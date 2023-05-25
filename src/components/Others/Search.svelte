@@ -803,27 +803,6 @@
                 {/if}
             </div>
         {/each}
-        {#each Object.entries(checkBoxSelections[filterTypeSelected]) as [checkBoxName, isSelected] (checkBoxName)}
-            <div
-                class="filter-checkbox"
-                {checkBoxName}
-                on:click={(e) => handleCheckboxChange(e, checkBoxName)}
-                on:keydown={(e) => handleCheckboxChange(e, checkBoxName)}
-            >
-                <div style:visibility="none" />
-                <div class="checkbox-wrap">
-                    <input
-                        type="checkbox"
-                        class="checkbox"
-                        on:change={(e) => handleCheckboxChange(e, checkBoxName)}
-                        bind:checked={checkBoxSelections[filterTypeSelected][
-                            checkBoxName
-                        ]}
-                    />
-                    <div class="checkbox-label">{checkBoxName}</div>
-                </div>
-            </div>
-        {/each}
         {#each Object.entries(inputNumberSelections[filterTypeSelected]) as [inputNumberName, { numberValue, maxValue, minValue, defaultValue }] (inputNumberName)}
             <div class="filter-input-number" {inputNumberName} {numberValue}>
                 <div class="filter-input-number-name">
@@ -844,6 +823,27 @@
                                 minValue
                             )}
                     />
+                </div>
+            </div>
+        {/each}
+        {#each Object.entries(checkBoxSelections[filterTypeSelected]) as [checkBoxName, isSelected] (checkBoxName)}
+            <div
+                class="filter-checkbox"
+                {checkBoxName}
+                on:click={(e) => handleCheckboxChange(e, checkBoxName)}
+                on:keydown={(e) => handleCheckboxChange(e, checkBoxName)}
+            >
+                <div style:visibility="none" />
+                <div class="checkbox-wrap">
+                    <input
+                        type="checkbox"
+                        class="checkbox"
+                        on:change={(e) => handleCheckboxChange(e, checkBoxName)}
+                        bind:checked={checkBoxSelections[filterTypeSelected][
+                            checkBoxName
+                        ]}
+                    />
+                    <div class="checkbox-label">{checkBoxName}</div>
                 </div>
             </div>
         {/each}
