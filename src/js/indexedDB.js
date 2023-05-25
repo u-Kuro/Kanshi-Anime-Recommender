@@ -1,3 +1,4 @@
+let db;
 async function IDBinit(){
     return await new Promise((resolve)=>{
         let request = indexedDB.open("Kanshi.Anime.Recommendations.Anilist.W~uPtWCq=vG$TR:Zl^#t<vdS]I~N70", 1)
@@ -6,17 +7,17 @@ async function IDBinit(){
             console.error(error)
         }
         request.onsuccess = (event) => {
-            let db = event.target.result
+            db = event.target.result
             return resolve(db)
         }
         request.onupgradeneeded = (event) => {
-            let db = event.target.result;
+            db = event.target.result;
             db.createObjectStore("MyObjectStore")
             return resolve(db)
         }
     })
 }
-async function saveJSON(data, name, db) {
+async function saveJSON(data, name) {
     return await new Promise(async(resolve)=>{
         try {
             let write = db.transaction("MyObjectStore","readwrite").objectStore("MyObjectStore").openCursor()
@@ -50,11 +51,11 @@ async function saveJSON(data, name, db) {
         }
     })
 }
-async function retrieveJSON(name, db) {
+async function retrieveJSON(name) {
     return await new Promise((resolve)=>{
         try {
-            let read = db.transaction("MyObjectStore","readwrite").objectStore("MyObjectStore").get(name)
-            read.onsuccess = (event) => {
+            let read = db.transaction("MyObjectStore","readonly").objectStore("MyObjectStore").get(name)
+            read.onsuccess = () => {
                 return resolve(read.result)
             }
             read.onerror = (error) => {
@@ -70,11 +71,11 @@ async function retrieveJSON(name, db) {
 async function deleteJSON(name) {
     return await new Promise((resolve)=>{
         try {
-            let read = db.transaction("MyObjectStore","readwrite").objectStore("MyObjectStore").delete(name)
-            read.onsuccess = (event) => {
+            let write = db.transaction("MyObjectStore","readwrite").objectStore("MyObjectStore").delete(name)
+            write.onsuccess = () => {
                 return resolve()
             }
-            read.onerror = (error) => {
+            write.onerror = (error) => {
                 console.error(error)
                 return resolve()
             }
@@ -85,4 +86,4 @@ async function deleteJSON(name) {
     })
 }
 
-export { IDBinit, saveJSON, retrieveJSON, deleteJSON }
+export { IDBinit, saveJSON, retrieveJSON, deleteJSON, db }

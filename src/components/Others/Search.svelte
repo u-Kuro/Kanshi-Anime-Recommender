@@ -1,6 +1,6 @@
 <script>
     import { onMount, onDestroy } from "svelte";
-    import { dragScroll } from "../../js/dragScroll.js";
+    import { dragScroll } from "../../js/others/dragScroll.js";
     let filterTypeSelected = "Anime Filter";
     let filterTypeSelections = {
         "Anime Filter": true,
@@ -21,6 +21,38 @@
         Popularity: "none",
         Date: "none",
     };
+    let inputNumberSelections = {
+        "Anime Filter": {
+            "Hello Num1": {
+                numberValue: "",
+                defaultValue: 1,
+                maxValue: 111,
+                minValue: 1,
+            },
+            "Hello Num2": {
+                numberValue: "",
+                defaultValue: 2,
+                maxValue: 222,
+                minValue: 2,
+            },
+            "Hello Num3": {
+                numberValue: "",
+                defaultValue: 3,
+                maxValue: 333,
+                minValue: 3,
+            },
+        },
+        "Content Warning": {
+            numberValue: 0,
+            maxValue: 100,
+            minValue: 0,
+        },
+        "Algorithm Filter": {
+            numberValue: 0,
+            maxValue: 100,
+            minValue: 0,
+        },
+    };
     let checkBoxSelections = {
         "Anime Filter": {
             "Hide My Anime": false,
@@ -30,6 +62,42 @@
         },
         "Algorithm Filter": {
             "Hide My Algorithms": false,
+        },
+    };
+
+    let x = {
+        Format: {},
+        Genre: {
+            genre1: true,
+            genre2: true,
+            genre3: true,
+            genre4: true,
+            genre5: true,
+            genre6: true,
+        },
+        Tag: {},
+        "Tag Category": {},
+        Studio: {},
+        Staff: {},
+        "Staff Role": {},
+        Year: {},
+        season: {},
+        "Airing Status": {},
+        "User Status": {},
+        "Sort Type": {},
+        Others: {
+            "Anime Filter": {
+                Checkbox: {},
+                "Input Number": {},
+            },
+            "Content Warning": {
+                Checkbox: {},
+                "Input Number": {},
+            },
+            "Filter Algorithm": {
+                Checkbox: {},
+                "Input Number": {},
+            },
         },
     };
     let filterSelections = {
@@ -172,6 +240,7 @@
     let handleTagFilterScroll;
     let tagFilterScrollTimeout;
     let handleCheckboxChange;
+    let handleInputNumber;
     let removeActiveTag;
     let changeActiveSelect;
     let removeAllActiveTag;
@@ -186,13 +255,7 @@
         windowResized = () => {
             maxFilterSelectionHeight = window.innerHeight * 0.3;
         };
-        handleFilterTypes = (event) => {
-            let element = event.target;
-            let classList = element.classList;
-            if (!classList.contains("option")) {
-                element = element.closest(".option");
-            }
-            let newFilterTypeName = element.getAttribute("filterTypeName");
+        handleFilterTypes = (newFilterTypeName) => {
             if (filterTypeSelected !== newFilterTypeName) {
                 // Close Filter Dropdown
                 selectedSortElement = false;
@@ -244,7 +307,7 @@
                 tagFilterIsScrolling = false;
             }, 500);
         };
-        filterSelect = (event) => {
+        filterSelect = (event, idx) => {
             let element = event.target;
             let filSelectEl = element.closest(".filter-select");
             if (filSelectEl === selectedFilterElement) return;
@@ -260,13 +323,12 @@
                 ].selected = false;
             }
             // Add New
-            let newindex = parseInt(filSelectEl.getAttribute("idx"));
+            let newindex = parseInt(idx);
             filterSelections[filterTypeSelected][newindex].selected = true;
             selectedFilterElement = filSelectEl;
         };
-        closeFilterSelect = (event) => {
-            let filSelectEl = event.target.closest(".filter-select");
-            let index = parseInt(filSelectEl.getAttribute("idx"));
+        closeFilterSelect = (idx) => {
+            let index = parseInt(idx);
             filterSelections[filterTypeSelected][index].selected = false;
             selectedFilterElement = null;
         };
@@ -295,25 +357,15 @@
                 selectedFilterElement = null;
             }
         };
-        handleFilterSelectOptionChange = (event) => {
-            let element = event.target;
-            if (!element.classList.contains("option")) {
-                element = event.target.closest(".option");
-            }
-            let currentOption = element.getAttribute("option");
-            let filSelectEl = element.closest(".filter-select");
-            let newindex = parseInt(filSelectEl.getAttribute("idx"));
-            let changeType = filSelectEl.getAttribute("changeType");
+        handleFilterSelectOptionChange = (option, idx, changeType) => {
+            let newindex = parseInt(idx);
             let currentValue =
-                filterSelections[filterTypeSelected][newindex].options[
-                    currentOption
-                ];
+                filterSelections[filterTypeSelected][newindex].options[option];
             if (currentValue === "none") {
-                filterSelections[filterTypeSelected][newindex].options[
-                    currentOption
-                ] = "included";
+                filterSelections[filterTypeSelected][newindex].options[option] =
+                    "included";
                 activeTagFilters[filterTypeSelected].unshift({
-                    option: currentOption,
+                    option: option,
                     idx: newindex,
                     selected: "included",
                     changeType: changeType,
@@ -323,22 +375,21 @@
             } else if (currentValue === "included") {
                 if (changeType === "read") {
                     filterSelections[filterTypeSelected][newindex].options[
-                        currentOption
+                        option
                     ] = "none";
                     activeTagFilters[filterTypeSelected] = activeTagFilters[
                         filterTypeSelected
                     ].filter(
-                        (e) =>
-                            !(e.idx === newindex && e.option === currentOption)
+                        (e) => !(e.idx === newindex && e.option === option)
                     );
                 } else {
                     filterSelections[filterTypeSelected][newindex].options[
-                        currentOption
+                        option
                     ] = "excluded";
                     activeTagFilters[filterTypeSelected].forEach((e) => {
                         if (
                             e.idx === newindex &&
-                            e.option === currentOption &&
+                            e.option === option &&
                             e.selected === "included"
                         ) {
                             e.selected = "excluded";
@@ -348,25 +399,18 @@
                         activeTagFilters[filterTypeSelected];
                 }
             } else {
-                filterSelections[filterTypeSelected][newindex].options[
-                    currentOption
-                ] = "none";
+                filterSelections[filterTypeSelected][newindex].options[option] =
+                    "none";
                 activeTagFilters[filterTypeSelected] = activeTagFilters[
                     filterTypeSelected
-                ].filter(
-                    (e) => !(e.idx === newindex && e.option === currentOption)
-                );
+                ].filter((e) => !(e.idx === newindex && e.option === option));
             }
         };
-        handleCheckboxChange = (event) => {
+        handleCheckboxChange = (event, checkBoxName) => {
             let element = event.target;
             let classList = element.classList;
             if (classList.contains("checkbox") && event.type === "click")
                 return; // Prevent Default
-            if (!classList.contains("filter-checkbox")) {
-                element = element.closest(".filter-checkbox");
-            }
-            let checkBoxName = element.getAttribute("checkBoxName");
             let currentCheckBoxStatus =
                 checkBoxSelections[filterTypeSelected][checkBoxName];
             if (currentCheckBoxStatus) {
@@ -393,15 +437,88 @@
             checkBoxSelections[filterTypeSelected][checkBoxName] =
                 !checkBoxSelections[filterTypeSelected][checkBoxName];
         };
-        changeActiveSelect = (event) => {
-            if (tagFilterIsScrolling) return false;
-            let element = event.target;
-            if (!element.classList.contains("activeTagFilter")) {
-                element = element.closest(".activeTagFilter");
+        handleInputNumber = (
+            event,
+            newValue,
+            inputNumberName,
+            maxValue,
+            minValue
+        ) => {
+            let currentValue =
+                inputNumberSelections[filterTypeSelected][inputNumberName]
+                    .numberValue;
+            if (
+                (newValue !== currentValue &&
+                    !isNaN(newValue) &&
+                    !isNaN(currentValue) &&
+                    parseFloat(newValue) >= minValue &&
+                    parseFloat(newValue) <= maxValue) ||
+                newValue === ""
+            ) {
+                if (newValue === "") {
+                    activeTagFilters[filterTypeSelected] = activeTagFilters[
+                        filterTypeSelected
+                    ].filter(
+                        (e) =>
+                            !(
+                                e.idx === -2 &&
+                                e.option ===
+                                    `${inputNumberName}: ${currentValue}` &&
+                                e.selected === "included"
+                            )
+                    );
+                } else {
+                    let elementIdx = activeTagFilters[
+                        filterTypeSelected
+                    ].findIndex(
+                        (item) =>
+                            item.option ===
+                                `${inputNumberName}: ${currentValue}` &&
+                            item.idx === -2
+                    );
+                    if (elementIdx === -1) {
+                        activeTagFilters[filterTypeSelected].unshift({
+                            option: `${inputNumberName}: ${newValue}`,
+                            idx: -2,
+                            selected: "included",
+                            changeType: "read",
+                        });
+                    } else {
+                        activeTagFilters[filterTypeSelected].splice(
+                            elementIdx,
+                            1
+                        );
+                        activeTagFilters[filterTypeSelected].unshift({
+                            option: `${inputNumberName}: ${newValue}`,
+                            idx: -2,
+                            selected: "included",
+                            changeType: "read",
+                        });
+                    }
+                    activeTagFilters = activeTagFilters;
+                }
+                inputNumberSelections[filterTypeSelected][
+                    inputNumberName
+                ].numberValue = newValue;
+            } else if (
+                isNaN(newValue) ||
+                newValue < minValue ||
+                newValue > maxValue
+            ) {
+                event.target.value = currentValue;
+            } else if (newValue === currentValue) {
+                return;
             }
-            let idx = parseInt(element.getAttribute("idx"));
-            let option = element.getAttribute("option");
-            let changeType = element.getAttribute("changeType");
+        };
+        changeActiveSelect = (idx, option, changeType) => {
+            if (tagFilterIsScrolling) return false;
+            // let element = event.target;
+            // if (!element.classList.contains("activeTagFilter")) {
+            //     element = element.closest(".activeTagFilter");
+            // }
+            idx = parseInt(idx);
+            // let option = element.getAttribute("option");
+            // let changeType = element.getAttribute("changeType");
             if (idx < 0 || changeType === "read") return; // Unchangable Selection
             let currentSelect =
                 filterSelections[filterTypeSelected][idx].options[option];
@@ -437,17 +554,22 @@
                 });
             }
         };
-        removeActiveTag = (event) => {
-            if (tagFilterIsScrolling) return false;
-            let element = event.target;
-            if (!element.classList.contains("activeTagFilter")) {
-                element = element.closest(".activeTagFilter");
-            }
-            let idx = parseInt(element.getAttribute("idx"));
-            let option = element.getAttribute("option");
-            if (idx < 0) {
+        removeActiveTag = (idx, option) => {
+            if (tagFilterIsScrolling) return;
+            // let element = event.target;
+            // if (!element.classList.contains("activeTagFilter")) {
+            //     element = element.closest(".activeTagFilter");
+            // }
+            idx = parseInt(idx);
+            // let option = element.getAttribute("option");
+            if (idx === -1) {
                 // Is Checkbox
                 checkBoxSelections[filterTypeSelected][option] = false;
+            } else if (idx === -2) {
+                // Is Input Number
+                inputNumberSelections[filterTypeSelected][
+                    option.split(":")[0].trim()
+                ].numberValue = "";
             } else {
                 // Is Only Read Option
                 filterSelections[filterTypeSelected][idx].options[option] =
@@ -460,6 +582,14 @@
         removeAllActiveTag = () => {
             if (tagFilterIsScrolling) return false;
             if (confirm("Do you want to remove all filters?") == true) {
+                // Remove Active Number Input
+                Object.keys(inputNumberSelections[filterTypeSelected]).forEach(
+                    (e) => {
+                        inputNumberSelections[filterTypeSelected][
+                            e
+                        ].numberValue = "";
+                    }
+                );
                 // Remove Checkbox
                 Object.keys(checkBoxSelections[filterTypeSelected]).forEach(
                     (checkBoxName) => {
@@ -468,7 +598,7 @@
                         ] = false;
                     }
                 );
-                //Remove Option Selections
+                // Remove Option Selections
                 filterSelections[filterTypeSelected].forEach((e) => {
                     Object.entries(e.options).forEach(([option, selected]) => {
                         e.options[option] = "none";
@@ -494,21 +624,21 @@
                 selectedSortElement = false;
             }
         };
-        changeSort = (event) => {
-            let element = event.target;
-            let classList = element.classList;
-            if (!classList.contains("option")) {
-                element = element.closest(".option");
-            }
+        changeSort = (sortname) => {
+            // let element = event.target;
+            // let classList = element.classList;
+            // if (!classList.contains("option")) {
+            //     element = element.closest(".option");
+            // }
             let [currentSortName, currentSortType] = sortFilter;
-            let newSortName = element.getAttribute("sortName");
-            if (currentSortName === newSortName) {
+            // let sortName = element.getAttribute("sortName");
+            if (currentSortName === sortname) {
                 let newSortType = currentSortType === "desc" ? "asc" : "desc";
                 sortSelections[currentSortName] = newSortType;
-                sortFilter = [newSortName, newSortType];
-            } else if (currentSortName !== newSortName) {
-                sortSelections[newSortName] = "desc";
-                sortFilter = [newSortName, "desc"];
+                sortFilter = [sortname, newSortType];
+            } else if (currentSortName !== sortname) {
+                sortSelections[sortname] = "desc";
+                sortFilter = [sortname, "desc"];
             }
         };
         changeSortType = () => {
@@ -534,6 +664,9 @@
             });
         };
         document
+            .getElementsByClassName("filters")[0]
+            .addEventListener("scroll", handleFiltersScroll);
+        document
             .getElementsByClassName("tagFilters")[0]
             .addEventListener("scroll", handleTagFilterScroll);
         window.addEventListener("resize", windowResized);
@@ -541,6 +674,9 @@
     });
     onDestroy(() => {
         unsubTagFiltersDragScroll();
+        document
+            .getElementsByClassName("filters")[0]
+            .removeEventListener("scroll", handleFiltersScroll);
         if (tagFilterScrollTimeout) clearTimeout(tagFilterScrollTimeout);
         document
             .getElementsByClassName("tagFilters")[0]
@@ -575,8 +711,8 @@
                             <div
                                 {filterTypeName}
                                 class="option"
-                                on:click={handleFilterTypes}
-                                on:keydown={handleFilterTypes}
+                                on:click={handleFilterTypes(filterTypeName)}
+                                on:keydown={handleFilterTypes(filterTypeName)}
                             >
                                 <h3
                                     style:color={isActive
@@ -594,14 +730,14 @@
     </div>
     <div class="filters">
         {#each filterSelections[filterTypeSelected] as { filname, options, selected, changeType, optKeyword }, idx (filname)}
-            <div class="filter-select" {filname} {idx} {changeType}>
+            <div class="filter-select" {filname} {changeType}>
                 <div class="filter-name">
                     <h2>{filname}</h2>
                 </div>
                 <div
                     class="select"
-                    on:keydown={filterSelect}
-                    on:click={filterSelect}
+                    on:keydown={(e) => filterSelect(e, idx)}
+                    on:click={(e) => filterSelect(e, idx)}
                 >
                     <div class="value-wrap">
                         <input
@@ -617,8 +753,8 @@
                     {#if selected && Object.entries(options).length}
                         <i
                             class="icon fa-solid fa-angle-up"
-                            on:keydown={closeFilterSelect}
-                            on:click={closeFilterSelect}
+                            on:keydown={closeFilterSelect(idx)}
+                            on:click={closeFilterSelect(idx)}
                         />
                     {:else}
                         <i class="icon fa-solid fa-angle-down" />
@@ -636,8 +772,16 @@
                                         class="option"
                                         {option}
                                         {changeType}
-                                        on:click={handleFilterSelectOptionChange}
-                                        on:keydown={handleFilterSelectOptionChange}
+                                        on:click={handleFilterSelectOptionChange(
+                                            option,
+                                            idx,
+                                            changeType
+                                        )}
+                                        on:keydown={handleFilterSelectOptionChange(
+                                            option,
+                                            idx,
+                                            changeType
+                                        )}
                                     >
                                         <h3>{option}</h3>
                                         {#if selected === "included"}
@@ -663,20 +807,43 @@
             <div
                 class="filter-checkbox"
                 {checkBoxName}
-                on:click={handleCheckboxChange}
-                on:keydown={handleCheckboxChange}
+                on:click={(e) => handleCheckboxChange(e, checkBoxName)}
+                on:keydown={(e) => handleCheckboxChange(e, checkBoxName)}
             >
                 <div style:visibility="none" />
                 <div class="checkbox-wrap">
                     <input
                         type="checkbox"
                         class="checkbox"
-                        on:change={handleCheckboxChange}
+                        on:change={(e) => handleCheckboxChange(e, checkBoxName)}
                         bind:checked={checkBoxSelections[filterTypeSelected][
                             checkBoxName
                         ]}
                     />
                     <div class="checkbox-label">{checkBoxName}</div>
+                </div>
+            </div>
+        {/each}
+        {#each Object.entries(inputNumberSelections[filterTypeSelected]) as [inputNumberName, { numberValue, maxValue, minValue, defaultValue }] (inputNumberName)}
+            <div class="filter-input-number" {inputNumberName} {numberValue}>
+                <div class="filter-input-number-name">
+                    <h2>{inputNumberName}</h2>
+                </div>
+                <div class="value-input-number-wrap">
+                    <input
+                        class="value-input-number"
+                        type="text"
+                        placeholder={"Default: " + defaultValue}
+                        value={numberValue}
+                        on:input={(e) =>
+                            handleInputNumber(
+                                e,
+                                e.target.value,
+                                inputNumberName,
+                                maxValue,
+                                minValue
+                            )}
+                    />
                 </div>
             </div>
         {/each}
@@ -702,14 +869,17 @@
                         {option}
                         {idx}
                         {changeType}
-                        on:click={changeActiveSelect}
-                        on:keydown={changeActiveSelect}
+                        on:click={changeActiveSelect(idx, option, changeType)}
+                        on:keydown={changeActiveSelect(idx, option, changeType)}
                     >
                         <h3>{option}</h3>
                         <i
                             class="fa-solid fa-xmark"
-                            on:click|preventDefault={removeActiveTag}
-                            on:keydown={removeActiveTag}
+                            on:click|preventDefault={removeActiveTag(
+                                idx,
+                                option
+                            )}
+                            on:keydown={removeActiveTag(idx, option)}
                         />
                     </div>
                 {/if}
@@ -737,8 +907,8 @@
                                 <div
                                     {sortname}
                                     class="option"
-                                    on:click={changeSort}
-                                    on:keydown={changeSort}
+                                    on:click={changeSort(sortname)}
+                                    on:keydown={changeSort(sortname)}
                                 >
                                     <h3>{sortname}</h3>
                                     {#if sortFilter[0] === sortname}
@@ -860,14 +1030,25 @@
         border-radius: 5px;
     }
 
-    .filter-select {
+    .filter-select,
+    .filter-input-number {
         display: grid;
         grid-template-rows: 18px 30px;
         grid-row-gap: 5px;
         width: 142px;
         scroll-snap-align: start;
     }
-    .filter-select .filter-name {
+    .filter-input-number .value-input-number {
+        text-align: center;
+        background: transparent;
+        color: inherit;
+        border: none;
+        outline: none;
+        width: 100%;
+        cursor: text;
+    }
+    .filter-select .filter-name,
+    .filter-input-number .filter-input-number-name {
         font-size: 1.5rem;
         font-weight: 600;
         text-transform: capitalize;
@@ -959,7 +1140,8 @@
         width: 142px;
         scroll-snap-align: start;
     }
-    .filter-checkbox .checkbox-wrap {
+    .filter-checkbox .checkbox-wrap,
+    .filter-input-number .value-input-number-wrap {
         background: rgb(21, 31, 46);
         border-radius: 6px;
         display: flex;

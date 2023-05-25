@@ -1,37 +1,151 @@
 <script>
-	import { IndexDB, animeEntries, lastUpdate } from "./js/globalValues.js";
-	import { IDBinit, retrieveJSON, saveJSON } from "./js/helper.js";
-	import { onMount, onDestroy } from "svelte";
-	import { listen, unsubscribe } from "../scripts/firebaseInit.js";
 	import C from "./components/index.js";
-
-	let listeners = [];
+	import { onMount, onDestroy } from "svelte";
+	import { IDBinit, retrieveJSON, saveJSON } from "./js/indexedDB.js";
+	import {
+		IndexedDB,
+		animeEntries,
+		lastAnimeUpdate,
+		username,
+		userEntries,
+		lastUserAnimeUpdate,
+		filterOptions,
+		recommendedAnimeList,
+	} from "./js/globalValues.js";
+	import {
+		getAnimeEntries,
+		getUserEntries,
+		getFilterOptions,
+	} from "./js/workerUtils.js";
+	import { jsonIsEmpty, fetchAniListData } from "./js/others/helper.js";
 
 	onMount(async () => {
-		let db = await IDBinit();
-		IndexDB.set(db);
-		lastUpdate.set(new Date(await retrieveJSON("lastSavedUpdateTime")));
-		animeEntries.set(await retrieveJSON("savedAnimeEntries"));
-		if (!$lastUpdate instanceof Date || !animeEntries) {
-			// get data from database
-		} else {
-			// User has Date
-			// listeners.push(await listen("lastUpdate", (val) => {
-			// 	let serverLastUpdate = new Date(val);
-			// 	if(serverLastUpdate>lastUpdate){
-			// 		// user data is late
-			// 	} else if(serverLastUpdate<lastUpdate){
-			// 		// server data is late
-			// 	}
-			// 	// lastUpdate.set(val);
-			// }));
-		}
-		console.log($lastUpdate);
+		// Init IndexedDB
+		$IndexedDB = await IDBinit();
+
+		// Init Data
+		let initDataPromises = [];
+		// Check/Get/Update/Process Anime Entries
+		initDataPromises.push(
+			new Promise(async (resolve, reject) => {
+				$animeEntries = await _retrieveJSON("savedAnimeEntries");
+				$lastAnimeUpdate = await _retrieveJSON("lastAnimeUpdate");
+				if (
+					jsonIsEmpty($animeEntries) ||
+					!$lastAnimeUpdate instanceof Date
+				) {
+					getAnimeEntries(
+						new Worker("./webapi/worker/getAnimeEntries.js")
+					)
+						.then(async (data) => {
+							$lastAnimeUpdate = data.lastAnimeUpdate;
+							$animeEntries = await retrieveJSON(
+								"savedAnimeEntries"
+							);
+							resolve();
+						})
+						.catch((error) => reject(error));
+				} else {
+					resolve();
+				}
+			})
+		);
+
+		// Check/Update/Process User Anime Entries
+		initDataPromises.push(
+			new Promise(async (resolve, reject) => {
+				$username = await _retrieveJSON("username");
+				$userEntries = await _retrieveJSON("savedUserEntries");
+				$lastUserAnimeUpdate = await _retrieveJSON(
+					"lastUserAnimeUpdate"
+				);
+				if ($username) {
+					if (
+						jsonIsEmpty($userEntries) ||
+						!$lastUserAnimeUpdate instanceof Date
+					) {
+						getUserEntries(
+							new Worker("./webapi/worker/getUserEntries.js")
+						)
+							.then(async (data) => {
+								$lastUserAnimeUpdate = data.lastUserAnimeUpdate;
+								$userEntries = await retrieveJSON(
+									"savedUserEntries"
+								);
+								resolve();
+							})
+							.catch((error) => reject(error));
+					} else {
+						fetchAniListData(
+							`{User(name: "${savedUsername}"){updatedAt}}`
+						)
+							.then((result) => {
+								let userUpdate = $lastUserAnimeUpdate;
+								let recentUserUpdate = new Date(
+									result.data.User.updatedAt * 1000
+								);
+								if (
+									!$lastUserAnimeUpdate instanceof Date ||
+									isNaN(userUpdate) ||
+									(recentUserUpdate instanceof Date &&
+										!isNaN(recentUserUpdate) &&
+										$lastUserAnimeUpdate < recentUserUpdate)
+								) {
+									getUserEntries(
+										new Worker(
+											"./webapi/worker/getUserEntries.js"
+										)
+									)
+										.then(async (data) => {
+											$lastUserAnimeUpdate =
+												data.lastUserAnimeUpdate;
+											$userEntries = await retrieveJSON(
+												"savedUserEntries"
+											);
+											resolve();
+										})
+										.catch((error) => reject(error));
+								} else {
+									resolve();
+								}
+							})
+							.catch((error) => reject(error));
+						// updateUserEntries
+					}
+				} else {
+					resolve();
+				}
+			})
+		);
+
+		// Check/Get Filter Options Selection
+		initDataPromises.push(
+			new Promise(async (resolve, reject) => {
+				$filterOptions = await _retrieveJSON("filterOptions");
+				if (jsonIsEmpty($filterOptions)) {
+					await getFilterOptions(
+						new Worker("./webapi/worker/getFilterOptions")
+					)
+						.then(async (data) => {
+							$filterOptions = data.filterOptions;
+							resolve();
+						})
+						.catch((error) => reject(error));
+				} else {
+					resolve();
+				}
+			})
+		);
+
+		// Data Processing
+		Promise.all(initDataPromises).then(async () => {
+			// Check/Process Saved
+			$recommendedAnimeList = await _retrieveJSON("recommendedAnimeList");
+		});
 	});
 
-	onDestroy(() => {
-		// unsubscribe(listeners);
-	});
+	let _retrieveJSON = async (name) => await retrieveJSON(name, $IndexedDB);
+	onDestroy(() => {});
 </script>
 
 <main>

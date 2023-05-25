@@ -94,8 +94,8 @@
     ];
 
     onMount(() => {
-        let animeLoaderWorker = new Worker("./js/worker/animeLoader.js");
-        console.log(animeLoaderWorker);
+        // let animeLoaderWorker = new Worker("./js/worker/animeLoader.js");
+        // console.log(animeLoaderWorker);
     });
 </script>
 

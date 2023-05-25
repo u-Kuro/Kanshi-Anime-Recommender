@@ -59,7 +59,6 @@
         height: 58px;
         background-color: #152232;
         color: #b9cadd;
-        padding: 0 50px;
     }
     .nav {
         display: grid;
@@ -72,6 +71,7 @@
         user-select: none;
         max-width: 1140px;
         margin: auto;
+        padding: 0 50px;
     }
     .input-search {
         display: flex;
@@ -107,7 +107,7 @@
         cursor: pointer;
     }
     @media screen and (orientation: portrait) {
-        .nav-container {
+        .nav {
             padding: 0 1em;
         }
     }

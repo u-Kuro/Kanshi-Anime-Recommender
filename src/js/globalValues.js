@@ -1,19 +1,27 @@
 import { writable } from "svelte/store";
 
-const IndexDB = writable(null)
-const animeEntries = writable({})
-const lastUpdate = writable("")
-const userEntries = writable({})
-const filterOptions = writable({})
-const processedAnimeList = writable([])
+const IndexedDB = writable(null)
+
+const animeEntries = writable(null)
+const lastAnimeUpdate = writable(null)
+
+const username = writable(null)
+const userEntries = writable(null)
+const lastUserAnimeUpdate = writable(null)
+
+const filterOptions = writable(null)
+const recommendedAnimeList = writable(null)
 
 const menuVisible = writable(false)
+
 export {
-    IndexDB,
-    lastUpdate,
+    IndexedDB,
     animeEntries,
+    lastAnimeUpdate,
+    username,
     userEntries,
+    lastUserAnimeUpdate,
     filterOptions,
-    processedAnimeList,
+    recommendedAnimeList,
     menuVisible
 }
