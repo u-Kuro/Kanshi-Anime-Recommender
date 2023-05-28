@@ -1,339 +1,19 @@
 <script>
     import { onMount, onDestroy } from "svelte";
-    import { filterOptions } from "../../js/globalValues.js";
+    import { IDBinit, retrieveJSON, saveJSON } from "../../js/indexedDB.js";
+    import {
+        IndexedDB,
+        filterOptions,
+        activeTagFilters,
+    } from "../../js/globalValues.js";
     import { dragScroll } from "../../js/others/dragScroll.js";
 
-    onMount(() => {
-        // Init
-        // let filOpts = $filterOptions
-        // sortSelections = filOpts["sort type"]
-        // let defaults = filOpts.defaults
-        // checkBoxSelections["Anime Filter"] = defaults["Anime Filter"].Checkbox || {}
-        // checkBoxSelections["Content Warning"] = defaults["Content Warning"].Checkbox || {}
-        // checkBoxSelections["Filter Algorithm"] = defaults["Content Warning"].Checkbox || {}
-        // inputNumberSelections["Anime Filter"] = defaults["Anime Filter"]["Input Number"] || {}
-        // inputNumberSelections["Content Warning"] = defaults["Content Warning"]["Input Number"] || {}
-        // inputNumberSelections["Filter Algorithm"] = defaults["Content Warning"]["Input Number"] || {}
-        // filterSelections
-    });
-    let filterTypeSelected = "Anime Filter";
-    let filterTypeSelections = {
-        "Anime Filter": true,
-        "Content Warning": false,
-        "Filter Algorithm": false,
-    };
-    let activeTagFilters = {
-        "Anime Filter": [],
-        "Content Warning": [],
-        "Filter Algorithm": [],
-    };
-    // let filterOptionsUnsubscribe = filterOptions.subscribe((value) => {
-    //     // Add Their own Filters
-    // });
-    let userFilters = {
-        "Anime Filter": {
-            Dropdown: [
-                {
-                    filName: "genre",
-                    options: {
-                        action: true,
-                        comedy: true,
-                        ecchi: true,
-                        fantasy: true,
-                        "mahou shoujo": true,
-                        "sci-fi": true,
-                        drama: true,
-                        mystery: true,
-                        adventure: true,
-                        romance: true,
-                        "slice of life": true,
-                        supernatural: true,
-                        music: true,
-                        psychological: true,
-                        mecha: true,
-                        sports: true,
-                        horror: true,
-                        thriller: true,
-                    },
-                    optKeyword: "",
-                    selected: false,
-                    changeType: "write",
-                },
-            ],
-            Checkbox: [
-                {
-                    filName: "hide my anime",
-                    isSelected: false,
-                },
-            ],
-            "Input Number": [
-                {
-                    filName: "limit favourites",
-                    defaultValue: null,
-                    maxValue: null,
-                    minValue: 0,
-                    numberValue: "",
-                },
-            ],
-        },
-        "Content Warning": {
-            Dropdown: [
-                {
-                    filName: "genre",
-                    options: {
-                        action: true,
-                        comedy: true,
-                        ecchi: true,
-                        fantasy: true,
-                        "mahou shoujo": true,
-                        "sci-fi": true,
-                        drama: true,
-                        mystery: true,
-                        adventure: true,
-                        romance: true,
-                        "slice of life": true,
-                        supernatural: true,
-                        music: true,
-                        psychological: true,
-                        mecha: true,
-                        sports: true,
-                        horror: true,
-                        thriller: true,
-                    },
-                    optKeyword: "",
-                    selected: false,
-                    changeType: "write",
-                },
-            ],
-            Checkbox: [],
-            "Input Number": [],
-        },
-        "Filter Algorithm": {
-            Dropdown: [
-                {
-                    filName: "genre",
-                    options: {
-                        action: true,
-                        comedy: true,
-                        ecchi: true,
-                        fantasy: true,
-                        "mahou shoujo": true,
-                        "sci-fi": true,
-                        drama: true,
-                        mystery: true,
-                        adventure: true,
-                        romance: true,
-                        "slice of life": true,
-                        supernatural: true,
-                        music: true,
-                        psychological: true,
-                        mecha: true,
-                        sports: true,
-                        horror: true,
-                        thriller: true,
-                        all: true,
-                    },
-                    optKeyword: "",
-                    selected: false,
-                    changeType: "write",
-                },
-            ],
-            Checkbox: [
-                {
-                    filName: "inc. all factors",
-                    isSelected: false,
-                },
-            ],
-            "Input Number": [
-                {
-                    filName: "sample size",
-                    defaultValue: null,
-                    maxValue: null,
-                    minValue: 1,
-                    numberValue: "",
-                },
-            ],
-        },
-        "sort type": {
-            "weighted score": "desc",
-            score: "none",
-            "average score": "none",
-            "user score": "none",
-            popularity: "none",
-            date: "none",
-        },
-    };
-    // let sortFilter = ["Weighted Score", "desc"];
-    // let sortSelections = {
-    //     "Weighted Score": "desc",
-    //     Score: "none",
-    //     "Average Score": "none",
-    //     "User Score": "none",
-    //     Popularity: "none",
-    //     Date: "none",
-    // };
-    // let inputNumberSelections = {
-    //     "Anime Filter": {
-    //         "Hello Num1": {
-    //             numberValue: "",
-    //             defaultValue: 1,
-    //             maxValue: 111,
-    //             minValue: 1,
-    //         },
-    //         "Hello Num2": {
-    //             numberValue: "",
-    //             defaultValue: 2,
-    //             maxValue: 222,
-    //             minValue: 2,
-    //         },
-    //         "Hello Num3": {
-    //             numberValue: "",
-    //             defaultValue: 3,
-    //             maxValue: 333,
-    //             minValue: 3,
-    //         },
-    //     },
-    //     "Content Warning": {
-    //         numberValue: 0,
-    //         maxValue: 100,
-    //         minValue: 0,
-    //     },
-    //     "Filter Algorithm": {
-    //         numberValue: 0,
-    //         maxValue: 100,
-    //         minValue: 0,
-    //     },
-    // };
-    // let checkBoxSelections = {
-    //     "Anime Filter": {
-    //         "Hide My Anime": false,
-    //     },
-    //     "Content Warning": {
-    //         "Hide My Content": false,
-    //     },
-    //     "Filter Algorithm": {
-    //         "Hide My Algorithms": false,
-    //     },
-    // };
-    // let filterSelections = {
-    //     "Anime Filter": [
-    //         {
-    //             filName: "Genre",
-    //             optKeyword: "",
-    //             options: {
-    //                 Action: "none",
-    //                 Comedy: "none",
-    //                 Drama: "none",
-    //                 Fantasy: "none",
-    //                 Horror: "none",
-    //                 Mystery: "none",
-    //                 "Romance Shoujoasdasdadsadads": "none",
-    //             },
-    //             selected: false,
-    //             changeType: "write",
-    //         },
-    //         {
-    //             filName: "Tags",
-    //             optKeyword: "",
-    //             options: {
-    //                 Tag1: "none",
-    //                 Tags2: "none",
-    //                 Tags3: "none",
-    //                 Tags4: "none",
-    //             },
-    //             selected: false,
-    //             changeType: "read",
-    //         },
-    //         {
-    //             filName: "Year",
-    //             optKeyword: "",
-    //             options: {
-    //                 Year1: "none",
-    //                 Year2: "none",
-    //                 Year3: "none",
-    //                 Year4: "none",
-    //                 Year5: "none",
-    //                 Year6: "none",
-    //             },
-    //             selected: false,
-    //             changeType: "write",
-    //         },
-    //         {
-    //             filName: "Season",
-    //             optKeyword: "",
-    //             options: {
-    //                 Season1: "none",
-    //                 Season2: "none",
-    //                 Season3: "none",
-    //                 Season4: "none",
-    //                 Season5: "none",
-    //                 Season6: "none",
-    //             },
-    //             selected: false,
-    //         },
-    //         {
-    //             filName: "Format",
-    //             optKeyword: "",
-    //             options: {
-    //                 Format1: "none",
-    //                 Format2: "none",
-    //                 Format3: "none",
-    //                 Format4: "none",
-    //                 Format5: "none",
-    //             },
-    //             selected: false,
-    //             changeType: "write",
-    //         },
-    //         {
-    //             filName: "Airing Status",
-    //             optKeyword: "",
-    //             options: {
-    //                 Airing: "none",
-    //                 Airing1: "none",
-    //                 Airing2: "none",
-    //                 Airing3: "none",
-    //                 Airing4: "none",
-    //                 Airing5: "none",
-    //             },
-    //             selected: false,
-    //             changeType: "write",
-    //         },
-    //     ],
-    //     "Content Warning": [
-    //         {
-    //             filName: "Genre",
-    //             optKeyword: "",
-    //             options: {
-    //                 ActionCW: "none",
-    //                 ComedyCW: "none",
-    //                 DramaCW: "none",
-    //                 FantasyCW: "none",
-    //                 HorrorCW: "none",
-    //                 MysteryCW: "none",
-    //                 "Romance ShoujoasdasdadsadadsCW": "none",
-    //             },
-    //             selected: false,
-    //             changeType: "write",
-    //         },
-    //     ],
-    //     "Filter Algorithm": [
-    //         {
-    //             filName: "Genre",
-    //             optKeyword: "",
-    //             options: {
-    //                 ActionAF: "none",
-    //                 ComedyAF: "none",
-    //                 DramaAF: "none",
-    //                 FantasyAF: "none",
-    //                 HorrorAF: "none",
-    //                 MysteryAF: "none",
-    //                 "Romance ShoujoasdasdadsadadsCW": "none",
-    //             },
-    //             selected: false,
-    //             changeType: "read",
-    //         },
-    //     ],
-    // };
+    let writableSubscriptions = [];
+
+    let userFilters;
+    let filterSelection;
+    let sortFilter;
+
     let selectedFilterTypeElement;
     let selectedFilterElement;
     let selectedSortElement;
@@ -342,7 +22,6 @@
     let tagFilterIsScrolling;
     let highlightedEl;
 
-    // Init
     let clickOutsideListener;
     let windowResized;
     let handleFilterTypes;
@@ -364,7 +43,111 @@
     let handleSortFilterPopup;
     let changeSort;
     let changeSortType;
+
+    // Init Data Stucture
+    filterSelection = $filterOptions?.filterSelection || [];
+    sortFilter = $filterOptions?.sortFilter || [];
+
+    //
     onMount(() => {
+        writableSubscriptions.push(
+            filterOptions.subscribe((val) => {
+                // Add new Dropdown Options
+                val?.filterSelection?.forEach?.((newfilterSelection) => {
+                    let filterSelectionIdx = filterSelection.findIndex(
+                        (e) =>
+                            newfilterSelection.filterSelectionName ===
+                            e.filterSelectionName
+                    );
+                    if (filterSelectionIdx < 0 || !filterSelectionIdx) {
+                        filterSelection.push(newfilterSelection);
+                        filterSelection = filterSelection;
+                    } else if (
+                        newfilterSelection.filters.Dropdown instanceof Array
+                    ) {
+                        newfilterSelection.filters.Dropdown.forEach(
+                            (newDropdown) => {
+                                let dropdownIdx = filterSelection?.[
+                                    filterSelectionIdx
+                                ]?.filters.Dropdown.findIndex((e) => {
+                                    return e.filName === newDropdown.filName;
+                                });
+
+                                if (
+                                    dropdownIdx < 0 ||
+                                    dropdownIdx === undefined
+                                ) {
+                                    filterSelection[
+                                        filterSelectionIdx
+                                    ].filters.Dropdown.push(newDropdown);
+                                    filterSelection[
+                                        filterSelectionIdx
+                                    ].filters.Dropdown =
+                                        filterSelection[
+                                            filterSelectionIdx
+                                        ].filters.Dropdown;
+                                } else {
+                                    let dropdownOptions =
+                                        filterSelection[filterSelectionIdx]
+                                            .filters.Dropdown[dropdownIdx]
+                                            .options;
+                                    let newDropdownOptions =
+                                        newDropdown.options;
+                                    let map = {};
+                                    for (
+                                        var i = 0;
+                                        i < dropdownOptions.length;
+                                        i++
+                                    ) {
+                                        let optionName =
+                                            dropdownOptions[i].optionName;
+                                        let selected =
+                                            dropdownOptions[i].selected;
+                                        map[optionName] = selected;
+                                    }
+                                    for (
+                                        var j = 0;
+                                        j < newDropdownOptions.length;
+                                        j++
+                                    ) {
+                                        let optionName =
+                                            newDropdownOptions[j].optionName;
+                                        if (map.hasOwnProperty(optionName)) {
+                                            newDropdownOptions[j].selected =
+                                                map[optionName];
+                                        }
+                                    }
+                                }
+                            }
+                        );
+                    }
+                });
+                // Add new SortFilters
+                if (val?.sortFilter instanceof Array) {
+                    sortFilter = sortFilter.concat(
+                        val.sortFilter.filter(
+                            (newEl) =>
+                                !sortFilter.some(
+                                    ({ sortName }) =>
+                                        sortName === newEl.sortName
+                                )
+                        )
+                    );
+                }
+            })
+        );
+        writableSubscriptions.push(
+            activeTagFilters.subscribe((val) => {
+                (async () => {
+                    if (val) {
+                        console.log(val);
+                        if (!$IndexedDB) $IndexedDB = await IDBinit();
+                        await saveJSON(val, "activeTagFilters");
+                    }
+                })();
+            })
+        );
+        // Init
         maxFilterSelectionHeight = window.innerHeight * 0.3;
         unsubTagFiltersDragScroll = dragScroll(
             document.getElementsByClassName("tagFilters")[0]
@@ -373,24 +156,34 @@
             maxFilterSelectionHeight = window.innerHeight * 0.3;
         };
         handleFilterTypes = (newFilterTypeName) => {
-            if (filterTypeSelected !== newFilterTypeName) {
+            let idxTypeSelected = filterSelection.findIndex(
+                ({ isSelected }) => isSelected
+            );
+            let nameTypeSelected =
+                filterSelection[idxTypeSelected].filterSelectionName;
+            if (nameTypeSelected !== newFilterTypeName) {
                 // Close Filter Dropdown
                 selectedSortElement = false;
                 // Close Filter Selection Dropdown
-                userFilters[filterTypeSelected].Dropdown = userFilters[
-                    filterTypeSelected
-                ].Dropdown.map((e) => {
-                    e.selected = false;
-                    return e;
-                });
+                filterSelection[idxTypeSelected].filters.Dropdown.forEach(
+                    (e) => {
+                        e.selected = false;
+                    }
+                );
+                filterSelection[idxTypeSelected] =
+                    filterSelection[idxTypeSelected];
                 selectedFilterElement = null;
                 // Change Filter Type
-                filterTypeSelections[filterTypeSelected] = false;
-                filterTypeSelections[newFilterTypeName] = true;
-                filterTypeSelected = newFilterTypeName;
+                filterSelection[idxTypeSelected].isSelected = false;
+                let newIdxFilterTypeSelected = filterSelection.findIndex(
+                    ({ filterSelectionName }) =>
+                        filterSelectionName === newFilterTypeName
+                );
+                filterSelection[newIdxFilterTypeSelected].isSelected = true;
             }
         };
         handleShowFilterTypes = (event) => {
+            if (filterSelection.length < 1) return;
             let element = event.target;
             let classList = element.classList;
             let filterTypEl = element.closest(".filterType");
@@ -407,12 +200,16 @@
         handleFiltersScroll = () => {
             filtersIsScrolling = true;
             if (selectedFilterElement) {
-                userFilters[filterTypeSelected].Dropdown = userFilters[
-                    filterTypeSelected
-                ].Dropdown.map((e) => {
-                    e.selected = false;
-                    return e;
-                });
+                let idxTypeSelected = filterSelection.findIndex(
+                    ({ isSelected }) => isSelected
+                );
+                filterSelection[idxTypeSelected].filters.Dropdown.forEach(
+                    (e) => {
+                        e.selected = false;
+                    }
+                );
+                filterSelection[idxTypeSelected].filters.Dropdown =
+                    filterSelection[idxTypeSelected].filters.Dropdown;
                 selectedFilterElement = null;
             }
             filtersIsScrolling = false;
@@ -424,106 +221,140 @@
                 tagFilterIsScrolling = false;
             }, 500);
         };
-        filterSelect = (event, idx) => {
+        filterSelect = (event, dropdownIdx) => {
             let element = event.target;
             let filSelectEl = element.closest(".filter-select");
             if (filSelectEl === selectedFilterElement) return;
+            let idxTypeSelected = filterSelection.findIndex(
+                ({ isSelected }) => isSelected
+            );
             if (selectedFilterElement instanceof Element) {
                 let selectedIndex = getIndexInParent(selectedFilterElement);
                 if (
                     element.classList.contains("icon") &&
-                    userFilters[filterTypeSelected].Dropdown[selectedIndex]
-                        .selected
+                    filterSelection[idxTypeSelected].filters.Dropdown[
+                        selectedIndex
+                    ].selected
                 )
                     return;
-                userFilters[filterTypeSelected].Dropdown[
+                filterSelection[idxTypeSelected].filters.Dropdown[
                     selectedIndex
                 ].selected = false;
             }
             // Add New
-            let newindex = parseInt(idx);
-            userFilters[filterTypeSelected].Dropdown[newindex].selected = true;
+            filterSelection[idxTypeSelected].filters.Dropdown[
+                dropdownIdx
+            ].selected = true;
             selectedFilterElement = filSelectEl;
         };
-        closeFilterSelect = (idx) => {
-            let index = parseInt(idx);
-            userFilters[filterTypeSelected].Dropdown[index].selected = false;
+        closeFilterSelect = (dropDownIdx) => {
+            let idxTypeSelected = filterSelection.findIndex(
+                ({ isSelected }) => isSelected
+            );
+            filterSelection[idxTypeSelected].filters.Dropdown[
+                dropDownIdx
+            ].selected = false;
             selectedFilterElement = null;
         };
         clickOutsideListener = (event) => {
+            if (filterSelection.length < 1) return;
             let element = event.target;
             let classList = element.classList;
             // Filter Type Dropdown
             let filterTypeEl = element.closest(".filterType");
             if (!classList.contains("filterType") && !filterTypeEl) {
                 selectedFilterTypeElement = false;
-                highlightedEl = null;
+                if (highlightedEl instanceof Element) {
+                    highlightedEl.style.backgroundColor = "";
+                    highlightedEl = null;
+                }
             }
             // Sort Filter Dropdown
             let sortSelectEl = element.closest(".sortFilter");
             if (!classList.contains("sortFilter") && !sortSelectEl) {
                 selectedSortElement = false;
-                highlightedEl = null;
+                if (highlightedEl instanceof Element) {
+                    highlightedEl.style.backgroundColor = "";
+                    highlightedEl = null;
+                }
             }
             // Filter Selection Dropdown
             let filterSelectEl = element.closest(".filter-select");
             if (filterSelectEl !== selectedFilterElement) {
-                userFilters[filterTypeSelected].Dropdown = userFilters[
-                    filterTypeSelected
-                ].Dropdown.map((e) => {
-                    e.selected = false;
-                    return e;
-                });
+                let idxTypeSelected = filterSelection.findIndex(
+                    ({ isSelected }) => isSelected
+                );
+                filterSelection[idxTypeSelected].filters.Dropdown.forEach(
+                    (e) => {
+                        e.selected = false;
+                    }
+                );
+                filterSelection[idxTypeSelected] =
+                    filterSelection[idxTypeSelected];
                 selectedFilterElement = null;
-                highlightedEl = null;
+                if (highlightedEl instanceof Element) {
+                    highlightedEl.style.backgroundColor = "";
+                    highlightedEl = null;
+                }
             }
         };
-        handleFilterSelectOptionChange = (tagName, idx, changeType) => {
-            let newindex = parseInt(idx);
+        handleFilterSelectOptionChange = (
+            optionName,
+            optionIdx,
+            dropdownIdx,
+            changeType
+        ) => {
+            let idxTypeSelected = filterSelection.findIndex(
+                ({ isSelected }) => isSelected
+            );
+            let nameTypeSelected =
+                filterSelection[idxTypeSelected].filterSelectionName;
             let currentValue =
-                userFilters[filterTypeSelected].Dropdown[newindex].options[
-                    tagName
-                ];
+                filterSelection[idxTypeSelected].filters.Dropdown[dropdownIdx]
+                    .options[optionIdx].selected;
             if (currentValue === "none" || currentValue === true) {
                 // true is default value of selections
-                userFilters[filterTypeSelected].Dropdown[newindex].options[
-                    tagName
-                ] = "included";
-                activeTagFilters[filterTypeSelected].unshift({
-                    tagName: tagName,
-                    tagIdx: newindex,
+                filterSelection[idxTypeSelected].filters.Dropdown[
+                    dropdownIdx
+                ].options[optionIdx].selected = "included";
+                $activeTagFilters[nameTypeSelected].unshift({
+                    optionName: optionName,
+                    optionIdx: optionIdx,
+                    categIdx: dropdownIdx,
                     selected: "included",
                     changeType: changeType,
                     filterType: "dropdown",
                 });
-                activeTagFilters[filterTypeSelected] =
-                    activeTagFilters[filterTypeSelected];
+                $activeTagFilters[nameTypeSelected] =
+                    $activeTagFilters[nameTypeSelected];
             } else if (currentValue === "included") {
                 if (changeType === "read") {
-                    userFilters[filterTypeSelected].Dropdown[newindex].options[
-                        tagName
-                    ] = "none";
-                    activeTagFilters[filterTypeSelected] = activeTagFilters[
-                        filterTypeSelected
+                    filterSelection[idxTypeSelected].filters.Dropdown[
+                        dropdownIdx
+                    ].options[optionIdx].selected = "none";
+                    $activeTagFilters[nameTypeSelected] = $activeTagFilters[
+                        nameTypeSelected
                     ].filter(
                         (e) =>
                             !(
-                                e.tagIdx === newindex &&
-                                e.tagName === tagName &&
-                                e.filterType === "dropdown"
+                                e.optionIdx === optionIdx &&
+                                e.optionName === optionName &&
+                                e.filterType === "dropdown" &&
+                                e.categIdx === dropdownIdx
                             )
                     );
                 } else {
-                    userFilters[filterTypeSelected].Dropdown[newindex].options[
-                        tagName
-                    ] = "excluded";
-                    activeTagFilters[filterTypeSelected] = activeTagFilters[
-                        filterTypeSelected
+                    filterSelection[idxTypeSelected].filters.Dropdown[
+                        dropdownIdx
+                    ].options[optionIdx].selected = "excluded";
+                    $activeTagFilters[nameTypeSelected] = $activeTagFilters[
+                        nameTypeSelected
                     ].map((e) => {
                         if (
-                            e.tagIdx === newindex &&
-                            e.tagName === tagName &&
+                            e.optionIdx === optionIdx &&
+                            e.optionName === optionName &&
                             e.filterType === "dropdown" &&
+                            e.categIdx === dropdownIdx &&
                             e.selected === "included"
                         ) {
                             e.selected = "excluded";
@@ -532,65 +363,88 @@
                     });
                 }
             } else {
-                userFilters[filterTypeSelected].Dropdown[newindex].options[
-                    tagName
-                ] = "none";
-                activeTagFilters[filterTypeSelected] = activeTagFilters[
-                    filterTypeSelected
+                filterSelection[idxTypeSelected].filters.Dropdown[
+                    dropdownIdx
+                ].options[optionIdx].selected = "none";
+                $activeTagFilters[nameTypeSelected] = $activeTagFilters[
+                    nameTypeSelected
                 ].filter(
                     (e) =>
                         !(
-                            e.tagIdx === newindex &&
-                            e.tagName === tagName &&
-                            e.filterType === "dropdown"
+                            e.optionIdx === optionIdx &&
+                            e.optionName === optionName &&
+                            e.filterType === "dropdown" &&
+                            e.categIdx === dropdownIdx
                         )
                 );
             }
         };
-        handleCheckboxChange = (event, checkBoxName, tagIdx) => {
+        handleCheckboxChange = (event, checkBoxName, checkboxIdx) => {
             let element = event.target;
             let classList = element.classList;
-            if (classList.contains("checkbox") && event.type === "click")
+            let keyCode = event.which || event.keyCode || 0;
+            if (
+                (classList.contains("checkbox") && event.type === "click") ||
+                (classList.contains("checkbox") &&
+                    keyCode !== 13 &&
+                    event.type === "keydown")
+            )
                 return; // Prevent Default
+
+            let idxTypeSelected = filterSelection.findIndex(
+                ({ isSelected }) => isSelected
+            );
+            let nameTypeSelected =
+                filterSelection[idxTypeSelected].filterSelectionName;
             let currentCheckBoxStatus =
-                userFilters[filterTypeSelected].Checkbox[tagIdx].isSelected;
+                filterSelection[idxTypeSelected].filters.Checkbox[checkboxIdx]
+                    .isSelected;
             if (currentCheckBoxStatus) {
-                activeTagFilters[filterTypeSelected] = activeTagFilters[
-                    filterTypeSelected
+                $activeTagFilters[nameTypeSelected] = $activeTagFilters[
+                    nameTypeSelected
                 ].filter(
                     (e) =>
                         !(
-                            e.tagIdx === tagIdx &&
-                            e.tagName === checkBoxName &&
+                            e.optionIdx === checkboxIdx &&
+                            e.optionName === checkBoxName &&
                             e.filterType === "checkbox" &&
                             e.selected === "included"
                         )
                 );
             } else {
-                activeTagFilters[filterTypeSelected].unshift({
-                    tagName: checkBoxName,
-                    tagIdx: tagIdx,
+                $activeTagFilters[nameTypeSelected].unshift({
+                    optionName: checkBoxName,
+                    optionIdx: checkboxIdx,
                     filterType: "checkbox",
                     selected: "included",
                     changeType: "read",
                 });
-                activeTagFilters[filterTypeSelected] =
-                    activeTagFilters[filterTypeSelected];
+                $activeTagFilters[nameTypeSelected] =
+                    $activeTagFilters[nameTypeSelected];
             }
-            userFilters[filterTypeSelected].Checkbox[tagIdx].isSelected =
-                !userFilters[filterTypeSelected].Checkbox[tagIdx].isSelected;
+            filterSelection[idxTypeSelected].filters.Checkbox[
+                checkboxIdx
+            ].isSelected =
+                !filterSelection[idxTypeSelected].filters.Checkbox[checkboxIdx]
+                    .isSelected;
         };
         handleInputNumber = (
             event,
             newValue,
-            tagIdx,
+            inputNumIdx,
             inputNumberName,
             maxValue,
             minValue
         ) => {
+            let idxTypeSelected = filterSelection.findIndex(
+                ({ isSelected }) => isSelected
+            );
+            let nameTypeSelected =
+                filterSelection[idxTypeSelected].filterSelectionName;
             let currentValue =
-                userFilters[filterTypeSelected]["Input Number"][tagIdx]
-                    .numberValue;
+                filterSelection[idxTypeSelected].filters["Input Number"][
+                    inputNumIdx
+                ].numberValue;
             let newValueLowerCase = newValue.toLowerCase();
             if (
                 newValueLowerCase === "infinity" ||
@@ -609,16 +463,25 @@
                     (parseFloat(newValue) <= maxValue ||
                         typeof maxValue !== "number")) ||
                 newValue === "" ||
-                "-infinity".includes(newValueLowerCase)
+                (newValue.startsWith("-") &&
+                    (typeof minValue === "number" ? minValue < 0 : true)) ||
+                ("-infinity".includes(newValueLowerCase) &&
+                    (typeof minValue === "number"
+                        ? minValue === -Infinity
+                        : true)) ||
+                ("infinity".includes(newValueLowerCase) &&
+                    (typeof maxValue === "number"
+                        ? maxValue === Infinity
+                        : true))
             ) {
                 if (newValue === "") {
-                    activeTagFilters[filterTypeSelected] = activeTagFilters[
-                        filterTypeSelected
+                    $activeTagFilters[nameTypeSelected] = $activeTagFilters[
+                        nameTypeSelected
                     ].filter(
                         (e) =>
                             !(
-                                e.tagIdx === tagIdx &&
-                                e.tagName ===
+                                e.optionIdx === inputNumIdx &&
+                                e.optionName ===
                                     `${inputNumberName}: ${currentValue}` &&
                                 e.filterType === "input number" &&
                                 e.selected === "included"
@@ -632,53 +495,53 @@
                         : newValueLowerCase !== "infinity") &&
                     isNaN(newValue)
                 ) {
-                    activeTagFilters[filterTypeSelected] = activeTagFilters[
-                        filterTypeSelected
+                    $activeTagFilters[nameTypeSelected] = $activeTagFilters[
+                        nameTypeSelected
                     ].filter(
                         (e) =>
                             !(
-                                e.tagIdx === tagIdx &&
-                                e.tagName ===
+                                e.optionIdx === inputNumIdx &&
+                                e.optionName ===
                                     `${inputNumberName}: ${currentValue}` &&
                                 e.filterType === "input number" &&
                                 e.selected === "included"
                             )
                     );
                 } else {
-                    let elementIdx = activeTagFilters[
-                        filterTypeSelected
+                    let elementIdx = $activeTagFilters[
+                        nameTypeSelected
                     ].findIndex(
                         (item) =>
-                            item.tagName ===
+                            item.optionName ===
                                 `${inputNumberName}: ${currentValue}` &&
-                            item.tagIdx === tagIdx &&
+                            item.optionIdx === inputNumIdx &&
                             item.filterType === "input number"
                     );
                     if (elementIdx === -1) {
-                        activeTagFilters[filterTypeSelected].unshift({
-                            tagName: `${inputNumberName}: ${newValue}`,
-                            tagIdx: tagIdx,
+                        $activeTagFilters[nameTypeSelected].unshift({
+                            optionName: `${inputNumberName}: ${newValue}`,
+                            optionIdx: inputNumIdx,
                             filterType: "input number",
                             selected: "included",
                             changeType: "read",
                         });
                     } else {
-                        activeTagFilters[filterTypeSelected].splice(
+                        $activeTagFilters[nameTypeSelected].splice(
                             elementIdx,
                             1
                         );
-                        activeTagFilters[filterTypeSelected].unshift({
-                            tagName: `${inputNumberName}: ${newValue}`,
-                            tagIdx: tagIdx,
+                        $activeTagFilters[nameTypeSelected].unshift({
+                            optionName: `${inputNumberName}: ${newValue}`,
+                            optionIdx: inputNumIdx,
                             filterType: "input number",
                             selected: "included",
                             changeType: "read",
                         });
                     }
-                    activeTagFilters = activeTagFilters;
+                    $activeTagFilters = $activeTagFilters;
                 }
-                userFilters[filterTypeSelected]["Input Number"][
-                    tagIdx
+                filterSelection[idxTypeSelected].filters["Input Number"][
+                    inputNumIdx
                 ].numberValue = newValue;
             } else if (
                 isNaN(newValue) ||
@@ -688,24 +551,33 @@
                 event.target.value = currentValue;
             }
         };
-        changeActiveSelect = (tagIdx, filterType, tagName, changeType) => {
+        changeActiveSelect = (
+            optionIdx,
+            optionName,
+            filterType,
+            categIdx,
+            changeType
+        ) => {
             if (tagFilterIsScrolling) return false;
-            tagIdx = parseInt(tagIdx);
             if (changeType === "read" || filterType !== "dropdown") return; // Unchangable Selection
+            let idxTypeSelected = filterSelection.findIndex(
+                ({ isSelected }) => isSelected
+            );
+            let nameTypeSelected =
+                filterSelection[idxTypeSelected].filterSelectionName;
             let currentSelect =
-                userFilters[filterTypeSelected].Dropdown[tagIdx].options[
-                    tagName
-                ];
+                filterSelection[idxTypeSelected].filters.Dropdown[categIdx]
+                    .options[optionIdx].selected;
             if (currentSelect === "included") {
-                userFilters[filterTypeSelected].Dropdown[tagIdx].options[
-                    tagName
-                ] = "excluded";
-                activeTagFilters[filterTypeSelected] = activeTagFilters[
-                    filterTypeSelected
+                filterSelection[idxTypeSelected].filters.Dropdown[
+                    categIdx
+                ].options[optionIdx].selected = "excluded";
+                $activeTagFilters[nameTypeSelected] = $activeTagFilters[
+                    nameTypeSelected
                 ].map((e) => {
                     if (
-                        e.tagIdx === tagIdx &&
-                        e.tagName === tagName &&
+                        e.optionIdx === optionIdx &&
+                        e.optionName === optionName &&
                         e.selected === "included"
                     ) {
                         e.selected = "excluded";
@@ -713,15 +585,15 @@
                     return e;
                 });
             } else if (currentSelect === "excluded") {
-                userFilters[filterTypeSelected].Dropdown[tagIdx].options[
-                    tagName
-                ] = "included";
-                activeTagFilters[filterTypeSelected] = activeTagFilters[
-                    filterTypeSelected
+                filterSelection[idxTypeSelected].filters.Dropdown[
+                    categIdx
+                ].options[optionIdx].selected = "included";
+                $activeTagFilters[nameTypeSelected] = $activeTagFilters[
+                    nameTypeSelected
                 ].map((e) => {
                     if (
-                        e.tagIdx === tagIdx &&
-                        e.tagName === tagName &&
+                        e.optionIdx === optionIdx &&
+                        e.optionName === optionName &&
                         e.selected === "excluded"
                     ) {
                         e.selected = "included";
@@ -730,32 +602,36 @@
                 });
             }
         };
-        removeActiveTag = (tagIdx, tagName, filterType) => {
+        removeActiveTag = (optionIdx, optionName, filterType, categIdx) => {
             if (tagFilterIsScrolling) return;
-            tagIdx = parseInt(tagIdx);
+            let idxTypeSelected = filterSelection.findIndex(
+                ({ isSelected }) => isSelected
+            );
+            let nameTypeSelected =
+                filterSelection[idxTypeSelected].filterSelectionName;
             if (filterType === "checkbox") {
                 // Is Checkbox
-                userFilters[filterTypeSelected].Checkbox[
-                    tagIdx
+                filterSelection[idxTypeSelected].filters.Checkbox[
+                    optionIdx
                 ].isSelected = false;
             } else if (filterType === "input number") {
                 // Is Input Number
-                userFilters[filterTypeSelected]["Input Number"][
-                    tagIdx
+                filterSelection[idxTypeSelected].filters["Input Number"][
+                    optionIdx
                 ].numberValue = "";
             } else {
-                // Is Only Read tagName
-                userFilters[filterTypeSelected].Dropdown[tagIdx].options[
-                    tagName
-                ] = "none";
+                // Is Only Read optionName
+                filterSelection[idxTypeSelected].filters.Dropdown[
+                    categIdx
+                ].options[optionIdx].selected = "none";
             }
-            activeTagFilters[filterTypeSelected] = activeTagFilters[
-                filterTypeSelected
+            $activeTagFilters[nameTypeSelected] = $activeTagFilters[
+                nameTypeSelected
             ].filter(
                 (e) =>
                     !(
-                        e.tagName === tagName &&
-                        e.tagIdx === tagIdx &&
+                        e.optionName === optionName &&
+                        e.optionIdx === optionIdx &&
                         e.filterType === filterType
                     )
             );
@@ -763,37 +639,43 @@
         removeAllActiveTag = () => {
             if (tagFilterIsScrolling) return false;
             if (confirm("Do you want to remove all filters?") == true) {
+                let idxTypeSelected = filterSelection.findIndex(
+                    ({ isSelected }) => isSelected
+                );
+                let nameTypeSelected =
+                    filterSelection[idxTypeSelected].filterSelectionName;
                 // Remove Active Number Input
-                userFilters[filterTypeSelected]["Input Number"] = userFilters[
-                    filterTypeSelected
-                ]["Input Number"].map((e) => {
+                filterSelection[idxTypeSelected].filters[
+                    "Input Number"
+                ].forEach((e) => {
                     e.numberValue = "";
-                    return e;
                 });
                 // Remove Checkbox
-                userFilters[filterTypeSelected].Checkbox = userFilters[
-                    filterTypeSelected
-                ].Checkbox.map((e) => {
-                    e.isSelected = false;
-                    return e;
-                });
-                // Remove Option Selections
-                userFilters[filterTypeSelected].Dropdown = userFilters[
-                    filterTypeSelected
-                ].Dropdown.map((e) => {
-                    Object.entries(e.options).forEach(([tagName, selected]) => {
-                        e.options[tagName] = "none";
-                    });
-                    return e;
-                });
-                activeTagFilters[filterTypeSelected] = [];
+                filterSelection[idxTypeSelected].filters.Checkbox.forEach(
+                    (e) => {
+                        e.isSelected = false;
+                    }
+                );
+                // Remove Dropdown
+                filterSelection[idxTypeSelected].filters.Dropdown.forEach(
+                    ({ options }, dropdownIdx) => {
+                        options.forEach(({ selected }, optionsIdx) => {
+                            selected = "none";
+                            filterSelection[idxTypeSelected].filters.Dropdown[
+                                dropdownIdx
+                            ].options[optionsIdx].selected = selected;
+                        });
+                    }
+                );
+                filterSelection[idxTypeSelected] =
+                    filterSelection[idxTypeSelected];
+                $activeTagFilters[nameTypeSelected] = [];
             }
         };
         handleSortFilterPopup = (event) => {
             let element = event.target;
             let classList = element.classList;
             let sortSelectEl = element.closest(".sortFilter");
-
             let optionsWrap = element.closest(".options-wrap");
             if (
                 (classList.contains("sortFilter") || sortSelectEl) &&
@@ -804,44 +686,61 @@
                 selectedSortElement = false;
             }
         };
-        changeSort = (sortname) => {
-            let [currentSortName, currentSortType] = Object.entries(
-                userFilters["sort type"]
-            ).filter(([k, v]) => v === "desc" || v === "asc")[0];
-            if (currentSortName === sortname) {
-                let newSortType = currentSortType === "desc" ? "asc" : "desc";
-                userFilters["sort type"][currentSortName] = newSortType;
-            } else if (currentSortName !== sortname) {
-                userFilters["sort type"][currentSortName] = "none";
-                userFilters["sort type"][sortname] = "desc";
+        changeSort = (newSortName) => {
+            let { sortName, sortType } = sortFilter.filter(
+                ({ sortType }) => sortType !== "none"
+            )[0];
+            let idxSortSelected = sortFilter.findIndex(
+                ({ sortType }) => sortType !== "none"
+            );
+            if (sortName === newSortName) {
+                let newSortType = sortType === "desc" ? "asc" : "desc";
+                sortFilter[idxSortSelected].sortType = newSortType;
+            } else if (sortName !== newSortName) {
+                sortFilter[idxSortSelected].sortType = "none";
+                let idxNewSortSelected = sortFilter.findIndex(
+                    ({ sortName }) => sortName === newSortName
+                );
+                sortFilter[idxNewSortSelected].sortType = "desc";
             }
         };
         changeSortType = () => {
-            let [currentSortName, currentSortType] = Object.entries(
-                userFilters["sort type"]
-            ).filter(([k, v]) => v === "desc" || v === "asc")[0];
-            if (currentSortType === "desc") {
-                userFilters["sort type"][currentSortName] = "asc";
+            let { sortType } = sortFilter.filter(
+                ({ sortType }) => sortType !== "none"
+            )[0];
+            let idxSortSelected = sortFilter.findIndex(
+                ({ sortType }) => sortType !== "none"
+            );
+            if (sortType === "desc") {
+                sortFilter[idxSortSelected].sortType = "asc";
             } else {
-                userFilters["sort type"][currentSortName] = "desc";
+                sortFilter[idxSortSelected].sortType = "desc";
             }
         };
         handleDropdownKeyDown = (event) => {
             let keyCode = event.which || event.keyCode || 0;
             // 38up 40down 13enter
-
             if (keyCode == 38 || keyCode == 40) {
-                let element =
-                    document.getElementsByClassName("options-wrap")[0];
-                console.log(element);
+                var element = Array.from(
+                    document.getElementsByClassName("options-wrap") || []
+                ).find(
+                    (el) =>
+                        getComputedStyle(el).display !== "none" &&
+                        getComputedStyle(el).visibility !== "hidden"
+                );
+                // let element =
+                document.getElementsByClassName("options-wrap")?.[0];
                 if (
-                    element.closest(".filterType") ||
-                    element.closest(".sortFilter") ||
-                    element.closest(".filter-select")
+                    element?.closest?.(".filterType") ||
+                    element?.closest?.(".sortFilter") ||
+                    element?.closest?.(".filter-select")
                 ) {
                     event.preventDefault();
                     // handle sortFilter
-                    if (highlightedEl instanceof Element) {
+                    if (
+                        highlightedEl instanceof Element &&
+                        highlightedEl?.closest?.(".options")?.children?.length
+                    ) {
                         let parent = highlightedEl.closest(".options");
                         let idx = Array.from(parent.children).indexOf(
                             highlightedEl
@@ -861,7 +760,11 @@
                             highlightedEl.style.backgroundColor =
                                 "rgba(0,0,0,0.25)";
                             highlightedEl.scrollIntoView({
-                                behavior: "smooth",
+                                behavior:
+                                    nextIdx === 0 ||
+                                    nextIdx === parent.children.length - 1
+                                        ? "auto"
+                                        : "smooth",
                                 container: parent,
                                 block: "nearest",
                                 inline: "end",
@@ -884,16 +787,34 @@
                     highlightedEl.dispatchEvent(keydownEvent);
                 }
             } else {
-                selectedFilterTypeElement = false;
-                selectedSortElement = false;
-                userFilters[filterTypeSelected].Dropdown = userFilters[
-                    filterTypeSelected
-                ].Dropdown.map((e) => {
-                    e.selected = false;
-                    return e;
-                });
+                var element = Array.from(
+                    document.getElementsByClassName("options-wrap") || []
+                ).find(
+                    (el) =>
+                        getComputedStyle(el).display !== "none" &&
+                        getComputedStyle(el).visibility !== "hidden"
+                );
+                if (element?.closest?.(".filter-select") && keyCode !== 9)
+                    return;
+                let idxTypeSelected = filterSelection.findIndex(
+                    ({ isSelected }) => isSelected
+                );
+                selectedFilterTypeElement = null;
+                selectedSortElement = null;
+                if (filterSelection.length > 0) {
+                    filterSelection[idxTypeSelected].filters.Dropdown.forEach(
+                        (e) => {
+                            e.selected = false;
+                        }
+                    );
+                    filterSelection[idxTypeSelected] =
+                        filterSelection[idxTypeSelected];
+                }
                 selectedFilterElement = null;
-                highlightedEl = null;
+                if (highlightedEl instanceof Element) {
+                    highlightedEl.style.backgroundColor = "";
+                    highlightedEl = null;
+                }
             }
         };
         hasPartialMatch = (strings, searchString) => {
@@ -919,6 +840,7 @@
         window.addEventListener("pointerdown", clickOutsideListener);
     });
     onDestroy(() => {
+        writableSubscriptions.forEach((unsub) => unsub());
         filterOptionsUnsubscribe();
         unsubTagFiltersDragScroll();
         document.removeEventListener("keydown", handleDropdownKeyDown);
@@ -949,86 +871,97 @@
                 on:click={handleShowFilterTypes}
                 on:keydown={handleShowFilterTypes}
             />
-            {#if selectedFilterTypeElement}
-                <div
-                    class="options-wrap"
-                    style:--maxFilterSelectionHeight="{maxFilterSelectionHeight}px"
-                >
-                    <div class="options">
-                        {#each Object.entries(filterTypeSelections) as [filterTypeName, isActive] (filterTypeName)}
-                            <div
-                                {filterTypeName}
-                                class="option"
-                                on:click={handleFilterTypes(filterTypeName)}
-                                on:keydown={handleFilterTypes(filterTypeName)}
+            <div
+                class="options-wrap"
+                style:--maxFilterSelectionHeight="{maxFilterSelectionHeight}px"
+                style:visibility={selectedFilterTypeElement ? "" : "hidden"}
+                style:pointer-events={selectedFilterTypeElement ? "" : "none"}
+            >
+                <div class="options">
+                    {#each filterSelection || [] as { filterSelectionName, isSelected } (filterSelectionName)}
+                        <div
+                            class="option"
+                            on:click={handleFilterTypes(filterSelectionName)}
+                            on:keydown={handleFilterTypes(filterSelectionName)}
+                        >
+                            <h3
+                                style:color={isSelected ? "#3db4f2" : "inherit"}
                             >
-                                <h3
-                                    style:color={isActive
-                                        ? "#3db4f2"
-                                        : "inherit"}
-                                >
-                                    {filterTypeName}
-                                </h3>
-                            </div>
-                        {/each}
-                    </div>
+                                {filterSelectionName || ""}
+                            </h3>
+                        </div>
+                    {/each}
                 </div>
-            {/if}
+            </div>
         </div>
     </div>
     <div class="filters">
-        {#each userFilters[filterTypeSelected].Dropdown as { filName, options, selected, changeType, optKeyword }, idx (filName)}
-            <div class="filter-select" {filName} {changeType}>
-                <div class="filter-name">
-                    <h2>{filName}</h2>
-                </div>
+        {#each filterSelection || [] as { filterSelectionName, filters, isSelected }, filSelIdx (filterSelectionName + filSelIdx)}
+            {#each filters.Dropdown || [] as { filName, options, selected, changeType, optKeyword }, dropdownIdx (filName + dropdownIdx)}
                 <div
-                    class="select"
-                    on:keydown={(e) => filterSelect(e, idx)}
-                    on:click={(e) => filterSelect(e, idx)}
+                    class="filter-select"
+                    style:display={isSelected ? "" : "none"}
                 >
-                    <div class="value-wrap">
-                        <input
-                            type="search"
-                            placeholder="Any"
-                            autocomplete="off"
-                            class="value-input"
-                            bind:value={userFilters[filterTypeSelected]
-                                .Dropdown[idx].optKeyword}
-                        />
+                    <div class="filter-name">
+                        <h2>{filName || ""}</h2>
                     </div>
-                    {#if selected && Object.entries(options).length}
-                        <i
-                            class="icon fa-solid fa-angle-up"
-                            on:keydown={closeFilterSelect(idx)}
-                            on:click={closeFilterSelect(idx)}
-                        />
-                    {:else}
-                        <i class="icon fa-solid fa-angle-down" />
-                    {/if}
-                </div>
-                {#if Object.entries(options).length && selected && !filtersIsScrolling}
+                    <div
+                        class="select"
+                        on:keydown={(e) => filterSelect(e, dropdownIdx)}
+                        on:click={(e) => filterSelect(e, dropdownIdx)}
+                    >
+                        <div class="value-wrap">
+                            <input
+                                type="search"
+                                placeholder="Any"
+                                autocomplete="off"
+                                class="value-input"
+                                bind:value={optKeyword}
+                            />
+                        </div>
+                        {#if selected && options.length}
+                            <i
+                                class="icon fa-solid fa-angle-up"
+                                on:keydown={closeFilterSelect(dropdownIdx)}
+                                on:click={closeFilterSelect(dropdownIdx)}
+                            />
+                        {:else}
+                            <i class="icon fa-solid fa-angle-down" />
+                        {/if}
+                    </div>
                     <div
                         class="options-wrap"
                         style:--maxFilterSelectionHeight="{maxFilterSelectionHeight}px"
+                        style:visibility={options.length &&
+                        selected &&
+                        !filtersIsScrolling
+                            ? ""
+                            : "hidden"}
+                        style:pointer-events={options.length &&
+                        selected &&
+                        !filtersIsScrolling
+                            ? ""
+                            : "none"}
                     >
                         <div class="options">
-                            {#each Object.entries(options) as [tagName, selected]}
-                                {#if hasPartialMatch(tagName, optKeyword) || optKeyword === ""}
+                            {#each options as { optionName, selected }, optionIdx (optionName + optionIdx)}
+                                {#if hasPartialMatch(optionName, optKeyword) || optKeyword === ""}
                                     <div
                                         class="option"
                                         on:click={handleFilterSelectOptionChange(
-                                            tagName,
-                                            idx,
+                                            optionName,
+                                            optionIdx,
+                                            dropdownIdx,
                                             changeType
                                         )}
                                         on:keydown={handleFilterSelectOptionChange(
-                                            tagName,
-                                            idx,
+                                            optionName,
+                                            optionIdx,
+                                            dropdownIdx,
                                             changeType
                                         )}
                                     >
-                                        <h3>{tagName}</h3>
+                                        <h3>{optionName || ""}</h3>
                                         {#if selected === "included"}
                                             <i
                                                 style:--optionColor="#5f9ea0"
@@ -1045,55 +978,65 @@
                             {/each}
                         </div>
                     </div>
-                {/if}
-            </div>
-        {/each}
-        {#each userFilters[filterTypeSelected]["Input Number"] as { filName, numberValue, maxValue, minValue, defaultValue }, idx (filName)}
-            <div class="filter-input-number">
-                <div class="filter-input-number-name">
-                    <h2>{filName}</h2>
                 </div>
-                <div class="value-input-number-wrap">
-                    <input
-                        class="value-input-number"
-                        type="text"
-                        placeholder={defaultValue !== null
-                            ? "Default: " + defaultValue
-                            : "Input Number"}
-                        value={numberValue}
-                        on:input={(e) =>
-                            handleInputNumber(
-                                e,
-                                e.target.value,
-                                idx,
-                                filName,
-                                maxValue,
-                                minValue
-                            )}
-                    />
+            {/each}
+            {#each filters["Input Number"] || [] as { filName, numberValue, maxValue, minValue, defaultValue }, inputNumIdx (filName + inputNumIdx)}
+                <div
+                    class="filter-input-number"
+                    style:display={isSelected ? "" : "none"}
+                >
+                    <div class="filter-input-number-name">
+                        <h2>{filName || ""}</h2>
+                    </div>
+                    <div class="value-input-number-wrap">
+                        <input
+                            class="value-input-number"
+                            type="text"
+                            placeholder={defaultValue !== null
+                                ? "Default: " + defaultValue
+                                : "Input Number"}
+                            value={numberValue || ""}
+                            on:input={(e) =>
+                                handleInputNumber(
+                                    e,
+                                    e.target.value,
+                                    inputNumIdx,
+                                    filName,
+                                    maxValue,
+                                    minValue
+                                )}
+                        />
+                    </div>
                 </div>
-            </div>
-        {/each}
-        {#each userFilters[filterTypeSelected].Checkbox as { filName }, idx (filName)}
-            <div
-                class="filter-checkbox"
-                {filName}
-                on:click={(e) => handleCheckboxChange(e, filName, idx)}
-                on:keydown={(e) => handleCheckboxChange(e, filName, idx)}
-            >
-                <div style:visibility="none" />
-                <div class="checkbox-wrap">
-                    <input
-                        type="checkbox"
-                        class="checkbox"
-                        on:change={(e) => handleCheckboxChange(e, filName, idx)}
-                        bind:checked={userFilters[filterTypeSelected].Checkbox[
-                            idx
-                        ].isSelected}
-                    />
-                    <div class="checkbox-label">{filName}</div>
+            {/each}
+            {#each filters.Checkbox || [] as Checkbox, checkboxIdx (Checkbox.filName + checkboxIdx)}
+                <div
+                    class="filter-checkbox"
+                    style:display={isSelected ? "" : "none"}
+                    on:click={(e) =>
+                        handleCheckboxChange(e, Checkbox.filName, checkboxIdx)}
+                    on:keydown={(e) =>
+                        handleCheckboxChange(e, Checkbox.filName, checkboxIdx)}
+                >
+                    <div style:visibility="none" />
+                    <div class="checkbox-wrap">
+                        <input
+                            type="checkbox"
+                            class="checkbox"
+                            on:change={(e) =>
+                                handleCheckboxChange(
+                                    e,
+                                    Checkbox.filName,
+                                    checkboxIdx
+                                )}
+                            bind:checked={Checkbox.isSelected}
+                        />
+                        <div class="checkbox-label">
+                            {Checkbox.filName || ""}
+                        </div>
+                    </div>
                 </div>
-            </div>
+            {/each}
         {/each}
     </div>
     <div class="activeFilters">
@@ -1102,12 +1045,16 @@
             title="Remove Filters"
             on:click={removeAllActiveTag}
             on:keydown={removeAllActiveTag}
-            style:visibility={activeTagFilters[filterTypeSelected].length
+            style:visibility={$activeTagFilters?.[
+                filterSelection?.[
+                    filterSelection?.findIndex(({ isSelected }) => isSelected)
+                ]?.filterSelectionName
+            ]?.length
                 ? "visible"
                 : "hidden"}
         />
         <div class="tagFilters">
-            {#each activeTagFilters[filterTypeSelected] as { tagName, tagIdx, selected, changeType, filterType } (tagName + tagIdx)}
+            {#each $activeTagFilters?.[filterSelection[filterSelection.findIndex(({ isSelected }) => isSelected)]?.filterSelectionName] || [] as { optionName, optionIdx, selected, changeType, filterType, categIdx } (optionName + optionIdx)}
                 {#if selected !== "none"}
                     <div
                         class="activeTagFilter"
@@ -1115,30 +1062,34 @@
                             ? "#5f9ea0"
                             : "#e85d75"}
                         on:click={changeActiveSelect(
-                            tagIdx,
+                            optionIdx,
+                            optionName,
                             filterType,
-                            tagName,
+                            categIdx,
                             changeType
                         )}
                         on:keydown={changeActiveSelect(
-                            tagIdx,
+                            optionIdx,
+                            optionName,
                             filterType,
-                            tagName,
+                            categIdx,
                             changeType
                         )}
                     >
-                        <h3>{tagName}</h3>
+                        <h3>{optionName || ""}</h3>
                         <i
                             class="fa-solid fa-xmark"
                             on:click|preventDefault={removeActiveTag(
-                                tagIdx,
-                                tagName,
-                                filterType
+                                optionIdx,
+                                optionName,
+                                filterType,
+                                categIdx
                             )}
                             on:keydown={removeActiveTag(
-                                tagIdx,
-                                tagName,
-                                filterType
+                                optionIdx,
+                                optionName,
+                                filterType,
+                                categIdx
                             )}
                         />
                     </div>
@@ -1146,54 +1097,58 @@
             {/each}
         </div>
         <div class="sortFilter">
-            <i
-                on:click={changeSortType}
-                on:keydown={changeSortType}
-                class={"fa-duotone fa-sort-" +
-                    (Object.entries(userFilters["sort type"]).filter(
-                        ([k, v]) => v !== "none"
-                    )[0][1] === "asc"
-                        ? "up"
-                        : "down")}
-            />
+            {#if sortFilter.length}
+                <i
+                    on:click={changeSortType}
+                    on:keydown={changeSortType}
+                    class={"fa-duotone fa-sort-" +
+                        (sortFilter?.[
+                            sortFilter?.findIndex(
+                                ({ sortType }) => sortType !== "none"
+                            )
+                        ]?.sortType === "asc"
+                            ? "up"
+                            : "down")}
+                />
+            {/if}
             <h3
                 on:click={handleSortFilterPopup}
                 on:keydown={handleSortFilterPopup}
             >
-                {Object.entries(userFilters["sort type"]).filter(
-                    ([k, v]) => v !== "none"
-                )[0][0]}
-                {#if selectedSortElement}
-                    <div
-                        class="options-wrap"
-                        style:--maxFilterSelectionHeight="{maxFilterSelectionHeight}px"
-                    >
-                        <div class="options">
-                            {#each Object.keys(userFilters["sort type"]) as sortname (sortname)}
-                                <div
-                                    {sortname}
-                                    class="option"
-                                    on:click={changeSort(sortname)}
-                                    on:keydown={changeSort(sortname)}
-                                >
-                                    <h3>{sortname}</h3>
-                                    {#if Object.entries(userFilters["sort type"]).filter(([k, v]) => v !== "none")[0][0] === sortname}
-                                        <i
-                                            class={"fa-duotone fa-sort-" +
-                                                (Object.entries(
-                                                    userFilters["sort type"]
-                                                ).filter(
-                                                    ([k, v]) => v !== "none"
-                                                )[0][1] === "asc"
-                                                    ? "up"
-                                                    : "down")}
-                                        />
-                                    {/if}
-                                </div>
-                            {/each}
-                        </div>
+                {sortFilter?.[
+                    sortFilter.findIndex(({ sortType }) => sortType !== "none")
+                ]?.sortName || ""}
+                <div
+                    class="options-wrap"
+                    style:--maxFilterSelectionHeight="{maxFilterSelectionHeight}px"
+                    style:visibility={selectedSortElement ? "" : "hidden"}
+                    style:pointer-events={selectedSortElement ? "" : "none"}
+                >
+                    <div class="options">
+                        {#each sortFilter || [] as { sortName }, sortIdx (sortName + sortIdx)}
+                            <div
+                                class="option"
+                                on:click={changeSort(sortName)}
+                                on:keydown={changeSort(sortName)}
+                            >
+                                <h3>{sortName || ""}</h3>
+                                {#if sortFilter?.[sortFilter.findIndex(({ sortType }) => sortType !== "none")].sortName === sortName && sortName}
+                                    <i
+                                        class={"fa-duotone fa-sort-" +
+                                            (sortFilter?.[
+                                                sortFilter.findIndex(
+                                                    ({ sortType }) =>
+                                                        sortType !== "none"
+                                                )
+                                            ].sortType === "asc"
+                                                ? "up"
+                                                : "down")}
+                                    />
+                                {/if}
+                            </div>
+                        {/each}
                     </div>
-                {/if}
+                </div>
             </h3>
         </div>
     </div>
@@ -1275,12 +1230,10 @@
         cursor: pointer;
         user-select: none;
         border-radius: 6px;
-        height: 28px;
     }
     .filterType .option h3 {
         cursor: pointer;
         text-transform: capitalize;
-        text-indent: 1ch;
     }
 
     .filters {
@@ -1397,13 +1350,11 @@
         cursor: pointer;
         user-select: none;
         border-radius: 6px;
-        height: 28px;
     }
 
     .filter-select .option h3 {
         cursor: pointer !important;
         text-transform: capitalize;
-        text-indent: 1ch;
     }
 
     .filter-select .option i {
@@ -1505,10 +1456,6 @@
         text-transform: capitalize;
     }
 
-    .sortFilter h3 {
-        text-indent: 1ch;
-    }
-
     .sortFilter .options-wrap {
         position: absolute;
         right: 0;
@@ -1541,7 +1488,6 @@
         cursor: pointer;
         user-select: none;
         border-radius: 6px;
-        height: 28px;
     }
     .sortFilter .option i {
         margin-left: auto;

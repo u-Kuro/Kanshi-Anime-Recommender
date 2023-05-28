@@ -1,5 +1,5 @@
-let filters = {
-    "sort type": {
+let savedFilters = {
+    "sortFilter": {
         "weighted score": true,
         score: true,
         "average score": true,
@@ -4276,158 +4276,179 @@ let filters = {
 }
 
 let userFilters = {
-    "Anime Filter": {},
-    "Content Warning": {},
-    "Filter Algorithm": {}
+    filterSelection:[
+        {
+            filterSelectionName: "Anime Filter",
+            filters: {},
+            isSelected: true
+        },
+        {
+            filterSelectionName: "Content Warning",
+            filters: {},
+            isSelected: false
+        },
+        {
+            filterSelectionName: "Algorithm Filter",
+            filters: {},
+            isSelected: false
+        }
+    ],
+    "sortFilter": []
 }
 // Init Sort
 let defaultSort = ["weighted score", "desc"]
-userFilters["sort type"] = Object.keys(filters["sort type"]).reduce((r,k)=>{
+userFilters["sortFilter"] = Object.keys(savedFilters["sortFilter"]).map((k)=>{
     if(k===defaultSort[0]){
-        r[k]=defaultSort[1]
+        return {sortName: k, sortType: defaultSort[1]}
     } else {
-        r[k]="none"
+        return {sortName: k, sortType: "none"}
     }
-    return r
-},{})
-
-// Init Anime Filter
-userFilters["Anime Filter"].Dropdown = []
-// Dropdown
-let aniFilDropdown = ["genre", "tag", "year", "season", "format", "airing status", "user status", "studio"] // Add Selections
-aniFilDropdown.forEach((e)=>{
-    userFilters["Anime Filter"].Dropdown.push({
-        filname: e,
-        options: filters[e],
-        optKeyword: "",
-        selected: false,
-        changeType: "write",
-    })
 })
-// Add Custom Filter Selection
-userFilters["Anime Filter"].Dropdown = userFilters["Anime Filter"].Dropdown.concat([
-    { 
-        filname: "favourite contents",
-        options: {
-            staff: true,
-            content: true,
-            studio: true,
-        },
-        optKeyword: "",
-        selected: false,
-        changeType: "write"
-    }
-])
-// Checkbox
-userFilters["Anime Filter"].Checkbox = []
-// Add Custom Checkbox Selection
-userFilters["Anime Filter"].Checkbox = userFilters["Anime Filter"].Checkbox.concat([
-    { 
-        filname: "hide my anime",
-        isSelected: false 
-    },
-    { 
-        filname: "hidden",
-        isSelected: false 
-    }
-])
-// Input Number
-userFilters["Anime Filter"]["Input Number"] = []
-// Add Custom Input Number Selection
-userFilters["Anime Filter"]["Input Number"] = userFilters["Anime Filter"]["Input Number"].concat([
-    {
-        filName: "limit favourites",
-        defaultValue: null,
-        maxValue: Infinity,
-        minValue: 0,
-        numberValue: ""
-    }
-])
 
-// Init Content Warning
-userFilters["Content Warning"].Dropdown = []
-// Dropdown
-aniFilDropdown = ["genre", "tag"] // Add Selections
-aniFilDropdown.forEach((e)=>{
-    userFilters["Content Warning"].Dropdown.push({
-        filname: e,
-        options: filters[e],
-        optKeyword: "",
-        selected: false,
-        changeType: "write",
-    })
-})
-// Checkbox
-userFilters["Content Warning"].Checkbox = []
-// Input Number
-userFilters["Content Warning"]["Input Number"] = []
+// Init filter Selections Filter
+userFilters.filterSelection.forEach(({filterSelectionName, filters})=>{
+    if(filterSelectionName==="Anime Filter"){
+        // Dropdown
+        let aniFilDropdown = ["genre", "tag", "year", "season", "format", "airing status", "user status", "studio"] // Add Selections
+        filters.Dropdown = aniFilDropdown.map((e)=>{
+            return {
+                filName: e,
+                options: Object.entries(savedFilters[e]).reduce((r,[k,v])=>{
+                    r[k.replace('_',' ')] = "none"
+                    return r
+                },{}),
+                optKeyword: "",
+                selected: false,
+                changeType: "write",
+            }
+        })
+        // Add Custom Filter Selection
+        filters.Dropdown.push({ 
+            filName: "favourite contents",
+            options: {
+                staff: "none",
+                content: "none",
+                studio: "none",
+            },
+            optKeyword: "",
+            selected: false,
+            changeType: "write"
+        })
 
-// Init Filter Algorithm
-userFilters["Filter Algorithm"].Dropdown = []
-// Dropdown
-aniFilDropdown = ["genre", "tag", "tag category", "studio", "staff role"] // Add Selections
-aniFilDropdown.forEach((e)=>{
-    let tempFil = Object.assign({}, filters[e])
-    tempFil["all"] = true
-    userFilters["Filter Algorithm"].Dropdown.push({
-        filname: e,
-        options: tempFil,
-        optKeyword: "",
-        selected: false,
-        changeType: "write",
-    })
+        // Checkbox
+        // Add Custom Checkbox Selection
+        filters.Checkbox = [
+            { 
+                filName: "hide my anime",
+                isSelected: false 
+            },
+            { 
+                filName: "hidden",
+                isSelected: false 
+            }
+        ]
+
+        // Input Number
+        // Add Custom Input Number Selection
+        filters["Input Number"] = [
+            {
+                filName: "limit favourites",
+                defaultValue: null,
+                maxValue: Infinity,
+                minValue: 0,
+                numberValue: ""
+            }
+        ]
+    } else if(filterSelectionName==="Content Warning") {
+        // Dropdown
+        let aniFilDropdown = ["genre", "tag"] // Add Selections
+        filters.Dropdown = aniFilDropdown.map((e)=>{
+            return {
+                filName: e,
+                options: Object.entries(savedFilters[e]).reduce((r,[k,v])=>{
+                    r[k.replace('_',' ')] = "none"
+                    return r
+                },{}),
+                optKeyword: "",
+                selected: false,
+                changeType: "write",
+            }
+        })
+
+        // Checkbox
+        filters.Checkbox = []
+
+        // Input Number
+        filters["Input Number"] = []
+
+    } else if(filterSelectionName==="Algorithm Filter") {
+        // Dropdown
+        let aniFilDropdown = ["genre", "tag", "tag category", "studio", "staff role"] // Add Selections
+        filters.Dropdown = aniFilDropdown.map((e)=>{
+            let tempFil = Object.assign({}, savedFilters[e])
+            tempFil["all"] = true
+            return {
+                filName: e,
+                options: Object.entries(tempFil).reduce((r,[k,v])=>{
+                    r[k.replace('_',' ')] = "none"
+                    return r
+                },{}),
+                optKeyword: "",
+                selected: false,
+                changeType: "write",
+            }
+        })
+        // Add Custom Filter Selection
+        filters.Dropdown.push({ 
+            filName: "measure",
+            options: {
+                mode: true,
+                mean: true,
+            },
+            optKeyword: "",
+            selected: false,
+            changeType: "read"
+        })
+
+        // Checkbox
+        // Add Custom Checkbox Selection
+        filters.Checkbox = [
+            { 
+                filName: "inc. all factors",
+                isSelected: false 
+            }
+        ]
+
+        // Input Number
+        // Add Custom Input Number Selection
+        filters["Input Number"] = [
+            {
+                filName: "sample size",
+                defaultValue: null,
+                maxValue: Infinity,
+                minValue: 1,
+                numberValue: ""
+            },
+            {
+                filName: "min sample size",
+                defaultValue: 1,
+                maxValue: Infinity,
+                minValue: 1,
+                numberValue: ""
+            },
+            {
+                filName: "min popularity",
+                defaultValue: null,
+                maxValue: Infinity,
+                minValue: 1,
+                numberValue: ""
+            },
+            {
+                filName: "sample size",
+                defaultValue: 49.67,
+                minValue: 1,
+                numberValue: ""
+            }
+        ]
+    }
 })
-// Add Custom Filter Selection
-userFilters["Filter Algorithm"].Dropdown = userFilters["Filter Algorithm"].Dropdown.concat([
-    { 
-        filname: "measure",
-        options: {
-            mode: true,
-            mean: true,
-        },
-        optKeyword: "",
-        selected: false,
-        changeType: "read"
-    }
-])
-// Checkbox
-userFilters["Filter Algorithm"].Checkbox = []
-// Add Custom Checkbox Selection
-userFilters["Filter Algorithm"].Checkbox = userFilters["Filter Algorithm"].Checkbox.concat([
-    { 
-        filname: "inc. all factors",
-        isSelected: false 
-    }
-])
-// Input Number
-userFilters["Filter Algorithm"]["Input Number"] = []
-// Add Custom Input Number Selection
-userFilters["Filter Algorithm"]["Input Number"] = userFilters["Filter Algorithm"]["Input Number"].concat([
-    {
-        filName: "sample size",
-        defaultValue: null,
-        maxValue: Infinity,
-        minValue: 1,
-        numberValue: ""
-    },
-    {
-        filName: "min sample size",
-        defaultValue: 1,
-        maxValue: Infinity,
-        minValue: 1,
-        numberValue: ""
-    },
-    {
-        filName: "min popularity",
-        defaultValue: null,
-        maxValue: Infinity,
-        minValue: 1,
-        numberValue: ""
-    },
-    {
-        filName: "sample size",
-        defaultValue: 49.67,
-        minValue: 1,
-        numberValue: ""
-    },
-])

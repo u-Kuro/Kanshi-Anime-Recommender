@@ -10,12 +10,17 @@
 		userEntries,
 		lastUserAnimeUpdate,
 		filterOptions,
+		activeTagFilters,
 		recommendedAnimeList,
 	} from "./js/globalValues.js";
 	import {
+		getIDBInfo,
 		getAnimeEntries,
 		getUserEntries,
 		getFilterOptions,
+		requestAnimeEntries,
+		requestUserEntries,
+		processRecommendedAnimeList,
 	} from "./js/workerUtils.js";
 	import { jsonIsEmpty, fetchAniListData } from "./js/others/helper.js";
 
@@ -28,15 +33,15 @@
 		// Check/Get/Update/Process Anime Entries
 		initDataPromises.push(
 			new Promise(async (resolve, reject) => {
-				$animeEntries = await _retrieveJSON("savedAnimeEntries");
-				$lastAnimeUpdate = await _retrieveJSON("lastAnimeUpdate");
+				let animeEntriesLen = await getIDBInfo("animeEntriesLength");
+				// $animeEntries = await _retrieveJSON("savedAnimeEntries");
+				let _lastAnimeUpdate = await _retrieveJSON("lastAnimeUpdate");
+				if (_lastAnimeUpdate) $lastAnimeUpdate = await _lastAnimeUpdate;
 				if (
-					jsonIsEmpty($animeEntries) ||
-					!$lastAnimeUpdate instanceof Date
+					animeEntriesLen < 1 ||
+					!($lastAnimeUpdate instanceof Date)
 				) {
-					getAnimeEntries(
-						new Worker("./webapi/worker/getAnimeEntries.js")
-					)
+					getAnimeEntries()
 						.then(async (data) => {
 							$lastAnimeUpdate = data.lastAnimeUpdate;
 							$animeEntries = await retrieveJSON(
@@ -54,24 +59,27 @@
 		// Check/Update/Process User Anime Entries
 		initDataPromises.push(
 			new Promise(async (resolve, reject) => {
-				$username = await _retrieveJSON("username");
-				$userEntries = await _retrieveJSON("savedUserEntries");
-				$lastUserAnimeUpdate = await _retrieveJSON(
+				let _username = await _retrieveJSON("username");
+				if (_username) $username = _username;
+				let _userEntries = await _retrieveJSON("userEntries");
+				if (_userEntries) $userEntries = _userEntries;
+				let _lastUserAnimeUpdate = await _retrieveJSON(
 					"lastUserAnimeUpdate"
 				);
+				if (_lastUserAnimeUpdate)
+					$lastUserAnimeUpdate = _lastUserAnimeUpdate;
 				if ($username) {
 					if (
 						jsonIsEmpty($userEntries) ||
-						!$lastUserAnimeUpdate instanceof Date
+						!($lastUserAnimeUpdate instanceof Date)
 					) {
-						getUserEntries(
-							new Worker("./webapi/worker/getUserEntries.js")
-						)
+						getUserEntries()
 							.then(async (data) => {
 								$lastUserAnimeUpdate = data.lastUserAnimeUpdate;
-								$userEntries = await retrieveJSON(
-									"savedUserEntries"
+								_userEntries = await retrieveJSON(
+									"userEntries"
 								);
+								if (_userEntries) $userEntries = _userEntries;
 								resolve();
 							})
 							.catch((error) => reject(error));
@@ -85,23 +93,21 @@
 									result.data.User.updatedAt * 1000
 								);
 								if (
-									!$lastUserAnimeUpdate instanceof Date ||
+									!($lastUserAnimeUpdate instanceof Date) ||
 									isNaN(userUpdate) ||
 									(recentUserUpdate instanceof Date &&
 										!isNaN(recentUserUpdate) &&
 										$lastUserAnimeUpdate < recentUserUpdate)
 								) {
-									getUserEntries(
-										new Worker(
-											"./webapi/worker/getUserEntries.js"
-										)
-									)
+									getUserEntries()
 										.then(async (data) => {
 											$lastUserAnimeUpdate =
 												data.lastUserAnimeUpdate;
-											$userEntries = await retrieveJSON(
-												"savedUserEntries"
+											_userEntries = await retrieveJSON(
+												"userEntries"
 											);
+											if (_userEntries)
+												$userEntries = _userEntries;
 											resolve();
 										})
 										.catch((error) => reject(error));
@@ -121,13 +127,36 @@
 		// Check/Get Filter Options Selection
 		initDataPromises.push(
 			new Promise(async (resolve, reject) => {
-				$filterOptions = await _retrieveJSON("filterOptions");
+				let _filterOptions = await _retrieveJSON("filterOptions");
+				if (_filterOptions) $filterOptions = _filterOptions;
+				let _activeTagFilters = await _retrieveJSON("activeTagFilters");
+				if (_activeTagFilters) {
+					$activeTagFilters = _activeTagFilters;
+				} else if ($filterOptions) {
+					// Add Default Active Filters
+					$activeTagFilters =
+						$filterOptions.filterSelection.reduce(
+							(r, { filterSelectionName }) => {
+								r[filterSelectionName] = [];
+								return r;
+							},
+							{}
+						) || {};
+					resolve();
+				}
 				if (jsonIsEmpty($filterOptions)) {
-					await getFilterOptions(
-						new Worker("./webapi/worker/getFilterOptions")
-					)
+					await getFilterOptions()
 						.then(async (data) => {
 							$filterOptions = data.filterOptions;
+							// Add Default Active Filters
+							$activeTagFilters =
+								$filterOptions.filterSelection.reduce(
+									(r, { filterSelectionName }) => {
+										r[filterSelectionName] = [];
+										return r;
+									},
+									{}
+								) || {};
 							resolve();
 						})
 						.catch((error) => reject(error));
@@ -139,8 +168,75 @@
 
 		// Data Processing
 		Promise.all(initDataPromises).then(async () => {
-			// Check/Process Saved
-			$recommendedAnimeList = await _retrieveJSON("recommendedAnimeList");
+			console.log("yay, data processed");
+			// Check/Process Saved or get it manually?
+			let _recommendedAnimeList = await _retrieveJSON(
+				"recommendedAnimeList"
+			);
+			if (_recommendedAnimeList?.length > 0)
+				$recommendedAnimeList = _recommendedAnimeList;
+			// Parts
+			// Need Name and AnimeEntries
+			// 1. Have Recommendation, and all
+			// 2. Have no Recommendation, have Userlist
+			// Process the Recommendation
+			// 3. Have no Recommendation, have no Userlist
+			// Get UserList then Process AnimeEntries
+			// Promised then pass global $recommendedAnimeList
+			if (!$username && false) {
+				// No Name?
+				// Alert User
+			} else {
+				new Promise(async (resolve, reject) => {
+					// Check and request Anime Entries
+					let animeEntriesLen = await getIDBInfo(
+						"animeEntriesLength"
+					);
+					if (animeEntriesLen < 1) {
+						await requestAnimeEntries()
+							.then(() => {
+								return;
+							})
+							.catch((error) => {
+								reject(error);
+							});
+					} else {
+						resolve();
+					}
+				})
+					.then(async () => {
+						// Check UserList
+						if (!$userEntries?.length) {
+							await requestUserEntries()
+								.then(() => {
+									return;
+								})
+								.catch((error) => {
+									throw error;
+								});
+						} else {
+							return;
+						}
+					})
+					.then(async () => {
+						// Process List
+						// await processRecommendedAnimeList(
+						// )
+						// 	.then(() => {
+						// 		return;
+						// 	})
+						// 	.catch((error) => {
+						// 		throw error;
+						// 	});
+						return;
+					})
+					.then(() => {
+						// Show List
+					})
+					.catch((error) => {
+						console.error(error);
+					});
+			}
 		});
 	});
 

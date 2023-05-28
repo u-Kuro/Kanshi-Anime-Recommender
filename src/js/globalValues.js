@@ -10,6 +10,7 @@ const userEntries = writable(null)
 const lastUserAnimeUpdate = writable(null)
 
 const filterOptions = writable(null)
+const activeTagFilters = writable(null)
 const recommendedAnimeList = writable(null)
 
 const menuVisible = writable(false)
@@ -22,6 +23,7 @@ export {
     userEntries,
     lastUserAnimeUpdate,
     filterOptions,
+    activeTagFilters,
     recommendedAnimeList,
     menuVisible
 }

@@ -1,94 +1,9 @@
 let g = {},
   request,
   db;
-const seasonOrder = { spring: 3, summer: 2, autumn: 1, winter: 0 };
+const seasonOrder = { fall: 3, summer: 2, spring: 1, winter: 0 };
 const addedAnimeLen = 33;
-const availableFilterTypes = {
-  sortdesc: true,
-  sortdescending: true,
-  sortascending: true,
-  sortasc: true,
-  topscore: true,
-  topscores: true,
-  limittopscore: true,
-  limittopscores: true,
-  topwscore: true,
-  limittopwscores: true,
-  limittopwscore: true,
-  topwscores: true,
-  format: true,
-  formats: true,
-  genre: true,
-  genres: true,
-  tagcategory: true,
-  tagcategories: true,
-  tag: true,
-  tags: true,
-  studio: true,
-  studios: true,
-  staffrole: true,
-  staffroles: true,
-  staff: true,
-  staffs: true,
-  measure: true,
-  measures: true,
-  average: true,
-  averages: true,
-  includeunknownvariables: true,
-  unknownvariables: true,
-  unknownvariable: true,
-  includeunknown: true,
-  unknown: true,
-  samplesizes: true,
-  samplesize: true,
-  samples: true,
-  sample: true,
-  size: true,
-  minimumpopularity: true,
-  minpopularity: true,
-  popularity: true,
-  minimumaveragescores: true,
-  minimumaveragescore: true,
-  minimumaverages: true,
-  minimumaverage: true,
-  minimumscores: true,
-  minimumscore: true,
-  averagescores: true,
-  averagescore: true,
-  scores: true,
-  score: true,
-  minaveragescores: true,
-  minaveragescore: true,
-  minaverages: true,
-  minaverage: true,
-  minscores: true,
-  minscore: true,
-  minimumavescores: true,
-  minimumavescore: true,
-  minimumave: true,
-  avescores: true,
-  avescore: true,
-  limittopsimilarity: true,
-  limittopsimilarities: true,
-  limitsimilarity: true,
-  limitsimilarities: true,
-  topsimilarities: true,
-  topsimilarity: true,
-  similarities: true,
-  similarity: true,
-  userscore: true,
-  userscores: true,
-  wscore: true,
-  wscores: true,
-  year: true,
-  years: true,
-  season: true,
-  seasons: true,
-  userstatus: true,
-  status: true,
-  title: true,
-  titles: true,
-};
+
 const topSimilarities = { include: {}, exclude: {} };
 self.onmessage = async ({ data }) => {
   if (data.removeIndex !== undefined) {
@@ -1411,88 +1326,103 @@ async function postWorker() {
 }
 async function IDBinit() {
   return await new Promise((resolve) => {
-    request = indexedDB.open(
-      "Kanshi.Anime.Recommendations.Anilist.W~uPtWCq=vG$TR:Zl^#t<vdS]I~N70",
-      1
-    );
-    request.onerror = (error) => {
-      console.error(error);
-    };
-    request.onsuccess = (event) => {
-      db = event.target.result;
-      return resolve();
-    };
-    request.onupgradeneeded = (event) => {
-      db = event.target.result;
-      db.createObjectStore("MyObjectStore");
-      return resolve();
-    };
+      request = indexedDB.open(
+          "Kanshi.Anime.Recommendations.Anilist.W~uPtWCq=vG$TR:Zl^#t<vdS]I~N70",
+          1
+      );
+      request.onerror = (error) => {
+          console.error(error);
+      };
+      request.onsuccess = (event) => {
+          db = event.target.result;
+          return resolve();
+      };
+      request.onupgradeneeded = (event) => {
+          db = event.target.result;
+          db.createObjectStore("MyObjectStore");
+          return resolve();
+      };
   });
 }
 async function saveJSON(data, name) {
   return await new Promise(async (resolve) => {
-    try {
-      let write = db
-        .transaction("MyObjectStore", "readwrite")
-        .objectStore("MyObjectStore")
-        .openCursor();
-      write.onsuccess = async (event) => {
-        const cursor = event.target.result;
-        if (cursor) {
-          if (cursor.key === name) {
-            await cursor.update(data);
-            return resolve();
-          }
-          await cursor.continue();
-        } else {
-          await db
-            .transaction("MyObjectStore", "readwrite")
-            .objectStore("MyObjectStore")
-            .add(data, name);
-          return resolve();
-        }
-      };
-      write.onerror = async (error) => {
-        console.error(error);
-        await db
-          .transaction("MyObjectStore", "readwrite")
-          .objectStore("MyObjectStore")
-          .add(data, name);
-        return resolve();
-      };
-    } catch (ex) {
       try {
-        console.error(ex);
-        await db
+          let write = db
           .transaction("MyObjectStore", "readwrite")
           .objectStore("MyObjectStore")
-          .add(data, name);
-        return resolve();
-      } catch (ex2) {
-        console.error(ex2);
-        return resolve();
+          .openCursor();
+          write.onsuccess = async (event) => {
+              const cursor = event.target.result;
+              if (cursor) {
+                  if (cursor.key === name) {
+                      await cursor.update(data);
+                      return resolve();
+                  }
+                  await cursor.continue();
+              } else {
+                  let add = await db
+                  .transaction("MyObjectStore", "readwrite")
+                  .objectStore("MyObjectStore")
+                  .add(data, name);
+                  add.onsuccess = (event) => {
+                      return resolve();
+                  }
+                  add.onerror = (event) => {
+                      return resolve();
+                  }
+              }
+          };
+          write.onerror = async (error) => {
+              console.error(error);
+              let add = await db
+                  .transaction("MyObjectStore", "readwrite")
+                  .objectStore("MyObjectStore")
+                  .add(data, name);
+              add.onsuccess = () => {
+                  return resolve();
+              }
+              add.onerror = () => {
+                  return resolve()
+              }
+          };
+      } catch (ex) {
+          try {
+              console.error(ex);
+              let add = await db
+                  .transaction("MyObjectStore", "readwrite")
+                  .objectStore("MyObjectStore")
+                  .add(data, name);
+              add.onsuccess = () => {
+                  return resolve();
+              }
+              add.onerror = () => {
+                  return resolve()
+              }
+          } catch (ex2) {
+              console.error(ex2);
+              return resolve();
+          }
       }
-    }
   });
 }
 async function retrieveJSON(name) {
   return await new Promise((resolve) => {
     try {
-      let read = db
-        .transaction("MyObjectStore", "readwrite")
-        .objectStore("MyObjectStore")
-        .get(name);
-      read.onsuccess = () => {
-        return resolve(read.result);
-      };
-      read.onerror = (error) => {
-        console.error(error);
-        return resolve();
-      };
-    } catch (ex) {
-      console.error(ex);
-      return resolve();
-    }
+          let read = db
+          .transaction("MyObjectStore", "readwrite")
+          .objectStore("MyObjectStore")
+          .get(name);
+          read.onsuccess = () => {
+              return resolve(read.result);
+          };
+          read.onerror = (error) => {
+              console.error(error);
+              return resolve();
+          };
+      } catch (ex) {
+          console.error(ex);
+          return resolve();
+      }
   });
 }
 function msToTime(duration) {

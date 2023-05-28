@@ -1,21 +1,76 @@
 <script>
-    import { menuVisible } from "../../js/globalValues.js";
+    import { IndexedDB, username, menuVisible } from "../../js/globalValues.js";
+    import { IDBinit, retrieveJSON, saveJSON } from "../../js/indexedDB.js";
+    import { requestUserEntries } from "../../js/workerUtils.js";
     import { onMount, onDestroy } from "svelte";
+
+    let writableSubscriptions = [];
     let windowWidth;
+    let typedUsername;
+
     onMount(() => {
         windowWidth = window.innerWidth;
         window.addEventListener("resize", updateWindowHeight);
+        writableSubscriptions.push(
+            username.subscribe((val) => {
+                typedUsername = val;
+            })
+        );
     });
 
     function updateWindowHeight() {
         windowWidth = window.innerWidth;
     }
 
-    function handleMenuVisibility() {
+    function updateUsername(event) {
+        let element = event.target;
+        let classList = element.classList;
+        if (
+            event.key === "Enter" ||
+            (event.type === "click" &&
+                (classList.contains("searchBtn") ||
+                    element?.closest?.(".searchBtn")))
+        ) {
+            if (typedUsername !== $username) {
+                (async () => {
+                    if (!$IndexedDB) $IndexedDB = await IDBinit();
+                    if ($username) {
+                        if (
+                            confirm(
+                                `Currently connected to ${$username}, do you want to update?`
+                            )
+                        ) {
+                            await requestUserEntries({
+                                username: typedUsername,
+                            })
+                                .then(({ message }) => {
+                                    alert(message);
+                                })
+                                .catch((error) => alert(error));
+                        }
+                    } else {
+                        await requestUserEntries({ username: typedUsername })
+                            .then(({ message }) => {
+                                typedUsername = $username = username;
+                                alert(message);
+                            })
+                            .catch((error) => alert(error));
+                    }
+                })();
+            }
+        }
+    }
+
+    function handleMenuVisibility(event) {
+        let element = event.target;
+        let classList = element.classList;
+        if (!classList.contains("menu-icon") && !classList.contains("nav"))
+            return;
         menuVisible.set(!$menuVisible);
     }
 
     onDestroy(() => {
+        writableSubscriptions.forEach((unsub) => unsub());
         window.removeEventListener("resize", updateWindowHeight);
     });
 </script>
@@ -32,10 +87,16 @@
             <input
                 type="text"
                 placeholder="{windowWidth > 415 ? 'Your ' : ''}Anilist Username"
+                on:keydown={updateUsername}
+                bind:value={typedUsername}
             />
-            <button>
+            <div
+                class="searchBtn"
+                on:keydown={updateUsername}
+                on:click={updateUsername}
+            >
                 <i class="fa-solid fa-magnifying-glass" />
-            </button>
+            </div>
         </div>
         <img class="menu-icon" src="./images/Kanshi-logo.png" alt="menubar" />
     </nav>
@@ -76,8 +137,9 @@
     .input-search {
         display: flex;
         height: 25px;
+        max-width: 172px;
         border-radius: 6px;
-        justify-content: right;
+        justify-self: right;
     }
     .input-search input {
         overflow: auto;
@@ -90,7 +152,7 @@
         max-width: 142px;
         width: 100%;
     }
-    .input-search button {
+    .input-search .searchBtn {
         display: flex;
         justify-content: center;
         align-items: center;
@@ -101,6 +163,10 @@
     }
     .input-search i {
         color: white;
+    }
+    .input-search .searchBtn,
+    .input-search i {
+        cursor: pointer;
     }
     .menu-icon {
         height: 34px;
