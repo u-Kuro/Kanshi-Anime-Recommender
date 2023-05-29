@@ -6,7 +6,6 @@ dropdownBasis = {
 };
 
 self.onmessage = async({ data }) => {
-    console.log('yay0')
     if(!db) await IDBinit()
     let savedFilters = await retrieveJSON('filters')
     if(!savedFilters){
@@ -4288,10 +4287,8 @@ self.onmessage = async({ data }) => {
         }
         await saveJSON(savedFilters,"filters")
     }
-    // console.log(savedFilters)
     let filterOptions = await retrieveJSON("filterOptions")
     let activeTagFilters = await retrieveJSON("activeTagFilters")
-    console.log('yay0.1')
     if(!filterOptions){
         filterOptions = {
             filterSelection:[
@@ -4542,18 +4539,12 @@ self.onmessage = async({ data }) => {
             }
         });
     } else {
-        console.log('yey1')
         filterOptions.filterSelection.forEach((filterType,filterTypeIdx)=>{
-            console.log('yey2')
             let dropdown = filterType?.filters?.Dropdown
-            console.log('yey3')
             if(dropdown instanceof Array){
-                console.log('yey4')
                 for(let i=0; i<dropdown.length; i++){
-                    console.log('yey5')
                     let filterName = dropdown[i].filName
                     if(savedFilters[filterName]!==undefined){
-                        console.log('yey6')
                         let newOptionNames = Object.keys(savedFilters[filterName]||{}).map((k)=>{
                             k = k!=="_"? k.replace(/\_/g,' ') : k
                             k = k!=='\\"'? k.replace(/\\"/g,'"') : k
@@ -4564,9 +4555,7 @@ self.onmessage = async({ data }) => {
                             newOptionNames.push("aaaaa")
                         }
                         if(newOptionNames.length){
-                            console.log('yey7')
                             if(dropdownBasis[filterName]){
-                                console.log('yey8')
                                 if(dropdownBasis[filterName]==="descnum"||dropdownBasis[filterName]==="ascnum"){
                                     dropdownBasis[filterName]==="descnum" ? newOptionNames.sort((a,b)=>parseFloat(b)-parseFloat(a)) : newOptions.sort((a,b)=>parseFloat(a)-parseFloat(b))
                                 } else if(dropdownBasis[filterName]==="desclet"){
@@ -4581,7 +4570,6 @@ self.onmessage = async({ data }) => {
                                     })
                                 }
                             } else {
-                                console.log('yey8.1')
                                 newOptionNames.sort() // Default Ascending
                             }
                             let currentOptions = dropdown[i].options.reduce((result,{optionName,selected})=>{
@@ -4595,7 +4583,6 @@ self.onmessage = async({ data }) => {
                                     return {optionName: optionName, selected: "none"}
                                 }
                             })
-                            console.log('yey9')
                             filterOptions.filterSelection[filterTypeIdx].filters.Dropdown[i].options = newOptions
                         }
                     } else {
@@ -4605,14 +4592,12 @@ self.onmessage = async({ data }) => {
             }
         })
     }
-    console.log('yay0.2')
     if(!activeTagFilters){
         activeTagFilters = filterOptions.filterSelection.reduce((r, { filterSelectionName }) => {
                 r[filterSelectionName] = [];
                 return r;
         },{}) || {};
     }
-    console.log('yay0.3');
     (async()=>{
         await IDBinit();
         await saveJSON(filterOptions,"filterOptions")

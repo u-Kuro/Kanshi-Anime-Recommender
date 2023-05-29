@@ -16,6 +16,7 @@ self.onmessage = async({data}) => {
         includeYear = true,
         includeAverageScore = true,
         includeAnimeLength = true,
+        hideUnwatchedSequels = true,
         minPopularity,
         minAverageScore,
         minSampleSize,
@@ -669,8 +670,14 @@ self.onmessage = async({data}) => {
     }
 
     // Calculate Anime Recommendation List
+    // Init Data
     let filters = await retrieveJSON("filters")
     animeEntries = Object.values(animeEntries ?? {});
+    let recommendedAnimeList = {};
+    let savedUserScores = {
+        all: {},
+        above: {},
+    };
     let popularityArray = animeEntries.map((anime) => {
         let popularity = anime?.popularity;
         if (typeof popularity === "number") {
@@ -684,8 +691,8 @@ self.onmessage = async({data}) => {
       ? varScheme.minPopularity
       : 0.33 * Math.min(arrayMean(popularityArray), arrayMode(popularityArray));
     let averageScoreMode = varScheme?.minAverageScore || 50 - 0.33;
-    animeFranchises = []
     if(!jsonIsEmpty(varScheme)){
+        animeFranchises = []
         let userScores = Object.values(userEntriesStatus.userScore);
         let meanUserScore, meanScoreAll, meanScoreAbove, userScoreBase;
         if (userScores?.length) {
@@ -715,7 +722,7 @@ self.onmessage = async({data}) => {
             // Update Anime Franchise
             let afIdxs = animeFranchises.reduce((result, e, idx) => {
                 if (e instanceof Array) {
-                    if (e.includes(anilistId)) {
+                    if (e.includes(animeID)) {
                         result.push(idx);
                     }
                 }
@@ -725,7 +732,7 @@ self.onmessage = async({data}) => {
             if (afIdxs.length > 1 || afIdxs.length < 1) {
                 // Union if there are duplicate franchise
                 if (afIdxs.length > 1) {
-                    let newFranchise = g.savedAnimeFranchises[afIdxs[0]];
+                    let newFranchise = animeFranchises[afIdxs[0]];
                     for (let j = 1; j < afIdxs.length; j++) {
                         newFranchise = Array.from(new Set(newFranchise.concat(animeFranchises[afIdxs[j]])));
                     }
@@ -764,16 +771,16 @@ self.onmessage = async({data}) => {
                         animeRelationType.trim().toLowerCase()
                         )
                     ) {
-                        if (g.savedAnimeFranchises[afIdx] instanceof Array) {
-                            if (!g.savedAnimeFranchises[afIdx].includes(relationID)) {
-                                g.savedAnimeFranchises[afIdx].push(relationID);
+                        if (animeFranchises[afIdx] instanceof Array) {
+                            if (!animeFranchises[afIdx].includes(relationID)) {
+                                animeFranchises[afIdx].push(relationID);
                             }
                         }
                     }
                 }
             });
             // Hide Unwatched Sequels
-            if (g.hideUnwatchedSequels) {
+            if (hideUnwatchedSequels) {
                 let animeRelations = anime?.relations?.edges || [];
                 // Conditions
                 let isUnwatchedSequel =
@@ -799,17 +806,17 @@ self.onmessage = async({data}) => {
                         if (animeRelationType.trim().toLowerCase() === "prequel") {
                             // ...Prequel is Watched
                             if (
-                                typeof g.userEntriesStatus?.userStatus?.[animeRelationID] === "string"
+                                typeof userEntriesStatus?.userStatus?.[animeRelationID] === "string"
                             ) {
                             if (
-                                g.userEntriesStatus?.userStatus?.[animeRelationID].trim().toLowerCase() === "completed" ||
-                                g.userEntriesStatus?.userStatus?.[animeRelationID].trim().toLowerCase() === "repeating"
+                                userEntriesStatus?.userStatus?.[animeRelationID].trim().toLowerCase() === "completed" ||
+                                userEntriesStatus?.userStatus?.[animeRelationID].trim().toLowerCase() === "repeating"
                             ) {
                                 return true;
                             }
                             // ...Prequel is a Small/Unpopular Anime
                             } else if (
-                                !g.userEntriesStatus?.userStatus?.[animeRelationID] &&
+                                !userEntriesStatus?.userStatus?.[animeRelationID] &&
                                 typeof popularity === "number"
                             ) {
                                 if (animeRelationPopularity <= popularity) {
@@ -821,8 +828,8 @@ self.onmessage = async({data}) => {
                 });
                 // Don't Include if Anime Entry
                 if (!isUnwatchedSequel) {
-                delete g.savedRecScheme[anilistId];
-                continue;
+                    delete recommendedAnimeList[animeID];
+                    continue;
                 }
             }
             // Update Non Iterative Filters
@@ -842,8 +849,8 @@ self.onmessage = async({data}) => {
             }
             if (typeof status === "string") {
                 let tempStatus = status.trim().toLowerCase();
-                if (filters['season'][tempStatus]===undefined) {
-                    filters['season'][tempStatus] = true
+                if (filters['airing status'][tempStatus]===undefined) {
+                    filters['airing status'][tempStatus] = true
                 }
             }
             let genresIncluded = {};
@@ -870,7 +877,7 @@ self.onmessage = async({data}) => {
                         }
                     }
                 } else if (typeof varScheme.meanGenres === "number" && includeUnknownVar) {
-                    zgenres.push(g.varScheme.meanGenres - minNumber);
+                    zgenres.push(varScheme.meanGenres - minNumber);
                 }
                 // Filters
                 if (filters['genre'][genre]===undefined) {
@@ -890,73 +897,514 @@ self.onmessage = async({data}) => {
                 let fullTagCategory = "tag category: " + tagCategory;
                 if (!jsonIsEmpty(varScheme.includeCategories)) {
                     if (varScheme.includeCategories[fullTagCategory]) {
-                    if (typeof varScheme.tags[fullTag] === "number") {
-                        ztags.push(varScheme.tags[fullTag]);
-                        // Top Similarities
-                        if (
-                        typeof g.varScheme.meanTags === "number" &&
-                        typeof tagRank === "number"
-                        ) {
-                        if (
-                            tagRank >= 50 &&
-                            g.varScheme.tags[fullTag] >= g.varScheme.meanTags &&
-                            !tagsIncluded[fullTag]
-                        ) {
-                            let tmpscore = g.varScheme.tags[fullTag];
-                            tagsIncluded[fullTag] = [
-                            tag + " (" + tmpscore.toFixed(2) + ")",
-                            tmpscore,
-                            ];
+                        if (typeof varScheme.tags[fullTag] === "number") {
+                            ztags.push(varScheme.tags[fullTag]);
+                            // Top Similarities
+                            if (typeof varScheme.meanTags === "number" && typeof tagRank === "number") {
+                                if (tagRank >= 50 && varScheme.tags[fullTag] >= varScheme.meanTags && !tagsIncluded[fullTag]) {
+                                    let tmpscore = varScheme.tags[fullTag];
+                                    tagsIncluded[fullTag] = [
+                                        tag + " (" + tmpscore.toFixed(2) + ")",
+                                        tmpscore,
+                                    ];
+                                }
+                            }
+                        } else if (includeUnknownVar) {
+                            ztags.push(varScheme.meanTags - minNumber);
                         }
-                        }
-                    } else if (includeUnknownVar) {
-                        ztags.push(g.varScheme.meanTags - minNumber);
-                    }
                     }
                 } else {
-                    if (!g.varScheme.excludeCategories[fullTagCategory]) {
-                    if (typeof g.varScheme.tags[fullTag] === "number") {
-                        ztags.push(g.varScheme.tags[fullTag]);
-                        // Top Similarities
-                        if (
-                        typeof g.varScheme.meanTags === "number" &&
-                        typeof tagRank === "number"
-                        ) {
-                        if (
-                            tagRank >= 50 &&
-                            g.varScheme.tags[fullTag] >= g.varScheme.meanTags &&
-                            !tagsIncluded[fullTag]
-                        ) {
-                            let tmpscore = g.varScheme.tags[fullTag];
-                            tagsIncluded[fullTag] = [
-                            tag + " (" + tmpscore.toFixed(2) + ")",
-                            tmpscore,
-                            ];
+                    if (!varScheme.excludeCategories[fullTagCategory]) {
+                        if (typeof varScheme.tags[fullTag] === "number") {
+                            ztags.push(varScheme.tags[fullTag]);
+                            // Top Similarities
+                            if (typeof varScheme.meanTags === "number" && typeof tagRank === "number") {
+                                if (tagRank >= 50 && varScheme.tags[fullTag] >= varScheme.meanTags &&!tagsIncluded[fullTag]) {
+                                    let tmpscore = varScheme.tags[fullTag];
+                                    tagsIncluded[fullTag] = [
+                                        tag + " (" + tmpscore.toFixed(2) + ")",
+                                        tmpscore,
+                                    ];
+                                }
+                            }
+                        } else if (includeUnknownVar) {
+                            ztags.push(varScheme.meanTags - minNumber);
                         }
-                        }
-                    } else if (includeUnknownVar) {
-                        ztags.push(g.varScheme.meanTags - minNumber);
-                    }
                     }
                 }
                 // Filters
-                if (
-                    !g.allFilterInfo[fullTagCategory] &&
-                    !g.allFilterInfo["!tag category: !" + tagCategory]
-                ) {
-                    g.allFilterInfo[fullTagCategory] = true;
-                    g.allFilterInfo["!tag category: !" + tagCategory] = true;
+                if (filters['tag'][tag]===undefined) {
+                    filters['tag'][tag] = true
                 }
-                if (!g.allFilterInfo[fullTag] && !g.allFilterInfo["!tag: !" + tag]) {
-                    g.allFilterInfo[fullTag] = true;
-                    g.allFilterInfo["!tag: !" + tag] = true;
+                if (filters['tag category'][tagCategory]===undefined) {
+                    filters['tag category'][tagCategory] = true
                 }
+            }
+            let zstudios = [];
+            let includedStudios = {};
+            for (let j = 0; j < studios.length; j++) {
+                let studio = studios[j]?.name;
+                if (typeof studio !== "string") continue;
+                if (includedStudios[studio]) continue;
+                includedStudios[studio] = true;
+                studio = studio.trim().toLowerCase();
+                let fullStudio = "studio: " + studio;
+                if (typeof varScheme.studios[fullStudio] === "number") {
+                    zstudios.push(varScheme.studios[fullStudio]);
+                    // Top Similarities
+                    if (typeof varScheme.meanStudios === "number") {
+                        let studioUrl = studios[j]?.siteUrl;
+                        if (varScheme.studios[fullStudio] >= varScheme.meanStudios && !studiosIncluded[fullStudio] && typeof studioUrl === "string") {
+                            let tmpscore = varScheme.studios[fullStudio];
+                            studiosIncluded[fullStudio] = [{
+                                    ["studio: " + studio + " (" + tmpscore.toFixed(2) + ")"]:
+                                    studioUrl,
+                                },
+                                tmpscore,
+                            ];
+                        }
+                    }
+                } else if (typeof varScheme.meanStudios === "number" && includeUnknownVar) {
+                    zstudios.push(varScheme.meanStudios - minNumber);
+                }
+                // Filters
+                if (filters['studio'][studio]===undefined) {
+                    filters['studio'][studio] = true
+                }
+            }
+            let zstaff = {};
+            let includedStaff = {};
+            for (let j = 0; j < staffs.length; j++) {
+                let staff = staffs[j]?.node?.name?.userPreferred;
+                if (typeof staff !== "string") continue;
+                if (includedStaff[staff]) continue;
+                includedStaff[staff] = true;
+                let staffRole = staffs[j]?.role;
+                if (typeof staffRole !== "string") continue;
+                staff = staff.trim().toLowerCase();
+                let fullStaff = "staff: " + staff;
+                staffRole = staffRole.split("(")[0].trim().toLowerCase();
+                let fullStaffRole = "staff role: " + staffRole;
+                if (!jsonIsEmpty(varScheme.includeRoles)) {
+                    if (varScheme.includeRoles[fullStaffRole]) {
+                        if (typeof varScheme.staff[fullStaff] === "number") {
+                            if (!zstaff[fullStaffRole]) {
+                                zstaff[fullStaffRole] = [varScheme.staff[fullStaff]];
+                            } else {
+                                zstaff[fullStaffRole].push(varScheme.staff[fullStaff]);
+                            }
+                            // Top Similarities
+                            if (typeof varScheme.meanStaff === "number") {
+                                let staffUrl = staffs[j]?.node?.siteUrl;
+                                if (varScheme.staff[fullStaff] >= varScheme.meanStaff && !staffIncluded[fullStaff] && typeof staffUrl === "string") {
+                                    let tmpscore = varScheme.staff[fullStaff];
+                                    staffIncluded[fullStaff] = [{
+                                        [staffRole +": " +staff +" (" +tmpscore.toFixed(2) +")"]: staffUrl},
+                                        tmpscore,
+                                    ];
+                                }
+                            }
+                        } else if (typeof varScheme.meanStaff === "number" && includeUnknownVar && zstaff[fullStaffRole]) {
+                            zstaff[fullStaffRole].push(varScheme.meanStaff - minNumber);
+                        }
+                    }
+                } else {
+                    if (!varScheme.excludeRoles[fullStaffRole]) {
+                        if (typeof varScheme.staff[fullStaff] === "number") {
+                            if (!zstaff[fullStaffRole]) {
+                                zstaff[fullStaffRole] = [varScheme.staff[fullStaff]];
+                            } else {
+                                zstaff[fullStaffRole].push(varScheme.staff[fullStaff]);
+                            }
+                            // Top Similarities
+                            if (typeof varScheme.meanStaff === "number") {
+                                let staffUrl = staffs[j]?.node?.siteUrl;
+                                if (varScheme.staff[fullStaff] >= varScheme.meanStaff && !staffIncluded[fullStaff] && typeof staffUrl === "string") {
+                                    let tmpscore = varScheme.staff[fullStaff];
+                                    staffIncluded[fullStaff] = [{
+                                        [staffRole+": "+staff +" (" +tmpscore.toFixed(2) +")"]: staffUrl,},
+                                        tmpscore,
+                                    ];
+                                }
+                            }
+                        } else if (typeof varScheme.meanStaff === "number" && includeUnknownVar && zstaff[fullStaffRole]) {
+                            zstaff[fullStaffRole].push(varScheme.meanStaff - minNumber);
+                        }
+                    }
+                }
+                // filters
+                if (filters['staff role'][staffRole]===undefined) {
+                    filters['staff role'][staffRole] = true
+                }
+            }
+            // Include Linear Model Prediction from Earlier
+            let tempStatus = status?.trim?.()?.toLowerCase?.();
+            let animeType = [];
+            let seasonYear = anime?.seasonYear;
+            let yearModel = varScheme.yearModel ?? {};
+            if (isaN(seasonYear) && !jsonIsEmpty(yearModel)) {
+                if (typeof seasonYear === "string") {
+                    seasonYear = parseFloat(seasonYear);
+                }
+                animeType.push(Math.max(1, LRpredict(yearModel, seasonYear)));
+            } else if(tempStatus!=="not_yet_released"){
+                animeType.push(1);
+            }
+            let averageScore = anime?.averageScore;
+            let averageScoreModel = varScheme.averageScoreModel ?? {};
+            if (isaN(averageScore) && !jsonIsEmpty(averageScoreModel)) {
+                if (typeof averageScore === "string") {
+                    averageScore = parseFloat(averageScore);
+                }
+                animeType.push(Math.max(1, LRpredict(averageScoreModel, averageScore)));
+            } else if(tempStatus==="finished"){
+                animeType.push(1);
+            }
+            let episodes = anime?.episodes
+            let duration = anime?.duration
+            let animeLengthModel = varScheme.animeLengthModel ?? {};
+            if (isaN(duration) && isaN(episodes) && !jsonIsEmpty(animeLengthModel) && duration>0 && episodes>0) {
+                if (typeof episodes === "string") {
+                    episodes = parseFloat(episodes);
+                }
+                if (typeof duration === "string") {
+                    duration = parseFloat(duration);
+                }
+                let animeLength = episodes * duration
+                animeType.push(Math.max(1, LRpredict(animeLengthModel, animeLength)));
+            } else if(tempStatus==="finished"){
+                animeType.push(1);
+            }
+
+            // Combine Scores
+            // Anime Content
+            let animeContent = [];
+            if (zgenres.length) {
+                if (measure === "mode") {
+                    animeContent.push(Math.max(1, arrayMode(zgenres)));
+                } else {
+                    animeContent.push(Math.max(1, arrayMean(zgenres)));
+                }
+            } else {
+                animeContent.push(1);
+            }
+            if (ztags.length) {
+                if (measure === "mode") {
+                    animeContent.push(Math.max(1, arrayMode(ztags)));
+                } else {
+                    animeContent.push(Math.max(1, arrayMean(ztags)));
+                }
+            } else {
+                animeContent.push(1);
+            }
+            // Anime Production
+            let animeProduction = [];
+            let zstaffRolesArray =
+            Object.values(zstaff).map((e) => {
+                if (measure === "mode") {
+                    return Math.max(1, arrayMode(e));
+                } else {
+                    return Math.max(1, arrayMean(e));
+                }
+            }) || [];
+            if (zstaffRolesArray.length) {
+                if (measure === "mode") {
+                    animeProduction = animeProduction.concat(zstaffRolesArray);
+                } else {
+                    animeProduction = animeProduction.concat(zstaffRolesArray);
+                }
+            } else {
+                animeProduction = animeProduction.concat([1]);
+            }
+            if (zstudios.length) {
+                if (measure === "mode") {
+                    animeProduction = animeProduction.concat([
+                        Math.max(1, arrayMode(zstudios)),
+                    ]);
+                } else {
+                    animeProduction = animeProduction.concat([
+                        Math.max(1, arrayMean(zstudios)),
+                    ]);
+                }
+            } else {
+                animeProduction = animeProduction.concat([1]);
+            }
+
+            // Calculate Recommendation Scores
+            let score = Math.max(1,
+                arrayProbability([
+                    Math.max(1,
+                        measure === "mode" ? arrayMode(animeType) : arrayMean(animeType)
+                    ),
+                    Math.max(1, arrayProbability(animeContent)),
+                    Math.max(1,
+                        measure === "mode"
+                        ? arrayMode(animeProduction)
+                        : arrayMean(animeProduction)
+                    ),
+                ])
+            );
+            let weightedScore = score; // Init for Later
+            // Check mean score
+            if (typeof meanUserScore === "number" &&typeof userEntriesStatus.userScore[animeID] === "number") {
+                savedUserScores.all[animeID] = score;
+                if (userEntriesStatus.userScore[animeID] >= meanUserScore) {
+                    savedUserScores.above[animeID] = score;
+                }
+            }
+            // Process other Anime Info
+            genres = genres.length ? genres : [];
+            tags = tags.length ? tags.map((e) => e?.name || "") : [];
+            studios = studios.reduce(
+                (result, e) => Object.assign(result, { [e?.name]: e?.siteUrl }),
+                {}
+            );
+            staffs = staffs.reduce((result, e) =>
+                Object.assign(result, {
+                    [e?.node?.name?.userPreferred]: e?.node?.siteUrl,
+                }),
+            {});
+            // Sort all Top Similarities
+            let variablesIncluded = Object.values(genresIncluded)
+            .concat(Object.values(tagsIncluded))
+            .concat(Object.values(studiosIncluded))
+            .concat(Object.values(staffIncluded))
+            .sort((a, b) => {
+                return b?.[1] - a?.[1];
+            })
+            .map((e) => {
+                return e?.[0] || "";
+            });
+            variablesIncluded = variablesIncluded.length ? variablesIncluded : [];
+            // Add To Processed Recommendation List
+            recommendedAnimeList[animeID] = {
+                id: animeID,
+                title: title,
+                animeUrl: animeUrl,
+                userScore: userEntriesStatus?.userScore?.[animeID],
+                averageScore: averageScore,
+                popularity: popularity,
+                score: score,
+                weightedScore: weightedScore,
+                variablesIncluded: variablesIncluded,
+                userStatus: userStatus,
+                status: status,
+                // Others
+                genres: genres,
+                tags: tags,
+                year: year,
+                season: season,
+                format: format,
+                studios: studios,
+                staffs: staffs,
+                episodes: episodes,
+                duration: duration,
+                coverImageUrl: anime?.coverImage?.large,
+                trailerID: anime?.trailer?.id,
+                bannerImageUrl: anime?.bannerImage,
+            };
+        }
+        // After Loop
+        // Calculate Mean Score 
+        if (!jsonIsEmpty(savedUserScores)) {
+            meanScoreAll = Object.values(savedUserScores.all ?? {});
+            meanScoreAbove = Object.values(savedUserScores.above ?? {});
+            meanScoreAll = Math.max(
+                Math.min(...meanScoreAbove),
+                arrayMean(meanScoreAll)
+            );
+            meanScoreAbove = arrayMean(meanScoreAbove);
+        }
+        let recommendedAnimeListEntries = Object.keys(recommendedAnimeList);
+        for (let i = 0; i < recommendedAnimeListEntries.length; i++) {
+            let anime = recommendedAnimeList[recommendedAnimeListEntries[i]];
+            let popularity = anime.popularity;
+            let weightedScore = anime.weightedScore;
+            let averageScore = anime.averageScore;
+            // Add Mean Score
+            if (typeof meanScoreAll === "number") {
+                recommendedAnimeList[recommendedAnimeListEntries[i]].meanScoreAll = meanScoreAll;
+            } else {
+                recommendedAnimeList[recommendedAnimeListEntries[i]].meanScoreAll = 0;
+            }
+            if (typeof meanScoreAbove === "number") {
+                recommendedAnimeList[recommendedAnimeListEntries[i]].meanScoreAbove = meanScoreAbove;
+            } else {
+                recommendedAnimeList[recommendedAnimeListEntries[i]].meanScoreAbove = 0;
+            }
+            // Low Average
+            if (isaN(averageScore)) {
+                if (typeof averageScore === "string") {
+                    averageScore = parseFloat(averageScore);
+                }
+                if (averageScore < averageScoreMode) {
+                    let ASmult = averageScore * 0.01;
+                    recommendedAnimeList[recommendedAnimeListEntries[i]].weightedScore =weightedScore * (ASmult >= 1 ? 1 : ASmult);
+                }
+            }
+            // Low Popularity
+            if (typeof popularity === "number" && typeof popularityMode === "number" && typeof popularitySum === "number" && popularitySum && typeof weightedScore === "number" && weightedScore) {
+                if (popularity < popularityMode) {
+                    recommendedAnimeList[recommendedAnimeListEntries[i]].weightedScore =
+                    popularity
+                        ? (anime.popularity / popularitySum) * weightedScore
+                        : (minNumber / popularitySum) * weightedScore;
+                }
+            }
+            if (!anime.weightedScore || !isFinite(anime.weightedScore)) {
+                recommendedAnimeList[recommendedAnimeListEntries[i]].weightedScore = 0;
+            }
+            if (!anime.score || !isFinite(anime.score)) {
+                recommendedAnimeList[recommendedAnimeListEntries[i]].score = 0;
             }
         }
     } else {
-
+        for (let i = 0; i < animeEntries.length; i++) {
+            let anime = animeEntries[i];
+            let title = anime?.title?.userPreferred;
+            let animeID = anime?.id;
+            let animeUrl = anime?.siteUrl;
+            let format = anime?.format;
+            let year = anime?.seasonYear;
+            let season = anime?.season;
+            let genres = anime?.genres || [];
+            let tags = anime?.tags || [];
+            let studios = anime?.studios?.nodes?.filter((studio) => {
+                return studio?.isAnimationStudio;
+            }) || [];
+            let staffs = anime?.staff?.edges || [];
+            let status = anime?.status;
+            let episodes = anime?.episodes
+            let duration = anime?.duration
+            if (typeof season === "string") {
+                let tempSeason = season.trim().toLowerCase();
+                if (filters['season'][tempSeason]===undefined) {
+                    filters['season'][tempSeason] = true
+                }
+            }
+            if (typeof status === "string") {
+                let tempStatus = status.trim().toLowerCase();
+                if (filters['airing status'][tempStatus]===undefined) {
+                    filters['airing status'][tempStatus] = true
+                }
+            }
+            // Arrange
+            for (let j = 0; j < genres.length; j++) {
+                let genre = genres[j];
+                if (typeof genre !== "string") continue;
+                genre = genre.trim().toLowerCase();
+                if (filters['genre'][genre]===undefined) {
+                    filters['genre'][genre] = true
+                }
+            }
+            for (let j = 0; j < tags.length; j++) {
+                let tag = tags[j]?.name;
+                if (typeof tag !== "string") continue;
+                tag = tag.trim().toLowerCase();
+                if (filters['tag'][tag]===undefined) {
+                    filters['tag'][tag] = true
+                }
+                let tagCategory = tags[j]?.category;
+                if (typeof tagCategory !== "string") continue;
+                tagCategory = tagCategory.trim().toLowerCase();
+                if (filters['tag category'][tagCategory]===undefined) {
+                    filters['tag category'][tagCategory] = true
+                }
+            }
+            for(let j=0; j<studios.length; j++){
+                let studio = studios[j]?.name
+                if(typeof studio!=="string") continue
+                studio = studio.trim().toLowerCase()
+                if (filters['studio'][studio]===undefined) {
+                    filters['studio'][studio] = true
+                }
+            }
+            for (let j = 0; j < staffs.length; j++) {
+                let staffRole = staffs[j].role;
+                if (typeof staffRole !== "string") continue;
+                staffRole = staffRole.split("(")[0].trim().toLowerCase();
+                if (filters['staff role'][staffRole]===undefined) {
+                    filters['staff role'][staffRole] = true
+                }
+            }
+            let score = (weightedScore = 0);
+            let averageScore = anime?.averageScore;
+            if (isaN(averageScore)) {
+                if (typeof averageScore === "string") {
+                    averageScore = parseFloat(averageScore);
+                }
+            }
+            let favourites = anime?.favourites;
+            if (isaN(favourites)) {
+                if (typeof favourites === "string") {
+                    favourites = parseFloat(favourites);
+                }
+            }
+            let popularity = anime?.popularity;
+            if (isaN(popularity)) {
+                if (typeof popularity === "string") {
+                    popularity = parseFloat(popularity);
+                }
+            }
+            if (
+                isaN(averageScore) &&
+                isaN(favourites) &&
+                isaN(popularity) &&
+                popularity
+            ) {
+                let favPopRatio = 1;
+                if (anime.favourites < anime.popularity) {
+                    favPopRatio = anime.favourites / anime.popularity;
+                }
+                score = weightedScore = favPopRatio * averageScore - minNumber;
+            }
+            // Other Anime Recommendation Info
+            genres = genres.length ? genres : [];
+            tags = tags.length ? tags.map((e) => e?.name || "") : [];
+            studios = studios.reduce((result, e) => {
+                Object.assign(result, { [e?.name]: e?.siteUrl })
+            },{});
+            staffs = staffs.reduce((result, e) =>{
+                Object.assign(result, {
+                    [e?.node?.name?.userPreferred]: e?.node?.siteUrl,
+                })
+            },{});
+            recommendedAnimeList[animeID] = {
+                id: animeID,
+                title: title,
+                animeUrl: animeUrl,
+                userScore: userEntriesStatus?.userScore?.[animeID],
+                averageScore: averageScore,
+                popularity: popularity,
+                score: score,
+                weightedScore: weightedScore,
+                variablesIncluded: [],
+                userStatus: "UNWATCHED",
+                status: status,
+                // Others
+                genres: genres,
+                tags: tags,
+                year: year,
+                season: season,
+                format: format,
+                studios: studios,
+                staffs: staffs,
+                episodes: episodes,
+                duration: duration,
+                coverImageUrl: anime?.coverImage?.large,
+                trailerID: anime?.trailer?.id,
+                bannerImageUrl: anime?.bannerImage,
+            };
+        }
     }
-
+    // Save Processed Recommendation List and other Data
+    await saveJSON(userEntries,'userEntries')
+    await saveJSON(animeFranchises,'animeFranchises')
+    await saveJSON(filters, 'filters')
+    await saveJSON(activeTagFilters, 'activeTagFilters')
+    // Notify User List Count ...
+    // await saveJSON(username, 'username')
+    await saveJSON(recommendedAnimeList, 'recommendedAnimeList')
 }
 
 function jsonIsEmpty(obj) {
@@ -1033,7 +1481,10 @@ function arrayMode(obj){
     let modSucFreq = !classIs[modeIdx+1]?0:classIs[modeIdx+1].freq
     return modLowLim+(((modFreq-modPreFreq)/((2*modFreq)-modPreFreq-modSucFreq))*classW)
 }
-    // Linear Regression
+function arrayProbability(obj) {
+    if (!obj?.length) return 0;
+    return obj.reduce((a, b) => a * b, 1);
+}
 function linearRegression(XY){
     let lr = {};
     let n = XY.length;
@@ -1053,6 +1504,12 @@ function linearRegression(XY){
     lr['intercept'] = (sum_y - lr.slope * sum_x)/n;
     lr['r2'] = Math.pow((n*sum_xy - sum_x*sum_y)/Math.sqrt((n*sum_xx-sum_x*sum_x)*(n*sum_yy-sum_y*sum_y)),2);
     return lr;
+}
+function LRpredict(modelObj, x) {
+    if (!modelObj) return null;
+    if (!modelObj.slope || !modelObj.intercept) return null;
+    if (isNaN(modelObj.slope) || isNaN(modelObj.intercept)) return null;
+    return parseFloat(modelObj.slope) * x + parseFloat(modelObj.intercept);
 }
 async function IDBinit() {
     return await new Promise((resolve) => {

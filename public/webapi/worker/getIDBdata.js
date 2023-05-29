@@ -3,8 +3,9 @@ self.onmessage = async({data}) => {
     if(!db) await IDBinit()
     if(data.name==="animeEntriesLength"){
         self.postMessage(Object.keys(await retrieveJSON("animeEntries")||{}).length)
+    } else if(data.name==="animeFranchisesLength"){
+        self.postMessage((await retrieveJSON("animeFranchises")||[]).length)
     } else if(data.name) {
-        console.log(data.name, 'workerget')
         self.postMessage(await retrieveJSON(data.name))
     }
 }

@@ -111,12 +111,27 @@ const getFilterOptions = (_data) => {
     })
 }
 
+const getAnimeFranchises = (_data) => {
+    return new Promise((resolve, reject) => {
+        let worker = new Worker("./webapi/worker/getAnimeFranchises.js")
+        worker.postMessage(_data)
+        worker.onmessage = ({data}) => {
+            worker.terminate();
+            resolve(data)
+        }
+        worker.onerror = (error) => {
+            reject(error)
+        }
+    })
+}
+
 export { 
     saveIDBdata,
     getIDBdata,
     getAnimeEntries, 
     getUserEntries, 
     getFilterOptions,
+    getAnimeFranchises,
     requestAnimeEntries,
     requestUserEntries,
     processRecommendedAnimeList

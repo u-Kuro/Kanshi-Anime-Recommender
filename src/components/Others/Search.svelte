@@ -48,114 +48,6 @@
     }
 
     onMount(() => {
-        // writableSubscriptions.push(
-        //     filterOptions.subscribe((val) => {
-        //         // Add new Dropdown Options
-        //         // val?.filterSelection?.forEach?.((newfilterSelection) => {
-        //         //     let filterSelectionIdx = filterSelection.findIndex(
-        //         //         (e) =>
-        //         //             newfilterSelection.filterSelectionName ===
-        //         //             e.filterSelectionName
-        //         //     );
-        //         //     if (filterSelectionIdx < 0 || !filterSelectionIdx) {
-        //         //         filterSelection.push(newfilterSelection);
-        //         //         filterSelection = filterSelection;
-        //         //     } else if (
-        //         //         newfilterSelection.filters.Dropdown instanceof Array
-        //         //     ) {
-        //         //         newfilterSelection.filters.Dropdown.forEach(
-        //         //             (newDropdown) => {
-        //         //                 let dropdownIdx = filterSelection?.[
-        //         //                     filterSelectionIdx
-        //         //                 ]?.filters.Dropdown.findIndex((e) => {
-        //         //                     return e.filName === newDropdown.filName;
-        //         //                 });
-        //         //                 if (
-        //         //                     dropdownIdx < 0 ||
-        //         //                     dropdownIdx === undefined
-        //         //                 ) {
-        //         //                     filterSelection[
-        //         //                         filterSelectionIdx
-        //         //                     ].filters.Dropdown.push(newDropdown);
-        //         //                     filterSelection[
-        //         //                         filterSelectionIdx
-        //         //                     ].filters.Dropdown =
-        //         //                         filterSelection[
-        //         //                             filterSelectionIdx
-        //         //                         ].filters.Dropdown;
-        //         //                 } else {
-        //         //                     let dropdownOptions =
-        //         //                         filterSelection[filterSelectionIdx]
-        //         //                             .filters.Dropdown[dropdownIdx]
-        //         //                             .options;
-        //         //                     let newDropdownOptions =
-        //         //                         newDropdown.options;
-        //         //                     let map = {};
-        //         //                     for (
-        //         //                         var i = 0;
-        //         //                         i < dropdownOptions.length;
-        //         //                         i++
-        //         //                     ) {
-        //         //                         let optionName =
-        //         //                             dropdownOptions[i].optionName;
-        //         //                         let selected =
-        //         //                             dropdownOptions[i].selected;
-        //         //                         map[optionName] = selected;
-        //         //                     }
-        //         //                     for (
-        //         //                         var j = 0;
-        //         //                         j < newDropdownOptions.length;
-        //         //                         j++
-        //         //                     ) {
-        //         //                         let optionName =
-        //         //                             newDropdownOptions[j].optionName;
-        //         //                         if (map.hasOwnProperty(optionName)) {
-        //         //                             newDropdownOptions[j].selected =
-        //         //                                 map[optionName];
-        //         //                         }
-        //         //                     }
-        //         //                 }
-        //         //             }
-        //         //         );
-        //         //     }
-        //         // });
-        //         // Add new SortFilters
-        //         // if (val?.sortFilter instanceof Array) {
-        //         //     sortFilter = sortFilter.concat(
-        //         //         val.sortFilter.filter(
-        //         //             (newEl) =>
-        //         //                 !sortFilter.some(
-        //         //                     ({ sortName }) =>
-        //         //                         sortName === newEl.sortName
-        //         //                 )
-        //         //         )
-        //         //     );
-        //         // }
-        //     if(filterOptionsDebounceTimeout) clearTimeout(filterOptionsDebounceTimeout)
-        //     filterOptionsDebounceTimeout = setTimeout(async () => {
-        //         if (val) {
-        //             // Update Filter Options
-        //             if (!$IndexedDB) $IndexedDB = await IDBinit();
-        //             console.log("filterOptions pre");
-        //             saveJSON(val, "filterOptions");
-        //         }
-        //     },300);
-
-        // })
-        // );
-        // writableSubscriptions.push(
-        //     activeTagFilters.subscribe((val) => {
-        //         if(activeTagFiltersDebounceTimeout) clearTimeout(activeTagFiltersDebounceTimeout)
-        //         activeTagFiltersDebounceTimeout = setTimeout(async () => {
-        //             if (val) {
-        //                 // Update Active Filters
-        //                 if (!$IndexedDB) $IndexedDB = await IDBinit();
-        //                 console.log("activeTagFilters pre");
-        //                 saveJSON(val, "activeTagFilters");
-        //             }
-        //         },300);
-        //     })
-        // );
         // Init
         maxFilterSelectionHeight = window.innerHeight * 0.3;
         unsubTagFiltersDragScroll = dragScroll(
@@ -974,7 +866,9 @@
                                 placeholder="Any"
                                 autocomplete="off"
                                 class="value-input"
-                                bind:value={optKeyword}
+                                bind:value={$filterOptions.filterSelection[
+                                    filSelIdx
+                                ].filters.Dropdown[dropdownIdx].optKeyword}
                             />
                         </div>
                         {#if selected && options.length && !Init}

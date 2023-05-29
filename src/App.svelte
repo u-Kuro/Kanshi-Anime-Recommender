@@ -17,6 +17,7 @@
 		getAnimeEntries,
 		getUserEntries,
 		getFilterOptions,
+		getAnimeFranchises,
 		requestAnimeEntries,
 		requestUserEntries,
 		processRecommendedAnimeList,
@@ -30,7 +31,6 @@
 		initDataPromises.push(
 			new Promise(async (resolve, reject) => {
 				let animeEntriesLen = await retrieveJSON("animeEntriesLength");
-				// $animeEntries = await retrieveJSON("savedAnimeEntries");
 				let _lastAnimeUpdate = await retrieveJSON("lastAnimeUpdate");
 				if (_lastAnimeUpdate) $lastAnimeUpdate = await _lastAnimeUpdate;
 				if (
@@ -152,6 +152,24 @@
 			})
 		);
 
+		// Check/Get Anime Franchises
+		initDataPromises.push(
+			new Promise(async (resolve, reject) => {
+				let animeFranchisesLen = await retrieveJSON(
+					"animeFranchisesLength"
+				);
+				if (animeFranchisesLen < 1) {
+					await getAnimeFranchises()
+						.then(async (data) => {
+							resolve();
+						})
+						.catch((error) => reject(error));
+				} else {
+					resolve();
+				}
+			})
+		);
+
 		// Data Processing
 		Promise.all(initDataPromises).then(async () => {
 			console.log("yay, data processed");
@@ -159,8 +177,9 @@
 			let _recommendedAnimeList = await retrieveJSON(
 				"recommendedAnimeList"
 			);
-			if (_recommendedAnimeList?.length > 0)
+			if (!jsonIsEmpty(_recommendedAnimeList))
 				$recommendedAnimeList = _recommendedAnimeList;
+			console.log($recommendedAnimeList);
 			// Parts
 			// Need Name and AnimeEntries
 			// 1. Have Recommendation, and all
