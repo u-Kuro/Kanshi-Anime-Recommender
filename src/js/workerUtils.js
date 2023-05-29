@@ -1,14 +1,29 @@
-const getIDBInfo = (info) => {
+const getIDBdata = (name) => {
+    let worker = new Worker("./webapi/worker/getIDBdata.js")
     return new Promise((resolve, reject) => {
-        let worker = new Worker("./webapi/worker/getIDBInfo.js")
-        worker.postMessage({info:info})
+        worker.postMessage({name:name})
         worker.onmessage = ({data}) => {
-            worker.terminate();
+            worker.terminate()
+            worker = null
             resolve(data)
         }
         worker.onerror = (error) => {
             reject(error)
         }
+    })
+}
+
+let saveIDBdataWorker;
+const saveIDBdata = (data, name) => {
+    return new Promise((resolve, reject) => {
+        if(!saveIDBdataWorker) saveIDBdataWorker = new Worker("./webapi/worker/saveIDBdata.js")
+        saveIDBdataWorker.onmessage = ({message}) => {
+            resolve(message)
+        }
+        saveIDBdataWorker.onerror = (error) => {
+            reject(error)
+        }
+        saveIDBdataWorker.postMessage({data:data, name:name})
     })
 }
 
@@ -97,7 +112,8 @@ const getFilterOptions = (_data) => {
 }
 
 export { 
-    getIDBInfo,
+    saveIDBdata,
+    getIDBdata,
     getAnimeEntries, 
     getUserEntries, 
     getFilterOptions,

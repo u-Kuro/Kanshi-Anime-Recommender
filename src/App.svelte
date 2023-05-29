@@ -14,7 +14,6 @@
 		recommendedAnimeList,
 	} from "./js/globalValues.js";
 	import {
-		getIDBInfo,
 		getAnimeEntries,
 		getUserEntries,
 		getFilterOptions,
@@ -25,17 +24,14 @@
 	import { jsonIsEmpty, fetchAniListData } from "./js/others/helper.js";
 
 	onMount(async () => {
-		// Init IndexedDB
-		$IndexedDB = await IDBinit();
-
 		// Init Data
 		let initDataPromises = [];
 		// Check/Get/Update/Process Anime Entries
 		initDataPromises.push(
 			new Promise(async (resolve, reject) => {
-				let animeEntriesLen = await getIDBInfo("animeEntriesLength");
-				// $animeEntries = await _retrieveJSON("savedAnimeEntries");
-				let _lastAnimeUpdate = await _retrieveJSON("lastAnimeUpdate");
+				let animeEntriesLen = await retrieveJSON("animeEntriesLength");
+				// $animeEntries = await retrieveJSON("savedAnimeEntries");
+				let _lastAnimeUpdate = await retrieveJSON("lastAnimeUpdate");
 				if (_lastAnimeUpdate) $lastAnimeUpdate = await _lastAnimeUpdate;
 				if (
 					animeEntriesLen < 1 ||
@@ -44,9 +40,7 @@
 					getAnimeEntries()
 						.then(async (data) => {
 							$lastAnimeUpdate = data.lastAnimeUpdate;
-							$animeEntries = await retrieveJSON(
-								"savedAnimeEntries"
-							);
+							$animeEntries = await retrieveJSON("animeEntries");
 							resolve();
 						})
 						.catch((error) => reject(error));
@@ -59,11 +53,11 @@
 		// Check/Update/Process User Anime Entries
 		initDataPromises.push(
 			new Promise(async (resolve, reject) => {
-				let _username = await _retrieveJSON("username");
+				let _username = await retrieveJSON("username");
 				if (_username) $username = _username;
-				let _userEntries = await _retrieveJSON("userEntries");
+				let _userEntries = await retrieveJSON("userEntries");
 				if (_userEntries) $userEntries = _userEntries;
-				let _lastUserAnimeUpdate = await _retrieveJSON(
+				let _lastUserAnimeUpdate = await retrieveJSON(
 					"lastUserAnimeUpdate"
 				);
 				if (_lastUserAnimeUpdate)
@@ -85,7 +79,7 @@
 							.catch((error) => reject(error));
 					} else {
 						fetchAniListData(
-							`{User(name: "${savedUsername}"){updatedAt}}`
+							`{User(name: "${$username}"){updatedAt}}`
 						)
 							.then((result) => {
 								let userUpdate = $lastUserAnimeUpdate;
@@ -127,9 +121,9 @@
 		// Check/Get Filter Options Selection
 		initDataPromises.push(
 			new Promise(async (resolve, reject) => {
-				let _filterOptions = await _retrieveJSON("filterOptions");
+				let _filterOptions = await retrieveJSON("filterOptions");
 				if (_filterOptions) $filterOptions = _filterOptions;
-				let _activeTagFilters = await _retrieveJSON("activeTagFilters");
+				let _activeTagFilters = await retrieveJSON("activeTagFilters");
 				if (_activeTagFilters) {
 					$activeTagFilters = _activeTagFilters;
 				} else if ($filterOptions) {
@@ -148,15 +142,7 @@
 					await getFilterOptions()
 						.then(async (data) => {
 							$filterOptions = data.filterOptions;
-							// Add Default Active Filters
-							$activeTagFilters =
-								$filterOptions.filterSelection.reduce(
-									(r, { filterSelectionName }) => {
-										r[filterSelectionName] = [];
-										return r;
-									},
-									{}
-								) || {};
+							$activeTagFilters = data.activeTagFilters;
 							resolve();
 						})
 						.catch((error) => reject(error));
@@ -170,7 +156,7 @@
 		Promise.all(initDataPromises).then(async () => {
 			console.log("yay, data processed");
 			// Check/Process Saved or get it manually?
-			let _recommendedAnimeList = await _retrieveJSON(
+			let _recommendedAnimeList = await retrieveJSON(
 				"recommendedAnimeList"
 			);
 			if (_recommendedAnimeList?.length > 0)
@@ -189,7 +175,7 @@
 			} else {
 				new Promise(async (resolve, reject) => {
 					// Check and request Anime Entries
-					let animeEntriesLen = await getIDBInfo(
+					let animeEntriesLen = await retrieveJSON(
 						"animeEntriesLength"
 					);
 					if (animeEntriesLen < 1) {
@@ -220,8 +206,7 @@
 					})
 					.then(async () => {
 						// Process List
-						// await processRecommendedAnimeList(
-						// )
+						await processRecommendedAnimeList();
 						// 	.then(() => {
 						// 		return;
 						// 	})
@@ -240,7 +225,6 @@
 		});
 	});
 
-	let _retrieveJSON = async (name) => await retrieveJSON(name, $IndexedDB);
 	onDestroy(() => {});
 </script>
 

@@ -27,7 +27,7 @@ const fetchAniListData = (anilistGraphQLQuery) => {
                 query: anilistGraphQLQuery
             })
         };
-        await makeFetchRequest('https://graphql.anilist.co', requestOptions, callback)
+        await makeFetchRequest('https://graphql.anilist.co', requestOptions)
         .then(data=>resolve(data))
         .catch(error => reject(error))
     })

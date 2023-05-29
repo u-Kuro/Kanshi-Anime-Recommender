@@ -1,3 +1,4 @@
+import {saveIDBdata, getIDBdata} from "../js/workerUtils.js"
 let db;
 async function IDBinit(){
     return await new Promise((resolve)=>{
@@ -17,82 +18,26 @@ async function IDBinit(){
         }
     })
 }
-async function saveJSON(data, name) {
-    return await new Promise(async (resolve) => {
-        try {
-            let write = db
-            .transaction("MyObjectStore", "readwrite")
-            .objectStore("MyObjectStore")
-            .openCursor();
-            write.onsuccess = async (event) => {
-                const cursor = event.target.result;
-                if (cursor) {
-                    if (cursor.key === name) {
-                        await cursor.update(data);
-                        return resolve();
-                    }
-                    await cursor.continue();
-                } else {
-                    let add = await db
-                    .transaction("MyObjectStore", "readwrite")
-                    .objectStore("MyObjectStore")
-                    .add(data, name);
-                    add.onsuccess = (event) => {
-                        return resolve();
-                    }
-                    add.onerror = (event) => {
-                        return resolve();
-                    }
-                }
-            };
-            write.onerror = async (error) => {
-                console.error(error);
-                let add = await db
-                    .transaction("MyObjectStore", "readwrite")
-                    .objectStore("MyObjectStore")
-                    .add(data, name);
-                add.onsuccess = () => {
-                    return resolve();
-                }
-                add.onerror = () => {
-                    return resolve()
-                }
-            };
-        } catch (ex) {
-            try {
-                console.error(ex);
-                let add = await db
-                    .transaction("MyObjectStore", "readwrite")
-                    .objectStore("MyObjectStore")
-                    .add(data, name);
-                add.onsuccess = () => {
-                    return resolve();
-                }
-                add.onerror = () => {
-                    return resolve()
-                }
-            } catch (ex2) {
-                console.error(ex2);
-                return resolve();
-            }
-        }
-    });
+function saveJSON(data, name) {
+    return new Promise(async(resolve, reject)=>{
+        await saveIDBdata(data, name)
+        .then((message)=>{
+            resolve(message)
+        })
+        .catch((error) => {
+            reject(error)
+        })
+    })
 }
 async function retrieveJSON(name) {
-    return await new Promise((resolve)=>{
-        try {
-            let read = db.transaction("MyObjectStore","readonly").objectStore("MyObjectStore").get(name)
-            read.onsuccess = () => {
-                return resolve(read.result)
-            }
-            read.onerror = (error) => {
-                console.error(error)
-                return resolve()
-            }
-        } catch(ex){
-            console.error(ex)
-            return resolve()
-        }
+    return new Promise(async(resolve, reject)=>{
+        await getIDBdata(name)
+        .then((data)=>{
+            resolve(data)
+        })
+        .catch((error) => {
+            reject(error)
+        })
     })
 }
 async function deleteJSON(name) {

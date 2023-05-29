@@ -1,10 +1,10 @@
-
 let db;
 self.onmessage = async({data}) => {
     if(!db) await IDBinit()
     let username = data?.username || await retrieveJSON("username")
     let userEntries = [];
     let maxAnimePerChunk = 500
+    let lastUserAnimeUpdate;
     function recallAV(chunk) {
         fetch('https://graphql.anilist.co', {
             method: 'POST',
@@ -48,6 +48,9 @@ self.onmessage = async({data}) => {
         })
         .then(({result, headers}) => {
             let collection = result?.data?.MediaListCollection
+            if(!(lastUserAnimeUpdate instanceof Date) || isNaN(lastUserAnimeUpdate)){
+                lastUserAnimeUpdate = new Date(collection?.user?.updatedAt*1000)
+            }
             let userList = collection?.lists ?? []
             let hasNextChunk = (result?.data?.MediaListCollection?.hasNextChunk ?? (userList?.length??0)>0)
             for(let i=0; i<userList.length; i++){
@@ -65,6 +68,10 @@ self.onmessage = async({data}) => {
                 }
             } else {
                 (async()=>{
+                    console.log(lastUserAnimeUpdate)
+                    if(lastUserAnimeUpdate instanceof Date && !isNaN(lastUserAnimeUpdate)) {
+                        await saveJSON(lastUserAnimeUpdate,"lastUserAnimeUpdate")
+                    }
                     await saveJSON(userEntries,"userEntries")
                     await saveJSON(username,"username")
                     self.postMessage({message:'success', username: username})
