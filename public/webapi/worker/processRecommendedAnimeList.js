@@ -52,14 +52,6 @@ self.onmessage = async({data}) => {
                 } else if(optionType==='tag'){
                     exclude.tags["tag: "+optionName] = true
                 }//...
-            } else if(filterType==='checkbox'){
-                if(optionName==='inc. all factors'){
-                    includeUnknownVar = true
-                }
-            } else if(filterType==='input number'){
-                if(optionName==='min sample size'){
-                    minSampleSize = optionValue
-                }
             }
         }
     })
@@ -1156,7 +1148,7 @@ self.onmessage = async({data}) => {
             genres = genres.length ? genres : [];
             tags = tags.length ? tags.map((e) => e?.name || "") : [];
             studios = studios.reduce(
-                (result, e) => Object.assign(result, { [e?.name]: e?.siteUrl }),
+                (result, e) => Object.assign(result, { [formatCustomString(e?.name)]: e?.siteUrl }),
                 {}
             );
             staffs = staffs.reduce((result, e) =>
@@ -1187,14 +1179,14 @@ self.onmessage = async({data}) => {
                 score: score,
                 weightedScore: weightedScore,
                 variablesIncluded: variablesIncluded,
-                userStatus: userStatus,
-                status: status,
+                userStatus: formatCustomString(userStatus),
+                status: formatCustomString(status),
                 // Others
-                genres: genres,
-                tags: tags,
+                genres: genres.map(e=>formatCustomString(e)),
+                tags: tags.map(e=>formatCustomString(e)),
                 year: year,
-                season: season,
-                format: format,
+                season: formatCustomString(season),
+                format: formatCustomString(format),
                 studios: studios,
                 staffs: staffs,
                 episodes: episodes,
@@ -1362,7 +1354,7 @@ self.onmessage = async({data}) => {
             genres = genres.length ? genres : [];
             tags = tags.length ? tags.map((e) => e?.name || "") : [];
             studios = studios.reduce((result, e) => {
-                Object.assign(result, { [e?.name]: e?.siteUrl })
+                Object.assign(result, { [formatCustomString(e?.name)]: e?.siteUrl })
             },{});
             staffs = staffs.reduce((result, e) =>{
                 Object.assign(result, {
@@ -1380,13 +1372,13 @@ self.onmessage = async({data}) => {
                 weightedScore: weightedScore,
                 variablesIncluded: [],
                 userStatus: "UNWATCHED",
-                status: status,
+                status: formatCustomString(status),
                 // Others
-                genres: genres,
-                tags: tags,
+                genres: genres.map(e=>formatCustomString(e)),
+                tags: tags.map(e=>formatCustomString(e)),
                 year: year,
-                season: season,
-                format: format,
+                season: formatCustomString(season),
+                format: formatCustomString(format),
                 studios: studios,
                 staffs: staffs,
                 episodes: episodes,
@@ -1404,9 +1396,17 @@ self.onmessage = async({data}) => {
     await saveJSON(activeTagFilters, 'activeTagFilters')
     // Notify User List Count ...
     // await saveJSON(username, 'username')
-    await saveJSON(recommendedAnimeList, 'recommendedAnimeList')
+    await saveJSON(Object.values(recommendedAnimeList), 'recommendedAnimeList')
+    self.postMessage({message:'success'})
 }
-
+function formatCustomString(str){
+    if(typeof str === 'string'){
+        str = str!=="_"? str.replace(/\_/g,' ') : str
+        str = str!=='\\"'? str.replace(/\\"/g,'"') : str
+        str = str.replace(/\b(tv|ona|ova)\b/gi, (match) => match.toUpperCase());
+    }
+    return str
+}
 function jsonIsEmpty(obj) {
     for (const key in obj) {
         return false;

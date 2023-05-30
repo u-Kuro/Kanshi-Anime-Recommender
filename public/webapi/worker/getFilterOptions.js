@@ -4598,15 +4598,12 @@ self.onmessage = async({ data }) => {
                 return r;
         },{}) || {};
     }
-    (async()=>{
-        await IDBinit();
-        await saveJSON(filterOptions,"filterOptions")
-        await saveJSON(activeTagFilters,"activeTagFilters")
-        self.postMessage({
-            filterOptions: filterOptions,
-            activeTagFilters: activeTagFilters
-        })
-    })();
+    await saveJSON(filterOptions,"filterOptions")
+    await saveJSON(activeTagFilters,"activeTagFilters")
+    self.postMessage({
+        filterOptions: filterOptions,
+        activeTagFilters: activeTagFilters
+    })
 };
 
 // Functions

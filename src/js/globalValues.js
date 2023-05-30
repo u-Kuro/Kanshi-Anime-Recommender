@@ -12,7 +12,9 @@ const lastUserAnimeUpdate = writable(null)
 const filterOptions = writable(null)
 const activeTagFilters = writable(null)
 const recommendedAnimeList = writable(null)
+const finalAnimeList = writable(null)
 
+const searchedAnimeKeyword = writable("")
 const menuVisible = writable(false)
 
 export {
@@ -25,5 +27,7 @@ export {
     filterOptions,
     activeTagFilters,
     recommendedAnimeList,
+    finalAnimeList,
+    searchedAnimeKeyword,
     menuVisible
 }

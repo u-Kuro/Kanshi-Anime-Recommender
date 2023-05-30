@@ -33,8 +33,33 @@ const fetchAniListData = (anilistGraphQLQuery) => {
     })
 }
 
+function formatNumber(number, dec=2) {
+    if (typeof number === "number") {
+      const formatter = new Intl.NumberFormat("en-US", {
+        maximumFractionDigits: dec, // display up to 2 decimal places
+        minimumFractionDigits: 0, // display at least 0 decimal places
+        notation: "compact", // use compact notation for large numbers
+        compactDisplay: "short", // use short notation for large numbers (K, M, etc.)
+      });
+  
+      if (Math.abs(number) >= 1000) {
+        return formatter.format(number);
+      } else if (Math.abs(number) < 0.01) {
+        return number.toExponential(0);
+      } else {
+        return (
+          number.toFixed(dec) ||
+          number.toLocaleString("en-US", { maximumFractionDigits: dec })
+        );
+      }
+    } else {
+      return null;
+    }
+}
+
 export { 
     jsonIsEmpty,
     makeFetchRequest,
-    fetchAniListData
+    fetchAniListData,
+    formatNumber
 }

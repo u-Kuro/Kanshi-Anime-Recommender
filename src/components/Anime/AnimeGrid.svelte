@@ -1,137 +1,196 @@
 <script>
-    import { onMount, onDestroy } from "svelte";
-    let animes = [
-        {
-            id: 1,
-            "anime-title": "Gintama",
-            "card-title-component": "",
-            "hover-text": "",
-        },
-        {
-            id: 2,
-            "anime-title": "Gintama",
-            "card-title-component": "",
-            "hover-text": "",
-        },
-        {
-            id: 3,
-            "anime-title": "Gintama",
-            "card-title-component": "",
-            "hover-text": "",
-        },
-        {
-            id: 4,
-            "anime-title": "Gintama",
-            "card-title-component": "",
-            "hover-text": "",
-        },
-        {
-            id: 5,
-            "anime-title": "Gintama",
-            "card-title-component": "",
-            "hover-text": "",
-        },
-        {
-            id: 6,
-            "anime-title": "Gintama",
-            "card-title-component": "",
-            "hover-text": "",
-        },
-        {
-            id: 7,
-            "anime-title": "Gintama",
-            "card-title-component": "",
-            "hover-text": "",
-        },
-        {
-            id: 8,
-            "anime-title": "Gintama",
-            "card-title-component": "",
-            "hover-text": "",
-        },
-        {
-            id: 9,
-            "anime-title": "Gintama",
-            "card-title-component": "",
-            "hover-text": "",
-        },
-        {
-            id: 10,
-            "anime-title": "Gintama",
-            "card-title-component": "",
-            "hover-text": "",
-        },
-        {
-            id: 11,
-            "anime-title": "Gintama",
-            "card-title-component": "",
-            "hover-text": "",
-        },
-        {
-            id: 12,
-            "anime-title": "Gintama",
-            "card-title-component": "",
-            "hover-text": "",
-        },
-        {
-            id: 13,
-            "anime-title": "Gintama",
-            "card-title-component": "",
-            "hover-text": "",
-        },
-        {
-            id: 14,
-            "anime-title": "Gintama",
-            "card-title-component": "",
-            "hover-text": "",
-        },
-        {
-            id: 15,
-            "anime-title": "Gintama",
-            "card-title-component": "",
-            "hover-text": "",
-        },
-    ];
+    import { tick, afterUpdate } from "svelte";
+    import {
+        finalAnimeList,
+        searchedAnimeKeyword,
+    } from "../../js/globalValues.js";
+    import { formatNumber } from "../../js/others/helper.js";
 
-    onMount(() => {
-        // let animeLoaderWorker = new Worker("./js/worker/animeLoader.js");
-        // console.log(animeLoaderWorker);
+    let filteredAnimeList = [];
+    let shownAnimeList = [];
+    let renderedImgGridLimit = 20;
+
+    let observer;
+    let observerTimeout;
+
+    function addObserver() {
+        observer = new IntersectionObserver(
+            (entries, self) => {
+                entries.forEach((entry) => {
+                    if (entry.isIntersecting) {
+                        self.unobserve(entry.target);
+                        if (observerTimeout) clearTimeout(observerTimeout);
+                        observerTimeout = setTimeout(() => {
+                            if (
+                                filteredAnimeList.length &&
+                                filteredAnimeList.length > shownAnimeList.length
+                            ) {
+                                shownAnimeList = shownAnimeList.concat(
+                                    filteredAnimeList.slice(
+                                        shownAnimeList.length,
+                                        Math.min(
+                                            shownAnimeList.length +
+                                                renderedImgGridLimit,
+                                            filteredAnimeList.length - 1
+                                        )
+                                    )
+                                );
+                                shownAnimeList = shownAnimeList;
+                                (async () => {
+                                    await tick();
+                                    observer.observe(
+                                        shownAnimeList[
+                                            shownAnimeList.length - 1
+                                        ].element
+                                    );
+                                })();
+                            }
+                        }, 300);
+                    }
+                });
+            },
+            {
+                root: null,
+                rootMargin: "100%",
+                threshold: 0,
+            }
+        );
+    }
+
+    finalAnimeList.subscribe((val) => {
+        if (val instanceof Array && val.length) {
+            filteredAnimeList = $finalAnimeList;
+            if (observer) {
+                observer.disconnect();
+            }
+            shownAnimeList = [];
+            shownAnimeList = shownAnimeList.concat(
+                filteredAnimeList.slice(
+                    0,
+                    Math.min(renderedImgGridLimit, filteredAnimeList.length)
+                )
+            );
+            (async () => {
+                addObserver();
+                await tick();
+                observer.observe(
+                    shownAnimeList[shownAnimeList.length - 1].element
+                );
+            })();
+        }
     });
+
+    searchedAnimeKeyword.subscribe(async (val) => {
+        if ($finalAnimeList instanceof Array && $finalAnimeList.length) {
+            filteredAnimeList = $finalAnimeList;
+            filteredAnimeList = filteredAnimeList.filter(({ title }) =>
+                hasPartialMatch(title, val)
+            );
+        }
+        if (filteredAnimeList instanceof Array && filteredAnimeList.length) {
+            if (observer) {
+                observer.disconnect();
+            }
+            shownAnimeList = [];
+            shownAnimeList = shownAnimeList.concat(
+                filteredAnimeList.slice(
+                    0,
+                    Math.min(renderedImgGridLimit, filteredAnimeList.length)
+                )
+            );
+            (async () => {
+                addObserver();
+                await tick();
+                observer.observe(
+                    shownAnimeList[shownAnimeList.length - 1].element
+                );
+            })();
+        } else if (filteredAnimeList instanceof Array) {
+            if (observer) {
+                observer.disconnect();
+            }
+            shownAnimeList = [];
+        }
+    });
+
+    let hasPartialMatch = (strings, searchString) => {
+        if (typeof strings === "string") {
+            let fullstring = strings;
+            strings = strings?.split?.(" ");
+            strings.push(fullstring);
+        }
+        return strings.some(function (str) {
+            return str
+                ?.toLowerCase?.()
+                .startsWith(searchString?.toLowerCase?.());
+        });
+    };
 </script>
 
 <main>
     <div id="anime-grid" class="image-grid">
-        {#each animes as anime (anime.id)}
-            <div class="image-grid__card" title={anime["hover-text"]}>
-                <div>
-                    <img
-                        style="opacity:0;"
-                        class="image-grid__card-thumb"
-                        alt=""
-                        src="https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/nx98292-MjBqoQt8fjzF.png"
-                        onload="this.style.opacity=1"
-                    />
-                </div>
-                <span
-                    class="image-grid__card-title copy-value"
-                    data-copy-value={anime["anime-title"]}
-                >
-                    <span class="title copy-value">{anime["anime-title"]}</span>
-                    <span class="copy-value brief-info">
-                        <div class="copy-value brief-info">
-                            <i
-                                class="green-color copy-value fa-solid fa-circle"
-                            />
-                            TV [12]
-                        </div>
-                        <div class="copy-value brief-info">
-                            <i class="red-color copy-value fa-solid fa-star" />
-                            20.12
-                        </div>
+        {#if shownAnimeList.length}
+            {#each shownAnimeList as { id, title, format, episodes, weightedScore, coverImageUrl, element }, idx (id)}
+                <div class="image-grid__card" bind:this={element}>
+                    <div class="shimmer">
+                        <img
+                            style="opacity:0;"
+                            class="image-grid__card-thumb"
+                            alt=""
+                            src={coverImageUrl}
+                            onload="this.style.opacity=1"
+                        />
+                    </div>
+                    <span
+                        class="image-grid__card-title copy-value"
+                        data-copy-value={title}
+                    >
+                        <span class="title copy-value">{title}</span>
+                        <span class="copy-value brief-info">
+                            <div class="copy-value brief-info">
+                                <i
+                                    class="green-color copy-value fa-solid fa-circle"
+                                />
+                                {`${format} [${episodes}]`}
+                            </div>
+                            <div class="copy-value brief-info">
+                                <i
+                                    class="red-color copy-value fa-solid fa-star"
+                                />
+                                {formatNumber(weightedScore)}
+                            </div>
+                        </span>
                     </span>
-                </span>
-            </div>
-        {/each}
+                </div>
+            {/each}
+            {#if shownAnimeList.length < filteredAnimeList.length}
+                {#each Array(1) as _}
+                    <div class="image-grid__card skeleton">
+                        <div class="shimmer">
+                            <img
+                                style="opacity:0;"
+                                class="image-grid__card-thumb skeleton"
+                                alt=""
+                            />
+                        </div>
+                    </div>
+                {/each}
+            {/if}
+        {:else if filteredAnimeList.length || !$finalAnimeList}
+            {#each Array(renderedImgGridLimit) as _}
+                <div class="image-grid__card skeleton">
+                    <div class="shimmer">
+                        <img
+                            style="opacity:0;"
+                            class="image-grid__card-thumb skeleton"
+                            alt=""
+                        />
+                    </div>
+                </div>
+            {/each}
+        {:else}
+            {"Empty Data"}
+        {/if}
     </div>
 </main>
 
@@ -141,28 +200,35 @@
         height: 100%;
     }
 
+    .skeleton {
+        border-radius: 6px !important;
+        background-color: rgba(0, 0, 0, 0.25) !important;
+    }
+
+    .image-grid__card.skeleton {
+        background-color: rgba(0, 0, 0, 0.25) !important;
+    }
+    .image-grid__card > div.shimmer {
+        height: 240px !important;
+    }
+
     .image-grid {
-        display: flex;
+        display: grid;
         justify-content: space-evenly;
         align-items: flex-start;
-        flex-wrap: wrap;
         grid-gap: 0.8rem;
         margin: 1.5em 0;
+        /* flex-wrap: wrap; */
+        grid-template-columns: repeat(auto-fit, minmax(180px, 180px));
     }
 
     .image-grid__card {
-        animation: fadeIn var(--transDur) ease-in;
-        width: 48%;
-        max-width: 180px;
+        animation: svelte-1g3ymol-fadeIn var(--transDur) ease-in;
+        width: 180px;
     }
 
-    .image-grid__card:focus,
-    .image-grid__card:hover {
-        z-index: 2;
-    }
-
-    .image-grid__card:focus .image-grid__card-title,
-    .image-grid__card:hover .image-grid__card-title {
+    .image-grid__card:not(.skeleton):focus .image-grid__card-title,
+    .image-grid__card:not(.skeleton):hover .image-grid__card-title {
         background-color: rgb(0, 0, 0, 0.75);
     }
 
@@ -177,8 +243,8 @@
         will-change: transform;
     }
 
-    .image-grid__card:focus .image-grid__card-thumb,
-    .image-grid__card:hover .image-grid__card-thumb {
+    .image-grid__card:not(.skeleton):focus .image-grid__card-thumb,
+    .image-grid__card:not(.skeleton):hover .image-grid__card-thumb {
         outline: transparent;
         border-radius: 0;
         opacity: 0.5;
@@ -221,6 +287,10 @@
         overflow-y: hidden;
         white-space: nowrap;
         text-overflow: unset;
+    }
+
+    .image-grid__card-title span.title::-webkit-scrollbar {
+        display: none;
     }
 
     .image-grid__card-title span.brief-info div {
@@ -306,6 +376,36 @@
 
         to {
             opacity: 1;
+        }
+    }
+
+    .shimmer {
+        position: relative;
+        overflow: hidden;
+    }
+
+    .shimmer::before {
+        animation: loadingShimmer 2s linear infinite;
+        position: absolute;
+        background: linear-gradient(
+            90deg,
+            rgba(30, 42, 56, 0) 0,
+            rgba(8, 143, 214, 0.06) 40%,
+            rgba(8, 143, 214, 0.06) 60%,
+            rgba(30, 42, 56, 0)
+        );
+        content: "";
+        display: block;
+        height: 100%;
+        transform: translateX(0);
+        width: 200%;
+    }
+    @keyframes loadingShimmer {
+        0% {
+            transform: translateX(-100%);
+        }
+        100% {
+            transform: translateX(100%);
         }
     }
 </style>

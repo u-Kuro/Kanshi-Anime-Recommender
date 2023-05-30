@@ -5,6 +5,7 @@
         IndexedDB,
         filterOptions,
         activeTagFilters,
+        searchedAnimeKeyword,
     } from "../../js/globalValues.js";
     import { dragScroll } from "../../js/others/dragScroll.js";
 
@@ -169,7 +170,8 @@
             selectedFilterElement = null;
         };
         clickOutsideListener = (event) => {
-            if ($filterOptions?.filterSelection?.length < 1) return;
+            if ($filterOptions?.filterSelection?.length < 1 || !$filterOptions)
+                return;
             let element = event.target;
             let classList = element.classList;
             // Filter Type Dropdown
@@ -814,7 +816,12 @@
 
 <main>
     <div class="input-search-wrap">
-        <input class="input-search" type="text" placeholder="Search" />
+        <input
+            class="input-search"
+            type="text"
+            placeholder="Search"
+            bind:value={$searchedAnimeKeyword}
+        />
         <div class="filterType">
             <i
                 class="fa-solid fa-sliders"
@@ -846,154 +853,180 @@
         </div>
     </div>
     <div class="filters">
-        {#each $filterOptions?.filterSelection || [] as { filterSelectionName, filters, isSelected }, filSelIdx (filterSelectionName + filSelIdx)}
-            {#each filters.Dropdown || [] as { filName, options, selected, changeType, optKeyword }, dropdownIdx (filName + dropdownIdx)}
-                <div
-                    class="filter-select"
-                    style:display={isSelected ? "" : "none"}
-                >
-                    <div class="filter-name">
-                        <h2>{filName || ""}</h2>
-                    </div>
+        {#if $filterOptions?.filterSelection?.length}
+            {#each $filterOptions?.filterSelection || [] as { filterSelectionName, filters, isSelected }, filSelIdx (filterSelectionName + filSelIdx)}
+                {#each filters.Dropdown || [] as { filName, options, selected, changeType, optKeyword }, dropdownIdx (filName + dropdownIdx)}
                     <div
-                        class="select"
-                        on:keydown={(e) => filterSelect(e, dropdownIdx)}
-                        on:click={(e) => filterSelect(e, dropdownIdx)}
+                        class="filter-select"
+                        style:display={isSelected ? "" : "none"}
                     >
+                        <div class="filter-name">
+                            <h2>{filName || ""}</h2>
+                        </div>
+                        <div
+                            class="select"
+                            on:keydown={(e) => filterSelect(e, dropdownIdx)}
+                            on:click={(e) => filterSelect(e, dropdownIdx)}
+                        >
+                            <div class="value-wrap">
+                                <input
+                                    type="search"
+                                    placeholder="Any"
+                                    autocomplete="off"
+                                    class="value-input"
+                                    bind:value={$filterOptions.filterSelection[
+                                        filSelIdx
+                                    ].filters.Dropdown[dropdownIdx].optKeyword}
+                                />
+                            </div>
+                            {#if selected && options.length && !Init}
+                                <i
+                                    class="icon fa-solid fa-angle-up"
+                                    on:keydown={closeFilterSelect(dropdownIdx)}
+                                    on:click={closeFilterSelect(dropdownIdx)}
+                                />
+                            {:else}
+                                <i class="icon fa-solid fa-angle-down" />
+                            {/if}
+                        </div>
+                        <div
+                            class="options-wrap"
+                            style:--maxFilterSelectionHeight="{maxFilterSelectionHeight}px"
+                            style:visibility={options.length &&
+                            selected &&
+                            !filtersIsScrolling &&
+                            !Init
+                                ? ""
+                                : "hidden"}
+                            style:pointer-events={options.length &&
+                            selected &&
+                            !filtersIsScrolling &&
+                            !Init
+                                ? ""
+                                : "none"}
+                        >
+                            <div class="options">
+                                {#each options as { optionName, selected }, optionIdx (optionName + optionIdx)}
+                                    {#if hasPartialMatch(optionName, optKeyword) || optKeyword === ""}
+                                        <div
+                                            class="option"
+                                            on:click={handleFilterSelectOptionChange(
+                                                optionName,
+                                                filName,
+                                                optionIdx,
+                                                dropdownIdx,
+                                                changeType
+                                            )}
+                                            on:keydown={handleFilterSelectOptionChange(
+                                                optionName,
+                                                filName,
+                                                optionIdx,
+                                                dropdownIdx,
+                                                changeType
+                                            )}
+                                        >
+                                            <h3>{optionName || ""}</h3>
+                                            {#if selected === "included"}
+                                                <i
+                                                    style:--optionColor="#5f9ea0"
+                                                    class="fa-regular fa-circle-check"
+                                                />
+                                            {:else if selected === "excluded"}
+                                                <i
+                                                    style:--optionColor="#e85d75"
+                                                    class="fa-regular fa-circle-xmark"
+                                                />
+                                            {/if}
+                                        </div>
+                                    {/if}
+                                {/each}
+                            </div>
+                        </div>
+                    </div>
+                {/each}
+                {#each filters["Input Number"] || [] as { filName, numberValue, maxValue, minValue, defaultValue }, inputNumIdx (filName + inputNumIdx)}
+                    <div
+                        class="filter-input-number"
+                        style:display={isSelected ? "" : "none"}
+                    >
+                        <div class="filter-input-number-name">
+                            <h2>{filName || ""}</h2>
+                        </div>
+                        <div class="value-input-number-wrap">
+                            <input
+                                class="value-input-number"
+                                type="text"
+                                placeholder={defaultValue !== null
+                                    ? "Default: " + defaultValue
+                                    : "Input Number"}
+                                value={numberValue || ""}
+                                on:input={(e) =>
+                                    handleInputNumber(
+                                        e,
+                                        e.target.value,
+                                        inputNumIdx,
+                                        filName,
+                                        maxValue,
+                                        minValue
+                                    )}
+                            />
+                        </div>
+                    </div>
+                {/each}
+                {#each filters.Checkbox || [] as Checkbox, checkboxIdx (Checkbox.filName + checkboxIdx)}
+                    <div
+                        class="filter-checkbox"
+                        style:display={isSelected ? "" : "none"}
+                        on:click={(e) =>
+                            handleCheckboxChange(
+                                e,
+                                Checkbox.filName,
+                                checkboxIdx
+                            )}
+                        on:keydown={(e) =>
+                            handleCheckboxChange(
+                                e,
+                                Checkbox.filName,
+                                checkboxIdx
+                            )}
+                    >
+                        <div style:visibility="none" />
+                        <div class="checkbox-wrap">
+                            <input
+                                type="checkbox"
+                                class="checkbox"
+                                on:change={(e) =>
+                                    handleCheckboxChange(
+                                        e,
+                                        Checkbox.filName,
+                                        checkboxIdx
+                                    )}
+                                bind:checked={Checkbox.isSelected}
+                            />
+                            <div class="checkbox-label">
+                                {Checkbox.filName || ""}
+                            </div>
+                        </div>
+                    </div>
+                {/each}
+            {/each}
+        {:else}
+            {#each Array(10) as _}
+                <div class="filter-select shimmer">
+                    <div class="filter-name skeleton" />
+                    <div class="select skeleton">
                         <div class="value-wrap">
                             <input
                                 type="search"
-                                placeholder="Any"
                                 autocomplete="off"
                                 class="value-input"
-                                bind:value={$filterOptions.filterSelection[
-                                    filSelIdx
-                                ].filters.Dropdown[dropdownIdx].optKeyword}
+                                disabled
                             />
                         </div>
-                        {#if selected && options.length && !Init}
-                            <i
-                                class="icon fa-solid fa-angle-up"
-                                on:keydown={closeFilterSelect(dropdownIdx)}
-                                on:click={closeFilterSelect(dropdownIdx)}
-                            />
-                        {:else}
-                            <i class="icon fa-solid fa-angle-down" />
-                        {/if}
-                    </div>
-                    <div
-                        class="options-wrap"
-                        style:--maxFilterSelectionHeight="{maxFilterSelectionHeight}px"
-                        style:visibility={options.length &&
-                        selected &&
-                        !filtersIsScrolling &&
-                        !Init
-                            ? ""
-                            : "hidden"}
-                        style:pointer-events={options.length &&
-                        selected &&
-                        !filtersIsScrolling &&
-                        !Init
-                            ? ""
-                            : "none"}
-                    >
-                        <div class="options">
-                            {#each options as { optionName, selected }, optionIdx (optionName + optionIdx)}
-                                {#if hasPartialMatch(optionName, optKeyword) || optKeyword === ""}
-                                    <div
-                                        class="option"
-                                        on:click={handleFilterSelectOptionChange(
-                                            optionName,
-                                            filName,
-                                            optionIdx,
-                                            dropdownIdx,
-                                            changeType
-                                        )}
-                                        on:keydown={handleFilterSelectOptionChange(
-                                            optionName,
-                                            filName,
-                                            optionIdx,
-                                            dropdownIdx,
-                                            changeType
-                                        )}
-                                    >
-                                        <h3>{optionName || ""}</h3>
-                                        {#if selected === "included"}
-                                            <i
-                                                style:--optionColor="#5f9ea0"
-                                                class="fa-regular fa-circle-check"
-                                            />
-                                        {:else if selected === "excluded"}
-                                            <i
-                                                style:--optionColor="#e85d75"
-                                                class="fa-regular fa-circle-xmark"
-                                            />
-                                        {/if}
-                                    </div>
-                                {/if}
-                            {/each}
-                        </div>
                     </div>
                 </div>
             {/each}
-            {#each filters["Input Number"] || [] as { filName, numberValue, maxValue, minValue, defaultValue }, inputNumIdx (filName + inputNumIdx)}
-                <div
-                    class="filter-input-number"
-                    style:display={isSelected ? "" : "none"}
-                >
-                    <div class="filter-input-number-name">
-                        <h2>{filName || ""}</h2>
-                    </div>
-                    <div class="value-input-number-wrap">
-                        <input
-                            class="value-input-number"
-                            type="text"
-                            placeholder={defaultValue !== null
-                                ? "Default: " + defaultValue
-                                : "Input Number"}
-                            value={numberValue || ""}
-                            on:input={(e) =>
-                                handleInputNumber(
-                                    e,
-                                    e.target.value,
-                                    inputNumIdx,
-                                    filName,
-                                    maxValue,
-                                    minValue
-                                )}
-                        />
-                    </div>
-                </div>
-            {/each}
-            {#each filters.Checkbox || [] as Checkbox, checkboxIdx (Checkbox.filName + checkboxIdx)}
-                <div
-                    class="filter-checkbox"
-                    style:display={isSelected ? "" : "none"}
-                    on:click={(e) =>
-                        handleCheckboxChange(e, Checkbox.filName, checkboxIdx)}
-                    on:keydown={(e) =>
-                        handleCheckboxChange(e, Checkbox.filName, checkboxIdx)}
-                >
-                    <div style:visibility="none" />
-                    <div class="checkbox-wrap">
-                        <input
-                            type="checkbox"
-                            class="checkbox"
-                            on:change={(e) =>
-                                handleCheckboxChange(
-                                    e,
-                                    Checkbox.filName,
-                                    checkboxIdx
-                                )}
-                            bind:checked={Checkbox.isSelected}
-                        />
-                        <div class="checkbox-label">
-                            {Checkbox.filName || ""}
-                        </div>
-                    </div>
-                </div>
-            {/each}
-        {/each}
+        {/if}
     </div>
     <div class="activeFilters">
         <i
@@ -1058,8 +1091,8 @@
                 {/if}
             {/each}
         </div>
-        <div class="sortFilter">
-            {#if $filterOptions?.sortFilter?.length}
+        {#if $filterOptions?.sortFilter?.length}
+            <div class="sortFilter">
                 <i
                     on:click={changeSortType}
                     on:keydown={changeSortType}
@@ -1072,49 +1105,51 @@
                             ? "up"
                             : "down")}
                 />
-            {/if}
-            <h3
-                on:click={handleSortFilterPopup}
-                on:keydown={handleSortFilterPopup}
-            >
-                {$filterOptions?.sortFilter?.[
-                    $filterOptions?.sortFilter.findIndex(
-                        ({ sortType }) => sortType !== "none"
-                    )
-                ]?.sortName || ""}
-                <div
-                    class="options-wrap"
-                    style:--maxFilterSelectionHeight="{maxFilterSelectionHeight}px"
-                    style:visibility={selectedSortElement ? "" : "hidden"}
-                    style:pointer-events={selectedSortElement ? "" : "none"}
+                <h3
+                    on:click={handleSortFilterPopup}
+                    on:keydown={handleSortFilterPopup}
                 >
-                    <div class="options">
-                        {#each $filterOptions?.sortFilter || [] as { sortName }, sortIdx (sortName + sortIdx)}
-                            <div
-                                class="option"
-                                on:click={changeSort(sortName)}
-                                on:keydown={changeSort(sortName)}
-                            >
-                                <h3>{sortName || ""}</h3>
-                                {#if $filterOptions?.sortFilter?.[$filterOptions?.sortFilter?.findIndex(({ sortType }) => sortType !== "none")].sortName === sortName && sortName}
-                                    <i
-                                        class={"fa-duotone fa-sort-" +
-                                            ($filterOptions?.sortFilter?.[
-                                                $filterOptions?.sortFilter?.findIndex(
-                                                    ({ sortType }) =>
-                                                        sortType !== "none"
-                                                )
-                                            ].sortType === "asc"
-                                                ? "up"
-                                                : "down")}
-                                    />
-                                {/if}
-                            </div>
-                        {/each}
+                    {$filterOptions?.sortFilter?.[
+                        $filterOptions?.sortFilter.findIndex(
+                            ({ sortType }) => sortType !== "none"
+                        )
+                    ]?.sortName || ""}
+                    <div
+                        class="options-wrap"
+                        style:--maxFilterSelectionHeight="{maxFilterSelectionHeight}px"
+                        style:visibility={selectedSortElement ? "" : "hidden"}
+                        style:pointer-events={selectedSortElement ? "" : "none"}
+                    >
+                        <div class="options">
+                            {#each $filterOptions?.sortFilter || [] as { sortName }, sortIdx (sortName + sortIdx)}
+                                <div
+                                    class="option"
+                                    on:click={changeSort(sortName)}
+                                    on:keydown={changeSort(sortName)}
+                                >
+                                    <h3>{sortName || ""}</h3>
+                                    {#if $filterOptions?.sortFilter?.[$filterOptions?.sortFilter?.findIndex(({ sortType }) => sortType !== "none")].sortName === sortName && sortName}
+                                        <i
+                                            class={"fa-duotone fa-sort-" +
+                                                ($filterOptions?.sortFilter?.[
+                                                    $filterOptions?.sortFilter?.findIndex(
+                                                        ({ sortType }) =>
+                                                            sortType !== "none"
+                                                    )
+                                                ].sortType === "asc"
+                                                    ? "up"
+                                                    : "down")}
+                                        />
+                                    {/if}
+                                </div>
+                            {/each}
+                        </div>
                     </div>
-                </div>
-            </h3>
-        </div>
+                </h3>
+            </div>
+        {:else}
+            <div class="sortFilter skeleton shimmer" />
+        {/if}
     </div>
 </main>
 
@@ -1134,6 +1169,11 @@
         grid-template-rows: 36px 59px 28px;
         row-gap: 1.25em;
         padding-top: 1.25em;
+    }
+
+    .skeleton {
+        border-radius: 6px !important;
+        background-color: rgba(0, 0, 0, 0.25) !important;
     }
 
     .input-search-wrap {
@@ -1409,7 +1449,8 @@
         justify-content: end;
         align-items: center;
         gap: 8px;
-        min-width: max-content;
+        min-width: 109px;
+        min-height: 15px;
         margin-left: auto;
         position: relative;
     }
@@ -1455,5 +1496,35 @@
     }
     .sortFilter .option i {
         margin-left: auto;
+    }
+
+    .shimmer {
+        position: relative;
+        overflow: hidden;
+    }
+
+    .shimmer::before {
+        animation: loadingShimmer 2s linear infinite;
+        position: absolute;
+        background: linear-gradient(
+            90deg,
+            rgba(30, 42, 56, 0) 0,
+            rgba(8, 143, 214, 0.06) 40%,
+            rgba(8, 143, 214, 0.06) 60%,
+            rgba(30, 42, 56, 0)
+        );
+        content: "";
+        display: block;
+        height: 100%;
+        transform: translateX(0);
+        width: 200%;
+    }
+    @keyframes loadingShimmer {
+        0% {
+            transform: translateX(-100%);
+        }
+        100% {
+            transform: translateX(100%);
+        }
     }
 </style>

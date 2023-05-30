@@ -69,6 +69,20 @@ const processRecommendedAnimeList = (_data) => {
     })
 }
 
+const animeLoader = (_data) => {
+    return new Promise((resolve, reject) => {
+        let worker = new Worker("./webapi/worker/animeLoader.js")
+        worker.postMessage(_data)
+        worker.onmessage = ({data}) => {
+            worker.terminate();
+            resolve(data)
+        }
+        worker.onerror = (error) => {
+            reject(error)
+        }
+    })
+}
+
 const getAnimeEntries = (_data) => {
     return new Promise((resolve, reject) => {
         let worker = new Worker("./webapi/worker/getAnimeEntries.js")
@@ -134,5 +148,6 @@ export {
     getAnimeFranchises,
     requestAnimeEntries,
     requestUserEntries,
-    processRecommendedAnimeList
+    processRecommendedAnimeList,
+    animeLoader
 }

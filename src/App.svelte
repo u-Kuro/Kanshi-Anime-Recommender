@@ -12,6 +12,7 @@
 		filterOptions,
 		activeTagFilters,
 		recommendedAnimeList,
+		finalAnimeList,
 	} from "./js/globalValues.js";
 	import {
 		getAnimeEntries,
@@ -21,6 +22,7 @@
 		requestAnimeEntries,
 		requestUserEntries,
 		processRecommendedAnimeList,
+		animeLoader,
 	} from "./js/workerUtils.js";
 	import { jsonIsEmpty, fetchAniListData } from "./js/others/helper.js";
 
@@ -174,12 +176,8 @@
 		Promise.all(initDataPromises).then(async () => {
 			console.log("yay, data processed");
 			// Check/Process Saved or get it manually?
-			let _recommendedAnimeList = await retrieveJSON(
-				"recommendedAnimeList"
-			);
-			if (!jsonIsEmpty(_recommendedAnimeList))
-				$recommendedAnimeList = _recommendedAnimeList;
-			console.log($recommendedAnimeList);
+			let _finalAnimeList = await retrieveJSON("finalAnimeList");
+			if (_finalAnimeList?.length) $finalAnimeList = _finalAnimeList;
 			// Parts
 			// Need Name and AnimeEntries
 			// 1. Have Recommendation, and all
@@ -188,7 +186,7 @@
 			// 3. Have no Recommendation, have no Userlist
 			// Get UserList then Process AnimeEntries
 			// Promised then pass global $recommendedAnimeList
-			if (!$username && false) {
+			if (!$username) {
 				// No Name?
 				// Alert User
 			} else {
@@ -225,16 +223,27 @@
 					})
 					.then(async () => {
 						// Process List
-						await processRecommendedAnimeList();
-						// 	.then(() => {
-						// 		return;
-						// 	})
-						// 	.catch((error) => {
-						// 		throw error;
-						// 	});
-						return;
+						await processRecommendedAnimeList()
+							.then(() => {
+								return;
+							})
+							.catch((error) => {
+								throw error;
+							});
+					})
+					.then(async () => {
+						// Create/Filter Processed List for Final List Shown
+						await animeLoader()
+							.then((data) => {
+								$finalAnimeList = data.finalAnimeList;
+								return;
+							})
+							.catch((error) => {
+								throw error;
+							});
 					})
 					.then(() => {
+						console.log("yey");
 						// Show List
 					})
 					.catch((error) => {
