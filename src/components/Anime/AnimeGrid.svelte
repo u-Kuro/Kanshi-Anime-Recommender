@@ -31,7 +31,7 @@
                                         Math.min(
                                             shownAnimeList.length +
                                                 renderedImgGridLimit,
-                                            filteredAnimeList.length - 1
+                                            filteredAnimeList.length
                                         )
                                     )
                                 );
@@ -219,12 +219,16 @@
         grid-gap: 0.8rem;
         margin: 1.5em 0;
         /* flex-wrap: wrap; */
-        grid-template-columns: repeat(auto-fit, minmax(180px, 180px));
+        grid-template-columns: repeat(
+            auto-fit,
+            minmax(min(calc(100% / 2), 180px), 1fr)
+        );
     }
 
     .image-grid__card {
         animation: svelte-1g3ymol-fadeIn var(--transDur) ease-in;
         width: 180px;
+        margin: 0 auto;
     }
 
     .image-grid__card:not(.skeleton):focus .image-grid__card-title,
