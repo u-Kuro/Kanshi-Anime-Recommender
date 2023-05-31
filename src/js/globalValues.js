@@ -1,7 +1,5 @@
 import { writable } from "svelte/store";
 
-const IndexedDB = writable(null)
-
 const animeEntries = writable(null)
 const lastAnimeUpdate = writable(null)
 
@@ -13,12 +11,13 @@ const filterOptions = writable(null)
 const activeTagFilters = writable(null)
 const recommendedAnimeList = writable(null)
 const finalAnimeList = writable(null)
+const animeLoaderWorker = writable(null)
+const dataStatus = writable(null)
 
 const searchedAnimeKeyword = writable("")
 const menuVisible = writable(false)
 
 export {
-    IndexedDB,
     animeEntries,
     lastAnimeUpdate,
     username,
@@ -28,6 +27,8 @@ export {
     activeTagFilters,
     recommendedAnimeList,
     finalAnimeList,
+    animeLoaderWorker,
+    dataStatus,
     searchedAnimeKeyword,
     menuVisible
 }

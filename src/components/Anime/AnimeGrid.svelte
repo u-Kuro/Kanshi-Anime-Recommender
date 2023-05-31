@@ -1,15 +1,18 @@
 <script>
-    import { tick, afterUpdate } from "svelte";
+    import { tick } from "svelte";
     import {
         finalAnimeList,
         searchedAnimeKeyword,
+        animeLoaderWorker,
+        dataStatus,
     } from "../../js/globalValues.js";
     import { formatNumber } from "../../js/others/helper.js";
 
-    let filteredAnimeList = [];
-    let shownAnimeList = [];
     let renderedImgGridLimit = 20;
+    let shownAllInList = false;
 
+    let justifyContent =
+        window.innerWidth / 180 <= 3.5 ? "space-evenly" : "space-between";
     let observer;
     let observerTimeout;
 
@@ -21,30 +24,10 @@
                         self.unobserve(entry.target);
                         if (observerTimeout) clearTimeout(observerTimeout);
                         observerTimeout = setTimeout(() => {
-                            if (
-                                filteredAnimeList.length &&
-                                filteredAnimeList.length > shownAnimeList.length
-                            ) {
-                                shownAnimeList = shownAnimeList.concat(
-                                    filteredAnimeList.slice(
-                                        shownAnimeList.length,
-                                        Math.min(
-                                            shownAnimeList.length +
-                                                renderedImgGridLimit,
-                                            filteredAnimeList.length
-                                        )
-                                    )
-                                );
-                                shownAnimeList = shownAnimeList;
-                                (async () => {
-                                    await tick();
-                                    observer.observe(
-                                        shownAnimeList[
-                                            shownAnimeList.length - 1
-                                        ].element
-                                    );
-                                })();
-                            }
+                            $animeLoaderWorker.postMessage({
+                                loadMore: true,
+                                shownAnimeLen: $finalAnimeList.length,
+                            });
                         }, 300);
                     }
                 });
@@ -57,80 +40,84 @@
         );
     }
 
+    animeLoaderWorker.subscribe((val) => {
+        if (val instanceof Worker) {
+            val.onmessage = ({ data }) => {
+                if (data?.status !== undefined) $dataStatus = data.status;
+                else if (
+                    data.finalAnimeList instanceof Array &&
+                    $finalAnimeList instanceof Array
+                ) {
+                    if (data.isNew) {
+                        $finalAnimeList = data.finalAnimeList;
+                    } else {
+                        $finalAnimeList = $finalAnimeList.concat(
+                            data.finalAnimeList
+                        );
+                        if (data.isLast) {
+                            shownAllInList = true;
+                            if (observer) {
+                                observer.disconnect();
+                            }
+                        }
+                    }
+                }
+            };
+            val.onerror = (error) => {
+                console.error(error);
+            };
+        }
+    });
+
     finalAnimeList.subscribe((val) => {
         if (val instanceof Array && val.length) {
-            filteredAnimeList = $finalAnimeList;
             if (observer) {
                 observer.disconnect();
             }
-            shownAnimeList = [];
-            shownAnimeList = shownAnimeList.concat(
-                filteredAnimeList.slice(
-                    0,
-                    Math.min(renderedImgGridLimit, filteredAnimeList.length)
-                )
-            );
-            (async () => {
-                addObserver();
-                await tick();
-                observer.observe(
-                    shownAnimeList[shownAnimeList.length - 1].element
-                );
-            })();
+            if ($finalAnimeList.length && !shownAllInList) {
+                (async () => {
+                    addObserver();
+                    await tick();
+                    observer.observe(
+                        $finalAnimeList[$finalAnimeList.length - 1].element
+                    );
+                })();
+            }
+        } else {
+            if (observer) {
+                observer.disconnect();
+            }
+        }
+        if (val?.length <= 2) {
+            justifyContent = "space-evenly";
+        } else if (val) {
+            justifyContent = "space-between";
         }
     });
 
     searchedAnimeKeyword.subscribe(async (val) => {
-        if ($finalAnimeList instanceof Array && $finalAnimeList.length) {
-            filteredAnimeList = $finalAnimeList;
-            filteredAnimeList = filteredAnimeList.filter(({ title }) =>
-                hasPartialMatch(title, val)
-            );
-        }
-        if (filteredAnimeList instanceof Array && filteredAnimeList.length) {
-            if (observer) {
-                observer.disconnect();
-            }
-            shownAnimeList = [];
-            shownAnimeList = shownAnimeList.concat(
-                filteredAnimeList.slice(
-                    0,
-                    Math.min(renderedImgGridLimit, filteredAnimeList.length)
-                )
-            );
-            (async () => {
-                addObserver();
-                await tick();
-                observer.observe(
-                    shownAnimeList[shownAnimeList.length - 1].element
-                );
-            })();
-        } else if (filteredAnimeList instanceof Array) {
-            if (observer) {
-                observer.disconnect();
-            }
-            shownAnimeList = [];
+        if (typeof val === "string" && $animeLoaderWorker instanceof Worker) {
+            shownAllInList = false;
+            $animeLoaderWorker.postMessage({
+                filterKeyword: val,
+            });
         }
     });
 
-    let hasPartialMatch = (strings, searchString) => {
-        if (typeof strings === "string") {
-            let fullstring = strings;
-            strings = strings?.split?.(" ");
-            strings.push(fullstring);
-        }
-        return strings.some(function (str) {
-            return str
-                ?.toLowerCase?.()
-                .startsWith(searchString?.toLowerCase?.());
-        });
-    };
+    window.addEventListener("resize", () => {
+        justifyContent =
+            window.innerWidth / 180 <= 3.5 ? "space-evenly" : "space-between";
+    });
 </script>
 
 <main>
-    <div id="anime-grid" class="image-grid">
-        {#if shownAnimeList.length}
-            {#each shownAnimeList as { id, title, format, episodes, weightedScore, coverImageUrl, element }, idx (id)}
+    <div
+        id="anime-grid"
+        class="image-grid"
+        style:justify-content={justifyContent}
+    >
+        {#if $finalAnimeList?.length}
+            {#each $finalAnimeList || [] as { id, title, format, episodes, weightedScore, coverImageUrl, element }, idx (id)}
                 <div class="image-grid__card" bind:this={element}>
                     <div class="shimmer">
                         <img
@@ -163,7 +150,7 @@
                     </span>
                 </div>
             {/each}
-            {#if shownAnimeList.length < filteredAnimeList.length}
+            {#if $finalAnimeList?.length && !shownAllInList}
                 {#each Array(1) as _}
                     <div class="image-grid__card skeleton">
                         <div class="shimmer">
@@ -176,7 +163,7 @@
                     </div>
                 {/each}
             {/if}
-        {:else if filteredAnimeList.length || !$finalAnimeList}
+        {:else if !$finalAnimeList}
             {#each Array(renderedImgGridLimit) as _}
                 <div class="image-grid__card skeleton">
                     <div class="shimmer">
@@ -202,11 +189,11 @@
 
     .skeleton {
         border-radius: 6px !important;
-        background-color: rgba(0, 0, 0, 0.25) !important;
+        background-color: rgba(30, 42, 56, 0.8) !important;
     }
 
     .image-grid__card.skeleton {
-        background-color: rgba(0, 0, 0, 0.25) !important;
+        background-color: rgba(30, 42, 56, 0.8) !important;
     }
     .image-grid__card > div.shimmer {
         height: 240px !important;
@@ -214,20 +201,20 @@
 
     .image-grid {
         display: grid;
-        justify-content: space-evenly;
+        /* flex-wrap: wrap; */
+        justify-content: space-between;
         align-items: flex-start;
         grid-gap: 0.8rem;
         margin: 1.5em 0;
-        /* flex-wrap: wrap; */
         grid-template-columns: repeat(
             auto-fit,
-            minmax(min(calc(100% / 2), 180px), 1fr)
+            minmax(min(100%/2 - 0.8rem, 180px), 0)
         );
     }
 
     .image-grid__card {
         animation: svelte-1g3ymol-fadeIn var(--transDur) ease-in;
-        width: 180px;
+        width: 100%;
         margin: 0 auto;
     }
 
@@ -262,7 +249,7 @@
         user-select: none;
     }
 
-    .image-grid__card-thumb--portrait {
+    .image-grid__card-thumb-portrait {
         width: 100%;
         height: auto;
     }

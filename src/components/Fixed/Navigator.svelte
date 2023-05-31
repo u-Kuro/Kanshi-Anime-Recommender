@@ -1,7 +1,16 @@
 <script>
-    import { IndexedDB, username, menuVisible } from "../../js/globalValues.js";
+    import {
+        username,
+        finalAnimeList,
+        dataStatus,
+        menuVisible,
+    } from "../../js/globalValues.js";
     import { IDBinit, retrieveJSON, saveJSON } from "../../js/indexedDB.js";
-    import { requestUserEntries } from "../../js/workerUtils.js";
+    import {
+        requestUserEntries,
+        processRecommendedAnimeList,
+        animeLoader,
+    } from "../../js/workerUtils.js";
     import { onMount, onDestroy } from "svelte";
 
     let writableSubscriptions = [];
@@ -33,26 +42,59 @@
         ) {
             if (typedUsername !== $username) {
                 (async () => {
-                    if (!$IndexedDB) $IndexedDB = await IDBinit();
                     if ($username) {
                         if (
                             confirm(
                                 `Currently connected to ${$username}, do you want to update?`
                             )
                         ) {
-                            await requestUserEntries({
+                            $dataStatus = "Getting User Entries";
+                            requestUserEntries({
                                 username: typedUsername,
                             })
-                                .then(({ message }) => {
-                                    alert(message);
+                                .then(({ message, newusername }) => {
+                                    if (newusername) {
+                                        typedUsername = $username = newusername;
+                                        processRecommendedAnimeList()
+                                            .then(() => {
+                                                animeLoader()
+                                                    .then((data) => {
+                                                        $finalAnimeList =
+                                                            data.finalAnimeList;
+                                                        return;
+                                                    })
+                                                    .catch((error) => {
+                                                        throw error;
+                                                    });
+                                            })
+                                            .catch((error) => {
+                                                throw error;
+                                            });
+                                    }
                                 })
                                 .catch((error) => alert(error));
                         }
                     } else {
+                        $dataStatus = "Getting User Entries";
                         await requestUserEntries({ username: typedUsername })
-                            .then(({ message }) => {
-                                typedUsername = $username = username;
-                                alert(message);
+                            .then(({ message, newusername }) => {
+                                if (newusername)
+                                    typedUsername = $username = newusername;
+                                processRecommendedAnimeList()
+                                    .then(() => {
+                                        animeLoader()
+                                            .then((data) => {
+                                                $finalAnimeList =
+                                                    data.finalAnimeList;
+                                                return;
+                                            })
+                                            .catch((error) => {
+                                                throw error;
+                                            });
+                                    })
+                                    .catch((error) => {
+                                        throw error;
+                                    });
                             })
                             .catch((error) => alert(error));
                     }

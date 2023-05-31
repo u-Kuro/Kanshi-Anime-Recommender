@@ -5,6 +5,7 @@ let minNumber = 1 - 6e-17 !== 1 ? 6e-17 : 1e-16;
 self.onmessage = async({data}) => {
     if(!db) await IDBinit()
     // Retrieve Data
+    self.postMessage({status:"Initializing Filters"})
     let activeTagFilters = await retrieveJSON("activeTagFilters")
     let animeEntries = await retrieveJSON("animeEntries") || {}
     let userEntries = await retrieveJSON("userEntries") || []
@@ -73,6 +74,7 @@ self.onmessage = async({data}) => {
             return result
         },[])
     }
+    self.postMessage({status:"Analyzing User List"})
     // Sort User Entries for Anomaly Removal
     if(userEntries.length>=2){
         if( typeof userEntries[0]?.score==="number"
@@ -109,6 +111,7 @@ self.onmessage = async({data}) => {
     let studiosMeanCount = {}
     let staffMeanCount = {}
     let includedAnimeRelations = {}
+    self.postMessage({status:"Processing User Schema"})
     for(let i=0; i<userEntries.length; i++){
         let anime = userEntries[i].media
         let animeID = anime?.id
@@ -662,6 +665,7 @@ self.onmessage = async({data}) => {
     }
 
     // Calculate Anime Recommendation List
+    self.postMessage({status:"Processing Recommendation List"})
     // Init Data
     let filters = await retrieveJSON("filters")
     animeEntries = Object.values(animeEntries ?? {});
@@ -1261,9 +1265,10 @@ self.onmessage = async({data}) => {
             let season = anime?.season;
             let genres = anime?.genres || [];
             let tags = anime?.tags || [];
-            let studios = anime?.studios?.nodes?.filter((studio) => {
-                return studio?.isAnimationStudio;
-            }) || [];
+            let studios =
+            anime?.studios?.nodes?.filter(
+                (studio) => studio?.isAnimationStudio
+            ) || [];
             let staffs = anime?.staff?.edges || [];
             let status = anime?.status;
             let episodes = anime?.episodes
@@ -1353,14 +1358,14 @@ self.onmessage = async({data}) => {
             // Other Anime Recommendation Info
             genres = genres.length ? genres : [];
             tags = tags.length ? tags.map((e) => e?.name || "") : [];
-            studios = studios.reduce((result, e) => {
+            studios = studios.reduce((result, e) => 
                 Object.assign(result, { [formatCustomString(e?.name)]: e?.siteUrl })
-            },{});
-            staffs = staffs.reduce((result, e) =>{
+            ,{});
+            staffs = staffs.reduce((result, e) =>
                 Object.assign(result, {
                     [e?.node?.name?.userPreferred]: e?.node?.siteUrl,
                 })
-            },{});
+            ,{});
             recommendedAnimeList[animeID] = {
                 id: animeID,
                 title: title,
@@ -1388,6 +1393,49 @@ self.onmessage = async({data}) => {
                 bannerImageUrl: anime?.bannerImage,
             };
         }
+        let recommendedAnimeListEntries = Object.keys(recommendedAnimeList);
+        for (let i = 0; i < recommendedAnimeListEntries.length; i++) {
+            let anime = recommendedAnimeList[recommendedAnimeListEntries[i]];
+            let popularity = anime.popularity;
+            let weightedScore = anime.weightedScore;
+            let averageScore = anime.averageScore;
+            // Add Mean Score
+            if (typeof meanScoreAll === "number") {
+                recommendedAnimeList[recommendedAnimeListEntries[i]].meanScoreAll = meanScoreAll;
+            } else {
+                recommendedAnimeList[recommendedAnimeListEntries[i]].meanScoreAll = 0;
+            }
+            if (typeof meanScoreAbove === "number") {
+                recommendedAnimeList[recommendedAnimeListEntries[i]].meanScoreAbove = meanScoreAbove;
+            } else {
+                recommendedAnimeList[recommendedAnimeListEntries[i]].meanScoreAbove = 0;
+            }
+            // Low Average
+            if (isaN(averageScore)) {
+                if (typeof averageScore === "string") {
+                    averageScore = parseFloat(averageScore);
+                }
+                if (averageScore < averageScoreMode) {
+                    let ASmult = averageScore * 0.01;
+                    recommendedAnimeList[recommendedAnimeListEntries[i]].weightedScore =weightedScore * (ASmult >= 1 ? 1 : ASmult);
+                }
+            }
+            // Low Popularity
+            if (typeof popularity === "number" && typeof popularityMode === "number" && typeof popularitySum === "number" && popularitySum && typeof weightedScore === "number" && weightedScore) {
+                if (popularity < popularityMode) {
+                    recommendedAnimeList[recommendedAnimeListEntries[i]].weightedScore =
+                    popularity
+                        ? (anime.popularity / popularitySum) * weightedScore
+                        : (minNumber / popularitySum) * weightedScore;
+                }
+            }
+            if (!anime.weightedScore || !isFinite(anime.weightedScore)) {
+                recommendedAnimeList[recommendedAnimeListEntries[i]].weightedScore = 0;
+            }
+            if (!anime.score || !isFinite(anime.score)) {
+                recommendedAnimeList[recommendedAnimeListEntries[i]].score = 0;
+            }
+        }
     }
     // Save Processed Recommendation List and other Data
     await saveJSON(userEntries,'userEntries')
@@ -1397,6 +1445,7 @@ self.onmessage = async({data}) => {
     // Notify User List Count ...
     // await saveJSON(username, 'username')
     await saveJSON(Object.values(recommendedAnimeList), 'recommendedAnimeList')
+    self.postMessage({status:null})
     self.postMessage({message:'success'})
 }
 function formatCustomString(str){
@@ -1532,63 +1581,30 @@ async function IDBinit() {
     });
 }
 async function saveJSON(data, name) {
-    return await new Promise(async (resolve) => {
+    return await new Promise(async (resolve,reject) => {
         try {
             let write = db
             .transaction("MyObjectStore", "readwrite")
             .objectStore("MyObjectStore")
             .openCursor();
             write.onsuccess = async (event) => {
-                const cursor = event.target.result;
-                if (cursor) {
-                    if (cursor.key === name) {
-                        await cursor.update(data);
-                        return resolve();
-                    }
-                    await cursor.continue();
-                } else {
-                    let add = await db
+                let put = await db
                     .transaction("MyObjectStore", "readwrite")
                     .objectStore("MyObjectStore")
-                    .add(data, name);
-                    add.onsuccess = (event) => {
-                        return resolve();
-                    }
-                    add.onerror = (event) => {
-                        return resolve();
-                    }
+                    .put(data, name);
+                put.onsuccess = (event) => {
+                    return resolve();
+                }
+                put.onerror = (event) => {
+                    return resolve();
                 }
             };
             write.onerror = async (error) => {
                 console.error(error);
-                let add = await db
-                    .transaction("MyObjectStore", "readwrite")
-                    .objectStore("MyObjectStore")
-                    .add(data, name);
-                add.onsuccess = () => {
-                    return resolve();
-                }
-                add.onerror = () => {
-                    return resolve()
-                }
+                return reject()
             };
         } catch (ex) {
-            try {
-                console.error(ex);
-                let add = await db
-                    .transaction("MyObjectStore", "readwrite")
-                    .objectStore("MyObjectStore")
-                    .add(data, name);
-                add.onsuccess = () => {
-                    return resolve();
-                }
-                add.onerror = () => {
-                    return resolve()
-                }
-            } catch (ex2) {
-                console.error(ex2);
-                return resolve();
-            }
+            console.error(ex)
         }
     });
 }

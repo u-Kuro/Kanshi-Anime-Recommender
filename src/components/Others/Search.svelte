@@ -2,11 +2,18 @@
     import { onMount, onDestroy } from "svelte";
     import { IDBinit, retrieveJSON, saveJSON } from "../../js/indexedDB.js";
     import {
-        IndexedDB,
+        finalAnimeList,
+        animeLoaderWorker,
         filterOptions,
         activeTagFilters,
         searchedAnimeKeyword,
+        dataStatus,
     } from "../../js/globalValues.js";
+    import {
+        processRecommendedAnimeList,
+        animeLoader,
+    } from "../../js/workerUtils.js";
+    import { fade } from "svelte/transition";
     import { dragScroll } from "../../js/others/dragScroll.js";
 
     let writableSubscriptions = [];
@@ -43,9 +50,58 @@
     let changeSort;
     let changeSortType;
 
-    async function saveFilters() {
-        await saveJSON($filterOptions, "filterOptions");
-        await saveJSON($activeTagFilters, "activeTagFilters");
+    let nameChangeUpdateProcessedList = ["Algorithm Filter"];
+    let nameChangeUpdateFinalList = ["sort", "Anime Filter", "Content Warning"];
+
+    async function saveFilters(changeName) {
+        if (nameChangeUpdateProcessedList.includes(changeName)) {
+            $dataStatus = "Updating List";
+            await saveJSON(true, "shouldProcessRecommendation");
+            await saveJSON(true, "shouldLoadAnime");
+            await saveJSON($filterOptions, "filterOptions");
+            await saveJSON($activeTagFilters, "activeTagFilters");
+            $finalAnimeList = null;
+            processRecommendedAnimeList()
+                .then(async () => {
+                    await saveJSON(false, "shouldProcessRecommendation");
+                    animeLoader()
+                        .then(async (data) => {
+                            $animeLoaderWorker = data.animeLoaderWorker;
+                            $searchedAnimeKeyword = "";
+                            $finalAnimeList = data.finalAnimeList;
+                            $dataStatus = null;
+                            await saveJSON(false, "shouldLoadAnime");
+                            return;
+                        })
+                        .catch((error) => {
+                            throw error;
+                        });
+                })
+                .catch((error) => {
+                    throw error;
+                });
+        } else if (nameChangeUpdateFinalList.includes(changeName)) {
+            $dataStatus = "Updating List";
+            $finalAnimeList = null;
+            await saveJSON(true, "shouldLoadAnime");
+            await saveJSON($filterOptions, "filterOptions");
+            await saveJSON($activeTagFilters, "activeTagFilters");
+            animeLoader()
+                .then(async (data) => {
+                    $animeLoaderWorker = data.animeLoaderWorker;
+                    $searchedAnimeKeyword = "";
+                    $finalAnimeList = data.finalAnimeList;
+                    $dataStatus = null;
+                    await saveJSON(false, "shouldLoadAnime");
+                    return;
+                })
+                .catch((error) => {
+                    throw error;
+                });
+        } else {
+            await saveJSON($filterOptions, "filterOptions");
+            await saveJSON($activeTagFilters, "activeTagFilters");
+        }
     }
 
     onMount(() => {
@@ -223,7 +279,8 @@
             optionType,
             optionIdx,
             dropdownIdx,
-            changeType
+            changeType,
+            filterSelectionName
         ) => {
             let idxTypeSelected = $filterOptions?.filterSelection?.findIndex(
                 ({ isSelected }) => isSelected
@@ -307,9 +364,14 @@
                         )
                 );
             }
-            saveFilters();
+            saveFilters(filterSelectionName);
         };
-        handleCheckboxChange = (event, checkBoxName, checkboxIdx) => {
+        handleCheckboxChange = (
+            event,
+            checkBoxName,
+            checkboxIdx,
+            filterSelectionName
+        ) => {
             let element = event.target;
             let classList = element.classList;
             let keyCode = event.which || event.keyCode || 0;
@@ -358,7 +420,7 @@
             ].isSelected =
                 !$filterOptions?.filterSelection?.[idxTypeSelected].filters
                     .Checkbox[checkboxIdx].isSelected;
-            saveFilters();
+            saveFilters(filterSelectionName);
         };
         handleInputNumber = (
             event,
@@ -366,7 +428,8 @@
             inputNumIdx,
             inputNumberName,
             maxValue,
-            minValue
+            minValue,
+            filterSelectionName
         ) => {
             let idxTypeSelected = $filterOptions?.filterSelection?.findIndex(
                 ({ isSelected }) => isSelected
@@ -378,15 +441,6 @@
                 $filterOptions?.filterSelection?.[idxTypeSelected].filters[
                     "Input Number"
                 ][inputNumIdx].numberValue;
-            let newValueLowerCase = newValue.toLowerCase();
-            if (
-                newValueLowerCase === "infinity" ||
-                newValueLowerCase === "-Infinity"
-            ) {
-                newValue = newValueLowerCase.startsWith("-")
-                    ? "-Infinity"
-                    : "Infinity";
-            }
             if (
                 (newValue !== currentValue &&
                     !isNaN(newValue) &&
@@ -395,39 +449,9 @@
                         typeof minValue !== "number") &&
                     (parseFloat(newValue) <= maxValue ||
                         typeof maxValue !== "number")) ||
-                newValue === "" ||
-                (newValue.startsWith("-") &&
-                    (typeof minValue === "number" ? minValue < 0 : true)) ||
-                ("-infinity".includes(newValueLowerCase) &&
-                    (typeof minValue === "number"
-                        ? minValue === -Infinity
-                        : true)) ||
-                ("infinity".includes(newValueLowerCase) &&
-                    (typeof maxValue === "number"
-                        ? maxValue === Infinity
-                        : true))
+                newValue === ""
             ) {
                 if (newValue === "") {
-                    $activeTagFilters[nameTypeSelected] = $activeTagFilters[
-                        nameTypeSelected
-                    ].filter(
-                        (e) =>
-                            !(
-                                e.optionIdx === inputNumIdx &&
-                                e.optionName === inputNumberName &&
-                                e.optionValue === parseFloat(currentValue) &&
-                                e.filterType === "input number" &&
-                                e.selected === "included"
-                            )
-                    );
-                } else if (
-                    (("-infinity".includes(newValueLowerCase) ||
-                        "infinity".includes(newValueLowerCase)) &&
-                    newValueLowerCase.startsWith("-")
-                        ? newValueLowerCase !== "-infinity"
-                        : newValueLowerCase !== "infinity") &&
-                    isNaN(newValue)
-                ) {
                     $activeTagFilters[nameTypeSelected] = $activeTagFilters[
                         nameTypeSelected
                     ].filter(
@@ -478,7 +502,7 @@
                 $filterOptions.filterSelection[idxTypeSelected].filters[
                     "Input Number"
                 ][inputNumIdx].numberValue = newValue;
-                saveFilters();
+                saveFilters(filterSelectionName);
             } else if (
                 isNaN(newValue) ||
                 (newValue < minValue && typeof minValue === "number") ||
@@ -540,7 +564,7 @@
                     return e;
                 });
             }
-            saveFilters();
+            saveFilters(nameTypeSelected);
         };
         removeActiveTag = (optionIdx, optionName, filterType, categIdx) => {
             if (tagFilterIsScrolling) return;
@@ -577,7 +601,7 @@
                         e.filterType === filterType
                     )
             );
-            saveFilters();
+            saveFilters(nameTypeSelected);
         };
         removeAllActiveTag = () => {
             if (tagFilterIsScrolling) return false;
@@ -617,7 +641,7 @@
                 $filterOptions.filterSelection[idxTypeSelected] =
                     $filterOptions?.filterSelection?.[idxTypeSelected];
                 $activeTagFilters[nameTypeSelected] = [];
-                saveFilters();
+                saveFilters(nameTypeSelected);
             }
         };
         handleSortFilterPopup = (event) => {
@@ -652,7 +676,7 @@
                 );
                 $filterOptions.sortFilter[idxNewSortSelected].sortType = "desc";
             }
-            saveFilters();
+            saveFilters("sort");
         };
         changeSortType = () => {
             let { sortType } = $filterOptions?.sortFilter?.filter(
@@ -666,7 +690,7 @@
             } else {
                 $filterOptions.sortFilter[idxSortSelected].sortType = "desc";
             }
-            saveFilters();
+            saveFilters("sort");
         };
         handleDropdownKeyDown = (event) => {
             let keyCode = event.which || event.keyCode || 0;
@@ -771,15 +795,8 @@
         };
         hasPartialMatch = (strings, searchString) => {
             if (typeof strings === "string") {
-                let fullstring = strings;
-                strings = strings?.split?.(" ");
-                strings.push(fullstring);
+                return strings.includes(searchString);
             }
-            return strings.some(function (str) {
-                return str
-                    ?.toLowerCase?.()
-                    .startsWith(searchString?.toLowerCase?.());
-            });
         };
         document
             .getElementsByClassName("filters")[0]
@@ -852,6 +869,22 @@
             </div>
         </div>
     </div>
+    <div class="home-status">
+        <span>
+            <h2>
+                {$filterOptions?.filterSelection?.filter?.(
+                    ({ isSelected }) => isSelected
+                )?.[0]?.filterSelectionName || ""}
+            </h2>
+        </span>
+        {#if $dataStatus}
+            <span transition:fade={{ duration: 300 }} class="data-status">
+                <h2>
+                    {$dataStatus || ""}
+                </h2>
+            </span>
+        {/if}
+    </div>
     <div class="filters">
         {#if $filterOptions?.filterSelection?.length}
             {#each $filterOptions?.filterSelection || [] as { filterSelectionName, filters, isSelected }, filSelIdx (filterSelectionName + filSelIdx)}
@@ -915,14 +948,16 @@
                                                 filName,
                                                 optionIdx,
                                                 dropdownIdx,
-                                                changeType
+                                                changeType,
+                                                filterSelectionName
                                             )}
                                             on:keydown={handleFilterSelectOptionChange(
                                                 optionName,
                                                 filName,
                                                 optionIdx,
                                                 dropdownIdx,
-                                                changeType
+                                                changeType,
+                                                filterSelectionName
                                             )}
                                         >
                                             <h3>{optionName || ""}</h3>
@@ -967,7 +1002,8 @@
                                         inputNumIdx,
                                         filName,
                                         maxValue,
-                                        minValue
+                                        minValue,
+                                        filterSelectionName
                                     )}
                             />
                         </div>
@@ -981,13 +1017,15 @@
                             handleCheckboxChange(
                                 e,
                                 Checkbox.filName,
-                                checkboxIdx
+                                checkboxIdx,
+                                filterSelectionName
                             )}
                         on:keydown={(e) =>
                             handleCheckboxChange(
                                 e,
                                 Checkbox.filName,
-                                checkboxIdx
+                                checkboxIdx,
+                                filterSelectionName
                             )}
                     >
                         <div style:visibility="none" />
@@ -999,7 +1037,8 @@
                                     handleCheckboxChange(
                                         e,
                                         Checkbox.filName,
-                                        checkboxIdx
+                                        checkboxIdx,
+                                        filterSelectionName
                                     )}
                                 bind:checked={Checkbox.isSelected}
                             />
@@ -1068,7 +1107,9 @@
                         )}
                     >
                         {#if filterType === "input number"}
-                            <h3>{optionName + ": " + optionValue || ""}</h3>
+                            <h3>
+                                {optionName + ": " + optionValue || ""}
+                            </h3>
                         {:else}
                             <h3>{optionName || ""}</h3>
                         {/if}
@@ -1166,14 +1207,14 @@
 
     main {
         display: grid;
-        grid-template-rows: 36px 59px 28px;
+        grid-template-rows: 36px 18px 59px 28px;
         row-gap: 1.25em;
         padding-top: 1.25em;
     }
 
     .skeleton {
         border-radius: 6px !important;
-        background-color: rgba(0, 0, 0, 0.25) !important;
+        background-color: rgba(30, 42, 56, 0.8) !important;
     }
 
     .input-search-wrap {
@@ -1238,6 +1279,28 @@
     .filterType .option h3 {
         cursor: pointer;
         text-transform: capitalize;
+    }
+
+    .home-status {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+        column-gap: 10px;
+    }
+
+    .home-status span {
+        overflow-x: auto;
+        overflow-y: hidden;
+    }
+
+    .home-status span h2 {
+        white-space: nowrap;
+    }
+
+    .home-status .data-status h2 {
+        margin-left: auto;
     }
 
     .filters {
@@ -1316,7 +1379,7 @@
 
     .filter-select .options-wrap {
         position: absolute;
-        top: 180px;
+        top: 210px;
         background-color: rgb(21, 31, 46);
         width: 142px;
         overflow-y: auto;
@@ -1464,6 +1527,7 @@
     .sortFilter .options-wrap {
         position: absolute;
         right: 0;
+        top: 20px;
         background-color: rgb(21, 31, 46);
         overflow-y: auto;
         overflow-x: hidden;

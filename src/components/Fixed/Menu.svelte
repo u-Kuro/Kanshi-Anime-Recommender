@@ -1,6 +1,8 @@
 <script>
     import { menuVisible } from "../../js/globalValues.js";
     import { onMount, onDestroy } from "svelte";
+    import { fade, fly } from "svelte/transition";
+
     let handleMenuVisibility;
     onMount(() => {
         handleMenuVisibility = (event) => {
@@ -17,6 +19,7 @@
         class="menu-container"
         on:click={handleMenuVisibility}
         on:keydown={handleMenuVisibility}
+        transition:fade={{ duration: 300 }}
     >
         <div class="menu">
             <button class="button" id="updateBtn">Update</button>

@@ -3,7 +3,6 @@
 	import { onMount, onDestroy } from "svelte";
 	import { IDBinit, retrieveJSON, saveJSON } from "./js/indexedDB.js";
 	import {
-		IndexedDB,
 		animeEntries,
 		lastAnimeUpdate,
 		username,
@@ -13,10 +12,12 @@
 		activeTagFilters,
 		recommendedAnimeList,
 		finalAnimeList,
+		animeLoaderWorker,
+		searchedAnimeKeyword,
+		dataStatus,
 	} from "./js/globalValues.js";
 	import {
 		getAnimeEntries,
-		getUserEntries,
 		getFilterOptions,
 		getAnimeFranchises,
 		requestAnimeEntries,
@@ -24,12 +25,14 @@
 		processRecommendedAnimeList,
 		animeLoader,
 	} from "./js/workerUtils.js";
-	import { jsonIsEmpty, fetchAniListData } from "./js/others/helper.js";
+	import { jsonIsEmpty } from "./js/others/helper.js";
 
 	onMount(async () => {
 		// Init Data
 		let initDataPromises = [];
+		let shouldProcessRecommendation, shouldLoadAnime;
 		// Check/Get/Update/Process Anime Entries
+		$dataStatus = "Getting Existing Data";
 		initDataPromises.push(
 			new Promise(async (resolve, reject) => {
 				let animeEntriesLen = await retrieveJSON("animeEntriesLength");
@@ -42,7 +45,6 @@
 					getAnimeEntries()
 						.then(async (data) => {
 							$lastAnimeUpdate = data.lastAnimeUpdate;
-							$animeEntries = await retrieveJSON("animeEntries");
 							resolve();
 						})
 						.catch((error) => reject(error));
@@ -56,64 +58,14 @@
 		initDataPromises.push(
 			new Promise(async (resolve, reject) => {
 				let _username = await retrieveJSON("username");
-				if (_username) $username = _username;
-				let _userEntries = await retrieveJSON("userEntries");
-				if (_userEntries) $userEntries = _userEntries;
-				let _lastUserAnimeUpdate = await retrieveJSON(
-					"lastUserAnimeUpdate"
-				);
-				if (_lastUserAnimeUpdate)
-					$lastUserAnimeUpdate = _lastUserAnimeUpdate;
-				if ($username) {
-					if (
-						jsonIsEmpty($userEntries) ||
-						!($lastUserAnimeUpdate instanceof Date)
-					) {
-						getUserEntries()
-							.then(async (data) => {
-								$lastUserAnimeUpdate = data.lastUserAnimeUpdate;
-								_userEntries = await retrieveJSON(
-									"userEntries"
-								);
-								if (_userEntries) $userEntries = _userEntries;
-								resolve();
-							})
-							.catch((error) => reject(error));
-					} else {
-						fetchAniListData(
-							`{User(name: "${$username}"){updatedAt}}`
-						)
-							.then((result) => {
-								let userUpdate = $lastUserAnimeUpdate;
-								let recentUserUpdate = new Date(
-									result.data.User.updatedAt * 1000
-								);
-								if (
-									!($lastUserAnimeUpdate instanceof Date) ||
-									isNaN(userUpdate) ||
-									(recentUserUpdate instanceof Date &&
-										!isNaN(recentUserUpdate) &&
-										$lastUserAnimeUpdate < recentUserUpdate)
-								) {
-									getUserEntries()
-										.then(async (data) => {
-											$lastUserAnimeUpdate =
-												data.lastUserAnimeUpdate;
-											_userEntries = await retrieveJSON(
-												"userEntries"
-											);
-											if (_userEntries)
-												$userEntries = _userEntries;
-											resolve();
-										})
-										.catch((error) => reject(error));
-								} else {
-									resolve();
-								}
-							})
-							.catch((error) => reject(error));
-						// updateUserEntries
-					}
+				if (_username) {
+					$username = _username;
+					requestUserEntries({ username: $username })
+						.then(async (data) => {
+							console.log(data.message);
+							resolve();
+						})
+						.catch((error) => reject(error));
 				} else {
 					resolve();
 				}
@@ -172,84 +124,95 @@
 			})
 		);
 
+		initDataPromises.push(
+			new Promise(async (resolve) => {
+				shouldProcessRecommendation = await retrieveJSON(
+					"shouldProcessRecommendation"
+				);
+				shouldLoadAnime = await retrieveJSON("shouldLoadAnime");
+				if (!shouldLoadAnime && !shouldProcessRecommendation) {
+					// let _finalAnimeList = await retrieveJSON("finalAnimeList");
+					// if (_finalAnimeList?.length)
+					// 	$finalAnimeList = _finalAnimeList;
+				}
+				resolve();
+			})
+		);
+
 		// Data Processing
 		Promise.all(initDataPromises).then(async () => {
-			console.log("yay, data processed");
-			// Check/Process Saved or get it manually?
-			let _finalAnimeList = await retrieveJSON("finalAnimeList");
-			if (_finalAnimeList?.length) $finalAnimeList = _finalAnimeList;
-			// Parts
-			// Need Name and AnimeEntries
-			// 1. Have Recommendation, and all
-			// 2. Have no Recommendation, have Userlist
-			// Process the Recommendation
-			// 3. Have no Recommendation, have no Userlist
-			// Get UserList then Process AnimeEntries
-			// Promised then pass global $recommendedAnimeList
-			if (!$username) {
-				// No Name?
-				// Alert User
-			} else {
-				new Promise(async (resolve, reject) => {
-					// Check and request Anime Entries
-					let animeEntriesLen = await retrieveJSON(
-						"animeEntriesLength"
-					);
-					if (animeEntriesLen < 1) {
-						await requestAnimeEntries()
-							.then(() => {
-								return;
-							})
-							.catch((error) => {
-								reject(error);
-							});
-					} else {
-						resolve();
-					}
-				})
-					.then(async () => {
-						// Check UserList
-						if (!$userEntries?.length) {
-							await requestUserEntries()
-								.then(() => {
-									return;
-								})
-								.catch((error) => {
-									throw error;
-								});
-						} else {
+			new Promise(async (resolve, reject) => {
+				// Check and request Anime Entries
+				let animeEntriesLen = await retrieveJSON("animeEntriesLength");
+				if (animeEntriesLen < 1) {
+					await requestAnimeEntries()
+						.then(() => {
 							return;
-						}
-					})
-					.then(async () => {
-						// Process List
+						})
+						.catch((error) => {
+							reject(error);
+						});
+				} else {
+					resolve();
+				}
+			})
+				.then(async () => {
+					// Process List
+					let recommendedAnimeListLen = await retrieveJSON(
+						"recommendedAnimeListLength"
+					);
+					let shouldProcessRecommendation = await retrieveJSON(
+						"shouldProcessRecommendation"
+					);
+					if (
+						recommendedAnimeListLen < 1 ||
+						shouldProcessRecommendation
+					) {
 						await processRecommendedAnimeList()
-							.then(() => {
+							.then(async () => {
+								if (shouldProcessRecommendation)
+									await saveJSON(
+										false,
+										"shouldProcessRecommendation"
+									);
 								return;
 							})
 							.catch((error) => {
 								throw error;
 							});
-					})
-					.then(async () => {
-						// Create/Filter Processed List for Final List Shown
+					} else {
+						return;
+					}
+				})
+				.then(async () => {
+					// Create/Filter Processed List for Final List and Shown the List
+					if (!$finalAnimeList?.length || shouldLoadAnime) {
 						await animeLoader()
-							.then((data) => {
+							.then(async (data) => {
+								if (shouldLoadAnime)
+									await saveJSON(false, "shouldLoadAnime");
+								$animeLoaderWorker = data.animeLoaderWorker;
+								$searchedAnimeKeyword = "";
 								$finalAnimeList = data.finalAnimeList;
 								return;
 							})
 							.catch((error) => {
 								throw error;
 							});
-					})
-					.then(() => {
-						console.log("yey");
-						// Show List
-					})
-					.catch((error) => {
-						console.error(error);
-					});
-			}
+					} else {
+						return;
+					}
+				})
+				.then(() => {
+					if (!$username) {
+						$dataStatus = "No Username Found";
+						// No Name?
+						// Alert User
+					}
+				})
+				.catch((error) => {
+					console.error(error);
+				});
 		});
 	});
 

@@ -6,9 +6,11 @@ dropdownBasis = {
 };
 
 self.onmessage = async({ data }) => {
+    
     if(!db) await IDBinit()
     let savedFilters = await retrieveJSON('filters')
     if(!savedFilters){
+        self.postMessage({status:"Getting Filters"})
         savedFilters = {
             "sortFilter": {
                 "weighted score": true,
@@ -4290,6 +4292,7 @@ self.onmessage = async({ data }) => {
     let filterOptions = await retrieveJSON("filterOptions")
     let activeTagFilters = await retrieveJSON("activeTagFilters")
     if(!filterOptions){
+        self.postMessage({status:"Getting Filter Options"})
         filterOptions = {
             filterSelection:[
                 {
@@ -4380,6 +4383,10 @@ self.onmessage = async({ data }) => {
                 filters.Checkbox = [
                     { 
                         filName: "hide my anime",
+                        isSelected: false 
+                    },
+                    { 
+                        filName: "hide watched",
                         isSelected: false 
                     },
                     { 
@@ -4539,6 +4546,7 @@ self.onmessage = async({ data }) => {
             }
         });
     } else {
+        self.postMessage({status:"Updating Filter Options"})
         filterOptions.filterSelection.forEach((filterType,filterTypeIdx)=>{
             let dropdown = filterType?.filters?.Dropdown
             if(dropdown instanceof Array){
@@ -4600,6 +4608,7 @@ self.onmessage = async({ data }) => {
     }
     await saveJSON(filterOptions,"filterOptions")
     await saveJSON(activeTagFilters,"activeTagFilters")
+    self.postMessage({status:null})
     self.postMessage({
         filterOptions: filterOptions,
         activeTagFilters: activeTagFilters
@@ -4628,65 +4637,32 @@ async function IDBinit() {
   });
 }
 async function saveJSON(data, name) {
-  return await new Promise(async (resolve) => {
-      try {
-          let write = db
-          .transaction("MyObjectStore", "readwrite")
-          .objectStore("MyObjectStore")
-          .openCursor();
-          write.onsuccess = async (event) => {
-              const cursor = event.target.result;
-              if (cursor) {
-                  if (cursor.key === name) {
-                      await cursor.update(data);
-                      return resolve();
-                  }
-                  await cursor.continue();
-              } else {
-                  let add = await db
-                  .transaction("MyObjectStore", "readwrite")
-                  .objectStore("MyObjectStore")
-                  .add(data, name);
-                  add.onsuccess = (event) => {
-                      return resolve();
-                  }
-                  add.onerror = (event) => {
-                      return resolve();
-                  }
-              }
-          };
-          write.onerror = async (error) => {
-              console.error(error);
-              let add = await db
-                  .transaction("MyObjectStore", "readwrite")
-                  .objectStore("MyObjectStore")
-                  .add(data, name);
-              add.onsuccess = () => {
-                  return resolve();
-              }
-              add.onerror = () => {
-                  return resolve()
-              }
-          };
-      } catch (ex) {
-          try {
-              console.error(ex);
-              let add = await db
-                  .transaction("MyObjectStore", "readwrite")
-                  .objectStore("MyObjectStore")
-                  .add(data, name);
-              add.onsuccess = () => {
-                  return resolve();
-              }
-              add.onerror = () => {
-                  return resolve()
-              }
-          } catch (ex2) {
-              console.error(ex2);
-              return resolve();
-          }
-      }
-  });
+    return await new Promise(async (resolve,reject) => {
+        try {
+            let write = db
+            .transaction("MyObjectStore", "readwrite")
+            .objectStore("MyObjectStore")
+            .openCursor();
+            write.onsuccess = async (event) => {
+                let put = await db
+                    .transaction("MyObjectStore", "readwrite")
+                    .objectStore("MyObjectStore")
+                    .put(data, name);
+                put.onsuccess = (event) => {
+                    return resolve();
+                }
+                put.onerror = (event) => {
+                    return resolve();
+                }
+            };
+            write.onerror = async (error) => {
+                console.error(error);
+                return reject()
+            };
+        } catch (ex) {
+            console.error(ex)
+        }
+    });
 }
 async function retrieveJSON(name) {
   return await new Promise((resolve) => {
