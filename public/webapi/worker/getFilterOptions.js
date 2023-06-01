@@ -1,16 +1,16 @@
 let db,
-dropdownBasis = {
-    "year": "descnum",
-    "season": { fall: 3, summer: 2, spring: 1, winter: 0 }, 
-    "format": { special: 5, ona: 4, ova: 3, "tv_short": 2, movie: 1, tv: 0 }
-};
+    dropdownBasis = {
+        "year": "descnum",
+        "season": { fall: 3, summer: 2, spring: 1, winter: 0 },
+        "format": { special: 5, ona: 4, ova: 3, "tv_short": 2, movie: 1, tv: 0 }
+    };
 
-self.onmessage = async({ data }) => {
-    
-    if(!db) await IDBinit()
+self.onmessage = async ({ data }) => {
+
+    if (!db) await IDBinit()
     let savedFilters = await retrieveJSON('filters')
-    if(!savedFilters){
-        self.postMessage({status:"Getting Filters"})
+    if (!savedFilters) {
+        self.postMessage({ status: "Getting Filters" })
         savedFilters = {
             "sortFilter": {
                 "weighted score": true,
@@ -4266,10 +4266,10 @@ self.onmessage = async({ data }) => {
                 "2023": true,
             },
             season: {
-              "winter": true,
-              "spring": true,
-              "summer": true,
-              "fall": true,
+                "winter": true,
+                "spring": true,
+                "summer": true,
+                "fall": true,
             },
             "airing status": {
                 "finished": true,
@@ -4287,14 +4287,14 @@ self.onmessage = async({ data }) => {
                 "repeating": true
             },
         }
-        await saveJSON(savedFilters,"filters")
+        await saveJSON(savedFilters, "filters")
     }
     let filterOptions = await retrieveJSON("filterOptions")
     let activeTagFilters = await retrieveJSON("activeTagFilters")
-    if(!filterOptions){
-        self.postMessage({status:"Getting Filter Options"})
+    if (!filterOptions) {
+        self.postMessage({ status: "Getting Filter Options" })
         filterOptions = {
-            filterSelection:[
+            filterSelection: [
                 {
                     filterSelectionName: "Anime Filter",
                     filters: {},
@@ -4313,34 +4313,34 @@ self.onmessage = async({ data }) => {
             ],
             "sortFilter": []
         }
-        
+
         // Init Sort
         let defaultSort = ["weighted score", "desc"]
-        filterOptions["sortFilter"] = Object.keys(savedFilters["sortFilter"]).map((k)=>{
-            if(k===defaultSort[0]){
-                return {sortName: k, sortType: defaultSort[1]}
+        filterOptions["sortFilter"] = Object.keys(savedFilters["sortFilter"]).map((k) => {
+            if (k === defaultSort[0]) {
+                return { sortName: k, sortType: defaultSort[1] }
             } else {
-                return {sortName: k, sortType: "none"}
+                return { sortName: k, sortType: "none" }
             }
         })
-        
+
         // Init filter Selections Filter
-        filterOptions.filterSelection.forEach(({filterSelectionName, filters})=>{
-            if(filterSelectionName==="Anime Filter"){
+        filterOptions.filterSelection.forEach(({ filterSelectionName, filters }) => {
+            if (filterSelectionName === "Anime Filter") {
                 // Dropdown
                 let aniFilDropdown = ["genre", "tag", "year", "season", "format", "airing status", "user status", "studio"] // Add Selections
-                filters.Dropdown = aniFilDropdown.map((e)=>{
+                filters.Dropdown = aniFilDropdown.map((e) => {
                     let filName = e;
                     let options;
-                    if(dropdownBasis[e]!==undefined){
+                    if (dropdownBasis[e] !== undefined) {
                         options = Object.keys(savedFilters[e])
-                        if(dropdownBasis[e]==="descnum"||dropdownBasis[e]==="ascnum"){
-                            dropdownBasis[e]==="descnum" ? options.sort((a,b)=>parseFloat(b)-parseFloat(a)) : options.sort((a,b)=>parseFloat(a)-parseFloat(b))
-                        } else if(dropdownBasis[e]==="desclet"){
+                        if (dropdownBasis[e] === "descnum" || dropdownBasis[e] === "ascnum") {
+                            dropdownBasis[e] === "descnum" ? options.sort((a, b) => parseFloat(b) - parseFloat(a)) : options.sort((a, b) => parseFloat(a) - parseFloat(b))
+                        } else if (dropdownBasis[e] === "desclet") {
                             options.sort()
                             options.reverse()
-                        } else if(isJson(dropdownBasis[e])) {
-                            options.sort((a,b)=>{
+                        } else if (isJson(dropdownBasis[e])) {
+                            options.sort((a, b) => {
                                 let x = a ? a.toLowerCase() : "";
                                 let y = b ? b.toLowerCase() : "";
                                 if (x !== y) return dropdownBasis[e][x] - dropdownBasis[e][y];
@@ -4351,11 +4351,11 @@ self.onmessage = async({ data }) => {
                         options = Object.keys(savedFilters[e])
                         options.sort() // default ascending
                     }
-                    options = options.map((k)=>{
-                        k = k!=="_"? k.replace(/\_/g,' ') : k
-                        k = k!=='\\"'? k.replace(/\\"/g,'"') : k
+                    options = options.map((k) => {
+                        k = k !== "_" ? k.replace(/\_/g, ' ') : k
+                        k = k !== '\\"' ? k.replace(/\\"/g, '"') : k
                         k = k.replace(/\b(tv|ona|ova)\b/gi, (match) => match.toUpperCase());
-                        return {optionName: k, selected: "none"}
+                        return { optionName: k, selected: "none" }
                     })
                     return {
                         filName: filName,
@@ -4366,35 +4366,48 @@ self.onmessage = async({ data }) => {
                     }
                 })
                 // Add Custom Filter Selection
-                filters.Dropdown.push({ 
-                    filName: "favourite contents",
-                    options: [                  
-                        {optionName: "staff", selected: "none"},
-                        {optionName: "content", selected: "none"},
-                        {optionName: "studio", selected: "none"},
-                    ],
-                    optKeyword: "",
-                    selected: false,
-                    changeType: "write"
-                })
-        
+                filters.Dropdown = filters.Dropdown.concat([
+                    {
+                        filName: "flexible inclusion",
+                        options: [
+                            { optionName: "OR: genre", selected: "none" },
+                            { optionName: "OR: tag", selected: "none" },
+                            { optionName: "OR: studio", selected: "none" },
+                        ],
+                        optKeyword: "",
+                        selected: false,
+                        changeType: "read"
+                    },
+                    {
+                        filName: "favourite contents",
+                        options: [
+                            { optionName: "FC: staff", selected: "none" },
+                            { optionName: "FC: content", selected: "none" },
+                            { optionName: "FC: studio", selected: "none" },
+                        ],
+                        optKeyword: "",
+                        selected: false,
+                        changeType: "write"
+                    }
+                ])
+
                 // Checkbox
                 // Add Custom Checkbox Selection
                 filters.Checkbox = [
-                    { 
+                    {
                         filName: "hide my anime",
-                        isSelected: false 
+                        isSelected: false
                     },
-                    { 
+                    {
                         filName: "hide watched",
-                        isSelected: false 
+                        isSelected: false
                     },
-                    { 
+                    {
                         filName: "hidden",
-                        isSelected: false 
+                        isSelected: false
                     }
                 ]
-        
+
                 // Input Number
                 // Add Custom Input Number Selection
                 filters["Input Number"] = [
@@ -4406,21 +4419,21 @@ self.onmessage = async({ data }) => {
                         numberValue: ""
                     }
                 ]
-            } else if(filterSelectionName==="Content Warning") {
+            } else if (filterSelectionName === "Content Warning") {
                 // Dropdown
                 let aniFilDropdown = ["genre", "tag"] // Add Selections
-                filters.Dropdown = aniFilDropdown.map((e)=>{
+                filters.Dropdown = aniFilDropdown.map((e) => {
                     let filName = e;
                     let options;
-                    if(dropdownBasis[e]!==undefined){
+                    if (dropdownBasis[e] !== undefined) {
                         options = Object.keys(savedFilters[e])
-                        if(dropdownBasis[e]==="descnum"||dropdownBasis[e]==="ascnum"){
-                            dropdownBasis[e]==="descnum" ? options.sort((a,b)=>parseFloat(b)-parseFloat(a)) : options.sort((a,b)=>parseFloat(a)-parseFloat(b))
-                        } else if(dropdownBasis[e]==="desclet"){
+                        if (dropdownBasis[e] === "descnum" || dropdownBasis[e] === "ascnum") {
+                            dropdownBasis[e] === "descnum" ? options.sort((a, b) => parseFloat(b) - parseFloat(a)) : options.sort((a, b) => parseFloat(a) - parseFloat(b))
+                        } else if (dropdownBasis[e] === "desclet") {
                             options.sort()
                             options.reverse()
-                        } else if(isJson(dropdownBasis[e])) {
-                            options.sort((a,b)=>{
+                        } else if (isJson(dropdownBasis[e])) {
+                            options.sort((a, b) => {
                                 let x = a ? a.toLowerCase() : "";
                                 let y = b ? b.toLowerCase() : "";
                                 if (x !== y) return dropdownBasis[e][x] - dropdownBasis[e][y];
@@ -4431,11 +4444,11 @@ self.onmessage = async({ data }) => {
                         options = Object.keys(savedFilters[e])
                         options.sort() // default ascending
                     }
-                    options = options.map((k)=>{
-                        k = k!=="_"? k.replace(/\_/g,' ') : k
-                        k = k!=='\\"'? k.replace(/\\"/g,'"') : k
+                    options = options.map((k) => {
+                        k = k !== "_" ? k.replace(/\_/g, ' ') : k
+                        k = k !== '\\"' ? k.replace(/\\"/g, '"') : k
                         k = k.replace(/\b(tv|ona|ova)\b/gi, (match) => match.toUpperCase());
-                        return {optionName: k, selected: "none"}
+                        return { optionName: k, selected: "none" }
                     })
                     return {
                         filName: filName,
@@ -4445,28 +4458,28 @@ self.onmessage = async({ data }) => {
                         changeType: "write",
                     }
                 })
-        
+
                 // Checkbox
                 filters.Checkbox = []
-        
+
                 // Input Number
                 filters["Input Number"] = []
-        
-            } else if(filterSelectionName==="Algorithm Filter") {
+
+            } else if (filterSelectionName === "Algorithm Filter") {
                 // Dropdown
                 let aniFilDropdown = ["genre", "tag", "tag category", "studio", "staff role"] // Add Selections
-                filters.Dropdown = aniFilDropdown.map((e)=>{
+                filters.Dropdown = aniFilDropdown.map((e) => {
                     let filName = e;
                     let options;
-                    if(dropdownBasis[e]!==undefined){
+                    if (dropdownBasis[e] !== undefined) {
                         options = Object.keys(savedFilters[e])
-                        if(dropdownBasis[e]==="descnum"||dropdownBasis[e]==="ascnum"){
-                            dropdownBasis[e]==="descnum" ? options.sort((a,b)=>parseFloat(b)-parseFloat(a)) : options.sort((a,b)=>parseFloat(a)-parseFloat(b))
-                        } else if(dropdownBasis[e]==="desclet"){
+                        if (dropdownBasis[e] === "descnum" || dropdownBasis[e] === "ascnum") {
+                            dropdownBasis[e] === "descnum" ? options.sort((a, b) => parseFloat(b) - parseFloat(a)) : options.sort((a, b) => parseFloat(a) - parseFloat(b))
+                        } else if (dropdownBasis[e] === "desclet") {
                             options.sort()
                             options.reverse()
-                        } else if(isJson(dropdownBasis[e])) {
-                            options.sort((a,b)=>{
+                        } else if (isJson(dropdownBasis[e])) {
+                            options.sort((a, b) => {
                                 let x = a ? a.toLowerCase() : "";
                                 let y = b ? b.toLowerCase() : "";
                                 if (x !== y) return dropdownBasis[e][x] - dropdownBasis[e][y];
@@ -4477,11 +4490,11 @@ self.onmessage = async({ data }) => {
                         options = Object.keys(savedFilters[e])
                         options.sort() // default ascending
                     }
-                    options = options.map((k)=>{
-                        k = k!=="_"? k.replace(/\_/g,' ') : k
-                        k = k!=='\\"'? k.replace(/\\"/g,'"') : k
+                    options = options.map((k) => {
+                        k = k !== "_" ? k.replace(/\_/g, ' ') : k
+                        k = k !== '\\"' ? k.replace(/\\"/g, '"') : k
                         k = k.replace(/\b(tv|ona|ova)\b/gi, (match) => match.toUpperCase());
-                        return {optionName: k, selected: "none"}
+                        return { optionName: k, selected: "none" }
                     })
                     return {
                         filName: filName,
@@ -4492,26 +4505,26 @@ self.onmessage = async({ data }) => {
                     }
                 })
                 // Add Custom Filter Selection
-                filters.Dropdown.push({ 
+                filters.Dropdown.push({
                     filName: "measure",
                     options: [
-                        {optionName: "mode", selected: "none"},
-                        {optionName: "mean", selected: "none"},
+                        { optionName: "mode", selected: "none" },
+                        { optionName: "mean", selected: "none" },
                     ],
                     optKeyword: "",
                     selected: false,
                     changeType: "read"
                 })
-        
+
                 // Checkbox
                 // Add Custom Checkbox Selection
                 filters.Checkbox = [
-                    { 
+                    {
                         filName: "inc. all factors",
-                        isSelected: false 
+                        isSelected: false
                     }
                 ]
-        
+
                 // Input Number
                 // Add Custom Input Number Selection
                 filters["Input Number"] = [
@@ -4546,31 +4559,28 @@ self.onmessage = async({ data }) => {
             }
         });
     } else {
-        self.postMessage({status:"Updating Filter Options"})
-        filterOptions.filterSelection.forEach((filterType,filterTypeIdx)=>{
+        self.postMessage({ status: "Updating Filter Options" })
+        filterOptions.filterSelection.forEach((filterType, filterTypeIdx) => {
             let dropdown = filterType?.filters?.Dropdown
-            if(dropdown instanceof Array){
-                for(let i=0; i<dropdown.length; i++){
+            if (dropdown instanceof Array) {
+                for (let i = 0; i < dropdown.length; i++) {
                     let filterName = dropdown[i].filName
-                    if(savedFilters[filterName]!==undefined){
-                        let newOptionNames = Object.keys(savedFilters[filterName]||{}).map((k)=>{
-                            k = k!=="_"? k.replace(/\_/g,' ') : k
-                            k = k!=='\\"'? k.replace(/\\"/g,'"') : k
+                    if (savedFilters[filterName] !== undefined) {
+                        let newOptionNames = Object.keys(savedFilters[filterName] || {}).map((k) => {
+                            k = k !== "_" ? k.replace(/\_/g, ' ') : k
+                            k = k !== '\\"' ? k.replace(/\\"/g, '"') : k
                             k = k.replace(/\b(tv|ona|ova)\b/gi, (match) => match.toUpperCase());
                             return k
                         })
-                        if(filterName==="genre"){
-                            newOptionNames.push("aaaaa")
-                        }
-                        if(newOptionNames.length){
-                            if(dropdownBasis[filterName]){
-                                if(dropdownBasis[filterName]==="descnum"||dropdownBasis[filterName]==="ascnum"){
-                                    dropdownBasis[filterName]==="descnum" ? newOptionNames.sort((a,b)=>parseFloat(b)-parseFloat(a)) : newOptions.sort((a,b)=>parseFloat(a)-parseFloat(b))
-                                } else if(dropdownBasis[filterName]==="desclet"){
+                        if (newOptionNames.length) {
+                            if (dropdownBasis[filterName]) {
+                                if (dropdownBasis[filterName] === "descnum" || dropdownBasis[filterName] === "ascnum") {
+                                    dropdownBasis[filterName] === "descnum" ? newOptionNames.sort((a, b) => parseFloat(b) - parseFloat(a)) : newOptions.sort((a, b) => parseFloat(a) - parseFloat(b))
+                                } else if (dropdownBasis[filterName] === "desclet") {
                                     newOptionNames.sort()
                                     newOptionNames.reverse()
-                                } else if(isJson(dropdownBasis[filterName])) {
-                                    newOptionNames.sort((a,b)=>{
+                                } else if (isJson(dropdownBasis[filterName])) {
+                                    newOptionNames.sort((a, b) => {
                                         let x = a ? a.toLowerCase() : "";
                                         let y = b ? b.toLowerCase() : "";
                                         if (x !== y) return dropdownBasis[filterName][x] - dropdownBasis[filterName][y];
@@ -4580,15 +4590,15 @@ self.onmessage = async({ data }) => {
                             } else {
                                 newOptionNames.sort() // Default Ascending
                             }
-                            let currentOptions = dropdown[i].options.reduce((result,{optionName,selected})=>{
-                                result[optionName]=selected
+                            let currentOptions = dropdown[i].options.reduce((result, { optionName, selected }) => {
+                                result[optionName] = selected
                                 return result
-                            },{})
-                            let newOptions = newOptionNames.map(optionName =>{
-                                if(currentOptions[optionName]!==undefined){
-                                    return {optionName: optionName, selected: currentOptions[optionName]}
+                            }, {})
+                            let newOptions = newOptionNames.map(optionName => {
+                                if (currentOptions[optionName] !== undefined) {
+                                    return { optionName: optionName, selected: currentOptions[optionName] }
                                 } else {
-                                    return {optionName: optionName, selected: "none"}
+                                    return { optionName: optionName, selected: "none" }
                                 }
                             })
                             filterOptions.filterSelection[filterTypeIdx].filters.Dropdown[i].options = newOptions
@@ -4600,15 +4610,15 @@ self.onmessage = async({ data }) => {
             }
         })
     }
-    if(!activeTagFilters){
+    if (!activeTagFilters) {
         activeTagFilters = filterOptions.filterSelection.reduce((r, { filterSelectionName }) => {
-                r[filterSelectionName] = [];
-                return r;
-        },{}) || {};
+            r[filterSelectionName] = [];
+            return r;
+        }, {}) || {};
     }
-    await saveJSON(filterOptions,"filterOptions")
-    await saveJSON(activeTagFilters,"activeTagFilters")
-    self.postMessage({status:null})
+    await saveJSON(filterOptions, "filterOptions")
+    await saveJSON(activeTagFilters, "activeTagFilters")
+    self.postMessage({ status: null })
     self.postMessage({
         filterOptions: filterOptions,
         activeTagFilters: activeTagFilters
@@ -4617,32 +4627,32 @@ self.onmessage = async({ data }) => {
 
 // Functions
 async function IDBinit() {
-  return await new Promise((resolve) => {
-      request = indexedDB.open(
-          "Kanshi.Anime.Recommendations.Anilist.W~uPtWCq=vG$TR:Zl^#t<vdS]I~N70",
-          1
-      );
-      request.onerror = (error) => {
-          console.error(error);
-      };
-      request.onsuccess = (event) => {
-          db = event.target.result;
-          return resolve();
-      };
-      request.onupgradeneeded = (event) => {
-          db = event.target.result;
-          db.createObjectStore("MyObjectStore");
-          return resolve();
-      };
-  });
+    return await new Promise((resolve) => {
+        request = indexedDB.open(
+            "Kanshi.Anime.Recommendations.Anilist.W~uPtWCq=vG$TR:Zl^#t<vdS]I~N70",
+            1
+        );
+        request.onerror = (error) => {
+            console.error(error);
+        };
+        request.onsuccess = (event) => {
+            db = event.target.result;
+            return resolve();
+        };
+        request.onupgradeneeded = (event) => {
+            db = event.target.result;
+            db.createObjectStore("MyObjectStore");
+            return resolve();
+        };
+    });
 }
 async function saveJSON(data, name) {
-    return await new Promise(async (resolve,reject) => {
+    return await new Promise(async (resolve, reject) => {
         try {
             let write = db
-            .transaction("MyObjectStore", "readwrite")
-            .objectStore("MyObjectStore")
-            .openCursor();
+                .transaction("MyObjectStore", "readwrite")
+                .objectStore("MyObjectStore")
+                .openCursor();
             write.onsuccess = async (event) => {
                 let put = await db
                     .transaction("MyObjectStore", "readwrite")
@@ -4665,29 +4675,29 @@ async function saveJSON(data, name) {
     });
 }
 async function retrieveJSON(name) {
-  return await new Promise((resolve) => {
-    try {
-          let read = db
-          .transaction("MyObjectStore", "readwrite")
-          .objectStore("MyObjectStore")
-          .get(name);
-          read.onsuccess = () => {
-              return resolve(read.result);
-          };
-          read.onerror = (error) => {
-              console.error(error);
-              return resolve();
-          };
-      } catch (ex) {
-          console.error(ex);
-          return resolve();
-      }
-  });
+    return await new Promise((resolve) => {
+        try {
+            let read = db
+                .transaction("MyObjectStore", "readwrite")
+                .objectStore("MyObjectStore")
+                .get(name);
+            read.onsuccess = () => {
+                return resolve(read.result);
+            };
+            read.onerror = (error) => {
+                console.error(error);
+                return resolve();
+            };
+        } catch (ex) {
+            console.error(ex);
+            return resolve();
+        }
+    });
 }
 function isJson(j) {
-  try {
-    return j?.constructor.name === "Object" && `${j}` === "[object Object]";
-  } catch (e) {
-    return false;
-  }
+    try {
+        return j?.constructor.name === "Object" && `${j}` === "[object Object]";
+    } catch (e) {
+        return false;
+    }
 }

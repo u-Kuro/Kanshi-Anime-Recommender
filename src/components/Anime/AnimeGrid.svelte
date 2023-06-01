@@ -5,8 +5,9 @@
         searchedAnimeKeyword,
         animeLoaderWorker,
         dataStatus,
+        filterOptions,
     } from "../../js/globalValues.js";
-    import { formatNumber } from "../../js/others/helper.js";
+    import { formatNumber, ncsCompare } from "../../js/others/helper.js";
 
     let renderedImgGridLimit = 20;
     let shownAllInList = false;
@@ -105,9 +106,47 @@
     });
 
     window.addEventListener("resize", () => {
-        justifyContent =
-            window.innerWidth / 180 <= 3.5 ? "space-evenly" : "space-between";
+        console.log(window.innerWidth / 180);
+        if ($finalAnimeList?.length < 3 || window.innerWidth / 180 <= 3.75) {
+            justifyContent = "space-evenly";
+        } else {
+            justifyContent = "space-between";
+        }
     });
+
+    function getShownScore({ weightedScore, score, averageScore, userScore }) {
+        let sortName = $filterOptions?.sortFilter.filter(
+            ({ sortType }) => sortType !== "none"
+        )?.[0]?.sortName;
+        if (sortName === "score") {
+            return formatNumber(score);
+        } else if (sortName === "user score") {
+            return userScore;
+        } else if (sortName === "average score") {
+            return averageScore;
+        } else {
+            return formatNumber(weightedScore);
+        }
+    }
+
+    function getUserStatusColor(userStatus) {
+        if (ncsCompare(userStatus, "completed")) {
+            return "green";
+        } else if (
+            ncsCompare(userStatus, "current") ||
+            ncsCompare(userStatus, "repeating")
+        ) {
+            return "blue";
+        } else if (ncsCompare(userStatus, "planning")) {
+            return "orange";
+        } else if (ncsCompare(userStatus, "paused")) {
+            return "peach";
+        } else if (ncsCompare(userStatus, "dropped")) {
+            return "red";
+        } else {
+            return "lightgrey"; // Default Unwatched Icon Color
+        }
+    }
 </script>
 
 <main>
@@ -117,34 +156,39 @@
         style:justify-content={justifyContent}
     >
         {#if $finalAnimeList?.length}
-            {#each $finalAnimeList || [] as { id, title, format, episodes, weightedScore, coverImageUrl, element }, idx (id)}
-                <div class="image-grid__card" bind:this={element}>
+            {#each $finalAnimeList || [] as anime (anime.id)}
+                <div class="image-grid__card" bind:this={anime.element}>
                     <div class="shimmer">
                         <img
                             style="opacity:0;"
                             class="image-grid__card-thumb"
-                            alt=""
-                            src={coverImageUrl}
+                            alt="anime-cover"
+                            src={anime.coverImageUrl}
                             onload="this.style.opacity=1"
                         />
                     </div>
-                    <span
-                        class="image-grid__card-title copy-value"
-                        data-copy-value={title}
-                    >
-                        <span class="title copy-value">{title}</span>
-                        <span class="copy-value brief-info">
-                            <div class="copy-value brief-info">
+                    <span class="image-grid__card-title">
+                        <span class="title">{anime.title || "N/A"}</span>
+                        <span class="brief-info">
+                            <div class="brief-info">
                                 <i
-                                    class="green-color copy-value fa-solid fa-circle"
+                                    class={`${getUserStatusColor(
+                                        anime.userStatus
+                                    )}-color fa-solid fa-circle`}
                                 />
-                                {`${format} [${episodes}]`}
+                                {`${anime.format || "N/A"}${
+                                    anime.episodes
+                                        ? " [" + anime.episodes + "]"
+                                        : ""
+                                }`}
                             </div>
-                            <div class="copy-value brief-info">
-                                <i
-                                    class="red-color copy-value fa-solid fa-star"
-                                />
-                                {formatNumber(weightedScore)}
+                            <div class="brief-info">
+                                <i class="red-color fa-solid fa-star" />
+                                {#if $filterOptions}
+                                    {getShownScore(anime) || "N/A"}
+                                {:else}
+                                    {formatNumber(anime.weightedScore) || "N/A"}
+                                {/if}
                             </div>
                         </span>
                     </span>

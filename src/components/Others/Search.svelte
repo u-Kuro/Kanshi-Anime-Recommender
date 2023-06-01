@@ -52,56 +52,72 @@
 
     let nameChangeUpdateProcessedList = ["Algorithm Filter"];
     let nameChangeUpdateFinalList = ["sort", "Anime Filter", "Content Warning"];
+    let saveFiltersTimeout;
+    let lastChangeName;
 
-    async function saveFilters(changeName) {
-        if (nameChangeUpdateProcessedList.includes(changeName)) {
-            $dataStatus = "Updating List";
-            await saveJSON(true, "shouldProcessRecommendation");
-            await saveJSON(true, "shouldLoadAnime");
-            await saveJSON($filterOptions, "filterOptions");
-            await saveJSON($activeTagFilters, "activeTagFilters");
-            $finalAnimeList = null;
-            processRecommendedAnimeList()
-                .then(async () => {
-                    await saveJSON(false, "shouldProcessRecommendation");
-                    animeLoader()
-                        .then(async (data) => {
-                            $animeLoaderWorker = data.animeLoaderWorker;
-                            $searchedAnimeKeyword = "";
-                            $finalAnimeList = data.finalAnimeList;
-                            $dataStatus = null;
-                            await saveJSON(false, "shouldLoadAnime");
-                            return;
-                        })
-                        .catch((error) => {
-                            throw error;
-                        });
-                })
-                .catch((error) => {
-                    throw error;
-                });
-        } else if (nameChangeUpdateFinalList.includes(changeName)) {
-            $dataStatus = "Updating List";
-            $finalAnimeList = null;
-            await saveJSON(true, "shouldLoadAnime");
-            await saveJSON($filterOptions, "filterOptions");
-            await saveJSON($activeTagFilters, "activeTagFilters");
-            animeLoader()
-                .then(async (data) => {
-                    $animeLoaderWorker = data.animeLoaderWorker;
-                    $searchedAnimeKeyword = "";
-                    $finalAnimeList = data.finalAnimeList;
-                    $dataStatus = null;
-                    await saveJSON(false, "shouldLoadAnime");
-                    return;
-                })
-                .catch((error) => {
-                    throw error;
-                });
-        } else {
-            await saveJSON($filterOptions, "filterOptions");
-            await saveJSON($activeTagFilters, "activeTagFilters");
+    function saveFilters(changeName) {
+        if (saveFiltersTimeout && lastChangeName === changeName) {
+            clearTimeout(saveFiltersTimeout);
         }
+        lastChangeName = changeName;
+        saveFiltersTimeout = setTimeout(async () => {
+            if (nameChangeUpdateProcessedList.includes(changeName)) {
+                if ($animeLoaderWorker) {
+                    $animeLoaderWorker.terminate();
+                    $animeLoaderWorker = null;
+                }
+                $finalAnimeList = null;
+                $dataStatus = "Updating List";
+                await saveJSON(true, "shouldProcessRecommendation");
+                await saveJSON(true, "shouldLoadAnime");
+                await saveJSON($filterOptions, "filterOptions");
+                await saveJSON($activeTagFilters, "activeTagFilters");
+                processRecommendedAnimeList()
+                    .then(async () => {
+                        await saveJSON(false, "shouldProcessRecommendation");
+                        animeLoader()
+                            .then(async (data) => {
+                                $animeLoaderWorker = data.animeLoaderWorker;
+                                $searchedAnimeKeyword = "";
+                                $finalAnimeList = data.finalAnimeList;
+                                $dataStatus = null;
+                                await saveJSON(false, "shouldLoadAnime");
+                                return;
+                            })
+                            .catch((error) => {
+                                throw error;
+                            });
+                    })
+                    .catch((error) => {
+                        throw error;
+                    });
+            } else if (nameChangeUpdateFinalList.includes(changeName)) {
+                if ($animeLoaderWorker) {
+                    $animeLoaderWorker.terminate();
+                    $animeLoaderWorker = null;
+                }
+                $finalAnimeList = null;
+                $dataStatus = "Updating List";
+                await saveJSON(true, "shouldLoadAnime");
+                await saveJSON($filterOptions, "filterOptions");
+                await saveJSON($activeTagFilters, "activeTagFilters");
+                animeLoader()
+                    .then(async (data) => {
+                        $animeLoaderWorker = data.animeLoaderWorker;
+                        $searchedAnimeKeyword = "";
+                        $finalAnimeList = data.finalAnimeList;
+                        $dataStatus = null;
+                        await saveJSON(false, "shouldLoadAnime");
+                        return;
+                    })
+                    .catch((error) => {
+                        throw error;
+                    });
+            } else {
+                await saveJSON($filterOptions, "filterOptions");
+                await saveJSON($activeTagFilters, "activeTagFilters");
+            }
+        }, 300);
     }
 
     onMount(() => {
@@ -851,32 +867,44 @@
                 style:visibility={selectedFilterTypeElement ? "" : "hidden"}
                 style:pointer-events={selectedFilterTypeElement ? "" : "none"}
             >
-                <div class="options">
-                    {#each $filterOptions?.filterSelection || [] as { filterSelectionName, isSelected } (filterSelectionName)}
-                        <div
-                            class="option"
-                            on:click={handleFilterTypes(filterSelectionName)}
-                            on:keydown={handleFilterTypes(filterSelectionName)}
-                        >
-                            <h3
-                                style:color={isSelected ? "#3db4f2" : "inherit"}
+                {#if $filterOptions}
+                    <div class="options">
+                        {#each $filterOptions?.filterSelection || [] as { filterSelectionName, isSelected } (filterSelectionName)}
+                            <div
+                                class="option"
+                                on:click={handleFilterTypes(
+                                    filterSelectionName
+                                )}
+                                on:keydown={handleFilterTypes(
+                                    filterSelectionName
+                                )}
                             >
-                                {filterSelectionName || ""}
-                            </h3>
-                        </div>
-                    {/each}
-                </div>
+                                <h3
+                                    style:color={isSelected
+                                        ? "#3db4f2"
+                                        : "inherit"}
+                                >
+                                    {filterSelectionName || ""}
+                                </h3>
+                            </div>
+                        {/each}
+                    </div>
+                {/if}
             </div>
         </div>
     </div>
     <div class="home-status">
-        <span>
-            <h2>
-                {$filterOptions?.filterSelection?.filter?.(
-                    ({ isSelected }) => isSelected
-                )?.[0]?.filterSelectionName || ""}
-            </h2>
-        </span>
+        {#if $filterOptions}
+            <span>
+                <h2>
+                    {$filterOptions?.filterSelection?.filter?.(
+                        ({ isSelected }) => isSelected
+                    )?.[0]?.filterSelectionName || ""}
+                </h2>
+            </span>
+        {:else}
+            <div class="skeleton shimmer" />
+        {/if}
         {#if $dataStatus}
             <span transition:fade={{ duration: 300 }} class="data-status">
                 <h2>
@@ -886,7 +914,7 @@
         {/if}
     </div>
     <div class="filters">
-        {#if $filterOptions?.filterSelection?.length}
+        {#if $filterOptions}
             {#each $filterOptions?.filterSelection || [] as { filterSelectionName, filters, isSelected }, filSelIdx (filterSelectionName + filSelIdx)}
                 {#each filters.Dropdown || [] as { filName, options, selected, changeType, optKeyword }, dropdownIdx (filName + dropdownIdx)}
                     <div
@@ -1051,88 +1079,85 @@
             {/each}
         {:else}
             {#each Array(10) as _}
-                <div class="filter-select shimmer">
-                    <div class="filter-name skeleton" />
-                    <div class="select skeleton">
-                        <div class="value-wrap">
-                            <input
-                                type="search"
-                                autocomplete="off"
-                                class="value-input"
-                                disabled
-                            />
-                        </div>
-                    </div>
+                <div class="filter-select">
+                    <div class="filter-name skeleton shimmer" />
+                    <div class="select skeleton shimmer" />
                 </div>
             {/each}
         {/if}
     </div>
     <div class="activeFilters">
-        <i
-            class="fa-solid fa-ban"
-            title="Remove Filters"
-            on:click={removeAllActiveTag}
-            on:keydown={removeAllActiveTag}
-            style:visibility={$activeTagFilters?.[
-                $filterOptions?.filterSelection?.[
-                    $filterOptions?.filterSelection?.findIndex(
-                        ({ isSelected }) => isSelected
-                    )
-                ]?.filterSelectionName
-            ]?.length
-                ? "visible"
-                : "hidden"}
-        />
-        <div class="tagFilters">
-            {#each $activeTagFilters?.[$filterOptions?.filterSelection?.[$filterOptions?.filterSelection?.findIndex(({ isSelected }) => isSelected)]?.filterSelectionName] || [] as { optionName, optionIdx, selected, changeType, filterType, categIdx, optionValue } (optionName + optionIdx)}
-                {#if selected !== "none"}
-                    <div
-                        class="activeTagFilter"
-                        style:--activeTagFilterColor={selected === "included"
-                            ? "#5f9ea0"
-                            : "#e85d75"}
-                        on:click={changeActiveSelect(
-                            optionIdx,
-                            optionName,
-                            filterType,
-                            categIdx,
-                            changeType
-                        )}
-                        on:keydown={changeActiveSelect(
-                            optionIdx,
-                            optionName,
-                            filterType,
-                            categIdx,
-                            changeType
-                        )}
-                    >
-                        {#if filterType === "input number"}
-                            <h3>
-                                {optionName + ": " + optionValue || ""}
-                            </h3>
-                        {:else}
-                            <h3>{optionName || ""}</h3>
-                        {/if}
-                        <i
-                            class="fa-solid fa-xmark"
-                            on:click|preventDefault={removeActiveTag(
+        {#if $activeTagFilters}
+            <i
+                class="fa-solid fa-ban"
+                title="Remove Filters"
+                on:click={removeAllActiveTag}
+                on:keydown={removeAllActiveTag}
+                style:visibility={$activeTagFilters?.[
+                    $filterOptions?.filterSelection?.[
+                        $filterOptions?.filterSelection?.findIndex(
+                            ({ isSelected }) => isSelected
+                        )
+                    ]?.filterSelectionName
+                ]?.length
+                    ? "visible"
+                    : "hidden"}
+            />
+            <div class="tagFilters">
+                {#each $activeTagFilters?.[$filterOptions?.filterSelection?.[$filterOptions?.filterSelection?.findIndex(({ isSelected }) => isSelected)]?.filterSelectionName] || [] as { optionName, optionIdx, selected, changeType, filterType, categIdx, optionValue } (optionName + optionIdx)}
+                    {#if selected !== "none"}
+                        <div
+                            class="activeTagFilter"
+                            style:--activeTagFilterColor={selected ===
+                            "included"
+                                ? "#5f9ea0"
+                                : "#e85d75"}
+                            on:click={changeActiveSelect(
                                 optionIdx,
                                 optionName,
                                 filterType,
-                                categIdx
+                                categIdx,
+                                changeType
                             )}
-                            on:keydown={removeActiveTag(
+                            on:keydown={changeActiveSelect(
                                 optionIdx,
                                 optionName,
                                 filterType,
-                                categIdx
+                                categIdx,
+                                changeType
                             )}
-                        />
-                    </div>
-                {/if}
-            {/each}
-        </div>
-        {#if $filterOptions?.sortFilter?.length}
+                        >
+                            {#if filterType === "input number"}
+                                <h3>
+                                    {optionName + ": " + optionValue || ""}
+                                </h3>
+                            {:else}
+                                <h3>{optionName || ""}</h3>
+                            {/if}
+                            <i
+                                class="fa-solid fa-xmark"
+                                on:click|preventDefault={removeActiveTag(
+                                    optionIdx,
+                                    optionName,
+                                    filterType,
+                                    categIdx
+                                )}
+                                on:keydown={removeActiveTag(
+                                    optionIdx,
+                                    optionName,
+                                    filterType,
+                                    categIdx
+                                )}
+                            />
+                        </div>
+                    {/if}
+                {/each}
+            </div>
+        {:else}
+            <i class="skeleton shimmer" />
+            <div class="tagFilters skeleton shimmer" />
+        {/if}
+        {#if $filterOptions}
             <div class="sortFilter">
                 <i
                     on:click={changeSortType}
@@ -1288,6 +1313,11 @@
         align-items: center;
         width: 100%;
         column-gap: 10px;
+    }
+
+    .home-status .skeleton {
+        height: 18px;
+        width: 100px;
     }
 
     .home-status span {
@@ -1476,6 +1506,13 @@
         cursor: pointer;
     }
 
+    .activeFilters > i.skeleton {
+        font-size: 1.5rem;
+        height: 20px;
+        width: 20px;
+        cursor: pointer;
+    }
+
     .tagFilters {
         display: flex;
         align-items: center;
@@ -1484,6 +1521,12 @@
         gap: 15px;
         user-select: none;
     }
+
+    .tagFilters.skeleton {
+        height: 28px;
+        width: 90px;
+    }
+
     .tagFilters::-webkit-scrollbar {
         display: none !important;
     }

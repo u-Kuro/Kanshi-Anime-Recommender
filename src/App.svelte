@@ -129,11 +129,19 @@
 				shouldProcessRecommendation = await retrieveJSON(
 					"shouldProcessRecommendation"
 				);
-				shouldLoadAnime = await retrieveJSON("shouldLoadAnime");
-				if (!shouldLoadAnime && !shouldProcessRecommendation) {
-					// let _finalAnimeList = await retrieveJSON("finalAnimeList");
-					// if (_finalAnimeList?.length)
-					// 	$finalAnimeList = _finalAnimeList;
+				if (!shouldProcessRecommendation) {
+					await animeLoader()
+						.then(async (data) => {
+							if (shouldLoadAnime)
+								await saveJSON(false, "shouldLoadAnime");
+							$animeLoaderWorker = data.animeLoaderWorker;
+							$searchedAnimeKeyword = "";
+							$finalAnimeList = data.finalAnimeList;
+							return;
+						})
+						.catch((error) => {
+							throw error;
+						});
 				}
 				resolve();
 			})
