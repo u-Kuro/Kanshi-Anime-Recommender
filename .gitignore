@@ -1,6 +1,5 @@
 /node_modules/
 /public/build/
-/public/webapi/worker/getAnimeEntries.js
 .DS_Store
 
 .vercel
