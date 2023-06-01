@@ -411,11 +411,9 @@ self.onmessage = async ({ data }) => {
                 })
             }
         }
-        // shownScore
         // warningCOlor
         // hasWarning > hasVeryLowScore > hasLowScore > hasSemiWarning > Good
         filteredList = finalAnimeList
-        console.log(finalAnimeList.map(({ year }) => year))
         await saveJSON(finalAnimeList, "finalAnimeList")
         self.postMessage({ status: null })
         self.postMessage({

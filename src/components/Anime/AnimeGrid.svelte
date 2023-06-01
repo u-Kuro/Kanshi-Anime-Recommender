@@ -106,7 +106,6 @@
     });
 
     window.addEventListener("resize", () => {
-        console.log(window.innerWidth / 180);
         if ($finalAnimeList?.length < 3 || window.innerWidth / 180 <= 3.75) {
             justifyContent = "space-evenly";
         } else {

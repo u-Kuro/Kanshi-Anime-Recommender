@@ -62,7 +62,6 @@
 					$username = _username;
 					requestUserEntries({ username: $username })
 						.then(async (data) => {
-							console.log(data.message);
 							resolve();
 						})
 						.catch((error) => reject(error));

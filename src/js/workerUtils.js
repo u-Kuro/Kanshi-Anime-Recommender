@@ -120,7 +120,6 @@ const processRecommendedAnimeList = (_data) => {
                     .then((data) => {
                         activeTagFilters.set(data.activeTagFilters)
                         filterOptions.set(data.filterOptions)
-                        console.log(activeTagFilters, JSON.stringify(filterOptions));
                     })
                 resolve(data);
             }

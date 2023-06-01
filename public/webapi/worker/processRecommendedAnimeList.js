@@ -1489,7 +1489,6 @@ self.onmessage = async ({ data }) => {
     await saveJSON(userEntries, 'userEntries')
     await saveJSON(animeFranchises, 'animeFranchises')
     await saveJSON(filters, 'filters')
-    console.log(filters.year)
     await saveJSON(activeTagFilters, 'activeTagFilters')
     // Notify User List Count ...
     // await saveJSON(username, 'username')
