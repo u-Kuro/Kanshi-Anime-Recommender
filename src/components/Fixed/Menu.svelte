@@ -1,7 +1,7 @@
 <script>
     import { menuVisible } from "../../js/globalValues.js";
     import { onMount, onDestroy } from "svelte";
-    import { fade, fly } from "svelte/transition";
+    import { fade } from "svelte/transition";
 
     let handleMenuVisibility;
     onMount(() => {

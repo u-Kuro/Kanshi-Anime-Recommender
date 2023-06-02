@@ -86,11 +86,11 @@ self.onmessage = async ({ data }) => {
                 studios: {},
                 year: {},
             },
-            favouriteContents = {};
+            favoriteContents = {};
         let hideMyAnime = false,
             hiddenList = false,
             hideWatched = false,
-            favouriteContentsLimit;
+            favoriteContentsLimit = 5;
         let animeFilter = activeTagFilters?.['Anime Filter'] || []
         animeFilter.forEach(({ selected, filterType, optionName, optionType, optionValue }) => {
             if (selected === "included") {
@@ -113,8 +113,6 @@ self.onmessage = async ({ data }) => {
                         include.userStatus[optionName] = true
                     } else if (optionType === 'studio') {
                         include.studios[optionName] = true
-                    } else if (optionType === 'favourite contents') {
-                        favouriteContents[optionName] = true
                     }
                 } else if (filterType === 'checkbox') {
                     if (optionName === 'hidden') {
@@ -126,7 +124,7 @@ self.onmessage = async ({ data }) => {
                     }
                 } else if (filterType === 'input number') {
                     if (optionName === "limit favourites") {
-                        favouriteContentsLimit = optionValue
+                        favoriteContentsLimit = optionValue
                     }
                 }
             } else if (selected === 'excluded') {
@@ -152,9 +150,9 @@ self.onmessage = async ({ data }) => {
             }
         })
         self.postMessage({ status: "Filtering Recommendation List" })
+        // Filter and ADD Warning State below
         finalAnimeList = recommendedAnimeList.filter(anime => {
-            // favouriteContentsLimit
-            // favouriteContents
+            // favoriteContents
             if (hideMyAnime) {
                 if (!ncsCompare(anime?.userStatus, 'unwatched')) {
                     return false;
@@ -288,7 +286,31 @@ self.onmessage = async ({ data }) => {
                 }
             }
 
-            // added to the filteredList
+            // Add Warnings
+            anime.contentWarning = {
+                warning: [],
+                semiWarning: []
+            }
+            // Add Genre Warning
+            anime.genres.forEach(genre => {
+                if (warningContents.genres[genre?.toLowerCase?.()]) {
+                    anime.contentWarning.warning.push(genre)
+                } else if (semiWarningContents.genres[genre?.toLowerCase?.()]) {
+                    anime.contentWarning.semiWarning.push(genre)
+                }
+            })
+            // Add Tag Warning
+            anime.tags.forEach(tag => {
+                if (warningContents.tags[tag?.toLowerCase?.()]) {
+                    anime.contentWarning.warning.push(tag)
+                } else if (semiWarningContents.tags[tag?.toLowerCase?.()]) {
+                    anime.contentWarning.semiWarning.push(tag)
+                }
+            })
+
+            // Limit Favorite Contents
+            anime.favoriteContents = anime.favoriteContents.slice(0, favoriteContentsLimit)
+
             return true;
         });
 

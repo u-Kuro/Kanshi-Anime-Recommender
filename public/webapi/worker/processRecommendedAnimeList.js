@@ -886,7 +886,6 @@ self.onmessage = async ({ data }) => {
             let genresIncluded = {};
             let tagsIncluded = {};
             let studiosIncluded = {};
-            let staffIncluded = {};
             // Calculate Recommendation Scores and Update Iterative Filters
             let zgenres = [];
             for (let j = 0; j < genres.length; j++) {
@@ -1023,18 +1022,6 @@ self.onmessage = async ({ data }) => {
                             } else {
                                 zstaff[fullStaffRole].push(varScheme.staff[fullStaff]);
                             }
-                            // Top Similarities
-                            if (typeof varScheme.meanStaff === "number") {
-                                let staffUrl = staffs[j]?.node?.siteUrl;
-                                if (varScheme.staff[fullStaff] >= varScheme.meanStaff && !staffIncluded[fullStaff] && typeof staffUrl === "string") {
-                                    let tmpscore = varScheme.staff[fullStaff];
-                                    staffIncluded[fullStaff] = [{
-                                        [staffRole + ": " + staff + " (" + tmpscore.toFixed(2) + ")"]: staffUrl
-                                    },
-                                        tmpscore,
-                                    ];
-                                }
-                            }
                         } else if (typeof varScheme.meanStaff === "number" && includeUnknownVar && zstaff[fullStaffRole]) {
                             zstaff[fullStaffRole].push(varScheme.meanStaff - minNumber);
                         }
@@ -1046,18 +1033,6 @@ self.onmessage = async ({ data }) => {
                                 zstaff[fullStaffRole] = [varScheme.staff[fullStaff]];
                             } else {
                                 zstaff[fullStaffRole].push(varScheme.staff[fullStaff]);
-                            }
-                            // Top Similarities
-                            if (typeof varScheme.meanStaff === "number") {
-                                let staffUrl = staffs[j]?.node?.siteUrl;
-                                if (varScheme.staff[fullStaff] >= varScheme.meanStaff && !staffIncluded[fullStaff] && typeof staffUrl === "string") {
-                                    let tmpscore = varScheme.staff[fullStaff];
-                                    staffIncluded[fullStaff] = [{
-                                        [staffRole + ": " + staff + " (" + tmpscore.toFixed(2) + ")"]: staffUrl,
-                                    },
-                                        tmpscore,
-                                    ];
-                                }
                             }
                         } else if (typeof varScheme.meanStaff === "number" && includeUnknownVar && zstaff[fullStaffRole]) {
                             zstaff[fullStaffRole].push(varScheme.meanStaff - minNumber);
@@ -1197,17 +1172,16 @@ self.onmessage = async ({ data }) => {
                 }),
                 {});
             // Sort all Top Similarities
-            let variablesIncluded = Object.values(genresIncluded)
+            let favoriteContents = Object.values(genresIncluded)
                 .concat(Object.values(tagsIncluded))
                 .concat(Object.values(studiosIncluded))
-                .concat(Object.values(staffIncluded))
                 .sort((a, b) => {
                     return b?.[1] - a?.[1];
                 })
                 .map((e) => {
                     return e?.[0] || "";
                 });
-            variablesIncluded = variablesIncluded.length ? variablesIncluded : [];
+            favoriteContents = favoriteContents.length ? favoriteContents : [];
             // Add To Processed Recommendation List
             recommendedAnimeList[animeID] = {
                 id: animeID,
@@ -1218,7 +1192,7 @@ self.onmessage = async ({ data }) => {
                 popularity: popularity,
                 score: score,
                 weightedScore: weightedScore,
-                variablesIncluded: variablesIncluded,
+                favoriteContents: favoriteContents,
                 userStatus: formatCustomString(userStatus),
                 status: formatCustomString(status),
                 // Others
@@ -1423,7 +1397,7 @@ self.onmessage = async ({ data }) => {
                 popularity: popularity,
                 score: score,
                 weightedScore: weightedScore,
-                variablesIncluded: [],
+                favoriteContents: [],
                 userStatus: "UNWATCHED",
                 status: formatCustomString(status),
                 // Others

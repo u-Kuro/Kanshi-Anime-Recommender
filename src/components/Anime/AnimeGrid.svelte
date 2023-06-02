@@ -6,14 +6,21 @@
         animeLoaderWorker,
         dataStatus,
         filterOptions,
+        popupVisible,
     } from "../../js/globalValues.js";
-    import { formatNumber, ncsCompare } from "../../js/others/helper.js";
+    import {
+        formatNumber,
+        ncsCompare,
+        isJsonObject,
+        jsonIsEmpty,
+    } from "../../js/others/helper.js";
 
     let renderedImgGridLimit = 20;
     let shownAllInList = false;
 
     let justifyContent =
         window.innerWidth / 180 <= 3.5 ? "space-evenly" : "space-between";
+
     let observer;
     let observerTimeout;
 
@@ -59,6 +66,7 @@
                             shownAllInList = true;
                             if (observer) {
                                 observer.disconnect();
+                                observer = null;
                             }
                         }
                     }
@@ -74,19 +82,26 @@
         if (val instanceof Array && val.length) {
             if (observer) {
                 observer.disconnect();
+                observer = null;
             }
             if ($finalAnimeList.length && !shownAllInList) {
                 (async () => {
                     addObserver();
                     await tick();
+                    // Grid Observed
                     observer.observe(
-                        $finalAnimeList[$finalAnimeList.length - 1].element
+                        $finalAnimeList[$finalAnimeList.length - 1].gridElement
+                    );
+                    // Popup Observed
+                    observer.observe(
+                        $finalAnimeList[$finalAnimeList.length - 1].popupElement
                     );
                 })();
             }
         } else {
             if (observer) {
                 observer.disconnect();
+                observer = null;
             }
         }
         if (val?.length <= 2) {
@@ -113,6 +128,47 @@
         }
     });
 
+    function getBriefInfo({
+        contentWarning,
+        favoriteContents,
+        meanScoreAll,
+        meanScoreAbove,
+        score,
+    }) {
+        let _favoriteContents = [];
+        favoriteContents?.forEach((e) => {
+            if (isJsonObject(e)) {
+                _favoriteContents.push(Object.keys(e)[0]);
+            } else if (typeof e === "string") {
+                _favoriteContents.push(e);
+            }
+        });
+
+        let _contentWarning = (contentWarning?.warning || []).concat(
+            contentWarning?.semiWarning || []
+        );
+        if (score < meanScoreAll) {
+            // Very Low Score
+            _contentWarning.push(
+                `Very Low Score (mean: ${formatNumber(meanScoreAll)})`
+            );
+        } else if (score < meanScoreAbove) {
+            // Low Score
+            _contentWarning.push(
+                `Low Score (mean: ${formatNumber(meanScoreAbove)})`
+            );
+        }
+        let briefInfo = "";
+        if (_favoriteContents.length) {
+            briefInfo +=
+                "Favorite Contents: " + _favoriteContents.join(", ") || "";
+        }
+        if (_contentWarning.length) {
+            briefInfo += "\n\nContent Warnings: " + _contentWarning.join(", ");
+        }
+        return briefInfo;
+    }
+
     function getShownScore({ weightedScore, score, averageScore, userScore }) {
         let sortName = $filterOptions?.sortFilter.filter(
             ({ sortType }) => sortType !== "none"
@@ -125,6 +181,29 @@
             return averageScore;
         } else {
             return formatNumber(weightedScore);
+        }
+    }
+
+    function getWarningColor({
+        contentWarning,
+        meanScoreAll,
+        meanScoreAbove,
+        score,
+    }) {
+        if (contentWarning?.warning?.length) {
+            // Warning
+            return "red";
+        } else if (score < meanScoreAll) {
+            // Very Low Score
+            return "purple";
+        } else if (score < meanScoreAbove) {
+            // Low Score
+            return "orange";
+        } else if (contentWarning?.semiWarning?.length) {
+            // Semi Warning
+            return "teal";
+        } else {
+            return "green";
         }
     }
 
@@ -156,14 +235,20 @@
     >
         {#if $finalAnimeList?.length}
             {#each $finalAnimeList || [] as anime (anime.id)}
-                <div class="image-grid__card" bind:this={anime.element}>
+                <div
+                    class="image-grid__card"
+                    bind:this={anime.gridElement}
+                    title={getBriefInfo(anime)}
+                >
                     <div class="shimmer">
                         <img
-                            style="opacity:0;"
+                            style:opacity="0"
                             class="image-grid__card-thumb"
                             alt="anime-cover"
                             src={anime.coverImageUrl}
-                            onload="this.style.opacity=1"
+                            on:load={(e) => (e.target.style.opacity = 1)}
+                            on:click={() => ($popupVisible = true)}
+                            on:keydown={() => ($popupVisible = true)}
                         />
                     </div>
                     <span class="image-grid__card-title">
@@ -182,7 +267,11 @@
                                 }`}
                             </div>
                             <div class="brief-info">
-                                <i class="red-color fa-solid fa-star" />
+                                <i
+                                    class={`${getWarningColor(
+                                        anime
+                                    )}-color fa-solid fa-star`}
+                                />
                                 {#if $filterOptions}
                                     {getShownScore(anime) || "N/A"}
                                 {:else}
@@ -198,7 +287,7 @@
                     <div class="image-grid__card skeleton">
                         <div class="shimmer">
                             <img
-                                style="opacity:0;"
+                                style:opacity="0"
                                 class="image-grid__card-thumb skeleton"
                                 alt=""
                             />
@@ -211,7 +300,7 @@
                 <div class="image-grid__card skeleton">
                     <div class="shimmer">
                         <img
-                            style="opacity:0;"
+                            style:opacity="0"
                             class="image-grid__card-thumb skeleton"
                             alt=""
                         />
@@ -261,11 +350,6 @@
         margin: 0 auto;
     }
 
-    .image-grid__card:not(.skeleton):focus .image-grid__card-title,
-    .image-grid__card:not(.skeleton):hover .image-grid__card-title {
-        background-color: rgb(0, 0, 0, 0.75);
-    }
-
     .image-grid__card .image-grid__card-thumb {
         background: #0003;
         border-radius: 0.25em;
@@ -275,13 +359,16 @@
         height: 240px;
         box-shadow: 0 0 0.375em #0b1622;
         will-change: transform;
+        cursor: pointer;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
     }
 
     .image-grid__card:not(.skeleton):focus .image-grid__card-thumb,
     .image-grid__card:not(.skeleton):hover .image-grid__card-thumb {
-        outline: transparent;
-        border-radius: 0;
-        opacity: 0.5;
+        opacity: 0.5 !important;
+        box-shadow: 0 14px 28px rgba(0, 0, 0, 0.25),
+            0 10px 10px rgba(0, 0, 0, 0.22);
     }
 
     .image-grid__card-thumb {

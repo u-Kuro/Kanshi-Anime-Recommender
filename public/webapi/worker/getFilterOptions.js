@@ -4377,17 +4377,6 @@ self.onmessage = async ({ data }) => {
                         optKeyword: "",
                         selected: false,
                         changeType: "read"
-                    },
-                    {
-                        filName: "favourite contents",
-                        options: [
-                            { optionName: "FC: staff", selected: "none" },
-                            { optionName: "FC: content", selected: "none" },
-                            { optionName: "FC: studio", selected: "none" },
-                        ],
-                        optKeyword: "",
-                        selected: false,
-                        changeType: "write"
                     }
                 ])
 

@@ -1,3 +1,7 @@
+const isJsonObject = (obj) => {
+  return Object.prototype.toString.call(obj) === "[object Object]"
+}
+
 const jsonIsEmpty = (obj) => {
   for (const key in obj) {
     return false;
@@ -65,6 +69,7 @@ function ncsCompare(str1, str2) {
 }
 
 export {
+  isJsonObject,
   jsonIsEmpty,
   makeFetchRequest,
   fetchAniListData,
