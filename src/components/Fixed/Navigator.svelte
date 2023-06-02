@@ -140,7 +140,7 @@
                 <i class="fa-solid fa-magnifying-glass" />
             </div>
         </div>
-        <img class="menu-icon" src="/static/Kanshi-logo.png" alt="menubar" />
+        <img class="menu-icon" src="/images/Kanshi-logo.png" alt="menubar" />
     </nav>
 </div>
 
