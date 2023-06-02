@@ -19,7 +19,7 @@
     let typedUsername;
 
     (async () => {
-        logoSrc = (await import("./path/to/image.jpg")).default;
+        logoSrc = (await import("../../images/Kanshi-Logo.png")).default;
     })();
 
     onMount(() => {
