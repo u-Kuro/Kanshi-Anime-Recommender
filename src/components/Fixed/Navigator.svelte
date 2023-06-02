@@ -13,14 +13,9 @@
     } from "../../js/workerUtils.js";
     import { onMount, onDestroy } from "svelte";
 
-    let logoSrc;
     let writableSubscriptions = [];
     let windowWidth;
     let typedUsername;
-
-    (async () => {
-        logoSrc = (await import("../../images/Kanshi-Logo.png")).default;
-    })();
 
     onMount(() => {
         windowWidth = window.innerWidth;
@@ -145,7 +140,11 @@
                 <i class="fa-solid fa-magnifying-glass" />
             </div>
         </div>
-        <img class="menu-icon" src={logoSrc} alt="menubar" />
+        <img
+            class="menu-icon"
+            src="../../../public/images/Kanshi-logo.png"
+            alt="menubar"
+        />
     </nav>
 </div>
 
