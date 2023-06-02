@@ -140,7 +140,7 @@
                 <i class="fa-solid fa-magnifying-glass" />
             </div>
         </div>
-        <div class="menu-icon" />
+        <img class="menu-icon" src="images/Kanshi-logo.png" alt="menubar" />
     </nav>
 </div>
 
@@ -213,9 +213,6 @@
     .menu-icon {
         height: 34px;
         cursor: pointer;
-        background-image: url("/images/Kanshi-logo.png");
-        background-repeat: no-repeat;
-        background-size: 100% auto;
     }
     @media screen and (orientation: portrait) {
         .nav {
