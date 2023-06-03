@@ -15,6 +15,8 @@
 		animeLoaderWorker,
 		searchedAnimeKeyword,
 		dataStatus,
+		autoPlay,
+		popupVisible,
 	} from "./js/globalValues.js";
 	import {
 		getAnimeEntries,
@@ -26,6 +28,8 @@
 		animeLoader,
 	} from "./js/workerUtils.js";
 	import { jsonIsEmpty } from "./js/others/helper.js";
+	// For Youtube API
+	const onYouTubeIframeAPIReady = new Function();
 
 	onMount(async () => {
 		// Init Data
@@ -123,8 +127,11 @@
 			})
 		);
 
+		// Get Existing Data If there are any
 		initDataPromises.push(
 			new Promise(async (resolve) => {
+				let _autoPlay = await retrieveJSON("autoPlay");
+				if (typeof _autoPlay === "boolean") $autoPlay = _autoPlay;
 				shouldProcessRecommendation = await retrieveJSON(
 					"shouldProcessRecommendation"
 				);
@@ -221,6 +228,21 @@
 					console.error(error);
 				});
 		});
+	});
+
+	let currentScrollTop;
+	popupVisible.subscribe((val) => {
+		if (val === true) {
+			currentScrollTop = document.documentElement.scrollTop;
+			document.documentElement.classList.add("noscroll");
+			document.body.classList.add("noscroll");
+			document.body.style.top = -currentScrollTop + "px";
+		} else if (val === false) {
+			document.documentElement.classList.remove("noscroll");
+			document.body.classList.remove("noscroll");
+			document.body.style.top = "";
+			document.documentElement.scrollTop = currentScrollTop;
+		}
 	});
 
 	onDestroy(() => {});

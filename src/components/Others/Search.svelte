@@ -850,6 +850,7 @@
 <main>
     <div class="input-search-wrap">
         <input
+            id="input-search"
             class="input-search"
             type="text"
             placeholder="Search"

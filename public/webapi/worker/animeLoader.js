@@ -2,21 +2,17 @@ let db,
     finalAnimeList,
     filteredList,
     keyword,
-    filterTimeout,
     loadLimit = 18,
     seasonOrder = { fall: 3, summer: 2, spring: 1, winter: 0 };
 
 self.onmessage = async ({ data }) => {
     if (data?.filterKeyword !== undefined) {
         keyword = data?.filterKeyword
-        if (filterTimeout) clearTimeout(filterTimeout)
-        filterTimeout = setTimeout(() => {
-            filteredList = finalAnimeList.filter(({ title }) => title?.toLowerCase?.().includes(keyword))
-            self.postMessage({
-                isNew: true,
-                finalAnimeList: filteredList.slice(0, loadLimit)
-            });
-        }, 1)
+        filteredList = finalAnimeList.filter(({ title }) => title?.toLowerCase?.().includes(keyword))
+        self.postMessage({
+            isNew: true,
+            finalAnimeList: filteredList.slice(0, loadLimit)
+        });
     } else if (data?.removeIndex !== undefined) {
         finalAnimeList.splice(data.removeIndex, 1);
     } else if (data?.loadMore !== undefined) {
@@ -29,6 +25,7 @@ self.onmessage = async ({ data }) => {
                 Math.min(nextIdx + loadLimit, filteredList.length - 1)
             ),
         });
+        filteredList = filteredList.slice(Math.min(nextIdx + loadLimit, filteredList.length - 1))
     } else {
         if (!db) await IDBinit()
         self.postMessage({ status: "Initializing Filters" })
@@ -309,7 +306,9 @@ self.onmessage = async ({ data }) => {
             })
 
             // Limit Favorite Contents
-            anime.favoriteContents = anime.favoriteContents.slice(0, favoriteContentsLimit)
+            if (anime.favoriteContents instanceof Array) {
+                anime.favoriteContents = anime.favoriteContents.slice(0, favoriteContentsLimit)
+            }
 
             return true;
         });

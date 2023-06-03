@@ -1,15 +1,26 @@
 <script>
+    import { onMount, tick } from "svelte";
     import {
         finalAnimeList,
         animeLoaderWorker,
         dataStatus,
         filterOptions,
+        ytPlayers,
         autoPlay,
+        animeObserver,
         popupVisible,
+        openedAnimePopupIdx,
     } from "../../../js/globalValues.js";
-    import { isJsonObject, formatNumber } from "../../../js/others/helper.js";
+    import {
+        isJsonObject,
+        formatNumber,
+        scrollToElement,
+        getMostVisibleElement,
+        getChildIndex,
+    } from "../../../js/others/helper.js";
+    import { saveJSON } from "../../../js/indexedDB.js";
 
-    let popupContent;
+    let popupWrapper, popupContainer;
 
     function handlePopupVisibility(e) {
         let target = e.target;
@@ -22,23 +33,30 @@
         $popupVisible = false;
     }
 
-    let delayedHide;
-    popupVisible.subscribe((val) => {
-        if (!val) {
-            setTimeout(() => {
-                delayedHide = val;
-            }, 400);
-        } else {
-            delayedHide = val;
-        }
-    });
+    // let delayedHide;
+    // popupVisible.subscribe((val) => {
+    //     if (!val) {
+    //         setTimeout(() => {
+    //             delayedHide = val;
+    //         }, 400);
+    //     } else {
+    //         delayedHide = val;
+    //     }
+    // });
 
-    function handleSeeMore(animeIdx) {
-        console.log(animeIdx);
+    async function handleSeeMore(anime, animeIdx) {
         if ($finalAnimeList[animeIdx]) {
-            $finalAnimeList.isSeenMore = !$finalAnimeList.isSeenMore;
+            $finalAnimeList[animeIdx].isSeenMore =
+                !$finalAnimeList[animeIdx].isSeenMore;
+            await tick();
+            let targetEl = anime.popupElement;
+            if (
+                targetEl instanceof Element &&
+                popupContainer instanceof Element
+            ) {
+                scrollToElement(popupContainer, targetEl, "bottom");
+            }
         }
-        console.log($finalAnimeList.isSeenMore);
     }
 
     function getContentWarning({
@@ -70,7 +88,6 @@
         meanScoreAbove,
         score,
     }) {
-        console.log(contentWarning, meanScoreAll, meanScoreAbove, score);
         if (contentWarning?.warning?.length) {
             // Warning
             return "red";
@@ -87,6 +104,236 @@
             return "green";
         }
     }
+
+    popupVisible.subscribe(async (val) => {
+        if (
+            !(popupWrapper instanceof Element) ||
+            !(popupContainer instanceof Element)
+        )
+            return;
+        if (val === true) {
+            // Init Height
+            Object.assign(popupContainer.style, {
+                "--translateY": window.innerHeight + "px",
+            });
+            // Scroll To Opened Anime
+            let openedAnimePopupEl =
+                popupContainer?.children[$openedAnimePopupIdx ?? 0];
+            if (openedAnimePopupEl instanceof Element) {
+                scrollToElement(popupContainer, openedAnimePopupEl);
+                // Animate Opening
+                popupWrapper.classList.add("visible");
+                popupContainer.classList.add("show");
+                // Try to Add YT player
+                let openedAnime = $finalAnimeList[$openedAnimePopupIdx];
+                let trailerEl =
+                    openedAnime?.popupTrailer?.querySelector(".trailer");
+                let haveNoTrailer = true;
+                for (let i = 0; i < $ytPlayers?.length ?? -1; i++) {
+                    if ($ytPlayers[i].g === trailerEl) {
+                        if ($autoPlay) {
+                            await tick();
+                            if (
+                                popupWrapper?.classList?.contains?.("visible")
+                            ) {
+                                $ytPlayers[i]?.playVideo?.();
+                            }
+                        }
+                        haveNoTrailer = false;
+                        break;
+                    }
+                }
+                if (haveNoTrailer) {
+                    createPopupYTPlayer(openedAnime);
+                }
+                $openedAnimePopupIdx = null;
+            } else {
+                // Animate Opening
+                popupWrapper.classList.add("visible");
+                popupContainer.classList.add("show");
+            }
+        } else if (val === false) {
+            popupContainer.classList.remove("show");
+            popupContainer.classList.add("hide");
+            setTimeout(() => {
+                // Stop All Player
+                $ytPlayers?.forEach((ytPlayer) => ytPlayer?.pauseVideo?.());
+                popupWrapper.classList.remove("visible");
+            }, 300);
+        }
+    });
+
+    finalAnimeList.subscribe(async (val) => {
+        if (val instanceof Array) {
+            await tick();
+            try {
+                if ($animeObserver && val.length) {
+                    // Popup Observed
+                    $animeObserver.observe(
+                        $finalAnimeList[$finalAnimeList.length - 1].popupElement
+                    );
+                }
+                playMostVisibleTrailer();
+            } catch (ex) {}
+        }
+    });
+
+    autoPlay.subscribe(async (val) => {
+        if (typeof val === "boolean") {
+            await saveJSON(val, "autoPlay");
+            if (val === true) {
+                playMostVisibleTrailer();
+            } else {
+                $ytPlayers?.forEach((ytPlayer) => ytPlayer?.pauseVideo?.());
+            }
+        }
+    });
+
+    onMount(() => {
+        document
+            .getElementById("popup-container")
+            .addEventListener("scroll", () => {
+                playMostVisibleTrailer();
+            });
+    });
+
+    async function playMostVisibleTrailer() {
+        await tick();
+        let visibleTrailer = getMostVisibleElement(popupContainer, ".trailer");
+        if (!visibleTrailer) {
+            visibleTrailer =
+                getMostVisibleElement(popupContainer, ".popup-main", 0) ||
+                getMostVisibleElement(popupContainer, ".popup-content", 0);
+            if (visibleTrailer) {
+                visibleTrailer = visibleTrailer.querySelector(".trailer");
+            } else {
+                visibleTrailer = undefined;
+            }
+        }
+        var haveTrailer = $ytPlayers?.some(
+            (ytPlayer) => ytPlayer.g === visibleTrailer
+        );
+        if (haveTrailer) {
+            // Check YT Players
+            $ytPlayers?.forEach(async (ytPlayer) => {
+                if (
+                    ytPlayer.g === visibleTrailer &&
+                    ytPlayer?.getPlayerState?.() !== 1 &&
+                    $autoPlay
+                ) {
+                    await tick();
+                    if (popupWrapper?.classList?.contains?.("visible")) {
+                        ytPlayer?.playVideo?.();
+                    }
+                } else if (ytPlayer.g !== visibleTrailer) {
+                    ytPlayer?.pauseVideo?.();
+                }
+            });
+        } else {
+            // Stop All Player
+            $ytPlayers?.forEach((ytPlayer) => ytPlayer?.pauseVideo?.());
+            // Create YT Player
+            if (visibleTrailer) {
+                let popupContent = visibleTrailer?.closest?.(".popup-content");
+                let anime =
+                    $finalAnimeList?.[getChildIndex(popupContent) ?? -1];
+                if (anime) createPopupYTPlayer(anime);
+            }
+        }
+    }
+
+    function createPopupYTPlayer(openedAnime) {
+        if (
+            !openedAnime ||
+            !(openedAnime.popupTrailer instanceof Element) ||
+            !openedAnime.trailerID ||
+            !popupWrapper?.classList?.contains("visible")
+        )
+            return; // Unavailable
+        let ytPlayerEl = openedAnime.popupTrailer.querySelector(".trailer");
+        let youtubeID = openedAnime.trailerID;
+        if (ytPlayerEl instanceof Element && youtubeID) {
+            if ($ytPlayers.some((ytPlayer) => ytPlayer.g === ytPlayerEl))
+                return;
+            if ($ytPlayers.length >= 8) {
+                let destroyedPlayer = $ytPlayers.shift();
+                // $ytPlayers = $ytPlayers
+                destroyedPlayer?.destroy?.();
+                let parentElement = ytPlayerEl.parentElement;
+                parentElement.innerHTML = '<div class="trailer"></div>';
+                ytPlayerEl = parentElement.querySelector(".trailer");
+            }
+        }
+        // Add a Unique ID
+        ytPlayerEl.setAttribute("id", "yt-player" + Date.now() + Math.random());
+        let ytPlayer = new YT.Player(ytPlayerEl, {
+            playerVars: {
+                cc_lang_pref: "en", // Set preferred caption language to English
+                cc_load_policy: 1, // Set on by default
+                enablejsapi: 1, // Enable the JavaScript API
+                loop: 1, // Enable video looping
+                modestbranding: 1, // Enable modest branding (hide the YouTube logo)
+                playsinline: 1, // Enable inline video playback
+                playlist: youtubeID,
+            },
+            events: {
+                onReady: (event) => {
+                    onPlayerReady(event);
+                },
+            },
+        });
+        // Add Trailer to Iframe
+        let trailerUrl = `https://www.youtube.com/embed/${youtubeID}?playlist=${youtubeID}&cc_load_policy=1&cc_lang_pref=en&enablejsapi=1&loop=1&modestbranding=1&playsinline=1`;
+        ytPlayerEl.setAttribute("src", trailerUrl);
+        $ytPlayers.push(ytPlayer);
+    }
+    function onPlayerReady(event) {
+        let ytPlayer = event.target;
+        let trailerEl = ytPlayer?.g;
+        let popupTrailer = trailerEl?.parentNode;
+        let popupContent = trailerEl?.closest?.(".popup-content");
+        let anime = $finalAnimeList?.[getChildIndex(popupContent) ?? -1];
+        let popupImg = anime?.popupImg;
+        if (
+            !anime ||
+            !popupContent ||
+            !(popupImg instanceof Element) ||
+            !(popupTrailer instanceof Element)
+        )
+            return;
+        if (ytPlayer.getPlayerState() === -1) {
+            $ytPlayers = $ytPlayers.filter(
+                (_ytPlayer) => _ytPlayer !== ytPlayer
+            );
+            ytPlayer.destroy();
+            let animeBannerImg = anime?.bannerImageUrl;
+            let animeBannerImgEl = popupImg.querySelector(".bannerImg");
+            if (
+                animeBannerImg &&
+                (animeBannerImgEl?.naturalHeight === 0 ||
+                    animeBannerImgEl?.naturalWidth === 0)
+            ) {
+                animeBannerImgEl.src = animeBannerImg;
+            }
+            let animeCoverImg = anime.coverImageUrl;
+            let animeCoverImgEl = popupImg.querySelector(".coverImg");
+            if (
+                animeCoverImg &&
+                (animeCoverImgEl?.naturalHeight === 0 ||
+                    animeCoverImgEl?.naturalWidth === 0)
+            ) {
+                animeCoverImgEl.src = animeCoverImg;
+            }
+            popupTrailer.style.display = "none";
+            popupImg.style.display = "";
+            return;
+        } else {
+            popupTrailer.style.display = "";
+            popupImg.style.display = "none";
+        }
+
+        playMostVisibleTrailer();
+    }
 </script>
 
 <div
@@ -94,23 +341,30 @@
     class="popup-wrapper"
     on:click={handlePopupVisibility}
     on:keydown={handlePopupVisibility}
-    style:visibility={delayedHide ? "visible" : "hidden"}
-    style:pointer-events={delayedHide ? "" : "none"}
+    bind:this={popupWrapper}
 >
     <div
         id="popup-container"
-        class="popup-container"
-        bind:this={popupContent}
+        class="popup-container hide"
         style:--translateY={window.innerHeight + "px"}
-        class:hide={!$popupVisible}
+        bind:this={popupContainer}
     >
         {#each $finalAnimeList || [] as anime, animeIdx (anime.id)}
             <div class="popup-content" bind:this={anime.popupElement}>
                 <div class="popup-main">
-                    <div class="popup-trailer" style:display="none">
-                        <div class="trailer" />
-                    </div>
-                    <div class="popup-img">
+                    {#if anime.trailerID}
+                        <div
+                            class="popup-trailer"
+                            bind:this={anime.popupTrailer}
+                        >
+                            <div class="trailer" />
+                        </div>
+                    {/if}
+                    <div
+                        class="popup-img"
+                        bind:this={anime.popupImg}
+                        style:display={anime.trailerID ? "none" : ""}
+                    >
                         <div class="youtubeDirect">
                             <img
                                 src={anime.bannerImageUrl}
@@ -193,34 +447,41 @@
                             <div>
                                 <div class="info-categ">Score</div>
                                 <div class="score-popup info">
-                                    {anime.score || "N/A"}
+                                    {formatNumber(anime.score) || "N/A"}
                                 </div>
                             </div>
                             <div>
-                                <div class="info-categ">Favourite Contents</div>
+                                <div class="info-categ">Favorite Contents</div>
                                 <div class="top-similarities-popup info">
-                                    {#each anime.favoriteContents || [] as favoriteContent, idx (favoriteContent)}
-                                        {#if isJsonObject(favoriteContent)}
-                                            {#each Object.entries(favoriteContent) || [] as [studio, studioUrl] (studio)}
-                                                <a
-                                                    rel="noopener noreferrer"
-                                                    target="_blank"
-                                                    href={studioUrl}>{studio}</a
-                                                >{idx <
-                                                anime.favoriteContents.length -
-                                                    1
-                                                    ? ", "
-                                                    : ""}
-                                            {/each}
-                                        {:else if typeof favoriteContent === "string"}
-                                            {favoriteContent +
-                                                (idx <
-                                                anime.favoriteContents.length -
-                                                    1
-                                                    ? ", "
-                                                    : "")}
-                                        {/if}
-                                    {/each}
+                                    {#if anime.favoriteContents?.length}
+                                        {#each anime.favoriteContents || [] as favoriteContent, idx (favoriteContent)}
+                                            {#if isJsonObject(favoriteContent)}
+                                                {#each Object.entries(favoriteContent) || [] as [studio, studioUrl] (studio)}
+                                                    <a
+                                                        rel="noopener noreferrer"
+                                                        target="_blank"
+                                                        href={studioUrl}
+                                                        >{studio}</a
+                                                    >{idx <
+                                                    anime.favoriteContents
+                                                        .length -
+                                                        1
+                                                        ? ", "
+                                                        : ""}
+                                                {/each}
+                                            {:else if typeof favoriteContent === "string"}
+                                                {favoriteContent +
+                                                    (idx <
+                                                    anime.favoriteContents
+                                                        .length -
+                                                        1
+                                                        ? ", "
+                                                        : "")}
+                                            {/if}
+                                        {/each}
+                                    {:else}
+                                        N/A
+                                    {/if}
                                 </div>
                             </div>
                             <div>
@@ -284,15 +545,15 @@
                             <div>
                                 <div class="info-categ">Wscore</div>
                                 <div class="wscore-popup info">
-                                    {anime.weightedScore || "N/A"}
+                                    {formatNumber(anime.weightedScore) || "N/A"}
                                 </div>
                             </div>
                         </div>
                         <div class="footer">
                             <button
                                 class="seemoreless"
-                                on:click={handleSeeMore(animeIdx)}
-                                on:keydown={handleSeeMore(animeIdx)}
+                                on:click={handleSeeMore(anime, animeIdx)}
+                                on:keydown={handleSeeMore(anime, animeIdx)}
                                 >See More</button
                             >
                             <button class="hideshowbtn">---</button>
@@ -319,24 +580,24 @@
         left: 0;
         top: 0;
         width: 100%;
-        max-height: 100%;
-        min-height: 100%;
         height: 100%;
         background-color: rgba(0, 0, 0, 0.6);
-        display: flex;
+        display: grid;
         justify-content: center;
         overflow: hidden;
-        align-items: center;
+        transform: translateY(99999px);
+    }
+
+    .popup-wrapper.visible {
+        transform: translateY(0);
     }
 
     .popup-container {
+        will-change: transform;
         display: flex;
-        width: 100%;
-        max-width: 600px;
-        max-height: 100%;
-        min-height: 100%;
-        height: 100%;
         flex-direction: column;
+        width: 100%;
+        max-width: 640px;
         overflow: auto;
         transition: 0.3s ease transform;
     }
@@ -345,18 +606,20 @@
         transform: translateY(var(--translateY));
     }
 
+    .popup-container.show {
+        transform: translateY(0);
+        /* transform: translate3d(0, 0, 0); */
+    }
+
     .popup-container::-webkit-scrollbar {
         display: none;
     }
 
     .popup-content {
-        display: flex;
-        flex-direction: column;
+        display: grid;
         color: #909cb8;
         background-color: #151f2e;
-        width: 100%;
-        max-width: 600px;
-        position: relative;
+        max-width: 640px;
     }
 
     .popup-main {
@@ -371,7 +634,8 @@
         background: #000;
     }
 
-    iframe.trailer {
+    /* Need to add Globally, trailer Elements are Recreated */
+    :global(.trailer) {
         position: absolute;
         top: 0;
         left: 0;
@@ -453,6 +717,11 @@
         align-items: center;
         display: flex;
         position: relative;
+        text-transform: capitalize;
+    }
+
+    .popup-body .anime-title-container::-webkit-scrollbar {
+        display: none;
     }
 
     .anime-title-container .anime-title {
@@ -560,6 +829,7 @@
         font-size: clamp(1.018rem, 1.099rem, 1.18rem);
         line-height: 1.3;
         max-width: fit-content;
+        text-transform: capitalize;
     }
 
     .popup-body a.darkMode {

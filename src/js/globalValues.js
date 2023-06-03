@@ -14,11 +14,14 @@ const finalAnimeList = writable(null)
 const animeLoaderWorker = writable(null)
 const dataStatus = writable(null)
 
+const ytPlayers = writable([])
 const autoPlay = writable(null)
 
+const animeObserver = writable(null)
 const searchedAnimeKeyword = writable("")
 const menuVisible = writable(false)
 const popupVisible = writable(false)
+const openedAnimePopupIdx = writable(null)
 
 export {
     animeEntries,
@@ -32,8 +35,11 @@ export {
     finalAnimeList,
     animeLoaderWorker,
     dataStatus,
+    ytPlayers,
     autoPlay,
+    animeObserver,
     searchedAnimeKeyword,
     menuVisible,
-    popupVisible
+    popupVisible,
+    openedAnimePopupIdx
 }

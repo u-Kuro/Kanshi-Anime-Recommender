@@ -20,9 +20,17 @@ html {
 
 html,
 body {
-    scroll-behavior: smooth;
     height: 100%;
     width: 100%;
+}
+
+html.noscroll {
+    position: fixed;
+    overflow-y: scroll;
+}
+
+body.noscroll {
+    position: relative;
 }
 
 /* Font Sizes */

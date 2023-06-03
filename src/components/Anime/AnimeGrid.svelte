@@ -6,7 +6,9 @@
         animeLoaderWorker,
         dataStatus,
         filterOptions,
+        animeObserver,
         popupVisible,
+        openedAnimePopupIdx,
     } from "../../js/globalValues.js";
     import {
         formatNumber,
@@ -21,22 +23,21 @@
     let justifyContent =
         window.innerWidth / 180 <= 3.5 ? "space-evenly" : "space-between";
 
-    let observer;
-    let observerTimeout;
+    // let observerTimeout;
 
     function addObserver() {
-        observer = new IntersectionObserver(
+        $animeObserver = new IntersectionObserver(
             (entries, self) => {
                 entries.forEach((entry) => {
                     if (entry.isIntersecting) {
                         self.unobserve(entry.target);
-                        if (observerTimeout) clearTimeout(observerTimeout);
-                        observerTimeout = setTimeout(() => {
-                            $animeLoaderWorker.postMessage({
-                                loadMore: true,
-                                shownAnimeLen: $finalAnimeList.length,
-                            });
-                        }, 300);
+                        // if (observerTimeout) clearTimeout(observerTimeout);
+                        // observerTimeout = setTimeout(() => {
+                        $animeLoaderWorker.postMessage({
+                            loadMore: true,
+                            shownAnimeLen: $finalAnimeList.length,
+                        });
+                        // }, 300);
                     }
                 });
             },
@@ -64,9 +65,9 @@
                         );
                         if (data.isLast) {
                             shownAllInList = true;
-                            if (observer) {
-                                observer.disconnect();
-                                observer = null;
+                            if ($animeObserver) {
+                                $animeObserver.disconnect();
+                                $animeObserver = null;
                             }
                         }
                     }
@@ -80,28 +81,27 @@
 
     finalAnimeList.subscribe((val) => {
         if (val instanceof Array && val.length) {
-            if (observer) {
-                observer.disconnect();
-                observer = null;
+            if ($animeObserver) {
+                $animeObserver.disconnect();
+                $animeObserver = null;
             }
             if ($finalAnimeList.length && !shownAllInList) {
                 (async () => {
                     addObserver();
                     await tick();
                     // Grid Observed
-                    observer.observe(
-                        $finalAnimeList[$finalAnimeList.length - 1].gridElement
-                    );
-                    // Popup Observed
-                    observer.observe(
-                        $finalAnimeList[$finalAnimeList.length - 1].popupElement
-                    );
+                    try {
+                        $animeObserver.observe(
+                            $finalAnimeList[$finalAnimeList.length - 1]
+                                .gridElement
+                        );
+                    } catch (ex) {}
                 })();
             }
         } else {
-            if (observer) {
-                observer.disconnect();
-                observer = null;
+            if ($animeObserver) {
+                $animeObserver.disconnect();
+                $animeObserver = null;
             }
         }
         if (val?.length <= 2) {
@@ -127,6 +127,11 @@
             justifyContent = "space-between";
         }
     });
+
+    function handleOpenPopup(animeIdx) {
+        $openedAnimePopupIdx = animeIdx;
+        $popupVisible = true;
+    }
 
     function getBriefInfo({
         contentWarning,
@@ -234,7 +239,7 @@
         style:justify-content={justifyContent}
     >
         {#if $finalAnimeList?.length}
-            {#each $finalAnimeList || [] as anime (anime.id)}
+            {#each $finalAnimeList || [] as anime, animeIdx (anime.id)}
                 <div
                     class="image-grid__card"
                     bind:this={anime.gridElement}
@@ -247,8 +252,8 @@
                             alt="anime-cover"
                             src={anime.coverImageUrl}
                             on:load={(e) => (e.target.style.opacity = 1)}
-                            on:click={() => ($popupVisible = true)}
-                            on:keydown={() => ($popupVisible = true)}
+                            on:click={handleOpenPopup(animeIdx)}
+                            on:keydown={handleOpenPopup(animeIdx)}
                         />
                     </div>
                     <span class="image-grid__card-title">
