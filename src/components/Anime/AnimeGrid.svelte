@@ -57,9 +57,9 @@
                     data.finalAnimeList instanceof Array &&
                     $finalAnimeList instanceof Array
                 ) {
-                    if (data.isNew) {
+                    if (data.isNew === true) {
                         $finalAnimeList = data.finalAnimeList;
-                    } else {
+                    } else if (data.isNew === false) {
                         $finalAnimeList = $finalAnimeList.concat(
                             data.finalAnimeList
                         );
@@ -71,6 +71,13 @@
                             }
                         }
                     }
+                } else if (
+                    data.isRemoved === true &&
+                    typeof data.removedID === "number"
+                ) {
+                    $finalAnimeList = $finalAnimeList.filter(
+                        ({ id }) => id !== data.removedID
+                    );
                 }
             };
             val.onerror = (error) => {

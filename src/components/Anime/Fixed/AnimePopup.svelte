@@ -4,12 +4,14 @@
         finalAnimeList,
         animeLoaderWorker,
         dataStatus,
+        hiddenEntries,
         filterOptions,
         ytPlayers,
         autoPlay,
         animeObserver,
         popupVisible,
         openedAnimePopupIdx,
+        searchedAnimeKeyword,
     } from "../../../js/globalValues.js";
     import {
         isJsonObject,
@@ -33,16 +35,29 @@
         $popupVisible = false;
     }
 
-    // let delayedHide;
-    // popupVisible.subscribe((val) => {
-    //     if (!val) {
-    //         setTimeout(() => {
-    //             delayedHide = val;
-    //         }, 400);
-    //     } else {
-    //         delayedHide = val;
-    //     }
-    // });
+    function getHiddenStatus(animeID) {
+        if (!$hiddenEntries) {
+            return "N/A";
+        } else if ($hiddenEntries[animeID]) {
+            return "Show";
+        } else {
+            return "Hide";
+        }
+    }
+
+    function handleHideShow(animeID) {
+        if ($hiddenEntries[animeID]) {
+            delete $hiddenEntries[animeID];
+            $hiddenEntries = $hiddenEntries;
+        } else {
+            $hiddenEntries[animeID] = true;
+        }
+        if ($finalAnimeList.length) {
+            if ($animeLoaderWorker instanceof Worker) {
+                $animeLoaderWorker.postMessage({ removeID: animeID });
+            }
+        }
+    }
 
     async function handleSeeMore(anime, animeIdx) {
         if ($finalAnimeList[animeIdx]) {
@@ -104,6 +119,24 @@
             return "green";
         }
     }
+
+    hiddenEntries.subscribe(async (val) => {
+        if (isJsonObject(val)) {
+            await saveJSON(val, "hiddenEntries");
+            // animeLoader()
+            //     .then(async (data) => {
+            //         $animeLoaderWorker = data.animeLoaderWorker;
+            //         $searchedAnimeKeyword = "";
+            //         $finalAnimeList = data.finalAnimeList;
+            //         $dataStatus = null;
+            //         await saveJSON(false, "shouldLoadAnime");
+            //         return;
+            //     })
+            //     .catch((error) => {
+            //         throw error;
+            //     });
+        }
+    });
 
     popupVisible.subscribe(async (val) => {
         if (
@@ -197,7 +230,7 @@
             });
     });
 
-    async function playMostVisibleTrailer() {
+    async function playMostVisibleTrailer(once = false) {
         await tick();
         let visibleTrailer = getMostVisibleElement(popupContainer, ".trailer");
         if (!visibleTrailer) {
@@ -237,7 +270,7 @@
                 let popupContent = visibleTrailer?.closest?.(".popup-content");
                 let anime =
                     $finalAnimeList?.[getChildIndex(popupContent) ?? -1];
-                if (anime) createPopupYTPlayer(anime);
+                if (anime && !once) createPopupYTPlayer(anime);
             }
         }
     }
@@ -331,8 +364,7 @@
             popupTrailer.style.display = "";
             popupImg.style.display = "none";
         }
-
-        playMostVisibleTrailer();
+        playMostVisibleTrailer(true);
     }
 </script>
 
@@ -383,6 +415,7 @@
                         </div>
                     </div>
                     <div class="button-container">
+                        <h3>Auto Play</h3>
                         <label class="switch">
                             <input
                                 type="checkbox"
@@ -556,7 +589,12 @@
                                 on:keydown={handleSeeMore(anime, animeIdx)}
                                 >See More</button
                             >
-                            <button class="hideshowbtn">---</button>
+                            <button
+                                class="hideshowbtn"
+                                on:click={handleHideShow(anime.id)}
+                                on:keydown={handleHideShow(anime.id)}
+                                >{getHiddenStatus(anime.id) || "N/A"}</button
+                            >
                         </div>
                     </div>
                 </div>
@@ -702,7 +740,7 @@
         min-height: 11em;
         flex: 0 1 auto;
         touch-action: pan-y;
-        margin: 2.4em;
+        margin: 2em 2.4em;
     }
 
     .popup-body a {
@@ -774,7 +812,7 @@
     }
 
     .info-list {
-        max-height: 235px;
+        max-height: 220px;
         overflow: hidden;
         display: grid;
         grid-template-columns: repeat(2, 1fr);
@@ -839,12 +877,20 @@
     .popup-content .button-container {
         background-color: #000 !important;
         display: flex;
-        justify-content: center;
-        padding: 5px;
+        justify-content: right;
+        padding: 5px 2.4em;
         align-items: center;
         z-index: 1;
         position: relative;
         user-select: none;
+        gap: 6px;
+    }
+
+    .popup-container .button-container h3 {
+        height: 14px;
+        line-height: 11px;
+        font-weight: 500;
+        color: #8d9abb;
     }
 
     .popup-content .button-next,

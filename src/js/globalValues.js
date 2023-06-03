@@ -6,6 +6,7 @@ const lastAnimeUpdate = writable(null)
 const username = writable(null)
 const userEntries = writable(null)
 const lastUserAnimeUpdate = writable(null)
+const hiddenEntries = writable(null)
 
 const filterOptions = writable(null)
 const activeTagFilters = writable(null)
@@ -29,6 +30,7 @@ export {
     username,
     userEntries,
     lastUserAnimeUpdate,
+    hiddenEntries,
     filterOptions,
     activeTagFilters,
     recommendedAnimeList,

@@ -13,8 +13,14 @@ self.onmessage = async ({ data }) => {
             isNew: true,
             finalAnimeList: filteredList.slice(0, loadLimit)
         });
-    } else if (data?.removeIndex !== undefined) {
-        finalAnimeList.splice(data.removeIndex, 1);
+    } else if (data?.removeID !== undefined) {
+        finalAnimeList = finalAnimeList.filter(({ id }) => id !== data.removeID)
+        filteredList = filteredList.filter(({ id }) => id !== data.removeID)
+        filteredList = finalAnimeList.filter(({ title }) => title?.toLowerCase?.().includes(keyword))
+        self.postMessage({
+            isRemoved: true,
+            removedID: data.removeID
+        });
     } else if (data?.loadMore !== undefined) {
         let nextIdx = data.shownAnimeLen;
         self.postMessage({
@@ -147,6 +153,9 @@ self.onmessage = async ({ data }) => {
             }
         })
         self.postMessage({ status: "Filtering Recommendation List" })
+
+        // Get Hidden Entries
+        let hiddenEntries = (await retrieveJSON("hiddenEntries")) || {}
         // Filter and ADD Warning State below
         finalAnimeList = recommendedAnimeList.filter(anime => {
             // favoriteContents
@@ -162,6 +171,13 @@ self.onmessage = async ({ data }) => {
             }
             if (hiddenList) {
                 // do hidden
+                if (hiddenEntries[anime.id] === undefined) {
+                    return false
+                }
+            } else {
+                if (hiddenEntries[anime.id] === true) {
+                    return false
+                }
             }
             // Should Exclude
             if (typeof anime?.season === 'string' && !jsonIsEmpty(exclude.season) && exclude.season[anime.season.toLowerCase()]) {

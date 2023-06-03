@@ -8,6 +8,7 @@
 		username,
 		userEntries,
 		lastUserAnimeUpdate,
+		hiddenEntries,
 		filterOptions,
 		activeTagFilters,
 		recommendedAnimeList,
@@ -27,7 +28,7 @@
 		processRecommendedAnimeList,
 		animeLoader,
 	} from "./js/workerUtils.js";
-	import { jsonIsEmpty } from "./js/others/helper.js";
+	import { isJsonObject, jsonIsEmpty } from "./js/others/helper.js";
 	// For Youtube API
 	const onYouTubeIframeAPIReady = new Function();
 
@@ -130,8 +131,11 @@
 		// Get Existing Data If there are any
 		initDataPromises.push(
 			new Promise(async (resolve) => {
+				// Auto Play
 				let _autoPlay = await retrieveJSON("autoPlay");
 				if (typeof _autoPlay === "boolean") $autoPlay = _autoPlay;
+				// Hidden Entries
+				$hiddenEntries = (await retrieveJSON("hiddenEntries")) || {};
 				shouldProcessRecommendation = await retrieveJSON(
 					"shouldProcessRecommendation"
 				);
