@@ -123,18 +123,6 @@
     hiddenEntries.subscribe(async (val) => {
         if (isJsonObject(val)) {
             await saveJSON(val, "hiddenEntries");
-            // animeLoader()
-            //     .then(async (data) => {
-            //         $animeLoaderWorker = data.animeLoaderWorker;
-            //         $searchedAnimeKeyword = "";
-            //         $finalAnimeList = data.finalAnimeList;
-            //         $dataStatus = null;
-            //         await saveJSON(false, "shouldLoadAnime");
-            //         return;
-            //     })
-            //     .catch((error) => {
-            //         throw error;
-            //     });
         }
     });
 
@@ -450,13 +438,22 @@
                                 <div class="info-categ">Studio</div>
                                 <div class="studio-popup info">
                                     {#if Object.entries(anime?.studios || {}).length}
-                                        {#each Object.entries(anime.studios || {}) as [studio, studioUrl] (studio)}
-                                            <a
-                                                rel="noopener noreferrer"
-                                                target="_blank"
-                                                href={studioUrl || ""}
-                                                >{studio || "N/A"}</a
-                                            >
+                                        {#each Object.entries(anime.studios || {}) as [studio, studioUrl], studioIdx (studio)}
+                                            {#if studio}
+                                                <a
+                                                    rel="noopener noreferrer"
+                                                    target="_blank"
+                                                    href={studioUrl || ""}
+                                                    >{studio +
+                                                        (Object.entries(
+                                                            anime?.studios || {}
+                                                        ).length -
+                                                            1 >
+                                                        studioIdx
+                                                            ? ", "
+                                                            : "")}</a
+                                                >
+                                            {/if}
                                         {/each}
                                     {:else}
                                         N/A
@@ -620,7 +617,7 @@
         width: 100%;
         height: 100%;
         background-color: rgba(0, 0, 0, 0.6);
-        display: grid;
+        display: flex;
         justify-content: center;
         overflow: hidden;
         transform: translateY(99999px);
@@ -655,6 +652,7 @@
 
     .popup-content {
         display: grid;
+        grid-template-columns: 100%;
         color: #909cb8;
         background-color: #151f2e;
         max-width: 640px;

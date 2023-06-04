@@ -162,6 +162,7 @@
 			new Promise(async (resolve, reject) => {
 				// Check and request Anime Entries
 				let animeEntriesLen = await retrieveJSON("animeEntriesLength");
+				console.log(animeEntriesLen);
 				if (animeEntriesLen < 1) {
 					await requestAnimeEntries()
 						.then(() => {

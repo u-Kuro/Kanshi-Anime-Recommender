@@ -810,8 +810,13 @@
             }
         };
         hasPartialMatch = (strings, searchString) => {
-            if (typeof strings === "string") {
-                return strings.includes(searchString);
+            if (
+                typeof strings === "string" &&
+                typeof searchString === "string"
+            ) {
+                return strings
+                    .toLowerCase()
+                    .includes(searchString.toLowerCase());
             }
         };
         document
@@ -1314,6 +1319,10 @@
         align-items: center;
         width: 100%;
         column-gap: 10px;
+    }
+
+    .home-status::-webkit-scrollbar {
+        display: none;
     }
 
     .home-status .skeleton {
