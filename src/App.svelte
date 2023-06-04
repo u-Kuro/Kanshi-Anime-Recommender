@@ -32,6 +32,11 @@
 	import { isJsonObject, jsonIsEmpty } from "./js/others/helper.js";
 	// For Youtube API
 	const onYouTubeIframeAPIReady = new Function();
+	let pleaseWaitStatusInterval = setInterval(() => {
+		if (!$dataStatus) {
+			$dataStatus = "Please Wait...";
+		}
+	}, 300);
 
 	onMount(async () => {
 		// Init Data
@@ -225,7 +230,7 @@
 					}
 				})
 				.then(() => {
-					console.log("why", !$username, $username);
+					clearInterval(pleaseWaitStatusInterval);
 					if (!$username) {
 						$dataStatus = "No Anilist Username Found";
 						let usernameInput =
@@ -237,6 +242,8 @@
 					}
 				})
 				.catch((error) => {
+					clearInterval(pleaseWaitStatusInterval);
+					$dataStatus = "Something Went Wrong...";
 					console.error(error);
 				});
 		});
