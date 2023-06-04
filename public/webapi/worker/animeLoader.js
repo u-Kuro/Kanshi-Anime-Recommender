@@ -117,7 +117,7 @@ self.onmessage = async ({ data }) => {
                         include.studios[optionName] = true
                     }
                 } else if (filterType === 'checkbox') {
-                    if (optionName === 'hidden') {
+                    if (optionName === 'hidden entries') {
                         hiddenList = true
                     } else if (optionName === 'hide my anime') {
                         hideMyAnime = true

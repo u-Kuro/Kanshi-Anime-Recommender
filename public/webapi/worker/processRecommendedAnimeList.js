@@ -986,7 +986,7 @@ self.onmessage = async ({ data }) => {
                         if (varScheme.studios[fullStudio] >= varScheme.meanStudios && !studiosIncluded[fullStudio] && typeof studioUrl === "string") {
                             let tmpscore = varScheme.studios[fullStudio];
                             studiosIncluded[fullStudio] = [{
-                                ["studio: " + studio + " (" + tmpscore.toFixed(2) + ")"]:
+                                [studio + " (" + tmpscore.toFixed(2) + ")"]:
                                     studioUrl,
                             },
                                 tmpscore,
