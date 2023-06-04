@@ -174,5 +174,6 @@ export {
   makeFetchRequest,
   fetchAniListData,
   formatNumber,
-  ncsCompare
+  ncsCompare,
+  msToTime
 }
