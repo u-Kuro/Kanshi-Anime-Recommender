@@ -366,6 +366,16 @@
         }
         playMostVisibleTrailer(true);
     }
+
+    function getFormattedAnimeFormat({ episodes, format, duration }) {
+        if (episodes > 0 && format) {
+            format = `${format} [${episodes}]`;
+            if (duration > 0) {
+                let time = msToTime(duration * 60 * 1000);
+                return `${format} | ${time ? time : ""}`;
+            }
+        }
+    }
 </script>
 
 <div
@@ -443,7 +453,7 @@
                             <div>
                                 <div class="info-categ">Format</div>
                                 <div class="format-popup info">
-                                    {anime.format || "N/A"}
+                                    {getFormattedAnimeFormat(anime) || "N/A"}
                                 </div>
                             </div>
                             <div>

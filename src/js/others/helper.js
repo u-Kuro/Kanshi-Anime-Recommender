@@ -9,6 +9,33 @@ const jsonIsEmpty = (obj) => {
   return true;
 }
 
+function msToTime(duration) {
+  try {
+    let seconds = Math.floor((duration / 1000) % 60),
+      minutes = Math.floor((duration / (1000 * 60)) % 60),
+      hours = Math.floor((duration / (1000 * 60 * 60)) % 24),
+      days = Math.floor((duration / (1000 * 60 * 60 * 24)) % 7),
+      weeks = Math.floor((duration / (1000 * 60 * 60 * 24 * 7)) % 4),
+      months = Math.floor((duration / (1000 * 60 * 60 * 24 * 7 * 4)) % 12)
+    years = Math.floor((duration / (1000 * 60 * 60 * 24 * 7 * 4 * 12)) % 10)
+    decades = Math.floor((duration / (1000 * 60 * 60 * 24 * 7 * 4 * 12 * 10)) % 10)
+    century = Math.floor((duration / (1000 * 60 * 60 * 24 * 7 * 4 * 12 * 10 * 10)) % 10)
+    millenium = Math.floor((duration / (1000 * 60 * 60 * 24 * 7 * 4 * 12 * 10 * 10 * 10)) % 10)
+    let time = []
+    if (millenium <= 0 && century <= 0 && decades <= 0 && years <= 0 && months <= 0 && weeks <= 0 && days <= 0 && hours <= 0 && minutes <= 0 && seconds <= 0) return "0s"
+    if (millenium > 0) time.push(millenium === 1 ? `${millenium}mil` : `${millenium}mils`)
+    if (decades > 0) time.push(decades === 1 ? `${decades}de` : `${decades}des`)
+    if (years > 0) time.push(`${years}y`)
+    if (months > 0) time.push(months === 1 ? `${months}mo` : `${months}mos`)
+    if (weeks > 0) time.push(`${weeks}w`)
+    if (days > 0) time.push(`${days}d`)
+    if (hours > 0) time.push(`${hours}h`)
+    if (minutes > 0) time.push(`${minutes}m`)
+    if (seconds > 0) time.push(`${seconds}s`)
+    return time.join(" ")
+  } catch (e) { return "N/A" }
+}
+
 function getMostVisibleElement(parent, childSelector, intersectionRatioThreshold = 0.5) {
   try {
     if (typeof parent === "string") parent = document.querySelector(parentSelector);
