@@ -88,8 +88,7 @@ self.onmessage = async ({ data }) => {
                 userStatus: {},
                 studios: {},
                 year: {},
-            },
-            favoriteContents = {};
+            }
         let hideMyAnime = false,
             hiddenList = false,
             hideWatched = false,

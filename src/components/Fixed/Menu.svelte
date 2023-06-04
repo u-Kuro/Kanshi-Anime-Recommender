@@ -1,17 +1,90 @@
 <script>
-    import { menuVisible } from "../../js/globalValues.js";
+    import {
+        menuVisible,
+        hiddenEntries,
+        animeLoaderWorker,
+        finalAnimeList,
+        dataStatus,
+        searchedAnimeKeyword,
+        filterOptions,
+        activeTagFilters,
+    } from "../../js/globalValues.js";
     import { onMount, onDestroy } from "svelte";
     import { fade } from "svelte/transition";
+    import { saveJSON } from "../../js/indexedDB.js";
+    import { animeLoader } from "../../js/workerUtils.js";
+    import { jsonIsEmpty } from "../../js/others/helper.js";
 
-    let handleMenuVisibility;
-    onMount(() => {
-        handleMenuVisibility = (event) => {
-            let element = event.target;
-            let classList = element.classList;
-            if (classList.contains("button")) return;
-            menuVisible.set(!$menuVisible);
-        };
-    });
+    function stillFixing() {
+        alert("Still Fixing This");
+    }
+    function updateList() {}
+
+    function handleMenuVisibility(event) {
+        let element = event.target;
+        let classList = element.classList;
+        if (classList.contains("button")) return;
+        menuVisible.set(!$menuVisible);
+    }
+
+    async function showAllHiddenEntries() {
+        if (jsonIsEmpty($hiddenEntries)) {
+            // Alert No Hidden Entries
+            alert("No Hidden Entries");
+            return;
+        } else if (
+            confirm("Are you sure you want to show all hidden Anime Entries?")
+        ) {
+            if ($animeLoaderWorker) {
+                $animeLoaderWorker.terminate();
+                $animeLoaderWorker = null;
+            }
+            $finalAnimeList = null;
+            $dataStatus = "Updating List";
+            $menuVisible = false;
+            await saveJSON(true, "shouldLoadAnime");
+            let filterSelectionIdx =
+                $filterOptions?.filterSelection?.findIndex?.(
+                    ({ filterSelectionName }) =>
+                        filterSelectionName === "Anime Filter"
+                );
+            let checkBoxFilterIdx = $filterOptions?.filterSelection?.[
+                filterSelectionIdx ?? -1
+            ]?.filters?.Checkbox?.findIndex?.(
+                ({ filName }) => filName === "hidden"
+            );
+            if (filterSelectionIdx >= 0 && checkBoxFilterIdx >= 0) {
+                $filterOptions.filterSelection[
+                    filterSelectionIdx ?? -1
+                ].filters.Checkbox[checkBoxFilterIdx ?? -1].isSelected = false;
+                // $filterOptions = $filterOptions;
+            }
+            if ($activeTagFilters?.["Anime Filter"]) {
+                $activeTagFilters["Anime Filter"] = $activeTagFilters[
+                    "Anime Filter"
+                ].filter(
+                    ({ optionName, filterType }) =>
+                        optionName !== "hidden" && filterType !== "checkbox"
+                );
+            }
+            $hiddenEntries = {};
+            await saveJSON($filterOptions, "filterOptions");
+            await saveJSON($activeTagFilters, "activeTagFilters");
+            await saveJSON($hiddenEntries, "hiddenEntries");
+            animeLoader()
+                .then(async (data) => {
+                    $animeLoaderWorker = data.animeLoaderWorker;
+                    $searchedAnimeKeyword = "";
+                    $finalAnimeList = data.finalAnimeList;
+                    $dataStatus = null;
+                    await saveJSON(false, "shouldLoadAnime");
+                    return;
+                })
+                .catch((error) => {
+                    throw error;
+                });
+        }
+    }
 </script>
 
 {#if $menuVisible}
@@ -22,8 +95,17 @@
         transition:fade={{ duration: 300 }}
     >
         <div class="menu">
-            <button class="button" id="updateBtn">Update</button>
-            <button class="button" id="showAllAnime">Show All</button>
+            <button
+                class="button"
+                on:click={stillFixing}
+                on:keydown={stillFixing}>Update List</button
+            >
+            <button
+                class="button"
+                on:click={showAllHiddenEntries}
+                on:keydown={showAllHiddenEntries}
+                >Show All Hidden Entries</button
+            >
             <input
                 class="darkMode"
                 type="file"
@@ -31,27 +113,36 @@
                 style="display: none;"
                 accept=".json"
             />
-            <button class="button" id="importBtn">Import</button>
-            <button class="button" id="exportBtn">Export</button>
-            <!-- <button class="button" id="warnAnimeBtn"
-                >Choose Content to Warn</button
-            > -->
-            <!-- <button class="button" id="filterAlgoBtn"
-                >Filter Algorithm Contents</button
-            > -->
-            <button class="button" id="themeBtn">Dark Mode</button>
-            <!-- <button class="button" id="hideKidsAnimeBtn">Hide Kids Anime</button
-            > -->
-            <!-- <button class="button" id="hideUnwatchedSequelsBtn"
-                >Hide Unwatched Sequels</button
-            > -->
-            <button class="button" id="updateIntervalBtn"
-                >Update Every Hour</button
+            <button
+                class="button"
+                on:click={stillFixing}
+                on:keydown={stillFixing}>Import List</button
             >
-            <button class="button" id="exportIntervalBtn"
-                >Export Every Hour</button
+            <button
+                class="button"
+                on:click={stillFixing}
+                on:keydown={stillFixing}>Export List</button
             >
-            <button class="button" id="sign-up">Create Another Account</button>
+            <button
+                class="button"
+                on:click={stillFixing}
+                on:keydown={stillFixing}>Dark Mode</button
+            >
+            <button
+                class="button"
+                on:click={stillFixing}
+                on:keydown={stillFixing}>Update Every Hour</button
+            >
+            <button
+                class="button"
+                on:click={stillFixing}
+                on:keydown={stillFixing}>Export Every Hour</button
+            >
+            <button
+                class="button"
+                on:click={stillFixing}
+                on:keydown={stillFixing}>Create Another Account</button
+            >
         </div>
     </div>
 {/if}
@@ -69,13 +160,19 @@
     }
     .menu {
         margin: 0 auto;
-        padding: 1.5em 50px 0;
+        padding: 1.5em 50px;
         width: 100vw;
         height: max-content;
         display: flex;
         flex-wrap: wrap;
         gap: 1.5em;
         max-width: 1140px;
+        max-height: 100%;
+        overflow-x: hidden;
+        overflow-y: auto;
+    }
+    .menu::-webkit-scrollbar {
+        display: none;
     }
     .menu > .button {
         -moz-box-shadow: 0 3px 20px 0 #2b2d42;
@@ -88,10 +185,11 @@
         padding: 0.8em 1.6em;
         height: fit-content;
         border: none;
+        cursor: pointer;
     }
     @media screen and (orientation: portrait) {
         .menu {
-            padding: 1.5em 1em 0;
+            padding: 1.5em 1em;
         }
     }
     /* .menu > button.selected {

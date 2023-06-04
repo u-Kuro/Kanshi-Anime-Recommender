@@ -4291,7 +4291,7 @@ self.onmessage = async ({ data }) => {
     }
     let filterOptions = await retrieveJSON("filterOptions")
     let activeTagFilters = await retrieveJSON("activeTagFilters")
-    if (!filterOptions) {
+    if (jsonIsEmpty(filterOptions)) {
         self.postMessage({ status: "Getting Filter Options" })
         filterOptions = {
             filterSelection: [
@@ -4392,7 +4392,7 @@ self.onmessage = async ({ data }) => {
                         isSelected: false
                     },
                     {
-                        filName: "hidden",
+                        filName: "hidden entries",
                         isSelected: false
                     }
                 ]
@@ -4549,7 +4549,7 @@ self.onmessage = async ({ data }) => {
         });
     } else {
         self.postMessage({ status: "Updating Filter Options" })
-        filterOptions.filterSelection.forEach((filterType, filterTypeIdx) => {
+        filterOptions?.filterSelection?.forEach((filterType, filterTypeIdx) => {
             let dropdown = filterType?.filters?.Dropdown
             if (dropdown instanceof Array) {
                 for (let i = 0; i < dropdown.length; i++) {
@@ -4599,7 +4599,7 @@ self.onmessage = async ({ data }) => {
             }
         })
     }
-    if (!activeTagFilters) {
+    if (jsonIsEmpty(activeTagFilters)) {
         activeTagFilters = filterOptions.filterSelection.reduce((r, { filterSelectionName }) => {
             r[filterSelectionName] = [];
             return r;
@@ -4682,6 +4682,12 @@ async function retrieveJSON(name) {
             return resolve();
         }
     });
+}
+const jsonIsEmpty = (obj) => {
+    for (const key in obj) {
+        return false;
+    }
+    return true;
 }
 function isJson(j) {
     try {

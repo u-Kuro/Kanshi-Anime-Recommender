@@ -14,6 +14,7 @@ const animeLoader = (_data) => {
             else {
                 animeLoaderWorker.onmessage = null
                 resolve({ finalAnimeList: data.finalAnimeList, animeLoaderWorker })
+
             }
         }
         animeLoaderWorker.onerror = (error) => {
@@ -117,11 +118,11 @@ const processRecommendedAnimeList = (_data) => {
                     processRecommendedAnimeListWorker.terminate();
                 }, terminateDelay);
                 getFilterOptions()
-                    .then((data) => {
-                        activeTagFilters.set(data.activeTagFilters)
-                        filterOptions.set(data.filterOptions)
+                    .then((_data) => {
+                        activeTagFilters.set(_data.activeTagFilters)
+                        filterOptions.set(_data.filterOptions)
+                        resolve(data);
                     })
-                resolve(data);
             }
         };
         processRecommendedAnimeListWorker.onerror = (error) => {

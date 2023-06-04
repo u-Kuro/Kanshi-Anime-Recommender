@@ -46,15 +46,27 @@
     }
 
     function handleHideShow(animeID) {
-        if ($hiddenEntries[animeID]) {
-            delete $hiddenEntries[animeID];
-            $hiddenEntries = $hiddenEntries;
+        let isHidden = $hiddenEntries[animeID];
+        if (isHidden) {
+            if (confirm("Are you sure you want to show the anime?")) {
+                delete $hiddenEntries[animeID];
+                $hiddenEntries = $hiddenEntries;
+                if (
+                    $finalAnimeList.length &&
+                    $animeLoaderWorker instanceof Worker
+                ) {
+                    $animeLoaderWorker.postMessage({ removeID: animeID });
+                }
+            }
         } else {
-            $hiddenEntries[animeID] = true;
-        }
-        if ($finalAnimeList.length) {
-            if ($animeLoaderWorker instanceof Worker) {
-                $animeLoaderWorker.postMessage({ removeID: animeID });
+            if (confirm("Are you sure you want to hide the anime?")) {
+                $hiddenEntries[animeID] = true;
+                if (
+                    $finalAnimeList.length &&
+                    $animeLoaderWorker instanceof Worker
+                ) {
+                    $animeLoaderWorker.postMessage({ removeID: animeID });
+                }
             }
         }
     }

@@ -18,6 +18,7 @@
 		dataStatus,
 		autoPlay,
 		popupVisible,
+		menuVisible,
 	} from "./js/globalValues.js";
 	import {
 		getAnimeEntries,
@@ -47,6 +48,7 @@
 					animeEntriesLen < 1 ||
 					!($lastAnimeUpdate instanceof Date)
 				) {
+					$finalAnimeList = null;
 					getAnimeEntries()
 						.then(async (data) => {
 							$lastAnimeUpdate = data.lastAnimeUpdate;
@@ -84,7 +86,7 @@
 				let _activeTagFilters = await retrieveJSON("activeTagFilters");
 				if (_activeTagFilters) {
 					$activeTagFilters = _activeTagFilters;
-				} else if ($filterOptions) {
+				} else if (!jsonIsEmpty($filterOptions)) {
 					// Add Default Active Filters
 					$activeTagFilters =
 						$filterOptions.filterSelection.reduce(
@@ -94,7 +96,6 @@
 							},
 							{}
 						) || {};
-					resolve();
 				}
 				if (jsonIsEmpty($filterOptions)) {
 					await getFilterOptions()
@@ -139,7 +140,7 @@
 				shouldProcessRecommendation = await retrieveJSON(
 					"shouldProcessRecommendation"
 				);
-				if (!shouldProcessRecommendation) {
+				if (shouldProcessRecommendation) {
 					await animeLoader()
 						.then(async (data) => {
 							if (shouldLoadAnime)
@@ -162,7 +163,6 @@
 			new Promise(async (resolve, reject) => {
 				// Check and request Anime Entries
 				let animeEntriesLen = await retrieveJSON("animeEntriesLength");
-				console.log(animeEntriesLen);
 				if (animeEntriesLen < 1) {
 					await requestAnimeEntries()
 						.then(() => {
@@ -187,6 +187,7 @@
 						recommendedAnimeListLen < 1 ||
 						shouldProcessRecommendation
 					) {
+						$finalAnimeList = null;
 						await processRecommendedAnimeList()
 							.then(async () => {
 								if (shouldProcessRecommendation)
@@ -206,6 +207,7 @@
 				.then(async () => {
 					// Create/Filter Processed List for Final List and Shown the List
 					if (!$finalAnimeList?.length || shouldLoadAnime) {
+						$finalAnimeList = null;
 						await animeLoader()
 							.then(async (data) => {
 								if (shouldLoadAnime)
@@ -223,10 +225,15 @@
 					}
 				})
 				.then(() => {
+					console.log("why", !$username, $username);
 					if (!$username) {
-						$dataStatus = "No Username Found";
-						// No Name?
-						// Alert User
+						$dataStatus = "No Anilist Username Found";
+						let usernameInput =
+							document.getElementById("usernameInput");
+						usernameInput.setCustomValidity(
+							"Enter your Anilist Username"
+						);
+						usernameInput.reportValidity();
 					}
 				})
 				.catch((error) => {
@@ -237,6 +244,12 @@
 
 	let currentScrollTop;
 	popupVisible.subscribe((val) => {
+		documentScroll(val);
+	});
+	menuVisible.subscribe((val) => {
+		documentScroll(val);
+	});
+	function documentScroll(val) {
 		if (val === true) {
 			currentScrollTop = document.documentElement.scrollTop;
 			document.documentElement.classList.add("noscroll");
@@ -248,7 +261,7 @@
 			document.body.style.top = "";
 			document.documentElement.scrollTop = currentScrollTop;
 		}
-	});
+	}
 
 	onDestroy(() => {});
 </script>

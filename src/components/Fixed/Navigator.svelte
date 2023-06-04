@@ -127,6 +127,7 @@
         <!-- <div id="fps">--</span> FPS</div> -->
         <div class="input-search">
             <input
+                id="usernameInput"
                 type="text"
                 placeholder="{windowWidth > 415 ? 'Your ' : ''}Anilist Username"
                 on:keydown={updateUsername}
