@@ -1,7 +1,7 @@
 <script>
 </script>
 
-<div id="anime-options">
+<div id="anime-options" style:display={"none"}>
     <div id="anime-options-container">
         <span id="anime-option-openpopup">Open Anime</span>
         <!-- <a

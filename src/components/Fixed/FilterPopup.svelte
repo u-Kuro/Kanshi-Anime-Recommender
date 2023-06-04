@@ -5,6 +5,7 @@
     id="warnAnimeContainer"
     class="swal2-container-custom swal2-center-custom swal2-backdrop-show-custom"
     style="display: none; overflow-y: auto;"
+    style:display={"none"}
 >
     <div
         id="warnAnimeModal"
@@ -53,6 +54,7 @@
     id="filterAlgoContainer"
     class="swal2-container-custom swal2-center-custom swal2-backdrop-show-custom"
     style="display: none; overflow-y: auto;"
+    style:display={"none"}
 >
     <div
         id="filterAlgoModal"
