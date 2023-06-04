@@ -369,13 +369,15 @@
     }
 
     function getFormattedAnimeFormat({ episodes, format, duration }) {
+        let _format;
         if (episodes > 0 && format) {
-            format = `${format} [${episodes}]`;
+            _format = `${format} [${episodes}]`;
             if (duration > 0) {
                 let time = msToTime(duration * 60 * 1000);
-                return `${format} | ${time ? time : ""}`;
+                _format = `${_format} | ${time ? time : ""}`;
             }
         }
+        return _format;
     }
 </script>
 
