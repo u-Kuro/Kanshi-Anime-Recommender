@@ -48,6 +48,9 @@
 	} from "./js/others/helper.js";
 
 	$android = isAndroid();
+        window.openMenu = ()=> {
+         $menuVisible = true
+	}
 	// Get Export Folder
 	(async () => {
 		$exportPathIsAvailable = await retrieveJSON("exportPathIsAvailable");
