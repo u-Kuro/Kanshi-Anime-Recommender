@@ -15,7 +15,7 @@
         runUpdate,
     } from "../../js/globalValues.js";
     import { fade } from "svelte/transition";
-    import { saveJSON } from "../../js/indexedDB.js";
+    import { saveJSON, retrieveJSON } from "../../js/indexedDB.js";
     import {
         animeLoader,
         exportUserData,
@@ -63,7 +63,8 @@
         console.log("WebtoApp: Choose an Export Path");
     }
 
-    function exportData() {
+    async function exportData() {
+        $exportPathIsAvailable = await retrieveJSON("exportPathIsAvailable");
         if (!$exportPathIsAvailable && $android) return handleExportFolder();
         if (confirm("Are you sure you want to export your Data?")) {
             $menuVisible = false;
@@ -91,7 +92,8 @@
         }
     }
 
-    function handleExportEveryHour() {
+    async function handleExportEveryHour() {
+        $exportPathIsAvailable = await retrieveJSON("exportPathIsAvailable");
         if (!$exportPathIsAvailable && $android) return handleExportFolder();
         if (
             confirm(
