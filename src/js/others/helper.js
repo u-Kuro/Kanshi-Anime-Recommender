@@ -135,7 +135,7 @@ const fetchAniListData = (anilistGraphQLQuery) => {
   })
 }
 
-function formatNumber(number, dec = 2) {
+const formatNumber = (number, dec = 2) => {
   if (typeof number === "number") {
     const formatter = new Intl.NumberFormat("en-US", {
       maximumFractionDigits: dec, // display up to 2 decimal places
@@ -159,20 +159,20 @@ function formatNumber(number, dec = 2) {
   }
 }
 
-function ncsCompare(str1, str2) {
+const ncsCompare = (str1, str2) => {
   if (typeof str1 !== "string" || typeof str2 !== "string") {
     return false;
   }
   return str1.toLowerCase() === str2.toLowerCase();
 }
 
-function changeInputValue(inputElement, newValue) {
+const changeInputValue = (inputElement, newValue) => {
   let selectionStart = Math.max(inputElement.selectionStart - 1 || 0, 0);
   inputElement.value = newValue;
   inputElement.setSelectionRange(selectionStart, selectionStart);
 }
 
-function dragScroll(element, axis = 'xy') {
+const dragScroll = (element, axis = 'xy') => {
   var curYPos, curXPos, curDown, curScrollLeft, curScrollTop;
 
   let move = (e) => {
@@ -212,7 +212,31 @@ function dragScroll(element, axis = 'xy') {
   };
 }
 
+const isAndroid = () => {
+  try {
+    JSBridge.exportJSON // Android Interface
+    return true
+  } catch (e) {
+    return false
+  }
+}
+
+let $_pastExportUrl;
+const downloadLink = (url, fileName) => {
+  if ($_pastExportUrl) {
+    setTimeout(() => URL.revokeObjectURL($_pastExportUrl), 0)
+  }
+  $_pastExportUrl = url
+  const a = document.createElement('a')
+  a.href = url
+  a.download = fileName
+  a.click()
+  return
+}
+
 export {
+  downloadLink,
+  isAndroid,
   isJsonObject,
   jsonIsEmpty,
   getChildIndex,

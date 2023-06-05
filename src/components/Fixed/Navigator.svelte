@@ -48,6 +48,7 @@
                                 `Currently connected to ${$username}, do you want to update?`
                             )
                         ) {
+                            $menuVisible = false;
                             $dataStatus = "Getting User Entries";
                             requestUserEntries({
                                 username: typedUsername,
@@ -75,6 +76,7 @@
                                 .catch((error) => alert(error));
                         }
                     } else {
+                        $menuVisible = false;
                         $dataStatus = "Getting User Entries";
                         await requestUserEntries({ username: typedUsername })
                             .then(({ message, newusername }) => {

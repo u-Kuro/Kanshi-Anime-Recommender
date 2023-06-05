@@ -13,15 +13,55 @@
     import { fade } from "svelte/transition";
     import { saveJSON } from "../../js/indexedDB.js";
     import {
-        processRecommendedAnimeList,
         animeLoader,
         requestAnimeEntries,
         requestUserEntries,
+        exportUserData,
+        importUserData,
     } from "../../js/workerUtils.js";
     import { jsonIsEmpty } from "../../js/others/helper.js";
 
+    let importFileInput;
+
     function stillFixing() {
         alert("Still Fixing This");
+    }
+
+    function importData() {
+        console.log(importFileInput);
+        if (!(importFileInput instanceof Element))
+            return ($dataStatus = "Something went wrong...");
+        if (confirm("Are you sure you want to import your Data?")) {
+            importFileInput.click();
+        }
+    }
+
+    function importJSONFile() {
+        console.log("change", importFileInput);
+        if (!(importFileInput instanceof Element))
+            return ($dataStatus = "Something went wrong...");
+        let importedFile = importFileInput.files?.[0];
+        if (importedFile) {
+            let filename = importedFile.name;
+            if (
+                confirm(
+                    `File ${
+                        filename ? "named [" + filename + "] " : ""
+                    }has been detected, do you want to continue the import?`
+                )
+            ) {
+                importUserData({
+                    importedFile: importedFile,
+                });
+            }
+        }
+    }
+
+    function exportData() {
+        if (confirm("Are you sure you want to export your Data?")) {
+            $menuVisible = false;
+            exportUserData();
+        }
     }
 
     function updateList() {
@@ -100,8 +140,21 @@
                 });
         }
     }
+
+    function anilistSignup() {
+        if (confirm("Do you want to sign up an Anilist account?")) {
+            window.open("https://anilist.co/signup", "_blank");
+        }
+    }
 </script>
 
+<input
+    type="file"
+    style:display="none"
+    accept=".json"
+    bind:this={importFileInput}
+    on:change={importJSONFile}
+/>
 {#if $menuVisible}
     <div
         class="menu-container"
@@ -119,22 +172,11 @@
                 on:keydown={showAllHiddenEntries}
                 >Show All Hidden Entries</button
             >
-            <input
-                class="darkMode"
-                type="file"
-                id="importFile"
-                style="display: none;"
-                accept=".json"
-            />
-            <button
-                class="button"
-                on:click={stillFixing}
-                on:keydown={stillFixing}>Import List</button
+            <button class="button" on:click={importData} on:keydown={importData}
+                >Import Data</button
             >
-            <button
-                class="button"
-                on:click={stillFixing}
-                on:keydown={stillFixing}>Export List</button
+            <button class="button" on:click={exportData} on:keydown={exportData}
+                >Export Data</button
             >
             <button
                 class="button"
@@ -153,8 +195,8 @@
             >
             <button
                 class="button"
-                on:click={stillFixing}
-                on:keydown={stillFixing}>Create Another Account</button
+                on:click={anilistSignup}
+                on:keydown={anilistSignup}>Create an Anilist Account</button
             >
         </div>
     </div>

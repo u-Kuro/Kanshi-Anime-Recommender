@@ -5,8 +5,10 @@ import {
     toast,
     updateRecommendationList,
     updateFilters,
-    loadAnime
+    loadAnime,
+    username
 } from "./globalValues";
+import { isAndroid, downloadLink } from "../js/others/helper.js"
 let terminateDelay = 1000;
 let dataStatusPrio = false
 
@@ -112,6 +114,81 @@ const requestUserEntries = (_data) => {
 
         }
         requestUserEntriesWorker.onerror = (error) => {
+            reject(error)
+        }
+    })
+}
+
+let exportUserDataWorker;
+const exportUserData = (_data) => {
+    return new Promise((resolve, reject) => {
+        if (exportUserDataWorker) exportUserDataWorker.terminate()
+        exportUserDataWorker = new Worker("./webapi/worker/exportUserData.js")
+        if (isAndroid()) {
+            exportUserDataWorker.postMessage('android')
+        } else {
+            exportUserDataWorker.postMessage('browser')
+        }
+        exportUserDataWorker.onmessage = ({ data }) => {
+            console.log(isAndroid())
+            if (data?.status !== undefined) {
+                dataStatusPrio = true
+                dataStatus.set(data.status)
+            } else if (isAndroid()) {
+                dataStatusPrio = false
+                let chunk = data.chunk
+                let state = data.state
+                // 0 - start | 1 - ongoing | 2 - done
+                if (state === 0) {
+                    JSBridge.exportJSON('', 0, '')
+                } else if (state === 1) {
+                    JSBridge.exportJSON(chunk, 1, '')
+                } else if (state === 2) {
+                    let username = data.username ?? null
+                    JSBridge.exportJSON(chunk, 2, `Kanshi.${username.toLowerCase() || "Backup"}.json`)
+                    exportUserDataWorker.terminate();
+                    resolve(data)
+                }
+            } else {
+                dataStatusPrio = false
+                let username = data.username ?? null
+                downloadLink(data.url, `Kanshi.${username.toLowerCase() || "Backup"}.json`)
+                resolve(data)
+                // dont terminate, can't oversee blob link lifetime
+            }
+        }
+        exportUserDataWorker.onerror = (error) => {
+            reject(error)
+        }
+    })
+}
+let importUserDataTerminateTimeout, importUserDataWorker;
+const importUserData = (_data) => {
+    return new Promise((resolve, reject) => {
+        if (importUserDataWorker) importUserDataWorker.terminate()
+        importUserDataWorker = new Worker("./webapi/worker/importUserData.js")
+        if (importUserDataTerminateTimeout) clearTimeout(importUserDataTerminateTimeout)
+        importUserDataWorker.postMessage(_data)
+        importUserDataWorker.onmessage = ({ data }) => {
+            if (data?.status !== undefined) {
+                dataStatusPrio = true
+                dataStatus.set(data.status)
+            } else if (typeof data?.importedUsername === "string") {
+                username.set(data.importedUsername)
+            } else if (data?.updateFilters !== undefined) {
+                updateFilters.update(e => !e)
+            } else if (data?.updateRecommendationList !== undefined) {
+                updateRecommendationList.update(e => !e)
+            } else {
+                dataStatusPrio = false
+                importUserDataTerminateTimeout = setTimeout(() => {
+                    importUserDataWorker.terminate();
+                }, terminateDelay)
+                resolve(data)
+            }
+
+        }
+        importUserDataWorker.onerror = (error) => {
             reject(error)
         }
     })
@@ -242,6 +319,8 @@ export {
     getAnimeFranchises,
     requestAnimeEntries,
     requestUserEntries,
+    exportUserData,
+    importUserData,
     processRecommendedAnimeList,
     animeLoader
 }
