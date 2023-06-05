@@ -8,10 +8,4 @@ const app = new App({
 	target: document.body
 });
 
-function printHello(){
-   console.log("hello")
-}
-
-window.printHello = printHello
-
 export default app;
