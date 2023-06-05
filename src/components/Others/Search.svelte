@@ -8,47 +8,30 @@
         activeTagFilters,
         searchedAnimeKeyword,
         dataStatus,
+        updateRecommendationList,
+        loadAnime,
+        username,
+        initData,
     } from "../../js/globalValues.js";
-    import {
-        processRecommendedAnimeList,
-        animeLoader,
-    } from "../../js/workerUtils.js";
     import { fade } from "svelte/transition";
     import { dragScroll } from "../../js/others/dragScroll.js";
 
-    let writableSubscriptions = [];
-
     let Init = true;
+
+    let maxFilterSelectionHeight;
+    let unsubFilterDragScroll;
+    let unsubTagFiltersDragScroll;
 
     let selectedFilterTypeElement;
     let selectedFilterElement;
     let selectedSortElement;
-    let maxFilterSelectionHeight;
-    let filtersIsScrolling;
-    let tagFilterIsScrolling;
     let highlightedEl;
 
-    let clickOutsideListener;
-    let windowResized;
-    let handleFilterTypes;
-    let handleShowFilterTypes;
-    let handleDropdownKeyDown;
-    let filterSelect;
-    let closeFilterSelect;
-    let hasPartialMatch;
-    let unsubTagFiltersDragScroll;
-    let handleFilterSelectOptionChange;
-    let handleFiltersScroll;
-    let handleTagFilterScroll;
+    let filterScrollTimeout;
+    let filterIsScrolling;
+
     let tagFilterScrollTimeout;
-    let handleCheckboxChange;
-    let handleInputNumber;
-    let removeActiveTag;
-    let changeActiveSelect;
-    let removeAllActiveTag;
-    let handleSortFilterPopup;
-    let changeSort;
-    let changeSortType;
+    let tagFilterIsScrolling;
 
     let nameChangeUpdateProcessedList = ["Algorithm Filter"];
     let nameChangeUpdateFinalList = ["sort", "Anime Filter", "Content Warning"];
@@ -69,28 +52,9 @@
                 $finalAnimeList = null;
                 $dataStatus = "Updating List";
                 await saveJSON(true, "shouldProcessRecommendation");
-                await saveJSON(true, "shouldLoadAnime");
                 await saveJSON($filterOptions, "filterOptions");
                 await saveJSON($activeTagFilters, "activeTagFilters");
-                processRecommendedAnimeList()
-                    .then(async () => {
-                        await saveJSON(false, "shouldProcessRecommendation");
-                        animeLoader()
-                            .then(async (data) => {
-                                $animeLoaderWorker = data.animeLoaderWorker;
-                                $searchedAnimeKeyword = "";
-                                $finalAnimeList = data.finalAnimeList;
-                                $dataStatus = null;
-                                await saveJSON(false, "shouldLoadAnime");
-                                return;
-                            })
-                            .catch((error) => {
-                                throw error;
-                            });
-                    })
-                    .catch((error) => {
-                        throw error;
-                    });
+                $updateRecommendationList = !$updateRecommendationList;
             } else if (nameChangeUpdateFinalList.includes(changeName)) {
                 if ($animeLoaderWorker) {
                     $animeLoaderWorker.terminate();
@@ -98,21 +62,9 @@
                 }
                 $finalAnimeList = null;
                 $dataStatus = "Updating List";
-                await saveJSON(true, "shouldLoadAnime");
                 await saveJSON($filterOptions, "filterOptions");
                 await saveJSON($activeTagFilters, "activeTagFilters");
-                animeLoader()
-                    .then(async (data) => {
-                        $animeLoaderWorker = data.animeLoaderWorker;
-                        $searchedAnimeKeyword = "";
-                        $finalAnimeList = data.finalAnimeList;
-                        $dataStatus = null;
-                        await saveJSON(false, "shouldLoadAnime");
-                        return;
-                    })
-                    .catch((error) => {
-                        throw error;
-                    });
+                $loadAnime = !$loadAnime;
             } else {
                 await saveJSON($filterOptions, "filterOptions");
                 await saveJSON($activeTagFilters, "activeTagFilters");
@@ -120,250 +72,189 @@
         }, 300);
     }
 
-    onMount(() => {
-        // Init
+    function windowResized() {
         maxFilterSelectionHeight = window.innerHeight * 0.3;
-        unsubTagFiltersDragScroll = dragScroll(
-            document.getElementsByClassName("tagFilters")[0]
+    }
+    function handleFilterTypes(newFilterTypeName) {
+        let idxTypeSelected = $filterOptions?.filterSelection.findIndex(
+            ({ isSelected }) => isSelected
         );
-        windowResized = () => {
-            maxFilterSelectionHeight = window.innerHeight * 0.3;
-        };
-        handleFilterTypes = (newFilterTypeName) => {
-            let idxTypeSelected = $filterOptions?.filterSelection.findIndex(
-                ({ isSelected }) => isSelected
-            );
-            let nameTypeSelected =
-                $filterOptions?.filterSelection?.[idxTypeSelected]
-                    .filterSelectionName;
-            if (nameTypeSelected !== newFilterTypeName) {
-                // Close Filter Dropdown
-                selectedSortElement = false;
-                // Close Filter Selection Dropdown
-                $filterOptions?.filterSelection?.[
-                    idxTypeSelected
-                ].filters.Dropdown.forEach((e) => {
-                    e.selected = false;
-                });
-                $filterOptions.filterSelection[idxTypeSelected] =
-                    $filterOptions?.filterSelection?.[idxTypeSelected];
-                selectedFilterElement = null;
-                // Change Filter Type
-                $filterOptions.filterSelection[
-                    idxTypeSelected
-                ].isSelected = false;
-                let newIdxFilterTypeSelected =
-                    $filterOptions?.filterSelection?.findIndex(
-                        ({ filterSelectionName }) =>
-                            filterSelectionName === newFilterTypeName
-                    );
-                $filterOptions.filterSelection[
-                    newIdxFilterTypeSelected
-                ].isSelected = true;
-                saveFilters();
-            }
-        };
-        handleShowFilterTypes = (event) => {
-            if ($filterOptions?.filterSelection?.length < 1) return;
-            let element = event.target;
-            let classList = element.classList;
-            let filterTypEl = element.closest(".filterType");
-            let optionsWrap = element.closest(".options-wrap");
+        let nameTypeSelected =
+            $filterOptions?.filterSelection?.[idxTypeSelected]
+                .filterSelectionName;
+        if (nameTypeSelected !== newFilterTypeName) {
+            // Close Filter Dropdown
+            selectedSortElement = false;
+            // Close Filter Selection Dropdown
+            $filterOptions?.filterSelection?.[
+                idxTypeSelected
+            ].filters.Dropdown.forEach((e) => {
+                e.selected = false;
+            });
+            $filterOptions.filterSelection[idxTypeSelected] =
+                $filterOptions?.filterSelection?.[idxTypeSelected];
+            selectedFilterElement = null;
+            // Change Filter Type
+            $filterOptions.filterSelection[idxTypeSelected].isSelected = false;
+            let newIdxFilterTypeSelected =
+                $filterOptions?.filterSelection?.findIndex(
+                    ({ filterSelectionName }) =>
+                        filterSelectionName === newFilterTypeName
+                );
+            $filterOptions.filterSelection[
+                newIdxFilterTypeSelected
+            ].isSelected = true;
+            saveFilters();
+        }
+    }
+    function handleShowFilterTypes(event) {
+        if ($filterOptions?.filterSelection?.length < 1) return;
+        let element = event.target;
+        let classList = element.classList;
+        let filterTypEl = element.closest(".filterType");
+        let optionsWrap = element.closest(".options-wrap");
+        if (
+            (classList.contains("filterType") || filterTypEl) &&
+            !selectedFilterTypeElement
+        ) {
+            selectedFilterTypeElement = true;
+        } else if (!optionsWrap && !classList.contains("options-wrap")) {
+            selectedFilterTypeElement = false;
+        }
+    }
+    function handleTagFilterScroll() {
+        if (tagFilterScrollTimeout) clearTimeout(tagFilterScrollTimeout);
+        tagFilterIsScrolling = true;
+        tagFilterScrollTimeout = setTimeout(() => {
+            tagFilterIsScrolling = false;
+        }, 500);
+    }
+    function handleFilterScroll() {
+        if (filterScrollTimeout) clearTimeout(filterScrollTimeout);
+        filterIsScrolling = true;
+        filterScrollTimeout = setTimeout(() => {
+            filterIsScrolling = false;
+        }, 500);
+    }
+    function filterSelect(event, dropdownIdx) {
+        if (filterIsScrolling) return;
+        let element = event.target;
+        let filSelectEl = element.closest(".filter-select");
+        if (filSelectEl === selectedFilterElement) return;
+        let idxTypeSelected = $filterOptions?.filterSelection?.findIndex(
+            ({ isSelected }) => isSelected
+        );
+        if (selectedFilterElement instanceof Element) {
+            let selectedIndex = getIndexInParent(selectedFilterElement);
             if (
-                (classList.contains("filterType") || filterTypEl) &&
-                !selectedFilterTypeElement
-            ) {
-                selectedFilterTypeElement = true;
-            } else if (!optionsWrap && !classList.contains("options-wrap")) {
-                selectedFilterTypeElement = false;
+                element.classList.contains("icon") &&
+                $filterOptions?.filterSelection?.[idxTypeSelected].filters
+                    .Dropdown[selectedIndex].selected
+            )
+                return;
+            $filterOptions.filterSelection[idxTypeSelected].filters.Dropdown[
+                selectedIndex
+            ].selected = false;
+        }
+        if (Init) Init = false;
+        $filterOptions.filterSelection[idxTypeSelected].filters.Dropdown[
+            dropdownIdx
+        ].selected = true;
+        selectedFilterElement = filSelectEl;
+    }
+    function closeFilterSelect(dropDownIdx) {
+        let idxTypeSelected = $filterOptions?.filterSelection?.findIndex(
+            ({ isSelected }) => isSelected
+        );
+        $filterOptions.filterSelection[idxTypeSelected].filters.Dropdown[
+            dropDownIdx
+        ].selected = false;
+        selectedFilterElement = null;
+    }
+    function clickOutsideListener(event) {
+        if ($filterOptions?.filterSelection?.length < 1 || !$filterOptions)
+            return;
+        let element = event.target;
+        let classList = element.classList;
+        // Filter Type Dropdown
+        let filterTypeEl = element.closest(".filterType");
+        if (!classList.contains("filterType") && !filterTypeEl) {
+            selectedFilterTypeElement = false;
+            if (highlightedEl instanceof Element) {
+                highlightedEl.style.backgroundColor = "";
+                highlightedEl = null;
             }
-        };
-        handleFiltersScroll = () => {
-            filtersIsScrolling = true;
-            if (selectedFilterElement) {
-                let idxTypeSelected =
-                    $filterOptions?.filterSelection?.findIndex(
-                        ({ isSelected }) => isSelected
-                    );
-                $filterOptions?.filterSelection?.[
-                    idxTypeSelected
-                ].filters.Dropdown.forEach((e) => {
-                    e.selected = false;
-                });
-                $filterOptions.filterSelection[
-                    idxTypeSelected
-                ].filters.Dropdown =
-                    $filterOptions?.filterSelection?.[
-                        idxTypeSelected
-                    ].filters.Dropdown;
-                selectedFilterElement = null;
+        }
+        // Sort Filter Dropdown
+        let sortSelectEl = element.closest(".sortFilter");
+        if (!classList.contains("sortFilter") && !sortSelectEl) {
+            selectedSortElement = false;
+            if (highlightedEl instanceof Element) {
+                highlightedEl.style.backgroundColor = "";
+                highlightedEl = null;
             }
-            filtersIsScrolling = false;
-        };
-        handleTagFilterScroll = () => {
-            if (tagFilterScrollTimeout) clearTimeout(tagFilterScrollTimeout);
-            tagFilterIsScrolling = true;
-            tagFilterScrollTimeout = setTimeout(() => {
-                tagFilterIsScrolling = false;
-            }, 500);
-        };
-        filterSelect = (event, dropdownIdx) => {
-            let element = event.target;
-            let filSelectEl = element.closest(".filter-select");
-            if (filSelectEl === selectedFilterElement) return;
+        }
+        // Filter Selection Dropdown
+        let filterSelectEl = element.closest(".filter-select");
+        let filterNameEl = element.closest(".filter-name");
+        if (
+            filterSelectEl !== selectedFilterElement ||
+            filterNameEl ||
+            classList.contains("filter-name")
+        ) {
             let idxTypeSelected = $filterOptions?.filterSelection?.findIndex(
                 ({ isSelected }) => isSelected
             );
-            if (selectedFilterElement instanceof Element) {
-                let selectedIndex = getIndexInParent(selectedFilterElement);
-                if (
-                    element.classList.contains("icon") &&
-                    $filterOptions?.filterSelection?.[idxTypeSelected].filters
-                        .Dropdown[selectedIndex].selected
-                )
-                    return;
-                $filterOptions.filterSelection[
-                    idxTypeSelected
-                ].filters.Dropdown[selectedIndex].selected = false;
+            $filterOptions?.filterSelection?.[
+                idxTypeSelected
+            ].filters.Dropdown.forEach((e) => {
+                e.selected = false;
+            });
+            $filterOptions.filterSelection[idxTypeSelected] =
+                $filterOptions?.filterSelection?.[idxTypeSelected];
+            selectedFilterElement = null;
+            if (highlightedEl instanceof Element) {
+                highlightedEl.style.backgroundColor = "";
+                highlightedEl = null;
             }
-            if (Init) Init = false;
+        }
+    }
+    function handleFilterSelectOptionChange(
+        optionName,
+        optionType,
+        optionIdx,
+        dropdownIdx,
+        changeType,
+        filterSelectionName
+    ) {
+        let idxTypeSelected = $filterOptions?.filterSelection?.findIndex(
+            ({ isSelected }) => isSelected
+        );
+        let nameTypeSelected =
+            $filterOptions?.filterSelection?.[idxTypeSelected]
+                .filterSelectionName;
+        let currentValue =
+            $filterOptions?.filterSelection?.[idxTypeSelected].filters.Dropdown[
+                dropdownIdx
+            ].options[optionIdx].selected;
+        if (currentValue === "none" || currentValue === true) {
+            // true is default value of selections
             $filterOptions.filterSelection[idxTypeSelected].filters.Dropdown[
                 dropdownIdx
-            ].selected = true;
-            selectedFilterElement = filSelectEl;
-        };
-        closeFilterSelect = (dropDownIdx) => {
-            let idxTypeSelected = $filterOptions?.filterSelection?.findIndex(
-                ({ isSelected }) => isSelected
-            );
-            $filterOptions.filterSelection[idxTypeSelected].filters.Dropdown[
-                dropDownIdx
-            ].selected = false;
-            selectedFilterElement = null;
-        };
-        clickOutsideListener = (event) => {
-            if ($filterOptions?.filterSelection?.length < 1 || !$filterOptions)
-                return;
-            let element = event.target;
-            let classList = element.classList;
-            // Filter Type Dropdown
-            let filterTypeEl = element.closest(".filterType");
-            if (!classList.contains("filterType") && !filterTypeEl) {
-                selectedFilterTypeElement = false;
-                if (highlightedEl instanceof Element) {
-                    highlightedEl.style.backgroundColor = "";
-                    highlightedEl = null;
-                }
-            }
-            // Sort Filter Dropdown
-            let sortSelectEl = element.closest(".sortFilter");
-            if (!classList.contains("sortFilter") && !sortSelectEl) {
-                selectedSortElement = false;
-                if (highlightedEl instanceof Element) {
-                    highlightedEl.style.backgroundColor = "";
-                    highlightedEl = null;
-                }
-            }
-            // Filter Selection Dropdown
-            let filterSelectEl = element.closest(".filter-select");
-            let filterNameEl = element.closest(".filter-name");
-            if (
-                filterSelectEl !== selectedFilterElement ||
-                filterNameEl ||
-                classList.contains("filter-name")
-            ) {
-                let idxTypeSelected =
-                    $filterOptions?.filterSelection?.findIndex(
-                        ({ isSelected }) => isSelected
-                    );
-                $filterOptions?.filterSelection?.[
-                    idxTypeSelected
-                ].filters.Dropdown.forEach((e) => {
-                    e.selected = false;
-                });
-                $filterOptions.filterSelection[idxTypeSelected] =
-                    $filterOptions?.filterSelection?.[idxTypeSelected];
-                selectedFilterElement = null;
-                if (highlightedEl instanceof Element) {
-                    highlightedEl.style.backgroundColor = "";
-                    highlightedEl = null;
-                }
-            }
-        };
-        handleFilterSelectOptionChange = (
-            optionName,
-            optionType,
-            optionIdx,
-            dropdownIdx,
-            changeType,
-            filterSelectionName
-        ) => {
-            let idxTypeSelected = $filterOptions?.filterSelection?.findIndex(
-                ({ isSelected }) => isSelected
-            );
-            let nameTypeSelected =
-                $filterOptions?.filterSelection?.[idxTypeSelected]
-                    .filterSelectionName;
-            let currentValue =
-                $filterOptions?.filterSelection?.[idxTypeSelected].filters
-                    .Dropdown[dropdownIdx].options[optionIdx].selected;
-            if (currentValue === "none" || currentValue === true) {
-                // true is default value of selections
-                $filterOptions.filterSelection[
-                    idxTypeSelected
-                ].filters.Dropdown[dropdownIdx].options[optionIdx].selected =
-                    "included";
-                $activeTagFilters[nameTypeSelected].unshift({
-                    optionName: optionName,
-                    optionType: optionType,
-                    optionIdx: optionIdx,
-                    categIdx: dropdownIdx,
-                    selected: "included",
-                    changeType: changeType,
-                    filterType: "dropdown",
-                });
-                $activeTagFilters[nameTypeSelected] =
-                    $activeTagFilters[nameTypeSelected];
-            } else if (currentValue === "included") {
-                if (changeType === "read") {
-                    $filterOptions.filterSelection[
-                        idxTypeSelected
-                    ].filters.Dropdown[dropdownIdx].options[
-                        optionIdx
-                    ].selected = "none";
-                    $activeTagFilters[nameTypeSelected] = $activeTagFilters[
-                        nameTypeSelected
-                    ].filter(
-                        (e) =>
-                            !(
-                                e.optionIdx === optionIdx &&
-                                e.optionName === optionName &&
-                                e.filterType === "dropdown" &&
-                                e.categIdx === dropdownIdx
-                            )
-                    );
-                } else {
-                    $filterOptions.filterSelection[
-                        idxTypeSelected
-                    ].filters.Dropdown[dropdownIdx].options[
-                        optionIdx
-                    ].selected = "excluded";
-                    $activeTagFilters[nameTypeSelected] = $activeTagFilters[
-                        nameTypeSelected
-                    ].map((e) => {
-                        if (
-                            e.optionIdx === optionIdx &&
-                            e.optionName === optionName &&
-                            e.filterType === "dropdown" &&
-                            e.categIdx === dropdownIdx &&
-                            e.selected === "included"
-                        ) {
-                            e.selected = "excluded";
-                        }
-                        return e;
-                    });
-                }
-            } else {
+            ].options[optionIdx].selected = "included";
+            $activeTagFilters[nameTypeSelected].unshift({
+                optionName: optionName,
+                optionType: optionType,
+                optionIdx: optionIdx,
+                categIdx: dropdownIdx,
+                selected: "included",
+                changeType: changeType,
+                filterType: "dropdown",
+            });
+            $activeTagFilters[nameTypeSelected] =
+                $activeTagFilters[nameTypeSelected];
+        } else if (currentValue === "included") {
+            if (changeType === "read") {
                 $filterOptions.filterSelection[
                     idxTypeSelected
                 ].filters.Dropdown[dropdownIdx].options[optionIdx].selected =
@@ -379,176 +270,10 @@
                             e.categIdx === dropdownIdx
                         )
                 );
-            }
-            saveFilters(filterSelectionName);
-        };
-        handleCheckboxChange = (
-            event,
-            checkBoxName,
-            checkboxIdx,
-            filterSelectionName
-        ) => {
-            let element = event.target;
-            let classList = element.classList;
-            let keyCode = event.which || event.keyCode || 0;
-            if (
-                (classList.contains("checkbox") && event.type === "click") ||
-                (classList.contains("checkbox") &&
-                    keyCode !== 13 &&
-                    event.type === "keydown")
-            )
-                return; // Prevent Default
-
-            let idxTypeSelected = $filterOptions?.filterSelection?.findIndex(
-                ({ isSelected }) => isSelected
-            );
-            let nameTypeSelected =
-                $filterOptions?.filterSelection?.[idxTypeSelected]
-                    .filterSelectionName;
-            let currentCheckBoxStatus =
-                $filterOptions?.filterSelection?.[idxTypeSelected].filters
-                    .Checkbox[checkboxIdx].isSelected;
-            if (currentCheckBoxStatus) {
-                $activeTagFilters[nameTypeSelected] = $activeTagFilters[
-                    nameTypeSelected
-                ].filter(
-                    (e) =>
-                        !(
-                            e.optionIdx === checkboxIdx &&
-                            e.optionName === checkBoxName &&
-                            e.filterType === "checkbox" &&
-                            e.selected === "included"
-                        )
-                );
             } else {
-                $activeTagFilters[nameTypeSelected].unshift({
-                    optionName: checkBoxName,
-                    optionIdx: checkboxIdx,
-                    filterType: "checkbox",
-                    selected: "included",
-                    changeType: "read",
-                });
-                $activeTagFilters[nameTypeSelected] =
-                    $activeTagFilters[nameTypeSelected];
-            }
-            $filterOptions.filterSelection[idxTypeSelected].filters.Checkbox[
-                checkboxIdx
-            ].isSelected =
-                !$filterOptions?.filterSelection?.[idxTypeSelected].filters
-                    .Checkbox[checkboxIdx].isSelected;
-            saveFilters(filterSelectionName);
-        };
-        handleInputNumber = (
-            event,
-            newValue,
-            inputNumIdx,
-            inputNumberName,
-            maxValue,
-            minValue,
-            filterSelectionName
-        ) => {
-            let idxTypeSelected = $filterOptions?.filterSelection?.findIndex(
-                ({ isSelected }) => isSelected
-            );
-            let nameTypeSelected =
-                $filterOptions?.filterSelection?.[idxTypeSelected]
-                    .filterSelectionName;
-            let currentValue =
-                $filterOptions?.filterSelection?.[idxTypeSelected].filters[
-                    "Input Number"
-                ][inputNumIdx].numberValue;
-            if (
-                (newValue !== currentValue &&
-                    !isNaN(newValue) &&
-                    !isNaN(currentValue) &&
-                    (parseFloat(newValue) >= minValue ||
-                        typeof minValue !== "number") &&
-                    (parseFloat(newValue) <= maxValue ||
-                        typeof maxValue !== "number")) ||
-                newValue === ""
-            ) {
-                if (newValue === "") {
-                    $activeTagFilters[nameTypeSelected] = $activeTagFilters[
-                        nameTypeSelected
-                    ].filter(
-                        (e) =>
-                            !(
-                                e.optionIdx === inputNumIdx &&
-                                e.optionName === inputNumberName &&
-                                e.optionValue === parseFloat(currentValue) &&
-                                e.filterType === "input number" &&
-                                e.selected === "included"
-                            )
-                    );
-                } else {
-                    let elementIdx = $activeTagFilters[
-                        nameTypeSelected
-                    ].findIndex(
-                        (item) =>
-                            item.optionName === inputNumberName &&
-                            item.optionValue === parseFloat(currentValue) &&
-                            item.optionIdx === inputNumIdx &&
-                            item.filterType === "input number"
-                    );
-                    if (elementIdx === -1) {
-                        $activeTagFilters[nameTypeSelected].unshift({
-                            optionName: inputNumberName,
-                            optionValue: parseFloat(newValue),
-                            optionIdx: inputNumIdx,
-                            filterType: "input number",
-                            selected: "included",
-                            changeType: "read",
-                        });
-                    } else {
-                        $activeTagFilters[nameTypeSelected].splice(
-                            elementIdx,
-                            1
-                        );
-                        $activeTagFilters[nameTypeSelected].unshift({
-                            optionName: inputNumberName,
-                            optionValue: parseFloat(newValue),
-                            optionIdx: inputNumIdx,
-                            filterType: "input number",
-                            selected: "included",
-                            changeType: "read",
-                        });
-                    }
-                    $activeTagFilters = $activeTagFilters;
-                }
-                $filterOptions.filterSelection[idxTypeSelected].filters[
-                    "Input Number"
-                ][inputNumIdx].numberValue = newValue;
-                saveFilters(filterSelectionName);
-            } else if (
-                isNaN(newValue) ||
-                (newValue < minValue && typeof minValue === "number") ||
-                (newValue > maxValue && typeof maxValue === "number")
-            ) {
-                event.target.value = currentValue;
-            }
-        };
-        changeActiveSelect = (
-            optionIdx,
-            optionName,
-            filterType,
-            categIdx,
-            changeType
-        ) => {
-            if (tagFilterIsScrolling) return false;
-            if (changeType === "read" || filterType !== "dropdown") return; // Unchangable Selection
-            let idxTypeSelected = $filterOptions?.filterSelection?.findIndex(
-                ({ isSelected }) => isSelected
-            );
-            let nameTypeSelected =
-                $filterOptions?.filterSelection?.[idxTypeSelected]
-                    .filterSelectionName;
-            let currentSelect =
-                $filterOptions?.filterSelection?.[idxTypeSelected].filters
-                    .Dropdown[categIdx].options[optionIdx].selected;
-            if (currentSelect === "included") {
                 $filterOptions.filterSelection[
                     idxTypeSelected
-                ].filters.Dropdown[categIdx].options[optionIdx].selected =
+                ].filters.Dropdown[dropdownIdx].options[optionIdx].selected =
                     "excluded";
                 $activeTagFilters[nameTypeSelected] = $activeTagFilters[
                     nameTypeSelected
@@ -556,294 +281,485 @@
                     if (
                         e.optionIdx === optionIdx &&
                         e.optionName === optionName &&
+                        e.filterType === "dropdown" &&
+                        e.categIdx === dropdownIdx &&
                         e.selected === "included"
                     ) {
                         e.selected = "excluded";
                     }
                     return e;
                 });
-            } else if (currentSelect === "excluded") {
-                $filterOptions.filterSelection[
-                    idxTypeSelected
-                ].filters.Dropdown[categIdx].options[optionIdx].selected =
-                    "included";
-                $activeTagFilters[nameTypeSelected] = $activeTagFilters[
-                    nameTypeSelected
-                ].map((e) => {
-                    if (
+            }
+        } else {
+            $filterOptions.filterSelection[idxTypeSelected].filters.Dropdown[
+                dropdownIdx
+            ].options[optionIdx].selected = "none";
+            $activeTagFilters[nameTypeSelected] = $activeTagFilters[
+                nameTypeSelected
+            ].filter(
+                (e) =>
+                    !(
                         e.optionIdx === optionIdx &&
                         e.optionName === optionName &&
-                        e.selected === "excluded"
-                    ) {
-                        e.selected = "included";
-                    }
-                    return e;
-                });
+                        e.filterType === "dropdown" &&
+                        e.categIdx === dropdownIdx
+                    )
+            );
+        }
+        saveFilters(filterSelectionName);
+    }
+    function handleCheckboxChange(
+        event,
+        checkBoxName,
+        checkboxIdx,
+        filterSelectionName
+    ) {
+        let element = event.target;
+        let classList = element.classList;
+        let keyCode = event.which || event.keyCode || 0;
+        if (
+            (classList.contains("checkbox") && event.type === "click") ||
+            (classList.contains("checkbox") &&
+                keyCode !== 13 &&
+                event.type === "keydown")
+        )
+            return; // Prevent Default
+
+        let idxTypeSelected = $filterOptions?.filterSelection?.findIndex(
+            ({ isSelected }) => isSelected
+        );
+        let nameTypeSelected =
+            $filterOptions?.filterSelection?.[idxTypeSelected]
+                .filterSelectionName;
+        let currentCheckBoxStatus =
+            $filterOptions?.filterSelection?.[idxTypeSelected].filters.Checkbox[
+                checkboxIdx
+            ].isSelected;
+        if (currentCheckBoxStatus) {
+            $activeTagFilters[nameTypeSelected] = $activeTagFilters[
+                nameTypeSelected
+            ].filter(
+                (e) =>
+                    !(
+                        e.optionIdx === checkboxIdx &&
+                        e.optionName === checkBoxName &&
+                        e.filterType === "checkbox" &&
+                        e.selected === "included"
+                    )
+            );
+        } else {
+            $activeTagFilters[nameTypeSelected].unshift({
+                optionName: checkBoxName,
+                optionIdx: checkboxIdx,
+                filterType: "checkbox",
+                selected: "included",
+                changeType: "read",
+            });
+            $activeTagFilters[nameTypeSelected] =
+                $activeTagFilters[nameTypeSelected];
+        }
+        $filterOptions.filterSelection[idxTypeSelected].filters.Checkbox[
+            checkboxIdx
+        ].isSelected =
+            !$filterOptions?.filterSelection?.[idxTypeSelected].filters
+                .Checkbox[checkboxIdx].isSelected;
+        saveFilters(filterSelectionName);
+    }
+    function handleInputNumber(
+        event,
+        newValue,
+        inputNumIdx,
+        inputNumberName,
+        maxValue,
+        minValue,
+        filterSelectionName
+    ) {
+        let idxTypeSelected = $filterOptions?.filterSelection?.findIndex(
+            ({ isSelected }) => isSelected
+        );
+        let nameTypeSelected =
+            $filterOptions?.filterSelection?.[idxTypeSelected]
+                .filterSelectionName;
+        let currentValue =
+            $filterOptions?.filterSelection?.[idxTypeSelected].filters[
+                "Input Number"
+            ][inputNumIdx].numberValue;
+        if (
+            (newValue !== currentValue &&
+                !isNaN(newValue) &&
+                !isNaN(currentValue) &&
+                (parseFloat(newValue) >= minValue ||
+                    typeof minValue !== "number") &&
+                (parseFloat(newValue) <= maxValue ||
+                    typeof maxValue !== "number")) ||
+            newValue === ""
+        ) {
+            if (newValue === "") {
+                $activeTagFilters[nameTypeSelected] = $activeTagFilters[
+                    nameTypeSelected
+                ].filter(
+                    (e) =>
+                        !(
+                            e.optionIdx === inputNumIdx &&
+                            e.optionName === inputNumberName &&
+                            e.optionValue === parseFloat(currentValue) &&
+                            e.filterType === "input number" &&
+                            e.selected === "included"
+                        )
+                );
+            } else {
+                let elementIdx = $activeTagFilters[nameTypeSelected].findIndex(
+                    (item) =>
+                        item.optionName === inputNumberName &&
+                        item.optionValue === parseFloat(currentValue) &&
+                        item.optionIdx === inputNumIdx &&
+                        item.filterType === "input number"
+                );
+                if (elementIdx === -1) {
+                    $activeTagFilters[nameTypeSelected].unshift({
+                        optionName: inputNumberName,
+                        optionValue: parseFloat(newValue),
+                        optionIdx: inputNumIdx,
+                        filterType: "input number",
+                        selected: "included",
+                        changeType: "read",
+                    });
+                } else {
+                    $activeTagFilters[nameTypeSelected].splice(elementIdx, 1);
+                    $activeTagFilters[nameTypeSelected].unshift({
+                        optionName: inputNumberName,
+                        optionValue: parseFloat(newValue),
+                        optionIdx: inputNumIdx,
+                        filterType: "input number",
+                        selected: "included",
+                        changeType: "read",
+                    });
+                }
+                $activeTagFilters = $activeTagFilters;
             }
-            saveFilters(nameTypeSelected);
-        };
-        removeActiveTag = (optionIdx, optionName, filterType, categIdx) => {
-            if (tagFilterIsScrolling) return;
+            $filterOptions.filterSelection[idxTypeSelected].filters[
+                "Input Number"
+            ][inputNumIdx].numberValue = newValue;
+            saveFilters(filterSelectionName);
+        } else if (
+            isNaN(newValue) ||
+            (newValue < minValue && typeof minValue === "number") ||
+            (newValue > maxValue && typeof maxValue === "number")
+        ) {
+            event.target.value = currentValue;
+        }
+    }
+    function changeActiveSelect(
+        optionIdx,
+        optionName,
+        filterType,
+        categIdx,
+        changeType
+    ) {
+        if (tagFilterIsScrolling) return false;
+        if (changeType === "read" || filterType !== "dropdown") return; // Unchangable Selection
+        let idxTypeSelected = $filterOptions?.filterSelection?.findIndex(
+            ({ isSelected }) => isSelected
+        );
+        let nameTypeSelected =
+            $filterOptions?.filterSelection?.[idxTypeSelected]
+                .filterSelectionName;
+        let currentSelect =
+            $filterOptions?.filterSelection?.[idxTypeSelected].filters.Dropdown[
+                categIdx
+            ].options[optionIdx].selected;
+        if (currentSelect === "included") {
+            $filterOptions.filterSelection[idxTypeSelected].filters.Dropdown[
+                categIdx
+            ].options[optionIdx].selected = "excluded";
+            $activeTagFilters[nameTypeSelected] = $activeTagFilters[
+                nameTypeSelected
+            ].map((e) => {
+                if (
+                    e.optionIdx === optionIdx &&
+                    e.optionName === optionName &&
+                    e.selected === "included"
+                ) {
+                    e.selected = "excluded";
+                }
+                return e;
+            });
+        } else if (currentSelect === "excluded") {
+            $filterOptions.filterSelection[idxTypeSelected].filters.Dropdown[
+                categIdx
+            ].options[optionIdx].selected = "included";
+            $activeTagFilters[nameTypeSelected] = $activeTagFilters[
+                nameTypeSelected
+            ].map((e) => {
+                if (
+                    e.optionIdx === optionIdx &&
+                    e.optionName === optionName &&
+                    e.selected === "excluded"
+                ) {
+                    e.selected = "included";
+                }
+                return e;
+            });
+        }
+        saveFilters(nameTypeSelected);
+    }
+    function removeActiveTag(optionIdx, optionName, filterType, categIdx) {
+        if (tagFilterIsScrolling) return;
+        let idxTypeSelected = $filterOptions?.filterSelection?.findIndex(
+            ({ isSelected }) => isSelected
+        );
+        let nameTypeSelected =
+            $filterOptions?.filterSelection?.[idxTypeSelected]
+                .filterSelectionName;
+        if (filterType === "checkbox") {
+            // Is Checkbox
+            $filterOptions.filterSelection[idxTypeSelected].filters.Checkbox[
+                optionIdx
+            ].isSelected = false;
+        } else if (filterType === "input number") {
+            // Is Input Number
+            $filterOptions.filterSelection[idxTypeSelected].filters[
+                "Input Number"
+            ][optionIdx].numberValue = "";
+        } else {
+            // Is Only Read optionName
+            $filterOptions.filterSelection[idxTypeSelected].filters.Dropdown[
+                categIdx
+            ].options[optionIdx].selected = "none";
+        }
+        $activeTagFilters[nameTypeSelected] = $activeTagFilters[
+            nameTypeSelected
+        ].filter(
+            (e) =>
+                !(
+                    e.optionName === optionName &&
+                    e.optionIdx === optionIdx &&
+                    e.filterType === filterType
+                )
+        );
+        saveFilters(nameTypeSelected);
+    }
+    function removeAllActiveTag() {
+        if (tagFilterIsScrolling) return false;
+        if (confirm("Do you want to remove all filters?") === true) {
             let idxTypeSelected = $filterOptions?.filterSelection?.findIndex(
                 ({ isSelected }) => isSelected
             );
             let nameTypeSelected =
                 $filterOptions?.filterSelection?.[idxTypeSelected]
                     .filterSelectionName;
-            if (filterType === "checkbox") {
-                // Is Checkbox
-                $filterOptions.filterSelection[
-                    idxTypeSelected
-                ].filters.Checkbox[optionIdx].isSelected = false;
-            } else if (filterType === "input number") {
-                // Is Input Number
-                $filterOptions.filterSelection[idxTypeSelected].filters[
-                    "Input Number"
-                ][optionIdx].numberValue = "";
-            } else {
-                // Is Only Read optionName
-                $filterOptions.filterSelection[
-                    idxTypeSelected
-                ].filters.Dropdown[categIdx].options[optionIdx].selected =
-                    "none";
-            }
-            $activeTagFilters[nameTypeSelected] = $activeTagFilters[
-                nameTypeSelected
-            ].filter(
-                (e) =>
-                    !(
-                        e.optionName === optionName &&
-                        e.optionIdx === optionIdx &&
-                        e.filterType === filterType
-                    )
-            );
+            // Remove Active Number Input
+            $filterOptions?.filterSelection?.[idxTypeSelected].filters[
+                "Input Number"
+            ].forEach((e) => {
+                e.numberValue = "";
+            });
+            // Remove Checkbox
+            $filterOptions?.filterSelection?.[
+                idxTypeSelected
+            ].filters.Checkbox.forEach((e) => {
+                e.isSelected = false;
+            });
+            // Remove Dropdown
+            $filterOptions?.filterSelection?.[
+                idxTypeSelected
+            ].filters.Dropdown.forEach(({ options }, dropdownIdx) => {
+                options.forEach(({ selected }, optionsIdx) => {
+                    selected = "none";
+                    $filterOptions.filterSelection[
+                        idxTypeSelected
+                    ].filters.Dropdown[dropdownIdx].options[
+                        optionsIdx
+                    ].selected = selected;
+                });
+            });
+            $filterOptions.filterSelection[idxTypeSelected] =
+                $filterOptions?.filterSelection?.[idxTypeSelected];
+            $activeTagFilters[nameTypeSelected] = [];
             saveFilters(nameTypeSelected);
-        };
-        removeAllActiveTag = () => {
-            if (tagFilterIsScrolling) return false;
-            if (confirm("Do you want to remove all filters?") === true) {
-                let idxTypeSelected =
-                    $filterOptions?.filterSelection?.findIndex(
-                        ({ isSelected }) => isSelected
+        }
+    }
+    function handleSortFilterPopup(event) {
+        let element = event.target;
+        let classList = element.classList;
+        let sortSelectEl = element.closest(".sortFilter");
+        let optionsWrap = element.closest(".options-wrap");
+        if (
+            (classList.contains("sortFilter") || sortSelectEl) &&
+            !selectedSortElement
+        ) {
+            selectedSortElement = true;
+        } else if (!optionsWrap && !classList.contains("options-wrap")) {
+            selectedSortElement = false;
+        }
+    }
+    function changeSort(newSortName) {
+        let { sortName, sortType } = $filterOptions?.sortFilter?.filter(
+            ({ sortType }) => sortType !== "none"
+        )[0];
+        let idxSortSelected = $filterOptions?.sortFilter?.findIndex(
+            ({ sortType }) => sortType !== "none"
+        );
+        if (sortName === newSortName) {
+            let newSortType = sortType === "desc" ? "asc" : "desc";
+            $filterOptions.sortFilter[idxSortSelected].sortType = newSortType;
+        } else if (sortName !== newSortName) {
+            $filterOptions.sortFilter[idxSortSelected].sortType = "none";
+            let idxNewSortSelected = $filterOptions?.sortFilter?.findIndex(
+                ({ sortName }) => sortName === newSortName
+            );
+            $filterOptions.sortFilter[idxNewSortSelected].sortType = "desc";
+        }
+        saveFilters("sort");
+    }
+    function changeSortType() {
+        let { sortType } = $filterOptions?.sortFilter?.filter(
+            ({ sortType }) => sortType !== "none"
+        )[0];
+        let idxSortSelected = $filterOptions?.sortFilter?.findIndex(
+            ({ sortType }) => sortType !== "none"
+        );
+        if (sortType === "desc") {
+            $filterOptions.sortFilter[idxSortSelected].sortType = "asc";
+        } else {
+            $filterOptions.sortFilter[idxSortSelected].sortType = "desc";
+        }
+        saveFilters("sort");
+    }
+    function handleDropdownKeyDown(event) {
+        let keyCode = event.which || event.keyCode || 0;
+        // 38up 40down 13enter
+        if (keyCode == 38 || keyCode == 40) {
+            var element = Array.from(
+                document.getElementsByClassName("options-wrap") || []
+            ).find(
+                (el) =>
+                    getComputedStyle(el).display !== "none" &&
+                    getComputedStyle(el).visibility !== "hidden"
+            );
+            // let element =
+            document.getElementsByClassName("options-wrap")?.[0];
+            if (
+                element?.closest?.(".filterType") ||
+                element?.closest?.(".sortFilter") ||
+                element?.closest?.(".filter-select")
+            ) {
+                event.preventDefault();
+                // handle sortFilter
+                if (
+                    highlightedEl instanceof Element &&
+                    highlightedEl?.closest?.(".options")?.children?.length
+                ) {
+                    let parent = highlightedEl.closest(".options");
+                    let idx = Array.from(parent.children).indexOf(
+                        highlightedEl
                     );
-                let nameTypeSelected =
-                    $filterOptions?.filterSelection?.[idxTypeSelected]
-                        .filterSelectionName;
-                // Remove Active Number Input
-                $filterOptions?.filterSelection?.[idxTypeSelected].filters[
-                    "Input Number"
-                ].forEach((e) => {
-                    e.numberValue = "";
+                    let nextIdx =
+                        keyCode === 38
+                            ? idx <= 0
+                                ? parent.children.length - 1
+                                : idx - 1
+                            : idx >= parent.children.length - 1
+                            ? 0
+                            : idx + 1;
+                    let currentHighlightedEl = highlightedEl;
+                    highlightedEl = parent.children?.[nextIdx];
+                    if (highlightedEl instanceof Element) {
+                        currentHighlightedEl.style.backgroundColor = "";
+                        highlightedEl.style.backgroundColor =
+                            "rgba(0,0,0,0.25)";
+                        highlightedEl.scrollIntoView({
+                            behavior:
+                                nextIdx === 0 ||
+                                nextIdx === parent.children.length - 1
+                                    ? "auto"
+                                    : "smooth",
+                            container: parent,
+                            block: "nearest",
+                            inline: "end",
+                        });
+                    }
+                } else {
+                    let options = element.querySelector(".options");
+                    highlightedEl = options?.children?.[0];
+                    if (highlightedEl instanceof Element) {
+                        highlightedEl.style.backgroundColor =
+                            "rgba(0,0,0,0.25)";
+                    }
+                }
+            }
+        } else if (keyCode === 13) {
+            if (highlightedEl instanceof Element) {
+                let keydownEvent = new KeyboardEvent("keydown", {
+                    key: "Enter",
                 });
-                // Remove Checkbox
+                highlightedEl.dispatchEvent(keydownEvent);
+            }
+        } else {
+            var element = Array.from(
+                document.getElementsByClassName("options-wrap") || []
+            ).find(
+                (el) =>
+                    getComputedStyle(el).display !== "none" &&
+                    getComputedStyle(el).visibility !== "hidden"
+            );
+            if (element?.closest?.(".filter-select") && keyCode !== 9) return;
+            let idxTypeSelected = $filterOptions?.filterSelection?.findIndex(
+                ({ isSelected }) => isSelected
+            );
+            selectedFilterTypeElement = null;
+            selectedSortElement = null;
+            if ($filterOptions?.filterSelection?.length > 0) {
                 $filterOptions?.filterSelection?.[
                     idxTypeSelected
-                ].filters.Checkbox.forEach((e) => {
-                    e.isSelected = false;
-                });
-                // Remove Dropdown
-                $filterOptions?.filterSelection?.[
-                    idxTypeSelected
-                ].filters.Dropdown.forEach(({ options }, dropdownIdx) => {
-                    options.forEach(({ selected }, optionsIdx) => {
-                        selected = "none";
-                        $filterOptions.filterSelection[
-                            idxTypeSelected
-                        ].filters.Dropdown[dropdownIdx].options[
-                            optionsIdx
-                        ].selected = selected;
-                    });
+                ].filters.Dropdown.forEach((e) => {
+                    e.selected = false;
                 });
                 $filterOptions.filterSelection[idxTypeSelected] =
                     $filterOptions?.filterSelection?.[idxTypeSelected];
-                $activeTagFilters[nameTypeSelected] = [];
-                saveFilters(nameTypeSelected);
             }
-        };
-        handleSortFilterPopup = (event) => {
-            let element = event.target;
-            let classList = element.classList;
-            let sortSelectEl = element.closest(".sortFilter");
-            let optionsWrap = element.closest(".options-wrap");
-            if (
-                (classList.contains("sortFilter") || sortSelectEl) &&
-                !selectedSortElement
-            ) {
-                selectedSortElement = true;
-            } else if (!optionsWrap && !classList.contains("options-wrap")) {
-                selectedSortElement = false;
+            selectedFilterElement = null;
+            if (highlightedEl instanceof Element) {
+                highlightedEl.style.backgroundColor = "";
+                highlightedEl = null;
             }
-        };
-        changeSort = (newSortName) => {
-            let { sortName, sortType } = $filterOptions?.sortFilter?.filter(
-                ({ sortType }) => sortType !== "none"
-            )[0];
-            let idxSortSelected = $filterOptions?.sortFilter?.findIndex(
-                ({ sortType }) => sortType !== "none"
-            );
-            if (sortName === newSortName) {
-                let newSortType = sortType === "desc" ? "asc" : "desc";
-                $filterOptions.sortFilter[idxSortSelected].sortType =
-                    newSortType;
-            } else if (sortName !== newSortName) {
-                $filterOptions.sortFilter[idxSortSelected].sortType = "none";
-                let idxNewSortSelected = $filterOptions?.sortFilter?.findIndex(
-                    ({ sortName }) => sortName === newSortName
-                );
-                $filterOptions.sortFilter[idxNewSortSelected].sortType = "desc";
-            }
-            saveFilters("sort");
-        };
-        changeSortType = () => {
-            let { sortType } = $filterOptions?.sortFilter?.filter(
-                ({ sortType }) => sortType !== "none"
-            )[0];
-            let idxSortSelected = $filterOptions?.sortFilter?.findIndex(
-                ({ sortType }) => sortType !== "none"
-            );
-            if (sortType === "desc") {
-                $filterOptions.sortFilter[idxSortSelected].sortType = "asc";
-            } else {
-                $filterOptions.sortFilter[idxSortSelected].sortType = "desc";
-            }
-            saveFilters("sort");
-        };
-        handleDropdownKeyDown = (event) => {
-            let keyCode = event.which || event.keyCode || 0;
-            // 38up 40down 13enter
-            if (keyCode == 38 || keyCode == 40) {
-                var element = Array.from(
-                    document.getElementsByClassName("options-wrap") || []
-                ).find(
-                    (el) =>
-                        getComputedStyle(el).display !== "none" &&
-                        getComputedStyle(el).visibility !== "hidden"
-                );
-                // let element =
-                document.getElementsByClassName("options-wrap")?.[0];
-                if (
-                    element?.closest?.(".filterType") ||
-                    element?.closest?.(".sortFilter") ||
-                    element?.closest?.(".filter-select")
-                ) {
-                    event.preventDefault();
-                    // handle sortFilter
-                    if (
-                        highlightedEl instanceof Element &&
-                        highlightedEl?.closest?.(".options")?.children?.length
-                    ) {
-                        let parent = highlightedEl.closest(".options");
-                        let idx = Array.from(parent.children).indexOf(
-                            highlightedEl
-                        );
-                        let nextIdx =
-                            keyCode === 38
-                                ? idx <= 0
-                                    ? parent.children.length - 1
-                                    : idx - 1
-                                : idx >= parent.children.length - 1
-                                ? 0
-                                : idx + 1;
-                        let currentHighlightedEl = highlightedEl;
-                        highlightedEl = parent.children?.[nextIdx];
-                        if (highlightedEl instanceof Element) {
-                            currentHighlightedEl.style.backgroundColor = "";
-                            highlightedEl.style.backgroundColor =
-                                "rgba(0,0,0,0.25)";
-                            highlightedEl.scrollIntoView({
-                                behavior:
-                                    nextIdx === 0 ||
-                                    nextIdx === parent.children.length - 1
-                                        ? "auto"
-                                        : "smooth",
-                                container: parent,
-                                block: "nearest",
-                                inline: "end",
-                            });
-                        }
-                    } else {
-                        let options = element.querySelector(".options");
-                        highlightedEl = options?.children?.[0];
-                        if (highlightedEl instanceof Element) {
-                            highlightedEl.style.backgroundColor =
-                                "rgba(0,0,0,0.25)";
-                        }
-                    }
-                }
-            } else if (keyCode === 13) {
-                if (highlightedEl instanceof Element) {
-                    let keydownEvent = new KeyboardEvent("keydown", {
-                        key: "Enter",
-                    });
-                    highlightedEl.dispatchEvent(keydownEvent);
-                }
-            } else {
-                var element = Array.from(
-                    document.getElementsByClassName("options-wrap") || []
-                ).find(
-                    (el) =>
-                        getComputedStyle(el).display !== "none" &&
-                        getComputedStyle(el).visibility !== "hidden"
-                );
-                if (element?.closest?.(".filter-select") && keyCode !== 9)
-                    return;
-                let idxTypeSelected =
-                    $filterOptions?.filterSelection?.findIndex(
-                        ({ isSelected }) => isSelected
-                    );
-                selectedFilterTypeElement = null;
-                selectedSortElement = null;
-                if ($filterOptions?.filterSelection?.length > 0) {
-                    $filterOptions?.filterSelection?.[
-                        idxTypeSelected
-                    ].filters.Dropdown.forEach((e) => {
-                        e.selected = false;
-                    });
-                    $filterOptions.filterSelection[idxTypeSelected] =
-                        $filterOptions?.filterSelection?.[idxTypeSelected];
-                }
-                selectedFilterElement = null;
-                if (highlightedEl instanceof Element) {
-                    highlightedEl.style.backgroundColor = "";
-                    highlightedEl = null;
-                }
-            }
-        };
-        hasPartialMatch = (strings, searchString) => {
-            if (
-                typeof strings === "string" &&
-                typeof searchString === "string"
-            ) {
-                return strings
-                    .toLowerCase()
-                    .includes(searchString.toLowerCase());
-            }
-        };
-        document
-            .getElementsByClassName("filters")[0]
-            .addEventListener("scroll", handleFiltersScroll);
-        document
-            .getElementsByClassName("tagFilters")[0]
-            .addEventListener("scroll", handleTagFilterScroll);
+        }
+    }
+    function hasPartialMatch(strings, searchString) {
+        if (typeof strings === "string" && typeof searchString === "string") {
+            return strings.toLowerCase().includes(searchString.toLowerCase());
+        }
+    }
+
+    onMount(() => {
+        // Init
+        maxFilterSelectionHeight = window.innerHeight * 0.3;
+
+        let filterEl = document.getElementById("filters");
+        filterEl.addEventListener("scroll", handleFilterScroll);
+        unsubFilterDragScroll = dragScroll(filterEl, "x");
+
+        let tagFilterEl = document.getElementById("tagFilters");
+        tagFilterEl.addEventListener("scroll", handleTagFilterScroll);
+        unsubTagFiltersDragScroll = dragScroll(tagFilterEl, "x");
+
         document.addEventListener("keydown", handleDropdownKeyDown);
         window.addEventListener("resize", windowResized);
         window.addEventListener("pointerdown", clickOutsideListener);
     });
-    onDestroy(() => {
-        writableSubscriptions.forEach((unsub) => unsub());
-        filterOptionsUnsubscribe();
-        unsubTagFiltersDragScroll();
-        document.removeEventListener("keydown", handleDropdownKeyDown);
-        document
-            .getElementsByClassName("filters")[0]
-            .removeEventListener("scroll", handleFiltersScroll);
-        if (tagFilterScrollTimeout) clearTimeout(tagFilterScrollTimeout);
-        document
-            .getElementsByClassName("tagFilters")[0]
-            .removeEventListener("scroll", handleTagFilterScroll);
-        window.removeEventListener("resize", windowResized);
-        window.removeEventListener("pointerdown", clickOutsideListener);
-    });
+    // onDestroy(() => {
+    //     writableSubscriptions.forEach((unsub) => unsub());
+    //     filterOptionsUnsubscribe();
+    //     unsubTagFiltersDragScroll();
+    //     unsubFilterDragScroll();
+    //     document.removeEventListener("keydown", handleDropdownKeyDown);
+    //     if (tagFilterScrollTimeout) clearTimeout(tagFilterScrollTimeout);
+    //     document
+    //         .getElementsByClassName("tagFilters")[0]
+    //         .removeEventListener("scroll", handleTagFilterScroll);
+    //     window.removeEventListener("resize", windowResized);
+    //     window.removeEventListener("pointerdown", clickOutsideListener);
+    // });
 
     // Helper
     function getIndexInParent(element) {
@@ -911,15 +827,25 @@
         {:else}
             <div class="skeleton shimmer" />
         {/if}
-        {#if $dataStatus}
-            <span transition:fade={{ duration: 300 }} class="data-status">
+        {#if $dataStatus || !$username}
+            <span out:fade={{ duration: 300 }} class="data-status">
                 <h2>
-                    {$dataStatus || ""}
+                    {#if $dataStatus}
+                        {$dataStatus}
+                    {:else if !$username && !$initData}
+                        {"No Anilist Username Found"}
+                    {:else}
+                        {""}
+                    {/if}
                 </h2>
             </span>
         {/if}
     </div>
-    <div class="filters">
+    <div
+        class="filters"
+        id="filters"
+        style:--maxPaddingHeight="{window.innerHeight}px"
+    >
         {#if $filterOptions}
             {#each $filterOptions?.filterSelection || [] as { filterSelectionName, filters, isSelected }, filSelIdx (filterSelectionName + filSelIdx)}
                 {#each filters.Dropdown || [] as { filName, options, selected, changeType, optKeyword }, dropdownIdx (filName + dropdownIdx)}
@@ -961,13 +887,11 @@
                             style:--maxFilterSelectionHeight="{maxFilterSelectionHeight}px"
                             style:visibility={options.length &&
                             selected &&
-                            !filtersIsScrolling &&
                             !Init
                                 ? ""
                                 : "hidden"}
                             style:pointer-events={options.length &&
                             selected &&
-                            !filtersIsScrolling &&
                             !Init
                                 ? ""
                                 : "none"}
@@ -1047,23 +971,25 @@
                     <div
                         class="filter-checkbox"
                         style:display={isSelected ? "" : "none"}
-                        on:click={(e) =>
-                            handleCheckboxChange(
-                                e,
-                                Checkbox.filName,
-                                checkboxIdx,
-                                filterSelectionName
-                            )}
-                        on:keydown={(e) =>
-                            handleCheckboxChange(
-                                e,
-                                Checkbox.filName,
-                                checkboxIdx,
-                                filterSelectionName
-                            )}
                     >
                         <div style:visibility="none" />
-                        <div class="checkbox-wrap">
+                        <div
+                            class="checkbox-wrap"
+                            on:click={(e) =>
+                                handleCheckboxChange(
+                                    e,
+                                    Checkbox.filName,
+                                    checkboxIdx,
+                                    filterSelectionName
+                                )}
+                            on:keydown={(e) =>
+                                handleCheckboxChange(
+                                    e,
+                                    Checkbox.filName,
+                                    checkboxIdx,
+                                    filterSelectionName
+                                )}
+                        >
                             <input
                                 type="checkbox"
                                 class="checkbox"
@@ -1093,73 +1019,76 @@
         {/if}
     </div>
     <div class="activeFilters">
-        {#if $activeTagFilters}
-            <i
-                class="fa-solid fa-ban"
-                title="Remove Filters"
-                on:click={removeAllActiveTag}
-                on:keydown={removeAllActiveTag}
-                style:visibility={$activeTagFilters?.[
-                    $filterOptions?.filterSelection?.[
-                        $filterOptions?.filterSelection?.findIndex(
-                            ({ isSelected }) => isSelected
-                        )
-                    ]?.filterSelectionName
-                ]?.length
-                    ? "visible"
-                    : "hidden"}
-            />
-            <div class="tagFilters">
-                {#each $activeTagFilters?.[$filterOptions?.filterSelection?.[$filterOptions?.filterSelection?.findIndex(({ isSelected }) => isSelected)]?.filterSelectionName] || [] as { optionName, optionIdx, selected, changeType, filterType, categIdx, optionValue } (optionName + optionIdx)}
-                    {#if selected !== "none"}
-                        <div
-                            class="activeTagFilter"
-                            style:--activeTagFilterColor={selected ===
-                            "included"
-                                ? "#5f9ea0"
-                                : "#e85d75"}
-                            on:click={changeActiveSelect(
+        <i
+            style:display={$activeTagFilters ? "" : "none"}
+            class="fa-solid fa-ban"
+            title="Remove Filters"
+            on:click={removeAllActiveTag}
+            on:keydown={removeAllActiveTag}
+            style:visibility={$activeTagFilters?.[
+                $filterOptions?.filterSelection?.[
+                    $filterOptions?.filterSelection?.findIndex(
+                        ({ isSelected }) => isSelected
+                    )
+                ]?.filterSelectionName
+            ]?.length
+                ? "visible"
+                : "hidden"}
+        />
+        <div
+            id="tagFilters"
+            class="tagFilters"
+            style:display={$activeTagFilters ? "" : "none"}
+        >
+            {#each $activeTagFilters?.[$filterOptions?.filterSelection?.[$filterOptions?.filterSelection?.findIndex(({ isSelected }) => isSelected)]?.filterSelectionName] || [] as { optionName, optionIdx, selected, changeType, filterType, categIdx, optionValue } (optionName + optionIdx)}
+                {#if selected !== "none"}
+                    <div
+                        class="activeTagFilter"
+                        style:--activeTagFilterColor={selected === "included"
+                            ? "#5f9ea0"
+                            : "#e85d75"}
+                        on:click={changeActiveSelect(
+                            optionIdx,
+                            optionName,
+                            filterType,
+                            categIdx,
+                            changeType
+                        )}
+                        on:keydown={changeActiveSelect(
+                            optionIdx,
+                            optionName,
+                            filterType,
+                            categIdx,
+                            changeType
+                        )}
+                    >
+                        {#if filterType === "input number"}
+                            <h3>
+                                {optionName + ": " + optionValue || ""}
+                            </h3>
+                        {:else}
+                            <h3>{optionName || ""}</h3>
+                        {/if}
+                        <i
+                            class="fa-solid fa-xmark"
+                            on:click|preventDefault={removeActiveTag(
                                 optionIdx,
                                 optionName,
                                 filterType,
-                                categIdx,
-                                changeType
+                                categIdx
                             )}
-                            on:keydown={changeActiveSelect(
+                            on:keydown={removeActiveTag(
                                 optionIdx,
                                 optionName,
                                 filterType,
-                                categIdx,
-                                changeType
+                                categIdx
                             )}
-                        >
-                            {#if filterType === "input number"}
-                                <h3>
-                                    {optionName + ": " + optionValue || ""}
-                                </h3>
-                            {:else}
-                                <h3>{optionName || ""}</h3>
-                            {/if}
-                            <i
-                                class="fa-solid fa-xmark"
-                                on:click|preventDefault={removeActiveTag(
-                                    optionIdx,
-                                    optionName,
-                                    filterType,
-                                    categIdx
-                                )}
-                                on:keydown={removeActiveTag(
-                                    optionIdx,
-                                    optionName,
-                                    filterType,
-                                    categIdx
-                                )}
-                            />
-                        </div>
-                    {/if}
-                {/each}
-            </div>
-        {:else}
+                        />
+                    </div>
+                {/if}
+            {/each}
+        </div>
+        {#if !$activeTagFilters}
             <i class="skeleton shimmer" />
             <div class="tagFilters skeleton shimmer" />
         {/if}
@@ -1344,22 +1273,19 @@
     }
 
     .filters {
-        overflow-y: auto;
+        overflow-x: auto;
+        overflow-y: hidden;
         display: flex;
         gap: 1em;
-        flex-wrap: wrap;
-        justify-content: space-evenly;
-        scroll-snap-type: y mandatory;
+        flex-wrap: nowrap;
+        padding-bottom: var(--maxPaddingHeight);
     }
     .filters::-webkit-scrollbar {
-        width: 5px !important;
+        display: none;
     }
-    .filters::-webkit-scrollbar-track {
-        background-color: transparent;
-    }
-    .filters::-webkit-scrollbar-thumb {
-        background-color: #b9cadd;
-        border-radius: 5px;
+
+    .filter-select {
+        position: relative;
     }
 
     .filter-select,
@@ -1368,8 +1294,9 @@
         grid-template-rows: 18px 30px;
         grid-row-gap: 5px;
         width: 142px;
-        scroll-snap-align: start;
+        min-width: 142px;
     }
+
     .filter-input-number .value-input-number {
         text-align: center;
         background: transparent;
@@ -1419,7 +1346,7 @@
 
     .filter-select .options-wrap {
         position: absolute;
-        top: 210px;
+        top: 61px;
         background-color: rgb(21, 31, 46);
         width: 142px;
         overflow-y: auto;
@@ -1473,7 +1400,10 @@
         grid-template-rows: 18px 30px;
         grid-row-gap: 5px;
         width: 142px;
-        scroll-snap-align: start;
+    }
+    .filter-checkbox .checkbox-wrap {
+        min-width: 142px;
+        width: 142px;
     }
     .filter-checkbox .checkbox-wrap,
     .filter-input-number .value-input-number-wrap {

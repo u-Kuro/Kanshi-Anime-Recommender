@@ -14,11 +14,17 @@
 		recommendedAnimeList,
 		finalAnimeList,
 		animeLoaderWorker,
+		initData,
 		searchedAnimeKeyword,
 		dataStatus,
 		autoPlay,
 		popupVisible,
 		menuVisible,
+		toast,
+		// Reactive Functions
+		updateRecommendationList,
+		loadAnime,
+		updateFilters,
 	} from "./js/globalValues.js";
 	import {
 		getAnimeEntries,
@@ -30,222 +36,178 @@
 		animeLoader,
 	} from "./js/workerUtils.js";
 	import { isJsonObject, jsonIsEmpty } from "./js/others/helper.js";
+
 	// For Youtube API
 	const onYouTubeIframeAPIReady = new Function();
+
+	let initDataPromises = [];
+	$dataStatus = "Getting Existing Data";
 	let pleaseWaitStatusInterval = setInterval(() => {
 		if (!$dataStatus) {
 			$dataStatus = "Please Wait...";
 		}
 	}, 300);
 
-	onMount(async () => {
-		// Init Data
-		let initDataPromises = [];
-		let shouldProcessRecommendation, shouldLoadAnime;
-		// Check/Get/Update/Process Anime Entries
-		$dataStatus = "Getting Existing Data";
-		initDataPromises.push(
-			new Promise(async (resolve, reject) => {
-				let animeEntriesLen = await retrieveJSON("animeEntriesLength");
-				let _lastAnimeUpdate = await retrieveJSON("lastAnimeUpdate");
-				if (_lastAnimeUpdate) $lastAnimeUpdate = await _lastAnimeUpdate;
-				if (
-					animeEntriesLen < 1 ||
-					!($lastAnimeUpdate instanceof Date)
-				) {
-					$finalAnimeList = null;
-					getAnimeEntries()
-						.then(async (data) => {
-							$lastAnimeUpdate = data.lastAnimeUpdate;
-							resolve();
-						})
-						.catch((error) => reject(error));
-				} else {
-					resolve();
-				}
-			})
-		);
-
-		// Check/Update/Process User Anime Entries
-		initDataPromises.push(
-			new Promise(async (resolve, reject) => {
-				let _username = await retrieveJSON("username");
-				if (_username) {
-					$username = _username;
-					requestUserEntries({ username: $username })
-						.then(async (data) => {
-							resolve();
-						})
-						.catch((error) => reject(error));
-				} else {
-					resolve();
-				}
-			})
-		);
-
-		// Check/Get Filter Options Selection
-		initDataPromises.push(
-			new Promise(async (resolve, reject) => {
-				let _filterOptions = await retrieveJSON("filterOptions");
-				if (_filterOptions) $filterOptions = _filterOptions;
-				let _activeTagFilters = await retrieveJSON("activeTagFilters");
-				if (_activeTagFilters) {
-					$activeTagFilters = _activeTagFilters;
-				} else if (!jsonIsEmpty($filterOptions)) {
-					// Add Default Active Filters
-					$activeTagFilters =
-						$filterOptions.filterSelection.reduce(
-							(r, { filterSelectionName }) => {
-								r[filterSelectionName] = [];
-								return r;
-							},
-							{}
-						) || {};
-				}
-				if (jsonIsEmpty($filterOptions)) {
-					await getFilterOptions()
-						.then(async (data) => {
-							$filterOptions = data.filterOptions;
-							$activeTagFilters = data.activeTagFilters;
-							resolve();
-						})
-						.catch((error) => reject(error));
-				} else {
-					resolve();
-				}
-			})
-		);
-
-		// Check/Get Anime Franchises
-		initDataPromises.push(
-			new Promise(async (resolve, reject) => {
-				let animeFranchisesLen = await retrieveJSON(
-					"animeFranchisesLength"
-				);
-				if (animeFranchisesLen < 1) {
-					await getAnimeFranchises()
-						.then(async (data) => {
-							resolve();
-						})
-						.catch((error) => reject(error));
-				} else {
-					resolve();
-				}
-			})
-		);
-
-		// Get Existing Data If there are any
-		initDataPromises.push(
-			new Promise(async (resolve) => {
-				// Auto Play
-				let _autoPlay = await retrieveJSON("autoPlay");
-				if (typeof _autoPlay === "boolean") $autoPlay = _autoPlay;
-				// Hidden Entries
-				$hiddenEntries = (await retrieveJSON("hiddenEntries")) || {};
-				shouldProcessRecommendation = await retrieveJSON(
-					"shouldProcessRecommendation"
-				);
-				if (shouldProcessRecommendation) {
-					await animeLoader()
-						.then(async (data) => {
-							if (shouldLoadAnime)
-								await saveJSON(false, "shouldLoadAnime");
-							$animeLoaderWorker = data.animeLoaderWorker;
-							$searchedAnimeKeyword = "";
-							$finalAnimeList = data.finalAnimeList;
-							return;
-						})
-						.catch((error) => {
-							throw error;
-						});
-				}
+	// Init Data
+	// Check/Get/Update/Process Anime Entries
+	initDataPromises.push(
+		new Promise(async (resolve) => {
+			let animeEntriesLen = await retrieveJSON("animeEntriesLength");
+			let _lastAnimeUpdate = await retrieveJSON("lastAnimeUpdate");
+			if (animeEntriesLen < 1 || !(_lastAnimeUpdate instanceof Date)) {
+				$finalAnimeList = null;
+				getAnimeEntries()
+					.then((data) => {
+						$lastAnimeUpdate = data.lastAnimeUpdate;
+						resolve();
+					})
+					.catch(async (error) => {
+						console.error(error);
+						requestAnimeEntries();
+						resolve();
+					});
+			} else {
 				resolve();
-			})
-		);
+			}
+		})
+	);
 
-		// Data Processing
-		Promise.all(initDataPromises).then(async () => {
-			new Promise(async (resolve, reject) => {
-				// Check and request Anime Entries
-				let animeEntriesLen = await retrieveJSON("animeEntriesLength");
-				if (animeEntriesLen < 1) {
-					await requestAnimeEntries()
-						.then(() => {
-							return;
-						})
-						.catch((error) => {
-							reject(error);
-						});
-				} else {
-					resolve();
-				}
+	// Check/Update/Process User Anime Entries
+	initDataPromises.push(
+		new Promise(async (resolve) => {
+			let _username = await retrieveJSON("username");
+			if (_username) {
+				$username = _username;
+				requestUserEntries({ username: $username });
+			}
+			resolve();
+		})
+	);
+
+	// Check/Get Anime Franchises
+	initDataPromises.push(
+		new Promise(async (resolve) => {
+			let animeFranchisesLen = await retrieveJSON(
+				"animeFranchisesLength"
+			);
+			console.log(animeFranchisesLen);
+			if (animeFranchisesLen < 1) {
+				getAnimeFranchises();
+			}
+			resolve();
+		})
+	);
+
+	// Check/Get/Update Filter Options Selection
+	initDataPromises.push(
+		new Promise(async (resolve) => {
+			let _filterOptions = await retrieveJSON("filterOptions");
+			let _activeTagFilters = await retrieveJSON("activeTagFilters");
+			if (jsonIsEmpty(_filterOptions) || jsonIsEmpty(_activeTagFilters)) {
+				updateFilters.update((e) => !e);
+			} else {
+				$filterOptions = _filterOptions;
+				$activeTagFilters = _activeTagFilters;
+			}
+			resolve();
+		})
+	);
+
+	// Get Existing Anime List
+	initDataPromises.push(
+		new Promise(async (resolve) => {
+			let shouldProcessRecommendation = await retrieveJSON(
+				"shouldProcessRecommendation"
+			);
+			let recommendedAnimeListLen = await retrieveJSON(
+				"recommendedAnimeListLength"
+			);
+			if (
+				!shouldProcessRecommendation &&
+				recommendedAnimeListLen?.length
+			) {
+				loadAnime.update((e) => !e);
+			} else {
+				updateRecommendationList.update((e) => !e);
+			}
+			resolve();
+		})
+	);
+
+	// Get Existing Data If there are any
+	initDataPromises.push(
+		new Promise(async (resolve) => {
+			// Auto Play
+			let _autoPlay = await retrieveJSON("autoPlay");
+			if (typeof _autoPlay === "boolean") $autoPlay = _autoPlay;
+			// Hidden Entries
+			$hiddenEntries = (await retrieveJSON("hiddenEntries")) || {};
+			resolve();
+		})
+	);
+
+	Promise.all(initDataPromises)
+		.then(async () => {
+			$initData = false;
+			clearInterval(pleaseWaitStatusInterval);
+			if (!$username) {
+				let usernameInput = document.getElementById("usernameInput");
+				usernameInput.setCustomValidity("Enter your Anilist Username");
+				usernameInput.reportValidity();
+			}
+			// Double Check
+			let recommendedAnimeListLen = await retrieveJSON(
+				"recommendedAnimeListLength"
+			);
+			if (recommendedAnimeListLen < 1) {
+				updateRecommendationList.update((e) => !e);
+			} else if (!$finalAnimeList?.length) {
+				loadAnime.update((e) => !e);
+			}
+		})
+		.catch((error) => {
+			$initData = false;
+			clearInterval(pleaseWaitStatusInterval);
+			$dataStatus = "Something went wrong...";
+			console.error(error);
+		});
+
+	// Reactive Functions
+	updateRecommendationList.subscribe(async (val) => {
+		if (val === null) return;
+		await saveJSON(true, "shouldProcessRecommendation");
+		processRecommendedAnimeList()
+			.then(async () => {
+				await saveJSON(false, "shouldProcessRecommendation");
+				loadAnime.update((e) => !e);
 			})
-				.then(async () => {
-					// Process List
-					let recommendedAnimeListLen = await retrieveJSON(
-						"recommendedAnimeListLength"
-					);
-					let shouldProcessRecommendation = await retrieveJSON(
-						"shouldProcessRecommendation"
-					);
-					if (
-						recommendedAnimeListLen < 1 ||
-						shouldProcessRecommendation
-					) {
-						$finalAnimeList = null;
-						await processRecommendedAnimeList()
-							.then(async () => {
-								if (shouldProcessRecommendation)
-									await saveJSON(
-										false,
-										"shouldProcessRecommendation"
-									);
-								return;
-							})
-							.catch((error) => {
-								throw error;
-							});
-					} else {
-						return;
-					}
-				})
-				.then(async () => {
-					// Create/Filter Processed List for Final List and Shown the List
-					if (!$finalAnimeList?.length || shouldLoadAnime) {
-						$finalAnimeList = null;
-						await animeLoader()
-							.then(async (data) => {
-								if (shouldLoadAnime)
-									await saveJSON(false, "shouldLoadAnime");
-								$animeLoaderWorker = data.animeLoaderWorker;
-								$searchedAnimeKeyword = "";
-								$finalAnimeList = data.finalAnimeList;
-								return;
-							})
-							.catch((error) => {
-								throw error;
-							});
-					} else {
-						return;
-					}
-				})
-				.then(() => {
-					clearInterval(pleaseWaitStatusInterval);
-					if (!$username) {
-						$dataStatus = "No Anilist Username Found";
-						let usernameInput =
-							document.getElementById("usernameInput");
-						usernameInput.setCustomValidity(
-							"Enter your Anilist Username"
-						);
-						usernameInput.reportValidity();
-					}
-				})
-				.catch((error) => {
-					clearInterval(pleaseWaitStatusInterval);
-					$dataStatus = "Something Went Wrong...";
-					console.error(error);
-				});
+			.catch((error) => {
+				throw error;
+			});
+	});
+	loadAnime.subscribe(async (val) => {
+		if (val === null) return;
+		animeLoader()
+			.then(async (data) => {
+				$animeLoaderWorker = data.animeLoaderWorker;
+				$searchedAnimeKeyword = "";
+				if ($initData) {
+					$finalAnimeList = null; // Loading
+				} else {
+					$finalAnimeList = data.finalAnimeList;
+				}
+				$dataStatus = null;
+				return;
+			})
+			.catch((error) => {
+				throw error;
+			});
+	});
+	updateFilters.subscribe(async (val) => {
+		if (val === null) return;
+		getFilterOptions().then((data) => {
+			$activeTagFilters = data.activeTagFilters;
+			$filterOptions = data.filterOptions;
 		});
 	});
 

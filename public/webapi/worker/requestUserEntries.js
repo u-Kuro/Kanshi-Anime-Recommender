@@ -1,10 +1,18 @@
 let db;
 self.onmessage = async ({ data }) => {
     if (!db) await IDBinit()
-    let username = data?.username || await retrieveJSON("username")
+    let username = data?.username
+    let savedUsername = await retrieveJSON("username")
     let lastUserAnimeUpdate = await retrieveJSON("lastUserAnimeUpdate")
 
-    recallUE() // Start Call
+    if (typeof savedUsername === "string" && (username === savedUsername || !username)) {
+        username = savedUsername
+        recallUE() // Check/Update Same User
+    } else if (typeof username === "string" && username !== savedUsername) {
+        getUserEntries() // Get New User Data
+    } else {
+        self.postMessage({ message: "No Anilist Username Found" })
+    }
 
     function recallUE() {
         if (lastUserAnimeUpdate instanceof Date && !isNaN(lastUserAnimeUpdate)) {
@@ -25,7 +33,7 @@ self.onmessage = async ({ data }) => {
                 .then((result) => {
                     let error;
                     if (typeof (error = result?.errors?.[0]?.message) === "string") {
-                        self.postMessage({ status: error })
+                        self.postMessage({ status: error || "Error in Checking Entries" })
                         self.postMessage({ message: error })
                     } else {
                         let currentUserAnimeUpdate = new Date(result?.data?.User?.updatedAt * 1000)
@@ -68,8 +76,8 @@ self.onmessage = async ({ data }) => {
         let userEntries = [];
         let maxAnimePerChunk = 500
         let currentUserAnimeUpdate;
+        self.postMessage({ status: "Getting User Entries: 0" })
         function recallAV(chunk) {
-            self.postMessage({ status: "Updating User Entries Chunk: " + chunk })
             fetch('https://graphql.anilist.co', {
                 method: 'POST',
                 headers: {
@@ -125,6 +133,7 @@ self.onmessage = async ({ data }) => {
                         for (let i = 0; i < userList.length; i++) {
                             userEntries = userEntries.concat(userList[i]?.entries ?? [])
                         }
+                        self.postMessage({ status: "Updating User Entries: " + userEntries.length })
                         if (hasNextChunk) {
                             // Handle the successful response here
                             if (headers?.get('x-ratelimit-remaining') > 0) {
@@ -148,7 +157,8 @@ self.onmessage = async ({ data }) => {
                                 await saveJSON(userEntries, "userEntries")
                                 await saveJSON(username, "username")
                                 self.postMessage({ status: null })
-                                self.postMessage({ message: 'success', newusername: username })
+                                self.postMessage({ updateRecommendationList: true })
+                                self.postMessage({ newusername: username })
                             })();
                         }
                     }
@@ -175,10 +185,6 @@ self.onmessage = async ({ data }) => {
                             }, 60000);
                         }
                     }
-                    console.error("error", error);
-                    console.error("error?.headers", error?.headers);
-                    console.error("error?.message", error?.message);
-                    console.error("error?.headers?.get('x-ratelimit-remaining')", error?.headers?.get('x-ratelimit-remaining'));
                 });
         }
         recallAV(1)

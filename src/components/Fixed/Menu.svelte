@@ -12,19 +12,36 @@
     import { onMount, onDestroy } from "svelte";
     import { fade } from "svelte/transition";
     import { saveJSON } from "../../js/indexedDB.js";
-    import { animeLoader } from "../../js/workerUtils.js";
+    import {
+        processRecommendedAnimeList,
+        animeLoader,
+        requestAnimeEntries,
+        requestUserEntries,
+    } from "../../js/workerUtils.js";
     import { jsonIsEmpty } from "../../js/others/helper.js";
 
     function stillFixing() {
         alert("Still Fixing This");
     }
-    function updateList() {}
+
+    function updateList() {
+        if (confirm("Are you sure you want to update your list?")) {
+            $menuVisible = false;
+            requestUserEntries()
+                .then(() => {
+                    requestAnimeEntries();
+                })
+                .catch((error) => {
+                    console.error(error);
+                });
+        }
+    }
 
     function handleMenuVisibility(event) {
         let element = event.target;
         let classList = element.classList;
         if (classList.contains("button")) return;
-        menuVisible.set(!$menuVisible);
+        $menuVisible = !$menuVisible;
     }
 
     async function showAllHiddenEntries() {
@@ -42,7 +59,6 @@
             $finalAnimeList = null;
             $dataStatus = "Updating List";
             $menuVisible = false;
-            await saveJSON(true, "shouldLoadAnime");
             let filterSelectionIdx =
                 $filterOptions?.filterSelection?.findIndex?.(
                     ({ filterSelectionName }) =>
@@ -77,7 +93,6 @@
                     $searchedAnimeKeyword = "";
                     $finalAnimeList = data.finalAnimeList;
                     $dataStatus = null;
-                    await saveJSON(false, "shouldLoadAnime");
                     return;
                 })
                 .catch((error) => {
@@ -95,10 +110,8 @@
         transition:fade={{ duration: 300 }}
     >
         <div class="menu">
-            <button
-                class="button"
-                on:click={stillFixing}
-                on:keydown={stillFixing}>Update List</button
+            <button class="button" on:click={updateList} on:keydown={updateList}
+                >Update List</button
             >
             <button
                 class="button"

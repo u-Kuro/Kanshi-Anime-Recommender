@@ -18,11 +18,18 @@ const dataStatus = writable(null)
 const ytPlayers = writable([])
 const autoPlay = writable(null)
 
+const initData = writable(true)
 const animeObserver = writable(null)
 const searchedAnimeKeyword = writable("")
+const toast = writable(null)
 const menuVisible = writable(false)
 const popupVisible = writable(false)
 const openedAnimePopupIdx = writable(null)
+
+// Reactive Functions
+const updateRecommendationList = writable(null)
+const updateFilters = writable(null)
+const loadAnime = writable(null)
 
 export {
     animeEntries,
@@ -39,9 +46,15 @@ export {
     dataStatus,
     ytPlayers,
     autoPlay,
+    initData,
     animeObserver,
     searchedAnimeKeyword,
+    toast,
     menuVisible,
     popupVisible,
-    openedAnimePopupIdx
+    openedAnimePopupIdx,
+    // Reactive Functions
+    updateRecommendationList,
+    updateFilters,
+    loadAnime,
 }
