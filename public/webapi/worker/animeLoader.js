@@ -37,32 +37,32 @@ self.onmessage = async ({ data }) => {
         self.postMessage({ status: "Initializing Filters" })
         let activeTagFilters = await retrieveJSON("activeTagFilters")
         let recommendedAnimeList = await retrieveJSON("recommendedAnimeList") || []
-        // Init Content Warning
-        let contentWarning = activeTagFilters?.['Content Warning'] || []
-        let semiWarningContents = {
+        // Init Content Caution
+        let contentCaution = activeTagFilters?.['Content Caution'] || []
+        let semiCautionContents = {
             genres: {},
             tags: {},
         },
-            warningContents = {
+            cautionContents = {
                 genres: {},
                 tags: {},
             };
-        contentWarning.forEach(({ selected, filterType, optionName, optionType }) => {
-            // Included is Semi Warning and Excluded is Warning
+        contentCaution.forEach(({ selected, filterType, optionName, optionType }) => {
+            // Included is Semi Caution and Excluded is Caution
             if (selected === "included") {
                 if (filterType === 'dropdown') {
                     if (optionType === 'genre') {
-                        semiWarningContents.genres[optionName] = true
+                        semiCautionContents.genres[optionName] = true
                     } else if (optionType === 'tag') {
-                        semiWarningContents.tags[optionName] = true
+                        semiCautionContents.tags[optionName] = true
                     }
                 }
             } else if (selected === 'excluded') {
                 if (filterType === 'dropdown') {
                     if (optionType === 'genre') {
-                        warningContents.genres[optionName] = true
+                        cautionContents.genres[optionName] = true
                     } else if (optionType === 'tag') {
-                        warningContents.tags[optionName] = true
+                        cautionContents.tags[optionName] = true
                     }
                 }
             }
@@ -88,13 +88,20 @@ self.onmessage = async ({ data }) => {
                 userStatus: {},
                 studios: {},
                 year: {},
+            },
+            comparisonFilter = {
+                weightedScore: null,
+                score: null,
+                averageScore: null,
+                userScore: null,
+                popularity: null
             }
         let hideMyAnime = false,
             hiddenList = false,
             hideWatched = false,
             favoriteContentsLimit = 5;
         let animeFilter = activeTagFilters?.['Anime Filter'] || []
-        animeFilter.forEach(({ selected, filterType, optionName, optionType, optionValue }) => {
+        animeFilter.forEach(({ selected, filterType, optionName, optionType, optionValue, CMPoperator, CMPNumber }) => {
             if (selected === "included") {
                 if (filterType === 'dropdown') {
                     if (optionType === 'flexible inclusion') {
@@ -117,7 +124,7 @@ self.onmessage = async ({ data }) => {
                         include.studios[optionName] = true
                     }
                 } else if (filterType === 'checkbox') {
-                    if (optionName === 'hidden entries') {
+                    if (optionName === 'hidden anime') {
                         hiddenList = true
                     } else if (optionName === 'hide my anime') {
                         hideMyAnime = true
@@ -125,8 +132,33 @@ self.onmessage = async ({ data }) => {
                         hideWatched = true
                     }
                 } else if (filterType === 'input number') {
-                    if (optionName === "limit favourites") {
-                        favoriteContentsLimit = optionValue
+                    if (optionName === "weighted score") {
+                        comparisonFilter.weightedScore = {
+                            operator: CMPoperator,
+                            value: parseFloat(CMPNumber ?? optionValue)
+                        }
+                    } else if (optionName === "score") {
+                        comparisonFilter.score = {
+                            operator: CMPoperator,
+                            value: parseFloat(CMPNumber ?? optionValue)
+                        }
+                    } else if (optionName === "average score") {
+                        comparisonFilter.averageScore = {
+                            operator: CMPoperator,
+                            value: parseFloat(CMPNumber ?? optionValue)
+                        }
+                    } else if (optionName === "user score") {
+                        comparisonFilter.userScore = {
+                            operator: CMPoperator,
+                            value: parseFloat(CMPNumber ?? optionValue)
+                        }
+                    } else if (optionName === "popularity") {
+                        comparisonFilter.popularity = {
+                            operator: CMPoperator,
+                            value: parseFloat(CMPNumber ?? optionValue)
+                        }
+                    } else if (optionName === "limit favourites") {
+                        favoriteContentsLimit = parseFloat(optionValue)
                     }
                 }
             } else if (selected === 'excluded') {
@@ -155,7 +187,7 @@ self.onmessage = async ({ data }) => {
 
         // Get Hidden Entries
         let hiddenEntries = (await retrieveJSON("hiddenEntries")) || {}
-        // Filter and ADD Warning State below
+        // Filter and ADD Caution State below
         finalAnimeList = recommendedAnimeList.filter(anime => {
             // favoriteContents
             if (hideMyAnime) {
@@ -178,6 +210,149 @@ self.onmessage = async ({ data }) => {
                     return false
                 }
             }
+
+            // Comparison Filter >=, >, <, <=, number
+            if (comparisonFilter.userScore) {
+                let operator = comparisonFilter.userScore.operator?.trim?.(),
+                    value = comparisonFilter.userScore.value
+                if (typeof anime.userScore !== "number") {
+                    return false
+                } else if (typeof operator === "string" && typeof value === "number") {
+                    switch (operator) {
+                        case ">=": {
+                            if (anime.userScore < value) return false
+                            break
+                        }
+                        case "<=": {
+                            if (anime.userScore > value) return false
+                            break
+                        }
+                        case "<": {
+                            if (anime.userScore >= value) return false
+                            break
+                        }
+                        case ">": {
+                            if (anime.userScore <= value) return false
+                            break
+                        }
+                    }
+                } else if (typeof value === "number") {
+                    if (anime.userScore !== value) return false
+                }
+            }
+            if (comparisonFilter.averageScore) {
+                let operator = comparisonFilter.averageScore.operator?.trim?.(),
+                    value = comparisonFilter.averageScore.value
+                if (typeof anime.averageScore !== "number") {
+                    return false
+                } else if (typeof operator === "string" && typeof value === "number") {
+                    switch (operator) {
+                        case ">=": {
+                            if (anime.averageScore < value) return false
+                            break
+                        }
+                        case "<=": {
+                            if (anime.averageScore > value) return false
+                            break
+                        }
+                        case "<": {
+                            if (anime.averageScore >= value) return false
+                            break
+                        }
+                        case ">": {
+                            if (anime.averageScore <= value) return false
+                            break
+                        }
+                    }
+                } else if (typeof value === "number") {
+                    if (anime.averageScore !== value) return false
+                }
+            }
+            if (comparisonFilter.popularity) {
+                let operator = comparisonFilter.popularity.operator?.trim?.(),
+                    value = comparisonFilter.popularity.value
+                if (typeof anime.popularity !== "number") {
+                    return false
+                } else if (typeof operator === "string" && typeof value === "number") {
+                    switch (operator) {
+                        case ">=": {
+                            if (anime.popularity < value) return false
+                            break
+                        }
+                        case "<=": {
+                            if (anime.popularity > value) return false
+                            break
+                        }
+                        case "<": {
+                            if (anime.popularity >= value) return false
+                            break
+                        }
+                        case ">": {
+                            if (anime.popularity <= value) return false
+                            break
+                        }
+                    }
+                } else if (typeof value === "number") {
+                    if (anime.popularity !== value) return false
+                }
+            }
+            if (comparisonFilter.weightedScore) {
+                let operator = comparisonFilter.weightedScore.operator?.trim?.(),
+                    value = comparisonFilter.weightedScore.value
+                if (typeof anime.weightedScore !== "number") {
+                    return false
+                } else if (typeof operator === "string" && typeof value === "number") {
+                    switch (operator) {
+                        case ">=": {
+                            if (anime.weightedScore < value) return false
+                            break
+                        }
+                        case "<=": {
+                            if (anime.weightedScore > value) return false
+                            break
+                        }
+                        case "<": {
+                            if (anime.weightedScore >= value) return false
+                            break
+                        }
+                        case ">": {
+                            if (anime.weightedScore <= value) return false
+                            break
+                        }
+                    }
+                } else if (typeof value === "number") {
+                    if (anime.weightedScore !== value) return false
+                }
+            }
+            if (comparisonFilter.score) {
+                let operator = comparisonFilter.score.operator?.trim?.(),
+                    value = comparisonFilter.score.value
+                if (typeof anime.score !== "number") {
+                    return false
+                } else if (typeof operator === "string" && typeof value === "number") {
+                    switch (operator) {
+                        case ">=": {
+                            if (anime.score < value) return false
+                            break
+                        }
+                        case "<=": {
+                            if (anime.score > value) return false
+                            break
+                        }
+                        case "<": {
+                            if (anime.score >= value) return false
+                            break
+                        }
+                        case ">": {
+                            if (anime.score <= value) return false
+                            break
+                        }
+                    }
+                } else if (typeof value === "number") {
+                    if (anime.score !== value) return false
+                }
+            }
+
             // Should Exclude
             if (typeof anime?.season === 'string' && !jsonIsEmpty(exclude.season) && exclude.season[anime.season.toLowerCase()]) {
                 return false
@@ -298,25 +473,25 @@ self.onmessage = async ({ data }) => {
                 }
             }
 
-            // Add Warnings
-            anime.contentWarning = {
-                warning: [],
-                semiWarning: []
+            // Add Cautions
+            anime.contentCaution = {
+                caution: [],
+                semiCaution: []
             }
-            // Add Genre Warning
+            // Add Genre Caution
             anime.genres.forEach(genre => {
-                if (warningContents.genres[genre?.toLowerCase?.()]) {
-                    anime.contentWarning.warning.push(genre)
-                } else if (semiWarningContents.genres[genre?.toLowerCase?.()]) {
-                    anime.contentWarning.semiWarning.push(genre)
+                if (cautionContents.genres[genre?.toLowerCase?.()]) {
+                    anime.contentCaution.caution.push(genre)
+                } else if (semiCautionContents.genres[genre?.toLowerCase?.()]) {
+                    anime.contentCaution.semiCaution.push(genre)
                 }
             })
-            // Add Tag Warning
+            // Add Tag Caution
             anime.tags.forEach(tag => {
-                if (warningContents.tags[tag?.toLowerCase?.()]) {
-                    anime.contentWarning.warning.push(tag)
-                } else if (semiWarningContents.tags[tag?.toLowerCase?.()]) {
-                    anime.contentWarning.semiWarning.push(tag)
+                if (cautionContents.tags[tag?.toLowerCase?.()]) {
+                    anime.contentCaution.caution.push(tag)
+                } else if (semiCautionContents.tags[tag?.toLowerCase?.()]) {
+                    anime.contentCaution.semiCaution.push(tag)
                 }
             })
 
@@ -447,8 +622,8 @@ self.onmessage = async ({ data }) => {
                 })
             }
         }
-        // warningCOlor
-        // hasWarning > hasVeryLowScore > hasLowScore > hasSemiWarning > Good
+        // CautionCOlor
+        // hasCaution > hasVeryLowScore > hasLowScore > hasSemiCaution > Good
         filteredList = finalAnimeList
         await saveJSON(finalAnimeList, "finalAnimeList")
         self.postMessage({ status: null })

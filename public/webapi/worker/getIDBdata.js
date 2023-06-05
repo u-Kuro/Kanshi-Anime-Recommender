@@ -1,16 +1,19 @@
 let db;
-self.onmessage = async({data}) => {
-    if(!db) await IDBinit()
-    if(data.name==="animeEntriesLength"){
-        let _data = Object.keys(await retrieveJSON("animeEntries")||{}).length
+self.onmessage = async ({ data }) => {
+    if (!db) await IDBinit()
+    if (data.name === "animeEntriesLength") {
+        let _data = Object.keys(await retrieveJSON("animeEntries") || {}).length
         self.postMessage(_data)
-    } else if(data.name==="animeFranchisesLength"){
-        let _data = (await retrieveJSON("animeFranchises")||[]).length
+    } else if (data.name === "userEntriesLength") {
+        let _data = (await retrieveJSON("userEntries") || []).length
         self.postMessage(_data)
-    } else if(data.name==="recommendedAnimeListLength"){
-        let _data = (await retrieveJSON("recommendedAnimeList")||[]).length
+    } else if (data.name === "animeFranchisesLength") {
+        let _data = (await retrieveJSON("animeFranchises") || []).length
         self.postMessage(_data)
-    } else if(data.name) {
+    } else if (data.name === "recommendedAnimeListLength") {
+        let _data = (await retrieveJSON("recommendedAnimeList") || []).length
+        self.postMessage(_data)
+    } else if (data.name) {
         self.postMessage(await retrieveJSON(data.name))
     }
 }
@@ -37,11 +40,11 @@ async function IDBinit() {
 }
 async function retrieveJSON(name) {
     return await new Promise((resolve) => {
-      try {
+        try {
             let read = db
-            .transaction("MyObjectStore", "readwrite")
-            .objectStore("MyObjectStore")
-            .get(name);
+                .transaction("MyObjectStore", "readwrite")
+                .objectStore("MyObjectStore")
+                .get(name);
             read.onsuccess = () => {
                 return resolve(read.result);
             };

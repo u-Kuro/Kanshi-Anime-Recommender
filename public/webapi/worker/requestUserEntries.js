@@ -4,11 +4,15 @@ self.onmessage = async ({ data }) => {
     let username = data?.username
     let savedUsername = await retrieveJSON("username")
     let lastUserAnimeUpdate = await retrieveJSON("lastUserAnimeUpdate")
+    let userEntriesLen = (await retrieveJSON("userEntries") || []).length
 
-    if (typeof savedUsername === "string" && (username === savedUsername || !username)) {
+    if (typeof savedUsername === "string" && userEntriesLen < 1) {
+        username = savedUsername
+        getUserEntries() // Empty User Entries
+    } else if (typeof savedUsername === "string" && userEntriesLen > 0 && (username === savedUsername || !username)) {
         username = savedUsername
         recallUE() // Check/Update Same User
-    } else if (typeof username === "string" && username !== savedUsername) {
+    } else if ((typeof username === "string" && username !== savedUsername)) {
         getUserEntries() // Get New User Data
     } else {
         self.postMessage({ message: "No Anilist Username Found" })

@@ -177,6 +177,10 @@
         margin: auto;
         padding: 0 50px;
     }
+    .nav .textLogo {
+        min-width: 87px;
+        word-break: keep-all;
+    }
     .input-search {
         display: flex;
         height: 25px;

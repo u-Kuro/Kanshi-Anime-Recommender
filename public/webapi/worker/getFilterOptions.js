@@ -14,11 +14,11 @@ self.onmessage = async ({ data }) => {
         savedFilters = {
             "sortFilter": {
                 "weighted score": true,
-                score: true,
-                "average score": true,
+                date: true,
                 "user score": true,
+                "average score": true,
+                score: true,
                 popularity: true,
-                date: true
             },
             format: {
                 "tv": true,
@@ -4301,7 +4301,7 @@ self.onmessage = async ({ data }) => {
                     isSelected: true
                 },
                 {
-                    filterSelectionName: "Content Warning",
+                    filterSelectionName: "Content Caution",
                     filters: {},
                     isSelected: false
                 },
@@ -4392,23 +4392,61 @@ self.onmessage = async ({ data }) => {
                         isSelected: false
                     },
                     {
-                        filName: "hidden entries",
+                        filName: "hidden anime",
                         isSelected: false
                     }
                 ]
 
                 // Input Number
                 // Add Custom Input Number Selection
+                // user score
+                // average score
+                // 
                 filters["Input Number"] = [
                     {
-                        filName: "limit favourites",
+                        filName: "user score",
                         defaultValue: null,
+                        maxValue: Infinity,
+                        minValue: 0,
+                        numberValue: ""
+                    },
+                    {
+                        filName: "average score",
+                        defaultValue: null,
+                        maxValue: Infinity,
+                        minValue: 0,
+                        numberValue: ""
+                    },
+                    {
+                        filName: "popularity",
+                        defaultValue: null,
+                        maxValue: Infinity,
+                        minValue: 0,
+                        numberValue: ""
+                    },
+                    {
+                        filName: "score",
+                        defaultValue: null,
+                        maxValue: Infinity,
+                        minValue: 0,
+                        numberValue: ""
+                    },
+                    {
+                        filName: "weighted score",
+                        defaultValue: null,
+                        maxValue: Infinity,
+                        minValue: 0,
+                        numberValue: ""
+                    },
+                    {
+                        filName: "limit favourites",
+                        defaultValue: 5,
                         maxValue: Infinity,
                         minValue: 0,
                         numberValue: ""
                     }
                 ]
-            } else if (filterSelectionName === "Content Warning") {
+            } else if (filterSelectionName === "Content Caution") {
                 // Dropdown
                 let aniFilDropdown = ["genre", "tag"] // Add Selections
                 filters.Dropdown = aniFilDropdown.map((e) => {

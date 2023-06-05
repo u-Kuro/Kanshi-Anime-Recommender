@@ -10,6 +10,7 @@ self.onmessage = async ({ data }) => {
     let animeEntries = await retrieveJSON("animeEntries") || {}
     let userEntries = await retrieveJSON("userEntries") || []
     let animeFranchises = await retrieveJSON("animeFranchise") || []
+
     let includedUserEntryCount;
     // Filter Algorithm
     let includeUnknownVar = false,

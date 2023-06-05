@@ -141,7 +141,7 @@
     }
 
     function getBriefInfo({
-        contentWarning,
+        contentCaution,
         favoriteContents,
         meanScoreAll,
         meanScoreAbove,
@@ -156,17 +156,17 @@
             }
         });
 
-        let _contentWarning = (contentWarning?.warning || []).concat(
-            contentWarning?.semiWarning || []
+        let _contentCaution = (contentCaution?.caution || []).concat(
+            contentCaution?.semiCaution || []
         );
         if (score < meanScoreAll) {
             // Very Low Score
-            _contentWarning.push(
+            _contentCaution.push(
                 `Very Low Score (mean: ${formatNumber(meanScoreAll)})`
             );
         } else if (score < meanScoreAbove) {
             // Low Score
-            _contentWarning.push(
+            _contentCaution.push(
                 `Low Score (mean: ${formatNumber(meanScoreAbove)})`
             );
         }
@@ -175,8 +175,8 @@
             briefInfo +=
                 "Favorite Contents: " + _favoriteContents.join(", ") || "";
         }
-        if (_contentWarning.length) {
-            briefInfo += "\n\nContent Warnings: " + _contentWarning.join(", ");
+        if (_contentCaution.length) {
+            briefInfo += "\n\nContent Cautions: " + _contentCaution.join(", ");
         }
         return briefInfo;
     }
@@ -196,14 +196,14 @@
         }
     }
 
-    function getWarningColor({
-        contentWarning,
+    function getCautionColor({
+        contentCaution,
         meanScoreAll,
         meanScoreAbove,
         score,
     }) {
-        if (contentWarning?.warning?.length) {
-            // Warning
+        if (contentCaution?.caution?.length) {
+            // Caution
             return "red";
         } else if (score < meanScoreAll) {
             // Very Low Score
@@ -211,8 +211,8 @@
         } else if (score < meanScoreAbove) {
             // Low Score
             return "orange";
-        } else if (contentWarning?.semiWarning?.length) {
-            // Semi Warning
+        } else if (contentCaution?.semiCaution?.length) {
+            // Semi Caution
             return "teal";
         } else {
             return "green";
@@ -280,7 +280,7 @@
                             </div>
                             <div class="brief-info">
                                 <i
-                                    class={`${getWarningColor(
+                                    class={`${getCautionColor(
                                         anime
                                     )}-color fa-solid fa-star`}
                                 />

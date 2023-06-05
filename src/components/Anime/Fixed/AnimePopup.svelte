@@ -87,37 +87,37 @@
         }
     }
 
-    function getContentWarning({
-        contentWarning,
+    function getContentCaution({
+        contentCaution,
         meanScoreAll,
         meanScoreAbove,
         score,
     }) {
-        let _contentWarning = (contentWarning?.warning || []).concat(
-            contentWarning?.semiWarning || []
+        let _contentCaution = (contentCaution?.caution || []).concat(
+            contentCaution?.semiCaution || []
         );
         if (score < meanScoreAll) {
             // Very Low Score
-            _contentWarning.push(
+            _contentCaution.push(
                 `Very Low Score (mean: ${formatNumber(meanScoreAll)})`
             );
         } else if (score < meanScoreAbove) {
             // Low Score
-            _contentWarning.push(
+            _contentCaution.push(
                 `Low Score (mean: ${formatNumber(meanScoreAbove)})`
             );
         }
-        return _contentWarning.join(", ") || "";
+        return _contentCaution.join(", ") || "";
     }
 
-    function getWarningColor({
-        contentWarning,
+    function getCautionColor({
+        contentCaution,
         meanScoreAll,
         meanScoreAbove,
         score,
     }) {
-        if (contentWarning?.warning?.length) {
-            // Warning
+        if (contentCaution?.caution?.length) {
+            // Caution
             return "red";
         } else if (score < meanScoreAll) {
             // Very Low Score
@@ -125,8 +125,8 @@
         } else if (score < meanScoreAbove) {
             // Low Score
             return "orange";
-        } else if (contentWarning?.semiWarning?.length) {
-            // Semi Warning
+        } else if (contentCaution?.semiCaution?.length) {
+            // Semi Caution
             return "teal";
         } else {
             return "green";
@@ -444,7 +444,7 @@
                                 rel="noopener noreferrer"
                                 target="_blank"
                                 href={anime.animeUrl || ""}
-                                class={getWarningColor(anime) +
+                                class={getCautionColor(anime) +
                                     "-color anime-title"}
                                 >{anime?.title || "N/A"}</a
                             >
@@ -541,8 +541,8 @@
                             </div>
                             <div>
                                 <div class="info-categ">Content Cautions</div>
-                                <div class="content-warning-popup info">
-                                    {getContentWarning(anime) || "N/A"}
+                                <div class="content-caution-popup info">
+                                    {getContentCaution(anime) || "N/A"}
                                 </div>
                             </div>
                             <div>

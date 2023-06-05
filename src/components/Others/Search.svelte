@@ -14,7 +14,7 @@
         initData,
     } from "../../js/globalValues.js";
     import { fade } from "svelte/transition";
-    import { dragScroll } from "../../js/others/dragScroll.js";
+    import { changeInputValue, dragScroll } from "../../js/others/helper.js";
 
     let Init = true;
 
@@ -34,7 +34,14 @@
     let tagFilterIsScrolling;
 
     let nameChangeUpdateProcessedList = ["Algorithm Filter"];
-    let nameChangeUpdateFinalList = ["sort", "Anime Filter", "Content Warning"];
+    let nameChangeUpdateFinalList = ["sort", "Anime Filter", "Content Caution"];
+    let conditionalInputNumberList = [
+        "weighted score",
+        "score",
+        "average score",
+        "user score",
+        "popularity",
+    ];
     let saveFiltersTimeout;
     let lastChangeName;
 
@@ -134,7 +141,7 @@
         filterIsScrolling = true;
         filterScrollTimeout = setTimeout(() => {
             filterIsScrolling = false;
-        }, 500);
+        }, 50);
     }
     function filterSelect(event, dropdownIdx) {
         if (filterIsScrolling) return;
@@ -385,68 +392,172 @@
                 "Input Number"
             ][inputNumIdx].numberValue;
         if (
-            (newValue !== currentValue &&
-                !isNaN(newValue) &&
-                !isNaN(currentValue) &&
-                (parseFloat(newValue) >= minValue ||
-                    typeof minValue !== "number") &&
-                (parseFloat(newValue) <= maxValue ||
-                    typeof maxValue !== "number")) ||
-            newValue === ""
+            conditionalInputNumberList.includes(inputNumberName) &&
+            /^(>=|<=|<|>).*($)/.test(newValue) // Check if it starts or ends with comparison operators
         ) {
-            if (newValue === "") {
-                $activeTagFilters[nameTypeSelected] = $activeTagFilters[
-                    nameTypeSelected
-                ].filter(
-                    (e) =>
-                        !(
-                            e.optionIdx === inputNumIdx &&
-                            e.optionName === inputNumberName &&
-                            e.optionValue === parseFloat(currentValue) &&
-                            e.filterType === "input number" &&
-                            e.selected === "included"
-                        )
-                );
-            } else {
-                let elementIdx = $activeTagFilters[nameTypeSelected].findIndex(
-                    (item) =>
-                        item.optionName === inputNumberName &&
-                        item.optionValue === parseFloat(currentValue) &&
-                        item.optionIdx === inputNumIdx &&
-                        item.filterType === "input number"
-                );
-                if (elementIdx === -1) {
-                    $activeTagFilters[nameTypeSelected].unshift({
-                        optionName: inputNumberName,
-                        optionValue: parseFloat(newValue),
-                        optionIdx: inputNumIdx,
-                        filterType: "input number",
-                        selected: "included",
-                        changeType: "read",
-                    });
+            let newSplitValue = newValue.split(/(<=|>=|<|>)/).filter((e) => e); // Remove White Space
+            if (newValue !== currentValue && newSplitValue.length <= 2) {
+                let currentSplitValue = newValue
+                    .split(/(<=|>=|<|>)/)
+                    .filter((e) => e); // Remove White Space
+                let currentCMPOperator, currentCMPNumber;
+                let newCMPOperator, newCMPNumber;
+                if (
+                    newSplitValue[0].includes(">") ||
+                    newSplitValue[0].includes("<")
+                ) {
+                    newCMPOperator = newSplitValue[0];
+                    newCMPNumber = newSplitValue[1];
                 } else {
-                    $activeTagFilters[nameTypeSelected].splice(elementIdx, 1);
-                    $activeTagFilters[nameTypeSelected].unshift({
-                        optionName: inputNumberName,
-                        optionValue: parseFloat(newValue),
-                        optionIdx: inputNumIdx,
-                        filterType: "input number",
-                        selected: "included",
-                        changeType: "read",
-                    });
+                    newCMPOperator = newSplitValue[1];
+                    newCMPNumber = newSplitValue[0];
                 }
-                $activeTagFilters = $activeTagFilters;
+                if (
+                    currentSplitValue[0].includes(">") ||
+                    currentSplitValue[0].includes("<")
+                ) {
+                    currentCMPOperator = currentSplitValue[0];
+                    currentCMPNumber = currentSplitValue[1];
+                } else {
+                    currentCMPOperator = currentSplitValue[1];
+                    currentCMPNumber = currentSplitValue[0];
+                }
+                if (
+                    newValue !== currentValue &&
+                    ((!isNaN(newCMPNumber) &&
+                        (parseFloat(newCMPNumber) >= minValue ||
+                            typeof minValue !== "number") &&
+                        (parseFloat(newCMPNumber) <= maxValue ||
+                            typeof maxValue !== "number")) ||
+                        !newCMPNumber)
+                ) {
+                    if (!newCMPNumber) {
+                        $activeTagFilters[nameTypeSelected] = $activeTagFilters[
+                            nameTypeSelected
+                        ].filter(
+                            (e) =>
+                                !(
+                                    e.optionIdx === inputNumIdx &&
+                                    e.optionName === inputNumberName &&
+                                    e.optionValue === currentValue &&
+                                    e.filterType === "input number" &&
+                                    e.selected === "included"
+                                )
+                        );
+                    } else {
+                        let elementIdx = $activeTagFilters[
+                            nameTypeSelected
+                        ].findIndex(
+                            (item) =>
+                                item.optionName === inputNumberName &&
+                                item.optionValue === currentValue &&
+                                item.optionIdx === inputNumIdx &&
+                                item.filterType === "input number"
+                        );
+                        if (elementIdx === -1) {
+                            $activeTagFilters[nameTypeSelected].unshift({
+                                optionName: inputNumberName,
+                                optionValue: newValue,
+                                CMPoperator: newCMPOperator,
+                                CMPNumber: newCMPNumber,
+                                optionIdx: inputNumIdx,
+                                filterType: "input number",
+                                selected: "included",
+                                changeType: "read",
+                            });
+                        } else {
+                            $activeTagFilters[nameTypeSelected].splice(
+                                elementIdx,
+                                1
+                            );
+                            $activeTagFilters[nameTypeSelected].unshift({
+                                optionName: inputNumberName,
+                                optionValue: newValue,
+                                CMPoperator: newCMPOperator,
+                                CMPNumber: newCMPNumber,
+                                optionIdx: inputNumIdx,
+                                filterType: "input number",
+                                selected: "included",
+                                changeType: "read",
+                            });
+                        }
+                        $activeTagFilters = $activeTagFilters;
+                    }
+                    $filterOptions.filterSelection[idxTypeSelected].filters[
+                        "Input Number"
+                    ][inputNumIdx].numberValue = newValue;
+                    saveFilters(filterSelectionName);
+                } else {
+                    changeInputValue(event.target, currentValue);
+                }
+            } else {
+                changeInputValue(event.target, currentValue);
             }
-            $filterOptions.filterSelection[idxTypeSelected].filters[
-                "Input Number"
-            ][inputNumIdx].numberValue = newValue;
-            saveFilters(filterSelectionName);
-        } else if (
-            isNaN(newValue) ||
-            (newValue < minValue && typeof minValue === "number") ||
-            (newValue > maxValue && typeof maxValue === "number")
-        ) {
-            event.target.value = currentValue;
+        } else {
+            if (
+                newValue !== currentValue &&
+                ((!isNaN(newValue) &&
+                    (parseFloat(newValue) >= minValue ||
+                        typeof minValue !== "number") &&
+                    (parseFloat(newValue) <= maxValue ||
+                        typeof maxValue !== "number")) ||
+                    newValue === "")
+            ) {
+                if (newValue === "") {
+                    $activeTagFilters[nameTypeSelected] = $activeTagFilters[
+                        nameTypeSelected
+                    ].filter(
+                        (e) =>
+                            !(
+                                e.optionIdx === inputNumIdx &&
+                                e.optionName === inputNumberName &&
+                                e.optionValue === currentValue &&
+                                e.filterType === "input number" &&
+                                e.selected === "included"
+                            )
+                    );
+                } else {
+                    let elementIdx = $activeTagFilters[
+                        nameTypeSelected
+                    ].findIndex(
+                        (item) =>
+                            item.optionName === inputNumberName &&
+                            item.optionValue === currentValue &&
+                            item.optionIdx === inputNumIdx &&
+                            item.filterType === "input number"
+                    );
+                    if (elementIdx === -1) {
+                        $activeTagFilters[nameTypeSelected].unshift({
+                            optionName: inputNumberName,
+                            optionValue: newValue,
+                            optionIdx: inputNumIdx,
+                            filterType: "input number",
+                            selected: "included",
+                            changeType: "read",
+                        });
+                    } else {
+                        $activeTagFilters[nameTypeSelected].splice(
+                            elementIdx,
+                            1
+                        );
+                        $activeTagFilters[nameTypeSelected].unshift({
+                            optionName: inputNumberName,
+                            optionValue: newValue,
+                            optionIdx: inputNumIdx,
+                            filterType: "input number",
+                            selected: "included",
+                            changeType: "read",
+                        });
+                    }
+                    $activeTagFilters = $activeTagFilters;
+                }
+                $filterOptions.filterSelection[idxTypeSelected].filters[
+                    "Input Number"
+                ][inputNumIdx].numberValue = newValue;
+                saveFilters(filterSelectionName);
+            } else {
+                changeInputValue(event.target, currentValue);
+            }
         }
     }
     function changeActiveSelect(
@@ -937,36 +1048,6 @@
                         </div>
                     </div>
                 {/each}
-                {#each filters["Input Number"] || [] as { filName, numberValue, maxValue, minValue, defaultValue }, inputNumIdx (filName + inputNumIdx)}
-                    <div
-                        class="filter-input-number"
-                        style:display={isSelected ? "" : "none"}
-                    >
-                        <div class="filter-input-number-name">
-                            <h2>{filName || ""}</h2>
-                        </div>
-                        <div class="value-input-number-wrap">
-                            <input
-                                class="value-input-number"
-                                type="text"
-                                placeholder={defaultValue !== null
-                                    ? "Default: " + defaultValue
-                                    : "Input Number"}
-                                value={numberValue || ""}
-                                on:input={(e) =>
-                                    handleInputNumber(
-                                        e,
-                                        e.target.value,
-                                        inputNumIdx,
-                                        filName,
-                                        maxValue,
-                                        minValue,
-                                        filterSelectionName
-                                    )}
-                            />
-                        </div>
-                    </div>
-                {/each}
                 {#each filters.Checkbox || [] as Checkbox, checkboxIdx (Checkbox.filName + checkboxIdx)}
                     <div
                         class="filter-checkbox"
@@ -1005,6 +1086,40 @@
                             <div class="checkbox-label">
                                 {Checkbox.filName || ""}
                             </div>
+                        </div>
+                    </div>
+                {/each}
+                {#each filters["Input Number"] || [] as { filName, numberValue, maxValue, minValue, defaultValue }, inputNumIdx (filName + inputNumIdx)}
+                    <div
+                        class="filter-input-number"
+                        style:display={isSelected ? "" : "none"}
+                    >
+                        <div class="filter-input-number-name">
+                            <h2>{filName || ""}</h2>
+                        </div>
+                        <div class="value-input-number-wrap">
+                            <input
+                                class="value-input-number"
+                                type="text"
+                                placeholder={conditionalInputNumberList.includes(
+                                    filName
+                                )
+                                    ? ">123 or 123"
+                                    : defaultValue !== null
+                                    ? "Default: " + defaultValue
+                                    : "123"}
+                                value={numberValue || ""}
+                                on:input={(e) =>
+                                    handleInputNumber(
+                                        e,
+                                        e.target.value,
+                                        inputNumIdx,
+                                        filName,
+                                        maxValue,
+                                        minValue,
+                                        filterSelectionName
+                                    )}
+                            />
                         </div>
                     </div>
                 {/each}
@@ -1250,10 +1365,6 @@
         column-gap: 10px;
     }
 
-    .home-status::-webkit-scrollbar {
-        display: none;
-    }
-
     .home-status .skeleton {
         height: 18px;
         width: 100px;
@@ -1263,9 +1374,13 @@
         overflow-x: auto;
         overflow-y: hidden;
     }
+    .home-status span::-webkit-scrollbar {
+        display: none;
+    }
 
     .home-status span h2 {
         white-space: nowrap;
+        user-select: none;
     }
 
     .home-status .data-status h2 {

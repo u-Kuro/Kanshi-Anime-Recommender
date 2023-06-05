@@ -13,13 +13,13 @@
         style="display: grid;"
     >
         <div class="swal2-html-container-custom" style="display: block;">
-            Customize Content Warning
+            Customize Content Caution
         </div>
         <div class="swal2-html-container-custom" style="display: block;">
             <div class="filter-container-custom">
                 <input
                     type="text"
-                    placeholder="Add Anime Warning (Yellow: Content, Red: !Content)"
+                    placeholder="Add Anime Caution (Yellow: Content, Red: !Content)"
                     class="flexdatalistWarnAnime"
                     data-search-in="info"
                     multiple="multiple"
