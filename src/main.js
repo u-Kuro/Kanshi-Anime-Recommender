@@ -8,4 +8,8 @@ const app = new App({
 	target: document.body
 });
 
+function printHello(){
+   console.log("hello")
+}
+
 export default app;
