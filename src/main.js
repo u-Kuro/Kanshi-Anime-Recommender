@@ -12,4 +12,6 @@ function printHello(){
    console.log("hello")
 }
 
+window.printHello = printHello
+
 export default app;
