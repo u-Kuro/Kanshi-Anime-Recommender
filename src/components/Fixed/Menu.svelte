@@ -1,25 +1,27 @@
 <script>
     import {
+        android,
         menuVisible,
         hiddenEntries,
         animeLoaderWorker,
         finalAnimeList,
         dataStatus,
+        autoUpdate,
+        autoExport,
+        exportPathIsAvailable,
         searchedAnimeKeyword,
         filterOptions,
         activeTagFilters,
+        runUpdate,
     } from "../../js/globalValues.js";
-    import { onMount, onDestroy } from "svelte";
     import { fade } from "svelte/transition";
     import { saveJSON } from "../../js/indexedDB.js";
     import {
         animeLoader,
-        requestAnimeEntries,
-        requestUserEntries,
         exportUserData,
         importUserData,
     } from "../../js/workerUtils.js";
-    import { jsonIsEmpty } from "../../js/others/helper.js";
+    import { jsonIsEmpty, isAndroid } from "../../js/others/helper.js";
 
     let importFileInput;
 
@@ -28,7 +30,6 @@
     }
 
     function importData() {
-        console.log(importFileInput);
         if (!(importFileInput instanceof Element))
             return ($dataStatus = "Something went wrong...");
         if (confirm("Are you sure you want to import your Data?")) {
@@ -36,8 +37,7 @@
         }
     }
 
-    function importJSONFile() {
-        console.log("change", importFileInput);
+    async function importJSONFile() {
         if (!(importFileInput instanceof Element))
             return ($dataStatus = "Something went wrong...");
         let importedFile = importFileInput.files?.[0];
@@ -50,6 +50,8 @@
                     }has been detected, do you want to continue the import?`
                 )
             ) {
+                await saveJSON(true, "shouldProcessRecommendation");
+                $menuVisible = false;
                 importUserData({
                     importedFile: importedFile,
                 });
@@ -57,7 +59,12 @@
         }
     }
 
+    function handleExportFolder() {
+        console.log("WebtoApp: Choose an Export Path");
+    }
+
     function exportData() {
+        if (!$exportPathIsAvailable && $android) return handleExportFolder();
         if (confirm("Are you sure you want to export your Data?")) {
             $menuVisible = false;
             exportUserData();
@@ -67,13 +74,34 @@
     function updateList() {
         if (confirm("Are you sure you want to update your list?")) {
             $menuVisible = false;
-            requestUserEntries()
-                .then(() => {
-                    requestAnimeEntries();
-                })
-                .catch((error) => {
-                    console.error(error);
-                });
+            runUpdate.update((e) => !e);
+        }
+    }
+
+    function handleUpdateEveryHour() {
+        if (
+            confirm(
+                `Are you sure you want to ${
+                    $autoUpdate ? "disable" : "enable"
+                } auto-update?`
+            )
+        ) {
+            $menuVisible = false;
+            $autoUpdate = !$autoUpdate;
+        }
+    }
+
+    function handleExportEveryHour() {
+        if (!$exportPathIsAvailable && $android) return handleExportFolder();
+        if (
+            confirm(
+                `Are you sure you want to ${
+                    $autoUpdate ? "disable" : "enable"
+                } auto-export?`
+            )
+        ) {
+            $menuVisible = false;
+            $autoExport = !$autoExport;
         }
     }
 
@@ -113,7 +141,6 @@
                 $filterOptions.filterSelection[
                     filterSelectionIdx ?? -1
                 ].filters.Checkbox[checkBoxFilterIdx ?? -1].isSelected = false;
-                // $filterOptions = $filterOptions;
             }
             if ($activeTagFilters?.["Anime Filter"]) {
                 $activeTagFilters["Anime Filter"] = $activeTagFilters[
@@ -142,7 +169,8 @@
     }
 
     function anilistSignup() {
-        if (confirm("Do you want to sign up an Anilist account?")) {
+        if (confirm("Do you want to sign-up an Anilist account?")) {
+            $menuVisible = false;
             window.open("https://anilist.co/signup", "_blank");
         }
     }
@@ -178,20 +206,31 @@
             <button class="button" on:click={exportData} on:keydown={exportData}
                 >Export Data</button
             >
+            {#if $android}
+                <button
+                    class="button"
+                    on:click={handleExportFolder}
+                    on:keydown={handleExportFolder}
+                >
+                    {$exportPathIsAvailable
+                        ? "Change"
+                        : "Set" + " Export Folder"}
+                </button>
+            {/if}
             <button
-                class="button"
+                class="button selected"
                 on:click={stillFixing}
                 on:keydown={stillFixing}>Dark Mode</button
             >
             <button
-                class="button"
-                on:click={stillFixing}
-                on:keydown={stillFixing}>Update Every Hour</button
+                class={"button " + ($autoUpdate ? "selected" : "")}
+                on:click={handleUpdateEveryHour}
+                on:keydown={handleUpdateEveryHour}>Auto Update</button
             >
             <button
-                class="button"
-                on:click={stillFixing}
-                on:keydown={stillFixing}>Export Every Hour</button
+                class={"button " + ($autoExport ? "selected" : "")}
+                on:click={handleExportEveryHour}
+                on:keydown={handleExportEveryHour}>Auto Export</button
             >
             <button
                 class="button"
@@ -247,10 +286,10 @@
             padding: 1.5em 1em;
         }
     }
-    /* .menu > button.selected {
+    .menu > button.selected {
         background-color: #000 !important;
         color: #b9cadd !important;
-    } */
+    }
     /* Light */
     /* .light {
         background-color: rgb(0, 0, 0, 0.925);

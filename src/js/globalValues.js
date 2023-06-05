@@ -1,19 +1,26 @@
 import { writable } from "svelte/store";
 
-const animeEntries = writable(null)
+const android = writable(null)
 const lastAnimeUpdate = writable(null)
 
 const username = writable(null)
-const userEntries = writable(null)
 const lastUserAnimeUpdate = writable(null)
 const hiddenEntries = writable(null)
 
 const filterOptions = writable(null)
 const activeTagFilters = writable(null)
-const recommendedAnimeList = writable(null)
 const finalAnimeList = writable(null)
 const animeLoaderWorker = writable(null)
 const dataStatus = writable(null)
+
+const autoUpdate = writable(null)
+const autoUpdateInterval = writable(null)
+const lastRunnedAutoUpdateDate = writable(null)
+
+const exportPathIsAvailable = writable(null)
+const autoExport = writable(null)
+const autoExportInterval = writable(null)
+const lastRunnedAutoExportDate = writable(null)
 
 const ytPlayers = writable([])
 const autoPlay = writable(null)
@@ -27,23 +34,30 @@ const popupVisible = writable(false)
 const openedAnimePopupIdx = writable(null)
 
 // Reactive Functions
+const runUpdate = writable(null)
+const runExport = writable(null)
 const updateRecommendationList = writable(null)
 const updateFilters = writable(null)
 const loadAnime = writable(null)
 
 export {
-    animeEntries,
+    android,
     lastAnimeUpdate,
     username,
-    userEntries,
     lastUserAnimeUpdate,
     hiddenEntries,
     filterOptions,
     activeTagFilters,
-    recommendedAnimeList,
     finalAnimeList,
     animeLoaderWorker,
     dataStatus,
+    autoUpdate,
+    autoUpdateInterval,
+    lastRunnedAutoUpdateDate,
+    exportPathIsAvailable,
+    autoExport,
+    autoExportInterval,
+    lastRunnedAutoExportDate,
     ytPlayers,
     autoPlay,
     initData,
@@ -54,6 +68,8 @@ export {
     popupVisible,
     openedAnimePopupIdx,
     // Reactive Functions
+    runUpdate,
+    runExport,
     updateRecommendationList,
     updateFilters,
     loadAnime,

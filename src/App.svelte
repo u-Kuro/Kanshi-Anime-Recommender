@@ -3,25 +3,30 @@
 	import { onMount, onDestroy } from "svelte";
 	import { IDBinit, retrieveJSON, saveJSON } from "./js/indexedDB.js";
 	import {
-		animeEntries,
+		android,
 		lastAnimeUpdate,
 		username,
-		userEntries,
-		lastUserAnimeUpdate,
 		hiddenEntries,
 		filterOptions,
 		activeTagFilters,
-		recommendedAnimeList,
 		finalAnimeList,
 		animeLoaderWorker,
 		initData,
 		searchedAnimeKeyword,
 		dataStatus,
+		autoUpdate,
+		autoUpdateInterval,
+		lastRunnedAutoUpdateDate,
+		exportPathIsAvailable,
+		autoExport,
+		autoExportInterval,
+		lastRunnedAutoExportDate,
 		autoPlay,
 		popupVisible,
 		menuVisible,
-		toast,
 		// Reactive Functions
+		runUpdate,
+		runExport,
 		updateRecommendationList,
 		loadAnime,
 		updateFilters,
@@ -34,12 +39,24 @@
 		requestUserEntries,
 		processRecommendedAnimeList,
 		animeLoader,
+		exportUserData,
 	} from "./js/workerUtils.js";
-	import { isJsonObject, jsonIsEmpty } from "./js/others/helper.js";
+	import {
+		isAndroid,
+		isJsonObject,
+		jsonIsEmpty,
+	} from "./js/others/helper.js";
+
+	$android = isAndroid();
+	// Get Export Folder
+	(async () => {
+		$exportPathIsAvailable = await retrieveJSON("exportPathIsAvailable");
+	})();
 
 	// For Youtube API
 	const onYouTubeIframeAPIReady = new Function();
 
+	// Init Data
 	let initDataPromises = [];
 	$dataStatus = "Getting Existing Data";
 	let pleaseWaitStatusInterval = setInterval(() => {
@@ -48,7 +65,6 @@
 		}
 	}, 300);
 
-	// Init Data
 	// Check/Get/Update/Process Anime Entries
 	initDataPromises.push(
 		new Promise(async (resolve) => {
@@ -90,7 +106,6 @@
 			let animeFranchisesLen = await retrieveJSON(
 				"animeFranchisesLength"
 			);
-			console.log(animeFranchisesLen);
 			if (animeFranchisesLen < 1) {
 				getAnimeFranchises();
 			}
@@ -142,6 +157,16 @@
 			if (typeof _autoPlay === "boolean") $autoPlay = _autoPlay;
 			// Hidden Entries
 			$hiddenEntries = (await retrieveJSON("hiddenEntries")) || {};
+			// Get Auto Functions
+			$lastRunnedAutoUpdateDate = await retrieveJSON(
+				"lastRunnedAutoUpdateDate"
+			);
+			$lastRunnedAutoExportDate = await retrieveJSON(
+				"lastRunnedAutoExportDate"
+			);
+			// Should be After Getting the Dates for Reactive Change
+			$autoUpdate = (await retrieveJSON("autoUpdate")) ?? false;
+			$autoExport = (await retrieveJSON("autoExport")) ?? false;
 			resolve();
 		})
 	);
@@ -174,7 +199,7 @@
 
 	// Reactive Functions
 	updateRecommendationList.subscribe(async (val) => {
-		if (val === null) return;
+		if (typeof val !== "boolean") return;
 		await saveJSON(true, "shouldProcessRecommendation");
 		processRecommendedAnimeList()
 			.then(async () => {
@@ -186,7 +211,7 @@
 			});
 	});
 	loadAnime.subscribe(async (val) => {
-		if (val === null) return;
+		if (typeof val !== "boolean") return;
 		animeLoader()
 			.then(async (data) => {
 				$animeLoaderWorker = data.animeLoaderWorker;
@@ -204,11 +229,142 @@
 			});
 	});
 	updateFilters.subscribe(async (val) => {
-		if (val === null) return;
+		if (typeof val !== "boolean") return;
 		getFilterOptions().then((data) => {
 			$activeTagFilters = data.activeTagFilters;
 			$filterOptions = data.filterOptions;
 		});
+	});
+	autoUpdate.subscribe(async (val) => {
+		console.log(val, "val");
+		if (typeof val !== "boolean") return;
+		else if (val === true) {
+			console.log(val, "val2");
+			saveJSON(true, "autoUpdate");
+			// Check Run First
+			let isPastDate = false;
+			if ($lastRunnedAutoUpdateDate === null) isPastDate = true;
+			else if (
+				$lastRunnedAutoUpdateDate instanceof Date &&
+				!isNaN($lastRunnedAutoUpdateDate)
+			) {
+				if (
+					new Date().getTime() - $lastRunnedAutoUpdateDate.getTime() >
+					3600000
+				) {
+					isPastDate = true;
+				}
+			}
+			console.log(
+				$autoUpdate,
+				isPastDate,
+				"isPastDate",
+				$lastRunnedAutoUpdateDate,
+				"$lastRunnedAutoUpdateDate"
+			);
+			if (isPastDate) {
+				runUpdate.update((e) => !e);
+				if ($autoUpdateInterval) clearInterval($autoUpdateInterval);
+				$autoUpdateInterval = setInterval(() => {
+					if ($autoUpdate) {
+						runUpdate.update((e) => !e);
+					}
+				}, 3600000);
+			} else {
+				let timeLeft =
+					3600000 -
+						(new Date().getTime() -
+							$lastRunnedAutoUpdateDate?.getTime()) || 0;
+				console.log(
+					timeLeft,
+					$lastRunnedAutoUpdateDate,
+					3600000 -
+						(new Date().getTime() -
+							$lastRunnedAutoUpdateDate?.getTime()),
+					3600000 -
+						(new Date().getTime() -
+							$lastRunnedAutoUpdateDate?.getTime()) || 0
+				);
+				setTimeout(() => {
+					if ($autoUpdate === false) return;
+					runUpdate.update((e) => !e);
+					if ($autoUpdateInterval) clearInterval($autoUpdateInterval);
+					$autoUpdateInterval = setInterval(() => {
+						if ($autoUpdate) {
+							runUpdate.update((e) => !e);
+						}
+					}, 3600000);
+				}, timeLeft);
+			}
+		} else if (val === false) {
+			if ($autoUpdateInterval) clearInterval($autoUpdateInterval);
+			saveJSON(false, "autoUpdate");
+		}
+	});
+	runUpdate.subscribe((val) => {
+		if (typeof val !== "boolean") return;
+		$lastRunnedAutoUpdateDate = new Date();
+		saveJSON($lastRunnedAutoUpdateDate, "lastRunnedAutoUpdateDate");
+		requestUserEntries()
+			.then(() => {
+				requestAnimeEntries();
+			})
+			.catch((error) => {
+				console.error(error);
+			});
+	});
+	autoExport.subscribe(async (val) => {
+		if (typeof val !== "boolean") return;
+		else if (val === true) {
+			saveJSON(true, "autoExport");
+			// Check Run First
+			let isPastDate = false;
+			if ($lastRunnedAutoExportDate === null) isPastDate = true;
+			else if (
+				$lastRunnedAutoExportDate instanceof Date &&
+				!isNaN($lastRunnedAutoExportDate)
+			) {
+				if (
+					new Date().getTime() - $lastRunnedAutoExportDate.getTime() >
+					3600000
+				) {
+					isPastDate = true;
+				}
+			}
+			if (isPastDate) {
+				runExport.update((e) => !e);
+				if ($autoExportInterval) clearInterval($autoExportInterval);
+				$autoExportInterval = setInterval(() => {
+					if ($autoExport) {
+						runExport.update((e) => !e);
+					}
+				}, 3600000);
+			} else {
+				let timeLeft =
+					3600000 -
+						(new Date().getTime() -
+							$lastRunnedAutoExportDate?.getTime()) || 0;
+				setTimeout(() => {
+					if ($autoExport === false) return;
+					runExport.update((e) => !e);
+					if ($autoExportInterval) clearInterval($autoExportInterval);
+					$autoExportInterval = setInterval(() => {
+						if ($autoExport) {
+							runExport.update((e) => !e);
+						}
+					}, 3600000);
+				}, timeLeft);
+			}
+		} else if (val === false) {
+			if ($autoExportInterval) clearInterval($autoExportInterval);
+			saveJSON(false, "autoExport");
+		}
+	});
+	runExport.subscribe(() => {
+		if (typeof val !== "boolean") return;
+		$lastRunnedAutoExportDate = new Date();
+		saveJSON($lastRunnedAutoExportDate, "lastRunnedAutoExportDate");
+		exportUserData();
 	});
 
 	let currentScrollTop;
