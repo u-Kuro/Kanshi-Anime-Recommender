@@ -8,7 +8,6 @@
         autoPlay,
         animeObserver,
         popupVisible,
-        animeOptionVisible,
         openedAnimePopupIdx,
     } from "../../../js/globalValues.js";
     import {
@@ -18,6 +17,7 @@
         getMostVisibleElement,
         getChildIndex,
         msToTime,
+        scrollToElementAmount,
     } from "../../../js/others/helper.js";
     import { saveJSON } from "../../../js/indexedDB.js";
     import captureSlideEvent from "../../../js/slideEvent.js";
@@ -223,12 +223,20 @@
         }
     });
 
-    let unsubSlideEvents;
+    let unsubSlideEvents, scrollToGridTimeout;
     onMount(() => {
         document
             .getElementById("popup-container")
             .addEventListener("scroll", () => {
                 playMostVisibleTrailer();
+                if (scrollToGridTimeout) clearTimeout(scrollToGridTimeout);
+                scrollToGridTimeout = setTimeout(() => {
+                    // Scroll to Anime in Grid
+                    let mostVisiblePopup = getMostVisibleElement(
+                        popupContainer,
+                        ".popup-trailer"
+                    );
+                }, 33);
             });
         if (window.innerWidth <= 768) {
             unsubSlideEvents = captureSlideEvent(popupContainer, () => {
@@ -254,6 +262,7 @@
     });
 
     async function playMostVisibleTrailer(once = false) {
+        if (!$popupVisible) return;
         await tick();
         let visibleTrailer = getMostVisibleElement(popupContainer, ".trailer");
         if (!visibleTrailer) {
@@ -269,6 +278,22 @@
         var haveTrailer = $ytPlayers?.some(
             (ytPlayer) => ytPlayer.g === visibleTrailer
         );
+        let mostVisiblePopup = visibleTrailer?.closest?.(".popup-content");
+        if (visibleTrailer) {
+            mostVisiblePopup = visibleTrailer?.closest?.(".popup-content");
+        } else {
+            mostVisiblePopup = getMostVisibleElement(
+                popupContainer,
+                ".popup-img"
+            )?.closest?.(".popup-content");
+        }
+        let animeGrid =
+            $finalAnimeList?.[getChildIndex(mostVisiblePopup) ?? -1]
+                ?.gridElement;
+        if (animeGrid instanceof Element) {
+            scrollToElement(window, animeGrid, "top", "smooth", -66);
+        }
+        // Recheck Trailer
         if (haveTrailer) {
             // Check YT Players
             $ytPlayers?.forEach(async (ytPlayer) => {
@@ -289,10 +314,9 @@
             // Stop All Player
             $ytPlayers?.forEach((ytPlayer) => ytPlayer?.pauseVideo?.());
             // Create YT Player
+            let popupContent = visibleTrailer?.closest?.(".popup-content");
+            let anime = $finalAnimeList?.[getChildIndex(popupContent) ?? -1];
             if (visibleTrailer) {
-                let popupContent = visibleTrailer?.closest?.(".popup-content");
-                let anime =
-                    $finalAnimeList?.[getChildIndex(popupContent) ?? -1];
                 if (anime && !once) createPopupYTPlayer(anime);
             }
         }
@@ -498,7 +522,8 @@
                                 target="_blank"
                                 href={anime.animeUrl || ""}
                                 class={getCautionColor(anime) +
-                                    "-color anime-title"}
+                                    "-color anime-title copy"}
+                                copy-value={anime.title || ""}
                                 >{anime?.title || "N/A"}</a
                             >
                         </div>
@@ -508,7 +533,12 @@
                         >
                             <div>
                                 <div class="info-categ">Format</div>
-                                <div class="format-popup info">
+                                <div
+                                    class="format-popup info copy"
+                                    copy-value={getFormattedAnimeFormat(
+                                        anime
+                                    ) || ""}
+                                >
                                     {getFormattedAnimeFormat(anime) || "N/A"}
                                 </div>
                             </div>
@@ -519,6 +549,8 @@
                                         {#each Object.entries(anime.studios || {}) as [studio, studioUrl], studioIdx (studio)}
                                             {#if studio}
                                                 <a
+                                                    class="copy"
+                                                    copy-value={studio || ""}
                                                     rel="noopener noreferrer"
                                                     target="_blank"
                                                     href={studioUrl || ""}
@@ -543,9 +575,13 @@
                                 <div class="genres-popup info">
                                     {#if anime.genres.length}
                                         {#each anime.genres as genre, idx (genre)}
-                                            {idx < anime.genres.length - 1
-                                                ? genre + ", "
-                                                : genre}
+                                            <span
+                                                class="copy"
+                                                copy-value={genre || ""}
+                                                >{idx < anime.genres.length - 1
+                                                    ? genre + ", "
+                                                    : genre}
+                                            </span>
                                         {/each}
                                     {:else}
                                         N/A
@@ -554,7 +590,10 @@
                             </div>
                             <div>
                                 <div class="info-categ">Score</div>
-                                <div class="score-popup info">
+                                <div
+                                    class="score-popup info copy"
+                                    copy-value={anime.score ?? ""}
+                                >
                                     {formatNumber(anime.score) || "N/A"}
                                 </div>
                             </div>
@@ -566,6 +605,9 @@
                                             {#if isJsonObject(favoriteContent)}
                                                 {#each Object.entries(favoriteContent) || [] as [studio, studioUrl] (studio)}
                                                     <a
+                                                        class="copy"
+                                                        copy-value={studio ||
+                                                            ""}
                                                         rel="noopener noreferrer"
                                                         target="_blank"
                                                         href={studioUrl}
@@ -578,13 +620,18 @@
                                                         : ""}
                                                 {/each}
                                             {:else if typeof favoriteContent === "string"}
-                                                {favoriteContent +
-                                                    (idx <
-                                                    anime.favoriteContents
-                                                        .length -
-                                                        1
-                                                        ? ", "
-                                                        : "")}
+                                                <span
+                                                    class="copy"
+                                                    copy-value={favoriteContent ||
+                                                        ""}
+                                                    >{favoriteContent +
+                                                        (idx <
+                                                        anime.favoriteContents
+                                                            .length -
+                                                            1
+                                                            ? ", "
+                                                            : "")}
+                                                </span>
                                             {/if}
                                         {/each}
                                     {:else}
@@ -594,19 +641,28 @@
                             </div>
                             <div>
                                 <div class="info-categ">Content Cautions</div>
-                                <div class="content-caution-popup info">
+                                <div
+                                    class="content-caution-popup info copy"
+                                    copy-value={getContentCaution(anime) || ""}
+                                >
                                     {getContentCaution(anime) || "N/A"}
                                 </div>
                             </div>
                             <div>
                                 <div class="info-categ">User Status</div>
-                                <div class="user-status-popup info">
+                                <div
+                                    class="user-status-popup info copy"
+                                    copy-value={anime.userStatus || ""}
+                                >
                                     {anime.userStatus || "N/A"}
                                 </div>
                             </div>
                             <div>
                                 <div class="info-categ">Status</div>
-                                <div class="status-popup info">
+                                <div
+                                    class="status-popup info copy"
+                                    copy-value={anime.status || ""}
+                                >
                                     {anime.status || "N/A"}
                                 </div>
                             </div>
@@ -615,9 +671,13 @@
                                 <div class="tags-popup info">
                                     {#if anime.tags.length}
                                         {#each anime.tags as tag, idx (tag)}
-                                            {idx < anime.tags.length - 1
-                                                ? tag + ", "
-                                                : tag}
+                                            <span
+                                                class="copy"
+                                                copy-value={tag || ""}
+                                                >{idx < anime.tags.length - 1
+                                                    ? tag + ", "
+                                                    : tag}
+                                            </span>
                                         {/each}
                                     {:else}
                                         N/A
@@ -626,13 +686,21 @@
                             </div>
                             <div>
                                 <div class="info-categ">Average Score</div>
-                                <div class="average-score-popup info">
+                                <div
+                                    class="average-score-popup info copy"
+                                    copy-value={anime.averageScore ?? ""}
+                                >
                                     {anime.averageScore || "N/A"}
                                 </div>
                             </div>
                             <div>
                                 <div class="info-categ">Season Year</div>
-                                <div class="season-year-popup info">
+                                <div
+                                    class="season-year-popup info copy"
+                                    copy-value={`${anime?.season || ""}${
+                                        anime?.year ? " " + anime.year : ""
+                                    }` || ""}
+                                >
                                     {`${anime?.season || ""}${
                                         anime?.year ? " " + anime.year : ""
                                     }` || "N/A"}
@@ -640,19 +708,28 @@
                             </div>
                             <div>
                                 <div class="info-categ">User Score</div>
-                                <div class="user-score-popup info">
+                                <div
+                                    class="user-score-popup info copy"
+                                    copy-value={anime.userScore ?? ""}
+                                >
                                     {anime.userScore || "N/A"}
                                 </div>
                             </div>
                             <div>
                                 <div class="info-categ">Popularity</div>
-                                <div class="popularity-popup info">
+                                <div
+                                    class="popularity-popup info copy"
+                                    copy-value={anime.popularity ?? ""}
+                                >
                                     {anime.popularity || "N/A"}
                                 </div>
                             </div>
                             <div>
                                 <div class="info-categ">Wscore</div>
-                                <div class="wscore-popup info">
+                                <div
+                                    class="wscore-popup info copy"
+                                    copy-value={anime.weightedScore ?? ""}
+                                >
                                     {formatNumber(anime.weightedScore) || "N/A"}
                                 </div>
                             </div>
@@ -712,6 +789,7 @@
         width: 100%;
         max-width: 640px;
         overflow: auto;
+        overscroll-behavior: contain;
         transition: 0.3s ease transform;
     }
 
@@ -755,6 +833,7 @@
         left: 0;
         width: 100%;
         height: 100%;
+        user-select: none !important;
     }
 
     .popup-img {
@@ -762,6 +841,7 @@
         position: relative;
         padding-bottom: 56.25%;
         background-color: #000 !important;
+        user-select: none !important;
     }
 
     .popup-img .bannerImg {
@@ -861,6 +941,7 @@
         justify-content: space-between;
         align-items: center;
         gap: 1em;
+        user-select: none !important;
     }
 
     .popup-body .footer button {
@@ -937,6 +1018,7 @@
         font-size: clamp(1.0631rem, 1.15155rem, 1.24rem);
         font-weight: 500;
         max-width: fit-content;
+        user-select: none !important;
     }
 
     .info-list .info {

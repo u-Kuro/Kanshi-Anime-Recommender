@@ -89,7 +89,7 @@ function captureSlideEvent(targetElement, callback = new Function) {
         } else if (type === "none") {
             alter(targetElement, {
                 keyframes: [
-                    { transform: `translateX(0)` },
+                    { transform: `` },
                 ]
             })
         }

@@ -884,7 +884,9 @@
         <input
             id="input-search"
             class="input-search"
-            type="text"
+            type="search"
+            enterkeyhint="search"
+            autocomplete="off"
             placeholder="Search"
             bind:value={$searchedAnimeKeyword}
         />
@@ -974,8 +976,9 @@
                         >
                             <div class="value-wrap">
                                 <input
-                                    type="search"
                                     placeholder="Any"
+                                    type="search"
+                                    enterkeyhint="search"
                                     autocomplete="off"
                                     class="value-input"
                                     bind:value={$filterOptions.filterSelection[

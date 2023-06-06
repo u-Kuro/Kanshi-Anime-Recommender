@@ -22,7 +22,8 @@
     let renderedImgGridLimit = 20;
     let shownAllInList = false;
 
-    // let observerTimeout;
+    let observerTimeout;
+    let observerDelay = 1000;
 
     function addObserver() {
         $animeObserver = new IntersectionObserver(
@@ -30,13 +31,13 @@
                 entries.forEach((entry) => {
                     if (entry.isIntersecting) {
                         self.unobserve(entry.target);
-                        // if (observerTimeout) clearTimeout(observerTimeout);
-                        // observerTimeout = setTimeout(() => {
-                        $animeLoaderWorker.postMessage({
-                            loadMore: true,
-                            shownAnimeLen: $finalAnimeList.length,
-                        });
-                        // }, 300);
+                        if (observerTimeout) clearTimeout(observerTimeout);
+                        observerTimeout = setTimeout(() => {
+                            $animeLoaderWorker.postMessage({
+                                loadMore: true,
+                                shownAnimeLen: $finalAnimeList.length,
+                            });
+                        }, observerDelay);
                     }
                 });
             },
@@ -126,10 +127,10 @@
         $popupVisible = true;
     }
 
-    let openOptionTimeout, isLongPressed;
+    let openOptionTimeout, openOptionIsLongPressed;
     function handleOpenOption(animeIdx) {
         if (openOptionTimeout) clearTimeout(openOptionTimeout);
-        isLongPressed = true;
+        openOptionIsLongPressed = true;
         openOptionTimeout = setTimeout(() => {
             $openedAnimeOptionIdx = animeIdx;
             $animeOptionVisible = true;
@@ -137,7 +138,7 @@
     }
     function cancelOpenOption() {
         if (openOptionTimeout) clearTimeout(openOptionTimeout);
-        isLongPressed = false;
+        openOptionIsLongPressed = false;
     }
 
     function getBriefInfo({
@@ -262,7 +263,12 @@
                             on:keydown={handleOpenPopup(animeIdx)}
                         />
                     </div>
-                    <span class="image-grid__card-title">
+                    <span
+                        class="image-grid__card-title copy"
+                        copy-value={anime.title || ""}
+                        on:click={handleOpenPopup(animeIdx)}
+                        on:keydown={handleOpenPopup(animeIdx)}
+                    >
                         <span class="title">{anime.title || "N/A"}</span>
                         <span class="brief-info">
                             <div class="brief-info">
@@ -319,7 +325,7 @@
                 </div>
             {/each}
         {:else}
-            {"Empty Data"}
+            <div class="empty">No Results</div>
         {/if}
     </div>
 </main>
@@ -451,6 +457,14 @@
         text-align: center;
         width: 100%;
         grid-column: 1/-1;
+    }
+
+    .empty {
+        font-size: 2rem;
+        font-weight: 700;
+        opacity: 1;
+        padding: 30px;
+        text-align: center;
     }
 
     .empty-img {

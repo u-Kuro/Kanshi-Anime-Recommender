@@ -70,19 +70,41 @@ const getChildIndex = (childElement) => {
   }
 }
 
-const scrollToElement = (parent, target, position = 'top') => {
+const scrollToElement = (parent, target, position = 'top', behavior, offset = 0) => {
   try {
-    if (typeof parent === "string") parent = document.querySelector(parent)
-    if (typeof target === "string") target = document.querySelector(target)
     let scrollAmount;
-    if (position === 'bottom') {
-      scrollAmount = target.offsetTop + target.offsetHeight - parent.offsetHeight;
+    if (parent === window) {
+      scrollAmount = target.offsetTop
     } else {
-      let targetRect = target.getBoundingClientRect();
-      let parentRect = parent.getBoundingClientRect();
-      scrollAmount = targetRect.top - parentRect.top + parent.scrollTop;
+      if (typeof parent === "string") parent = document.querySelector(parent)
+      if (typeof target === "string") target = document.querySelector(target)
+      if (position === 'bottom') {
+        scrollAmount = target.offsetTop + target.offsetHeight - parent.offsetHeight;
+      } else {
+        let targetRect = target.getBoundingClientRect();
+        let parentRect = parent.getBoundingClientRect();
+        scrollAmount = targetRect.top - parentRect.top + parent.scrollTop;
+      }
     }
-    parent.scrollTop = scrollAmount;
+    if (parent === window) {
+      if (behavior === 'smooth') {
+        window.scrollTo({
+          top: scrollAmount + offset,
+          behavior: 'smooth'
+        })
+      } else {
+        window.scrollTo({ top: scrollAmount + offset })
+      }
+    } else {
+      if (behavior === 'smooth') {
+        parent.scrollBy({
+          top: scrollAmount + offset,
+          behavior: "smooth"
+        })
+      } else {
+        parent.scrollTop = scrollAmount + offset;
+      }
+    }
   } catch (ex) {
     console.error(ex)
     return

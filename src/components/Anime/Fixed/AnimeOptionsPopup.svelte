@@ -65,14 +65,7 @@
 
     function copyTitle() {
         if (isRecentlyOpened) return;
-        if ($android) {
-            try {
-                JSBridge.copyToClipBoard();
-            } catch (e) {}
-            // android
-        } else {
-            navigator?.clipboard?.writeText?.(animeTitle);
-        }
+        window.copyToClipboard(animeTitle);
         $animeOptionVisible = false;
     }
 
@@ -111,9 +104,10 @@
         class="anime-options"
         on:click={handleAnimeOptionVisibility}
         on:keydown={handleAnimeOptionVisibility}
-        transition:fade
+        transition:fade={{ duration: 200 }}
     >
         <div class="anime-options-container">
+            <span class="anime-title"><h1>{animeTitle}</h1></span>
             <span on:click={openAnimePopup} on:keydown={openAnimePopup}
                 ><h2>Open Anime</h2></span
             >
@@ -145,6 +139,7 @@
         justify-content: center;
         align-items: center;
         overflow-y: auto;
+        overscroll-behavior: contain;
     }
 
     .anime-options-container {
@@ -157,7 +152,19 @@
         padding: 10px 15px;
     }
 
-    .anime-options-container a,
+    .anime-title {
+        overflow-x: auto;
+        overflow-y: hidden;
+    }
+
+    .anime-title::-webkit-scrollbar {
+        display: none;
+    }
+
+    .anime-title h1 {
+        white-space: nowrap;
+    }
+
     .anime-options-container span {
         padding: 1em;
         color: #dddce0 !important;
@@ -165,7 +172,12 @@
         text-decoration: none !important;
     }
 
+    .anime-options-container span:not(.anime-title) {
+        cursor: pointer;
+    }
+
     .anime-options-container h2 {
         font-weight: 400;
+        cursor: pointer;
     }
 </style>

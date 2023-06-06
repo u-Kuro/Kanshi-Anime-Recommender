@@ -31,6 +31,7 @@
 		updateRecommendationList,
 		loadAnime,
 		updateFilters,
+		animeOptionVisible,
 	} from "./js/globalValues.js";
 	import {
 		getAnimeEntries,
@@ -357,18 +358,21 @@
 	menuVisible.subscribe((val) => {
 		documentScroll(val);
 	});
+	animeOptionVisible.subscribe((val) => {
+		documentScroll(val);
+	});
 	function documentScroll(val) {
-		if (val === true) {
-			currentScrollTop = document.documentElement.scrollTop;
-			document.documentElement.classList.add("noscroll");
-			document.body.classList.add("noscroll");
-			document.body.style.top = -currentScrollTop + "px";
-		} else if (val === false) {
-			document.documentElement.classList.remove("noscroll");
-			document.body.classList.remove("noscroll");
-			document.body.style.top = "";
-			document.documentElement.scrollTop = currentScrollTop;
-		}
+		// if (val === true) {
+		// 	currentScrollTop = document.documentElement.scrollTop;
+		// 	document.documentElement.classList.add("noscroll");
+		// 	document.body.classList.add("noscroll");
+		// 	document.body.style.top = -currentScrollTop + "px";
+		// } else if (val === false) {
+		// 	document.documentElement.classList.remove("noscroll");
+		// 	document.body.classList.remove("noscroll");
+		// 	document.body.style.top = "";
+		// 	document.documentElement.scrollTop = currentScrollTop;
+		// }
 	}
 
 	// Global Function For Android/Browser
@@ -385,34 +389,16 @@
 			if (!$android) {
 				window.history.pushState("visited", ""); // Push Popped State
 			}
-			// if($("#anime-options").css("display")!=="none"){
-			// 	alter("#anime-options-container",{
-			// 		keyframes: [
-			// 			{ opacity: 1 },
-			// 			{ opacity: 0 }
-			// 		],
-			// 		callback: () => {
-			// 			alter("#anime-options",{
-			// 				keyframes: [
-			// 					{ opacity: 1 },
-			// 					{ opacity: 0 }
-			// 				],
-			// 				callback: () => {
-			// 					alter("#anime-options",{styles:{display: 'none',opacity:1}})
-			// 					alter("#anime-options-container",{styles:{display:'flex',opacity: 1}})
-			// 				}
-			// 			})
-			// 		}
-			// 	})
-			// 	return
-			// }
-			if ($menuVisible) {
+			if ($animeOptionVisible) {
+				$animeOptionVisible = false;
+				return;
+			} else if ($menuVisible) {
 				$menuVisible = false;
 				return;
 			} else if ($popupVisible) {
 				$popupVisible = false;
 				return;
-			} else if (window.scrollY !== 0) {
+			} else if (window.scrollY > 200) {
 				window.scrollTo({ top: 0, behavior: "smooth" });
 				return;
 			} else {
@@ -428,8 +414,25 @@
 		if (typeof val !== "boolean") return;
 		if (val === true) window.setShoulGoBack(false);
 	});
+	let isScrolling, scrollingTimeout;
 	window.addEventListener("scroll", () => {
 		if (window.scrollY !== 0) window.setShoulGoBack(false);
+		if (!isScrolling) isScrolling = true;
+		if (scrollingTimeout) clearTimeout(scrollingTimeout);
+		scrollingTimeout = setTimeout(() => {
+			isScrolling = false;
+		}, 1000);
+	});
+	onMount(() => {
+		document
+			.getElementById("popup-container")
+			.addEventListener("scroll", () => {
+				if (!isScrolling) isScrolling = true;
+				if (scrollingTimeout) clearTimeout(scrollingTimeout);
+				scrollingTimeout = setTimeout(() => {
+					isScrolling = false;
+				}, 1000);
+			});
 	});
 
 	window.setShoulGoBack = (_shouldGoBack) => {
@@ -445,6 +448,57 @@
 			$shouldGoBack = _shouldGoBack;
 		}
 	};
+
+	window.copyToClipBoard = (text) => {
+		if ($android) {
+			try {
+				JSBridge.copyToClipBoard(text);
+			} catch (e) {}
+		} else {
+			navigator?.clipboard?.writeText?.(text);
+		}
+	};
+
+	let copytimeoutId;
+	let copyhold = false;
+	document.addEventListener("pointerdown", (e) => {
+		let target = e.target;
+		let classList = target.classList;
+		if (!classList.contains("copy")) target = target.closest(".copy");
+		if (target) {
+			e.preventDefault();
+			copyhold = true;
+			if (copytimeoutId) clearTimeout(copytimeoutId);
+			copytimeoutId = setTimeout(() => {
+				let text = target.getAttribute("copy-value");
+				if (text && !isScrolling && copyhold) {
+					target.style.pointerEvents = "none";
+					setTimeout(() => {
+						target.style.pointerEvents = "";
+					}, 500);
+					window.copyToClipBoard(text);
+				}
+			}, 500);
+		}
+	});
+	document.addEventListener("pointerup", (e) => {
+		let target = e.target;
+		let classList = target.classList;
+		if (!classList.contains("copy")) target = target.closest(".copy");
+		if (target) {
+			copyhold = false;
+			if (copytimeoutId) clearTimeout(copytimeoutId);
+		}
+	});
+	document.addEventListener("pointercancel", (e) => {
+		let target = e.target;
+		let classList = target.classList;
+		if (!classList.contains("copy")) target = target.closest(".copy");
+		if (target) {
+			copyhold = false;
+			if (copytimeoutId) clearTimeout(copytimeoutId);
+		}
+	});
 </script>
 
 <main>

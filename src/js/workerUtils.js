@@ -130,7 +130,6 @@ const exportUserData = (_data) => {
             exportUserDataWorker.postMessage('browser')
         }
         exportUserDataWorker.onmessage = ({ data }) => {
-            console.log(isAndroid())
             if (data?.status !== undefined) {
                 dataStatusPrio = true
                 dataStatus.set(data.status)
@@ -262,12 +261,10 @@ const getAnimeEntries = (_data) => {
 let getAnimeFranchisesTerminateTimeout
 const getAnimeFranchises = (_data) => {
     return new Promise((resolve, reject) => {
-        console.log(111)
         let worker = new Worker("./webapi/worker/getAnimeFranchises.js")
         if (getAnimeFranchisesTerminateTimeout) clearTimeout(getAnimeFranchisesTerminateTimeout)
         worker.postMessage(_data)
         worker.onmessage = ({ data }) => {
-            console.log(2222, data)
             if (data?.status !== undefined) {
                 dataStatusPrio = true
                 dataStatus.set(data.status)
@@ -275,7 +272,6 @@ const getAnimeFranchises = (_data) => {
                 updateRecommendationList.update(e => !e)
                 dataStatusPrio = false
                 getAnimeFranchisesTerminateTimeout = setTimeout(() => {
-                    console.log(444)
                     worker.terminate();
                 }, terminateDelay)
                 resolve(data)

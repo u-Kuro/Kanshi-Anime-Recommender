@@ -22,16 +22,12 @@ self.onmessage = async ({ data }) => {
             removedID: data.removeID
         });
     } else if (data?.loadMore !== undefined) {
-        let nextIdx = data.shownAnimeLen;
         self.postMessage({
             isNew: false,
-            isLast: nextIdx >= filteredList.length,
-            finalAnimeList: filteredList.slice(
-                nextIdx,
-                Math.min(nextIdx + loadLimit, filteredList.length - 1)
-            ),
+            isLast: filteredList.length <= loadLimit,//nextIdx >= filteredList.length,
+            finalAnimeList: filteredList.slice(0, loadLimit)
         });
-        filteredList = filteredList.slice(Math.min(nextIdx + loadLimit, filteredList.length - 1))
+        filteredList = filteredList.slice(loadLimit)
     } else {
         if (!db) await IDBinit()
         self.postMessage({ status: "Initializing Filters" })
@@ -502,7 +498,7 @@ self.onmessage = async ({ data }) => {
 
             return true;
         });
-
+        console.log(finalAnimeList.length)
         // Sort List
         let sortFilter = (await retrieveJSON("filterOptions") || []).sortFilter
         let { sortName, sortType } = sortFilter?.filter(({ sortType }) => sortType === "desc" || sortType === "asc")?.[0] || { sortName: 'weighted score', sortType: 'desc' }
@@ -628,8 +624,9 @@ self.onmessage = async ({ data }) => {
         await saveJSON(finalAnimeList, "finalAnimeList")
         self.postMessage({ status: null })
         self.postMessage({
-            finalAnimeList: finalAnimeList.slice(0, loadLimit),
+            finalAnimeList: filteredList.slice(0, loadLimit),
         });
+        filteredList = filteredList.slice(loadLimit)
     }
 };
 

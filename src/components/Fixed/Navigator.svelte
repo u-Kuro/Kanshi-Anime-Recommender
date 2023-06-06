@@ -130,7 +130,9 @@
         <div class="input-search">
             <input
                 id="usernameInput"
-                type="text"
+                type="search"
+                enterkeyhint="search"
+                autocomplete="off"
                 placeholder="{windowWidth > 415 ? 'Your ' : ''}Anilist Username"
                 on:keydown={updateUsername}
                 bind:value={typedUsername}
@@ -186,7 +188,7 @@
     .input-search {
         display: flex;
         height: 25px;
-        max-width: 172px;
+        max-width: 190px;
         border-radius: 6px;
         justify-self: right;
     }
@@ -198,7 +200,7 @@
         color: white;
         padding-left: 1ch;
         padding-right: 1ch;
-        max-width: 142px;
+        max-width: 160px;
         width: 100%;
     }
     .input-search .searchBtn {
