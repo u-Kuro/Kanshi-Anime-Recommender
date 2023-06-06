@@ -379,6 +379,37 @@
         }
         return _format;
     }
+
+    // Global Function For Android
+    window.returnedAppIsVisible = (inApp) => {
+        let visibleTrailer = getMostVisibleElement(popupContainer, ".trailer");
+        if (!visibleTrailer) {
+            visibleTrailer =
+                getMostVisibleElement(popupContainer, ".popup-main", 0) ||
+                getMostVisibleElement(popupContainer, ".popup-content", 0);
+            if (visibleTrailer) {
+                visibleTrailer = visibleTrailer.querySelector(".trailer");
+            } else {
+                visibleTrailer = undefined;
+            }
+        }
+        if (!visibleTrailer) return;
+        if ($popupVisible) {
+            for (var ytPlayer of $ytPlayers) {
+                if (ytPlayer.g === visibleTrailer) {
+                    if (inApp) {
+                        if (ytPlayer?.getPlayerState?.() === 2) {
+                            ytPlayer?.playVideo?.();
+                            break;
+                        }
+                    } else {
+                        ytPlayer?.pauseVideo?.();
+                        break;
+                    }
+                }
+            }
+        }
+    };
 </script>
 
 <div

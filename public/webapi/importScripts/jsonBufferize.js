@@ -1,6 +1,6 @@
 const encoder = new TextEncoder;
 let chunkBuffer, chunkStr, maxByteSize;
-JSON.bufferize = async (obj, byteSize = 1024 * 1024) => {
+JSON.bufferize = async (obj, byteSize = 4 * 1024 * 1024) => {
     chunkBuffer = new Uint8Array;
     chunkStr = ''
     maxByteSize = byteSize

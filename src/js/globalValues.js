@@ -32,7 +32,7 @@ const toast = writable(null)
 const menuVisible = writable(false)
 const popupVisible = writable(false)
 const openedAnimePopupIdx = writable(null)
-
+const shouldGoBack = writable(true)
 // Reactive Functions
 const runUpdate = writable(null)
 const runExport = writable(null)
@@ -67,6 +67,7 @@ export {
     menuVisible,
     popupVisible,
     openedAnimePopupIdx,
+    shouldGoBack,
     // Reactive Functions
     runUpdate,
     runExport,

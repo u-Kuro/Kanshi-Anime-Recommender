@@ -1,4 +1,4 @@
-JSON.parseAsync = async (text, byte = 1024 * 1024) => {
+JSON.parseAsync = async (text, iterLimit = 1000) => {
     function isValidJson(j) {
         let construct = j?.constructor.name
         try { return ((construct === 'Object' && `${j}` === '[object Object]') || j instanceof Array || construct === 'Array') }
@@ -163,7 +163,7 @@ JSON.parseAsync = async (text, byte = 1024 * 1024) => {
                 parseStr = '';
                 return {};
             } else {
-                if (++counter > byte) {
+                if (++counter > iterLimit) {
                     counter = 0;
                     yield;
                 }

@@ -1,4 +1,4 @@
-importScripts("../importScripts/jsonBufferize.js");
+importScripts("../importScripts/JSONToBlob.js");
 let request, db;
 
 self.onmessage = async ({ data }) => {
@@ -21,7 +21,7 @@ self.onmessage = async ({ data }) => {
         animeEntries: await retrieveJSON("animeEntries"),
     };
     if (data === 'android') {
-        const byteSize = 1024 * 1024
+        const byteSize = 64 * 1024 // 64KB
         let chunkStr = ''
         function stringify(x) {
             if (chunkStr.length >= byteSize) {
@@ -84,8 +84,7 @@ self.onmessage = async ({ data }) => {
             username: username
         })
     } else {
-        let buffer = await JSON.bufferize(backUpData);
-        let blob = new Blob([buffer], { type: "text/json" });
+        let blob = JSONToBlob(backUpData)
         let url = URL.createObjectURL(blob);
         self.postMessage({ status: null })
         self.postMessage({ url: url, username: username });

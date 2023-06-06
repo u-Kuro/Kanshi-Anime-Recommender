@@ -24,6 +24,7 @@
 		autoPlay,
 		popupVisible,
 		menuVisible,
+		shouldGoBack,
 		// Reactive Functions
 		runUpdate,
 		runExport,
@@ -48,10 +49,8 @@
 	} from "./js/others/helper.js";
 
 	$android = isAndroid();
-        window.openMenu = ()=> {
-         $menuVisible = true
-	}
-	// Get Export Folder
+
+	// Get Export Folder for Android
 	(async () => {
 		$exportPathIsAvailable = await retrieveJSON("exportPathIsAvailable");
 	})();
@@ -391,7 +390,85 @@
 		}
 	}
 
-	onDestroy(() => {});
+	// Global Function For Android/Browser
+	if ("scrollRestoration" in window.history) {
+		// Disable scrolling to top when navigating back
+		window.history.scrollRestoration = "manual";
+	}
+	window.addEventListener("popstate", () => {
+		window.backPressed();
+	});
+	window.backPressed = () => {
+		if ($shouldGoBack && !$android) {
+			window.history.go(-1); // Only in Browser
+		} else {
+			if (!$android) {
+				window.history.pushState("visited", ""); // Push Popped State
+			}
+			// if($("#anime-options").css("display")!=="none"){
+			// 	alter("#anime-options-container",{
+			// 		keyframes: [
+			// 			{ opacity: 1 },
+			// 			{ opacity: 0 }
+			// 		],
+			// 		callback: () => {
+			// 			alter("#anime-options",{
+			// 				keyframes: [
+			// 					{ opacity: 1 },
+			// 					{ opacity: 0 }
+			// 				],
+			// 				callback: () => {
+			// 					alter("#anime-options",{styles:{display: 'none',opacity:1}})
+			// 					alter("#anime-options-container",{styles:{display:'flex',opacity: 1}})
+			// 				}
+			// 			})
+			// 		}
+			// 	})
+			// 	return
+			// }
+			if ($menuVisible) {
+				$menuVisible = false;
+				return;
+			} else if ($popupVisible) {
+				$popupVisible = false;
+				return;
+			} else if (window.scrollY !== 0) {
+				window.scrollTo({ top: 0, behavior: "smooth" });
+				return;
+			} else {
+				window.setShoulGoBack(true);
+			}
+		}
+	};
+
+	popupVisible.subscribe((val) => {
+		if (typeof val !== "boolean") return;
+		if (val === true) window.setShoulGoBack(false);
+	});
+	menuVisible.subscribe((val) => {
+		if (typeof val !== "boolean") return;
+		if (val === true) window.setShoulGoBack(false);
+	});
+
+	window.addEventListener("scroll", () => {
+		if (window.scrollY !== 0) window.setShoulGoBack(false);
+	});
+
+	window.setShoulGoBack = (_shouldGoBack) => {
+		if ($android) {
+			try {
+				console.log(_shouldGoBack, "android");
+				JSBridge.setShoulGoBack(_shouldGoBack);
+			} catch (e) {}
+		} else {
+			if (window.history.state !== "visited") {
+				// Only Add 1 state
+				window.history.pushState("visited", "");
+			}
+			console.log(_shouldGoBack, "browser");
+			$shouldGoBack = _shouldGoBack;
+		}
+	};
 </script>
 
 <main>
