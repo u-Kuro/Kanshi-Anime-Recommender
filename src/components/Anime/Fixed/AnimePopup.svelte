@@ -3,15 +3,13 @@
     import {
         finalAnimeList,
         animeLoaderWorker,
-        dataStatus,
         hiddenEntries,
-        filterOptions,
         ytPlayers,
         autoPlay,
         animeObserver,
         popupVisible,
+        animeOptionVisible,
         openedAnimePopupIdx,
-        searchedAnimeKeyword,
     } from "../../../js/globalValues.js";
     import {
         isJsonObject,
@@ -22,6 +20,8 @@
         msToTime,
     } from "../../../js/others/helper.js";
     import { saveJSON } from "../../../js/indexedDB.js";
+    import captureSlideEvent from "../../../js/slideEvent.js";
+    import alter from "../../../js/alter.js";
 
     let popupWrapper, popupContainer;
 
@@ -223,12 +223,34 @@
         }
     });
 
+    let unsubSlideEvents;
     onMount(() => {
         document
             .getElementById("popup-container")
             .addEventListener("scroll", () => {
                 playMostVisibleTrailer();
             });
+        if (window.innerWidth <= 768) {
+            unsubSlideEvents = captureSlideEvent(popupContainer, () => {
+                return new Promise((resolve) => {
+                    $popupVisible = false;
+                    setTimeout(resolve, 300); // To return values
+                });
+            });
+        }
+        window.addEventListener("resize", () => {
+            if (window.innerWidth <= 768 && !unsubSlideEvents) {
+                unsubSlideEvents = captureSlideEvent(popupContainer, () => {
+                    return new Promise((resolve) => {
+                        $popupVisible = false;
+                        setTimeout(resolve, 300); // To return values
+                    });
+                });
+            } else if (unsubSlideEvents && window.innerWidth > 768) {
+                if (unsubSlideEvents) unsubSlideEvents();
+                unsubSlideEvents = null;
+            }
+        });
     });
 
     async function playMostVisibleTrailer(once = false) {

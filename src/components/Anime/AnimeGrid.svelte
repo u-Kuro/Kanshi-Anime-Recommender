@@ -9,6 +9,8 @@
         animeObserver,
         popupVisible,
         openedAnimePopupIdx,
+        animeOptionVisible,
+        openedAnimeOptionIdx,
     } from "../../js/globalValues.js";
     import {
         formatNumber,
@@ -19,9 +21,6 @@
 
     let renderedImgGridLimit = 20;
     let shownAllInList = false;
-
-    let justifyContent =
-        window.innerWidth / 180 <= 3.5 ? "space-evenly" : "space-between";
 
     // let observerTimeout;
 
@@ -111,11 +110,6 @@
                 $animeObserver = null;
             }
         }
-        if (val?.length <= 2) {
-            justifyContent = "space-evenly";
-        } else if (val) {
-            justifyContent = "space-between";
-        }
     });
 
     searchedAnimeKeyword.subscribe(async (val) => {
@@ -127,17 +121,23 @@
         }
     });
 
-    window.addEventListener("resize", () => {
-        if ($finalAnimeList?.length < 3 || window.innerWidth / 180 <= 3.75) {
-            justifyContent = "space-evenly";
-        } else {
-            justifyContent = "space-between";
-        }
-    });
-
     function handleOpenPopup(animeIdx) {
         $openedAnimePopupIdx = animeIdx;
         $popupVisible = true;
+    }
+
+    let openOptionTimeout, isLongPressed;
+    function handleOpenOption(animeIdx) {
+        if (openOptionTimeout) clearTimeout(openOptionTimeout);
+        isLongPressed = true;
+        openOptionTimeout = setTimeout(() => {
+            $openedAnimeOptionIdx = animeIdx;
+            $animeOptionVisible = true;
+        }, 500);
+    }
+    function cancelOpenOption() {
+        if (openOptionTimeout) clearTimeout(openOptionTimeout);
+        isLongPressed = false;
     }
 
     function getBriefInfo({
@@ -240,11 +240,7 @@
 </script>
 
 <main>
-    <div
-        id="anime-grid"
-        class="image-grid"
-        style:justify-content={justifyContent}
-    >
+    <div id="anime-grid" class="image-grid">
         {#if $finalAnimeList?.length}
             {#each $finalAnimeList || [] as anime, animeIdx (anime.id)}
                 <div
@@ -260,6 +256,9 @@
                             src={anime.coverImageUrl}
                             on:load={(e) => (e.target.style.opacity = 1)}
                             on:click={handleOpenPopup(animeIdx)}
+                            on:pointerdown={handleOpenOption(animeIdx)}
+                            on:pointerup={cancelOpenOption}
+                            on:pointercancel={cancelOpenOption}
                             on:keydown={handleOpenPopup(animeIdx)}
                         />
                     </div>
@@ -345,7 +344,6 @@
 
     .image-grid {
         display: grid;
-        /* flex-wrap: wrap; */
         justify-content: space-between;
         align-items: flex-start;
         grid-gap: 0.8rem;
@@ -427,7 +425,20 @@
     }
 
     .image-grid__card-title span.brief-info div {
-        width: fit-content;
+        width: max-content;
+        display: flex;
+        align-items: center;
+        height: 15px;
+        white-space: nowrap;
+        line-height: 15px;
+        column-gap: 2px;
+    }
+
+    .brief-info i.fa-circle::before {
+        font-size: 9px;
+    }
+    .brief-info i.fa-star::before {
+        font-size: 10px;
     }
 
     .image-grid__status {
@@ -539,6 +550,12 @@
         }
         100% {
             transform: translateX(100%);
+        }
+    }
+
+    @media screen and (orientation: portrait) {
+        .image-grid {
+            justify-content: space-evenly;
         }
     }
 </style>

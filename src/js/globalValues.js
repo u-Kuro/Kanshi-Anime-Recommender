@@ -30,6 +30,8 @@ const animeObserver = writable(null)
 const searchedAnimeKeyword = writable("")
 const toast = writable(null)
 const menuVisible = writable(false)
+const animeOptionVisible = writable(false)
+const openedAnimeOptionIdx = writable(null)
 const popupVisible = writable(false)
 const openedAnimePopupIdx = writable(null)
 const shouldGoBack = writable(true)
@@ -65,6 +67,8 @@ export {
     searchedAnimeKeyword,
     toast,
     menuVisible,
+    animeOptionVisible,
+    openedAnimeOptionIdx,
     popupVisible,
     openedAnimePopupIdx,
     shouldGoBack,

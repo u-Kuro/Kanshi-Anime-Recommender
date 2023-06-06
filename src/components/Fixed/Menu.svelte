@@ -59,11 +59,10 @@
         }
     }
 
-    function handleExportFolder() {
-        console.log("WebtoApp: Choose an Export Path");
-    }
-
     // Global Function For Android
+    function handleExportFolder() {
+        console.log("WebtoApp: Choose an Export Path"); // Dont Remove
+    }
     window.setExportPathAvailability = async (value = true) => {
         $exportPathIsAvailable = value;
         await saveJSON(value, "exportPathIsAvailable");

@@ -38658,7 +38658,6 @@ self.onmessage = async ({ data }) => {
       164440
     ]
   ], "animeFranchises")
-  console.log(333)
   self.postMessage({ status: null })
   self.postMessage({ message: 'success' })
 };

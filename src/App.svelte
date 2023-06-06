@@ -238,10 +238,8 @@
 		});
 	});
 	autoUpdate.subscribe(async (val) => {
-		console.log(val, "val");
 		if (typeof val !== "boolean") return;
 		else if (val === true) {
-			console.log(val, "val2");
 			saveJSON(true, "autoUpdate");
 			// Check Run First
 			let isPastDate = false;
@@ -257,13 +255,6 @@
 					isPastDate = true;
 				}
 			}
-			console.log(
-				$autoUpdate,
-				isPastDate,
-				"isPastDate",
-				$lastRunnedAutoUpdateDate,
-				"$lastRunnedAutoUpdateDate"
-			);
 			if (isPastDate) {
 				runUpdate.update((e) => !e);
 				if ($autoUpdateInterval) clearInterval($autoUpdateInterval);
@@ -277,16 +268,6 @@
 					3600000 -
 						(new Date().getTime() -
 							$lastRunnedAutoUpdateDate?.getTime()) || 0;
-				console.log(
-					timeLeft,
-					$lastRunnedAutoUpdateDate,
-					3600000 -
-						(new Date().getTime() -
-							$lastRunnedAutoUpdateDate?.getTime()),
-					3600000 -
-						(new Date().getTime() -
-							$lastRunnedAutoUpdateDate?.getTime()) || 0
-				);
 				setTimeout(() => {
 					if ($autoUpdate === false) return;
 					runUpdate.update((e) => !e);
@@ -392,8 +373,7 @@
 
 	// Global Function For Android/Browser
 	if ("scrollRestoration" in window.history) {
-		// Disable scrolling to top when navigating back
-		window.history.scrollRestoration = "manual";
+		window.history.scrollRestoration = "manual"; // Disable scrolling to top when navigating back
 	}
 	window.addEventListener("popstate", () => {
 		window.backPressed();
@@ -440,7 +420,6 @@
 			}
 		}
 	};
-
 	popupVisible.subscribe((val) => {
 		if (typeof val !== "boolean") return;
 		if (val === true) window.setShoulGoBack(false);
@@ -449,7 +428,6 @@
 		if (typeof val !== "boolean") return;
 		if (val === true) window.setShoulGoBack(false);
 	});
-
 	window.addEventListener("scroll", () => {
 		if (window.scrollY !== 0) window.setShoulGoBack(false);
 	});
@@ -457,7 +435,6 @@
 	window.setShoulGoBack = (_shouldGoBack) => {
 		if ($android) {
 			try {
-				console.log(_shouldGoBack, "android");
 				JSBridge.setShoulGoBack(_shouldGoBack);
 			} catch (e) {}
 		} else {
@@ -465,7 +442,6 @@
 				// Only Add 1 state
 				window.history.pushState("visited", "");
 			}
-			console.log(_shouldGoBack, "browser");
 			$shouldGoBack = _shouldGoBack;
 		}
 	};

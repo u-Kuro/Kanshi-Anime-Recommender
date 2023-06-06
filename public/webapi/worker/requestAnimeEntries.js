@@ -147,7 +147,6 @@ self.onmessage = async ({ data }) => {
                     }
                 })
                 .catch((error) => {
-                    console.log(error)
                     let headers = error.headers;
                     let errorText = error.message;
                     if (errorText === 'User not found') {
