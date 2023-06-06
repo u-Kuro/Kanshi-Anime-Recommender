@@ -465,6 +465,7 @@
         opacity: 1;
         padding: 30px;
         text-align: center;
+        grid-column: 1 / -1;
     }
 
     .empty-img {

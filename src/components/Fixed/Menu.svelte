@@ -140,7 +140,7 @@
             let checkBoxFilterIdx = $filterOptions?.filterSelection?.[
                 filterSelectionIdx ?? -1
             ]?.filters?.Checkbox?.findIndex?.(
-                ({ filName }) => filName === "hidden"
+                ({ filName }) => filName === "hidden anime"
             );
             if (filterSelectionIdx >= 0 && checkBoxFilterIdx >= 0) {
                 $filterOptions.filterSelection[
@@ -217,9 +217,8 @@
                     on:click={handleExportFolder}
                     on:keydown={handleExportFolder}
                 >
-                    {$exportPathIsAvailable
-                        ? "Change"
-                        : "Set" + " Export Folder"}
+                    {($exportPathIsAvailable ? "Change" : "Set") +
+                        " Export Folder"}
                 </button>
             {/if}
             <button

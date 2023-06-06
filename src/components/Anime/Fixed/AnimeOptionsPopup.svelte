@@ -65,7 +65,13 @@
 
     function copyTitle() {
         if (isRecentlyOpened) return;
-        window.copyToClipboard(animeTitle);
+        if ($android) {
+            try {
+                JSBridge.copyToClipBoard(text);
+            } catch (e) {}
+        } else {
+            navigator?.clipboard?.writeText?.(text);
+        }
         $animeOptionVisible = false;
     }
 
