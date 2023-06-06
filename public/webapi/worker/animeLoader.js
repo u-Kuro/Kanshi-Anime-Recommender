@@ -498,7 +498,6 @@ self.onmessage = async ({ data }) => {
 
             return true;
         });
-        console.log(finalAnimeList.length)
         // Sort List
         let sortFilter = (await retrieveJSON("filterOptions") || []).sortFilter
         let { sortName, sortType } = sortFilter?.filter(({ sortType }) => sortType === "desc" || sortType === "asc")?.[0] || { sortName: 'weighted score', sortType: 'desc' }
