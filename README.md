@@ -9,7 +9,6 @@ This app is designed to provide anime recommendations based on your personal rat
 
 - [Kanshi Web](https://kanshi.vercel.app/)
 - [Kanshi Alternative 1](https://u-kuro.github.io/Kanshi.Anime-Recommendation/)
-- [Kanshi Alternative 2](http://kanshi.rf.gd/) (Not Recommended)
 
 ## Website Preview
 
