@@ -35,12 +35,15 @@ const openedAnimeOptionIdx = writable(null)
 const popupVisible = writable(false)
 const openedAnimePopupIdx = writable(null)
 const shouldGoBack = writable(true)
+const isScrolling = writable(null)
+const scrollingTimeout = writable(null)
 // Reactive Functions
 const runUpdate = writable(null)
 const runExport = writable(null)
 const updateRecommendationList = writable(null)
 const updateFilters = writable(null)
 const loadAnime = writable(null)
+const runIsScrolling = writable(null)
 
 export {
     android,
@@ -72,10 +75,13 @@ export {
     popupVisible,
     openedAnimePopupIdx,
     shouldGoBack,
+    isScrolling,
+    scrollingTimeout,
     // Reactive Functions
     runUpdate,
     runExport,
     updateRecommendationList,
     updateFilters,
     loadAnime,
+    runIsScrolling
 }

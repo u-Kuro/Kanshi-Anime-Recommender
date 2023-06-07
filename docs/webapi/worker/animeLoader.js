@@ -15,7 +15,6 @@ self.onmessage = async ({ data }) => {
         });
     } else if (data?.removeID !== undefined) {
         finalAnimeList = finalAnimeList.filter(({ id }) => id !== data.removeID)
-        filteredList = filteredList.filter(({ id }) => id !== data.removeID)
         filteredList = finalAnimeList.filter(({ title }) => title?.toLowerCase?.().includes(keyword))
         self.postMessage({
             isRemoved: true,
@@ -498,7 +497,6 @@ self.onmessage = async ({ data }) => {
 
             return true;
         });
-        console.log(finalAnimeList.length)
         // Sort List
         let sortFilter = (await retrieveJSON("filterOptions") || []).sortFilter
         let { sortName, sortType } = sortFilter?.filter(({ sortType }) => sortType === "desc" || sortType === "asc")?.[0] || { sortName: 'weighted score', sortType: 'desc' }
@@ -624,6 +622,7 @@ self.onmessage = async ({ data }) => {
         await saveJSON(finalAnimeList, "finalAnimeList")
         self.postMessage({ status: null })
         self.postMessage({
+            isNew: true,
             finalAnimeList: filteredList.slice(0, loadLimit),
         });
         filteredList = filteredList.slice(loadLimit)

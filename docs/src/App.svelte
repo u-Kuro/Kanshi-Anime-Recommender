@@ -1,6 +1,7 @@
 <script>
 	import C from "./components/index.js";
-	import { onMount, onDestroy } from "svelte";
+	import { onMount, onDestroy, tick } from "svelte";
+	import { inject } from "@vercel/analytics";
 	import { IDBinit, retrieveJSON, saveJSON } from "./js/indexedDB.js";
 	import {
 		android,
@@ -25,6 +26,8 @@
 		popupVisible,
 		menuVisible,
 		shouldGoBack,
+		isScrolling,
+		scrollingTimeout,
 		// Reactive Functions
 		runUpdate,
 		runExport,
@@ -32,6 +35,7 @@
 		loadAnime,
 		updateFilters,
 		animeOptionVisible,
+		runIsScrolling,
 	} from "./js/globalValues.js";
 	import {
 		getAnimeEntries,
@@ -49,15 +53,27 @@
 		jsonIsEmpty,
 	} from "./js/others/helper.js";
 
-	$android = isAndroid();
+	$android = isAndroid(); // Android/Browser Identifier
 
 	// Get Export Folder for Android
 	(async () => {
 		$exportPathIsAvailable = await retrieveJSON("exportPathIsAvailable");
 	})();
 
+	inject(); // Vercel Analytics
+
+	window.onload = () => {
+		window.dataLayer = window.dataLayer || [];
+		function gtag() {
+			dataLayer.push(arguments);
+		}
+		gtag("js", new Date());
+		gtag("config", "G-PPMY92TJCE");
+	}; // Google Analytics
+
 	// For Youtube API
 	const onYouTubeIframeAPIReady = new Function();
+	window.onYouTubeIframeAPIReady = onYouTubeIframeAPIReady;
 
 	// Init Data
 	let initDataPromises = [];
@@ -221,7 +237,7 @@
 				$searchedAnimeKeyword = "";
 				if ($initData) {
 					$finalAnimeList = null; // Loading
-				} else {
+				} else if (data?.isNew) {
 					$finalAnimeList = data.finalAnimeList;
 				}
 				$dataStatus = null;
@@ -238,6 +254,7 @@
 			$filterOptions = data.filterOptions;
 		});
 	});
+	let dayInMS = 24 * 60 * 60 * 1000;
 	autoUpdate.subscribe(async (val) => {
 		if (typeof val !== "boolean") return;
 		else if (val === true) {
@@ -251,7 +268,7 @@
 			) {
 				if (
 					new Date().getTime() - $lastRunnedAutoUpdateDate.getTime() >
-					3600000
+					dayInMS
 				) {
 					isPastDate = true;
 				}
@@ -263,10 +280,10 @@
 					if ($autoUpdate) {
 						runUpdate.update((e) => !e);
 					}
-				}, 3600000);
+				}, dayInMS);
 			} else {
 				let timeLeft =
-					3600000 -
+					dayInMS -
 						(new Date().getTime() -
 							$lastRunnedAutoUpdateDate?.getTime()) || 0;
 				setTimeout(() => {
@@ -277,7 +294,7 @@
 						if ($autoUpdate) {
 							runUpdate.update((e) => !e);
 						}
-					}, 3600000);
+					}, dayInMS);
 				}, timeLeft);
 			}
 		} else if (val === false) {
@@ -297,6 +314,7 @@
 				console.error(error);
 			});
 	});
+	let hourINMS = 60 * 60 * 1000;
 	autoExport.subscribe(async (val) => {
 		if (typeof val !== "boolean") return;
 		else if (val === true) {
@@ -310,7 +328,7 @@
 			) {
 				if (
 					new Date().getTime() - $lastRunnedAutoExportDate.getTime() >
-					3600000
+					hourINMS
 				) {
 					isPastDate = true;
 				}
@@ -322,10 +340,10 @@
 					if ($autoExport) {
 						runExport.update((e) => !e);
 					}
-				}, 3600000);
+				}, hourINMS);
 			} else {
 				let timeLeft =
-					3600000 -
+					hourINMS -
 						(new Date().getTime() -
 							$lastRunnedAutoExportDate?.getTime()) || 0;
 				setTimeout(() => {
@@ -336,7 +354,7 @@
 						if ($autoExport) {
 							runExport.update((e) => !e);
 						}
-					}, 3600000);
+					}, hourINMS);
 				}, timeLeft);
 			}
 		} else if (val === false) {
@@ -350,8 +368,15 @@
 		saveJSON($lastRunnedAutoExportDate, "lastRunnedAutoExportDate");
 		exportUserData();
 	});
+	runIsScrolling.subscribe((val) => {
+		if (typeof val !== "boolean") return;
+		if (!$isScrolling) $isScrolling = true;
+		if ($scrollingTimeout) clearTimeout($scrollingTimeout);
+		$scrollingTimeout = setTimeout(() => {
+			$isScrolling = false;
+		}, 1000);
+	});
 
-	let currentScrollTop;
 	popupVisible.subscribe((val) => {
 		documentScroll(val);
 	});
@@ -402,6 +427,7 @@
 				window.scrollTo({ top: 0, behavior: "smooth" });
 				return;
 			} else {
+				window.scrollTo({ top: 0, behavior: "smooth" });
 				window.setShoulGoBack(true);
 			}
 		}
@@ -414,24 +440,15 @@
 		if (typeof val !== "boolean") return;
 		if (val === true) window.setShoulGoBack(false);
 	});
-	let isScrolling, scrollingTimeout;
 	window.addEventListener("scroll", () => {
 		if (window.scrollY !== 0) window.setShoulGoBack(false);
-		if (!isScrolling) isScrolling = true;
-		if (scrollingTimeout) clearTimeout(scrollingTimeout);
-		scrollingTimeout = setTimeout(() => {
-			isScrolling = false;
-		}, 1000);
+		runIsScrolling.update((e) => !e);
 	});
 	onMount(() => {
 		document
 			.getElementById("popup-container")
 			.addEventListener("scroll", () => {
-				if (!isScrolling) isScrolling = true;
-				if (scrollingTimeout) clearTimeout(scrollingTimeout);
-				scrollingTimeout = setTimeout(() => {
-					isScrolling = false;
-				}, 1000);
+				runIsScrolling.update((e) => !e);
 			});
 	});
 
@@ -471,7 +488,7 @@
 			if (copytimeoutId) clearTimeout(copytimeoutId);
 			copytimeoutId = setTimeout(() => {
 				let text = target.getAttribute("copy-value");
-				if (text && !isScrolling && copyhold) {
+				if (text && !$isScrolling && copyhold) {
 					target.style.pointerEvents = "none";
 					setTimeout(() => {
 						target.style.pointerEvents = "";

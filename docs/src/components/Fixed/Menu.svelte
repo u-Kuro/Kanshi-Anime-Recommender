@@ -140,7 +140,7 @@
             let checkBoxFilterIdx = $filterOptions?.filterSelection?.[
                 filterSelectionIdx ?? -1
             ]?.filters?.Checkbox?.findIndex?.(
-                ({ filName }) => filName === "hidden"
+                ({ filName }) => filName === "hidden anime"
             );
             if (filterSelectionIdx >= 0 && checkBoxFilterIdx >= 0) {
                 $filterOptions.filterSelection[
@@ -193,7 +193,7 @@
         class="menu-container"
         on:click={handleMenuVisibility}
         on:keydown={handleMenuVisibility}
-        transition:fade={{ duration: 300 }}
+        transition:fade={{ duration: 200 }}
     >
         <div class="menu">
             <button class="button" on:click={updateList} on:keydown={updateList}
@@ -217,9 +217,8 @@
                     on:click={handleExportFolder}
                     on:keydown={handleExportFolder}
                 >
-                    {$exportPathIsAvailable
-                        ? "Change"
-                        : "Set" + " Export Folder"}
+                    {($exportPathIsAvailable ? "Change" : "Set") +
+                        " Export Folder"}
                 </button>
             {/if}
             <button

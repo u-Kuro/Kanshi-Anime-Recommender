@@ -1,4 +1,5 @@
 import alter from "../js/alter.js";
+import { runIsScrolling } from "../js/globalValues.js"
 function captureSlideEvent(targetElement, callback = new Function) {
     // Slides
     var startX;
@@ -17,6 +18,7 @@ function captureSlideEvent(targetElement, callback = new Function) {
         if (event.pointerId === pointerId && isPointerDown) {
             endX = event.clientX;
             const deltaX = endX - startX;
+            runIsScrolling.update(e => !e)
             if (deltaX >= 50) {
                 alter(targetElement, {
                     keyframes: [

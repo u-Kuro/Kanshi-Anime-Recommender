@@ -28,7 +28,7 @@
                 animeTitle = openedAnime.title;
                 animeID = openedAnime.id;
                 animeUrl = openedAnime.animeUrl;
-                animeIdx = openedAnimeOptionIdx;
+                animeIdx = $openedAnimeOptionIdx;
             }
             $openedAnimeOptionIdx = null;
         } else {
@@ -64,8 +64,14 @@
     }
 
     function copyTitle() {
-        if (isRecentlyOpened) return;
-        window.copyToClipboard(animeTitle);
+        if (isRecentlyOpened || !animeTitle) return;
+        if ($android) {
+            try {
+                JSBridge.copyToClipBoard(animeTitle);
+            } catch (e) {}
+        } else {
+            navigator?.clipboard?.writeText?.(animeTitle);
+        }
         $animeOptionVisible = false;
     }
 

@@ -1522,6 +1522,7 @@
     .filter-checkbox .checkbox-wrap {
         min-width: 142px;
         width: 142px;
+        cursor: pointer;
     }
     .filter-checkbox .checkbox-wrap,
     .filter-input-number .value-input-number-wrap {
@@ -1539,6 +1540,7 @@
         border-radius: 4px;
         border: 2px solid gray;
         accent-color: #5f9ea0;
+        cursor: pointer;
     }
     .filter-checkbox .checkbox-label {
         font-weight: 600;
@@ -1547,6 +1549,7 @@
         -ms-user-select: none;
         user-select: none;
         font-size: 1.4rem;
+        cursor: pointer;
     }
 
     .activeFilters {
