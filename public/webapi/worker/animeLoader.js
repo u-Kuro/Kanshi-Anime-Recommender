@@ -47,17 +47,17 @@ self.onmessage = async ({ data }) => {
             if (selected === "included") {
                 if (filterType === 'dropdown') {
                     if (optionType === 'genre') {
-                        semiCautionContents.genres[optionName] = true
+                        semiCautionContents.genres[optionName.toLowerCase()] = true
                     } else if (optionType === 'tag') {
-                        semiCautionContents.tags[optionName] = true
+                        semiCautionContents.tags[optionName.toLowerCase()] = true
                     }
                 }
             } else if (selected === 'excluded') {
                 if (filterType === 'dropdown') {
                     if (optionType === 'genre') {
-                        cautionContents.genres[optionName] = true
+                        cautionContents.genres[optionName.toLowerCase()] = true
                     } else if (optionType === 'tag') {
-                        cautionContents.tags[optionName] = true
+                        cautionContents.tags[optionName.toLowerCase()] = true
                     }
                 }
             }
@@ -100,80 +100,80 @@ self.onmessage = async ({ data }) => {
             if (selected === "included") {
                 if (filterType === 'dropdown') {
                     if (optionType === 'flexible inclusion') {
-                        flexibleInclusion[optionName.replace('OR: ', '')] = true
+                        flexibleInclusion[optionName.replace('OR: ', '').toLowerCase()] = true
                     } else if (optionType === 'genre') {
-                        include.genres[optionName] = true
+                        include.genres[optionName.toLowerCase()] = true
                     } else if (optionType === 'tag') {
-                        include.tags[optionName] = true
+                        include.tags[optionName.toLowerCase()] = true
                     } else if (optionType === 'year') {
                         include.year[optionName] = true
                     } else if (optionType === 'season') {
-                        include.season[optionName] = true
+                        include.season[optionName.toLowerCase()] = true
                     } else if (optionType === 'format') {
-                        include.format[optionName] = true
+                        include.format[optionName.toLowerCase()] = true
                     } else if (optionType === 'airing status') {
-                        include.status[optionName] = true
+                        include.status[optionName.toLowerCase()] = true
                     } else if (optionType === 'user status') {
-                        include.userStatus[optionName] = true
+                        include.userStatus[optionName.toLowerCase()] = true
                     } else if (optionType === 'studio') {
-                        include.studios[optionName] = true
+                        include.studios[optionName.toLowerCase()] = true
                     }
                 } else if (filterType === 'checkbox') {
-                    if (optionName === 'hidden anime') {
+                    if (optionName.toLowerCase() === 'hidden anime') {
                         hiddenList = true
-                    } else if (optionName === 'hide my anime') {
+                    } else if (optionName.toLowerCase() === 'hide my anime') {
                         hideMyAnime = true
-                    } else if (optionName === 'hide watched') {
+                    } else if (optionName.toLowerCase() === 'hide watched') {
                         hideWatched = true
                     }
                 } else if (filterType === 'input number') {
-                    if (optionName === "weighted score") {
+                    if (optionName.toLowerCase() === "weighted score") {
                         comparisonFilter.weightedScore = {
                             operator: CMPoperator,
                             value: parseFloat(CMPNumber ?? optionValue)
                         }
-                    } else if (optionName === "score") {
+                    } else if (optionName.toLowerCase() === "score") {
                         comparisonFilter.score = {
                             operator: CMPoperator,
                             value: parseFloat(CMPNumber ?? optionValue)
                         }
-                    } else if (optionName === "average score") {
+                    } else if (optionName.toLowerCase() === "average score") {
                         comparisonFilter.averageScore = {
                             operator: CMPoperator,
                             value: parseFloat(CMPNumber ?? optionValue)
                         }
-                    } else if (optionName === "user score") {
+                    } else if (optionName.toLowerCase() === "user score") {
                         comparisonFilter.userScore = {
                             operator: CMPoperator,
                             value: parseFloat(CMPNumber ?? optionValue)
                         }
-                    } else if (optionName === "popularity") {
+                    } else if (optionName.toLowerCase() === "popularity") {
                         comparisonFilter.popularity = {
                             operator: CMPoperator,
                             value: parseFloat(CMPNumber ?? optionValue)
                         }
-                    } else if (optionName === "limit favourites") {
+                    } else if (optionName.toLowerCase() === "limit favourites") {
                         favoriteContentsLimit = parseFloat(optionValue)
                     }
                 }
             } else if (selected === 'excluded') {
                 if (filterType === 'dropdown') {
                     if (optionType === 'genre') {
-                        exclude.genres[optionName] = true
+                        exclude.genres[optionName.toLowerCase()] = true
                     } else if (optionType === 'tag') {
-                        exclude.tags[optionName] = true
+                        exclude.tags[optionName.toLowerCase()] = true
                     } else if (optionType === 'year') {
                         exclude.year[optionName] = true
                     } else if (optionType === 'season') {
-                        exclude.season[optionName] = true
+                        exclude.season[optionName.toLowerCase()] = true
                     } else if (optionType === 'format') {
-                        exclude.format[optionName] = true
+                        exclude.format[optionName.toLowerCase()] = true
                     } else if (optionType === 'airing status') {
-                        exclude.status[optionName] = true
+                        exclude.status[optionName.toLowerCase()] = true
                     } else if (optionType === 'user status') {
-                        exclude.userStatus[optionName] = true
+                        exclude.userStatus[optionName.toLowerCase()] = true
                     } else if (optionType === 'studio') {
-                        exclude.studios[optionName] = true
+                        exclude.studios[optionName.toLowerCase()] = true
                     }
                 }
             }

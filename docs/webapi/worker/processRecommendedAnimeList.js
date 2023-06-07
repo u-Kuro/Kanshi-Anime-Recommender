@@ -34,47 +34,47 @@ self.onmessage = async ({ data }) => {
         if (selected === "included") {
             if (filterType === 'dropdown') {
                 if (optionType === 'genre') {
-                    include.genres["genre: " + optionName] = true
+                    include.genres["genre: " + optionName.toLowerCase()] = true
                 } else if (optionType === 'tag') {
-                    include.tags["tag: " + optionName] = true
+                    include.tags["tag: " + optionName.toLowerCase()] = true
                 } else if (optionType === 'tag category') {
-                    include.tags["tag category: " + optionName] = true
+                    include.tags["tag category: " + optionName.toLowerCase()] = true
                 } else if (optionType === 'studio') {
-                    include.tags["studio: " + optionName] = true
+                    include.tags["studio: " + optionName.toLowerCase()] = true
                 } else if (optionType === 'staff role') {
-                    include.tags["staff role: " + optionName] = true
+                    include.tags["staff role: " + optionName.toLowerCase()] = true
                 } else if (optionType === 'measurement') {
-                    if (optionName === "mode") {
+                    if (optionName.toLowerCase() === "mode") {
                         measure = "mode"
                     }
                 }
             } else if (filterType === 'checkbox') {
-                if (optionName === 'inc. all factors') {
+                if (optionName.toLowerCase() === 'inc. all factors') {
                     includeUnknownVar = true
                 }
             } else if (filterType === 'input number') {
-                if (optionName === 'sample size') {
+                if (optionName.toLowerCase() === 'sample size') {
                     sampleSize = parseFloat(optionValue)
-                } else if (optionName === 'min sample size') {
+                } else if (optionName.toLowerCase() === 'min sample size') {
                     minSampleSize = parseFloat(optionValue)
-                } else if (optionName === 'min popularity') {
+                } else if (optionName.toLowerCase() === 'min popularity') {
                     minPopularity = parseFloat(optionValue)
-                } else if (optionName === 'min average score') {
+                } else if (optionName.toLowerCase() === 'min average score') {
                     minAverageScore = parseFloat(optionValue)
                 }
             }
         } else if (selected === 'excluded') {
             if (filterType === 'dropdown') {
                 if (optionType === 'genre') {
-                    exclude.genres["genre: " + optionName] = true
+                    exclude.genres["genre: " + optionName.toLowerCase()] = true
                 } else if (optionType === 'tag') {
-                    exclude.tags["tag: " + optionName] = true
+                    exclude.tags["tag: " + optionName.toLowerCase()] = true
                 } else if (optionType === 'tag category') {
-                    exclude.tags["tag category: " + optionName] = true
+                    exclude.tags["tag category: " + optionName.toLowerCase()] = true
                 } else if (optionType === 'studio') {
-                    exclude.tags["studio: " + optionName] = true
+                    exclude.tags["studio: " + optionName.toLowerCase()] = true
                 } else if (optionType === 'staff role') {
-                    exclude.tags["staff role: " + optionName] = true
+                    exclude.tags["staff role: " + optionName.toLowerCase()] = true
                 }
             }
         }
