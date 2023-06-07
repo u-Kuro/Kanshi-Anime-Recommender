@@ -274,7 +274,8 @@
                             e.optionIdx === optionIdx &&
                             e.optionName === optionName &&
                             e.filterType === "dropdown" &&
-                            e.categIdx === dropdownIdx
+                            e.categIdx === dropdownIdx &&
+                            (e.optionType ? e.optionType === optionType : true)
                         )
                 );
             } else {
@@ -290,7 +291,8 @@
                         e.optionName === optionName &&
                         e.filterType === "dropdown" &&
                         e.categIdx === dropdownIdx &&
-                        e.selected === "included"
+                        e.selected === "included" &&
+                        (e.optionType ? e.optionType === optionType : true)
                     ) {
                         e.selected = "excluded";
                     }
@@ -309,7 +311,8 @@
                         e.optionIdx === optionIdx &&
                         e.optionName === optionName &&
                         e.filterType === "dropdown" &&
-                        e.categIdx === dropdownIdx
+                        e.categIdx === dropdownIdx &&
+                        (e.optionType ? e.optionType === optionType : true)
                     )
             );
         }
@@ -569,7 +572,8 @@
         optionName,
         filterType,
         categIdx,
-        changeType
+        changeType,
+        optionType
     ) {
         if (tagFilterIsScrolling) return false;
         if (changeType === "read" || filterType !== "dropdown") return; // Unchangable Selection
@@ -593,7 +597,8 @@
                 if (
                     e.optionIdx === optionIdx &&
                     e.optionName === optionName &&
-                    e.selected === "included"
+                    e.selected === "included" &&
+                    (e.optionType ? e.optionType === optionType : true)
                 ) {
                     e.selected = "excluded";
                 }
@@ -609,7 +614,8 @@
                 if (
                     e.optionIdx === optionIdx &&
                     e.optionName === optionName &&
-                    e.selected === "excluded"
+                    e.selected === "excluded" &&
+                    (e.optionType ? e.optionType === optionType : true)
                 ) {
                     e.selected = "included";
                 }
@@ -618,7 +624,13 @@
         }
         saveFilters(nameTypeSelected);
     }
-    function removeActiveTag(optionIdx, optionName, filterType, categIdx) {
+    function removeActiveTag(
+        optionIdx,
+        optionName,
+        filterType,
+        categIdx,
+        optionType
+    ) {
         if (tagFilterIsScrolling) return;
         let idxTypeSelected = $filterOptions?.filterSelection?.findIndex(
             ({ isSelected }) => isSelected
@@ -649,7 +661,8 @@
                 !(
                     e.optionName === optionName &&
                     e.optionIdx === optionIdx &&
-                    e.filterType === filterType
+                    e.filterType === filterType &&
+                    (e.optionType ? e.optionType === optionType : true)
                 )
         );
         saveFilters(nameTypeSelected);
@@ -1162,7 +1175,7 @@
             class="tagFilters"
             style:display={$activeTagFilters ? "" : "none"}
         >
-            {#each $activeTagFilters?.[$filterOptions?.filterSelection?.[$filterOptions?.filterSelection?.findIndex(({ isSelected }) => isSelected)]?.filterSelectionName] || [] as { optionName, optionIdx, selected, changeType, filterType, categIdx, optionValue } (optionName + optionIdx)}
+            {#each $activeTagFilters?.[$filterOptions?.filterSelection?.[$filterOptions?.filterSelection?.findIndex(({ isSelected }) => isSelected)]?.filterSelectionName] || [] as { optionName, optionIdx, selected, changeType, filterType, categIdx, optionValue, optionType } (optionName + optionIdx + (optionType ?? ""))}
                 {#if selected !== "none"}
                     <div
                         class="activeTagFilter"
@@ -1174,20 +1187,24 @@
                             optionName,
                             filterType,
                             categIdx,
-                            changeType
+                            changeType,
+                            optionType
                         )}
                         on:keydown={changeActiveSelect(
                             optionIdx,
                             optionName,
                             filterType,
                             categIdx,
-                            changeType
+                            changeType,
+                            optionType
                         )}
                     >
                         {#if filterType === "input number"}
                             <h3>
                                 {optionName + ": " + optionValue || ""}
                             </h3>
+                        {:else if optionType}
+                            <h3>{optionType + ": " + optionName || ""}</h3>
                         {:else}
                             <h3>{optionName || ""}</h3>
                         {/if}
@@ -1197,13 +1214,15 @@
                                 optionIdx,
                                 optionName,
                                 filterType,
-                                categIdx
+                                categIdx,
+                                optionType
                             )}
                             on:keydown={removeActiveTag(
                                 optionIdx,
                                 optionName,
                                 filterType,
-                                categIdx
+                                categIdx,
+                                optionType
                             )}
                         />
                     </div>

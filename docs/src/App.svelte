@@ -249,10 +249,7 @@
 	});
 	updateFilters.subscribe(async (val) => {
 		if (typeof val !== "boolean") return;
-		getFilterOptions().then((data) => {
-			$activeTagFilters = data.activeTagFilters;
-			$filterOptions = data.filterOptions;
-		});
+		getFilterOptions();
 	});
 	let dayInMS = 24 * 60 * 60 * 1000;
 	autoUpdate.subscribe(async (val) => {
