@@ -1,6 +1,6 @@
 <script>
 	import C from "./components/index.js";
-	import { onMount, onDestroy } from "svelte";
+	import { onMount, onDestroy, tick } from "svelte";
 	import { IDBinit, retrieveJSON, saveJSON } from "./js/indexedDB.js";
 	import {
 		android,
@@ -221,7 +221,7 @@
 				$searchedAnimeKeyword = "";
 				if ($initData) {
 					$finalAnimeList = null; // Loading
-				} else {
+				} else if (data?.isNew) {
 					$finalAnimeList = data.finalAnimeList;
 				}
 				$dataStatus = null;
@@ -238,6 +238,7 @@
 			$filterOptions = data.filterOptions;
 		});
 	});
+	let dayInMS = 24 * 60 * 60 * 1000;
 	autoUpdate.subscribe(async (val) => {
 		if (typeof val !== "boolean") return;
 		else if (val === true) {
@@ -251,7 +252,7 @@
 			) {
 				if (
 					new Date().getTime() - $lastRunnedAutoUpdateDate.getTime() >
-					3600000
+					dayInMS
 				) {
 					isPastDate = true;
 				}
@@ -263,10 +264,10 @@
 					if ($autoUpdate) {
 						runUpdate.update((e) => !e);
 					}
-				}, 3600000);
+				}, dayInMS);
 			} else {
 				let timeLeft =
-					3600000 -
+					dayInMS -
 						(new Date().getTime() -
 							$lastRunnedAutoUpdateDate?.getTime()) || 0;
 				setTimeout(() => {
@@ -277,7 +278,7 @@
 						if ($autoUpdate) {
 							runUpdate.update((e) => !e);
 						}
-					}, 3600000);
+					}, dayInMS);
 				}, timeLeft);
 			}
 		} else if (val === false) {
@@ -297,6 +298,7 @@
 				console.error(error);
 			});
 	});
+	let hourINMS = 60 * 60 * 1000;
 	autoExport.subscribe(async (val) => {
 		if (typeof val !== "boolean") return;
 		else if (val === true) {
@@ -310,7 +312,7 @@
 			) {
 				if (
 					new Date().getTime() - $lastRunnedAutoExportDate.getTime() >
-					3600000
+					hourINMS
 				) {
 					isPastDate = true;
 				}
@@ -322,10 +324,10 @@
 					if ($autoExport) {
 						runExport.update((e) => !e);
 					}
-				}, 3600000);
+				}, hourINMS);
 			} else {
 				let timeLeft =
-					3600000 -
+					hourINMS -
 						(new Date().getTime() -
 							$lastRunnedAutoExportDate?.getTime()) || 0;
 				setTimeout(() => {
@@ -336,7 +338,7 @@
 						if ($autoExport) {
 							runExport.update((e) => !e);
 						}
-					}, 3600000);
+					}, hourINMS);
 				}, timeLeft);
 			}
 		} else if (val === false) {

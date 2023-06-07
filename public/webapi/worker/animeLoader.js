@@ -15,7 +15,6 @@ self.onmessage = async ({ data }) => {
         });
     } else if (data?.removeID !== undefined) {
         finalAnimeList = finalAnimeList.filter(({ id }) => id !== data.removeID)
-        filteredList = filteredList.filter(({ id }) => id !== data.removeID)
         filteredList = finalAnimeList.filter(({ title }) => title?.toLowerCase?.().includes(keyword))
         self.postMessage({
             isRemoved: true,
@@ -623,6 +622,7 @@ self.onmessage = async ({ data }) => {
         await saveJSON(finalAnimeList, "finalAnimeList")
         self.postMessage({ status: null })
         self.postMessage({
+            isNew: true,
             finalAnimeList: filteredList.slice(0, loadLimit),
         });
         filteredList = filteredList.slice(loadLimit)

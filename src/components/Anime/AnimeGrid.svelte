@@ -35,7 +35,7 @@
                         observerTimeout = setTimeout(() => {
                             $animeLoaderWorker.postMessage({
                                 loadMore: true,
-                                shownAnimeLen: $finalAnimeList.length,
+                                // shownAnimeLen: $finalAnimeList.length,
                             });
                         }, observerDelay);
                     }
@@ -49,20 +49,24 @@
         );
     }
 
+    let finaliListOrigCopy; // To Keep Element Reference Binding New
     animeLoaderWorker.subscribe((val) => {
         if (val instanceof Worker) {
-            val.onmessage = ({ data }) => {
+            val.onmessage = async ({ data }) => {
+                await tick();
                 if (data?.status !== undefined) $dataStatus = data.status;
                 else if (
                     data.finalAnimeList instanceof Array &&
                     $finalAnimeList instanceof Array
                 ) {
                     if (data.isNew === true) {
-                        $finalAnimeList = data.finalAnimeList;
+                        finaliListOrigCopy = data.finalAnimeList;
+                        $finalAnimeList = finaliListOrigCopy;
                     } else if (data.isNew === false) {
-                        $finalAnimeList = $finalAnimeList.concat(
+                        finaliListOrigCopy = finaliListOrigCopy.concat(
                             data.finalAnimeList
                         );
+                        $finalAnimeList = finaliListOrigCopy;
                         if (data.isLast) {
                             shownAllInList = true;
                             if ($animeObserver) {
@@ -75,9 +79,10 @@
                     data.isRemoved === true &&
                     typeof data.removedID === "number"
                 ) {
-                    $finalAnimeList = $finalAnimeList.filter(
+                    finaliListOrigCopy = finaliListOrigCopy.filter(
                         ({ id }) => id !== data.removedID
                     );
+                    $finalAnimeList = finaliListOrigCopy;
                 }
             };
             val.onerror = (error) => {
@@ -87,6 +92,10 @@
     });
 
     finalAnimeList.subscribe((val) => {
+        if (!val) finaliListOrigCopy = null;
+        if (!finaliListOrigCopy && val instanceof Array) {
+            finaliListOrigCopy = val; // First Copy
+        }
         if (val instanceof Array && val.length) {
             if ($animeObserver) {
                 $animeObserver.disconnect();

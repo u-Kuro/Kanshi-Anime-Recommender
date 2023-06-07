@@ -26,11 +26,10 @@ const animeLoader = (_data) => {
             if (data?.status !== undefined) {
                 dataStatusPrio = true
                 dataStatus.set(data.status)
-            } else {
+            } else if (data?.isNew) {
                 dataStatusPrio = false
                 animeLoaderWorker.onmessage = null
-                resolve({ finalAnimeList: data.finalAnimeList, animeLoaderWorker })
-
+                resolve(Object.assign({}, data, { animeLoaderWorker: animeLoaderWorker }))
             }
         }
         animeLoaderWorker.onerror = (error) => {
