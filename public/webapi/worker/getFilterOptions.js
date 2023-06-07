@@ -4357,6 +4357,7 @@ self.onmessage = async ({ data }) => {
                         k = k.replace(/\b(tv|ona|ova)\b/gi, (match) => match.toUpperCase());
                         return { optionName: k, selected: "none" }
                     })
+                    options = options.filter(({ optionName }) => optionName !== "")
                     return {
                         filName: filName,
                         options: options,
@@ -4477,6 +4478,7 @@ self.onmessage = async ({ data }) => {
                         k = k.replace(/\b(tv|ona|ova)\b/gi, (match) => match.toUpperCase());
                         return { optionName: k, selected: "none" }
                     })
+                    options = options.filter(({ optionName }) => optionName !== "")
                     return {
                         filName: filName,
                         options: options,
@@ -4523,6 +4525,8 @@ self.onmessage = async ({ data }) => {
                         k = k.replace(/\b(tv|ona|ova)\b/gi, (match) => match.toUpperCase());
                         return { optionName: k, selected: "none" }
                     })
+                    options = options.filter(({ optionName }) => optionName !== "" && optionName !== "all")
+                    options.unshift({ optionName: "all", selected: "none" })
                     return {
                         filName: filName,
                         options: options,
@@ -4616,6 +4620,14 @@ self.onmessage = async ({ data }) => {
                                 }
                             } else {
                                 newOptionNames.sort() // Default Ascending
+                            }
+                            newOptionNames = newOptionNames.filter((e) => e !== "")
+                            if (filterType.filterSelectionName === "Algorithm Filter") {
+                                let allOptionIndex = newOptionNames.indexOf("all")
+                                if (allOptionIndex !== -1) {
+                                    newOptionNames.splice(allOptionIndex, 1);
+                                }
+                                newOptionNames.unshift("all");
                             }
                             let currentOptions = dropdown[i].options.reduce((result, { optionName, selected }) => {
                                 result[optionName] = selected
