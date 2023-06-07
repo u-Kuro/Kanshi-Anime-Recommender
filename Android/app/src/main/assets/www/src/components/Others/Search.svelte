@@ -1240,18 +1240,20 @@
         {/if}
         {#if $filterOptions}
             <div class="sortFilter">
-                <i
-                    on:click={changeSortType}
-                    on:keydown={changeSortType}
-                    class={"fa-duotone fa-sort-" +
-                        ($filterOptions?.sortFilter?.[
-                            $filterOptions?.sortFilter?.findIndex(
-                                ({ sortType }) => sortType !== "none"
-                            )
-                        ]?.sortType === "asc"
-                            ? "up"
-                            : "down")}
-                />
+                {#if !$initData}
+                    <i
+                        on:click={changeSortType}
+                        on:keydown={changeSortType}
+                        class={"fa-duotone fa-sort-" +
+                            ($filterOptions?.sortFilter?.[
+                                $filterOptions?.sortFilter?.findIndex(
+                                    ({ sortType }) => sortType !== "none"
+                                )
+                            ]?.sortType === "asc"
+                                ? "up"
+                                : "down")}
+                    />
+                {/if}
                 <h3
                     on:click={handleSortFilterPopup}
                     on:keydown={handleSortFilterPopup}

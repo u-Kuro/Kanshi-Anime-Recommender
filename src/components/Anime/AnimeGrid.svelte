@@ -11,6 +11,7 @@
         openedAnimePopupIdx,
         animeOptionVisible,
         openedAnimeOptionIdx,
+        updateRecommendationList,
     } from "../../js/globalValues.js";
     import {
         formatNumber,
@@ -33,10 +34,16 @@
                         self.unobserve(entry.target);
                         if (observerTimeout) clearTimeout(observerTimeout);
                         observerTimeout = setTimeout(() => {
-                            $animeLoaderWorker.postMessage({
-                                loadMore: true,
-                                // shownAnimeLen: $finalAnimeList.length,
-                            });
+                            try {
+                                $animeLoaderWorker.postMessage({
+                                    loadMore: true,
+                                    // shownAnimeLen: $finalAnimeList.length,
+                                });
+                            } catch (ex) {
+                                finaliListOrigCopy = undefined;
+                                $finalAnimeList = null;
+                                updateRecommendationList.update((e) => !e);
+                            }
                         }, observerDelay);
                     }
                 });
@@ -98,7 +105,7 @@
         }
         if (val instanceof Array && val.length) {
             if ($animeObserver) {
-                $animeObserver.disconnect();
+                $animeObserver?.disconnect?.();
                 $animeObserver = null;
             }
             if ($finalAnimeList.length && !shownAllInList) {
@@ -111,12 +118,16 @@
                             $finalAnimeList[$finalAnimeList.length - 1]
                                 .gridElement
                         );
-                    } catch (ex) {}
+                    } catch (ex) {
+                        finaliListOrigCopy = undefined;
+                        $finalAnimeList = null;
+                        updateRecommendationList.update((e) => !e);
+                    }
                 })();
             }
         } else {
             if ($animeObserver) {
-                $animeObserver.disconnect();
+                $animeObserver?.disconnect?.();
                 $animeObserver = null;
             }
         }
