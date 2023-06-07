@@ -50,7 +50,6 @@
 
     function openAnimePopup() {
         if (isRecentlyOpened) return;
-        console.log(animeIdx);
         $openedAnimePopupIdx = animeIdx;
         $popupVisible = true;
         $animeOptionVisible = false;

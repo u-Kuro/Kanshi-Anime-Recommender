@@ -63,7 +63,6 @@
 	inject(); // Vercel Analytics
 
 	window.onload = () => {
-		console.log(11111);
 		window.dataLayer = window.dataLayer || [];
 		function gtag() {
 			dataLayer.push(arguments);
@@ -490,7 +489,6 @@
 			copytimeoutId = setTimeout(() => {
 				let text = target.getAttribute("copy-value");
 				if (text && !$isScrolling && copyhold) {
-					console.log(text);
 					target.style.pointerEvents = "none";
 					setTimeout(() => {
 						target.style.pointerEvents = "";
