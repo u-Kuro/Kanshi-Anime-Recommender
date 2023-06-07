@@ -4,6 +4,7 @@
         finalAnimeList,
         dataStatus,
         menuVisible,
+        initData,
     } from "../../js/globalValues.js";
     import { IDBinit, retrieveJSON, saveJSON } from "../../js/indexedDB.js";
     import {
@@ -134,6 +135,7 @@
                 enterkeyhint="search"
                 autocomplete="off"
                 placeholder="{windowWidth > 415 ? 'Your ' : ''}Anilist Username"
+                disabled={$initData && !$username}
                 on:keydown={updateUsername}
                 bind:value={typedUsername}
             />

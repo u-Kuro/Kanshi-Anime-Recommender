@@ -126,9 +126,16 @@
 				"animeFranchisesLength"
 			);
 			if (animeFranchisesLen < 1) {
-				getAnimeFranchises();
+				getAnimeFranchises()
+					.then(() => {
+						resolve();
+					})
+					.catch((error) => {
+						resolve();
+					});
+			} else {
+				resolve();
 			}
-			resolve();
 		})
 	);
 
@@ -138,12 +145,20 @@
 			let _filterOptions = await retrieveJSON("filterOptions");
 			let _activeTagFilters = await retrieveJSON("activeTagFilters");
 			if (jsonIsEmpty(_filterOptions) || jsonIsEmpty(_activeTagFilters)) {
-				updateFilters.update((e) => !e);
+				getFilterOptions()
+					.then((data) => {
+						$activeTagFilters = data.activeTagFilters;
+						$filterOptions = data.filterOptions;
+						resolve();
+					})
+					.catch((error) => {
+						resolve();
+					});
 			} else {
 				$filterOptions = _filterOptions;
 				$activeTagFilters = _activeTagFilters;
+				resolve();
 			}
-			resolve();
 		})
 	);
 
@@ -160,9 +175,46 @@
 				!shouldProcessRecommendation &&
 				recommendedAnimeListLen?.length
 			) {
-				loadAnime.update((e) => !e);
+				animeLoader()
+					.then(async (data) => {
+						$animeLoaderWorker = data.animeLoaderWorker;
+						$searchedAnimeKeyword = "";
+						if (data?.isNew) {
+							$finalAnimeList = data.finalAnimeList;
+							resolve();
+						}
+						$dataStatus = null;
+					})
+					.catch((error) => {
+						resolve();
+					});
 			} else {
-				updateRecommendationList.update((e) => !e);
+				processRecommendedAnimeList()
+					.then(async () => {
+						await saveJSON(false, "shouldProcessRecommendation");
+						animeLoader()
+							.then(async (data) => {
+								$animeLoaderWorker = data.animeLoaderWorker;
+								$searchedAnimeKeyword = "";
+								if (
+									!$username &&
+									data.finalAnimeList.length < 1 &&
+									($finalAnimeList?.length ?? 0) < 1
+								) {
+									$finalAnimeList = null;
+								} else if (data?.isNew) {
+									$finalAnimeList = data.finalAnimeList;
+									resolve();
+								}
+								$dataStatus = null;
+							})
+							.catch((error) => {
+								resolve();
+							});
+					})
+					.catch((error) => {
+						resolve();
+					});
 			}
 			resolve();
 		})
@@ -194,21 +246,14 @@
 		.then(async () => {
 			$initData = false;
 			clearInterval(pleaseWaitStatusInterval);
+			await tick();
 			if (!$username) {
 				let usernameInput = document.getElementById("usernameInput");
 				usernameInput.setCustomValidity("Enter your Anilist Username");
 				usernameInput.reportValidity();
 			}
 			// Double Check
-			let recommendedAnimeListLen = await retrieveJSON(
-				"recommendedAnimeListLength"
-			);
-			if (recommendedAnimeListLen < 1) {
-				getFilterOptions().then((data) => {
-					$activeTagFilters = data.activeTagFilters;
-					$filterOptions = data.filterOptions;
-				});
-			} else if (!$finalAnimeList?.length) {
+			if (!$finalAnimeList?.length) {
 				loadAnime.update((e) => !e);
 			}
 		})
@@ -238,7 +283,11 @@
 			.then(async (data) => {
 				$animeLoaderWorker = data.animeLoaderWorker;
 				$searchedAnimeKeyword = "";
-				if ($initData) {
+				if (
+					!$username &&
+					data.finalAnimeList.length < 1 &&
+					($finalAnimeList?.length ?? 0) < 1
+				) {
 					$finalAnimeList = null; // Loading
 				} else if (data?.isNew) {
 					$finalAnimeList = data.finalAnimeList;

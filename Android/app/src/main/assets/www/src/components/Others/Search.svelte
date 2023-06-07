@@ -905,6 +905,7 @@
             enterkeyhint="search"
             autocomplete="off"
             placeholder="Search"
+            disabled={$initData}
             bind:value={$searchedAnimeKeyword}
         />
         <div class="filterType">
@@ -913,36 +914,40 @@
                 on:click={handleShowFilterTypes}
                 on:keydown={handleShowFilterTypes}
             />
-            <div
-                class="options-wrap"
-                style:--maxFilterSelectionHeight="{maxFilterSelectionHeight}px"
-                style:visibility={selectedFilterTypeElement ? "" : "hidden"}
-                style:pointer-events={selectedFilterTypeElement ? "" : "none"}
-            >
-                {#if $filterOptions}
-                    <div class="options">
-                        {#each $filterOptions?.filterSelection || [] as { filterSelectionName, isSelected } (filterSelectionName)}
-                            <div
-                                class="option"
-                                on:click={handleFilterTypes(
-                                    filterSelectionName
-                                )}
-                                on:keydown={handleFilterTypes(
-                                    filterSelectionName
-                                )}
-                            >
-                                <h3
-                                    style:color={isSelected
-                                        ? "#3db4f2"
-                                        : "inherit"}
+            {#if !$initData}
+                <div
+                    class="options-wrap"
+                    style:--maxFilterSelectionHeight="{maxFilterSelectionHeight}px"
+                    style:visibility={selectedFilterTypeElement ? "" : "hidden"}
+                    style:pointer-events={selectedFilterTypeElement
+                        ? ""
+                        : "none"}
+                >
+                    {#if $filterOptions}
+                        <div class="options">
+                            {#each $filterOptions?.filterSelection || [] as { filterSelectionName, isSelected } (filterSelectionName)}
+                                <div
+                                    class="option"
+                                    on:click={handleFilterTypes(
+                                        filterSelectionName
+                                    )}
+                                    on:keydown={handleFilterTypes(
+                                        filterSelectionName
+                                    )}
                                 >
-                                    {filterSelectionName || ""}
-                                </h3>
-                            </div>
-                        {/each}
-                    </div>
-                {/if}
-            </div>
+                                    <h3
+                                        style:color={isSelected
+                                            ? "#3db4f2"
+                                            : "inherit"}
+                                    >
+                                        {filterSelectionName || ""}
+                                    </h3>
+                                </div>
+                            {/each}
+                        </div>
+                    {/if}
+                </div>
+            {/if}
         </div>
     </div>
     <div class="home-status">
@@ -976,7 +981,7 @@
         id="filters"
         style:--maxPaddingHeight="{window.innerHeight}px"
     >
-        {#if $filterOptions}
+        {#if $filterOptions && !$initData}
             {#each $filterOptions?.filterSelection || [] as { filterSelectionName, filters, isSelected }, filSelIdx (filterSelectionName + filSelIdx)}
                 {#each filters.Dropdown || [] as { filName, options, selected, changeType, optKeyword }, dropdownIdx (filName + dropdownIdx)}
                     <div
