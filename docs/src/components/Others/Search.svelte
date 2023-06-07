@@ -141,7 +141,7 @@
         filterIsScrolling = true;
         filterScrollTimeout = setTimeout(() => {
             filterIsScrolling = false;
-        }, 50);
+        }, 300);
     }
     function filterSelect(event, dropdownIdx) {
         if (filterIsScrolling) return;
@@ -329,9 +329,13 @@
             (classList.contains("checkbox") &&
                 keyCode !== 13 &&
                 event.type === "keydown")
-        )
-            return; // Prevent Default
-
+        ) {
+            return;
+        }
+        if (filterIsScrolling) {
+            return;
+        }
+        // Prevent Default
         let idxTypeSelected = $filterOptions?.filterSelection?.findIndex(
             ({ isSelected }) => isSelected
         );
