@@ -270,8 +270,11 @@
             mostVisiblePopupHeader?.querySelector?.(".trailer");
         // Scroll in Grid
         let animeGrid =
-            $finalAnimeList?.[getChildIndex(mostVisiblePopupHeader) ?? -1]
-                ?.gridElement;
+            $finalAnimeList?.[
+                getChildIndex(
+                    mostVisiblePopupHeader?.closest?.(".popup-content")
+                ) ?? -1
+            ]?.gridElement;
         if (animeGrid instanceof Element) {
             scrollToElement(window, animeGrid, "top", "smooth", -66); // Nav + GridGap
         }
