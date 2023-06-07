@@ -53,12 +53,12 @@
                                 .then(({ newusername }) => {
                                     if (newusername) {
                                         typedUsername = $username = newusername;
-                                        updateRecommendationList.updateRecommendationList(
+                                        updateRecommendationList.update(
                                             (e) => !e
                                         );
                                     }
                                 })
-                                .catch((error) => alert(error));
+                                .catch((error) => console.error(error));
                         }
                     } else {
                         $menuVisible = false;
@@ -67,11 +67,9 @@
                             .then(({ newusername }) => {
                                 if (newusername)
                                     typedUsername = $username = newusername;
-                                updateRecommendationList.updateRecommendationList(
-                                    (e) => !e
-                                );
+                                updateRecommendationList.update((e) => !e);
                             })
-                            .catch((error) => alert(error));
+                            .catch((error) => console.error(error));
                     }
                 })();
             }
