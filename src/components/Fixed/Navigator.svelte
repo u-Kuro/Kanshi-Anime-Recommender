@@ -41,6 +41,7 @@
                 (classList.contains("searchBtn") ||
                     element?.closest?.(".searchBtn")))
         ) {
+            if (!typedUsername) return;
             if (typedUsername !== $username) {
                 (async () => {
                     if ($username) {

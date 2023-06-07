@@ -1261,37 +1261,45 @@
                             ({ sortType }) => sortType !== "none"
                         )
                     ]?.sortName || ""}
-                    <div
-                        class="options-wrap"
-                        style:--maxFilterSelectionHeight="{maxFilterSelectionHeight}px"
-                        style:visibility={selectedSortElement ? "" : "hidden"}
-                        style:pointer-events={selectedSortElement ? "" : "none"}
-                    >
-                        <div class="options">
-                            {#each $filterOptions?.sortFilter || [] as { sortName }, sortIdx (sortName + sortIdx)}
-                                <div
-                                    class="option"
-                                    on:click={changeSort(sortName)}
-                                    on:keydown={changeSort(sortName)}
-                                >
-                                    <h3>{sortName || ""}</h3>
-                                    {#if $filterOptions?.sortFilter?.[$filterOptions?.sortFilter?.findIndex(({ sortType }) => sortType !== "none")].sortName === sortName && sortName}
-                                        <i
-                                            class={"fa-duotone fa-sort-" +
-                                                ($filterOptions?.sortFilter?.[
-                                                    $filterOptions?.sortFilter?.findIndex(
-                                                        ({ sortType }) =>
-                                                            sortType !== "none"
-                                                    )
-                                                ].sortType === "asc"
-                                                    ? "up"
-                                                    : "down")}
-                                        />
-                                    {/if}
-                                </div>
-                            {/each}
+                    {#if !$initData}
+                        <div
+                            class="options-wrap"
+                            style:--maxFilterSelectionHeight="{maxFilterSelectionHeight}px"
+                            style:visibility={selectedSortElement
+                                ? ""
+                                : "hidden"}
+                            style:pointer-events={selectedSortElement
+                                ? ""
+                                : "none"}
+                        >
+                            <div class="options">
+                                {#each $filterOptions?.sortFilter || [] as { sortName }, sortIdx (sortName + sortIdx)}
+                                    <div
+                                        class="option"
+                                        on:click={changeSort(sortName)}
+                                        on:keydown={changeSort(sortName)}
+                                    >
+                                        <h3>{sortName || ""}</h3>
+                                        {#if $filterOptions?.sortFilter?.[$filterOptions?.sortFilter?.findIndex(({ sortType }) => sortType !== "none")].sortName === sortName && sortName}
+                                            <i
+                                                class={"fa-duotone fa-sort-" +
+                                                    ($filterOptions
+                                                        ?.sortFilter?.[
+                                                        $filterOptions?.sortFilter?.findIndex(
+                                                            ({ sortType }) =>
+                                                                sortType !==
+                                                                "none"
+                                                        )
+                                                    ].sortType === "asc"
+                                                        ? "up"
+                                                        : "down")}
+                                            />
+                                        {/if}
+                                    </div>
+                                {/each}
+                            </div>
                         </div>
-                    </div>
+                    {/if}
                 </h3>
             </div>
         {:else}
