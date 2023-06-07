@@ -1,6 +1,7 @@
 <script>
 	import C from "./components/index.js";
 	import { onMount, onDestroy, tick } from "svelte";
+	import { inject } from "@vercel/analytics";
 	import { IDBinit, retrieveJSON, saveJSON } from "./js/indexedDB.js";
 	import {
 		android,
@@ -52,12 +53,14 @@
 		jsonIsEmpty,
 	} from "./js/others/helper.js";
 
-	$android = isAndroid();
+	$android = isAndroid(); // Android/Browser Identifier
 
 	// Get Export Folder for Android
 	(async () => {
 		$exportPathIsAvailable = await retrieveJSON("exportPathIsAvailable");
 	})();
+
+	inject(); // Vercel Analytics
 
 	window.onload = () => {
 		console.log(11111);
@@ -67,7 +70,7 @@
 		}
 		gtag("js", new Date());
 		gtag("config", "G-PPMY92TJCE");
-	};
+	}; // Google Analytics
 
 	// For Youtube API
 	const onYouTubeIframeAPIReady = new Function();
