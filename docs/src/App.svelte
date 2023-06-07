@@ -204,7 +204,10 @@
 				"recommendedAnimeListLength"
 			);
 			if (recommendedAnimeListLen < 1) {
-				updateRecommendationList.update((e) => !e);
+				getFilterOptions().then((data) => {
+					$activeTagFilters = data.activeTagFilters;
+					$filterOptions = data.filterOptions;
+				});
 			} else if (!$finalAnimeList?.length) {
 				loadAnime.update((e) => !e);
 			}
