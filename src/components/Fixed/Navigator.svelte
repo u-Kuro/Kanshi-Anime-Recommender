@@ -1,17 +1,12 @@
 <script>
     import {
         username,
-        finalAnimeList,
         dataStatus,
         menuVisible,
         initData,
+        updateRecommendationList,
     } from "../../js/globalValues.js";
-    import { IDBinit, retrieveJSON, saveJSON } from "../../js/indexedDB.js";
-    import {
-        requestUserEntries,
-        processRecommendedAnimeList,
-        animeLoader,
-    } from "../../js/workerUtils.js";
+    import { requestUserEntries } from "../../js/workerUtils.js";
     import { onMount, onDestroy } from "svelte";
 
     let writableSubscriptions = [];
@@ -55,24 +50,12 @@
                             requestUserEntries({
                                 username: typedUsername,
                             })
-                                .then(({ message, newusername }) => {
+                                .then(({ newusername }) => {
                                     if (newusername) {
                                         typedUsername = $username = newusername;
-                                        processRecommendedAnimeList()
-                                            .then(() => {
-                                                animeLoader()
-                                                    .then((data) => {
-                                                        $finalAnimeList =
-                                                            data.finalAnimeList;
-                                                        return;
-                                                    })
-                                                    .catch((error) => {
-                                                        throw error;
-                                                    });
-                                            })
-                                            .catch((error) => {
-                                                throw error;
-                                            });
+                                        updateRecommendationList.updateRecommendationList(
+                                            (e) => !e
+                                        );
                                     }
                                 })
                                 .catch((error) => alert(error));
@@ -81,24 +64,12 @@
                         $menuVisible = false;
                         $dataStatus = "Getting User Entries";
                         await requestUserEntries({ username: typedUsername })
-                            .then(({ message, newusername }) => {
+                            .then(({ newusername }) => {
                                 if (newusername)
                                     typedUsername = $username = newusername;
-                                processRecommendedAnimeList()
-                                    .then(() => {
-                                        animeLoader()
-                                            .then((data) => {
-                                                $finalAnimeList =
-                                                    data.finalAnimeList;
-                                                return;
-                                            })
-                                            .catch((error) => {
-                                                throw error;
-                                            });
-                                    })
-                                    .catch((error) => {
-                                        throw error;
-                                    });
+                                updateRecommendationList.updateRecommendationList(
+                                    (e) => !e
+                                );
                             })
                             .catch((error) => alert(error));
                     }
@@ -127,7 +98,14 @@
     on:click={handleMenuVisibility}
 >
     <nav class="nav">
-        <h1 class="textLogo copy-value" data-copy-value="Kanshi.">Kanshi.</h1>
+        <h1
+            class="textLogo copy-value"
+            data-copy-value="Kanshi."
+            on:click={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+            on:keydown={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+        >
+            Kanshi.
+        </h1>
         <!-- <div id="fps">--</span> FPS</div> -->
         <div class="input-search">
             <input
@@ -187,6 +165,7 @@
     .nav .textLogo {
         min-width: 87px;
         word-break: keep-all;
+        cursor: pointer;
     }
     .input-search {
         display: flex;
@@ -205,6 +184,7 @@
         padding-right: 1ch;
         max-width: 160px;
         width: 100%;
+        cursor: auto;
     }
     .input-search .searchBtn {
         display: flex;

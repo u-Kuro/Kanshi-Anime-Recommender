@@ -28,7 +28,7 @@ const autoPlay = writable(null)
 const initData = writable(true)
 const animeObserver = writable(null)
 const searchedAnimeKeyword = writable("")
-const toast = writable(null)
+// const toast = writable(null)
 const menuVisible = writable(false)
 const animeOptionVisible = writable(false)
 const openedAnimeOptionIdx = writable(null)
@@ -68,7 +68,7 @@ export {
     initData,
     animeObserver,
     searchedAnimeKeyword,
-    toast,
+    // toast,
     menuVisible,
     animeOptionVisible,
     openedAnimeOptionIdx,

@@ -57,7 +57,7 @@ function getMostVisibleElement(parent, childSelector, intersectionRatioThreshold
     });
     return mostVisibleElement;
   } catch (ex) {
-    console.error(ex)
+    // console.error(ex)
     return
   }
 }
@@ -107,7 +107,7 @@ const scrollToElement = (parent, target, position = 'top', behavior, offset = 0)
       }
     }
   } catch (ex) {
-    console.error(ex)
+    // console.error(ex)
     return
   }
 };
@@ -124,7 +124,7 @@ const scrollToElementAmount = (parent, target, position = 'top') => {
       return targetRect.top - parentRect.top + parent.scrollTop;
     }
   } catch (ex) {
-    console.error(ex)
+    // console.error(ex)
     return
   }
 };

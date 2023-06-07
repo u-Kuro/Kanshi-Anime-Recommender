@@ -17,7 +17,6 @@
         formatNumber,
         ncsCompare,
         isJsonObject,
-        jsonIsEmpty,
     } from "../../js/others/helper.js";
 
     let renderedImgGridLimit = 20;
@@ -37,11 +36,8 @@
                             try {
                                 $animeLoaderWorker.postMessage({
                                     loadMore: true,
-                                    // shownAnimeLen: $finalAnimeList.length,
                                 });
                             } catch (ex) {
-                                finaliListOrigCopy = undefined;
-                                $finalAnimeList = null;
                                 updateRecommendationList.update((e) => !e);
                             }
                         }, observerDelay);
@@ -56,7 +52,6 @@
         );
     }
 
-    let finaliListOrigCopy; // To Keep Element Reference Binding New
     animeLoaderWorker.subscribe((val) => {
         if (val instanceof Worker) {
             val.onmessage = async ({ data }) => {
@@ -67,16 +62,16 @@
                     $finalAnimeList instanceof Array
                 ) {
                     if (data.isNew === true) {
-                        finaliListOrigCopy = data.finalAnimeList;
-                        $finalAnimeList = finaliListOrigCopy;
+                        $finalAnimeList = data.finalAnimeList;
                     } else if (data.isNew === false) {
-                        finaliListOrigCopy = finaliListOrigCopy.concat(
+                        $finalAnimeList = $finalAnimeList.concat(
                             data.finalAnimeList
                         );
-                        $finalAnimeList = finaliListOrigCopy;
                         if (data.isLast) {
                             shownAllInList = true;
-                            if ($animeObserver) {
+                            if (
+                                $animeObserver instanceof IntersectionObserver
+                            ) {
                                 $animeObserver.disconnect();
                                 $animeObserver = null;
                             }
@@ -86,10 +81,20 @@
                     data.isRemoved === true &&
                     typeof data.removedID === "number"
                 ) {
-                    finaliListOrigCopy = finaliListOrigCopy.filter(
-                        ({ id }) => id !== data.removedID
-                    );
-                    $finalAnimeList = finaliListOrigCopy;
+                    try {
+                        if ($animeObserver instanceof IntersectionObserver) {
+                            $animeObserver.observe(
+                                $finalAnimeList[
+                                    Math.max($finalAnimeList.length - 2, 0)
+                                ].gridElement
+                            );
+                        }
+                        $finalAnimeList = $finalAnimeList.filter(
+                            ({ id }) => id !== data.removedID
+                        );
+                    } catch (ex) {
+                        updateRecommendationList.update((e) => !e);
+                    }
                 }
             };
             val.onerror = (error) => {
@@ -99,32 +104,26 @@
     });
 
     finalAnimeList.subscribe((val) => {
-        if (!val) finaliListOrigCopy = null;
-        if (!finaliListOrigCopy && val instanceof Array) {
-            finaliListOrigCopy = val; // First Copy
-        }
         if (val instanceof Array && val.length) {
+            if (shownAllInList) {
+                shownAllInList = false;
+            }
             if ($animeObserver) {
-                $animeObserver?.disconnect?.();
+                $animeObserver.disconnect();
                 $animeObserver = null;
             }
-            if ($finalAnimeList.length && !shownAllInList) {
-                (async () => {
-                    addObserver();
-                    await tick();
-                    // Grid Observed
-                    try {
-                        $animeObserver.observe(
-                            $finalAnimeList[$finalAnimeList.length - 1]
-                                .gridElement
-                        );
-                    } catch (ex) {
-                        finaliListOrigCopy = undefined;
-                        $finalAnimeList = null;
-                        updateRecommendationList.update((e) => !e);
-                    }
-                })();
-            }
+            (async () => {
+                await tick();
+                addObserver();
+                // Grid Observed
+                try {
+                    $animeObserver.observe(
+                        $finalAnimeList[$finalAnimeList.length - 1].gridElement
+                    );
+                } catch (ex) {
+                    updateRecommendationList.update((e) => !e);
+                }
+            })();
         } else {
             if ($animeObserver) {
                 $animeObserver?.disconnect?.();

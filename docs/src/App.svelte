@@ -1,11 +1,10 @@
 <script>
 	import C from "./components/index.js";
-	import { onMount, onDestroy, tick } from "svelte";
+	import { onMount, tick } from "svelte";
 	import { inject } from "@vercel/analytics";
-	import { IDBinit, retrieveJSON, saveJSON } from "./js/indexedDB.js";
+	import { retrieveJSON, saveJSON } from "./js/indexedDB.js";
 	import {
 		android,
-		lastAnimeUpdate,
 		username,
 		hiddenEntries,
 		filterOptions,
@@ -47,11 +46,7 @@
 		animeLoader,
 		exportUserData,
 	} from "./js/workerUtils.js";
-	import {
-		isAndroid,
-		isJsonObject,
-		jsonIsEmpty,
-	} from "./js/others/helper.js";
+	import { isAndroid, jsonIsEmpty } from "./js/others/helper.js";
 
 	$android = isAndroid(); // Android/Browser Identifier
 
@@ -92,12 +87,10 @@
 			if (animeEntriesLen < 1 || !(_lastAnimeUpdate instanceof Date)) {
 				$finalAnimeList = null;
 				getAnimeEntries()
-					.then((data) => {
-						$lastAnimeUpdate = data.lastAnimeUpdate;
+					.then(() => {
 						resolve();
 					})
 					.catch(async (error) => {
-						console.error(error);
 						requestAnimeEntries();
 						resolve();
 					});
@@ -130,7 +123,7 @@
 					.then(() => {
 						resolve();
 					})
-					.catch((error) => {
+					.catch(() => {
 						resolve();
 					});
 			} else {
@@ -151,7 +144,7 @@
 						$filterOptions = data.filterOptions;
 						resolve();
 					})
-					.catch((error) => {
+					.catch(() => {
 						resolve();
 					});
 			} else {
@@ -179,13 +172,19 @@
 					.then(async (data) => {
 						$animeLoaderWorker = data.animeLoaderWorker;
 						$searchedAnimeKeyword = "";
-						if (data?.isNew) {
+						if (
+							!$username &&
+							data.finalAnimeList.length < 1 &&
+							($finalAnimeList?.length ?? 0) < 1
+						) {
+							$finalAnimeList = null;
+						} else if (data?.isNew) {
 							$finalAnimeList = data.finalAnimeList;
 							resolve();
 						}
 						$dataStatus = null;
 					})
-					.catch((error) => {
+					.catch(() => {
 						resolve();
 					});
 			} else {
@@ -208,11 +207,11 @@
 								}
 								$dataStatus = null;
 							})
-							.catch((error) => {
+							.catch(() => {
 								resolve();
 							});
 					})
-					.catch((error) => {
+					.catch(() => {
 						resolve();
 					});
 			}
@@ -267,6 +266,7 @@
 	// Reactive Functions
 	updateRecommendationList.subscribe(async (val) => {
 		if (typeof val !== "boolean") return;
+		$finalAnimeList = null;
 		await saveJSON(true, "shouldProcessRecommendation");
 		processRecommendedAnimeList()
 			.then(async () => {
@@ -279,6 +279,7 @@
 	});
 	loadAnime.subscribe(async (val) => {
 		if (typeof val !== "boolean") return;
+		$finalAnimeList = null;
 		animeLoader()
 			.then(async (data) => {
 				$animeLoaderWorker = data.animeLoaderWorker;
@@ -305,8 +306,7 @@
 	});
 	let dayInMS = 24 * 60 * 60 * 1000;
 	autoUpdate.subscribe(async (val) => {
-		if (typeof val !== "boolean") return;
-		else if (val === true) {
+		if (val === true) {
 			saveJSON(true, "autoUpdate");
 			// Check Run First
 			let isPastDate = false;
@@ -365,8 +365,7 @@
 	});
 	let hourINMS = 60 * 60 * 1000;
 	autoExport.subscribe(async (val) => {
-		if (typeof val !== "boolean") return;
-		else if (val === true) {
+		if (val === true) {
 			saveJSON(true, "autoExport");
 			// Check Run First
 			let isPastDate = false;
@@ -426,29 +425,6 @@
 		}, 1000);
 	});
 
-	popupVisible.subscribe((val) => {
-		documentScroll(val);
-	});
-	menuVisible.subscribe((val) => {
-		documentScroll(val);
-	});
-	animeOptionVisible.subscribe((val) => {
-		documentScroll(val);
-	});
-	function documentScroll(val) {
-		// if (val === true) {
-		// 	currentScrollTop = document.documentElement.scrollTop;
-		// 	document.documentElement.classList.add("noscroll");
-		// 	document.body.classList.add("noscroll");
-		// 	document.body.style.top = -currentScrollTop + "px";
-		// } else if (val === false) {
-		// 	document.documentElement.classList.remove("noscroll");
-		// 	document.body.classList.remove("noscroll");
-		// 	document.body.style.top = "";
-		// 	document.documentElement.scrollTop = currentScrollTop;
-		// }
-	}
-
 	// Global Function For Android/Browser
 	if ("scrollRestoration" in window.history) {
 		window.history.scrollRestoration = "manual"; // Disable scrolling to top when navigating back
@@ -482,11 +458,9 @@
 		}
 	};
 	popupVisible.subscribe((val) => {
-		if (typeof val !== "boolean") return;
 		if (val === true) window.setShoulGoBack(false);
 	});
 	menuVisible.subscribe((val) => {
-		if (typeof val !== "boolean") return;
 		if (val === true) window.setShoulGoBack(false);
 	});
 	window.addEventListener("scroll", () => {
@@ -571,18 +545,14 @@
 	<C.Fixed.Navigator />
 	<C.Fixed.Menu />
 
-	<C.Others.Header />
 	<div class="home">
 		<C.Others.Search />
 		<C.Anime.AnimeGrid />
 		<C.Anime.Fixed.AnimePopup />
 	</div>
 
-	<C.Fixed.FilterPopup />
 	<C.Anime.Fixed.AnimeOptionsPopup />
-
-	<C.Fixed.Toast />
-	<C.Fixed.Loader />
+	<!-- <C.Fixed.Toast /> -->
 </main>
 
 <style>

@@ -9,6 +9,7 @@
         animeObserver,
         popupVisible,
         openedAnimePopupIdx,
+        updateRecommendationList,
     } from "../../../js/globalValues.js";
     import {
         isJsonObject,
@@ -17,11 +18,9 @@
         getMostVisibleElement,
         getChildIndex,
         msToTime,
-        scrollToElementAmount,
     } from "../../../js/others/helper.js";
     import { saveJSON } from "../../../js/indexedDB.js";
     import captureSlideEvent from "../../../js/slideEvent.js";
-    import alter from "../../../js/alter.js";
 
     let isOnline = window.navigator.onLine;
     let popupWrapper, popupContainer;
@@ -205,12 +204,19 @@
             try {
                 if ($animeObserver) {
                     // Popup Observed
-                    $animeObserver.observe(
-                        $finalAnimeList[$finalAnimeList.length - 1].popupContent
-                    );
+                    try {
+                        $animeObserver.observe(
+                            $finalAnimeList[$finalAnimeList.length - 1]
+                                .popupContent
+                        );
+                    } catch (ex) {
+                        updateRecommendationList.update((e) => !e);
+                    }
                 }
                 playMostVisibleTrailer();
             } catch (ex) {}
+        } else {
+            $popupVisible = false;
         }
     });
 
@@ -509,7 +515,6 @@
             var tag = document.createElement("script");
             tag.src = "https://www.youtube.com/iframe_api?v=16";
             tag.onerror = () => {
-                console.error("Failed to load YouTube API script.");
                 resolve();
             };
             tag.onload = () => {
@@ -1035,17 +1040,6 @@
         flex: 1;
     }
 
-    .popup-body .footer button.show {
-        background-color: rgb(40 69 102) !important;
-        color: #b8bfd1 !important;
-    }
-
-    .popup-body .footer button.hide:focus,
-    .popup-body .footer button.hide:hover {
-        background-color: #d75a72 !important;
-        color: #fff !important;
-    }
-
     .info-list {
         max-height: 220px;
         overflow: hidden;
@@ -1074,18 +1068,6 @@
             font-size: clamp(1.2rem, 1.3rem, 1.4rem);
             background-color: transparent;
         }
-
-        .image-grid__card-title i {
-            font-size: 0.9rem;
-        }
-
-        .image-grid__card .image-grid__card-thumb {
-            height: 210px !important;
-        }
-    }
-
-    .image-grid__card-title i {
-        font-size: 1rem;
     }
 
     .info-list div {

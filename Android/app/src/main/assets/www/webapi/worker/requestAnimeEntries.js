@@ -756,7 +756,7 @@ function mergeArraysByUniqueProperties(array1, array2, uniqueProperties) {
         let mergedArray = Object.values(mergedData);
         return mergedArray;
     } catch (ex) {
-        console.error(ex)
+        // console.error(ex)
         return
     }
 }  

@@ -1,8 +1,5 @@
 import {
     dataStatus,
-    activeTagFilters,
-    filterOptions,
-    toast,
     updateRecommendationList,
     updateFilters,
     loadAnime,
@@ -13,14 +10,12 @@ let terminateDelay = 1000;
 let dataStatusPrio = false
 
 // Reactinve Functions
-let animeLoaderTerminateTimeout;
 let animeLoaderWorker;
 const animeLoader = (_data) => {
     dataStatusPrio = true
     return new Promise((resolve, reject) => {
         if (animeLoaderWorker) animeLoaderWorker.terminate();
         animeLoaderWorker = new Worker("./webapi/worker/animeLoader.js")
-        if (animeLoaderTerminateTimeout) clearTimeout(animeLoaderTerminateTimeout)
         animeLoaderWorker.postMessage(_data)
         animeLoaderWorker.onmessage = ({ data }) => {
             if (data?.status !== undefined) {
@@ -57,6 +52,7 @@ const processRecommendedAnimeList = (_data) => {
                 }, terminateDelay);
                 updateFilters.update(e => !e)
                 loadAnime.update(e => !e)
+                resolve()
             }
         };
         processRecommendedAnimeListWorker.onerror = (error) => {

@@ -8,14 +8,15 @@ let db,
 self.onmessage = async ({ data }) => {
     if (data?.filterKeyword !== undefined) {
         keyword = data?.filterKeyword
-        filteredList = finalAnimeList.filter(({ title }) => title?.toLowerCase?.().includes(keyword))
+        filteredList = finalAnimeList.filter(({ title }) => title?.toLowerCase?.().includes(keyword?.toLowerCase?.()) || !keyword)
         self.postMessage({
             isNew: true,
             finalAnimeList: filteredList.slice(0, loadLimit)
         });
+        filteredList = filteredList.slice(loadLimit)
     } else if (data?.removeID !== undefined) {
         finalAnimeList = finalAnimeList.filter(({ id }) => id !== data.removeID)
-        filteredList = finalAnimeList.filter(({ title }) => title?.toLowerCase?.().includes(keyword))
+        filteredList = filteredList.filter(({ id }) => id !== data.removeID)
         self.postMessage({
             isRemoved: true,
             removedID: data.removeID

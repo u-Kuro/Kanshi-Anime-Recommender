@@ -21,7 +21,7 @@
         exportUserData,
         importUserData,
     } from "../../js/workerUtils.js";
-    import { jsonIsEmpty, isAndroid } from "../../js/others/helper.js";
+    import { jsonIsEmpty } from "../../js/others/helper.js";
 
     let importFileInput;
 

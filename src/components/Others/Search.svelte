@@ -1,6 +1,6 @@
 <script>
-    import { onMount, onDestroy } from "svelte";
-    import { IDBinit, retrieveJSON, saveJSON } from "../../js/indexedDB.js";
+    import { onMount } from "svelte";
+    import { saveJSON } from "../../js/indexedDB.js";
     import {
         finalAnimeList,
         animeLoaderWorker,
@@ -875,19 +875,6 @@
         window.addEventListener("resize", windowResized);
         window.addEventListener("pointerdown", clickOutsideListener);
     });
-    // onDestroy(() => {
-    //     writableSubscriptions.forEach((unsub) => unsub());
-    //     filterOptionsUnsubscribe();
-    //     unsubTagFiltersDragScroll();
-    //     unsubFilterDragScroll();
-    //     document.removeEventListener("keydown", handleDropdownKeyDown);
-    //     if (tagFilterScrollTimeout) clearTimeout(tagFilterScrollTimeout);
-    //     document
-    //         .getElementsByClassName("tagFilters")[0]
-    //         .removeEventListener("scroll", handleTagFilterScroll);
-    //     window.removeEventListener("resize", windowResized);
-    //     window.removeEventListener("pointerdown", clickOutsideListener);
-    // });
 
     // Helper
     function getIndexInParent(element) {

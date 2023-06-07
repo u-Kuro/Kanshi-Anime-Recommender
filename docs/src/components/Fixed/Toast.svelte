@@ -1,4 +1,4 @@
-<script>
+<!-- <script>
     import { toast } from "../../js/globalValues.js";
 </script>
 
@@ -28,4 +28,4 @@
         white-space: nowrap;
         overflow: auto;
     }
-</style>
+</style> -->
