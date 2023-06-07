@@ -28,7 +28,7 @@
                 animeTitle = openedAnime.title;
                 animeID = openedAnime.id;
                 animeUrl = openedAnime.animeUrl;
-                animeIdx = openedAnimeOptionIdx;
+                animeIdx = $openedAnimeOptionIdx;
             }
             $openedAnimeOptionIdx = null;
         } else {
@@ -50,6 +50,7 @@
 
     function openAnimePopup() {
         if (isRecentlyOpened) return;
+        console.log(animeIdx);
         $openedAnimePopupIdx = animeIdx;
         $popupVisible = true;
         $animeOptionVisible = false;
@@ -64,13 +65,13 @@
     }
 
     function copyTitle() {
-        if (isRecentlyOpened) return;
+        if (isRecentlyOpened || !animeTitle) return;
         if ($android) {
             try {
-                JSBridge.copyToClipBoard(text);
+                JSBridge.copyToClipBoard(animeTitle);
             } catch (e) {}
         } else {
-            navigator?.clipboard?.writeText?.(text);
+            navigator?.clipboard?.writeText?.(animeTitle);
         }
         $animeOptionVisible = false;
     }

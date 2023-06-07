@@ -23,8 +23,8 @@
     import captureSlideEvent from "../../../js/slideEvent.js";
     import alter from "../../../js/alter.js";
 
+    let isOnline = window.navigator.onLine;
     let popupWrapper, popupContainer;
-    let popupContainerEls = {};
 
     function handlePopupVisibility(e) {
         let target = e.target;
@@ -79,10 +79,11 @@
                 !$finalAnimeList[animeIdx].isSeenMore;
             await tick();
             let targetEl = anime.popupContent;
-            if (
-                targetEl instanceof Element &&
-                popupContainer instanceof Element
-            ) {
+            if (!popupContainer instanceof Element) return;
+            if (!(targetEl instanceof Element)) {
+                targetEl = anime?.popupHeader?.closest?.(".popup-content");
+            }
+            if (targetEl instanceof Element) {
                 scrollToElement(popupContainer, targetEl, "bottom");
             }
         }
@@ -258,10 +259,13 @@
     async function playMostVisibleTrailer(once = false) {
         if (!$popupVisible) return;
         await tick();
-        let mostVisiblePopupHeader = getMostVisibleElement(
-            popupContainer,
-            ".popup-header"
-        );
+        let mostVisiblePopupHeader =
+            getMostVisibleElement(popupContainer, ".popup-header", 0) ||
+            getMostVisibleElement(
+                popupContainer,
+                ".popup-content",
+                1
+            )?.querySelector(".popup-header");
         let visibleTrailer =
             mostVisiblePopupHeader?.querySelector?.(".trailer");
         // Scroll in Grid
@@ -311,51 +315,81 @@
     }
 
     function createPopupYTPlayer(openedAnime) {
-        if (
-            !openedAnime ||
-            !(openedAnime.popupHeader instanceof Element) ||
-            !openedAnime.trailerID ||
-            !popupWrapper?.classList?.contains("visible")
-        )
-            return; // Unavailable
         let ytPlayerEl = openedAnime.popupHeader.querySelector(".trailer");
-        let youtubeID = openedAnime.trailerID;
-        if (ytPlayerEl instanceof Element && youtubeID) {
-            if ($ytPlayers.some((ytPlayer) => ytPlayer.g === ytPlayerEl))
-                return;
-            if ($ytPlayers.length >= 8) {
-                let destroyedPlayer = $ytPlayers.shift();
-                // $ytPlayers = $ytPlayers
-                destroyedPlayer?.destroy?.();
-                let parentElement = ytPlayerEl.parentElement;
-                let newYtPlayerEl = document.createElement("div");
-                newYtPlayerEl.className = "trailer";
-                parentElement.replaceChild(newYtPlayerEl, ytPlayerEl);
-                ytPlayerEl = parentElement.querySelector(".trailer"); // Get new YT player
+        if (!isOnline) {
+            let popupHeader = ytPlayerEl?.parentNode;
+            let popupImg = popupHeader?.querySelector?.(".popup-img");
+            let hasPlayer = $ytPlayers?.some(({ g }) => g === ytPlayerEl);
+            if (hasPlayer) return; // Keep Playing Available YTPlayers
+            let animeBannerImg = openedAnime?.bannerImageUrl;
+            let animeBannerImgEl = popupImg.querySelector(".bannerImg");
+            if (
+                animeBannerImg &&
+                (animeBannerImgEl?.naturalHeight === 0 ||
+                    animeBannerImgEl?.naturalWidth === 0)
+            ) {
+                animeBannerImgEl.src = animeBannerImg;
             }
-        }
-        // Add a Unique ID
-        ytPlayerEl.setAttribute("id", "yt-player" + Date.now() + Math.random());
-        let ytPlayer = new YT.Player(ytPlayerEl, {
-            playerVars: {
-                cc_lang_pref: "en", // Set preferred caption language to English
-                cc_load_policy: 1, // Set on by default
-                enablejsapi: 1, // Enable the JavaScript API
-                loop: 1, // Enable video looping
-                modestbranding: 1, // Enable modest branding (hide the YouTube logo)
-                playsinline: 1, // Enable inline video playback
-                playlist: youtubeID,
-            },
-            events: {
-                onReady: (event) => {
-                    onPlayerReady(event);
+            let animeCoverImg = openedAnime.coverImageUrl;
+            let animeCoverImgEl = popupImg.querySelector(".coverImg");
+            if (
+                animeCoverImg &&
+                (animeCoverImgEl?.naturalHeight === 0 ||
+                    animeCoverImgEl?.naturalWidth === 0)
+            ) {
+                animeCoverImgEl.src = animeCoverImg;
+            }
+            popupImg.style.display = "";
+            ytPlayerEl.style.display = "none";
+        } else {
+            if (
+                !openedAnime ||
+                !(openedAnime.popupHeader instanceof Element) ||
+                !openedAnime.trailerID ||
+                !popupWrapper?.classList?.contains("visible")
+            )
+                return; // Unavailable
+            let youtubeID = openedAnime.trailerID;
+            if (ytPlayerEl instanceof Element && youtubeID) {
+                if ($ytPlayers.some((ytPlayer) => ytPlayer.g === ytPlayerEl))
+                    return;
+                if ($ytPlayers.length >= 8) {
+                    let destroyedPlayer = $ytPlayers.shift();
+                    // $ytPlayers = $ytPlayers
+                    destroyedPlayer?.destroy?.();
+                    let parentElement = ytPlayerEl.parentElement;
+                    let newYtPlayerEl = document.createElement("div");
+                    newYtPlayerEl.className = "trailer";
+                    parentElement.replaceChild(newYtPlayerEl, ytPlayerEl);
+                    ytPlayerEl = parentElement.querySelector(".trailer"); // Get new YT player
+                }
+            }
+            // Add a Unique ID
+            ytPlayerEl.setAttribute(
+                "id",
+                "yt-player" + Date.now() + Math.random()
+            );
+            let ytPlayer = new YT.Player(ytPlayerEl, {
+                playerVars: {
+                    cc_lang_pref: "en", // Set preferred caption language to English
+                    cc_load_policy: 1, // Set on by default
+                    enablejsapi: 1, // Enable the JavaScript API
+                    loop: 1, // Enable video looping
+                    modestbranding: 1, // Enable modest branding (hide the YouTube logo)
+                    playsinline: 1, // Enable inline video playback
+                    playlist: youtubeID,
                 },
-            },
-        });
-        // Add Trailer to Iframe
-        let trailerUrl = `https://www.youtube.com/embed/${youtubeID}?playlist=${youtubeID}&cc_load_policy=1&cc_lang_pref=en&enablejsapi=1&loop=1&modestbranding=1&playsinline=1`;
-        ytPlayerEl.setAttribute("src", trailerUrl);
-        $ytPlayers.push(ytPlayer);
+                events: {
+                    onReady: (event) => {
+                        onPlayerReady(event);
+                    },
+                },
+            });
+            // Add Trailer to Iframe
+            let trailerUrl = `https://www.youtube.com/embed/${youtubeID}?playlist=${youtubeID}&cc_load_policy=1&cc_lang_pref=en&enablejsapi=1&loop=1&modestbranding=1&playsinline=1`;
+            ytPlayerEl.setAttribute("src", trailerUrl);
+            $ytPlayers.push(ytPlayer);
+        }
     }
     function onPlayerReady(event) {
         let ytPlayer = event.target;
@@ -372,7 +406,11 @@
             !(popupImg instanceof Element)
         )
             return;
-        if (ytPlayer.getPlayerState() === -1) {
+        if (
+            ytPlayer.getPlayerState() === -1 ||
+            trailerEl.tagName !== "IFRAME" ||
+            !isOnline
+        ) {
             $ytPlayers = $ytPlayers.filter(
                 (_ytPlayer) => _ytPlayer !== ytPlayer
             );
@@ -447,6 +485,38 @@
             }
         }
     };
+    window.addEventListener("online", () => {
+        isOnline = true;
+        loadYouTubeAPI().then(() => {
+            lastProcessedTrailer = undefined;
+            playMostVisibleTrailer();
+        });
+    });
+    window.addEventListener("offline", () => {
+        isOnline = false;
+    });
+    function loadYouTubeAPI() {
+        return new Promise((resolve) => {
+            var existingScript = document.getElementById(
+                "www-widgetapi-script"
+            );
+            if (existingScript) {
+                existingScript.parentNode.removeChild(existingScript);
+            }
+            var tag = document.createElement("script");
+            tag.src = "https://www.youtube.com/iframe_api?v=16";
+            tag.onerror = () => {
+                console.error("Failed to load YouTube API script.");
+                resolve();
+            };
+            tag.onload = () => {
+                window?.onYouTubeIframeAPIReady?.();
+                resolve();
+            };
+            var firstScriptTag = document.getElementsByTagName("script")[0];
+            firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+        });
+    }
 </script>
 
 <div

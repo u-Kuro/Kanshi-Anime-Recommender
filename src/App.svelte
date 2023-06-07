@@ -25,6 +25,8 @@
 		popupVisible,
 		menuVisible,
 		shouldGoBack,
+		isScrolling,
+		scrollingTimeout,
 		// Reactive Functions
 		runUpdate,
 		runExport,
@@ -32,6 +34,7 @@
 		loadAnime,
 		updateFilters,
 		animeOptionVisible,
+		runIsScrolling,
 	} from "./js/globalValues.js";
 	import {
 		getAnimeEntries,
@@ -56,8 +59,19 @@
 		$exportPathIsAvailable = await retrieveJSON("exportPathIsAvailable");
 	})();
 
+	window.onload = () => {
+		console.log(11111);
+		window.dataLayer = window.dataLayer || [];
+		function gtag() {
+			dataLayer.push(arguments);
+		}
+		gtag("js", new Date());
+		gtag("config", "G-PPMY92TJCE");
+	};
+
 	// For Youtube API
 	const onYouTubeIframeAPIReady = new Function();
+	window.onYouTubeIframeAPIReady = onYouTubeIframeAPIReady;
 
 	// Init Data
 	let initDataPromises = [];
@@ -352,8 +366,15 @@
 		saveJSON($lastRunnedAutoExportDate, "lastRunnedAutoExportDate");
 		exportUserData();
 	});
+	runIsScrolling.subscribe((val) => {
+		if (typeof val !== "boolean") return;
+		if (!$isScrolling) $isScrolling = true;
+		if ($scrollingTimeout) clearTimeout($scrollingTimeout);
+		$scrollingTimeout = setTimeout(() => {
+			$isScrolling = false;
+		}, 1000);
+	});
 
-	let currentScrollTop;
 	popupVisible.subscribe((val) => {
 		documentScroll(val);
 	});
@@ -417,24 +438,15 @@
 		if (typeof val !== "boolean") return;
 		if (val === true) window.setShoulGoBack(false);
 	});
-	let isScrolling, scrollingTimeout;
 	window.addEventListener("scroll", () => {
 		if (window.scrollY !== 0) window.setShoulGoBack(false);
-		if (!isScrolling) isScrolling = true;
-		if (scrollingTimeout) clearTimeout(scrollingTimeout);
-		scrollingTimeout = setTimeout(() => {
-			isScrolling = false;
-		}, 1000);
+		runIsScrolling.update((e) => !e);
 	});
 	onMount(() => {
 		document
 			.getElementById("popup-container")
 			.addEventListener("scroll", () => {
-				if (!isScrolling) isScrolling = true;
-				if (scrollingTimeout) clearTimeout(scrollingTimeout);
-				scrollingTimeout = setTimeout(() => {
-					isScrolling = false;
-				}, 1000);
+				runIsScrolling.update((e) => !e);
 			});
 	});
 
@@ -474,7 +486,8 @@
 			if (copytimeoutId) clearTimeout(copytimeoutId);
 			copytimeoutId = setTimeout(() => {
 				let text = target.getAttribute("copy-value");
-				if (text && !isScrolling && copyhold) {
+				if (text && !$isScrolling && copyhold) {
+					console.log(text);
 					target.style.pointerEvents = "none";
 					setTimeout(() => {
 						target.style.pointerEvents = "";

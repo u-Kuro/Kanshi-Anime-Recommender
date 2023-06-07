@@ -193,7 +193,7 @@
         class="menu-container"
         on:click={handleMenuVisibility}
         on:keydown={handleMenuVisibility}
-        transition:fade={{ duration: 300 }}
+        transition:fade={{ duration: 200 }}
     >
         <div class="menu">
             <button class="button" on:click={updateList} on:keydown={updateList}
