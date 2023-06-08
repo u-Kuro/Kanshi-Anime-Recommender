@@ -23,6 +23,7 @@
 		lastRunnedAutoExportDate,
 		autoPlay,
 		popupVisible,
+		ytPlayers,
 		menuVisible,
 		shouldGoBack,
 		isScrolling,
@@ -46,7 +47,11 @@
 		animeLoader,
 		exportUserData,
 	} from "./js/workerUtils.js";
-	import { isAndroid, jsonIsEmpty } from "./js/others/helper.js";
+	import {
+		isAndroid,
+		jsonIsEmpty,
+		getMostVisibleElement,
+	} from "./js/others/helper.js";
 
 	$android = isAndroid(); // Android/Browser Identifier
 
@@ -155,70 +160,6 @@
 		})
 	);
 
-	// Get Existing Anime List
-	initDataPromises.push(
-		new Promise(async (resolve) => {
-			let shouldProcessRecommendation = await retrieveJSON(
-				"shouldProcessRecommendation"
-			);
-			let recommendedAnimeListLen = await retrieveJSON(
-				"recommendedAnimeListLength"
-			);
-			if (
-				!shouldProcessRecommendation &&
-				recommendedAnimeListLen?.length
-			) {
-				animeLoader()
-					.then(async (data) => {
-						$animeLoaderWorker = data.animeLoaderWorker;
-						$searchedAnimeKeyword = "";
-						if (
-							!$username &&
-							data.finalAnimeList.length < 1 &&
-							($finalAnimeList?.length ?? 0) < 1
-						) {
-							$finalAnimeList = null;
-						} else if (data?.isNew) {
-							$finalAnimeList = data.finalAnimeList;
-							resolve();
-						}
-						$dataStatus = null;
-					})
-					.catch(() => {
-						resolve();
-					});
-			} else {
-				processRecommendedAnimeList()
-					.then(async () => {
-						await saveJSON(false, "shouldProcessRecommendation");
-						animeLoader()
-							.then(async (data) => {
-								$animeLoaderWorker = data.animeLoaderWorker;
-								$searchedAnimeKeyword = "";
-								if (
-									!$username &&
-									data.finalAnimeList.length < 1 &&
-									($finalAnimeList?.length ?? 0) < 1
-								) {
-									$finalAnimeList = null;
-								} else if (data?.isNew) {
-									$finalAnimeList = data.finalAnimeList;
-									resolve();
-								}
-								$dataStatus = null;
-							})
-							.catch(() => {
-								resolve();
-							});
-					})
-					.catch(() => {
-						resolve();
-					});
-			}
-			resolve();
-		})
-	);
-
 	// Get Existing Data If there are any
 	initDataPromises.push(
 		new Promise(async (resolve) => {
@@ -243,30 +184,64 @@
 
 	Promise.all(initDataPromises)
 		.then(async () => {
-			$initData = false;
-			clearInterval(pleaseWaitStatusInterval);
-			await tick();
-			if (!$username) {
-				let usernameInput = document.getElementById("usernameInput");
-				usernameInput.setCustomValidity("Enter your Anilist Username");
-				usernameInput.reportValidity();
-			}
-			// Double Check
-			if (!$finalAnimeList?.length) {
-				loadAnime.update((e) => !e);
-			}
+			// Get/Show List
+			let recommendedAnimeListLen = await retrieveJSON(
+				"recommendedAnimeListLength"
+			);
+			new Promise(async (resolve) => {
+				if (recommendedAnimeListLen < 1) {
+					processRecommendedAnimeList()
+						.then(async () => {
+							resolve();
+						})
+						.catch((error) => {
+							throw error;
+						});
+				} else {
+					resolve();
+				}
+			}).then(() => {
+				animeLoader()
+					.then(async (data) => {
+						$animeLoaderWorker = data.animeLoaderWorker;
+						$searchedAnimeKeyword = "";
+						if (data?.isNew) {
+							$finalAnimeList = data.finalAnimeList;
+							$initData = false;
+						}
+						$dataStatus = null;
+						return;
+					})
+					.catch((error) => {
+						throw error;
+					});
+			});
 		})
 		.catch((error) => {
 			$initData = false;
-			clearInterval(pleaseWaitStatusInterval);
 			$dataStatus = "Something went wrong...";
 			console.error(error);
 		});
 
+	initData.subscribe(async (val) => {
+		if (val === false) {
+			if (!$username) {
+				await tick();
+				let usernameInput = document.getElementById("usernameInput");
+				usernameInput.setCustomValidity("Enter your Anilist Username");
+				usernameInput.reportValidity();
+			}
+			clearInterval(pleaseWaitStatusInterval);
+		}
+	});
+	finalAnimeList.subscribe((val) => {
+		if (!$initData) return;
+		if (val?.length > 0) $initData = false; // Have Loaded Recommendations
+	});
+
 	// Reactive Functions
 	updateRecommendationList.subscribe(async (val) => {
 		if (typeof val !== "boolean") return;
-		$finalAnimeList = null;
 		await saveJSON(true, "shouldProcessRecommendation");
 		processRecommendedAnimeList()
 			.then(async () => {
@@ -279,18 +254,11 @@
 	});
 	loadAnime.subscribe(async (val) => {
 		if (typeof val !== "boolean") return;
-		$finalAnimeList = null;
 		animeLoader()
 			.then(async (data) => {
 				$animeLoaderWorker = data.animeLoaderWorker;
 				$searchedAnimeKeyword = "";
-				if (
-					!$username &&
-					data.finalAnimeList.length < 1 &&
-					($finalAnimeList?.length ?? 0) < 1
-				) {
-					$finalAnimeList = null; // Loading
-				} else if (data?.isNew) {
+				if (data?.isNew) {
 					$finalAnimeList = data.finalAnimeList;
 				}
 				$dataStatus = null;
@@ -426,9 +394,18 @@
 	});
 
 	// Global Function For Android/Browser
+	document.addEventListener("visibilitychange", function () {
+		if (document.visibilityState === "visible") {
+			requestUserEntries();
+		}
+	});
+
 	if ("scrollRestoration" in window.history) {
 		window.history.scrollRestoration = "manual"; // Disable scrolling to top when navigating back
 	}
+	window.checkEntries = () => {
+		requestUserEntries();
+	};
 	window.addEventListener("popstate", () => {
 		window.backPressed();
 	});

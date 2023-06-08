@@ -10,6 +10,7 @@
         popupVisible,
         openedAnimePopupIdx,
         updateRecommendationList,
+        android,
     } from "../../../js/globalValues.js";
     import {
         isJsonObject,
@@ -215,7 +216,7 @@
                 }
                 playMostVisibleTrailer();
             } catch (ex) {}
-        } else {
+        } else if (val instanceof Array && val.length < 1) {
             $popupVisible = false;
         }
     });
@@ -466,6 +467,7 @@
 
     // Global Function For Android
     window.returnedAppIsVisible = (inApp) => {
+        if (!$popupVisible || !$android) return; // Only For Android
         let visibleTrailer = getMostVisibleElement(popupContainer, ".trailer");
         if (!visibleTrailer) {
             visibleTrailer =
@@ -877,6 +879,7 @@
         overflow: auto;
         overscroll-behavior: contain;
         transition: 0.3s ease transform;
+        background-color: #151f2e;
     }
 
     .popup-container.hide {

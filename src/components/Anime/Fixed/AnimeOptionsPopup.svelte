@@ -1,5 +1,5 @@
 <script>
-    import { fade } from "svelte/transition";
+    import { fly } from "svelte/transition";
     import {
         android,
         animeOptionVisible,
@@ -110,9 +110,11 @@
         class="anime-options"
         on:click={handleAnimeOptionVisibility}
         on:keydown={handleAnimeOptionVisibility}
-        transition:fade={{ duration: 200 }}
     >
-        <div class="anime-options-container">
+        <div
+            class="anime-options-container"
+            transition:fly={{ y: 20, duration: 300 }}
+        >
             <span class="anime-title"><h1>{animeTitle}</h1></span>
             <span on:click={openAnimePopup} on:keydown={openAnimePopup}
                 ><h2>Open Anime</h2></span
@@ -141,7 +143,7 @@
         top: 0;
         width: 100%;
         height: 100%;
-        background-color: rgba(0, 0, 0, 0.6);
+        background-color: rgba(0, 0, 0, 0.4);
         justify-content: center;
         align-items: center;
         overflow-y: auto;
@@ -151,10 +153,10 @@
     .anime-options-container {
         display: flex;
         flex-direction: column;
-        background-color: #2d2d39;
+        background-color: #151f2e;
         width: 300px;
         max-width: 90%;
-        border-radius: 20px;
+        border-radius: 6px;
         padding: 10px 15px;
     }
 
@@ -173,7 +175,6 @@
 
     .anime-options-container span {
         padding: 1em;
-        color: #dddce0 !important;
         user-select: none !important;
         text-decoration: none !important;
     }

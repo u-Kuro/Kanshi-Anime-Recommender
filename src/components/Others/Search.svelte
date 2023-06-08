@@ -13,11 +13,12 @@
         username,
         initData,
     } from "../../js/globalValues.js";
-    import { fade } from "svelte/transition";
+    import { fade, fly } from "svelte/transition";
     import { changeInputValue, dragScroll } from "../../js/others/helper.js";
 
     let Init = true;
 
+    let windowWidth = window.innerWidth;
     let maxFilterSelectionHeight;
     let unsubFilterDragScroll;
     let unsubTagFiltersDragScroll;
@@ -81,6 +82,7 @@
 
     function windowResized() {
         maxFilterSelectionHeight = window.innerHeight * 0.3;
+        windowWidth = window.innerWidth;
     }
     function handleFilterTypes(newFilterTypeName) {
         let idxTypeSelected = $filterOptions?.filterSelection.findIndex(
@@ -185,7 +187,11 @@
         let classList = element.classList;
         // Filter Type Dropdown
         let filterTypeEl = element.closest(".filterType");
-        if (!classList.contains("filterType") && !filterTypeEl) {
+        if (
+            (!classList.contains("filterType") && !filterTypeEl) ||
+            (classList.contains("options-wrap") &&
+                window.getComputedStyle(element).position === "fixed")
+        ) {
             selectedFilterTypeElement = false;
             if (highlightedEl instanceof Element) {
                 highlightedEl.style.backgroundColor = "";
@@ -194,7 +200,11 @@
         }
         // Sort Filter Dropdown
         let sortSelectEl = element.closest(".sortFilter");
-        if (!classList.contains("sortFilter") && !sortSelectEl) {
+        if (
+            (!classList.contains("sortFilter") && !sortSelectEl) ||
+            (classList.contains("options-wrap") &&
+                window.getComputedStyle(element).position === "fixed")
+        ) {
             selectedSortElement = false;
             if (highlightedEl instanceof Element) {
                 highlightedEl.style.backgroundColor = "";
@@ -207,7 +217,9 @@
         if (
             filterSelectEl !== selectedFilterElement ||
             filterNameEl ||
-            classList.contains("filter-name")
+            classList.contains("filter-name") ||
+            (classList.contains("options-wrap") &&
+                window.getComputedStyle(element).position === "fixed")
         ) {
             let idxTypeSelected = $filterOptions?.filterSelection?.findIndex(
                 ({ isSelected }) => isSelected
@@ -873,7 +885,7 @@
 
         document.addEventListener("keydown", handleDropdownKeyDown);
         window.addEventListener("resize", windowResized);
-        window.addEventListener("pointerdown", clickOutsideListener);
+        window.addEventListener("click", clickOutsideListener);
     });
 
     // Helper
@@ -911,6 +923,9 @@
                         : "none"}
                 >
                     {#if $filterOptions}
+                        <div class="options-wrap-filter-info">
+                            <h2>Filter Type</h2>
+                        </div>
                         <div class="options">
                             {#each $filterOptions?.filterSelection || [] as { filterSelectionName, isSelected } (filterSelectionName)}
                                 <div
@@ -993,6 +1008,7 @@
                                     bind:value={$filterOptions.filterSelection[
                                         filSelIdx
                                     ].filters.Dropdown[dropdownIdx].optKeyword}
+                                    disabled={windowWidth <= 760}
                                 />
                             </div>
                             {#if selected && options.length && !Init}
@@ -1019,9 +1035,21 @@
                                 ? ""
                                 : "none"}
                         >
+                            <div class="options-wrap-filter-info">
+                                <h2>{filName}</h2>
+                                <input
+                                    placeholder="Any"
+                                    type="search"
+                                    enterkeyhint="search"
+                                    autocomplete="off"
+                                    bind:value={$filterOptions.filterSelection[
+                                        filSelIdx
+                                    ].filters.Dropdown[dropdownIdx].optKeyword}
+                                />
+                            </div>
                             <div class="options">
-                                {#each options as { optionName, selected }, optionIdx (optionName + optionIdx)}
-                                    {#if hasPartialMatch(optionName, optKeyword) || optKeyword === ""}
+                                {#if options?.filter?.(({ optionName }) => hasPartialMatch(optionName, optKeyword) || optKeyword === "")?.length}
+                                    {#each options.filter(({ optionName }) => hasPartialMatch(optionName, optKeyword) || optKeyword === "") || [] as { optionName, selected }, optionIdx (optionName + optionIdx)}
                                         <div
                                             class="option"
                                             on:click={handleFilterSelectOptionChange(
@@ -1054,8 +1082,12 @@
                                                 />
                                             {/if}
                                         </div>
-                                    {/if}
-                                {/each}
+                                    {/each}
+                                {:else}
+                                    <div class="option">
+                                        <h3>No Results</h3>
+                                    </div>
+                                {/if}
                             </div>
                         </div>
                     </div>
@@ -1147,7 +1179,7 @@
     </div>
     <div class="activeFilters">
         <i
-            style:display={$activeTagFilters ? "" : "none"}
+            style:display={$activeTagFilters && !$initData ? "" : "none"}
             class="fa-solid fa-ban"
             title="Remove Filters"
             on:click={removeAllActiveTag}
@@ -1165,12 +1197,13 @@
         <div
             id="tagFilters"
             class="tagFilters"
-            style:display={$activeTagFilters ? "" : "none"}
+            style:display={$activeTagFilters && !$initData ? "" : "none"}
         >
-            {#each $activeTagFilters?.[$filterOptions?.filterSelection?.[$filterOptions?.filterSelection?.findIndex(({ isSelected }) => isSelected)]?.filterSelectionName] || [] as { optionName, optionIdx, selected, changeType, filterType, categIdx, optionValue, optionType } (optionName + optionIdx + (optionType ?? ""))}
+            {#each $activeTagFilters?.[$filterOptions?.filterSelection?.[$filterOptions?.filterSelection?.findIndex(({ isSelected }) => isSelected)]?.filterSelectionName] || [] as { optionName, optionIdx, selected, changeType, filterType, categIdx, optionValue, optionType }, tagFilterIdx (optionName + optionIdx + (optionType ?? ""))}
                 {#if selected !== "none"}
                     <div
                         class="activeTagFilter"
+                        transition:fly={{ x: -10, duration: 300 }}
                         style:--activeTagFilterColor={selected === "included"
                             ? "#5f9ea0"
                             : "#e85d75"}
@@ -1221,26 +1254,24 @@
                 {/if}
             {/each}
         </div>
-        {#if !$activeTagFilters}
+        {#if !$activeTagFilters || $initData}
             <i class="skeleton shimmer" />
             <div class="tagFilters skeleton shimmer" />
         {/if}
-        {#if $filterOptions}
+        {#if $filterOptions && !$initData}
             <div class="sortFilter">
-                {#if !$initData}
-                    <i
-                        on:click={changeSortType}
-                        on:keydown={changeSortType}
-                        class={"fa-duotone fa-sort-" +
-                            ($filterOptions?.sortFilter?.[
-                                $filterOptions?.sortFilter?.findIndex(
-                                    ({ sortType }) => sortType !== "none"
-                                )
-                            ]?.sortType === "asc"
-                                ? "up"
-                                : "down")}
-                    />
-                {/if}
+                <i
+                    on:click={changeSortType}
+                    on:keydown={changeSortType}
+                    class={"fa-duotone fa-sort-" +
+                        ($filterOptions?.sortFilter?.[
+                            $filterOptions?.sortFilter?.findIndex(
+                                ({ sortType }) => sortType !== "none"
+                            )
+                        ]?.sortType === "asc"
+                            ? "up"
+                            : "down")}
+                />
                 <h3
                     on:click={handleSortFilterPopup}
                     on:keydown={handleSortFilterPopup}
@@ -1250,45 +1281,40 @@
                             ({ sortType }) => sortType !== "none"
                         )
                     ]?.sortName || ""}
-                    {#if !$initData}
-                        <div
-                            class="options-wrap"
-                            style:--maxFilterSelectionHeight="{maxFilterSelectionHeight}px"
-                            style:visibility={selectedSortElement
-                                ? ""
-                                : "hidden"}
-                            style:pointer-events={selectedSortElement
-                                ? ""
-                                : "none"}
-                        >
-                            <div class="options">
-                                {#each $filterOptions?.sortFilter || [] as { sortName }, sortIdx (sortName + sortIdx)}
-                                    <div
-                                        class="option"
-                                        on:click={changeSort(sortName)}
-                                        on:keydown={changeSort(sortName)}
-                                    >
-                                        <h3>{sortName || ""}</h3>
-                                        {#if $filterOptions?.sortFilter?.[$filterOptions?.sortFilter?.findIndex(({ sortType }) => sortType !== "none")].sortName === sortName && sortName}
-                                            <i
-                                                class={"fa-duotone fa-sort-" +
-                                                    ($filterOptions
-                                                        ?.sortFilter?.[
-                                                        $filterOptions?.sortFilter?.findIndex(
-                                                            ({ sortType }) =>
-                                                                sortType !==
-                                                                "none"
-                                                        )
-                                                    ].sortType === "asc"
-                                                        ? "up"
-                                                        : "down")}
-                                            />
-                                        {/if}
-                                    </div>
-                                {/each}
-                            </div>
+                    <div
+                        class="options-wrap"
+                        style:--maxFilterSelectionHeight="{maxFilterSelectionHeight}px"
+                        style:visibility={selectedSortElement ? "" : "hidden"}
+                        style:pointer-events={selectedSortElement ? "" : "none"}
+                    >
+                        <div class="options-wrap-filter-info">
+                            <h2>Sort By</h2>
                         </div>
-                    {/if}
+                        <div class="options">
+                            {#each $filterOptions?.sortFilter || [] as { sortName }, sortIdx (sortName + sortIdx)}
+                                <div
+                                    class="option"
+                                    on:click={changeSort(sortName)}
+                                    on:keydown={changeSort(sortName)}
+                                >
+                                    <h3>{sortName || ""}</h3>
+                                    {#if $filterOptions?.sortFilter?.[$filterOptions?.sortFilter?.findIndex(({ sortType }) => sortType !== "none")].sortName === sortName && sortName}
+                                        <i
+                                            class={"fa-duotone fa-sort-" +
+                                                ($filterOptions?.sortFilter?.[
+                                                    $filterOptions?.sortFilter?.findIndex(
+                                                        ({ sortType }) =>
+                                                            sortType !== "none"
+                                                    )
+                                                ].sortType === "asc"
+                                                    ? "up"
+                                                    : "down")}
+                                        />
+                                    {/if}
+                                </div>
+                            {/each}
+                        </div>
+                    </div>
                 </h3>
             </div>
         {:else}
@@ -1440,6 +1466,31 @@
         min-width: 142px;
     }
 
+    .dropdown-filter {
+        position: fixed;
+        display: flex;
+        z-index: 996;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.4);
+        justify-content: center;
+        align-items: center;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+    }
+
+    .dropdown-filter-container {
+        display: flex;
+        flex-direction: column;
+        background-color: #151f2e;
+        width: 300px;
+        max-width: 90%;
+        border-radius: 6px;
+        padding: 10px 15px;
+    }
+
     .filter-input-number .value-input-number {
         text-align: center;
         background: transparent;
@@ -1500,7 +1551,7 @@
         z-index: 1;
     }
     .options-wrap::-webkit-scrollbar {
-        width: 5px !important;
+        width: 7px !important;
     }
     .options-wrap::-webkit-scrollbar-track {
         background-color: transparent;
@@ -1508,6 +1559,10 @@
     .options-wrap::-webkit-scrollbar-thumb {
         background-color: #b9cadd;
         border-radius: 5px;
+    }
+
+    .options::-webkit-scrollbar {
+        display: none;
     }
 
     .filter-select .options {
@@ -1641,10 +1696,12 @@
         justify-content: end;
         align-items: center;
         gap: 8px;
-        min-width: 109px;
         min-height: 15px;
         margin-left: auto;
         position: relative;
+    }
+    .sortFilter.skeleton {
+        min-width: 109px;
     }
     .sortFilter h3,
     .sortFilter i {
@@ -1718,6 +1775,91 @@
         }
         100% {
             transform: translateX(100%);
+        }
+    }
+
+    .options-wrap {
+        overscroll-behavior: contain;
+    }
+    .options-wrap-filter-info {
+        display: none !important;
+    }
+    .options-wrap-filter-info h2 {
+        display: none !important;
+    }
+    .options-wrap-filter-info input {
+        display: none !important;
+    }
+    @media screen and (max-width: 760px) {
+        .options-wrap {
+            position: fixed !important;
+            display: flex !important;
+            flex-direction: column !important;
+            z-index: 996 !important;
+            left: 0px !important;
+            top: 0px !important;
+            width: 100% !important;
+            height: 100% !important;
+            background-color: rgba(0, 0, 0, 0.4) !important;
+            justify-content: center !important;
+            align-items: center !important;
+            overflow-y: auto !important;
+            overscroll-behavior: contain !important;
+            max-height: initial !important;
+            margin: 0 !important;
+            border-radius: 0 !important;
+            padding: 0 !important;
+        }
+        .options-wrap-filter-info {
+            display: flex !important;
+            flex-direction: column;
+            width: 90vw;
+            padding: 14px 12px;
+            gap: 14px;
+            background-color: #0b1622;
+            border-radius: 6px 6px 0px 0px;
+            transform: translateY(2px);
+        }
+        .options-wrap-filter-info h2 {
+            display: initial !important;
+            font-size: 1.8rem;
+            font-weight: bold;
+            text-transform: capitalize;
+        }
+        .options-wrap-filter-info input {
+            display: initial !important;
+            background: #151f2e;
+            padding: 14px 12px;
+            border-radius: 6px;
+            font-size: 1.6rem;
+            color: inherit;
+            border: none;
+            outline: none;
+            width: 100%;
+            cursor: text;
+        }
+
+        .options-wrap .options {
+            display: flex !important;
+            flex-direction: column !important;
+            background-color: #151f2e !important;
+            width: 90vw !important;
+            max-height: calc(50vh - 112px) !important;
+            border-radius: 0px 0px 6px !important;
+            padding: 6px 11px !important;
+            overflow: auto !important;
+            gap: 0 !important;
+            min-height: 59px !important;
+            overscroll-behavior: contain !important;
+        }
+
+        .options .option {
+            padding: 14px 12px !important;
+        }
+
+        .option h3,
+        .option i {
+            font-size: 1.6rem !important;
         }
     }
 </style>

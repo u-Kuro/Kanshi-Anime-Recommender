@@ -14,7 +14,7 @@
         activeTagFilters,
         runUpdate,
     } from "../../js/globalValues.js";
-    import { fade } from "svelte/transition";
+    import { fade, fly } from "svelte/transition";
     import { saveJSON } from "../../js/indexedDB.js";
     import {
         animeLoader,
@@ -193,29 +193,39 @@
         class="menu-container"
         on:click={handleMenuVisibility}
         on:keydown={handleMenuVisibility}
-        transition:fade={{ duration: 200 }}
     >
         <div class="menu">
-            <button class="button" on:click={updateList} on:keydown={updateList}
-                >Update List</button
+            <button
+                class="button"
+                on:click={updateList}
+                on:keydown={updateList}
+                transition:fly={{ x: 50, duration: 300 }}>Update List</button
             >
             <button
                 class="button"
                 on:click={showAllHiddenEntries}
                 on:keydown={showAllHiddenEntries}
+                transition:fly={{ x: 50, duration: 300 }}
                 >Show All Hidden Entries</button
             >
-            <button class="button" on:click={importData} on:keydown={importData}
-                >Import Data</button
+            <button
+                class="button"
+                on:click={importData}
+                on:keydown={importData}
+                transition:fly={{ x: 50, duration: 300 }}>Import Data</button
             >
-            <button class="button" on:click={exportData} on:keydown={exportData}
-                >Export Data</button
+            <button
+                class="button"
+                on:click={exportData}
+                on:keydown={exportData}
+                transition:fly={{ x: 50, duration: 300 }}>Export Data</button
             >
             {#if $android}
                 <button
                     class="button"
                     on:click={handleExportFolder}
                     on:keydown={handleExportFolder}
+                    transition:fly={{ x: 50, duration: 300 }}
                 >
                     {($exportPathIsAvailable ? "Change" : "Set") +
                         " Export Folder"}
@@ -223,20 +233,24 @@
             {/if}
             <button
                 class="button selected"
+                transition:fly={{ x: 50, duration: 300 }}
                 on:click={stillFixing}
                 on:keydown={stillFixing}>Dark Mode</button
             >
             <button
+                transition:fly={{ x: 50, duration: 300 }}
                 class={"button " + ($autoUpdate ? "selected" : "")}
                 on:click={handleUpdateEveryHour}
                 on:keydown={handleUpdateEveryHour}>Auto Update</button
             >
             <button
+                transition:fly={{ x: 50, duration: 300 }}
                 class={"button " + ($autoExport ? "selected" : "")}
                 on:click={handleExportEveryHour}
                 on:keydown={handleExportEveryHour}>Auto Export</button
             >
             <button
+                transition:fly={{ x: 50, duration: 300 }}
                 class="button"
                 on:click={anilistSignup}
                 on:keydown={anilistSignup}>Create an Anilist Account</button

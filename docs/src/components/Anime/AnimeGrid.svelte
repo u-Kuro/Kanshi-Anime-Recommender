@@ -12,6 +12,7 @@
         animeOptionVisible,
         openedAnimeOptionIdx,
         updateRecommendationList,
+        initData,
     } from "../../js/globalValues.js";
     import {
         formatNumber,
@@ -273,7 +274,7 @@
                             style:opacity="0"
                             class="image-grid__card-thumb"
                             alt="anime-cover"
-                            src={anime.coverImageUrl}
+                            src={anime.coverImageUrl || ""}
                             on:load={(e) => (e.target.style.opacity = 1)}
                             on:click={handleOpenPopup(animeIdx)}
                             on:pointerdown={handleOpenOption(animeIdx)}
@@ -331,7 +332,7 @@
                     </div>
                 {/each}
             {/if}
-        {:else if !$finalAnimeList}
+        {:else if !$finalAnimeList || $initData}
             {#each Array(renderedImgGridLimit) as _}
                 <div class="image-grid__card skeleton">
                     <div class="shimmer">

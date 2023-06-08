@@ -311,7 +311,7 @@ public class MainActivity extends AppCompatActivity  {
         isVisible = hasFocus;
         if(hasFocus){
             // Play YT Player if video is paused
-            webView.post(() -> webView.loadUrl("javascript:window.returnedAppIsVisible(true);"));
+            webView.post(() -> webView.loadUrl("javascript:window.returnedAppIsVisible(true);window.checkEntries();"));
         } else {
             // Close YT Player
             webView.post(() -> webView.loadUrl("javascript:window.returnedAppIsVisible(false);"));
