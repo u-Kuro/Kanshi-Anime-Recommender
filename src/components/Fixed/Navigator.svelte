@@ -161,7 +161,7 @@
         padding: 0 50px;
     }
     .nav .textLogo {
-        min-width: 87px;
+        min-width: max-content;
         word-break: keep-all;
         cursor: pointer;
     }

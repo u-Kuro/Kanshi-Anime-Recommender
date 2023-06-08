@@ -3,7 +3,9 @@ import {
     updateRecommendationList,
     updateFilters,
     loadAnime,
-    username
+    username,
+    activeTagFilters,
+    filterOptions
 } from "./globalValues";
 import { isAndroid, downloadLink } from "../js/others/helper.js"
 let terminateDelay = 1000;
@@ -170,6 +172,15 @@ const importUserData = (_data) => {
             } else if (typeof data?.importedUsername === "string") {
                 username.set(data.importedUsername)
             } else if (data?.updateFilters !== undefined) {
+                getFilterOptions()
+                    .then((data) => {
+                        activeTagFilters.set(data.activeTagFilters)
+                        filterOptions.set(data.filterOptions)
+                        resolve();
+                    })
+                    .catch(() => {
+                        resolve();
+                    });
                 updateFilters.update(e => !e)
             } else if (data?.updateRecommendationList !== undefined) {
                 updateRecommendationList.update(e => !e)
