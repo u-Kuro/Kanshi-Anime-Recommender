@@ -181,7 +181,6 @@ const importUserData = (_data) => {
                     .catch(() => {
                         resolve();
                     });
-                updateFilters.update(e => !e)
             } else if (data?.updateRecommendationList !== undefined) {
                 updateRecommendationList.update(e => !e)
             } else {
