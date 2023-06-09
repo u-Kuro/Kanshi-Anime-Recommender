@@ -5,8 +5,8 @@ This app is designed to provide anime recommendations based on your personal rat
 - [Kanshi App (Android)](https://github.com/u-Kuro/Kanshi.Anime-Recommendation/raw/main/Kanshi.apk)
 
 ## Website Links
-- [Kanshi Web](https://kanshi.vercel.app/)
-- [Kanshi Alternative 1](https://u-kuro.github.io/Kanshi.Anime-Recommendation/)
+- [kanshi.vercel.app](https://kanshi.vercel.app/)
+- [Alternative](https://u-kuro.github.io/Kanshi.Anime-Recommendation/)
 
 ## Website Preview
 ![Website Preview 1](https://i.imgur.com/TEv9xzB.png)
