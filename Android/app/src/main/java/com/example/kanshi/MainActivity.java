@@ -294,11 +294,11 @@ public class MainActivity extends AppCompatActivity  {
             }
         });
 
-        if(isNetworkAvailable()){
-            webView.loadUrl("https://kanshi.vercel.app/");
-        } else {
+//        if(isNetworkAvailable()){
+//            webView.loadUrl("https://kanshi.vercel.app/");
+//        } else {
             webView.loadUrl("file:///android_asset/www/index.html");
-        }
+//        }
     }
 
     // Get Path From MainActivity Context

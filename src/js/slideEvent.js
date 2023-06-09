@@ -18,8 +18,8 @@ function captureSlideEvent(targetElement, callback = new Function) {
         if (event.pointerId === pointerId && isPointerDown) {
             endX = event.clientX;
             const deltaX = endX - startX;
-            runIsScrolling.update(e => !e)
             if (deltaX >= 50) {
+                runIsScrolling.update(e => !e)
                 alter(targetElement, {
                     keyframes: [
                         { transform: `translateX(${deltaX}px)` },
