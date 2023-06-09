@@ -157,7 +157,7 @@
         }, 300);
     }
     function filterSelect(event, dropdownIdx) {
-        if (filterIsScrolling) return;
+        if (filterIsScrolling && event.pointerType !== "touch") return;
         let element = event.target;
         let filSelectEl = element.closest(".filter-select");
         if (filSelectEl === selectedFilterElement) return;
@@ -645,6 +645,7 @@
         }
     }
     function changeActiveSelect(
+        event,
         optionIdx,
         optionName,
         filterType,
@@ -652,7 +653,7 @@
         changeType,
         optionType
     ) {
-        if (tagFilterIsScrolling) return false;
+        if (tagFilterIsScrolling && event.pointerType !== "touch") return false;
         if (changeType === "read" || filterType !== "dropdown") return; // Unchangable Selection
         let idxTypeSelected = $filterOptions?.filterSelection?.findIndex(
             ({ isSelected }) => isSelected
@@ -702,13 +703,14 @@
         saveFilters(nameTypeSelected);
     }
     function removeActiveTag(
+        event,
         optionIdx,
         optionName,
         filterType,
         categIdx,
         optionType
     ) {
-        if (tagFilterIsScrolling) return;
+        if (tagFilterIsScrolling && event.pointerType !== "touch") return;
         let idxTypeSelected = $filterOptions?.filterSelection?.findIndex(
             ({ isSelected }) => isSelected
         );
@@ -744,8 +746,7 @@
         );
         saveFilters(nameTypeSelected);
     }
-    function removeAllActiveTag() {
-        if (tagFilterIsScrolling) return false;
+    function removeAllActiveTag(event) {
         if (confirm("Do you want to remove all filters?") === true) {
             let idxTypeSelected = $filterOptions?.filterSelection?.findIndex(
                 ({ isSelected }) => isSelected
@@ -953,12 +954,7 @@
     }
 
     window.checkOpenDropdown = () => {
-        return (
-            (selectedFilterTypeElement ||
-                selectedSortElement ||
-                selectedFilterElement) &&
-            window.innerWidth <= 760
-        );
+        return selectedFilterElement && window.innerWidth <= 760
     };
     window.closeDropdown = () => {
         // Small Screen Width
@@ -1029,9 +1025,6 @@
                     style:top={selectedFilterTypeElement ? "" : "-9999px"}
                 >
                     {#if $filterOptions}
-                        <div class="options-wrap-filter-info">
-                            <h2>Filter Type</h2>
-                        </div>
                         <div class="options">
                             {#each $filterOptions?.filterSelection || [] as { filterSelectionName, isSelected } (filterSelectionName)}
                                 <div
@@ -1317,17 +1310,20 @@
                         style:--activeTagFilterColor={selected === "included"
                             ? "#5f9ea0"
                             : "#e85d75"}
-                        on:click={changeActiveSelect(
-                            optionIdx,
-                            optionName,
-                            filterType,
-                            categIdx,
-                            changeType,
-                            optionType
-                        )}
+                        on:click={(e) =>
+                            changeActiveSelect(
+                                e,
+                                optionIdx,
+                                optionName,
+                                filterType,
+                                categIdx,
+                                changeType,
+                                optionType
+                            )}
                         on:keydown={(e) =>
                             e.key === "Enter" &&
                             changeActiveSelect(
+                                e,
                                 optionIdx,
                                 optionName,
                                 filterType,
@@ -1347,16 +1343,19 @@
                         {/if}
                         <i
                             class="fa-solid fa-xmark"
-                            on:click|preventDefault={removeActiveTag(
-                                optionIdx,
-                                optionName,
-                                filterType,
-                                categIdx,
-                                optionType
-                            )}
+                            on:click|preventDefault={(e) =>
+                                removeActiveTag(
+                                    e,
+                                    optionIdx,
+                                    optionName,
+                                    filterType,
+                                    categIdx,
+                                    optionType
+                                )}
                             on:keydown={(e) =>
                                 e.key === "Enter" &&
                                 removeActiveTag(
+                                    e,
                                     optionIdx,
                                     optionName,
                                     filterType,
@@ -1401,9 +1400,6 @@
                         style:--maxFilterSelectionHeight="{maxFilterSelectionHeight}px"
                         style:top={selectedSortElement ? "" : "-9999px"}
                     >
-                        <div class="options-wrap-filter-info">
-                            <h2>Sort By</h2>
-                        </div>
                         <div class="options">
                             {#each $filterOptions?.sortFilter || [] as { sortName }, sortIdx (sortName + sortIdx)}
                                 <div
@@ -1908,9 +1904,7 @@
         display: none !important;
     }
     @media screen and (max-width: 760px) {
-        .filter-select .options-wrap,
-        .filterType .options-wrap,
-        .sortFilter .options-wrap {
+        .filter-select .options-wrap {
             position: fixed !important;
             display: flex !important;
             flex-direction: column !important;
@@ -1929,7 +1923,7 @@
             border-radius: 0 !important;
             padding: 0 !important;
         }
-        .options-wrap-filter-info {
+        .filter-select .options-wrap-filter-info {
             display: flex !important;
             flex-direction: column;
             width: 90vw;
@@ -1939,13 +1933,13 @@
             border-radius: 6px 6px 0px 0px;
             transform: translateY(2px);
         }
-        .options-wrap-filter-info h2 {
+        .filter-select .options-wrap-filter-info h2 {
             display: initial !important;
             font-size: 1.8rem;
             font-weight: bold;
             text-transform: capitalize;
         }
-        .options-wrap-filter-info input {
+        .filter-select .options-wrap-filter-info input {
             display: initial !important;
             background: #151f2e;
             padding: 14px 12px;
@@ -1958,7 +1952,7 @@
             cursor: text;
         }
 
-        .options-wrap .options {
+        .filter-select .options-wrap .options {
             display: flex !important;
             flex-direction: column !important;
             background-color: #151f2e !important;
@@ -1972,12 +1966,12 @@
             overscroll-behavior: contain !important;
         }
 
-        .options .option {
+        .filter-select .options .option {
             padding: 14px 12px !important;
         }
 
-        .option h3,
-        .option i {
+        .filter-select .option h3,
+        .filter-select .option i {
             font-size: 1.6rem !important;
         }
     }
