@@ -52,8 +52,6 @@ const processRecommendedAnimeList = (_data) => {
                 processRecommendedAnimeListTerminateTimeout = setTimeout(() => {
                     processRecommendedAnimeListWorker.terminate();
                 }, terminateDelay);
-                updateFilters.update(e => !e)
-                loadAnime.update(e => !e)
                 resolve()
             }
         };
@@ -176,12 +174,7 @@ const importUserData = (_data) => {
                     .then((data) => {
                         activeTagFilters.set(data.activeTagFilters)
                         filterOptions.set(data.filterOptions)
-                        resolve();
                     })
-                    .catch(() => {
-                        resolve();
-                    });
-                updateFilters.update(e => !e)
             } else if (data?.updateRecommendationList !== undefined) {
                 updateRecommendationList.update(e => !e)
             } else {

@@ -92,7 +92,7 @@
 
 <div
     class="nav-container"
-    on:keydown={handleMenuVisibility}
+    on:keydown={(e) => e.key === "Enter" && handleMenuVisibility()}
     on:click={handleMenuVisibility}
 >
     <nav class="nav">
@@ -100,7 +100,9 @@
             class="textLogo copy-value"
             data-copy-value="Kanshi."
             on:click={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-            on:keydown={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+            on:keydown={(e) =>
+                e.key === "Enter" &&
+                window.scrollTo({ top: 0, behavior: "smooth" })}
         >
             Kanshi.
         </h1>
@@ -113,12 +115,12 @@
                 autocomplete="off"
                 placeholder="{windowWidth > 415 ? 'Your ' : ''}Anilist Username"
                 disabled={$initData && !$username}
-                on:keydown={updateUsername}
+                on:keydown={(e) => e.key === "Enter" && updateUsername()}
                 bind:value={typedUsername}
             />
             <div
                 class="searchBtn"
-                on:keydown={updateUsername}
+                on:keydown={(e) => e.key === "Enter" && updateUsername()}
                 on:click={updateUsername}
             >
                 <i class="fa-solid fa-magnifying-glass" />

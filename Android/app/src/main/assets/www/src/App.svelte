@@ -23,7 +23,6 @@
 		lastRunnedAutoExportDate,
 		autoPlay,
 		popupVisible,
-		ytPlayers,
 		menuVisible,
 		shouldGoBack,
 		isScrolling,
@@ -246,6 +245,7 @@
 		processRecommendedAnimeList()
 			.then(async () => {
 				await saveJSON(false, "shouldProcessRecommendation");
+				updateFilters.update((e) => !e);
 				loadAnime.update((e) => !e);
 			})
 			.catch((error) => {
@@ -416,14 +416,17 @@
 			if (!$android) {
 				window.history.pushState("visited", ""); // Push Popped State
 			}
-			if ($animeOptionVisible) {
-				$animeOptionVisible = false;
-				return;
-			} else if ($menuVisible) {
+			if ($menuVisible) {
 				$menuVisible = false;
 				return;
 			} else if ($popupVisible) {
 				$popupVisible = false;
+				return;
+			} else if ($animeOptionVisible) {
+				$animeOptionVisible = false;
+				return;
+			} else if (window.checkOpenDropdown?.()) {
+				window.closeDropdown?.();
 				return;
 			} else if (window.scrollY > 200) {
 				window.scrollTo({ top: 0, behavior: "smooth" });

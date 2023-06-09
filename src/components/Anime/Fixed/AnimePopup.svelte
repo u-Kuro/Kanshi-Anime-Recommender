@@ -161,13 +161,26 @@
                 popupWrapper.classList.add("visible");
                 popupContainer.classList.add("show");
                 // Try to Add YT player
-                let openedAnime = $finalAnimeList[$openedAnimePopupIdx];
-                let trailerEl =
-                    openedAnime?.popupHeader?.querySelector(".trailer");
-                let haveNoTrailer = true;
-                for (let i = 0; i < $ytPlayers?.length ?? -1; i++) {
-                    if ($ytPlayers[i].g === trailerEl) {
-                        if ($autoPlay) {
+                let openedAnimes = [
+                    $finalAnimeList[$openedAnimePopupIdx - 1],
+                    $finalAnimeList[$openedAnimePopupIdx],
+                    $finalAnimeList[$openedAnimePopupIdx + 1],
+                ];
+                let trailerEls = [
+                    openedAnimes[0]?.popupHeader?.querySelector(".trailer"),
+                    openedAnimes[1]?.popupHeader?.querySelector(".trailer"),
+                    openedAnimes[2]?.popupHeader?.querySelector(".trailer"),
+                ];
+                let haveNoTrailers = [true, true, true];
+                for (let i = 0; i < $ytPlayers.length; i++) {
+                    let trailerIdx;
+                    if (
+                        (trailerIdx =
+                            trailerEls.findIndex(
+                                (trailerEl) => trailerEl === $ytPlayers[i].g
+                            ) >= 0)
+                    ) {
+                        if ($autoPlay && trailerIdx === 1) {
                             await tick();
                             if (
                                 popupWrapper?.classList?.contains?.("visible")
@@ -175,13 +188,15 @@
                                 $ytPlayers[i]?.playVideo?.();
                             }
                         }
-                        haveNoTrailer = false;
+                        haveNoTrailers[trailerIdx] = false;
                         break;
                     }
                 }
-                if (haveNoTrailer) {
-                    createPopupYTPlayer(openedAnime);
-                }
+                haveNoTrailers.forEach((haveNoTrailer, idx) => {
+                    if (haveNoTrailer) {
+                        createPopupYTPlayer(openedAnimes[idx]);
+                    }
+                });
                 $openedAnimePopupIdx = null;
             } else {
                 // Animate Opening
@@ -202,20 +217,17 @@
     finalAnimeList.subscribe(async (val) => {
         if (val instanceof Array && val.length) {
             await tick();
-            try {
-                if ($animeObserver) {
-                    // Popup Observed
-                    try {
-                        $animeObserver.observe(
-                            $finalAnimeList[$finalAnimeList.length - 1]
-                                .popupContent
-                        );
-                    } catch (ex) {
-                        updateRecommendationList.update((e) => !e);
-                    }
-                }
-                playMostVisibleTrailer();
-            } catch (ex) {}
+            if (
+                $animeObserver &&
+                $finalAnimeList[$finalAnimeList.length - 1]
+                    .popupContent instanceof Element
+            ) {
+                // Popup Observed
+                $animeObserver.observe(
+                    $finalAnimeList[$finalAnimeList.length - 1].popupContent
+                );
+            }
+            playMostVisibleTrailer();
         } else if (val instanceof Array && val.length < 1) {
             $popupVisible = false;
         }
@@ -225,7 +237,22 @@
         if (typeof val === "boolean") {
             await saveJSON(val, "autoPlay");
             if (val === true) {
-                playMostVisibleTrailer();
+                await tick();
+                let mostVisiblePopupHeader =
+                    getMostVisibleElement(popupContainer, ".popup-header", 0) ||
+                    getMostVisibleElement(
+                        popupContainer,
+                        ".popup-content",
+                        1
+                    )?.querySelector(".popup-header");
+                let visibleTrailer =
+                    mostVisiblePopupHeader?.querySelector?.(".trailer");
+                for (let i = 0; i < $ytPlayers.length; i++) {
+                    if ($ytPlayers[i].g === visibleTrailer) {
+                        $ytPlayers[i]?.playVideo?.();
+                        break;
+                    }
+                }
             } else {
                 $ytPlayers?.forEach((ytPlayer) => ytPlayer?.pauseVideo?.());
             }
@@ -247,6 +274,41 @@
                 });
             });
         }
+        document.addEventListener("keydown", async (e) => {
+            if (e.key === " " && $popupVisible) {
+                e.preventDefault();
+                let isPlaying = $ytPlayers?.some(
+                    (ytPlayer) =>
+                        ytPlayer.getPlayerState() === YT.PlayerState.PLAYING
+                );
+                if (isPlaying) {
+                    $ytPlayers.forEach((ytPlayer) => {
+                        ytPlayer?.pauseVideo?.();
+                    });
+                } else {
+                    await tick();
+                    let mostVisiblePopupHeader =
+                        getMostVisibleElement(
+                            popupContainer,
+                            ".popup-header",
+                            0
+                        ) ||
+                        getMostVisibleElement(
+                            popupContainer,
+                            ".popup-content",
+                            1
+                        )?.querySelector(".popup-header");
+                    let visibleTrailer =
+                        mostVisiblePopupHeader?.querySelector?.(".trailer");
+                    for (let i = 0; i < $ytPlayers.length; i++) {
+                        if ($ytPlayers[i].g === visibleTrailer) {
+                            $ytPlayers[i]?.playVideo?.();
+                            break;
+                        }
+                    }
+                }
+            }
+        });
         window.addEventListener("resize", () => {
             if (window.innerWidth <= 768 && !unsubSlideEvents) {
                 unsubSlideEvents = captureSlideEvent(popupContainer, () => {
@@ -262,8 +324,8 @@
         });
     });
 
-    let lastProcessedTrailer;
-    async function playMostVisibleTrailer(once = false) {
+    let lastProcessedPopupHeader;
+    async function playMostVisibleTrailer() {
         if (!$popupVisible) return;
         await tick();
         let mostVisiblePopupHeader =
@@ -273,15 +335,21 @@
                 ".popup-content",
                 1
             )?.querySelector(".popup-header");
+        if (
+            (lastProcessedPopupHeader === mostVisiblePopupHeader &&
+                lastProcessedPopupHeader instanceof Element) ||
+            !mostVisiblePopupHeader
+        )
+            return;
+        lastProcessedPopupHeader = mostVisiblePopupHeader;
         let visibleTrailer =
             mostVisiblePopupHeader?.querySelector?.(".trailer");
         // Scroll in Grid
-        let animeGrid =
-            $finalAnimeList?.[
-                getChildIndex(
-                    mostVisiblePopupHeader?.closest?.(".popup-content")
-                ) ?? -1
-            ]?.gridElement;
+        let visibleTrailerIdx =
+            getChildIndex(
+                mostVisiblePopupHeader?.closest?.(".popup-content")
+            ) ?? -1;
+        let animeGrid = $finalAnimeList?.[visibleTrailerIdx]?.gridElement;
         if (animeGrid instanceof Element) {
             scrollToElement(window, animeGrid, "top", "smooth", -66); // Nav + GridGap
         }
@@ -290,6 +358,12 @@
             haveTrailer = $ytPlayers?.some(
                 (ytPlayer) => ytPlayer.g === visibleTrailer
             );
+        } else {
+            let popupImg =
+                mostVisiblePopupHeader?.querySelector?.(".popup-img");
+            if (popupImg instanceof Element) {
+                popupImg.style.display = "";
+            }
         }
         if (haveTrailer) {
             // Replay Most Visible Trailer
@@ -307,73 +381,57 @@
                     ytPlayer?.pauseVideo?.();
                 }
             });
+            // Recheck Trailer
+            if (visibleTrailerIdx >= 0) {
+                let nearAnimes = [
+                    $finalAnimeList?.[visibleTrailerIdx - 1],
+                    $finalAnimeList?.[visibleTrailerIdx + 1],
+                ];
+                nearAnimes.forEach((nearAnime) => {
+                    if (nearAnime) createPopupYTPlayer(nearAnime);
+                });
+            }
         } else {
             // Pause All Players
             $ytPlayers?.forEach((ytPlayer) => ytPlayer?.pauseVideo?.());
-            if (
-                visibleTrailer instanceof Element &&
-                lastProcessedTrailer !== visibleTrailer
-            ) {
-                lastProcessedTrailer = visibleTrailer;
-                // Recheck Trailer
-                let popupContent = visibleTrailer?.closest?.(".popup-content");
-                let anime =
-                    $finalAnimeList?.[getChildIndex(popupContent) ?? -1];
-                if (anime && !once) createPopupYTPlayer(anime);
+            // Recheck Trailer
+            if (visibleTrailerIdx >= 0) {
+                let nearAnimes = [
+                    $finalAnimeList?.[visibleTrailerIdx - 1],
+                    $finalAnimeList?.[visibleTrailerIdx],
+                    $finalAnimeList?.[visibleTrailerIdx + 1],
+                ];
+                nearAnimes.forEach((nearAnime) => {
+                    if (nearAnime) createPopupYTPlayer(nearAnime);
+                });
             }
         }
     }
 
     function createPopupYTPlayer(openedAnime) {
-        let ytPlayerEl = openedAnime.popupHeader.querySelector(".trailer");
-        if (!isOnline) {
-            let popupHeader = ytPlayerEl?.parentNode;
-            let popupImg = popupHeader?.querySelector?.(".popup-img");
-            let hasPlayer = $ytPlayers?.some(({ g }) => g === ytPlayerEl);
-            if (hasPlayer) return; // Keep Playing Available YTPlayers
-            let animeBannerImg = openedAnime?.bannerImageUrl;
-            let animeBannerImgEl = popupImg.querySelector(".bannerImg");
-            if (
-                animeBannerImg &&
-                (animeBannerImgEl?.naturalHeight === 0 ||
-                    animeBannerImgEl?.naturalWidth === 0)
-            ) {
-                animeBannerImgEl.src = animeBannerImg;
+        let ytPlayerEl = openedAnime?.popupHeader?.querySelector?.(".trailer");
+        if (
+            !openedAnime ||
+            !(openedAnime?.popupHeader instanceof Element) ||
+            !openedAnime?.trailerID ||
+            !popupWrapper?.classList?.contains("visible")
+        )
+            return; // Unavailable
+        let youtubeID = openedAnime.trailerID;
+        let popupImg = openedAnime.popupHeader.querySelector(".popup-img");
+        if (ytPlayerEl instanceof Element && youtubeID) {
+            if ($ytPlayers.some((ytPlayer) => ytPlayer.g === ytPlayerEl))
+                return;
+            if ($ytPlayers.length >= 8) {
+                let destroyedPlayer = $ytPlayers.shift();
+                // $ytPlayers = $ytPlayers
+                destroyedPlayer?.destroy?.();
+                let newYtPlayerEl = document.createElement("div");
+                newYtPlayerEl.className = "trailer";
+                openedAnime.popupHeader.replaceChild(newYtPlayerEl, ytPlayerEl);
+                ytPlayerEl = openedAnime.popupHeader.querySelector(".trailer"); // Get new YT player
             }
-            let animeCoverImg = openedAnime.coverImageUrl;
-            let animeCoverImgEl = popupImg.querySelector(".coverImg");
-            if (
-                animeCoverImg &&
-                (animeCoverImgEl?.naturalHeight === 0 ||
-                    animeCoverImgEl?.naturalWidth === 0)
-            ) {
-                animeCoverImgEl.src = animeCoverImg;
-            }
-            popupImg.style.display = "";
-            ytPlayerEl.style.display = "none";
-        } else {
-            if (
-                !openedAnime ||
-                !(openedAnime.popupHeader instanceof Element) ||
-                !openedAnime.trailerID ||
-                !popupWrapper?.classList?.contains("visible")
-            )
-                return; // Unavailable
-            let youtubeID = openedAnime.trailerID;
-            if (ytPlayerEl instanceof Element && youtubeID) {
-                if ($ytPlayers.some((ytPlayer) => ytPlayer.g === ytPlayerEl))
-                    return;
-                if ($ytPlayers.length >= 8) {
-                    let destroyedPlayer = $ytPlayers.shift();
-                    // $ytPlayers = $ytPlayers
-                    destroyedPlayer?.destroy?.();
-                    let parentElement = ytPlayerEl.parentElement;
-                    let newYtPlayerEl = document.createElement("div");
-                    newYtPlayerEl.className = "trailer";
-                    parentElement.replaceChild(newYtPlayerEl, ytPlayerEl);
-                    ytPlayerEl = parentElement.querySelector(".trailer"); // Get new YT player
-                }
-            }
+
             // Add a Unique ID
             ytPlayerEl.setAttribute(
                 "id",
@@ -399,13 +457,15 @@
             let trailerUrl = `https://www.youtube.com/embed/${youtubeID}?playlist=${youtubeID}&cc_load_policy=1&cc_lang_pref=en&enablejsapi=1&loop=1&modestbranding=1&playsinline=1`;
             ytPlayerEl.setAttribute("src", trailerUrl);
             $ytPlayers.push(ytPlayer);
+        } else {
+            popupImg.style.display = "";
         }
     }
-    function onPlayerReady(event) {
+    async function onPlayerReady(event) {
         let ytPlayer = event.target;
         let trailerEl = ytPlayer?.g;
 
-        let popupHeader = trailerEl?.parentNode;
+        let popupHeader = trailerEl?.parentElement;
         let popupImg = popupHeader?.querySelector?.(".popup-img");
 
         let popupContent = popupHeader?.closest?.(".popup-content");
@@ -443,14 +503,46 @@
             ) {
                 animeCoverImgEl.src = animeCoverImg;
             }
-            popupImg.style.display = "";
             trailerEl.style.display = "none";
-            return;
+            popupImg.style.display = "";
         } else {
-            trailerEl.style.display = "";
             popupImg.style.display = "none";
+            trailerEl.style.display = "";
+            // Play Most Visible when 1 Succeed
+            if (!$popupVisible) return;
+            await tick();
+            let mostVisiblePopupHeader =
+                getMostVisibleElement(popupContainer, ".popup-header", 0) ||
+                getMostVisibleElement(
+                    popupContainer,
+                    ".popup-content",
+                    1
+                )?.querySelector(".popup-header");
+            let visibleTrailer =
+                mostVisiblePopupHeader?.querySelector?.(".trailer");
+            let haveTrailer;
+            if (visibleTrailer instanceof Element) {
+                haveTrailer = $ytPlayers?.some(
+                    (ytPlayer) => ytPlayer.g === visibleTrailer
+                );
+            }
+            if (haveTrailer) {
+                $ytPlayers?.forEach(async (ytPlayer) => {
+                    if (
+                        ytPlayer.g === visibleTrailer &&
+                        ytPlayer?.getPlayerState?.() !== 1 &&
+                        $autoPlay
+                    ) {
+                        await tick();
+                        if (popupWrapper?.classList?.contains?.("visible")) {
+                            ytPlayer?.playVideo?.();
+                        }
+                    } else if (ytPlayer.g !== visibleTrailer) {
+                        ytPlayer?.pauseVideo?.();
+                    }
+                });
+            }
         }
-        playMostVisibleTrailer(true);
     }
 
     function getFormattedAnimeFormat({ episodes, format, duration }) {
@@ -499,7 +591,7 @@
     window.addEventListener("online", () => {
         isOnline = true;
         loadYouTubeAPI().then(() => {
-            lastProcessedTrailer = undefined;
+            lastProcessedPopupHeader = undefined;
             playMostVisibleTrailer();
         });
     });
@@ -512,7 +604,7 @@
                 "www-widgetapi-script"
             );
             if (existingScript) {
-                existingScript.parentNode.removeChild(existingScript);
+                existingScript.parentElement.removeChild(existingScript);
             }
             var tag = document.createElement("script");
             tag.src = "https://www.youtube.com/iframe_api?v=16";
@@ -524,7 +616,7 @@
                 resolve();
             };
             var firstScriptTag = document.getElementsByTagName("script")[0];
-            firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+            firstScriptTag.parentElement.insertBefore(tag, firstScriptTag);
         });
     }
 </script>
@@ -533,7 +625,7 @@
     id="popup-wrapper"
     class="popup-wrapper"
     on:click={handlePopupVisibility}
-    on:keydown={handlePopupVisibility}
+    on:keydown={(e) => e.key === "Enter" && handlePopupVisibility()}
     bind:this={popupWrapper}
 >
     <div
@@ -548,12 +640,9 @@
                     <div class="popup-main">
                         <div class="popup-header" bind:this={anime.popupHeader}>
                             {#if anime.trailerID}
-                                <div class="trailer" />
+                                <div class="trailer" style:display="none" />
                             {/if}
-                            <div
-                                class="popup-img"
-                                style:display={anime.trailerID ? "none" : ""}
-                            >
+                            <div class="popup-img" style:display="none">
                                 <img
                                     src={anime.bannerImageUrl}
                                     alt="bannerImg"
@@ -821,7 +910,9 @@
                                 <button
                                     class="seemoreless"
                                     on:click={handleSeeMore(anime, animeIdx)}
-                                    on:keydown={handleSeeMore(anime, animeIdx)}
+                                    on:keydown={(e) =>
+                                        e.key === "Enter" &&
+                                        handleSeeMore(anime, animeIdx)}
                                     >{"See " +
                                         (anime.isSeenMore
                                             ? "Less"
@@ -830,7 +921,9 @@
                                 <button
                                     class="hideshowbtn"
                                     on:click={handleHideShow(anime.id)}
-                                    on:keydown={handleHideShow(anime.id)}
+                                    on:keydown={(e) =>
+                                        e.key === "Enter" &&
+                                        handleHideShow(anime.id)}
                                     >{getHiddenStatus(anime.id) ||
                                         "N/A"}</button
                                 >
@@ -845,7 +938,7 @@
         id="closing-x"
         class="closing-x"
         on:click={handlePopupVisibility}
-        on:keydown={handlePopupVisibility}
+        on:keydown={(e) => e.key === "Enter" && handlePopupVisibility()}
     >
         &#215;
     </div>
@@ -914,6 +1007,27 @@
         padding-bottom: 56.25%;
         background: #000;
         user-select: none !important;
+    }
+
+    .popup-header::before {
+        font-family: "FontAwesome";
+        content: "\f3f4";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 40px;
+        color: #fff;
+        animation: spin 2s linear infinite;
+    }
+
+    @keyframes spin {
+        0% {
+            transform: translate(-50%, -50%) rotate(0deg);
+        }
+        100% {
+            transform: translate(-50%, -50%) rotate(360deg);
+        }
     }
 
     /* Need to add Globally, trailer Elements are Recreated */

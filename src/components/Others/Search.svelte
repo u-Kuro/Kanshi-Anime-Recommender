@@ -14,7 +14,11 @@
         initData,
     } from "../../js/globalValues.js";
     import { fade, fly } from "svelte/transition";
-    import { changeInputValue, dragScroll } from "../../js/others/helper.js";
+    import {
+        changeInputValue,
+        dragScroll,
+        getChildIndex,
+    } from "../../js/others/helper.js";
 
     let Init = true;
 
@@ -128,6 +132,13 @@
         ) {
             selectedFilterTypeElement = true;
         } else if (!optionsWrap && !classList.contains("options-wrap")) {
+            if (
+                highlightedEl instanceof Element &&
+                highlightedEl.closest(".filterType")
+            ) {
+                highlightedEl.style.backgroundColor = "";
+                highlightedEl = null;
+            }
             selectedFilterTypeElement = false;
         }
     }
@@ -154,7 +165,19 @@
             ({ isSelected }) => isSelected
         );
         if (selectedFilterElement instanceof Element) {
-            let selectedIndex = getIndexInParent(selectedFilterElement);
+            let filterSelectChildrenArray = Array.from(
+                selectedFilterElement.parentElement.children
+            ).filter((el) => {
+                return (
+                    getComputedStyle(el).display !== "none" &&
+                    getComputedStyle(el).visibility !== "hidden" &&
+                    (parseFloat(getComputedStyle(el).top) > -999 ||
+                        isNaN(parseFloat(getComputedStyle(el).top)))
+                );
+            });
+            let selectedIndex = filterSelectChildrenArray.indexOf(
+                selectedFilterElement
+            );
             if (
                 element.classList.contains("icon") &&
                 $filterOptions?.filterSelection?.[idxTypeSelected].filters
@@ -166,6 +189,13 @@
             ].selected = false;
         }
         if (Init) Init = false;
+        if (
+            highlightedEl instanceof Element &&
+            highlightedEl.closest(".filter-select")
+        ) {
+            highlightedEl.style.backgroundColor = "";
+            highlightedEl = null;
+        }
         $filterOptions.filterSelection[idxTypeSelected].filters.Dropdown[
             dropdownIdx
         ].selected = true;
@@ -178,6 +208,13 @@
         $filterOptions.filterSelection[idxTypeSelected].filters.Dropdown[
             dropDownIdx
         ].selected = false;
+        if (
+            highlightedEl instanceof Element &&
+            highlightedEl.closest(".filter-select")
+        ) {
+            highlightedEl.style.backgroundColor = "";
+            highlightedEl = null;
+        }
         selectedFilterElement = null;
     }
     function clickOutsideListener(event) {
@@ -185,42 +222,20 @@
             return;
         let element = event.target;
         let classList = element.classList;
-        // Filter Type Dropdown
-        let filterTypeEl = element.closest(".filterType");
         if (
-            (!classList.contains("filterType") && !filterTypeEl) ||
-            (classList.contains("options-wrap") &&
-                window.getComputedStyle(element).position === "fixed")
+            classList.contains("options-wrap") &&
+            getComputedStyle(element).position === "fixed"
         ) {
+            // Small Screen Width
+            if (highlightedEl instanceof Element) {
+                highlightedEl.style.backgroundColor = "";
+                highlightedEl = null;
+            }
+            // Close Filter Type Dropdown
             selectedFilterTypeElement = false;
-            if (highlightedEl instanceof Element) {
-                highlightedEl.style.backgroundColor = "";
-                highlightedEl = null;
-            }
-        }
-        // Sort Filter Dropdown
-        let sortSelectEl = element.closest(".sortFilter");
-        if (
-            (!classList.contains("sortFilter") && !sortSelectEl) ||
-            (classList.contains("options-wrap") &&
-                window.getComputedStyle(element).position === "fixed")
-        ) {
+            // Close Sort Filter Dropdown
             selectedSortElement = false;
-            if (highlightedEl instanceof Element) {
-                highlightedEl.style.backgroundColor = "";
-                highlightedEl = null;
-            }
-        }
-        // Filter Selection Dropdown
-        let filterSelectEl = element.closest(".filter-select");
-        let filterNameEl = element.closest(".filter-name");
-        if (
-            filterSelectEl !== selectedFilterElement ||
-            filterNameEl ||
-            classList.contains("filter-name") ||
-            (classList.contains("options-wrap") &&
-                window.getComputedStyle(element).position === "fixed")
-        ) {
+            // Close Filter Selection Dropdown
             let idxTypeSelected = $filterOptions?.filterSelection?.findIndex(
                 ({ isSelected }) => isSelected
             );
@@ -232,9 +247,59 @@
             $filterOptions.filterSelection[idxTypeSelected] =
                 $filterOptions?.filterSelection?.[idxTypeSelected];
             selectedFilterElement = null;
-            if (highlightedEl instanceof Element) {
-                highlightedEl.style.backgroundColor = "";
-                highlightedEl = null;
+        } else if (
+            !classList.contains("options-wrap") &&
+            !element.closest(".options-wrap")
+        ) {
+            // Large Screen Width
+            // Filter Type Dropdown
+            let filterTypeEl = element.closest(".filterType");
+            if (!classList.contains("filterType") && !filterTypeEl) {
+                if (
+                    highlightedEl instanceof Element &&
+                    highlightedEl.closest(".filterType")
+                ) {
+                    highlightedEl.style.backgroundColor = "";
+                    highlightedEl = null;
+                }
+                selectedFilterTypeElement = false;
+            }
+
+            // Sort Filter Dropdown
+            let sortSelectEl = element.closest(".sortFilter");
+            if (!classList.contains("sortFilter") && !sortSelectEl) {
+                if (
+                    highlightedEl instanceof Element &&
+                    highlightedEl.closest(".sortFilter")
+                ) {
+                    highlightedEl.style.backgroundColor = "";
+                    highlightedEl = null;
+                }
+                selectedSortElement = false;
+            }
+
+            // Filter Selection Dropdown
+            let inputDropdownSelectEl = element.closest(".select");
+            if (!classList.contains("select") && !inputDropdownSelectEl) {
+                if (
+                    highlightedEl instanceof Element &&
+                    highlightedEl.closest(".filter-select")
+                ) {
+                    highlightedEl.style.backgroundColor = "";
+                    highlightedEl = null;
+                }
+                let idxTypeSelected =
+                    $filterOptions?.filterSelection?.findIndex(
+                        ({ isSelected }) => isSelected
+                    );
+                $filterOptions?.filterSelection?.[
+                    idxTypeSelected
+                ].filters.Dropdown.forEach((e) => {
+                    e.selected = false;
+                });
+                $filterOptions.filterSelection[idxTypeSelected] =
+                    $filterOptions?.filterSelection?.[idxTypeSelected];
+                selectedFilterElement = null;
             }
         }
     }
@@ -731,6 +796,13 @@
             selectedSortElement = true;
         } else if (!optionsWrap && !classList.contains("options-wrap")) {
             selectedSortElement = false;
+            if (
+                highlightedEl instanceof Element &&
+                highlightedEl.closest(".sortFilter")
+            ) {
+                highlightedEl.style.backgroundColor = "";
+                highlightedEl = null;
+            }
         }
     }
     function changeSort(newSortName) {
@@ -772,13 +844,14 @@
         if (keyCode == 38 || keyCode == 40) {
             var element = Array.from(
                 document.getElementsByClassName("options-wrap") || []
-            ).find(
-                (el) =>
+            ).find((el) => {
+                return (
                     getComputedStyle(el).display !== "none" &&
-                    getComputedStyle(el).visibility !== "hidden"
-            );
-            // let element =
-            document.getElementsByClassName("options-wrap")?.[0];
+                    getComputedStyle(el).visibility !== "hidden" &&
+                    (parseFloat(getComputedStyle(el).top) > -999 ||
+                        isNaN(parseFloat(getComputedStyle(el).top)))
+                );
+            });
             if (
                 element?.closest?.(".filterType") ||
                 element?.closest?.(".sortFilter") ||
@@ -816,7 +889,6 @@
                                     : "smooth",
                             container: parent,
                             block: "nearest",
-                            inline: "end",
                         });
                     }
                 } else {
@@ -841,9 +913,16 @@
             ).find(
                 (el) =>
                     getComputedStyle(el).display !== "none" &&
-                    getComputedStyle(el).visibility !== "hidden"
+                    getComputedStyle(el).visibility !== "hidden" &&
+                    (parseFloat(getComputedStyle(el).top) > -999 ||
+                        isNaN(parseFloat(getComputedStyle(el).top)))
             );
-            if (element?.closest?.(".filter-select") && keyCode !== 9) return;
+            if (
+                (element?.closest?.(".filter-select") && keyCode !== 9) ||
+                (element instanceof Element &&
+                    getComputedStyle(element).position === "fixed")
+            )
+                return;
             let idxTypeSelected = $filterOptions?.filterSelection?.findIndex(
                 ({ isSelected }) => isSelected
             );
@@ -867,9 +946,43 @@
     }
     function hasPartialMatch(strings, searchString) {
         if (typeof strings === "string" && typeof searchString === "string") {
-            return strings.toLowerCase().includes(searchString.toLowerCase());
+            return strings
+                .toLowerCase()
+                .includes(searchString.trim().toLowerCase());
         }
     }
+
+    window.checkOpenDropdown = () => {
+        return (
+            (selectedFilterTypeElement ||
+                selectedSortElement ||
+                selectedFilterElement) &&
+            window.innerWidth <= 760
+        );
+    };
+    window.closeDropdown = () => {
+        // Small Screen Width
+        if (highlightedEl instanceof Element) {
+            highlightedEl.style.backgroundColor = "";
+            highlightedEl = null;
+        }
+        // Close Filter Type Dropdown
+        selectedFilterTypeElement = false;
+        // Close Sort Filter Dropdown
+        selectedSortElement = false;
+        // Close Filter Selection Dropdown
+        let idxTypeSelected = $filterOptions?.filterSelection?.findIndex(
+            ({ isSelected }) => isSelected
+        );
+        $filterOptions?.filterSelection?.[
+            idxTypeSelected
+        ].filters.Dropdown.forEach((e) => {
+            e.selected = false;
+        });
+        $filterOptions.filterSelection[idxTypeSelected] =
+            $filterOptions?.filterSelection?.[idxTypeSelected];
+        selectedFilterElement = null;
+    };
 
     onMount(() => {
         // Init
@@ -889,10 +1002,6 @@
     });
 
     // Helper
-    function getIndexInParent(element) {
-        if (!element) return;
-        return Array.from(element.parentNode.children).indexOf(element);
-    }
 </script>
 
 <main>
@@ -911,16 +1020,13 @@
             <i
                 class="fa-solid fa-sliders"
                 on:click={handleShowFilterTypes}
-                on:keydown={handleShowFilterTypes}
+                on:keydown={(e) => e.key === "Enter" && handleShowFilterTypes()}
             />
             {#if !$initData}
                 <div
                     class="options-wrap"
                     style:--maxFilterSelectionHeight="{maxFilterSelectionHeight}px"
-                    style:visibility={selectedFilterTypeElement ? "" : "hidden"}
-                    style:pointer-events={selectedFilterTypeElement
-                        ? ""
-                        : "none"}
+                    style:top={selectedFilterTypeElement ? "" : "-9999px"}
                 >
                     {#if $filterOptions}
                         <div class="options-wrap-filter-info">
@@ -933,9 +1039,9 @@
                                     on:click={handleFilterTypes(
                                         filterSelectionName
                                     )}
-                                    on:keydown={handleFilterTypes(
-                                        filterSelectionName
-                                    )}
+                                    on:keydown={(e) =>
+                                        e.key === "Enter" &&
+                                        handleFilterTypes(filterSelectionName)}
                                 >
                                     <h3
                                         style:color={isSelected
@@ -995,7 +1101,11 @@
                         </div>
                         <div
                             class="select"
-                            on:keydown={(e) => filterSelect(e, dropdownIdx)}
+                            on:keydown={(e) =>
+                                (e.key === "Enter" ||
+                                    e.key === "ArrowDown" ||
+                                    e.key === "ArrowUp") &&
+                                filterSelect(e, dropdownIdx)}
                             on:click={(e) => filterSelect(e, dropdownIdx)}
                         >
                             <div class="value-wrap">
@@ -1014,7 +1124,9 @@
                             {#if selected && options.length && !Init}
                                 <i
                                     class="icon fa-solid fa-angle-up"
-                                    on:keydown={closeFilterSelect(dropdownIdx)}
+                                    on:keydown={(e) =>
+                                        e.key === "Enter" &&
+                                        closeFilterSelect(dropdownIdx)}
                                     on:click={closeFilterSelect(dropdownIdx)}
                                 />
                             {:else}
@@ -1024,16 +1136,11 @@
                         <div
                             class="options-wrap"
                             style:--maxFilterSelectionHeight="{maxFilterSelectionHeight}px"
-                            style:visibility={options.length &&
-                            selected &&
+                            style:top={options.length &&
+                            selected === true &&
                             !Init
                                 ? ""
-                                : "hidden"}
-                            style:pointer-events={options.length &&
-                            selected &&
-                            !Init
-                                ? ""
-                                : "none"}
+                                : "-9999px"}
                         >
                             <div class="options-wrap-filter-info">
                                 <h2>{filName}</h2>
@@ -1060,14 +1167,16 @@
                                                 changeType,
                                                 filterSelectionName
                                             )}
-                                            on:keydown={handleFilterSelectOptionChange(
-                                                optionName,
-                                                filName,
-                                                optionIdx,
-                                                dropdownIdx,
-                                                changeType,
-                                                filterSelectionName
-                                            )}
+                                            on:keydown={(e) =>
+                                                e.key === "Enter" &&
+                                                handleFilterSelectOptionChange(
+                                                    optionName,
+                                                    filName,
+                                                    optionIdx,
+                                                    dropdownIdx,
+                                                    changeType,
+                                                    filterSelectionName
+                                                )}
                                         >
                                             <h3>{optionName || ""}</h3>
                                             {#if selected === "included"}
@@ -1108,6 +1217,7 @@
                                     filterSelectionName
                                 )}
                             on:keydown={(e) =>
+                                e.key === "Enter" &&
                                 handleCheckboxChange(
                                     e,
                                     Checkbox.filName,
@@ -1183,7 +1293,7 @@
             class="fa-solid fa-ban"
             title="Remove Filters"
             on:click={removeAllActiveTag}
-            on:keydown={removeAllActiveTag}
+            on:keydown={(e) => e.key === "Enter" && removeAllActiveTag()}
             style:visibility={$activeTagFilters?.[
                 $filterOptions?.filterSelection?.[
                     $filterOptions?.filterSelection?.findIndex(
@@ -1215,14 +1325,16 @@
                             changeType,
                             optionType
                         )}
-                        on:keydown={changeActiveSelect(
-                            optionIdx,
-                            optionName,
-                            filterType,
-                            categIdx,
-                            changeType,
-                            optionType
-                        )}
+                        on:keydown={(e) =>
+                            e.key === "Enter" &&
+                            changeActiveSelect(
+                                optionIdx,
+                                optionName,
+                                filterType,
+                                categIdx,
+                                changeType,
+                                optionType
+                            )}
                     >
                         {#if filterType === "input number"}
                             <h3>
@@ -1242,13 +1354,15 @@
                                 categIdx,
                                 optionType
                             )}
-                            on:keydown={removeActiveTag(
-                                optionIdx,
-                                optionName,
-                                filterType,
-                                categIdx,
-                                optionType
-                            )}
+                            on:keydown={(e) =>
+                                e.key === "Enter" &&
+                                removeActiveTag(
+                                    optionIdx,
+                                    optionName,
+                                    filterType,
+                                    categIdx,
+                                    optionType
+                                )}
                         />
                     </div>
                 {/if}
@@ -1262,7 +1376,7 @@
             <div class="sortFilter">
                 <i
                     on:click={changeSortType}
-                    on:keydown={changeSortType}
+                    on:keydown={(e) => e.key === "Enter" && changeSortType()}
                     class={"fa-duotone fa-sort-" +
                         ($filterOptions?.sortFilter?.[
                             $filterOptions?.sortFilter?.findIndex(
@@ -1274,7 +1388,8 @@
                 />
                 <h3
                     on:click={handleSortFilterPopup}
-                    on:keydown={handleSortFilterPopup}
+                    on:keydown={(e) =>
+                        e.key === "Enter" && handleSortFilterPopup()}
                 >
                     {$filterOptions?.sortFilter?.[
                         $filterOptions?.sortFilter.findIndex(
@@ -1284,8 +1399,7 @@
                     <div
                         class="options-wrap"
                         style:--maxFilterSelectionHeight="{maxFilterSelectionHeight}px"
-                        style:visibility={selectedSortElement ? "" : "hidden"}
-                        style:pointer-events={selectedSortElement ? "" : "none"}
+                        style:top={selectedSortElement ? "" : "-9999px"}
                     >
                         <div class="options-wrap-filter-info">
                             <h2>Sort By</h2>
@@ -1295,7 +1409,9 @@
                                 <div
                                     class="option"
                                     on:click={changeSort(sortName)}
-                                    on:keydown={changeSort(sortName)}
+                                    on:keydown={(e) =>
+                                        e.key === "Enter" &&
+                                        changeSort(sortName)}
                                 >
                                     <h3>{sortName || ""}</h3>
                                     {#if $filterOptions?.sortFilter?.[$filterOptions?.sortFilter?.findIndex(({ sortType }) => sortType !== "none")].sortName === sortName && sortName}
@@ -1712,6 +1828,7 @@
 
     .sortFilter .options-wrap {
         position: absolute;
+        display: flex;
         right: 0;
         top: 20px;
         background-color: rgb(21, 31, 46);
@@ -1791,13 +1908,15 @@
         display: none !important;
     }
     @media screen and (max-width: 760px) {
-        .options-wrap {
+        .filter-select .options-wrap,
+        .filterType .options-wrap,
+        .sortFilter .options-wrap {
             position: fixed !important;
             display: flex !important;
             flex-direction: column !important;
             z-index: 996 !important;
             left: 0px !important;
-            top: 0px !important;
+            top: 0px;
             width: 100% !important;
             height: 100% !important;
             background-color: rgba(0, 0, 0, 0.4) !important;

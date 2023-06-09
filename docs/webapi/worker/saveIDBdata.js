@@ -1,9 +1,23 @@
 let db;
-self.onmessage = async({data}) => {
-    if(!db) await IDBinit()
-    if(data.data!==undefined&&data.name){
+self.onmessage = async ({ data }) => {
+    if (!db) await IDBinit()
+    if (data.data !== undefined && data.name) {
+        // Just a workaround to remove opened filters
+        if (data.name === "filterOptions") {
+            let filterSelection = data.data?.filterSelection
+            filterSelection?.forEach(({ filters }, filterSelectionIdx) => {
+                let Dropdown = filters.Dropdown
+                Dropdown.forEach((_dropdown, dropdownIdx) => {
+                    _dropdown.selected = false
+                    filterSelection[filterSelectionIdx].filters.Dropdown[dropdownIdx] = _dropdown
+                })
+            })
+            if (filterSelection) {
+                data.data.filterSelection = filterSelection
+            }
+        }
         await saveJSON(data.data, data.name)
-        self.postMessage({message:'success'})
+        self.postMessage({ message: 'success' })
     }
 }
 
@@ -28,12 +42,12 @@ async function IDBinit() {
     });
 }
 async function saveJSON(data, name) {
-    return await new Promise(async (resolve,reject) => {
+    return await new Promise(async (resolve, reject) => {
         try {
             let write = db
-            .transaction("MyObjectStore", "readwrite")
-            .objectStore("MyObjectStore")
-            .openCursor();
+                .transaction("MyObjectStore", "readwrite")
+                .objectStore("MyObjectStore")
+                .openCursor();
             write.onsuccess = async (event) => {
                 let put = await db
                     .transaction("MyObjectStore", "readwrite")
@@ -57,11 +71,11 @@ async function saveJSON(data, name) {
 }
 async function retrieveJSON(name) {
     return await new Promise((resolve) => {
-      try {
+        try {
             let read = db
-            .transaction("MyObjectStore", "readwrite")
-            .objectStore("MyObjectStore")
-            .get(name);
+                .transaction("MyObjectStore", "readwrite")
+                .objectStore("MyObjectStore")
+                .get(name);
             read.onsuccess = () => {
                 return resolve(read.result);
             };

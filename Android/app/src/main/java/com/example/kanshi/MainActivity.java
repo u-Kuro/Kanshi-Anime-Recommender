@@ -522,7 +522,6 @@ public class MainActivity extends AppCompatActivity  {
 
     @Override
     public void onBackPressed() {
-        System.out.println(webView.getUrl().contains("https"));
         if(!shoulGoBack){
             webView.post(() -> webView.loadUrl("javascript:window.backPressed();"));
         } else {

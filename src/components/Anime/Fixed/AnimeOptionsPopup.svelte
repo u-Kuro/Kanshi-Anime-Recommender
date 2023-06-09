@@ -109,23 +109,31 @@
     <div
         class="anime-options"
         on:click={handleAnimeOptionVisibility}
-        on:keydown={handleAnimeOptionVisibility}
+        on:keydown={(e) => e.key === "Enter" && handleAnimeOptionVisibility()}
     >
         <div
             class="anime-options-container"
             transition:fly={{ y: 20, duration: 300 }}
         >
             <span class="anime-title"><h1>{animeTitle}</h1></span>
-            <span on:click={openAnimePopup} on:keydown={openAnimePopup}
+            <span
+                on:click={openAnimePopup}
+                on:keydown={(e) => e.key === "Enter" && openAnimePopup()}
                 ><h2>Open Anime</h2></span
             >
-            <span on:click={openInAnilist} on:keydown={openInAnilist}
+            <span
+                on:click={openInAnilist}
+                on:keydown={(e) => e.key === "Enter" && openInAnilist()}
                 ><h2>Open In Anilist</h2></span
             >
-            <span on:click={copyTitle} on:keydown={copyTitle}
+            <span
+                on:click={copyTitle}
+                on:keydown={(e) => e.key === "Enter" && copyTitle()}
                 ><h2>Copy Title</h2></span
             >
-            <span on:click={handleHideShow} on:keydown={handleHideShow}
+            <span
+                on:click={handleHideShow}
+                on:keydown={(e) => e.key === "Enter" && handleHideShow()}
                 ><h2>
                     {($hiddenEntries[animeID] ? "Show" : "Hide") + " Anime"}
                 </h2></span

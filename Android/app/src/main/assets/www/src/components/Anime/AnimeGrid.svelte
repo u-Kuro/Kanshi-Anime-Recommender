@@ -34,12 +34,10 @@
                         self.unobserve(entry.target);
                         if (observerTimeout) clearTimeout(observerTimeout);
                         observerTimeout = setTimeout(() => {
-                            try {
+                            if ($animeLoaderWorker instanceof Worker) {
                                 $animeLoaderWorker.postMessage({
                                     loadMore: true,
                                 });
-                            } catch (ex) {
-                                updateRecommendationList.update((e) => !e);
                             }
                         }, observerDelay);
                     }
@@ -82,20 +80,20 @@
                     data.isRemoved === true &&
                     typeof data.removedID === "number"
                 ) {
-                    try {
-                        if ($animeObserver instanceof IntersectionObserver) {
-                            $animeObserver.observe(
-                                $finalAnimeList[
-                                    Math.max($finalAnimeList.length - 2, 0)
-                                ].gridElement
-                            );
-                        }
-                        $finalAnimeList = $finalAnimeList.filter(
-                            ({ id }) => id !== data.removedID
+                    if (
+                        $animeObserver instanceof IntersectionObserver &&
+                        $finalAnimeList[Math.max($finalAnimeList.length - 2, 0)]
+                            .gridElement instanceof Element
+                    ) {
+                        $animeObserver.observe(
+                            $finalAnimeList[
+                                Math.max($finalAnimeList.length - 2, 0)
+                            ].gridElement
                         );
-                    } catch (ex) {
-                        updateRecommendationList.update((e) => !e);
                     }
+                    $finalAnimeList = $finalAnimeList.filter(
+                        ({ id }) => id !== data.removedID
+                    );
                 }
             };
             val.onerror = (error) => {
@@ -116,13 +114,14 @@
             (async () => {
                 await tick();
                 addObserver();
-                // Grid Observed
-                try {
+                if (
+                    $animeObserver instanceof IntersectionObserver &&
+                    $finalAnimeList[$finalAnimeList.length - 1]
+                        .gridElement instanceof Element
+                ) {
                     $animeObserver.observe(
                         $finalAnimeList[$finalAnimeList.length - 1].gridElement
                     );
-                } catch (ex) {
-                    updateRecommendationList.update((e) => !e);
                 }
             })();
         } else {
@@ -280,14 +279,16 @@
                             on:pointerdown={handleOpenOption(animeIdx)}
                             on:pointerup={cancelOpenOption}
                             on:pointercancel={cancelOpenOption}
-                            on:keydown={handleOpenPopup(animeIdx)}
+                            on:keydown={(e) =>
+                                e.key === "Enter" && handleOpenPopup(animeIdx)}
                         />
                     </div>
                     <span
                         class="image-grid__card-title copy"
                         copy-value={anime.title || ""}
                         on:click={handleOpenPopup(animeIdx)}
-                        on:keydown={handleOpenPopup(animeIdx)}
+                        on:keydown={(e) =>
+                            e.key === "Enter" && handleOpenPopup(animeIdx)}
                     >
                         <span class="title">{anime.title || "N/A"}</span>
                         <span class="brief-info">

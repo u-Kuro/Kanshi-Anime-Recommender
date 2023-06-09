@@ -192,39 +192,40 @@
     <div
         class="menu-container"
         on:click={handleMenuVisibility}
-        on:keydown={handleMenuVisibility}
+        on:keydown={(e) => e.key === "Enter" && handleMenuVisibility()}
     >
         <div class="menu">
             <button
                 class="button"
                 on:click={updateList}
-                on:keydown={updateList}
+                on:keydown={(e) => e.key === "Enter" && updateList()}
                 transition:fly={{ x: 50, duration: 300 }}>Update List</button
             >
             <button
                 class="button"
                 on:click={showAllHiddenEntries}
-                on:keydown={showAllHiddenEntries}
+                on:keydown={(e) => e.key === "Enter" && showAllHiddenEntries()}
                 transition:fly={{ x: 50, duration: 300 }}
                 >Show All Hidden Entries</button
             >
             <button
                 class="button"
                 on:click={importData}
-                on:keydown={importData}
+                on:keydown={(e) => e.key === "Enter" && importData()}
                 transition:fly={{ x: 50, duration: 300 }}>Import Data</button
             >
             <button
                 class="button"
                 on:click={exportData}
-                on:keydown={exportData}
+                on:keydown={(e) => e.key === "Enter" && exportData()}
                 transition:fly={{ x: 50, duration: 300 }}>Export Data</button
             >
             {#if $android}
                 <button
                     class="button"
                     on:click={handleExportFolder}
-                    on:keydown={handleExportFolder}
+                    on:keydown={(e) =>
+                        e.key === "Enter" && handleExportFolder()}
                     transition:fly={{ x: 50, duration: 300 }}
                 >
                     {($exportPathIsAvailable ? "Change" : "Set") +
@@ -235,25 +236,29 @@
                 class="button selected"
                 transition:fly={{ x: 50, duration: 300 }}
                 on:click={stillFixing}
-                on:keydown={stillFixing}>Dark Mode</button
+                on:keydown={(e) => e.key === "Enter" && stillFixing()}
+                >Dark Mode</button
             >
             <button
                 transition:fly={{ x: 50, duration: 300 }}
                 class={"button " + ($autoUpdate ? "selected" : "")}
                 on:click={handleUpdateEveryHour}
-                on:keydown={handleUpdateEveryHour}>Auto Update</button
+                on:keydown={(e) => e.key === "Enter" && handleUpdateEveryHour()}
+                >Auto Update</button
             >
             <button
                 transition:fly={{ x: 50, duration: 300 }}
                 class={"button " + ($autoExport ? "selected" : "")}
                 on:click={handleExportEveryHour}
-                on:keydown={handleExportEveryHour}>Auto Export</button
+                on:keydown={(e) => e.key === "Enter" && handleExportEveryHour()}
+                >Auto Export</button
             >
             <button
                 transition:fly={{ x: 50, duration: 300 }}
                 class="button"
                 on:click={anilistSignup}
-                on:keydown={anilistSignup}>Create an Anilist Account</button
+                on:keydown={(e) => e.key === "Enter" && anilistSignup()}
+                >Create an Anilist Account</button
             >
         </div>
     </div>

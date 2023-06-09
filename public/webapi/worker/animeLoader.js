@@ -8,7 +8,7 @@ let db,
 self.onmessage = async ({ data }) => {
     if (data?.filterKeyword !== undefined) {
         keyword = data?.filterKeyword
-        filteredList = finalAnimeList.filter(({ title }) => title?.toLowerCase?.().includes(keyword?.toLowerCase?.()) || !keyword)
+        filteredList = finalAnimeList.filter(({ title }) => title?.toLowerCase?.().includes(keyword?.trim()?.toLowerCase?.()) || !keyword)
         self.postMessage({
             isNew: true,
             finalAnimeList: filteredList.slice(0, loadLimit)

@@ -62,9 +62,9 @@ function getMostVisibleElement(parent, childSelector, intersectionRatioThreshold
   }
 }
 
-const getChildIndex = (childElement) => {
+const getChildIndex = (childElement, condition) => {
   try {
-    return Array.from(childElement.parentNode.children).indexOf(childElement);
+    return Array.from(childElement.parentElement.children).indexOf(childElement);
   } catch (ex) {
     // console.error(ex)
     return
