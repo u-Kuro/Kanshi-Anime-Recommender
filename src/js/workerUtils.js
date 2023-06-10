@@ -141,14 +141,14 @@ const exportUserData = (_data) => {
                     JSBridge.exportJSON(chunk, 1, '')
                 } else if (state === 2) {
                     let username = data.username ?? null
-                    JSBridge.exportJSON(chunk, 2, `Kanshi.${username.toLowerCase() || "Backup"}.json`)
+                    JSBridge.exportJSON(chunk, 2, `Kanshi.${username?.toLowerCase() || "Backup"}.json`)
                     exportUserDataWorker.terminate();
                     resolve(data)
                 }
             } else {
                 dataStatusPrio = false
                 let username = data.username ?? null
-                downloadLink(data.url, `Kanshi.${username.toLowerCase() || "Backup"}.json`)
+                downloadLink(data.url, `Kanshi.${username?.toLowerCase() || "Backup"}.json`)
                 resolve(data)
                 // dont terminate, can't oversee blob link lifetime
             }

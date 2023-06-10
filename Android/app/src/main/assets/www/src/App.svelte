@@ -332,6 +332,7 @@
 	let hourINMS = 60 * 60 * 1000;
 	autoExport.subscribe(async (val) => {
 		if (val === true) {
+			saveJSON(true, "autoExport");
 			// Check Run First
 			let isPastDate = false;
 			if ($lastRunnedAutoExportDate === null) isPastDate = true;
