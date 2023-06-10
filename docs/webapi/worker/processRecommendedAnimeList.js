@@ -4,6 +4,7 @@ let mediaRelationTypes = ["adaptation", "prequel", "sequel", "parent", "side_sto
 let minNumber = 1 - 6e-17 !== 1 ? 6e-17 : 1e-16;
 self.onmessage = async ({ data }) => {
     if (!db) await IDBinit()
+    let xxx = new Date()
     // Retrieve Data
     self.postMessage({ status: "Initializing Filters" })
     let activeTagFilters = await retrieveJSON("activeTagFilters")
@@ -712,21 +713,19 @@ self.onmessage = async ({ data }) => {
         : Math.min(arrayMean(averageScoresArray), arrayMode(averageScoresArray));
     if (!jsonIsEmpty(varScheme)) {
         animeFranchises = []
+        let maxScoreTest = 0
         let userScoreBase = 100
         let userScores = Object.values(userEntriesStatus.userScore);
         let meanUserScore, meanScoreAll, meanScoreAbove;
         if (userScores?.length) {
             let max = Math.max(...userScores);
-            userScoreBase =
-                customUserScoreBase >= 0
-                    ? customUserScoreBase
-                    : max <= 3
-                        ? 3
-                        : max <= 5
-                            ? 5
-                            : max <= 10
-                                ? 10
-                                : 100;
+            userScoreBase = max <= 3
+                ? 3
+                : max <= 5
+                    ? 5
+                    : max <= 10
+                        ? 10
+                        : 100;
             meanUserScore = arrayMean(userScores);
         }
         for (let i = 0; i < animeEntries.length; i++) {
@@ -1185,6 +1184,7 @@ self.onmessage = async ({ data }) => {
                 });
             favoriteContents = favoriteContents.length ? favoriteContents : [];
             // Add To Processed Recommendation List
+            maxScoreTest = Math.max(score, maxScoreTest)
             recommendedAnimeList[animeID] = {
                 id: animeID,
                 title: title,
@@ -1245,8 +1245,9 @@ self.onmessage = async ({ data }) => {
         })
         // Map Value to Score Basis
         recommendedAnimeListEntries = recommendedAnimeListEntries.map((anime) => {
-            anime.score = userScoreBase > 1 ? mapValue(anime.score, 1, maxScore, 1, userScoreBase) : anime.score
-            anime.weightedScore = userScoreBase > 1 ? mapValue(anime.weightedScore, 1, maxScore, 1, userScoreBase) : anime.weightedScore
+            let newHighestRange = customUserScoreBase >= 0 ? customUserScoreBase : userScoreBase
+            anime.score = newHighestRange > 1 ? mapValue(anime.score, 1, maxScore, 1, newHighestRange) : anime.score
+            anime.weightedScore = newHighestRange > 1 ? mapValue(anime.weightedScore, 1, maxScore, 1, newHighestRange) : anime.weightedScore
             return anime
         })
         // Get Mean Scores
@@ -1269,7 +1270,7 @@ self.onmessage = async ({ data }) => {
             }
         })
     } else {
-        let scoreBase = customUserScoreBase >= 0 ? customUserScoreBase : 100 // 0 causes problem so it should be > 0
+        let scoreBase = 100 // 0 causes problem so it should be > 0
         let maxScore
         for (let i = 0; i < animeEntries.length; i++) {
             let anime = animeEntries[i];
@@ -1455,8 +1456,9 @@ self.onmessage = async ({ data }) => {
         })
         // Map Value to Score Basis
         recommendedAnimeListEntries = recommendedAnimeListEntries.map((anime) => {
-            anime.score = scoreBase > 1 ? mapValue(anime.score, 1, maxScore, 1, scoreBase) : anime.score
-            anime.weightedScore = scoreBase > 1 ? mapValue(anime.weightedScore, 1, maxScore, 1, scoreBase) : anime.weightedScore
+            let newHighestRange = customUserScoreBase >= 0 ? customUserScoreBase : scoreBase
+            anime.score = newHighestRange > 1 ? mapValue(anime.score, 1, maxScore, 1, newHighestRange) : anime.score
+            anime.weightedScore = newHighestRange > 1 ? mapValue(anime.weightedScore, 1, maxScore, 1, newHighestRange) : anime.weightedScore
             return anime
         })
         // Get Mean Scores

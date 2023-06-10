@@ -727,7 +727,6 @@ self.onmessage = async ({ data }) => {
                         ? 10
                         : 100;
             meanUserScore = arrayMean(userScores);
-            // console.log(meanUserScore)
         }
         for (let i = 0; i < animeEntries.length; i++) {
             let anime = animeEntries[i];
@@ -1488,7 +1487,6 @@ self.onmessage = async ({ data }) => {
     await saveJSON(filters, 'filters')
     await saveJSON(activeTagFilters, 'activeTagFilters')
     await saveJSON(Object.values(recommendedAnimeList), 'recommendedAnimeList')
-    // console.log(((new Date).getTime() - xxx.getTime()) / 1000)
     self.postMessage({ status: null })
     self.postMessage({ message: 'success' })
 }
