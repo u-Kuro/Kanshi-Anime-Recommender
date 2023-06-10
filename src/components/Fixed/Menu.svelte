@@ -55,11 +55,13 @@
                 $menuVisible = false;
                 importUserData({
                     importedFile: importedFile,
+                }).then(() => {
+                    if (importFileInput instanceof Element)
+                        importFileInput.value = null;
                 });
             }
         }
     }
-
     // Global Function For Android
     function handleExportFolder() {
         try {
