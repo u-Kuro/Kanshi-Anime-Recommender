@@ -319,13 +319,17 @@
 			saveJSON(false, "autoUpdate");
 		}
 	});
+	let userRequestIsRunning = false; // Workaround for Visibility Change
 	runUpdate.subscribe((val) => {
 		if (typeof val !== "boolean") return;
+		userRequestIsRunning = true;
 		requestUserEntries()
 			.then(() => {
+				userRequestIsRunning = false;
 				requestAnimeEntries();
 			})
 			.catch((error) => {
+				userRequestIsRunning = false;
 				console.error(error);
 			});
 	});
@@ -394,7 +398,7 @@
 
 	// Global Function For Android/Browser
 	document.addEventListener("visibilitychange", function () {
-		if (document.visibilityState === "visible") {
+		if (document.visibilityState === "visible" && !userRequestIsRunning) {
 			requestUserEntries();
 		}
 	});
@@ -403,7 +407,9 @@
 		window.history.scrollRestoration = "manual"; // Disable scrolling to top when navigating back
 	}
 	window.checkEntries = () => {
-		requestUserEntries();
+		if (!userRequestIsRunning) {
+			requestUserEntries();
+		}
 	};
 	window.addEventListener("popstate", () => {
 		window.backPressed();
