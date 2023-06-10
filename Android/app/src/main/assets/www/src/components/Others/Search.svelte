@@ -954,7 +954,7 @@
     }
 
     window.checkOpenDropdown = () => {
-        return selectedFilterElement && window.innerWidth <= 760
+        return selectedFilterElement && window.innerWidth <= 760;
     };
     window.closeDropdown = () => {
         // Small Screen Width
@@ -1016,7 +1016,8 @@
             <i
                 class="fa-solid fa-sliders"
                 on:click={handleShowFilterTypes}
-                on:keydown={(e) => e.key === "Enter" && handleShowFilterTypes()}
+                on:keydown={(e) =>
+                    e.key === "Enter" && handleShowFilterTypes(e)}
             />
             {#if !$initData}
                 <div
@@ -1286,7 +1287,7 @@
             class="fa-solid fa-ban"
             title="Remove Filters"
             on:click={removeAllActiveTag}
-            on:keydown={(e) => e.key === "Enter" && removeAllActiveTag()}
+            on:keydown={(e) => e.key === "Enter" && removeAllActiveTag(e)}
             style:visibility={$activeTagFilters?.[
                 $filterOptions?.filterSelection?.[
                     $filterOptions?.filterSelection?.findIndex(
@@ -1375,7 +1376,7 @@
             <div class="sortFilter">
                 <i
                     on:click={changeSortType}
-                    on:keydown={(e) => e.key === "Enter" && changeSortType()}
+                    on:keydown={(e) => e.key === "Enter" && changeSortType(e)}
                     class={"fa-duotone fa-sort-" +
                         ($filterOptions?.sortFilter?.[
                             $filterOptions?.sortFilter?.findIndex(
@@ -1388,7 +1389,7 @@
                 <h3
                     on:click={handleSortFilterPopup}
                     on:keydown={(e) =>
-                        e.key === "Enter" && handleSortFilterPopup()}
+                        e.key === "Enter" && handleSortFilterPopup(e)}
                 >
                     {$filterOptions?.sortFilter?.[
                         $filterOptions?.sortFilter.findIndex(

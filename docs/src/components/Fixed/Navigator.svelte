@@ -92,7 +92,7 @@
 
 <div
     class="nav-container"
-    on:keydown={(e) => e.key === "Enter" && handleMenuVisibility()}
+    on:keydown={(e) => e.key === "Enter" && handleMenuVisibility(e)}
     on:click={handleMenuVisibility}
 >
     <nav class="nav">
@@ -115,12 +115,12 @@
                 autocomplete="off"
                 placeholder="{windowWidth > 415 ? 'Your ' : ''}Anilist Username"
                 disabled={$initData && !$username}
-                on:keydown={(e) => e.key === "Enter" && updateUsername()}
+                on:keydown={(e) => e.key === "Enter" && updateUsername(e)}
                 bind:value={typedUsername}
             />
             <div
                 class="searchBtn"
-                on:keydown={(e) => e.key === "Enter" && updateUsername()}
+                on:keydown={(e) => e.key === "Enter" && updateUsername(e)}
                 on:click={updateUsername}
             >
                 <i class="fa-solid fa-magnifying-glass" />

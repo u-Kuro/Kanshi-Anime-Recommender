@@ -625,7 +625,7 @@
     id="popup-wrapper"
     class="popup-wrapper"
     on:click={handlePopupVisibility}
-    on:keydown={(e) => e.key === "Enter" && handlePopupVisibility()}
+    on:keydown={(e) => e.key === "Enter" && handlePopupVisibility(e)}
     bind:this={popupWrapper}
 >
     <div
@@ -938,7 +938,7 @@
         id="closing-x"
         class="closing-x"
         on:click={handlePopupVisibility}
-        on:keydown={(e) => e.key === "Enter" && handlePopupVisibility()}
+        on:keydown={(e) => e.key === "Enter" && handlePopupVisibility(e)}
     >
         &#215;
     </div>
