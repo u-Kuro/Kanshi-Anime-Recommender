@@ -175,10 +175,9 @@
                 for (let i = 0; i < $ytPlayers.length; i++) {
                     let trailerIdx;
                     if (
-                        (trailerIdx =
-                            trailerEls.findIndex(
-                                (trailerEl) => trailerEl === $ytPlayers[i].g
-                            ) >= 0)
+                        (trailerIdx = trailerEls.findIndex(
+                            (trailerEl) => trailerEl === $ytPlayers[i].g
+                        )) >= 0
                     ) {
                         if ($autoPlay && trailerIdx === 1) {
                             await tick();
