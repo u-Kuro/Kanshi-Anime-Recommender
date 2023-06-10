@@ -139,23 +139,15 @@
 	// Check/Get/Update Filter Options Selection
 	initDataPromises.push(
 		new Promise(async (resolve) => {
-			let _filterOptions = await retrieveJSON("filterOptions");
-			let _activeTagFilters = await retrieveJSON("activeTagFilters");
-			if (jsonIsEmpty(_filterOptions) || jsonIsEmpty(_activeTagFilters)) {
-				getFilterOptions()
-					.then((data) => {
-						$activeTagFilters = data.activeTagFilters;
-						$filterOptions = data.filterOptions;
-						resolve();
-					})
-					.catch(() => {
-						resolve();
-					});
-			} else {
-				$filterOptions = _filterOptions;
-				$activeTagFilters = _activeTagFilters;
-				resolve();
-			}
+			getFilterOptions()
+				.then((data) => {
+					$activeTagFilters = data.activeTagFilters;
+					$filterOptions = data.filterOptions;
+					resolve();
+				})
+				.catch(() => {
+					resolve();
+				});
 		})
 	);
 
