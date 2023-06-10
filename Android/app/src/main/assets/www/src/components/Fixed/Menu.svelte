@@ -13,6 +13,7 @@
         filterOptions,
         activeTagFilters,
         runUpdate,
+        runExport,
     } from "../../js/globalValues.js";
     import { fade, fly } from "svelte/transition";
     import { saveJSON } from "../../js/indexedDB.js";
@@ -61,7 +62,9 @@
 
     // Global Function For Android
     function handleExportFolder() {
-        console.log("WebtoApp: Choose an Export Path"); // Dont Remove
+        try {
+            JSBridge.chooseExportFolder();
+        } catch (e) {}
     }
     window.setExportPathAvailability = async (value = true) => {
         $exportPathIsAvailable = value;
@@ -72,7 +75,7 @@
         if (!$exportPathIsAvailable && $android) return handleExportFolder();
         if (confirm("Are you sure you want to export your Data?")) {
             $menuVisible = false;
-            exportUserData();
+            runExport.update((e) => !e);
         }
     }
 

@@ -1,11 +1,11 @@
 import {
     dataStatus,
     updateRecommendationList,
-    updateFilters,
-    loadAnime,
     username,
     activeTagFilters,
-    filterOptions
+    filterOptions,
+    lastRunnedAutoUpdateDate,
+    lastRunnedAutoExportDate
 } from "./globalValues";
 import { isAndroid, downloadLink } from "../js/others/helper.js"
 let terminateDelay = 1000;
@@ -74,6 +74,8 @@ const requestAnimeEntries = (_data) => {
                 }
             } else if (data?.updateRecommendationList !== undefined) {
                 updateRecommendationList.update(e => !e)
+            } else if (data?.lastRunnedAutoUpdateDate instanceof Date && !isNaN(data?.lastRunnedAutoUpdateDate)) {
+                lastRunnedAutoUpdateDate.set(data.lastRunnedAutoUpdateDate)
             } else {
                 requestAnimeEntriesTerminateTimeout = setTimeout(() => {
                     requestAnimeEntriesWorker.terminate();
@@ -169,6 +171,10 @@ const importUserData = (_data) => {
                 dataStatus.set(data.status)
             } else if (typeof data?.importedUsername === "string") {
                 username.set(data.importedUsername)
+            } else if (data?.importedlastRunnedAutoUpdateDate instanceof Date && !isNaN(data?.importedlastRunnedAutoUpdateDate)) {
+                lastRunnedAutoUpdateDate.set(data.importedlastRunnedAutoUpdateDate)
+            } else if (data?.importedlastRunnedAutoExportDate instanceof Date && !isNaN(data?.importedlastRunnedAutoExportDate)) {
+                lastRunnedAutoExportDate.set(data.importedlastRunnedAutoExportDate)
             } else if (data?.updateFilters !== undefined) {
                 getFilterOptions()
                     .then((data) => {

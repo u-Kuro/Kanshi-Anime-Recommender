@@ -13,13 +13,21 @@ self.onmessage = async ({ data }) => {
         if (typeof username === "string") {
             await saveJSON(username, "username")
         }
-        let lastAnimeUpdate = fileContent.lastAnimeUpdate
+        let lastAnimeUpdate = fileContent.lastAnimeUpdate ? new Date(fileContent.lastAnimeUpdate) : null
         if (lastAnimeUpdate instanceof Date && !isNaN(lastAnimeUpdate)) {
             await saveJSON(lastAnimeUpdate, "lastAnimeUpdate")
         }
-        let lastUserAnimeUpdate = fileContent.lastUserAnimeUpdate
+        let lastUserAnimeUpdate = fileContent.lastUserAnimeUpdate ? new Date(fileContent.lastUserAnimeUpdate) : null
         if (lastUserAnimeUpdate instanceof Date && !isNaN(lastUserAnimeUpdate)) {
             await saveJSON(lastUserAnimeUpdate, "lastUserAnimeUpdate")
+        }
+        let lastRunnedAutoUpdateDate = fileContent.lastRunnedAutoUpdateDate ? new Date(fileContent.lastRunnedAutoUpdateDate) : null
+        if (lastRunnedAutoUpdateDate instanceof Date && !isNaN(lastRunnedAutoUpdateDate)) {
+            await saveJSON(lastRunnedAutoUpdateDate, "lastRunnedAutoUpdateDate")
+        }
+        let lastRunnedAutoExportDate = fileContent.lastRunnedAutoExportDate ? new Date(fileContent.lastRunnedAutoExportDate) : null
+        if (lastRunnedAutoExportDate instanceof Date && !isNaN(lastRunnedAutoExportDate)) {
+            await saveJSON(lastRunnedAutoExportDate, "lastRunnedAutoExportDate")
         }
         let activeTagFilters = fileContent.activeTagFilters
         if (isJsonObject(activeTagFilters) && !jsonIsEmpty(activeTagFilters)) {
@@ -43,6 +51,8 @@ self.onmessage = async ({ data }) => {
         }
         self.postMessage({ status: "Data has been Imported..." })
         self.postMessage({ importedUsername: username })
+        self.postMessage({ importedlastRunnedAutoUpdateDate: lastRunnedAutoUpdateDate })
+        self.postMessage({ importedlastRunnedAutoExportDate: lastRunnedAutoExportDate })
         self.postMessage({ updateFilters: true })
         self.postMessage({ updateRecommendationList: true })
         self.postMessage({ status: null })

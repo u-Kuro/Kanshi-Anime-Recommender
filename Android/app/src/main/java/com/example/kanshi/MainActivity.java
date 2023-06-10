@@ -222,73 +222,6 @@ public class MainActivity extends AppCompatActivity  {
             @Override
             public boolean onConsoleMessage(ConsoleMessage consoleMessage) {
                 String message = consoleMessage.message();
-                if("WebtoApp: Choose an Export Path".equals(message)){
-                    if (!Environment.isExternalStorageManager()) {
-                        new AlertDialog.Builder(MainActivity.this)
-                                .setTitle("Requires Permission for External Storage")
-                                .setMessage("Enable Kanshi. App in the Settings after clicking OK!")
-                                .setIcon(android.R.drawable.ic_dialog_alert)
-                                .setPositiveButton("OK", (dialogInterface, i) -> {
-                                    Uri uri = Uri.parse("package:${BuildConfig.APPLICATION_ID}");
-                                    Toast.makeText(getApplicationContext(), "Enable Kanshi. App in here to permit Data Export!", Toast.LENGTH_LONG).show();
-                                    startActivity(new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION, uri));
-                                })
-                                .setNegativeButton("Later", null).show();
-                    } else {
-                        Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)
-                                .addCategory(Intent.CATEGORY_DEFAULT);
-                        chooseExportFile.launch(i);
-                        Toast.makeText(getApplicationContext(), "Select or Create a Directory!", Toast.LENGTH_LONG).show();
-                    }
-                } else if("WebtoApp: List is Updated".equals(message)){
-                    if(isVisible){
-                        Vibrator v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                            v.vibrate(VibrationEffect.createWaveform(new long[] {0, 250, 250, 250},-1));
-                        } else {
-                            v.vibrate(250);
-                        }
-                    } else {
-                        Intent resultIntent = new Intent(MainActivity.this, MainActivity.class);
-                        PendingIntent resultPendingIntent = null;
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                            resultPendingIntent = PendingIntent.getActivity(MainActivity.this, 1, resultIntent, PendingIntent.FLAG_MUTABLE);
-                        }
-                        NotificationCompat.Builder builder = new NotificationCompat.Builder(MainActivity.this, "My Notification")
-                                .setContentTitle("Update")
-                                .setContentText("Recommendations List has been Updated!")
-                                .setSmallIcon(R.drawable.img)
-                                .setAutoCancel(true)
-                                .setPriority(NotificationCompat.PRIORITY_MAX)
-                                .setContentIntent(resultPendingIntent);
-                        managerCompat = NotificationManagerCompat.from(MainActivity.this);
-                        managerCompat.notify(1, builder.build());
-                    }
-                } else if("WebtoApp: Update Error".equals(message)){
-                    if(isVisible){
-                        Vibrator v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                            v.vibrate(VibrationEffect.createWaveform(new long[] {0, 250, 250, 250},-1));
-                        } else {
-                            v.vibrate(250);
-                        }
-                    } else {
-                        Intent resultIntent = new Intent(MainActivity.this, MainActivity.class);
-                        PendingIntent resultPendingIntent = null;
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                            resultPendingIntent = PendingIntent.getActivity(MainActivity.this, 1, resultIntent, PendingIntent.FLAG_MUTABLE);
-                        }
-                        NotificationCompat.Builder builder = new NotificationCompat.Builder(MainActivity.this, "My Notification")
-                                .setContentTitle("Update")
-                                .setContentText("An Error Occurred, List was not been Updated!")
-                                .setSmallIcon(R.drawable.img)
-                                .setAutoCancel(true)
-                                .setPriority(NotificationCompat.PRIORITY_MAX)
-                                .setContentIntent(resultPendingIntent);
-                        managerCompat = NotificationManagerCompat.from(MainActivity.this);
-                        managerCompat.notify(1, builder.build());
-                    }
-                }
                 Log.d("WebConsole",message);
                 return true;
             }
@@ -518,6 +451,28 @@ public class MainActivity extends AppCompatActivity  {
         }
         @JavascriptInterface
         public void setShoulGoBack(boolean _shoulGoBack) { shoulGoBack = _shoulGoBack; }
+        @JavascriptInterface
+        public void chooseExportFolder() {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                if (!Environment.isExternalStorageManager()) {
+                    new AlertDialog.Builder(MainActivity.this)
+                            .setTitle("Requires Permission for External Storage")
+                            .setMessage("Enable Kanshi. App in the Settings after clicking OK!")
+                            .setIcon(android.R.drawable.ic_dialog_alert)
+                            .setPositiveButton("OK", (dialogInterface, i) -> {
+                                Uri uri = Uri.parse("package:${BuildConfig.APPLICATION_ID}");
+                                Toast.makeText(getApplicationContext(), "Enable Kanshi. App in here to permit Data Export!", Toast.LENGTH_LONG).show();
+                                startActivity(new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION, uri));
+                            })
+                            .setNegativeButton("Later", null).show();
+                } else {
+                    Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)
+                            .addCategory(Intent.CATEGORY_DEFAULT);
+                    chooseExportFile.launch(i);
+                    Toast.makeText(getApplicationContext(), "Select or Create a Directory!", Toast.LENGTH_LONG).show();
+                }
+            }
+        }
     }
 
     @Override

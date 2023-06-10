@@ -14,6 +14,8 @@ self.onmessage = async ({ data }) => {
         username: username,
         lastAnimeUpdate: await retrieveJSON("lastAnimeUpdate"),
         lastUserAnimeUpdate: await retrieveJSON("lastUserAnimeUpdate"),
+        lastRunnedAutoUpdateDate: await retrieveJSON("lastRunnedAutoUpdateDate"),
+        lastRunnedAutoExportDate: new Date(),
         activeTagFilters: await retrieveJSON("activeTagFilters"),
         hiddenEntries: await retrieveJSON("hiddenEntries"),
         userEntries: await retrieveJSON("userEntries"),
@@ -77,6 +79,7 @@ self.onmessage = async ({ data }) => {
             }
         }
         stringify(backUpData)
+        self.postMessage({ status: "Data has been Exported..." })
         self.postMessage({ status: null })
         self.postMessage({
             chunk: chunkStr,
@@ -86,6 +89,7 @@ self.onmessage = async ({ data }) => {
     } else {
         let blob = JSONToBlob(backUpData)
         let url = URL.createObjectURL(blob);
+        self.postMessage({ status: "Data has been Exported..." })
         self.postMessage({ status: null })
         self.postMessage({ url: url, username: username });
     }

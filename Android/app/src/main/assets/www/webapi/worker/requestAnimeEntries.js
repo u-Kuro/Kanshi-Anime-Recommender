@@ -371,6 +371,9 @@ self.onmessage = async ({ data }) => {
                             // Update User Recommendation List
                             self.postMessage({ status: null })
                             self.postMessage({ updateRecommendationList: true })
+                            let lastRunnedAutoUpdateDate = new Date();
+                            saveJSON(lastRunnedAutoUpdateDate, "lastRunnedAutoUpdateDate");
+                            self.postMessage({ lastRunnedAutoUpdateDate: lastRunnedAutoUpdateDate })
                             // Call New
                             updateNonRecentEntries()
                         }
@@ -599,7 +602,7 @@ self.onmessage = async ({ data }) => {
                             // Update User Recommendation List
                             self.postMessage({ status: null })
                             self.postMessage({ updateRecommendationList: true })
-                            self.postMessage({ message: 'success' })
+                            self.postMessage({ done: true })
                         }
                     }
                 })

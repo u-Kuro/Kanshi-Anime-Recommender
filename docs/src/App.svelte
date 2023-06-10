@@ -321,8 +321,6 @@
 	});
 	runUpdate.subscribe((val) => {
 		if (typeof val !== "boolean") return;
-		$lastRunnedAutoUpdateDate = new Date();
-		saveJSON($lastRunnedAutoUpdateDate, "lastRunnedAutoUpdateDate");
 		requestUserEntries()
 			.then(() => {
 				requestAnimeEntries();
@@ -379,9 +377,10 @@
 	});
 	runExport.subscribe((val) => {
 		if (typeof val !== "boolean") return;
-		$lastRunnedAutoExportDate = new Date();
-		saveJSON($lastRunnedAutoExportDate, "lastRunnedAutoExportDate");
-		exportUserData();
+		exportUserData().then(() => {
+			$lastRunnedAutoExportDate = new Date();
+			saveJSON($lastRunnedAutoExportDate, "lastRunnedAutoExportDate");
+		});
 	});
 	runIsScrolling.subscribe((val) => {
 		if (typeof val !== "boolean") return;
