@@ -22,7 +22,8 @@ self.onmessage = async ({ data }) => {
         minPopularity,
         minAverageScore,
         minSampleSize,
-        sampleSize;
+        sampleSize,
+        customUserScoreBase;
     let include = {
         genres: {}, tags: {}, categories: {}, studios: {}, staffs: {}, roles: {}
     },
@@ -53,7 +54,9 @@ self.onmessage = async ({ data }) => {
                     includeUnknownVar = true
                 }
             } else if (filterType === 'input number') {
-                if (optionName.toLowerCase() === 'sample size') {
+                if (optionName.toLowerCase() === 'scoring system') {
+                    customUserScoreBase = parseFloat(optionValue)
+                } else if (optionName.toLowerCase() === 'sample size') {
                     sampleSize = parseFloat(optionValue)
                 } else if (optionName.toLowerCase() === 'min sample size') {
                     minSampleSize = parseFloat(optionValue)
@@ -693,32 +696,37 @@ self.onmessage = async ({ data }) => {
     let filters = await retrieveJSON("filters")
     animeEntries = Object.values(animeEntries ?? {});
     let recommendedAnimeList = {};
-    let savedUserScores = {
-        all: {},
-        above: {},
-    };
-    let popularityArray = animeEntries.map((anime) => {
-        let popularity = anime?.popularity;
-        if (typeof popularity === "number") {
-            return popularity;
-        }
-    });
+    let maxScore;
+    let averageScoresArray = animeEntries.filter(({ averageScore }) => averageScore >= 1)
+        .map(({ averageScore }) => averageScore);
+    let popularityArray = animeEntries.filter(({ popularity }) => popularity >= 1)
+        .map(({ popularity }) => popularity);
     let popularitySum = popularityArray.length
         ? arraySum(popularityArray)
         : 3000000;
     let popularityMode = varScheme?.minPopularity
         ? varScheme.minPopularity
-        : 0.33 * Math.min(arrayMean(popularityArray), arrayMode(popularityArray));
-    let averageScoreMode = varScheme?.minAverageScore || 50 - 0.33;
+        : Math.min(arrayMean(popularityArray), arrayMode(popularityArray));
+    let averageScoreMode = varScheme?.minAverageScore
+        ? varScheme.minAverageScore
+        : Math.min(arrayMean(averageScoresArray), arrayMode(averageScoresArray));
     if (!jsonIsEmpty(varScheme)) {
         animeFranchises = []
+        let userScoreBase = 100
         let userScores = Object.values(userEntriesStatus.userScore);
-        let meanUserScore, meanScoreAll, meanScoreAbove, userScoreBase;
+        let meanUserScore, meanScoreAll, meanScoreAbove;
         if (userScores?.length) {
             let max = Math.max(...userScores);
-            let min = Math.min(...userScores);
             userScoreBase =
-                max <= 5 && min >= 1 ? 5 : max <= 10 && min >= 1 ? 10 : 100;
+                customUserScoreBase >= 0
+                    ? customUserScoreBase
+                    : max <= 3
+                        ? 3
+                        : max <= 5
+                            ? 5
+                            : max <= 10
+                                ? 10
+                                : 100;
             meanUserScore = arrayMean(userScores);
         }
         for (let i = 0; i < animeEntries.length; i++) {
@@ -1152,14 +1160,7 @@ self.onmessage = async ({ data }) => {
                     ),
                 ])
             );
-            let weightedScore = score; // Init for Later
-            // Check mean score
-            if (typeof meanUserScore === "number" && typeof userEntriesStatus.userScore[animeID] === "number") {
-                savedUserScores.all[animeID] = score;
-                if (userEntriesStatus.userScore[animeID] >= meanUserScore) {
-                    savedUserScores.above[animeID] = score;
-                }
-            }
+            maxScore = Math.pow(userScoreBase, 4) // animeType * (animeGenre * animeTag) * animeProduction = userScoreMax^4 // MaxScore
             // Process other Anime Info
             genres = genres.length ? genres : [];
             tags = tags.length ? tags.map((e) => e?.name || "") : [];
@@ -1192,7 +1193,6 @@ self.onmessage = async ({ data }) => {
                 averageScore: averageScore,
                 popularity: popularity,
                 score: score,
-                weightedScore: weightedScore,
                 favoriteContents: favoriteContents,
                 userStatus: formatCustomString(userStatus),
                 status: formatCustomString(status),
@@ -1212,60 +1212,65 @@ self.onmessage = async ({ data }) => {
             };
         }
         // After Loop
-        // Calculate Mean Score 
-        if (!jsonIsEmpty(savedUserScores)) {
-            meanScoreAll = Object.values(savedUserScores.all ?? {});
-            meanScoreAbove = Object.values(savedUserScores.above ?? {});
-            meanScoreAll = Math.max(
-                Math.min(...meanScoreAbove),
-                arrayMean(meanScoreAll)
-            );
-            meanScoreAbove = arrayMean(meanScoreAbove);
-        }
-        let recommendedAnimeListEntries = Object.keys(recommendedAnimeList);
-        for (let i = 0; i < recommendedAnimeListEntries.length; i++) {
-            let anime = recommendedAnimeList[recommendedAnimeListEntries[i]];
-            let popularity = anime.popularity;
-            let weightedScore = anime.weightedScore;
-            let averageScore = anime.averageScore;
-            // Add Mean Score
-            if (typeof meanScoreAll === "number") {
-                recommendedAnimeList[recommendedAnimeListEntries[i]].meanScoreAll = meanScoreAll;
-            } else {
-                recommendedAnimeList[recommendedAnimeListEntries[i]].meanScoreAll = 0;
-            }
-            if (typeof meanScoreAbove === "number") {
-                recommendedAnimeList[recommendedAnimeListEntries[i]].meanScoreAbove = meanScoreAbove;
-            } else {
-                recommendedAnimeList[recommendedAnimeListEntries[i]].meanScoreAbove = 0;
-            }
+        let recommendedAnimeListEntries = Object.values(recommendedAnimeList);
+        // Calculate WeightedScore
+        recommendedAnimeListEntries = recommendedAnimeListEntries.map((anime) => {
+            let weightedScore;
             // Low Average
-            if (isaN(averageScore)) {
-                if (typeof averageScore === "string") {
-                    averageScore = parseFloat(averageScore);
-                }
-                if (averageScore < averageScoreMode) {
-                    let ASmult = averageScore * 0.01;
-                    recommendedAnimeList[recommendedAnimeListEntries[i]].weightedScore = weightedScore * (ASmult >= 1 ? 1 : ASmult);
+            if (anime.averageScore >= 1) {
+                if (anime.averageScore < averageScoreMode) {
+                    let ASweight = anime.averageScore * 0.01;
+                    weightedScore = anime.score * ASweight >= 0.01 ? Math.min(ASweight, 1) : 0.01
+                } else {
+                    weightedScore = anime.score
                 }
             }
             // Low Popularity
-            if (typeof popularity === "number" && typeof popularityMode === "number" && typeof popularitySum === "number" && popularitySum && typeof weightedScore === "number" && weightedScore) {
-                if (popularity < popularityMode) {
-                    recommendedAnimeList[recommendedAnimeListEntries[i]].weightedScore =
-                        popularity
-                            ? (anime.popularity / popularitySum) * weightedScore
-                            : (minNumber / popularitySum) * weightedScore;
+            if (anime.popularity >= 1 && popularityMode >= 1 && popularitySum >= 1 && anime.score >= 1) {
+                if (anime.popularity < popularityMode) {
+                    weightedScore = Math.min(weightedScore, ((anime.popularity || 1) / popularitySum) * anime.score)
+                } else {
+                    weightedScore = anime.score
                 }
             }
+            anime.weightedScore = weightedScore
+            // Handle Exceptions
             if (!anime.weightedScore || !isFinite(anime.weightedScore)) {
-                recommendedAnimeList[recommendedAnimeListEntries[i]].weightedScore = 0;
+                anime.weightedScore = 1;
             }
             if (!anime.score || !isFinite(anime.score)) {
-                recommendedAnimeList[recommendedAnimeListEntries[i]].score = 0;
+                anime.score = 1;
             }
+            return anime
+        })
+        // Map Value to Score Basis
+        recommendedAnimeListEntries = recommendedAnimeListEntries.map((anime) => {
+            anime.score = userScoreBase > 1 ? mapValue(anime.score, 1, maxScore, 1, userScoreBase) : anime.score
+            anime.weightedScore = userScoreBase > 1 ? mapValue(anime.weightedScore, 1, maxScore, 1, userScoreBase) : anime.weightedScore
+            return anime
+        })
+        // Get Mean Scores
+        let userScoresAnimes = recommendedAnimeListEntries?.filter(({ userScore }) => userScore >= 1) || []
+        let scoresArray = userScoresAnimes?.map(({ score }) => score) || []
+        let scoreAboveMeanArray = userScoresAnimes?.filter(({ userScore }) => userScore >= meanUserScore)?.map(({ score }) => score) || []
+        if (scoresArray?.length) {
+            meanScoreAll = arrayMean(scoresArray)
         }
+        if (scoreAboveMeanArray?.length) {
+            meanScoreAbove = arrayMean(scoreAboveMeanArray)
+        }
+        // Update List
+        recommendedAnimeListEntries.forEach((anime) => {
+            let animeID = anime.id
+            if (animeID !== null && animeID !== undefined) {
+                anime.meanScoreAll = meanScoreAll >= 1 ? meanScoreAll : 1;
+                anime.meanScoreAbove = meanScoreAbove >= 1 ? meanScoreAbove : 1;
+                recommendedAnimeList[animeID] = anime
+            }
+        })
     } else {
+        let scoreBase = customUserScoreBase >= 0 ? customUserScoreBase : 100 // 0 causes problem so it should be > 0
+        let maxScore
         for (let i = 0; i < animeEntries.length; i++) {
             let anime = animeEntries[i];
             let title = anime?.title?.userPreferred;
@@ -1347,7 +1352,7 @@ self.onmessage = async ({ data }) => {
                     filters['staff role'][staffRole] = true
                 }
             }
-            let score = (weightedScore = 0);
+            let score = 1;
             let averageScore = anime?.averageScore;
             if (isaN(averageScore)) {
                 if (typeof averageScore === "string") {
@@ -1376,8 +1381,9 @@ self.onmessage = async ({ data }) => {
                 if (anime.favourites < anime.popularity) {
                     favPopRatio = anime.favourites / anime.popularity;
                 }
-                score = weightedScore = favPopRatio * averageScore - minNumber;
+                score = favPopRatio * averageScore;
             }
+            maxScore = 100 // favepopupRatio * averageScore = 1 * 100 = 100 max score
             // Other Anime Recommendation Info
             genres = genres.length ? genres : [];
             tags = tags.length ? tags.map((e) => e?.name || "") : [];
@@ -1397,7 +1403,6 @@ self.onmessage = async ({ data }) => {
                 averageScore: averageScore,
                 popularity: popularity,
                 score: score,
-                weightedScore: weightedScore,
                 favoriteContents: [],
                 userStatus: "UNWATCHED",
                 status: formatCustomString(status),
@@ -1416,57 +1421,69 @@ self.onmessage = async ({ data }) => {
                 bannerImageUrl: anime?.bannerImage,
             };
         }
-        let recommendedAnimeListEntries = Object.keys(recommendedAnimeList);
-        for (let i = 0; i < recommendedAnimeListEntries.length; i++) {
-            let anime = recommendedAnimeList[recommendedAnimeListEntries[i]];
-            let popularity = anime.popularity;
-            let weightedScore = anime.weightedScore;
-            let averageScore = anime.averageScore;
-            // Add Mean Score
-            if (typeof meanScoreAll === "number") {
-                recommendedAnimeList[recommendedAnimeListEntries[i]].meanScoreAll = meanScoreAll;
-            } else {
-                recommendedAnimeList[recommendedAnimeListEntries[i]].meanScoreAll = 0;
-            }
-            if (typeof meanScoreAbove === "number") {
-                recommendedAnimeList[recommendedAnimeListEntries[i]].meanScoreAbove = meanScoreAbove;
-            } else {
-                recommendedAnimeList[recommendedAnimeListEntries[i]].meanScoreAbove = 0;
-            }
+        // After Loop
+        let recommendedAnimeListEntries = Object.values(recommendedAnimeList);
+        // Calculate WeightedScore
+        recommendedAnimeListEntries = recommendedAnimeListEntries.map((anime) => {
+            let weightedScore;
             // Low Average
-            if (isaN(averageScore)) {
-                if (typeof averageScore === "string") {
-                    averageScore = parseFloat(averageScore);
-                }
-                if (averageScore < averageScoreMode) {
-                    let ASmult = averageScore * 0.01;
-                    recommendedAnimeList[recommendedAnimeListEntries[i]].weightedScore = weightedScore * (ASmult >= 1 ? 1 : ASmult);
+            if (anime.averageScore >= 1) {
+                if (anime.averageScore < averageScoreMode) {
+                    let ASweight = anime.averageScore * 0.01;
+                    weightedScore = anime.score * ASweight >= 0.01 ? Math.min(ASweight, 1) : 0.01
+                } else {
+                    weightedScore = anime.score
                 }
             }
             // Low Popularity
-            if (typeof popularity === "number" && typeof popularityMode === "number" && typeof popularitySum === "number" && popularitySum && typeof weightedScore === "number" && weightedScore) {
-                if (popularity < popularityMode) {
-                    recommendedAnimeList[recommendedAnimeListEntries[i]].weightedScore =
-                        popularity
-                            ? (anime.popularity / popularitySum) * weightedScore
-                            : (minNumber / popularitySum) * weightedScore;
+            if (anime.popularity >= 1 && popularityMode >= 1 && popularitySum >= 1 && anime.score >= 1) {
+                if (anime.popularity < popularityMode) {
+                    weightedScore = Math.min(weightedScore, ((anime.popularity || 1) / popularitySum) * anime.score)
+                } else {
+                    weightedScore = anime.score
                 }
             }
+            anime.weightedScore = weightedScore
+            // Handle Exceptions
             if (!anime.weightedScore || !isFinite(anime.weightedScore)) {
-                recommendedAnimeList[recommendedAnimeListEntries[i]].weightedScore = 0;
+                anime.weightedScore = 1;
             }
             if (!anime.score || !isFinite(anime.score)) {
-                recommendedAnimeList[recommendedAnimeListEntries[i]].score = 0;
+                anime.score = 1;
             }
+            return anime
+        })
+        // Map Value to Score Basis
+        recommendedAnimeListEntries = recommendedAnimeListEntries.map((anime) => {
+            anime.score = scoreBase > 1 ? mapValue(anime.score, 1, maxScore, 1, scoreBase) : anime.score
+            anime.weightedScore = scoreBase > 1 ? mapValue(anime.weightedScore, 1, maxScore, 1, scoreBase) : anime.weightedScore
+            return anime
+        })
+        // Get Mean Scores
+        let scoresArray = recommendedAnimeListEntries?.map(({ score }) => score) || []
+        let scoreAboveMeanArray;
+        if (scoresArray?.length) {
+            meanScoreAll = arrayMean(scoresArray)
+            scoreAboveMeanArray = scoresArray.filter((score) => score >= meanScoreAll)
         }
+        if (scoreAboveMeanArray?.length) {
+            meanScoreAbove = arrayMean(scoreAboveMeanArray)
+        }
+        // Update List
+        recommendedAnimeListEntries.forEach((anime) => {
+            let animeID = anime.id
+            if (animeID !== null && animeID !== undefined) {
+                anime.meanScoreAll = meanScoreAll >= 1 ? meanScoreAll : 1;
+                anime.meanScoreAbove = meanScoreAbove >= 1 ? meanScoreAbove : 1;
+                recommendedAnimeList[animeID] = anime
+            }
+        })
     }
     // Save Processed Recommendation List and other Data
     await saveJSON(userEntries, 'userEntries')
     await saveJSON(animeFranchises, 'animeFranchises')
     await saveJSON(filters, 'filters')
     await saveJSON(activeTagFilters, 'activeTagFilters')
-    // Notify User List Count ...
-    // await saveJSON(username, 'username')
     await saveJSON(Object.values(recommendedAnimeList), 'recommendedAnimeList')
     self.postMessage({ status: null })
     self.postMessage({ message: 'success' })
@@ -1504,6 +1521,11 @@ function isJson(j) {
     try { return (j?.constructor.name === 'Object' && `${j}` === '[object Object]') }
     catch (e) { return false }
 }
+function mapValue(originalValue, lowestValue, highestValue, newLowestRange, newHighestRange) {
+    var mappedValue = ((originalValue - lowestValue) * (newHighestRange - newLowestRange) / (highestValue - lowestValue)) + newLowestRange;
+    return mappedValue;
+}
+
 function arrayMean(obj) {
     return (arraySum(obj) / obj.length) || 0
 }

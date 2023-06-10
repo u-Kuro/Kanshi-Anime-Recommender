@@ -3,7 +3,8 @@ let db,
         "year": "descnum",
         "season": { fall: 3, summer: 2, spring: 1, winter: 0 },
         "format": { special: 5, ona: 4, ova: 3, "tv_short": 2, movie: 1, tv: 0 }
-    };
+    },
+    minNumber = 1 - 6e-17 !== 1 ? 6e-17 : 1e-16;
 
 self.onmessage = async ({ data }) => {
 
@@ -4559,6 +4560,13 @@ self.onmessage = async ({ data }) => {
                 // Input Number
                 // Add Custom Input Number Selection
                 filters["Input Number"] = [
+                    {
+                        filName: "scoring system",
+                        defaultValue: null,
+                        maxValue: Infinity,
+                        minValue: 0,
+                        numberValue: ""
+                    },
                     {
                         filName: "sample size",
                         defaultValue: null,

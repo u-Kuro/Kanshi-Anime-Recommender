@@ -1249,9 +1249,11 @@
                             <input
                                 class="value-input-number"
                                 type="text"
-                                placeholder={conditionalInputNumberList.includes(
-                                    filName
-                                )
+                                placeholder={filName === "scoring system"
+                                    ? "Default: User Scoring"
+                                    : conditionalInputNumberList.includes(
+                                          filName
+                                      )
                                     ? ">123 or 123"
                                     : defaultValue !== null
                                     ? "Default: " + defaultValue
