@@ -407,7 +407,9 @@
 		window.history.scrollRestoration = "manual"; // Disable scrolling to top when navigating back
 	}
 	window.checkEntries = () => {
-		requestUserEntries();
+		if (!userRequestIsRunning) {
+			requestUserEntries();
+		}
 	};
 	window.addEventListener("popstate", () => {
 		window.backPressed();

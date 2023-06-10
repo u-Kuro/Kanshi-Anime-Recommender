@@ -238,11 +238,15 @@
             if (val === true) {
                 await tick();
                 let mostVisiblePopupHeader =
-                    getMostVisibleElement(popupContainer, ".popup-header", 0) ||
+                    getMostVisibleElement(
+                        popupContainer,
+                        ".popup-header",
+                        0.5
+                    ) ||
                     getMostVisibleElement(
                         popupContainer,
                         ".popup-content",
-                        1
+                        0.1
                     )?.querySelector(".popup-header");
                 let visibleTrailer =
                     mostVisiblePopupHeader?.querySelector?.(".trailer");
@@ -290,12 +294,12 @@
                         getMostVisibleElement(
                             popupContainer,
                             ".popup-header",
-                            0
+                            0.5
                         ) ||
                         getMostVisibleElement(
                             popupContainer,
                             ".popup-content",
-                            1
+                            0.1
                         )?.querySelector(".popup-header");
                     let visibleTrailer =
                         mostVisiblePopupHeader?.querySelector?.(".trailer");
@@ -328,11 +332,11 @@
         if (!$popupVisible) return;
         await tick();
         let mostVisiblePopupHeader =
-            getMostVisibleElement(popupContainer, ".popup-header", 0) ||
+            getMostVisibleElement(popupContainer, ".popup-header", 0.5) ||
             getMostVisibleElement(
                 popupContainer,
                 ".popup-content",
-                1
+                0.1
             )?.querySelector(".popup-header");
         if (
             (lastProcessedPopupHeader === mostVisiblePopupHeader &&
@@ -511,11 +515,11 @@
             if (!$popupVisible) return;
             await tick();
             let mostVisiblePopupHeader =
-                getMostVisibleElement(popupContainer, ".popup-header", 0) ||
+                getMostVisibleElement(popupContainer, ".popup-header", 0.5) ||
                 getMostVisibleElement(
                     popupContainer,
                     ".popup-content",
-                    1
+                    0.1
                 )?.querySelector(".popup-header");
             let visibleTrailer =
                 mostVisiblePopupHeader?.querySelector?.(".trailer");
@@ -559,17 +563,15 @@
     // Global Function For Android
     window.returnedAppIsVisible = (inApp) => {
         if (!$popupVisible || !$android) return; // Only For Android
-        let visibleTrailer = getMostVisibleElement(popupContainer, ".trailer");
-        if (!visibleTrailer) {
-            visibleTrailer =
-                getMostVisibleElement(popupContainer, ".popup-main", 0) ||
-                getMostVisibleElement(popupContainer, ".popup-content", 0);
-            if (visibleTrailer) {
-                visibleTrailer = visibleTrailer.querySelector(".trailer");
-            } else {
-                visibleTrailer = undefined;
-            }
-        }
+        let mostVisiblePopupHeader =
+            getMostVisibleElement(popupContainer, ".popup-header", 0.5) ||
+            getMostVisibleElement(
+                popupContainer,
+                ".popup-content",
+                0.1
+            )?.querySelector(".popup-header");
+        let visibleTrailer =
+            mostVisiblePopupHeader?.querySelector?.(".trailer");
         if (!visibleTrailer) return;
         if ($popupVisible) {
             for (var ytPlayer of $ytPlayers) {
