@@ -59,7 +59,13 @@
                     if (importFileInput instanceof Element)
                         importFileInput.value = null;
                 });
+            } else {
+                if (importFileInput instanceof Element)
+                    importFileInput.value = null;
             }
+        } else {
+            if (importFileInput instanceof Element)
+                importFileInput.value = null;
         }
     }
     // Global Function For Android
