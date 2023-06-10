@@ -326,6 +326,22 @@
             $filterOptions.filterSelection[idxTypeSelected].filters.Dropdown[
                 dropdownIdx
             ].options[optionIdx].selected = "included";
+            $activeTagFilters[nameTypeSelected] = $activeTagFilters[
+                nameTypeSelected
+            ].filter((e) => {
+                return (
+                    e.optionName + e.optionIdx + (e.optionType ?? "") !==
+                    optionName + optionIdx + (e.optionType ?? "")
+                );
+            });
+            $activeTagFilters[nameTypeSelected] = $activeTagFilters[
+                nameTypeSelected
+            ].filter((e) => {
+                return (
+                    e.optionName + e.optionIdx + (e.optionType ?? "") !==
+                    optionName + optionIdx + (optionType ?? "")
+                );
+            });
             $activeTagFilters[nameTypeSelected].unshift({
                 optionName: optionName,
                 optionType: optionType,
@@ -439,6 +455,14 @@
                     )
             );
         } else {
+            $activeTagFilters[nameTypeSelected] = $activeTagFilters[
+                nameTypeSelected
+            ].filter((e) => {
+                return (
+                    e.optionName + e.optionIdx + (e.optionType ?? "") !==
+                    checkBoxName + checkboxIdx
+                );
+            });
             $activeTagFilters[nameTypeSelected].unshift({
                 optionName: checkBoxName,
                 optionIdx: checkboxIdx,
@@ -539,6 +563,17 @@
                                 item.filterType === "input number"
                         );
                         if (elementIdx === -1) {
+                            $activeTagFilters[nameTypeSelected] =
+                                $activeTagFilters[nameTypeSelected].filter(
+                                    (e) => {
+                                        return (
+                                            e.optionName +
+                                                e.optionIdx +
+                                                (e.optionType ?? "") !==
+                                            inputNumberName + inputNumIdx
+                                        );
+                                    }
+                                );
                             $activeTagFilters[nameTypeSelected].unshift({
                                 optionName: inputNumberName,
                                 optionValue: newValue,
@@ -554,6 +589,17 @@
                                 elementIdx,
                                 1
                             );
+                            $activeTagFilters[nameTypeSelected] =
+                                $activeTagFilters[nameTypeSelected].filter(
+                                    (e) => {
+                                        return (
+                                            e.optionName +
+                                                e.optionIdx +
+                                                (e.optionType ?? "") !==
+                                            inputNumberName + inputNumIdx
+                                        );
+                                    }
+                                );
                             $activeTagFilters[nameTypeSelected].unshift({
                                 optionName: inputNumberName,
                                 optionValue: newValue,
@@ -611,6 +657,16 @@
                             item.filterType === "input number"
                     );
                     if (elementIdx === -1) {
+                        $activeTagFilters[nameTypeSelected] = $activeTagFilters[
+                            nameTypeSelected
+                        ].filter((e) => {
+                            return (
+                                e.optionName +
+                                    e.optionIdx +
+                                    (e.optionType ?? "") !==
+                                inputNumberName + inputNumIdx
+                            );
+                        });
                         $activeTagFilters[nameTypeSelected].unshift({
                             optionName: inputNumberName,
                             optionValue: newValue,
@@ -624,6 +680,16 @@
                             elementIdx,
                             1
                         );
+                        $activeTagFilters[nameTypeSelected] = $activeTagFilters[
+                            nameTypeSelected
+                        ].filter((e) => {
+                            return (
+                                e.optionName +
+                                    e.optionIdx +
+                                    (e.optionType ?? "") !==
+                                inputNumberName + inputNumIdx
+                            );
+                        });
                         $activeTagFilters[nameTypeSelected].unshift({
                             optionName: inputNumberName,
                             optionValue: newValue,
