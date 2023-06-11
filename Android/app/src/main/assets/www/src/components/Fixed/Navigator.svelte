@@ -5,6 +5,7 @@
         menuVisible,
         initData,
         updateRecommendationList,
+        confirmPromise,
     } from "../../js/globalValues.js";
     import { requestUserEntries } from "../../js/workerUtils.js";
     import { onMount, onDestroy } from "svelte";
@@ -27,7 +28,7 @@
         windowWidth = window.innerWidth;
     }
 
-    function updateUsername(event) {
+    async function updateUsername(event) {
         let element = event.target;
         let classList = element.classList;
         if (
@@ -41,8 +42,8 @@
                 (async () => {
                     if ($username) {
                         if (
-                            confirm(
-                                `Currently connected to ${$username}, do you want to update?`
+                            await $confirmPromise(
+                                `Currently connected to ${$username}, do you want to change account?`
                             )
                         ) {
                             $menuVisible = false;
@@ -175,7 +176,6 @@
         justify-self: right;
     }
     .input-search input {
-        overflow: auto;
         outline: none;
         border: none;
         background-color: rgb(21, 31, 46);
@@ -206,7 +206,7 @@
         height: 34px;
         cursor: pointer;
     }
-    @media screen and (orientation: portrait) {
+    @media screen and (max-width: 425px) {
         .nav {
             padding: 0 1em;
         }

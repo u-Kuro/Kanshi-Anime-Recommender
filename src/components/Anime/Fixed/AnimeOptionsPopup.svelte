@@ -9,6 +9,7 @@
         openedAnimePopupIdx,
         hiddenEntries,
         animeLoaderWorker,
+        confirmPromise,
     } from "../../../js/globalValues";
 
     let animeTitle;
@@ -75,11 +76,15 @@
         $animeOptionVisible = false;
     }
 
-    function handleHideShow() {
+    async function handleHideShow() {
         if (isRecentlyOpened) return;
         let isHidden = $hiddenEntries[animeID];
         if (isHidden) {
-            if (confirm("Are you sure you want to show the anime?")) {
+            if (
+                await $confirmPromise(
+                    "Are you sure you want to show the anime?"
+                )
+            ) {
                 delete $hiddenEntries[animeID];
                 $hiddenEntries = $hiddenEntries;
                 if (
@@ -91,7 +96,11 @@
                 $animeOptionVisible = false;
             }
         } else {
-            if (confirm("Are you sure you want to hide the anime?")) {
+            if (
+                await $confirmPromise(
+                    "Are you sure you want to hide the anime?"
+                )
+            ) {
                 $hiddenEntries[animeID] = true;
                 if (
                     $finalAnimeList.length &&

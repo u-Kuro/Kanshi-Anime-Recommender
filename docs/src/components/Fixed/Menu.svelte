@@ -14,6 +14,7 @@
         activeTagFilters,
         runUpdate,
         runExport,
+        confirmPromise,
     } from "../../js/globalValues.js";
     import { fade, fly } from "svelte/transition";
     import { saveJSON } from "../../js/indexedDB.js";
@@ -26,14 +27,21 @@
 
     let importFileInput;
 
-    function stillFixing() {
-        alert("Still Fixing This");
+    async function stillFixing() {
+        $confirmPromise({
+            isAlert: true,
+            text: "Sorry, this is still not working.",
+        });
     }
 
-    function importData() {
+    async function importData() {
         if (!(importFileInput instanceof Element))
             return ($dataStatus = "Something went wrong...");
-        if (confirm("Are you sure you want to import your Data?")) {
+        if (
+            await $confirmPromise({
+                text: "Are you sure you want to import your Data?",
+            })
+        ) {
             importFileInput.click();
         }
     }
@@ -45,7 +53,7 @@
         if (importedFile) {
             let filename = importedFile.name;
             if (
-                confirm(
+                await $confirmPromise(
                     `File ${
                         filename ? "named [" + filename + "] " : ""
                     }has been detected, do you want to continue the import?`
@@ -81,22 +89,26 @@
 
     async function exportData() {
         if (!$exportPathIsAvailable && $android) return handleExportFolder();
-        if (confirm("Are you sure you want to export your Data?")) {
+        if (
+            await $confirmPromise("Are you sure you want to export your Data?")
+        ) {
             $menuVisible = false;
             runExport.update((e) => !e);
         }
     }
 
-    function updateList() {
-        if (confirm("Are you sure you want to update your list?")) {
+    async function updateList() {
+        if (
+            await $confirmPromise("Are you sure you want to update your list?")
+        ) {
             $menuVisible = false;
             runUpdate.update((e) => !e);
         }
     }
 
-    function handleUpdateEveryHour() {
+    async function handleUpdateEveryHour() {
         if (
-            confirm(
+            await $confirmPromise(
                 `Are you sure you want to ${
                     $autoUpdate ? "disable" : "enable"
                 } auto-update?`
@@ -110,7 +122,7 @@
     async function handleExportEveryHour() {
         if (!$exportPathIsAvailable && $android) return handleExportFolder();
         if (
-            confirm(
+            await $confirmPromise(
                 `Are you sure you want to ${
                     $autoExport ? "disable" : "enable"
                 } auto-export?`
@@ -131,10 +143,15 @@
     async function showAllHiddenEntries() {
         if (jsonIsEmpty($hiddenEntries)) {
             // Alert No Hidden Entries
-            alert("No Hidden Entries");
+            $confirmPromise({
+                isAlert: true,
+                text: "There is currently no hidden entries.",
+            });
             return;
         } else if (
-            confirm("Are you sure you want to show all hidden Anime Entries?")
+            await $confirmPromise(
+                "Are you sure you want to show all hidden Anime Entries?"
+            )
         ) {
             if ($animeLoaderWorker) {
                 $animeLoaderWorker.terminate();
@@ -184,8 +201,10 @@
         }
     }
 
-    function anilistSignup() {
-        if (confirm("Do you want to sign-up an Anilist account?")) {
+    async function anilistSignup() {
+        if (
+            await $confirmPromise("Do you want to sign-up an Anilist account?")
+        ) {
             $menuVisible = false;
             window.open("https://anilist.co/signup", "_blank");
         }
@@ -317,8 +336,9 @@
         height: fit-content;
         border: none;
         cursor: pointer;
+        user-select: none;
     }
-    @media screen and (orientation: portrait) {
+    @media screen and (max-width: 425px) {
         .menu {
             padding: 1.5em 1em;
         }

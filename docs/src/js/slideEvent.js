@@ -32,6 +32,7 @@ function captureSlideEvent(targetElement, callback = new Function) {
         }
     }
     function up(event) {
+        if (pointerDownTimeout) clearTimeout(pointerDownTimeout)
         targetElement.removeEventListener('pointermove', move)
         if (pointTimeout) clearTimeout(pointTimeout)
         if (event.pointerId === pointerId && isPointerDown) {
@@ -48,17 +49,20 @@ function captureSlideEvent(targetElement, callback = new Function) {
             }
             releasePointer();
         }
-
     }
+    let pointerDownTimeout;
     function down(event) {
-        if (event.pointerType === "mouse") return
-        startX = event.clientX;
-        pointerId = event.pointerId;
-        targetElement.setPointerCapture(pointerId);
-        isPointerDown = true;
-        targetElement.addEventListener('pointermove', move)
+        if (pointerDownTimeout) clearTimeout(pointerDownTimeout)
+        pointerDownTimeout = setTimeout(() => {
+            startX = event.clientX;
+            pointerId = event.pointerId;
+            targetElement.setPointerCapture(pointerId);
+            isPointerDown = true;
+            targetElement.addEventListener('pointermove', move)
+        }, 100)
     }
     function cancel(event) {
+        if (pointerDownTimeout) clearTimeout(pointerDownTimeout)
         targetElement.removeEventListener('pointermove', move)
         if (pointTimeout) clearTimeout(pointTimeout)
         if (event.pointerId === pointerId && isPointerDown) {

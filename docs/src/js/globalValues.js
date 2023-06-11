@@ -29,6 +29,7 @@ const initData = writable(true)
 const animeObserver = writable(null)
 const searchedAnimeKeyword = writable("")
 // const toast = writable(null)
+const confirmPromise = writable(null)
 const menuVisible = writable(false)
 const animeOptionVisible = writable(false)
 const openedAnimeOptionIdx = writable(null)
@@ -69,6 +70,7 @@ export {
     animeObserver,
     searchedAnimeKeyword,
     // toast,
+    confirmPromise,
     menuVisible,
     animeOptionVisible,
     openedAnimeOptionIdx,

@@ -12,6 +12,7 @@
         loadAnime,
         username,
         initData,
+        confirmPromise,
     } from "../../js/globalValues.js";
     import { fade, fly } from "svelte/transition";
     import {
@@ -157,7 +158,7 @@
         }, 300);
     }
     function filterSelect(event, dropdownIdx) {
-        if (filterIsScrolling && event.pointerType !== "touch") return;
+        if (filterIsScrolling && event.pointerType === "mouse") return;
         let element = event.target;
         let filSelectEl = element.closest(".filter-select");
         if (filSelectEl === selectedFilterElement) return;
@@ -424,11 +425,9 @@
             (classList.contains("checkbox") && event.type === "click") ||
             (classList.contains("checkbox") &&
                 keyCode !== 13 &&
-                event.type === "keydown")
+                event.type === "keydown") ||
+            (filterIsScrolling && event.pointerType === "mouse")
         ) {
-            return;
-        }
-        if (filterIsScrolling) {
             return;
         }
         // Prevent Default
@@ -719,7 +718,7 @@
         changeType,
         optionType
     ) {
-        if (tagFilterIsScrolling && event.pointerType !== "touch") return false;
+        if (tagFilterIsScrolling && event.pointerType === "mouse") return false;
         if (changeType === "read" || filterType !== "dropdown") return; // Unchangable Selection
         let idxTypeSelected = $filterOptions?.filterSelection?.findIndex(
             ({ isSelected }) => isSelected
@@ -776,7 +775,7 @@
         categIdx,
         optionType
     ) {
-        if (tagFilterIsScrolling && event.pointerType !== "touch") return;
+        if (tagFilterIsScrolling && event.pointerType === "mouse") return;
         let idxTypeSelected = $filterOptions?.filterSelection?.findIndex(
             ({ isSelected }) => isSelected
         );
@@ -812,8 +811,8 @@
         );
         saveFilters(nameTypeSelected);
     }
-    function removeAllActiveTag(event) {
-        if (confirm("Do you want to remove all filters?") === true) {
+    async function removeAllActiveTag(event) {
+        if (await $confirmPromise("Do you want to remove all filters?")) {
             let idxTypeSelected = $filterOptions?.filterSelection?.findIndex(
                 ({ isSelected }) => isSelected
             );
@@ -1020,7 +1019,12 @@
     }
 
     window.checkOpenDropdown = () => {
-        return selectedFilterElement && window.innerWidth <= 760;
+        return (
+            (selectedFilterElement ||
+                selectedFilterTypeElement ||
+                selectedSortElement) &&
+            window.innerWidth <= 425
+        );
     };
     window.closeDropdown = () => {
         // Small Screen Width
@@ -1067,6 +1071,32 @@
 </script>
 
 <main>
+    <div class="home-status">
+        {#if $filterOptions}
+            <span>
+                <h2>
+                    {$filterOptions?.filterSelection?.filter?.(
+                        ({ isSelected }) => isSelected
+                    )?.[0]?.filterSelectionName || ""}
+                </h2>
+            </span>
+        {:else}
+            <div class="skeleton shimmer" />
+        {/if}
+        {#if $dataStatus || !$username}
+            <span out:fade={{ duration: 300 }} class="data-status">
+                <h2>
+                    {#if $dataStatus}
+                        {$dataStatus}
+                    {:else if !$username && !$initData}
+                        {"No Anilist Username Found"}
+                    {:else}
+                        {""}
+                    {/if}
+                </h2>
+            </span>
+        {/if}
+    </div>
     <div class="input-search-wrap">
         <input
             id="input-search"
@@ -1118,32 +1148,6 @@
             {/if}
         </div>
     </div>
-    <div class="home-status">
-        {#if $filterOptions}
-            <span>
-                <h2>
-                    {$filterOptions?.filterSelection?.filter?.(
-                        ({ isSelected }) => isSelected
-                    )?.[0]?.filterSelectionName || ""}
-                </h2>
-            </span>
-        {:else}
-            <div class="skeleton shimmer" />
-        {/if}
-        {#if $dataStatus || !$username}
-            <span out:fade={{ duration: 300 }} class="data-status">
-                <h2>
-                    {#if $dataStatus}
-                        {$dataStatus}
-                    {:else if !$username && !$initData}
-                        {"No Anilist Username Found"}
-                    {:else}
-                        {""}
-                    {/if}
-                </h2>
-            </span>
-        {/if}
-    </div>
     <div
         class="filters"
         id="filters"
@@ -1178,7 +1182,7 @@
                                     bind:value={$filterOptions.filterSelection[
                                         filSelIdx
                                     ].filters.Dropdown[dropdownIdx].optKeyword}
-                                    disabled={windowWidth <= 760}
+                                    disabled={windowWidth <= 425}
                                 />
                             </div>
                             {#if selected && options.length && !Init}
@@ -1203,7 +1207,20 @@
                                 : "-9999px"}
                         >
                             <div class="options-wrap-filter-info">
-                                <h2>{filName}</h2>
+                                <div>
+                                    <h2>{filName}</h2>
+                                    <div
+                                        class="closing-x"
+                                        on:keydown={(e) =>
+                                            e.key === "Enter" &&
+                                            closeFilterSelect(dropdownIdx)}
+                                        on:click={closeFilterSelect(
+                                            dropdownIdx
+                                        )}
+                                    >
+                                        ×
+                                    </div>
+                                </div>
                                 <input
                                     placeholder="Any"
                                     type="search"
@@ -1454,7 +1471,7 @@
                             ? "up"
                             : "down")}
                 />
-                <h3
+                <h2
                     on:click={handleSortFilterPopup}
                     on:keydown={(e) =>
                         e.key === "Enter" && handleSortFilterPopup(e)}
@@ -1496,7 +1513,7 @@
                             {/each}
                         </div>
                     </div>
-                </h3>
+                </h2>
             </div>
         {:else}
             <div class="sortFilter skeleton shimmer" />
@@ -1517,9 +1534,8 @@
 
     main {
         display: grid;
-        grid-template-rows: 36px 18px 59px 28px;
-        row-gap: 1.25em;
-        padding-top: 1.25em;
+        grid-template-rows: 20px 55px 80px 50px;
+        padding-top: 2em;
     }
 
     .skeleton {
@@ -1538,9 +1554,9 @@
         width: 100%;
         height: max-content;
         position: relative;
+        margin-top: 1.5em;
     }
     .input-search {
-        overflow: auto;
         outline: none;
         border: none;
         background-color: rgb(21, 31, 46);
@@ -1559,6 +1575,7 @@
         background-color: rgb(21, 31, 46);
         overflow-y: auto;
         overflow-x: hidden;
+        overscroll-behavior: contain;
         max-height: var(--maxFilterSelectionHeight);
         margin-top: 1px;
         border-radius: 6px;
@@ -1598,6 +1615,7 @@
         align-items: center;
         width: 100%;
         column-gap: 10px;
+        height: 20px;
     }
 
     .home-status .skeleton {
@@ -1629,6 +1647,8 @@
         gap: 1em;
         flex-wrap: nowrap;
         padding-bottom: var(--maxPaddingHeight);
+        margin-top: 2em;
+        user-select: none;
     }
     .filters::-webkit-scrollbar {
         display: none;
@@ -1643,33 +1663,8 @@
         display: grid;
         grid-template-rows: 18px 30px;
         grid-row-gap: 5px;
-        width: 142px;
-        min-width: 142px;
-    }
-
-    .dropdown-filter {
-        position: fixed;
-        display: flex;
-        z-index: 996;
-        left: 0;
-        top: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(0, 0, 0, 0.4);
-        justify-content: center;
-        align-items: center;
-        overflow-y: auto;
-        overscroll-behavior: contain;
-    }
-
-    .dropdown-filter-container {
-        display: flex;
-        flex-direction: column;
-        background-color: #151f2e;
-        width: 300px;
-        max-width: 90%;
-        border-radius: 6px;
-        padding: 10px 15px;
+        width: 165px;
+        min-width: 165px;
     }
 
     .filter-input-number .value-input-number {
@@ -1723,8 +1718,9 @@
         position: absolute;
         top: 61px;
         background-color: rgb(21, 31, 46);
-        width: 142px;
+        width: 165px;
         overflow-y: auto;
+        overscroll-behavior: contain;
         max-height: var(--maxFilterSelectionHeight);
         margin-top: 1px;
         border-radius: 6px;
@@ -1778,11 +1774,11 @@
         display: grid;
         grid-template-rows: 18px 30px;
         grid-row-gap: 5px;
-        width: 142px;
+        width: 165px;
     }
     .filter-checkbox .checkbox-wrap {
-        min-width: 142px;
-        width: 142px;
+        min-width: 165px;
+        width: 165px;
         cursor: pointer;
     }
     .filter-checkbox .checkbox-wrap,
@@ -1819,13 +1815,15 @@
         gap: 15px;
         min-height: 28px;
         width: 100%;
-        grid-template-columns: 15px repeat(2, auto);
+        grid-template-columns: 23px repeat(2, auto);
+        margin-top: 2em;
     }
     .activeFilters > i {
         font-size: 1.5rem;
         height: 28px;
         line-height: 28px;
         cursor: pointer;
+        padding: 0 4px;
     }
 
     .activeFilters > i.skeleton {
@@ -1839,6 +1837,7 @@
         display: flex;
         align-items: center;
         overflow-x: auto;
+        overscroll-behavior: contain;
         justify-content: start;
         gap: 15px;
         user-select: none;
@@ -1877,14 +1876,15 @@
         justify-content: end;
         align-items: center;
         gap: 8px;
-        min-height: 15px;
+        min-height: 17px;
         margin-left: auto;
         position: relative;
     }
     .sortFilter.skeleton {
+        min-height: 17px;
         min-width: 109px;
     }
-    .sortFilter h3,
+    .sortFilter h2,
     .sortFilter i {
         user-select: none;
         cursor: pointer;
@@ -1899,6 +1899,7 @@
         background-color: rgb(21, 31, 46);
         overflow-y: auto;
         overflow-x: hidden;
+        overscroll-behavior: contain;
         max-height: var(--maxFilterSelectionHeight);
         margin-top: 1px;
         border-radius: 6px;
@@ -1928,6 +1929,7 @@
     }
     .sortFilter .option i {
         margin-left: auto;
+        font-size: 1.2rem;
     }
 
     .shimmer {
@@ -1972,7 +1974,44 @@
     .options-wrap-filter-info input {
         display: none !important;
     }
-    @media screen and (max-width: 760px) {
+
+    .closing-x {
+        font-size: 25px;
+        width: 25px;
+        height: 25px;
+        text-align: center;
+        position: fixed;
+        right: 10px;
+        top: 10px;
+        vertical-align: middle;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        line-height: 1;
+        cursor: pointer;
+        border-radius: 50%;
+        z-index: 2;
+        user-select: none;
+        background-color: transparent;
+    }
+
+    .filters {
+        scroll-snap-type: x mandatory;
+    }
+    .filters > * {
+        scroll-snap-align: start;
+    }
+
+    @media (pointer: fine) {
+        .filters {
+            scroll-snap-type: none !important;
+        }
+        .filters > * {
+            scroll-snap-align: none !important;
+        }
+    }
+
+    @media screen and (max-width: 425px) {
         .filter-select .options-wrap {
             position: fixed !important;
             display: flex !important;
@@ -2026,8 +2065,8 @@
             flex-direction: column !important;
             background-color: #151f2e !important;
             width: 90vw !important;
-            max-height: calc(50vh - 112px) !important;
-            border-radius: 0px 0px 6px !important;
+            height: calc(60vh - 112px) !important;
+            border-radius: 0px 0px 6px 6px !important;
             padding: 6px 11px !important;
             overflow: auto !important;
             gap: 0 !important;

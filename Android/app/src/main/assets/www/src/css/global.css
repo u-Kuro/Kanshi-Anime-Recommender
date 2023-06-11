@@ -24,15 +24,6 @@ body {
     width: 100%;
 }
 
-html.noscroll {
-    position: fixed;
-    overflow-y: scroll;
-}
-
-body.noscroll {
-    position: relative;
-}
-
 /* Font Sizes */
 .textLogo {
     font-size: clamp(2.5714rem, 2.7857rem, 3rem)

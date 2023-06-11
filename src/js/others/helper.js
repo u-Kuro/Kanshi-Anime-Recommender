@@ -199,7 +199,7 @@ const dragScroll = (element, axis = 'xy') => {
   var curYPos, curXPos, curDown, curScrollLeft, curScrollTop;
 
   let move = (e) => {
-    if (curDown) {
+    if (curDown && e.pointerType === "mouse") {
       if (axis.toLowerCase().includes('y'))
         element.scrollTop = curYPos - e.pageY + curScrollTop;
       if (axis.toLowerCase().includes('x'))
@@ -208,6 +208,7 @@ const dragScroll = (element, axis = 'xy') => {
   };
 
   let down = (e) => {
+    if (e.pointerType !== "mouse") return
     if (axis.toLowerCase().includes('y')) {
       curYPos = e.pageY;
       curScrollTop = element.scrollTop;
@@ -219,7 +220,8 @@ const dragScroll = (element, axis = 'xy') => {
     curDown = true;
   };
 
-  let up = () => {
+  let up = (e) => {
+    if (e.pointerType !== "mouse") return
     curDown = false;
   };
 

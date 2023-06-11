@@ -286,9 +286,6 @@
                     <span
                         class="image-grid__card-title copy"
                         copy-value={anime.title || ""}
-                        on:click={handleOpenPopup(animeIdx)}
-                        on:keydown={(e) =>
-                            e.key === "Enter" && handleOpenPopup(animeIdx)}
                     >
                         <span class="title">{anime.title || "N/A"}</span>
                         <span class="brief-info">
@@ -355,6 +352,7 @@
     main {
         width: 100%;
         height: 100%;
+        padding: 2.5em 0;
     }
 
     .skeleton {
@@ -373,8 +371,8 @@
         display: grid;
         justify-content: space-between;
         align-items: flex-start;
-        grid-gap: 0.8rem;
-        margin: 1.5em 0;
+        grid-column-gap: 0.8rem;
+        grid-row-gap: 2em;
         grid-template-columns: repeat(
             auto-fit,
             minmax(min(100%/2 - 0.8rem, 180px), 0)
@@ -459,6 +457,7 @@
         white-space: nowrap;
         line-height: 15px;
         column-gap: 2px;
+        user-select: none;
     }
 
     .brief-info i.fa-circle::before {
@@ -589,7 +588,7 @@
         }
     }
 
-    @media screen and (orientation: portrait) {
+    @media screen and (max-width: 656px) {
         .image-grid {
             justify-content: space-evenly;
         }

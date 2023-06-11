@@ -35,6 +35,7 @@
 		updateFilters,
 		animeOptionVisible,
 		runIsScrolling,
+		confirmPromise,
 	} from "./js/globalValues.js";
 	import {
 		getAnimeEntries,
@@ -479,11 +480,12 @@
 	let copytimeoutId;
 	let copyhold = false;
 	document.addEventListener("pointerdown", (e) => {
+		if (e.pointerType === "mouse") return;
 		let target = e.target;
 		let classList = target.classList;
 		if (!classList.contains("copy")) target = target.closest(".copy");
 		if (target) {
-			e.preventDefault();
+			// e.preventDefault();
 			copyhold = true;
 			if (copytimeoutId) clearTimeout(copytimeoutId);
 			copytimeoutId = setTimeout(() => {
@@ -499,6 +501,7 @@
 		}
 	});
 	document.addEventListener("pointerup", (e) => {
+		if (e.pointerType === "mouse") return;
 		let target = e.target;
 		let classList = target.classList;
 		if (!classList.contains("copy")) target = target.closest(".copy");
@@ -508,6 +511,7 @@
 		}
 	});
 	document.addEventListener("pointercancel", (e) => {
+		if (e.pointerType === "mouse") return;
 		let target = e.target;
 		let classList = target.classList;
 		if (!classList.contains("copy")) target = target.closest(".copy");
@@ -516,6 +520,49 @@
 			if (copytimeoutId) clearTimeout(copytimeoutId);
 		}
 	});
+
+	let _showConfirm = false;
+	let _isAlert, _confirmTitle, _confirmText, _confirmLabel, _cancelLabel;
+	let _confirmModalPromise;
+	$confirmPromise = async (confirmValues) => {
+		return new Promise((resolve) => {
+			_isAlert = confirmValues?.isAlert || false;
+			_confirmTitle =
+				confirmValues?.title ||
+				(_isAlert ? "Heads Up" : "Confirmation");
+			_confirmText =
+				(typeof confirmValues === "string"
+					? confirmValues
+					: confirmValues?.text) ||
+				"Are you sure you want to continue";
+			_confirmLabel = confirmValues?.confirmLabel || "OK";
+			_cancelLabel = confirmValues?.cancelLabel || "CANCEL";
+			_showConfirm = true;
+			_confirmModalPromise = { resolve };
+		});
+	};
+	function handleConfirmationConfirmed() {
+		_confirmModalPromise.resolve(true);
+		_confirmModalPromise =
+			_isAlert =
+			_confirmTitle =
+			_confirmText =
+			_confirmLabel =
+			_cancelLabel =
+				undefined;
+		_showConfirm = false;
+	}
+	function handleConfirmationCancelled() {
+		_confirmModalPromise.resolve(false);
+		_confirmModalPromise =
+			_isAlert =
+			_confirmTitle =
+			_confirmText =
+			_confirmLabel =
+			_cancelLabel =
+				undefined;
+		_showConfirm = false;
+	}
 </script>
 
 <main>
@@ -529,7 +576,16 @@
 	</div>
 
 	<C.Anime.Fixed.AnimeOptionsPopup />
-	<!-- <C.Fixed.Toast /> -->
+	<C.Others.Confirm
+		showConfirm={_showConfirm}
+		on:confirmed={handleConfirmationConfirmed}
+		on:cancelled={handleConfirmationCancelled}
+		isAlert={_isAlert}
+		confirmTitle={_confirmTitle}
+		confirmText={_confirmText}
+		confirmLabel={_confirmLabel}
+		cancelLabel={_cancelLabel}
+	/>
 </main>
 
 <style>
@@ -545,7 +601,7 @@
 		padding-left: 50px;
 		padding-right: 50px;
 	}
-	@media screen and (orientation: portrait) {
+	@media screen and (max-width: 425px) {
 		.home {
 			padding: 0 1em;
 		}

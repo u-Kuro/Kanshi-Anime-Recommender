@@ -11,6 +11,7 @@
         openedAnimePopupIdx,
         updateRecommendationList,
         android,
+        confirmPromise,
     } from "../../../js/globalValues.js";
     import {
         isJsonObject,
@@ -47,10 +48,14 @@
         }
     }
 
-    function handleHideShow(animeID) {
+    async function handleHideShow(animeID) {
         let isHidden = $hiddenEntries[animeID];
         if (isHidden) {
-            if (confirm("Are you sure you want to show the anime?")) {
+            if (
+                await $confirmPromise(
+                    "Are you sure you want to show the anime?"
+                )
+            ) {
                 delete $hiddenEntries[animeID];
                 $hiddenEntries = $hiddenEntries;
                 if (
@@ -61,7 +66,11 @@
                 }
             }
         } else {
-            if (confirm("Are you sure you want to hide the anime?")) {
+            if (
+                await $confirmPromise(
+                    "Are you sure you want to hide the anime?"
+                )
+            ) {
                 $hiddenEntries[animeID] = true;
                 if (
                     $finalAnimeList.length &&
@@ -327,7 +336,6 @@
         });
     });
 
-    let lastProcessedPopupHeader;
     async function playMostVisibleTrailer() {
         if (!$popupVisible) return;
         await tick();
@@ -338,13 +346,6 @@
                 ".popup-content",
                 0.1
             )?.querySelector(".popup-header");
-        if (
-            (lastProcessedPopupHeader === mostVisiblePopupHeader &&
-                lastProcessedPopupHeader instanceof Element) ||
-            !mostVisiblePopupHeader
-        )
-            return;
-        lastProcessedPopupHeader = mostVisiblePopupHeader;
         let visibleTrailer =
             mostVisiblePopupHeader?.querySelector?.(".trailer");
         // Scroll in Grid
@@ -427,14 +428,14 @@
                 return;
             if ($ytPlayers.length >= 8) {
                 let destroyedPlayer = $ytPlayers.shift();
-                // $ytPlayers = $ytPlayers
                 destroyedPlayer?.destroy?.();
                 let newYtPlayerEl = document.createElement("div");
                 newYtPlayerEl.className = "trailer";
+                ytPlayerEl.style.display = "none";
                 openedAnime.popupHeader.replaceChild(newYtPlayerEl, ytPlayerEl);
                 ytPlayerEl = openedAnime.popupHeader.querySelector(".trailer"); // Get new YT player
             }
-
+            ytPlayerEl.style.display = "none";
             // Add a Unique ID
             ytPlayerEl.setAttribute(
                 "id",
@@ -541,6 +542,7 @@
                             ytPlayer?.playVideo?.();
                         }
                     } else if (ytPlayer.g !== visibleTrailer) {
+                        ytPlayer?.playVideo?.();
                         ytPlayer?.pauseVideo?.();
                     }
                 });
@@ -562,7 +564,8 @@
 
     // Global Function For Android
     window.returnedAppIsVisible = (inApp) => {
-        if (!$popupVisible || !$android) return; // Only For Android
+        // Only For Android, and workaround for Alert visibility
+        if (!$popupVisible || !$android) return;
         let mostVisiblePopupHeader =
             getMostVisibleElement(popupContainer, ".popup-header", 0.5) ||
             getMostVisibleElement(
@@ -574,25 +577,23 @@
             mostVisiblePopupHeader?.querySelector?.(".trailer");
         if (!visibleTrailer) return;
         if ($popupVisible) {
-            for (var ytPlayer of $ytPlayers) {
-                if (ytPlayer.g === visibleTrailer) {
-                    if (inApp) {
-                        if (ytPlayer?.getPlayerState?.() === 2) {
-                            ytPlayer?.playVideo?.();
-                            break;
-                        }
-                    } else {
-                        ytPlayer?.pauseVideo?.();
+            if (inApp) {
+                for (var ytPlayer of $ytPlayers) {
+                    if (ytPlayer.g === visibleTrailer) {
+                        ytPlayer?.playVideo?.();
                         break;
                     }
                 }
+            } else {
+                $ytPlayers.forEach((ytPlayer) => {
+                    ytPlayer?.pauseVideo?.();
+                });
             }
         }
     };
     window.addEventListener("online", () => {
         isOnline = true;
         loadYouTubeAPI().then(() => {
-            lastProcessedPopupHeader = undefined;
             playMostVisibleTrailer();
         });
     });
@@ -1093,7 +1094,7 @@
     }
 
     .popup-body {
-        overflow: auto;
+        overflow: hidden;
         min-height: 11em;
         flex: 0 1 auto;
         touch-action: pan-y;
@@ -1172,19 +1173,6 @@
         .info-list {
             max-height: 410px;
             grid-template-columns: repeat(1, 1fr);
-        }
-
-        .image-grid__card {
-            animation: fadeIn var(--transDur) ease-in;
-            width: 47%;
-        }
-
-        .image-grid__card-title {
-            display: flex;
-            flex-wrap: wrap;
-            padding: clamp(0.1em, 0.3em, 0.5em);
-            font-size: clamp(1.2rem, 1.3rem, 1.4rem);
-            background-color: transparent;
         }
     }
 

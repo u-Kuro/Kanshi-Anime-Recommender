@@ -11,6 +11,7 @@ import Menu from "./Fixed/Menu.svelte";
 
 // Other Components
 import Search from "./Others/Search.svelte";
+import Confirm from "./Others/Confirm.svelte";
 
 export default {
     Fixed: {
@@ -25,6 +26,7 @@ export default {
         }
     },
     Others: {
-        Search: Search
+        Search: Search,
+        Confirm: Confirm
     }
 }
