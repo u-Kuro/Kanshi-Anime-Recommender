@@ -44,8 +44,8 @@
             transition:fly={{ y: 20, duration: 300 }}
         >
             <div class="confirm-info-container">
-                <span class="confirm-title">{confirmTitle}</span>
-                <span class="confirm-text">{confirmText}</span>
+                <h2 class="confirm-title">{confirmTitle}</h2>
+                <h2 class="confirm-text">{confirmText}</h2>
             </div>
             <div class="confirm-button-container">
                 {#if !isAlert}
@@ -78,8 +78,13 @@
         justify-content: center;
         align-items: center;
         overflow-y: scroll;
+        overflow-x: hidden;
         overscroll-behavior: contain;
         user-select: none;
+    }
+
+    .confirm::-webkit-scrollbar {
+        display: none;
     }
 
     .confirm::-webkit-scrollbar {
@@ -91,7 +96,7 @@
         grid-template-rows: auto 20px;
         background-color: #151f2e;
         width: 30em;
-        height: 12.4em;
+        min-height: 12.4em;
         max-width: 90%;
         max-height: 90%;
         border-radius: 6px;
@@ -113,6 +118,13 @@
 
     .confirm-text {
         font-size: clamp(1.3757rem, 1.48785rem, 1.6rem);
+        overflow-y: auto;
+        max-height: 75px;
+        overflow-x: hidden;
+    }
+
+    .confirm-text::-webkit-scrollbar {
+        display: none;
     }
 
     .confirm-button-container {
@@ -142,7 +154,7 @@
     @media screen and (min-width: 768px) {
         .confirm-container {
             width: 40em;
-            height: 16.4em;
+            min-height: 16.4em;
         }
 
         .confirm-title {

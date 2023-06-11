@@ -233,7 +233,7 @@
 
 	// Reactive Functions
 	updateRecommendationList.subscribe(async (val) => {
-		if (typeof val !== "boolean") return;
+		if (typeof val !== "boolean" || $initData) return;
 		await saveJSON(true, "shouldProcessRecommendation");
 		processRecommendedAnimeList()
 			.then(async () => {
@@ -246,7 +246,7 @@
 			});
 	});
 	loadAnime.subscribe(async (val) => {
-		if (typeof val !== "boolean") return;
+		if (typeof val !== "boolean" || $initData) return;
 		animeLoader()
 			.then(async (data) => {
 				$animeLoaderWorker = data.animeLoaderWorker;

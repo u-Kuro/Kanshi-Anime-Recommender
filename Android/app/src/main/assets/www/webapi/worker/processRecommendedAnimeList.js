@@ -4,7 +4,6 @@ let mediaRelationTypes = ["adaptation", "prequel", "sequel", "parent", "side_sto
 let minNumber = 1 - 6e-17 !== 1 ? 6e-17 : 1e-16;
 self.onmessage = async ({ data }) => {
     if (!db) await IDBinit()
-    let xxx = new Date()
     // Retrieve Data
     self.postMessage({ status: "Initializing Filters" })
     let activeTagFilters = await retrieveJSON("activeTagFilters")
@@ -19,7 +18,7 @@ self.onmessage = async ({ data }) => {
         includeYear = true,
         includeAverageScore = true,
         includeAnimeLength = true,
-        hideUnwatchedSequels = true,
+        showAllSequels = false,
         minPopularity,
         minAverageScore,
         minSampleSize,
@@ -53,6 +52,8 @@ self.onmessage = async ({ data }) => {
             } else if (filterType === 'checkbox') {
                 if (optionName.toLowerCase() === 'inc. all factors') {
                     includeUnknownVar = true
+                } else if (optionName.toLowerCase() === 'show all sequels') {
+                    showAllSequels = true
                 }
             } else if (filterType === 'input number') {
                 if (optionName.toLowerCase() === 'scoring system') {
@@ -805,8 +806,8 @@ self.onmessage = async ({ data }) => {
                     }
                 }
             });
-            // Hide Unwatched Sequels
-            if (hideUnwatchedSequels) {
+            // Show All Sequels or Hide Next Sequels
+            if (!showAllSequels) {
                 let animeRelations = anime?.relations?.edges || [];
                 // Conditions
                 let isUnwatchedSequel =
@@ -1290,6 +1291,66 @@ self.onmessage = async ({ data }) => {
             let status = anime?.status;
             let episodes = anime?.episodes
             let duration = anime?.duration
+            // Update Anime Franchise
+            let afIdxs = animeFranchises.reduce((result, e, idx) => {
+                if (e instanceof Array) {
+                    if (e.includes(animeID)) {
+                        result.push(idx);
+                    }
+                }
+                return result;
+            }, []);
+            let afIdx;
+            if (afIdxs.length > 1 || afIdxs.length < 1) {
+                // Union if there are duplicate franchise
+                if (afIdxs.length > 1) {
+                    let newFranchise = animeFranchises[afIdxs[0]];
+                    for (let j = 1; j < afIdxs.length; j++) {
+                        newFranchise = Array.from(new Set(newFranchise.concat(animeFranchises[afIdxs[j]])));
+                    }
+                    // Remove Old Duplicates
+                    afIdxs.sort((a, b) => b - a);
+                    for (let j = 0; j < afIdxs.length; j++) {
+                        animeFranchises.splice(afIdxs[j], 1);
+                    }
+                    // Add New Unioned Franchise
+                    animeFranchises.push(newFranchise);
+                } else { // If its a New Franchise
+                    animeFranchises.push([animeID]);
+                }
+                // Get the index of the New Franchise
+                afIdx = animeFranchises.length - 1;
+            } else { // else if there is only one
+                // Index of Franchise
+                afIdx = animeFranchises.findIndex((e) => {
+                    if (e instanceof Array) {
+                        return e.includes(animeID);
+                    }
+                });
+            }
+            // Add each Anime relations to its Franchise
+            let animeRelations = anime?.relations?.edges || [];
+            animeRelations.forEach((e) => {
+                let animeRelationType = e?.relationType;
+                let relationID = e?.node?.id;
+                if (
+                    typeof animeRelationType === "string" &&
+                    typeof relationID === "number" &&
+                    animeRelationType
+                ) {
+                    if (
+                        mediaRelationTypes.includes(
+                            animeRelationType.trim().toLowerCase()
+                        )
+                    ) {
+                        if (animeFranchises[afIdx] instanceof Array) {
+                            if (!animeFranchises[afIdx].includes(relationID)) {
+                                animeFranchises[afIdx].push(relationID);
+                            }
+                        }
+                    }
+                }
+            });
             if (typeof season === "string") {
                 let tempSeason = season.trim().toLowerCase();
                 if (filters['season'][tempSeason] === undefined) {

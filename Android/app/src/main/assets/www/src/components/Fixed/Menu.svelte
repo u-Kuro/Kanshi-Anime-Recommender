@@ -15,6 +15,7 @@
         runUpdate,
         runExport,
         confirmPromise,
+        initData,
     } from "../../js/globalValues.js";
     import { fade, fly } from "svelte/transition";
     import { saveJSON } from "../../js/indexedDB.js";
@@ -35,6 +36,11 @@
     }
 
     async function importData() {
+        if ($initData)
+            return $confirmPromise({
+                isAlert: true,
+                text: "Please wait a moment...",
+            });
         if (!(importFileInput instanceof Element))
             return ($dataStatus = "Something went wrong...");
         if (
@@ -88,6 +94,11 @@
     };
 
     async function exportData() {
+        if ($initData)
+            return $confirmPromise({
+                isAlert: true,
+                text: "Please wait a moment...",
+            });
         if (!$exportPathIsAvailable && $android) return handleExportFolder();
         if (
             await $confirmPromise("Are you sure you want to export your Data?")
@@ -98,6 +109,11 @@
     }
 
     async function updateList() {
+        if ($initData)
+            return $confirmPromise({
+                isAlert: true,
+                text: "Please wait a moment...",
+            });
         if (
             await $confirmPromise("Are you sure you want to update your list?")
         ) {

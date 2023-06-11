@@ -4332,9 +4332,17 @@ self.onmessage = async ({ data }) => {
                 let aniFilDropdown = ["genre", "tag", "year", "season", "format", "airing status", "user status", "studio"] // Add Selections
                 filters.Dropdown = aniFilDropdown.map((e) => {
                     let filName = e;
-                    let options;
+                    let options = Object.keys(savedFilters[e]);
+                    options = Object.keys(options.reduce((uniqueOptions, k) => {
+                        k = k !== "_" ? k.replace(/\_/g, ' ') : k;
+                        k = k !== '\\"' ? k.replace(/\\"/g, '"') : k;
+                        k = k.replace(/\b(tv|ona|ova)\b/gi, (match) => match.toUpperCase());
+                        if (k !== "" && !uniqueOptions[k]) {
+                            uniqueOptions[k] = true
+                        }
+                        return uniqueOptions;
+                    }, {}))
                     if (dropdownBasis[e] !== undefined) {
-                        options = Object.keys(savedFilters[e])
                         if (dropdownBasis[e] === "descnum" || dropdownBasis[e] === "ascnum") {
                             dropdownBasis[e] === "descnum" ? options.sort((a, b) => parseFloat(b) - parseFloat(a)) : options.sort((a, b) => parseFloat(a) - parseFloat(b))
                         } else if (dropdownBasis[e] === "desclet") {
@@ -4349,16 +4357,9 @@ self.onmessage = async ({ data }) => {
                             })
                         }
                     } else {
-                        options = Object.keys(savedFilters[e])
                         options.sort() // default ascending
                     }
-                    options = options.map((k) => {
-                        k = k !== "_" ? k.replace(/\_/g, ' ') : k
-                        k = k !== '\\"' ? k.replace(/\\"/g, '"') : k
-                        k = k.replace(/\b(tv|ona|ova)\b/gi, (match) => match.toUpperCase());
-                        return { optionName: k, selected: "none" }
-                    })
-                    options = options.filter(({ optionName }) => optionName !== "")
+                    options = options.map(k => ({ optionName: k, selected: "none" }));
                     return {
                         filName: filName,
                         options: options,
@@ -4453,9 +4454,17 @@ self.onmessage = async ({ data }) => {
                 let aniFilDropdown = ["genre", "tag"] // Add Selections
                 filters.Dropdown = aniFilDropdown.map((e) => {
                     let filName = e;
-                    let options;
+                    let options = Object.keys(savedFilters[e]);
+                    options = Object.keys(options.reduce((uniqueOptions, k) => {
+                        k = k !== "_" ? k.replace(/\_/g, ' ') : k;
+                        k = k !== '\\"' ? k.replace(/\\"/g, '"') : k;
+                        k = k.replace(/\b(tv|ona|ova)\b/gi, (match) => match.toUpperCase());
+                        if (k !== "" && !uniqueOptions[k]) {
+                            uniqueOptions[k] = true
+                        }
+                        return uniqueOptions;
+                    }, {}))
                     if (dropdownBasis[e] !== undefined) {
-                        options = Object.keys(savedFilters[e])
                         if (dropdownBasis[e] === "descnum" || dropdownBasis[e] === "ascnum") {
                             dropdownBasis[e] === "descnum" ? options.sort((a, b) => parseFloat(b) - parseFloat(a)) : options.sort((a, b) => parseFloat(a) - parseFloat(b))
                         } else if (dropdownBasis[e] === "desclet") {
@@ -4470,16 +4479,9 @@ self.onmessage = async ({ data }) => {
                             })
                         }
                     } else {
-                        options = Object.keys(savedFilters[e])
                         options.sort() // default ascending
                     }
-                    options = options.map((k) => {
-                        k = k !== "_" ? k.replace(/\_/g, ' ') : k
-                        k = k !== '\\"' ? k.replace(/\\"/g, '"') : k
-                        k = k.replace(/\b(tv|ona|ova)\b/gi, (match) => match.toUpperCase());
-                        return { optionName: k, selected: "none" }
-                    })
-                    options = options.filter(({ optionName }) => optionName !== "")
+                    options = options.map(k => ({ optionName: k, selected: "none" }));
                     return {
                         filName: filName,
                         options: options,
@@ -4500,9 +4502,17 @@ self.onmessage = async ({ data }) => {
                 let aniFilDropdown = ["genre", "tag", "tag category", "studio", "staff role"] // Add Selections
                 filters.Dropdown = aniFilDropdown.map((e) => {
                     let filName = e;
-                    let options;
+                    let options = Object.keys(savedFilters[e]);
+                    options = Object.keys(options.reduce((uniqueOptions, k) => {
+                        k = k !== "_" ? k.replace(/\_/g, ' ') : k;
+                        k = k !== '\\"' ? k.replace(/\\"/g, '"') : k;
+                        k = k.replace(/\b(tv|ona|ova)\b/gi, (match) => match.toUpperCase());
+                        if (k !== "" && k !== "all" && !uniqueOptions[k]) {
+                            uniqueOptions[k] = true
+                        }
+                        return uniqueOptions;
+                    }, {}))
                     if (dropdownBasis[e] !== undefined) {
-                        options = Object.keys(savedFilters[e])
                         if (dropdownBasis[e] === "descnum" || dropdownBasis[e] === "ascnum") {
                             dropdownBasis[e] === "descnum" ? options.sort((a, b) => parseFloat(b) - parseFloat(a)) : options.sort((a, b) => parseFloat(a) - parseFloat(b))
                         } else if (dropdownBasis[e] === "desclet") {
@@ -4517,16 +4527,9 @@ self.onmessage = async ({ data }) => {
                             })
                         }
                     } else {
-                        options = Object.keys(savedFilters[e])
                         options.sort() // default ascending
                     }
-                    options = options.map((k) => {
-                        k = k !== "_" ? k.replace(/\_/g, ' ') : k
-                        k = k !== '\\"' ? k.replace(/\\"/g, '"') : k
-                        k = k.replace(/\b(tv|ona|ova)\b/gi, (match) => match.toUpperCase());
-                        return { optionName: k, selected: "none" }
-                    })
-                    options = options.filter(({ optionName }) => optionName !== "" && optionName !== "all")
+                    options = options.map(k => ({ optionName: k, selected: "none" }));
                     options.unshift({ optionName: "all", selected: "none" })
                     return {
                         filName: filName,
@@ -4554,7 +4557,11 @@ self.onmessage = async ({ data }) => {
                     {
                         filName: "inc. all factors",
                         isSelected: false
-                    }
+                    },
+                    {
+                        filName: "show all sequels",
+                        isSelected: false
+                    },
                 ]
 
                 // Input Number
@@ -4605,12 +4612,23 @@ self.onmessage = async ({ data }) => {
                 for (let i = 0; i < dropdown.length; i++) {
                     let filterName = dropdown[i].filName
                     if (savedFilters[filterName] !== undefined) {
-                        let newOptionNames = Object.keys(savedFilters[filterName] || {}).map((k) => {
-                            k = k !== "_" ? k.replace(/\_/g, ' ') : k
-                            k = k !== '\\"' ? k.replace(/\\"/g, '"') : k
+                        let isAlgorithmFilter = filterType.filterSelectionName === "Algorithm Filter"
+                        let newOptionNames = Object.keys(Object.keys(savedFilters[filterName] || {}).reduce((uniqueOptions, k) => {
+                            k = k !== "_" ? k.replace(/\_/g, ' ') : k;
+                            k = k !== '\\"' ? k.replace(/\\"/g, '"') : k;
                             k = k.replace(/\b(tv|ona|ova)\b/gi, (match) => match.toUpperCase());
-                            return k
-                        })
+                            if (isAlgorithmFilter) {
+                                if (k !== "" && k !== "all" && !uniqueOptions[k]) {
+                                    uniqueOptions[k] = true
+                                }
+                            } else {
+                                if (k !== "" && !uniqueOptions[k]) {
+                                    uniqueOptions[k] = true
+                                }
+                            }
+
+                            return uniqueOptions;
+                        }, {}))
                         if (newOptionNames.length) {
                             if (dropdownBasis[filterName]) {
                                 if (dropdownBasis[filterName] === "descnum" || dropdownBasis[filterName] === "ascnum") {
@@ -4630,11 +4648,7 @@ self.onmessage = async ({ data }) => {
                                 newOptionNames.sort() // Default Ascending
                             }
                             newOptionNames = newOptionNames.filter((e) => e !== "")
-                            if (filterType.filterSelectionName === "Algorithm Filter") {
-                                let allOptionIndex = newOptionNames.indexOf("all")
-                                if (allOptionIndex !== -1) {
-                                    newOptionNames.splice(allOptionIndex, 1);
-                                }
+                            if (isAlgorithmFilter) {
                                 newOptionNames.unshift("all");
                             }
                             let currentOptions = dropdown[i].options.reduce((result, { optionName, selected }) => {

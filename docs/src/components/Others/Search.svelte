@@ -1154,14 +1154,14 @@
         style:--maxPaddingHeight="{window.innerHeight}px"
     >
         {#if $filterOptions && !$initData}
-            {#each $filterOptions?.filterSelection || [] as { filterSelectionName, filters, isSelected }, filSelIdx (filterSelectionName + filSelIdx)}
-                {#each filters.Dropdown || [] as { filName, options, selected, changeType, optKeyword }, dropdownIdx (filName + dropdownIdx)}
+            {#each $filterOptions?.filterSelection || [] as filterSelection, filSelIdx (filterSelection.filterSelectionName)}
+                {#each filterSelection.filters.Dropdown || [] as Dropdown, dropdownIdx (filterSelection.filterSelectionName + Dropdown.filName)}
                     <div
                         class="filter-select"
-                        style:display={isSelected ? "" : "none"}
+                        style:display={filterSelection.isSelected ? "" : "none"}
                     >
                         <div class="filter-name">
-                            <h2>{filName || ""}</h2>
+                            <h2>{Dropdown.filName || ""}</h2>
                         </div>
                         <div
                             class="select"
@@ -1185,7 +1185,7 @@
                                     disabled={windowWidth <= 425}
                                 />
                             </div>
-                            {#if selected && options.length && !Init}
+                            {#if Dropdown.selected && Dropdown.options.length && !Init}
                                 <i
                                     class="icon fa-solid fa-angle-up"
                                     on:keydown={(e) =>
@@ -1200,15 +1200,15 @@
                         <div
                             class="options-wrap"
                             style:--maxFilterSelectionHeight="{maxFilterSelectionHeight}px"
-                            style:top={options.length &&
-                            selected === true &&
+                            style:top={Dropdown.options.length &&
+                            Dropdown.selected === true &&
                             !Init
                                 ? ""
                                 : "-9999px"}
                         >
                             <div class="options-wrap-filter-info">
                                 <div>
-                                    <h2>{filName}</h2>
+                                    <h2>{Dropdown.filName}</h2>
                                     <div
                                         class="closing-x"
                                         on:keydown={(e) =>
@@ -1232,42 +1232,46 @@
                                 />
                             </div>
                             <div class="options">
-                                {#if options?.filter?.(({ optionName }) => hasPartialMatch(optionName, optKeyword) || optKeyword === "")?.length}
-                                    {#each options.filter(({ optionName }) => hasPartialMatch(optionName, optKeyword) || optKeyword === "") || [] as { optionName, selected }, optionIdx (optionName + optionIdx)}
-                                        <div
-                                            class="option"
-                                            on:click={handleFilterSelectOptionChange(
-                                                optionName,
-                                                filName,
-                                                optionIdx,
-                                                dropdownIdx,
-                                                changeType,
-                                                filterSelectionName
-                                            )}
-                                            on:keydown={(e) =>
-                                                e.key === "Enter" &&
-                                                handleFilterSelectOptionChange(
-                                                    optionName,
-                                                    filName,
+                                {#if Dropdown.options?.filter?.(({ optionName }) => hasPartialMatch(optionName, Dropdown.optKeyword) || Dropdown.optKeyword === "")?.length}
+                                    {#each Dropdown.options || [] as option, optionIdx (filterSelection.filterSelectionName + Dropdown.filName + option.optionName)}
+                                        {#if hasPartialMatch(option.optionName, Dropdown.optKeyword)}
+                                            <div
+                                                class="option"
+                                                on:click={handleFilterSelectOptionChange(
+                                                    option.optionName,
+                                                    Dropdown.filName,
                                                     optionIdx,
                                                     dropdownIdx,
-                                                    changeType,
-                                                    filterSelectionName
+                                                    Dropdown.changeType,
+                                                    filterSelection.filterSelectionName
                                                 )}
-                                        >
-                                            <h3>{optionName || ""}</h3>
-                                            {#if selected === "included"}
-                                                <i
-                                                    style:--optionColor="#5f9ea0"
-                                                    class="fa-regular fa-circle-check"
-                                                />
-                                            {:else if selected === "excluded"}
-                                                <i
-                                                    style:--optionColor="#e85d75"
-                                                    class="fa-regular fa-circle-xmark"
-                                                />
-                                            {/if}
-                                        </div>
+                                                on:keydown={(e) =>
+                                                    e.key === "Enter" &&
+                                                    handleFilterSelectOptionChange(
+                                                        option.optionName,
+                                                        Dropdown.filName,
+                                                        optionIdx,
+                                                        dropdownIdx,
+                                                        Dropdown.changeType,
+                                                        filterSelection.filterSelectionName
+                                                    )}
+                                            >
+                                                <h3>
+                                                    {option.optionName || ""}
+                                                </h3>
+                                                {#if option.selected === "included"}
+                                                    <i
+                                                        style:--optionColor="#5f9ea0"
+                                                        class="fa-regular fa-circle-check"
+                                                    />
+                                                {:else if option.selected === "excluded"}
+                                                    <i
+                                                        style:--optionColor="#e85d75"
+                                                        class="fa-regular fa-circle-xmark"
+                                                    />
+                                                {/if}
+                                            </div>
+                                        {/if}
                                     {/each}
                                 {:else}
                                     <div class="option">
@@ -1278,10 +1282,10 @@
                         </div>
                     </div>
                 {/each}
-                {#each filters.Checkbox || [] as Checkbox, checkboxIdx (Checkbox.filName + checkboxIdx)}
+                {#each filterSelection.filters.Checkbox || [] as Checkbox, checkboxIdx (filterSelection.filterSelectionName + Checkbox.filName)}
                     <div
                         class="filter-checkbox"
-                        style:display={isSelected ? "" : "none"}
+                        style:display={filterSelection.isSelected ? "" : "none"}
                     >
                         <div style:visibility="none" />
                         <div
@@ -1291,7 +1295,7 @@
                                     e,
                                     Checkbox.filName,
                                     checkboxIdx,
-                                    filterSelectionName
+                                    filterSelection.filterSelectionName
                                 )}
                             on:keydown={(e) =>
                                 e.key === "Enter" &&
@@ -1299,7 +1303,7 @@
                                     e,
                                     Checkbox.filName,
                                     checkboxIdx,
-                                    filterSelectionName
+                                    filterSelection.filterSelectionName
                                 )}
                         >
                             <input
@@ -1310,7 +1314,7 @@
                                         e,
                                         Checkbox.filName,
                                         checkboxIdx,
-                                        filterSelectionName
+                                        filterSelection.filterSelectionName
                                     )}
                                 bind:checked={Checkbox.isSelected}
                             />
@@ -1320,37 +1324,38 @@
                         </div>
                     </div>
                 {/each}
-                {#each filters["Input Number"] || [] as { filName, numberValue, maxValue, minValue, defaultValue }, inputNumIdx (filName + inputNumIdx)}
+                {#each filterSelection.filters["Input Number"] || [] as inputNum, inputNumIdx (filterSelection.filterSelectionName + inputNum.filName)}
                     <div
                         class="filter-input-number"
-                        style:display={isSelected ? "" : "none"}
+                        style:display={filterSelection.isSelected ? "" : "none"}
                     >
                         <div class="filter-input-number-name">
-                            <h2>{filName || ""}</h2>
+                            <h2>{inputNum.filName || ""}</h2>
                         </div>
                         <div class="value-input-number-wrap">
                             <input
                                 class="value-input-number"
                                 type="text"
-                                placeholder={filName === "scoring system"
+                                placeholder={inputNum.filName ===
+                                "scoring system"
                                     ? "Default: User Scoring"
                                     : conditionalInputNumberList.includes(
-                                          filName
+                                          inputNum.filName
                                       )
                                     ? ">123 or 123"
-                                    : defaultValue !== null
-                                    ? "Default: " + defaultValue
+                                    : inputNum.defaultValue !== null
+                                    ? "Default: " + inputNum.defaultValue
                                     : "123"}
-                                value={numberValue || ""}
+                                value={inputNum.numberValue || ""}
                                 on:input={(e) =>
                                     handleInputNumber(
                                         e,
                                         e.target.value,
                                         inputNumIdx,
-                                        filName,
-                                        maxValue,
-                                        minValue,
-                                        filterSelectionName
+                                        inputNum.filName,
+                                        inputNum.maxValue,
+                                        inputNum.minValue,
+                                        filterSelection.filterSelectionName
                                     )}
                             />
                         </div>
@@ -1388,7 +1393,7 @@
             class="tagFilters"
             style:display={$activeTagFilters && !$initData ? "" : "none"}
         >
-            {#each $activeTagFilters?.[$filterOptions?.filterSelection?.[$filterOptions?.filterSelection?.findIndex(({ isSelected }) => isSelected)]?.filterSelectionName] || [] as { optionName, optionIdx, selected, changeType, filterType, categIdx, optionValue, optionType }, tagFilterIdx (optionName + optionIdx + (optionType ?? ""))}
+            {#each $activeTagFilters?.[$filterOptions?.filterSelection?.[$filterOptions?.filterSelection?.findIndex(({ isSelected }) => isSelected)]?.filterSelectionName] || [] as { optionName, optionIdx, selected, changeType, filterType, categIdx, optionValue, optionType } (optionName + optionIdx + (optionType ?? ""))}
                 {#if selected !== "none"}
                     <div
                         class="activeTagFilter"
