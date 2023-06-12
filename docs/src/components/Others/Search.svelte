@@ -1299,10 +1299,17 @@
                                                     {option.optionName || ""}
                                                 </h3>
                                                 {#if option.selected === "included"}
-                                                    <i
-                                                        style:--optionColor="#5f9ea0"
-                                                        class="fa-regular fa-circle-check"
-                                                    />
+                                                    {#if filterSelection.filterSelectionName === "Content Caution"}
+                                                        <i
+                                                            style:--optionColor="#5f9ea0"
+                                                            class="fa-regular fa-circle-xmark"
+                                                        />
+                                                    {:else}
+                                                        <i
+                                                            style:--optionColor="#5f9ea0"
+                                                            class="fa-regular fa-circle-check"
+                                                        />
+                                                    {/if}
                                                 {:else if option.selected === "excluded"}
                                                     <i
                                                         style:--optionColor="#e85d75"
