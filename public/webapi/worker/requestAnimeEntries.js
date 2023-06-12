@@ -107,8 +107,18 @@ self.onmessage = async ({ data }) => {
                 .then(async ({ result, headers }) => {
                     let error;
                     if (typeof (error = result?.errors?.[0]?.message) === "string") {
-                        self.postMessage({ status: error })
-                        self.postMessage({ message: error })
+                        if (onlyGetNewEntries) {
+                            self.postMessage({ errorDuringInit: true })
+                        }
+                        let secondsPassed = 60
+                        let rateLimitInterval = setInterval(() => {
+                            self.postMessage({ status: (error ? (error + " ") : "") + `Rate Limit: ${msToTime(secondsPassed * 1000)}` })
+                            --secondsPassed
+                        }, 1000)
+                        setTimeout(() => {
+                            clearInterval(rateLimitInterval)
+                            return recallGNE(page);
+                        }, 60000);
                     } else {
                         let Page = result?.data?.Page
                         let media = Page?.media || []
@@ -127,6 +137,9 @@ self.onmessage = async ({ data }) => {
                             if (headers?.get('x-ratelimit-remaining') > 0) {
                                 return recallGNE(++page);
                             } else {
+                                if (onlyGetNewEntries) {
+                                    self.postMessage({ errorDuringInit: true })
+                                }
                                 let secondsPassed = 60
                                 let rateLimitInterval = setInterval(() => {
                                     self.postMessage({ status: `Rate Limit: ${msToTime(secondsPassed * 1000)}` })
@@ -162,6 +175,9 @@ self.onmessage = async ({ data }) => {
                         if (headers?.get('x-ratelimit-remaining') > 0) {
                             return recallGNE(page);
                         } else {
+                            if (onlyGetNewEntries) {
+                                self.postMessage({ errorDuringInit: true })
+                            }
                             let secondsPassed = 60
                             let rateLimitInterval = setInterval(() => {
                                 self.postMessage({ status: `Rate Limit: ${msToTime(secondsPassed * 1000)}` })
@@ -195,7 +211,6 @@ self.onmessage = async ({ data }) => {
         let airingAnimeIDsString = airingAnimeIDs.join(',') // Get IDs
 
         self.postMessage({ status: "Updating Entries 0.00%" }) // Init Data Status
-
         function recallUAA(page, staffPage, isStaffRecursion = false) {
             fetch('https://graphql.anilist.co', {
                 method: 'POST',
@@ -294,8 +309,15 @@ self.onmessage = async ({ data }) => {
                 .then(async ({ result, headers }) => {
                     let error;
                     if (typeof (error = result?.errors?.[0]?.message) === "string") {
-                        self.postMessage({ status: error })
-                        self.postMessage({ message: error })
+                        let secondsPassed = 60
+                        let rateLimitInterval = setInterval(() => {
+                            self.postMessage({ status: (error ? (error + " ") : "") + `Rate Limit: ${msToTime(secondsPassed * 1000)}` })
+                            --secondsPassed
+                        }, 1000)
+                        setTimeout(() => {
+                            clearInterval(rateLimitInterval)
+                            return recallUAA(page, staffPage, isStaffRecursion);
+                        }, 60000);
                     } else {
                         let Page = result?.data?.Page
                         let media = Page?.media || []
@@ -517,8 +539,15 @@ self.onmessage = async ({ data }) => {
                 .then(async ({ result, headers }) => {
                     let error;
                     if (typeof (error = result?.errors?.[0]?.message) === "string") {
-                        self.postMessage({ status: error })
-                        self.postMessage({ message: error })
+                        let secondsPassed = 60
+                        let rateLimitInterval = setInterval(() => {
+                            self.postMessage({ status: (error ? (error + " ") : "") + `Rate Limit: ${msToTime(secondsPassed * 1000)}` })
+                            --secondsPassed
+                        }, 1000)
+                        setTimeout(() => {
+                            clearInterval(rateLimitInterval)
+                            return recallUNRE(page, staffPage, isStaffRecursion);
+                        }, 60000);
                     } else {
                         let Page = result?.data?.Page
                         let media = Page?.media || []

@@ -76,6 +76,8 @@ const requestAnimeEntries = (_data) => {
                 updateRecommendationList.update(e => !e)
             } else if (data?.lastRunnedAutoUpdateDate instanceof Date && !isNaN(data?.lastRunnedAutoUpdateDate)) {
                 lastRunnedAutoUpdateDate.set(data.lastRunnedAutoUpdateDate)
+            } else if (data?.errorDuringInit !== undefined) {
+                resolve(data)
             } else {
                 requestAnimeEntriesTerminateTimeout = setTimeout(() => {
                     requestAnimeEntriesWorker.terminate();
