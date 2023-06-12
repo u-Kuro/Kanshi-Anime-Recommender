@@ -186,10 +186,20 @@
 			let recommendedAnimeListLen = await retrieveJSON(
 				"recommendedAnimeListLength"
 			);
+			let shouldProcessRecommendation = await retrieveJSON(
+				"shouldProcessRecommendation"
+			);
 			new Promise(async (resolve) => {
-				if (recommendedAnimeListLen < 1) {
+				if (
+					recommendedAnimeListLen < 1 ||
+					shouldProcessRecommendation
+				) {
 					processRecommendedAnimeList()
 						.then(async () => {
+							await saveJSON(
+								false,
+								"shouldProcessRecommendation"
+							);
 							resolve();
 						})
 						.catch((error) => {
