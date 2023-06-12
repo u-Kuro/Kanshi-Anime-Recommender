@@ -1970,6 +1970,7 @@
         line-height: 1px;
         min-width: max-content;
         text-transform: capitalize;
+        cursor: pointer;
     }
     .activeTagFilter i {
         font-size: 1.2rem;
