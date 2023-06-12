@@ -115,8 +115,8 @@
         display: grid;
         grid-template-rows: auto 20px;
         background-color: #151f2e;
-        width: 30em;
-        min-height: 12.4em;
+        width: 35em;
+        min-height: 15em;
         max-width: 90%;
         max-height: 90%;
         border-radius: 6px;
