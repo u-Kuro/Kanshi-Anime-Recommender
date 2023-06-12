@@ -6,7 +6,7 @@ self.onmessage = async ({ data }) => {
     let currentYear = (new Date()).getFullYear();
     let lastAnimeUpdate = await retrieveJSON("lastAnimeUpdate") || 0
     let animeEntries = await retrieveJSON("animeEntries") || {}
-
+    let onlyGetNewEntries = data?.onlyGetNewEntries ?? false
     getNewEntries() // Start Call
     // For Getting new Entries
     // Get all Existing IDs
@@ -14,9 +14,9 @@ self.onmessage = async ({ data }) => {
     // add results to local list
     function getNewEntries() {
         let currentAnimeIDs = Object.keys(animeEntries).join(',')
-        let chunkCount = 0
+        let entriesCount = 0
+        self.postMessage({ status: "Checking New Entries..." }) // Update Data Status
         function recallGNE(page) {
-            self.postMessage({ status: "Getting New Entries: " + (++chunkCount) }) // Update Data Status
             fetch('https://graphql.anilist.co', {
                 method: 'POST',
                 headers: {
@@ -113,6 +113,7 @@ self.onmessage = async ({ data }) => {
                         let Page = result?.data?.Page
                         let media = Page?.media || []
                         if (media instanceof Array && media.length) {
+                            self.postMessage({ status: "Getting New Entries: " + (entriesCount += media.length) }) // Update Data Status
                             media.forEach((anime) => {
                                 if (typeof anime.id === "number" && animeEntries[anime.id] === undefined) {
                                     animeEntries[anime.id] = anime
@@ -142,7 +143,11 @@ self.onmessage = async ({ data }) => {
                             self.postMessage({ updateRecommendationList: true })
                             self.postMessage({ status: null })
                             // Call Next
-                            updateAiringAnime()
+                            if (onlyGetNewEntries) {
+                                self.postMessage({ done: true })
+                            } else {
+                                updateAiringAnime()
+                            }
                         }
                     }
                 })

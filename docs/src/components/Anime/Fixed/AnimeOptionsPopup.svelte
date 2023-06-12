@@ -17,11 +17,12 @@
     let animeUrl;
     let animeIdx;
 
-    let isRecentlyOpened = true;
+    let isRecentlyOpened = true,
+        isRecentlyOpenedTimeout;
     animeOptionVisible.subscribe((val) => {
         if (val === true) {
             isRecentlyOpened = true;
-            setTimeout(() => {
+            isRecentlyOpenedTimeout = setTimeout(() => {
                 isRecentlyOpened = false;
             }, 500);
             let openedAnime = $finalAnimeList[$openedAnimeOptionIdx];
@@ -33,6 +34,7 @@
             }
             $openedAnimeOptionIdx = null;
         } else {
+            if (isRecentlyOpenedTimeout) clearTimeout(isRecentlyOpenedTimeout);
             isRecentlyOpened = false;
         }
     });

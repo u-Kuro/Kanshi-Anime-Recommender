@@ -137,7 +137,7 @@ self.onmessage = async ({ data }) => {
                         for (let i = 0; i < userList.length; i++) {
                             userEntries = userEntries.concat(userList[i]?.entries ?? [])
                         }
-                        self.postMessage({ status: "Updating User Entries: " + userEntries.length })
+                        self.postMessage({ status: "Getting User Entries: " + userEntries.length })
                         if (hasNextChunk) {
                             // Handle the successful response here
                             if (headers?.get('x-ratelimit-remaining') > 0) {

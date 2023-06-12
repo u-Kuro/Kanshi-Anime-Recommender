@@ -100,7 +100,13 @@
 						resolve();
 					});
 			} else {
-				resolve();
+				requestAnimeEntries({ onlyGetNewEntries: true })
+					.then(() => {
+						resolve();
+					})
+					.catch(async (error) => {
+						resolve();
+					});
 			}
 		})
 	);
@@ -396,6 +402,7 @@
 		}
 	});
 
+	let _showConfirm = false;
 	if ("scrollRestoration" in window.history) {
 		window.history.scrollRestoration = "manual"; // Disable scrolling to top when navigating back
 	}
@@ -414,7 +421,11 @@
 			if (!$android) {
 				window.history.pushState("visited", ""); // Push Popped State
 			}
-			if ($menuVisible) {
+			if (_showConfirm) {
+				handleConfirmationCancelled();
+				_showConfirm = false;
+				return;
+			} else if ($menuVisible) {
 				$menuVisible = false;
 				return;
 			} else if ($popupVisible) {
@@ -521,7 +532,6 @@
 		}
 	});
 
-	let _showConfirm = false;
 	let _isAlert, _confirmTitle, _confirmText, _confirmLabel, _cancelLabel;
 	let _confirmModalPromise;
 	$confirmPromise = async (confirmValues) => {
@@ -542,7 +552,7 @@
 		});
 	};
 	function handleConfirmationConfirmed() {
-		_confirmModalPromise.resolve(true);
+		_confirmModalPromise?.resolve?.(true);
 		_confirmModalPromise =
 			_isAlert =
 			_confirmTitle =
@@ -553,7 +563,7 @@
 		_showConfirm = false;
 	}
 	function handleConfirmationCancelled() {
-		_confirmModalPromise.resolve(false);
+		_confirmModalPromise?.resolve?.(false);
 		_confirmModalPromise =
 			_isAlert =
 			_confirmTitle =

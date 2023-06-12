@@ -90,6 +90,7 @@
         windowWidth = window.innerWidth;
     }
     function handleFilterTypes(newFilterTypeName) {
+        if ($initData) return pleaseWaitAlert();
         let idxTypeSelected = $filterOptions?.filterSelection.findIndex(
             ({ isSelected }) => isSelected
         );
@@ -132,7 +133,10 @@
             !selectedFilterTypeElement
         ) {
             selectedFilterTypeElement = true;
-        } else if (!optionsWrap && !classList.contains("options-wrap")) {
+        } else if (
+            (!optionsWrap || classList.contains("closing-x")) &&
+            !classList.contains("options-wrap")
+        ) {
             if (
                 highlightedEl instanceof Element &&
                 highlightedEl.closest(".filterType")
@@ -312,6 +316,7 @@
         changeType,
         filterSelectionName
     ) {
+        if ($initData) return pleaseWaitAlert();
         let idxTypeSelected = $filterOptions?.filterSelection?.findIndex(
             ({ isSelected }) => isSelected
         );
@@ -430,6 +435,12 @@
         ) {
             return;
         }
+        if ($initData) {
+            if (!classList.contains("checkbox")) {
+                pleaseWaitAlert();
+            }
+            return;
+        }
         // Prevent Default
         let idxTypeSelected = $filterOptions?.filterSelection?.findIndex(
             ({ isSelected }) => isSelected
@@ -488,6 +499,7 @@
         minValue,
         filterSelectionName
     ) {
+        if ($initData) return pleaseWaitAlert();
         let idxTypeSelected = $filterOptions?.filterSelection?.findIndex(
             ({ isSelected }) => isSelected
         );
@@ -720,6 +732,7 @@
     ) {
         if (tagFilterIsScrolling && event.pointerType === "mouse") return false;
         if (changeType === "read" || filterType !== "dropdown") return; // Unchangable Selection
+        if ($initData) return pleaseWaitAlert();
         let idxTypeSelected = $filterOptions?.filterSelection?.findIndex(
             ({ isSelected }) => isSelected
         );
@@ -775,6 +788,7 @@
         categIdx,
         optionType
     ) {
+        if ($initData) return pleaseWaitAlert();
         if (tagFilterIsScrolling && event.pointerType === "mouse") return;
         let idxTypeSelected = $filterOptions?.filterSelection?.findIndex(
             ({ isSelected }) => isSelected
@@ -812,6 +826,7 @@
         saveFilters(nameTypeSelected);
     }
     async function removeAllActiveTag(event) {
+        if ($initData) return pleaseWaitAlert();
         if (await $confirmPromise("Do you want to remove all filters?")) {
             let idxTypeSelected = $filterOptions?.filterSelection?.findIndex(
                 ({ isSelected }) => isSelected
@@ -860,7 +875,10 @@
             !selectedSortElement
         ) {
             selectedSortElement = true;
-        } else if (!optionsWrap && !classList.contains("options-wrap")) {
+        } else if (
+            (!optionsWrap || classList.contains("closing-x")) &&
+            !classList.contains("options-wrap")
+        ) {
             selectedSortElement = false;
             if (
                 highlightedEl instanceof Element &&
@@ -872,6 +890,7 @@
         }
     }
     function changeSort(newSortName) {
+        if ($initData) return pleaseWaitAlert();
         let { sortName, sortType } = $filterOptions?.sortFilter?.filter(
             ({ sortType }) => sortType !== "none"
         )[0];
@@ -891,6 +910,7 @@
         saveFilters("sort");
     }
     function changeSortType() {
+        if ($initData) return pleaseWaitAlert();
         let { sortType } = $filterOptions?.sortFilter?.filter(
             ({ sortType }) => sortType !== "none"
         )[0];
@@ -1067,6 +1087,14 @@
         window.addEventListener("click", clickOutsideListener);
     });
 
+    function pleaseWaitAlert() {
+        $confirmPromise({
+            isAlert: true,
+            title: "Initializing Resources",
+            text: "Please wait a moment...",
+        });
+    }
+
     // Helper
 </script>
 
@@ -1105,7 +1133,6 @@
             enterkeyhint="search"
             autocomplete="off"
             placeholder="Search"
-            disabled={$initData}
             bind:value={$searchedAnimeKeyword}
         />
         <div class="filterType">
@@ -1115,37 +1142,49 @@
                 on:keydown={(e) =>
                     e.key === "Enter" && handleShowFilterTypes(e)}
             />
-            {#if !$initData}
-                <div
-                    class="options-wrap"
-                    style:--maxFilterSelectionHeight="{maxFilterSelectionHeight}px"
-                    style:top={selectedFilterTypeElement ? "" : "-9999px"}
-                >
-                    {#if $filterOptions}
-                        <div class="options">
-                            {#each $filterOptions?.filterSelection || [] as { filterSelectionName, isSelected } (filterSelectionName)}
-                                <div
-                                    class="option"
-                                    on:click={handleFilterTypes(
-                                        filterSelectionName
-                                    )}
-                                    on:keydown={(e) =>
-                                        e.key === "Enter" &&
-                                        handleFilterTypes(filterSelectionName)}
-                                >
-                                    <h3
-                                        style:color={isSelected
-                                            ? "#3db4f2"
-                                            : "inherit"}
-                                    >
-                                        {filterSelectionName || ""}
-                                    </h3>
-                                </div>
-                            {/each}
+            <div
+                class="options-wrap"
+                style:--maxFilterSelectionHeight="{maxFilterSelectionHeight}px"
+                style:top={selectedFilterTypeElement ? "" : "-9999px"}
+            >
+                {#if $filterOptions}
+                    <div class="options-wrap-filter-info">
+                        <div>
+                            <h2>Filters</h2>
+                            <div
+                                class="closing-x"
+                                on:keydown={(e) =>
+                                    e.key === "Enter" &&
+                                    handleShowFilterTypes(e)}
+                                on:click={handleShowFilterTypes}
+                            >
+                                ×
+                            </div>
                         </div>
-                    {/if}
-                </div>
-            {/if}
+                    </div>
+                    <div class="options">
+                        {#each $filterOptions?.filterSelection || [] as { filterSelectionName, isSelected } (filterSelectionName)}
+                            <div
+                                class="option"
+                                on:click={handleFilterTypes(
+                                    filterSelectionName
+                                )}
+                                on:keydown={(e) =>
+                                    e.key === "Enter" &&
+                                    handleFilterTypes(filterSelectionName)}
+                            >
+                                <h3
+                                    style:color={isSelected
+                                        ? "#3db4f2"
+                                        : "inherit"}
+                                >
+                                    {filterSelectionName || ""}
+                                </h3>
+                            </div>
+                        {/each}
+                    </div>
+                {/if}
+            </div>
         </div>
     </div>
     <div
@@ -1153,7 +1192,7 @@
         id="filters"
         style:--maxPaddingHeight="{window.innerHeight}px"
     >
-        {#if $filterOptions && !$initData}
+        {#if $filterOptions}
             {#each $filterOptions?.filterSelection || [] as filterSelection, filSelIdx (filterSelection.filterSelectionName)}
                 {#each filterSelection.filters.Dropdown || [] as Dropdown, dropdownIdx (filterSelection.filterSelectionName + Dropdown.filName)}
                     <div
@@ -1306,18 +1345,30 @@
                                     filterSelection.filterSelectionName
                                 )}
                         >
-                            <input
-                                type="checkbox"
-                                class="checkbox"
-                                on:change={(e) =>
-                                    handleCheckboxChange(
-                                        e,
-                                        Checkbox.filName,
-                                        checkboxIdx,
-                                        filterSelection.filterSelectionName
-                                    )}
-                                bind:checked={Checkbox.isSelected}
-                            />
+                            {#if $initData}
+                                <input
+                                    type="checkbox"
+                                    class="checkbox"
+                                    on:change={(e) => {
+                                        e.target.checked = false;
+                                        pleaseWaitAlert();
+                                    }}
+                                    checked={Checkbox.isSelected}
+                                />
+                            {:else}
+                                <input
+                                    type="checkbox"
+                                    class="checkbox"
+                                    on:change={(e) =>
+                                        handleCheckboxChange(
+                                            e,
+                                            Checkbox.filName,
+                                            checkboxIdx,
+                                            filterSelection.filterSelectionName
+                                        )}
+                                    bind:checked={Checkbox.isSelected}
+                                />
+                            {/if}
                             <div class="checkbox-label">
                                 {Checkbox.filName || ""}
                             </div>
@@ -1373,7 +1424,7 @@
     </div>
     <div class="activeFilters">
         <i
-            style:display={$activeTagFilters && !$initData ? "" : "none"}
+            style:display={$activeTagFilters ? "" : "none"}
             class="fa-solid fa-ban"
             title="Remove Filters"
             on:click={removeAllActiveTag}
@@ -1391,7 +1442,7 @@
         <div
             id="tagFilters"
             class="tagFilters"
-            style:display={$activeTagFilters && !$initData ? "" : "none"}
+            style:display={$activeTagFilters ? "" : "none"}
         >
             {#each $activeTagFilters?.[$filterOptions?.filterSelection?.[$filterOptions?.filterSelection?.findIndex(({ isSelected }) => isSelected)]?.filterSelectionName] || [] as { optionName, optionIdx, selected, changeType, filterType, categIdx, optionValue, optionType } (optionName + optionIdx + (optionType ?? ""))}
                 {#if selected !== "none"}
@@ -1458,11 +1509,11 @@
                 {/if}
             {/each}
         </div>
-        {#if !$activeTagFilters || $initData}
+        {#if !$activeTagFilters}
             <i class="skeleton shimmer" />
             <div class="tagFilters skeleton shimmer" />
         {/if}
-        {#if $filterOptions && !$initData}
+        {#if $filterOptions}
             <div class="sortFilter">
                 <i
                     on:click={changeSortType}
@@ -1486,39 +1537,52 @@
                             ({ sortType }) => sortType !== "none"
                         )
                     ]?.sortName || ""}
-                    <div
-                        class="options-wrap"
-                        style:--maxFilterSelectionHeight="{maxFilterSelectionHeight}px"
-                        style:top={selectedSortElement ? "" : "-9999px"}
-                    >
-                        <div class="options">
-                            {#each $filterOptions?.sortFilter || [] as { sortName }, sortIdx (sortName + sortIdx)}
-                                <div
-                                    class="option"
-                                    on:click={changeSort(sortName)}
-                                    on:keydown={(e) =>
-                                        e.key === "Enter" &&
-                                        changeSort(sortName)}
-                                >
-                                    <h3>{sortName || ""}</h3>
-                                    {#if $filterOptions?.sortFilter?.[$filterOptions?.sortFilter?.findIndex(({ sortType }) => sortType !== "none")].sortName === sortName && sortName}
-                                        <i
-                                            class={"fa-duotone fa-sort-" +
-                                                ($filterOptions?.sortFilter?.[
-                                                    $filterOptions?.sortFilter?.findIndex(
-                                                        ({ sortType }) =>
-                                                            sortType !== "none"
-                                                    )
-                                                ].sortType === "asc"
-                                                    ? "up"
-                                                    : "down")}
-                                        />
-                                    {/if}
-                                </div>
-                            {/each}
+                </h2>
+                <div
+                    class="options-wrap"
+                    style:--maxFilterSelectionHeight="{maxFilterSelectionHeight}px"
+                    style:top={selectedSortElement ? "" : "-9999px"}
+                >
+                    <div class="options-wrap-filter-info">
+                        <div>
+                            <h2>Sort By</h2>
+                            <div
+                                class="closing-x"
+                                on:keydown={(e) =>
+                                    e.key === "Enter" &&
+                                    handleSortFilterPopup(e)}
+                                on:click={handleSortFilterPopup}
+                            >
+                                ×
+                            </div>
                         </div>
                     </div>
-                </h2>
+                    <div class="options">
+                        {#each $filterOptions?.sortFilter || [] as { sortName }, sortIdx (sortName + sortIdx)}
+                            <div
+                                class="option"
+                                on:click={changeSort(sortName)}
+                                on:keydown={(e) =>
+                                    e.key === "Enter" && changeSort(sortName)}
+                            >
+                                <h3>{sortName || ""}</h3>
+                                {#if $filterOptions?.sortFilter?.[$filterOptions?.sortFilter?.findIndex(({ sortType }) => sortType !== "none")].sortName === sortName && sortName}
+                                    <i
+                                        class={"fa-duotone fa-sort-" +
+                                            ($filterOptions?.sortFilter?.[
+                                                $filterOptions?.sortFilter?.findIndex(
+                                                    ({ sortType }) =>
+                                                        sortType !== "none"
+                                                )
+                                            ].sortType === "asc"
+                                                ? "up"
+                                                : "down")}
+                                    />
+                                {/if}
+                            </div>
+                        {/each}
+                    </div>
+                </div>
             </div>
         {:else}
             <div class="sortFilter skeleton shimmer" />
@@ -1890,6 +1954,7 @@
         min-width: 109px;
     }
     .sortFilter h2,
+    .sortFilter h3,
     .sortFilter i {
         user-select: none;
         cursor: pointer;
@@ -2017,7 +2082,9 @@
     }
 
     @media screen and (max-width: 425px) {
-        .filter-select .options-wrap {
+        .filterType .options-wrap,
+        .filter-select .options-wrap,
+        .sortFilter .options-wrap {
             position: fixed !important;
             display: flex !important;
             flex-direction: column !important;
@@ -2036,7 +2103,7 @@
             border-radius: 0 !important;
             padding: 0 !important;
         }
-        .filter-select .options-wrap-filter-info {
+        .options-wrap-filter-info {
             display: flex !important;
             flex-direction: column;
             width: 90vw;
@@ -2046,13 +2113,13 @@
             border-radius: 6px 6px 0px 0px;
             transform: translateY(2px);
         }
-        .filter-select .options-wrap-filter-info h2 {
+        .options-wrap-filter-info h2 {
             display: initial !important;
             font-size: 1.8rem;
             font-weight: bold;
             text-transform: capitalize;
         }
-        .filter-select .options-wrap-filter-info input {
+        .options-wrap-filter-info input {
             display: initial !important;
             background: #151f2e;
             padding: 14px 12px;
@@ -2065,7 +2132,7 @@
             cursor: text;
         }
 
-        .filter-select .options-wrap .options {
+        .options-wrap .options {
             display: flex !important;
             flex-direction: column !important;
             background-color: #151f2e !important;
@@ -2079,12 +2146,12 @@
             overscroll-behavior: contain !important;
         }
 
-        .filter-select .options .option {
+        .options .option {
             padding: 14px 12px !important;
         }
 
-        .filter-select .option h3,
-        .filter-select .option i {
+        .option h3,
+        .option i {
             font-size: 1.6rem !important;
         }
     }

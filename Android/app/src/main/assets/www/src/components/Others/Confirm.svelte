@@ -1,6 +1,6 @@
 <script>
     import { fly } from "svelte/transition";
-    import { createEventDispatcher } from "svelte";
+    import { createEventDispatcher, afterUpdate } from "svelte";
 
     const dispatch = createEventDispatcher();
 
@@ -10,18 +10,24 @@
     export let confirmText = "Do you want to continue?";
     export let confirmLabel = "OK";
     export let cancelLabel = "CANCEL";
+    let confirmButtonEl;
 
+    let isRecentlyOpened = false,
+        isRecentlyOpenedTimeout;
     function handleConfirm() {
+        if (isRecentlyOpened) return;
         showConfirm = false;
         dispatch("confirmed");
     }
 
     function handleCancel() {
+        if (isRecentlyOpened) return;
         showConfirm = false;
         dispatch("cancelled");
     }
 
     function handleConfirmVisibility(e) {
+        if (isRecentlyOpened) return;
         let target = e.target;
         let classList = target.classList;
         if (
@@ -31,6 +37,19 @@
             return;
         handleCancel();
     }
+
+    afterUpdate(() => {
+        if (showConfirm) {
+            isRecentlyOpened = true;
+            isRecentlyOpenedTimeout = setTimeout(() => {
+                isRecentlyOpened = false;
+            }, 500);
+            confirmButtonEl?.focus?.();
+        } else {
+            if (isRecentlyOpenedTimeout) clearTimeout(isRecentlyOpenedTimeout);
+            isRecentlyOpened = false;
+        }
+    });
 </script>
 
 {#if showConfirm}
@@ -56,6 +75,7 @@
                     >
                 {/if}
                 <button
+                    bind:this={confirmButtonEl}
                     on:click={handleConfirm}
                     on:keydown={(e) => e.key === "Enter" && handleConfirm(e)}
                     >{confirmLabel}</button
@@ -147,7 +167,8 @@
         cursor: pointer;
     }
 
-    .confirm-button-container > button:hover {
+    .confirm-button-container > button:hover,
+    .confirm-button-container > button:focus {
         background-color: rgba(0, 0, 0, 0.4);
     }
 

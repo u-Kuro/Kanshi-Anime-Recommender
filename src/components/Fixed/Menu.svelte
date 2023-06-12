@@ -36,11 +36,7 @@
     }
 
     async function importData() {
-        if ($initData)
-            return $confirmPromise({
-                isAlert: true,
-                text: "Please wait a moment...",
-            });
+        if ($initData) return pleaseWaitAlert();
         if (!(importFileInput instanceof Element))
             return ($dataStatus = "Something went wrong...");
         if (
@@ -94,11 +90,7 @@
     };
 
     async function exportData() {
-        if ($initData)
-            return $confirmPromise({
-                isAlert: true,
-                text: "Please wait a moment...",
-            });
+        if ($initData) return pleaseWaitAlert();
         if (!$exportPathIsAvailable && $android) return handleExportFolder();
         if (
             await $confirmPromise("Are you sure you want to export your Data?")
@@ -109,11 +101,7 @@
     }
 
     async function updateList() {
-        if ($initData)
-            return $confirmPromise({
-                isAlert: true,
-                text: "Please wait a moment...",
-            });
+        if ($initData) return pleaseWaitAlert();
         if (
             await $confirmPromise("Are you sure you want to update your list?")
         ) {
@@ -219,11 +207,21 @@
 
     async function anilistSignup() {
         if (
-            await $confirmPromise("Do you want to sign-up an Anilist account?")
+            await $confirmPromise(
+                "Are you sure want to sign-up an Anilist account?"
+            )
         ) {
             $menuVisible = false;
             window.open("https://anilist.co/signup", "_blank");
         }
+    }
+
+    function pleaseWaitAlert() {
+        $confirmPromise({
+            isAlert: true,
+            title: "Initializing Resources",
+            text: "Please wait a moment...",
+        });
     }
 </script>
 

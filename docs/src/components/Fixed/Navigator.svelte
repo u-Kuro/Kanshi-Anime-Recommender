@@ -29,6 +29,7 @@
     }
 
     async function updateUsername(event) {
+        if ($initData) return pleaseWaitAlert();
         let element = event.target;
         let classList = element.classList;
         if (
@@ -62,15 +63,23 @@
                                 .catch((error) => console.error(error));
                         }
                     } else {
-                        $menuVisible = false;
-                        $dataStatus = "Getting User Entries";
-                        await requestUserEntries({ username: typedUsername })
-                            .then(({ newusername }) => {
-                                if (newusername)
-                                    typedUsername = $username = newusername;
-                                updateRecommendationList.update((e) => !e);
+                        if (
+                            await $confirmPromise(
+                                `Are you sure you want to connect to ${typedUsername}?`
+                            )
+                        ) {
+                            $menuVisible = false;
+                            $dataStatus = "Getting User Entries";
+                            await requestUserEntries({
+                                username: typedUsername,
                             })
-                            .catch((error) => console.error(error));
+                                .then(({ newusername }) => {
+                                    if (newusername)
+                                        typedUsername = $username = newusername;
+                                    updateRecommendationList.update((e) => !e);
+                                })
+                                .catch((error) => console.error(error));
+                        }
                     }
                 })();
             }
@@ -89,6 +98,14 @@
         writableSubscriptions.forEach((unsub) => unsub());
         window.removeEventListener("resize", updateWindowHeight);
     });
+
+    function pleaseWaitAlert() {
+        $confirmPromise({
+            isAlert: true,
+            title: "Initializing Resources",
+            text: "Please wait a moment...",
+        });
+    }
 </script>
 
 <div
@@ -115,7 +132,6 @@
                 enterkeyhint="search"
                 autocomplete="off"
                 placeholder="{windowWidth > 415 ? 'Your ' : ''}Anilist Username"
-                disabled={$initData && !$username}
                 on:keydown={(e) => e.key === "Enter" && updateUsername(e)}
                 bind:value={typedUsername}
             />

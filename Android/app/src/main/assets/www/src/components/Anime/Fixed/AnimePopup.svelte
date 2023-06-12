@@ -414,15 +414,7 @@
 
     function createPopupYTPlayer(openedAnime) {
         let ytPlayerEl = openedAnime?.popupHeader?.querySelector?.(".trailer");
-        if (
-            !openedAnime ||
-            !(openedAnime?.popupHeader instanceof Element) ||
-            !openedAnime?.trailerID ||
-            !popupWrapper?.classList?.contains("visible")
-        )
-            return; // Unavailable
-        let youtubeID = openedAnime.trailerID;
-        let popupImg = openedAnime.popupHeader.querySelector(".popup-img");
+        let youtubeID = openedAnime?.trailerID;
         if (ytPlayerEl instanceof Element && youtubeID) {
             if ($ytPlayers.some((ytPlayer) => ytPlayer.g === ytPlayerEl))
                 return;
@@ -462,7 +454,11 @@
             ytPlayerEl.setAttribute("src", trailerUrl);
             $ytPlayers.push(ytPlayer);
         } else {
-            popupImg.style.display = "";
+            let popupImg =
+                openedAnime?.popupHeader?.querySelector?.(".popup-img");
+            if (popupImg instanceof Element) {
+                popupImg.style.display = "";
+            }
         }
     }
     async function onPlayerReady(event) {
