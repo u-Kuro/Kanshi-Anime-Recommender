@@ -11,6 +11,7 @@
         openedAnimePopupIdx,
         updateRecommendationList,
         android,
+        androidInApp,
         confirmPromise,
     } from "../../../js/globalValues.js";
     import {
@@ -191,7 +192,10 @@
                         if ($autoPlay && trailerIdx === 1) {
                             await tick();
                             if (
-                                popupWrapper?.classList?.contains?.("visible")
+                                popupWrapper?.classList?.contains?.(
+                                    "visible"
+                                ) &&
+                                ($androidInApp || !$android)
                             ) {
                                 $ytPlayers[i]?.playVideo?.();
                             }
@@ -260,7 +264,10 @@
                 let visibleTrailer =
                     mostVisiblePopupHeader?.querySelector?.(".trailer");
                 for (let i = 0; i < $ytPlayers.length; i++) {
-                    if ($ytPlayers[i].g === visibleTrailer) {
+                    if (
+                        $ytPlayers[i].g === visibleTrailer &&
+                        ($androidInApp || !$android)
+                    ) {
                         $ytPlayers[i]?.playVideo?.();
                         break;
                     }
@@ -313,7 +320,10 @@
                     let visibleTrailer =
                         mostVisiblePopupHeader?.querySelector?.(".trailer");
                     for (let i = 0; i < $ytPlayers.length; i++) {
-                        if ($ytPlayers[i].g === visibleTrailer) {
+                        if (
+                            $ytPlayers[i].g === visibleTrailer &&
+                            ($androidInApp || !$android)
+                        ) {
                             $ytPlayers[i]?.playVideo?.();
                             break;
                         }
@@ -378,7 +388,10 @@
                     $autoPlay
                 ) {
                     await tick();
-                    if (popupWrapper?.classList?.contains?.("visible")) {
+                    if (
+                        popupWrapper?.classList?.contains?.("visible") &&
+                        ($androidInApp || !$android)
+                    ) {
                         ytPlayer?.playVideo?.();
                     }
                 } else if (ytPlayer.g !== visibleTrailer) {
@@ -534,7 +547,10 @@
                         $autoPlay
                     ) {
                         await tick();
-                        if (popupWrapper?.classList?.contains?.("visible")) {
+                        if (
+                            popupWrapper?.classList?.contains?.("visible") &&
+                            ($androidInApp || !$android)
+                        ) {
                             ytPlayer?.playVideo?.();
                         }
                     } else if (ytPlayer.g !== visibleTrailer) {
@@ -562,6 +578,7 @@
     window.returnedAppIsVisible = (inApp) => {
         // Only For Android, and workaround for Alert visibility
         if (!$popupVisible || !$android) return;
+        $androidInApp = inApp;
         let mostVisiblePopupHeader =
             getMostVisibleElement(popupContainer, ".popup-header", 0.5) ||
             getMostVisibleElement(
