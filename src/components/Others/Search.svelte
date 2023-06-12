@@ -341,16 +341,8 @@
                 nameTypeSelected
             ].filter((e) => {
                 return (
-                    e.optionName + e.optionIdx + (e.optionType ?? "") !==
-                    optionName + optionIdx + (e.optionType ?? "")
-                );
-            });
-            $activeTagFilters[nameTypeSelected] = $activeTagFilters[
-                nameTypeSelected
-            ].filter((e) => {
-                return (
-                    e.optionName + e.optionIdx + (e.optionType ?? "") !==
-                    optionName + optionIdx + (optionType ?? "")
+                    e.optionName + e.optionIdx + e.optionType !==
+                    optionName + optionIdx + optionType
                 );
             });
             $activeTagFilters[nameTypeSelected].unshift({
@@ -396,7 +388,7 @@
                         e.filterType === "dropdown" &&
                         e.categIdx === dropdownIdx &&
                         e.selected === "included" &&
-                        (e.optionType ? e.optionType === optionType : true)
+                        e.optionType === optionType
                     ) {
                         e.selected = "excluded";
                     }
@@ -416,7 +408,7 @@
                         e.optionName === optionName &&
                         e.filterType === "dropdown" &&
                         e.categIdx === dropdownIdx &&
-                        (e.optionType ? e.optionType === optionType : true)
+                        e.optionType === optionType
                     )
             );
         }
@@ -474,8 +466,7 @@
                 nameTypeSelected
             ].filter((e) => {
                 return (
-                    e.optionName + e.optionIdx + (e.optionType ?? "") !==
-                    checkBoxName + checkboxIdx
+                    e.optionName + e.optionIdx !== checkBoxName + checkboxIdx
                 );
             });
             $activeTagFilters[nameTypeSelected].unshift({
@@ -583,9 +574,7 @@
                                 $activeTagFilters[nameTypeSelected].filter(
                                     (e) => {
                                         return (
-                                            e.optionName +
-                                                e.optionIdx +
-                                                (e.optionType ?? "") !==
+                                            e.optionName + e.optionIdx !==
                                             inputNumberName + inputNumIdx
                                         );
                                     }
@@ -609,9 +598,7 @@
                                 $activeTagFilters[nameTypeSelected].filter(
                                     (e) => {
                                         return (
-                                            e.optionName +
-                                                e.optionIdx +
-                                                (e.optionType ?? "") !==
+                                            e.optionName + e.optionIdx !==
                                             inputNumberName + inputNumIdx
                                         );
                                     }
@@ -677,9 +664,7 @@
                             nameTypeSelected
                         ].filter((e) => {
                             return (
-                                e.optionName +
-                                    e.optionIdx +
-                                    (e.optionType ?? "") !==
+                                e.optionName + e.optionIdx !==
                                 inputNumberName + inputNumIdx
                             );
                         });
@@ -700,9 +685,7 @@
                             nameTypeSelected
                         ].filter((e) => {
                             return (
-                                e.optionName +
-                                    e.optionIdx +
-                                    (e.optionType ?? "") !==
+                                e.optionName + e.optionIdx !==
                                 inputNumberName + inputNumIdx
                             );
                         });
