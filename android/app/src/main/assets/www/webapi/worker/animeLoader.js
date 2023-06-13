@@ -6,9 +6,9 @@ let db,
     seasonOrder = { fall: 3, summer: 2, spring: 1, winter: 0 };
 
 self.onmessage = async ({ data }) => {
-    if (data?.asyncShowHideFilters !== undefined) { // Animation Async
+    if (data?.reload !== undefined) { // Animation Async
         self.postMessage({
-            asyncShowHideFilters: true,
+            reload: data?.reload,
             finalAnimeList: finalAnimeList.slice(0, loadLimit)
         });
         filteredList = finalAnimeList.slice(loadLimit)

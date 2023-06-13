@@ -28,8 +28,8 @@ const autoPlay = writable(null)
 
 const initData = writable(true)
 const animeObserver = writable(null)
+const animeIdxRemoved = writable(null)
 const searchedAnimeKeyword = writable("")
-// const toast = writable(null)
 const confirmPromise = writable(null)
 const menuVisible = writable(false)
 const animeOptionVisible = writable(false)
@@ -39,7 +39,7 @@ const openedAnimePopupIdx = writable(null)
 const shouldGoBack = writable(true)
 const isScrolling = writable(null)
 const scrollingTimeout = writable(null)
-const asyncShowHideFilters = writable(null)
+const asyncAnimeReloaded = writable(null)
 // Reactive Functions
 const runUpdate = writable(null)
 const runExport = writable(null)
@@ -72,7 +72,7 @@ export {
     initData,
     animeObserver,
     searchedAnimeKeyword,
-    // toast,
+    animeIdxRemoved,
     confirmPromise,
     menuVisible,
     animeOptionVisible,
@@ -82,7 +82,7 @@ export {
     shouldGoBack,
     isScrolling,
     scrollingTimeout,
-    asyncShowHideFilters,
+    asyncAnimeReloaded,
     // Reactive Functions
     runUpdate,
     runExport,

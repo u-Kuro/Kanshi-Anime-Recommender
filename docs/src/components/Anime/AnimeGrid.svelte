@@ -13,12 +13,14 @@
         openedAnimeOptionIdx,
         updateRecommendationList,
         initData,
-        asyncShowHideFilters,
+        asyncAnimeReloaded,
+        animeIdxRemoved,
     } from "../../js/globalValues.js";
     import {
         formatNumber,
         ncsCompare,
         isJsonObject,
+        scrollToElement,
     } from "../../js/others/helper.js";
 
     let shownAllInList = false;
@@ -60,9 +62,9 @@
                     data.finalAnimeList instanceof Array &&
                     $finalAnimeList instanceof Array
                 ) {
-                    if (data.asyncShowHideFilters === true) {
+                    if (data?.reload === true) {
                         $finalAnimeList = data.finalAnimeList;
-                        $asyncShowHideFilters = !$asyncShowHideFilters;
+                        $asyncAnimeReloaded = !$asyncAnimeReloaded;
                     } else if (data.isNew === true) {
                         $finalAnimeList = data.finalAnimeList;
                     } else if (data.isNew === false) {
@@ -94,9 +96,15 @@
                             ].gridElement
                         );
                     }
+                    let removedIdx = $finalAnimeList.findIndex(
+                        ({ id }) => id === data.removedID
+                    );
                     $finalAnimeList = $finalAnimeList.filter(
                         ({ id }) => id !== data.removedID
                     );
+                    if (removedIdx >= 0) {
+                        $animeIdxRemoved = removedIdx;
+                    }
                 }
             };
             val.onerror = (error) => {

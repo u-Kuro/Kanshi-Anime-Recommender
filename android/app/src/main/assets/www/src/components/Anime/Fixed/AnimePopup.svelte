@@ -13,6 +13,7 @@
         android,
         androidInApp,
         confirmPromise,
+        animeIdxRemoved,
     } from "../../../js/globalValues.js";
     import {
         isJsonObject,
@@ -82,6 +83,19 @@
             }
         }
     }
+
+    animeIdxRemoved.subscribe(async (removedIdx) => {
+        if ($popupVisible && removedIdx >= 0) {
+            await tick();
+            let newPopupContent = popupContainer?.children[removedIdx];
+            if (
+                newPopupContent instanceof Element &&
+                popupContainer instanceof Element
+            ) {
+                scrollToElement(popupContainer, newPopupContent, "top");
+            }
+        }
+    });
 
     async function handleSeeMore(anime, animeIdx) {
         if ($finalAnimeList[animeIdx]) {
@@ -1180,6 +1194,7 @@
         grid-gap: 0.8em;
         padding: 0 0.8em !important;
         margin: 0.5em 0 1.6em 0;
+        transition: max-height 0.3s ease;
     }
 
     @media screen and (orientation: portrait) {

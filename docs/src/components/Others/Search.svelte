@@ -1,5 +1,5 @@
 <script>
-    import { onMount } from "svelte";
+    import { onMount, tick } from "svelte";
     import { saveJSON } from "../../js/indexedDB.js";
     import {
         finalAnimeList,
@@ -13,7 +13,7 @@
         username,
         initData,
         confirmPromise,
-        asyncShowHideFilters,
+        asyncAnimeReloaded,
     } from "../../js/globalValues.js";
     import { fade, fly } from "svelte/transition";
     import {
@@ -84,11 +84,22 @@
         }, 300);
     }
 
+    async function scrollToFirstTagFilter() {
+        let parentEl = document.getElementById("tagFilters");
+        if (parentEl instanceof Element) {
+            await tick();
+            parentEl.scrollBy({
+                top: 0,
+                behavior: "smooth",
+            });
+        }
+    }
+
     function windowResized() {
         maxFilterSelectionHeight = window.innerHeight * 0.3;
         windowWidth = window.innerWidth;
     }
-    function handleFilterTypes(newFilterTypeName) {
+    async function handleFilterTypes(newFilterTypeName) {
         if ($initData) return pleaseWaitAlert();
         let idxTypeSelected = $filterOptions?.filterSelection.findIndex(
             ({ isSelected }) => isSelected
@@ -99,6 +110,10 @@
         if (nameTypeSelected !== newFilterTypeName) {
             // Close Filter Dropdown
             selectedSortElement = false;
+            // Reload Anime for Async Animation
+            if ($finalAnimeList?.length > 0) {
+                await callAsyncAnimeReload();
+            }
             // Close Filter Selection Dropdown
             $filterOptions?.filterSelection?.[
                 idxTypeSelected
@@ -118,6 +133,7 @@
             $filterOptions.filterSelection[
                 newIdxFilterTypeSelected
             ].isSelected = true;
+            scrollToFirstTagFilter();
             saveFilters();
         }
         if (
@@ -982,6 +998,7 @@
                             behavior: isFirstOrLast ? "auto" : "smooth",
                             container: parent,
                             block: "nearest",
+                            inline: "nearest",
                         });
                     }
                 } else {
@@ -996,6 +1013,7 @@
                             behavior: "smooth",
                             container: parent,
                             block: "nearest",
+                            inline: "nearest",
                         });
                     }
                 }
@@ -1039,18 +1057,27 @@
         }
     }
 
-    function handleShowActiveFilters() {
-        if (!$finalAnimeList) {
-            showAllActiveFilters = !showAllActiveFilters;
-        } else if ($animeLoaderWorker instanceof Worker) {
-            $animeLoaderWorker.postMessage({
-                asyncShowHideFilters: true,
-            });
+    async function handleShowActiveFilters() {
+        if ($finalAnimeList?.length > 0) {
+            await callAsyncAnimeReload();
         }
-    }
-    asyncShowHideFilters.subscribe((val) => {
-        if (typeof val !== "boolean") return;
         showAllActiveFilters = !showAllActiveFilters;
+        scrollToFirstTagFilter();
+    }
+    let asyncAnimeReloadPromise;
+    function callAsyncAnimeReload() {
+        return new Promise((resolve) => {
+            if ($animeLoaderWorker instanceof Worker) {
+                $animeLoaderWorker.postMessage({
+                    reload: true,
+                });
+            }
+            asyncAnimeReloadPromise = { resolve };
+        });
+    }
+    asyncAnimeReloaded.subscribe((val) => {
+        if (typeof val !== "boolean") return;
+        asyncAnimeReloadPromise?.resolve?.();
     });
     function hasPartialMatch(strings, searchString) {
         if (typeof strings === "string" && typeof searchString === "string") {
