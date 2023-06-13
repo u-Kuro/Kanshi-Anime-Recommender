@@ -4664,6 +4664,8 @@ self.onmessage = async ({ data }) => {
                             })
                             filterOptions.filterSelection[filterTypeIdx].filters.Dropdown[i].options = newOptions
                         }
+                    } else {
+                        continue
                     }
                 }
             }

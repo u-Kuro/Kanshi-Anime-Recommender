@@ -590,8 +590,9 @@
 	<C.Fixed.Menu />
 
 	<div class="home">
-		<C.Others.Search />
-		<C.Anime.AnimeGrid />
+		<C.Others.Search>
+			<C.Anime.AnimeGrid />
+		</C.Others.Search>
 		<C.Anime.Fixed.AnimePopup />
 	</div>
 
