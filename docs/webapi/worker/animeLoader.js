@@ -6,7 +6,13 @@ let db,
     seasonOrder = { fall: 3, summer: 2, spring: 1, winter: 0 };
 
 self.onmessage = async ({ data }) => {
-    if (data?.filterKeyword !== undefined) {
+    if (data?.asyncShowHideFilters !== undefined) { // Animation Async
+        self.postMessage({
+            asyncShowHideFilters: true,
+            finalAnimeList: finalAnimeList.slice(0, loadLimit)
+        });
+        filteredList = finalAnimeList.slice(loadLimit)
+    } else if (data?.filterKeyword !== undefined) {
         keyword = data?.filterKeyword
         filteredList = finalAnimeList.filter(({ title }) => title?.toLowerCase?.().includes(keyword?.trim()?.toLowerCase?.()) || !keyword)
         self.postMessage({

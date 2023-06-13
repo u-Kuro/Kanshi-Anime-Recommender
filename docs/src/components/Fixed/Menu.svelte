@@ -350,8 +350,8 @@
         height: fit-content;
         border: none;
         cursor: pointer;
-        user-select: none;
         flex: 1 0 auto;
+        user-select: none;
     }
     .menu:after {
         content: "";
@@ -360,6 +360,9 @@
     @media screen and (max-width: 425px) {
         .menu {
             padding: 1.5em 1em;
+        }
+        .menu > .button {
+            flex: none;
         }
     }
     .menu > button.selected {

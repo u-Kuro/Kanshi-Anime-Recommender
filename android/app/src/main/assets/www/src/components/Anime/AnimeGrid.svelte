@@ -13,6 +13,7 @@
         openedAnimeOptionIdx,
         updateRecommendationList,
         initData,
+        asyncShowHideFilters,
     } from "../../js/globalValues.js";
     import {
         formatNumber,
@@ -20,7 +21,6 @@
         isJsonObject,
     } from "../../js/others/helper.js";
 
-    let renderedImgGridLimit = 20;
     let shownAllInList = false;
 
     let observerTimeout;
@@ -60,7 +60,10 @@
                     data.finalAnimeList instanceof Array &&
                     $finalAnimeList instanceof Array
                 ) {
-                    if (data.isNew === true) {
+                    if (data.asyncShowHideFilters === true) {
+                        $finalAnimeList = data.finalAnimeList;
+                        $asyncShowHideFilters = !$asyncShowHideFilters;
+                    } else if (data.isNew === true) {
                         $finalAnimeList = data.finalAnimeList;
                     } else if (data.isNew === false) {
                         $finalAnimeList = $finalAnimeList.concat(
@@ -331,7 +334,7 @@
                 {/each}
             {/if}
         {:else if !$finalAnimeList || $initData}
-            {#each Array(renderedImgGridLimit) as _}
+            {#each Array(10) as _}
                 <div class="image-grid__card skeleton">
                     <div class="shimmer">
                         <img

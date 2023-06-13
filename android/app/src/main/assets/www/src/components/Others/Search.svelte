@@ -13,6 +13,7 @@
         username,
         initData,
         confirmPromise,
+        asyncShowHideFilters,
     } from "../../js/globalValues.js";
     import { fade, fly } from "svelte/transition";
     import {
@@ -1037,6 +1038,20 @@
             }
         }
     }
+
+    function handleShowActiveFilters() {
+        if (!$finalAnimeList) {
+            showAllActiveFilters = !showAllActiveFilters;
+        } else if ($animeLoaderWorker instanceof Worker) {
+            $animeLoaderWorker.postMessage({
+                asyncShowHideFilters: true,
+            });
+        }
+    }
+    asyncShowHideFilters.subscribe((val) => {
+        if (typeof val !== "boolean") return;
+        showAllActiveFilters = !showAllActiveFilters;
+    });
     function hasPartialMatch(strings, searchString) {
         if (typeof strings === "string" && typeof searchString === "string") {
             return strings
@@ -1555,10 +1570,8 @@
         </div>
         <div
             class="showHideActiveFilters"
-            on:click={() => (showAllActiveFilters = !showAllActiveFilters)}
-            on:keydown={(e) =>
-                e.key === "Enter" &&
-                (() => (showAllActiveFilters = !showAllActiveFilters))()}
+            on:click={handleShowActiveFilters}
+            on:keydown={(e) => e.key === "Enter" && handleShowActiveFilters()}
         >
             <i
                 class={"icon fa-solid fa-angle-" +
@@ -1936,10 +1949,11 @@
     .activeFilters {
         display: grid;
         align-items: center;
+        justify-content: space-between;
         gap: 15px;
         min-height: 28px;
         width: 100%;
-        grid-template-columns: auto;
+        grid-template-columns: 100%;
         margin-top: 2em;
     }
 
@@ -1985,7 +1999,7 @@
         padding: 8px 10px;
         display: flex;
         flex: 1;
-        justify-content: center;
+        justify-content: space-between;
         align-items: center;
         column-gap: 6px;
         border-radius: 6px;
@@ -2006,7 +2020,7 @@
         display: flex;
         justify-content: center;
         background: rgb(21, 31, 46);
-        padding: 0.75em 1em;
+        padding: 0.9em 1.5em;
         border-radius: 6px;
     }
 

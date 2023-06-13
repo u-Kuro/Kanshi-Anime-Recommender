@@ -39,6 +39,7 @@ const openedAnimePopupIdx = writable(null)
 const shouldGoBack = writable(true)
 const isScrolling = writable(null)
 const scrollingTimeout = writable(null)
+const asyncShowHideFilters = writable(null)
 // Reactive Functions
 const runUpdate = writable(null)
 const runExport = writable(null)
@@ -81,6 +82,7 @@ export {
     shouldGoBack,
     isScrolling,
     scrollingTimeout,
+    asyncShowHideFilters,
     // Reactive Functions
     runUpdate,
     runExport,

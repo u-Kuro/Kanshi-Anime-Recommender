@@ -44,7 +44,9 @@
             isRecentlyOpenedTimeout = setTimeout(() => {
                 isRecentlyOpened = false;
             }, 500);
-            confirmButtonEl?.focus?.();
+            if (window.matchMedia("(pointer: fine)").matches) {
+                confirmButtonEl?.focus?.();
+            }
         } else {
             if (isRecentlyOpenedTimeout) clearTimeout(isRecentlyOpenedTimeout);
             isRecentlyOpened = false;
@@ -167,9 +169,11 @@
         cursor: pointer;
     }
 
-    .confirm-button-container > button:hover,
-    .confirm-button-container > button:focus {
-        background-color: rgba(0, 0, 0, 0.4);
+    @media (pointer: fine) {
+        .confirm-button-container > button:hover,
+        .confirm-button-container > button:focus {
+            background-color: rgba(0, 0, 0, 0.4);
+        }
     }
 
     @media screen and (min-width: 768px) {
