@@ -26,7 +26,6 @@
     let windowWidth = window.innerWidth;
     let maxFilterSelectionHeight;
     let unsubFilterDragScroll;
-    let unsubTagFiltersDragScroll;
 
     let selectedFilterTypeElement;
     let selectedFilterElement;
@@ -36,8 +35,7 @@
     let filterScrollTimeout;
     let filterIsScrolling;
 
-    let tagFilterScrollTimeout;
-    let tagFilterIsScrolling;
+    let showAllActiveFilters = false;
 
     let nameChangeUpdateProcessedList = ["Algorithm Filter"];
     let nameChangeUpdateFinalList = ["sort", "Anime Filter", "Content Caution"];
@@ -156,13 +154,6 @@
             }
             selectedFilterTypeElement = false;
         }
-    }
-    function handleTagFilterScroll() {
-        if (tagFilterScrollTimeout) clearTimeout(tagFilterScrollTimeout);
-        tagFilterIsScrolling = true;
-        tagFilterScrollTimeout = setTimeout(() => {
-            tagFilterIsScrolling = false;
-        }, 500);
     }
     function handleFilterScroll() {
         if (filterScrollTimeout) clearTimeout(filterScrollTimeout);
@@ -718,7 +709,6 @@
         changeType,
         optionType
     ) {
-        if (tagFilterIsScrolling && event.pointerType === "mouse") return false;
         if (changeType === "read" || filterType !== "dropdown") return; // Unchangable Selection
         if ($initData) return pleaseWaitAlert();
         let idxTypeSelected = $filterOptions?.filterSelection?.findIndex(
@@ -777,7 +767,6 @@
         optionType
     ) {
         if ($initData) return pleaseWaitAlert();
-        if (tagFilterIsScrolling && event.pointerType === "mouse") return;
         let idxTypeSelected = $filterOptions?.filterSelection?.findIndex(
             ({ isSelected }) => isSelected
         );
@@ -1095,10 +1084,6 @@
         let filterEl = document.getElementById("filters");
         filterEl.addEventListener("scroll", handleFilterScroll);
         unsubFilterDragScroll = dragScroll(filterEl, "x");
-
-        let tagFilterEl = document.getElementById("tagFilters");
-        tagFilterEl.addEventListener("scroll", handleTagFilterScroll);
-        unsubTagFiltersDragScroll = dragScroll(tagFilterEl, "x");
 
         document.addEventListener("keydown", handleDropdownKeyDown);
         window.addEventListener("resize", windowResized);
@@ -1470,28 +1455,41 @@
             {/each}
         {/if}
     </div>
-    <div class="activeFilters">
-        <i
-            style:display={$activeTagFilters ? "" : "none"}
-            class="fa-solid fa-ban"
-            title="Remove Filters"
-            on:click={removeAllActiveTag}
-            on:keydown={(e) => e.key === "Enter" && removeAllActiveTag(e)}
-            style:visibility={$activeTagFilters?.[
+    <div
+        class="activeFilters"
+        style:display={(
+            $activeTagFilters?.[
                 $filterOptions?.filterSelection?.[
                     $filterOptions?.filterSelection?.findIndex(
                         ({ isSelected }) => isSelected
                     )
                 ]?.filterSelectionName
-            ]?.length
-                ? "visible"
-                : "hidden"}
-        />
+            ] || []
+        ).length
+            ? ""
+            : "none"}
+    >
         <div
             id="tagFilters"
             class="tagFilters"
-            style:display={$activeTagFilters ? "" : "none"}
+            style:max-height={showAllActiveFilters ? "200px" : "28px"}
         >
+            <i
+                style:display={$activeTagFilters ? "" : "none"}
+                class="fa-solid fa-ban"
+                title="Remove Filters"
+                on:click={removeAllActiveTag}
+                on:keydown={(e) => e.key === "Enter" && removeAllActiveTag(e)}
+                style:visibility={$activeTagFilters?.[
+                    $filterOptions?.filterSelection?.[
+                        $filterOptions?.filterSelection?.findIndex(
+                            ({ isSelected }) => isSelected
+                        )
+                    ]?.filterSelectionName
+                ]?.length
+                    ? "visible"
+                    : "hidden"}
+            />
             {#each $activeTagFilters?.[$filterOptions?.filterSelection?.[$filterOptions?.filterSelection?.findIndex(({ isSelected }) => isSelected)]?.filterSelectionName] || [] as { optionName, optionIdx, selected, changeType, filterType, categIdx, optionValue, optionType } (optionName + optionIdx + (optionType ?? ""))}
                 <div
                     class="activeTagFilter"
@@ -1555,89 +1553,96 @@
                 </div>
             {/each}
         </div>
-        {#if !$activeTagFilters}
-            <i class="skeleton shimmer" />
-            <div class="tagFilters skeleton shimmer" />
-        {/if}
-        {#if $filterOptions}
-            <div class="sortFilter">
-                <i
-                    on:click={changeSortType}
-                    on:keydown={(e) => e.key === "Enter" && changeSortType(e)}
-                    class={"fa-duotone fa-sort-" +
-                        ($filterOptions?.sortFilter?.[
-                            $filterOptions?.sortFilter?.findIndex(
-                                ({ sortType }) => sortType !== "none"
-                            )
-                        ]?.sortType === "asc"
-                            ? "up"
-                            : "down")}
-                />
-                <h2
-                    on:click={handleSortFilterPopup}
-                    on:keydown={(e) =>
-                        e.key === "Enter" && handleSortFilterPopup(e)}
-                >
-                    {$filterOptions?.sortFilter?.[
-                        $filterOptions?.sortFilter.findIndex(
+        <div
+            class="showHideActiveFilters"
+            on:click={() => (showAllActiveFilters = !showAllActiveFilters)}
+            on:keydown={(e) =>
+                e.key === "Enter" &&
+                (() => (showAllActiveFilters = !showAllActiveFilters))()}
+        >
+            <i
+                class={"icon fa-solid fa-angle-" +
+                    (showAllActiveFilters ? "up" : "down")}
+            />
+        </div>
+    </div>
+    {#if $filterOptions}
+        <div class="sortFilter">
+            <i
+                on:click={changeSortType}
+                on:keydown={(e) => e.key === "Enter" && changeSortType(e)}
+                class={"fa-duotone fa-sort-" +
+                    ($filterOptions?.sortFilter?.[
+                        $filterOptions?.sortFilter?.findIndex(
                             ({ sortType }) => sortType !== "none"
                         )
-                    ]?.sortName || ""}
-                </h2>
+                    ]?.sortType === "asc"
+                        ? "up"
+                        : "down")}
+            />
+            <h2
+                on:click={handleSortFilterPopup}
+                on:keydown={(e) =>
+                    e.key === "Enter" && handleSortFilterPopup(e)}
+            >
+                {$filterOptions?.sortFilter?.[
+                    $filterOptions?.sortFilter.findIndex(
+                        ({ sortType }) => sortType !== "none"
+                    )
+                ]?.sortName || ""}
+            </h2>
+            <div
+                class={"options-wrap " +
+                    (selectedSortElement ? "" : "disable-interaction hide")}
+                style:--maxFilterSelectionHeight="{maxFilterSelectionHeight}px"
+            >
                 <div
-                    class={"options-wrap " +
-                        (selectedSortElement ? "" : "disable-interaction hide")}
-                    style:--maxFilterSelectionHeight="{maxFilterSelectionHeight}px"
+                    class={"options-wrap-filter-info " +
+                        (selectedSortElement ? "" : "hide")}
                 >
-                    <div
-                        class={"options-wrap-filter-info " +
-                            (selectedSortElement ? "" : "hide")}
-                    >
-                        <div class="header">
-                            <h2>Sort By</h2>
+                    <div class="header">
+                        <h2>Sort By</h2>
+                        <div
+                            class="closing-x"
+                            on:keydown={(e) =>
+                                e.key === "Enter" && handleSortFilterPopup(e)}
+                            on:click={handleSortFilterPopup}
+                        >
+                            ×
+                        </div>
+                    </div>
+                    <div class="options">
+                        {#each $filterOptions?.sortFilter || [] as { sortName }, sortIdx (sortName + sortIdx)}
                             <div
-                                class="closing-x"
+                                class="option"
+                                on:click={changeSort(sortName)}
                                 on:keydown={(e) =>
-                                    e.key === "Enter" &&
-                                    handleSortFilterPopup(e)}
-                                on:click={handleSortFilterPopup}
+                                    e.key === "Enter" && changeSort(sortName)}
                             >
-                                ×
+                                <h3>{sortName || ""}</h3>
+                                {#if $filterOptions?.sortFilter?.[$filterOptions?.sortFilter?.findIndex(({ sortType }) => sortType !== "none")].sortName === sortName && sortName}
+                                    <i
+                                        class={"fa-duotone fa-sort-" +
+                                            ($filterOptions?.sortFilter?.[
+                                                $filterOptions?.sortFilter?.findIndex(
+                                                    ({ sortType }) =>
+                                                        sortType !== "none"
+                                                )
+                                            ].sortType === "asc"
+                                                ? "up"
+                                                : "down")}
+                                    />
+                                {/if}
                             </div>
-                        </div>
-                        <div class="options">
-                            {#each $filterOptions?.sortFilter || [] as { sortName }, sortIdx (sortName + sortIdx)}
-                                <div
-                                    class="option"
-                                    on:click={changeSort(sortName)}
-                                    on:keydown={(e) =>
-                                        e.key === "Enter" &&
-                                        changeSort(sortName)}
-                                >
-                                    <h3>{sortName || ""}</h3>
-                                    {#if $filterOptions?.sortFilter?.[$filterOptions?.sortFilter?.findIndex(({ sortType }) => sortType !== "none")].sortName === sortName && sortName}
-                                        <i
-                                            class={"fa-duotone fa-sort-" +
-                                                ($filterOptions?.sortFilter?.[
-                                                    $filterOptions?.sortFilter?.findIndex(
-                                                        ({ sortType }) =>
-                                                            sortType !== "none"
-                                                    )
-                                                ].sortType === "asc"
-                                                    ? "up"
-                                                    : "down")}
-                                        />
-                                    {/if}
-                                </div>
-                            {/each}
-                        </div>
+                        {/each}
                     </div>
                 </div>
             </div>
-        {:else}
-            <div class="sortFilter skeleton shimmer" />
-        {/if}
-    </div>
+        </div>
+    {:else}
+        <div class="sortFilter skeleton shimmer" />
+    {/if}
+    <slot />
 </main>
 
 <style>
@@ -1653,7 +1658,7 @@
 
     main {
         display: grid;
-        grid-template-rows: 20px 55px 80px 50px;
+        grid-template-rows: 20px 55px 80px auto 37px auto;
         padding-top: 2em;
     }
 
@@ -1934,37 +1939,42 @@
         gap: 15px;
         min-height: 28px;
         width: 100%;
-        grid-template-columns: 23px repeat(2, auto);
+        grid-template-columns: auto;
         margin-top: 2em;
     }
-    .activeFilters > i {
+
+    .tagFilters {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 15px;
+        user-select: none;
+        overflow-y: auto;
+        scroll-snap-type: y mandatory;
+        transition: max-height 0.3s ease;
+        will-change: max-height;
+    }
+
+    .tagFilters > * {
+        scroll-snap-align: start;
+    }
+
+    .tagFilters.skeleton {
+        height: 28px;
+        width: 90px;
+    }
+
+    .tagFilters > i {
         font-size: 1.5rem;
         height: 28px;
         line-height: 28px;
         cursor: pointer;
         padding: 0 4px;
     }
-
-    .activeFilters > i.skeleton {
-        font-size: 1.5rem;
-        height: 20px;
-        width: 20px;
-        cursor: pointer;
-    }
-
-    .tagFilters {
-        display: flex;
-        align-items: center;
-        overflow-x: auto;
-        overscroll-behavior: contain;
-        justify-content: start;
-        gap: 15px;
-        user-select: none;
-    }
-
-    .tagFilters.skeleton {
-        height: 28px;
-        width: 90px;
+    .tagFilters:after {
+        content: "";
+        flex: 1000 0 auto;
     }
 
     .tagFilters::-webkit-scrollbar {
@@ -1974,6 +1984,7 @@
         background-color: var(--activeTagFilterColor);
         padding: 8px 10px;
         display: flex;
+        flex: 1;
         justify-content: center;
         align-items: center;
         column-gap: 6px;
@@ -1991,12 +2002,21 @@
         font-size: 1.2rem;
     }
 
+    .showHideActiveFilters {
+        display: flex;
+        justify-content: center;
+        background: rgb(21, 31, 46);
+        padding: 0.75em 1em;
+        border-radius: 6px;
+    }
+
     .sortFilter {
         display: flex;
         justify-content: end;
         align-items: center;
         gap: 8px;
         min-height: 17px;
+        margin-top: 2em;
         margin-left: auto;
         position: relative;
     }

@@ -352,7 +352,7 @@
     main {
         width: 100%;
         height: 100%;
-        padding: 2.5em 0;
+        margin: 2em 0;
     }
 
     .skeleton {

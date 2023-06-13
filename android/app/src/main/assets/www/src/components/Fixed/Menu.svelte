@@ -351,6 +351,11 @@
         border: none;
         cursor: pointer;
         user-select: none;
+        flex: 1 0 auto;
+    }
+    .menu:after {
+        content: "";
+        flex: 1000 0 auto;
     }
     @media screen and (max-width: 425px) {
         .menu {

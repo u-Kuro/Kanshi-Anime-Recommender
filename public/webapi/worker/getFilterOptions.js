@@ -4670,6 +4670,8 @@ self.onmessage = async ({ data }) => {
                 }
             }
         })
+        await saveJSON(filterOptions, "filterOptions")
+        await saveJSON(activeTagFilters, "activeTagFilters")
     }
     if (jsonIsEmpty(activeTagFilters)) {
         activeTagFilters = filterOptions.filterSelection.reduce((r, { filterSelectionName }) => {
@@ -4677,8 +4679,6 @@ self.onmessage = async ({ data }) => {
             return r;
         }, {}) || {};
     }
-    await saveJSON(filterOptions, "filterOptions")
-    await saveJSON(activeTagFilters, "activeTagFilters")
     self.postMessage({ status: null })
     self.postMessage({
         filterOptions: filterOptions,
