@@ -568,8 +568,10 @@
                             ytPlayer?.playVideo?.();
                         }
                     } else if (ytPlayer.g !== visibleTrailer) {
+                        ytPlayer?.mute?.();
                         ytPlayer?.playVideo?.();
                         ytPlayer?.pauseVideo?.();
+                        ytPlayer?.unMute?.();
                     }
                 });
             }

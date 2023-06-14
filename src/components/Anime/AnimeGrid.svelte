@@ -20,7 +20,6 @@
         formatNumber,
         ncsCompare,
         isJsonObject,
-        scrollToElement,
     } from "../../js/others/helper.js";
 
     let shownAllInList = false;

@@ -15,6 +15,7 @@ self.onmessage = async ({ data }) => {
     // Filter Algorithm
     let includeUnknownVar = false,
         measure = "mean",
+        includeStaffCount = true,
         includeYear = true,
         includeAverageScore = true,
         includeAnimeLength = true,
@@ -42,9 +43,9 @@ self.onmessage = async ({ data }) => {
                     include.tags["tag category: " + optionName.toLowerCase()] = true
                 } else if (optionType === 'studio') {
                     include.tags["studio: " + optionName.toLowerCase()] = true
-                } else if (optionType === 'staff role') {
-                    include.tags["staff role: " + optionName.toLowerCase()] = true
-                } else if (optionType === 'measurement') {
+                    // } else if (optionType === 'staff role') {
+                    //     include.tags["staff role: " + optionName.toLowerCase()] = true
+                } else if (optionType === 'measure') {
                     if (optionName.toLowerCase() === "mode") {
                         measure = "mode"
                     }
@@ -52,9 +53,10 @@ self.onmessage = async ({ data }) => {
             } else if (filterType === 'checkbox') {
                 if (optionName.toLowerCase() === 'inc. all factors') {
                     includeUnknownVar = true
-                } else if (optionName.toLowerCase() === 'show all sequels') {
-                    showAllSequels = true
-                }
+                } else
+                    if (optionName.toLowerCase() === 'show all sequels') {
+                        showAllSequels = true
+                    }
             } else if (filterType === 'input number') {
                 if (optionName.toLowerCase() === 'scoring system') {
                     customUserScoreBase = parseFloat(optionValue)
@@ -78,8 +80,8 @@ self.onmessage = async ({ data }) => {
                     exclude.tags["tag category: " + optionName.toLowerCase()] = true
                 } else if (optionType === 'studio') {
                     exclude.tags["studio: " + optionName.toLowerCase()] = true
-                } else if (optionType === 'staff role') {
-                    exclude.tags["staff role: " + optionName.toLowerCase()] = true
+                    // } else if (optionType === 'staff role') {
+                    //     exclude.tags["staff role: " + optionName.toLowerCase()] = true
                 }
             }
         }
@@ -133,6 +135,7 @@ self.onmessage = async ({ data }) => {
     }
     let averageScore = []
     let animeLength = []
+    let staffCount = []
     let year = []
     let genresMeanCount = {}
     let tagsMeanCount = {}
@@ -250,7 +253,7 @@ self.onmessage = async ({ data }) => {
             for (let j = 0; j < tags.length; j++) {
                 let tag = tags[j]?.name
                 let tagCategory = tags[j]?.category
-                if (typeof tag === "string" && typeof tagCategory === "string" && tags?.[j]?.rank >= 50) {
+                if (typeof tag === "string" && typeof tagCategory === "string") {
                     let fullTag = "tag: " + tag.trim().toLowerCase()
                     let fullTagCategory = "tag category: " + tagCategory.trim().toLowerCase()
                     if (!jsonIsEmpty(include.categories)) {
@@ -468,6 +471,9 @@ self.onmessage = async ({ data }) => {
             if (isaN(anime?.averageScore)) {
                 averageScore.push({ userScore: userScore, averageScore: anime.averageScore })
             }
+            if (staffs instanceof Array) {
+                staffCount.push({ userScore: userScore, staffCount: staffs.length })
+            }
             if (isaN(parseFloat(anime?.seasonYear))) {
                 year.push({ userScore: userScore, year: parseFloat(anime.seasonYear) })
             }
@@ -481,10 +487,8 @@ self.onmessage = async ({ data }) => {
             genresMeanCount = sampleSize
         } else if (!jsonIsEmpty(genresMeanCount)) {
             let genresCountValues = Object.values(genresMeanCount)
-            let genresCountMode = arrayMode(genresCountValues)
-            let genresCountMean = arrayMean(genresCountValues)
-            let tempgenresMeanCount = genresCountMean >= 33 ? 33 : Math.max(genresCountMode, genresCountMean)
-            genresMeanCount = tempgenresMeanCount
+            genresCountValues = filterArrayByMeanPercentages(genresCountValues)
+            genresMeanCount = arrayMean(genresCountValues)
         } else {
             genresMeanCount = 10
         }
@@ -492,14 +496,14 @@ self.onmessage = async ({ data }) => {
             genresMeanCount = Math.max(minSampleSize, genresMeanCount)
         }
 
+        let tagMeanCountLower;
         if (typeof sampleSize === "number" && sampleSize >= 1) {
             tagsMeanCount = sampleSize
         } else if (!jsonIsEmpty(tagsMeanCount)) {
             let tagsCountValues = Object.values(tagsMeanCount)
-            let tagsCountMode = arrayMode(tagsCountValues)
-            let tagsCountMean = arrayMean(tagsCountValues)
-            let temptagsMeanCount = tagsCountMean >= 33 ? 33 : Math.max(tagsCountMode, tagsCountMean)
-            tagsMeanCount = temptagsMeanCount
+            tagsCountValues = filterArrayByMeanPercentages(tagsCountValues)
+            tagsMeanCount = arrayMean(tagsCountValues)
+            tagMeanCountLower = Math.min(tagsMeanCount, arrayMedian(tagsCountValues), arrayMode(tagsCountValues))
         } else {
             tagsMeanCount = 10
         }
@@ -511,10 +515,7 @@ self.onmessage = async ({ data }) => {
             studiosMeanCount = sampleSize
         } else if (!jsonIsEmpty(studiosMeanCount)) {
             let studiosCountValues = Object.values(studiosMeanCount)
-            let studiosCountMode = arrayMode(studiosCountValues)
-            let studiosCountMean = arrayMean(studiosCountValues)
-            let tempstudiosMeanCount = studiosCountMean >= 33 ? 33 : Math.max(studiosCountMode, studiosCountMean)
-            studiosMeanCount = tempstudiosMeanCount
+            studiosMeanCount = arrayMode(studiosCountValues) // Appears Little so Set Minimum
         } else {
             studiosMeanCount = 10
         }
@@ -526,10 +527,7 @@ self.onmessage = async ({ data }) => {
             staffMeanCount = sampleSize
         } else if (!jsonIsEmpty(staffMeanCount)) {
             let staffCountValues = Object.values(staffMeanCount)
-            let staffCountMode = arrayMode(staffCountValues)
-            let staffCountMean = arrayMean(staffCountValues)
-            let tempstaffMeanCount = staffCountMean >= 33 ? 33 : Math.max(staffCountMode, staffCountMean)
-            staffMeanCount = tempstaffMeanCount
+            staffMeanCount = arrayMode(staffCountValues) // Appears Little so Set Minimum
         } else {
             staffMeanCount = 10
         }
@@ -546,14 +544,24 @@ self.onmessage = async ({ data }) => {
         // Genres
         let genresKey = Object.keys(varScheme.genres)
         let genresMean = []
+        let filteredGenresMean = []
         for (let i = 0; i < genresKey.length; i++) {
             if (measure === "mode") {
-                genresMean.push(arrayMode(varScheme.genres[genresKey[i]].userScore))
+                let tempModeScore = arrayMode(varScheme.genres[genresKey[i]].userScore)
+                if (varScheme.genres[genresKey[i]].count >= genresMeanCount) {
+                    filteredGenresMean.push(tempModeScore)
+                }
+                genresMean.push(tempModeScore)
             } else {
-                genresMean.push(arrayMean(varScheme.genres[genresKey[i]].userScore))
+                let tempMeanScore = arrayMean(varScheme.genres[genresKey[i]].userScore)
+                if (varScheme.genres[genresKey[i]].count >= genresMeanCount) {
+                    filteredGenresMean.push(tempMeanScore)
+                }
+                genresMean.push(tempMeanScore)
             }
         }
         genresMean = arrayMean(genresMean)
+        filteredGenresMean = arrayMean(filteredGenresMean)
         for (let i = 0; i < genresKey.length; i++) {
             let tempScore = 0
             if (measure === "mode") {
@@ -563,23 +571,58 @@ self.onmessage = async ({ data }) => {
             }
             // Include High Weight or Low scored Variables to avoid High-scored Variables without enough sample
             let count = varScheme.genres[genresKey[i]].count
-            if (count >= genresMeanCount || tempScore < genresMean) {
+            if (count >= genresMeanCount || tempScore < filteredGenresMean) {
+                if (count <= genresMeanCount) {
+                    tempScore = 1
+                }
                 varScheme.genres[genresKey[i]] = tempScore
             } else {
                 delete varScheme.genres[genresKey[i]]
             }
         }
+
         // Tags
         let tagsKey = Object.keys(varScheme.tags)
         let tagsMean = []
+        let filteredTagsMean = []
         for (let i = 0; i < tagsKey.length; i++) {
             if (measure === "mode") {
-                tagsMean.push(arrayMode(varScheme.tags[tagsKey[i]].userScore))
+                let tempModeScore = arrayMode(varScheme.tags[tagsKey[i]].userScore)
+                if (varScheme.tags[tagsKey[i]].count >= tagsMeanCount) {
+                    filteredTagsMean.push(tempModeScore)
+                }
+                tagsMean.push(tempModeScore)
             } else {
-                tagsMean.push(arrayMean(varScheme.tags[tagsKey[i]].userScore))
+                let tempMeanScore = arrayMean(varScheme.tags[tagsKey[i]].userScore)
+                if (varScheme.tags[tagsKey[i]].count >= tagsMeanCount) {
+                    filteredTagsMean.push(tempMeanScore)
+                }
+                tagsMean.push(tempMeanScore)
             }
         }
         tagsMean = arrayMean(tagsMean)
+        filteredTagsMean = arrayMean(filteredTagsMean)
+        let tagsMeanLower = []
+        for (let i = 0; i < tagsKey.length; i++) {
+            let tempMeanScore = arrayMean(varScheme.tags[tagsKey[i]].userScore)
+            if (tempMeanScore < tagsMean) {
+                tagsMeanLower.push(tempMeanScore)
+            }
+        }
+        let totalTagCount = 0
+        for (let i = 0; i < tagsKey.length; i++) {
+            let tempScore = 0
+            if (measure === "mode") {
+                tempScore = arrayMode(varScheme.tags[tagsKey[i]].userScore)
+            } else {
+                tempScore = arrayMean(varScheme.tags[tagsKey[i]].userScore)
+            }
+            let count = varScheme.tags[tagsKey[i]].count
+            if (count <= tagMeanCountLower || tempScore <= tagsMeanLower) {
+                totalTagCount += varScheme.tags[tagsKey[i]].count
+            }
+        }
+        tagsMeanLower = arrayMean(tagsMeanLower)
         for (let i = 0; i < tagsKey.length; i++) {
             let tempScore = 0
             if (measure === "mode") {
@@ -589,23 +632,40 @@ self.onmessage = async ({ data }) => {
             }
             // Include High Weight or Low scored Variables to avoid High-scored Variables without enough sample
             let count = varScheme.tags[tagsKey[i]].count
-            if (count >= tagsMeanCount || tempScore < tagsMean) {
+            if (count <= tagMeanCountLower || tempScore <= tagsMeanLower) {
+                tempScore = 1
+            }
+            if (count >= tagsMeanCount || tempScore === 1) {
+                if (tempScore === 1) {
+                    tempScore = tempScore / (totalTagCount / count)
+                }
                 varScheme.tags[tagsKey[i]] = tempScore
             } else {
                 delete varScheme.tags[tagsKey[i]]
             }
         }
+
         // Studios
         let studiosKey = Object.keys(varScheme.studios)
         let studiosMean = []
+        let filteredStudiosMean = []
         for (let i = 0; i < studiosKey.length; i++) {
             if (measure === "mode") {
-                studiosMean.push(arrayMode(varScheme.studios[studiosKey[i]].userScore))
+                let tempModeScore = arrayMode(varScheme.studios[studiosKey[i]].userScore)
+                if (varScheme.studios[studiosKey[i]].count >= studiosMeanCount) {
+                    filteredStudiosMean.push(tempModeScore)
+                }
+                studiosMean.push(tempModeScore)
             } else {
-                studiosMean.push(arrayMean(varScheme.studios[studiosKey[i]].userScore))
+                let tempMeanScore = arrayMean(varScheme.studios[studiosKey[i]].userScore)
+                if (varScheme.studios[studiosKey[i]].count >= studiosMeanCount) {
+                    filteredStudiosMean.push(tempMeanScore)
+                }
+                studiosMean.push(tempMeanScore)
             }
         }
         studiosMean = arrayMean(studiosMean)
+        filteredStudiosMean = arrayMean(filteredStudiosMean)
         for (let i = 0; i < studiosKey.length; i++) {
             let tempScore = 0
             if (measure === "mode") {
@@ -615,23 +675,34 @@ self.onmessage = async ({ data }) => {
             }
             // Include High Weight or Low scored Variables to avoid High-scored Variables without enough sample
             let count = varScheme.studios[studiosKey[i]].count
-            if (count >= studiosMeanCount || (count >= (minSampleSize ?? 2)) && tempScore < studiosMean) {
+            if (count >= studiosMeanCount) {
                 varScheme.studios[studiosKey[i]] = tempScore
             } else {
                 delete varScheme.studios[studiosKey[i]]
             }
         }
+
         // Staffs
         let staffKey = Object.keys(varScheme.staff)
         let staffMean = []
+        let filteredStaffMean = []
         for (let i = 0; i < staffKey.length; i++) {
             if (measure === "mode") {
-                staffMean.push(arrayMode(varScheme.staff[staffKey[i]].userScore))
+                let tempModeScore = arrayMode(varScheme.staff[staffKey[i]].userScore)
+                if (varScheme.staff[staffKey[i]].count >= staffMeanCount) {
+                    filteredStaffMean.push(tempModeScore)
+                }
+                staffMean.push(tempModeScore)
             } else {
-                staffMean.push(arrayMean(varScheme.staff[staffKey[i]].userScore))
+                let tempMeanScore = arrayMean(varScheme.staff[staffKey[i]].userScore)
+                if (varScheme.staff[staffKey[i]].count >= staffMeanCount) {
+                    filteredStaffMean.push(tempMeanScore)
+                }
+                staffMean.push(tempMeanScore)
             }
         }
         staffMean = arrayMean(staffMean)
+        filteredStaffMean = arrayMean(filteredStaffMean)
         for (let i = 0; i < staffKey.length; i++) {
             let tempScore = 0
             if (measure === "mode") {
@@ -641,7 +712,7 @@ self.onmessage = async ({ data }) => {
             }
             // Include High Weight or Low scored Variables to avoid High-scored Variables without enough sample
             let count = varScheme.staff[staffKey[i]].count
-            if (count >= staffMeanCount || (count >= (minSampleSize ?? 2)) && tempScore < staffMean) {
+            if (count >= staffMeanCount) {
                 varScheme.staff[staffKey[i]] = tempScore
             } else {
                 delete varScheme.staff[staffKey[i]]
@@ -660,6 +731,16 @@ self.onmessage = async ({ data }) => {
         varScheme.measure = measure
 
         // Linear Model Building | y is Predicted so its Userscore
+        // Production Staff Model
+        if (includeStaffCount) {
+            let staffCountXY = []
+            for (let i = 0; i < staffCount.length; i++) {
+                staffCountXY.push([staffCount[i].staffCount, staffCount[i].userScore])
+            }
+            if (staffCountXY.length >= (minSampleSize || 33)) {
+                varScheme.staffCountModel = linearRegression(staffCountXY)
+            }
+        }
         // Year Model
         if (includeYear) {
             let yearXY = []
@@ -691,7 +772,6 @@ self.onmessage = async ({ data }) => {
             }
         }
     }
-
     // Calculate Anime Recommendation List
     self.postMessage({ status: "Processing Recommendation List" })
     // Init Data
@@ -699,8 +779,8 @@ self.onmessage = async ({ data }) => {
     animeEntries = Object.values(animeEntries ?? {});
     let recommendedAnimeList = {};
     let maxScore;
-    let averageScoresArray = animeEntries.filter(({ averageScore }) => averageScore >= 1)
-        .map(({ averageScore }) => averageScore);
+    // let averageScoresArray = animeEntries.filter(({ averageScore }) => averageScore >= 1)
+    //     .map(({ averageScore }) => averageScore);
     let popularityArray = animeEntries.filter(({ popularity }) => popularity >= 1)
         .map(({ popularity }) => popularity);
     let popularitySum = popularityArray.length
@@ -711,7 +791,8 @@ self.onmessage = async ({ data }) => {
         : Math.min(arrayMean(popularityArray), arrayMode(popularityArray));
     let averageScoreMode = varScheme?.minAverageScore
         ? varScheme.minAverageScore
-        : Math.min(arrayMean(averageScoresArray), arrayMode(averageScoresArray));
+        : 49.67
+    // let averageScoreMean = arrayMean(averageScoresArray)
     if (!jsonIsEmpty(varScheme)) {
         animeFranchises = []
         let maxScoreTest = 0
@@ -906,7 +987,8 @@ self.onmessage = async ({ data }) => {
                     zgenres.push(varScheme.genres[fullGenre]);
                     // Top Similarities
                     if (typeof varScheme.meanGenres === "number") {
-                        if (varScheme.genres[fullGenre] >= varScheme.meanGenres && !genresIncluded[fullGenre]) {
+                        if (varScheme.genres[fullGenre] >= varScheme.meanGenres &&
+                            !genresIncluded[fullGenre]) {
                             let tmpscore = varScheme.genres[fullGenre];
                             genresIncluded[fullGenre] = [
                                 genre + " (" + tmpscore.toFixed(2) + ")",
@@ -915,7 +997,7 @@ self.onmessage = async ({ data }) => {
                         }
                     }
                 } else if (typeof varScheme.meanGenres === "number" && includeUnknownVar) {
-                    zgenres.push(varScheme.meanGenres - minNumber);
+                    zgenres.push(1);
                 }
                 // Filters
                 if (filters['genre'][genre] === undefined) {
@@ -939,7 +1021,9 @@ self.onmessage = async ({ data }) => {
                             ztags.push(varScheme.tags[fullTag]);
                             // Top Similarities
                             if (typeof varScheme.meanTags === "number" && typeof tagRank === "number") {
-                                if (tagRank >= 50 && varScheme.tags[fullTag] >= varScheme.meanTags && !tagsIncluded[fullTag]) {
+                                if (tagRank >= 50
+                                    && varScheme.tags[fullTag] >= varScheme.meanTags &&
+                                    !tagsIncluded[fullTag]) {
                                     let tmpscore = varScheme.tags[fullTag];
                                     tagsIncluded[fullTag] = [
                                         tag + " (" + tmpscore.toFixed(2) + ")",
@@ -948,7 +1032,7 @@ self.onmessage = async ({ data }) => {
                                 }
                             }
                         } else if (includeUnknownVar) {
-                            ztags.push(varScheme.meanTags - minNumber);
+                            ztags.push(1);
                         }
                     }
                 } else {
@@ -957,7 +1041,9 @@ self.onmessage = async ({ data }) => {
                             ztags.push(varScheme.tags[fullTag]);
                             // Top Similarities
                             if (typeof varScheme.meanTags === "number" && typeof tagRank === "number") {
-                                if (tagRank >= 50 && varScheme.tags[fullTag] >= varScheme.meanTags && !tagsIncluded[fullTag]) {
+                                if (tagRank >= 50 &&
+                                    varScheme.tags[fullTag] >= varScheme.meanTags &&
+                                    !tagsIncluded[fullTag]) {
                                     let tmpscore = varScheme.tags[fullTag];
                                     tagsIncluded[fullTag] = [
                                         tag + " (" + tmpscore.toFixed(2) + ")",
@@ -966,7 +1052,7 @@ self.onmessage = async ({ data }) => {
                                 }
                             }
                         } else if (includeUnknownVar) {
-                            ztags.push(varScheme.meanTags - minNumber);
+                            ztags.push(1);
                         }
                     }
                 }
@@ -992,7 +1078,8 @@ self.onmessage = async ({ data }) => {
                     // Top Similarities
                     if (typeof varScheme.meanStudios === "number") {
                         let studioUrl = studios[j]?.siteUrl;
-                        if (varScheme.studios[fullStudio] >= varScheme.meanStudios && !studiosIncluded[fullStudio] && typeof studioUrl === "string") {
+                        if (varScheme.studios[fullStudio] >= varScheme.meanStudios &&
+                            !studiosIncluded[fullStudio] && typeof studioUrl === "string") {
                             let tmpscore = varScheme.studios[fullStudio];
                             studiosIncluded[fullStudio] = [{
                                 [studio + " (" + tmpscore.toFixed(2) + ")"]:
@@ -1003,14 +1090,14 @@ self.onmessage = async ({ data }) => {
                         }
                     }
                 } else if (typeof varScheme.meanStudios === "number" && includeUnknownVar) {
-                    zstudios.push(varScheme.meanStudios - minNumber);
+                    zstudios.push(1);
                 }
                 // Filters
                 if (filters['studio'][studio] === undefined) {
                     filters['studio'][studio] = true
                 }
             }
-            let zstaff = {};
+            // let zstaff = {};
             let includedStaff = {};
             for (let j = 0; j < staffs.length; j++) {
                 let staff = staffs[j]?.node?.name?.userPreferred;
@@ -1020,62 +1107,73 @@ self.onmessage = async ({ data }) => {
                 let staffRole = staffs[j]?.role;
                 if (typeof staffRole !== "string") continue;
                 staff = staff.trim().toLowerCase();
-                let fullStaff = "staff: " + staff;
+                // let fullStaff = "staff: " + staff;
                 staffRole = staffRole.split("(")[0].trim().toLowerCase();
-                let fullStaffRole = "staff role: " + staffRole;
-                if (!jsonIsEmpty(varScheme.includeRoles)) {
-                    if (varScheme.includeRoles[fullStaffRole]) {
-                        if (typeof varScheme.staff[fullStaff] === "number") {
-                            if (!zstaff[fullStaffRole]) {
-                                zstaff[fullStaffRole] = [varScheme.staff[fullStaff]];
-                            } else {
-                                zstaff[fullStaffRole].push(varScheme.staff[fullStaff]);
-                            }
-                        } else if (typeof varScheme.meanStaff === "number" && includeUnknownVar && zstaff[fullStaffRole]) {
-                            zstaff[fullStaffRole].push(varScheme.meanStaff - minNumber);
-                        }
-                    }
-                } else {
-                    if (!varScheme.excludeRoles[fullStaffRole]) {
-                        if (typeof varScheme.staff[fullStaff] === "number") {
-                            if (!zstaff[fullStaffRole]) {
-                                zstaff[fullStaffRole] = [varScheme.staff[fullStaff]];
-                            } else {
-                                zstaff[fullStaffRole].push(varScheme.staff[fullStaff]);
-                            }
-                        } else if (typeof varScheme.meanStaff === "number" && includeUnknownVar && zstaff[fullStaffRole]) {
-                            zstaff[fullStaffRole].push(varScheme.meanStaff - minNumber);
-                        }
-                    }
-                }
+                // let fullStaffRole = "staff role: " + staffRole;
+                // if (!jsonIsEmpty(varScheme.includeRoles)) {
+                //     if (varScheme.includeRoles[fullStaffRole]) {
+                //         if (typeof varScheme.staff[fullStaff] === "number") {
+                //             if (!zstaff[fullStaffRole]) {
+                //                 zstaff[fullStaffRole] = [varScheme.staff[fullStaff]];
+                //             } else {
+                //                 zstaff[fullStaffRole].push(varScheme.staff[fullStaff]);
+                //             }
+                //         } else if (typeof varScheme.meanStaff === "number" && includeUnknownVar && zstaff[fullStaffRole]) {
+                //             zstaff[fullStaffRole].push(1);
+                //         }
+                //     }
+                // } else {
+                //     if (!varScheme.excludeRoles[fullStaffRole]) {
+                //         if (typeof varScheme.staff[fullStaff] === "number") {
+                //             if (!zstaff[fullStaffRole]) {
+                //                 zstaff[fullStaffRole] = [varScheme.staff[fullStaff]];
+                //             } else {
+                //                 zstaff[fullStaffRole].push(varScheme.staff[fullStaff]);
+                //             }
+                //         } else if (typeof varScheme.meanStaff === "number" && includeUnknownVar && zstaff[fullStaffRole]) {
+                //             zstaff[fullStaffRole].push(1);
+                //         }
+                //     }
+                // }
                 // filters
                 if (filters['staff role'][staffRole] === undefined) {
                     filters['staff role'][staffRole] = true
                 }
             }
             // Include Linear Model Prediction from Earlier
-            let tempStatus = status?.trim?.()?.toLowerCase?.();
-            let animeType = [];
+            // Anime Quality
+            let animeQuality = [];
+            let animeType = []
             let seasonYear = anime?.seasonYear;
             let yearModel = varScheme.yearModel ?? {};
             if (isaN(seasonYear) && !jsonIsEmpty(yearModel)) {
                 if (typeof seasonYear === "string") {
                     seasonYear = parseFloat(seasonYear);
                 }
-                animeType.push(Math.max(1, LRpredict(yearModel, seasonYear)));
-            } else if (tempStatus !== "not_yet_released") {
-                animeType.push(1);
+                let modelScore = LRpredict(yearModel, seasonYear)
+                if (modelScore >= 1) {
+                    animeQuality.push(modelScore);
+                } else {
+                    animeQuality.push(1)
+                }
+            } else {
+                animeQuality.push(1)
             }
             let averageScore = anime?.averageScore;
-            let averageScoreModel = varScheme.averageScoreModel ?? {};
-            if (isaN(averageScore) && !jsonIsEmpty(averageScoreModel)) {
-                if (typeof averageScore === "string") {
-                    averageScore = parseFloat(averageScore);
-                }
-                animeType.push(Math.max(1, LRpredict(averageScoreModel, averageScore)));
-            } else if (tempStatus === "finished") {
-                animeType.push(1);
-            }
+            // let averageScoreModel = varScheme.averageScoreModel ?? {};
+            // if (isaN(averageScore) && !jsonIsEmpty(averageScoreModel)) {
+            //     if (typeof averageScore === "string") {
+            //         averageScore = parseFloat(averageScore);
+            //     }
+            //     let modelScore = LRpredict(averageScoreModel, averageScore)
+            //     if (modelScore >= 1) {
+            //         animeQuality.push(modelScore);
+            //     } else {
+            //         animeQuality.push(1)
+            //     }
+            // } else {
+            //     animeQuality.push(1)
+            // }
             let episodes = anime?.episodes
             let duration = anime?.duration
             let animeLengthModel = varScheme.animeLengthModel ?? {};
@@ -1087,80 +1185,89 @@ self.onmessage = async ({ data }) => {
                     duration = parseFloat(duration);
                 }
                 let animeLength = episodes * duration
-                animeType.push(Math.max(1, LRpredict(animeLengthModel, animeLength)));
-            } else if (tempStatus === "finished") {
-                animeType.push(1);
+                let modelScore = LRpredict(animeLengthModel, animeLength)
+                if (modelScore >= 1) {
+                    animeQuality.push(modelScore);
+                } else {
+                    animeQuality.push(1);
+                }
+            } else {
+                animeQuality.push(1);
             }
+            let staffCountModel = varScheme.staffCountModel ?? {}
+            if (staffs instanceof Array && !jsonIsEmpty(staffCountModel)) {
+                let modelScore = LRpredict(staffCountModel, staffs.length)
+                if (modelScore >= 1) {
+                    animeQuality.push(modelScore);
+                } else {
+                    animeQuality.push(1)
+                }
+            } else {
+                animeQuality.push(1)
+            }
+            // animeQuality.push(
+            //     animeType.length
+            //         ? measure === "mode"
+            //             ? arrayMode(animeType)
+            //             : arrayMean(animeType)
+            //         : 1
+            // )
+            // let animeProduction = []
+            // let zstaffRolesArray =
+            //     Object.values(zstaff).map((e) => {
+            //         if (measure === "mode") {
+            //             return arrayMode(e);
+            //         } else {
+            //             return arrayMean(e);
+            //         }
+            //     }) || [];
+            // if (zstaffRolesArray.length > 1) {
+            //     if (measure === "mode") {
+            //         animeProduction.push(arrayMode(zstaffRolesArray));
+            //     } else {
+            //         animeProduction.push(arrayMean(zstaffRolesArray));
+            //     }
+            // } else {
+            //     animeProduction.push(1)
+            // }
 
             // Combine Scores
             // Anime Content
             let animeContent = [];
             if (zgenres.length) {
                 if (measure === "mode") {
-                    animeContent.push(Math.max(1, arrayMode(zgenres)));
+                    animeContent.push(Math.max(...zgenres));
                 } else {
-                    animeContent.push(Math.max(1, arrayMean(zgenres)));
+                    animeContent.push(Math.max(...zgenres));
                 }
             } else {
-                animeContent.push(1);
+                animeContent.push(1)
             }
             if (ztags.length) {
                 if (measure === "mode") {
-                    animeContent.push(Math.max(1, arrayMode(ztags)));
+                    animeContent.push(arrayMode(ztags));
                 } else {
-                    animeContent.push(Math.max(1, arrayMean(ztags)));
+                    animeContent.push(arrayMean(ztags));
                 }
             } else {
-                animeContent.push(1);
-            }
-            // Anime Production
-            let animeProduction = [];
-            let zstaffRolesArray =
-                Object.values(zstaff).map((e) => {
-                    if (measure === "mode") {
-                        return Math.max(1, arrayMode(e));
-                    } else {
-                        return Math.max(1, arrayMean(e));
-                    }
-                }) || [];
-            if (zstaffRolesArray.length) {
-                if (measure === "mode") {
-                    animeProduction = animeProduction.concat(zstaffRolesArray);
-                } else {
-                    animeProduction = animeProduction.concat(zstaffRolesArray);
-                }
-            } else {
-                animeProduction = animeProduction.concat([1]);
-            }
-            if (zstudios.length) {
-                if (measure === "mode") {
-                    animeProduction = animeProduction.concat([
-                        Math.max(1, arrayMode(zstudios)),
-                    ]);
-                } else {
-                    animeProduction = animeProduction.concat([
-                        Math.max(1, arrayMean(zstudios)),
-                    ]);
-                }
-            } else {
-                animeProduction = animeProduction.concat([1]);
+                animeContent.push(1)
             }
 
             // Calculate Recommendation Scores
-            let score = Math.max(1,
-                arrayProbability([
-                    Math.max(1,
-                        measure === "mode" ? arrayMode(animeType) : arrayMean(animeType)
-                    ),
-                    Math.max(1, arrayProbability(animeContent)),
-                    Math.max(1,
-                        measure === "mode"
-                            ? arrayMode(animeProduction)
-                            : arrayMean(animeProduction)
-                    ),
-                ])
-            );
-            maxScore = Math.pow(userScoreBase, 4) // animeType * (animeGenre * animeTag) * animeProduction = userScoreMax^4 // MaxScore
+            let finalAnimeQuality =
+                animeQuality.length
+                    ? measure === "mode"
+                        ? arrayMode(animeQuality)
+                        : arrayMean(animeQuality)
+                    : 1
+            let finalAnimeContent =
+                animeContent.length
+                    ? measure === "mode"
+                        ? arrayMode(animeContent)
+                        : arrayMean(animeContent)
+                    : 1
+            let score = finalAnimeContent * finalAnimeQuality
+            maxScore = Math.pow(userScoreBase, 2)
             // Process other Anime Info
             genres = genres.length ? genres : [];
             tags = tags.length ? tags.map((e) => e?.name || "") : [];
@@ -1595,6 +1702,19 @@ function arrayMean(obj) {
 function arraySum(obj) {
     return obj.reduce((a, b) => a + b, 0)
 }
+function arrayMedian(arr) {
+    const sortedArr = arr.slice().sort((a, b) => a - b);
+    const n = sortedArr.length;
+    if (n % 2 === 0) {
+        const middleRight = n / 2;
+        const middleLeft = middleRight - 1;
+        return (sortedArr[middleLeft] + sortedArr[middleRight]) / 2;
+    } else {
+        const middle = Math.floor(n / 2);
+        return sortedArr[middle];
+    }
+}
+
 function arrayMode(obj) {
     if (obj.length === 0) { return }
     else if (obj.length === 1) { return obj[0] }
@@ -1642,6 +1762,25 @@ function arrayProbability(obj) {
     if (!obj?.length) return 0;
     return obj.reduce((a, b) => a * b, 1);
 }
+function filterArrayByMeanPercentages(numbers) {
+    const counts = {};
+    numbers.forEach((num) => {
+        counts[num] = counts[num] ? counts[num] + 1 : 1;
+    });
+    const percentages = {};
+    const totalCount = numbers.length;
+    Object.keys(counts).forEach((key) => {
+        percentages[key] = (counts[key] / totalCount) * 100;
+    });
+    const meanPercentage =
+        Object.values(percentages).reduce((sum, val) => sum + val, 0) /
+        Object.keys(percentages).length;
+    const filteredArray = numbers.filter((num) => {
+        return percentages[num] < meanPercentage;
+    });
+    return filteredArray;
+}
+
 function linearRegression(XY) {
     let lr = {};
     let n = XY.length;
@@ -1667,6 +1806,13 @@ function LRpredict(modelObj, x) {
     if (!modelObj.slope || !modelObj.intercept) return null;
     if (isNaN(modelObj.slope) || isNaN(modelObj.intercept)) return null;
     return parseFloat(modelObj.slope) * x + parseFloat(modelObj.intercept);
+}
+function LRpredictInverse(modelObj, y) {
+    if (!modelObj) return null;
+    if (!modelObj.slope || !modelObj.intercept) return null;
+    if (isNaN(modelObj.slope) || isNaN(modelObj.intercept)) return null;
+    if (parseFloat(modelObj.slope) === 0) return null;
+    return (parseFloat(y) - parseFloat(modelObj.intercept)) / parseFloat(modelObj.slope);
 }
 async function IDBinit() {
     return await new Promise((resolve) => {
