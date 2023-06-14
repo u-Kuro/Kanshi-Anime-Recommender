@@ -4499,7 +4499,8 @@ self.onmessage = async ({ data }) => {
 
             } else if (filterSelectionName === "Algorithm Filter") {
                 // Dropdown
-                let aniFilDropdown = ["genre", "tag", "tag category", "studio"
+                let aniFilDropdown = ["genre", "tag", "tag category"
+                    // , "studio"
                     // , "staff role"
                 ] // Add Selections
                 filters.Dropdown = aniFilDropdown.map((e) => {
