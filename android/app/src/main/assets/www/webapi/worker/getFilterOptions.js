@@ -4562,6 +4562,10 @@ self.onmessage = async ({ data }) => {
                         isSelected: false
                     },
                     {
+                        filName: "inc. average score",
+                        isSelected: false
+                    },
+                    {
                         filName: "show all sequels",
                         isSelected: false
                     },

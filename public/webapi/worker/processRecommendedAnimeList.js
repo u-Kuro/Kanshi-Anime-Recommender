@@ -17,14 +17,15 @@ self.onmessage = async ({ data }) => {
         measure = "mean",
         includeStaffCount = true,
         includeYear = true,
-        includeAverageScore = true,
+        includeAverageScore = false,
         includeAnimeLength = true,
         showAllSequels = false,
         minPopularity,
         minAverageScore,
         minSampleSize,
         sampleSize,
-        customUserScoreBase;
+        customUserScoreBase,
+        genresWithLowerCount = {};
     let include = {
         genres: {}, tags: {}, categories: {}, studios: {}, staffs: {}, roles: {}
     },
@@ -53,10 +54,11 @@ self.onmessage = async ({ data }) => {
             } else if (filterType === 'checkbox') {
                 if (optionName.toLowerCase() === 'inc. all factors') {
                     includeUnknownVar = true
-                } else
-                    if (optionName.toLowerCase() === 'show all sequels') {
-                        showAllSequels = true
-                    }
+                } else if (optionName.toLowerCase() === "inc. average score") {
+                    includeAverageScore = true
+                } else if (optionName.toLowerCase() === 'show all sequels') {
+                    showAllSequels = true
+                }
             } else if (filterType === 'input number') {
                 if (optionName.toLowerCase() === 'scoring system') {
                     customUserScoreBase = parseFloat(optionValue)
@@ -483,12 +485,14 @@ self.onmessage = async ({ data }) => {
         varScheme = {}
     } else {
         // Clean Data
+        let genreMeanCountLower;
         if (typeof sampleSize === "number" && sampleSize >= 1) {
             genresMeanCount = sampleSize
         } else if (!jsonIsEmpty(genresMeanCount)) {
             let genresCountValues = Object.values(genresMeanCount)
             genresCountValues = filterArrayByMeanPercentages(genresCountValues)
             genresMeanCount = arrayMean(genresCountValues)
+            genreMeanCountLower = Math.min(genresMeanCount, arrayMedian(genresCountValues), arrayMode(genresCountValues))
         } else {
             genresMeanCount = 10
         }
@@ -544,24 +548,16 @@ self.onmessage = async ({ data }) => {
         // Genres
         let genresKey = Object.keys(varScheme.genres)
         let genresMean = []
-        let filteredGenresMean = []
         for (let i = 0; i < genresKey.length; i++) {
             if (measure === "mode") {
                 let tempModeScore = arrayMode(varScheme.genres[genresKey[i]].userScore)
-                if (varScheme.genres[genresKey[i]].count >= genresMeanCount) {
-                    filteredGenresMean.push(tempModeScore)
-                }
                 genresMean.push(tempModeScore)
             } else {
                 let tempMeanScore = arrayMean(varScheme.genres[genresKey[i]].userScore)
-                if (varScheme.genres[genresKey[i]].count >= genresMeanCount) {
-                    filteredGenresMean.push(tempMeanScore)
-                }
                 genresMean.push(tempMeanScore)
             }
         }
         genresMean = arrayMean(genresMean)
-        filteredGenresMean = arrayMean(filteredGenresMean)
         for (let i = 0; i < genresKey.length; i++) {
             let tempScore = 0
             if (measure === "mode") {
@@ -571,9 +567,9 @@ self.onmessage = async ({ data }) => {
             }
             // Include High Weight or Low scored Variables to avoid High-scored Variables without enough sample
             let count = varScheme.genres[genresKey[i]].count
-            if (count >= genresMeanCount || tempScore < filteredGenresMean) {
-                if (count <= genresMeanCount) {
-                    tempScore = 1
+            if (count >= genresMeanCount || (count <= genreMeanCountLower && tempScore < genresMean)) {
+                if ((count <= genreMeanCountLower && tempScore < genresMean)) {
+                    genresWithLowerCount[genresKey[i]] = true
                 }
                 varScheme.genres[genresKey[i]] = tempScore
             } else {
@@ -584,45 +580,16 @@ self.onmessage = async ({ data }) => {
         // Tags
         let tagsKey = Object.keys(varScheme.tags)
         let tagsMean = []
-        let filteredTagsMean = []
         for (let i = 0; i < tagsKey.length; i++) {
             if (measure === "mode") {
                 let tempModeScore = arrayMode(varScheme.tags[tagsKey[i]].userScore)
-                if (varScheme.tags[tagsKey[i]].count >= tagsMeanCount) {
-                    filteredTagsMean.push(tempModeScore)
-                }
                 tagsMean.push(tempModeScore)
             } else {
                 let tempMeanScore = arrayMean(varScheme.tags[tagsKey[i]].userScore)
-                if (varScheme.tags[tagsKey[i]].count >= tagsMeanCount) {
-                    filteredTagsMean.push(tempMeanScore)
-                }
                 tagsMean.push(tempMeanScore)
             }
         }
         tagsMean = arrayMean(tagsMean)
-        filteredTagsMean = arrayMean(filteredTagsMean)
-        let tagsMeanLower = []
-        for (let i = 0; i < tagsKey.length; i++) {
-            let tempMeanScore = arrayMean(varScheme.tags[tagsKey[i]].userScore)
-            if (tempMeanScore < tagsMean) {
-                tagsMeanLower.push(tempMeanScore)
-            }
-        }
-        let totalTagCount = 0
-        for (let i = 0; i < tagsKey.length; i++) {
-            let tempScore = 0
-            if (measure === "mode") {
-                tempScore = arrayMode(varScheme.tags[tagsKey[i]].userScore)
-            } else {
-                tempScore = arrayMean(varScheme.tags[tagsKey[i]].userScore)
-            }
-            let count = varScheme.tags[tagsKey[i]].count
-            if (count <= tagMeanCountLower || tempScore <= tagsMeanLower) {
-                totalTagCount += varScheme.tags[tagsKey[i]].count
-            }
-        }
-        tagsMeanLower = arrayMean(tagsMeanLower)
         for (let i = 0; i < tagsKey.length; i++) {
             let tempScore = 0
             if (measure === "mode") {
@@ -632,13 +599,7 @@ self.onmessage = async ({ data }) => {
             }
             // Include High Weight or Low scored Variables to avoid High-scored Variables without enough sample
             let count = varScheme.tags[tagsKey[i]].count
-            if (count <= tagMeanCountLower || tempScore <= tagsMeanLower) {
-                tempScore = 1
-            }
-            if (count >= tagsMeanCount || tempScore === 1) {
-                if (tempScore === 1) {
-                    tempScore = tempScore / (totalTagCount / count)
-                }
+            if (count >= tagsMeanCount || (count <= tagMeanCountLower && tempScore < tagsMean)) {
                 varScheme.tags[tagsKey[i]] = tempScore
             } else {
                 delete varScheme.tags[tagsKey[i]]
@@ -984,7 +945,7 @@ self.onmessage = async ({ data }) => {
                 genre = genre.trim().toLowerCase();
                 let fullGenre = "genre: " + genre;
                 if (typeof varScheme.genres[fullGenre] === "number") {
-                    zgenres.push(varScheme.genres[fullGenre]);
+                    zgenres.push({ genre: fullGenre, score: varScheme.genres[fullGenre] });
                     // Top Similarities
                     if (typeof varScheme.meanGenres === "number") {
                         if (varScheme.genres[fullGenre] >= varScheme.meanGenres &&
@@ -997,7 +958,7 @@ self.onmessage = async ({ data }) => {
                         }
                     }
                 } else if (typeof varScheme.meanGenres === "number" && includeUnknownVar) {
-                    zgenres.push(1);
+                    zgenres.push({ genre: fullGenre, score: varScheme.meanGenres });
                 }
                 // Filters
                 if (filters['genre'][genre] === undefined) {
@@ -1031,8 +992,8 @@ self.onmessage = async ({ data }) => {
                                     ];
                                 }
                             }
-                        } else if (includeUnknownVar) {
-                            ztags.push(1);
+                        } else if (typeof varScheme.meanTags === "number" && includeUnknownVar) {
+                            ztags.push(varScheme.meanTags);
                         }
                     }
                 } else {
@@ -1051,8 +1012,8 @@ self.onmessage = async ({ data }) => {
                                     ];
                                 }
                             }
-                        } else if (includeUnknownVar) {
-                            ztags.push(1);
+                        } else if (typeof varScheme.meanTags === "number" && includeUnknownVar) {
+                            ztags.push(varScheme.meanTags);
                         }
                     }
                 }
@@ -1090,7 +1051,7 @@ self.onmessage = async ({ data }) => {
                         }
                     }
                 } else if (typeof varScheme.meanStudios === "number" && includeUnknownVar) {
-                    zstudios.push(1);
+                    zstudios.push(varScheme.meanStudios);
                 }
                 // Filters
                 if (filters['studio'][studio] === undefined) {
@@ -1119,7 +1080,7 @@ self.onmessage = async ({ data }) => {
                 //                 zstaff[fullStaffRole].push(varScheme.staff[fullStaff]);
                 //             }
                 //         } else if (typeof varScheme.meanStaff === "number" && includeUnknownVar && zstaff[fullStaffRole]) {
-                //             zstaff[fullStaffRole].push(1);
+                //             zstaff[fullStaffRole].push(varScheme.meanStaff);
                 //         }
                 //     }
                 // } else {
@@ -1131,7 +1092,7 @@ self.onmessage = async ({ data }) => {
                 //                 zstaff[fullStaffRole].push(varScheme.staff[fullStaff]);
                 //             }
                 //         } else if (typeof varScheme.meanStaff === "number" && includeUnknownVar && zstaff[fullStaffRole]) {
-                //             zstaff[fullStaffRole].push(1);
+                //             zstaff[fullStaffRole].push(varScheme.meanStaff);
                 //         }
                 //     }
                 // }
@@ -1143,7 +1104,6 @@ self.onmessage = async ({ data }) => {
             // Include Linear Model Prediction from Earlier
             // Anime Quality
             let animeQuality = [];
-            let animeType = []
             let seasonYear = anime?.seasonYear;
             let yearModel = varScheme.yearModel ?? {};
             if (isaN(seasonYear) && !jsonIsEmpty(yearModel)) {
@@ -1160,20 +1120,20 @@ self.onmessage = async ({ data }) => {
                 animeQuality.push(1)
             }
             let averageScore = anime?.averageScore;
-            // let averageScoreModel = varScheme.averageScoreModel ?? {};
-            // if (isaN(averageScore) && !jsonIsEmpty(averageScoreModel)) {
-            //     if (typeof averageScore === "string") {
-            //         averageScore = parseFloat(averageScore);
-            //     }
-            //     let modelScore = LRpredict(averageScoreModel, averageScore)
-            //     if (modelScore >= 1) {
-            //         animeQuality.push(modelScore);
-            //     } else {
-            //         animeQuality.push(1)
-            //     }
-            // } else {
-            //     animeQuality.push(1)
-            // }
+            let averageScoreModel = varScheme.averageScoreModel ?? {};
+            if (isaN(averageScore) && !jsonIsEmpty(averageScoreModel) && includeAverageScore) {
+                if (typeof averageScore === "string") {
+                    averageScore = parseFloat(averageScore);
+                }
+                let modelScore = LRpredict(averageScoreModel, averageScore)
+                if (modelScore >= 1) {
+                    animeQuality.push(modelScore);
+                } else {
+                    animeQuality.push(1)
+                }
+            } else {
+                animeQuality.push(1)
+            }
             let episodes = anime?.episodes
             let duration = anime?.duration
             let animeLengthModel = varScheme.animeLengthModel ?? {};
@@ -1235,10 +1195,18 @@ self.onmessage = async ({ data }) => {
             // Anime Content
             let animeContent = [];
             if (zgenres.length) {
-                if (measure === "mode") {
-                    animeContent.push(Math.max(...zgenres));
+                let genreValues = zgenres.reduce((acc, _genre) => {
+                    acc.push(_genre.score)
+                    return acc
+                }, [])
+                if (zgenres.some((e) => genresWithLowerCount[e.genre])) {
+                    if (measure === "mode") {
+                        animeContent.push(arrayMode(genreValues));
+                    } else {
+                        animeContent.push(arrayMean(genreValues));
+                    }
                 } else {
-                    animeContent.push(Math.max(...zgenres));
+                    animeContent.push(Math.max(...genreValues));
                 }
             } else {
                 animeContent.push(1)
