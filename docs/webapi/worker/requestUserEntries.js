@@ -158,6 +158,7 @@ self.onmessage = async ({ data }) => {
                                 if (currentUserAnimeUpdate instanceof Date && !isNaN(currentUserAnimeUpdate)) {
                                     await saveJSON(currentUserAnimeUpdate, "lastUserAnimeUpdate")
                                 }
+                                await saveJSON(true, "shouldProcessRecommendation");
                                 await saveJSON(userEntries, "userEntries")
                                 await saveJSON(username, "username")
                                 self.postMessage({ status: null })

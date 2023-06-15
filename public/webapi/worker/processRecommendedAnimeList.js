@@ -609,87 +609,75 @@ self.onmessage = async ({ data }) => {
         // Studios
         let studiosKey = Object.keys(varScheme.studios)
         let studiosMean = []
-        let filteredStudiosMean = []
+        // let filteredStudiosMean = []
         for (let i = 0; i < studiosKey.length; i++) {
             if (measure === "mode") {
                 let tempModeScore = arrayMode(varScheme.studios[studiosKey[i]].userScore)
-                if (varScheme.studios[studiosKey[i]].count >= studiosMeanCount) {
-                    filteredStudiosMean.push(tempModeScore)
-                }
                 studiosMean.push(tempModeScore)
             } else {
                 let tempMeanScore = arrayMean(varScheme.studios[studiosKey[i]].userScore)
-                if (varScheme.studios[studiosKey[i]].count >= studiosMeanCount) {
-                    filteredStudiosMean.push(tempMeanScore)
-                }
                 studiosMean.push(tempMeanScore)
             }
         }
         studiosMean = arrayMean(studiosMean)
-        filteredStudiosMean = arrayMean(filteredStudiosMean)
-        for (let i = 0; i < studiosKey.length; i++) {
-            let tempScore = 0
-            if (measure === "mode") {
-                tempScore = arrayMode(varScheme.studios[studiosKey[i]].userScore)
-            } else {
-                tempScore = arrayMean(varScheme.studios[studiosKey[i]].userScore)
-            }
-            // Include High Weight or Low scored Variables to avoid High-scored Variables without enough sample
-            let count = varScheme.studios[studiosKey[i]].count
-            if (count >= studiosMeanCount) {
-                varScheme.studios[studiosKey[i]] = tempScore
-            } else {
-                delete varScheme.studios[studiosKey[i]]
-            }
-        }
+        // filteredStudiosMean = arrayMean(filteredStudiosMean)
+        // for (let i = 0; i < studiosKey.length; i++) {
+        // let tempScore = 0
+        // if (measure === "mode") {
+        //     tempScore = arrayMode(varScheme.studios[studiosKey[i]].userScore)
+        // } else {
+        //     tempScore = arrayMean(varScheme.studios[studiosKey[i]].userScore)
+        // }
+        // Include High Weight or Low scored Variables to avoid High-scored Variables without enough sample
+        // let count = varScheme.studios[studiosKey[i]].count
+        // if (count >= studiosMeanCount) {
+        //     varScheme.studios[studiosKey[i]] = tempScore
+        // } else {
+        //     delete varScheme.studios[studiosKey[i]]
+        // }
+        // }
 
         // Staffs
         let staffKey = Object.keys(varScheme.staff)
         let staffMean = []
-        let filteredStaffMean = []
+        // let filteredStaffMean = []
         for (let i = 0; i < staffKey.length; i++) {
             if (measure === "mode") {
                 let tempModeScore = arrayMode(varScheme.staff[staffKey[i]].userScore)
-                if (varScheme.staff[staffKey[i]].count >= staffMeanCount) {
-                    filteredStaffMean.push(tempModeScore)
-                }
                 staffMean.push(tempModeScore)
             } else {
                 let tempMeanScore = arrayMean(varScheme.staff[staffKey[i]].userScore)
-                if (varScheme.staff[staffKey[i]].count >= staffMeanCount) {
-                    filteredStaffMean.push(tempMeanScore)
-                }
                 staffMean.push(tempMeanScore)
             }
         }
         staffMean = arrayMean(staffMean)
-        filteredStaffMean = arrayMean(filteredStaffMean)
-        for (let i = 0; i < staffKey.length; i++) {
-            let tempScore = 0
-            if (measure === "mode") {
-                tempScore = arrayMode(varScheme.staff[staffKey[i]].userScore)
-            } else {
-                tempScore = arrayMean(varScheme.staff[staffKey[i]].userScore)
-            }
-            // Include High Weight or Low scored Variables to avoid High-scored Variables without enough sample
-            let count = varScheme.staff[staffKey[i]].count
-            if (count >= staffMeanCount) {
-                varScheme.staff[staffKey[i]] = tempScore
-            } else {
-                delete varScheme.staff[staffKey[i]]
-            }
-        }
+        // filteredStaffMean = arrayMean(filteredStaffMean)
+        // for (let i = 0; i < staffKey.length; i++) {
+        // let tempScore = 0
+        // if (measure === "mode") {
+        //     tempScore = arrayMode(varScheme.staff[staffKey[i]].userScore)
+        // } else {
+        //     tempScore = arrayMean(varScheme.staff[staffKey[i]].userScore)
+        // }
+        // Include High Weight or Low scored Variables to avoid High-scored Variables without enough sample
+        // let count = varScheme.staff[staffKey[i]].count
+        // if (count >= staffMeanCount) {
+        //     varScheme.staff[staffKey[i]] = tempScore
+        // } else {
+        //     delete varScheme.staff[staffKey[i]]
+        // }
+        // }
 
         // Join Data
         varScheme.meanGenres = genresMean
         varScheme.meanTags = tagsMean
-        varScheme.meanStudios = studiosMean
-        varScheme.meanStaff = staffMean
-        varScheme.includeRoles = include.roles
-        varScheme.excludeRoles = exclude.roles
+        // varScheme.meanStudios = studiosMean
+        // varScheme.meanStaff = staffMean
+        // varScheme.includeRoles = include.roles
+        // varScheme.excludeRoles = exclude.roles
         varScheme.includeCategories = include.categories
         varScheme.excludeCategories = exclude.categories
-        varScheme.measure = measure
+        // varScheme.measure = measure
 
         // Linear Model Building | y is Predicted so its Userscore
         // Production Staff Model
@@ -1025,7 +1013,7 @@ self.onmessage = async ({ data }) => {
                     filters['tag category'][tagCategory] = true
                 }
             }
-            let zstudios = [];
+            // let zstudios = [];
             let includedStudios = {};
             for (let j = 0; j < studios.length; j++) {
                 let studio = studios[j]?.name;
@@ -1033,26 +1021,26 @@ self.onmessage = async ({ data }) => {
                 if (includedStudios[studio]) continue;
                 includedStudios[studio] = true;
                 studio = studio.trim().toLowerCase();
-                let fullStudio = "studio: " + studio;
-                if (typeof varScheme.studios[fullStudio] === "number") {
-                    zstudios.push(varScheme.studios[fullStudio]);
-                    // Top Similarities
-                    if (typeof varScheme.meanStudios === "number") {
-                        let studioUrl = studios[j]?.siteUrl;
-                        if (varScheme.studios[fullStudio] >= varScheme.meanStudios &&
-                            !studiosIncluded[fullStudio] && typeof studioUrl === "string") {
-                            let tmpscore = varScheme.studios[fullStudio];
-                            studiosIncluded[fullStudio] = [{
-                                [studio + " (" + tmpscore.toFixed(2) + ")"]:
-                                    studioUrl,
-                            },
-                                tmpscore,
-                            ];
-                        }
-                    }
-                } else if (typeof varScheme.meanStudios === "number" && includeUnknownVar) {
-                    zstudios.push(varScheme.meanStudios);
-                }
+                // let fullStudio = "studio: " + studio;
+                // if (typeof varScheme.studios[fullStudio] === "number") {
+                //     zstudios.push(varScheme.studios[fullStudio]);
+                //     // Top Similarities
+                //     if (typeof varScheme.meanStudios === "number") {
+                //         let studioUrl = studios[j]?.siteUrl;
+                //         if (varScheme.studios[fullStudio] >= varScheme.meanStudios &&
+                //             !studiosIncluded[fullStudio] && typeof studioUrl === "string") {
+                //             let tmpscore = varScheme.studios[fullStudio];
+                //             studiosIncluded[fullStudio] = [{
+                //                 [studio + " (" + tmpscore.toFixed(2) + ")"]:
+                //                     studioUrl,
+                //             },
+                //                 tmpscore,
+                //             ];
+                //         }
+                //     }
+                // } else if (typeof varScheme.meanStudios === "number" && includeUnknownVar) {
+                //     zstudios.push(varScheme.meanStudios);
+                // }
                 // Filters
                 if (filters['studio'][studio] === undefined) {
                     filters['studio'][studio] = true
