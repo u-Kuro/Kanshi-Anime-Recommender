@@ -23,10 +23,15 @@
         getChildIndex,
         msToTime,
     } from "../../../js/others/helper.js";
-    import { saveJSON } from "../../../js/indexedDB.js";
+    import { retrieveJSON, saveJSON } from "../../../js/indexedDB.js";
     import captureSlideEvent from "../../../js/slideEvent.js";
 
     let isOnline = window.navigator.onLine;
+    let savedYtVolume = 50;
+    (async () => {
+        savedYtVolume = (await retrieveJSON("savedYtVolume")) || 50;
+    })();
+    let currentYtPlayer;
     let popupWrapper, popupContainer;
 
     function handlePopupVisibility(e) {
@@ -211,7 +216,9 @@
                                 ) &&
                                 ($androidInApp || !$android)
                             ) {
+                                prePlayYtPlayer($ytPlayers[i]);
                                 $ytPlayers[i]?.playVideo?.();
+                                currentYtPlayer = $ytPlayers[i];
                             }
                         }
                         haveNoTrailers[trailerIdx] = false;
@@ -282,6 +289,7 @@
                         $ytPlayers[i].g === visibleTrailer &&
                         ($androidInApp || !$android)
                     ) {
+                        prePlayYtPlayer($ytPlayers[i]);
                         $ytPlayers[i]?.playVideo?.();
                         break;
                     }
@@ -338,6 +346,7 @@
                             $ytPlayers[i].g === visibleTrailer &&
                             ($androidInApp || !$android)
                         ) {
+                            prePlayYtPlayer($ytPlayers[i]);
                             $ytPlayers[i]?.playVideo?.();
                             break;
                         }
@@ -360,6 +369,7 @@
         });
     });
 
+    let currentHeader;
     async function playMostVisibleTrailer() {
         if (!$popupVisible) return;
         await tick();
@@ -381,6 +391,7 @@
         if (animeGrid instanceof Element) {
             scrollToElement(window, animeGrid, "top", "smooth", -66); // Nav + GridGap
         }
+
         let haveTrailer;
         if (visibleTrailer instanceof Element) {
             haveTrailer = $ytPlayers?.some(
@@ -404,9 +415,13 @@
                     await tick();
                     if (
                         popupWrapper?.classList?.contains?.("visible") &&
-                        ($androidInApp || !$android)
+                        ($androidInApp || !$android) &&
+                        currentHeader !== mostVisiblePopupHeader
                     ) {
+                        prePlayYtPlayer(ytPlayer);
                         ytPlayer?.playVideo?.();
+                        currentYtPlayer = ytPlayer;
+                        currentHeader = mostVisiblePopupHeader;
                     }
                 } else if (ytPlayer.g !== visibleTrailer) {
                     ytPlayer?.pauseVideo?.();
@@ -423,6 +438,7 @@
                 });
             }
         } else {
+            currentHeader = mostVisiblePopupHeader;
             // Pause All Players
             $ytPlayers?.forEach((ytPlayer) => ytPlayer?.pauseVideo?.());
             // Recheck Trailer
@@ -491,7 +507,6 @@
     async function onPlayerReady(event) {
         let ytPlayer = event.target;
         let trailerEl = ytPlayer?.g;
-
         let popupHeader = trailerEl?.parentElement;
         let popupImg = popupHeader?.querySelector?.(".popup-img");
 
@@ -565,6 +580,7 @@
                             popupWrapper?.classList?.contains?.("visible") &&
                             ($androidInApp || !$android)
                         ) {
+                            prePlayYtPlayer(ytPlayer);
                             ytPlayer?.playVideo?.();
                         }
                     } else if (ytPlayer.g !== visibleTrailer) {
@@ -574,6 +590,26 @@
                         ytPlayer?.unMute?.();
                     }
                 });
+            }
+        }
+    }
+    function prePlayYtPlayer(ytPlayer) {
+        if (currentYtPlayer?.isMuted && currentYtPlayer?.getVolume) {
+            let isMuted = currentYtPlayer?.isMuted?.();
+            let ytVolume = currentYtPlayer?.getVolume?.();
+            if (typeof isMuted == "boolean") {
+                if (isMuted) {
+                    ytPlayer?.mute?.();
+                } else {
+                    ytPlayer?.unMute?.();
+                }
+            }
+            if (typeof ytVolume === "number") {
+                if (savedYtVolume !== ytVolume) {
+                    savedYtVolume = ytVolume;
+                    saveJSON(savedYtVolume, "savedYtVolume");
+                }
+                ytPlayer?.setVolume?.(savedYtVolume);
             }
         }
     }
@@ -609,6 +645,7 @@
             if (inApp) {
                 for (var ytPlayer of $ytPlayers) {
                     if (ytPlayer.g === visibleTrailer) {
+                        prePlayYtPlayer(ytPlayer);
                         ytPlayer?.playVideo?.();
                         break;
                     }
