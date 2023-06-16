@@ -681,15 +681,15 @@ self.onmessage = async ({ data }) => {
 
         // Linear Model Building | y is Predicted so its Userscore
         // Production Staff Model
-        if (includeStaffCount) {
-            let staffCountXY = []
-            for (let i = 0; i < staffCount.length; i++) {
-                staffCountXY.push([staffCount[i].staffCount, staffCount[i].userScore])
-            }
-            if (staffCountXY.length >= (minSampleSize || 33)) {
-                varScheme.staffCountModel = linearRegression(staffCountXY)
-            }
-        }
+        // if (includeStaffCount) {
+        //     let staffCountXY = []
+        //     for (let i = 0; i < staffCount.length; i++) {
+        //         staffCountXY.push([staffCount[i].staffCount, staffCount[i].userScore])
+        //     }
+        //     if (staffCountXY.length >= (minSampleSize || 33)) {
+        //         varScheme.staffCountModel = linearRegression(staffCountXY)
+        //     }
+        // }
         // Year Model
         if (includeYear) {
             let yearXY = []
@@ -701,15 +701,15 @@ self.onmessage = async ({ data }) => {
             }
         }
         // Duration Model
-        if (includeAnimeLength) {
-            let animeLengthXY = []
-            for (let i = 0; i < animeLength.length; i++) {
-                animeLengthXY.push([animeLength[i].animeLength, animeLength[i].userScore])
-            }
-            if (animeLengthXY.length >= (minSampleSize || 33)) {
-                varScheme.animeLengthModel = linearRegression(animeLengthXY)
-            }
-        }
+        // if (includeAnimeLength) {
+        //     let animeLengthXY = []
+        //     for (let i = 0; i < animeLength.length; i++) {
+        //         animeLengthXY.push([animeLength[i].animeLength, animeLength[i].userScore])
+        //     }
+        //     if (animeLengthXY.length >= (minSampleSize || 33)) {
+        //         varScheme.animeLengthModel = linearRegression(animeLengthXY)
+        //     }
+        // }
         // Average Score Model
         if (includeAverageScore) {
             let averageScoreXY = []
@@ -1124,35 +1124,35 @@ self.onmessage = async ({ data }) => {
             }
             let episodes = anime?.episodes
             let duration = anime?.duration
-            let animeLengthModel = varScheme.animeLengthModel ?? {};
-            if (isaN(duration) && isaN(episodes) && !jsonIsEmpty(animeLengthModel) && duration > 0 && episodes > 0) {
-                if (typeof episodes === "string") {
-                    episodes = parseFloat(episodes);
-                }
-                if (typeof duration === "string") {
-                    duration = parseFloat(duration);
-                }
-                let animeLength = episodes * duration
-                let modelScore = LRpredict(animeLengthModel, animeLength)
-                if (modelScore >= 1) {
-                    animeQuality.push(modelScore);
-                } else {
-                    animeQuality.push(1);
-                }
-            } else {
-                animeQuality.push(1);
-            }
-            let staffCountModel = varScheme.staffCountModel ?? {}
-            if (staffs instanceof Array && !jsonIsEmpty(staffCountModel)) {
-                let modelScore = LRpredict(staffCountModel, staffs.length)
-                if (modelScore >= 1) {
-                    animeQuality.push(modelScore);
-                } else {
-                    animeQuality.push(1)
-                }
-            } else {
-                animeQuality.push(1)
-            }
+            // let animeLengthModel = varScheme.animeLengthModel ?? {};
+            // if (isaN(duration) && isaN(episodes) && !jsonIsEmpty(animeLengthModel) && duration > 0 && episodes > 0) {
+            //     if (typeof episodes === "string") {
+            //         episodes = parseFloat(episodes);
+            //     }
+            //     if (typeof duration === "string") {
+            //         duration = parseFloat(duration);
+            //     }
+            //     let animeLength = episodes * duration
+            //     let modelScore = LRpredict(animeLengthModel, animeLength)
+            //     if (modelScore >= 1) {
+            //         animeQuality.push(modelScore);
+            //     } else {
+            //         animeQuality.push(1);
+            //     }
+            // } else {
+            //     animeQuality.push(1);
+            // }
+            // let staffCountModel = varScheme.staffCountModel ?? {}
+            // if (staffs instanceof Array && !jsonIsEmpty(staffCountModel)) {
+            //     let modelScore = LRpredict(staffCountModel, staffs.length)
+            //     if (modelScore >= 1) {
+            //         animeQuality.push(modelScore);
+            //     } else {
+            //         animeQuality.push(1)
+            //     }
+            // } else {
+            //     animeQuality.push(1)
+            // }
             // animeQuality.push(
             //     animeType.length
             //         ? measure === "mode"
