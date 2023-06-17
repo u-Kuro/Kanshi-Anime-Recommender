@@ -10,21 +10,18 @@ import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.constraintlayout.widget.ConstraintSet;
-import androidx.core.app.NotificationCompat;
-import androidx.core.app.NotificationManagerCompat;
 
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
-import android.icu.text.SymbolTable;
+import android.graphics.BitmapFactory;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
@@ -32,8 +29,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.PowerManager;
-import android.os.VibrationEffect;
-import android.os.Vibrator;
 import android.provider.DocumentsContract;
 import android.provider.Settings;
 import android.util.AttributeSet;
@@ -43,11 +38,9 @@ import android.webkit.ConsoleMessage;
 import android.webkit.JavascriptInterface;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
-import android.webkit.WebResourceError;
-import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
-import android.webkit.WebViewClient;
+import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
@@ -66,10 +59,7 @@ public class MainActivity extends AppCompatActivity  {
     private MediaWebView webView;
 
     private PowerManager.WakeLock wakeLock;
-    private NotificationManagerCompat managerCompat;
-    private boolean isVisible = true;
-    private boolean isLoaded = false;
-    public boolean shoulGoBack;
+    public boolean shouldGoBack;
 
     // Activity Results
     final ActivityResultLauncher<Intent> chooseImportFile =
@@ -145,6 +135,7 @@ public class MainActivity extends AppCompatActivity  {
         // Add WebView on Layout
         ConstraintLayout constraintLayout = findViewById(R.id.activity_main);
         webView = new MediaWebView(MainActivity.this);
+        webView.setWebChromeClient(new WebChromeClient());
         webView.setId(R.id.webView);
         constraintLayout.addView(webView);
         // Add WebView Layout Style
@@ -176,12 +167,7 @@ public class MainActivity extends AppCompatActivity  {
             webSettings.setOffscreenPreRaster(true);
         }
         // prevent the default behavior of WebView for long press events
-        webView.setOnLongClickListener(new View.OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View v) {
-                return true;
-            }
-        });
+        webView.setOnLongClickListener(v -> true);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationChannel channel = new NotificationChannel("My Notification","My Notification", NotificationManager.IMPORTANCE_DEFAULT);
             NotificationManager manager = getSystemService(NotificationManager.class);
@@ -197,6 +183,10 @@ public class MainActivity extends AppCompatActivity  {
         // Add Bridge to Webview
         webView.addJavascriptInterface(new JSBridge(),"JSBridge");
         webView.setWebChromeClient(new WebChromeClient() {
+            private View mCustomView;
+            private WebChromeClient.CustomViewCallback mCustomViewCallback;
+            private int mOriginalOrientation;
+            private int mOriginalSystemUiVisibility;
             // Import
             @Override
             public boolean onShowFileChooser(WebView webView, ValueCallback<Uri[]> filePathCallback, FileChooserParams fileChooserParams) {
@@ -216,7 +206,36 @@ public class MainActivity extends AppCompatActivity  {
                     return true;
                 }
             }
-
+            // Fullscreen
+            @Override
+            public Bitmap getDefaultVideoPoster(){
+                if (mCustomView == null) {
+                    return null;
+                }
+                return BitmapFactory.decodeResource(getApplicationContext().getResources(), 2130837573);
+            }
+            @Override
+            public void onHideCustomView() {
+                ((FrameLayout)getWindow().getDecorView()).removeView(this.mCustomView);
+                this.mCustomView = null;
+                getWindow().getDecorView().setSystemUiVisibility(this.mOriginalSystemUiVisibility);
+                setRequestedOrientation(this.mOriginalOrientation);
+                this.mCustomViewCallback.onCustomViewHidden();
+                this.mCustomViewCallback = null;
+            }
+            @Override
+            public void onShowCustomView(View paramView, WebChromeClient.CustomViewCallback paramCustomViewCallback) {
+                if (this.mCustomView != null) {
+                    onHideCustomView();
+                    return;
+                }
+                this.mCustomView = paramView;
+                this.mOriginalSystemUiVisibility = getWindow().getDecorView().getSystemUiVisibility();
+                this.mOriginalOrientation = getRequestedOrientation();
+                this.mCustomViewCallback = paramCustomViewCallback;
+                ((FrameLayout)getWindow().getDecorView()).addView(this.mCustomView, new FrameLayout.LayoutParams(-1, -1));
+                getWindow().getDecorView().setSystemUiVisibility(3846 | View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
+            }
             // Console Logs for Debugging
             @RequiresApi(api = Build.VERSION_CODES.R)
             @Override
@@ -241,17 +260,6 @@ public class MainActivity extends AppCompatActivity  {
 
     @Override
     public void onWindowFocusChanged(boolean hasFocus) {
-        isVisible = hasFocus;
-        if(hasFocus){
-            // Play YT Player if video is paused
-            webView.post(() -> webView.loadUrl("javascript:window.returnedAppIsVisible(true);window.checkEntries();"));
-        } else {
-            // Close YT Player
-            webView.post(() -> webView.loadUrl("javascript:window.returnedAppIsVisible(false);"));
-        }
-        if(hasFocus&&managerCompat!=null){
-            managerCompat.cancelAll();
-        }
         webView.setKeepScreenOn(true);
         webView.resumeTimers();
         webView.setVisibility(View.VISIBLE);
@@ -299,9 +307,20 @@ public class MainActivity extends AppCompatActivity  {
     }
 
     @Override
+    protected void onPause() {
+        super.onPause();
+        webView.post(() -> webView.loadUrl("javascript:window.returnedAppIsVisible(false);"));
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        webView.post(() -> webView.loadUrl("javascript:window.returnedAppIsVisible(true);window.checkEntries();"));
+    }
+
+    @Override
     protected void onDestroy() {
         super.onDestroy();
-        isLoaded = false;
         wakeLock.release();
     }
 
@@ -450,7 +469,7 @@ public class MainActivity extends AppCompatActivity  {
             clipboard.setPrimaryClip(clip);
         }
         @JavascriptInterface
-        public void setShoulGoBack(boolean _shoulGoBack) { shoulGoBack = _shoulGoBack; }
+        public void setShouldGoBack(boolean _shouldGoBack) { shouldGoBack = _shouldGoBack; }
         @JavascriptInterface
         public void chooseExportFolder() {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
@@ -460,7 +479,7 @@ public class MainActivity extends AppCompatActivity  {
                             .setMessage("Enable Kanshi. App in the Settings after clicking OK!")
                             .setIcon(android.R.drawable.ic_dialog_alert)
                             .setPositiveButton("OK", (dialogInterface, i) -> {
-                                Uri uri = Uri.parse("package:${BuildConfig.APPLICATION_ID}");
+                                Uri uri = Uri.fromParts("package", getPackageName(), null);
                                 Toast.makeText(getApplicationContext(), "Enable Kanshi. App in here to permit Data Export!", Toast.LENGTH_LONG).show();
                                 startActivity(new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION, uri));
                             })
@@ -477,7 +496,7 @@ public class MainActivity extends AppCompatActivity  {
 
     @Override
     public void onBackPressed() {
-        if(!shoulGoBack){
+        if(!shouldGoBack){
             webView.post(() -> webView.loadUrl("javascript:window.backPressed();"));
         } else {
             moveTaskToBack(true);
