@@ -154,7 +154,9 @@ self.onmessage = async ({ data }) => {
                         } else {
                             await saveJSON(animeEntries, "animeEntries")
                             // Update User Recommendation List
-                            self.postMessage({ updateRecommendationList: true })
+                            if (entriesCount > 0) {
+                                self.postMessage({ updateRecommendationList: true })
+                            }
                             self.postMessage({ status: null })
                             // Call Next
                             if (onlyGetNewEntries) {
@@ -400,6 +402,7 @@ self.onmessage = async ({ data }) => {
     // if the current track of Current least update gets less than Last Anime Update, then stop update and save new Last Anime Update Date
     function updateNonRecentEntries() {
         let recursingUpdatedAtDate;
+        let latestUpdateAtDate;
         function recallUNRE(page) {
             fetch('https://graphql.anilist.co', {
                 method: 'POST',
@@ -516,6 +519,12 @@ self.onmessage = async ({ data }) => {
                                             currentAnimeUpdateDate instanceof Date &&
                                             !isNaN(currentAnimeUpdateDate)
                                         ) {
+                                            if (latestUpdateAtDate === undefined ||
+                                                currentAnimeUpdateDate > latestUpdateAtDate
+                                            ) {
+                                                latestUpdateAtDate = currentAnimeUpdateDate
+                                            }
+                                            //
                                             if (recursingUpdatedAtDate instanceof Date &&
                                                 !isNaN(recursingUpdatedAtDate) &&
                                                 currentAnimeUpdateDate < recursingUpdatedAtDate
@@ -534,7 +543,7 @@ self.onmessage = async ({ data }) => {
                         let hasNextPage = Page?.pageInfo?.hasNextPage ?? true
                         // Handle the successful response here
                         if (hasNextPage && media.length > 0 &&
-                            (lastAnimeUpdate < recursingUpdatedAtDate) ||
+                            (lastAnimeUpdate <= recursingUpdatedAtDate) ||
                             !(recursingUpdatedAtDate instanceof Date) ||
                             isNaN(recursingUpdatedAtDate) ||
                             !(lastAnimeUpdate instanceof Date) ||
@@ -557,9 +566,9 @@ self.onmessage = async ({ data }) => {
                             }
                         } else {
                             await saveJSON(animeEntries, "animeEntries")
-                            if (recursingUpdatedAtDate instanceof Date &&
-                                !isNaN(recursingUpdatedAtDate)) {
-                                lastAnimeUpdate = recursingUpdatedAtDate
+                            if (latestUpdateAtDate instanceof Date &&
+                                !isNaN(latestUpdateAtDate)) {
+                                lastAnimeUpdate = latestUpdateAtDate
                                 await saveJSON(lastAnimeUpdate, "lastAnimeUpdate")
                             }
                             // Update User Recommendation List
