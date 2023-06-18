@@ -168,7 +168,9 @@ const importUserData = (_data) => {
         if (importUserDataTerminateTimeout) clearTimeout(importUserDataTerminateTimeout)
         importUserDataWorker.postMessage(_data)
         importUserDataWorker.onmessage = ({ data }) => {
-            if (data?.status !== undefined) {
+            if (data?.error !== undefined) {
+                reject(data?.error || "Something went wrong...")
+            } else if (data?.status !== undefined) {
                 dataStatusPrio = true
                 dataStatus.set(data.status)
             } else if (typeof data?.importedUsername === "string") {
@@ -195,7 +197,7 @@ const importUserData = (_data) => {
 
         }
         importUserDataWorker.onerror = (error) => {
-            reject(error)
+            reject(error || "Something went wrong...")
         }
     })
 }

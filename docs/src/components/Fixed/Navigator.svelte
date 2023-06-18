@@ -47,6 +47,7 @@
                                 `Currently connected to ${$username}, do you want to change account?`
                             )
                         ) {
+                            window?.scrollTo?.({ top: 0, behavior: "smooth" });
                             $menuVisible = false;
                             $dataStatus = "Getting User Entries";
                             requestUserEntries({
@@ -68,6 +69,7 @@
                                 `Are you sure you want to connect to ${typedUsername}?`
                             )
                         ) {
+                            window?.scrollTo?.({ top: 0, behavior: "smooth" });
                             $menuVisible = false;
                             $dataStatus = "Getting User Entries";
                             await requestUserEntries({

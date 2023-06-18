@@ -47,11 +47,7 @@
 		animeLoader,
 		exportUserData,
 	} from "./js/workerUtils.js";
-	import {
-		isAndroid,
-		jsonIsEmpty,
-		getMostVisibleElement,
-	} from "./js/others/helper.js";
+	import { isAndroid } from "./js/others/helper.js";
 
 	$android = isAndroid(); // Android/Browser Identifier
 
@@ -278,7 +274,7 @@
 			});
 	});
 	updateFilters.subscribe(async (val) => {
-		if (typeof val !== "boolean") return;
+		if (typeof val !== "boolean" || $initData) return;
 		getFilterOptions();
 	});
 	let dayInMS = 24 * 60 * 60 * 1000;
@@ -330,7 +326,7 @@
 	});
 	let userRequestIsRunning = false; // Workaround for Visibility Change
 	runUpdate.subscribe((val) => {
-		if (typeof val !== "boolean") return;
+		if (typeof val !== "boolean" || $initData) return;
 		userRequestIsRunning = true;
 		requestUserEntries()
 			.then(() => {
@@ -390,7 +386,7 @@
 		}
 	});
 	runExport.subscribe((val) => {
-		if (typeof val !== "boolean") return;
+		if (typeof val !== "boolean" || $initData) return;
 		exportUserData().then(() => {
 			$lastRunnedAutoExportDate = new Date();
 			saveJSON($lastRunnedAutoExportDate, "lastRunnedAutoExportDate");
@@ -406,7 +402,8 @@
 	});
 
 	// Global Function For Android/Browser
-	document.addEventListener("visibilitychange", function () {
+	document.addEventListener("visibilitychange", () => {
+		if ($initData) return;
 		if (document.visibilityState === "visible" && !userRequestIsRunning) {
 			requestUserEntries();
 		}
@@ -417,6 +414,7 @@
 		window.history.scrollRestoration = "manual"; // Disable scrolling to top when navigating back
 	}
 	window.checkEntries = () => {
+		if ($initData) return;
 		if (!userRequestIsRunning) {
 			requestUserEntries();
 		}

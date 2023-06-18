@@ -16,14 +16,11 @@
         runExport,
         confirmPromise,
         initData,
+        updateRecommendationList,
     } from "../../js/globalValues.js";
-    import { fade, fly } from "svelte/transition";
+    import { fly } from "svelte/transition";
     import { saveJSON } from "../../js/indexedDB.js";
-    import {
-        animeLoader,
-        exportUserData,
-        importUserData,
-    } from "../../js/workerUtils.js";
+    import { animeLoader, importUserData } from "../../js/workerUtils.js";
     import { jsonIsEmpty } from "../../js/others/helper.js";
 
     let importFileInput;
@@ -63,12 +60,19 @@
             ) {
                 await saveJSON(true, "shouldProcessRecommendation");
                 $menuVisible = false;
+                window?.scrollTo?.({ top: 0, behavior: "smooth" });
                 importUserData({
                     importedFile: importedFile,
-                }).then(() => {
-                    if (importFileInput instanceof Element)
+                })
+                    .then(() => {
+                        if (importFileInput instanceof Element)
+                            importFileInput.value = null;
+                    })
+                    .catch((error) => {
+                        $dataStatus = error || "Something went wrong...";
                         importFileInput.value = null;
-                });
+                        updateRecommendationList.update((e) => !e);
+                    });
             } else {
                 if (importFileInput instanceof Element)
                     importFileInput.value = null;
@@ -145,6 +149,7 @@
     }
 
     async function showAllHiddenEntries() {
+        if ($initData) return pleaseWaitAlert();
         if (jsonIsEmpty($hiddenEntries)) {
             // Alert No Hidden Entries
             $confirmPromise({
