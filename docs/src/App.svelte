@@ -277,7 +277,7 @@
 		if (typeof val !== "boolean" || $initData) return;
 		getFilterOptions();
 	});
-	let dayInMS = 24 * 60 * 60 * 1000;
+	let hourINMS = 60 * 60 * 1000;
 	autoUpdate.subscribe(async (val) => {
 		if (val === true) {
 			saveJSON(true, "autoUpdate");
@@ -290,7 +290,7 @@
 			) {
 				if (
 					new Date().getTime() - $lastRunnedAutoUpdateDate.getTime() >
-					dayInMS
+					hourINMS
 				) {
 					isPastDate = true;
 				}
@@ -302,10 +302,10 @@
 					if ($autoUpdate) {
 						runUpdate.update((e) => !e);
 					}
-				}, dayInMS);
+				}, hourINMS);
 			} else {
 				let timeLeft =
-					dayInMS -
+					hourINMS -
 						(new Date().getTime() -
 							$lastRunnedAutoUpdateDate?.getTime()) || 0;
 				setTimeout(() => {
@@ -316,7 +316,7 @@
 						if ($autoUpdate) {
 							runUpdate.update((e) => !e);
 						}
-					}, dayInMS);
+					}, hourINMS);
 				}, timeLeft);
 			}
 		} else if (val === false) {
@@ -338,7 +338,6 @@
 				console.error(error);
 			});
 	});
-	let hourINMS = 60 * 60 * 1000;
 	autoExport.subscribe(async (val) => {
 		if (val === true) {
 			saveJSON(true, "autoExport");

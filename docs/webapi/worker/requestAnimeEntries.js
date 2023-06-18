@@ -1,8 +1,9 @@
 let db;
+let maxAnimePerPage = 50;
+let maxStaffPerPage = 25;
+
 self.onmessage = async ({ data }) => {
     if (!db) await IDBinit()
-    let maxAnimePerPage = 50;
-    let maxStaffPerPage = 25;
     let currentYear = (new Date()).getFullYear();
     let lastAnimeUpdate = await retrieveJSON("lastAnimeUpdate") || 0
     let animeEntries = await retrieveJSON("animeEntries") || {}
@@ -125,7 +126,7 @@ self.onmessage = async ({ data }) => {
                         if (media instanceof Array && media.length) {
                             self.postMessage({ status: "Getting New Entries: " + (entriesCount += media.length) }) // Update Data Status
                             media.forEach((anime) => {
-                                if (typeof anime.id === "number" && animeEntries[anime.id] === undefined) {
+                                if (typeof anime?.id === "number") {
                                     animeEntries[anime.id] = anime
                                 }
                             })
@@ -211,7 +212,7 @@ self.onmessage = async ({ data }) => {
         let airingAnimeIDsString = airingAnimeIDs.join(',') // Get IDs
 
         self.postMessage({ status: "Updating Entries 0.00%" }) // Init Data Status
-        function recallUAA(page, staffPage, isStaffRecursion = false) {
+        function recallUAA(page) {
             fetch('https://graphql.anilist.co', {
                 method: 'POST',
                 headers: {
@@ -232,73 +233,69 @@ self.onmessage = async ({ data }) => {
                                 id_in: [${airingAnimeIDsString || ''}]
                                 ) {
                                 id
-                                ${isStaffRecursion // remove unnecessary data for staff recursion
-                            ? ""
-                            : `
-                                  updatedAt
-                                  title {
-                                      userPreferred
-                                  }
-                                  relations {
-                                      edges {
-                                          relationType
-                                          node{
-                                              id
-                                              popularity
-                                          }
-                                      }
-                                  }
-                                  siteUrl
-                                  averageScore
-                                  episodes
-                                  duration
-                                  trending
-                                  popularity
-                                  favourites
-                                  format
-                                  genres
-                                  status
-                                  coverImage {
-                                      large
-                                  }
-                                  trailer {
-                                      id
-                                      thumbnail
-                                      site
-                                  }
-                                  bannerImage
-                                  tags {
-                                      name
-                                      rank
-                                      category
-                                  }
-                                  studios {
-                                      nodes {
-                                          name
-                                          siteUrl
-                                          isAnimationStudio
-                                      }
-                                  }
-                                  seasonYear
-                                  season`
+                                updatedAt
+                                title {
+                                    userPreferred
+                                }
+                                relations {
+                                    edges {
+                                        relationType
+                                        node{
+                                            id
+                                            popularity
+                                        }
+                                    }
+                                }
+                                siteUrl
+                                averageScore
+                                episodes
+                                duration
+                                trending
+                                popularity
+                                favourites
+                                format
+                                genres
+                                status
+                                coverImage {
+                                    large
+                                }
+                                trailer {
+                                    id
+                                    thumbnail
+                                    site
+                                }
+                                bannerImage
+                                tags {
+                                    name
+                                    rank
+                                    category
+                                }
+                                studios {
+                                    nodes {
+                                        name
+                                        siteUrl
+                                        isAnimationStudio
+                                    }
+                                }
+                                seasonYear
+                                season
+                                staff(perPage:${maxStaffPerPage}, page:1, sort:[RELEVANCE]) {
+                                    pageInfo{
+                                        hasNextPage
+                                    }
+                                    edges {
+                                        node {
+                                            name {
+                                                userPreferred
+                                            }
+                                            siteUrl
+                                        }
+                                        role
+                                    }
+                                }
+                            }
                         }
-                                  staff(perPage:${maxStaffPerPage}, page:${staffPage}, sort:[RELEVANCE]) {
-                                      pageInfo{
-                                          hasNextPage
-                                      }
-                                      edges {
-                                          node {
-                                              name {
-                                                  userPreferred
-                                              }
-                                              siteUrl
-                                          }
-                                          role
-                                      }
-                                  }
-                              }
-                          }
-                      }`
+                    }`
                 })
             })
                 .then(async (response) => {
@@ -316,67 +313,29 @@ self.onmessage = async ({ data }) => {
                         }, 1000)
                         setTimeout(() => {
                             clearInterval(rateLimitInterval)
-                            return recallUAA(page, staffPage, isStaffRecursion);
+                            return recallUAA(page);
                         }, 60000);
                     } else {
                         let Page = result?.data?.Page
                         let media = Page?.media || []
-                        let _staffHasNextPage = false
                         if (media instanceof Array) {
                             media.forEach((anime) => {
-                                if (typeof anime.id === "number" && animeEntries[anime.id] !== undefined) {
-                                    if (anime?.staff?.pageInfo?.hasNextPage ?? false) {
-                                        _staffHasNextPage = true
-                                    } else {
-                                        airingAnimeIDs = airingAnimeIDs.filter(_id => _id !== anime.id)
-                                        if (currentNonProcessedLength > airingAnimeIDs.length) {
-                                            currentNonProcessedLength = airingAnimeIDs.length // Only Send when its done processing 1 anime
-
-                                            let processedLength = Math.max(animeLength - airingAnimeIDs.length, 0)
-                                            let percentage = (100 * (processedLength / animeLength))
-                                            percentage = percentage >= 0 ? percentage : 0
-                                            self.postMessage({ status: "Updating Entries " + (percentage.toFixed(2)) + "%" }) // Update Data Status
-                                        }
+                                if (typeof anime?.id === "number") {
+                                    airingAnimeIDs = airingAnimeIDs.filter(_id => _id !== anime.id)
+                                    if (currentNonProcessedLength > airingAnimeIDs.length) {
+                                        currentNonProcessedLength = airingAnimeIDs.length // Only Send when its done processing 1 anime
+                                        let processedLength = Math.max(animeLength - airingAnimeIDs.length, 0)
+                                        let percentage = (100 * (processedLength / animeLength))
+                                        percentage = percentage >= 0 ? percentage : 0
+                                        self.postMessage({ status: "Updating Entries " + (percentage.toFixed(2)) + "%" }) // Update Data Status
                                     }
-                                    let currentStaff = animeEntries[anime.id]?.staff?.edges
-                                    if (currentStaff instanceof Array && currentStaff.length && (anime?.staff?.edges instanceof Array)) {
-                                        let newStaff = anime.staff.edges
-                                        let mergedArray = mergeArraysByUniqueProperties(currentStaff, newStaff, ["node.name.userPreferred", "role"]);
-                                        if (mergedArray instanceof Array) {
-                                            if (!isStaffRecursion && typeof anime?.title === "string") {
-                                                // Allow only in Media Recursion
-                                                animeEntries[anime.id] = anime
-                                            }
-                                            animeEntries[anime.id].staff.edges = mergedArray
-                                        }
-                                    } else if (!isStaffRecursion && (!currentStaff || (currentStaff instanceof Array && currentStaff.length < 1))) {
-                                        // Allow only in Media Recursion and if there is no Current Staff
-                                        animeEntries[anime.id] = anime
-                                    }
-                                } else if (typeof anime.id === "number") {
-                                    // If in any case a bug occured
                                     animeEntries[anime.id] = anime
                                 }
                             })
                         }
                         let hasNextPage = Page?.pageInfo?.hasNextPage ?? true
                         // Handle the successful response here
-                        if (_staffHasNextPage) {
-                            // Staff Recursion
-                            if (headers?.get('x-ratelimit-remaining') > 0) {
-                                return recallUAA(page, ++staffPage, true);
-                            } else {
-                                let secondsPassed = 60
-                                let rateLimitInterval = setInterval(() => {
-                                    self.postMessage({ status: `Rate Limit: ${msToTime(secondsPassed * 1000)}` })
-                                    --secondsPassed
-                                }, 1000)
-                                setTimeout(() => {
-                                    clearInterval(rateLimitInterval)
-                                    return recallUAA(page, ++staffPage, true);
-                                }, 60000);
-                            }
-                        } else if (hasNextPage && media.length > 0) {
+                        if (hasNextPage && media.length > 0) {
                             saveJSON(animeEntries, "animeEntries")
                             // Media Recursion
                             if (headers?.get('x-ratelimit-remaining') > 0) {
@@ -415,7 +374,7 @@ self.onmessage = async ({ data }) => {
                         self.postMessage({ message: 'User not found' })
                     } else {
                         if (headers?.get('x-ratelimit-remaining') > 0) {
-                            return recallUAA(page, staffPage, isStaffRecursion);
+                            return recallUAA(page);
                         } else {
                             let secondsPassed = 60
                             let rateLimitInterval = setInterval(() => {
@@ -424,14 +383,14 @@ self.onmessage = async ({ data }) => {
                             }, 1000)
                             setTimeout(() => {
                                 clearInterval(rateLimitInterval)
-                                return recallUAA(page, staffPage, isStaffRecursion);
+                                return recallUAA(page);
                             }, 60000);
                         }
                     }
                     console.error(error)
                 });
         }
-        recallUAA(1, 1, false)
+        recallUAA(1)
     }
 
     // For Overall Updating
@@ -441,7 +400,7 @@ self.onmessage = async ({ data }) => {
     // if the current track of Current least update gets less than Last Anime Update, then stop update and save new Last Anime Update Date
     function updateNonRecentEntries() {
         let recursingUpdatedAtDate;
-        function recallUNRE(page, staffPage, isStaffRecursion = false) {
+        function recallUNRE(page) {
             fetch('https://graphql.anilist.co', {
                 method: 'POST',
                 headers: {
@@ -462,73 +421,69 @@ self.onmessage = async ({ data }) => {
                                 sort: [UPDATED_AT_DESC]
                                 ) {
                                 id
-                                ${isStaffRecursion // remove unnecessary data for staff recursion
-                            ? ""
-                            : `
-                                  updatedAt
-                                  title {
-                                      userPreferred
-                                  }
-                                  relations {
-                                      edges {
-                                          relationType
-                                          node{
-                                              id
-                                              popularity
-                                          }
-                                      }
-                                  }
-                                  siteUrl
-                                  averageScore
-                                  episodes
-                                  duration
-                                  trending
-                                  popularity
-                                  favourites
-                                  format
-                                  genres
-                                  status
-                                  coverImage {
-                                      large
-                                  }
-                                  trailer {
-                                      id
-                                      thumbnail
-                                      site
-                                  }
-                                  bannerImage
-                                  tags {
-                                      name
-                                      rank
-                                      category
-                                  }
-                                  studios {
-                                      nodes {
-                                          name
-                                          siteUrl
-                                          isAnimationStudio
-                                      }
-                                  }
-                                  seasonYear
-                                  season`
+                                updatedAt
+                                title {
+                                    userPreferred
+                                }
+                                relations {
+                                    edges {
+                                        relationType
+                                        node{
+                                            id
+                                            popularity
+                                        }
+                                    }
+                                }
+                                siteUrl
+                                averageScore
+                                episodes
+                                duration
+                                trending
+                                popularity
+                                favourites
+                                format
+                                genres
+                                status
+                                coverImage {
+                                    large
+                                }
+                                trailer {
+                                    id
+                                    thumbnail
+                                    site
+                                }
+                                bannerImage
+                                tags {
+                                    name
+                                    rank
+                                    category
+                                }
+                                studios {
+                                    nodes {
+                                        name
+                                        siteUrl
+                                        isAnimationStudio
+                                    }
+                                }
+                                seasonYear
+                                season
+                                staff(perPage:${maxStaffPerPage}, page:1, sort:[RELEVANCE]) {
+                                    pageInfo{
+                                        hasNextPage
+                                    }
+                                    edges {
+                                        node {
+                                            name {
+                                                userPreferred
+                                            }
+                                            siteUrl
+                                        }
+                                        role
+                                    }
+                                }
+                            }
                         }
-                                  staff(perPage:${maxStaffPerPage}, page:${staffPage}, sort:[RELEVANCE]) {
-                                      pageInfo{
-                                          hasNextPage
-                                      }
-                                      edges {
-                                          node {
-                                              name {
-                                                  userPreferred
-                                              }
-                                              siteUrl
-                                          }
-                                          role
-                                      }
-                                  }
-                              }
-                          }
-                      }`
+                    }`
                 })
             })
                 .then(async (response) => {
@@ -546,17 +501,16 @@ self.onmessage = async ({ data }) => {
                         }, 1000)
                         setTimeout(() => {
                             clearInterval(rateLimitInterval)
-                            return recallUNRE(page, staffPage, isStaffRecursion);
+                            return recallUNRE(page);
                         }, 60000);
                     } else {
                         let Page = result?.data?.Page
                         let media = Page?.media || []
-                        let _staffHasNextPage = false
                         if (media instanceof Array) {
                             media.forEach((anime) => {
-                                if (typeof anime.id === "number" && animeEntries[anime.id] !== undefined) {
+                                if (typeof anime?.id === "number") {
                                     // Handle Last Saved Update Date only in Media Recursion
-                                    if (!isStaffRecursion && typeof anime.updatedAt === "number") {
+                                    if (typeof anime.updatedAt === "number") {
                                         let currentAnimeUpdateDate = new Date(anime.updatedAt * 1000)
                                         if (
                                             currentAnimeUpdateDate instanceof Date &&
@@ -573,49 +527,23 @@ self.onmessage = async ({ data }) => {
                                         }
                                     }
                                     // Handle Anime Entries Update
-                                    if (anime?.staff?.pageInfo?.hasNextPage ?? false) _staffHasNextPage = true
-                                    let currentStaff = animeEntries[anime.id]?.staff?.edges
-                                    if (currentStaff instanceof Array && currentStaff.length && (anime?.staff?.edges instanceof Array)) {
-                                        let newStaff = anime.staff.edges
-                                        let mergedArray = mergeArraysByUniqueProperties(currentStaff, newStaff, ["node.name.userPreferred", "role"]);
-                                        if (mergedArray instanceof Array) {
-                                            if (!isStaffRecursion && typeof anime?.title === "string") {
-                                                // Allow only in Media Recursion
-                                                animeEntries[anime.id] = anime
-                                            }
-                                            animeEntries[anime.id].staff.edges = mergedArray
-                                        }
-                                    } else if (!isStaffRecursion && (!currentStaff || (currentStaff instanceof Array && currentStaff.length < 1))) {
-                                        // Allow only in Media Recursion and if there is no Current Staff
-                                        animeEntries[anime.id] = anime
-                                    }
-                                } else if (typeof anime.id === "number") {
                                     animeEntries[anime.id] = anime
                                 }
                             })
                         }
                         let hasNextPage = Page?.pageInfo?.hasNextPage ?? true
                         // Handle the successful response here
-                        if (_staffHasNextPage) {
-                            // Staff Recursion
-                            if (headers?.get('x-ratelimit-remaining') > 0) {
-                                return recallUNRE(page, ++staffPage, true);
-                            } else {
-                                let secondsPassed = 60
-                                let rateLimitInterval = setInterval(() => {
-                                    self.postMessage({ status: `Rate Limit: ${msToTime(secondsPassed * 1000)}` })
-                                    --secondsPassed
-                                }, 1000)
-                                setTimeout(() => {
-                                    clearInterval(rateLimitInterval)
-                                    return recallUNRE(page, ++staffPage, true);
-                                }, 60000);
-                            }
-                        } else if (hasNextPage && media.length > 0 && lastAnimeUpdate > recursingUpdatedAtDate) {
+                        if (hasNextPage && media.length > 0 &&
+                            (lastAnimeUpdate < recursingUpdatedAtDate) ||
+                            !(recursingUpdatedAtDate instanceof Date) ||
+                            isNaN(recursingUpdatedAtDate) ||
+                            !(lastAnimeUpdate instanceof Date) ||
+                            isNaN(lastAnimeUpdate)
+                        ) {
                             saveJSON(animeEntries, "animeEntries")
                             // Media Recursion
                             if (headers?.get('x-ratelimit-remaining') > 0) {
-                                return recallUNRE(++page, 1, false);
+                                return recallUNRE(++page);
                             } else {
                                 let secondsPassed = 60
                                 let rateLimitInterval = setInterval(() => {
@@ -624,13 +552,14 @@ self.onmessage = async ({ data }) => {
                                 }, 1000)
                                 setTimeout(() => {
                                     clearInterval(rateLimitInterval)
-                                    return recallUNRE(++page, 1, false);
+                                    return recallUNRE(++page);
                                 }, 60000);
                             }
                         } else {
                             await saveJSON(animeEntries, "animeEntries")
                             if (recursingUpdatedAtDate instanceof Date &&
                                 !isNaN(recursingUpdatedAtDate)) {
+                                lastAnimeUpdate = recursingUpdatedAtDate
                                 await saveJSON(lastAnimeUpdate, "lastAnimeUpdate")
                             }
                             // Update User Recommendation List
@@ -649,7 +578,7 @@ self.onmessage = async ({ data }) => {
                         self.postMessage({ message: 'User not found' })
                     } else {
                         if (headers?.get('x-ratelimit-remaining') > 0) {
-                            return recallUNRE(page, staffPage, isStaffRecursion);
+                            return recallUNRE(page);
                         } else {
                             let secondsPassed = 60
                             let rateLimitInterval = setInterval(() => {
@@ -658,13 +587,13 @@ self.onmessage = async ({ data }) => {
                             }, 1000)
                             setTimeout(() => {
                                 clearInterval(rateLimitInterval)
-                                return recallUNRE(page, staffPage, isStaffRecursion);
+                                return recallUNRE(page);
                             }, 60000);
                         }
                     }
                 });
         }
-        recallUNRE(1, 1, false)
+        recallUNRE(1)
     }
 }
 
@@ -779,21 +708,21 @@ function ncsCompare(str1, str2) {
     }
     return str1.toLowerCase() === str2.toLowerCase();
 }
-function mergeArraysByUniqueProperties(array1, array2, uniqueProperties) {
-    try {
-        let mergedData = {};
-        array1.forEach(obj => {
-            const key = uniqueProperties.map(prop => obj[prop]).join("_");
-            mergedData[key] = obj;
-        });
-        array2.forEach(obj => {
-            const key = uniqueProperties.map(prop => obj[prop]).join("_");
-            mergedData[key] = obj;
-        });
-        let mergedArray = Object.values(mergedData);
-        return mergedArray;
-    } catch (ex) {
-        // console.error(ex)
-        return
-    }
-}  
+// function mergeArraysByUniqueProperties(array1, array2, uniqueProperties) {
+//     try {
+//         let mergedData = {};
+//         array1.forEach(obj => {
+//             const key = uniqueProperties.map(prop => obj[prop]).join("_");
+//             mergedData[key] = obj;
+//         });
+//         array2.forEach(obj => {
+//             const key = uniqueProperties.map(prop => obj[prop]).join("_");
+//             mergedData[key] = obj;
+//         });
+//         let mergedArray = Object.values(mergedData);
+//         return mergedArray;
+//     } catch (ex) {
+//         // console.error(ex)
+//         return
+//     }
+// }  
