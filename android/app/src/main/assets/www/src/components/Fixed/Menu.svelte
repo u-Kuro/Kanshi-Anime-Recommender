@@ -333,6 +333,7 @@
         width: 100%;
         max-width: 1140px;
         max-height: 100%;
+        margin: 0 auto;
         overflow-x: hidden;
         overflow-y: auto;
         overscroll-behavior: contain;
