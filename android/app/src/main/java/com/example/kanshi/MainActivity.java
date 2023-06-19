@@ -250,6 +250,12 @@ public class MainActivity extends AppCompatActivity  {
             webView.loadUrl("https://kanshi.vercel.app/");
         } else {
             webView.loadUrl("file:///android_asset/www/index.html");
+            new AlertDialog.Builder(MainActivity.this)
+                .setTitle("Network Unavailable")
+                .setMessage("Network Unavailable, Switched to Offline App and Cached Data.")
+                .setIcon(android.R.drawable.ic_dialog_info)
+                .setPositiveButton("OK", null)
+                .show();
         }
     }
 
