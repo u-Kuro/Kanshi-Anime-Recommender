@@ -662,7 +662,7 @@
         }
     };
     window.addEventListener("online", () => {
-        $dataStatus = "Back Online...";
+        $dataStatus = "Reconnected Successfully";
         isOnline = true;
         document.querySelectorAll("img")?.forEach((image) => {
             if (!image.naturalHeight) {
@@ -678,7 +678,7 @@
         });
     });
     window.addEventListener("offline", () => {
-        $dataStatus = "Went Offline...";
+        $dataStatus = "Currently Offline...";
         isOnline = false;
     });
     function loadYouTubeAPI() {

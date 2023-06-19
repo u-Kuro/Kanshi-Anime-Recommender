@@ -122,16 +122,16 @@
     on:click={handleMenuVisibility}
 >
     <nav class="nav">
-        <h1
-            class="textLogo copy-value"
-            data-copy-value="Kanshi."
+        <div
+            class="logo-icon copy"
+            copy-value="Kanshi."
             on:click={() => window.scrollTo({ top: -9999, behavior: "smooth" })}
             on:keydown={(e) =>
                 e.key === "Enter" &&
                 window.scrollTo({ top: -9999, behavior: "smooth" })}
         >
-            Kanshi.
-        </h1>
+            <img src="/images/Kanshi-Logo.png" alt="Kanshi Logo" />
+        </div>
         <!-- <div id="fps">--</span> FPS</div> -->
         <div class="input-search">
             <input
@@ -151,7 +151,7 @@
                 <i class="fa-solid fa-magnifying-glass" />
             </div>
         </div>
-        <img class="menu-icon" src="/images/Kanshi-Logo.png" alt="menubar" />
+        <i class="menu-icon fa-solid fa-bars" />
     </nav>
 </div>
 
@@ -176,8 +176,8 @@
     }
     .nav {
         display: grid;
-        column-gap: 1.5em;
-        grid-template-columns: 87px auto 34px;
+        column-gap: 1em;
+        grid-template-columns: minmax(34px, 1fr) auto 34px;
         height: 100%;
         align-items: center;
         -ms-user-select: none;
@@ -187,12 +187,17 @@
         margin: auto;
         padding: 0 50px;
     }
-    .nav .textLogo {
-        width: 83px;
-        height: 33px;
-        border-radius: 6px;
-        word-break: keep-all;
+    .logo-icon {
         cursor: pointer;
+        justify-self: start;
+        width: 86px;
+        max-width: 100%;
+        height: 34px;
+    }
+    .logo-icon img {
+        height: 34px;
+        width: 34px;
+        border-radius: 6px;
     }
     .input-search {
         display: flex;
@@ -230,10 +235,16 @@
         cursor: pointer;
     }
     .menu-icon {
+        font-size: 22px;
         height: 34px;
         width: 34px;
         border-radius: 6px;
         cursor: pointer;
+        justify-self: end;
+        color: #b9cadd;
+        display: flex;
+        justify-content: center;
+        align-items: center;
     }
     @media screen and (max-width: 425px) {
         .nav {
