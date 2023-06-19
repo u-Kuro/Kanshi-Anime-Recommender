@@ -2220,6 +2220,9 @@
             border-radius: 0 !important;
             padding: 0 !important;
         }
+        .options-wrap::-webkit-scrollbar {
+            display: none;
+        }
         .options-wrap.hide {
             transition: transform 0s ease 0.3s;
         }
