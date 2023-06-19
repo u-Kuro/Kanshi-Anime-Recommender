@@ -52,6 +52,7 @@ self.onmessage = async ({ data }) => {
             }
             self.postMessage({ status: "Data has been Imported..." })
             self.postMessage({ importedUsername: username })
+            self.postMessage({ importedHiddenEntries: hiddenEntries })
             self.postMessage({ importedlastRunnedAutoUpdateDate: lastRunnedAutoUpdateDate })
             self.postMessage({ importedlastRunnedAutoExportDate: lastRunnedAutoExportDate })
             self.postMessage({ updateFilters: true })

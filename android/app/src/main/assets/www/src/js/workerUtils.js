@@ -5,9 +5,10 @@ import {
     activeTagFilters,
     filterOptions,
     lastRunnedAutoUpdateDate,
-    lastRunnedAutoExportDate
+    lastRunnedAutoExportDate,
+    hiddenEntries
 } from "./globalValues";
-import { isAndroid, downloadLink } from "../js/others/helper.js"
+import { isAndroid, downloadLink, isJsonObject } from "../js/others/helper.js"
 let terminateDelay = 1000;
 let dataStatusPrio = false
 
@@ -175,6 +176,8 @@ const importUserData = (_data) => {
                 dataStatus.set(data.status)
             } else if (typeof data?.importedUsername === "string") {
                 username.set(data.importedUsername)
+            } else if (isJsonObject(data?.importedHiddenEntries)) {
+                hiddenEntries.set(data?.importedHiddenEntries)
             } else if (data?.importedlastRunnedAutoUpdateDate instanceof Date && !isNaN(data?.importedlastRunnedAutoUpdateDate)) {
                 lastRunnedAutoUpdateDate.set(data.importedlastRunnedAutoUpdateDate)
             } else if (data?.importedlastRunnedAutoExportDate instanceof Date && !isNaN(data?.importedlastRunnedAutoExportDate)) {
