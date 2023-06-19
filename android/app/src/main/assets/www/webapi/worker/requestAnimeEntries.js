@@ -495,15 +495,8 @@ self.onmessage = async ({ data }) => {
                     return { result, headers }
                 })
                 .then(async ({ result, headers }) => {
-                    let error;
-                    if (typeof (error = result?.errors?.[0]?.message) === "string") {
-                        let secondsPassed = 60
-                        let rateLimitInterval = setInterval(() => {
-                            self.postMessage({ status: (error ? (error + " ") : "") + `Rate Limit: ${msToTime(secondsPassed * 1000)}` })
-                            --secondsPassed
-                        }, 1000)
+                    if (typeof result?.errors?.[0]?.message === "string") {
                         setTimeout(() => {
-                            clearInterval(rateLimitInterval)
                             return recallUNRE(page);
                         }, 60000);
                     } else {
@@ -554,13 +547,7 @@ self.onmessage = async ({ data }) => {
                             if (headers?.get('x-ratelimit-remaining') > 0) {
                                 return recallUNRE(++page);
                             } else {
-                                let secondsPassed = 60
-                                let rateLimitInterval = setInterval(() => {
-                                    self.postMessage({ status: `Rate Limit: ${msToTime(secondsPassed * 1000)}` })
-                                    --secondsPassed
-                                }, 1000)
                                 setTimeout(() => {
-                                    clearInterval(rateLimitInterval)
                                     return recallUNRE(++page);
                                 }, 60000);
                             }
@@ -589,13 +576,7 @@ self.onmessage = async ({ data }) => {
                         if (headers?.get('x-ratelimit-remaining') > 0) {
                             return recallUNRE(page);
                         } else {
-                            let secondsPassed = 60
-                            let rateLimitInterval = setInterval(() => {
-                                self.postMessage({ status: `Rate Limit: ${msToTime(secondsPassed * 1000)}` })
-                                --secondsPassed
-                            }, 1000)
                             setTimeout(() => {
-                                clearInterval(rateLimitInterval)
                                 return recallUNRE(page);
                             }, 60000);
                         }

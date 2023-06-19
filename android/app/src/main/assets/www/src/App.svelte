@@ -169,9 +169,6 @@
 			$lastRunnedAutoExportDate = await retrieveJSON(
 				"lastRunnedAutoExportDate"
 			);
-			// Should be After Getting the Dates for Reactive Change
-			$autoUpdate = (await retrieveJSON("autoUpdate")) ?? false;
-			$autoExport = (await retrieveJSON("autoExport")) ?? false;
 			resolve();
 		})
 	);
@@ -212,6 +209,11 @@
 						if (data?.isNew) {
 							$finalAnimeList = data.finalAnimeList;
 							$initData = false;
+							// Should be After Getting the Dates for Reactive Change
+							$autoUpdate =
+								(await retrieveJSON("autoUpdate")) ?? false;
+							$autoExport =
+								(await retrieveJSON("autoExport")) ?? false;
 						}
 						$dataStatus = null;
 						return;
@@ -221,8 +223,11 @@
 					});
 			});
 		})
-		.catch((error) => {
+		.catch(async (error) => {
 			$initData = false;
+			// Should be After Getting the Dates for Reactive Change
+			$autoUpdate = (await retrieveJSON("autoUpdate")) ?? false;
+			$autoExport = (await retrieveJSON("autoExport")) ?? false;
 			$dataStatus = "Something went wrong...";
 			console.error(error);
 		});
@@ -238,9 +243,14 @@
 			clearInterval(pleaseWaitStatusInterval);
 		}
 	});
-	finalAnimeList.subscribe((val) => {
+	finalAnimeList.subscribe(async (val) => {
 		if (!$initData) return;
-		if (val?.length > 0) $initData = false; // Have Loaded Recommendations
+		if (val?.length > 0 && $initData !== false) {
+			$initData = false;
+			// Should be After Getting the Dates for Reactive Change
+			$autoUpdate = (await retrieveJSON("autoUpdate")) ?? false;
+			$autoExport = (await retrieveJSON("autoExport")) ?? false;
+		} // Have Loaded Recommendations
 	});
 
 	// Reactive Functions
