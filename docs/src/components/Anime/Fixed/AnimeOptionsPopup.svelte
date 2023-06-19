@@ -40,7 +40,7 @@
     });
 
     function handleAnimeOptionVisibility(e) {
-        if (isRecentlyOpened) return;
+        if (isRecentlyOpened && e.type !== "keydown") return;
         let target = e.target;
         let classList = target.classList;
         if (
@@ -51,35 +51,35 @@
         $animeOptionVisible = false;
     }
 
-    function openAnimePopup() {
-        if (isRecentlyOpened) return;
+    function openAnimePopup(e) {
+        if (isRecentlyOpened && e.type !== "keydown") return;
         $openedAnimePopupIdx = animeIdx;
         $popupVisible = true;
         $animeOptionVisible = false;
     }
 
-    function openInAnilist() {
-        if (isRecentlyOpened) return;
+    function openInAnilist(e) {
+        if (isRecentlyOpened && e.type !== "keydown") return;
         if (animeUrl) {
             window.open(animeUrl, "_blank");
         }
         $animeOptionVisible = false;
     }
 
-    function copyTitle() {
-        if (isRecentlyOpened || !animeTitle) return;
+    function copyTitle(e) {
+        if ((isRecentlyOpened && e.type !== "keydown") || !animeTitle) return;
         if ($android) {
             try {
                 JSBridge.copyToClipBoard(animeTitle);
-            } catch (e) {}
+            } catch (ex) {}
         } else {
             navigator?.clipboard?.writeText?.(animeTitle);
         }
         $animeOptionVisible = false;
     }
 
-    async function handleHideShow() {
-        if (isRecentlyOpened) return;
+    async function handleHideShow(e) {
+        if (isRecentlyOpened && e.type !== "keydown") return;
         let isHidden = $hiddenEntries[animeID];
         if (isHidden) {
             if (
@@ -167,6 +167,10 @@
         align-items: center;
         overflow-y: auto;
         overscroll-behavior: contain;
+    }
+
+    .anime-options::-webkit-scrollbar {
+        display: none;
     }
 
     .anime-options-container {

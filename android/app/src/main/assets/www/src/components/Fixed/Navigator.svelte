@@ -47,7 +47,10 @@
                                 `Currently connected to ${$username}, do you want to change account?`
                             )
                         ) {
-                            window?.scrollTo?.({ top: 0, behavior: "smooth" });
+                            window?.scrollTo?.({
+                                top: -9999,
+                                behavior: "smooth",
+                            });
                             $menuVisible = false;
                             $dataStatus = "Getting User Entries";
                             requestUserEntries({
@@ -69,7 +72,10 @@
                                 `Are you sure you want to connect to ${typedUsername}?`
                             )
                         ) {
-                            window?.scrollTo?.({ top: 0, behavior: "smooth" });
+                            window?.scrollTo?.({
+                                top: -9999,
+                                behavior: "smooth",
+                            });
                             $menuVisible = false;
                             $dataStatus = "Getting User Entries";
                             await requestUserEntries({
@@ -119,10 +125,10 @@
         <h1
             class="textLogo copy-value"
             data-copy-value="Kanshi."
-            on:click={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+            on:click={() => window.scrollTo({ top: -9999, behavior: "smooth" })}
             on:keydown={(e) =>
                 e.key === "Enter" &&
-                window.scrollTo({ top: 0, behavior: "smooth" })}
+                window.scrollTo({ top: -9999, behavior: "smooth" })}
         >
             Kanshi.
         </h1>
@@ -182,14 +188,15 @@
         padding: 0 50px;
     }
     .nav .textLogo {
-        min-width: max-content;
+        width: 83px;
+        height: 33px;
+        border-radius: 6px;
         word-break: keep-all;
         cursor: pointer;
     }
     .input-search {
         display: flex;
         height: 25px;
-        max-width: 190px;
         border-radius: 6px;
         justify-self: right;
     }
@@ -200,6 +207,7 @@
         color: white;
         padding-left: 1ch;
         padding-right: 1ch;
+        height: 25px;
         max-width: 160px;
         width: 100%;
         cursor: auto;
@@ -209,6 +217,7 @@
         justify-content: center;
         align-items: center;
         width: 30px;
+        height: 25px;
         border: none;
         outline: none;
         background-color: rgb(21, 31, 46);
@@ -222,6 +231,8 @@
     }
     .menu-icon {
         height: 34px;
+        width: 34px;
+        border-radius: 6px;
         cursor: pointer;
     }
     @media screen and (max-width: 425px) {

@@ -4566,6 +4566,10 @@ self.onmessage = async ({ data }) => {
                         isSelected: false
                     },
                     {
+                        filName: "exclude year",
+                        isSelected: false
+                    },
+                    {
                         filName: "show all sequels",
                         isSelected: false
                     },

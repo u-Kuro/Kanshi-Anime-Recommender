@@ -15,10 +15,8 @@ self.onmessage = async ({ data }) => {
     // Filter Algorithm
     let includeUnknownVar = false,
         measure = "mean",
-        includeStaffCount = true,
         includeYear = true,
         includeAverageScore = false,
-        includeAnimeLength = true,
         showAllSequels = false,
         minPopularity,
         minAverageScore,
@@ -56,6 +54,8 @@ self.onmessage = async ({ data }) => {
                     includeUnknownVar = true
                 } else if (optionName.toLowerCase() === "inc. average score") {
                     includeAverageScore = true
+                } else if (optionName.toLowerCase() === "exclude year") {
+                    includeYear = false
                 } else if (optionName.toLowerCase() === 'show all sequels') {
                     showAllSequels = true
                 }
@@ -136,8 +136,6 @@ self.onmessage = async ({ data }) => {
         userStatus: {}
     }
     let averageScore = []
-    let animeLength = []
-    let staffCount = []
     let year = []
     let genresMeanCount = {}
     let tagsMeanCount = {}
@@ -465,18 +463,10 @@ self.onmessage = async ({ data }) => {
             }
 
             // Init Linear Models Training Data
-            if (isaN(anime?.duration) && isaN(anime?.episodes)) {
-                if (anime.duration > 0 && anime.episodes > 0) {
-                    animeLength.push({ userScore: userScore, animeLength: anime.duration * anime.episodes })
-                }
-            }
-            if (isaN(anime?.averageScore)) {
+            if (isaN(anime?.averageScore) && includeAverageScore) {
                 averageScore.push({ userScore: userScore, averageScore: anime.averageScore })
             }
-            if (staffs instanceof Array) {
-                staffCount.push({ userScore: userScore, staffCount: staffs.length })
-            }
-            if (isaN(parseFloat(anime?.seasonYear))) {
+            if (isaN(parseFloat(anime?.seasonYear)) && includeYear) {
                 year.push({ userScore: userScore, year: parseFloat(anime.seasonYear) })
             }
         }
@@ -620,22 +610,6 @@ self.onmessage = async ({ data }) => {
             }
         }
         studiosMean = arrayMean(studiosMean)
-        // filteredStudiosMean = arrayMean(filteredStudiosMean)
-        // for (let i = 0; i < studiosKey.length; i++) {
-        // let tempScore = 0
-        // if (measure === "mode") {
-        //     tempScore = arrayMode(varScheme.studios[studiosKey[i]].userScore)
-        // } else {
-        //     tempScore = arrayMean(varScheme.studios[studiosKey[i]].userScore)
-        // }
-        // Include High Weight or Low scored Variables to avoid High-scored Variables without enough sample
-        // let count = varScheme.studios[studiosKey[i]].count
-        // if (count >= studiosMeanCount) {
-        //     varScheme.studios[studiosKey[i]] = tempScore
-        // } else {
-        //     delete varScheme.studios[studiosKey[i]]
-        // }
-        // }
 
         // Staffs
         let staffKey = Object.keys(varScheme.staff)
@@ -651,45 +625,14 @@ self.onmessage = async ({ data }) => {
             }
         }
         staffMean = arrayMean(staffMean)
-        // filteredStaffMean = arrayMean(filteredStaffMean)
-        // for (let i = 0; i < staffKey.length; i++) {
-        // let tempScore = 0
-        // if (measure === "mode") {
-        //     tempScore = arrayMode(varScheme.staff[staffKey[i]].userScore)
-        // } else {
-        //     tempScore = arrayMean(varScheme.staff[staffKey[i]].userScore)
-        // }
-        // Include High Weight or Low scored Variables to avoid High-scored Variables without enough sample
-        // let count = varScheme.staff[staffKey[i]].count
-        // if (count >= staffMeanCount) {
-        //     varScheme.staff[staffKey[i]] = tempScore
-        // } else {
-        //     delete varScheme.staff[staffKey[i]]
-        // }
-        // }
 
         // Join Data
         varScheme.meanGenres = genresMean
         varScheme.meanTags = tagsMean
-        // varScheme.meanStudios = studiosMean
-        // varScheme.meanStaff = staffMean
-        // varScheme.includeRoles = include.roles
-        // varScheme.excludeRoles = exclude.roles
         varScheme.includeCategories = include.categories
         varScheme.excludeCategories = exclude.categories
-        // varScheme.measure = measure
 
         // Linear Model Building | y is Predicted so its Userscore
-        // Production Staff Model
-        // if (includeStaffCount) {
-        //     let staffCountXY = []
-        //     for (let i = 0; i < staffCount.length; i++) {
-        //         staffCountXY.push([staffCount[i].staffCount, staffCount[i].userScore])
-        //     }
-        //     if (staffCountXY.length >= (minSampleSize || 33)) {
-        //         varScheme.staffCountModel = linearRegression(staffCountXY)
-        //     }
-        // }
         // Year Model
         if (includeYear) {
             let yearXY = []
@@ -700,16 +643,6 @@ self.onmessage = async ({ data }) => {
                 varScheme.yearModel = linearRegression(yearXY)
             }
         }
-        // Duration Model
-        // if (includeAnimeLength) {
-        //     let animeLengthXY = []
-        //     for (let i = 0; i < animeLength.length; i++) {
-        //         animeLengthXY.push([animeLength[i].animeLength, animeLength[i].userScore])
-        //     }
-        //     if (animeLengthXY.length >= (minSampleSize || 33)) {
-        //         varScheme.animeLengthModel = linearRegression(animeLengthXY)
-        //     }
-        // }
         // Average Score Model
         if (includeAverageScore) {
             let averageScoreXY = []
@@ -1021,26 +954,6 @@ self.onmessage = async ({ data }) => {
                 if (includedStudios[studio]) continue;
                 includedStudios[studio] = true;
                 studio = studio.trim().toLowerCase();
-                // let fullStudio = "studio: " + studio;
-                // if (typeof varScheme.studios[fullStudio] === "number") {
-                //     zstudios.push(varScheme.studios[fullStudio]);
-                //     // Top Similarities
-                //     if (typeof varScheme.meanStudios === "number") {
-                //         let studioUrl = studios[j]?.siteUrl;
-                //         if (varScheme.studios[fullStudio] >= varScheme.meanStudios &&
-                //             !studiosIncluded[fullStudio] && typeof studioUrl === "string") {
-                //             let tmpscore = varScheme.studios[fullStudio];
-                //             studiosIncluded[fullStudio] = [{
-                //                 [studio + " (" + tmpscore.toFixed(2) + ")"]:
-                //                     studioUrl,
-                //             },
-                //                 tmpscore,
-                //             ];
-                //         }
-                //     }
-                // } else if (typeof varScheme.meanStudios === "number" && includeUnknownVar) {
-                //     zstudios.push(varScheme.meanStudios);
-                // }
                 // Filters
                 if (filters['studio'][studio] === undefined) {
                     filters['studio'][studio] = true
@@ -1056,34 +969,7 @@ self.onmessage = async ({ data }) => {
                 let staffRole = staffs[j]?.role;
                 if (typeof staffRole !== "string") continue;
                 staff = staff.trim().toLowerCase();
-                // let fullStaff = "staff: " + staff;
                 staffRole = staffRole.split("(")[0].trim().toLowerCase();
-                // let fullStaffRole = "staff role: " + staffRole;
-                // if (!jsonIsEmpty(varScheme.includeRoles)) {
-                //     if (varScheme.includeRoles[fullStaffRole]) {
-                //         if (typeof varScheme.staff[fullStaff] === "number") {
-                //             if (!zstaff[fullStaffRole]) {
-                //                 zstaff[fullStaffRole] = [varScheme.staff[fullStaff]];
-                //             } else {
-                //                 zstaff[fullStaffRole].push(varScheme.staff[fullStaff]);
-                //             }
-                //         } else if (typeof varScheme.meanStaff === "number" && includeUnknownVar && zstaff[fullStaffRole]) {
-                //             zstaff[fullStaffRole].push(varScheme.meanStaff);
-                //         }
-                //     }
-                // } else {
-                //     if (!varScheme.excludeRoles[fullStaffRole]) {
-                //         if (typeof varScheme.staff[fullStaff] === "number") {
-                //             if (!zstaff[fullStaffRole]) {
-                //                 zstaff[fullStaffRole] = [varScheme.staff[fullStaff]];
-                //             } else {
-                //                 zstaff[fullStaffRole].push(varScheme.staff[fullStaff]);
-                //             }
-                //         } else if (typeof varScheme.meanStaff === "number" && includeUnknownVar && zstaff[fullStaffRole]) {
-                //             zstaff[fullStaffRole].push(varScheme.meanStaff);
-                //         }
-                //     }
-                // }
                 // filters
                 if (filters['staff role'][staffRole] === undefined) {
                     filters['staff role'][staffRole] = true
@@ -1094,7 +980,7 @@ self.onmessage = async ({ data }) => {
             let animeQuality = [];
             let seasonYear = anime?.seasonYear;
             let yearModel = varScheme.yearModel ?? {};
-            if (isaN(seasonYear) && !jsonIsEmpty(yearModel)) {
+            if (isaN(seasonYear) && !jsonIsEmpty(yearModel) && includeYear) {
                 if (typeof seasonYear === "string") {
                     seasonYear = parseFloat(seasonYear);
                 }
@@ -1124,60 +1010,6 @@ self.onmessage = async ({ data }) => {
             }
             let episodes = anime?.episodes
             let duration = anime?.duration
-            // let animeLengthModel = varScheme.animeLengthModel ?? {};
-            // if (isaN(duration) && isaN(episodes) && !jsonIsEmpty(animeLengthModel) && duration > 0 && episodes > 0) {
-            //     if (typeof episodes === "string") {
-            //         episodes = parseFloat(episodes);
-            //     }
-            //     if (typeof duration === "string") {
-            //         duration = parseFloat(duration);
-            //     }
-            //     let animeLength = episodes * duration
-            //     let modelScore = LRpredict(animeLengthModel, animeLength)
-            //     if (modelScore >= 1) {
-            //         animeQuality.push(modelScore);
-            //     } else {
-            //         animeQuality.push(1);
-            //     }
-            // } else {
-            //     animeQuality.push(1);
-            // }
-            // let staffCountModel = varScheme.staffCountModel ?? {}
-            // if (staffs instanceof Array && !jsonIsEmpty(staffCountModel)) {
-            //     let modelScore = LRpredict(staffCountModel, staffs.length)
-            //     if (modelScore >= 1) {
-            //         animeQuality.push(modelScore);
-            //     } else {
-            //         animeQuality.push(1)
-            //     }
-            // } else {
-            //     animeQuality.push(1)
-            // }
-            // animeQuality.push(
-            //     animeType.length
-            //         ? measure === "mode"
-            //             ? arrayMode(animeType)
-            //             : arrayMean(animeType)
-            //         : 1
-            // )
-            // let animeProduction = []
-            // let zstaffRolesArray =
-            //     Object.values(zstaff).map((e) => {
-            //         if (measure === "mode") {
-            //             return arrayMode(e);
-            //         } else {
-            //             return arrayMean(e);
-            //         }
-            //     }) || [];
-            // if (zstaffRolesArray.length > 1) {
-            //     if (measure === "mode") {
-            //         animeProduction.push(arrayMode(zstaffRolesArray));
-            //     } else {
-            //         animeProduction.push(arrayMean(zstaffRolesArray));
-            //     }
-            // } else {
-            //     animeProduction.push(1)
-            // }
 
             // Combine Scores
             // Anime Content

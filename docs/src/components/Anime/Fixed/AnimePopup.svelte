@@ -9,7 +9,6 @@
         animeObserver,
         popupVisible,
         openedAnimePopupIdx,
-        updateRecommendationList,
         android,
         androidInApp,
         confirmPromise,
@@ -1024,7 +1023,7 @@
         display: flex;
         justify-content: center;
         overflow: hidden;
-        transform: translateY(99999px);
+        transform: translateY(-99999px);
     }
 
     .popup-wrapper.visible {
@@ -1033,8 +1032,6 @@
 
     .popup-container {
         will-change: transform;
-        display: flex;
-        flex-direction: column;
         width: 100%;
         max-width: 640px;
         overflow: auto;
@@ -1117,7 +1114,7 @@
         width: 100%;
         position: absolute;
         object-fit: cover;
-        object-position: revert;
+        object-position: center;
     }
 
     .popup-img .bannerImg::after {
@@ -1161,8 +1158,6 @@
 
     .popup-body {
         overflow: hidden;
-        min-height: 11em;
-        flex: 0 1 auto;
         touch-action: pan-y;
         margin: 2em 2.4em;
     }
@@ -1178,8 +1173,6 @@
         white-space: nowrap;
         align-items: center;
         display: flex;
-        position: relative;
-        text-transform: capitalize;
     }
 
     .popup-body .anime-title-container::-webkit-scrollbar {
@@ -1188,11 +1181,9 @@
 
     .anime-title-container .anime-title {
         padding: 0.5em;
-        border-radius: 0.1em;
-        width: max-content;
+        border-radius: 6px;
         cursor: pointer;
         font-size: clamp(1.6309rem, 1.76545rem, 1.9rem);
-        font-weight: 400;
     }
 
     .anime-title-container .anime-title:hover {
@@ -1250,13 +1241,11 @@
     .info-list .info-categ {
         font-size: clamp(1.0631rem, 1.15155rem, 1.24rem);
         font-weight: 500;
-        max-width: fit-content;
         user-select: none !important;
     }
 
     .info-list .info {
         font-size: clamp(1.018rem, 1.099rem, 1.18rem);
-        line-height: 1.3;
         max-width: fit-content;
         text-transform: capitalize;
     }
@@ -1289,7 +1278,7 @@
         background-color: #000 !important;
         color: #909cb8 !important;
         padding: 0.5em 1.5em 0.5em 1.5em;
-        border-radius: 0.1em;
+        border-radius: 6px;
         outline: 0;
         border: 0;
         cursor: pointer;

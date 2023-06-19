@@ -455,10 +455,10 @@
 				window.closeDropdown?.();
 				return;
 			} else if (window.scrollY > 200) {
-				window.scrollTo({ top: 0, behavior: "smooth" });
+				window.scrollTo({ top: -9999, behavior: "smooth" });
 				return;
 			} else {
-				window.scrollTo({ top: 0, behavior: "smooth" });
+				window.scrollTo({ top: -9999, behavior: "smooth" });
 				window.setShoulGoBack(true);
 			}
 		}

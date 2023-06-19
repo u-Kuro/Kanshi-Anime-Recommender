@@ -14,20 +14,20 @@
 
     let isRecentlyOpened = false,
         isRecentlyOpenedTimeout;
-    function handleConfirm() {
-        if (isRecentlyOpened) return;
+    function handleConfirm(e) {
+        if (isRecentlyOpened && e.type !== "keydown") return;
         showConfirm = false;
         dispatch("confirmed");
     }
 
-    function handleCancel() {
-        if (isRecentlyOpened) return;
+    function handleCancel(e) {
+        if (isRecentlyOpened && e.type !== "keydown") return;
         showConfirm = false;
         dispatch("cancelled");
     }
 
     function handleConfirmVisibility(e) {
-        if (isRecentlyOpened) return;
+        if (isRecentlyOpened && e.type !== "keydown") return;
         let target = e.target;
         let classList = target.classList;
         if (
@@ -35,7 +35,7 @@
             classList.contains("confirm-container")
         )
             return;
-        handleCancel();
+        handleCancel(e);
     }
 
     afterUpdate(() => {
@@ -154,7 +154,7 @@
         column-gap: 0.5em;
         align-items: center;
         display: flex;
-        justify-content: end;
+        justify-content: center;
     }
 
     .confirm-button-container > button {
@@ -173,6 +173,7 @@
         .confirm-button-container > button:hover,
         .confirm-button-container > button:focus {
             background-color: rgba(0, 0, 0, 0.4);
+            border-radius: 6px;
         }
     }
 

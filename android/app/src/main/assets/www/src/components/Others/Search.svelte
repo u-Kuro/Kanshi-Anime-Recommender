@@ -16,11 +16,7 @@
         asyncAnimeReloaded,
     } from "../../js/globalValues.js";
     import { fade, fly } from "svelte/transition";
-    import {
-        changeInputValue,
-        dragScroll,
-        getChildIndex,
-    } from "../../js/others/helper.js";
+    import { changeInputValue, dragScroll } from "../../js/others/helper.js";
 
     let Init = true;
 

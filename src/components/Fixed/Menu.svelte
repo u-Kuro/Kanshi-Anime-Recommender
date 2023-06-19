@@ -60,7 +60,7 @@
             ) {
                 await saveJSON(true, "shouldProcessRecommendation");
                 $menuVisible = false;
-                window?.scrollTo?.({ top: 0, behavior: "smooth" });
+                window?.scrollTo?.({ top: -9999, behavior: "smooth" });
                 importUserData({
                     importedFile: importedFile,
                 })
@@ -320,20 +320,17 @@
         position: fixed;
         padding-top: 58px;
         top: 0;
-        display: flex;
         width: 100%;
         height: 100%;
         background-color: rgb(0, 0, 0, 0.925);
         z-index: 1;
     }
     .menu {
-        margin: 0 auto;
         padding: 1.5em 50px;
-        width: 100vw;
-        height: max-content;
         display: flex;
         flex-wrap: wrap;
         gap: 1.5em;
+        width: 100%;
         max-width: 1140px;
         max-height: 100%;
         overflow-x: hidden;
@@ -352,7 +349,6 @@
         background-color: rgb(40 69 102);
         color: #b9cadd;
         padding: 0.8em 1.6em;
-        height: fit-content;
         border: none;
         cursor: pointer;
         flex: 1 0 auto;

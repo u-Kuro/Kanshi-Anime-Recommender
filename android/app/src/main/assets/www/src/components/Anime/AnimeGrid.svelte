@@ -11,7 +11,6 @@
         openedAnimePopupIdx,
         animeOptionVisible,
         openedAnimeOptionIdx,
-        updateRecommendationList,
         initData,
         asyncAnimeReloaded,
         animeIdxRemoved,
@@ -328,7 +327,7 @@
                 </div>
             {/each}
             {#if $finalAnimeList?.length && !shownAllInList}
-                {#each Array(1) as _}
+                {#each Array(6) as _}
                     <div class="image-grid__card skeleton">
                         <div class="shimmer">
                             <img
@@ -371,10 +370,13 @@
     }
 
     .image-grid__card.skeleton {
-        background-color: rgba(30, 42, 56, 0.8) !important;
+        background: transparent !important;
+        height: 319px;
     }
     .image-grid__card > div.shimmer {
-        height: 240px !important;
+        background-color: rgba(30, 42, 56, 0.8);
+        height: 262px;
+        border-radius: 0.25em;
     }
 
     .image-grid {
@@ -382,7 +384,7 @@
         justify-content: space-between;
         align-items: flex-start;
         grid-column-gap: 0.8rem;
-        grid-row-gap: 2em;
+        grid-row-gap: 1em;
         grid-template-columns: repeat(
             auto-fit,
             minmax(min(100%/2 - 0.8rem, 180px), 0)
@@ -390,23 +392,22 @@
     }
 
     .image-grid__card {
-        animation: svelte-1g3ymol-fadeIn var(--transDur) ease-in;
+        animation: fadeIn 0.3s ease-in;
         width: 100%;
-        margin: 0 auto;
+        height: 100%;
+        display: grid;
+        grid-template-rows: auto 57px;
+        grid-template-columns: 100%;
     }
 
     .image-grid__card .image-grid__card-thumb {
-        background: #0003;
+        background: rgba(30, 42, 56, 0.8);
         border-radius: 0.25em;
         display: block;
-        overflow: hidden;
-        position: relative;
-        height: 240px;
-        box-shadow: 0 0 0.375em #0b1622;
         will-change: transform;
         cursor: pointer;
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
-        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        transition: all 0.3s ease;
     }
 
     .image-grid__card:not(.skeleton):focus .image-grid__card-thumb,
@@ -420,7 +421,7 @@
         object-fit: cover;
         width: 100%;
         height: 100%;
-        transition: all 125ms linear;
+        transition: all 0.3s linear;
         user-select: none;
     }
 
@@ -430,29 +431,23 @@
     }
 
     .image-grid__card-title {
-        display: flex;
-        flex-wrap: wrap;
         padding: clamp(0.1em, 0.3em, 0.5em);
         font-size: clamp(1.2rem, 1.3rem, 1.4rem);
         background-color: transparent;
+        height: 57px;
     }
 
-    .image-grid__card-title span {
-        flex: 1;
-        min-width: 100%;
-        margin: 0;
-        padding: 0;
+    .image-grid__card-title span.brief-info {
         display: flex;
         gap: 0.5ch;
-        flex-flow: wrap;
-        background-color: transparent;
+        flex-wrap: wrap;
     }
 
     .image-grid__card-title span.title {
+        display: block;
         overflow-x: auto;
         overflow-y: hidden;
         white-space: nowrap;
-        text-overflow: unset;
     }
 
     .image-grid__card-title span.title::-webkit-scrollbar {
@@ -460,12 +455,9 @@
     }
 
     .image-grid__card-title span.brief-info div {
-        width: max-content;
         display: flex;
         align-items: center;
-        height: 15px;
         white-space: nowrap;
-        line-height: 15px;
         column-gap: 2px;
         user-select: none;
     }
@@ -483,7 +475,7 @@
         align-items: center;
         flex-direction: column;
         gap: 1em;
-        animation: fadeIn var(--transDur) linear;
+        animation: fadeIn 0.3s linear;
         text-align: center;
         width: 100%;
         grid-column: 1/-1;
