@@ -13,6 +13,8 @@
         androidInApp,
         confirmPromise,
         animeIdxRemoved,
+        shownAllInList,
+        dataStatus,
     } from "../../../js/globalValues.js";
     import {
         isJsonObject,
@@ -368,7 +370,7 @@
         });
     });
 
-    let currentHeader;
+    let currentHeader, scrollToGridTimeout;
     async function playMostVisibleTrailer() {
         if (!$popupVisible) return;
         await tick();
@@ -388,7 +390,10 @@
             ) ?? -1;
         let animeGrid = $finalAnimeList?.[visibleTrailerIdx]?.gridElement;
         if (animeGrid instanceof Element) {
-            scrollToElement(window, animeGrid, "top", "smooth", -66); // Nav + GridGap
+            if (scrollToGridTimeout) clearTimeout(scrollToGridTimeout);
+            scrollToGridTimeout = setTimeout(() => {
+                scrollToElement(window, animeGrid, "top", "smooth", -66); // Nav + GridGap
+            }, 300);
         }
 
         let haveTrailer;
@@ -658,11 +663,21 @@
     };
     window.addEventListener("online", () => {
         isOnline = true;
+        document.querySelectorAll("img")?.forEach((image) => {
+            if (!image.naturalHeight) {
+                image.style.opacity = 0;
+                image.onload = () => {
+                    image.style.opacity = 1;
+                };
+                image.src = image.src;
+            }
+        });
         loadYouTubeAPI().then(() => {
             playMostVisibleTrailer();
         });
     });
     window.addEventListener("offline", () => {
+        $dataStatus = "Currently Offline";
         isOnline = false;
     });
     function loadYouTubeAPI() {
@@ -999,6 +1014,11 @@
                     </div>
                 </div>
             {/each}
+            {#if $finalAnimeList?.length && !$shownAllInList}
+                <div class="popup-content-loading">
+                    <i class="fa-solid fa-k fa-fade" />
+                </div>
+            {/if}
         {/if}
     </div>
     <div
@@ -1084,6 +1104,19 @@
         font-size: 40px;
         color: #fff;
         animation: spin 2s linear infinite;
+    }
+
+    .popup-content-loading {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        max-width: 640px;
+        padding: 2em;
+        background-color: #000;
+    }
+
+    .popup-content-loading i {
+        font-size: 35px;
     }
 
     @keyframes spin {

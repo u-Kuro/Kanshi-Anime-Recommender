@@ -14,14 +14,13 @@
         initData,
         asyncAnimeReloaded,
         animeIdxRemoved,
+        shownAllInList,
     } from "../../js/globalValues.js";
     import {
         formatNumber,
         ncsCompare,
         isJsonObject,
     } from "../../js/others/helper.js";
-
-    let shownAllInList = false;
 
     let observerTimeout;
     let observerDelay = 1000;
@@ -70,7 +69,7 @@
                             data.finalAnimeList
                         );
                         if (data.isLast) {
-                            shownAllInList = true;
+                            $shownAllInList = true;
                             if (
                                 $animeObserver instanceof IntersectionObserver
                             ) {
@@ -113,8 +112,8 @@
 
     finalAnimeList.subscribe((val) => {
         if (val instanceof Array && val.length) {
-            if (shownAllInList) {
-                shownAllInList = false;
+            if ($shownAllInList) {
+                $shownAllInList = false;
             }
             if ($animeObserver) {
                 $animeObserver.disconnect();
@@ -143,7 +142,7 @@
 
     searchedAnimeKeyword.subscribe(async (val) => {
         if (typeof val === "string" && $animeLoaderWorker instanceof Worker) {
-            shownAllInList = false;
+            $shownAllInList = false;
             $animeLoaderWorker.postMessage({
                 filterKeyword: val,
             });
@@ -326,29 +325,25 @@
                     </span>
                 </div>
             {/each}
-            {#if $finalAnimeList?.length && !shownAllInList}
+            {#if $finalAnimeList?.length && !$shownAllInList}
                 {#each Array(6) as _}
                     <div class="image-grid__card skeleton">
-                        <div class="shimmer">
-                            <img
-                                style:opacity="0"
-                                class="image-grid__card-thumb skeleton"
-                                alt=""
-                            />
-                        </div>
+                        <div class="shimmer" />
+                        <span class="image-grid__card-title">
+                            <span class="title skeleton shimmer" />
+                            <span class="brief-info skeleton shimmer" />
+                        </span>
                     </div>
                 {/each}
             {/if}
         {:else if !$finalAnimeList || $initData}
             {#each Array(10) as _}
                 <div class="image-grid__card skeleton">
-                    <div class="shimmer">
-                        <img
-                            style:opacity="0"
-                            class="image-grid__card-thumb skeleton"
-                            alt=""
-                        />
-                    </div>
+                    <div class="shimmer" />
+                    <span class="image-grid__card-title">
+                        <span class="title skeleton shimmer" />
+                        <span class="brief-info skeleton shimmer" />
+                    </span>
                 </div>
             {/each}
         {:else}
@@ -370,13 +365,18 @@
     }
 
     .image-grid__card.skeleton {
-        background: transparent !important;
-        height: 319px;
+        background-color: transparent !important;
     }
-    .image-grid__card > div.shimmer {
-        background-color: rgba(30, 42, 56, 0.8);
-        height: 262px;
-        border-radius: 0.25em;
+
+    .image-grid__card.skeleton .title {
+        height: 10px;
+        width: 75%;
+        margin-bottom: clamp(0.1em, 0.3em, 0.5em);
+    }
+
+    .image-grid__card.skeleton .brief-info {
+        height: 10px;
+        width: 50%;
     }
 
     .image-grid {
@@ -400,7 +400,15 @@
         grid-template-columns: 100%;
     }
 
+    .image-grid__card > .shimmer {
+        position: relative;
+        padding-bottom: calc(181 / 128 * 100%);
+        background-color: rgba(30, 42, 56, 0.8);
+        border-radius: 0.25em;
+    }
+
     .image-grid__card .image-grid__card-thumb {
+        position: absolute;
         background: rgba(30, 42, 56, 0.8);
         border-radius: 0.25em;
         display: block;

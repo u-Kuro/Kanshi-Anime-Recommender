@@ -29,6 +29,7 @@ const autoPlay = writable(null)
 const initData = writable(true)
 const animeObserver = writable(null)
 const animeIdxRemoved = writable(null)
+const shownAllInList = writable(false)
 const searchedAnimeKeyword = writable("")
 const confirmPromise = writable(null)
 const menuVisible = writable(false)
@@ -71,6 +72,7 @@ export {
     autoPlay,
     initData,
     animeObserver,
+    shownAllInList,
     searchedAnimeKeyword,
     animeIdxRemoved,
     confirmPromise,
