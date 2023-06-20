@@ -194,6 +194,7 @@
             );
             if (
                 element.classList.contains("icon") &&
+                !element.classList.contains("fa-angle-down") &&
                 $filterOptions?.filterSelection?.[idxTypeSelected].filters
                     .Dropdown[selectedIndex].selected
             )
@@ -231,7 +232,7 @@
         }
         selectedFilterElement = null;
     }
-    function clickOutsideListener(event) {
+    async function clickOutsideListener(event) {
         if ($filterOptions?.filterSelection?.length < 1 || !$filterOptions)
             return;
         let element = event.target;
@@ -263,7 +264,8 @@
             selectedFilterElement = null;
         } else if (
             !classList.contains("options-wrap") &&
-            !element.closest(".options-wrap")
+            !element.closest(".options-wrap") &&
+            !classList.contains("async-element")
         ) {
             // Large Screen Width
             // Filter Type Dropdown
@@ -294,7 +296,11 @@
 
             // Filter Selection Dropdown
             let inputDropdownSelectEl = element.closest(".select");
-            if (!classList.contains("select") && !inputDropdownSelectEl) {
+            if (
+                !classList.contains("select") &&
+                !classList.contains("fa-angle-down") &&
+                !inputDropdownSelectEl
+            ) {
                 if (
                     highlightedEl instanceof Element &&
                     highlightedEl.closest(".filter-select")
@@ -1363,18 +1369,18 @@
                                                     {#if filterSelection.filterSelectionName === "Content Caution"}
                                                         <i
                                                             style:--optionColor="#5f9ea0"
-                                                            class="fa-regular fa-circle-xmark"
+                                                            class="fa-regular fa-circle-xmark async-element"
                                                         />
                                                     {:else}
                                                         <i
                                                             style:--optionColor="#5f9ea0"
-                                                            class="fa-regular fa-circle-check"
+                                                            class="fa-regular fa-circle-check async-element"
                                                         />
                                                     {/if}
                                                 {:else if option.selected === "excluded"}
                                                     <i
                                                         style:--optionColor="#e85d75"
-                                                        class="fa-regular fa-circle-xmark"
+                                                        class="fa-regular fa-circle-xmark async-element"
                                                     />
                                                 {/if}
                                             </div>
@@ -2045,6 +2051,7 @@
         background: rgb(21, 31, 46);
         padding: 0.9em 1.5em;
         border-radius: 6px;
+        cursor: pointer;
     }
 
     .sortFilter {
