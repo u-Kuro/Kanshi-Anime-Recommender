@@ -287,7 +287,7 @@
     }
     @media screen and (max-width: 425px) {
         .nav {
-            padding: 0 1em;
+            padding: 0 2em;
         }
     }
 </style>

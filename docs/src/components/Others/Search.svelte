@@ -1701,7 +1701,7 @@
     main {
         display: grid;
         grid-template-rows: 20px 55px 80px auto 37px auto;
-        padding-top: 2em;
+        padding-top: 1.5em;
     }
 
     .skeleton {
