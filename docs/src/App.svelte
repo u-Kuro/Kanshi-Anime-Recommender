@@ -439,46 +439,39 @@
 				window.history.pushState("visited", ""); // Push Popped State
 			}
 			if (_showConfirm) {
-				console.log("_showConfirm");
 				handleConfirmationCancelled();
 				_showConfirm = false;
 				return;
 			} else if ($menuVisible) {
-				console.log("$menuVisible");
 				$menuVisible = false;
 				return;
 			} else if ($popupVisible) {
-				console.log("$popupVisible");
 				$popupVisible = false;
 				return;
 			} else if ($animeOptionVisible) {
-				console.log("$animeOptionVisible");
 				$animeOptionVisible = false;
 				return;
 			} else if (window.checkOpenDropdown?.()) {
-				console.log("window.closeDropdown");
 				window.closeDropdown?.();
 				return;
 			} else if (window.scrollY > 200) {
-				console.log("window.scrollY");
 				window.scrollTo({ top: -9999, behavior: "smooth" });
-				window.setShoulGoBack(true);
+				window.setShouldGoBack(true);
 				return;
 			} else {
-				console.log("window.scrollY2");
 				window.scrollTo({ top: -9999, behavior: "smooth" });
-				window.setShoulGoBack(true);
+				window.setShouldGoBack(true);
 			}
 		}
 	};
 	popupVisible.subscribe((val) => {
-		if (val === true) window.setShoulGoBack(false);
+		if (val === true) window.setShouldGoBack(false);
 	});
 	menuVisible.subscribe((val) => {
-		if (val === true) window.setShoulGoBack(false);
+		if (val === true) window.setShouldGoBack(false);
 	});
 	window.addEventListener("scroll", () => {
-		if (window.scrollY !== 0) window.setShoulGoBack(false);
+		if (window.scrollY !== 0) window.setShouldGoBack(false);
 		runIsScrolling.update((e) => !e);
 	});
 	onMount(() => {
@@ -489,10 +482,10 @@
 			});
 	});
 
-	window.setShoulGoBack = (_shouldGoBack) => {
+	window.setShouldGoBack = (_shouldGoBack) => {
 		if ($android) {
 			try {
-				JSBridge.setShoulGoBack(_shouldGoBack);
+				JSBridge.setShouldGoBack(_shouldGoBack);
 			} catch (e) {}
 		} else {
 			if (window.history.state !== "visited") {
@@ -632,7 +625,7 @@
 	.home {
 		height: 100%;
 		width: 100%;
-		margin: 58px auto 0;
+		margin: 56px auto 0;
 		max-width: 1140px;
 		padding-left: 50px;
 		padding-right: 50px;

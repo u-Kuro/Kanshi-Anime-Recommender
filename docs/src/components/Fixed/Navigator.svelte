@@ -115,7 +115,10 @@
         if (searchBtn instanceof Element) {
             if (searchButtonFocusOutTimeout)
                 clearTimeout(searchButtonFocusOutTimeout);
-            if (typedUsername === $username || typedUsername === "") {
+            if (
+                typedUsername?.toLowerCase?.() === $username?.toLowerCase?.() ||
+                typedUsername === ""
+            ) {
                 searchBtn.style.display = "none";
             }
         }
@@ -148,8 +151,7 @@
                 e.key === "Enter" &&
                 window.scrollTo({ top: -9999, behavior: "smooth" })}
         >
-            <!-- <img src="/images/Kanshi-Logo-Transparent.png" alt="Kanshi Logo" /> -->
-            <img src="/images/Kanshi-Text-Logo.png" alt="Kanshi Logo" />
+            <img src="./images/Kanshi-Text-Logo.png" alt="Kanshi Logo" />
         </div>
         <!-- <div id="fps">--</span> FPS</div> -->
         <div class="input-search">
@@ -178,7 +180,7 @@
         </div>
         <img
             class="menu-icon"
-            src="/images/Kanshi-Logo.png"
+            src="./images/Kanshi-Logo.png"
             alt="Kanshi Logo"
         />
     </nav>
@@ -199,13 +201,13 @@
         position: fixed;
         top: 0;
         width: 100%;
-        height: 58px;
+        height: 56px;
         background-color: #152232;
         color: #b9cadd;
     }
     .nav {
         display: grid;
-        grid-template-columns: 75px auto 34px;
+        grid-template-columns: 86px auto 25px;
         height: 100%;
         align-items: center;
         -ms-user-select: none;
@@ -218,21 +220,21 @@
     .logo-icon {
         cursor: pointer;
         justify-self: start;
-        width: 75px;
+        width: 86px;
         max-width: 100%;
-        height: 34px;
+        height: 25px;
         display: flex;
         align-items: center;
         justify-content: center;
         border-radius: 6px;
     }
     .logo-icon img {
-        height: 25px;
-        width: 75px;
+        height: 20px;
+        width: 86px;
     }
     .input-search {
         display: flex;
-        height: 34px;
+        height: 25px;
         border-radius: 6px;
         justify-self: right;
         margin-left: 2em;
@@ -246,7 +248,7 @@
         color: white;
         padding-left: 1ch;
         padding-right: 1ch;
-        height: 34px;
+        height: 25px;
         max-width: 160px;
         width: 100%;
         cursor: auto;
@@ -276,8 +278,8 @@
         display: flex;
         justify-content: center;
         align-items: center;
-        width: 34px;
-        height: 34px;
+        width: 25px;
+        height: 25px;
         border: none;
         outline: none;
         background-color: rgb(21, 31, 46);
@@ -293,8 +295,8 @@
     }
     .menu-icon {
         font-size: 22px;
-        height: 34px;
-        width: 34px;
+        height: 25px;
+        width: 25px;
         border-radius: 6px;
         cursor: pointer;
         justify-self: end;

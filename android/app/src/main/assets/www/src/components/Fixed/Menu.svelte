@@ -318,7 +318,7 @@
 <style>
     .menu-container {
         position: fixed;
-        padding-top: 58px;
+        padding-top: 56px;
         top: 0;
         width: 100%;
         height: 100%;
