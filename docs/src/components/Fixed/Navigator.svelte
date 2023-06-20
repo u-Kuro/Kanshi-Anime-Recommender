@@ -93,8 +93,7 @@
     function handleMenuVisibility(event) {
         let element = event.target;
         let classList = element.classList;
-        if (!classList.contains("menu-icon") && !classList.contains("nav"))
-            return;
+        if (!classList.contains("nav")) return;
         menuVisible.set(!$menuVisible);
     }
 
@@ -143,16 +142,16 @@
     on:click={handleMenuVisibility}
 >
     <nav class="nav">
-        <div
+        <img
             class="logo-icon copy"
             copy-value="Kanshi."
+            src="./images/Kanshi-Logo.png"
+            alt="Kanshi Logo"
             on:click={() => window.scrollTo({ top: -9999, behavior: "smooth" })}
             on:keydown={(e) =>
                 e.key === "Enter" &&
                 window.scrollTo({ top: -9999, behavior: "smooth" })}
-        >
-            <img src="./images/Kanshi-Text-Logo.png" alt="Kanshi Logo" />
-        </div>
+        />
         <!-- <div id="fps">--</span> FPS</div> -->
         <div class="input-search">
             <input
@@ -178,36 +177,31 @@
                 <i class="fa-solid fa-magnifying-glass" />
             </div>
         </div>
-        <img
-            class="menu-icon"
-            src="./images/Kanshi-Logo.png"
-            alt="Kanshi Logo"
-        />
     </nav>
 </div>
 
 <style>
     ::placeholder {
         opacity: 1 !important;
-        color: #8390a0 !important;
+        color: white !important;
     }
 
     :-ms-input-placeholder,
     ::-ms-input-placeholder {
-        color: #8390a0 !important;
+        color: white !important;
     }
     .nav-container {
         z-index: 2;
         position: fixed;
         top: 0;
         width: 100%;
-        height: 56px;
+        height: 45px;
         background-color: #152232;
         color: #b9cadd;
     }
     .nav {
         display: grid;
-        grid-template-columns: 86px auto 25px;
+        grid-template-columns: 25px auto;
         height: 100%;
         align-items: center;
         -ms-user-select: none;
@@ -215,12 +209,13 @@
         user-select: none;
         max-width: 1140px;
         margin: auto;
+        gap: 2em;
         padding: 0 50px;
     }
     .logo-icon {
         cursor: pointer;
         justify-self: start;
-        width: 86px;
+        width: 25px;
         max-width: 100%;
         height: 25px;
         display: flex;
@@ -228,17 +223,11 @@
         justify-content: center;
         border-radius: 6px;
     }
-    .logo-icon img {
-        height: 20px;
-        width: 86px;
-    }
     .input-search {
         display: flex;
         height: 25px;
         border-radius: 6px;
         justify-self: right;
-        margin-left: 2em;
-        margin-right: 2em;
     }
     .input-search input {
         outline: none;
@@ -257,10 +246,6 @@
         max-width: var(--min-width) !important;
         padding-right: 0;
         padding-left: 0;
-    }
-    .input-search:not(:focus-within) {
-        margin-right: 10px;
-        margin-left: 10px;
     }
     .input-search:not(:focus-within) input:not(:placeholder-shown) {
         font-family: system-ui !important;
@@ -292,18 +277,6 @@
     .input-search .searchBtn,
     .input-search i {
         cursor: pointer;
-    }
-    .menu-icon {
-        font-size: 22px;
-        height: 25px;
-        width: 25px;
-        border-radius: 6px;
-        cursor: pointer;
-        justify-self: end;
-        color: #b9cadd;
-        display: flex;
-        justify-content: center;
-        align-items: center;
     }
     @media screen and (max-width: 588px) {
         .input-search input {
