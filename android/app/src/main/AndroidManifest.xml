@@ -25,11 +25,15 @@
         android:theme="@style/Theme.Kanshi"
         android:requestLegacyExternalStorage="true"
         tools:targetApi="33">
-        <activity
-            android:name=".MainActivity"
+        <activity android:name=".MainActivity"
             android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|uiMode|screenSize|smallestScreenSize"
             android:exported="true"
-            android:launchMode="singleTop">
+            android:theme="@style/Theme.Kanshi"/>
+        <activity
+            android:name=".SplashActivity"
+            android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|uiMode|screenSize|smallestScreenSize"
+            android:exported="true"
+            android:theme="@style/splashScreen">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />

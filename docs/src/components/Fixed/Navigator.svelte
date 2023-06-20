@@ -104,6 +104,8 @@
         }
     }
 
+    window.searchButtonFocusOut = searchButtonFocusOut;
+
     let searchButtonFocusOutTimeout;
     function searchButtonFocusOut() {
         typedUsername = typedUsername?.trim?.() || "";
@@ -195,9 +197,9 @@
         position: fixed;
         top: 0;
         width: 100%;
-        height: 45px;
+        height: 50px;
         background-color: #152232;
-        color: #b9cadd;
+        color: white;
     }
     .nav {
         display: grid;
@@ -230,6 +232,7 @@
         justify-self: right;
     }
     .input-search input {
+        font-family: system-ui !important;
         outline: none;
         border: none;
         background-color: #152232;
@@ -248,7 +251,6 @@
         padding-left: 0;
     }
     .input-search:not(:focus-within) input:not(:placeholder-shown) {
-        font-family: system-ui !important;
         text-transform: uppercase;
     }
     .input-search:focus-within input {

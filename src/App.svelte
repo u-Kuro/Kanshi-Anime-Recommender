@@ -237,6 +237,7 @@
 			if (!$username) {
 				await tick();
 				let usernameInput = document.getElementById("usernameInput");
+				usernameInput.focus();
 				usernameInput.setCustomValidity("Enter your Anilist Username");
 				usernameInput.reportValidity();
 			}
@@ -625,7 +626,7 @@
 	.home {
 		height: 100%;
 		width: 100%;
-		margin: 45px auto 0;
+		margin: 50px auto 0;
 		max-width: 1140px;
 		padding-left: 50px;
 		padding-right: 50px;
