@@ -17,6 +17,7 @@
         writableSubscriptions.push(
             username.subscribe((val) => {
                 typedUsername = val;
+                searchButtonFocusOut();
             })
         );
     });
@@ -52,6 +53,7 @@
                                 .then(({ newusername }) => {
                                     if (newusername) {
                                         typedUsername = $username = newusername;
+                                        searchButtonFocusOut();
                                         updateRecommendationList.update(
                                             (e) => !e
                                         );
@@ -77,6 +79,7 @@
                                 .then(({ newusername }) => {
                                     if (newusername)
                                         typedUsername = $username = newusername;
+                                    searchButtonFocusOut();
                                     updateRecommendationList.update((e) => !e);
                                 })
                                 .catch((error) => console.error(error));
@@ -93,6 +96,29 @@
         if (!classList.contains("menu-icon") && !classList.contains("nav"))
             return;
         menuVisible.set(!$menuVisible);
+    }
+
+    function searchButtonFocusIn() {
+        let searchBtn = document.getElementById("searchBtn");
+        if (searchBtn instanceof Element) {
+            searchBtn.style.display = "flex";
+        }
+    }
+
+    let searchButtonFocusOutTimeout;
+    function searchButtonFocusOut() {
+        typedUsername = typedUsername?.trim?.() || "";
+        if (typedUsername === "") {
+            typedUsername = "";
+        }
+        let searchBtn = document.getElementById("searchBtn");
+        if (searchBtn instanceof Element) {
+            if (searchButtonFocusOutTimeout)
+                clearTimeout(searchButtonFocusOutTimeout);
+            if (typedUsername === $username || typedUsername === "") {
+                searchBtn.style.display = "none";
+            }
+        }
     }
 
     onDestroy(() => {
@@ -138,8 +164,11 @@
                     "ch"}
                 on:keydown={(e) => e.key === "Enter" && updateUsername(e)}
                 bind:value={typedUsername}
+                on:focusin={searchButtonFocusIn}
+                on:focusout={searchButtonFocusOut}
             />
             <div
+                id="searchBtn"
                 class="searchBtn"
                 on:keydown={(e) => e.key === "Enter" && updateUsername(e)}
                 on:click={updateUsername}
@@ -239,11 +268,12 @@
         background-color: rgb(21, 31, 46);
         text-align: start;
     }
-    .input-search:focus-within .searchBtn {
-        display: flex;
+    .input-search:not(:focus-within) .searchBtn {
+        background-color: #152232;
     }
     .input-search .searchBtn {
-        display: none;
+        transition: opacity 0.3s ease;
+        display: flex;
         justify-content: center;
         align-items: center;
         width: 34px;
@@ -254,7 +284,8 @@
     }
     .input-search i {
         color: white;
-        font-size: 1.25em;
+        font-size: 1em;
+        transform: translateY(1px);
     }
     .input-search .searchBtn,
     .input-search i {
