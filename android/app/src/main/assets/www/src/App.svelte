@@ -439,25 +439,33 @@
 				window.history.pushState("visited", ""); // Push Popped State
 			}
 			if (_showConfirm) {
+				console.log("_showConfirm");
 				handleConfirmationCancelled();
 				_showConfirm = false;
 				return;
 			} else if ($menuVisible) {
+				console.log("$menuVisible");
 				$menuVisible = false;
 				return;
 			} else if ($popupVisible) {
+				console.log("$popupVisible");
 				$popupVisible = false;
 				return;
 			} else if ($animeOptionVisible) {
+				console.log("$animeOptionVisible");
 				$animeOptionVisible = false;
 				return;
 			} else if (window.checkOpenDropdown?.()) {
+				console.log("window.closeDropdown");
 				window.closeDropdown?.();
 				return;
 			} else if (window.scrollY > 200) {
+				console.log("window.scrollY");
 				window.scrollTo({ top: -9999, behavior: "smooth" });
+				window.setShoulGoBack(true);
 				return;
 			} else {
+				console.log("window.scrollY2");
 				window.scrollTo({ top: -9999, behavior: "smooth" });
 				window.setShoulGoBack(true);
 			}

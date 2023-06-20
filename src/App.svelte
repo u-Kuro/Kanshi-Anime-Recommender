@@ -456,21 +456,22 @@
 				return;
 			} else if (window.scrollY > 200) {
 				window.scrollTo({ top: -9999, behavior: "smooth" });
+				window.setShouldGoBack(true);
 				return;
 			} else {
 				window.scrollTo({ top: -9999, behavior: "smooth" });
-				window.setShoulGoBack(true);
+				window.setShouldGoBack(true);
 			}
 		}
 	};
 	popupVisible.subscribe((val) => {
-		if (val === true) window.setShoulGoBack(false);
+		if (val === true) window.setShouldGoBack(false);
 	});
 	menuVisible.subscribe((val) => {
-		if (val === true) window.setShoulGoBack(false);
+		if (val === true) window.setShouldGoBack(false);
 	});
 	window.addEventListener("scroll", () => {
-		if (window.scrollY !== 0) window.setShoulGoBack(false);
+		if (window.scrollY !== 0) window.setShouldGoBack(false);
 		runIsScrolling.update((e) => !e);
 	});
 	onMount(() => {
@@ -481,10 +482,10 @@
 			});
 	});
 
-	window.setShoulGoBack = (_shouldGoBack) => {
+	window.setShouldGoBack = (_shouldGoBack) => {
 		if ($android) {
 			try {
-				JSBridge.setShoulGoBack(_shouldGoBack);
+				JSBridge.setShouldGoBack(_shouldGoBack);
 			} catch (e) {}
 		} else {
 			if (window.history.state !== "visited") {
