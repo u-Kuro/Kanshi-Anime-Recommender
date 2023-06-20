@@ -44,9 +44,7 @@
             isRecentlyOpenedTimeout = setTimeout(() => {
                 isRecentlyOpened = false;
             }, 500);
-            if (window.matchMedia("(pointer: fine)").matches) {
-                confirmButtonEl?.focus?.();
-            }
+            confirmButtonEl?.focus?.();
         } else {
             if (isRecentlyOpenedTimeout) clearTimeout(isRecentlyOpenedTimeout);
             isRecentlyOpened = false;

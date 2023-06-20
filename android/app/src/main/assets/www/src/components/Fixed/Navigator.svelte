@@ -11,22 +11,15 @@
     import { onMount, onDestroy } from "svelte";
 
     let writableSubscriptions = [];
-    let windowWidth;
     let typedUsername;
 
     onMount(() => {
-        windowWidth = window.innerWidth;
-        window.addEventListener("resize", updateWindowHeight);
         writableSubscriptions.push(
             username.subscribe((val) => {
                 typedUsername = val;
             })
         );
     });
-
-    function updateWindowHeight() {
-        windowWidth = window.innerWidth;
-    }
 
     async function updateUsername(event) {
         if ($initData) return pleaseWaitAlert();
@@ -104,7 +97,6 @@
 
     onDestroy(() => {
         writableSubscriptions.forEach((unsub) => unsub());
-        window.removeEventListener("resize", updateWindowHeight);
     });
 
     function pleaseWaitAlert() {
@@ -130,16 +122,20 @@
                 e.key === "Enter" &&
                 window.scrollTo({ top: -9999, behavior: "smooth" })}
         >
-            <img src="/images/Kanshi-Logo.png" alt="Kanshi Logo" />
+            <!-- <img src="/images/Kanshi-Logo-Transparent.png" alt="Kanshi Logo" /> -->
+            <img src="/images/Kanshi-Text-Logo.png" alt="Kanshi Logo" />
         </div>
         <!-- <div id="fps">--</span> FPS</div> -->
         <div class="input-search">
             <input
                 id="usernameInput"
-                type="search"
+                type="text"
                 enterkeyhint="search"
                 autocomplete="off"
-                placeholder="{windowWidth > 415 ? 'Your ' : ''}Anilist Username"
+                placeholder="Your Anilist Username"
+                style:--min-width={Math.min(typedUsername?.length || 17, 22) +
+                    1 +
+                    "ch"}
                 on:keydown={(e) => e.key === "Enter" && updateUsername(e)}
                 bind:value={typedUsername}
             />
@@ -151,7 +147,11 @@
                 <i class="fa-solid fa-magnifying-glass" />
             </div>
         </div>
-        <i class="menu-icon fa-solid fa-bars" />
+        <img
+            class="menu-icon"
+            src="/images/Kanshi-Logo.png"
+            alt="Kanshi Logo"
+        />
     </nav>
 </div>
 
@@ -176,8 +176,7 @@
     }
     .nav {
         display: grid;
-        column-gap: 1em;
-        grid-template-columns: minmax(34px, 1fr) auto 34px;
+        grid-template-columns: 75px auto 34px;
         height: 100%;
         align-items: center;
         -ms-user-select: none;
@@ -190,45 +189,72 @@
     .logo-icon {
         cursor: pointer;
         justify-self: start;
-        width: 86px;
+        width: 75px;
         max-width: 100%;
         height: 34px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 6px;
     }
     .logo-icon img {
-        height: 34px;
-        width: 34px;
-        border-radius: 6px;
+        height: 25px;
+        width: 75px;
     }
     .input-search {
         display: flex;
-        height: 25px;
+        height: 34px;
         border-radius: 6px;
         justify-self: right;
+        margin-left: 2em;
+        margin-right: 2em;
     }
     .input-search input {
         outline: none;
         border: none;
-        background-color: rgb(21, 31, 46);
+        background-color: #152232;
+        text-align: end;
         color: white;
         padding-left: 1ch;
         padding-right: 1ch;
-        height: 25px;
+        height: 34px;
         max-width: 160px;
         width: 100%;
         cursor: auto;
     }
-    .input-search .searchBtn {
+    .input-search:not(:focus-within) input {
+        max-width: var(--min-width) !important;
+        padding-right: 0;
+        padding-left: 0;
+    }
+    .input-search:not(:focus-within) {
+        margin-right: 10px;
+        margin-left: 10px;
+    }
+    .input-search:not(:focus-within) input:not(:placeholder-shown) {
+        font-family: system-ui !important;
+        text-transform: uppercase;
+    }
+    .input-search:focus-within input {
+        background-color: rgb(21, 31, 46);
+        text-align: start;
+    }
+    .input-search:focus-within .searchBtn {
         display: flex;
+    }
+    .input-search .searchBtn {
+        display: none;
         justify-content: center;
         align-items: center;
-        width: 30px;
-        height: 25px;
+        width: 34px;
+        height: 34px;
         border: none;
         outline: none;
         background-color: rgb(21, 31, 46);
     }
     .input-search i {
         color: white;
+        font-size: 1.25em;
     }
     .input-search .searchBtn,
     .input-search i {
@@ -246,14 +272,14 @@
         justify-content: center;
         align-items: center;
     }
+    @media screen and (max-width: 588px) {
+        .input-search input {
+            max-width: none;
+        }
+    }
     @media screen and (max-width: 425px) {
         .nav {
             padding: 0 1em;
         }
     }
-    /* Light */
-    /* .nav.light {
-        background-color: rgb(43, 45, 66, 0.925);
-        color: #f0f0f0;
-    } */
 </style>

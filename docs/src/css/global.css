@@ -11,7 +11,7 @@
 
 html {
     font-size: 62.5% !important;
-    font-family: Roboto, -apple-system, BlinkMacSystemFont, Segoe UI, Oxygen,
+    font-family: system-ui, Roboto, -apple-system, BlinkMacSystemFont, Segoe UI, Oxygen,
         Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
     line-height: 1.15;
     background-color: #0b1622 !important;
