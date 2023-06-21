@@ -172,13 +172,13 @@
         position: fixed;
         top: 0;
         width: 100%;
-        height: 50px;
+        height: 55px;
         background-color: #152232;
         color: white;
     }
     .nav {
         display: grid;
-        grid-template-columns: auto 20px;
+        grid-template-columns: auto 30px;
         height: 100%;
         align-items: center;
         -ms-user-select: none;
@@ -192,9 +192,9 @@
     .logo-icon {
         cursor: pointer;
         justify-self: start;
-        width: 20px;
+        width: 30px;
         max-width: 100%;
-        height: 20px;
+        height: 30px;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -203,10 +203,13 @@
     .input-search {
         display: flex;
         gap: 1.5em;
-        height: 30px;
+        height: 35px;
         border-radius: 6px;
         justify-self: left;
         align-items: center;
+    }
+    .input-search input::-webkit-search-cancel-button {
+        font-size: 1.5rem;
     }
     .input-search input {
         font-family: system-ui !important;
@@ -218,16 +221,16 @@
         padding-left: 1ch;
         padding-right: 1ch;
         border-radius: 6px;
-        height: 30px;
-        max-width: 150px;
+        height: 35px;
+        max-width: 200px;
         width: 100%;
         cursor: auto;
     }
     .goback {
         display: none;
-        font-size: 20px;
-        height: 20px;
-        width: 20px;
+        font-size: 25px;
+        height: 25px;
+        width: 25px;
         align-items: center;
         justify-content: center;
     }
@@ -239,14 +242,17 @@
         text-transform: uppercase;
     }
     .input-search:focus-within input {
-        background-color: rgb(21, 31, 46);
+        background-color: rgb(35 45 65);
         text-align: start;
+    }
+    .input-search:not(:focus-within) input::-webkit-search-cancel-button {
+        -webkit-appearance: none;
     }
     .input-search i {
         color: white;
         cursor: pointer;
     }
-    @media screen and (max-width: 424px) {
+    @media screen and (max-width: 425px) {
         .input-search:focus-within {
             width: 100%;
         }

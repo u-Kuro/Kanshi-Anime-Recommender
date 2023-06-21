@@ -334,7 +334,7 @@
 <style>
     .menu-container {
         position: fixed;
-        padding-top: 50px;
+        padding-top: 55px;
         top: 0;
         width: 100%;
         height: 100%;

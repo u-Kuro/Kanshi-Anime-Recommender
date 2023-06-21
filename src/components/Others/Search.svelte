@@ -1882,7 +1882,6 @@
         align-items: center;
         background: rgb(21, 31, 46);
         border-radius: 6px;
-        cursor: pointer;
         display: grid;
         grid-template-columns: auto 24px;
         height: 36px;
@@ -1893,10 +1892,11 @@
         font-size: 14px;
         width: min-content;
         margin: auto;
+        cursor: pointer;
     }
     .filter-select .value-wrap {
         width: max-content;
-        max-width: 98px;
+        max-width: 115px;
         margin-left: 10px;
     }
     .filter-select .value-input {
@@ -2235,6 +2235,9 @@
     }
 
     @media screen and (max-width: 425px) {
+        .filter-select .select {
+            cursor: pointer !important;
+        }
         .filterType .options-wrap,
         .filter-select .options-wrap,
         .sortFilter .options-wrap {

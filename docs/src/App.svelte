@@ -442,6 +442,12 @@
 				handleConfirmationCancelled();
 				_showConfirm = false;
 				return;
+			} else if (
+				document?.getElementById?.("usernameInput") ===
+					document?.activeElement &&
+				window.innerWidth <= 425
+			) {
+				document.getElementById("usernameInput")?.blur?.();
 			} else if ($menuVisible) {
 				$menuVisible = false;
 				return;
@@ -633,7 +639,7 @@
 	.home {
 		height: 100%;
 		width: 100%;
-		margin: 50px auto 0;
+		margin: 55px auto 0;
 		max-width: 1140px;
 		padding-left: 50px;
 		padding-right: 50px;

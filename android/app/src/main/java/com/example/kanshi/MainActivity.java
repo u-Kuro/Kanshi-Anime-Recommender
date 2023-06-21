@@ -531,7 +531,7 @@ public class MainActivity extends AppCompatActivity  {
                     .setTitle("Something went Wrong")
                     .setMessage("App switch is currently not working...")
                     .setIcon(android.R.drawable.ic_dialog_alert)
-                    .setPositiveButton("OK", null);
+                    .setPositiveButton("OK", null).show();
             }
         }
         @RequiresApi(api = Build.VERSION_CODES.M)
@@ -543,7 +543,7 @@ public class MainActivity extends AppCompatActivity  {
                         new AlertDialog.Builder(MainActivity.this)
                                 .setTitle("Reconnected Successfully")
                                 .setMessage("Do you want to switch to the online app?")
-                                .setIcon(android.R.drawable.ic_dialog_alert)
+                                .setIcon(android.R.drawable.ic_dialog_info)
                                 .setPositiveButton("OK", (dialogInterface, i) -> webView.loadUrl("https://kanshi.vercel.app"))
                                 .setNegativeButton("Later", null).show();
                     }
