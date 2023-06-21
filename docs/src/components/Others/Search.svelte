@@ -342,7 +342,11 @@
             $filterOptions?.filterSelection?.[idxTypeSelected].filters.Dropdown[
                 dropdownIdx
             ].options[optionIdx].selected;
-        if (currentValue === "none" || currentValue === true) {
+        if (
+            currentValue === "none" ||
+            currentValue === true ||
+            (changeType === "read" && currentValue !== "included")
+        ) {
             // true is default value of selections
             $filterOptions.filterSelection[idxTypeSelected].filters.Dropdown[
                 dropdownIdx
@@ -565,8 +569,7 @@
                                     e.optionIdx === inputNumIdx &&
                                     e.optionName === inputNumberName &&
                                     e.optionValue === currentValue &&
-                                    e.filterType === "input number" &&
-                                    e.selected === "included"
+                                    e.filterType === "input number"
                                 )
                         );
                     } else {
@@ -634,6 +637,17 @@
                     changeInputValue(event.target, currentValue);
                 }
             } else {
+                let elementIdx = $activeTagFilters[nameTypeSelected].findIndex(
+                    (item) =>
+                        item.optionName === inputNumberName &&
+                        item.optionValue === currentValue &&
+                        item.optionIdx === inputNumIdx &&
+                        item.filterType === "input number"
+                );
+                if (elementIdx >= 0) {
+                    $activeTagFilters[nameTypeSelected][elementIdx].selected =
+                        "included";
+                }
                 changeInputValue(event.target, currentValue);
             }
         } else {
@@ -655,8 +669,7 @@
                                 e.optionIdx === inputNumIdx &&
                                 e.optionName === inputNumberName &&
                                 e.optionValue === currentValue &&
-                                e.filterType === "input number" &&
-                                e.selected === "included"
+                                e.filterType === "input number"
                             )
                     );
                 } else {
@@ -715,6 +728,10 @@
                 ][inputNumIdx].numberValue = newValue;
                 saveFilters(filterSelectionName);
             } else {
+                if (elementIdx >= 0) {
+                    $activeTagFilters[nameTypeSelected][elementIdx].selected =
+                        "included";
+                }
                 changeInputValue(event.target, currentValue);
             }
         }
@@ -726,13 +743,9 @@
         filterType,
         categIdx,
         changeType,
-        optionType
+        optionType,
+        optionValue
     ) {
-        if (
-            (changeType === "read" && filterType !== "checkbox") ||
-            filterType === "dropdown"
-        )
-            return; // Unchangable Selection
         if ($initData) return pleaseWaitAlert();
         let idxTypeSelected = $filterOptions?.filterSelection?.findIndex(
             ({ isSelected }) => isSelected
@@ -740,7 +753,26 @@
         let nameTypeSelected =
             $filterOptions?.filterSelection?.[idxTypeSelected]
                 .filterSelectionName;
-        if (filterType === "checkbox") {
+        if (filterType === "input number") {
+            let elementIdx = $activeTagFilters[nameTypeSelected].findIndex(
+                (item) =>
+                    item.optionName === optionName &&
+                    item.optionValue === optionValue &&
+                    item.optionIdx === optionIdx &&
+                    item.filterType === "input number"
+            );
+            if (elementIdx >= 0) {
+                let currentSelect =
+                    $activeTagFilters[nameTypeSelected][elementIdx].selected;
+                if (currentSelect === "included") {
+                    $activeTagFilters[nameTypeSelected][elementIdx].selected =
+                        "excluded";
+                } else {
+                    $activeTagFilters[nameTypeSelected][elementIdx].selected =
+                        "included";
+                }
+            }
+        } else if (filterType === "checkbox") {
             let tagFilterIdx = $activeTagFilters[nameTypeSelected].findIndex(
                 (e) =>
                     e.optionIdx === optionIdx &&
@@ -1578,7 +1610,8 @@
                             filterType,
                             categIdx,
                             changeType,
-                            optionType
+                            optionType,
+                            optionValue
                         )}
                     on:keydown={(e) =>
                         e.key === "Enter" &&
@@ -1589,7 +1622,8 @@
                             filterType,
                             categIdx,
                             changeType,
-                            optionType
+                            optionType,
+                            optionValue
                         )}
                 >
                     {#if filterType === "input number"}

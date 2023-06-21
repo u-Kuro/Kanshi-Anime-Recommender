@@ -40,8 +40,8 @@ self.onmessage = async ({ data }) => {
                     include.tags["tag: " + optionName.toLowerCase()] = true
                 } else if (optionType === 'tag category') {
                     include.tags["tag category: " + optionName.toLowerCase()] = true
-                } else if (optionType === 'studio') {
-                    include.tags["studio: " + optionName.toLowerCase()] = true
+                    // } else if (optionType === 'studio') {
+                    //     include.tags["studio: " + optionName.toLowerCase()] = true
                     // } else if (optionType === 'staff role') {
                     //     include.tags["staff role: " + optionName.toLowerCase()] = true
                 } else if (optionType === 'measure') {
@@ -80,8 +80,8 @@ self.onmessage = async ({ data }) => {
                     exclude.tags["tag: " + optionName.toLowerCase()] = true
                 } else if (optionType === 'tag category') {
                     exclude.tags["tag category: " + optionName.toLowerCase()] = true
-                } else if (optionType === 'studio') {
-                    exclude.tags["studio: " + optionName.toLowerCase()] = true
+                    // } else if (optionType === 'studio') {
+                    //     exclude.tags["studio: " + optionName.toLowerCase()] = true
                     // } else if (optionType === 'staff role') {
                     //     exclude.tags["staff role: " + optionName.toLowerCase()] = true
                 }
