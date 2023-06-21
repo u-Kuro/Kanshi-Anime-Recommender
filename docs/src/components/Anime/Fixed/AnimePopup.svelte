@@ -631,6 +631,7 @@
     }
 
     // Global Function For Android
+    let isCurrentlyPlaying = false;
     window.returnedAppIsVisible = (inApp) => {
         // Only For Android, and workaround for Alert visibility
         if (!$popupVisible || !$android) return;
@@ -646,18 +647,30 @@
             mostVisiblePopupHeader?.querySelector?.(".trailer");
         if (!visibleTrailer) return;
         if ($popupVisible) {
-            if (inApp && $autoPlay) {
+            if (inApp) {
                 for (var ytPlayer of $ytPlayers) {
-                    if (ytPlayer.g === visibleTrailer) {
+                    if (
+                        ytPlayer.g === visibleTrailer &&
+                        ((ytPlayer?.getPlayerState?.() === 2 &&
+                            isCurrentlyPlaying) ||
+                            $autoPlay)
+                    ) {
                         prePlayYtPlayer(ytPlayer);
                         ytPlayer?.playVideo?.();
                         break;
                     }
                 }
             } else if (!inApp) {
-                $ytPlayers.forEach((ytPlayer) => {
+                isCurrentlyPlaying = false;
+                for (var ytPlayer of $ytPlayers) {
+                    if (
+                        ytPlayer.g === visibleTrailer &&
+                        ytPlayer?.getPlayerState?.() === 1
+                    ) {
+                        isCurrentlyPlaying = true;
+                    }
                     ytPlayer?.pauseVideo?.();
-                });
+                }
             }
         }
     };
