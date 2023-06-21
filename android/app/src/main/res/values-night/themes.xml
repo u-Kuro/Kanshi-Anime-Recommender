@@ -12,10 +12,12 @@
         <!-- Status bar color. -->
         <item name="android:statusBarColor" >?attr/colorPrimaryVariant</item>
         <!-- Customize your theme here. -->
-        <item name="android:actionBarSize">50dp</item>
-        <item name="actionBarSize">50dp</item>
-        <item name="android:icon">@drawable/img</item>
-        <item name="logo">@drawable/img</item>
-        <item name="displayOptions">useLogo|showHome|showTitle</item>
     </style>
+    <style name="Theme.Kanshi.SplashScreen" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@android:color/black</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/kanshi_logo_splash</item>
+        <item name="postSplashScreenTheme">@style/Theme.Kanshi</item>
+    </style>
+
+    <color name="white">#FFFFFF</color>
 </resources>

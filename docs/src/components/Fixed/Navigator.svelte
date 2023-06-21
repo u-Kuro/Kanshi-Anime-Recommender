@@ -17,13 +17,15 @@
         writableSubscriptions.push(
             username.subscribe((val) => {
                 typedUsername = val;
-                searchButtonFocusOut();
             })
         );
     });
 
     async function updateUsername(event) {
-        if ($initData) return pleaseWaitAlert();
+        if ($initData) {
+            await pleaseWaitAlert();
+            document?.getElementById("usernameInput")?.focus?.();
+        }
         let element = event.target;
         let classList = element.classList;
         if (
@@ -53,13 +55,16 @@
                                 .then(({ newusername }) => {
                                     if (newusername) {
                                         typedUsername = $username = newusername;
-                                        searchButtonFocusOut();
                                         updateRecommendationList.update(
                                             (e) => !e
                                         );
                                     }
                                 })
                                 .catch((error) => console.error(error));
+                        } else {
+                            document
+                                ?.getElementById("usernameInput")
+                                ?.focus?.();
                         }
                     } else {
                         if (
@@ -79,10 +84,13 @@
                                 .then(({ newusername }) => {
                                     if (newusername)
                                         typedUsername = $username = newusername;
-                                    searchButtonFocusOut();
                                     updateRecommendationList.update((e) => !e);
                                 })
                                 .catch((error) => console.error(error));
+                        } else {
+                            document
+                                ?.getElementById("usernameInput")
+                                ?.focus?.();
                         }
                     }
                 })();
@@ -93,44 +101,23 @@
     function handleMenuVisibility(event) {
         let element = event.target;
         let classList = element.classList;
-        if (!classList.contains("nav")) return;
+        if (!classList.contains("nav") && !classList.contains("logo-icon"))
+            return;
         menuVisible.set(!$menuVisible);
     }
 
-    function searchButtonFocusIn() {
-        let searchBtn = document.getElementById("searchBtn");
-        if (searchBtn instanceof Element) {
-            searchBtn.style.display = "flex";
-        }
-    }
-
-    window.searchButtonFocusOut = searchButtonFocusOut;
-
-    let searchButtonFocusOutTimeout;
-    function searchButtonFocusOut() {
-        typedUsername = typedUsername?.trim?.() || "";
-        if (typedUsername === "") {
-            typedUsername = "";
-        }
-        let searchBtn = document.getElementById("searchBtn");
-        if (searchBtn instanceof Element) {
-            if (searchButtonFocusOutTimeout)
-                clearTimeout(searchButtonFocusOutTimeout);
-            if (
-                typedUsername?.toLowerCase?.() === $username?.toLowerCase?.() ||
-                typedUsername === ""
-            ) {
-                searchBtn.style.display = "none";
-            }
-        }
+    function handleInputUsernameFocus() {
+        let element = document?.getElementById("usernameInput");
+        element?.focus?.();
+        element?.blur?.();
     }
 
     onDestroy(() => {
         writableSubscriptions.forEach((unsub) => unsub());
     });
 
-    function pleaseWaitAlert() {
-        $confirmPromise({
+    async function pleaseWaitAlert() {
+        return await $confirmPromise({
             isAlert: true,
             title: "Initializing Resources",
             text: "Please wait a moment...",
@@ -144,41 +131,29 @@
     on:click={handleMenuVisibility}
 >
     <nav class="nav">
+        <div class="input-search">
+            <i
+                class="goback fa-solid fa-arrow-left"
+                on:click={handleInputUsernameFocus}
+                on:keydown={(e) =>
+                    e.key === "Enter" && handleInputUsernameFocus(e)}
+            />
+            <input
+                id="usernameInput"
+                type="search"
+                enterkeyhint="search"
+                autocomplete="off"
+                placeholder="Your Anilist Username"
+                on:keydown={(e) => e.key === "Enter" && updateUsername(e)}
+                bind:value={typedUsername}
+            />
+        </div>
         <img
             class="logo-icon copy"
             copy-value="Kanshi."
             src="./images/Kanshi-Logo.png"
             alt="Kanshi Logo"
-            on:click={() => window.scrollTo({ top: -9999, behavior: "smooth" })}
-            on:keydown={(e) =>
-                e.key === "Enter" &&
-                window.scrollTo({ top: -9999, behavior: "smooth" })}
         />
-        <!-- <div id="fps">--</span> FPS</div> -->
-        <div class="input-search">
-            <input
-                id="usernameInput"
-                type="text"
-                enterkeyhint="search"
-                autocomplete="off"
-                placeholder="Your Anilist Username"
-                style:--min-width={Math.min(typedUsername?.length || 17, 22) +
-                    1 +
-                    "ch"}
-                on:keydown={(e) => e.key === "Enter" && updateUsername(e)}
-                bind:value={typedUsername}
-                on:focusin={searchButtonFocusIn}
-                on:focusout={searchButtonFocusOut}
-            />
-            <div
-                id="searchBtn"
-                class="searchBtn"
-                on:keydown={(e) => e.key === "Enter" && updateUsername(e)}
-                on:click={updateUsername}
-            >
-                <i class="fa-solid fa-magnifying-glass" />
-            </div>
-        </div>
     </nav>
 </div>
 
@@ -203,7 +178,7 @@
     }
     .nav {
         display: grid;
-        grid-template-columns: 25px auto;
+        grid-template-columns: auto 20px;
         height: 100%;
         align-items: center;
         -ms-user-select: none;
@@ -211,15 +186,15 @@
         user-select: none;
         max-width: 1140px;
         margin: auto;
-        gap: 2em;
+        gap: 1.5em;
         padding: 0 50px;
     }
     .logo-icon {
         cursor: pointer;
         justify-self: start;
-        width: 25px;
+        width: 20px;
         max-width: 100%;
-        height: 25px;
+        height: 20px;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -227,26 +202,36 @@
     }
     .input-search {
         display: flex;
-        height: 25px;
+        gap: 1.5em;
+        height: 30px;
         border-radius: 6px;
-        justify-self: right;
+        justify-self: left;
+        align-items: center;
     }
     .input-search input {
         font-family: system-ui !important;
         outline: none;
         border: none;
         background-color: #152232;
-        text-align: end;
+        text-align: start;
         color: white;
         padding-left: 1ch;
         padding-right: 1ch;
-        height: 25px;
-        max-width: 160px;
+        border-radius: 6px;
+        height: 30px;
+        max-width: 150px;
         width: 100%;
         cursor: auto;
     }
+    .goback {
+        display: none;
+        font-size: 20px;
+        height: 20px;
+        width: 20px;
+        align-items: center;
+        justify-content: center;
+    }
     .input-search:not(:focus-within) input {
-        max-width: var(--min-width) !important;
         padding-right: 0;
         padding-left: 0;
     }
@@ -257,37 +242,23 @@
         background-color: rgb(21, 31, 46);
         text-align: start;
     }
-    .input-search:not(:focus-within) .searchBtn {
-        background-color: #152232;
-    }
-    .input-search .searchBtn {
-        transition: opacity 0.3s ease;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        width: 25px;
-        height: 25px;
-        border: none;
-        outline: none;
-        background-color: rgb(21, 31, 46);
-    }
     .input-search i {
         color: white;
-        font-size: 1em;
-        transform: translateY(1px);
-    }
-    .input-search .searchBtn,
-    .input-search i {
         cursor: pointer;
     }
-    @media screen and (max-width: 588px) {
-        .input-search input {
-            max-width: none;
+    @media screen and (max-width: 424px) {
+        .input-search:focus-within {
+            width: 100%;
         }
-    }
-    @media screen and (max-width: 425px) {
+        .input-search:focus-within input {
+            max-width: none;
+            width: 100%;
+        }
+        .input-search:focus-within .goback {
+            display: flex;
+        }
         .nav {
-            padding: 0 2em;
+            padding: 0 1.5em;
         }
     }
 </style>

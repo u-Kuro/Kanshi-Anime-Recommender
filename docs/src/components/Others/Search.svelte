@@ -728,7 +728,11 @@
         changeType,
         optionType
     ) {
-        if (changeType === "read" || filterType !== "dropdown") return; // Unchangable Selection
+        if (
+            (changeType === "read" && filterType !== "checkbox") ||
+            filterType === "dropdown"
+        )
+            return; // Unchangable Selection
         if ($initData) return pleaseWaitAlert();
         let idxTypeSelected = $filterOptions?.filterSelection?.findIndex(
             ({ isSelected }) => isSelected
@@ -736,44 +740,69 @@
         let nameTypeSelected =
             $filterOptions?.filterSelection?.[idxTypeSelected]
                 .filterSelectionName;
-        let currentSelect =
-            $filterOptions?.filterSelection?.[idxTypeSelected].filters.Dropdown[
-                categIdx
-            ].options[optionIdx].selected;
-        if (currentSelect === "included") {
-            $filterOptions.filterSelection[idxTypeSelected].filters.Dropdown[
-                categIdx
-            ].options[optionIdx].selected = "excluded";
-            $activeTagFilters[nameTypeSelected] = $activeTagFilters[
-                nameTypeSelected
-            ].map((e) => {
-                if (
+        if (filterType === "checkbox") {
+            let tagFilterIdx = $activeTagFilters[nameTypeSelected].findIndex(
+                (e) =>
                     e.optionIdx === optionIdx &&
                     e.optionName === optionName &&
-                    e.selected === "included" &&
-                    (e.optionType ? e.optionType === optionType : true)
-                ) {
-                    e.selected = "excluded";
-                }
-                return e;
-            });
-        } else if (currentSelect === "excluded") {
-            $filterOptions.filterSelection[idxTypeSelected].filters.Dropdown[
-                categIdx
-            ].options[optionIdx].selected = "included";
-            $activeTagFilters[nameTypeSelected] = $activeTagFilters[
-                nameTypeSelected
-            ].map((e) => {
-                if (
-                    e.optionIdx === optionIdx &&
-                    e.optionName === optionName &&
-                    e.selected === "excluded" &&
-                    (e.optionType ? e.optionType === optionType : true)
-                ) {
-                    e.selected = "included";
-                }
-                return e;
-            });
+                    e.filterType === filterType
+            );
+            let checkboxSelection =
+                $activeTagFilters?.[nameTypeSelected]?.[tagFilterIdx]?.selected;
+            if (checkboxSelection === "included") {
+                $activeTagFilters[nameTypeSelected][tagFilterIdx].selected =
+                    "excluded";
+                $filterOptions.filterSelection[
+                    idxTypeSelected
+                ].filters.Checkbox[optionIdx].isSelected = false;
+            } else if (checkboxSelection === "excluded") {
+                $activeTagFilters[nameTypeSelected][tagFilterIdx].selected =
+                    "included";
+                $filterOptions.filterSelection[
+                    idxTypeSelected
+                ].filters.Checkbox[optionIdx].isSelected = true;
+            }
+        } else if (filterType === "dropdown") {
+            let currentSelect =
+                $filterOptions?.filterSelection?.[idxTypeSelected].filters
+                    .Dropdown[categIdx].options[optionIdx].selected;
+            if (currentSelect === "included") {
+                $filterOptions.filterSelection[
+                    idxTypeSelected
+                ].filters.Dropdown[categIdx].options[optionIdx].selected =
+                    "excluded";
+                $activeTagFilters[nameTypeSelected] = $activeTagFilters[
+                    nameTypeSelected
+                ].map((e) => {
+                    if (
+                        e.optionIdx === optionIdx &&
+                        e.optionName === optionName &&
+                        e.selected === "included" &&
+                        (e.optionType ? e.optionType === optionType : true)
+                    ) {
+                        e.selected = "excluded";
+                    }
+                    return e;
+                });
+            } else if (currentSelect === "excluded") {
+                $filterOptions.filterSelection[
+                    idxTypeSelected
+                ].filters.Dropdown[categIdx].options[optionIdx].selected =
+                    "included";
+                $activeTagFilters[nameTypeSelected] = $activeTagFilters[
+                    nameTypeSelected
+                ].map((e) => {
+                    if (
+                        e.optionIdx === optionIdx &&
+                        e.optionName === optionName &&
+                        e.selected === "excluded" &&
+                        (e.optionType ? e.optionType === optionType : true)
+                    ) {
+                        e.selected = "included";
+                    }
+                    return e;
+                });
+            }
         }
         saveFilters(nameTypeSelected);
     }

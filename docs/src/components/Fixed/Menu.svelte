@@ -221,6 +221,13 @@
         }
     }
 
+    function switchAppMode() {
+        if (!$android) return;
+        try {
+            JSBridge.switchApp();
+        } catch (e) {}
+    }
+
     function pleaseWaitAlert() {
         $confirmPromise({
             isAlert: true,
@@ -311,6 +318,15 @@
                 on:keydown={(e) => e.key === "Enter" && anilistSignup(e)}
                 >Create an Anilist Account</button
             >
+            {#if $android}
+                <button
+                    class="button"
+                    on:keydown={(e) => e.key === "Enter" && switchAppMode(e)}
+                    on:click={switchAppMode}
+                    transition:fly={{ x: 50, duration: 300 }}
+                    >Switch App Mode</button
+                >
+            {/if}
         </div>
     </div>
 {/if}
@@ -361,7 +377,7 @@
     }
     @media screen and (max-width: 425px) {
         .menu {
-            padding: 1.5em 2em;
+            padding: 1.5em;
         }
         .menu > .button {
             flex: none;

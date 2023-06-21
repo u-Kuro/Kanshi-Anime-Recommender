@@ -23,7 +23,8 @@ import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
+import android.net.Network;
+import android.net.NetworkCapabilities;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -32,9 +33,8 @@ import android.os.PowerManager;
 import android.provider.DocumentsContract;
 import android.provider.Settings;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.View;
-import android.webkit.ConsoleMessage;
+import android.view.WindowManager;
 import android.webkit.JavascriptInterface;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
@@ -48,6 +48,8 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.util.Objects;
+
+import androidx.core.splashscreen.SplashScreen;
 
 public class MainActivity extends AppCompatActivity  {
 
@@ -115,6 +117,7 @@ public class MainActivity extends AppCompatActivity  {
                         }
                     }
             );
+    @RequiresApi(api = Build.VERSION_CODES.M)
     @SuppressLint("SetJavaScriptEnabled")
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
@@ -122,14 +125,18 @@ public class MainActivity extends AppCompatActivity  {
         PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
         wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "KeepAwake:");
         wakeLock.acquire(10*60*1000L);
-        // Hide Action Bar
-        Objects.requireNonNull(getSupportActionBar()).hide();
         // Shared Preference
         prefs = MainActivity.this.getSharedPreferences("com.example.kanshi", Context.MODE_PRIVATE);
         prefsEdit = prefs.edit();
         // Saved Data
         exportPath = prefs.getString("savedExportPath", "");
         // Create WebView App Instance
+        SplashScreen.installSplashScreen(this);
+        if(getSupportActionBar()!=null){
+            getSupportActionBar().hide(); // After Applying Theme
+        }
+        // Show status bar
+        getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         // Add WebView on Layout
@@ -182,6 +189,7 @@ public class MainActivity extends AppCompatActivity  {
         webView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
         // Add Bridge to Webview
         webView.addJavascriptInterface(new JSBridge(),"JSBridge");
+        //noinspection CommentedOutCode
         webView.setWebChromeClient(new WebChromeClient() {
             private View mCustomView;
             private WebChromeClient.CustomViewCallback mCustomViewCallback;
@@ -237,13 +245,13 @@ public class MainActivity extends AppCompatActivity  {
                 getWindow().getDecorView().setSystemUiVisibility(3846 | View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
             }
             // Console Logs for Debugging
-            @RequiresApi(api = Build.VERSION_CODES.R)
-            @Override
-            public boolean onConsoleMessage(ConsoleMessage consoleMessage) {
-                String message = consoleMessage.message();
-                Log.d("WebConsole",message);
-                return true;
-            }
+//            @RequiresApi(api = Build.VERSION_CODES.R)
+//            @Override
+//            public boolean onConsoleMessage(ConsoleMessage consoleMessage) {
+//                String message = consoleMessage.message();
+//                Log.d("WebConsole",message);
+//                return true;
+//            }
         });
 
         if(isNetworkAvailable()){
@@ -498,6 +506,50 @@ public class MainActivity extends AppCompatActivity  {
                 }
             }
         }
+        @JavascriptInterface
+        public void switchApp() {
+            try {
+                webView.post(() -> {
+                    if (webView.getUrl().startsWith("file:///android_asset/www/index.html")) {
+                        new AlertDialog.Builder(MainActivity.this)
+                                .setTitle("Switch App Mode")
+                                .setMessage("Do you want to switch to the online app?")
+                                .setIcon(android.R.drawable.ic_dialog_info)
+                                .setPositiveButton("OK", (dialogInterface, i) -> webView.loadUrl("https://kanshi.vercel.app"))
+                                .setNegativeButton("Later", null).show();
+                    } else {
+                        new AlertDialog.Builder(MainActivity.this)
+                                .setTitle("Switch App Mode")
+                                .setMessage("Do you want to switch to the local app?")
+                                .setIcon(android.R.drawable.ic_dialog_info)
+                                .setPositiveButton("OK", (dialogInterface, i) -> webView.loadUrl("file:///android_asset/www/index.html"))
+                                .setNegativeButton("Later", null).show();
+                    }
+                });
+            } catch (Exception exception) {
+                new AlertDialog.Builder(MainActivity.this)
+                    .setTitle("Something went Wrong")
+                    .setMessage("App switch is currently not working...")
+                    .setIcon(android.R.drawable.ic_dialog_alert)
+                    .setPositiveButton("OK", null);
+            }
+        }
+        @RequiresApi(api = Build.VERSION_CODES.M)
+        @JavascriptInterface
+        public void isOnline(boolean isOnline) {
+            try {
+                webView.post(() -> {
+                    if (isOnline && isNetworkAvailable() && webView.getUrl().startsWith("file:///android_asset/www/index.html")) {
+                        new AlertDialog.Builder(MainActivity.this)
+                                .setTitle("Reconnected Successfully")
+                                .setMessage("Do you want to switch to the online app?")
+                                .setIcon(android.R.drawable.ic_dialog_alert)
+                                .setPositiveButton("OK", (dialogInterface, i) -> webView.loadUrl("https://kanshi.vercel.app"))
+                                .setNegativeButton("Later", null).show();
+                    }
+                });
+            } catch (Exception ignored) {}
+        }
     }
 
     @Override
@@ -509,11 +561,18 @@ public class MainActivity extends AppCompatActivity  {
         }
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.M)
     private boolean isNetworkAvailable() {
-        ConnectivityManager connectivityManager
-                = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo activeNetworkInfo = connectivityManager != null ? connectivityManager.getActiveNetworkInfo() : null;
-        return activeNetworkInfo != null && activeNetworkInfo.isConnected();
+        ConnectivityManager connectivityManager =
+                (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        Network network = connectivityManager.getActiveNetwork();
+        if (network == null) {
+            return false;
+        }
+        NetworkCapabilities networkCapabilities = connectivityManager.getNetworkCapabilities(network);
+        return networkCapabilities != null &&
+                (networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) ||
+                        networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR));
     }
 }
 

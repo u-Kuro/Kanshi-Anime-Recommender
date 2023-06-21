@@ -182,6 +182,14 @@ self.onmessage = async ({ data }) => {
                     } else if (optionType === 'studio') {
                         exclude.studios[optionName.toLowerCase()] = true
                     }
+                } else if (filterType === 'checkbox') {
+                    if (optionName.toLowerCase() === 'hidden anime') {
+                        hiddenList = false
+                    } else if (optionName.toLowerCase() === 'hide my anime') {
+                        hideMyAnime = false
+                    } else if (optionName.toLowerCase() === 'hide watched') {
+                        hideWatched = false
+                    }
                 }
             }
         })

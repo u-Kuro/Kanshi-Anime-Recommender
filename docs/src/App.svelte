@@ -237,7 +237,6 @@
 			if (!$username) {
 				await tick();
 				let usernameInput = document.getElementById("usernameInput");
-				usernameInput.focus();
 				usernameInput.setCustomValidity("Enter your Anilist Username");
 				usernameInput.reportValidity();
 			}
@@ -507,6 +506,14 @@
 		}
 	};
 
+	window.addEventListener("online", () => {
+		if ($android) {
+			try {
+				JSBridge.isOnline(true);
+			} catch (e) {}
+		}
+	});
+
 	let copytimeoutId;
 	let copyhold = false;
 	document.addEventListener("pointerdown", (e) => {
@@ -633,7 +640,7 @@
 	}
 	@media screen and (max-width: 425px) {
 		.home {
-			padding: 0 2em;
+			padding: 0 1.5em;
 		}
 	}
 </style>

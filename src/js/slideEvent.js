@@ -4,10 +4,11 @@ function captureSlideEvent(targetElement, callback = new Function) {
     // Slides
     var startX;
     var endX;
-    // var startY;
-    // var endY;
+    var startY;
+    var endY;
     var pointerId;
     var isPointerDown = false;
+    var isSliding = false;
     var pointTimeout;
 
     targetElement.addEventListener('pointerdown', down);
@@ -17,12 +18,21 @@ function captureSlideEvent(targetElement, callback = new Function) {
     function move(event) {
         if (event.pointerId === pointerId && isPointerDown) {
             endX = event.clientX;
+            endY = event.clientY;
             const deltaX = endX - startX;
-            if (deltaX >= 50) {
+            const deltaY = endY - startY;
+            if ((deltaX > deltaY && deltaX >= 25) || (isSliding && deltaX >= 0)) {
+                isSliding = true
                 runIsScrolling.update(e => !e)
                 alter(targetElement, {
                     keyframes: [
                         { transform: `translateX(${deltaX}px)` },
+                    ]
+                })
+            } else if (isSliding && deltaX <= 0) {
+                alter(targetElement, {
+                    keyframes: [
+                        { transform: `translateX(0)` },
                     ]
                 })
             }
@@ -55,6 +65,7 @@ function captureSlideEvent(targetElement, callback = new Function) {
         if (pointerDownTimeout) clearTimeout(pointerDownTimeout)
         pointerDownTimeout = setTimeout(() => {
             startX = event.clientX;
+            startY = event.clientY;
             pointerId = event.pointerId;
             targetElement.setPointerCapture(pointerId);
             isPointerDown = true;
@@ -72,6 +83,7 @@ function captureSlideEvent(targetElement, callback = new Function) {
     }
     function releasePointer() {
         targetElement.releasePointerCapture(pointerId);
+        isSliding = false
         isPointerDown = false;
     }
 
