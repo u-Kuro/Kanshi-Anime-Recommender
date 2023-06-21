@@ -9,13 +9,13 @@ This app is designed to provide anime recommendations based on your personal rat
 - [Alternative](https://u-kuro.github.io/Kanshi.Anime-Recommendation/)
 
 ## Website Preview
-![Website Preview 1](https://i.imgur.com/TEv9xzB.png)
-![Website Preview 2](https://i.imgur.com/r95kjhl.png)
+![Website Preview 1](https://i.imgur.com/zgigCGa.png)
+![Website Preview 2](https://i.imgur.com/6rTaWe5.png)
 
 ## Android Preview
 <div style="display: flex;flex-wrap:nowrap;">
-  <img src="https://i.imgur.com/Ilhw7Fh.png" style="flex:1;width: 24%;">
-  <img src="https://i.imgur.com/7LBJtOF.png" style="flex:1;width: 24%;">
-  <img src="https://i.imgur.com/yFRUjBl.png" style="flex:1;width: 24%;">
-  <img src="https://i.imgur.com/RuxHZqq.png" style="flex:1;width: 24%;">
+  <img src="https://i.imgur.com/Oa1frem.png" style="flex:1;width: 24%;">
+  <img src="https://i.imgur.com/nxukxRS.png" style="flex:1;width: 24%;">
+  <img src="https://i.imgur.com/nxd8arA.png" style="flex:1;width: 24%;">
+  <img src="https://i.imgur.com/iTOZOmP.png" style="flex:1;width: 24%;">
 </div>
