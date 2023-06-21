@@ -94,6 +94,10 @@ p {
     min-width: fit-content
 }
 
+input[type="search"]::-webkit-search-cancel-button {
+    cursor: pointer;
+}
+
 .lightgrey-color {
     color: #d3d3d3 !important;
 }

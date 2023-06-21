@@ -208,6 +208,9 @@
         justify-self: left;
         align-items: center;
     }
+    .input-search input::-webkit-search-cancel-button {
+        font-size: 1.5rem;
+    }
     .input-search input {
         font-family: system-ui !important;
         outline: none;
@@ -234,7 +237,6 @@
     .input-search:not(:focus-within) input {
         padding-right: 0;
         padding-left: 0;
-        font-size: 1.5rem;
     }
     .input-search:not(:focus-within) input:not(:placeholder-shown) {
         text-transform: uppercase;
