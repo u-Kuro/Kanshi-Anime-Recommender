@@ -646,7 +646,7 @@
             mostVisiblePopupHeader?.querySelector?.(".trailer");
         if (!visibleTrailer) return;
         if ($popupVisible) {
-            if (inApp) {
+            if (inApp && $autoPlay) {
                 for (var ytPlayer of $ytPlayers) {
                     if (ytPlayer.g === visibleTrailer) {
                         prePlayYtPlayer(ytPlayer);
@@ -654,7 +654,7 @@
                         break;
                     }
                 }
-            } else {
+            } else if (!inApp) {
                 $ytPlayers.forEach((ytPlayer) => {
                     ytPlayer?.pauseVideo?.();
                 });
