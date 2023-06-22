@@ -4402,10 +4402,6 @@ self.onmessage = async ({ data }) => {
                         filName: "show my anime",
                         isSelected: false
                     },
-                    {
-                        filName: "show airing",
-                        isSelected: false
-                    },
                 ]
 
                 // Input Number
