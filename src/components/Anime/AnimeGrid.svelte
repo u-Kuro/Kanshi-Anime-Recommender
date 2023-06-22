@@ -154,10 +154,9 @@
         $popupVisible = true;
     }
 
-    let openOptionTimeout, openOptionIsLongPressed;
+    let openOptionTimeout;
     function handleOpenOption(animeIdx) {
         if (openOptionTimeout) clearTimeout(openOptionTimeout);
-        openOptionIsLongPressed = true;
         openOptionTimeout = setTimeout(() => {
             $openedAnimeOptionIdx = animeIdx;
             $animeOptionVisible = true;
@@ -165,7 +164,6 @@
     }
     function cancelOpenOption() {
         if (openOptionTimeout) clearTimeout(openOptionTimeout);
-        openOptionIsLongPressed = false;
     }
 
     function getBriefInfo({
@@ -265,6 +263,15 @@
             return "lightgrey"; // Default Unwatched Icon Color
         }
     }
+
+    let gridContentVisibility = "auto";
+    window.addEventListener("scroll", () => {
+        if (window.scrollY >= 265) {
+            gridContentVisibility = "visible";
+        } else {
+            gridContentVisibility = "auto";
+        }
+    });
 </script>
 
 <main>
@@ -275,6 +282,8 @@
                     class="image-grid__card"
                     bind:this={anime.gridElement}
                     title={getBriefInfo(anime)}
+                    style:--content-visibility={gridContentVisibility ||
+                        "visible"}
                 >
                     <div class="shimmer">
                         <img
@@ -398,6 +407,7 @@
         display: grid;
         grid-template-rows: auto 57px;
         grid-template-columns: 100%;
+        content-visibility: var(--content-visibility);
     }
 
     .image-grid__card > .shimmer {

@@ -44,8 +44,9 @@
         let target = e.target;
         let classList = target.classList;
         if (
-            target.closest(".anime-options-container") ||
-            classList.contains("anime-options-container")
+            !classList.contains("closing-x") &&
+            (target.closest(".anime-options-container") ||
+                classList.contains("anime-options-container"))
         )
             return;
         $animeOptionVisible = false;
@@ -126,7 +127,17 @@
             class="anime-options-container"
             transition:fly={{ y: 20, duration: 300 }}
         >
-            <span class="anime-title"><h1>{animeTitle}</h1></span>
+            <div class="option-header">
+                <span class="anime-title"><h1>{animeTitle}</h1></span>
+                <div
+                    class="closing-x"
+                    on:click={handleAnimeOptionVisibility}
+                    on:keydown={(e) =>
+                        e.key === "Enter" && handleAnimeOptionVisibility(e)}
+                >
+                    &#215;
+                </div>
+            </div>
             <span
                 on:click={openAnimePopup}
                 on:keydown={(e) => e.key === "Enter" && openAnimePopup(e)}
@@ -183,9 +194,19 @@
         padding: 10px 15px;
     }
 
+    .option-header {
+        display: grid;
+        grid-template-columns: auto 25px;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1em;
+    }
+
     .anime-title {
         overflow-x: auto;
         overflow-y: hidden;
+        margin: 1em 0 1em 1em !important;
+        padding: 0 !important;
     }
 
     .anime-title::-webkit-scrollbar {
@@ -209,5 +230,27 @@
     .anime-options-container h2 {
         font-weight: 400;
         cursor: pointer;
+    }
+
+    .closing-x {
+        font-size: 25px;
+        width: 25px;
+        height: 25px;
+        text-align: center;
+        vertical-align: middle;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        line-height: 1;
+        cursor: pointer;
+        border-radius: 50%;
+        z-index: 2;
+        user-select: none;
+        background-color: transparent;
+    }
+
+    .closing-x:focus,
+    .closing-x:hover {
+        background-color: rgba(0, 0, 0, 0.75);
     }
 </style>

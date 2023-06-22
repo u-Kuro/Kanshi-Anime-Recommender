@@ -98,7 +98,12 @@
         }
     }
 
+    let goUpTimeout, goUpIsLongPressed;
     function handleMenuVisibility(event) {
+        if (goUpIsLongPressed) {
+            goUpIsLongPressed = false;
+            return;
+        }
         let element = event.target;
         let classList = element.classList;
         if (!classList.contains("nav") && !classList.contains("logo-icon"))
@@ -110,6 +115,22 @@
         let element = document?.getElementById("usernameInput");
         element?.focus?.();
         element?.blur?.();
+    }
+
+    function handleGoUp() {
+        if (goUpTimeout) clearTimeout(goUpTimeout);
+        goUpTimeout = setTimeout(() => {
+            goUpIsLongPressed = true;
+            window.scrollTo({ top: -9999, behavior: "smooth" });
+        }, 500);
+    }
+    function cancelGoUp() {
+        if (goUpTimeout) clearTimeout(goUpTimeout);
+        if (goUpIsLongPressed) {
+            goUpTimeout = setTimeout(() => {
+                goUpIsLongPressed = false;
+            }, 50);
+        }
     }
 
     onDestroy(() => {
@@ -153,6 +174,9 @@
             copy-value="Kanshi."
             src="./images/Kanshi-Logo.png"
             alt="Kanshi Logo"
+            on:pointerdown={handleGoUp}
+            on:pointerup={cancelGoUp}
+            on:pointercancel={cancelGoUp}
         />
     </nav>
 </div>
