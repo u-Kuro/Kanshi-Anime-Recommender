@@ -1,5 +1,3 @@
-## Kanshi. Anime Recommendation
-
 <p align="center">
   <img src="https://i.imgur.com/6duwbXo.png" height="100px;" width="100px;" />
   <h2 align="center">Kanshi.</h2>
