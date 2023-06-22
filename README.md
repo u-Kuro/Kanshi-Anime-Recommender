@@ -28,3 +28,8 @@ This app is designed to provide anime recommendations based on your personal rat
   <img src="https://i.imgur.com/nxd8arA.png" style="flex:1;width: 24%;">
   <img src="https://i.imgur.com/iTOZOmP.png" style="flex:1;width: 24%;">
 </div>
+
+<h2 align="center"></h2>
+
+## Others
+- [Alternative Website](https://u-kuro.github.io/Kanshi.Anime-Recommendation/)
