@@ -1438,7 +1438,7 @@
                                                             class="fa-regular fa-circle-check async-element"
                                                         />
                                                     {/if}
-                                                {:else if option.selected === "excluded"}
+                                                {:else if option.selected === "excluded" && Dropdown.changeType !== "read"}
                                                     <i
                                                         style:--optionColor="#e85d75"
                                                         class="fa-regular fa-circle-xmark async-element"

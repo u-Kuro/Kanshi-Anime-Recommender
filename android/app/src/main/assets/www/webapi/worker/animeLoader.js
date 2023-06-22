@@ -101,6 +101,8 @@ self.onmessage = async ({ data }) => {
         let hideMyAnime = false,
             hiddenList = false,
             hideWatched = false,
+            showMyAnime = false,
+            showAiring = false,
             favoriteContentsLimit = 5;
         let animeFilter = activeTagFilters?.['Anime Filter'] || []
         animeFilter.forEach(({ selected, filterType, optionName, optionType, optionValue, CMPoperator, CMPNumber }) => {
@@ -132,6 +134,10 @@ self.onmessage = async ({ data }) => {
                         hideMyAnime = true
                     } else if (optionName.toLowerCase() === 'hide watched') {
                         hideWatched = true
+                    } else if (optionName.toLowerCase() === 'show my anime') {
+                        showMyAnime = true
+                    } else if (optionName.toLowerCase() === 'show airing') {
+                        showAiring = true
                     }
                 } else if (filterType === 'input number') {
                     if (optionName.toLowerCase() === "weighted score") {
@@ -175,20 +181,10 @@ self.onmessage = async ({ data }) => {
                         exclude.season[optionName.toLowerCase()] = true
                     } else if (optionType === 'format') {
                         exclude.format[optionName.toLowerCase()] = true
-                    } else if (optionType === 'airing status') {
-                        exclude.status[optionName.toLowerCase()] = true
                     } else if (optionType === 'user status') {
                         exclude.userStatus[optionName.toLowerCase()] = true
                     } else if (optionType === 'studio') {
                         exclude.studios[optionName.toLowerCase()] = true
-                    }
-                } else if (filterType === 'checkbox') {
-                    if (optionName.toLowerCase() === 'hidden anime') {
-                        hiddenList = false
-                    } else if (optionName.toLowerCase() === 'hide my anime') {
-                        hideMyAnime = false
-                    } else if (optionName.toLowerCase() === 'hide watched') {
-                        hideWatched = false
                     }
                 }
             }
@@ -200,8 +196,18 @@ self.onmessage = async ({ data }) => {
         // Filter and ADD Caution State below
         finalAnimeList = recommendedAnimeList.filter(anime => {
             // favoriteContents
+            if (showAiring) {
+                if (!ncsCompare(anime?.status, 'releasing')) {
+                    return false;
+                }
+            }
             if (hideMyAnime) {
                 if (!ncsCompare(anime?.userStatus, 'unwatched')) {
+                    return false;
+                }
+            }
+            if (showMyAnime) {
+                if (ncsCompare(anime?.userStatus, 'unwatched')) {
                     return false;
                 }
             }

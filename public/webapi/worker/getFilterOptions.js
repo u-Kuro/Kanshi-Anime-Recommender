@@ -4397,14 +4397,19 @@ self.onmessage = async ({ data }) => {
                     {
                         filName: "hidden anime",
                         isSelected: false
-                    }
+                    },
+                    {
+                        filName: "show my anime",
+                        isSelected: false
+                    },
+                    {
+                        filName: "show airing",
+                        isSelected: false
+                    },
                 ]
 
                 // Input Number
                 // Add Custom Input Number Selection
-                // user score
-                // average score
-                // 
                 filters["Input Number"] = [
                     {
                         filName: "user score",
@@ -4618,12 +4623,13 @@ self.onmessage = async ({ data }) => {
     } else {
         self.postMessage({ status: "Updating Filter Options" })
         filterOptions?.filterSelection?.forEach((filterType, filterTypeIdx) => {
+            let filterSelectionName = filterType.filterSelectionName
             let dropdown = filterType?.filters?.Dropdown
-            if (dropdown instanceof Array) {
+            if (dropdown instanceof Array && dropdown.length) {
                 for (let i = 0; i < dropdown.length; i++) {
                     let filterName = dropdown[i].filName
                     if (savedFilters[filterName] !== undefined) {
-                        let isAlgorithmFilter = filterType.filterSelectionName === "Algorithm Filter"
+                        let isAlgorithmFilter = filterSelectionName === "Algorithm Filter"
                         let newOptionNames = Object.keys(Object.keys(savedFilters[filterName] || {}).reduce((uniqueOptions, k) => {
                             k = k !== "_" ? k.replace(/\_/g, ' ') : k;
                             k = k !== '\\"' ? k.replace(/\\"/g, '"') : k;

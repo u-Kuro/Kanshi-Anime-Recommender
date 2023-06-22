@@ -85,16 +85,6 @@ self.onmessage = async ({ data }) => {
                     // } else if (optionType === 'staff role') {
                     //     exclude.tags["staff role: " + optionName.toLowerCase()] = true
                 }
-            } else if (filterType === 'checkbox') {
-                if (optionName.toLowerCase() === 'inc. all factors') {
-                    includeUnknownVar = false
-                } else if (optionName.toLowerCase() === "inc. average score") {
-                    includeAverageScore = false
-                } else if (optionName.toLowerCase() === "exclude year") {
-                    includeYear = true
-                } else if (optionName.toLowerCase() === 'show all sequels') {
-                    showAllSequels = false
-                }
             }
         }
     })
