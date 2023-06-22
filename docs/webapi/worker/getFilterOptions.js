@@ -4365,7 +4365,7 @@ self.onmessage = async ({ data }) => {
                         options: options,
                         optKeyword: "",
                         selected: false,
-                        changeType: "write",
+                        changeType: e === "airing status" ? "read" : "write",
                     }
                 })
                 // Add Custom Filter Selection
