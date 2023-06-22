@@ -6,13 +6,12 @@
 </p>
 This app is designed to provide anime recommendations based on your personal ratings of anime shows on Anilist. It uses an algorithm to analyze your ratings and suggest other anime shows that you may enjoy. If you're having trouble deciding what to watch next, this app can help you discover new anime that match your preferences.
 
-#
+<h2 align="center"></h2>
 <h3>Android / Website</h3>
 <h2 align="center"></h2>
-<p>
-  <img src="https://i.imgur.com/RtS6ib5.png" width="105px;" />
-  <img src="https://i.imgur.com/vXJ8zt8.png" width="105px;" />
-</p>
+
+[<img src="https://i.imgur.com/RtS6ib5.png" width="105px;" />](https://github.com/u-Kuro/Kanshi.Anime-Recommendation/raw/main/Kanshi.apk)
+[<img src="https://i.imgur.com/vXJ8zt8.png" width="105px;" />](https://kanshi.vercel.app)
 
 <h2 align="center"></h2>
 
