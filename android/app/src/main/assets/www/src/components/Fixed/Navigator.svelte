@@ -170,8 +170,7 @@
             />
         </div>
         <img
-            class="logo-icon copy"
-            copy-value="Kanshi."
+            class="logo-icon"
             src="./images/Kanshi-Logo.png"
             alt="Kanshi Logo"
             on:pointerdown={handleGoUp}
