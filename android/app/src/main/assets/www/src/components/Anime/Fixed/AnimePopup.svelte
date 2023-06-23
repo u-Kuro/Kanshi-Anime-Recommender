@@ -1058,6 +1058,7 @@
         justify-content: center;
         overflow: hidden;
         transform: translateY(-99999px);
+        will-change: transform;
     }
 
     .popup-wrapper.visible {
