@@ -487,18 +487,6 @@
         font-size: 10px;
     }
 
-    .image-grid__status {
-        justify-content: center;
-        display: flex;
-        align-items: center;
-        flex-direction: column;
-        gap: 1em;
-        animation: fadeIn 0.3s linear;
-        text-align: center;
-        width: 100%;
-        grid-column: 1/-1;
-    }
-
     .empty {
         font-size: 2rem;
         font-weight: 700;
@@ -506,66 +494,6 @@
         padding: 30px;
         text-align: center;
         grid-column: 1 / -1;
-    }
-
-    .empty-img {
-        flex: 1;
-        width: clamp(6rem, 6.5rem, 7rem);
-    }
-
-    .pl,
-    .pl:after,
-    .pl:before {
-        animation-duration: 2s;
-        animation-timing-function: linear;
-        animation-iteration-count: infinite;
-    }
-
-    .pl {
-        margin: 0 auto 1.5em auto;
-        position: relative;
-        width: 3em;
-        height: 3em;
-        content: "";
-        display: inline-block;
-        border: 0.25em solid currentColor;
-        border-top-color: transparent;
-        border-radius: 50%;
-        animation-name: spin;
-    }
-
-    .pl:after,
-    .pl:before {
-        background: 0 0;
-        content: "";
-    }
-
-    .pl:before {
-        top: -0.25em;
-        left: -0.25em;
-        width: 2.5em;
-        height: 2.5em;
-        border-radius: 50%;
-        border-bottom-color: currentColor;
-    }
-
-    .pl:after {
-        top: -0.25em;
-        left: -0.25em;
-        width: 2.5em;
-        height: 2.5em;
-        border-radius: 50%;
-        border-bottom-color: currentColor;
-    }
-
-    @keyframes spin {
-        0% {
-            transform: rotate(0);
-        }
-
-        100% {
-            transform: rotate(360deg);
-        }
     }
 
     @keyframes fadeIn {
