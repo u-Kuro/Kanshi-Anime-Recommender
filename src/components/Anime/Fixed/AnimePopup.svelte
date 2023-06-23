@@ -192,8 +192,8 @@
                 popupContainer.classList.add("show");
                 // Try to Add YT player
                 let openedAnimes = [
-                    $finalAnimeList[$openedAnimePopupIdx - 1],
                     $finalAnimeList[$openedAnimePopupIdx],
+                    $finalAnimeList[$openedAnimePopupIdx - 1],
                     $finalAnimeList[$openedAnimePopupIdx + 1],
                 ];
                 let trailerEls = [
@@ -209,7 +209,7 @@
                             (trailerEl) => trailerEl === $ytPlayers[i].g
                         )) >= 0
                     ) {
-                        if ($autoPlay && trailerIdx === 1) {
+                        if ($autoPlay && trailerIdx === 0) {
                             await tick();
                             if (
                                 popupWrapper?.classList?.contains?.(
@@ -370,7 +370,7 @@
         });
     });
 
-    let currentHeader, scrollToGridTimeout;
+    let currentHeader, scrollToGridTimeout, createPopupPlayersTimeout;
     async function playMostVisibleTrailer() {
         if (!$popupVisible) return;
         await tick();
@@ -409,6 +409,24 @@
             }
         }
         if (haveTrailer) {
+            // Recheck Trailer
+            if (
+                visibleTrailerIdx >= 0 &&
+                (currentHeader !== mostVisiblePopupHeader ||
+                    currentHeader === undefined)
+            ) {
+                let nearAnimes = [
+                    $finalAnimeList?.[visibleTrailerIdx - 1],
+                    $finalAnimeList?.[visibleTrailerIdx + 1],
+                ];
+                if (createPopupPlayersTimeout)
+                    clearTimeout(createPopupPlayersTimeout);
+                createPopupPlayersTimeout = setTimeout(async () => {
+                    nearAnimes.forEach((nearAnime) => {
+                        if (nearAnime) createPopupYTPlayer(nearAnime);
+                    });
+                }, 300);
+            }
             // Replay Most Visible Trailer
             $ytPlayers?.forEach(async (ytPlayer) => {
                 if (
@@ -431,31 +449,29 @@
                     ytPlayer?.pauseVideo?.();
                 }
             });
-            // Recheck Trailer
-            if (visibleTrailerIdx >= 0) {
-                let nearAnimes = [
-                    $finalAnimeList?.[visibleTrailerIdx - 1],
-                    $finalAnimeList?.[visibleTrailerIdx + 1],
-                ];
-                nearAnimes.forEach((nearAnime) => {
-                    if (nearAnime) createPopupYTPlayer(nearAnime);
-                });
-            }
         } else {
-            currentHeader = mostVisiblePopupHeader;
             // Pause All Players
             $ytPlayers?.forEach((ytPlayer) => ytPlayer?.pauseVideo?.());
             // Recheck Trailer
-            if (visibleTrailerIdx >= 0) {
+            if (
+                visibleTrailerIdx >= 0 &&
+                (currentHeader !== mostVisiblePopupHeader ||
+                    currentHeader === undefined)
+            ) {
                 let nearAnimes = [
-                    $finalAnimeList?.[visibleTrailerIdx - 1],
                     $finalAnimeList?.[visibleTrailerIdx],
+                    $finalAnimeList?.[visibleTrailerIdx - 1],
                     $finalAnimeList?.[visibleTrailerIdx + 1],
                 ];
-                nearAnimes.forEach((nearAnime) => {
-                    if (nearAnime) createPopupYTPlayer(nearAnime);
-                });
+                if (createPopupPlayersTimeout)
+                    clearTimeout(createPopupPlayersTimeout);
+                createPopupPlayersTimeout = setTimeout(async () => {
+                    nearAnimes.forEach((nearAnime) => {
+                        if (nearAnime) createPopupYTPlayer(nearAnime);
+                    });
+                }, 300);
             }
+            currentHeader = mostVisiblePopupHeader;
         }
     }
 
@@ -508,6 +524,7 @@
             }
         }
     }
+
     async function onPlayerReady(event) {
         let ytPlayer = event.target;
         let trailerEl = ytPlayer?.g;

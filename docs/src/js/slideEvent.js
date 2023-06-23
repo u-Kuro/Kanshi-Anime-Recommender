@@ -2,16 +2,16 @@ import alter from "../js/alter.js";
 import { runIsScrolling } from "../js/globalValues.js"
 function captureSlideEvent(targetElement, callback = new Function) {
     // Slides
-    var startX;
-    var endX;
-    var startY;
-    var endY;
-    var pointerId;
-    var isPointerDown = false;
-    var isSliding = false;
-    var pointTimeout;
-    var slidingAnimation;
-    var slidingAnimationTimeout;
+    let startX;
+    let endX;
+    let startY;
+    let endY;
+    let pointerId;
+    let isPointerDown = false;
+    let isSliding = false;
+    let pointTimeout;
+    let slideAnimationFrame;
+    let activationThreshold = 15;
 
     targetElement.addEventListener('pointerdown', down);
     targetElement.addEventListener('pointerup', up);
@@ -21,27 +21,28 @@ function captureSlideEvent(targetElement, callback = new Function) {
         if (event.pointerId === pointerId && isPointerDown) {
             endX = event.clientX;
             endY = event.clientY;
-            const deltaX = endX - startX;
-            const deltaY = endY - startY;
+            let deltaX = endX - startX;
+            let deltaY = endY - startY;
             // Cancel the previous animation frame request
-            if ((deltaX > deltaY && deltaX >= 25) || (isSliding && deltaX >= 0)) {
+            if ((deltaX > deltaY && deltaX >= activationThreshold) || (isSliding && deltaX >= 0)) {
+                deltaX = deltaX - activationThreshold
                 isSliding = true
                 runIsScrolling.update(e => !e)
-                cancelAnimationFrame(slidingAnimation);
-                slidingAnimation = requestAnimationFrame(() => {
+                cancelAnimationFrame(slideAnimationFrame)
+                slideAnimationFrame = requestAnimationFrame(() => {
                     alter(targetElement, {
-                        keyframes: [
-                            { transform: `translateX(${deltaX}px)` },
-                        ]
+                        styles: {
+                            transform: `translateX(${Math.max(deltaX, 0)}px)`
+                        }
                     })
                 })
             } else if (isSliding && deltaX <= 0) {
-                cancelAnimationFrame(slidingAnimation);
-                slidingAnimation = requestAnimationFrame(() => {
+                cancelAnimationFrame(slideAnimationFrame)
+                slideAnimationFrame = requestAnimationFrame(() => {
                     alter(targetElement, {
-                        keyframes: [
-                            { transform: `translateX(0)` },
-                        ]
+                        styles: {
+                            transform: `translateX(0px)`
+                        }
                     })
                 })
             }
@@ -56,11 +57,10 @@ function captureSlideEvent(targetElement, callback = new Function) {
         if (pointTimeout) clearTimeout(pointTimeout)
         if (event.pointerId === pointerId && isPointerDown) {
             endX = event.clientX;
-            var targetElementRect = targetElement.getBoundingClientRect()
-            var targetWidth = Math.min(targetElementRect.width, window.innerWidth);
-            var xThreshold = targetWidth / 2;
-            var deltaX = endX - startX
-            // var slopeX = Math.abs(deltaX);
+            let targetElementRect = targetElement.getBoundingClientRect()
+            let targetWidth = Math.min(targetElementRect.width, window.innerWidth);
+            let xThreshold = targetWidth / 2;
+            let deltaX = (endX - startX) - activationThreshold
             if (deltaX >= xThreshold) {
                 slideCallback('slideRight', targetElement);
             } else {
@@ -99,33 +99,30 @@ function captureSlideEvent(targetElement, callback = new Function) {
     function slideCallback(type, targetElement) {
         // Handle slide events as needed
         if (type === "slideRight") {
-            cancelAnimationFrame(slidingAnimation);
-            slidingAnimation = requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
                 alter(targetElement, {
                     keyframes: [
                         { transform: `translateX(${window.innerWidth}px)` }
                     ],
+                    easing: 'linear',
                     callback: () => {
                         callback().then(() => {
-                            cancelAnimationFrame(slidingAnimation);
-                            slidingAnimation = requestAnimationFrame(() => {
-                                alter(targetElement, {
-                                    styles: {
-                                        transform: ``
-                                    }
-                                })
+                            alter(targetElement, {
+                                styles: {
+                                    transform: ``
+                                }
                             })
                         })
                     }
                 })
             })
         } else if (type === "none") {
-            cancelAnimationFrame(slidingAnimation);
-            slidingAnimation = requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
                 alter(targetElement, {
                     keyframes: [
                         { transform: `` },
-                    ]
+                    ],
+                    easing: 'linear',
                 })
             })
         }

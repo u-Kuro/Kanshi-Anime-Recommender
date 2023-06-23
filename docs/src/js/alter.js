@@ -27,14 +27,20 @@ function alter(element_s, parameters = {}) {
             }
         }
         if (parameters['onfinish'] === undefined) {
-            const lastkeyframe = keyframes.slice(-1)[0]
+            const lastkeyframe = keyframes.at(-1)
             animations.forEach(([animation, element], idx) => {
                 animation.onfinish = () => {
-                    Object.assign(element.style, lastkeyframe)
-                    animation.cancel()
-                    if (idx === animations.length - 1 && typeof parameters['callback'] === 'function') {
-                        parameters['callback']()
-                    }
+                    requestAnimationFrame(() => {
+                        element.style.transition = 'none';
+                        requestAnimationFrame(() => {
+                            Object.assign(element.style, lastkeyframe)
+                            animation.cancel()
+                            element.style.transition = '';
+                            if (idx === animations.length - 1 && typeof parameters['callback'] === 'function') {
+                                parameters['callback']()
+                            }
+                        })
+                    })
                 }
             })
         }
@@ -45,7 +51,13 @@ function alter(element_s, parameters = {}) {
         if (styles) {
             for (let i = 0; i < element_s.length; i++) {
                 if (isNativeStyleProperty(element_s[i])) {
-                    Object.assign(element_s[i].style, styles);
+                    requestAnimationFrame(() => {
+                        element_s[i].style.transition = 'none';
+                        requestAnimationFrame(() => {
+                            Object.assign(element_s[i].style, styles);
+                            element_s[i].style.transition = '';
+                        })
+                    })
                 }
             }
         }
