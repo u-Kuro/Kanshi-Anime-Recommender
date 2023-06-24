@@ -666,7 +666,6 @@ self.onmessage = async ({ data }) => {
             }
         }
     }
-    console.log(varScheme.genres)
     // Calculate Anime Recommendation List
     self.postMessage({ status: "Processing Recommendation List" })
     // Init Data
@@ -1052,7 +1051,6 @@ self.onmessage = async ({ data }) => {
             // Combine Scores
             // Anime Content
             let animeContent = [];
-            console.log(zgenres)
             if (zgenres.length) {
                 let genreValues = zgenres.reduce((acc, _genre) => {
                     acc.push(_genre.score)
