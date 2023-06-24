@@ -35,9 +35,7 @@ self.onmessage = async ({ data }) => {
                     query: `{User(name: "${username}"){updatedAt}}`
                 })
             }).then(async (response) => {
-                let headers = response.headers
-                let result = await response.json()
-                return { result, headers }
+                return await response.json()
             })
                 .then((result) => {
                     let error;
