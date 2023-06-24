@@ -5,6 +5,7 @@ self.onmessage = async ({ data }) => {
     let savedUsername = await retrieveJSON("username")
     let lastUserAnimeUpdate = await retrieveJSON("lastUserAnimeUpdate")
     let userEntriesLen = (await retrieveJSON("userEntries") || []).length
+    let retryCount = 0
 
     if (typeof savedUsername === "string" && userEntriesLen < 1) {
         username = savedUsername
@@ -20,7 +21,9 @@ self.onmessage = async ({ data }) => {
 
     function recallUE() {
         if (lastUserAnimeUpdate instanceof Date && !isNaN(lastUserAnimeUpdate)) {
-            self.postMessage({ status: "Checking Latest User Entries" })
+            if (retryCount < 2) {
+                self.postMessage({ status: "Checking Latest User Entries" })
+            }
             fetch('https://graphql.anilist.co', {
                 method: 'POST',
                 headers: {
@@ -32,7 +35,9 @@ self.onmessage = async ({ data }) => {
                     query: `{User(name: "${username}"){updatedAt}}`
                 })
             }).then(async (response) => {
-                return await response.json()
+                let headers = response.headers
+                let result = await response.json()
+                return { result, headers }
             })
                 .then((result) => {
                     let error;
@@ -53,6 +58,11 @@ self.onmessage = async ({ data }) => {
                     }
                 })
                 .catch((error) => {
+                    if (!navigator.onLine) {
+                        self.postMessage({ status: "Currently Offline..." })
+                        self.postMessage({ message: 'Currently Offline...' })
+                        return
+                    }
                     let headers = error.headers;
                     let errorText = error.message;
                     if (errorText === 'User not found') {
@@ -60,15 +70,27 @@ self.onmessage = async ({ data }) => {
                         self.postMessage({ status: null })
                         self.postMessage({ message: 'User not found' })
                     } else {
-                        let secondsPassed = 60
-                        let rateLimitInterval = setInterval(() => {
-                            self.postMessage({ status: `Rate Limit: ${msToTime(secondsPassed * 1000)}` })
-                            --secondsPassed
-                        }, 1000)
-                        setTimeout(() => {
-                            clearInterval(rateLimitInterval)
+                        if (headers?.get('x-ratelimit-remaining') > 0) {
                             return recallUE();
-                        }, 60000);
+                        } else {
+                            ++retryCount
+                            if (retryCount >= 2) {
+                                self.postMessage({ status: "Request Timeout" })
+                            }
+                            let rateLimitInterval;
+                            if (retryCount < 2) {
+                                let secondsPassed = 60
+                                rateLimitInterval = setInterval(() => {
+                                    self.postMessage({ status: `Rate Limit: ${msToTime(secondsPassed * 1000)}` })
+                                    --secondsPassed
+                                }, 1000)
+                            }
+                            setTimeout(() => {
+                                if (rateLimitInterval) clearInterval(rateLimitInterval)
+                                self.postMessage({ status: "Retrying..." })
+                                return recallUE();
+                            }, 60000);
+                        }
                     }
                 })
         } else {
@@ -80,7 +102,9 @@ self.onmessage = async ({ data }) => {
         let userEntries = [];
         let maxAnimePerChunk = 500
         let currentUserAnimeUpdate;
-        self.postMessage({ status: "Getting User Entries: 0" })
+        if (retryCount < 2) {
+            self.postMessage({ status: "Getting User Entries: 0" })
+        }
         function recallAV(chunk) {
             fetch('https://graphql.anilist.co', {
                 method: 'POST',
@@ -138,6 +162,7 @@ self.onmessage = async ({ data }) => {
                             userEntries = userEntries.concat(userList[i]?.entries ?? [])
                         }
                         self.postMessage({ status: "Getting User Entries: " + userEntries.length })
+                        retryCount = 0
                         if (hasNextChunk) {
                             // Handle the successful response here
                             if (headers?.get('x-ratelimit-remaining') > 0) {
@@ -169,6 +194,11 @@ self.onmessage = async ({ data }) => {
                     }
                 })
                 .catch((error) => {
+                    if (!navigator.onLine) {
+                        self.postMessage({ status: "Currently Offline..." })
+                        self.postMessage({ message: 'Currently Offline...' })
+                        return
+                    }
                     let headers = error.headers;
                     let errorText = error.message;
                     if (errorText === 'User not found') {
@@ -179,13 +209,21 @@ self.onmessage = async ({ data }) => {
                         if (headers?.get('x-ratelimit-remaining') > 0) {
                             return recallAV(chunk);
                         } else {
-                            let secondsPassed = 60
-                            let rateLimitInterval = setInterval(() => {
-                                self.postMessage({ status: `Rate Limit: ${msToTime(secondsPassed * 1000)}` })
-                                --secondsPassed
-                            }, 1000)
+                            ++retryCount
+                            if (retryCount >= 2) {
+                                self.postMessage({ status: "Request Timeout" })
+                            }
+                            let rateLimitInterval;
+                            if (retryCount < 2) {
+                                let secondsPassed = 60
+                                rateLimitInterval = setInterval(() => {
+                                    self.postMessage({ status: `Rate Limit: ${msToTime(secondsPassed * 1000)}` })
+                                    --secondsPassed
+                                }, 1000)
+                            }
                             setTimeout(() => {
-                                clearInterval(rateLimitInterval)
+                                if (rateLimitInterval) clearInterval(rateLimitInterval)
+                                self.postMessage({ status: "Retrying..." })
                                 return recallAV(chunk);
                             }, 60000);
                         }

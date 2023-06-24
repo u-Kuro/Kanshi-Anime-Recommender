@@ -106,6 +106,13 @@
 
     async function updateList() {
         if ($initData) return pleaseWaitAlert();
+        else if (!navigator.onLine) {
+            return $confirmPromise({
+                isAlert: true,
+                title: "Currently Offline",
+                text: "It seems that you're currently offline and unable to update.",
+            });
+        }
         if (
             await $confirmPromise("Are you sure you want to update your list?")
         ) {

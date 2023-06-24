@@ -25,6 +25,7 @@
         if ($initData) {
             await pleaseWaitAlert();
             document?.getElementById("usernameInput")?.focus?.();
+            return;
         }
         let element = event.target;
         let classList = element.classList;
@@ -36,6 +37,13 @@
         ) {
             if (!typedUsername) return;
             if (typedUsername !== $username) {
+                if (!navigator.onLine) {
+                    return $confirmPromise({
+                        isAlert: true,
+                        title: "Currently Offline",
+                        text: "It seems that you're currently offline and unable to update.",
+                    });
+                }
                 (async () => {
                     if ($username) {
                         if (

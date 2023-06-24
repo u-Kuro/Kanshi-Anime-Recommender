@@ -22,6 +22,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
 import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.Uri;
@@ -66,6 +67,8 @@ public class MainActivity extends AppCompatActivity  {
 
     private PowerManager.WakeLock wakeLock;
     public boolean shouldGoBack;
+    public Toast currentToast;
+    public AlertDialog currentDialog;
 
     // Activity Results
     final ActivityResultLauncher<Intent> chooseImportFile =
@@ -112,7 +115,7 @@ public class MainActivity extends AppCompatActivity  {
                                 Uri docUri = DocumentsContract.buildDocumentUriUsingTree(uri,
                                         DocumentsContract.getTreeDocumentId(uri));
                                 exportPath = getThisPath(docUri);
-                                Toast.makeText(getApplicationContext(), "Export folder is selected, you may now use the export feature.", Toast.LENGTH_LONG).show();
+                                showToast(Toast.makeText(getApplicationContext(), "Export folder is selected, you may now use the export feature.", Toast.LENGTH_LONG));
                                 prefsEdit.putString("savedExportPath", exportPath).apply();
                                 webView.loadUrl("javascript:window.setExportPathAvailability(true)");
                             } catch (Exception e) {
@@ -160,6 +163,7 @@ public class MainActivity extends AppCompatActivity  {
         constraintSet.connect(webView.getId(),ConstraintSet.END,ConstraintSet.PARENT_ID,ConstraintSet.END,0);
         constraintSet.connect(webView.getId(),ConstraintSet.START,ConstraintSet.PARENT_ID,ConstraintSet.START,0);
         constraintSet.applyTo(constraintLayout);
+        webView.setBackgroundColor(Color.BLACK);
         // Set WebView Settings
         WebSettings webSettings = webView.getSettings();
         webSettings.setJavaScriptEnabled(true);
@@ -211,7 +215,7 @@ public class MainActivity extends AppCompatActivity  {
                             .addCategory(Intent.CATEGORY_OPENABLE)
                             .setType("application/json");// set MIME type to filter
                     chooseImportFile.launch(i);
-                    Toast.makeText(getApplicationContext(), "Please select your backup file.", Toast.LENGTH_LONG).show();
+                    showToast(Toast.makeText(getApplicationContext(), "Please select your backup file.", Toast.LENGTH_LONG));
                     return true;
                 } catch (Exception e){
                     e.printStackTrace();
@@ -258,18 +262,20 @@ public class MainActivity extends AppCompatActivity  {
 //            }
         });
 
+        showToast(Toast.makeText(getApplicationContext(), "Connecting...", Toast.LENGTH_LONG));
         isAppConnectionAvailable(isConnected -> webView.post(() -> {
+            hideToast();
             if (isConnected) {
                 webView.loadUrl("https://kanshi.vercel.app/");
             } else {
                 webView.loadUrl("file:///android_asset/www/index.html");
-                new AlertDialog.Builder(MainActivity.this)
+                showDialog(new AlertDialog.Builder(MainActivity.this)
                         .setTitle("Connection Unreachable")
                         .setMessage("Switched to offline app and cached data.")
                         .setPositiveButton("OK", null)
-                        .show();
+                );
             }
-        }));
+        }),3500);
     }
 
     // Get Path From MainActivity Context
@@ -355,15 +361,15 @@ public class MainActivity extends AppCompatActivity  {
         public void exportJSON(String chunk, int status, String fileName){
             if(status==0) {
                 if (!Environment.isExternalStorageManager()) {
-                    new AlertDialog.Builder(MainActivity.this)
+                    showDialog(new AlertDialog.Builder(MainActivity.this)
                             .setTitle("Permission for External Storage")
                             .setMessage("Allow permission for Kanshi. to use the export feature.")
                             .setPositiveButton("OK", (dialogInterface, i) -> {
                                 Uri uri = Uri.parse("package:${BuildConfig.APPLICATION_ID}");
-                                Toast.makeText(getApplicationContext(), "Allow permission for Kanshi. in here to use the export feature.", Toast.LENGTH_LONG).show();
+                                showToast(Toast.makeText(getApplicationContext(), "Allow permission for Kanshi. in here to use the export feature.", Toast.LENGTH_LONG));
                                 startActivity(new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION, uri));
                             })
-                            .setNegativeButton("CANCEL", null).show();
+                            .setNegativeButton("CANCEL", null));
                 } else {
                     if (new File(exportPath).isDirectory()) {
                         directoryPath = exportPath + File.separator;
@@ -390,22 +396,22 @@ public class MainActivity extends AppCompatActivity  {
                                 if (tempFileIsDeleted) {
                                     writer = new BufferedWriter(new FileWriter(tempFile, true));
                                 } else {
-                                    Toast.makeText(getApplicationContext(), "Error: Temporary data can't be re-written, please delete tmp.json first in the selected directory.", Toast.LENGTH_LONG).show();
+                                    showToast(Toast.makeText(getApplicationContext(), "Error: Temporary data can't be re-written, please delete tmp.json first in the selected directory.", Toast.LENGTH_LONG));
                                 }
                             } catch (Exception e) {
                                 if(writer!=null){
                                     try {
                                         writer.close();
                                     } catch (Exception e2) {
-                                        Toast.makeText(getApplicationContext(), "Error: An exception occurred initializing the tmp.json file.", Toast.LENGTH_LONG).show();
+                                        showToast(Toast.makeText(getApplicationContext(), "Error: An exception occurred initializing the tmp.json file.", Toast.LENGTH_LONG));
                                         e.printStackTrace();
                                     }
                                 }
-                                Toast.makeText(getApplicationContext(), "Error: An exception occurred initializing the tmp.json file.", Toast.LENGTH_LONG).show();
+                                showToast(Toast.makeText(getApplicationContext(), "Error: An exception occurred initializing the tmp.json file.", Toast.LENGTH_LONG));
                                 e.printStackTrace();
                             }
                         } else if (!dirIsCreated) {
-                            Toast.makeText(getApplicationContext(), "Error: Folder directory can't be found, please create it first.", Toast.LENGTH_LONG).show();
+                            showToast(Toast.makeText(getApplicationContext(), "Error: Folder directory can't be found, please create it first.", Toast.LENGTH_LONG));
                         }
                     } else if (!Objects.equals(exportPath, "") && !new File(exportPath).isDirectory()) {
                         String[] tempExportPath = exportPath.split("/");
@@ -413,7 +419,7 @@ public class MainActivity extends AppCompatActivity  {
                                 tempExportPath[tempExportPath.length - 2] + "/" +
                                         tempExportPath[tempExportPath.length - 1]
                                 : tempExportPath[tempExportPath.length - 1];
-                        new AlertDialog.Builder(MainActivity.this)
+                        showDialog(new AlertDialog.Builder(MainActivity.this)
                                 .setTitle("Export Folder is Missing")
                                 .setMessage("Folder directory [" + tempPathName
                                         + "] is missing, please choose another folder for exporting.")
@@ -421,14 +427,14 @@ public class MainActivity extends AppCompatActivity  {
                                     Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)
                                             .addCategory(Intent.CATEGORY_DEFAULT);
                                     chooseExportFile.launch(i);
-                                    Toast.makeText(getApplicationContext(), "Select or create a directory.", Toast.LENGTH_LONG).show();
+                                    showToast(Toast.makeText(getApplicationContext(), "Select or create a directory.", Toast.LENGTH_LONG));
                                 })
-                                .setNegativeButton("CANCEL", null).show();
+                                .setNegativeButton("CANCEL", null));
                     } else {
                         Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)
                                 .addCategory(Intent.CATEGORY_DEFAULT);
                         chooseExportFile.launch(i);
-                        Toast.makeText(getApplicationContext(), "Select or create a directory.", Toast.LENGTH_LONG).show();
+                        showToast(Toast.makeText(getApplicationContext(), "Select or create a directory.", Toast.LENGTH_LONG));
                     }
                 }
             } else if(status==1&&writer!=null) {
@@ -438,10 +444,10 @@ public class MainActivity extends AppCompatActivity  {
                     try {
                         writer.close();
                     } catch (Exception e2) {
-                        Toast.makeText(getApplicationContext(), "Error: An exception occurred while writing to tmp.json file.", Toast.LENGTH_LONG).show();
+                        showToast(Toast.makeText(getApplicationContext(), "Error: An exception occurred while writing to tmp.json file.", Toast.LENGTH_LONG));
                         e.printStackTrace();
                     }
-                    Toast.makeText(getApplicationContext(), "Error: An exception occurred while writing to tmp.json file.", Toast.LENGTH_LONG).show();
+                    showToast(Toast.makeText(getApplicationContext(), "Error: An exception occurred while writing to tmp.json file.", Toast.LENGTH_LONG));
                     e.printStackTrace();
                 }
             } else if(status==2&&writer!=null){
@@ -462,19 +468,19 @@ public class MainActivity extends AppCompatActivity  {
                     if(fileIsDeleted){
                         boolean renamed = tempFile.renameTo(file);
                         if(!renamed){
-                            Toast.makeText(getApplicationContext(), "Error: Data file can't be renamed, your original backup is in tmp.json.", Toast.LENGTH_LONG).show();
+                            showToast(Toast.makeText(getApplicationContext(), "Error: Data file can't be renamed, your original backup is in tmp.json.", Toast.LENGTH_LONG));
                         }
                     } else {
-                        Toast.makeText(getApplicationContext(), "Error: Data can't be re-written, please delete it first in the selected directory.", Toast.LENGTH_LONG).show();
+                        showToast(Toast.makeText(getApplicationContext(), "Error: Data can't be re-written, please delete it first in the selected directory.", Toast.LENGTH_LONG));
                     }
                 } catch (Exception e) {
                     try {
                         writer.close();
                     } catch (Exception e2) {
-                        Toast.makeText(getApplicationContext(), "Error: An exception occurred in finalizing the exported file, your back-up was saved in tmp.json but is not guaranteed to work.", Toast.LENGTH_LONG).show();
+                        showToast(Toast.makeText(getApplicationContext(), "Error: An exception occurred in finalizing the exported file, your back-up was saved in tmp.json but is not guaranteed to work.", Toast.LENGTH_LONG));
                         e.printStackTrace();
                     }
-                    Toast.makeText(getApplicationContext(), "Error: An exception occurred in finalizing the exported file, your back-up was saved in tmp.json but is not guaranteed to work.", Toast.LENGTH_LONG).show();
+                    showToast(Toast.makeText(getApplicationContext(), "Error: An exception occurred in finalizing the exported file, your back-up was saved in tmp.json but is not guaranteed to work.", Toast.LENGTH_LONG));
                     e.printStackTrace();
                 }
             }
@@ -491,57 +497,63 @@ public class MainActivity extends AppCompatActivity  {
         public void chooseExportFolder() {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                 if (!Environment.isExternalStorageManager()) {
-                    new AlertDialog.Builder(MainActivity.this)
+                    showDialog(new AlertDialog.Builder(MainActivity.this)
                             .setTitle("Permission for External Storage")
                             .setMessage("Allow permission for Kanshi. to use the export feature.")
                             .setPositiveButton("OK", (dialogInterface, i) -> {
                                 Uri uri = Uri.fromParts("package", getPackageName(), null);
-                                Toast.makeText(getApplicationContext(), "Allow permission for Kanshi. in here to use the export feature.", Toast.LENGTH_LONG).show();
+                                showToast(Toast.makeText(getApplicationContext(), "Allow permission for Kanshi. in here to use the export feature.", Toast.LENGTH_LONG));
                                 startActivity(new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION, uri));
                             })
-                            .setNegativeButton("CANCEL", null).show();
+                            .setNegativeButton("CANCEL", null));
                 } else {
                     Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)
                             .addCategory(Intent.CATEGORY_DEFAULT);
                     chooseExportFile.launch(i);
-                    Toast.makeText(getApplicationContext(), "Select or create a directory.", Toast.LENGTH_LONG).show();
+                    showToast(Toast.makeText(getApplicationContext(), "Select or create a directory.", Toast.LENGTH_LONG));
                 }
             }
         }
+        public boolean connectionChecking = false;
         @RequiresApi(api = Build.VERSION_CODES.N)
         @JavascriptInterface
         public void switchApp() {
             try {
                 webView.post(() -> {
                     if (webView.getUrl().startsWith("https://kanshi.vercel.app")) {
-                        new AlertDialog.Builder(MainActivity.this)
+                        showDialog(new AlertDialog.Builder(MainActivity.this)
                                 .setTitle("Switch App Mode")
                                 .setMessage("Do you want to switch to the local app?")
                                 .setPositiveButton("OK", (dialogInterface, i) -> webView.loadUrl("file:///android_asset/www/index.html"))
-                                .setNegativeButton("CANCEL", null).show();
+                                .setNegativeButton("CANCEL", null));
                     } else {
+                        showToast(Toast.makeText(getApplicationContext(), "Connecting...", Toast.LENGTH_LONG));
+                        if(connectionChecking) return;
+                        connectionChecking = true;
                         isAppConnectionAvailable(isConnected -> webView.post(() -> {
+                            hideToast();
+                            connectionChecking = false;
                             if (isConnected) {
-                                new AlertDialog.Builder(MainActivity.this)
+                                showDialog(new AlertDialog.Builder(MainActivity.this)
                                         .setTitle("Switch App Mode")
                                         .setMessage("Do you want to switch to the online app?")
                                         .setPositiveButton("OK", (dialogInterface, i) -> webView.loadUrl("https://kanshi.vercel.app"))
-                                        .setNegativeButton("CANCEL", null).show();
+                                        .setNegativeButton("CANCEL", null));
                             } else {
-                                new AlertDialog.Builder(MainActivity.this)
+                                showDialog(new AlertDialog.Builder(MainActivity.this)
                                         .setTitle("Switch App Mode")
                                         .setMessage("Connection unreachable, can't switch at this moment.")
-                                        .setPositiveButton("OK", null)
-                                        .show();
+                                        .setPositiveButton("OK", null));
                             }
-                        }));
+                        }),3500);
                     }
                 });
             } catch (Exception exception) {
-                new AlertDialog.Builder(MainActivity.this)
+                connectionChecking = false;
+                showDialog(new AlertDialog.Builder(MainActivity.this)
                     .setTitle("Switch App Mode")
                     .setMessage("Something went wrong, app switch is currently not working.")
-                    .setPositiveButton("OK", null).show();
+                    .setPositiveButton("OK", null));
             }
         }
         @RequiresApi(api = Build.VERSION_CODES.N)
@@ -550,13 +562,13 @@ public class MainActivity extends AppCompatActivity  {
             try {
                 isAppConnectionAvailable(isConnected -> webView.post(() -> {
                     if (isConnected && isOnline && webView.getUrl().startsWith("file:///android_asset/www/index.html")) {
-                        new AlertDialog.Builder(MainActivity.this)
+                        showDialog(new AlertDialog.Builder(MainActivity.this)
                             .setTitle("Reconnected Successfully")
                             .setMessage("Do you want to switch to the online app?")
                             .setPositiveButton("OK", (dialogInterface, i) -> webView.loadUrl("https://kanshi.vercel.app"))
-                            .setNegativeButton("CANCEL", null).show();
+                            .setNegativeButton("CANCEL", null));
                     }
-                }));
+                }),0);
             } catch (Exception ignored) {}
         }
     }
@@ -570,8 +582,27 @@ public class MainActivity extends AppCompatActivity  {
         }
     }
 
+    public void showDialog(AlertDialog.Builder alertDialog) {
+        if (currentDialog != null && currentDialog.isShowing()) {
+            currentDialog.dismiss();
+        }
+        currentDialog = alertDialog.show();
+    }
+    public void showToast(Toast toast) {
+        if (currentToast != null) {
+            currentToast.cancel();
+        }
+        currentToast = toast;
+        currentToast.show();
+    }
+    public void hideToast() {
+        if (currentToast != null) {
+            currentToast.cancel();
+        }
+        currentToast = null;
+    }
     @RequiresApi(api = Build.VERSION_CODES.N)
-    private void isAppConnectionAvailable(ConnectivityCallback callback) {
+    private void isAppConnectionAvailable(ConnectivityCallback callback, int timeout) {
         ConnectivityManager connectivityManager =
                 (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
         Network network = connectivityManager.getActiveNetwork();
@@ -579,25 +610,36 @@ public class MainActivity extends AppCompatActivity  {
             callback.onConnectionResult(false);
             return;
         }
-
-        // Check if the device has an active internet connection
-        CompletableFuture.supplyAsync(this::checkAppConnection)
+        CompletableFuture.supplyAsync(() -> checkAppConnection(timeout))
                 .thenAccept(callback::onConnectionResult);
     }
-
-    private boolean checkAppConnection() {
+    private boolean checkAppConnection(int timeout) {
         try {
-            HttpURLConnection urlConnection = (HttpURLConnection) new URL("https://kanshi.vercel.app").openConnection();
+            URL url = new URL("https://kanshi.vercel.app");
+            HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
             urlConnection.setRequestMethod("HEAD");
-            int responseCode = urlConnection.getResponseCode();
-            return (responseCode == HttpURLConnection.HTTP_OK);
-        } catch (IOException e) {
+            Thread connectionThread = new Thread(() -> {
+                try {
+                    urlConnection.getResponseCode();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            });
+            connectionThread.start();
+            connectionThread.join(timeout); // Wait for the connection thread to finish or timeout
+            if (connectionThread.isAlive()) {
+                // The connection check took longer than the timeout, interrupt the thread
+                connectionThread.interrupt();
+                return false;
+            } else {
+                // The connection check completed within the timeout
+                return true;
+            }
+        } catch (IOException | InterruptedException e) {
             e.printStackTrace();
         }
         return false;
     }
-
-    // Define a callback interface to handle the connection result
     interface ConnectivityCallback {
         void onConnectionResult(boolean isConnected);
     }

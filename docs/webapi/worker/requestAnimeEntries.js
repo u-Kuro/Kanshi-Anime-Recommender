@@ -8,6 +8,7 @@ self.onmessage = async ({ data }) => {
     let lastAnimeUpdate = await retrieveJSON("lastAnimeUpdate") || 0
     let animeEntries = await retrieveJSON("animeEntries") || {}
     let onlyGetNewEntries = data?.onlyGetNewEntries ?? false
+    let retryCount = 0;
     getNewEntries() // Start Call
     // For Getting new Entries
     // Get all Existing IDs
@@ -131,6 +132,7 @@ self.onmessage = async ({ data }) => {
                                 }
                             })
                         }
+                        retryCount = 0;
                         let hasNextPage = Page?.pageInfo?.hasNextPage ?? true
                         if (hasNextPage && media.length > 0) {
                             saveJSON(animeEntries, "animeEntries")
@@ -168,6 +170,11 @@ self.onmessage = async ({ data }) => {
                     }
                 })
                 .catch((error) => {
+                    if (!navigator.onLine) {
+                        self.postMessage({ status: "Currently Offline..." })
+                        self.postMessage({ message: 'Currently Offline...' })
+                        return
+                    }
                     let headers = error.headers;
                     let errorText = error.message;
                     if (errorText === 'User not found') {
@@ -181,13 +188,21 @@ self.onmessage = async ({ data }) => {
                             if (onlyGetNewEntries) {
                                 self.postMessage({ errorDuringInit: true })
                             }
-                            let secondsPassed = 60
-                            let rateLimitInterval = setInterval(() => {
-                                self.postMessage({ status: `Rate Limit: ${msToTime(secondsPassed * 1000)}` })
-                                --secondsPassed
-                            }, 1000)
+                            ++retryCount
+                            if (retryCount >= 2) {
+                                self.postMessage({ status: "Request Timeout" })
+                            }
+                            let rateLimitInterval;
+                            if (retryCount < 2) {
+                                let secondsPassed = 60
+                                rateLimitInterval = setInterval(() => {
+                                    self.postMessage({ status: `Rate Limit: ${msToTime(secondsPassed * 1000)}` })
+                                    --secondsPassed
+                                }, 1000)
+                            }
                             setTimeout(() => {
-                                clearInterval(rateLimitInterval)
+                                if (rateLimitInterval) clearInterval(rateLimitInterval)
+                                self.postMessage({ status: "Retrying..." })
                                 return recallGNE(page);
                             }, 60000);
                         }
@@ -335,6 +350,7 @@ self.onmessage = async ({ data }) => {
                                 }
                             })
                         }
+                        retryCount = 0
                         let hasNextPage = Page?.pageInfo?.hasNextPage ?? true
                         // Handle the successful response here
                         if (hasNextPage && media.length > 0) {
@@ -368,6 +384,11 @@ self.onmessage = async ({ data }) => {
                     }
                 })
                 .catch((error) => {
+                    if (!navigator.onLine) {
+                        self.postMessage({ status: "Currently Offline..." })
+                        self.postMessage({ message: 'Currently Offline...' })
+                        return
+                    }
                     let headers = error.headers;
                     let errorText = error.message;
                     if (errorText === 'User not found') {
@@ -378,13 +399,21 @@ self.onmessage = async ({ data }) => {
                         if (headers?.get('x-ratelimit-remaining') > 0) {
                             return recallUAA(page);
                         } else {
-                            let secondsPassed = 60
-                            let rateLimitInterval = setInterval(() => {
-                                self.postMessage({ status: `Rate Limit: ${msToTime(secondsPassed * 1000)}` })
-                                --secondsPassed
-                            }, 1000)
+                            ++retryCount
+                            if (retryCount >= 2) {
+                                self.postMessage({ status: "Request Timeout" })
+                            }
+                            let rateLimitInterval;
+                            if (retryCount < 2) {
+                                let secondsPassed = 60
+                                rateLimitInterval = setInterval(() => {
+                                    self.postMessage({ status: `Rate Limit: ${msToTime(secondsPassed * 1000)}` })
+                                    --secondsPassed
+                                }, 1000)
+                            }
                             setTimeout(() => {
-                                clearInterval(rateLimitInterval)
+                                if (rateLimitInterval) clearInterval(rateLimitInterval)
+                                self.postMessage({ status: "Retrying..." })
                                 return recallUAA(page);
                             }, 60000);
                         }
@@ -566,6 +595,11 @@ self.onmessage = async ({ data }) => {
                     }
                 })
                 .catch((error) => {
+                    if (!navigator.onLine) {
+                        self.postMessage({ status: "Currently Offline..." })
+                        self.postMessage({ message: 'Currently Offline...' })
+                        return
+                    }
                     let headers = error.headers;
                     let errorText = error.message;
                     if (errorText === 'User not found') {

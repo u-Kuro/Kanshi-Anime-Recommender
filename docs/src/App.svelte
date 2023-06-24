@@ -82,7 +82,7 @@
 
 	// Check/Get/Update/Process Anime Entries
 	initDataPromises.push(
-		new Promise(async (resolve) => {
+		new Promise(async (resolve, reject) => {
 			let animeEntriesLen = await retrieveJSON("animeEntriesLength");
 			let _lastAnimeUpdate = await retrieveJSON("lastAnimeUpdate");
 			if (animeEntriesLen < 1 || !(_lastAnimeUpdate instanceof Date)) {
@@ -91,18 +91,12 @@
 					.then(() => {
 						resolve();
 					})
-					.catch(async (error) => {
-						requestAnimeEntries();
-						resolve();
+					.catch(async () => {
+						reject();
 					});
 			} else {
-				requestAnimeEntries({ onlyGetNewEntries: true })
-					.then(() => {
-						resolve();
-					})
-					.catch(async (error) => {
-						resolve();
-					});
+				requestAnimeEntries({ onlyGetNewEntries: true });
+				resolve();
 			}
 		})
 	);
@@ -131,7 +125,7 @@
 						resolve();
 					})
 					.catch(() => {
-						resolve();
+						reject();
 					});
 			} else {
 				resolve();
@@ -149,7 +143,7 @@
 					resolve();
 				})
 				.catch(() => {
-					resolve();
+					reject();
 				});
 		})
 	);
