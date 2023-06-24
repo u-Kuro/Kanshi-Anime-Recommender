@@ -173,6 +173,7 @@
                 enterkeyhint="search"
                 autocomplete="off"
                 placeholder="Your Anilist Username"
+                style:--nonFocusWidth={(typedUsername?.length || 17) + 2 + "ch"}
                 on:keydown={(e) => e.key === "Enter" && updateUsername(e)}
                 bind:value={typedUsername}
             />
@@ -253,7 +254,7 @@
         padding-right: 1ch;
         border-radius: 6px;
         height: 35px;
-        max-width: 200px;
+        max-width: 165px;
         width: 100%;
         cursor: auto;
     }
@@ -266,6 +267,7 @@
         justify-content: center;
     }
     .input-search:not(:focus-within) input {
+        width: min(var(--nonFocusWidth), 165px, 100%);
         padding-right: 0;
         padding-left: 0;
     }
