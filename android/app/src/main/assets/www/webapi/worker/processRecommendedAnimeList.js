@@ -216,9 +216,10 @@ self.onmessage = async ({ data }) => {
                 if (typeof genre === "string") {
                     let fullGenre = "genre: " + genre.trim().toLowerCase()
                     if (!jsonIsEmpty(include.genres)) {
-                        if (((include.genres[fullGenre] && !exclude.genres[fullGenre])
-                            || include.genres["genre: all"])
-                            && !exclude.genres["genre: all"]) {
+                        if ((include.genres[fullGenre] || include.genres["genre: all"]) &&
+                            !exclude.genres[fullGenre] &&
+                            !exclude.genres["genre: all"]
+                        ) {
                             if (varScheme.genres[fullGenre]) {
                                 varScheme.genres[fullGenre].userScore.push(userScore)
                                 ++varScheme.genres[fullGenre].count
@@ -232,8 +233,9 @@ self.onmessage = async ({ data }) => {
                             }
                         }
                     } else {
-                        if ((!exclude.genres[fullGenre] || include.genres["genre: all"])
-                            && !exclude.genres["genre: all"]) {
+                        if (!exclude.genres[fullGenre] &&
+                            !exclude.genres["genre: all"]
+                        ) {
                             if (varScheme.genres[fullGenre]) {
                                 varScheme.genres[fullGenre].userScore.push(userScore)
                                 ++varScheme.genres[fullGenre].count
@@ -257,13 +259,15 @@ self.onmessage = async ({ data }) => {
                     let fullTag = "tag: " + tag.trim().toLowerCase()
                     let fullTagCategory = "tag category: " + tagCategory.trim().toLowerCase()
                     if (!jsonIsEmpty(include.categories)) {
-                        if (((include.categories[fullTagCategory] && !exclude.categories[fullTagCategory])
-                            || include.categories["tag category: all"])
-                            && !exclude.categories["tag category: all"]) {
+                        if ((include.categories[fullTagCategory] || include.categories["tag category: all"]) &&
+                            !exclude.categories[fullTagCategory] &&
+                            !exclude.categories["tag category: all"]
+                        ) {
                             if (!jsonIsEmpty(include.tags)) {
-                                if (((include.tags[fullTag] && !exclude.tags[fullTag])
-                                    || include.tags["tag: all"])
-                                    && !exclude.tags["tag: all"]) {
+                                if ((include.tags[fullTag] || include.tags["tag: all"]) &&
+                                    !exclude.tags[fullTag] &&
+                                    !exclude.tags["tag: all"]
+                                ) {
                                     if (varScheme.tags[fullTag]) {
                                         varScheme.tags[fullTag].userScore.push(userScore)
                                         ++varScheme.tags[fullTag].count
@@ -277,8 +281,9 @@ self.onmessage = async ({ data }) => {
                                     }
                                 }
                             } else {
-                                if ((!exclude.tags[fullTag] || include.tags["tag: all"])
-                                    && !exclude.tags["tag: all"]) {
+                                if (!exclude.tags[fullTag] &&
+                                    !exclude.tags["tag: all"]
+                                ) {
                                     if (varScheme.tags[fullTag]) {
                                         varScheme.tags[fullTag].userScore.push(userScore)
                                         ++varScheme.tags[fullTag].count
@@ -294,12 +299,14 @@ self.onmessage = async ({ data }) => {
                             }
                         }
                     } else {
-                        if ((!exclude.categories[fullTagCategory] || include.categories["tag category: all"])
-                            && !exclude.categories["tag category: all"]) {
+                        if (!exclude.categories[fullTagCategory] &&
+                            !exclude.categories["tag category: all"]
+                        ) {
                             if (!jsonIsEmpty(include.tags)) {
-                                if (((include.tags[fullTag] && !exclude.tags[fullTag])
-                                    || include.tags["tag: all"])
-                                    && !exclude.tags["tag: all"]) {
+                                if ((include.tags[fullTag] || include.tags["tag: all"]) &&
+                                    !exclude.tags[fullTag] &&
+                                    !exclude.tags["tag: all"]
+                                ) {
                                     if (varScheme.tags[fullTag]) {
                                         varScheme.tags[fullTag].userScore.push(userScore)
                                         ++varScheme.tags[fullTag].count
@@ -313,8 +320,9 @@ self.onmessage = async ({ data }) => {
                                     }
                                 }
                             } else {
-                                if ((!exclude.tags[fullTag] || include.tags["tag: all"])
-                                    && !exclude.tags["tag: all"]) {
+                                if (!exclude.tags[fullTag] &&
+                                    !exclude.tags["tag: all"]
+                                ) {
                                     if (varScheme.tags[fullTag]) {
                                         varScheme.tags[fullTag].userScore.push(userScore)
                                         ++varScheme.tags[fullTag].count
@@ -597,40 +605,44 @@ self.onmessage = async ({ data }) => {
         }
 
         // Studios
-        let studiosKey = Object.keys(varScheme.studios)
-        let studiosMean = []
-        // let filteredStudiosMean = []
-        for (let i = 0; i < studiosKey.length; i++) {
-            if (measure === "mode") {
-                let tempModeScore = arrayMode(varScheme.studios[studiosKey[i]].userScore)
-                studiosMean.push(tempModeScore)
-            } else {
-                let tempMeanScore = arrayMean(varScheme.studios[studiosKey[i]].userScore)
-                studiosMean.push(tempMeanScore)
-            }
-        }
-        studiosMean = arrayMean(studiosMean)
+        // let studiosKey = Object.keys(varScheme.studios)
+        // let studiosMean = []
+        // // let filteredStudiosMean = []
+        // for (let i = 0; i < studiosKey.length; i++) {
+        //     if (measure === "mode") {
+        //         let tempModeScore = arrayMode(varScheme.studios[studiosKey[i]].userScore)
+        //         studiosMean.push(tempModeScore)
+        //     } else {
+        //         let tempMeanScore = arrayMean(varScheme.studios[studiosKey[i]].userScore)
+        //         studiosMean.push(tempMeanScore)
+        //     }
+        // }
+        // studiosMean = arrayMean(studiosMean)
 
         // Staffs
-        let staffKey = Object.keys(varScheme.staff)
-        let staffMean = []
-        // let filteredStaffMean = []
-        for (let i = 0; i < staffKey.length; i++) {
-            if (measure === "mode") {
-                let tempModeScore = arrayMode(varScheme.staff[staffKey[i]].userScore)
-                staffMean.push(tempModeScore)
-            } else {
-                let tempMeanScore = arrayMean(varScheme.staff[staffKey[i]].userScore)
-                staffMean.push(tempMeanScore)
-            }
-        }
-        staffMean = arrayMean(staffMean)
+        // let staffKey = Object.keys(varScheme.staff)
+        // let staffMean = []
+        // // let filteredStaffMean = []
+        // for (let i = 0; i < staffKey.length; i++) {
+        //     if (measure === "mode") {
+        //         let tempModeScore = arrayMode(varScheme.staff[staffKey[i]].userScore)
+        //         staffMean.push(tempModeScore)
+        //     } else {
+        //         let tempMeanScore = arrayMean(varScheme.staff[staffKey[i]].userScore)
+        //         staffMean.push(tempMeanScore)
+        //     }
+        // }
+        // staffMean = arrayMean(staffMean)
 
         // Join Data
         varScheme.meanGenres = genresMean
         varScheme.meanTags = tagsMean
         varScheme.includeCategories = include.categories
         varScheme.excludeCategories = exclude.categories
+        varScheme.includeGenres = include.genres
+        varScheme.excludeGenres = exclude.genres
+        varScheme.includeTags = include.tags
+        varScheme.excludeTags = exclude.tags
 
         // Linear Model Building | y is Predicted so its Userscore
         // Year Model
@@ -654,6 +666,7 @@ self.onmessage = async ({ data }) => {
             }
         }
     }
+    console.log(varScheme.genres)
     // Calculate Anime Recommendation List
     self.postMessage({ status: "Processing Recommendation List" })
     // Init Data
@@ -878,7 +891,16 @@ self.onmessage = async ({ data }) => {
                             ];
                         }
                     }
-                } else if (typeof varScheme.meanGenres === "number" && includeUnknownVar) {
+                } else if (
+                    typeof varScheme.meanGenres === "number" &&
+                    includeUnknownVar &&
+                    !varScheme.excludeGenres[fullGenre] &&
+                    !varScheme.excludeGenres["genre: all"] &&
+                    (jsonIsEmpty(varScheme.includeGenres) ||
+                        varScheme.includeGenres[fullGenre] ||
+                        varScheme.includeGenres["genre: all"]
+                    )
+                ) {
                     zgenres.push({ genre: fullGenre, score: varScheme.meanGenres });
                 }
                 // Filters
@@ -913,7 +935,15 @@ self.onmessage = async ({ data }) => {
                                     ];
                                 }
                             }
-                        } else if (typeof varScheme.meanTags === "number" && includeUnknownVar) {
+                        } else if (typeof varScheme.meanTags === "number" &&
+                            includeUnknownVar &&
+                            !varScheme.excludeTags[fullTag] &&
+                            !varScheme.excludeTags["tag: all"] &&
+                            (jsonIsEmpty(varScheme.includeTags) ||
+                                varScheme.includeTags[fullTag] ||
+                                varScheme.includeTags["tag: all"]
+                            )
+                        ) {
                             ztags.push(varScheme.meanTags);
                         }
                     }
@@ -933,7 +963,15 @@ self.onmessage = async ({ data }) => {
                                     ];
                                 }
                             }
-                        } else if (typeof varScheme.meanTags === "number" && includeUnknownVar) {
+                        } else if (typeof varScheme.meanTags === "number" &&
+                            includeUnknownVar &&
+                            !varScheme.excludeTags[fullTag] &&
+                            !varScheme.excludeTags["tag: all"] &&
+                            (jsonIsEmpty(varScheme.includeTags) ||
+                                varScheme.includeTags[fullTag] ||
+                                varScheme.includeTags["tag: all"]
+                            )
+                        ) {
                             ztags.push(varScheme.meanTags);
                         }
                     }
@@ -1014,6 +1052,7 @@ self.onmessage = async ({ data }) => {
             // Combine Scores
             // Anime Content
             let animeContent = [];
+            console.log(zgenres)
             if (zgenres.length) {
                 let genreValues = zgenres.reduce((acc, _genre) => {
                     acc.push(_genre.score)
