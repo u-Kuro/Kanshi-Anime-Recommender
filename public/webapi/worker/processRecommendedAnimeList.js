@@ -25,10 +25,10 @@ self.onmessage = async ({ data }) => {
         customUserScoreBase,
         genresWithLowerCount = {};
     let include = {
-        genres: {}, tags: {}, categories: {}, studios: {}, staffs: {}, roles: {}
+        genres: {}, tags: {}, categories: {}//, studios: {}, staffs: {}, roles: {}
     },
         exclude = {
-            genres: {}, tags: {}, categories: {}, studios: {}, staffs: {}, roles: {}
+            genres: {}, tags: {}, categories: {}//, studios: {}, staffs: {}, roles: {}
         }
     let algorithmFilter = activeTagFilters?.['Algorithm Filter'] || []
     algorithmFilter.forEach(({ selected, filterType, optionName, optionType, optionValue }) => {
@@ -39,7 +39,7 @@ self.onmessage = async ({ data }) => {
                 } else if (optionType === 'tag') {
                     include.tags["tag: " + optionName.toLowerCase()] = true
                 } else if (optionType === 'tag category') {
-                    include.tags["tag category: " + optionName.toLowerCase()] = true
+                    include.categories["tag category: " + optionName.toLowerCase()] = true
                     // } else if (optionType === 'studio') {
                     //     include.tags["studio: " + optionName.toLowerCase()] = true
                     // } else if (optionType === 'staff role') {
@@ -79,7 +79,7 @@ self.onmessage = async ({ data }) => {
                 } else if (optionType === 'tag') {
                     exclude.tags["tag: " + optionName.toLowerCase()] = true
                 } else if (optionType === 'tag category') {
-                    exclude.tags["tag category: " + optionName.toLowerCase()] = true
+                    exclude.categories["tag category: " + optionName.toLowerCase()] = true
                     // } else if (optionType === 'studio') {
                     //     exclude.tags["studio: " + optionName.toLowerCase()] = true
                     // } else if (optionType === 'staff role') {
@@ -128,8 +128,8 @@ self.onmessage = async ({ data }) => {
     let varScheme = {
         genres: {},
         tags: {},
-        studios: {},
-        staff: {}
+        // studios: {},
+        // staff: {}
     }
     let userEntriesStatus = {
         userScore: {},
@@ -139,8 +139,8 @@ self.onmessage = async ({ data }) => {
     let year = []
     let genresMeanCount = {}
     let tagsMeanCount = {}
-    let studiosMeanCount = {}
-    let staffMeanCount = {}
+    // let studiosMeanCount = {}
+    // let staffMeanCount = {}
     let includedAnimeRelations = {}
     self.postMessage({ status: "Processing User Schema" })
     for (let i = 0; i < userEntries.length; i++) {
@@ -160,8 +160,8 @@ self.onmessage = async ({ data }) => {
         // Init Variables
         let genres = anime?.genres || []
         let tags = anime?.tags || []
-        let studios = anime?.studios?.nodes || []
-        let staffs = anime?.staff?.edges || []
+        // let studios = anime?.studios?.nodes || []
+        // let staffs = anime?.staff?.edges || []
         if (userScore > 0) {// Filter Scored Anime
             // Check if a related anime is already analyzed
             if (includedAnimeRelations[animeID]) continue
@@ -215,38 +215,20 @@ self.onmessage = async ({ data }) => {
                 let genre = genres[j]
                 if (typeof genre === "string") {
                     let fullGenre = "genre: " + genre.trim().toLowerCase()
-                    if (!jsonIsEmpty(include.genres)) {
-                        if ((include.genres[fullGenre] || include.genres["genre: all"]) &&
-                            !exclude.genres[fullGenre] &&
-                            !exclude.genres["genre: all"]
-                        ) {
-                            if (varScheme.genres[fullGenre]) {
-                                varScheme.genres[fullGenre].userScore.push(userScore)
-                                ++varScheme.genres[fullGenre].count
-                            } else {
-                                varScheme.genres[fullGenre] = { userScore: [userScore], count: 1 }
-                            }
-                            if (genresMeanCount[fullGenre]) {
-                                ++genresMeanCount[fullGenre]
-                            } else {
-                                genresMeanCount[fullGenre] = 1
-                            }
+                    if ((jsonIsEmpty(include.genres) || include.genres[fullGenre] || include.genres["genre: all"]) &&
+                        !exclude.genres[fullGenre] &&
+                        !exclude.genres["genre: all"]
+                    ) {
+                        if (varScheme.genres[fullGenre]) {
+                            varScheme.genres[fullGenre].userScore.push(userScore)
+                            ++varScheme.genres[fullGenre].count
+                        } else {
+                            varScheme.genres[fullGenre] = { userScore: [userScore], count: 1 }
                         }
-                    } else {
-                        if (!exclude.genres[fullGenre] &&
-                            !exclude.genres["genre: all"]
-                        ) {
-                            if (varScheme.genres[fullGenre]) {
-                                varScheme.genres[fullGenre].userScore.push(userScore)
-                                ++varScheme.genres[fullGenre].count
-                            } else {
-                                varScheme.genres[fullGenre] = { userScore: [userScore], count: 1 }
-                            }
-                            if (genresMeanCount[fullGenre]) {
-                                ++genresMeanCount[fullGenre]
-                            } else {
-                                genresMeanCount[fullGenre] = 1
-                            }
+                        if (genresMeanCount[fullGenre]) {
+                            ++genresMeanCount[fullGenre]
+                        } else {
+                            genresMeanCount[fullGenre] = 1
                         }
                     }
                 }
@@ -258,217 +240,158 @@ self.onmessage = async ({ data }) => {
                 if (typeof tag === "string" && typeof tagCategory === "string") {
                     let fullTag = "tag: " + tag.trim().toLowerCase()
                     let fullTagCategory = "tag category: " + tagCategory.trim().toLowerCase()
-                    if (!jsonIsEmpty(include.categories)) {
-                        if ((include.categories[fullTagCategory] || include.categories["tag category: all"]) &&
-                            !exclude.categories[fullTagCategory] &&
-                            !exclude.categories["tag category: all"]
-                        ) {
-                            if (!jsonIsEmpty(include.tags)) {
-                                if ((include.tags[fullTag] || include.tags["tag: all"]) &&
-                                    !exclude.tags[fullTag] &&
-                                    !exclude.tags["tag: all"]
-                                ) {
-                                    if (varScheme.tags[fullTag]) {
-                                        varScheme.tags[fullTag].userScore.push(userScore)
-                                        ++varScheme.tags[fullTag].count
-                                    } else {
-                                        varScheme.tags[fullTag] = { userScore: [userScore], count: 1 }
-                                    }
-                                    if (tagsMeanCount[fullTag]) {
-                                        ++tagsMeanCount[fullTag]
-                                    } else {
-                                        tagsMeanCount[fullTag] = 1
-                                    }
-                                }
-                            } else {
-                                if (!exclude.tags[fullTag] &&
-                                    !exclude.tags["tag: all"]
-                                ) {
-                                    if (varScheme.tags[fullTag]) {
-                                        varScheme.tags[fullTag].userScore.push(userScore)
-                                        ++varScheme.tags[fullTag].count
-                                    } else {
-                                        varScheme.tags[fullTag] = { userScore: [userScore], count: 1 }
-                                    }
-                                    if (tagsMeanCount[fullTag]) {
-                                        ++tagsMeanCount[fullTag]
-                                    } else {
-                                        tagsMeanCount[fullTag] = 1
-                                    }
-                                }
-                            }
+                    if ((jsonIsEmpty(include.categories) || include.categories[fullTagCategory] || include.categories["tag category: all"]) &&
+                        !exclude.categories[fullTagCategory] &&
+                        !exclude.categories["tag category: all"] &&
+                        //
+                        (jsonIsEmpty(include.tags) || include.tags[fullTag] || include.tags["tag: all"]) &&
+                        !exclude.tags[fullTag] &&
+                        !exclude.tags["tag: all"]
+                    ) {
+                        if (varScheme.tags[fullTag]) {
+                            varScheme.tags[fullTag].userScore.push(userScore)
+                            ++varScheme.tags[fullTag].count
+                        } else {
+                            varScheme.tags[fullTag] = { userScore: [userScore], count: 1 }
                         }
-                    } else {
-                        if (!exclude.categories[fullTagCategory] &&
-                            !exclude.categories["tag category: all"]
-                        ) {
-                            if (!jsonIsEmpty(include.tags)) {
-                                if ((include.tags[fullTag] || include.tags["tag: all"]) &&
-                                    !exclude.tags[fullTag] &&
-                                    !exclude.tags["tag: all"]
-                                ) {
-                                    if (varScheme.tags[fullTag]) {
-                                        varScheme.tags[fullTag].userScore.push(userScore)
-                                        ++varScheme.tags[fullTag].count
-                                    } else {
-                                        varScheme.tags[fullTag] = { userScore: [userScore], count: 1 }
-                                    }
-                                    if (tagsMeanCount[fullTag]) {
-                                        ++tagsMeanCount[fullTag]
-                                    } else {
-                                        tagsMeanCount[fullTag] = 1
-                                    }
-                                }
-                            } else {
-                                if (!exclude.tags[fullTag] &&
-                                    !exclude.tags["tag: all"]
-                                ) {
-                                    if (varScheme.tags[fullTag]) {
-                                        varScheme.tags[fullTag].userScore.push(userScore)
-                                        ++varScheme.tags[fullTag].count
-                                    } else {
-                                        varScheme.tags[fullTag] = { userScore: [userScore], count: 1 }
-                                    }
-                                    if (tagsMeanCount[fullTag]) {
-                                        ++tagsMeanCount[fullTag]
-                                    } else {
-                                        tagsMeanCount[fullTag] = 1
-                                    }
-                                }
-                            }
+                        if (tagsMeanCount[fullTag]) {
+                            ++tagsMeanCount[fullTag]
+                        } else {
+                            tagsMeanCount[fullTag] = 1
                         }
                     }
+
                 }
             }
             // Studios
-            let includedStudios = {}
-            for (let j = 0; j < studios.length; j++) {
-                if (!studios[j]?.isAnimationStudio) continue
-                let studio = studios[j]?.name
-                if (typeof studio === "string") {
-                    if (includedStudios[studio]) continue
-                    includedStudios[studio] = true
-                    let fullStudio = "studio: " + studio.trim().toLowerCase()
-                    if (!jsonIsEmpty(include.studios)) {
-                        if (((include.studios[fullStudio] && !exclude.studios[fullStudio])
-                            || include.studios["studio: all"])
-                            && !exclude.studios["studio: all"]) {
-                            if (varScheme.studios[fullStudio]) {
-                                varScheme.studios[fullStudio].userScore.push(userScore)
-                                ++varScheme.studios[fullStudio].count
-                            } else {
-                                varScheme.studios[fullStudio] = { userScore: [userScore], count: 1 }
-                            }
-                            if (studiosMeanCount[fullStudio]) {
-                                ++studiosMeanCount[fullStudio]
-                            } else {
-                                studiosMeanCount[fullStudio] = 1
-                            }
-                        }
-                    } else {
-                        if ((!exclude.studios[fullStudio] || include.studios["studio: all"])
-                            && !exclude.studios["studio: all"]) {
-                            if (varScheme.studios[fullStudio]) {
-                                varScheme.studios[fullStudio].userScore.push(userScore)
-                                ++varScheme.studios[fullStudio].count
-                            } else {
-                                varScheme.studios[fullStudio] = { userScore: [userScore], count: 1 }
-                            }
-                            if (studiosMeanCount[fullStudio]) {
-                                ++studiosMeanCount[fullStudio]
-                            } else {
-                                studiosMeanCount[fullStudio] = 1
-                            }
-                        }
-                    }
-                }
-            }
-            // Staffs
-            let includedStaff = {}
-            for (let j = 0; j < staffs.length; j++) {
-                let staff = staffs[j]?.node?.name?.userPreferred
-                if (typeof staff === "string" && typeof staffs[j]?.role === "string") {
-                    if (includedStaff[staff]) continue
-                    includedStaff[staff] = true
-                    let staffRole = staffs[j].role.split("(")[0].trim()
-                    let fullStaff = "staff: " + staff.trim().toLowerCase()
-                    let fullStaffRole = "staff role: " + staffRole.trim().toLowerCase()
-                    if (!jsonIsEmpty(include.roles)) {
-                        if (((include.roles[fullStaffRole] && !exclude.roles[fullStaffRole])
-                            || include.roles["staff role: all"])
-                            && !exclude.roles["staff role: all"]) {
-                            if (!jsonIsEmpty(include.staffs)) {
-                                if (((include.staffs[fullStaff] && !exclude.staffs[fullStaff])
-                                    || include.staffs["staff: all"])
-                                    && !exclude.staffs["staff: all"]) {
-                                    if (varScheme.staff[fullStaff]) {
-                                        varScheme.staff[fullStaff].userScore.push(userScore)
-                                        ++varScheme.staff[fullStaff].count
-                                    } else {
-                                        varScheme.staff[fullStaff] = { userScore: [userScore], count: 1 }
-                                    }
-                                    if (staffMeanCount[fullStaff]) {
-                                        ++staffMeanCount[fullStaff]
-                                    } else {
-                                        staffMeanCount[fullStaff] = 1
-                                    }
-                                }
-                            } else {
-                                if ((!exclude.staffs[fullStaff] || include.staffs["staff: all"])
-                                    && !exclude.staffs["staff: all"]) {
-                                    if (varScheme.staff[fullStaff]) {
-                                        varScheme.staff[fullStaff].userScore.push(userScore)
-                                        ++varScheme.staff[fullStaff].count
-                                    } else {
-                                        varScheme.staff[fullStaff] = { userScore: [userScore], count: 1 }
-                                    }
-                                    if (staffMeanCount[fullStaff]) {
-                                        ++staffMeanCount[fullStaff]
-                                    } else {
-                                        staffMeanCount[fullStaff] = 1
-                                    }
-                                }
-                            }
-                        }
-                    } else {
-                        if ((!exclude.roles[fullStaffRole] || include.roles["staff role: all"])
-                            && !exclude.roles["staff role: all"]) {
-                            if (!jsonIsEmpty(include.staffs)) {
-                                if (((include.staffs[fullStaff] && !exclude.staffs[fullStaff])
-                                    || include.staffs["staff: all"])
-                                    && !exclude.staffs["staff: all"]) {
-                                    if (varScheme.staff[fullStaff]) {
-                                        varScheme.staff[fullStaff].userScore.push(userScore)
-                                        ++varScheme.staff[fullStaff].count
-                                    } else {
-                                        varScheme.staff[fullStaff] = { userScore: [userScore], count: 1 }
-                                    }
-                                    if (staffMeanCount[fullStaff]) {
-                                        ++staffMeanCount[fullStaff]
-                                    } else {
-                                        staffMeanCount[fullStaff] = 1
-                                    }
-                                }
-                            } else {
-                                if ((!exclude.staffs[fullStaff] || include.staffs["staff: all"])
-                                    && !exclude.staffs["staff: all"]) {
-                                    if (varScheme.staff[fullStaff]) {
-                                        varScheme.staff[fullStaff].userScore.push(userScore)
-                                        ++varScheme.staff[fullStaff].count
-                                    } else {
-                                        varScheme.staff[fullStaff] = { userScore: [userScore], count: 1 }
-                                    }
-                                    if (staffMeanCount[fullStaff]) {
-                                        ++staffMeanCount[fullStaff]
-                                    } else {
-                                        staffMeanCount[fullStaff] = 1
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+            // let includedStudios = {}
+            // for (let j = 0; j < studios.length; j++) {
+            //     if (!studios[j]?.isAnimationStudio) continue
+            //     let studio = studios[j]?.name
+            //     if (typeof studio === "string") {
+            //         if (includedStudios[studio]) continue
+            //         includedStudios[studio] = true
+            //         let fullStudio = "studio: " + studio.trim().toLowerCase()
+            //         if (!jsonIsEmpty(include.studios)) {
+            //             if (((include.studios[fullStudio] && !exclude.studios[fullStudio])
+            //                 || include.studios["studio: all"])
+            //                 && !exclude.studios["studio: all"]) {
+            //                 if (varScheme.studios[fullStudio]) {
+            //                     varScheme.studios[fullStudio].userScore.push(userScore)
+            //                     ++varScheme.studios[fullStudio].count
+            //                 } else {
+            //                     varScheme.studios[fullStudio] = { userScore: [userScore], count: 1 }
+            //                 }
+            //                 if (studiosMeanCount[fullStudio]) {
+            //                     ++studiosMeanCount[fullStudio]
+            //                 } else {
+            //                     studiosMeanCount[fullStudio] = 1
+            //                 }
+            //             }
+            //         } else {
+            //             if ((!exclude.studios[fullStudio] || include.studios["studio: all"])
+            //                 && !exclude.studios["studio: all"]) {
+            //                 if (varScheme.studios[fullStudio]) {
+            //                     varScheme.studios[fullStudio].userScore.push(userScore)
+            //                     ++varScheme.studios[fullStudio].count
+            //                 } else {
+            //                     varScheme.studios[fullStudio] = { userScore: [userScore], count: 1 }
+            //                 }
+            //                 if (studiosMeanCount[fullStudio]) {
+            //                     ++studiosMeanCount[fullStudio]
+            //                 } else {
+            //                     studiosMeanCount[fullStudio] = 1
+            //                 }
+            //             }
+            //         }
+            //     }
+            // }
+            // // Staffs
+            // let includedStaff = {}
+            // for (let j = 0; j < staffs.length; j++) {
+            //     let staff = staffs[j]?.node?.name?.userPreferred
+            //     if (typeof staff === "string" && typeof staffs[j]?.role === "string") {
+            //         if (includedStaff[staff]) continue
+            //         includedStaff[staff] = true
+            //         let staffRole = staffs[j].role.split("(")[0].trim()
+            //         let fullStaff = "staff: " + staff.trim().toLowerCase()
+            //         let fullStaffRole = "staff role: " + staffRole.trim().toLowerCase()
+            //         if (!jsonIsEmpty(include.roles)) {
+            //             if (((include.roles[fullStaffRole] && !exclude.roles[fullStaffRole])
+            //                 || include.roles["staff role: all"])
+            //                 && !exclude.roles["staff role: all"]) {
+            //                 if (!jsonIsEmpty(include.staffs)) {
+            //                     if (((include.staffs[fullStaff] && !exclude.staffs[fullStaff])
+            //                         || include.staffs["staff: all"])
+            //                         && !exclude.staffs["staff: all"]) {
+            //                         if (varScheme.staff[fullStaff]) {
+            //                             varScheme.staff[fullStaff].userScore.push(userScore)
+            //                             ++varScheme.staff[fullStaff].count
+            //                         } else {
+            //                             varScheme.staff[fullStaff] = { userScore: [userScore], count: 1 }
+            //                         }
+            //                         if (staffMeanCount[fullStaff]) {
+            //                             ++staffMeanCount[fullStaff]
+            //                         } else {
+            //                             staffMeanCount[fullStaff] = 1
+            //                         }
+            //                     }
+            //                 } else {
+            //                     if ((!exclude.staffs[fullStaff] || include.staffs["staff: all"])
+            //                         && !exclude.staffs["staff: all"]) {
+            //                         if (varScheme.staff[fullStaff]) {
+            //                             varScheme.staff[fullStaff].userScore.push(userScore)
+            //                             ++varScheme.staff[fullStaff].count
+            //                         } else {
+            //                             varScheme.staff[fullStaff] = { userScore: [userScore], count: 1 }
+            //                         }
+            //                         if (staffMeanCount[fullStaff]) {
+            //                             ++staffMeanCount[fullStaff]
+            //                         } else {
+            //                             staffMeanCount[fullStaff] = 1
+            //                         }
+            //                     }
+            //                 }
+            //             }
+            //         } else {
+            //             if ((!exclude.roles[fullStaffRole] || include.roles["staff role: all"])
+            //                 && !exclude.roles["staff role: all"]) {
+            //                 if (!jsonIsEmpty(include.staffs)) {
+            //                     if (((include.staffs[fullStaff] && !exclude.staffs[fullStaff])
+            //                         || include.staffs["staff: all"])
+            //                         && !exclude.staffs["staff: all"]) {
+            //                         if (varScheme.staff[fullStaff]) {
+            //                             varScheme.staff[fullStaff].userScore.push(userScore)
+            //                             ++varScheme.staff[fullStaff].count
+            //                         } else {
+            //                             varScheme.staff[fullStaff] = { userScore: [userScore], count: 1 }
+            //                         }
+            //                         if (staffMeanCount[fullStaff]) {
+            //                             ++staffMeanCount[fullStaff]
+            //                         } else {
+            //                             staffMeanCount[fullStaff] = 1
+            //                         }
+            //                     }
+            //                 } else {
+            //                     if ((!exclude.staffs[fullStaff] || include.staffs["staff: all"])
+            //                         && !exclude.staffs["staff: all"]) {
+            //                         if (varScheme.staff[fullStaff]) {
+            //                             varScheme.staff[fullStaff].userScore.push(userScore)
+            //                             ++varScheme.staff[fullStaff].count
+            //                         } else {
+            //                             varScheme.staff[fullStaff] = { userScore: [userScore], count: 1 }
+            //                         }
+            //                         if (staffMeanCount[fullStaff]) {
+            //                             ++staffMeanCount[fullStaff]
+            //                         } else {
+            //                             staffMeanCount[fullStaff] = 1
+            //                         }
+            //                     }
+            //                 }
+            //             }
+            //         }
+            //     }
+            // }
 
             // Init Linear Models Training Data
             if (isaN(anime?.averageScore) && includeAverageScore) {
@@ -513,29 +436,29 @@ self.onmessage = async ({ data }) => {
             tagsMeanCount = Math.max(minSampleSize, tagsMeanCount)
         }
 
-        if (typeof sampleSize === "number" && sampleSize >= 1) {
-            studiosMeanCount = sampleSize
-        } else if (!jsonIsEmpty(studiosMeanCount)) {
-            let studiosCountValues = Object.values(studiosMeanCount)
-            studiosMeanCount = arrayMode(studiosCountValues) // Appears Little so Set Minimum
-        } else {
-            studiosMeanCount = 10
-        }
-        if (minSampleSize >= 0) {
-            studiosMeanCount = Math.max(minSampleSize, studiosMeanCount)
-        }
+        // if (typeof sampleSize === "number" && sampleSize >= 1) {
+        //     studiosMeanCount = sampleSize
+        // } else if (!jsonIsEmpty(studiosMeanCount)) {
+        //     let studiosCountValues = Object.values(studiosMeanCount)
+        //     studiosMeanCount = arrayMode(studiosCountValues) // Appears Little so Set Minimum
+        // } else {
+        //     studiosMeanCount = 10
+        // }
+        // if (minSampleSize >= 0) {
+        //     studiosMeanCount = Math.max(minSampleSize, studiosMeanCount)
+        // }
 
-        if (typeof sampleSize === "number" && sampleSize >= 1) {
-            staffMeanCount = sampleSize
-        } else if (!jsonIsEmpty(staffMeanCount)) {
-            let staffCountValues = Object.values(staffMeanCount)
-            staffMeanCount = arrayMode(staffCountValues) // Appears Little so Set Minimum
-        } else {
-            staffMeanCount = 10
-        }
-        if (minSampleSize >= 0) {
-            staffMeanCount = Math.max(minSampleSize, staffMeanCount)
-        }
+        // if (typeof sampleSize === "number" && sampleSize >= 1) {
+        //     staffMeanCount = sampleSize
+        // } else if (!jsonIsEmpty(staffMeanCount)) {
+        //     let staffCountValues = Object.values(staffMeanCount)
+        //     staffMeanCount = arrayMode(staffCountValues) // Appears Little so Set Minimum
+        // } else {
+        //     staffMeanCount = 10
+        // }
+        // if (minSampleSize >= 0) {
+        //     staffMeanCount = Math.max(minSampleSize, staffMeanCount)
+        // }
 
         // Add other Parameters
         varScheme.includeUnknownVar = includeUnknownVar
@@ -877,30 +800,29 @@ self.onmessage = async ({ data }) => {
                 if (typeof genre !== "string") continue;
                 genre = genre.trim().toLowerCase();
                 let fullGenre = "genre: " + genre;
-                if (typeof varScheme.genres[fullGenre] === "number") {
-                    zgenres.push({ genre: fullGenre, score: varScheme.genres[fullGenre] });
-                    // Top Similarities
-                    if (typeof varScheme.meanGenres === "number") {
-                        if (varScheme.genres[fullGenre] >= varScheme.meanGenres &&
-                            !genresIncluded[fullGenre]) {
+                if ((jsonIsEmpty(varScheme.includeGenres) || varScheme.includeGenres[fullGenre] || varScheme.includeGenres["genre: all"]) &&
+                    !varScheme.excludeGenres[fullGenre] &&
+                    !varScheme.excludeGenres["genre: all"]
+                ) {
+                    if (typeof varScheme.genres[fullGenre] === "number") {
+                        zgenres.push({ genre: fullGenre, score: varScheme.genres[fullGenre] });
+                        // Top Similarities
+                        if (typeof varScheme.meanGenres === "number" &&
+                            varScheme.genres[fullGenre] >= varScheme.meanGenres &&
+                            !genresIncluded[fullGenre]
+                        ) {
                             let tmpscore = varScheme.genres[fullGenre];
                             genresIncluded[fullGenre] = [
                                 genre + " (" + tmpscore.toFixed(2) + ")",
                                 tmpscore,
                             ];
                         }
+                    } else if (
+                        typeof varScheme.meanGenres === "number" &&
+                        includeUnknownVar
+                    ) {
+                        zgenres.push({ genre: fullGenre, score: varScheme.meanGenres });
                     }
-                } else if (
-                    typeof varScheme.meanGenres === "number" &&
-                    includeUnknownVar &&
-                    !varScheme.excludeGenres[fullGenre] &&
-                    !varScheme.excludeGenres["genre: all"] &&
-                    (jsonIsEmpty(varScheme.includeGenres) ||
-                        varScheme.includeGenres[fullGenre] ||
-                        varScheme.includeGenres["genre: all"]
-                    )
-                ) {
-                    zgenres.push({ genre: fullGenre, score: varScheme.meanGenres });
                 }
                 // Filters
                 if (filters['genre'][genre] === undefined) {
@@ -918,61 +840,34 @@ self.onmessage = async ({ data }) => {
                 let fullTag = "tag: " + tag;
                 tagCategory = tagCategory.trim().toLowerCase();
                 let fullTagCategory = "tag category: " + tagCategory;
-                if (!jsonIsEmpty(varScheme.includeCategories)) {
-                    if (varScheme.includeCategories[fullTagCategory]) {
-                        if (typeof varScheme.tags[fullTag] === "number") {
-                            ztags.push(varScheme.tags[fullTag]);
-                            // Top Similarities
-                            if (typeof varScheme.meanTags === "number" && typeof tagRank === "number") {
-                                if (tagRank >= 50
-                                    && varScheme.tags[fullTag] >= varScheme.meanTags &&
-                                    !tagsIncluded[fullTag]) {
-                                    let tmpscore = varScheme.tags[fullTag];
-                                    tagsIncluded[fullTag] = [
-                                        tag + " (" + tmpscore.toFixed(2) + ")",
-                                        tmpscore,
-                                    ];
-                                }
-                            }
-                        } else if (typeof varScheme.meanTags === "number" &&
-                            includeUnknownVar &&
-                            !varScheme.excludeTags[fullTag] &&
-                            !varScheme.excludeTags["tag: all"] &&
-                            (jsonIsEmpty(varScheme.includeTags) ||
-                                varScheme.includeTags[fullTag] ||
-                                varScheme.includeTags["tag: all"]
-                            )
+                if ((jsonIsEmpty(varScheme.includeCategories) || varScheme.includeCategories[fullTagCategory] || varScheme.includeCategories["tag category: all"]) &&
+                    !varScheme.excludeCategories[fullTagCategory] &&
+                    !varScheme.excludeCategories["tag category: all"] &&
+                    //
+                    (jsonIsEmpty(varScheme.includeTags) || varScheme.includeTags[fullTag] || varScheme.includeTags["tag: all"]) &&
+                    !varScheme.excludeTags[fullTag] &&
+                    !varScheme.excludeTags["tag: all"]
+                ) {
+                    if (typeof varScheme.tags[fullTag] === "number") {
+                        ztags.push(varScheme.tags[fullTag]);
+                        // Top Similarities
+                        if (typeof varScheme.meanTags === "number" &&
+                            typeof tagRank === "number" &&
+                            tagRank >= 50
+                            && varScheme.tags[fullTag] >= varScheme.meanTags &&
+                            !tagsIncluded[fullTag]
                         ) {
-                            ztags.push(varScheme.meanTags);
+                            let tmpscore = varScheme.tags[fullTag];
+                            tagsIncluded[fullTag] = [
+                                tag + " (" + tmpscore.toFixed(2) + ")",
+                                tmpscore,
+                            ];
                         }
-                    }
-                } else {
-                    if (!varScheme.excludeCategories[fullTagCategory]) {
-                        if (typeof varScheme.tags[fullTag] === "number") {
-                            ztags.push(varScheme.tags[fullTag]);
-                            // Top Similarities
-                            if (typeof varScheme.meanTags === "number" && typeof tagRank === "number") {
-                                if (tagRank >= 50 &&
-                                    varScheme.tags[fullTag] >= varScheme.meanTags &&
-                                    !tagsIncluded[fullTag]) {
-                                    let tmpscore = varScheme.tags[fullTag];
-                                    tagsIncluded[fullTag] = [
-                                        tag + " (" + tmpscore.toFixed(2) + ")",
-                                        tmpscore,
-                                    ];
-                                }
-                            }
-                        } else if (typeof varScheme.meanTags === "number" &&
-                            includeUnknownVar &&
-                            !varScheme.excludeTags[fullTag] &&
-                            !varScheme.excludeTags["tag: all"] &&
-                            (jsonIsEmpty(varScheme.includeTags) ||
-                                varScheme.includeTags[fullTag] ||
-                                varScheme.includeTags["tag: all"]
-                            )
-                        ) {
-                            ztags.push(varScheme.meanTags);
-                        }
+                    } else if (
+                        typeof varScheme.meanTags === "number" &&
+                        includeUnknownVar
+                    ) {
+                        ztags.push(varScheme.meanTags);
                     }
                 }
                 // Filters
@@ -984,12 +879,12 @@ self.onmessage = async ({ data }) => {
                 }
             }
             // let zstudios = [];
-            let includedStudios = {};
+            // let includedStudios = {};
             for (let j = 0; j < studios.length; j++) {
                 let studio = studios[j]?.name;
                 if (typeof studio !== "string") continue;
-                if (includedStudios[studio]) continue;
-                includedStudios[studio] = true;
+                // if (includedStudios[studio]) continue;
+                // includedStudios[studio] = true;
                 studio = studio.trim().toLowerCase();
                 // Filters
                 if (filters['studio'][studio] === undefined) {
@@ -997,15 +892,15 @@ self.onmessage = async ({ data }) => {
                 }
             }
             // let zstaff = {};
-            let includedStaff = {};
+            // let includedStaff = {};
             for (let j = 0; j < staffs.length; j++) {
-                let staff = staffs[j]?.node?.name?.userPreferred;
-                if (typeof staff !== "string") continue;
-                if (includedStaff[staff]) continue;
-                includedStaff[staff] = true;
+                // let staff = staffs[j]?.node?.name?.userPreferred;
+                // if (typeof staff !== "string") continue;
+                // if (includedStaff[staff]) continue;
+                // includedStaff[staff] = true;
                 let staffRole = staffs[j]?.role;
                 if (typeof staffRole !== "string") continue;
-                staff = staff.trim().toLowerCase();
+                // staff = staff.trim().toLowerCase();
                 staffRole = staffRole.split("(")[0].trim().toLowerCase();
                 // filters
                 if (filters['staff role'][staffRole] === undefined) {
