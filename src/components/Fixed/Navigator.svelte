@@ -11,12 +11,12 @@
     import { onMount, onDestroy } from "svelte";
 
     let writableSubscriptions = [];
-    let typedUsername;
+    let typedUsername = "";
 
     onMount(() => {
         writableSubscriptions.push(
             username.subscribe((val) => {
-                typedUsername = val;
+                typedUsername = val || "";
             })
         );
     });
@@ -62,7 +62,8 @@
                             })
                                 .then(({ newusername }) => {
                                     if (newusername) {
-                                        typedUsername = $username = newusername;
+                                        typedUsername = $username =
+                                            newusername || "";
                                         updateRecommendationList.update(
                                             (e) => !e
                                         );
@@ -91,7 +92,8 @@
                             })
                                 .then(({ newusername }) => {
                                     if (newusername)
-                                        typedUsername = $username = newusername;
+                                        typedUsername = $username =
+                                            newusername || "";
                                     updateRecommendationList.update((e) => !e);
                                 })
                                 .catch((error) => console.error(error));
@@ -102,6 +104,8 @@
                         }
                     }
                 })();
+            } else {
+                handleInputUsernameFocus();
             }
         }
     }
@@ -121,8 +125,12 @@
 
     function handleInputUsernameFocus() {
         let element = document?.getElementById("usernameInput");
-        element?.focus?.();
-        element?.blur?.();
+        if (element === document.activeElement) {
+            element?.focus?.();
+            element?.blur?.();
+        } else {
+            element?.focus?.();
+        }
     }
 
     function handleGoUp() {
@@ -140,6 +148,15 @@
             }, 50);
         }
     }
+
+    $: typedUsername,
+        (() => {
+            if (typedUsername) {
+                document
+                    ?.getElementById?.("usernameInput")
+                    ?.setCustomValidity?.("");
+            }
+        })();
 
     onDestroy(() => {
         writableSubscriptions.forEach((unsub) => unsub());
@@ -173,10 +190,17 @@
                 enterkeyhint="search"
                 autocomplete="off"
                 placeholder="Your Anilist Username"
-                style:--nonFocusWidth={(typedUsername?.length || 17) + 2 + "ch"}
                 on:keydown={(e) => e.key === "Enter" && updateUsername(e)}
                 bind:value={typedUsername}
             />
+            <div
+                class="usernameText"
+                on:click={handleInputUsernameFocus}
+                on:keydown={(e) =>
+                    e.key === "Enter" && handleInputUsernameFocus(e)}
+            >
+                {typedUsername || "Your Anilist Username"}
+            </div>
         </div>
         <img
             class="logo-icon"
@@ -210,7 +234,7 @@
     }
     .nav {
         display: grid;
-        grid-template-columns: auto 30px;
+        grid-template-columns: calc(100% - 30px) 30px;
         height: 100%;
         align-items: center;
         -ms-user-select: none;
@@ -239,24 +263,32 @@
         border-radius: 6px;
         justify-self: left;
         align-items: center;
+        max-width: 100%;
     }
-    .input-search input::-webkit-search-cancel-button {
-        font-size: 1.5rem;
+    .input-search:not(:focus-within) {
+        max-width: min(165px, 100%);
     }
     .input-search input {
         font-family: system-ui !important;
         outline: none;
         border: none;
-        background-color: #152232;
+        background-color: rgb(35 45 65) !important;
+        color: white !important;
         text-align: start;
-        color: white;
         padding-left: 1ch;
         padding-right: 1ch;
         border-radius: 6px;
         height: 35px;
-        max-width: 165px;
+        max-width: 100%;
         width: 100%;
         cursor: auto;
+    }
+    .input-search:not(:focus-within) input {
+        transform: translateY(-99999px);
+        position: fixed;
+    }
+    .input-search input::-webkit-search-cancel-button {
+        font-size: 1.5rem;
     }
     .goback {
         display: none;
@@ -266,24 +298,35 @@
         align-items: center;
         justify-content: center;
     }
-    .input-search:not(:focus-within) input {
-        width: min(var(--nonFocusWidth), 165px, 100%);
-        padding-right: 0;
-        padding-left: 0;
-    }
-    .input-search:not(:focus-within) input:not(:placeholder-shown) {
-        text-transform: uppercase;
-    }
-    .input-search:focus-within input {
-        background-color: rgb(35 45 65);
-        text-align: start;
-    }
-    .input-search:not(:focus-within) input::-webkit-search-cancel-button {
-        -webkit-appearance: none;
-    }
     .input-search i {
         color: white;
         cursor: pointer;
+    }
+    .input-search:not(:focus-within) .usernameText {
+        display: flex;
+    }
+    .input-search:focus-within .usernameText {
+        display: none;
+    }
+    .input-search .usernameText {
+        white-space: nowrap;
+        max-width: 165px;
+        font-family: system-ui !important;
+        font-size: 13.33px;
+        font-weight: 400;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        text-transform: uppercase;
+        cursor: pointer;
+        align-items: center;
+        justify-content: start;
+        height: 30px;
+        max-width: min(100%, 165px);
+        min-width: 30px;
+    }
+    .input-search input[value=""] + .usernameText,
+    #usernameInput:placeholder-shown + .usernameText {
+        text-transform: none;
     }
     @media screen and (max-width: 425px) {
         .input-search:focus-within {

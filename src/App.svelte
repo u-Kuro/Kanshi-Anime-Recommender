@@ -231,8 +231,10 @@
 			if (!$username) {
 				await tick();
 				let usernameInput = document.getElementById("usernameInput");
-				usernameInput.setCustomValidity("Enter your Anilist Username");
-				usernameInput.reportValidity();
+				usernameInput?.setCustomValidity?.(
+					"Enter your Anilist Username"
+				);
+				usernameInput?.reportValidity?.();
 			}
 			clearInterval(pleaseWaitStatusInterval);
 		}

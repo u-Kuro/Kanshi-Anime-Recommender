@@ -275,7 +275,7 @@ public class MainActivity extends AppCompatActivity  {
                         .setPositiveButton("OK", null)
                 );
             }
-        }),3500);
+        }),3000);
     }
 
     // Get Path From MainActivity Context
@@ -545,7 +545,7 @@ public class MainActivity extends AppCompatActivity  {
                                         .setMessage("Connection unreachable, can't switch at this moment.")
                                         .setPositiveButton("OK", null));
                             }
-                        }),3500);
+                        }),3000);
                     }
                 });
             } catch (Exception exception) {
@@ -568,7 +568,7 @@ public class MainActivity extends AppCompatActivity  {
                             .setPositiveButton("OK", (dialogInterface, i) -> webView.loadUrl("https://kanshi.vercel.app"))
                             .setNegativeButton("CANCEL", null));
                     }
-                }),0);
+                }),10000);
             } catch (Exception ignored) {}
         }
     }
