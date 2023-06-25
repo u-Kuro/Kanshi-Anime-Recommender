@@ -912,7 +912,7 @@ self.onmessage = async ({ data }) => {
             let animeQuality = [];
             let seasonYear = anime?.seasonYear;
             let yearModel = varScheme.yearModel ?? {};
-            if (isaN(seasonYear) && !jsonIsEmpty(yearModel) && includeYear) {
+            if (isaN(seasonYear) && !jsonIsEmpty(yearModel) && includeYear && yearModel?.slope > 0) {
                 if (typeof seasonYear === "string") {
                     seasonYear = parseFloat(seasonYear);
                 }
@@ -927,7 +927,7 @@ self.onmessage = async ({ data }) => {
             }
             let averageScore = anime?.averageScore;
             let averageScoreModel = varScheme.averageScoreModel ?? {};
-            if (isaN(averageScore) && !jsonIsEmpty(averageScoreModel) && includeAverageScore) {
+            if (isaN(averageScore) && !jsonIsEmpty(averageScoreModel) && includeAverageScore && averageScoreModel?.slope > 0) {
                 if (typeof averageScore === "string") {
                     averageScore = parseFloat(averageScore);
                 }
