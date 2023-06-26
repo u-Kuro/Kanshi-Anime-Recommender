@@ -15,7 +15,7 @@ const cacheRequest = (url) => {
             xhr.open("GET", url, true);
             xhr.responseType = "text";
             xhr.setRequestHeader('Cache-Control', 'max-age=31536000, immutable');
-            xhr.onprogress = function (event) {
+            xhr.onprogress = (event) => {
                 if (event.lengthComputable) {
                     let loaded = event.loaded;
                     let total = event.total;
@@ -28,9 +28,11 @@ const cacheRequest = (url) => {
                     }
                     requestProgress.set(minProgress)
                 }
+                console.log(event)
             };
-            xhr.onload = () => {
+            xhr.onload = (z) => {
                 --runningRequest
+                console.log(xhr, z)
                 if (xhr.status === 200) {
                     if (runningRequest < 1) { // All requests have finished
                         minProgress = 100
@@ -52,7 +54,8 @@ const cacheRequest = (url) => {
             };
             xhr.onerror = (error) => {
                 --runningRequest
-                reject(new Error(error));
+                console.log(xhr, url, error)
+                reject(new Error("Failed to Load: " + url));
             };
             xhr.send();
         }
