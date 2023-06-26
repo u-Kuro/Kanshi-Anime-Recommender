@@ -34,6 +34,7 @@ const cacheRequest = (url) => {
                                                 controller.close();
                                                 return;
                                             }
+                                            console.log(loaded, progressEvent.value.byteLength, contentLength)
                                             loaded += progressEvent.value.byteLength;
                                             let progress = (loaded / contentLength) * 100
                                             if (runningRequest < 2) { // Just One Running Request
