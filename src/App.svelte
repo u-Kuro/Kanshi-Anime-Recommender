@@ -1,4 +1,37 @@
 <script>
+	let pageProgressPercent = 0;
+	let xhr = new XMLHttpRequest();
+	// xhr.upload.addEventListener(
+	// 	"progress",
+	// 	function (evt) {
+	// 		if (evt.lengthComputable) {
+	// 			pageProgressPercent = (evt.loaded / evt.total) * 100;
+	// 			// Do something with upload progress
+	// 			console.log(pageProgressPercent, "1st");
+	// 		}
+	// 	},
+	// 	false
+	// );
+	xhr.addEventListener(
+		"progress",
+		function (evt) {
+			if (evt.lengthComputable) {
+				pageProgressPercent = (evt.loaded / evt.total) * 100;
+				// Do something with download progress
+				console.log(pageProgressPercent, "download");
+			}
+		},
+		false
+	);
+	xhr.open("POST", "/");
+	xhr.send();
+
+	xhr.onreadystatechange = function () {
+		if (xhr.readyState === 4 && xhr.status === 200) {
+			pageProgressPercent = 100;
+		}
+	};
+
 	import C from "./components/index.js";
 	import { onMount, tick } from "svelte";
 	import { inject } from "@vercel/analytics";
@@ -603,6 +636,11 @@
 	}
 </script>
 
+<div
+	class="page-progress"
+	style:--page-progress-percent={(pageProgressPercent || 100) + "%"}
+	style:display={pageProgressPercent < 100 ? "flex" : ""}
+/>
 <main>
 	<C.Fixed.Navigator />
 	<C.Fixed.Menu />
@@ -628,6 +666,15 @@
 </main>
 
 <style>
+	.page-progress {
+		position: fixed;
+		display: none;
+		height: 1px;
+		top: 0;
+		z-index: 99999;
+		background: #5f9ea0;
+		width: var(--page-progress-percent);
+	}
 	main {
 		height: 100%;
 		width: 100%;
