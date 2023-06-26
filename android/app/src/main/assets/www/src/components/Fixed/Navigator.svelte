@@ -234,7 +234,7 @@
     }
     .nav {
         display: grid;
-        grid-template-columns: calc(100% - 30px) 30px;
+        grid-template-columns: calc(100% - 30px - 1.5em) 30px;
         height: 100%;
         align-items: center;
         -ms-user-select: none;
