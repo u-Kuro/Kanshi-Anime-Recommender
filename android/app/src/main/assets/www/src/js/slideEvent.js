@@ -30,19 +30,15 @@ function captureSlideEvent(targetElement, callback = new Function) {
                 runIsScrolling.update(e => !e)
                 cancelAnimationFrame(slideAnimationFrame)
                 slideAnimationFrame = requestAnimationFrame(() => {
-                    alter(targetElement, {
-                        styles: {
-                            transform: `translateX(${Math.max(deltaX, 0)}px)`
-                        }
+                    Object.assign(targetElement.style, {
+                        transform: `translateX(${Math.max(deltaX, 0)}px)`
                     })
                 })
             } else if (isSliding && deltaX <= 0) {
                 cancelAnimationFrame(slideAnimationFrame)
                 slideAnimationFrame = requestAnimationFrame(() => {
-                    alter(targetElement, {
-                        styles: {
-                            transform: `translateX(0px)`
-                        }
+                    Object.assign(targetElement.style, {
+                        transform: `translateX(0px)`
                     })
                 })
             }
@@ -105,6 +101,7 @@ function captureSlideEvent(targetElement, callback = new Function) {
                         { transform: `translateX(${window.innerWidth}px)` }
                     ],
                     easing: 'linear',
+                    duration: 50,
                     callback: () => {
                         callback().then(() => {
                             alter(targetElement, {
@@ -120,9 +117,17 @@ function captureSlideEvent(targetElement, callback = new Function) {
             requestAnimationFrame(() => {
                 alter(targetElement, {
                     keyframes: [
-                        { transform: `` },
+                        { transform: `translateX(0px)` }
                     ],
                     easing: 'linear',
+                    duration: 50,
+                    callback: () => {
+                        alter(targetElement, {
+                            styles: {
+                                transform: ``
+                            }
+                        })
+                    }
                 })
             })
         }

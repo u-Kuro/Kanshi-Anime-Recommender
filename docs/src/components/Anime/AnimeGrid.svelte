@@ -287,6 +287,7 @@
                 >
                     <div class="shimmer">
                         <img
+                            loading="lazy"
                             style:opacity="0"
                             class="image-grid__card-thumb"
                             alt="anime-cover"
@@ -422,10 +423,10 @@
         background: rgba(30, 42, 56, 0.8);
         border-radius: 0.25em;
         display: block;
-        will-change: transform;
+        will-change: transform, opacity;
         cursor: pointer;
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
-        transition: all 0.3s ease;
+        transition: transform opacity 0.3s ease;
     }
 
     .image-grid__card:not(.skeleton):focus .image-grid__card-thumb,
@@ -439,7 +440,6 @@
         object-fit: cover;
         width: 100%;
         height: 100%;
-        transition: all 0.3s linear;
         user-select: none;
     }
 

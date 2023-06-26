@@ -189,7 +189,11 @@
                 scrollToElement(popupContainer, openedAnimePopupEl);
                 // Animate Opening
                 popupWrapper.classList.add("visible");
+                popupContainer.classList.add("animate");
                 popupContainer.classList.add("show");
+                setTimeout(() => {
+                    popupContainer.classList.remove("animate");
+                }, 300);
                 // Try to Add YT player
                 let openedAnimes = [
                     $finalAnimeList[$openedAnimePopupIdx],
@@ -239,11 +243,13 @@
             }
         } else if (val === false) {
             popupContainer.classList.remove("show");
+            popupContainer.classList.add("animate");
             popupContainer.classList.add("hide");
             setTimeout(() => {
                 // Stop All Player
                 $ytPlayers?.forEach((ytPlayer) => ytPlayer?.pauseVideo?.());
                 popupWrapper.classList.remove("visible");
+                popupContainer.classList.remove("animate");
             }, 300);
         }
     });
@@ -528,6 +534,7 @@
     async function onPlayerReady(event) {
         let ytPlayer = event.target;
         let trailerEl = ytPlayer?.g;
+        trailerEl?.setAttribute?.("loading", "lazy");
         let popupHeader = trailerEl?.parentElement;
         let popupImg = popupHeader?.querySelector?.(".popup-img");
 
@@ -757,6 +764,7 @@
                             {/if}
                             <div class="popup-img" style:display="none">
                                 <img
+                                    loading="lazy"
                                     src={anime.bannerImageUrl}
                                     alt="bannerImg"
                                     style:opacity="0"
@@ -765,6 +773,7 @@
                                         (e.target.style.opacity = 0.75)}
                                 />
                                 <img
+                                    loading="lazy"
                                     src={anime.coverImageUrl}
                                     alt="coverImg"
                                     style:opacity="0"
@@ -1088,8 +1097,11 @@
         max-width: 640px;
         overflow: auto;
         overscroll-behavior: contain;
-        transition: 0.3s ease transform;
         background-color: #151f2e;
+    }
+
+    .popup-container.animate {
+        transition: transform 0.3s ease;
     }
 
     .popup-container.hide {
