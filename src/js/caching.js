@@ -16,9 +16,14 @@ const cacheRequest = (url) => {
             xhr.responseType = "text";
             xhr.setRequestHeader('Cache-Control', 'max-age=31536000, immutable');
             xhr.onprogress = (event) => {
+                let total;
                 if (event.lengthComputable) {
+                    total = event.total;
+                } else {
+                    total = parseInt(event?.target?.getResponseHeader?.('x-decompressed-content-length'), 10);
+                }
+                if (total > 0) {
                     let loaded = event.loaded;
-                    let total = event.total;
                     let progress = (loaded / total) * 100;
                     console.log(progress, loaded, total, url)
                     if (runningRequest < 2) { // Just One Running Request
@@ -28,7 +33,7 @@ const cacheRequest = (url) => {
                     }
                     requestProgress.set(minProgress)
                 }
-                console.log(event)
+                console.log(event, event?.target?.getResponseHeader?.('x-decompressed-content-length'))
             };
             xhr.onload = (z) => {
                 --runningRequest
