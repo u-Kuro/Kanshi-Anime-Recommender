@@ -710,6 +710,7 @@
                 image.src = image.src;
             }
         });
+        currentHeader = undefined;
         loadYouTubeAPI().then(() => {
             playMostVisibleTrailer();
         });
