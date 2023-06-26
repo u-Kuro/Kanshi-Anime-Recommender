@@ -283,11 +283,15 @@ const saveIDBdata = (data, name) => {
 }
 
 // One Time Use
-let getAnimeEntriesTerminateTimeout
+let getAnimeEntriesTerminateTimeout, gettingAnimeEntriesInterval;
 const getAnimeEntries = (_data) => {
     return new Promise((resolve, reject) => {
+        gettingAnimeEntriesInterval = setInterval(() => {
+            dataStatus.set("Getting Anime Entries")
+        }, 300)
         cacheRequest("./webapi/worker/getAnimeEntries.js")
             .then(url => {
+                if (gettingAnimeEntriesInterval) clearInterval(gettingAnimeEntriesInterval)
                 let worker = new Worker(url)
                 if (getAnimeEntriesTerminateTimeout) clearTimeout(getAnimeEntriesTerminateTimeout)
                 worker.postMessage(_data)
@@ -308,16 +312,22 @@ const getAnimeEntries = (_data) => {
                     reject(error)
                 }
             }).catch((error) => {
+                if (gettingAnimeEntriesInterval) clearInterval(gettingAnimeEntriesInterval)
+                dataStatus.set(null)
                 reject(error)
             })
     })
 }
 
-let getAnimeFranchisesTerminateTimeout
+let getAnimeFranchisesTerminateTimeout, gettingAnimeFranchisesInterval
 const getAnimeFranchises = (_data) => {
     return new Promise((resolve, reject) => {
+        gettingAnimeFranchisesInterval = setInterval(() => {
+            dataStatus.set("Getting Anime Entries")
+        }, 300)
         cacheRequest("./webapi/worker/getAnimeFranchises.js")
             .then(url => {
+                if (gettingAnimeFranchisesInterval) clearInterval(gettingAnimeFranchisesInterval)
                 let worker = new Worker(url)
                 if (getAnimeFranchisesTerminateTimeout) clearTimeout(getAnimeFranchisesTerminateTimeout)
                 worker.postMessage(_data)
@@ -338,16 +348,22 @@ const getAnimeFranchises = (_data) => {
                     reject(error)
                 }
             }).catch((error) => {
+                if (gettingAnimeFranchisesInterval) clearInterval(gettingAnimeFranchisesInterval)
+                dataStatus.set(null)
                 reject(error)
             })
     })
 }
 
-let getFilterOptionsTerminateTimeout
+let getFilterOptionsTerminateTimeout, getFilterOptionsInterval
 const getFilterOptions = (_data) => {
     return new Promise((resolve, reject) => {
+        getFilterOptionsInterval = setInterval(() => {
+            dataStatus.set("Getting Filters")
+        }, 300)
         cacheRequest("./webapi/worker/getFilterOptions.js")
             .then(url => {
+                if (getFilterOptionsInterval) clearInterval(getFilterOptionsInterval)
                 let worker = new Worker(url)
                 if (getFilterOptionsTerminateTimeout) clearTimeout(getFilterOptionsTerminateTimeout)
                 worker.postMessage(_data)
@@ -367,6 +383,8 @@ const getFilterOptions = (_data) => {
                     reject(error)
                 }
             }).catch((error) => {
+                if (getFilterOptionsInterval) clearInterval(getFilterOptionsInterval)
+                dataStatus.set(null)
                 reject(error)
             })
     })

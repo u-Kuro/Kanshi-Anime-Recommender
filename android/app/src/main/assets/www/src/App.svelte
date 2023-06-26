@@ -89,6 +89,7 @@
 				$finalAnimeList = null;
 				getAnimeEntries()
 					.then(() => {
+						requestAnimeEntries({ onlyGetNewEntries: true });
 						resolve();
 					})
 					.catch(async () => {
