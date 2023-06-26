@@ -1,8 +1,7 @@
-let cacheID = 1
 let loadedUrls = {}
+
 const cacheRequest = (url) => {
-    return new Promise((resolve, reject) => {
-        url = url + `?v=${cacheID}`
+    return new Promise((resolve) => {
         if (loadedUrls[url]) {
             resolve(loadedUrls[url])
         } else {
@@ -17,11 +16,15 @@ const cacheRequest = (url) => {
                     loadedUrls[url] = bloburl
                     resolve(bloburl);
                 })
-                .catch((error) => {
-                    reject(new Error(error))
+                .catch(async () => {
+                    resolve(url)
                 })
         }
     })
+}
+
+const cacheBrowserImage = () => {
+
 }
 
 export { cacheRequest }

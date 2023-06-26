@@ -21,7 +21,6 @@
         ncsCompare,
         isJsonObject,
     } from "../../js/others/helper.js";
-    import { cacheRequest } from "../../js/caching.js";
 
     let observerTimeout;
     let observerDelay = 1000;
@@ -60,16 +59,6 @@
                     data.finalAnimeList instanceof Array &&
                     $finalAnimeList instanceof Array
                 ) {
-                    data?.finalAnimeList?.forEach?.(async (anime) => {
-                        if (anime.coverImageUrl)
-                            anime.coverImageUrl = await cacheRequest(
-                                anime.coverImageUrl
-                            );
-                        if (anime.bannerImageUrl)
-                            anime.bannerImageUrl = await cacheRequest(
-                                anime.bannerImageUrl
-                            );
-                    });
                     if (data?.reload === true) {
                         $finalAnimeList = data.finalAnimeList;
                         $asyncAnimeReloaded = !$asyncAnimeReloaded;
