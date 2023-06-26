@@ -15,7 +15,7 @@ const cacheRequest = (url) => {
             xhr.open("GET", url, true);
             xhr.responseType = "text";
             xhr.setRequestHeader('Cache-Control', 'max-age=31536000, immutable');
-            xhr.onprogress = (event) => {
+            xhr.upload.onprogress = (event) => {
                 let total;
                 if (event.lengthComputable) {
                     total = event.total;
