@@ -196,6 +196,10 @@ public class MainActivity extends AppCompatActivity  {
         webView.setLongClickable(true);
         webView.setKeepScreenOn(true);
         webView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
+//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+//            if (0 != (getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE))
+//            { WebView.setWebContentsDebuggingEnabled(true); }
+//        }
         // Add Bridge to Webview
         webView.addJavascriptInterface(new JSBridge(),"JSBridge");
         //noinspection CommentedOutCode

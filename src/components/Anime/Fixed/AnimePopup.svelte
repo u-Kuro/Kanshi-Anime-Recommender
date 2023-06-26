@@ -537,7 +537,6 @@
         trailerEl?.setAttribute?.("loading", "lazy");
         let popupHeader = trailerEl?.parentElement;
         let popupImg = popupHeader?.querySelector?.(".popup-img");
-
         let popupContent = popupHeader?.closest?.(".popup-content");
         let anime = $finalAnimeList?.[getChildIndex(popupContent) ?? -1];
         if (
@@ -593,7 +592,10 @@
             let haveTrailer;
             if (visibleTrailer instanceof Element) {
                 haveTrailer = $ytPlayers?.some(
-                    (ytPlayer) => ytPlayer.g === visibleTrailer
+                    (ytPlayer) =>
+                        ytPlayer.g === visibleTrailer &&
+                        typeof ytPlayer?.playVideo === "function" &&
+                        ytPlayer.getPlayerState() !== -1
                 );
             }
             if (haveTrailer) {
@@ -699,6 +701,11 @@
         }
     };
     window.addEventListener("online", () => {
+        if ($android) {
+            try {
+                JSBridge.isOnline(true);
+            } catch (e) {}
+        }
         $dataStatus = "Reconnected Successfully";
         isOnline = true;
         document.querySelectorAll("img")?.forEach((image) => {
@@ -712,6 +719,18 @@
         });
         currentHeader = undefined;
         loadYouTubeAPI().then(() => {
+            $ytPlayers = $ytPlayers.filter((ytPlayer) => {
+                if (
+                    typeof ytPlayer?.playVideo === "function" &&
+                    ytPlayer.getPlayerState() !== -1 &&
+                    !isNaN(ytPlayer.getPlayerState())
+                ) {
+                    return true;
+                } else {
+                    ytPlayer.destroy();
+                    return false;
+                }
+            });
             playMostVisibleTrailer();
         });
     });

@@ -508,14 +508,6 @@
 		}
 	};
 
-	window.addEventListener("online", () => {
-		if ($android) {
-			try {
-				JSBridge.isOnline(true);
-			} catch (e) {}
-		}
-	});
-
 	let copytimeoutId;
 	let copyhold = false;
 	document.addEventListener("pointerdown", (e) => {
