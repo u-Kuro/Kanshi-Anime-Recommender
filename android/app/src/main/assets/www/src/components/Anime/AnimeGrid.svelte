@@ -266,7 +266,7 @@
 
     let gridContentVisibility = "auto";
     window.addEventListener("scroll", () => {
-        if (window.scrollY >= 265) {
+        if (window.scrollY >= 500) {
             gridContentVisibility = "visible";
         } else {
             gridContentVisibility = "auto";
