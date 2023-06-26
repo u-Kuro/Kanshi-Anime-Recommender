@@ -6,6 +6,7 @@
 	import {
 		android,
 		username,
+		requestProgress,
 		hiddenEntries,
 		filterOptions,
 		activeTagFilters,
@@ -601,8 +602,18 @@
 				undefined;
 		_showConfirm = false;
 	}
+	let _requestProgress;
+	requestProgress.subscribe((val) => {
+		console.log(val);
+		_requestProgress = val;
+	});
 </script>
 
+<div
+	class="request-progress"
+	style:--request-progress-percent={(_requestProgress || 0) + "%"}
+	style:display={_requestProgress < 100 ? "flex" : ""}
+/>
 <main>
 	<C.Fixed.Navigator />
 	<C.Fixed.Menu />
@@ -628,6 +639,14 @@
 </main>
 
 <style>
+	.request-progress {
+		display: none;
+		position: fixed;
+		top: 0;
+		width: var(--request-progress-percent);
+		height: 1px;
+		background-color: #5f9ea0;
+	}
 	main {
 		height: 100%;
 		width: 100%;
