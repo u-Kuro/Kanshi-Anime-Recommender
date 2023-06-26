@@ -11,6 +11,7 @@
         android:id="@+id/webView"
         android:layout_width="match_parent"
         android:layout_height="fill_parent"
+        android:overScrollMode="never"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent">
