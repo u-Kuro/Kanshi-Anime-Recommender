@@ -31,7 +31,7 @@ const cacheRequest = (url) => {
                                 function read() {
                                     reader.read()
                                         .then((progressEvent) => {
-                                            console.log(loaded, progressEvent.value.byteLength, contentLength, progressEvent, url)
+                                            console.log(loaded, progressEvent?.value?.byteLength, progressEvent?.value, contentLength, progressEvent, url)
                                             if (progressEvent.done) {
                                                 controller.close();
                                                 return;
