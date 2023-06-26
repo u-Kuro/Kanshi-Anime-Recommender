@@ -31,11 +31,12 @@ const cacheRequest = (url) => {
                                 function read() {
                                     reader.read()
                                         .then((progressEvent) => {
+                                            console.log(loaded, progressEvent.value.byteLength, contentLength, progressEvent, url)
                                             if (progressEvent.done) {
                                                 controller.close();
                                                 return;
                                             }
-                                            console.log(loaded, progressEvent.value.byteLength, contentLength, progressEvent)
+                                            console.log(loaded, progressEvent.value.byteLength, contentLength, progressEvent, url)
                                             loaded += progressEvent.value.byteLength;
                                             let progress = (loaded / contentLength) * 100
                                             if (runningRequest < 2) { // Just One Running Request
