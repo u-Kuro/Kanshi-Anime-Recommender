@@ -646,6 +646,7 @@
 		width: var(--request-progress-percent);
 		height: 1px;
 		background-color: #5f9ea0;
+		z-index: 9999;
 	}
 	main {
 		height: 100%;
