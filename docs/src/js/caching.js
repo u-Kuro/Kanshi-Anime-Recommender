@@ -20,8 +20,9 @@ const cacheRequest = (url) => {
                     if (!response.ok) {
                         throw new Error(res.statusText);
                     }
-                    const contentLength = response.headers.get('content-length');
+                    let contentLength = parseFloat(response.headers.get('content-length'));
                     let loaded = 0;
+                    if (isNaN(contentLength)) return
                     return new Response(
                         new ReadableStream({
                             start(controller) {
@@ -34,7 +35,7 @@ const cacheRequest = (url) => {
                                                 controller.close();
                                                 return;
                                             }
-                                            console.log(loaded, progressEvent.value.byteLength, contentLength)
+                                            console.log(loaded, progressEvent.value.byteLength, contentLength, progressEvent)
                                             loaded += progressEvent.value.byteLength;
                                             let progress = (loaded / contentLength) * 100
                                             if (runningRequest < 2) { // Just One Running Request
@@ -54,6 +55,10 @@ const cacheRequest = (url) => {
                 .then(response => response.blob())
                 .then(blob => {
                     --runningRequest
+                    if (runningRequest < 1) { // All requests have finished
+                        minProgress = 100
+                        requestProgress.set(minProgress)
+                    }
                     let bloburl = URL.createObjectURL(blob);
                     loadedUrls[url] = bloburl
                     resolve(bloburl);
