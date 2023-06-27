@@ -197,23 +197,16 @@
                 // Try to Add YT player
                 let openedAnimes = [
                     $finalAnimeList[$openedAnimePopupIdx],
-                    $finalAnimeList[$openedAnimePopupIdx - 1],
                     $finalAnimeList[$openedAnimePopupIdx + 1],
+                    $finalAnimeList[$openedAnimePopupIdx - 1],
                 ];
-                let trailerEls = [
-                    openedAnimes[0]?.popupHeader?.querySelector(".trailer"),
-                    openedAnimes[1]?.popupHeader?.querySelector(".trailer"),
-                    openedAnimes[2]?.popupHeader?.querySelector(".trailer"),
-                ];
-                let haveNoTrailers = [true, true, true];
+                let trailerEl =
+                    openedAnimes[0]?.popupHeader?.querySelector(".trailer");
+                let haveTrailer;
                 for (let i = 0; i < $ytPlayers.length; i++) {
-                    let trailerIdx;
-                    if (
-                        (trailerIdx = trailerEls.findIndex(
-                            (trailerEl) => trailerEl === $ytPlayers[i].g
-                        )) >= 0
-                    ) {
-                        if ($autoPlay && trailerIdx === 0) {
+                    if ($ytPlayers[i].g === trailerEl) {
+                        haveTrailer = true;
+                        if ($autoPlay) {
                             await tick();
                             if (
                                 popupWrapper?.classList?.contains?.(
@@ -226,14 +219,12 @@
                                 currentYtPlayer = $ytPlayers[i];
                             }
                         }
-                        haveNoTrailers[trailerIdx] = false;
                         break;
                     }
                 }
-                haveNoTrailers.forEach((haveNoTrailer, idx) => {
-                    if (haveNoTrailer) {
-                        createPopupYTPlayer(openedAnimes[idx]);
-                    }
+                openedAnimes.forEach((openedAnime, idx) => {
+                    if (haveTrailer && openedAnime && idx === 0) return;
+                    else if (openedAnime) createPopupYTPlayer(openedAnime);
                 });
                 $openedAnimePopupIdx = null;
             } else {
@@ -422,8 +413,8 @@
                     currentHeader === undefined)
             ) {
                 let nearAnimes = [
-                    $finalAnimeList?.[visibleTrailerIdx - 1],
                     $finalAnimeList?.[visibleTrailerIdx + 1],
+                    $finalAnimeList?.[visibleTrailerIdx - 1],
                 ];
                 if (createPopupPlayersTimeout)
                     clearTimeout(createPopupPlayersTimeout);
@@ -466,8 +457,8 @@
             ) {
                 let nearAnimes = [
                     $finalAnimeList?.[visibleTrailerIdx],
-                    $finalAnimeList?.[visibleTrailerIdx - 1],
                     $finalAnimeList?.[visibleTrailerIdx + 1],
+                    $finalAnimeList?.[visibleTrailerIdx - 1],
                 ];
                 if (createPopupPlayersTimeout)
                     clearTimeout(createPopupPlayersTimeout);

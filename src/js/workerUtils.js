@@ -34,6 +34,7 @@ const animeLoader = (_data) => {
                     }
                 }
                 animeLoaderWorker.onerror = (error) => {
+                    alertError()
                     reject(error)
                 }
             })
@@ -66,6 +67,7 @@ const processRecommendedAnimeList = (_data) => {
                     }
                 };
                 processRecommendedAnimeListWorker.onerror = (error) => {
+                    alertError()
                     reject(error);
                 };
             }).catch((error) => {
@@ -101,6 +103,7 @@ const requestAnimeEntries = (_data) => {
                     }
                 }
                 requestAnimeEntriesWorker.onerror = (error) => {
+                    alertError()
                     reject(error)
                 }
             }).catch((error) => {
@@ -132,6 +135,7 @@ const requestUserEntries = (_data) => {
                     }
                 }
                 requestUserEntriesWorker.onerror = (error) => {
+                    alertError()
                     reject(error)
                 }
             }).catch((error) => {
@@ -180,6 +184,7 @@ const exportUserData = (_data) => {
                     }
                 }
                 exportUserDataWorker.onerror = (error) => {
+                    alertError()
                     reject(error)
                 }
             }).catch((error) => {
@@ -227,6 +232,7 @@ const importUserData = (_data) => {
                     }
                 }
                 importUserDataWorker.onerror = (error) => {
+                    alertError()
                     reject(error || "Something went wrong...")
                 }
             }).catch((error) => {
@@ -251,6 +257,7 @@ const getIDBdata = (name) => {
                     }
                 }
                 worker.onerror = (error) => {
+                    alertError()
                     reject(error)
                 }
             })
@@ -273,6 +280,7 @@ const saveIDBdata = (data, name) => {
                     }
                 }
                 worker.onerror = (error) => {
+                    alertError()
                     reject(error)
                 }
                 worker.postMessage({ data: data, name: name })
@@ -291,7 +299,10 @@ const getAnimeEntries = (_data) => {
         }, 300)
         cacheRequest("./webapi/worker/getAnimeEntries.js")
             .then(url => {
-                if (gettingAnimeEntriesInterval) clearInterval(gettingAnimeEntriesInterval)
+                if (gettingAnimeEntriesInterval) {
+                    clearInterval(gettingAnimeEntriesInterval)
+                    gettingAnimeEntriesInterval = null
+                }
                 let worker = new Worker(url)
                 if (getAnimeEntriesTerminateTimeout) clearTimeout(getAnimeEntriesTerminateTimeout)
                 worker.postMessage(_data)
@@ -309,10 +320,14 @@ const getAnimeEntries = (_data) => {
                     }
                 }
                 worker.onerror = (error) => {
+                    alertError()
                     reject(error)
                 }
             }).catch((error) => {
-                if (gettingAnimeEntriesInterval) clearInterval(gettingAnimeEntriesInterval)
+                if (gettingAnimeEntriesInterval) {
+                    clearInterval(gettingAnimeEntriesInterval)
+                    gettingAnimeEntriesInterval = null
+                }
                 dataStatus.set(null)
                 reject(error)
             })
@@ -323,11 +338,16 @@ let getAnimeFranchisesTerminateTimeout, gettingAnimeFranchisesInterval
 const getAnimeFranchises = (_data) => {
     return new Promise((resolve, reject) => {
         gettingAnimeFranchisesInterval = setInterval(() => {
-            dataStatus.set("Getting Anime Entries")
+            if (!gettingAnimeEntriesInterval) {
+                dataStatus.set("Getting Anime Franchise")
+            }
         }, 300)
         cacheRequest("./webapi/worker/getAnimeFranchises.js")
             .then(url => {
-                if (gettingAnimeFranchisesInterval) clearInterval(gettingAnimeFranchisesInterval)
+                if (gettingAnimeFranchisesInterval) {
+                    clearInterval(gettingAnimeFranchisesInterval)
+                    gettingAnimeFranchisesInterval = null
+                }
                 let worker = new Worker(url)
                 if (getAnimeFranchisesTerminateTimeout) clearTimeout(getAnimeFranchisesTerminateTimeout)
                 worker.postMessage(_data)
@@ -345,10 +365,14 @@ const getAnimeFranchises = (_data) => {
                     }
                 }
                 worker.onerror = (error) => {
+                    alertError()
                     reject(error)
                 }
             }).catch((error) => {
-                if (gettingAnimeFranchisesInterval) clearInterval(gettingAnimeFranchisesInterval)
+                if (gettingAnimeFranchisesInterval) {
+                    clearInterval(gettingAnimeFranchisesInterval)
+                    gettingAnimeFranchisesInterval = null
+                }
                 dataStatus.set(null)
                 reject(error)
             })
@@ -359,11 +383,16 @@ let getFilterOptionsTerminateTimeout, getFilterOptionsInterval
 const getFilterOptions = (_data) => {
     return new Promise((resolve, reject) => {
         getFilterOptionsInterval = setInterval(() => {
-            dataStatus.set("Getting Filters")
+            if (!gettingAnimeEntriesInterval && !gettingAnimeFranchisesInterval) {
+                dataStatus.set("Getting Filters")
+            }
         }, 300)
         cacheRequest("./webapi/worker/getFilterOptions.js")
             .then(url => {
-                if (getFilterOptionsInterval) clearInterval(getFilterOptionsInterval)
+                if (getFilterOptionsInterval) {
+                    clearInterval(getFilterOptionsInterval)
+                    getFilterOptionsInterval = null
+                }
                 let worker = new Worker(url)
                 if (getFilterOptionsTerminateTimeout) clearTimeout(getFilterOptionsTerminateTimeout)
                 worker.postMessage(_data)
@@ -380,14 +409,32 @@ const getFilterOptions = (_data) => {
                     }
                 }
                 worker.onerror = (error) => {
+                    alertError()
                     reject(error)
                 }
             }).catch((error) => {
-                if (getFilterOptionsInterval) clearInterval(getFilterOptionsInterval)
+                if (getFilterOptionsInterval) {
+                    clearInterval(getFilterOptionsInterval)
+                    getFilterOptionsInterval = null
+                }
                 dataStatus.set(null)
                 reject(error)
             })
     })
+}
+
+function alertError() {
+    if (isAndroid()) {
+        window.confirmPromise?.({
+            title: "Something Went Wrong",
+            text: "App may not be running the latest version",
+        })
+    } else {
+        window.confirmPromise?.({
+            title: "Something Went Wrong",
+            text: "You may want to clear your cookies and refresh the page",
+        })
+    }
 }
 
 export {

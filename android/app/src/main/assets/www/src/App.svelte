@@ -4,6 +4,7 @@
 	import { inject } from "@vercel/analytics";
 	import { retrieveJSON, saveJSON } from "./js/indexedDB.js";
 	import {
+		appID,
 		android,
 		username,
 		hiddenEntries,
@@ -555,7 +556,8 @@
 
 	let _isAlert, _confirmTitle, _confirmText, _confirmLabel, _cancelLabel;
 	let _confirmModalPromise;
-	$confirmPromise = async (confirmValues) => {
+
+	$confirmPromise = window.confirmPromise = async (confirmValues) => {
 		return new Promise((resolve) => {
 			_isAlert = confirmValues?.isAlert || false;
 			_confirmTitle =
@@ -593,6 +595,37 @@
 			_cancelLabel =
 				undefined;
 		_showConfirm = false;
+	}
+
+	window.updateAppAlert = async () => {
+		if (
+			await $confirmPromise?.({
+				title: "Currently in the Old Version",
+				text: "You may want to download the new version.",
+				confirmLabel: "DOWNLOAD",
+			})
+		) {
+			window.open(
+				"https://github.com/u-Kuro/Kanshi.Anime-Recommendation/raw/main/Kanshi.apk",
+				"_blank"
+			);
+		}
+	};
+
+	// Check App ID
+	if ($android) {
+		try {
+			JSBridge.checkAppID($appID);
+			console.log(
+				"noterrored",
+				$appID,
+				typeof JSBridge,
+				typeof JSBridge.checkAppID
+			);
+		} catch (e) {
+			console.log(e, "error");
+			window.updateAppAlert?.();
+		}
 	}
 </script>
 

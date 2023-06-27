@@ -1,3 +1,4 @@
+import { isAndroid } from "./others/helper"
 let loadedUrls = {}
 
 const cacheRequest = (url) => {
@@ -5,26 +6,27 @@ const cacheRequest = (url) => {
         if (loadedUrls[url]) {
             resolve(loadedUrls[url])
         } else {
-            fetch(url, {
-                headers: {
-                    'Cache-Control': 'max-age=31536000, immutable'
-                }
-            })
-                .then(response => response.blob())
-                .then(blob => {
-                    let bloburl = URL.createObjectURL(blob);
-                    loadedUrls[url] = bloburl
-                    resolve(bloburl);
+            if (isAndroid()) {
+                loadedUrls[url] = url
+                resolve(url);
+            } else {
+                fetch(url, {
+                    headers: {
+                        'Cache-Control': 'max-age=31536000, immutable'
+                    }
                 })
-                .catch(async () => {
-                    resolve(url)
-                })
+                    .then(response => response.blob())
+                    .then(blob => {
+                        let bloburl = URL.createObjectURL(blob);
+                        loadedUrls[url] = bloburl
+                        resolve(bloburl);
+                    })
+                    .catch(async () => {
+                        resolve(url)
+                    })
+            }
         }
     })
-}
-
-const cacheBrowserImage = () => {
-
 }
 
 export { cacheRequest }

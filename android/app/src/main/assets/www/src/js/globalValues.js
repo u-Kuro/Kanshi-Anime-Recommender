@@ -1,5 +1,6 @@
 import { writable } from "svelte/store";
 
+const appID = writable(1)
 const android = writable(null)
 const androidInApp = writable(true)
 const lastAnimeUpdate = writable(null)
@@ -50,6 +51,7 @@ const loadAnime = writable(null)
 const runIsScrolling = writable(null)
 
 export {
+    appID,
     android,
     androidInApp,
     lastAnimeUpdate,

@@ -20,6 +20,7 @@ import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.ApplicationInfo;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
@@ -38,8 +39,11 @@ import android.view.WindowManager;
 import android.webkit.JavascriptInterface;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
+import android.webkit.WebResourceError;
+import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
+import android.webkit.WebViewClient;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.Toast;
@@ -58,6 +62,8 @@ import androidx.core.splashscreen.SplashScreen;
 @SuppressWarnings("CommentedOutCode")
 public class MainActivity extends AppCompatActivity  {
 
+    public final int appID = 1;
+    public boolean webviewIsLoaded = false;
     public SharedPreferences prefs;
     private SharedPreferences.Editor prefsEdit;
 
@@ -134,7 +140,8 @@ public class MainActivity extends AppCompatActivity  {
         // Saved Data
         exportPath = prefs.getString("savedExportPath", "");
         // Create WebView App Instance
-        SplashScreen.installSplashScreen(this);
+        SplashScreen splashScreen = SplashScreen.installSplashScreen(this);
+        splashScreen.setKeepOnScreenCondition(() -> !webviewIsLoaded);
         if(getSupportActionBar()!=null){
             getSupportActionBar().hide(); // After Applying Theme
         }
@@ -196,12 +203,32 @@ public class MainActivity extends AppCompatActivity  {
         webView.setLongClickable(true);
         webView.setKeepScreenOn(true);
         webView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
-//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-//            if (0 != (getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE))
-//            { WebView.setWebContentsDebuggingEnabled(true); }
-//        }
+        if (0 != (getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE))
+        { WebView.setWebContentsDebuggingEnabled(true); }
         // Add Bridge to Webview
         webView.addJavascriptInterface(new JSBridge(),"JSBridge");
+        webView.setWebViewClient(new WebViewClient(){
+            @Override
+            public void onPageStarted(WebView view, String url, Bitmap favicon) {
+                super.onPageStarted(view, url, favicon);
+                webviewIsLoaded = false;
+            }
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                super.onPageFinished(view, url);
+                webviewIsLoaded = true;
+            }
+            @Override public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
+                super.onReceivedError(view, request, error);
+                if (webView.getUrl().startsWith("https://kanshi.vercel.app") && !webviewIsLoaded){
+                    showDialog(new AlertDialog.Builder(MainActivity.this)
+                        .setTitle("Something failed to load")
+                        .setMessage("Do you want to switch to the local app?")
+                        .setPositiveButton("OK", (dialogInterface, i) -> webView.loadUrl("file:///android_asset/www/index.html"))
+                        .setNegativeButton("CANCEL", null));
+                }
+            }
+        });
         //noinspection CommentedOutCode
         webView.setWebChromeClient(new WebChromeClient() {
             private View mCustomView;
@@ -267,7 +294,6 @@ public class MainActivity extends AppCompatActivity  {
 //            }
         });
 
-        showToast(Toast.makeText(getApplicationContext(), "Connecting...", Toast.LENGTH_LONG));
         isAppConnectionAvailable(isConnected -> webView.post(() -> {
             hideToast();
             if (isConnected) {
@@ -533,7 +559,7 @@ public class MainActivity extends AppCompatActivity  {
                                 .setNegativeButton("CANCEL", null));
                     } else {
                         showToast(Toast.makeText(getApplicationContext(), "Connecting...", Toast.LENGTH_LONG));
-                        if(connectionChecking) return;
+                        if (connectionChecking) return;
                         connectionChecking = true;
                         isAppConnectionAvailable(isConnected -> webView.post(() -> {
                             hideToast();
@@ -550,15 +576,15 @@ public class MainActivity extends AppCompatActivity  {
                                         .setMessage("Connection unreachable, can't switch at this moment.")
                                         .setPositiveButton("OK", null));
                             }
-                        }),3000);
+                        }), 3000);
                     }
                 });
             } catch (Exception exception) {
                 connectionChecking = false;
                 showDialog(new AlertDialog.Builder(MainActivity.this)
-                    .setTitle("Switch App Mode")
-                    .setMessage("Something went wrong, app switch is currently not working.")
-                    .setPositiveButton("OK", null));
+                        .setTitle("Switch App Mode")
+                        .setMessage("Something went wrong, app switch is currently not working.")
+                        .setPositiveButton("OK", null));
             }
         }
         @RequiresApi(api = Build.VERSION_CODES.N)
@@ -575,6 +601,12 @@ public class MainActivity extends AppCompatActivity  {
                     }
                 }),10000);
             } catch (Exception ignored) {}
+        }
+        @JavascriptInterface
+        public void checkAppID(int _appID) {
+            if (_appID > appID) {
+                webView.post(() -> webView.loadUrl("javascript:window.updateAppAlert();"));
+            }
         }
     }
 
