@@ -1,5 +1,6 @@
 <script>
     import {
+        appID,
         android,
         menuVisible,
         hiddenEntries,
@@ -97,7 +98,7 @@
         if ($initData) return pleaseWaitAlert();
         if (!$exportPathIsAvailable && $android) return handleExportFolder();
         if (
-            await $confirmPromise("Are you sure you want to export your Data?")
+            await $confirmPromise("Are you sure you want to export your data?")
         ) {
             $menuVisible = false;
             runExport.update((e) => !e);
@@ -109,7 +110,7 @@
         else if (!navigator.onLine) {
             return $confirmPromise({
                 isAlert: true,
-                title: "Currently Offline",
+                title: "Currently offline",
                 text: "It seems that you're currently offline and unable to update.",
             });
         }
@@ -166,7 +167,7 @@
             return;
         } else if (
             await $confirmPromise(
-                "Are you sure you want to show all hidden Anime Entries?"
+                "Are you sure you want to show all hidden anime entries?"
             )
         ) {
             if ($animeLoaderWorker) {
@@ -220,7 +221,7 @@
     async function anilistSignup() {
         if (
             await $confirmPromise(
-                "Are you sure want to sign-up an Anilist account?"
+                "Are you sure want to sign-up an anilist account?"
             )
         ) {
             $menuVisible = false;
@@ -235,10 +236,25 @@
         } catch (e) {}
     }
 
+    function checkForUpdates() {
+        if (!navigator.onLine) {
+            return $confirmPromise({
+                isAlert: true,
+                title: "Currently offline",
+                text: "It seems that you're currently offline and unable to check for updates.",
+            });
+        } else {
+            if (!$android) return;
+            try {
+                JSBridge.checkAppID($appID, true);
+            } catch (e) {}
+        }
+    }
+
     function pleaseWaitAlert() {
         $confirmPromise({
             isAlert: true,
-            title: "Initializing Resources",
+            title: "Initializing resources",
             text: "Please wait a moment...",
         });
     }
@@ -332,6 +348,13 @@
                     on:click={switchAppMode}
                     transition:fly={{ x: 50, duration: 300 }}
                     >Switch App Mode</button
+                >
+                <button
+                    class="button"
+                    on:keydown={(e) => e.key === "Enter" && checkForUpdates(e)}
+                    on:click={checkForUpdates}
+                    transition:fly={{ x: 50, duration: 300 }}
+                    >Check for Updates</button
                 >
             {/if}
         </div>

@@ -1198,7 +1198,7 @@
     function pleaseWaitAlert() {
         $confirmPromise({
             isAlert: true,
-            title: "Initializing Resources",
+            title: "Initializing resources",
             text: "Please wait a moment...",
         });
     }

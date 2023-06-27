@@ -228,19 +228,27 @@
 			console.error(error);
 		});
 
+	window.focusInUsernameInput = () => {
+		let usernameInput = document.getElementById("usernameInput");
+		usernameInput?.setCustomValidity?.("Enter your Anilist Username");
+		usernameInput?.reportValidity?.();
+	};
 	initData.subscribe(async (val) => {
 		if (val === false) {
 			if (!$username) {
 				await tick();
-				let usernameInput = document.getElementById("usernameInput");
-				usernameInput?.setCustomValidity?.(
-					"Enter your Anilist Username"
-				);
-				usernameInput?.reportValidity?.();
+				if ($android) {
+					try {
+						JSBridge.requireUsernameFocus();
+					} catch (e) {}
+				} else {
+					window.focusInUsernameInput?.();
+				}
 			}
 			clearInterval(pleaseWaitStatusInterval);
 		}
 	});
+
 	finalAnimeList.subscribe(async (val) => {
 		if (!$initData) return;
 		if (val?.length > 0 && $initData !== false) {
@@ -334,7 +342,7 @@
 	});
 	let userRequestIsRunning = false; // Workaround for Visibility Change
 	runUpdate.subscribe((val) => {
-		if (typeof val !== "boolean" || $initData) return;
+		if (typeof val !== "boolean" || $initData || !navigator.onLine) return;
 		userRequestIsRunning = true;
 		requestUserEntries()
 			.then(() => {
@@ -600,30 +608,34 @@
 	window.updateAppAlert = async () => {
 		if (
 			await $confirmPromise?.({
-				title: "Currently in the Old Version",
+				title: "New updates are available",
 				text: "You may want to download the new version.",
 				confirmLabel: "DOWNLOAD",
 			})
 		) {
-			window.open(
-				"https://github.com/u-Kuro/Kanshi.Anime-Recommendation/raw/main/Kanshi.apk",
-				"_blank"
-			);
+			try {
+				JSBridge.downloadUpdate();
+			} catch (e) {
+				window.open(
+					"https://github.com/u-Kuro/Kanshi.Anime-Recommendation/raw/main/Kanshi.apk",
+					"_blank"
+				);
+			}
 		}
 	};
 
+	window.appIsUpToDate = () => {
+		$confirmPromise?.({
+			isAlert: true,
+			text: "There are currently no updates available.",
+		});
+	};
+
 	// Check App ID
-	if ($android) {
+	if ($android && navigator.onLine) {
 		try {
-			JSBridge.checkAppID($appID);
-			console.log(
-				"noterrored",
-				$appID,
-				typeof JSBridge,
-				typeof JSBridge.checkAppID
-			);
+			JSBridge.checkAppID($appID, false);
 		} catch (e) {
-			console.log(e, "error");
 			window.updateAppAlert?.();
 		}
 	}

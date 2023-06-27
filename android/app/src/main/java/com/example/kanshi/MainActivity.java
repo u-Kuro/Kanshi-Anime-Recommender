@@ -20,7 +20,8 @@ import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
@@ -54,15 +55,17 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
+import androidx.core.content.FileProvider;
 import androidx.core.splashscreen.SplashScreen;
 
 @SuppressWarnings("CommentedOutCode")
 public class MainActivity extends AppCompatActivity  {
 
-    public final int appID = 1;
+    public final int appID = 2;
     public boolean webviewIsLoaded = false;
     public SharedPreferences prefs;
     private SharedPreferences.Editor prefsEdit;
@@ -77,6 +80,16 @@ public class MainActivity extends AppCompatActivity  {
     public AlertDialog currentDialog;
 
     // Activity Results
+    final ActivityResultLauncher<Intent> allowApplicationUpdate =
+            registerForActivityResult(
+                    new ActivityResultContracts.StartActivityForResult(),
+                    new ActivityResultCallback<>() {
+                        @Override
+                        public void onActivityResult(ActivityResult activityResult) {
+                            webView.post(() -> webView.loadUrl("javascript:window.updateAppAlert();"));
+                        }
+                    }
+            );
     final ActivityResultLauncher<Intent> chooseImportFile =
             registerForActivityResult(
                     new ActivityResultContracts.StartActivityForResult(),
@@ -203,8 +216,8 @@ public class MainActivity extends AppCompatActivity  {
         webView.setLongClickable(true);
         webView.setKeepScreenOn(true);
         webView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
-        if (0 != (getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE))
-        { WebView.setWebContentsDebuggingEnabled(true); }
+//        if (0 != (getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE))
+//        { WebView.setWebContentsDebuggingEnabled(true); }
         // Add Bridge to Webview
         webView.addJavascriptInterface(new JSBridge(),"JSBridge");
         webView.setWebViewClient(new WebViewClient(){
@@ -295,14 +308,13 @@ public class MainActivity extends AppCompatActivity  {
         });
 
         isAppConnectionAvailable(isConnected -> webView.post(() -> {
-            hideToast();
             if (isConnected) {
                 webView.loadUrl("https://kanshi.vercel.app/");
             } else {
                 webView.loadUrl("file:///android_asset/www/index.html");
                 showDialog(new AlertDialog.Builder(MainActivity.this)
-                        .setTitle("Connection Unreachable")
-                        .setMessage("Switched to offline app and cached data.")
+                        .setTitle("Connection unreachable")
+                        .setMessage("Switched to local app and cached data.")
                         .setPositiveButton("OK", null)
                 );
             }
@@ -393,7 +405,7 @@ public class MainActivity extends AppCompatActivity  {
             if(status==0) {
                 if (!Environment.isExternalStorageManager()) {
                     showDialog(new AlertDialog.Builder(MainActivity.this)
-                            .setTitle("Permission for External Storage")
+                            .setTitle("Permission for external storage")
                             .setMessage("Allow permission for Kanshi. to use the export feature.")
                             .setPositiveButton("OK", (dialogInterface, i) -> {
                                 Uri uri = Uri.parse("package:${BuildConfig.APPLICATION_ID}");
@@ -451,7 +463,7 @@ public class MainActivity extends AppCompatActivity  {
                                         tempExportPath[tempExportPath.length - 1]
                                 : tempExportPath[tempExportPath.length - 1];
                         showDialog(new AlertDialog.Builder(MainActivity.this)
-                                .setTitle("Export Folder is Missing")
+                                .setTitle("Export folder is missing")
                                 .setMessage("Folder directory [" + tempPathName
                                         + "] is missing, please choose another folder for exporting.")
                                 .setPositiveButton("Choose a Folder", (dialogInterface, x) -> {
@@ -529,7 +541,7 @@ public class MainActivity extends AppCompatActivity  {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                 if (!Environment.isExternalStorageManager()) {
                     showDialog(new AlertDialog.Builder(MainActivity.this)
-                            .setTitle("Permission for External Storage")
+                            .setTitle("Permission for external storage")
                             .setMessage("Allow permission for Kanshi. to use the export feature.")
                             .setPositiveButton("OK", (dialogInterface, i) -> {
                                 Uri uri = Uri.fromParts("package", getPackageName(), null);
@@ -553,7 +565,7 @@ public class MainActivity extends AppCompatActivity  {
                 webView.post(() -> {
                     if (webView.getUrl().startsWith("https://kanshi.vercel.app")) {
                         showDialog(new AlertDialog.Builder(MainActivity.this)
-                                .setTitle("Switch App Mode")
+                                .setTitle("Switch app mode")
                                 .setMessage("Do you want to switch to the local app?")
                                 .setPositiveButton("OK", (dialogInterface, i) -> webView.loadUrl("file:///android_asset/www/index.html"))
                                 .setNegativeButton("CANCEL", null));
@@ -566,13 +578,13 @@ public class MainActivity extends AppCompatActivity  {
                             connectionChecking = false;
                             if (isConnected) {
                                 showDialog(new AlertDialog.Builder(MainActivity.this)
-                                        .setTitle("Switch App Mode")
+                                        .setTitle("Switch app mode")
                                         .setMessage("Do you want to switch to the online app?")
                                         .setPositiveButton("OK", (dialogInterface, i) -> webView.loadUrl("https://kanshi.vercel.app"))
                                         .setNegativeButton("CANCEL", null));
                             } else {
                                 showDialog(new AlertDialog.Builder(MainActivity.this)
-                                        .setTitle("Switch App Mode")
+                                        .setTitle("Switch app mode")
                                         .setMessage("Connection unreachable, can't switch at this moment.")
                                         .setPositiveButton("OK", null));
                             }
@@ -582,7 +594,7 @@ public class MainActivity extends AppCompatActivity  {
             } catch (Exception exception) {
                 connectionChecking = false;
                 showDialog(new AlertDialog.Builder(MainActivity.this)
-                        .setTitle("Switch App Mode")
+                        .setTitle("Switch app mode")
                         .setMessage("Something went wrong, app switch is currently not working.")
                         .setPositiveButton("OK", null));
             }
@@ -594,7 +606,7 @@ public class MainActivity extends AppCompatActivity  {
                 isAppConnectionAvailable(isConnected -> webView.post(() -> {
                     if (isConnected && isOnline && webView.getUrl().startsWith("file:///android_asset/www/index.html")) {
                         showDialog(new AlertDialog.Builder(MainActivity.this)
-                            .setTitle("Reconnected Successfully")
+                            .setTitle("Reconnected successfully")
                             .setMessage("Do you want to switch to the online app?")
                             .setPositiveButton("OK", (dialogInterface, i) -> webView.loadUrl("https://kanshi.vercel.app"))
                             .setNegativeButton("CANCEL", null));
@@ -603,11 +615,84 @@ public class MainActivity extends AppCompatActivity  {
             } catch (Exception ignored) {}
         }
         @JavascriptInterface
-        public void checkAppID(int _appID) {
+        public void checkAppID(int _appID, boolean manualCheck) {
             if (_appID > appID) {
                 webView.post(() -> webView.loadUrl("javascript:window.updateAppAlert();"));
+            } else if (manualCheck) {
+                webView.post(() -> webView.loadUrl("javascript:window.appIsUpToDate();"));
             }
         }
+        @RequiresApi(api = Build.VERSION_CODES.O)
+        @JavascriptInterface
+        public void downloadUpdate() {
+            boolean hasPermission = getPackageManager().canRequestPackageInstalls();
+            if (hasPermission) {
+                _downloadUpdate();
+            } else {
+                showDialog(new AlertDialog.Builder(MainActivity.this)
+                .setTitle("Permission for in-app installation")
+                .setMessage("Allow permission for Kanshi. to update within the app.")
+                .setPositiveButton("OK", (dialogInterface, i) -> {
+                    Intent intent = new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.fromParts("package", getPackageName(), null));
+                    showToast(Toast.makeText(getApplicationContext(), "Allow permission for Kanshi. in here to update within the app.", Toast.LENGTH_LONG));
+                    allowApplicationUpdate.launch(intent);
+                })
+                .setNegativeButton("CANCEL", (dialogInterface, i) -> {
+                    showToast(Toast.makeText(getApplicationContext(), "You may still manually install the update.", Toast.LENGTH_LONG));
+                    webView.post(() -> webView.loadUrl("javascript:window.updateAppAlert();"));
+                }));
+            }
+        }
+        @JavascriptInterface
+        public void requireUsernameFocus() {
+            if (currentDialog == null || !currentDialog.isShowing()) {
+                webView.post(() -> webView.loadUrl("javascript:window.focusInUsernameInput();"));
+            }
+        }
+    }
+
+    public void _downloadUpdate() {
+        String fileUrl = "https://github.com/u-Kuro/Kanshi.Anime-Recommendation/raw/main/Kanshi.apk";
+        String fileName = "Kanshi.apk";
+        DownloadUtils.downloadFile(MainActivity.this, fileUrl, fileName, new DownloadUtils.DownloadCallback() {
+            @RequiresApi(api = Build.VERSION_CODES.O)
+            @Override
+            public void onDownloadCompleted(String apkFilePath) {
+                boolean hasPermission = getPackageManager().canRequestPackageInstalls();
+                if (hasPermission) {
+                    showDialog(new AlertDialog.Builder(MainActivity.this)
+                        .setTitle("Update ready to install")
+                        .setMessage("Do you want to continue the installation?")
+                        .setPositiveButton("OK", (dialogInterface, i) -> {
+                            File apkFile = new File(apkFilePath);
+                            if (apkFile.exists()) {
+                                Uri apkUri = FileProvider.getUriForFile(MainActivity.this, "com.example.kanshi.provider", apkFile);
+                                Intent intent = new Intent(Intent.ACTION_VIEW);
+                                intent.setDataAndType(apkUri, "application/vnd.android.package-archive");
+                                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                                intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                                List<ResolveInfo> resolveInfoList = getPackageManager().queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY);
+                                if (!resolveInfoList.isEmpty()) {
+                                    startActivity(intent);
+                                } else {
+                                    Toast.makeText(MainActivity.this, "No application available to open the APK file", Toast.LENGTH_LONG).show();
+                                }
+                            } else {
+                                Toast.makeText(MainActivity.this, "File is not found", Toast.LENGTH_LONG).show();
+                            }
+                        })
+                        .setNegativeButton("CANCEL", null).setCancelable(false));
+                }
+            }
+            @Override
+            public void onDownloadFailed() {
+                showDialog(new AlertDialog.Builder(MainActivity.this)
+                    .setTitle("Download failed")
+                    .setMessage("Do you want to re-download?")
+                    .setPositiveButton("OK", (dialogInterface, i) -> _downloadUpdate())
+                    .setNegativeButton("CANCEL", null));
+            }
+        });
     }
 
     @Override
@@ -624,6 +709,7 @@ public class MainActivity extends AppCompatActivity  {
             currentDialog.dismiss();
         }
         currentDialog = alertDialog.show();
+        webView.post(() -> webView.loadUrl("javascript:document?.querySelectorAll?.('input:focus')?.forEach(input => input?.blur?.());"));
     }
     public void showToast(Toast toast) {
         if (currentToast != null) {
@@ -680,19 +766,5 @@ public class MainActivity extends AppCompatActivity  {
     interface ConnectivityCallback {
         void onConnectionResult(boolean isConnected);
     }
-
-    //    @RequiresApi(api = Build.VERSION_CODES.M)
-    //    private boolean isNetworkAvailable() {
-    //        ConnectivityManager connectivityManager =
-    //                (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-    //        Network network = connectivityManager.getActiveNetwork();
-    //        if (network == null) {
-    //            return false;
-    //        }
-    //        NetworkCapabilities networkCapabilities = connectivityManager.getNetworkCapabilities(network);
-    //        return networkCapabilities != null &&
-    //                (networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) ||
-    //                        networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR));
-    //    }
 }
 
