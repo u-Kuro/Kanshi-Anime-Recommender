@@ -65,7 +65,7 @@ import androidx.core.splashscreen.SplashScreen;
 @SuppressWarnings("CommentedOutCode")
 public class MainActivity extends AppCompatActivity  {
 
-    public final int appID = 2;
+    public final int appID = 4;
     public boolean webviewIsLoaded = false;
     public SharedPreferences prefs;
     private SharedPreferences.Editor prefsEdit;
@@ -215,9 +215,10 @@ public class MainActivity extends AppCompatActivity  {
         webView.setScrollBarStyle(View.SCROLLBARS_INSIDE_OVERLAY);
         webView.setLongClickable(true);
         webView.setKeepScreenOn(true);
+        getWindow().setFlags(
+                WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
+                WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED);
         webView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
-//        if (0 != (getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE))
-//        { WebView.setWebContentsDebuggingEnabled(true); }
         // Add Bridge to Webview
         webView.addJavascriptInterface(new JSBridge(),"JSBridge");
         webView.setWebViewClient(new WebViewClient(){
@@ -240,6 +241,14 @@ public class MainActivity extends AppCompatActivity  {
                         .setPositiveButton("OK", (dialogInterface, i) -> webView.loadUrl("file:///android_asset/www/index.html"))
                         .setNegativeButton("CANCEL", null));
                 }
+            }
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+                // Prevent In App Browsing
+                String url = request.getUrl().toString();
+                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+                startActivity(intent);
+                return true;
             }
         });
         //noinspection CommentedOutCode
@@ -306,6 +315,8 @@ public class MainActivity extends AppCompatActivity  {
 //                return true;
 //            }
         });
+//        if (0 != (getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE))
+//        { WebView.setWebContentsDebuggingEnabled(true); }
 
         isAppConnectionAvailable(isConnected -> webView.post(() -> {
             if (isConnected) {
@@ -697,10 +708,18 @@ public class MainActivity extends AppCompatActivity  {
 
     @Override
     public void onBackPressed() {
-        if(!shouldGoBack){
-            webView.post(() -> webView.loadUrl("javascript:window.backPressed();"));
+        if(webView.getUrl().startsWith("file:///android_asset/www/index.html") || webView.getUrl().startsWith("https://kanshi.vercel.app")){
+            if(!shouldGoBack){
+                webView.post(() -> webView.loadUrl("javascript:window.backPressed();"));
+            } else {
+                moveTaskToBack(true);
+            }
         } else {
-            moveTaskToBack(true);
+            if (webView.canGoBack()) {
+                webView.goBack();
+            } else {
+                super.onBackPressed();
+            }
         }
     }
 
@@ -749,13 +768,11 @@ public class MainActivity extends AppCompatActivity  {
                 }
             });
             connectionThread.start();
-            connectionThread.join(timeout); // Wait for the connection thread to finish or timeout
+            connectionThread.join(timeout);
             if (connectionThread.isAlive()) {
-                // The connection check took longer than the timeout, interrupt the thread
                 connectionThread.interrupt();
                 return false;
             } else {
-                // The connection check completed within the timeout
                 return true;
             }
         } catch (IOException | InterruptedException e) {

@@ -23,17 +23,73 @@
         getMostVisibleElement,
         getChildIndex,
         msToTime,
+        isElementVisible,
+        addClass,
+        removeClass,
+        getMostVisibleElementFromArray,
     } from "../../../js/others/helper.js";
     import { retrieveJSON, saveJSON } from "../../../js/indexedDB.js";
-    import captureSlideEvent from "../../../js/slideEvent.js";
 
     let isOnline = window.navigator.onLine;
+
     let savedYtVolume = 50;
     (async () => {
         savedYtVolume = (await retrieveJSON("savedYtVolume")) || 50;
     })();
-    let currentYtPlayer;
-    let popupWrapper, popupContainer;
+
+    let animeGridParentEl,
+        mostVisiblePopupHeader,
+        currentHeaderIdx,
+        currentYtPlayer,
+        popupWrapper,
+        popupContainer,
+        popupAnimeObserver,
+        popupObserverFrame;
+
+    function addPopupObserver() {
+        popupAnimeObserver = new IntersectionObserver(
+            (entries) => {
+                if (!$popupVisible) return;
+                let intersectingPopupHeaders = [];
+                let hasIntersectingHeader = false;
+                entries.forEach((entry) => {
+                    if (!$popupVisible) return;
+                    let popupHeader = entry.target;
+                    if (entry.isIntersecting) {
+                        if (entry.intersectionRatio >= 0.5) {
+                            intersectingPopupHeaders.push(popupHeader);
+                        } else if (window.innerHeight < 180) {
+                            intersectingPopupHeaders.push(popupHeader);
+                        }
+                        hasIntersectingHeader = true;
+                    }
+                });
+                cancelAnimationFrame(popupObserverFrame);
+                popupObserverFrame = requestAnimationFrame(() => {
+                    if (hasIntersectingHeader) {
+                        let visiblePopupHeader =
+                            getMostVisibleElementFromArray(
+                                intersectingPopupHeaders,
+                                popupContainer,
+                                0.5
+                            ) ||
+                            getMostVisibleElement(
+                                popupContainer,
+                                ".popup-content",
+                                0.1
+                            )?.querySelector?.(".popup-header");
+                        mostVisiblePopupHeader = visiblePopupHeader;
+                        playMostVisibleTrailer();
+                    }
+                });
+            },
+            {
+                root: null,
+                rootMargin: "100%",
+                threshold: [0.5, 0],
+            }
+        );
+    }
 
     function handlePopupVisibility(e) {
         let target = e.target;
@@ -108,11 +164,8 @@
             $finalAnimeList[animeIdx].isSeenMore =
                 !$finalAnimeList[animeIdx].isSeenMore;
             await tick();
-            let targetEl = anime.popupContent;
-            if (!popupContainer instanceof Element) return;
-            if (!(targetEl instanceof Element)) {
-                targetEl = anime?.popupHeader?.closest?.(".popup-content");
-            }
+            let targetEl =
+                anime.popupContent || popupContainer.children?.[animeIdx];
             if (targetEl instanceof Element) {
                 scrollToElement(popupContainer, targetEl, "bottom");
             }
@@ -179,32 +232,44 @@
             return;
         if (val === true) {
             // Init Height
-            Object.assign(popupContainer.style, {
-                "--translateY": window.innerHeight + "px",
-            });
+            popupContainer.style.setProperty(
+                "--translateY",
+                window.innerHeight + "px"
+            );
             // Scroll To Opened Anime
             let openedAnimePopupEl =
                 popupContainer?.children[$openedAnimePopupIdx ?? 0];
             if (openedAnimePopupEl instanceof Element) {
                 scrollToElement(popupContainer, openedAnimePopupEl);
                 // Animate Opening
-                popupWrapper.classList.add("visible");
-                popupContainer.classList.add("animate");
-                popupContainer.classList.add("show");
-                setTimeout(() => {
-                    popupContainer.classList.remove("animate");
-                }, 300);
+                addClass(popupWrapper, "visible");
+                addClass(popupContainer, "show");
                 // Try to Add YT player
+                currentHeaderIdx = $openedAnimePopupIdx;
                 let openedAnimes = [
-                    $finalAnimeList[$openedAnimePopupIdx],
-                    $finalAnimeList[$openedAnimePopupIdx + 1],
-                    $finalAnimeList[$openedAnimePopupIdx - 1],
+                    [
+                        $finalAnimeList[$openedAnimePopupIdx],
+                        $openedAnimePopupIdx,
+                    ],
+                    [
+                        $finalAnimeList[$openedAnimePopupIdx + 1],
+                        $openedAnimePopupIdx + 1,
+                    ],
+                    [
+                        $finalAnimeList[$openedAnimePopupIdx - 1],
+                        $openedAnimePopupIdx - 1,
+                    ],
                 ];
                 let trailerEl =
-                    openedAnimes[0]?.popupHeader?.querySelector(".trailer");
+                    openedAnimes[0][0]?.popupHeader?.querySelector?.(
+                        ".trailer"
+                    ) ||
+                    popupContainer?.children?.[
+                        $openedAnimePopupIdx
+                    ]?.querySelector?.(".trailer");
                 let haveTrailer;
                 for (let i = 0; i < $ytPlayers.length; i++) {
-                    if ($ytPlayers[i].g === trailerEl) {
+                    if ($ytPlayers[i].ytPlayer.g === trailerEl) {
                         haveTrailer = true;
                         if ($autoPlay) {
                             await tick();
@@ -214,49 +279,61 @@
                                 ) &&
                                 ($androidInApp || !$android)
                             ) {
-                                prePlayYtPlayer($ytPlayers[i]);
-                                $ytPlayers[i]?.playVideo?.();
-                                currentYtPlayer = $ytPlayers[i];
+                                prePlayYtPlayer($ytPlayers[i].ytPlayer);
+                                $ytPlayers[i].ytPlayer?.playVideo?.();
+                                currentYtPlayer = $ytPlayers[i].ytPlayer;
                             }
                         }
                         break;
                     }
                 }
-                openedAnimes.forEach((openedAnime, idx) => {
+                openedAnimes.forEach(([openedAnime, openedAnimeIdx], idx) => {
                     if (haveTrailer && openedAnime && idx === 0) return;
-                    else if (openedAnime) createPopupYTPlayer(openedAnime);
+                    else if (openedAnime)
+                        createPopupYTPlayer(openedAnime, openedAnimeIdx);
                 });
                 $openedAnimePopupIdx = null;
             } else {
                 // Animate Opening
-                popupWrapper.classList.add("visible");
-                popupContainer.classList.add("show");
+                addClass(popupWrapper, "visible");
+                addClass(popupContainer, "show");
             }
         } else if (val === false) {
-            popupContainer.classList.remove("show");
-            popupContainer.classList.add("animate");
-            popupContainer.classList.add("hide");
+            removeClass(popupContainer, "show");
+            addClass(popupContainer, "hide");
             setTimeout(() => {
                 // Stop All Player
-                $ytPlayers?.forEach((ytPlayer) => ytPlayer?.pauseVideo?.());
-                popupWrapper.classList.remove("visible");
-                popupContainer.classList.remove("animate");
+                $ytPlayers?.forEach(({ ytPlayer }) => ytPlayer?.pauseVideo?.());
+                removeClass(popupWrapper, "visible");
             }, 300);
         }
     });
 
     finalAnimeList.subscribe(async (val) => {
         if (val instanceof Array && val.length) {
+            if (popupAnimeObserver) {
+                popupAnimeObserver?.disconnect?.();
+                popupAnimeObserver = null;
+            }
             await tick();
-            if (
-                $animeObserver &&
-                $finalAnimeList[$finalAnimeList.length - 1]
-                    .popupContent instanceof Element
-            ) {
+            addPopupObserver();
+            val.forEach(async (anime, animeIdx) => {
+                let popupHeader =
+                    anime.popupHeader ||
+                    popupContainer.children?.[animeIdx]?.querySelector?.(
+                        ".popup-header"
+                    );
+                if (popupHeader instanceof Element) {
+                    popupAnimeObserver?.observe?.(popupHeader);
+                }
+            });
+            let lastAnimeContent = $finalAnimeList[$finalAnimeList.length - 1];
+            let lastPopupContent =
+                lastAnimeContent.popupContent ||
+                popupContainer.children?.[$finalAnimeList.length - 1];
+            if ($animeObserver && lastPopupContent instanceof Element) {
                 // Popup Observed
-                $animeObserver.observe(
-                    $finalAnimeList[$finalAnimeList.length - 1].popupContent
-                );
+                $animeObserver.observe(lastPopupContent);
             }
             playMostVisibleTrailer();
         } else if (val instanceof Array && val.length < 1) {
@@ -284,44 +361,34 @@
                     mostVisiblePopupHeader?.querySelector?.(".trailer");
                 for (let i = 0; i < $ytPlayers.length; i++) {
                     if (
-                        $ytPlayers[i].g === visibleTrailer &&
+                        $ytPlayers[i].ytPlayer.g === visibleTrailer &&
                         ($androidInApp || !$android)
                     ) {
-                        prePlayYtPlayer($ytPlayers[i]);
-                        $ytPlayers[i]?.playVideo?.();
+                        prePlayYtPlayer($ytPlayers[i].ytPlayer);
+                        $ytPlayers[i].ytPlayer?.playVideo?.();
                         break;
                     }
                 }
             } else {
-                $ytPlayers?.forEach((ytPlayer) => ytPlayer?.pauseVideo?.());
+                $ytPlayers?.forEach(({ ytPlayer }) => ytPlayer?.pauseVideo?.());
             }
         }
     });
 
-    let unsubSlideEvents;
     onMount(() => {
-        document
-            .getElementById("popup-container")
-            .addEventListener("scroll", () => {
-                playMostVisibleTrailer();
-            });
-        if (window.innerWidth <= 768) {
-            unsubSlideEvents = captureSlideEvent(popupContainer, () => {
-                return new Promise((resolve) => {
-                    $popupVisible = false;
-                    setTimeout(resolve, 300); // To return values
-                });
-            });
-        }
+        popupWrapper = popupWrapper || document.getElementById("popup-wrapper");
+        popupContainer =
+            popupContainer || popupWrapper.querySelector("#popup-container");
+        animeGridParentEl = document.getElementById("anime-grid");
         document.addEventListener("keydown", async (e) => {
             if (e.key === " " && $popupVisible) {
                 e.preventDefault();
                 let isPlaying = $ytPlayers?.some(
-                    (ytPlayer) =>
+                    ({ ytPlayer }) =>
                         ytPlayer.getPlayerState() === YT.PlayerState.PLAYING
                 );
                 if (isPlaying) {
-                    $ytPlayers.forEach((ytPlayer) => {
+                    $ytPlayers.forEach(({ ytPlayer }) => {
                         ytPlayer?.pauseVideo?.();
                     });
                 } else {
@@ -341,43 +408,23 @@
                         mostVisiblePopupHeader?.querySelector?.(".trailer");
                     for (let i = 0; i < $ytPlayers.length; i++) {
                         if (
-                            $ytPlayers[i].g === visibleTrailer &&
+                            $ytPlayers[i].ytPlayer.g === visibleTrailer &&
                             ($androidInApp || !$android)
                         ) {
-                            prePlayYtPlayer($ytPlayers[i]);
-                            $ytPlayers[i]?.playVideo?.();
+                            prePlayYtPlayer($ytPlayers[i].ytPlayer);
+                            $ytPlayers[i].ytPlayer?.playVideo?.();
                             break;
                         }
                     }
                 }
             }
         });
-        window.addEventListener("resize", () => {
-            if (window.innerWidth <= 768 && !unsubSlideEvents) {
-                unsubSlideEvents = captureSlideEvent(popupContainer, () => {
-                    return new Promise((resolve) => {
-                        $popupVisible = false;
-                        setTimeout(resolve, 300); // To return values
-                    });
-                });
-            } else if (unsubSlideEvents && window.innerWidth > 768) {
-                if (unsubSlideEvents) unsubSlideEvents();
-                unsubSlideEvents = null;
-            }
-        });
     });
 
-    let currentHeader, scrollToGridTimeout, createPopupPlayersTimeout;
+    let scrollToGridTimeout, createPopupPlayersTimeout;
     async function playMostVisibleTrailer() {
         if (!$popupVisible) return;
         await tick();
-        let mostVisiblePopupHeader =
-            getMostVisibleElement(popupContainer, ".popup-header", 0.5) ||
-            getMostVisibleElement(
-                popupContainer,
-                ".popup-content",
-                0.1
-            )?.querySelector(".popup-header");
         let visibleTrailer =
             mostVisiblePopupHeader?.querySelector?.(".trailer");
         // Scroll in Grid
@@ -385,47 +432,55 @@
             getChildIndex(
                 mostVisiblePopupHeader?.closest?.(".popup-content")
             ) ?? -1;
-        let animeGrid = $finalAnimeList?.[visibleTrailerIdx]?.gridElement;
-        if (animeGrid instanceof Element) {
-            if (scrollToGridTimeout) clearTimeout(scrollToGridTimeout);
-            scrollToGridTimeout = setTimeout(() => {
-                scrollToElement(window, animeGrid, "top", "smooth", -66); // Nav + GridGap
-            }, 300);
-        }
-
+        if (scrollToGridTimeout) clearTimeout(scrollToGridTimeout);
+        scrollToGridTimeout = setTimeout(() => {
+            if (!$popupVisible) return;
+            let animeGrid =
+                $finalAnimeList?.[visibleTrailerIdx]?.gridElement ||
+                animeGridParentEl.children?.[visibleTrailerIdx];
+            if (
+                $popupVisible &&
+                animeGrid instanceof Element &&
+                !isElementVisible(animeGridParentEl, animeGrid, 0.5)
+            ) {
+                animeGrid.scrollIntoView({
+                    behavior: "smooth",
+                    block: "nearest",
+                });
+            }
+        }, 300);
         let haveTrailer;
         if (visibleTrailer instanceof Element) {
             haveTrailer = $ytPlayers?.some(
-                (ytPlayer) => ytPlayer.g === visibleTrailer
+                ({ ytPlayer }) => ytPlayer.g === visibleTrailer
             );
-        } else {
-            let popupImg =
-                mostVisiblePopupHeader?.querySelector?.(".popup-img");
-            if (popupImg instanceof Element) {
-                popupImg.style.display = "";
-            }
         }
         if (haveTrailer) {
             // Recheck Trailer
-            if (
-                visibleTrailerIdx >= 0 &&
-                (currentHeader !== mostVisiblePopupHeader ||
-                    currentHeader === undefined)
-            ) {
+            if (visibleTrailerIdx >= 0) {
+                currentHeaderIdx = visibleTrailerIdx;
                 let nearAnimes = [
-                    $finalAnimeList?.[visibleTrailerIdx + 1],
-                    $finalAnimeList?.[visibleTrailerIdx - 1],
+                    [
+                        $finalAnimeList?.[visibleTrailerIdx + 1],
+                        visibleTrailerIdx + 1,
+                    ],
+                    [
+                        $finalAnimeList?.[visibleTrailerIdx - 1],
+                        visibleTrailerIdx - 1,
+                    ],
                 ];
                 if (createPopupPlayersTimeout)
                     clearTimeout(createPopupPlayersTimeout);
                 createPopupPlayersTimeout = setTimeout(async () => {
-                    nearAnimes.forEach((nearAnime) => {
-                        if (nearAnime) createPopupYTPlayer(nearAnime);
+                    if (!$popupVisible) return;
+                    nearAnimes.forEach(([nearAnime, nearAnimeIdx]) => {
+                        if (nearAnime)
+                            createPopupYTPlayer(nearAnime, nearAnimeIdx);
                     });
                 }, 300);
             }
-            // Replay Most Visible Trailer
-            $ytPlayers?.forEach(async (ytPlayer) => {
+            // // Replay Most Visible Trailer
+            $ytPlayers?.forEach(async ({ ytPlayer }) => {
                 if (
                     ytPlayer.g === visibleTrailer &&
                     ytPlayer?.getPlayerState?.() !== 1 &&
@@ -434,13 +489,10 @@
                     await tick();
                     if (
                         popupWrapper?.classList?.contains?.("visible") &&
-                        ($androidInApp || !$android) &&
-                        currentHeader !== mostVisiblePopupHeader
+                        ($androidInApp || !$android)
                     ) {
                         prePlayYtPlayer(ytPlayer);
                         ytPlayer?.playVideo?.();
-                        currentYtPlayer = ytPlayer;
-                        currentHeader = mostVisiblePopupHeader;
                     }
                 } else if (ytPlayer.g !== visibleTrailer) {
                     ytPlayer?.pauseVideo?.();
@@ -448,46 +500,93 @@
             });
         } else {
             // Pause All Players
-            $ytPlayers?.forEach((ytPlayer) => ytPlayer?.pauseVideo?.());
+            $ytPlayers?.forEach(({ ytPlayer }) => ytPlayer?.pauseVideo?.());
             // Recheck Trailer
-            if (
-                visibleTrailerIdx >= 0 &&
-                (currentHeader !== mostVisiblePopupHeader ||
-                    currentHeader === undefined)
-            ) {
+            if (visibleTrailerIdx >= 0) {
+                currentHeaderIdx = visibleTrailerIdx;
                 let nearAnimes = [
-                    $finalAnimeList?.[visibleTrailerIdx],
-                    $finalAnimeList?.[visibleTrailerIdx + 1],
-                    $finalAnimeList?.[visibleTrailerIdx - 1],
+                    [$finalAnimeList?.[visibleTrailerIdx], visibleTrailerIdx],
+                    [
+                        $finalAnimeList?.[visibleTrailerIdx + 1],
+                        visibleTrailerIdx + 1,
+                    ],
+                    [
+                        $finalAnimeList?.[visibleTrailerIdx - 1],
+                        visibleTrailerIdx - 1,
+                    ],
                 ];
                 if (createPopupPlayersTimeout)
                     clearTimeout(createPopupPlayersTimeout);
                 createPopupPlayersTimeout = setTimeout(async () => {
-                    nearAnimes.forEach((nearAnime) => {
-                        if (nearAnime) createPopupYTPlayer(nearAnime);
+                    if (!$popupVisible) return;
+                    nearAnimes.forEach(([nearAnime, nearAnimeIdx]) => {
+                        if (nearAnime)
+                            createPopupYTPlayer(nearAnime, nearAnimeIdx);
                     });
                 }, 300);
             }
-            currentHeader = mostVisiblePopupHeader;
         }
     }
 
-    function createPopupYTPlayer(openedAnime) {
-        let ytPlayerEl = openedAnime?.popupHeader?.querySelector?.(".trailer");
+    let failingTrailers = {};
+    function createPopupYTPlayer(openedAnime, headerIdx) {
+        let popupHeader =
+            openedAnime?.popupHeader ||
+            popupContainer.children?.[headerIdx]?.querySelector(
+                ".popup-header"
+            );
+        let ytPlayerEl =
+            popupHeader?.querySelector?.(".trailer") ||
+            popupHeader?.querySelector?.(".trailer");
         let youtubeID = openedAnime?.trailerID;
         if (ytPlayerEl instanceof Element && youtubeID) {
-            if ($ytPlayers.some((ytPlayer) => ytPlayer.g === ytPlayerEl))
+            if ($ytPlayers.some(({ ytPlayer }) => ytPlayer.g === ytPlayerEl))
                 return;
+            addClass(popupHeader, "loader");
+            let popupImg = popupHeader?.querySelector?.(".popup-img");
+            if (
+                openedAnime?.bannerImageUrl &&
+                !failingTrailers[openedAnime.id]
+            ) {
+                let animeCoverImgEl = popupImg.querySelector(".coverImg");
+                addClass(animeCoverImgEl, "display-none");
+            }
             if ($ytPlayers.length >= 8) {
-                let destroyedPlayer = $ytPlayers.shift();
+                let destroyedPlayerIdx = 0;
+                let furthestDistance = -Infinity;
+                $ytPlayers.forEach((_ytPlayer, index) => {
+                    if (_ytPlayer.headerIdx === -1) return;
+                    let distance = Math.abs(
+                        _ytPlayer.headerIdx - currentHeaderIdx
+                    );
+                    if (distance > furthestDistance) {
+                        furthestDistance = distance;
+                        destroyedPlayerIdx = index;
+                    }
+                });
+                let destroyedPlayer = $ytPlayers?.splice?.(
+                    destroyedPlayerIdx,
+                    1
+                )?.[0]?.ytPlayer;
+                let destroyedPopupHeader =
+                    destroyedPlayer?.g?.closest?.(".popup-header");
                 destroyedPlayer?.destroy?.();
+                let destroyedPopupImg =
+                    destroyedPopupHeader?.querySelector?.(".popup-img");
+                if (destroyedPopupImg instanceof Element) {
+                    removeClass(destroyedPopupImg, "display-none");
+                }
                 let newYtPlayerEl = document.createElement("div");
                 newYtPlayerEl.className = "trailer";
-                ytPlayerEl.style.display = "none";
-                openedAnime.popupHeader.replaceChild(newYtPlayerEl, ytPlayerEl);
-                ytPlayerEl = openedAnime.popupHeader.querySelector(".trailer"); // Get new YT player
+                addClass(ytPlayerEl, "display-none");
+                removeClass(popupImg, "display-none");
+                popupHeader.replaceChild(newYtPlayerEl, ytPlayerEl);
+                addClass(ytPlayerEl, "display-none");
+                ytPlayerEl = popupHeader.querySelector(".trailer"); // Get new YT player
+            } else {
+                addClass(ytPlayerEl, "display-none");
             }
-            ytPlayerEl.style.display = "none";
+            removeClass(popupImg, "display-none");
             // Add a Unique ID
             ytPlayerEl.setAttribute(
                 "id",
@@ -512,12 +611,13 @@
             // Add Trailer to Iframe
             let trailerUrl = `https://www.youtube.com/embed/${youtubeID}?playlist=${youtubeID}&cc_load_policy=1&cc_lang_pref=en&enablejsapi=1&loop=1&modestbranding=1&playsinline=1`;
             ytPlayerEl.setAttribute("src", trailerUrl);
-            $ytPlayers.push(ytPlayer);
+            $ytPlayers.push({ ytPlayer, headerIdx });
         } else {
-            let popupImg =
-                openedAnime?.popupHeader?.querySelector?.(".popup-img");
+            let popupImg = popupHeader?.querySelector?.(".popup-img");
+            let animeCoverImgEl = popupImg.querySelector(".coverImg");
+            removeClass(animeCoverImgEl, "display-none");
             if (popupImg instanceof Element) {
-                popupImg.style.display = "";
+                removeClass(popupImg, "display-none");
             }
         }
     }
@@ -541,10 +641,10 @@
             trailerEl.tagName !== "IFRAME" ||
             !isOnline
         ) {
+            failingTrailers[anime.id] = true;
             $ytPlayers = $ytPlayers.filter(
-                (_ytPlayer) => _ytPlayer !== ytPlayer
+                (_ytPlayer) => _ytPlayer.ytPlayer !== ytPlayer
             );
-            ytPlayer.destroy();
             let animeBannerImg = anime?.bannerImageUrl;
             let animeBannerImgEl = popupImg.querySelector(".bannerImg");
             if (
@@ -563,55 +663,24 @@
             ) {
                 animeCoverImgEl.src = animeCoverImg;
             }
-            trailerEl.style.display = "none";
-            popupImg.style.display = "";
+            ytPlayer.destroy();
+            addClass(trailerEl, "display-none");
+            removeClass(popupHeader, "loader");
+            removeClass(animeCoverImgEl, "display-none");
+            removeClass(popupImg, "display-none");
         } else {
-            popupImg.style.display = "none";
-            trailerEl.style.display = "";
+            addClass(popupImg, "fade-out");
+            setTimeout(() => {
+                removeClass(popupHeader, "loader");
+                removeClass(trailerEl, "display-none");
+                setTimeout(() => {
+                    addClass(popupImg, "display-none");
+                    removeClass(popupImg, "fade-out");
+                }, 300);
+            }, 1000);
             // Play Most Visible when 1 Succeed
-            if (!$popupVisible) return;
-            await tick();
-            let mostVisiblePopupHeader =
-                getMostVisibleElement(popupContainer, ".popup-header", 0.5) ||
-                getMostVisibleElement(
-                    popupContainer,
-                    ".popup-content",
-                    0.1
-                )?.querySelector(".popup-header");
-            let visibleTrailer =
-                mostVisiblePopupHeader?.querySelector?.(".trailer");
-            let haveTrailer;
-            if (visibleTrailer instanceof Element) {
-                haveTrailer = $ytPlayers?.some(
-                    (ytPlayer) =>
-                        ytPlayer.g === visibleTrailer &&
-                        typeof ytPlayer?.playVideo === "function" &&
-                        ytPlayer.getPlayerState() !== -1
-                );
-            }
-            if (haveTrailer) {
-                $ytPlayers?.forEach(async (ytPlayer) => {
-                    if (
-                        ytPlayer.g === visibleTrailer &&
-                        ytPlayer?.getPlayerState?.() !== 1 &&
-                        $autoPlay
-                    ) {
-                        await tick();
-                        if (
-                            popupWrapper?.classList?.contains?.("visible") &&
-                            ($androidInApp || !$android)
-                        ) {
-                            prePlayYtPlayer(ytPlayer);
-                            ytPlayer?.playVideo?.();
-                        }
-                    } else if (ytPlayer.g !== visibleTrailer) {
-                        ytPlayer?.mute?.();
-                        ytPlayer?.playVideo?.();
-                        ytPlayer?.pauseVideo?.();
-                        ytPlayer?.unMute?.();
-                    }
-                });
-            }
+            playMostVisibleTrailer();
+            delete failingTrailers[anime.id];
         }
     }
     function prePlayYtPlayer(ytPlayer) {
@@ -665,7 +734,7 @@
         if (!visibleTrailer) return;
         if ($popupVisible) {
             if (inApp) {
-                for (var ytPlayer of $ytPlayers) {
+                for (var { ytPlayer } of $ytPlayers) {
                     if (
                         ytPlayer.g === visibleTrailer &&
                         ((ytPlayer?.getPlayerState?.() === 2 &&
@@ -679,7 +748,7 @@
                 }
             } else if (!inApp) {
                 isCurrentlyPlaying = false;
-                for (var ytPlayer of $ytPlayers) {
+                for (var { ytPlayer } of $ytPlayers) {
                     if (
                         ytPlayer.g === visibleTrailer &&
                         ytPlayer?.getPlayerState?.() === 1
@@ -701,16 +770,11 @@
         isOnline = true;
         document.querySelectorAll("img")?.forEach((image) => {
             if (!image.naturalHeight) {
-                image.style.opacity = 0;
-                image.onload = () => {
-                    image.style.opacity = 1;
-                };
                 image.src = image.src;
             }
         });
-        currentHeader = undefined;
         loadYouTubeAPI().then(() => {
-            $ytPlayers = $ytPlayers.filter((ytPlayer) => {
+            $ytPlayers = $ytPlayers.filter(({ ytPlayer }) => {
                 if (
                     typeof ytPlayer?.playVideo === "function" &&
                     ytPlayer.getPlayerState() !== -1 &&
@@ -719,6 +783,12 @@
                     return true;
                 } else {
                     ytPlayer.destroy();
+                    let popupImg = ytPlayer?.g
+                        ?.closest?.(".popup-header")
+                        ?.querySelector?.(".popup-img");
+                    if (popupImg instanceof Element) {
+                        removeClass(popupImg, "display-none");
+                    }
                     return false;
                 }
             });
@@ -769,29 +839,43 @@
             {#each $finalAnimeList || [] as anime, animeIdx (anime.id)}
                 <div class="popup-content" bind:this={anime.popupContent}>
                     <div class="popup-main">
-                        <div class="popup-header" bind:this={anime.popupHeader}>
+                        <div
+                            class={"popup-header " +
+                                (anime.trailerID ? "loader" : "")}
+                            bind:this={anime.popupHeader}
+                        >
+                            <div class="popup-header-loading">
+                                <i class="fa-solid fa-k fa-fade" />
+                            </div>
                             {#if anime.trailerID}
-                                <div class="trailer" style:display="none" />
+                                <div class="trailer display-none" />
                             {/if}
-                            <div class="popup-img" style:display="none">
-                                <img
-                                    loading="lazy"
-                                    src={anime.bannerImageUrl}
-                                    alt="bannerImg"
-                                    style:opacity="0"
-                                    class="bannerImg"
-                                    on:load={(e) =>
-                                        (e.target.style.opacity = 0.75)}
-                                />
-                                <img
-                                    loading="lazy"
-                                    src={anime.coverImageUrl}
-                                    alt="coverImg"
-                                    style:opacity="0"
-                                    class="coverImg"
-                                    on:load={(e) =>
-                                        (e.target.style.opacity = 1)}
-                                />
+                            <div class="popup-img">
+                                {#if anime.bannerImageUrl}
+                                    <img
+                                        loading="lazy"
+                                        src={anime.bannerImageUrl}
+                                        alt="bannerImg"
+                                        class="bannerImg"
+                                    />
+                                {/if}
+                                {#if anime.coverImageUrl}
+                                    {#if anime.bannerImageUrl}
+                                        <img
+                                            loading="lazy"
+                                            src={anime.coverImageUrl}
+                                            alt="coverImg"
+                                            class="coverImg display-none"
+                                        />
+                                    {:else}
+                                        <img
+                                            loading="lazy"
+                                            src={anime.coverImageUrl}
+                                            alt="coverImg"
+                                            class="coverImg"
+                                        />
+                                    {/if}
+                                {/if}
                             </div>
                         </div>
 
@@ -1072,14 +1156,16 @@
             {/if}
         {/if}
     </div>
-    <div
-        id="closing-x"
-        class="closing-x"
-        on:click={handlePopupVisibility}
-        on:keydown={(e) => e.key === "Enter" && handlePopupVisibility(e)}
-    >
-        &#215;
-    </div>
+    {#if !$android}
+        <div
+            id="closing-x"
+            class="closing-x"
+            on:click={handlePopupVisibility}
+            on:keydown={(e) => e.key === "Enter" && handlePopupVisibility(e)}
+        >
+            <i class="fa-solid fa-x" />
+        </div>
+    {/if}
 </div>
 
 <style>
@@ -1109,10 +1195,7 @@
         overflow: auto;
         overscroll-behavior: contain;
         background-color: #151f2e;
-    }
-
-    .popup-container.animate {
-        transition: transform 0.3s ease;
+        transition: transform 0.15s ease;
     }
 
     .popup-container.hide {
@@ -1135,10 +1218,15 @@
         background-color: #151f2e;
         max-width: 640px;
     }
+    .popup-content.hidden {
+        height: var(--popup-content-height);
+    }
 
     .popup-main {
         display: initial;
-        /* visibility: hidden; */
+    }
+    :global(.popup-content.hidden > .popup-main) {
+        display: none !important;
     }
 
     .popup-header {
@@ -1149,16 +1237,26 @@
         user-select: none !important;
     }
 
-    .popup-header::before {
-        font-family: "FontAwesome";
-        content: "\f3f4";
+    .popup-header .popup-header-loading {
+        display: none;
+    }
+
+    :global(.popup-header.loader .popup-header-loading) {
+        display: flex !important;
+        justify-content: center;
+        align-items: center;
         position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        font-size: 40px;
+        bottom: 1em;
+        right: 1em;
+        z-index: 3;
+        background-color: #000;
+        padding: 1em 1.5em;
+        border-radius: 100%;
+    }
+
+    :global(.popup-header.loader i) {
+        font-size: 20px;
         color: #fff;
-        animation: spin 2s linear infinite;
     }
 
     .popup-content-loading {
@@ -1185,6 +1283,7 @@
 
     /* Need to add Globally, trailer Elements are Recreated */
     :global(.trailer) {
+        z-index: 0;
         position: absolute;
         top: 0;
         left: 0;
@@ -1193,11 +1292,17 @@
     }
 
     .popup-img {
+        transition: opacity 0.3s ease 1s;
         width: 100%;
         background-color: #000 !important;
+        z-index: 2;
     }
 
-    .popup-img .bannerImg {
+    .popup-img.fade-out {
+        opacity: 0;
+    }
+
+    .bannerImg {
         height: 100%;
         width: 100%;
         position: absolute;
@@ -1205,7 +1310,7 @@
         object-position: center;
     }
 
-    .popup-img .bannerImg::after {
+    .bannerImg::after {
         content: "";
         position: absolute;
         top: 0;
@@ -1214,8 +1319,12 @@
         height: 100%;
         background-color: rgba(0, 0, 0, 0.5);
     }
+    .bannerImg.fade-out {
+        opacity: 0;
+    }
 
-    .popup-img .coverImg {
+    .coverImg {
+        transition: opacity 0.3s;
         height: 100%;
         max-height: clamp(1px, 70%, 20em);
         width: auto;
@@ -1312,7 +1421,6 @@
         grid-gap: 0.8em;
         padding: 0 0.8em !important;
         margin: 0.5em 0 1.6em 0;
-        transition: max-height 0.3s ease;
     }
 
     @media screen and (orientation: portrait) {
@@ -1378,28 +1486,37 @@
     }
 
     .closing-x {
-        font-size: 25px;
-        width: 25px;
-        height: 25px;
-        text-align: center;
+        background: white;
+        color: black;
+        width: 35px;
+        height: 35px;
         position: fixed;
         right: 10px;
         top: 10px;
-        vertical-align: middle;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        line-height: 1;
         cursor: pointer;
         border-radius: 50%;
         z-index: 2;
         user-select: none;
-        background-color: transparent;
     }
 
-    .closing-x:focus,
-    .closing-x:hover {
-        background-color: rgba(0, 0, 0, 0.75);
+    .closing-x i {
+        color: black;
+        font-size: 1.5rem;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -45%);
+    }
+
+    @media screen and (max-width: 750px) and (min-height: 360px) {
+        .closing-x {
+            top: calc(360px + 20px + 30px + 2px) !important;
+        }
+    }
+    @media screen and (max-width: 750px) and (max-height: 360px) {
+        .closing-x {
+            top: calc(50% - 17.5px) !important;
+        }
     }
 
     .switch {

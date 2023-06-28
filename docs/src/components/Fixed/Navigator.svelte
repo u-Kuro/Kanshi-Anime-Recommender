@@ -268,7 +268,7 @@
     .input-search:not(:focus-within) {
         max-width: min(165px, 100%);
     }
-    .input-search input {
+    #usernameInput {
         font-family: system-ui !important;
         outline: none;
         border: none;
@@ -283,11 +283,11 @@
         width: 100%;
         cursor: auto;
     }
-    .input-search:not(:focus-within) input {
+    .input-search:not(:focus-within) #usernameInput {
         transform: translateY(-99999px);
         position: fixed;
     }
-    .input-search input::-webkit-search-cancel-button {
+    #usernameInput::-webkit-search-cancel-button {
         font-size: 1.5rem;
     }
     .goback {
@@ -297,8 +297,6 @@
         width: 25px;
         align-items: center;
         justify-content: center;
-    }
-    .input-search i {
         color: white;
         cursor: pointer;
     }
@@ -308,7 +306,7 @@
     .input-search:focus-within .usernameText {
         display: none;
     }
-    .input-search .usernameText {
+    .usernameText {
         white-space: nowrap;
         max-width: 165px;
         font-family: system-ui !important;
@@ -324,7 +322,7 @@
         max-width: min(100%, 165px);
         min-width: 30px;
     }
-    .input-search input[value=""] + .usernameText,
+    #usernameInput[value=""] + .usernameText,
     #usernameInput:placeholder-shown + .usernameText {
         text-transform: none;
     }
@@ -332,7 +330,7 @@
         .input-search:focus-within {
             width: 100%;
         }
-        .input-search:focus-within input {
+        .input-search:focus-within #usernameInput {
             max-width: none;
             width: 100%;
         }

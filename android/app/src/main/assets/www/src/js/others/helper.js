@@ -41,12 +41,25 @@ function msToTime(duration) {
 
 function getMostVisibleElement(parent, childSelector, intersectionRatioThreshold = 0.5) {
   try {
-    if (typeof parent === "string") parent = document.querySelector(parentSelector);
     var childElements = parent.querySelectorAll(childSelector);
     var mostVisibleElement = null;
     var highestVisibleRatio = 0;
-    childElements.forEach((childElement) => {
-      var parentRect = parent.getBoundingClientRect();
+    let twoElements = []
+    let parentScroll = parent.scrollTop
+    for (let i = 0; i < childElements.length; i++) {
+      if (childElements[i].offsetTop > parentScroll) {
+        if (i > 0) {
+          twoElements = [childElements[i - 1], childElements[i]]
+        } else if (i === 0) {
+          twoElements = [childElements[i]];
+        } else {
+          twoElements = [];
+        }
+        break;
+      }
+    }
+    var parentRect = parent.getBoundingClientRect();
+    twoElements.forEach((childElement) => {
       var childRect = childElement.getBoundingClientRect();
       var intersectionHeight = Math.min(childRect.bottom, parentRect.bottom) - Math.max(childRect.top, parentRect.top);
       var intersectionRatio = intersectionHeight / childRect.height;
@@ -59,6 +72,78 @@ function getMostVisibleElement(parent, childSelector, intersectionRatioThreshold
   } catch (ex) {
     // console.error(ex)
     return
+  }
+}
+
+function getMostVisibleElementFromArray(elements, parent, intersectionRatioThreshold = 0.5) {
+  try {
+    let mostVisibleElement = null;
+    var highestVisibleRatio = 0;
+    let parentRect = parent.getBoundingClientRect();
+    elements.forEach((child) => {
+      let childRect = child.getBoundingClientRect();
+      var intersectionHeight = Math.min(childRect.bottom, parentRect.bottom) - Math.max(childRect.top, parentRect.top);
+      var intersectionRatio = intersectionHeight / childRect.height;
+      if (intersectionRatio >= intersectionRatioThreshold && intersectionRatio > highestVisibleRatio) {
+        highestVisibleRatio = intersectionRatio;
+        mostVisibleElement = child;
+      }
+    });
+    return mostVisibleElement;
+  } catch (ex) {
+    console.error(ex)
+    return
+  }
+}
+
+function isElementVisible(parent, element, intersectionRatioThreshold = 0) {
+  try {
+    var boundingRect = element.getBoundingClientRect();
+    var parentRect = parent.getBoundingClientRect();
+    var overflowX = getComputedStyle(parent).overflowX;
+    var overflowY = getComputedStyle(parent).overflowY;
+    var isParentScrollable = overflowX === 'auto' || overflowX === 'scroll' || overflowY === 'auto' || overflowY === 'scroll';
+    if (isParentScrollable) {
+      var scrollLeft = parent.scrollLeft;
+      var scrollTop = parent.scrollTop;
+      var isVisible = (
+        boundingRect.top >= parentRect.top &&
+        boundingRect.left >= parentRect.left &&
+        boundingRect.bottom <= parentRect.bottom &&
+        boundingRect.right <= parentRect.right
+      );
+      if (!isVisible) {
+        var intersectionTop = Math.max(boundingRect.top, parentRect.top) - Math.min(boundingRect.bottom, parentRect.bottom);
+        var intersectionLeft = Math.max(boundingRect.left, parentRect.left) - Math.min(boundingRect.right, parentRect.right);
+        var intersectionArea = intersectionTop * intersectionLeft;
+        var elementArea = boundingRect.height * boundingRect.width;
+        var intersectionRatio = intersectionArea / elementArea;
+        isVisible = intersectionRatio >= intersectionRatioThreshold;
+      }
+      if (!isVisible) {
+        return false;
+      }
+      boundingRect = {
+        top: boundingRect.top - parentRect.top + scrollTop,
+        left: boundingRect.left - parentRect.left + scrollLeft,
+        bottom: boundingRect.bottom - parentRect.top + scrollTop,
+        right: boundingRect.right - parentRect.left + scrollLeft,
+        height: boundingRect.height,
+        width: boundingRect.width
+      };
+    }
+    var windowHeight = window.innerHeight || document.documentElement.clientHeight;
+    var windowWidth = window.innerWidth || document.documentElement.clientWidth;
+    var isVisibleInWindow = (
+      boundingRect.top >= 0 &&
+      boundingRect.left >= 0 &&
+      boundingRect.bottom <= windowHeight &&
+      boundingRect.right <= windowWidth
+    );
+    return isVisibleInWindow;
+  } catch (ex) {
+    // console.error(ex)
+    return false;
   }
 }
 
@@ -259,7 +344,18 @@ const downloadLink = (url, fileName) => {
   return
 }
 
+const addClass = (element, className) => {
+  element?.classList?.add?.(className)
+}
+
+const removeClass = (element, className) => {
+  element?.classList?.remove?.(className)
+}
+
 export {
+  getMostVisibleElementFromArray,
+  addClass,
+  removeClass,
   downloadLink,
   isAndroid,
   isJsonObject,
@@ -274,5 +370,6 @@ export {
   ncsCompare,
   msToTime,
   changeInputValue,
-  dragScroll
+  dragScroll,
+  isElementVisible
 }

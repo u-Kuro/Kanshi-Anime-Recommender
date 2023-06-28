@@ -16,7 +16,7 @@
         asyncAnimeReloaded,
     } from "../../js/globalValues.js";
     import { fade, fly } from "svelte/transition";
-    import { changeInputValue, dragScroll } from "../../js/others/helper.js";
+    import { addClass, changeInputValue, dragScroll, removeClass } from "../../js/others/helper.js";
 
     let Init = true;
 
@@ -109,6 +109,7 @@
             // Reload Anime for Async Animation
             if ($finalAnimeList?.length > 0) {
                 await callAsyncAnimeReload();
+                showAllActiveFilters = false;
             }
             // Close Filter Selection Dropdown
             $filterOptions?.filterSelection?.[
@@ -136,7 +137,7 @@
             highlightedEl instanceof Element &&
             highlightedEl.closest(".filterType")
         ) {
-            highlightedEl.style.backgroundColor = "";
+            removeClass(highlightedEl,"highlight")
             highlightedEl = null;
         }
         selectedFilterTypeElement = false;
@@ -162,7 +163,7 @@
                 highlightedEl instanceof Element &&
                 highlightedEl.closest(".filterType")
             ) {
-                highlightedEl.style.backgroundColor = "";
+                removeClass(highlightedEl,"highlight")
                 highlightedEl = null;
             }
             selectedFilterTypeElement = false;
@@ -208,7 +209,7 @@
             highlightedEl instanceof Element &&
             highlightedEl.closest(".filter-select")
         ) {
-            highlightedEl.style.backgroundColor = "";
+            removeClass(highlightedEl,"highlight")
             highlightedEl = null;
         }
         $filterOptions.filterSelection[idxTypeSelected].filters.Dropdown[
@@ -227,7 +228,7 @@
             highlightedEl instanceof Element &&
             highlightedEl.closest(".filter-select")
         ) {
-            highlightedEl.style.backgroundColor = "";
+            removeClass(highlightedEl,"highlight")
             highlightedEl = null;
         }
         selectedFilterElement = null;
@@ -243,7 +244,7 @@
         ) {
             // Small Screen Width
             if (highlightedEl instanceof Element) {
-                highlightedEl.style.backgroundColor = "";
+                removeClass(highlightedEl,"highlight")
                 highlightedEl = null;
             }
             // Close Filter Type Dropdown
@@ -275,7 +276,7 @@
                     highlightedEl instanceof Element &&
                     highlightedEl.closest(".filterType")
                 ) {
-                    highlightedEl.style.backgroundColor = "";
+                    removeClass(highlightedEl,"highlight")
                     highlightedEl = null;
                 }
                 selectedFilterTypeElement = false;
@@ -288,7 +289,7 @@
                     highlightedEl instanceof Element &&
                     highlightedEl.closest(".sortFilter")
                 ) {
-                    highlightedEl.style.backgroundColor = "";
+                    removeClass(highlightedEl,"highlight")
                     highlightedEl = null;
                 }
                 selectedSortElement = false;
@@ -305,7 +306,7 @@
                     highlightedEl instanceof Element &&
                     highlightedEl.closest(".filter-select")
                 ) {
-                    highlightedEl.style.backgroundColor = "";
+                    removeClass(highlightedEl,"highlight")
                     highlightedEl = null;
                 }
                 let idxTypeSelected =
@@ -940,7 +941,7 @@
                 highlightedEl instanceof Element &&
                 highlightedEl.closest(".sortFilter")
             ) {
-                highlightedEl.style.backgroundColor = "";
+                removeClass(highlightedEl,"highlight")
                 highlightedEl = null;
             }
             selectedSortElement = false;
@@ -969,7 +970,7 @@
             highlightedEl instanceof Element &&
             highlightedEl.closest(".sortFilter")
         ) {
-            highlightedEl.style.backgroundColor = "";
+            removeClass(highlightedEl,"highlight")
             highlightedEl = null;
         }
         selectedSortElement = false;
@@ -1053,10 +1054,9 @@
                         }
                     }
                     if (nextEl instanceof Element) {
-                        highlightedEl.style.backgroundColor = "";
+                        removeClass(highlightedEl,"highlight")
                         highlightedEl = nextEl;
-                        highlightedEl.style.backgroundColor =
-                            "rgba(0,0,0,0.25)";
+                        addClass(highlightedEl,"highlight")
                         highlightedEl.scrollIntoView({
                             behavior: isFirstOrLast ? "auto" : "smooth",
                             container: parent,
@@ -1070,8 +1070,7 @@
                     );
                     highlightedEl = options[0];
                     if (highlightedEl instanceof Element) {
-                        highlightedEl.style.backgroundColor =
-                            "rgba(0,0,0,0.25)";
+                        addClass(highlightedEl,"highlight")
                         highlightedEl.scrollIntoView({
                             behavior: "smooth",
                             container: parent,
@@ -1114,7 +1113,7 @@
             }
             selectedFilterElement = null;
             if (highlightedEl instanceof Element) {
-                highlightedEl.style.backgroundColor = "";
+                removeClass(highlightedEl,"highlight")
                 highlightedEl = null;
             }
         }
@@ -1161,7 +1160,7 @@
     window.closeDropdown = () => {
         // Small Screen Width
         if (highlightedEl instanceof Element) {
-            highlightedEl.style.backgroundColor = "";
+            removeClass(highlightedEl,"highlight")
             highlightedEl = null;
         }
         // Close Filter Type Dropdown
@@ -1970,6 +1969,9 @@
     .options::-webkit-scrollbar {
         display: none;
     }
+    .highlight {
+        background-color: rgba(0,0,0,0.25);
+    }
 
     .filter-select .options {
         display: flex;
@@ -2058,7 +2060,6 @@
         user-select: none;
         overflow-y: auto;
         scroll-snap-type: y mandatory;
-        transition: max-height 0.3s ease;
         will-change: max-height;
     }
 

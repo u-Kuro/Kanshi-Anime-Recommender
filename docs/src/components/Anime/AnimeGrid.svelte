@@ -1,5 +1,5 @@
 <script>
-    import { tick } from "svelte";
+    import { onMount, tick } from "svelte";
     import {
         finalAnimeList,
         searchedAnimeKeyword,
@@ -20,16 +20,21 @@
         formatNumber,
         ncsCompare,
         isJsonObject,
+        removeClass,
+        addClass,
     } from "../../js/others/helper.js";
 
+    let animeGridEl;
     let observerTimeout;
-    let observerDelay = 1000;
+    let observerDelay = 1000,
+        loadingMore = false;
 
-    function addObserver() {
+    function addLastAnimeObserver() {
         $animeObserver = new IntersectionObserver(
             (entries, self) => {
                 entries.forEach((entry) => {
                     if (entry.isIntersecting) {
+                        loadingMore = true;
                         self.unobserve(entry.target);
                         if (observerTimeout) clearTimeout(observerTimeout);
                         observerTimeout = setTimeout(() => {
@@ -50,6 +55,11 @@
         );
     }
 
+    onMount(() => {
+        animeGridEl = animeGridEl || document.getElementById("anime-grid");
+    });
+
+    let isAsyncLoad = false;
     animeLoaderWorker.subscribe((val) => {
         if (val instanceof Worker) {
             val.onmessage = async ({ data }) => {
@@ -61,7 +71,7 @@
                 ) {
                     if (data?.reload === true) {
                         $finalAnimeList = data.finalAnimeList;
-                        $asyncAnimeReloaded = !$asyncAnimeReloaded;
+                        isAsyncLoad = true;
                     } else if (data.isNew === true) {
                         $finalAnimeList = data.finalAnimeList;
                     } else if (data.isNew === false) {
@@ -82,16 +92,15 @@
                     data.isRemoved === true &&
                     typeof data.removedID === "number"
                 ) {
+                    let maxGridElIdx = Math.max($finalAnimeList.length - 2, 0);
+                    let gridElement =
+                        $finalAnimeList[maxGridElIdx].gridElement ||
+                        animeGridEl.children?.[maxGridElIdx];
                     if (
                         $animeObserver instanceof IntersectionObserver &&
-                        $finalAnimeList[Math.max($finalAnimeList.length - 2, 0)]
-                            .gridElement instanceof Element
+                        gridElement instanceof Element
                     ) {
-                        $animeObserver.observe(
-                            $finalAnimeList[
-                                Math.max($finalAnimeList.length - 2, 0)
-                            ].gridElement
-                        );
+                        $animeObserver.observe(gridElement);
                     }
                     let removedIdx = $finalAnimeList.findIndex(
                         ({ id }) => id === data.removedID
@@ -103,6 +112,7 @@
                         $animeIdxRemoved = removedIdx;
                     }
                 }
+                loadingMore = false;
             };
             val.onerror = (error) => {
                 console.error(error);
@@ -110,7 +120,7 @@
         }
     });
 
-    finalAnimeList.subscribe((val) => {
+    finalAnimeList.subscribe(async (val) => {
         if (val instanceof Array && val.length) {
             if ($shownAllInList) {
                 $shownAllInList = false;
@@ -119,23 +129,30 @@
                 $animeObserver.disconnect();
                 $animeObserver = null;
             }
-            (async () => {
-                await tick();
-                addObserver();
-                if (
-                    $animeObserver instanceof IntersectionObserver &&
-                    $finalAnimeList[$finalAnimeList.length - 1]
-                        .gridElement instanceof Element
-                ) {
-                    $animeObserver.observe(
-                        $finalAnimeList[$finalAnimeList.length - 1].gridElement
-                    );
-                }
-            })();
+            await tick();
+            addLastAnimeObserver();
+            let gridElementIdx = $finalAnimeList.length - 1;
+            let gridElement =
+                $finalAnimeList[gridElementIdx].gridElement ||
+                animeGridEl.children?.[gridElementIdx];
+            if (
+                $animeObserver instanceof IntersectionObserver &&
+                gridElement instanceof Element
+            ) {
+                $animeObserver.observe(gridElement);
+            }
+            if (isAsyncLoad) {
+                $asyncAnimeReloaded = !$asyncAnimeReloaded;
+                isAsyncLoad = false;
+            }
         } else {
             if ($animeObserver) {
                 $animeObserver?.disconnect?.();
                 $animeObserver = null;
+            }
+            if (isAsyncLoad) {
+                $asyncAnimeReloaded = !$asyncAnimeReloaded;
+                isAsyncLoad = false;
             }
         }
     });
@@ -263,36 +280,24 @@
             return "lightgrey"; // Default Unwatched Icon Color
         }
     }
-
-    let gridContentVisibility = "auto";
-    window.addEventListener("scroll", () => {
-        if (window.scrollY >= 500) {
-            gridContentVisibility = "visible";
-        } else {
-            gridContentVisibility = "auto";
-        }
-    });
 </script>
 
 <main>
-    <div id="anime-grid" class="image-grid">
+    <div id="anime-grid" class="image-grid" bind:this={animeGridEl}>
         {#if $finalAnimeList?.length}
             {#each $finalAnimeList || [] as anime, animeIdx (anime.id)}
                 <div
                     class="image-grid__card"
                     bind:this={anime.gridElement}
                     title={getBriefInfo(anime)}
-                    style:--content-visibility={gridContentVisibility ||
-                        "visible"}
                 >
                     <div class="shimmer">
                         <img
                             loading="lazy"
-                            style:opacity="0"
-                            class="image-grid__card-thumb"
+                            class="image-grid__card-thumb fade-out"
                             alt="anime-cover"
                             src={anime.coverImageUrl || ""}
-                            on:load={(e) => (e.target.style.opacity = 1)}
+                            on:load={(e) => removeClass(e.target, "fade-out")}
                             on:click={handleOpenPopup(animeIdx)}
                             on:pointerdown={handleOpenOption(animeIdx)}
                             on:pointerup={cancelOpenOption}
@@ -306,7 +311,7 @@
                         copy-value={anime.title || ""}
                     >
                         <span class="title">{anime.title || "N/A"}</span>
-                        <span class="brief-info">
+                        <span class="brief-info-wrapper">
                             <div class="brief-info">
                                 <i
                                     class={`${getUserStatusColor(
@@ -335,7 +340,7 @@
                     </span>
                 </div>
             {/each}
-            {#if $finalAnimeList?.length && !$shownAllInList}
+            {#if $finalAnimeList?.length && !$shownAllInList && loadingMore}
                 {#each Array(6) as _}
                     <div class="image-grid__card skeleton">
                         <div class="shimmer" />
@@ -374,17 +379,42 @@
         background-color: rgba(30, 42, 56, 0.8) !important;
     }
 
+    .image-grid__card.hidden {
+        content-visibility: auto;
+    }
+
     .image-grid__card.skeleton {
         background-color: transparent !important;
     }
 
-    .image-grid__card.skeleton .title {
+    .title.skeleton {
         height: 10px;
         width: 75%;
         margin-bottom: clamp(0.1em, 0.3em, 0.5em);
     }
 
-    .image-grid__card.skeleton .brief-info {
+    .brief-info.skeleton {
+        height: 10px;
+        width: 50%;
+        margin-bottom: clamp(0.1em, 0.3em, 0.5em);
+    }
+
+    .title {
+        margin-bottom: clamp(0.1em, 0.3em, 0.5em);
+        overflow-x: auto;
+        overflow-y: hidden;
+        white-space: nowrap;
+        display: block;
+    }
+
+    .title::-webkit-scrollbar {
+        display: none;
+    }
+
+    .image-grid__card.skeleton
+        .brief-info
+        .image-grid__card.skeleton
+        .brief-info-wrapper {
         height: 10px;
         width: 50%;
     }
@@ -404,11 +434,14 @@
     .image-grid__card {
         animation: fadeIn 0.3s ease-in;
         width: 100%;
-        height: 100%;
+        height: var(--popup-content-height);
         display: grid;
         grid-template-rows: auto 57px;
         grid-template-columns: 100%;
-        content-visibility: var(--content-visibility);
+    }
+    :global(.image-grid__card.hidden > .shimmer),
+    :global(.image-grid__card.hidden > .image-grid__card-title) {
+        display: none;
     }
 
     .image-grid__card > .shimmer {
@@ -418,7 +451,7 @@
         border-radius: 0.25em;
     }
 
-    .image-grid__card .image-grid__card-thumb {
+    .image-grid__card-thumb {
         position: absolute;
         background: rgba(30, 42, 56, 0.8);
         border-radius: 0.25em;
@@ -427,6 +460,10 @@
         cursor: pointer;
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
         transition: transform opacity 0.3s ease;
+        object-fit: cover;
+        width: 100%;
+        height: 100%;
+        user-select: none;
     }
 
     .image-grid__card:not(.skeleton):focus .image-grid__card-thumb,
@@ -436,16 +473,8 @@
             0 10px 10px rgba(0, 0, 0, 0.22);
     }
 
-    .image-grid__card-thumb {
-        object-fit: cover;
-        width: 100%;
-        height: 100%;
-        user-select: none;
-    }
-
-    .image-grid__card-thumb-portrait {
-        width: 100%;
-        height: auto;
+    .image-grid__card-thumb.fade-out {
+        opacity: 0;
     }
 
     .image-grid__card-title {
@@ -455,35 +484,21 @@
         height: 57px;
     }
 
-    .image-grid__card-title span.brief-info {
+    .brief-info,
+    .brief-info-wrapper {
         display: flex;
         gap: 0.5ch;
         flex-wrap: wrap;
-    }
-
-    .image-grid__card-title span.title {
-        display: block;
-        overflow-x: auto;
-        overflow-y: hidden;
-        white-space: nowrap;
-    }
-
-    .image-grid__card-title span.title::-webkit-scrollbar {
-        display: none;
-    }
-
-    .image-grid__card-title span.brief-info div {
-        display: flex;
         align-items: center;
         white-space: nowrap;
         column-gap: 2px;
         user-select: none;
     }
 
-    .brief-info i.fa-circle::before {
+    .fa-circle::before {
         font-size: 9px;
     }
-    .brief-info i.fa-star::before {
+    .fa-star::before {
         font-size: 10px;
     }
 
@@ -494,16 +509,6 @@
         padding: 30px;
         text-align: center;
         grid-column: 1 / -1;
-    }
-
-    @keyframes fadeIn {
-        from {
-            opacity: 0;
-        }
-
-        to {
-            opacity: 1;
-        }
     }
 
     .shimmer {

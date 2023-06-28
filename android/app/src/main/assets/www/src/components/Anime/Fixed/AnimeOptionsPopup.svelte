@@ -139,24 +139,28 @@
                 </div>
             </div>
             <span
+                class="anime-option"
                 on:click={openAnimePopup}
                 on:keydown={(e) => e.key === "Enter" && openAnimePopup(e)}
-                ><h2>Open Anime</h2></span
+                ><h2 class="option-title">Open Anime</h2></span
             >
             <span
+                class="anime-option"
                 on:click={openInAnilist}
                 on:keydown={(e) => e.key === "Enter" && openInAnilist(e)}
-                ><h2>Open In Anilist</h2></span
+                ><h2 class="option-title">Open In Anilist</h2></span
             >
             <span
+                class="anime-option"
                 on:click={copyTitle}
                 on:keydown={(e) => e.key === "Enter" && copyTitle(e)}
-                ><h2>Copy Title</h2></span
+                ><h2 class="option-title">Copy Title</h2></span
             >
             <span
+                class="anime-option"
                 on:click={handleHideShow}
                 on:keydown={(e) => e.key === "Enter" && handleHideShow(e)}
-                ><h2>
+                ><h2 class="option-title">
                     {($hiddenEntries[animeID] ? "Show" : "Hide") + " Anime"}
                 </h2></span
             >
@@ -213,21 +217,21 @@
         display: none;
     }
 
-    .anime-title h1 {
+    h1 {
         white-space: nowrap;
     }
 
-    .anime-options-container span {
+    span {
         padding: 1em;
         user-select: none !important;
         text-decoration: none !important;
     }
 
-    .anime-options-container span:not(.anime-title) {
+    .anime-option {
         cursor: pointer;
     }
 
-    .anime-options-container h2 {
+    .option-title {
         font-weight: 400;
         cursor: pointer;
     }

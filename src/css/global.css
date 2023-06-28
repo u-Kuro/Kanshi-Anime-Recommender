@@ -98,6 +98,10 @@ input[type="search"]::-webkit-search-cancel-button {
     cursor: pointer;
 }
 
+.display-none {
+    display: none !important;
+}
+
 .lightgrey-color {
     color: #d3d3d3 !important;
 }
@@ -148,4 +152,24 @@ input[type="search"]::-webkit-search-cancel-button {
 
 .red-background {
     background-color: #e85d75 !important;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+    }
+
+    to {
+        opacity: 0;
+    }
 }

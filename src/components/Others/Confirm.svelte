@@ -69,12 +69,14 @@
             <div class="confirm-button-container">
                 {#if !isAlert}
                     <button
+                        class="button"
                         on:click={handleCancel}
                         on:keydown={(e) => e.key === "Enter" && handleCancel(e)}
                         >{cancelLabel}</button
                     >
                 {/if}
                 <button
+                    class="button"
                     bind:this={confirmButtonEl}
                     on:click={handleConfirm}
                     on:keydown={(e) => e.key === "Enter" && handleConfirm(e)}
@@ -155,7 +157,7 @@
         justify-content: center;
     }
 
-    .confirm-button-container > button {
+    .button {
         background-color: transparent;
         outline: none;
         color: inherit;
@@ -168,8 +170,8 @@
     }
 
     @media (pointer: fine) {
-        .confirm-button-container > button:hover,
-        .confirm-button-container > button:focus {
+        .button:hover,
+        .button:focus {
             background-color: rgba(0, 0, 0, 0.4);
             border-radius: 6px;
         }
@@ -185,7 +187,7 @@
             font-size: 2rem;
         }
 
-        .confirm-button-container > button {
+        .button {
             font-size: 1.2rem;
         }
     }

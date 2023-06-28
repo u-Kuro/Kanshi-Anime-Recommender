@@ -387,7 +387,7 @@
     .menu::-webkit-scrollbar {
         display: none;
     }
-    .menu > .button {
+    .button {
         -moz-box-shadow: 0 3px 20px 0 #2b2d42;
         -webkit-box-shadow: 0 3px 20px 0 #2b2d42;
         box-shadow: 0 3px 20px 0 #2b2d42;
@@ -409,21 +409,12 @@
         .menu {
             padding: 1.5em;
         }
-        .menu > .button {
+        .button {
             flex: none;
         }
     }
-    .menu > button.selected {
+    .button.selected {
         background-color: #000 !important;
         color: #b9cadd !important;
     }
-    /* Light */
-    /* .light {
-        background-color: rgb(0, 0, 0, 0.925);
-        color: #f0f0f0;
-    }
-    .light.selected {
-        background-color: #f0f0f0 !important;
-        color: #000 !important;
-    } */
 </style>
