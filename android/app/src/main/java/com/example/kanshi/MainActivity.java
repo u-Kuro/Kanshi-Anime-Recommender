@@ -65,7 +65,7 @@ import androidx.core.splashscreen.SplashScreen;
 @SuppressWarnings("CommentedOutCode")
 public class MainActivity extends AppCompatActivity  {
 
-    public final int appID = 4;
+    public final int appID = 5;
     public boolean webviewIsLoaded = false;
     public SharedPreferences prefs;
     private SharedPreferences.Editor prefsEdit;
@@ -317,7 +317,6 @@ public class MainActivity extends AppCompatActivity  {
         });
 //        if (0 != (getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE))
 //        { WebView.setWebContentsDebuggingEnabled(true); }
-
         isAppConnectionAvailable(isConnected -> webView.post(() -> {
             if (isConnected) {
                 webView.loadUrl("https://kanshi.vercel.app/");
@@ -329,6 +328,10 @@ public class MainActivity extends AppCompatActivity  {
                         .setPositiveButton("OK", null)
                 );
             }
+            // Only works after first page load
+            webSettings.setBuiltInZoomControls(false);
+            webSettings.setDisplayZoomControls(false);
+            webSettings.setSupportZoom(false);
         }),3000);
     }
 

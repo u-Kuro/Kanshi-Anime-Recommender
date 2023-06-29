@@ -41,7 +41,12 @@ function msToTime(duration) {
 
 function getMostVisibleElement(parent, childSelector, intersectionRatioThreshold = 0.5) {
   try {
-    var childElements = parent.querySelectorAll(childSelector);
+    var childElements;
+    if (childSelector instanceof Array) {
+      childElements = childSelector;
+    } else {
+      childElements = parent.querySelectorAll(childSelector);
+    }
     var mostVisibleElement = null;
     var highestVisibleRatio = 0;
     let twoElements = []
@@ -75,23 +80,32 @@ function getMostVisibleElement(parent, childSelector, intersectionRatioThreshold
   }
 }
 
-function getMostVisibleElementFromArray(elements, parent, intersectionRatioThreshold = 0.5) {
+function getMostVisibleElementFromArray(parent, elements, intersectionRatioThreshold = 0.5) {
   try {
+    if (!elements.length) return null;
     let mostVisibleElement = null;
     var highestVisibleRatio = 0;
     let parentRect = parent.getBoundingClientRect();
-    elements.forEach((child) => {
+    if (elements instanceof HTMLCollection) {
+      elements = Array.from(elements);
+    }
+    elements?.forEach?.((child) => {
       let childRect = child.getBoundingClientRect();
       var intersectionHeight = Math.min(childRect.bottom, parentRect.bottom) - Math.max(childRect.top, parentRect.top);
       var intersectionRatio = intersectionHeight / childRect.height;
-      if (intersectionRatio >= intersectionRatioThreshold && intersectionRatio > highestVisibleRatio) {
-        highestVisibleRatio = intersectionRatio;
-        mostVisibleElement = child;
+      if (intersectionRatio > highestVisibleRatio) {
+        if (intersectionRatioThreshold === 0 && intersectionRatio > intersectionRatioThreshold) {
+          highestVisibleRatio = intersectionRatio;
+          mostVisibleElement = child;
+        } else if (intersectionRatio >= intersectionRatioThreshold) {
+          highestVisibleRatio = intersectionRatio;
+          mostVisibleElement = child;
+        }
       }
     });
     return mostVisibleElement;
   } catch (ex) {
-    console.error(ex)
+    // console.error(ex)
     return
   }
 }
@@ -116,7 +130,7 @@ function isElementVisible(parent, element, intersectionRatioThreshold = 0) {
         var intersectionTop = Math.max(boundingRect.top, parentRect.top) - Math.min(boundingRect.bottom, parentRect.bottom);
         var intersectionLeft = Math.max(boundingRect.left, parentRect.left) - Math.min(boundingRect.right, parentRect.right);
         var intersectionArea = intersectionTop * intersectionLeft;
-        var elementArea = boundingRect.height * boundingRect.width;
+        var elementArea = Math.min(boundingRect.height, window.innerHeight) * Math.min(boundingRect.width, window.innerWidth);
         var intersectionRatio = intersectionArea / elementArea;
         isVisible = intersectionRatio >= intersectionRatioThreshold;
       }
@@ -143,7 +157,7 @@ function isElementVisible(parent, element, intersectionRatioThreshold = 0) {
     return isVisibleInWindow;
   } catch (ex) {
     // console.error(ex)
-    return false;
+    return
   }
 }
 
@@ -159,13 +173,27 @@ const getChildIndex = (childElement, condition) => {
 const scrollToElement = (parent, target, position = 'top', behavior, offset = 0) => {
   try {
     let scrollAmount;
+    if (typeof target === "string") target = document.querySelector(target)
     if (parent === window) {
-      scrollAmount = target.offsetTop
+      const targetRect = target.getBoundingClientRect();
+      const scrollY = window.scrollY;
+      if (position === 'bottom') {
+        scrollAmount = targetRect.bottom + scrollY - window.innerHeight;
+      } else if (position === 'center') {
+        scrollAmount = targetRect.top + scrollY - (window.innerHeight / 2);
+      } else {
+        scrollAmount = targetRect.top + scrollY;
+      }
     } else {
       if (typeof parent === "string") parent = document.querySelector(parent)
-      if (typeof target === "string") target = document.querySelector(target)
       if (position === 'bottom') {
         scrollAmount = target.offsetTop + target.offsetHeight - parent.offsetHeight;
+      } else if (position === 'center') {
+        let targetRect = target.getBoundingClientRect();
+        let parentRect = parent.getBoundingClientRect();
+        let targetCenter = targetRect.top + targetRect.height / 2;
+        let parentCenter = parentRect.top + parentRect.height / 2;
+        scrollAmount = targetCenter - parentCenter + parent.scrollTop - parentRect.height / 2;
       } else {
         let targetRect = target.getBoundingClientRect();
         let parentRect = parent.getBoundingClientRect();

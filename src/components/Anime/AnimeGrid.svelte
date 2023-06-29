@@ -65,26 +65,26 @@
             val.onmessage = async ({ data }) => {
                 await tick();
                 if (data?.status !== undefined) $dataStatus = data.status;
-                else if (
-                    data.finalAnimeList instanceof Array &&
-                    $finalAnimeList instanceof Array
-                ) {
+                else if (data.finalAnimeList instanceof Array) {
                     if (data?.reload === true) {
                         $finalAnimeList = data.finalAnimeList;
                         isAsyncLoad = true;
                     } else if (data.isNew === true) {
                         $finalAnimeList = data.finalAnimeList;
                     } else if (data.isNew === false) {
-                        $finalAnimeList = $finalAnimeList.concat(
-                            data.finalAnimeList
-                        );
-                        if (data.isLast) {
-                            $shownAllInList = true;
-                            if (
-                                $animeObserver instanceof IntersectionObserver
-                            ) {
-                                $animeObserver.disconnect();
-                                $animeObserver = null;
+                        if ($finalAnimeList instanceof Array) {
+                            $finalAnimeList = $finalAnimeList.concat(
+                                data.finalAnimeList
+                            );
+                            if (data.isLast) {
+                                $shownAllInList = true;
+                                if (
+                                    $animeObserver instanceof
+                                    IntersectionObserver
+                                ) {
+                                    $animeObserver.disconnect();
+                                    $animeObserver = null;
+                                }
                             }
                         }
                     }
@@ -115,7 +115,7 @@
                 loadingMore = false;
             };
             val.onerror = (error) => {
-                console.error(error);
+                $dataStatus = "Something went wrong...";
             };
         }
     });

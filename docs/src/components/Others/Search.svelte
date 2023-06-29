@@ -16,7 +16,12 @@
         asyncAnimeReloaded,
     } from "../../js/globalValues.js";
     import { fade, fly } from "svelte/transition";
-    import { addClass, changeInputValue, dragScroll, removeClass } from "../../js/others/helper.js";
+    import {
+        addClass,
+        changeInputValue,
+        dragScroll,
+        removeClass,
+    } from "../../js/others/helper.js";
 
     let Init = true;
 
@@ -107,9 +112,8 @@
             // Close Filter Dropdown
             selectedSortElement = false;
             // Reload Anime for Async Animation
-            if ($finalAnimeList?.length > 0) {
+            if ($finalAnimeList?.length > 18) {
                 await callAsyncAnimeReload();
-                showAllActiveFilters = false;
             }
             // Close Filter Selection Dropdown
             $filterOptions?.filterSelection?.[
@@ -137,7 +141,7 @@
             highlightedEl instanceof Element &&
             highlightedEl.closest(".filterType")
         ) {
-            removeClass(highlightedEl,"highlight")
+            removeClass(highlightedEl, "highlight");
             highlightedEl = null;
         }
         selectedFilterTypeElement = false;
@@ -163,7 +167,7 @@
                 highlightedEl instanceof Element &&
                 highlightedEl.closest(".filterType")
             ) {
-                removeClass(highlightedEl,"highlight")
+                removeClass(highlightedEl, "highlight");
                 highlightedEl = null;
             }
             selectedFilterTypeElement = false;
@@ -209,7 +213,7 @@
             highlightedEl instanceof Element &&
             highlightedEl.closest(".filter-select")
         ) {
-            removeClass(highlightedEl,"highlight")
+            removeClass(highlightedEl, "highlight");
             highlightedEl = null;
         }
         $filterOptions.filterSelection[idxTypeSelected].filters.Dropdown[
@@ -228,7 +232,7 @@
             highlightedEl instanceof Element &&
             highlightedEl.closest(".filter-select")
         ) {
-            removeClass(highlightedEl,"highlight")
+            removeClass(highlightedEl, "highlight");
             highlightedEl = null;
         }
         selectedFilterElement = null;
@@ -244,7 +248,7 @@
         ) {
             // Small Screen Width
             if (highlightedEl instanceof Element) {
-                removeClass(highlightedEl,"highlight")
+                removeClass(highlightedEl, "highlight");
                 highlightedEl = null;
             }
             // Close Filter Type Dropdown
@@ -276,7 +280,7 @@
                     highlightedEl instanceof Element &&
                     highlightedEl.closest(".filterType")
                 ) {
-                    removeClass(highlightedEl,"highlight")
+                    removeClass(highlightedEl, "highlight");
                     highlightedEl = null;
                 }
                 selectedFilterTypeElement = false;
@@ -289,7 +293,7 @@
                     highlightedEl instanceof Element &&
                     highlightedEl.closest(".sortFilter")
                 ) {
-                    removeClass(highlightedEl,"highlight")
+                    removeClass(highlightedEl, "highlight");
                     highlightedEl = null;
                 }
                 selectedSortElement = false;
@@ -306,7 +310,7 @@
                     highlightedEl instanceof Element &&
                     highlightedEl.closest(".filter-select")
                 ) {
-                    removeClass(highlightedEl,"highlight")
+                    removeClass(highlightedEl, "highlight");
                     highlightedEl = null;
                 }
                 let idxTypeSelected =
@@ -941,7 +945,7 @@
                 highlightedEl instanceof Element &&
                 highlightedEl.closest(".sortFilter")
             ) {
-                removeClass(highlightedEl,"highlight")
+                removeClass(highlightedEl, "highlight");
                 highlightedEl = null;
             }
             selectedSortElement = false;
@@ -970,7 +974,7 @@
             highlightedEl instanceof Element &&
             highlightedEl.closest(".sortFilter")
         ) {
-            removeClass(highlightedEl,"highlight")
+            removeClass(highlightedEl, "highlight");
             highlightedEl = null;
         }
         selectedSortElement = false;
@@ -1054,9 +1058,9 @@
                         }
                     }
                     if (nextEl instanceof Element) {
-                        removeClass(highlightedEl,"highlight")
+                        removeClass(highlightedEl, "highlight");
                         highlightedEl = nextEl;
-                        addClass(highlightedEl,"highlight")
+                        addClass(highlightedEl, "highlight");
                         highlightedEl.scrollIntoView({
                             behavior: isFirstOrLast ? "auto" : "smooth",
                             container: parent,
@@ -1070,7 +1074,7 @@
                     );
                     highlightedEl = options[0];
                     if (highlightedEl instanceof Element) {
-                        addClass(highlightedEl,"highlight")
+                        addClass(highlightedEl, "highlight");
                         highlightedEl.scrollIntoView({
                             behavior: "smooth",
                             container: parent,
@@ -1113,14 +1117,14 @@
             }
             selectedFilterElement = null;
             if (highlightedEl instanceof Element) {
-                removeClass(highlightedEl,"highlight")
+                removeClass(highlightedEl, "highlight");
                 highlightedEl = null;
             }
         }
     }
 
     async function handleShowActiveFilters() {
-        if ($finalAnimeList?.length > 0) {
+        if ($finalAnimeList?.length > 18) {
             await callAsyncAnimeReload();
         }
         showAllActiveFilters = !showAllActiveFilters;
@@ -1130,6 +1134,7 @@
     function callAsyncAnimeReload() {
         return new Promise((resolve) => {
             if ($animeLoaderWorker instanceof Worker) {
+                $finalAnimeList = null;
                 $animeLoaderWorker.postMessage({
                     reload: true,
                 });
@@ -1160,7 +1165,7 @@
     window.closeDropdown = () => {
         // Small Screen Width
         if (highlightedEl instanceof Element) {
-            removeClass(highlightedEl,"highlight")
+            removeClass(highlightedEl, "highlight");
             highlightedEl = null;
         }
         // Close Filter Type Dropdown
@@ -1244,7 +1249,7 @@
         />
         <div class="filterType">
             <i
-                class="fa-solid fa-sliders"
+                class="input-search-wrap-icon fa-solid fa-sliders"
                 on:click={handleShowFilterTypes}
                 on:keydown={(e) =>
                     e.key === "Enter" && handleShowFilterTypes(e)}
@@ -1792,7 +1797,7 @@
         width: 100%;
         cursor: text;
     }
-    .input-search-wrap i {
+    .input-search-wrap-icon {
         font-size: 20px;
         cursor: pointer;
     }
@@ -1970,7 +1975,7 @@
         display: none;
     }
     .highlight {
-        background-color: rgba(0,0,0,0.25);
+        background-color: rgba(0, 0, 0, 0.25);
     }
 
     .filter-select .options {

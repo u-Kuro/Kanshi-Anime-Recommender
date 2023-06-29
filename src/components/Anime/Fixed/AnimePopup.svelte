@@ -20,7 +20,6 @@
         isJsonObject,
         formatNumber,
         scrollToElement,
-        getMostVisibleElement,
         getChildIndex,
         msToTime,
         isElementVisible,
@@ -43,45 +42,44 @@
         currentYtPlayer,
         popupWrapper,
         popupContainer,
-        popupAnimeObserver,
-        popupObserverFrame;
+        popupAnimeObserver;
 
+    let count = 0;
     function addPopupObserver() {
         popupAnimeObserver = new IntersectionObserver(
             (entries) => {
+                ++count;
                 if (!$popupVisible) return;
                 let intersectingPopupHeaders = [];
-                let hasIntersectingHeader = false;
                 entries.forEach((entry) => {
                     if (!$popupVisible) return;
                     let popupHeader = entry.target;
                     if (entry.isIntersecting) {
                         if (entry.intersectionRatio >= 0.5) {
                             intersectingPopupHeaders.push(popupHeader);
-                        } else if (window.innerHeight < 180) {
+                        } else if (
+                            window.innerHeight < 180 &&
+                            entry.intersectionRatio > 0
+                        ) {
                             intersectingPopupHeaders.push(popupHeader);
                         }
-                        hasIntersectingHeader = true;
                     }
                 });
-                cancelAnimationFrame(popupObserverFrame);
-                popupObserverFrame = requestAnimationFrame(() => {
-                    if (hasIntersectingHeader) {
-                        let visiblePopupHeader =
-                            getMostVisibleElementFromArray(
-                                intersectingPopupHeaders,
-                                popupContainer,
-                                0.5
-                            ) ||
-                            getMostVisibleElement(
-                                popupContainer,
-                                ".popup-content",
-                                0.1
-                            )?.querySelector?.(".popup-header");
-                        mostVisiblePopupHeader = visiblePopupHeader;
-                        playMostVisibleTrailer();
-                    }
-                });
+                if (intersectingPopupHeaders.length) {
+                    let visiblePopupHeader =
+                        getMostVisibleElementFromArray(
+                            popupContainer,
+                            intersectingPopupHeaders,
+                            window.innerHeight >= 180 ? 0.5 : 0
+                        ) ||
+                        getMostVisibleElementFromArray(
+                            popupContainer,
+                            popupContainer.children,
+                            0
+                        )?.getElementsByClassName("popup-header")?.[0];
+                    mostVisiblePopupHeader = visiblePopupHeader;
+                    playMostVisibleTrailer();
+                }
             },
             {
                 root: null,
@@ -166,8 +164,12 @@
             await tick();
             let targetEl =
                 anime.popupContent || popupContainer.children?.[animeIdx];
+            let targetPopupHeader =
+                targetEl?.getElementsByClassName?.("popup-header")[0];
             if (targetEl instanceof Element) {
                 scrollToElement(popupContainer, targetEl, "bottom");
+                mostVisiblePopupHeader = targetPopupHeader;
+                playMostVisibleTrailer();
             }
         }
     }
@@ -346,17 +348,6 @@
             await saveJSON(val, "autoPlay");
             if (val === true) {
                 await tick();
-                let mostVisiblePopupHeader =
-                    getMostVisibleElement(
-                        popupContainer,
-                        ".popup-header",
-                        0.5
-                    ) ||
-                    getMostVisibleElement(
-                        popupContainer,
-                        ".popup-content",
-                        0.1
-                    )?.querySelector(".popup-header");
                 let visibleTrailer =
                     mostVisiblePopupHeader?.querySelector?.(".trailer");
                 for (let i = 0; i < $ytPlayers.length; i++) {
@@ -385,7 +376,7 @@
                 e.preventDefault();
                 let isPlaying = $ytPlayers?.some(
                     ({ ytPlayer }) =>
-                        ytPlayer.getPlayerState() === YT.PlayerState.PLAYING
+                        ytPlayer?.getPlayerState?.() === YT.PlayerState.PLAYING
                 );
                 if (isPlaying) {
                     $ytPlayers.forEach(({ ytPlayer }) => {
@@ -393,17 +384,6 @@
                     });
                 } else {
                     await tick();
-                    let mostVisiblePopupHeader =
-                        getMostVisibleElement(
-                            popupContainer,
-                            ".popup-header",
-                            0.5
-                        ) ||
-                        getMostVisibleElement(
-                            popupContainer,
-                            ".popup-content",
-                            0.1
-                        )?.querySelector(".popup-header");
                     let visibleTrailer =
                         mostVisiblePopupHeader?.querySelector?.(".trailer");
                     for (let i = 0; i < $ytPlayers.length; i++) {
@@ -443,10 +423,13 @@
                 animeGrid instanceof Element &&
                 !isElementVisible(animeGridParentEl, animeGrid, 0.5)
             ) {
-                animeGrid.scrollIntoView({
-                    behavior: "smooth",
-                    block: "nearest",
-                });
+                window.scrollTo(window.scrollX, window.scrollY); // Stop Current Scroll
+                setTimeout(() => {
+                    animeGrid.scrollIntoView({
+                        behavior: "smooth",
+                        block: "nearest",
+                    });
+                }, 8);
             }
         }, 300);
         let haveTrailer;
@@ -722,13 +705,6 @@
         // Only For Android, and workaround for Alert visibility
         if (!$popupVisible || !$android) return;
         $androidInApp = inApp;
-        let mostVisiblePopupHeader =
-            getMostVisibleElement(popupContainer, ".popup-header", 0.5) ||
-            getMostVisibleElement(
-                popupContainer,
-                ".popup-content",
-                0.1
-            )?.querySelector(".popup-header");
         let visibleTrailer =
             mostVisiblePopupHeader?.querySelector?.(".trailer");
         if (!visibleTrailer) return;
@@ -880,7 +856,7 @@
                         </div>
 
                         <div class="button-container">
-                            <h3>Auto Play</h3>
+                            <h3 class="autoplay-label">Auto Play</h3>
                             <label class="switch">
                                 <input
                                     type="checkbox"
@@ -908,7 +884,7 @@
                                     ? "none"
                                     : ""}
                             >
-                                <div>
+                                <div class="info-list-wrapper">
                                     <div class="info-categ">Format</div>
                                     <div
                                         class="format-popup info copy"
@@ -1151,7 +1127,9 @@
             {/each}
             {#if $finalAnimeList?.length && !$shownAllInList}
                 <div class="popup-content-loading">
-                    <i class="fa-solid fa-k fa-fade" />
+                    <i
+                        class="popup-content-loading-icon fa-solid fa-k fa-fade"
+                    />
                 </div>
             {/if}
         {/if}
@@ -1163,7 +1141,7 @@
             on:click={handlePopupVisibility}
             on:keydown={(e) => e.key === "Enter" && handlePopupVisibility(e)}
         >
-            <i class="fa-solid fa-x" />
+            <i class="closing-x-icon fa-solid fa-x" />
         </div>
     {/if}
 </div>
@@ -1195,7 +1173,7 @@
         overflow: auto;
         overscroll-behavior: contain;
         background-color: #151f2e;
-        transition: transform 0.15s ease;
+        transition: transform 0.3s ease;
     }
 
     .popup-container.hide {
@@ -1204,7 +1182,6 @@
 
     .popup-container.show {
         transform: translateY(0);
-        /* transform: translate3d(0, 0, 0); */
     }
 
     .popup-container::-webkit-scrollbar {
@@ -1237,7 +1214,7 @@
         user-select: none !important;
     }
 
-    .popup-header .popup-header-loading {
+    .popup-header-loading {
         display: none;
     }
 
@@ -1268,17 +1245,8 @@
         background-color: #000;
     }
 
-    .popup-content-loading i {
+    .popup-content-loading-icon {
         font-size: 35px;
-    }
-
-    @keyframes spin {
-        0% {
-            transform: translate(-50%, -50%) rotate(0deg);
-        }
-        100% {
-            transform: translate(-50%, -50%) rotate(360deg);
-        }
     }
 
     /* Need to add Globally, trailer Elements are Recreated */
@@ -1338,21 +1306,6 @@
             0 10px 10px rgba(0, 0, 0, 0.22);
     }
 
-    .close-btn {
-        position: absolute;
-        top: 10px;
-        right: 10px;
-        font-size: 20px;
-        background-color: transparent;
-        border: none;
-        cursor: pointer;
-        color: #000;
-    }
-
-    .close-btn:hover {
-        color: #999;
-    }
-
     .popup-body {
         overflow: hidden;
         touch-action: pan-y;
@@ -1364,7 +1317,7 @@
         text-decoration: none;
     }
 
-    .popup-body .anime-title-container {
+    .anime-title-container {
         width: 100%;
         overflow-x: auto;
         white-space: nowrap;
@@ -1372,26 +1325,26 @@
         display: flex;
     }
 
-    .popup-body .anime-title-container::-webkit-scrollbar {
+    .anime-title-container::-webkit-scrollbar {
         display: none;
     }
 
-    .anime-title-container .anime-title {
+    .anime-title {
         padding: 0.5em;
         border-radius: 6px;
         cursor: pointer;
         font-size: clamp(1.6309rem, 1.76545rem, 1.9rem);
     }
 
-    .anime-title-container .anime-title:hover {
+    .anime-title:hover {
         background-color: rgba(0, 0, 0, 0.5);
     }
 
-    .anime-title-container a.anime-title {
+    .anime-title {
         text-decoration: none;
     }
 
-    .popup-body .footer {
+    .footer {
         display: flex;
         flex-wrap: wrap;
         justify-content: space-between;
@@ -1400,7 +1353,8 @@
         user-select: none !important;
     }
 
-    .popup-body .footer button {
+    .hideshowbtn,
+    .seemoreless {
         padding: 0.5em 1.5em 0.5em 1.5em;
         border-radius: 0.1em;
         outline: 0;
@@ -1430,27 +1384,25 @@
         }
     }
 
-    .info-list div {
+    .info-list-wrapper,
+    .info-categ,
+    .info {
         margin-bottom: 0.8em;
     }
 
-    .info-list .info-categ {
+    .info-categ {
         font-size: clamp(1.0631rem, 1.15155rem, 1.24rem);
         font-weight: 500;
         user-select: none !important;
     }
 
-    .info-list .info {
+    .info {
         font-size: clamp(1.018rem, 1.099rem, 1.18rem);
         max-width: fit-content;
         text-transform: capitalize;
     }
 
-    .popup-body a.darkMode {
-        color: #0055c8;
-    }
-
-    .popup-content .button-container {
+    .button-container {
         background-color: #000 !important;
         display: flex;
         justify-content: right;
@@ -1462,27 +1414,11 @@
         gap: 6px;
     }
 
-    .popup-container .button-container h3 {
+    .autoplay-label {
         height: 14px;
         line-height: 11px;
         font-weight: 500;
         color: #8d9abb;
-    }
-
-    .popup-content .button-next,
-    .popup-content .button-prev {
-        background-color: #000 !important;
-        color: #909cb8 !important;
-        padding: 0.5em 1.5em 0.5em 1.5em;
-        border-radius: 6px;
-        outline: 0;
-        border: 0;
-        cursor: pointer;
-    }
-
-    .popup-content .button-left:hover,
-    .popup-content .button-right:hover {
-        background-color: #ccc;
     }
 
     .closing-x {
@@ -1499,7 +1435,7 @@
         user-select: none;
     }
 
-    .closing-x i {
+    .closing-x-icon {
         color: black;
         font-size: 1.5rem;
         position: absolute;
@@ -1526,7 +1462,7 @@
         height: 20px;
     }
 
-    .switch input {
+    .autoplayToggle {
         display: none;
     }
 
@@ -1554,25 +1490,25 @@
         transition: 0.4s transform;
     }
 
-    input:checked + .slider {
+    .autoplayToggle:checked + .slider {
         background-color: rgb(40 69 102);
     }
 
-    input:focus + .slider {
+    .autoplayToggle:focus + .slider {
         box-shadow: 0 0 1px #2196f3;
     }
 
-    input:checked + .slider:before {
+    .autoplayToggle:checked + .slider:before {
         -webkit-transform: translateX(22px);
         -ms-transform: translateX(22px);
         transform: translateX(22px);
     }
 
-    .slider.round {
+    .slider {
         border-radius: 34px;
     }
 
-    .slider.round:before {
+    .slider:before {
         border-radius: 50%;
     }
 </style>
