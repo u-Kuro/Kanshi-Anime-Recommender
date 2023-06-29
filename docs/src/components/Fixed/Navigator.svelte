@@ -6,14 +6,24 @@
         initData,
         updateRecommendationList,
         confirmPromise,
+        popupVisible,
     } from "../../js/globalValues.js";
+    import { addClass, removeClass } from "../../js/others/helper.js";
     import { requestUserEntries } from "../../js/workerUtils.js";
     import { onMount, onDestroy } from "svelte";
 
     let writableSubscriptions = [];
     let typedUsername = "";
+    let navEl,
+        inputUsernameEl,
+        inputUsernameElFocused = false;
 
     onMount(() => {
+        navEl = navEl || document?.getElementById("nav");
+        inputUsernameEl =
+            inputUsernameEl || document?.getElementById("usernameInput");
+        popupContainer =
+            popupContainer || document?.getElementById("popup-container");
         writableSubscriptions.push(
             username.subscribe((val) => {
                 typedUsername = val || "";
@@ -24,7 +34,7 @@
     async function updateUsername(event) {
         if ($initData) {
             await pleaseWaitAlert();
-            document?.getElementById("usernameInput")?.focus?.();
+            focusInputUsernameEl();
             return;
         }
         let element = event.target;
@@ -51,6 +61,8 @@
                                 `Currently connected to ${$username}, do you want to change account?`
                             )
                         ) {
+                            window.scrollY = window.scrollY;
+                            window.scrollX = window.scrollX;
                             window?.scrollTo?.({
                                 top: -9999,
                                 behavior: "smooth",
@@ -69,11 +81,12 @@
                                         );
                                     }
                                 })
-                                .catch((error) => console.error(error));
+                                .catch((error) => {
+                                    $dataStatus = "Something went wrong...";
+                                    console.error(error);
+                                });
                         } else {
-                            document
-                                ?.getElementById("usernameInput")
-                                ?.focus?.();
+                            focusInputUsernameEl();
                         }
                     } else {
                         if (
@@ -81,6 +94,8 @@
                                 `Are you sure you want to connect to ${typedUsername}?`
                             )
                         ) {
+                            window.scrollY = window.scrollY;
+                            window.scrollX = window.scrollX;
                             window?.scrollTo?.({
                                 top: -9999,
                                 behavior: "smooth",
@@ -96,16 +111,17 @@
                                             newusername || "";
                                     updateRecommendationList.update((e) => !e);
                                 })
-                                .catch((error) => console.error(error));
+                                .catch((error) => {
+                                    $dataStatus = "Something went wrong...";
+                                    console.error(error);
+                                });
                         } else {
-                            document
-                                ?.getElementById("usernameInput")
-                                ?.focus?.();
+                            focusInputUsernameEl();
                         }
                     }
                 })();
             } else {
-                handleInputUsernameFocus();
+                focusInputUsernameEl();
             }
         }
     }
@@ -120,24 +136,49 @@
         let classList = element.classList;
         if (!classList.contains("nav") && !classList.contains("logo-icon"))
             return;
-        menuVisible.set(!$menuVisible);
+        if (inputUsernameElFocused && !classList.contains("logo-icon")) {
+            inputUsernameEl?.blur?.();
+            inputUsernameElFocused = false;
+            return;
+        }
+        $menuVisible = !$menuVisible;
     }
 
-    function handleInputUsernameFocus() {
-        let element = document?.getElementById("usernameInput");
-        if (element === document.activeElement) {
-            element?.focus?.();
-            element?.blur?.();
-        } else {
-            element?.focus?.();
+    function focusInputUsernameEl() {
+        inputUsernameEl?.focus?.();
+    }
+
+    function handleGoBack() {
+        if (
+            inputUsernameEl === document.activeElement ||
+            inputUsernameElFocused
+        ) {
+            inputUsernameEl?.blur?.();
+            inputUsernameElFocused = false;
+        } else if ($menuVisible) {
+            $menuVisible = !$menuVisible;
+        } else if ($popupVisible) {
+            $popupVisible = false;
         }
     }
 
+    let popupContainer;
     function handleGoUp() {
         if (goUpTimeout) clearTimeout(goUpTimeout);
         goUpTimeout = setTimeout(() => {
             goUpIsLongPressed = true;
-            window.scrollTo({ top: -9999, behavior: "smooth" });
+            if ($popupVisible) {
+                popupContainer.scrollTop = popupContainer.scrollTop;
+                popupContainer.scrollLeft = popupContainer.scrollLeft;
+                popupContainer?.children?.[0]?.scrollIntoView?.({
+                    behavior: "smooth",
+                    block: "start",
+                });
+            } else {
+                window.scrollY = window.scrollY;
+                window.scrollX = window.scrollX;
+                window.scrollTo({ top: -9999, behavior: "smooth" });
+            }
         }, 500);
     }
     function cancelGoUp() {
@@ -152,9 +193,7 @@
     $: typedUsername,
         (() => {
             if (typedUsername) {
-                document
-                    ?.getElementById?.("usernameInput")
-                    ?.setCustomValidity?.("");
+                inputUsernameEl?.setCustomValidity?.("");
             }
         })();
 
@@ -169,6 +208,18 @@
             text: "Please wait a moment...",
         });
     }
+
+    function onfocusUsernameInput(event) {
+        if (event.type === "focusin") {
+            inputUsernameElFocused = true;
+            addClass(navEl, "inputfocused");
+        } else {
+            setTimeout(() => {
+                removeClass(navEl, "inputfocused");
+                inputUsernameElFocused = false;
+            }, 100);
+        }
+    }
 </script>
 
 <div
@@ -176,14 +227,22 @@
     on:keydown={(e) => e.key === "Enter" && handleMenuVisibility(e)}
     on:click={handleMenuVisibility}
 >
-    <nav class="nav">
+    <nav
+        id="nav"
+        class={"nav " +
+            ($popupVisible || $menuVisible
+                ? "popupvisible"
+                : inputUsernameEl === document?.activeElement
+                ? "inputfocused"
+                : "")}
+        bind:this={navEl}
+    >
+        <i
+            class={"goback fa-solid fa-arrow-left"}
+            on:click={handleGoBack}
+            on:keydown={(e) => e.key === "Enter" && handleGoBack(e)}
+        />
         <div class="input-search">
-            <i
-                class="goback fa-solid fa-arrow-left"
-                on:click={handleInputUsernameFocus}
-                on:keydown={(e) =>
-                    e.key === "Enter" && handleInputUsernameFocus(e)}
-            />
             <input
                 id="usernameInput"
                 type="search"
@@ -191,13 +250,18 @@
                 autocomplete="off"
                 placeholder="Your Anilist Username"
                 on:keydown={(e) => e.key === "Enter" && updateUsername(e)}
+                on:focusin={onfocusUsernameInput}
+                on:focusout={onfocusUsernameInput}
                 bind:value={typedUsername}
+                bind:this={inputUsernameEl}
             />
             <div
-                class="usernameText"
-                on:click={handleInputUsernameFocus}
-                on:keydown={(e) =>
-                    e.key === "Enter" && handleInputUsernameFocus(e)}
+                class={"usernameText " +
+                    ($dataStatus && ($popupVisible || $menuVisible)
+                        ? "animate"
+                        : "")}
+                on:click={focusInputUsernameEl}
+                on:keydown={(e) => e.key === "Enter" && focusInputUsernameEl(e)}
             >
                 {typedUsername || "Your Anilist Username"}
             </div>
@@ -224,7 +288,7 @@
         color: white !important;
     }
     .nav-container {
-        z-index: 2;
+        z-index: 999;
         position: fixed;
         top: 0;
         width: 100%;
@@ -244,6 +308,7 @@
         margin: auto;
         gap: 1.5em;
         padding: 0 50px;
+        border-bottom: 1px solid rgb(35 45 65);
     }
     .logo-icon {
         cursor: pointer;
@@ -265,7 +330,7 @@
         align-items: center;
         max-width: 100%;
     }
-    .input-search:not(:focus-within) {
+    .input-search {
         max-width: min(165px, 100%);
     }
     #usernameInput {
@@ -283,7 +348,11 @@
         width: 100%;
         cursor: auto;
     }
-    .input-search:not(:focus-within) #usernameInput {
+    .nav.inputfocused #usernameInput {
+        transform: unset !important;
+        position: unset !important;
+    }
+    #usernameInput {
         transform: translateY(-99999px);
         position: fixed;
     }
@@ -300,11 +369,25 @@
         color: white;
         cursor: pointer;
     }
-    .input-search:not(:focus-within) .usernameText {
+    .usernameText {
         display: flex;
     }
-    .input-search:focus-within .usernameText {
+    .nav.inputfocused .usernameText {
         display: none;
+    }
+    .usernameText.animate {
+        animation: fadeInOut 1s ease infinite;
+    }
+    @keyframes fadeInOut {
+        from {
+            opacity: 1;
+        }
+        50% {
+            opacity: 0.5;
+        }
+        to {
+            opacity: 1;
+        }
     }
     .usernameText {
         white-space: nowrap;
@@ -326,17 +409,36 @@
     #usernameInput:placeholder-shown + .usernameText {
         text-transform: none;
     }
-    @media screen and (max-width: 425px) {
-        .input-search:focus-within {
-            width: 100%;
+    @media screen and (max-width: 750px) {
+        .nav.popupvisible {
+            padding: 0 1.5em;
+            max-width: 640px;
         }
-        .input-search:focus-within #usernameInput {
-            max-width: none;
-            width: 100%;
+        .nav.popupvisible {
+            grid-template-columns: 30px calc(100% - 60px - 3em) 30px !important;
         }
-        .input-search:focus-within .goback {
+        .nav.popupvisible .input-search {
+            justify-self: center !important;
+        }
+        .nav.popupvisible .goback {
+            display: flex !important;
+        }
+        .nav.inputfocused .input-search {
+            max-width: none !important;
+            width: 100% !important;
+        }
+        .nav.inputfocused #usernameInput {
+            max-width: none !important;
+            width: 100% !important;
+        }
+        .nav.inputfocused {
+            grid-template-columns: 30px calc(100% - 60px - 3em) 30px !important;
+        }
+        .nav.inputfocused .goback {
             display: flex;
         }
+    }
+    @media screen and (max-width: 425px) {
         .nav {
             padding: 0 1.5em;
         }

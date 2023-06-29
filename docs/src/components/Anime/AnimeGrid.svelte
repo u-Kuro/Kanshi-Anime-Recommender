@@ -116,6 +116,7 @@
             };
             val.onerror = (error) => {
                 $dataStatus = "Something went wrong...";
+                console.error(error);
             };
         }
     });

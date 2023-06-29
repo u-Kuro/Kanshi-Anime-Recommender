@@ -351,6 +351,7 @@
 			})
 			.catch((error) => {
 				userRequestIsRunning = false;
+				$dataStatus = "Something went wrong...";
 				console.error(error);
 			});
 	});
@@ -437,6 +438,7 @@
 	window.addEventListener("popstate", () => {
 		window.backPressed();
 	});
+	let usernameInputEl;
 	window.backPressed = () => {
 		if ($shouldGoBack && !$android) {
 			window.history.go(-1); // Only in Browser
@@ -449,11 +451,12 @@
 				_showConfirm = false;
 				return;
 			} else if (
-				document?.getElementById?.("usernameInput") ===
-					document?.activeElement &&
-				window.innerWidth <= 425
+				usernameInputEl &&
+				usernameInputEl === document?.activeElement &&
+				window.innerWidth <= 750
 			) {
-				document.getElementById("usernameInput")?.blur?.();
+				usernameInputEl?.focus?.();
+				usernameInputEl?.blur?.();
 			} else if ($menuVisible) {
 				$menuVisible = false;
 				return;
@@ -467,10 +470,14 @@
 				window.closeDropdown?.();
 				return;
 			} else if (window.scrollY > 200) {
+				window.scrollY = window.scrollY;
+				window.scrollX = window.scrollX;
 				window.scrollTo({ top: -9999, behavior: "smooth" });
 				window.setShouldGoBack(true);
 				return;
 			} else {
+				window.scrollY = window.scrollY;
+				window.scrollX = window.scrollX;
 				window.scrollTo({ top: -9999, behavior: "smooth" });
 				window.setShouldGoBack(true);
 			}
@@ -487,6 +494,7 @@
 		runIsScrolling.update((e) => !e);
 	});
 	onMount(() => {
+		usernameInputEl = document.getElementById("usernameInput");
 		document
 			.getElementById("popup-container")
 			.addEventListener("scroll", () => {

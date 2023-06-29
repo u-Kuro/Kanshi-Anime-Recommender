@@ -91,7 +91,7 @@
     .confirm {
         position: fixed;
         display: flex;
-        z-index: 996;
+        z-index: 1000;
         left: 0;
         top: 0;
         width: 100%;

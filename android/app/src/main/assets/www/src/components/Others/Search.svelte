@@ -87,12 +87,9 @@
 
     async function scrollToFirstTagFilter() {
         let parentEl = document.getElementById("tagFilters");
+        await tick();
         if (parentEl instanceof Element) {
-            await tick();
-            parentEl.scrollBy({
-                top: 0,
-                behavior: "smooth",
-            });
+            parentEl.scrollTop = 0
         }
     }
 

@@ -167,7 +167,13 @@
             let targetPopupHeader =
                 targetEl?.getElementsByClassName?.("popup-header")[0];
             if (targetEl instanceof Element) {
-                scrollToElement(popupContainer, targetEl, "bottom");
+                scrollToElement(
+                    popupContainer,
+                    targetEl,
+                    "bottom",
+                    "instant",
+                    55
+                );
                 mostVisiblePopupHeader = targetPopupHeader;
                 playMostVisibleTrailer();
             }
@@ -357,6 +363,7 @@
                     ) {
                         prePlayYtPlayer($ytPlayers[i].ytPlayer);
                         $ytPlayers[i].ytPlayer?.playVideo?.();
+                        currentYtPlayer = $ytPlayers[i].ytPlayer;
                         break;
                     }
                 }
@@ -393,6 +400,7 @@
                         ) {
                             prePlayYtPlayer($ytPlayers[i].ytPlayer);
                             $ytPlayers[i].ytPlayer?.playVideo?.();
+                            currentYtPlayer = $ytPlayers[i].ytPlayer;
                             break;
                         }
                     }
@@ -423,13 +431,12 @@
                 animeGrid instanceof Element &&
                 !isElementVisible(animeGridParentEl, animeGrid, 0.5)
             ) {
-                window.scrollTo(window.scrollX, window.scrollY); // Stop Current Scroll
-                setTimeout(() => {
-                    animeGrid.scrollIntoView({
-                        behavior: "smooth",
-                        block: "nearest",
-                    });
-                }, 8);
+                window.scrollY = window.scrollY;
+                window.scrollX = window.scrollX; // Stop Current Scroll
+                animeGrid.scrollIntoView({
+                    behavior: "smooth",
+                    block: "nearest",
+                });
             }
         }, 300);
         let haveTrailer;
@@ -476,6 +483,7 @@
                     ) {
                         prePlayYtPlayer(ytPlayer);
                         ytPlayer?.playVideo?.();
+                        currentYtPlayer = ytPlayer;
                     }
                 } else if (ytPlayer.g !== visibleTrailer) {
                     ytPlayer?.pauseVideo?.();
@@ -719,6 +727,7 @@
                     ) {
                         prePlayYtPlayer(ytPlayer);
                         ytPlayer?.playVideo?.();
+                        currentYtPlayer = ytPlayer;
                         break;
                     }
                 }
@@ -833,6 +842,8 @@
                                         src={anime.bannerImageUrl}
                                         alt="bannerImg"
                                         class="bannerImg"
+                                        on:load={(e) =>
+                                            addClass(e.target, "fade-in")}
                                     />
                                 {/if}
                                 {#if anime.coverImageUrl}
@@ -841,7 +852,7 @@
                                             loading="lazy"
                                             src={anime.coverImageUrl}
                                             alt="coverImg"
-                                            class="coverImg display-none"
+                                            class="coverImg display-none fade-in"
                                         />
                                     {:else}
                                         <img
@@ -849,6 +860,8 @@
                                             src={anime.coverImageUrl}
                                             alt="coverImg"
                                             class="coverImg"
+                                            on:load={(e) =>
+                                                addClass(e.target, "fade-in")}
                                         />
                                     {/if}
                                 {/if}
@@ -1134,16 +1147,6 @@
             {/if}
         {/if}
     </div>
-    {#if !$android}
-        <div
-            id="closing-x"
-            class="closing-x"
-            on:click={handlePopupVisibility}
-            on:keydown={(e) => e.key === "Enter" && handlePopupVisibility(e)}
-        >
-            <i class="closing-x-icon fa-solid fa-x" />
-        </div>
-    {/if}
 </div>
 
 <style>
@@ -1154,7 +1157,7 @@
         top: 0;
         width: 100%;
         height: 100%;
-        background-color: rgba(0, 0, 0, 0.6);
+        background-color: rgba(0, 0, 0, 0.7);
         display: flex;
         justify-content: center;
         overflow: hidden;
@@ -1163,7 +1166,7 @@
     }
 
     .popup-wrapper.visible {
-        transform: translateY(0);
+        transform: translateY(55px);
     }
 
     .popup-container {
@@ -1227,8 +1230,9 @@
         right: 1em;
         z-index: 3;
         background-color: #000;
-        padding: 1em 1.5em;
         border-radius: 100%;
+        width: 40px;
+        height: 40px;
     }
 
     :global(.popup-header.loader i) {
@@ -1288,11 +1292,13 @@
         background-color: rgba(0, 0, 0, 0.5);
     }
     .bannerImg.fade-out {
-        opacity: 0;
+        animation: fadeOut 0.3s ease forwards;
+    }
+    .bannerImg.fade-in {
+        animation: fadeIn 0.3s ease forwards;
     }
 
     .coverImg {
-        transition: opacity 0.3s;
         height: 100%;
         max-height: clamp(1px, 70%, 20em);
         width: auto;
@@ -1304,6 +1310,12 @@
         border-radius: 2px 2px 0 0;
         box-shadow: 0 14px 28px rgba(0, 0, 0, 0.25),
             0 10px 10px rgba(0, 0, 0, 0.22);
+    }
+    .coverImg.fade-out {
+        animation: fadeOut 0.3s ease forwards;
+    }
+    .coverImg.fade-in {
+        animation: fadeIn 0.3s ease forwards;
     }
 
     .popup-body {
@@ -1419,40 +1431,6 @@
         line-height: 11px;
         font-weight: 500;
         color: #8d9abb;
-    }
-
-    .closing-x {
-        background: white;
-        color: black;
-        width: 35px;
-        height: 35px;
-        position: fixed;
-        right: 10px;
-        top: 10px;
-        cursor: pointer;
-        border-radius: 50%;
-        z-index: 2;
-        user-select: none;
-    }
-
-    .closing-x-icon {
-        color: black;
-        font-size: 1.5rem;
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -45%);
-    }
-
-    @media screen and (max-width: 750px) and (min-height: 360px) {
-        .closing-x {
-            top: calc(360px + 20px + 30px + 2px) !important;
-        }
-    }
-    @media screen and (max-width: 750px) and (max-height: 360px) {
-        .closing-x {
-            top: calc(50% - 17.5px) !important;
-        }
     }
 
     .switch {

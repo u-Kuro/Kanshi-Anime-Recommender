@@ -61,6 +61,8 @@
             ) {
                 await saveJSON(true, "shouldProcessRecommendation");
                 $menuVisible = false;
+                window.scrollY = window.scrollY;
+                window.scrollX = window.scrollX;
                 window?.scrollTo?.({ top: -9999, behavior: "smooth" });
                 importUserData({
                     importedFile: importedFile,
@@ -368,8 +370,8 @@
         top: 0;
         width: 100%;
         height: 100%;
-        background-color: rgb(0, 0, 0, 0.925);
-        z-index: 1;
+        background-color: rgb(0, 0, 0, 0.7);
+        z-index: 997;
     }
     .menu {
         padding: 1.5em 50px;
