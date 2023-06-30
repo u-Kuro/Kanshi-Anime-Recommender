@@ -29,5 +29,5 @@ This app is designed to provide anime recommendations based on your personal rat
 
 <h2 align="center"></h2>
 
-## Others
+## Other Information
 - [Alternative Website](https://u-kuro.github.io/Kanshi.Anime-Recommendation/)
