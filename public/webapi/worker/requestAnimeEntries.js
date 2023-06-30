@@ -6,15 +6,16 @@ self.onmessage = async ({ data }) => {
     if (!db) await IDBinit()
     let currentYear = (new Date()).getFullYear();
     let lastAnimeUpdate = await retrieveJSON("lastAnimeUpdate") || 0
-    let animeEntries = await retrieveJSON("animeEntries") || {}
     let onlyGetNewEntries = data?.onlyGetNewEntries ?? false
     let retryCount = 0;
-    getNewEntries() // Start Call
+    let animeEntries = await retrieveJSON("animeEntries") || {}
+    getNewEntries(animeEntries) // Start Call
+    animeEntries = null
     // For Getting new Entries
     // Get all Existing IDs
     // set id_not_in the Existing IDs
     // add results to local list
-    function getNewEntries() {
+    function getNewEntries(animeEntries) {
         let currentAnimeIDs = Object.keys(animeEntries).join(',')
         let entriesCount = 0
         self.postMessage({ status: "Checking New Entries..." }) // Update Data Status
@@ -112,13 +113,21 @@ self.onmessage = async ({ data }) => {
                         if (onlyGetNewEntries) {
                             self.postMessage({ errorDuringInit: true })
                         }
-                        let secondsPassed = 60
-                        let rateLimitInterval = setInterval(() => {
-                            self.postMessage({ status: (error ? (error + " ") : "") + `Rate Limit: ${msToTime(secondsPassed * 1000)}` })
-                            --secondsPassed
-                        }, 1000)
+                        ++retryCount
+                        if (retryCount >= 2) {
+                            self.postMessage({ status: "Request Timeout" })
+                        }
+                        let rateLimitInterval;
+                        if (retryCount < 2) {
+                            let secondsPassed = 60
+                            rateLimitInterval = setInterval(() => {
+                                self.postMessage({ status: (error ? (error + " ") : "") + `Rate Limit: ${msToTime(secondsPassed * 1000)}` })
+                                --secondsPassed
+                            }, 1000)
+                        }
                         setTimeout(() => {
-                            clearInterval(rateLimitInterval)
+                            if (rateLimitInterval) clearInterval(rateLimitInterval)
+                            self.postMessage({ status: "Retrying..." })
                             return recallGNE(page);
                         }, 60000);
                     } else {
@@ -150,6 +159,7 @@ self.onmessage = async ({ data }) => {
                                 }, 1000)
                                 setTimeout(() => {
                                     clearInterval(rateLimitInterval)
+                                    self.postMessage({ status: "Retrying..." })
                                     return recallGNE(++page);
                                 }, 60000);
                             }
@@ -163,8 +173,10 @@ self.onmessage = async ({ data }) => {
                             // Call Next
                             if (onlyGetNewEntries) {
                                 self.postMessage({ done: true })
+                                animeEntries = null
                             } else {
-                                updateAiringAnime()
+                                updateAiringAnime(animeEntries)
+                                animeEntries = null
                             }
                         }
                     }
@@ -217,7 +229,7 @@ self.onmessage = async ({ data }) => {
     // Get all Existing IDs
     // set id_in Existing IDs
     // update results to local list
-    function updateAiringAnime() {
+    function updateAiringAnime(animeEntries) {
         let airingAnimeIDs = Object.values(animeEntries).filter(({ seasonYear, status }) => {
             // Either Currently Releasing or Not Yet Released but Its Release Year is >= Current Year
             return ncsCompare(status, 'releasing') || (ncsCompare(status, 'not_yet_released') && parseInt(seasonYear) >= currentYear)
@@ -323,13 +335,21 @@ self.onmessage = async ({ data }) => {
                 .then(async ({ result, headers }) => {
                     let error;
                     if (typeof (error = result?.errors?.[0]?.message) === "string") {
-                        let secondsPassed = 60
-                        let rateLimitInterval = setInterval(() => {
-                            self.postMessage({ status: (error ? (error + " ") : "") + `Rate Limit: ${msToTime(secondsPassed * 1000)}` })
-                            --secondsPassed
-                        }, 1000)
+                        ++retryCount
+                        if (retryCount >= 2) {
+                            self.postMessage({ status: "Request Timeout" })
+                        }
+                        let rateLimitInterval;
+                        if (retryCount < 2) {
+                            let secondsPassed = 60
+                            rateLimitInterval = setInterval(() => {
+                                self.postMessage({ status: (error ? (error + " ") : "") + `Rate Limit: ${msToTime(secondsPassed * 1000)}` })
+                                --secondsPassed
+                            }, 1000)
+                        }
                         setTimeout(() => {
-                            clearInterval(rateLimitInterval)
+                            if (rateLimitInterval) clearInterval(rateLimitInterval)
+                            self.postMessage({ status: "Retrying..." })
                             return recallUAA(page);
                         }, 60000);
                     } else {
@@ -357,7 +377,7 @@ self.onmessage = async ({ data }) => {
                             saveJSON(animeEntries, "animeEntries")
                             // Media Recursion
                             if (headers?.get('x-ratelimit-remaining') > 0) {
-                                return recallUAA(++page, 1, false);
+                                return recallUAA(++page);
                             } else {
                                 let secondsPassed = 60
                                 let rateLimitInterval = setInterval(() => {
@@ -366,7 +386,8 @@ self.onmessage = async ({ data }) => {
                                 }, 1000)
                                 setTimeout(() => {
                                     clearInterval(rateLimitInterval)
-                                    return recallUAA(++page, 1, false);
+                                    self.postMessage({ status: "Retrying..." })
+                                    return recallUAA(++page);
                                 }, 60000);
                             }
                         } else {
@@ -379,7 +400,8 @@ self.onmessage = async ({ data }) => {
                             saveJSON(lastRunnedAutoUpdateDate, "lastRunnedAutoUpdateDate");
                             self.postMessage({ lastRunnedAutoUpdateDate: lastRunnedAutoUpdateDate })
                             // Call New
-                            updateNonRecentEntries()
+                            updateNonRecentEntries(animeEntries)
+                            animeEntries = null
                         }
                     }
                 })
@@ -429,9 +451,98 @@ self.onmessage = async ({ data }) => {
     // get results but first keep track of least updateAt Date in Media Recursion to see if we are past last Update
     // use results, and update local results
     // if the current track of Current least update gets less than Last Anime Update, then stop update and save new Last Anime Update Date
-    function updateNonRecentEntries() {
+    function updateNonRecentEntries(animeEntries) {
         let recursingUpdatedAtDate;
         let latestUpdateAtDate;
+        let lastUpdateAtDate = lastAnimeUpdate || new Date(1670770349 * 1000)
+        let largestDif = -Infinity;
+        function recallGOUD() {
+            fetch('https://graphql.anilist.co', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'Cache-Control': 'max-age=31536000, immutable'
+                },
+                body: JSON.stringify({
+                    query: `{
+                        Page(page: 1, perPage: 1) {
+                            media(
+                                type: ANIME,
+                                genre_not_in: ["Hentai"],
+                                format_not_in:[MUSIC,MANGA,NOVEL,ONE_SHOT],
+                                sort: [UPDATED_AT]
+                                ) {
+                                updatedAt
+                            }
+                        }
+                    }
+                `})
+            })
+                .then(async (response) => {
+                    let headers = response.headers
+                    let result = await response.json()
+                    return { result, headers }
+                })
+                .then(async ({ result, headers }) => {
+                    let error;
+                    if (typeof (error = result?.errors?.[0]?.message) === "string") {
+                        ++retryCount
+                        if (retryCount >= 2) {
+                            self.postMessage({ status: "Request Timeout" })
+                        }
+                        let rateLimitInterval;
+                        if (retryCount < 2) {
+                            let secondsPassed = 60
+                            rateLimitInterval = setInterval(() => {
+                                self.postMessage({ status: (error ? (error + " ") : "") + `Rate Limit: ${msToTime(secondsPassed * 1000)}` })
+                                --secondsPassed
+                            }, 1000)
+                        }
+                        setTimeout(() => {
+                            if (rateLimitInterval) clearInterval(rateLimitInterval)
+                            self.postMessage({ status: "Retrying..." })
+                            return recallGOUD();
+                        }, 60000);
+                    } else {
+                        let currentOldestUpdateAtDate = new Date((result?.data?.Page?.media?.[0]?.updatedAt || 1670770349) * 1000)
+                        if (currentOldestUpdateAtDate instanceof Date && !isNaN(currentOldestUpdateAtDate)) {
+                            if (currentOldestUpdateAtDate.getTime() > lastUpdateAtDate.getTime()) {
+                                lastUpdateAtDate = currentOldestUpdateAtDate
+                            }
+                        }
+                        recallUNRE(1)
+                    }
+                })
+                .catch(() => {
+                    if (!navigator.onLine) {
+                        self.postMessage({ status: "Currently Offline..." })
+                        self.postMessage({ message: 'Currently Offline...' })
+                        return
+                    }
+                    if (headers?.get('x-ratelimit-remaining') > 0) {
+                        return recallGOUD();
+                    } else {
+                        ++retryCount
+                        if (retryCount >= 2) {
+                            self.postMessage({ status: "Request Timeout" })
+                        }
+                        let rateLimitInterval;
+                        if (retryCount < 2) {
+                            let secondsPassed = 60
+                            rateLimitInterval = setInterval(() => {
+                                self.postMessage({ status: `Rate Limit: ${msToTime(secondsPassed * 1000)}` })
+                                --secondsPassed
+                            }, 1000)
+                        }
+                        setTimeout(() => {
+                            if (rateLimitInterval) clearInterval(rateLimitInterval)
+                            self.postMessage({ status: "Retrying..." })
+                            return recallGOUD();
+                        }, 60000);
+                    }
+                });
+        }
         function recallUNRE(page) {
             fetch('https://graphql.anilist.co', {
                 method: 'POST',
@@ -524,8 +635,23 @@ self.onmessage = async ({ data }) => {
                     return { result, headers }
                 })
                 .then(async ({ result, headers }) => {
-                    if (typeof result?.errors?.[0]?.message === "string") {
+                    let error;
+                    if (typeof (error = result?.errors?.[0]?.message) === "string") {
+                        ++retryCount
+                        if (retryCount >= 2) {
+                            self.postMessage({ status: "Request Timeout" })
+                        }
+                        let rateLimitInterval;
+                        if (retryCount < 2) {
+                            let secondsPassed = 60
+                            rateLimitInterval = setInterval(() => {
+                                self.postMessage({ status: (error ? (error + " ") : "") + `Rate Limit: ${msToTime(secondsPassed * 1000)}` })
+                                --secondsPassed
+                            }, 1000)
+                        }
                         setTimeout(() => {
+                            if (rateLimitInterval) clearInterval(rateLimitInterval)
+                            self.postMessage({ status: "Retrying..." })
                             return recallUNRE(page);
                         }, 60000);
                     } else {
@@ -545,15 +671,41 @@ self.onmessage = async ({ data }) => {
                                                 currentAnimeUpdateDate > latestUpdateAtDate
                                             ) {
                                                 latestUpdateAtDate = currentAnimeUpdateDate
+                                                largestDif = Math.max(largestDif, latestUpdateAtDate.getTime() - lastUpdateAtDate.getTime())
                                             }
-                                            //
                                             if (recursingUpdatedAtDate instanceof Date &&
                                                 !isNaN(recursingUpdatedAtDate) &&
                                                 currentAnimeUpdateDate < recursingUpdatedAtDate
                                             ) {
                                                 recursingUpdatedAtDate = currentAnimeUpdateDate
+                                                if (
+                                                    latestUpdateAtDate instanceof Date &&
+                                                    !isNaN(latestUpdateAtDate) &&
+                                                    lastUpdateAtDate <= recursingUpdatedAtDate &&
+                                                    latestUpdateAtDate > recursingUpdatedAtDate
+                                                ) {
+                                                    let lastUpdateAtDateTime = lastUpdateAtDate.getTime()
+                                                    let recursingUpdatedAtDateTime = recursingUpdatedAtDate.getTime()
+                                                    let percentage = ((largestDif - (recursingUpdatedAtDateTime - lastUpdateAtDateTime)) / largestDif) * 100
+                                                    if (percentage >= 0.01) {
+                                                        self.postMessage({ status: "Updating Additional Entries " + (percentage.toFixed(2)) + "%" })
+                                                    }
+                                                }
                                             } else if (recursingUpdatedAtDate === undefined) {
                                                 recursingUpdatedAtDate = currentAnimeUpdateDate
+                                                if (
+                                                    latestUpdateAtDate instanceof Date &&
+                                                    !isNaN(latestUpdateAtDate) &&
+                                                    lastUpdateAtDate <= recursingUpdatedAtDate &&
+                                                    latestUpdateAtDate > recursingUpdatedAtDate
+                                                ) {
+                                                    let lastUpdateAtDateTime = lastUpdateAtDate.getTime()
+                                                    let recursingUpdatedAtDateTime = recursingUpdatedAtDate.getTime()
+                                                    let percentage = ((largestDif - (recursingUpdatedAtDateTime - lastUpdateAtDateTime)) / largestDif) * 100
+                                                    if (percentage >= 0.01) {
+                                                        self.postMessage({ status: "Updating Additional Entries " + (percentage.toFixed(2)) + "%" })
+                                                    }
+                                                }
                                             }
                                         }
                                     }
@@ -576,12 +728,21 @@ self.onmessage = async ({ data }) => {
                             if (headers?.get('x-ratelimit-remaining') > 0) {
                                 return recallUNRE(++page);
                             } else {
+                                let secondsPassed = 60
+                                rateLimitInterval = setInterval(() => {
+                                    self.postMessage({ status: (error ? (error + " ") : "") + `Rate Limit: ${msToTime(secondsPassed * 1000)}` })
+                                    --secondsPassed
+                                }, 1000)
                                 setTimeout(() => {
+                                    if (rateLimitInterval) clearInterval(rateLimitInterval)
+                                    self.postMessage({ status: "Retrying..." })
                                     return recallUNRE(++page);
                                 }, 60000);
                             }
                         } else {
+                            self.postMessage({ status: "Updating Additional Entries 100%" })
                             await saveJSON(animeEntries, "animeEntries")
+                            animeEntries = null
                             if (latestUpdateAtDate instanceof Date &&
                                 !isNaN(latestUpdateAtDate)) {
                                 lastAnimeUpdate = latestUpdateAtDate
@@ -610,14 +771,28 @@ self.onmessage = async ({ data }) => {
                         if (headers?.get('x-ratelimit-remaining') > 0) {
                             return recallUNRE(page);
                         } else {
+                            ++retryCount
+                            if (retryCount >= 2) {
+                                self.postMessage({ status: "Request Timeout" })
+                            }
+                            let rateLimitInterval;
+                            if (retryCount < 2) {
+                                let secondsPassed = 60
+                                rateLimitInterval = setInterval(() => {
+                                    self.postMessage({ status: `Rate Limit: ${msToTime(secondsPassed * 1000)}` })
+                                    --secondsPassed
+                                }, 1000)
+                            }
                             setTimeout(() => {
+                                if (rateLimitInterval) clearInterval(rateLimitInterval)
+                                self.postMessage({ status: "Retrying..." })
                                 return recallUNRE(page);
                             }, 60000);
                         }
                     }
                 });
         }
-        recallUNRE(1)
+        recallGOUD()
     }
 }
 

@@ -186,23 +186,18 @@
 
     function getBriefInfo({
         contentCaution,
-        favoriteContents,
+        sortedFavoriteContents,
         meanScoreAll,
         meanScoreAbove,
         score,
     }) {
-        let _favoriteContents = [];
-        favoriteContents?.forEach((e) => {
-            if (isJsonObject(e)) {
-                _favoriteContents.push(Object.keys(e)[0]);
-            } else if (typeof e === "string") {
-                _favoriteContents.push(e);
+        let _sortedFavoriteContents = [];
+        sortedFavoriteContents?.forEach((e) => {
+            if (typeof e === "string") {
+                _sortedFavoriteContents.push(e);
             }
         });
-
-        let _contentCaution = (contentCaution?.caution || []).concat(
-            contentCaution?.semiCaution || []
-        );
+        let _contentCaution = [];
         if (score < meanScoreAll) {
             // Very Low Score
             _contentCaution.push(
@@ -214,10 +209,14 @@
                 `Low Score (mean: ${formatNumber(meanScoreAbove)})`
             );
         }
+        _contentCaution = _contentCaution
+            .concat(contentCaution?.caution || [])
+            .concat(contentCaution?.semiCaution || []);
         let briefInfo = "";
-        if (_favoriteContents.length) {
+        if (_sortedFavoriteContents.length) {
             briefInfo +=
-                "Favorite Contents: " + _favoriteContents.join(", ") || "";
+                "Favorite Contents: " + _sortedFavoriteContents.join(", ") ||
+                "";
         }
         if (_contentCaution.length) {
             briefInfo += "\n\nContent Cautions: " + _contentCaution.join(", ");

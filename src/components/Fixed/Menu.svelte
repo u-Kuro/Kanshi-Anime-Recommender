@@ -132,7 +132,6 @@
                 } auto-update?`
             )
         ) {
-            $menuVisible = false;
             $autoUpdate = !$autoUpdate;
         }
     }
@@ -146,7 +145,6 @@
                 } auto-export?`
             )
         ) {
-            $menuVisible = false;
             $autoExport = !$autoExport;
         }
     }
@@ -226,7 +224,6 @@
                 "Are you sure want to sign-up an anilist account?"
             )
         ) {
-            $menuVisible = false;
             window.open("https://anilist.co/signup", "_blank");
         }
     }

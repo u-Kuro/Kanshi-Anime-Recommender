@@ -19,6 +19,7 @@ self.onmessage = async ({ data }) => {
         await saveJSON(data.data, data.name)
         self.postMessage({ message: 'success' })
     }
+    data = null
 }
 
 async function IDBinit() {

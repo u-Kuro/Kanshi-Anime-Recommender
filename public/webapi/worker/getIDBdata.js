@@ -1,21 +1,23 @@
 let db;
 self.onmessage = async ({ data }) => {
     if (!db) await IDBinit()
+    let _data
     if (data.name === "animeEntriesLength") {
-        let _data = Object.keys(await retrieveJSON("animeEntries") || {}).length
+        _data = Object.keys(await retrieveJSON("animeEntries") || {}).length
         self.postMessage(_data)
     } else if (data.name === "userEntriesLength") {
-        let _data = (await retrieveJSON("userEntries") || []).length
+        _data = (await retrieveJSON("userEntries") || []).length
         self.postMessage(_data)
     } else if (data.name === "animeFranchisesLength") {
-        let _data = (await retrieveJSON("animeFranchises") || []).length
+        _data = (await retrieveJSON("animeFranchises") || []).length
         self.postMessage(_data)
     } else if (data.name === "recommendedAnimeListLength") {
-        let _data = (await retrieveJSON("recommendedAnimeList") || []).length
+        _data = (await retrieveJSON("recommendedAnimeList") || []).length
         self.postMessage(_data)
     } else if (data.name) {
         self.postMessage(await retrieveJSON(data.name))
     }
+    _data = null
 }
 
 async function IDBinit() {

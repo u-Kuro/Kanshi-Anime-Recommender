@@ -4,6 +4,7 @@ self.onmessage = async ({ data }) => {
     if (!db) {
         await IDBinit();
     }
+    let currentAnimeUpdate = await retrieveJSON("lastAnimeUpdate") || new Date(1670770349 * 1000)
     self.postMessage({ status: "Importing User Data..." })
     const reader = new FileReader()
     reader.onload = async () => {
@@ -21,47 +22,67 @@ self.onmessage = async ({ data }) => {
             if (typeof username === "string") {
                 await saveJSON(username, "username")
             }
+            self.postMessage({ importedUsername: username })
+
             let lastAnimeUpdate = fileContent.lastAnimeUpdate ? new Date(fileContent.lastAnimeUpdate) : null
-            if (lastAnimeUpdate instanceof Date && !isNaN(lastAnimeUpdate)) {
+            if (lastAnimeUpdate instanceof Date && !isNaN(lastAnimeUpdate) && lastAnimeUpdate > currentAnimeUpdate) {
                 await saveJSON(lastAnimeUpdate, "lastAnimeUpdate")
             }
+
             let lastUserAnimeUpdate = fileContent.lastUserAnimeUpdate ? new Date(fileContent.lastUserAnimeUpdate) : null
             if (lastUserAnimeUpdate instanceof Date && !isNaN(lastUserAnimeUpdate)) {
                 await saveJSON(lastUserAnimeUpdate, "lastUserAnimeUpdate")
             }
+
             let lastRunnedAutoUpdateDate = fileContent.lastRunnedAutoUpdateDate ? new Date(fileContent.lastRunnedAutoUpdateDate) : null
             if (lastRunnedAutoUpdateDate instanceof Date && !isNaN(lastRunnedAutoUpdateDate)) {
                 await saveJSON(lastRunnedAutoUpdateDate, "lastRunnedAutoUpdateDate")
             }
+            self.postMessage({ importedlastRunnedAutoUpdateDate: lastRunnedAutoUpdateDate })
+
             let lastRunnedAutoExportDate = fileContent.lastRunnedAutoExportDate ? new Date(fileContent.lastRunnedAutoExportDate) : null
             if (lastRunnedAutoExportDate instanceof Date && !isNaN(lastRunnedAutoExportDate)) {
                 await saveJSON(lastRunnedAutoExportDate, "lastRunnedAutoExportDate")
             }
+            self.postMessage({ importedlastRunnedAutoExportDate: lastRunnedAutoExportDate })
+
             let activeTagFilters = fileContent.activeTagFilters
+            fileContent.activeTagFilters = null
             if (isJsonObject(activeTagFilters) && !jsonIsEmpty(activeTagFilters)) {
                 await saveJSON(activeTagFilters, "activeTagFilters")
+                activeTagFilters = null
             }
+
             let hiddenEntries = fileContent.hiddenEntries
+            fileContent.hiddenEntries = null
             if (isJsonObject(hiddenEntries)) {
                 await saveJSON(hiddenEntries, "hiddenEntries")
             }
+            self.postMessage({ importedHiddenEntries: hiddenEntries })
+            hiddenEntries = null
+
             let userEntries = fileContent.userEntries
+            fileContent.userEntries = null
             if (userEntries instanceof Array) {
                 await saveJSON(userEntries, "userEntries")
+                userEntries = null
             }
+
             let filterOptions = fileContent.filterOptions
+            fileContent.filterOptions = null
             if (isJsonObject(filterOptions) && !jsonIsEmpty(filterOptions)) {
                 await saveJSON(filterOptions, "filterOptions")
+                filterOptions = null
             }
+
             let animeEntries = fileContent.animeEntries
-            if (isJsonObject(filterOptions) && !jsonIsEmpty(filterOptions)) {
+            fileContent = null
+            if (lastAnimeUpdate instanceof Date && !isNaN(lastAnimeUpdate) && lastAnimeUpdate > currentAnimeUpdate && isJsonObject(animeEntries) && !jsonIsEmpty(animeEntries)) {
                 await saveJSON(animeEntries, "animeEntries")
+                animeEntries = null
             }
+
             self.postMessage({ status: "Data has been Imported..." })
-            self.postMessage({ importedUsername: username })
-            self.postMessage({ importedHiddenEntries: hiddenEntries })
-            self.postMessage({ importedlastRunnedAutoUpdateDate: lastRunnedAutoUpdateDate })
-            self.postMessage({ importedlastRunnedAutoExportDate: lastRunnedAutoExportDate })
             self.postMessage({ updateFilters: true })
             self.postMessage({ updateRecommendationList: true })
             self.postMessage({ status: null })
@@ -144,8 +165,27 @@ async function saveJSON(data, name) {
         }
     });
 }
-
-const parseAsync = async (text, iterLimit = 1000) => {
+async function retrieveJSON(name) {
+    return await new Promise((resolve) => {
+        try {
+            let read = db
+                .transaction("MyObjectStore", "readwrite")
+                .objectStore("MyObjectStore")
+                .get(name);
+            read.onsuccess = () => {
+                return resolve(read.result);
+            };
+            read.onerror = (error) => {
+                console.error(error);
+                return resolve();
+            };
+        } catch (ex) {
+            console.error(ex);
+            return resolve();
+        }
+    });
+}
+async function parseAsync(text, iterLimit = 1000) {
     function isValidJson(j) {
         let construct = j?.constructor.name
         try { return ((construct === 'Object' && `${j}` === '[object Object]') || j instanceof Array || construct === 'Array') }

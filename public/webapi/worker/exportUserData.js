@@ -9,7 +9,7 @@ self.onmessage = async ({ data }) => {
         self.postMessage({ state: 0 }) // Start Deleting Existing File
     }
     const username = await retrieveJSON("username");
-    const backUpData = {
+    let backUpData = {
         username: username,
         lastAnimeUpdate: await retrieveJSON("lastAnimeUpdate"),
         lastUserAnimeUpdate: await retrieveJSON("lastUserAnimeUpdate"),
@@ -78,6 +78,7 @@ self.onmessage = async ({ data }) => {
             }
         }
         stringify(backUpData)
+        backUpData = null
         self.postMessage({ status: "Data has been Exported..." })
         self.postMessage({ status: null })
         self.postMessage({
@@ -87,6 +88,7 @@ self.onmessage = async ({ data }) => {
         })
     } else {
         let blob = JSONToBlob(backUpData)
+        backUpData = null
         let url = URL.createObjectURL(blob);
         self.postMessage({ status: "Data has been Exported..." })
         self.postMessage({ status: null })

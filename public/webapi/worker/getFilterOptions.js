@@ -4291,7 +4291,6 @@ self.onmessage = async ({ data }) => {
         await saveJSON(savedFilters, "filters")
     }
     let filterOptions = await retrieveJSON("filterOptions")
-    let activeTagFilters = await retrieveJSON("activeTagFilters")
     if (jsonIsEmpty(filterOptions)) {
         self.postMessage({ status: "Getting Filter Options" })
         filterOptions = {
@@ -4684,8 +4683,9 @@ self.onmessage = async ({ data }) => {
             }
         })
         await saveJSON(filterOptions, "filterOptions")
-        await saveJSON(activeTagFilters, "activeTagFilters")
     }
+    savedFilters = null
+    let activeTagFilters = await retrieveJSON("activeTagFilters")
     if (jsonIsEmpty(activeTagFilters)) {
         activeTagFilters = filterOptions.filterSelection.reduce((r, { filterSelectionName }) => {
             r[filterSelectionName] = [];

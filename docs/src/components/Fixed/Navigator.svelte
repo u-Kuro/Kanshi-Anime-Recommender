@@ -14,7 +14,9 @@
 
     let writableSubscriptions = [];
     let typedUsername = "";
-    let navEl,
+    let windowScrollY = window.scrollY;
+    let popupContainer,
+        navEl,
         inputUsernameEl,
         inputUsernameElFocused = false;
 
@@ -29,6 +31,9 @@
                 typedUsername = val || "";
             })
         );
+        document.addEventListener("scroll", () => {
+            windowScrollY = window.scrollY;
+        });
     });
 
     async function updateUsername(event) {
@@ -121,7 +126,8 @@
                     }
                 })();
             } else {
-                focusInputUsernameEl();
+                inputUsernameEl?.blur?.();
+                inputUsernameElFocused = false;
             }
         }
     }
@@ -162,7 +168,6 @@
         }
     }
 
-    let popupContainer;
     function handleGoUp() {
         if (goUpTimeout) clearTimeout(goUpTimeout);
         goUpTimeout = setTimeout(() => {
@@ -171,8 +176,9 @@
                 popupContainer.scrollTop = popupContainer.scrollTop;
                 popupContainer.scrollLeft = popupContainer.scrollLeft;
                 popupContainer?.children?.[0]?.scrollIntoView?.({
+                    container: popupContainer,
                     behavior: "smooth",
-                    block: "start",
+                    block: "center",
                 });
             } else {
                 window.scrollY = window.scrollY;
@@ -257,7 +263,11 @@
             />
             <div
                 class={"usernameText " +
-                    ($dataStatus && ($popupVisible || $menuVisible)
+                    ($dataStatus &&
+                    ($popupVisible ||
+                        $menuVisible ||
+                        windowScrollY > 40 ||
+                        window.scrollY > 40)
                         ? "animate"
                         : "")}
                 on:click={focusInputUsernameEl}

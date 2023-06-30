@@ -90,14 +90,14 @@
 				$finalAnimeList = null;
 				getAnimeEntries()
 					.then(() => {
-						requestAnimeEntries({ onlyGetNewEntries: true });
+						requestAnimeEntries();
 						resolve();
 					})
 					.catch(async () => {
 						reject();
 					});
 			} else {
-				requestAnimeEntries({ onlyGetNewEntries: true });
+				requestAnimeEntries();
 				resolve();
 			}
 		})
@@ -453,7 +453,7 @@
 			} else if (
 				usernameInputEl &&
 				usernameInputEl === document?.activeElement &&
-				window.innerWidth <= 750
+				window.visualViewport.width <= 750
 			) {
 				usernameInputEl?.focus?.();
 				usernameInputEl?.blur?.();

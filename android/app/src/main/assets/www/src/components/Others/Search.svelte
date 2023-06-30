@@ -25,8 +25,9 @@
 
     let Init = true;
 
-    let windowWidth = window.innerWidth;
-    let maxFilterSelectionHeight;
+    let windowWidth = window.visualViewport.width;
+    let windowHeight = window.visualViewport.height;
+    let maxFilterSelectionHeight = windowHeight * 0.3;
     let unsubFilterDragScroll;
 
     let selectedFilterTypeElement;
@@ -89,13 +90,14 @@
         let parentEl = document.getElementById("tagFilters");
         await tick();
         if (parentEl instanceof Element) {
-            parentEl.scrollTop = 0
+            parentEl.scrollTop = 0;
         }
     }
 
     function windowResized() {
-        maxFilterSelectionHeight = window.innerHeight * 0.3;
-        windowWidth = window.innerWidth;
+        windowHeight = window.visualViewport.height;
+        maxFilterSelectionHeight = windowHeight * 0.3;
+        windowWidth = window.visualViewport.width;
     }
     async function handleFilterTypes(newFilterTypeName) {
         if ($initData) return pleaseWaitAlert();
@@ -1156,7 +1158,7 @@
             (selectedFilterElement ||
                 selectedFilterTypeElement ||
                 selectedSortElement) &&
-            window.innerWidth <= 425
+            window.visualViewport.width <= 425
         );
     };
     window.closeDropdown = () => {
@@ -1185,8 +1187,6 @@
 
     onMount(() => {
         // Init
-        maxFilterSelectionHeight = window.innerHeight * 0.3;
-
         let filterEl = document.getElementById("filters");
         filterEl.addEventListener("scroll", handleFilterScroll);
         unsubFilterDragScroll = dragScroll(filterEl, "x");
@@ -1304,7 +1304,7 @@
     <div
         class="filters"
         id="filters"
-        style:--maxPaddingHeight="{window.innerHeight}px"
+        style:--maxPaddingHeight="{windowHeight}px"
     >
         {#if $filterOptions}
             {#each $filterOptions?.filterSelection || [] as filterSelection, filSelIdx (filterSelection.filterSelectionName)}

@@ -6,7 +6,6 @@ self.onmessage = async ({ data }) => {
     if (!db) await IDBinit()
     // Retrieve Data
     self.postMessage({ status: "Initializing Filters" })
-    let activeTagFilters = await retrieveJSON("activeTagFilters")
     let animeEntries = await retrieveJSON("animeEntries") || {}
     let userEntries = await retrieveJSON("userEntries") || []
     let animeFranchises = await retrieveJSON("animeFranchise") || []
@@ -25,11 +24,12 @@ self.onmessage = async ({ data }) => {
         customUserScoreBase,
         genresWithLowerCount = {};
     let include = {
-        genres: {}, tags: {}, categories: {}//, studios: {}, staffs: {}, roles: {}
+        genres: {}, tags: {}, categories: {}, //studios: {}, staffs: {}, roles: {}
     },
         exclude = {
-            genres: {}, tags: {}, categories: {}//, studios: {}, staffs: {}, roles: {}
+            genres: {}, tags: {}, categories: {}, //studios: {}, staffs: {}, roles: {}
         }
+    let activeTagFilters = await retrieveJSON("activeTagFilters")
     let algorithmFilter = activeTagFilters?.['Algorithm Filter'] || []
     algorithmFilter.forEach(({ selected, filterType, optionName, optionType, optionValue }) => {
         if (selected === "included") {
@@ -90,7 +90,7 @@ self.onmessage = async ({ data }) => {
     })
     // Init User Entries and Information
     if (jsonIsEmpty(animeEntries)) {
-        includedUserEntryCount = 1000 // Stop User Alert
+        includedUserEntryCount = 0
         userEntries = []
     } else {
         includedUserEntryCount = 0 // Init
@@ -128,7 +128,7 @@ self.onmessage = async ({ data }) => {
     let varScheme = {
         genres: {},
         tags: {},
-        // studios: {},
+        studios: {},
         // staff: {}
     }
     let userEntriesStatus = {
@@ -139,7 +139,7 @@ self.onmessage = async ({ data }) => {
     let year = []
     let genresMeanCount = {}
     let tagsMeanCount = {}
-    // let studiosMeanCount = {}
+    let studiosMeanCount = {}
     // let staffMeanCount = {}
     let includedAnimeRelations = {}
     self.postMessage({ status: "Processing User Schema" })
@@ -160,7 +160,7 @@ self.onmessage = async ({ data }) => {
         // Init Variables
         let genres = anime?.genres || []
         let tags = anime?.tags || []
-        // let studios = anime?.studios?.nodes || []
+        let studios = anime?.studios?.nodes || []
         // let staffs = anime?.staff?.edges || []
         if (userScore > 0) {// Filter Scored Anime
             // Check if a related anime is already analyzed
@@ -264,48 +264,59 @@ self.onmessage = async ({ data }) => {
                 }
             }
             // Studios
-            // let includedStudios = {}
-            // for (let j = 0; j < studios.length; j++) {
-            //     if (!studios[j]?.isAnimationStudio) continue
-            //     let studio = studios[j]?.name
-            //     if (typeof studio === "string") {
-            //         if (includedStudios[studio]) continue
-            //         includedStudios[studio] = true
-            //         let fullStudio = "studio: " + studio.trim().toLowerCase()
-            //         if (!jsonIsEmpty(include.studios)) {
-            //             if (((include.studios[fullStudio] && !exclude.studios[fullStudio])
-            //                 || include.studios["studio: all"])
-            //                 && !exclude.studios["studio: all"]) {
-            //                 if (varScheme.studios[fullStudio]) {
-            //                     varScheme.studios[fullStudio].userScore.push(userScore)
-            //                     ++varScheme.studios[fullStudio].count
-            //                 } else {
-            //                     varScheme.studios[fullStudio] = { userScore: [userScore], count: 1 }
-            //                 }
-            //                 if (studiosMeanCount[fullStudio]) {
-            //                     ++studiosMeanCount[fullStudio]
-            //                 } else {
-            //                     studiosMeanCount[fullStudio] = 1
-            //                 }
-            //             }
-            //         } else {
-            //             if ((!exclude.studios[fullStudio] || include.studios["studio: all"])
-            //                 && !exclude.studios["studio: all"]) {
-            //                 if (varScheme.studios[fullStudio]) {
-            //                     varScheme.studios[fullStudio].userScore.push(userScore)
-            //                     ++varScheme.studios[fullStudio].count
-            //                 } else {
-            //                     varScheme.studios[fullStudio] = { userScore: [userScore], count: 1 }
-            //                 }
-            //                 if (studiosMeanCount[fullStudio]) {
-            //                     ++studiosMeanCount[fullStudio]
-            //                 } else {
-            //                     studiosMeanCount[fullStudio] = 1
-            //                 }
-            //             }
-            //         }
-            //     }
-            // }
+            let includedStudios = {}
+            for (let j = 0; j < studios.length; j++) {
+                if (!studios[j]?.isAnimationStudio) continue
+                let studio = studios[j]?.name
+                if (typeof studio === "string") {
+                    if (includedStudios[studio]) continue
+                    includedStudios[studio] = true
+                    let fullStudio = "studio: " + studio.trim().toLowerCase()
+                    if (varScheme.studios[fullStudio]) {
+                        varScheme.studios[fullStudio].userScore.push(userScore)
+                        ++varScheme.studios[fullStudio].count
+                    } else {
+                        varScheme.studios[fullStudio] = { userScore: [userScore], count: 1 }
+                    }
+                    if (studiosMeanCount[fullStudio]) {
+                        ++studiosMeanCount[fullStudio]
+                    } else {
+                        studiosMeanCount[fullStudio] = 1
+                    }
+                    // if (!jsonIsEmpty(include.studios)) {
+                    //     if (((include.studios[fullStudio] && !exclude.studios[fullStudio])
+                    //         || include.studios["studio: all"])
+                    //         && !exclude.studios["studio: all"]) {
+                    //         if (varScheme.studios[fullStudio]) {
+                    //             varScheme.studios[fullStudio].userScore.push(userScore)
+                    //             ++varScheme.studios[fullStudio].count
+                    //         } else {
+                    //             varScheme.studios[fullStudio] = { userScore: [userScore], count: 1 }
+                    //         }
+                    //         if (studiosMeanCount[fullStudio]) {
+                    //             ++studiosMeanCount[fullStudio]
+                    //         } else {
+                    //             studiosMeanCount[fullStudio] = 1
+                    //         }
+                    //     }
+                    // } else {
+                    //     if ((!exclude.studios[fullStudio] || include.studios["studio: all"])
+                    //         && !exclude.studios["studio: all"]) {
+                    //         if (varScheme.studios[fullStudio]) {
+                    //             varScheme.studios[fullStudio].userScore.push(userScore)
+                    //             ++varScheme.studios[fullStudio].count
+                    //         } else {
+                    //             varScheme.studios[fullStudio] = { userScore: [userScore], count: 1 }
+                    //         }
+                    //         if (studiosMeanCount[fullStudio]) {
+                    //             ++studiosMeanCount[fullStudio]
+                    //         } else {
+                    //             studiosMeanCount[fullStudio] = 1
+                    //         }
+                    //     }
+                    // }
+                }
+            }
             // // Staffs
             // let includedStaff = {}
             // for (let j = 0; j < staffs.length; j++) {
@@ -436,17 +447,17 @@ self.onmessage = async ({ data }) => {
             tagsMeanCount = Math.max(minSampleSize, tagsMeanCount)
         }
 
-        // if (typeof sampleSize === "number" && sampleSize >= 1) {
-        //     studiosMeanCount = sampleSize
-        // } else if (!jsonIsEmpty(studiosMeanCount)) {
-        //     let studiosCountValues = Object.values(studiosMeanCount)
-        //     studiosMeanCount = arrayMode(studiosCountValues) // Appears Little so Set Minimum
-        // } else {
-        //     studiosMeanCount = 10
-        // }
-        // if (minSampleSize >= 0) {
-        //     studiosMeanCount = Math.max(minSampleSize, studiosMeanCount)
-        // }
+        if (typeof sampleSize === "number" && sampleSize >= 1) {
+            studiosMeanCount = sampleSize
+        } else if (!jsonIsEmpty(studiosMeanCount)) {
+            let studiosCountValues = Object.values(studiosMeanCount)
+            studiosMeanCount = arrayMode(studiosCountValues) // Appears Little so Set Minimum
+        } else {
+            studiosMeanCount = 10
+        }
+        if (minSampleSize >= 0) {
+            studiosMeanCount = Math.max(minSampleSize, studiosMeanCount)
+        }
 
         // if (typeof sampleSize === "number" && sampleSize >= 1) {
         //     staffMeanCount = sampleSize
@@ -528,19 +539,33 @@ self.onmessage = async ({ data }) => {
         }
 
         // Studios
-        // let studiosKey = Object.keys(varScheme.studios)
-        // let studiosMean = []
-        // // let filteredStudiosMean = []
-        // for (let i = 0; i < studiosKey.length; i++) {
-        //     if (measure === "mode") {
-        //         let tempModeScore = arrayMode(varScheme.studios[studiosKey[i]].userScore)
-        //         studiosMean.push(tempModeScore)
-        //     } else {
-        //         let tempMeanScore = arrayMean(varScheme.studios[studiosKey[i]].userScore)
-        //         studiosMean.push(tempMeanScore)
-        //     }
-        // }
-        // studiosMean = arrayMean(studiosMean)
+        let studiosKey = Object.keys(varScheme.studios)
+        let studiosMean = []
+        for (let i = 0; i < studiosKey.length; i++) {
+            if (measure === "mode") {
+                let tempModeScore = arrayMode(varScheme.studios[studiosKey[i]].userScore)
+                studiosMean.push(tempModeScore)
+            } else {
+                let tempMeanScore = arrayMean(varScheme.studios[studiosKey[i]].userScore)
+                studiosMean.push(tempMeanScore)
+            }
+        }
+        studiosMean = arrayMean(studiosMean)
+        for (let i = 0; i < studiosKey.length; i++) {
+            let tempScore = 0
+            if (measure === "mode") {
+                tempScore = arrayMode(varScheme.studios[studiosKey[i]].userScore)
+            } else {
+                tempScore = arrayMean(varScheme.studios[studiosKey[i]].userScore)
+            }
+            // Include High Weight or Low scored Variables to avoid High-scored Variables without enough sample
+            let count = varScheme.studios[studiosKey[i]].count
+            if (count >= studiosMeanCount && tempScore >= studiosMean) {
+                varScheme.studios[studiosKey[i]] = tempScore
+            } else {
+                delete varScheme.studios[studiosKey[i]]
+            }
+        }
 
         // Staffs
         // let staffKey = Object.keys(varScheme.staff)
@@ -809,13 +834,10 @@ self.onmessage = async ({ data }) => {
                         // Top Similarities
                         if (typeof varScheme.meanGenres === "number" &&
                             varScheme.genres[fullGenre] >= varScheme.meanGenres &&
-                            !genresIncluded[fullGenre]
+                            !genresIncluded[genre]
                         ) {
                             let tmpscore = varScheme.genres[fullGenre];
-                            genresIncluded[fullGenre] = [
-                                genre + " (" + tmpscore.toFixed(2) + ")",
-                                tmpscore,
-                            ];
+                            genresIncluded[genre] = tmpscore
                         }
                     } else if (
                         typeof varScheme.meanGenres === "number" &&
@@ -855,13 +877,10 @@ self.onmessage = async ({ data }) => {
                             typeof tagRank === "number" &&
                             tagRank >= 50
                             && varScheme.tags[fullTag] >= varScheme.meanTags &&
-                            !tagsIncluded[fullTag]
+                            !tagsIncluded[tag]
                         ) {
                             let tmpscore = varScheme.tags[fullTag];
-                            tagsIncluded[fullTag] = [
-                                tag + " (" + tmpscore.toFixed(2) + ")",
-                                tmpscore,
-                            ];
+                            tagsIncluded[tag] = tmpscore
                         }
                     } else if (
                         typeof varScheme.meanTags === "number" &&
@@ -879,13 +898,22 @@ self.onmessage = async ({ data }) => {
                 }
             }
             // let zstudios = [];
-            // let includedStudios = {};
+            let includedStudios = {};
             for (let j = 0; j < studios.length; j++) {
                 let studio = studios[j]?.name;
                 if (typeof studio !== "string") continue;
-                // if (includedStudios[studio]) continue;
-                // includedStudios[studio] = true;
+                if (includedStudios[studio]) continue;
+                includedStudios[studio] = true;
                 studio = studio.trim().toLowerCase();
+                let fullStudio = "studio: " + studio;
+                //
+                if (typeof varScheme.studios[fullStudio] === "number") {
+                    // Top Similarities
+                    if (!studiosIncluded[studio]) {
+                        let tmpscore = varScheme.studios[fullStudio];
+                        studiosIncluded[studio] = tmpscore
+                    }
+                }
                 // Filters
                 if (filters['studio'][studio] === undefined) {
                     filters['studio'][studio] = true
@@ -1001,16 +1029,11 @@ self.onmessage = async ({ data }) => {
                 }),
                 {});
             // Sort all Top Similarities
-            let favoriteContents = Object.values(genresIncluded)
-                .concat(Object.values(tagsIncluded))
-                .concat(Object.values(studiosIncluded))
-                .sort((a, b) => {
-                    return b?.[1] - a?.[1];
-                })
-                .map((e) => {
-                    return e?.[0] || "";
-                });
-            favoriteContents = favoriteContents.length ? favoriteContents : [];
+            let favoriteContents = {
+                genres: genresIncluded,
+                tags: tagsIncluded,
+                studios: studiosIncluded
+            }
             // Add To Processed Recommendation List
             maxScoreTest = Math.max(score, maxScoreTest)
             recommendedAnimeList[animeID] = {
@@ -1292,7 +1315,7 @@ self.onmessage = async ({ data }) => {
                 averageScore: averageScore,
                 popularity: popularity,
                 score: score,
-                favoriteContents: [],
+                favoriteContents: {},
                 userStatus: "UNWATCHED",
                 status: formatCustomString(status),
                 // Others

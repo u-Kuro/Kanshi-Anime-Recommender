@@ -38,9 +38,10 @@ self.onmessage = async ({ data }) => {
         if (!db) await IDBinit()
         self.postMessage({ status: "Initializing Filters" })
         let activeTagFilters = await retrieveJSON("activeTagFilters")
-        let recommendedAnimeList = await retrieveJSON("recommendedAnimeList") || []
-        // Init Content Caution
         let contentCaution = activeTagFilters?.['Content Caution'] || []
+        let animeFilter = activeTagFilters?.['Anime Filter'] || []
+        activeTagFilters = null
+        // Init Content Caution
         let semiCautionContents = {
             genres: {},
             tags: {},
@@ -69,6 +70,7 @@ self.onmessage = async ({ data }) => {
                 }
             }
         })
+        contentCaution = null
         // Init Anime Filter
         let flexibleInclusion = {},
             include = {
@@ -104,7 +106,6 @@ self.onmessage = async ({ data }) => {
             showMyAnime = false,
             showAiring = false,
             favoriteContentsLimit = 5;
-        let animeFilter = activeTagFilters?.['Anime Filter'] || []
         animeFilter.forEach(({ selected, filterType, optionName, optionType, optionValue, CMPoperator, CMPNumber }) => {
             if (selected === "included") {
                 if (filterType === 'dropdown') {
@@ -189,11 +190,13 @@ self.onmessage = async ({ data }) => {
                 }
             }
         })
+        animeFilter = null
         self.postMessage({ status: "Filtering Recommendation List" })
 
         // Get Hidden Entries
         let hiddenEntries = (await retrieveJSON("hiddenEntries")) || {}
         // Filter and ADD Caution State below
+        let recommendedAnimeList = await retrieveJSON("recommendedAnimeList") || []
         finalAnimeList = recommendedAnimeList.filter(anime => {
             // favoriteContents
             if (showAiring) {
@@ -226,7 +229,6 @@ self.onmessage = async ({ data }) => {
                     return false
                 }
             }
-
             // Comparison Filter >=, >, <, <=, number
             if (comparisonFilter.userScore) {
                 let operator = comparisonFilter.userScore.operator?.trim?.(),
@@ -385,6 +387,7 @@ self.onmessage = async ({ data }) => {
             if (anime?.year && !jsonIsEmpty(exclude.year) && exclude.year[anime.year?.toString?.()?.toLowerCase?.()]) {
                 return false
             }
+
             if (!jsonIsEmpty(exclude.genres)) {
                 if (anime.genres.some(e => {
                     if (typeof e !== 'string') return false
@@ -436,6 +439,7 @@ self.onmessage = async ({ data }) => {
                     return false
                 }
             }
+
             // Should Include
             if (flexibleInclusion['genre']) {
                 // Should Include OR
@@ -452,6 +456,7 @@ self.onmessage = async ({ data }) => {
                     })) return false
                 }
             }
+
             if (flexibleInclusion['tag']) {
                 // Should Include OR
                 if (!jsonIsEmpty(include.tags)) {
@@ -467,6 +472,7 @@ self.onmessage = async ({ data }) => {
                     })) return false
                 }
             }
+
             if (flexibleInclusion['studio']) {
                 // Should Include OR
                 if (!jsonIsEmpty(include.studios)) {
@@ -512,16 +518,26 @@ self.onmessage = async ({ data }) => {
             })
 
             // Limit Favorite Contents
-            if (anime.favoriteContents instanceof Array) {
-                anime.favoriteContents = anime.favoriteContents.slice(0, favoriteContentsLimit)
+            if (isJsonObject(anime.favoriteContents) && !jsonIsEmpty(anime.favoriteContents)) {
+                let sortedFavoriteContents = Object.entries(anime.favoriteContents.genres)
+                    .concat(Object.entries(anime.favoriteContents.tags))
+                    .concat(Object.entries(anime.favoriteContents.studios))
+                    .sort((a, b) => {
+                        return b[1] - a[1]
+                    })
+                    .map(([k, v]) => `${k}: (${formatNumber(v)})`)
+                anime.sortedFavoriteContents = sortedFavoriteContents?.slice?.(0, favoriteContentsLimit) || []
+            } else {
+                anime.sortedFavoriteContents = []
             }
 
             return true;
         });
+        hiddenEntries = recommendedAnimeList = null
         // Sort List
         let sortFilter = (await retrieveJSON("filterOptions") || []).sortFilter
         let { sortName, sortType } = sortFilter?.filter(({ sortType }) => sortType === "desc" || sortType === "asc")?.[0] || { sortName: 'weighted score', sortType: 'desc' }
-
+        sortFilter = null
         if (sortType === "desc") {
             if (sortName === "weighted score") {
                 finalAnimeList.sort((a, b) => {
@@ -637,20 +653,41 @@ self.onmessage = async ({ data }) => {
                 })
             }
         }
-        // CautionCOlor
-        // hasCaution > hasVeryLowScore > hasLowScore > hasSemiCaution > Good
-        filteredList = finalAnimeList
+        sortName = sortType = null
         await saveJSON(finalAnimeList, "finalAnimeList")
         self.postMessage({ status: null })
         self.postMessage({
             isNew: true,
-            finalAnimeList: filteredList.slice(0, loadLimit),
+            finalAnimeList: finalAnimeList.slice(0, loadLimit),
         });
-        filteredList = filteredList.slice(loadLimit)
+        filteredList = finalAnimeList.slice(loadLimit)
     }
 };
 
 // Functions
+const formatNumber = (number, dec = 2) => {
+    if (typeof number === "number") {
+        const formatter = new Intl.NumberFormat("en-US", {
+            maximumFractionDigits: dec, // display up to 2 decimal places
+            minimumFractionDigits: 0, // display at least 0 decimal places
+            notation: "compact", // use compact notation for large numbers
+            compactDisplay: "short", // use short notation for large numbers (K, M, etc.)
+        });
+
+        if (Math.abs(number) >= 1000) {
+            return formatter.format(number);
+        } else if (Math.abs(number) < 0.01) {
+            return number.toExponential(0);
+        } else {
+            return (
+                number.toFixed(dec) ||
+                number.toLocaleString("en-US", { maximumFractionDigits: dec })
+            );
+        }
+    } else {
+        return null;
+    }
+}
 function ncsCompare(str1, str2) {
     if (typeof str1 !== 'string' || typeof str2 !== 'string') {
         return false;
@@ -731,10 +768,6 @@ function jsonIsEmpty(obj) {
     }
     return true;
 }
-function isJson(j) {
-    try {
-        return j?.constructor.name === "Object" && `${j}` === "[object Object]";
-    } catch (e) {
-        return false;
-    }
+function isJsonObject(obj) {
+    return Object.prototype.toString.call(obj) === "[object Object]"
 }

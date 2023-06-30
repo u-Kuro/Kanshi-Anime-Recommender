@@ -6,18 +6,21 @@ import {
     filterOptions,
     lastRunnedAutoUpdateDate,
     lastRunnedAutoExportDate,
-    hiddenEntries
+    hiddenEntries,
+    runUpdate
 } from "./globalValues";
 import { isAndroid, downloadLink, isJsonObject } from "../js/others/helper.js"
 import { cacheRequest } from "./caching";
 let terminateDelay = 1000;
 let dataStatusPrio = false
+let isImporting = false, isExporting = false;
 
 // Reactinve Functions
 let animeLoaderWorker;
 const animeLoader = (_data) => {
-    dataStatusPrio = true
     return new Promise((resolve, reject) => {
+        if (isExporting || isImporting) return
+        dataStatusPrio = true
         if (animeLoaderWorker) animeLoaderWorker.terminate();
         cacheRequest("./webapi/worker/animeLoader.js")
             .then(url => {
@@ -46,8 +49,9 @@ const animeLoader = (_data) => {
 let processRecommendedAnimeListTerminateTimeout;
 let processRecommendedAnimeListWorker;
 const processRecommendedAnimeList = (_data) => {
-    dataStatusPrio = true
     return new Promise((resolve, reject) => {
+        if (isExporting || isImporting) return
+        dataStatusPrio = true
         if (processRecommendedAnimeListWorker) processRecommendedAnimeListWorker.terminate();
         cacheRequest("./webapi/worker/processRecommendedAnimeList.js")
             .then(url => {
@@ -78,6 +82,7 @@ const processRecommendedAnimeList = (_data) => {
 let requestAnimeEntriesTerminateTimeout, requestAnimeEntriesWorker;
 const requestAnimeEntries = (_data) => {
     return new Promise((resolve, reject) => {
+        if (isExporting || isImporting) return
         if (requestAnimeEntriesWorker) requestAnimeEntriesWorker.terminate()
         cacheRequest("./webapi/worker/requestAnimeEntries.js")
             .then(url => {
@@ -114,6 +119,7 @@ const requestAnimeEntries = (_data) => {
 let requestUserEntriesTerminateTimeout, requestUserEntriesWorker;
 const requestUserEntries = (_data) => {
     return new Promise((resolve, reject) => {
+        if (isExporting || isImporting) return
         if (requestUserEntriesWorker) requestUserEntriesWorker.terminate()
         cacheRequest("./webapi/worker/requestUserEntries.js")
             .then(url => {
@@ -147,6 +153,9 @@ const requestUserEntries = (_data) => {
 let exportUserDataWorker;
 const exportUserData = (_data) => {
     return new Promise((resolve, reject) => {
+        if (isImporting) return
+        isExporting = true
+        stopConflictingWorkers()
         if (exportUserDataWorker) exportUserDataWorker.terminate()
         cacheRequest("./webapi/worker/exportUserData.js")
             .then(url => {
@@ -173,21 +182,25 @@ const exportUserData = (_data) => {
                             let username = data.username ?? null
                             JSBridge.exportJSON(chunk, 2, `Kanshi.${username?.toLowerCase() || "Backup"}.json`)
                             exportUserDataWorker.terminate();
+                            isExporting = false
                             resolve(data)
                         }
                     } else {
                         dataStatusPrio = false
                         let username = data.username ?? null
                         downloadLink(data.url, `Kanshi.${username?.toLowerCase() || "Backup"}.json`)
+                        isExporting = false
                         resolve(data)
                         // dont terminate, can't oversee blob link lifetime
                     }
                 }
                 exportUserDataWorker.onerror = (error) => {
+                    isExporting = false
                     alertError()
                     reject(error)
                 }
             }).catch((error) => {
+                isExporting = false
                 reject(error)
             })
     })
@@ -195,6 +208,9 @@ const exportUserData = (_data) => {
 let importUserDataTerminateTimeout, importUserDataWorker;
 const importUserData = (_data) => {
     return new Promise((resolve, reject) => {
+        if (isExporting) return
+        isImporting = true
+        stopConflictingWorkers()
         if (importUserDataWorker) importUserDataWorker.terminate()
         cacheRequest("./webapi/worker/importUserData.js")
             .then(url => {
@@ -203,6 +219,7 @@ const importUserData = (_data) => {
                 importUserDataWorker.postMessage(_data)
                 importUserDataWorker.onmessage = ({ data }) => {
                     if (data?.error !== undefined) {
+                        isImporting = false
                         reject(data?.error || "Something went wrong...")
                     } else if (data?.status !== undefined) {
                         dataStatusPrio = true
@@ -216,14 +233,18 @@ const importUserData = (_data) => {
                     } else if (data?.importedlastRunnedAutoExportDate instanceof Date && !isNaN(data?.importedlastRunnedAutoExportDate)) {
                         lastRunnedAutoExportDate.set(data.importedlastRunnedAutoExportDate)
                     } else if (data?.updateFilters !== undefined) {
+                        isImporting = false
                         getFilterOptions()
                             .then((data) => {
                                 activeTagFilters.set(data.activeTagFilters)
                                 filterOptions.set(data.filterOptions)
                             })
                     } else if (data?.updateRecommendationList !== undefined) {
+                        isImporting = false
                         updateRecommendationList.update(e => !e)
                     } else {
+                        isImporting = false
+                        runUpdate.update(e => !e)
                         dataStatusPrio = false
                         importUserDataTerminateTimeout = setTimeout(() => {
                             importUserDataWorker.terminate();
@@ -232,10 +253,12 @@ const importUserData = (_data) => {
                     }
                 }
                 importUserDataWorker.onerror = (error) => {
+                    isImporting = false
                     alertError()
                     reject(error || "Something went wrong...")
                 }
             }).catch((error) => {
+                isImporting = false
                 reject(error)
             })
     })
@@ -265,6 +288,7 @@ const getIDBdata = (name) => {
 }
 const saveIDBdata = (data, name) => {
     return new Promise((resolve, reject) => {
+        if (isExporting || isImporting) return
         cacheRequest("./webapi/worker/saveIDBdata.js")
             .then(url => {
                 let worker = new Worker(url)
@@ -379,8 +403,9 @@ const getAnimeFranchises = (_data) => {
     })
 }
 
-let getFilterOptionsTerminateTimeout, getFilterOptionsInterval
+let getFilterOptionsTerminateTimeout, getFilterOptionsInterval, getFilterOptionsWorker;
 const getFilterOptions = (_data) => {
+    if (isExporting || isImporting) return
     return new Promise((resolve, reject) => {
         getFilterOptionsInterval = setInterval(() => {
             if (!gettingAnimeEntriesInterval && !gettingAnimeFranchisesInterval) {
@@ -393,22 +418,23 @@ const getFilterOptions = (_data) => {
                     clearInterval(getFilterOptionsInterval)
                     getFilterOptionsInterval = null
                 }
-                let worker = new Worker(url)
+                if (getFilterOptionsWorker) getFilterOptionsWorker.terminate()
+                getFilterOptionsWorker = new Worker(url)
                 if (getFilterOptionsTerminateTimeout) clearTimeout(getFilterOptionsTerminateTimeout)
-                worker.postMessage(_data)
-                worker.onmessage = ({ data }) => {
+                getFilterOptionsWorker.postMessage(_data)
+                getFilterOptionsWorker.onmessage = ({ data }) => {
                     if (data?.status !== undefined) {
                         dataStatusPrio = true
                         dataStatus.set(data.status)
                     } else {
                         dataStatusPrio = false
                         getFilterOptionsTerminateTimeout = setTimeout(() => {
-                            worker.terminate();
+                            getFilterOptionsWorker.terminate();
                         }, terminateDelay)
                         resolve(data)
                     }
                 }
-                worker.onerror = (error) => {
+                getFilterOptionsWorker.onerror = (error) => {
                     alertError()
                     reject(error)
                 }
@@ -421,6 +447,16 @@ const getFilterOptions = (_data) => {
                 reject(error)
             })
     })
+}
+
+function stopConflictingWorkers() {
+    animeLoaderWorker?.terminate?.();
+    processRecommendedAnimeListWorker?.terminate?.();
+    requestAnimeEntriesWorker?.terminate?.()
+    requestUserEntriesWorker?.terminate?.()
+    exportUserDataWorker?.terminate?.()
+    importUserDataWorker?.terminate?.()
+    getFilterOptionsWorker?.terminate?.()
 }
 
 function alertError() {
