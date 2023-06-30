@@ -5,7 +5,7 @@ let maxStaffPerPage = 25;
 self.onmessage = async ({ data }) => {
     if (!db) await IDBinit()
     let currentYear = (new Date()).getFullYear();
-    let lastAnimeUpdate = await retrieveJSON("lastAnimeUpdate") || 0
+    let lastAnimeUpdate = await retrieveJSON("lastAnimeUpdate") || new Date(1670770349 * 1000)
     let onlyGetNewEntries = data?.onlyGetNewEntries ?? false
     let retryCount = 0;
     let animeEntries = await retrieveJSON("animeEntries") || {}
