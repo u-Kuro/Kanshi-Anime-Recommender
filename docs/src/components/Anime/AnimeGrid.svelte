@@ -15,6 +15,7 @@
         asyncAnimeReloaded,
         animeIdxRemoved,
         shownAllInList,
+        loadAnime,
     } from "../../js/globalValues.js";
     import {
         formatNumber,
@@ -23,25 +24,27 @@
     } from "../../js/others/helper.js";
 
     let animeGridEl;
-    let observerTimeout;
+    let alreadyRunning;
     let observerDelay = 1000,
         loadingMore = false;
 
     function addLastAnimeObserver() {
+        alreadyRunning = false;
         $animeObserver = new IntersectionObserver(
-            (entries, self) => {
+            (entries) => {
                 entries.forEach((entry) => {
                     if (entry.isIntersecting) {
                         loadingMore = true;
-                        if (observerTimeout) clearTimeout(observerTimeout);
-                        observerTimeout = setTimeout(() => {
+                        if (alreadyRunning) return;
+                        alreadyRunning = true;
+                        setTimeout(() => {
+                            alreadyRunning = false;
                             if ($animeLoaderWorker instanceof Worker) {
                                 $animeLoaderWorker.postMessage({
                                     loadMore: true,
                                 });
-                                try {
-                                    self.unobserve(entry.target);
-                                } catch (e) {}
+                            } else {
+                                $loadAnime = !$loadAnime;
                             }
                         }, observerDelay);
                     }
@@ -50,7 +53,7 @@
             {
                 root: null,
                 rootMargin: "100%",
-                threshold: 0,
+                threshold: [0, 1],
             }
         );
     }
@@ -136,11 +139,15 @@
             let gridElement =
                 $finalAnimeList[gridElementIdx].gridElement ||
                 animeGridEl.children?.[gridElementIdx];
-            if (
-                $animeObserver instanceof IntersectionObserver &&
-                gridElement instanceof Element
-            ) {
-                $animeObserver.observe(gridElement);
+            if ($animeObserver instanceof IntersectionObserver) {
+                if (gridElement instanceof Element) {
+                    $animeObserver.observe(gridElement);
+                }
+                document
+                    .querySelectorAll(".anime-loaded-padding")
+                    .forEach((item) => {
+                        $animeObserver.observe(item);
+                    });
             }
             if (isAsyncLoad) {
                 $asyncAnimeReloaded = !$asyncAnimeReloaded;
@@ -340,17 +347,22 @@
                     </span>
                 </div>
             {/each}
-            {#if $finalAnimeList?.length && !$shownAllInList && loadingMore}
-                {#each Array(6) as _}
-                    <div class="image-grid__card skeleton">
-                        <div class="shimmer" />
-                        <span class="image-grid__card-title">
-                            <span class="title skeleton shimmer" />
-                            <span class="brief-info skeleton shimmer" />
-                        </span>
-                    </div>
-                {/each}
-            {/if}
+            {#each Array(6) as _}
+                <div
+                    class={"image-grid__card skeleton anime-loaded-padding " +
+                        ($finalAnimeList?.length &&
+                        !$shownAllInList &&
+                        loadingMore
+                            ? ""
+                            : "disable-interaction")}
+                >
+                    <div class="shimmer" />
+                    <span class="image-grid__card-title">
+                        <span class="title skeleton shimmer" />
+                        <span class="brief-info skeleton shimmer" />
+                    </span>
+                </div>
+            {/each}
         {:else if !$finalAnimeList || $initData}
             {#each Array(10) as _}
                 <div class="image-grid__card skeleton">
@@ -545,5 +557,16 @@
         .image-grid {
             justify-content: space-evenly;
         }
+    }
+    .disable-interaction {
+        pointer-events: none !important;
+        position: fixed !important;
+        transform: translateY(-99999px) !important;
+        user-select: none !important;
+        touch-action: none !important;
+        cursor: not-allowed !important;
+        -webkit-user-drag: none !important;
+        -moz-user-select: none !important;
+        -ms-user-select: none !important;
     }
 </style>

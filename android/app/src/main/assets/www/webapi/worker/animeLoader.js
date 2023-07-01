@@ -36,6 +36,7 @@ self.onmessage = async ({ data }) => {
         filteredList = filteredList.slice(loadLimit)
     } else {
         if (!db) await IDBinit()
+        self.postMessage({ init: true })
         self.postMessage({ status: "Initializing Filters" })
         let activeTagFilters = await retrieveJSON("activeTagFilters")
         let contentCaution = activeTagFilters?.['Content Caution'] || []
