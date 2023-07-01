@@ -275,38 +275,46 @@
 				throw error;
 			});
 	});
-
+	setInterval(() => console.log(window.scrollY), 2000);
 	loadAnime.subscribe(async (val) => {
 		if (typeof val !== "boolean" || $initData) return;
-		animeLoader()
-			.then(async (data) => {
-				if ($popupVisible || $finalAnimeList?.length > 18) {
-					if (
-						await $confirmPromise({
-							text: "List update is available do you want to refresh the list?",
-						})
-					) {
+		if ($popupVisible || window.scrollY > 500) {
+			if (
+				await $confirmPromise({
+					text: "List update is available do you want to refresh the list?",
+				})
+			) {
+				animeLoader()
+					.then(async (data) => {
 						$animeLoaderWorker = data.animeLoaderWorker;
 						$searchedAnimeKeyword = "";
 						if (data?.isNew) {
 							$finalAnimeList = data.finalAnimeList;
 							$hiddenEntries = data.hiddenEntries;
 						}
-					}
-				} else {
+						$dataStatus = null;
+						return;
+					})
+					.catch((error) => {
+						throw error;
+					});
+			}
+		} else {
+			animeLoader()
+				.then(async (data) => {
 					$animeLoaderWorker = data.animeLoaderWorker;
 					$searchedAnimeKeyword = "";
 					if (data?.isNew) {
 						$finalAnimeList = data.finalAnimeList;
 						$hiddenEntries = data.hiddenEntries;
 					}
-				}
-				$dataStatus = null;
-				return;
-			})
-			.catch((error) => {
-				throw error;
-			});
+					$dataStatus = null;
+					return;
+				})
+				.catch((error) => {
+					throw error;
+				});
+		}
 	});
 	updateFilters.subscribe(async (val) => {
 		if (typeof val !== "boolean" || $initData) return;
