@@ -1059,7 +1059,7 @@ self.onmessage = async ({ data }) => {
                 duration: duration,
                 coverImageUrl: anime?.coverImage?.large,
                 trailerID: anime?.trailer?.id,
-                bannerImageUrl: anime?.bannerImage,
+                bannerImageUrl: anime?.bannerImage || anime?.trailer?.thumbnail,
             };
         }
         // After Loop
@@ -1330,7 +1330,7 @@ self.onmessage = async ({ data }) => {
                 duration: duration,
                 coverImageUrl: anime?.coverImage?.large,
                 trailerID: anime?.trailer?.id,
-                bannerImageUrl: anime?.bannerImage,
+                bannerImageUrl: anime?.bannerImage || anime?.trailer?.thumbnail,
             };
         }
         // After Loop

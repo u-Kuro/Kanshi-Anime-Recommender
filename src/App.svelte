@@ -275,7 +275,7 @@
 				throw error;
 			});
 	});
-	setInterval(() => console.log(window.scrollY), 2000);
+
 	loadAnime.subscribe(async (val) => {
 		if (typeof val !== "boolean" || $initData) return;
 		if ($popupVisible || window.scrollY > 500) {

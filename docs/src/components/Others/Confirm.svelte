@@ -1,6 +1,7 @@
 <script>
     import { fly } from "svelte/transition";
     import { createEventDispatcher, afterUpdate } from "svelte";
+    import { popupVisible } from "../../js/globalValues";
 
     const dispatch = createEventDispatcher();
 
@@ -59,29 +60,36 @@
         on:keydown={(e) => e.key === "Enter" && handleConfirmVisibility(e)}
     >
         <div
-            class="confirm-container"
-            transition:fly={{ y: 20, duration: 300 }}
+            class="confirm-wrapper"
+            style:--height={$popupVisible ? "calc(100% + 1px)" : "100%"}
         >
-            <div class="confirm-info-container">
-                <h2 class="confirm-title">{confirmTitle}</h2>
-                <h2 class="confirm-text">{confirmText}</h2>
-            </div>
-            <div class="confirm-button-container">
-                {#if !isAlert}
+            <div
+                class="confirm-container"
+                transition:fly={{ y: 20, duration: 300 }}
+            >
+                <div class="confirm-info-container">
+                    <h2 class="confirm-title">{confirmTitle}</h2>
+                    <h2 class="confirm-text">{confirmText}</h2>
+                </div>
+                <div class="confirm-button-container">
+                    {#if !isAlert}
+                        <button
+                            class="button"
+                            on:click={handleCancel}
+                            on:keydown={(e) =>
+                                e.key === "Enter" && handleCancel(e)}
+                            >{cancelLabel}</button
+                        >
+                    {/if}
                     <button
                         class="button"
-                        on:click={handleCancel}
-                        on:keydown={(e) => e.key === "Enter" && handleCancel(e)}
-                        >{cancelLabel}</button
+                        bind:this={confirmButtonEl}
+                        on:click={handleConfirm}
+                        on:keydown={(e) =>
+                            e.key === "Enter" && handleConfirm(e)}
+                        >{confirmLabel}</button
                     >
-                {/if}
-                <button
-                    class="button"
-                    bind:this={confirmButtonEl}
-                    on:click={handleConfirm}
-                    on:keydown={(e) => e.key === "Enter" && handleConfirm(e)}
-                    >{confirmLabel}</button
-                >
+                </div>
             </div>
         </div>
     </div>
@@ -90,16 +98,13 @@
 <style>
     .confirm {
         position: fixed;
-        display: flex;
         z-index: 1000;
         left: 0;
         top: 0;
         width: 100%;
         height: 100%;
         background-color: rgba(0, 0, 0, 0.4);
-        justify-content: center;
-        align-items: center;
-        overflow-y: scroll;
+        overflow-y: auto;
         overflow-x: hidden;
         overscroll-behavior: contain;
         user-select: none;
@@ -109,7 +114,15 @@
         display: none;
     }
 
-    .confirm::-webkit-scrollbar {
+    .confirm-wrapper {
+        width: 100%;
+        height: var(--height);
+        justify-content: center;
+        align-items: center;
+        display: flex;
+    }
+
+    .confirm-wrapper::-webkit-scrollbar {
         display: none;
     }
 

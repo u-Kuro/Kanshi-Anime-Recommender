@@ -15,7 +15,6 @@
         asyncAnimeReloaded,
         animeIdxRemoved,
         shownAllInList,
-        hiddenEntries,
     } from "../../js/globalValues.js";
     import {
         formatNumber,

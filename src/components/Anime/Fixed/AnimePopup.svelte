@@ -16,7 +16,7 @@
         shownAllInList,
         dataStatus,
         initData,
-        updateRecommendationList
+        updateRecommendationList,
     } from "../../../js/globalValues.js";
     import {
         isJsonObject,
@@ -421,8 +421,7 @@
             if (e.key === " " && $popupVisible) {
                 e.preventDefault();
                 let isPlaying = $ytPlayers?.some(
-                    ({ ytPlayer }) =>
-                        ytPlayer?.getPlayerState?.() === 1
+                    ({ ytPlayer }) => ytPlayer?.getPlayerState?.() === 1
                 );
                 if (isPlaying) {
                     $ytPlayers.forEach(({ ytPlayer }) => {
@@ -580,6 +579,7 @@
             ) {
                 let animeCoverImgEl = popupImg.querySelector(".coverImg");
                 addClass(animeCoverImgEl, "display-none");
+                addClass(animeCoverImgEl, "fade-out");
             }
             if ($ytPlayers.length >= 8) {
                 let destroyedPlayerIdx = 0;
@@ -646,9 +646,7 @@
             let popupImg = popupHeader?.querySelector?.(".popup-img");
             let animeCoverImgEl = popupImg.querySelector(".coverImg");
             removeClass(animeCoverImgEl, "display-none");
-            if (popupImg instanceof Element) {
-                removeClass(popupImg, "display-none");
-            }
+            removeClass(popupImg, "display-none");
         }
     }
 
@@ -696,7 +694,11 @@
             ytPlayer.destroy();
             addClass(trailerEl, "display-none");
             removeClass(popupHeader, "loader");
+            addClass(animeCoverImgEl, "fade-out");
+            removeClass(animeCoverImgEl, "fade-in");
+            addClass(animeCoverImgEl, "fade-in");
             removeClass(animeCoverImgEl, "display-none");
+            removeClass(animeCoverImgEl, "fade-out");
             removeClass(popupImg, "display-none");
         } else {
             addClass(popupImg, "fade-out");
@@ -980,19 +982,19 @@
         }
         $dataStatus = "Reconnected Successfully";
         if ($initData) {
-            $initData = false
+            $initData = false;
         }
         if (!$finalAnimeList?.length) {
-            $updateRecommendationList = !$updateRecommendationList
+            $updateRecommendationList = !$updateRecommendationList;
         }
         isOnline = true;
         document.querySelectorAll("link")?.forEach((link) => {
-            if(link.href){
+            if (link.href) {
                 link.href = link.href;
             }
         });
         document.querySelectorAll("script")?.forEach((script) => {
-            if(script.src){
+            if (script.src) {
                 script.src = script.src;
             }
         });
@@ -1084,9 +1086,11 @@
                                         loading="lazy"
                                         src={anime.bannerImageUrl}
                                         alt="bannerImg"
-                                        class="bannerImg"
-                                        on:load={(e) =>
-                                            addClass(e.target, "fade-in")}
+                                        class="bannerImg fade-out"
+                                        on:load={(e) => {
+                                            removeClass(e.target, "fade-out");
+                                            addClass(e.target, "fade-in");
+                                        }}
                                     />
                                 {/if}
                                 {#if anime.coverImageUrl}
@@ -1095,16 +1099,28 @@
                                             loading="lazy"
                                             src={anime.coverImageUrl}
                                             alt="coverImg"
-                                            class="coverImg display-none fade-in"
+                                            class="coverImg display-none fade-out"
+                                            on:load={(e) => {
+                                                removeClass(
+                                                    e.target,
+                                                    "fade-out"
+                                                );
+                                                addClass(e.target, "fade-in");
+                                            }}
                                         />
                                     {:else}
                                         <img
                                             loading="lazy"
                                             src={anime.coverImageUrl}
                                             alt="coverImg"
-                                            class="coverImg"
-                                            on:load={(e) =>
-                                                addClass(e.target, "fade-in")}
+                                            class="coverImg fade-out"
+                                            on:load={(e) => {
+                                                removeClass(
+                                                    e.target,
+                                                    "fade-out"
+                                                );
+                                                addClass(e.target, "fade-in");
+                                            }}
                                         />
                                     {/if}
                                 {/if}
@@ -1265,7 +1281,11 @@
                                     <div class="info-categ">User Status</div>
                                     <div class="user-status-popup info">
                                         <span
-                                            class={"copy "+(getUserStatusColor(anime.userStatus)+"-color")}
+                                            class={"copy " +
+                                                (getUserStatusColor(
+                                                    anime.userStatus
+                                                ) +
+                                                    "-color")}
                                             copy-value={anime.userStatus || ""}
                                         >
                                             {anime.userStatus || "N/A"}
@@ -1521,9 +1541,11 @@
     }
     .bannerImg.fade-out {
         animation: fadeOut 0.3s ease forwards;
+        opacity: 0;
     }
     .bannerImg.fade-in {
         animation: fadeIn 0.3s ease forwards;
+        opacity: 1;
     }
 
     .coverImg {
@@ -1541,9 +1563,11 @@
     }
     .coverImg.fade-out {
         animation: fadeOut 0.3s ease forwards;
+        opacity: 0;
     }
     .coverImg.fade-in {
         animation: fadeIn 0.3s ease forwards;
+        opacity: 1;
     }
 
     .popup-body {
