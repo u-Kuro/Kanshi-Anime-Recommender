@@ -66,13 +66,15 @@
                                 `Currently connected to ${$username}, do you want to change account?`
                             )
                         ) {
-                            window.scrollY = window.scrollY;
-                            window.scrollX = window.scrollX;
-                            window?.scrollTo?.({
-                                top: -9999,
-                                behavior: "smooth",
-                            });
                             $menuVisible = false;
+                            if (!$popupVisible) {
+                                window.scrollY = window.scrollY;
+                                window.scrollX = window.scrollX;
+                                window?.scrollTo?.({
+                                    top: -9999,
+                                    behavior: "smooth",
+                                });
+                            }
                             $dataStatus = "Getting User Entries";
                             requestUserEntries({
                                 username: typedUsername,
@@ -99,13 +101,15 @@
                                 `Are you sure you want to connect to ${typedUsername}?`
                             )
                         ) {
-                            window.scrollY = window.scrollY;
-                            window.scrollX = window.scrollX;
-                            window?.scrollTo?.({
-                                top: -9999,
-                                behavior: "smooth",
-                            });
                             $menuVisible = false;
+                            if (!$popupVisible) {
+                                window.scrollY = window.scrollY;
+                                window.scrollX = window.scrollX;
+                                window?.scrollTo?.({
+                                    top: -9999,
+                                    behavior: "smooth",
+                                });
+                            }
                             $dataStatus = "Getting User Entries";
                             await requestUserEntries({
                                 username: typedUsername,

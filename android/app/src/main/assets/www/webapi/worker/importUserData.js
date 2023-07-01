@@ -18,6 +18,11 @@ self.onmessage = async ({ data }) => {
             if (!fileContent) {
                 fileContent = await parseAsync(reader.result)
             }
+            if (!fileContent) {
+                self.postMessage({ status: "File parsing has failed..." })
+                self.postMessage({ error: "File parsing has failed..." })
+                return
+            }
             let username = fileContent.username
             if (typeof username === "string") {
                 await saveJSON(username, "username")

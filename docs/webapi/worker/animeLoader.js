@@ -533,7 +533,7 @@ self.onmessage = async ({ data }) => {
 
             return true;
         });
-        hiddenEntries = recommendedAnimeList = null
+        recommendedAnimeList = null
         // Sort List
         let sortFilter = (await retrieveJSON("filterOptions") || []).sortFilter
         let { sortName, sortType } = sortFilter?.filter(({ sortType }) => sortType === "desc" || sortType === "asc")?.[0] || { sortName: 'weighted score', sortType: 'desc' }
@@ -659,6 +659,7 @@ self.onmessage = async ({ data }) => {
         self.postMessage({
             isNew: true,
             finalAnimeList: finalAnimeList.slice(0, loadLimit),
+            hiddenEntries: hiddenEntries
         });
         filteredList = finalAnimeList.slice(loadLimit)
     }

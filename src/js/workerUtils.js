@@ -37,11 +37,11 @@ const animeLoader = (_data) => {
                     }
                 }
                 animeLoaderWorker.onerror = (error) => {
-                    alertError()
                     reject(error)
                 }
             })
             .catch((error) => {
+                alertError()
                 reject(error)
             })
     })
@@ -71,10 +71,10 @@ const processRecommendedAnimeList = (_data) => {
                     }
                 };
                 processRecommendedAnimeListWorker.onerror = (error) => {
-                    alertError()
                     reject(error);
                 };
             }).catch((error) => {
+                alertError()
                 reject(error)
             })
     });
@@ -108,10 +108,10 @@ const requestAnimeEntries = (_data) => {
                     }
                 }
                 requestAnimeEntriesWorker.onerror = (error) => {
-                    alertError()
                     reject(error)
                 }
             }).catch((error) => {
+                alertError()
                 reject(error)
             })
     })
@@ -141,10 +141,10 @@ const requestUserEntries = (_data) => {
                     }
                 }
                 requestUserEntriesWorker.onerror = (error) => {
-                    alertError()
                     reject(error)
                 }
             }).catch((error) => {
+                alertError()
                 reject(error)
             })
     })
@@ -196,11 +196,16 @@ const exportUserData = (_data) => {
                 }
                 exportUserDataWorker.onerror = (error) => {
                     isExporting = false
-                    alertError()
+                    window.confirmPromise?.({
+                        isAlert: true,
+                        title: "Export Failed",
+                        text: "Data is not exported, please try again in a later time.",
+                    })
                     reject(error)
                 }
             }).catch((error) => {
                 isExporting = false
+                alertError()
                 reject(error)
             })
     })
@@ -220,6 +225,11 @@ const importUserData = (_data) => {
                 importUserDataWorker.onmessage = ({ data }) => {
                     if (data?.error !== undefined) {
                         isImporting = false
+                        window.confirmPromise?.({
+                            isAlert: true,
+                            title: "Import Failed",
+                            text: "File has not been imported, please ensure that file is in a supported format (e.g., .json)",
+                        })
                         reject(data?.error || "Something went wrong...")
                     } else if (data?.status !== undefined) {
                         dataStatusPrio = true
@@ -254,11 +264,16 @@ const importUserData = (_data) => {
                 }
                 importUserDataWorker.onerror = (error) => {
                     isImporting = false
-                    alertError()
+                    window.confirmPromise?.({
+                        isAlert: true,
+                        title: "Import Failed",
+                        text: "File has not been imported, please ensure that file is in a supported format (e.g., .json)",
+                    })
                     reject(error || "Something went wrong...")
                 }
             }).catch((error) => {
                 isImporting = false
+                alertError()
                 reject(error)
             })
     })
@@ -280,9 +295,11 @@ const getIDBdata = (name) => {
                     }
                 }
                 worker.onerror = (error) => {
-                    alertError()
                     reject(error)
                 }
+            }).catch(() => {
+                alertError()
+                reject(error)
             })
     })
 }
@@ -304,11 +321,11 @@ const saveIDBdata = (data, name) => {
                     }
                 }
                 worker.onerror = (error) => {
-                    alertError()
                     reject(error)
                 }
                 worker.postMessage({ data: data, name: name })
             }).catch((error) => {
+                alertError()
                 reject(error)
             })
     })
@@ -344,7 +361,6 @@ const getAnimeEntries = (_data) => {
                     }
                 }
                 worker.onerror = (error) => {
-                    alertError()
                     reject(error)
                 }
             }).catch((error) => {
@@ -353,6 +369,7 @@ const getAnimeEntries = (_data) => {
                     gettingAnimeEntriesInterval = null
                 }
                 dataStatus.set(null)
+                alertError()
                 reject(error)
             })
     })
@@ -389,7 +406,6 @@ const getAnimeFranchises = (_data) => {
                     }
                 }
                 worker.onerror = (error) => {
-                    alertError()
                     reject(error)
                 }
             }).catch((error) => {
@@ -398,6 +414,7 @@ const getAnimeFranchises = (_data) => {
                     gettingAnimeFranchisesInterval = null
                 }
                 dataStatus.set(null)
+                alertError()
                 reject(error)
             })
     })
@@ -435,7 +452,6 @@ const getFilterOptions = (_data) => {
                     }
                 }
                 getFilterOptionsWorker.onerror = (error) => {
-                    alertError()
                     reject(error)
                 }
             }).catch((error) => {
@@ -444,6 +460,7 @@ const getFilterOptions = (_data) => {
                     getFilterOptionsInterval = null
                 }
                 dataStatus.set(null)
+                alertError()
                 reject(error)
             })
     })
@@ -462,11 +479,13 @@ function stopConflictingWorkers() {
 function alertError() {
     if (isAndroid()) {
         window.confirmPromise?.({
+            isAlert: true,
             title: "Something Went Wrong",
             text: "App may not be running the latest version",
         })
     } else {
         window.confirmPromise?.({
+            isAlert: true,
             title: "Something Went Wrong",
             text: "You may want to clear your cookies and refresh the page",
         })

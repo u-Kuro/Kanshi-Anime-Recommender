@@ -15,13 +15,12 @@
         asyncAnimeReloaded,
         animeIdxRemoved,
         shownAllInList,
+        hiddenEntries,
     } from "../../js/globalValues.js";
     import {
         formatNumber,
         ncsCompare,
-        isJsonObject,
         removeClass,
-        addClass,
     } from "../../js/others/helper.js";
 
     let animeGridEl;
@@ -35,13 +34,15 @@
                 entries.forEach((entry) => {
                     if (entry.isIntersecting) {
                         loadingMore = true;
-                        self.unobserve(entry.target);
                         if (observerTimeout) clearTimeout(observerTimeout);
                         observerTimeout = setTimeout(() => {
                             if ($animeLoaderWorker instanceof Worker) {
                                 $animeLoaderWorker.postMessage({
                                     loadMore: true,
                                 });
+                                try {
+                                    self.unobserve(entry.target);
+                                } catch (e) {}
                             }
                         }, observerDelay);
                     }

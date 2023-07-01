@@ -65,7 +65,7 @@ import androidx.core.splashscreen.SplashScreen;
 @SuppressWarnings("CommentedOutCode")
 public class MainActivity extends AppCompatActivity  {
 
-    public final int appID = 7;
+    public final int appID = 8;
     public boolean webviewIsLoaded = false;
     public SharedPreferences prefs;
     private SharedPreferences.Editor prefsEdit;

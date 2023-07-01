@@ -543,6 +543,7 @@ self.onmessage = async ({ data }) => {
                     }
                 });
         }
+        let percentage;
         function recallUNRE(page) {
             fetch('https://graphql.anilist.co', {
                 method: 'POST',
@@ -686,10 +687,7 @@ self.onmessage = async ({ data }) => {
                                                 ) {
                                                     let lastUpdateAtDateTime = lastUpdateAtDate.getTime()
                                                     let recursingUpdatedAtDateTime = recursingUpdatedAtDate.getTime()
-                                                    let percentage = ((largestDif - (recursingUpdatedAtDateTime - lastUpdateAtDateTime)) / largestDif) * 100
-                                                    if (percentage >= 0.01) {
-                                                        self.postMessage({ status: "Updating Additional Entries " + (percentage.toFixed(2)) + "%" })
-                                                    }
+                                                    percentage = ((largestDif - (recursingUpdatedAtDateTime - lastUpdateAtDateTime)) / largestDif) * 100
                                                 }
                                             } else if (recursingUpdatedAtDate === undefined) {
                                                 recursingUpdatedAtDate = currentAnimeUpdateDate
@@ -702,9 +700,6 @@ self.onmessage = async ({ data }) => {
                                                     let lastUpdateAtDateTime = lastUpdateAtDate.getTime()
                                                     let recursingUpdatedAtDateTime = recursingUpdatedAtDate.getTime()
                                                     let percentage = ((largestDif - (recursingUpdatedAtDateTime - lastUpdateAtDateTime)) / largestDif) * 100
-                                                    if (percentage >= 0.01) {
-                                                        self.postMessage({ status: "Updating Additional Entries " + (percentage.toFixed(2)) + "%" })
-                                                    }
                                                 }
                                             }
                                         }
@@ -713,6 +708,11 @@ self.onmessage = async ({ data }) => {
                                     animeEntries[anime.id] = anime
                                 }
                             })
+                        }
+                        if (percentage >= 0.01) {
+                            self.postMessage({ status: "Updating Additional Entries " + (percentage.toFixed(2)) + "%" })
+                        } else {
+                            self.postMessage({ status: "Updating Additional Entries..." })
                         }
                         let hasNextPage = Page?.pageInfo?.hasNextPage ?? true
                         // Handle the successful response here

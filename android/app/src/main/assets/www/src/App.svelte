@@ -204,6 +204,7 @@
 						$searchedAnimeKeyword = "";
 						if (data?.isNew) {
 							$finalAnimeList = data.finalAnimeList;
+							$hiddenEntries = data.hiddenEntries;
 							$initData = false;
 							// Should be After Getting the Dates for Reactive Change
 							$autoUpdate =
@@ -270,17 +271,35 @@
 				loadAnime.update((e) => !e);
 			})
 			.catch((error) => {
+				loadAnime.update((e) => !e);
 				throw error;
 			});
 	});
+
 	loadAnime.subscribe(async (val) => {
 		if (typeof val !== "boolean" || $initData) return;
 		animeLoader()
 			.then(async (data) => {
-				$animeLoaderWorker = data.animeLoaderWorker;
-				$searchedAnimeKeyword = "";
-				if (data?.isNew) {
-					$finalAnimeList = data.finalAnimeList;
+				if ($popupVisible || $finalAnimeList?.length > 18) {
+					if (
+						await $confirmPromise({
+							text: "List update is available do you want to refresh the list?",
+						})
+					) {
+						$animeLoaderWorker = data.animeLoaderWorker;
+						$searchedAnimeKeyword = "";
+						if (data?.isNew) {
+							$finalAnimeList = data.finalAnimeList;
+							$hiddenEntries = data.hiddenEntries;
+						}
+					}
+				} else {
+					$animeLoaderWorker = data.animeLoaderWorker;
+					$searchedAnimeKeyword = "";
+					if (data?.isNew) {
+						$finalAnimeList = data.finalAnimeList;
+						$hiddenEntries = data.hiddenEntries;
+					}
 				}
 				$dataStatus = null;
 				return;

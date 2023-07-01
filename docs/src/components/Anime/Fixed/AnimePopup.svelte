@@ -15,6 +15,8 @@
         animeIdxRemoved,
         shownAllInList,
         dataStatus,
+        initData,
+        updateRecommendationList
     } from "../../../js/globalValues.js";
     import {
         isJsonObject,
@@ -27,6 +29,7 @@
         removeClass,
         getMostVisibleElementFromArray,
         jsonIsEmpty,
+        ncsCompare,
     } from "../../../js/others/helper.js";
     import { retrieveJSON, saveJSON } from "../../../js/indexedDB.js";
 
@@ -61,7 +64,7 @@
                         if (entry.intersectionRatio >= 0.5) {
                             intersectingPopupHeaders.push(popupHeader);
                         } else if (
-                            windowHeight < 180 &&
+                            windowHeight <= 360 &&
                             entry.intersectionRatio > 0
                         ) {
                             intersectingPopupHeaders.push(popupHeader);
@@ -73,7 +76,7 @@
                         getMostVisibleElementFromArray(
                             popupContainer,
                             intersectingPopupHeaders,
-                            windowHeight >= 180 ? 0.5 : 0
+                            windowHeight > 360 ? 0.5 : 0
                         ) ||
                         getMostVisibleElementFromArray(
                             popupContainer,
@@ -403,15 +406,23 @@
             popupContainer || popupWrapper.querySelector("#popup-container");
         animeGridParentEl = document.getElementById("anime-grid");
         window.addEventListener("resize", () => {
+            if (
+                document.fullScreen ||
+                document.mozFullScreen ||
+                document.webkitIsFullScreen ||
+                document.msFullscreenElement
+            )
+                return;
             windowWidth = window.visualViewport.width;
             windowHeight = window.visualViewport.height;
         });
+
         document.addEventListener("keydown", async (e) => {
             if (e.key === " " && $popupVisible) {
                 e.preventDefault();
                 let isPlaying = $ytPlayers?.some(
                     ({ ytPlayer }) =>
-                        ytPlayer?.getPlayerState?.() === YT.PlayerState.PLAYING
+                        ytPlayer?.getPlayerState?.() === 1
                 );
                 if (isPlaying) {
                     $ytPlayers.forEach(({ ytPlayer }) => {
@@ -558,7 +569,7 @@
             popupHeader?.querySelector?.(".trailer") ||
             popupHeader?.querySelector?.(".trailer");
         let youtubeID = openedAnime?.trailerID;
-        if (ytPlayerEl instanceof Element && youtubeID) {
+        if (ytPlayerEl instanceof Element && youtubeID && YT) {
             if ($ytPlayers.some(({ ytPlayer }) => ytPlayer.g === ytPlayerEl))
                 return;
             addClass(popupHeader, "loader");
@@ -723,6 +734,23 @@
         }
     }
 
+    function getUserStatusColor(userStatus) {
+        if (ncsCompare(userStatus, "completed")) {
+            return "green";
+        } else if (
+            ncsCompare(userStatus, "current") ||
+            ncsCompare(userStatus, "repeating")
+        ) {
+            return "blue";
+        } else if (ncsCompare(userStatus, "planning")) {
+            return "orange";
+        } else if (ncsCompare(userStatus, "paused")) {
+            return "peach";
+        } else if (ncsCompare(userStatus, "dropped")) {
+            return "red";
+        }
+    }
+
     function getTags(tags, favouriteTags, contentCaution) {
         if (!tags?.length) return tags;
         let haveFavorite =
@@ -787,11 +815,12 @@
     function getStudios(studios, favouriteStudios) {
         // [studio, studioUrl]
         if (!studios?.length) return studios;
-        let haveFavorite = isJsonObject(favouriteStudios) && !jsonIsEmpty(favouriteStudios);
+        let haveFavorite =
+            isJsonObject(favouriteStudios) && !jsonIsEmpty(favouriteStudios);
         let _favouriteStudios = [],
             otherStudios = [];
         studios.forEach(([studio, studioUrl]) => {
-            if (haveFavorite){
+            if (haveFavorite) {
                 let trimmedStudio = studio?.trim?.().toLowerCase?.();
                 if (favouriteStudios[trimmedStudio]) {
                     _favouriteStudios.push({
@@ -799,21 +828,21 @@
                         score: favouriteStudios[trimmedStudio],
                     });
                 } else {
-                    otherStudios.push({ 
+                    otherStudios.push({
                         studio: {
-                            studioName: studio, 
-                            studioUrl: studioUrl
-                        }, 
-                        studioColor: null 
+                            studioName: studio,
+                            studioUrl: studioUrl,
+                        },
+                        studioColor: null,
                     });
                 }
             } else {
-                otherStudios.push({ 
+                otherStudios.push({
                     studio: {
-                        studioName: studio, 
-                        studioUrl: studioUrl
-                    }, 
-                    studioColor: null 
+                        studioName: studio,
+                        studioUrl: studioUrl,
+                    },
+                    studioColor: null,
                 });
             }
         });
@@ -823,8 +852,8 @@
         _favouriteStudios = _favouriteStudios.map((e) => {
             return {
                 studio: {
-                    studioName:`${e.studio[0]} (${formatNumber(e.score)})`, 
-                    studioUrl: e.studio[1]
+                    studioName: `${e.studio[0]} (${formatNumber(e.score)})`,
+                    studioUrl: e.studio[1],
                 },
                 studioColor: "green",
             };
@@ -950,7 +979,23 @@
             } catch (e) {}
         }
         $dataStatus = "Reconnected Successfully";
+        if ($initData) {
+            $initData = false
+        }
+        if (!$finalAnimeList?.length) {
+            $updateRecommendationList = !$updateRecommendationList
+        }
         isOnline = true;
+        document.querySelectorAll("link")?.forEach((link) => {
+            if(link.href){
+                link.href = link.href;
+            }
+        });
+        document.querySelectorAll("script")?.forEach((script) => {
+            if(script.src){
+                script.src = script.src;
+            }
+        });
         document.querySelectorAll("img")?.forEach((image) => {
             if (!image.naturalHeight) {
                 image.src = image.src;
@@ -1111,19 +1156,34 @@
                                 </div>
                                 <div>
                                     <div class="info-categ">Studio</div>
-                                    <div class="studio-popup info" title={JSON.stringify(getStudios(Object.entries(anime.studios || {}), anime?.favoriteContents?.studios))}>
+                                    <div
+                                        class="studio-popup info"
+                                        title={JSON.stringify(
+                                            getStudios(
+                                                Object.entries(
+                                                    anime.studios || {}
+                                                ),
+                                                anime?.favoriteContents?.studios
+                                            )
+                                        )}
+                                    >
                                         {#if Object.entries(anime?.studios || {}).length}
-                                            {#each getStudios(Object.entries(anime.studios || {}), anime?.favoriteContents?.studios) as {studio, studioColor} (studio)}
+                                            {#each getStudios(Object.entries(anime.studios || {}), anime?.favoriteContents?.studios) as { studio, studioColor } (studio)}
                                                 <span
                                                     class={"copy"}
-                                                    copy-value={studio.studioName || ""}
+                                                    copy-value={studio.studioName ||
+                                                        ""}
                                                 >
                                                     <a
-                                                        class={studioColor? `${studioColor}-color` : ''}
+                                                        class={studioColor
+                                                            ? `${studioColor}-color`
+                                                            : ""}
                                                         rel="noopener noreferrer"
                                                         target="_blank"
-                                                        href={studio.studioUrl || ""}
-                                                        >{studio.studioName || "N/A"}</a
+                                                        href={studio.studioUrl ||
+                                                            ""}
+                                                        >{studio.studioName ||
+                                                            "N/A"}</a
                                                     >
                                                 </span>
                                             {/each}
@@ -1205,7 +1265,7 @@
                                     <div class="info-categ">User Status</div>
                                     <div class="user-status-popup info">
                                         <span
-                                            class="copy"
+                                            class={"copy "+(getUserStatusColor(anime.userStatus)+"-color")}
                                             copy-value={anime.userStatus || ""}
                                         >
                                             {anime.userStatus || "N/A"}

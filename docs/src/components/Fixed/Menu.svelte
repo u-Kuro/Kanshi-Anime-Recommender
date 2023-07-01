@@ -10,7 +10,6 @@
         autoUpdate,
         autoExport,
         exportPathIsAvailable,
-        searchedAnimeKeyword,
         filterOptions,
         activeTagFilters,
         runUpdate,
@@ -18,10 +17,12 @@
         confirmPromise,
         initData,
         updateRecommendationList,
+        loadAnime,
+        popupVisible,
     } from "../../js/globalValues.js";
     import { fly } from "svelte/transition";
     import { saveJSON } from "../../js/indexedDB.js";
-    import { animeLoader, importUserData } from "../../js/workerUtils.js";
+    import { importUserData } from "../../js/workerUtils.js";
     import { jsonIsEmpty } from "../../js/others/helper.js";
 
     let importFileInput;
@@ -61,9 +62,12 @@
             ) {
                 await saveJSON(true, "shouldProcessRecommendation");
                 $menuVisible = false;
-                window.scrollY = window.scrollY;
-                window.scrollX = window.scrollX;
-                window?.scrollTo?.({ top: -9999, behavior: "smooth" });
+                if (!$popupVisible) {
+                    window.scrollY = window.scrollY;
+                    window.scrollX = window.scrollX;
+                    window?.scrollTo?.({ top: -9999, behavior: "smooth" });
+                    $finalAnimeList = null;
+                }
                 importUserData({
                     importedFile: importedFile,
                 })
@@ -174,7 +178,9 @@
                 $animeLoaderWorker.terminate();
                 $animeLoaderWorker = null;
             }
-            $finalAnimeList = null;
+            if (!$popupVisible) {
+                $finalAnimeList = null;
+            }
             $dataStatus = "Updating List";
             $menuVisible = false;
             let filterSelectionIdx =
@@ -200,21 +206,10 @@
                         optionName !== "hidden" && filterType !== "checkbox"
                 );
             }
-            $hiddenEntries = {};
             await saveJSON($filterOptions, "filterOptions");
             await saveJSON($activeTagFilters, "activeTagFilters");
-            await saveJSON($hiddenEntries, "hiddenEntries");
-            animeLoader()
-                .then(async (data) => {
-                    $animeLoaderWorker = data.animeLoaderWorker;
-                    $searchedAnimeKeyword = "";
-                    $finalAnimeList = data.finalAnimeList;
-                    $dataStatus = null;
-                    return;
-                })
-                .catch((error) => {
-                    throw error;
-                });
+            await saveJSON({}, "hiddenEntries");
+            $loadAnime = !$loadAnime;
         }
     }
 
