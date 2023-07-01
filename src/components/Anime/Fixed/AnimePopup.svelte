@@ -568,7 +568,11 @@
             popupHeader?.querySelector?.(".trailer") ||
             popupHeader?.querySelector?.(".trailer");
         let youtubeID = openedAnime?.trailerID;
-        if (ytPlayerEl instanceof Element && youtubeID && YT) {
+        if (
+            ytPlayerEl instanceof Element &&
+            youtubeID &&
+            typeof YT !== "undefined"
+        ) {
             if ($ytPlayers.some(({ ytPlayer }) => ytPlayer.g === ytPlayerEl))
                 return;
             addClass(popupHeader, "loader");
@@ -994,7 +998,10 @@
             }
         });
         document.querySelectorAll("script")?.forEach((script) => {
-            if (script.src) {
+            if (
+                script.src &&
+                script.src !== "https://www.youtube.com/iframe_api?v=16"
+            ) {
                 script.src = script.src;
             }
         });

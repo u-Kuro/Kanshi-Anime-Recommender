@@ -17,12 +17,15 @@
         shownAllInList,
         loadAnime,
         android,
+        hiddenEntries,
+        confirmPromise,
     } from "../../js/globalValues.js";
     import {
         formatNumber,
         ncsCompare,
         removeClass,
     } from "../../js/others/helper.js";
+    import { animeLoader } from "../../js/workerUtils.js";
 
     let animeGridEl;
     let isRunningIntersectEvent;
@@ -126,8 +129,41 @@
     });
 
     window.checkAnimeLoader = () => {
-        if (!$animeObserver && $android && !$initData) {
-            $loadAnime = !$loadAnime;
+        if (
+            (!($animeObserver instanceof IntersectionObserver) ||
+                !($animeLoaderWorker instanceof Worker) ||
+                typeof $animeLoaderWorker?.onmessage !== "function" ||
+                typeof $animeLoaderWorker?.postMessage !== "function") &&
+            $android &&
+            !$initData
+        ) {
+            $finalAnimeList = null;
+            animeLoader()
+                .then(async (data) => {
+                    $animeLoaderWorker = data.animeLoaderWorker;
+                    $searchedAnimeKeyword = "";
+                    if (data?.isNew) {
+                        $finalAnimeList = data.finalAnimeList;
+                        $hiddenEntries = data.hiddenEntries;
+                    }
+                    $dataStatus = null;
+                    return;
+                })
+                .catch((error) => {
+                    if ($android) {
+                        $confirmPromise?.({
+                            isAlert: true,
+                            title: "Something Went Wrong",
+                            text: "App may not be working properly, you may want to restart and make sure you're running the latest version.",
+                        });
+                    } else {
+                        $confirmPromise?.({
+                            isAlert: true,
+                            title: "Something Went Wrong",
+                            text: "App may not be working properly, you may want to refresh the page, or if not clear the cookies but backup your data first.",
+                        });
+                    }
+                });
         }
     };
 

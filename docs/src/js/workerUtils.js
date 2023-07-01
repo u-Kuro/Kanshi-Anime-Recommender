@@ -484,7 +484,7 @@ function alertError() {
         window.confirmPromise?.({
             isAlert: true,
             title: "Something Went Wrong",
-            text: "App may not be working properly, you may want to restart and make sure youre running the latest version.",
+            text: "App may not be working properly, you may want to restart and make sure you're running the latest version.",
         })
     } else {
         window.confirmPromise?.({
