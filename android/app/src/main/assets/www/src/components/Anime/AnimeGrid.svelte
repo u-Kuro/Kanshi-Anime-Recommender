@@ -16,6 +16,7 @@
         animeIdxRemoved,
         shownAllInList,
         loadAnime,
+        android,
     } from "../../js/globalValues.js";
     import {
         formatNumber,
@@ -24,21 +25,20 @@
     } from "../../js/others/helper.js";
 
     let animeGridEl;
-    let alreadyRunning;
+    let isRunningIntersectEvent;
     let observerDelay = 1000,
         loadingMore = false;
 
     function addLastAnimeObserver() {
-        alreadyRunning = false;
+        isRunningIntersectEvent = false;
         $animeObserver = new IntersectionObserver(
             (entries) => {
                 entries.forEach((entry) => {
                     if (entry.isIntersecting) {
                         loadingMore = true;
-                        if (alreadyRunning) return;
-                        alreadyRunning = true;
+                        if (isRunningIntersectEvent) return;
+                        isRunningIntersectEvent = true;
                         setTimeout(() => {
-                            alreadyRunning = false;
                             if ($animeLoaderWorker instanceof Worker) {
                                 $animeLoaderWorker.postMessage({
                                     loadMore: true,
@@ -46,6 +46,7 @@
                             } else {
                                 $loadAnime = !$loadAnime;
                             }
+                            isRunningIntersectEvent = false;
                         }, observerDelay);
                     }
                 });
@@ -123,6 +124,12 @@
             };
         }
     });
+
+    window.checkAnimeLoader = () => {
+        if (!$animeObserver && $android && !$initData) {
+            $loadAnime = !$loadAnime;
+        }
+    };
 
     finalAnimeList.subscribe(async (val) => {
         if (val instanceof Array && val.length) {

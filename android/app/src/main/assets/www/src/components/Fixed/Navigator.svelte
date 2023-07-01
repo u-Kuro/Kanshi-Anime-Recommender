@@ -7,6 +7,7 @@
         updateRecommendationList,
         confirmPromise,
         popupVisible,
+        finalAnimeList,
     } from "../../js/globalValues.js";
     import { addClass, removeClass } from "../../js/others/helper.js";
     import { requestUserEntries } from "../../js/workerUtils.js";
@@ -74,6 +75,7 @@
                                     top: -9999,
                                     behavior: "smooth",
                                 });
+                                $finalAnimeList = null;
                             }
                             $dataStatus = "Getting User Entries";
                             requestUserEntries({
@@ -109,6 +111,7 @@
                                     top: -9999,
                                     behavior: "smooth",
                                 });
+                                $finalAnimeList = null;
                             }
                             $dataStatus = "Getting User Entries";
                             await requestUserEntries({

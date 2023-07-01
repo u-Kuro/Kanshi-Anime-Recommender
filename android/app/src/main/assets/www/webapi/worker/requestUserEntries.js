@@ -2,6 +2,7 @@ let db;
 self.onmessage = async ({ data }) => {
     if (!db) await IDBinit()
     let username = data?.username
+    let visibilityChange = data?.visibilityChange ?? false
     let savedUsername = await retrieveJSON("username")
     let lastUserAnimeUpdate = await retrieveJSON("lastUserAnimeUpdate")
     let userEntriesLen = (await retrieveJSON("userEntries") || []).length
@@ -21,7 +22,7 @@ self.onmessage = async ({ data }) => {
 
     function recallUE() {
         if (lastUserAnimeUpdate instanceof Date && !isNaN(lastUserAnimeUpdate)) {
-            if (retryCount < 2) {
+            if (retryCount < 2 && !visibilityChange) {
                 self.postMessage({ status: "Checking Latest User Entries" })
             }
             fetch('https://graphql.anilist.co', {

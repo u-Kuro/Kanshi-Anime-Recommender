@@ -90,14 +90,13 @@
 				$finalAnimeList = null;
 				getAnimeEntries()
 					.then(() => {
-						requestAnimeEntries();
 						resolve();
 					})
 					.catch(async () => {
 						reject();
 					});
 			} else {
-				requestAnimeEntries();
+				requestAnimeEntries({ onlyGetNewEntries: true });
 				resolve();
 			}
 		})
@@ -211,6 +210,7 @@
 								(await retrieveJSON("autoUpdate")) ?? false;
 							$autoExport =
 								(await retrieveJSON("autoExport")) ?? false;
+							$runUpdate = !$runUpdate;
 						}
 						$dataStatus = null;
 						return;
@@ -226,6 +226,19 @@
 			$autoUpdate = (await retrieveJSON("autoUpdate")) ?? false;
 			$autoExport = (await retrieveJSON("autoExport")) ?? false;
 			$dataStatus = "Something went wrong...";
+			if ($android) {
+				$confirmPromise?.({
+					isAlert: true,
+					title: "Something Went Wrong",
+					text: "App may not be working properly, you may want to restart and make sure youre running the latest version.",
+				});
+			} else {
+				$confirmPromise?.({
+					isAlert: true,
+					title: "Something Went Wrong",
+					text: "App may not be working properly, you may want to refresh the page, or if not clear the cookies but backup your data first.",
+				});
+			}
 			console.error(error);
 		});
 
@@ -448,7 +461,7 @@
 	document.addEventListener("visibilitychange", () => {
 		if ($initData) return;
 		if (document.visibilityState === "visible" && !userRequestIsRunning) {
-			requestUserEntries();
+			requestUserEntries({ visibilityChange: true });
 		}
 	});
 
@@ -459,7 +472,7 @@
 	window.checkEntries = () => {
 		if ($initData) return;
 		if (!userRequestIsRunning) {
-			requestUserEntries();
+			requestUserEntries({ visibilityChange: true });
 		}
 	};
 	window.addEventListener("popstate", () => {

@@ -484,13 +484,13 @@ function alertError() {
         window.confirmPromise?.({
             isAlert: true,
             title: "Something Went Wrong",
-            text: "App may not be running the latest version",
+            text: "App may not be working properly, you may want to restart and make sure youre running the latest version.",
         })
     } else {
         window.confirmPromise?.({
             isAlert: true,
             title: "Something Went Wrong",
-            text: "You may want to clear your cookies and refresh the page",
+            text: "App may not be working properly, you may want to refresh the page, or if not clear the cookies but backup your data first.",
         })
     }
 }

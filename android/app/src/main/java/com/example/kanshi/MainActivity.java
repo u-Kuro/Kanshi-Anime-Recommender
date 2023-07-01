@@ -65,7 +65,7 @@ import androidx.core.splashscreen.SplashScreen;
 @SuppressWarnings("CommentedOutCode")
 public class MainActivity extends AppCompatActivity  {
 
-    public final int appID = 10;
+    public final int appID = 11;
     public boolean webviewIsLoaded = false;
     public SharedPreferences prefs;
     private SharedPreferences.Editor prefsEdit;
@@ -398,7 +398,11 @@ public class MainActivity extends AppCompatActivity  {
     @Override
     protected void onResume() {
         super.onResume();
-        webView.post(() -> webView.loadUrl("javascript:window.returnedAppIsVisible(true);window.checkEntries();"));
+        webView.post(() -> webView.loadUrl("javascript:" +
+            "window.returnedAppIsVisible(true);" +
+            "window.checkEntries();" +
+            "window.checkAnimeLoader();"
+        ));
     }
 
     @Override
