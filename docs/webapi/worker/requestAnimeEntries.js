@@ -699,7 +699,7 @@ self.onmessage = async ({ data }) => {
                                                 ) {
                                                     let lastUpdateAtDateTime = lastUpdateAtDate.getTime()
                                                     let recursingUpdatedAtDateTime = recursingUpdatedAtDate.getTime()
-                                                    let percentage = ((largestDif - (recursingUpdatedAtDateTime - lastUpdateAtDateTime)) / largestDif) * 100
+                                                    percentage = ((largestDif - (recursingUpdatedAtDateTime - lastUpdateAtDateTime)) / largestDif) * 100
                                                 }
                                             }
                                         }
