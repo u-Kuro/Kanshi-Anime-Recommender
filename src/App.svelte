@@ -803,8 +803,8 @@
 	}
 	.list-update-container {
 		position: fixed;
-		bottom: 2em;
-		right: 2em;
+		bottom: 3em;
+		right: 3em;
 		display: flex;
 		justify-content: center;
 		align-items: center;
@@ -816,12 +816,12 @@
 	}
 	.list-update-icon {
 		color: white;
-		font-size: 1.25rem;
+		font-size: 2rem;
 		cursor: pointer;
 	}
 	.list-update-label {
 		color: white;
-		font-size: 1.25rem;
+		font-size: 1.5rem;
 		cursor: pointer;
 	}
 
@@ -833,7 +833,7 @@
 			border-radius: 50%;
 		}
 		.list-update-icon {
-			font-size: 1.75rem;
+			font-size: 3rem;
 		}
 		.list-update-label {
 			display: none;

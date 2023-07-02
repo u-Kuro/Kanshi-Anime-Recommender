@@ -1875,7 +1875,7 @@
 
     .list-update-label {
         height: 14px;
-        line-height: 11px;
+        line-height: 14px;
         font-weight: 500;
         color: #8d9abb;
         white-space: nowrap;
@@ -1891,7 +1891,7 @@
 
     .autoplay-label {
         height: 14px;
-        line-height: 11px;
+        line-height: 14px;
         font-weight: 500;
         color: #8d9abb;
         white-space: nowrap;
