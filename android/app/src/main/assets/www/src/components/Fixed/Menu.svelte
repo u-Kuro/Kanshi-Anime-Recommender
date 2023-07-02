@@ -343,13 +343,16 @@
                     transition:fly={{ x: 50, duration: 300 }}
                     >Switch App Mode</button
                 >
-                <button
-                    class="button"
-                    on:keydown={(e) => e.key === "Enter" && checkForUpdates(e)}
-                    on:click={checkForUpdates}
-                    transition:fly={{ x: 50, duration: 300 }}
-                    >Check for Updates</button
-                >
+                {#if !window.location.protocol.startsWith("file:")}
+                    <button
+                        class="button"
+                        on:keydown={(e) =>
+                            e.key === "Enter" && checkForUpdates(e)}
+                        on:click={checkForUpdates}
+                        transition:fly={{ x: 50, duration: 300 }}
+                        >Check for Updates</button
+                    >
+                {/if}
             {/if}
         </div>
     </div>
