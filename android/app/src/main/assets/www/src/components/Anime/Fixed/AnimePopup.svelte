@@ -626,7 +626,6 @@
                     cc_lang_pref: "en", // Set preferred caption language to English
                     cc_load_policy: 1, // Set on by default
                     enablejsapi: 1, // Enable the JavaScript API
-                    // loop: 1, // Enable video looping
                     modestbranding: 1, // Enable modest branding (hide the YouTube logo)
                     playsinline: 1, // Enable inline video playback
                     playlist: youtubeID,
@@ -644,14 +643,23 @@
                 },
             });
             // Add Trailer to Iframe
-            let trailerUrl = `https://www.youtube.com/embed/${youtubeID}`; //?playlist=${youtubeID}&cc_load_policy=1&cc_lang_pref=en&enablejsapi=1&loop=1&modestbranding=1&playsinline=1`;
+            let trailerUrl = `https://www.youtube.com/embed/${youtubeID}`;
             ytPlayerEl.setAttribute("src", trailerUrl);
             $ytPlayers.push({ ytPlayer, headerIdx });
         } else {
             let popupImg = popupHeader?.querySelector?.(".popup-img");
             let animeCoverImgEl = popupImg.querySelector(".coverImg");
+            removeClass(popupHeader, "loader");
             removeClass(animeCoverImgEl, "display-none");
             removeClass(popupImg, "display-none");
+            $ytPlayers.forEach(({ ytPlayer }) => {
+                let trailerEl = ytPlayer?.g;
+                let popupHeader = trailerEl?.parentElement;
+                let popupImg = popupHeader?.querySelector?.(".popup-img");
+                addClass(trailerEl, "display-none");
+                removeClass(popupHeader, "loader");
+                removeClass(popupImg, "display-none");
+            });
         }
     }
 
@@ -660,7 +668,6 @@
         let trailerEl = ytPlayer?.g;
         let popupHeader = trailerEl?.parentElement;
         let popupImg = popupHeader?.querySelector?.(".popup-img");
-        let popupContent = popupHeader?.closest?.(".popup-content");
         $ytPlayers = $ytPlayers.filter(
             (_ytPlayer) => _ytPlayer.ytPlayer !== ytPlayer
         );
@@ -678,10 +685,10 @@
 
     function onPlayerStateChange(event) {
         let _ytPlayer = event.target;
+        if (!_ytPlayer || !_ytPlayer?.getPlayerState) return;
         let trailerEl = _ytPlayer?.g;
         let popupHeader = trailerEl?.parentElement;
         let popupImg = popupHeader?.querySelector?.(".popup-img");
-        let popupContent = popupHeader?.closest?.(".popup-content");
         if (_ytPlayer?.getPlayerState?.() === 0) {
             _ytPlayer?.seekTo?.(0, true);
         }
@@ -734,6 +741,16 @@
         } else {
             // Play Most Visible when 1 Succeed
             trailerEl?.setAttribute?.("loading", "lazy");
+            if (!$autoPlay) {
+                let popupImg = popupHeader?.querySelector?.(".popup-img");
+                addClass(popupImg, "fade-out");
+                removeClass(popupHeader, "loader");
+                removeClass(trailerEl, "display-none");
+                setTimeout(() => {
+                    addClass(popupImg, "display-none");
+                    removeClass(popupImg, "fade-out");
+                }, 300);
+            }
             playMostVisibleTrailer();
             delete failingTrailers[anime.id];
         }
