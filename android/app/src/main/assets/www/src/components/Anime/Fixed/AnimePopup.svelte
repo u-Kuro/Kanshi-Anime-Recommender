@@ -419,17 +419,18 @@
         document.addEventListener("keydown", async (e) => {
             if (e.key === " " && $popupVisible) {
                 e.preventDefault();
+                let visibleTrailer =
+                    mostVisiblePopupHeader?.querySelector?.(".trailer");
                 let isPlaying = $ytPlayers?.some(
-                    ({ ytPlayer }) => ytPlayer?.getPlayerState?.() === 1
+                    ({ ytPlayer }) =>
+                        visibleTrailer === ytPlayer.g &&
+                        ytPlayer?.getPlayerState?.() === 1
                 );
-                if (isPlaying) {
-                    $ytPlayers.forEach(({ ytPlayer }) => {
-                        ytPlayer?.pauseVideo?.();
-                    });
-                } else {
+                $ytPlayers.forEach(({ ytPlayer }) => {
+                    ytPlayer?.pauseVideo?.();
+                });
+                if (!isPlaying) {
                     await tick();
-                    let visibleTrailer =
-                        mostVisiblePopupHeader?.querySelector?.(".trailer");
                     for (let i = 0; i < $ytPlayers.length; i++) {
                         if (
                             $ytPlayers[i].ytPlayer.g === visibleTrailer &&
@@ -652,14 +653,16 @@
             removeClass(popupHeader, "loader");
             removeClass(animeCoverImgEl, "display-none");
             removeClass(popupImg, "display-none");
-            $ytPlayers.forEach(({ ytPlayer }) => {
-                let trailerEl = ytPlayer?.g;
-                let popupHeader = trailerEl?.parentElement;
-                let popupImg = popupHeader?.querySelector?.(".popup-img");
-                addClass(trailerEl, "display-none");
-                removeClass(popupHeader, "loader");
-                removeClass(popupImg, "display-none");
-            });
+            if ($autoPlay) {
+                $ytPlayers.forEach(({ ytPlayer }) => {
+                    let trailerEl = ytPlayer?.g;
+                    let popupHeader = trailerEl?.parentElement;
+                    let popupImg = popupHeader?.querySelector?.(".popup-img");
+                    addClass(trailerEl, "display-none");
+                    removeClass(popupHeader, "loader");
+                    removeClass(popupImg, "display-none");
+                });
+            }
         }
     }
 
@@ -705,7 +708,7 @@
                 addClass(popupImg, "display-none");
                 removeClass(popupImg, "fade-out");
             }, 300);
-        } else if (mostVisiblePopupHeader !== popupHeader) {
+        } else if (mostVisiblePopupHeader !== popupHeader && $autoPlay) {
             addClass(trailerEl, "display-none");
             removeClass(popupHeader, "loader");
             removeClass(popupImg, "display-none");
