@@ -1,8 +1,8 @@
 import { writable } from "svelte/store";
 
-const appID = writable(12)
+const appID = writable(13)
 const android = writable(null)
-const androidInApp = writable(true)
+const inApp = writable(true)
 const lastAnimeUpdate = writable(null)
 
 const username = writable(null)
@@ -39,12 +39,15 @@ const openedAnimeOptionIdx = writable(null)
 const popupVisible = writable(false)
 const openedAnimePopupIdx = writable(null)
 const shouldGoBack = writable(true)
+const listUpdateAvailable = writable(false)
 const isScrolling = writable(null)
 const scrollingTimeout = writable(null)
 const asyncAnimeReloaded = writable(null)
 // Reactive Functions
 const runUpdate = writable(null)
 const runExport = writable(null)
+const importantUpdate = writable(null)
+const importantLoad = writable(null)
 const updateRecommendationList = writable(null)
 const updateFilters = writable(null)
 const loadAnime = writable(null)
@@ -53,7 +56,7 @@ const runIsScrolling = writable(null)
 export {
     appID,
     android,
-    androidInApp,
+    inApp,
     lastAnimeUpdate,
     username,
     lastUserAnimeUpdate,
@@ -84,12 +87,15 @@ export {
     popupVisible,
     openedAnimePopupIdx,
     shouldGoBack,
+    listUpdateAvailable,
     isScrolling,
     scrollingTimeout,
     asyncAnimeReloaded,
     // Reactive Functions
     runUpdate,
     runExport,
+    importantLoad,
+    importantUpdate,
     updateRecommendationList,
     updateFilters,
     loadAnime,

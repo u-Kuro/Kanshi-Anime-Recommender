@@ -7,7 +7,9 @@ import {
     lastRunnedAutoUpdateDate,
     lastRunnedAutoExportDate,
     hiddenEntries,
-    runUpdate
+    runUpdate,
+    importantUpdate,
+    loadAnime
 } from "./globalValues";
 import { isAndroid, downloadLink, isJsonObject } from "../js/others/helper.js"
 import { cacheRequest } from "./caching";
@@ -133,7 +135,24 @@ const requestUserEntries = (_data) => {
                     if (data?.status !== undefined) {
                         if (!dataStatusPrio) {
                             dataStatus.set(data.status)
+                            if (data.status === "User not found") {
+                                loadAnime.update((e) => !e)
+                                window.confirmPromise({
+                                    isAlert: true,
+                                    text: "User is not found, you may want to try again..."
+                                })
+                                requestUserEntriesTerminateTimeout = setTimeout(() => {
+                                    requestUserEntriesWorker.terminate();
+                                }, terminateDelay)
+                                reject(data)
+                            }
                         }
+                    } else if (data?.error) {
+                        loadAnime.update((e) => !e)
+                        requestUserEntriesTerminateTimeout = setTimeout(() => {
+                            requestUserEntriesWorker.terminate();
+                        }, terminateDelay)
+                        reject(data)
                     } else if (data?.updateRecommendationList !== undefined) {
                         updateRecommendationList.update(e => !e)
                     } else {
@@ -144,9 +163,14 @@ const requestUserEntries = (_data) => {
                     }
                 }
                 requestUserEntriesWorker.onerror = (error) => {
+                    loadAnime.update((e) => !e)
+                    requestUserEntriesTerminateTimeout = setTimeout(() => {
+                        requestUserEntriesWorker.terminate();
+                    }, terminateDelay)
                     reject(error)
                 }
             }).catch((error) => {
+                loadAnime.update((e) => !e)
                 alertError()
                 reject(error)
             })
@@ -228,6 +252,7 @@ const importUserData = (_data) => {
                 importUserDataWorker.onmessage = ({ data }) => {
                     if (data?.error !== undefined) {
                         isImporting = false
+                        loadAnime.update((e) => !e)
                         window.confirmPromise?.({
                             isAlert: true,
                             title: "Import Failed",
@@ -254,7 +279,7 @@ const importUserData = (_data) => {
                             })
                     } else if (data?.updateRecommendationList !== undefined) {
                         isImporting = false
-                        updateRecommendationList.update(e => !e)
+                        importantUpdate.update(e => !e)
                     } else {
                         isImporting = false
                         runUpdate.update(e => !e)
@@ -272,10 +297,12 @@ const importUserData = (_data) => {
                         title: "Import Failed",
                         text: "File has not been imported, please ensure that file is in a supported format (e.g., .json)",
                     })
+                    loadAnime.update((e) => !e)
                     reject(error || "Something went wrong...")
                 }
             }).catch((error) => {
                 isImporting = false
+                loadAnime.update((e) => !e)
                 alertError()
                 reject(error)
             })

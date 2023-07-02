@@ -4,7 +4,7 @@
         dataStatus,
         menuVisible,
         initData,
-        updateRecommendationList,
+        importantUpdate,
         confirmPromise,
         popupVisible,
         finalAnimeList,
@@ -85,9 +85,7 @@
                                     if (newusername) {
                                         typedUsername = $username =
                                             newusername || "";
-                                        updateRecommendationList.update(
-                                            (e) => !e
-                                        );
+                                        importantUpdate.update((e) => !e);
                                     }
                                 })
                                 .catch((error) => {
@@ -121,7 +119,7 @@
                                     if (newusername)
                                         typedUsername = $username =
                                             newusername || "";
-                                    updateRecommendationList.update((e) => !e);
+                                    importantUpdate.update((e) => !e);
                                 })
                                 .catch((error) => {
                                     $dataStatus = "Something went wrong...";

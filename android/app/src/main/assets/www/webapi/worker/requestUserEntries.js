@@ -59,7 +59,7 @@ self.onmessage = async ({ data }) => {
                 .catch((error) => {
                     if (!navigator.onLine) {
                         self.postMessage({ status: "Currently Offline..." })
-                        self.postMessage({ message: 'Currently Offline...' })
+                        self.postMessage({ error: 'Currently Offline...' })
                         return
                     }
                     let headers = error.headers;
@@ -67,7 +67,7 @@ self.onmessage = async ({ data }) => {
                     if (errorText === 'User not found') {
                         // Handle the specific error here
                         self.postMessage({ status: null })
-                        self.postMessage({ message: 'User not found' })
+                        self.postMessage({ error: 'User not found' })
                     } else {
                         if (headers?.get('x-ratelimit-remaining') > 0) {
                             return recallUE();
@@ -149,7 +149,7 @@ self.onmessage = async ({ data }) => {
                     let error;
                     if (typeof (error = result?.errors?.[0]?.message) === "string") {
                         self.postMessage({ status: error })
-                        self.postMessage({ message: error })
+                        self.postMessage({ error: error })
                     } else {
                         let collection = result?.data?.MediaListCollection
                         if (!(currentUserAnimeUpdate instanceof Date) || isNaN(currentUserAnimeUpdate)) {
@@ -195,7 +195,7 @@ self.onmessage = async ({ data }) => {
                 .catch((error) => {
                     if (!navigator.onLine) {
                         self.postMessage({ status: "Currently Offline..." })
-                        self.postMessage({ message: 'Currently Offline...' })
+                        self.postMessage({ error: 'Currently Offline...' })
                         return
                     }
                     let headers = error.headers;
@@ -203,7 +203,7 @@ self.onmessage = async ({ data }) => {
                     if (errorText === 'User not found') {
                         // Handle the specific error here
                         self.postMessage({ status: null })
-                        self.postMessage({ message: 'User not found' })
+                        self.postMessage({ error: 'User not found' })
                     } else {
                         if (headers?.get('x-ratelimit-remaining') > 0) {
                             return recallAV(chunk);

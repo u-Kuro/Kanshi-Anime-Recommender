@@ -1,6 +1,7 @@
 <script>
 	import C from "./components/index.js";
 	import { onMount, tick } from "svelte";
+	import { fly } from "svelte/transition";
 	import { inject } from "@vercel/analytics";
 	import { retrieveJSON, saveJSON } from "./js/indexedDB.js";
 	import {
@@ -28,9 +29,12 @@
 		shouldGoBack,
 		isScrolling,
 		scrollingTimeout,
+		listUpdateAvailable,
 		// Reactive Functions
 		runUpdate,
 		runExport,
+		importantLoad,
+		importantUpdate,
 		updateRecommendationList,
 		loadAnime,
 		updateFilters,
@@ -48,8 +52,9 @@
 		animeLoader,
 		exportUserData,
 	} from "./js/workerUtils.js";
-	import { isAndroid } from "./js/others/helper.js";
+	import { isAndroid, addClass, removeClass } from "./js/others/helper.js";
 
+	let usernameInputEl, animeGridEl;
 	$android = isAndroid(); // Android/Browser Identifier
 
 	// Get Export Folder for Android
@@ -274,6 +279,39 @@
 	});
 
 	// Reactive Functions
+	importantLoad.subscribe(async (val) => {
+		if (typeof val !== "boolean" || $initData) return;
+		$listUpdateAvailable = false;
+		animeLoader()
+			.then(async (data) => {
+				$animeLoaderWorker = data.animeLoaderWorker;
+				$searchedAnimeKeyword = "";
+				if (data?.isNew) {
+					$finalAnimeList = data.finalAnimeList;
+					$hiddenEntries = data.hiddenEntries;
+				}
+				$dataStatus = null;
+				return;
+			})
+			.catch((error) => {
+				throw error;
+			});
+	});
+	importantUpdate.subscribe(async (val) => {
+		if (typeof val !== "boolean" || $initData) return;
+		await saveJSON(true, "shouldProcessRecommendation");
+		$listUpdateAvailable = false;
+		processRecommendedAnimeList()
+			.then(async () => {
+				await saveJSON(false, "shouldProcessRecommendation");
+				updateFilters.update((e) => !e);
+				importantLoad.update((e) => !e);
+			})
+			.catch((error) => {
+				importantLoad.update((e) => !e);
+				throw error;
+			});
+	});
 	updateRecommendationList.subscribe(async (val) => {
 		if (typeof val !== "boolean" || $initData) return;
 		await saveJSON(true, "shouldProcessRecommendation");
@@ -291,27 +329,11 @@
 
 	loadAnime.subscribe(async (val) => {
 		if (typeof val !== "boolean" || $initData) return;
-		if ($popupVisible || window.scrollY > 500) {
-			if (
-				await $confirmPromise({
-					text: "List update is available do you want to refresh the list?",
-				})
-			) {
-				animeLoader()
-					.then(async (data) => {
-						$animeLoaderWorker = data.animeLoaderWorker;
-						$searchedAnimeKeyword = "";
-						if (data?.isNew) {
-							$finalAnimeList = data.finalAnimeList;
-							$hiddenEntries = data.hiddenEntries;
-						}
-						$dataStatus = null;
-						return;
-					})
-					.catch((error) => {
-						throw error;
-					});
-			}
+		if (
+			($popupVisible || window.scrollY > animeGridEl?.offsetTop - 55) &&
+			$finalAnimeList
+		) {
+			$listUpdateAvailable = true;
 		} else {
 			animeLoader()
 				.then(async (data) => {
@@ -478,7 +500,6 @@
 	window.addEventListener("popstate", () => {
 		window.backPressed();
 	});
-	let usernameInputEl;
 	window.backPressed = () => {
 		if ($shouldGoBack && !$android) {
 			window.history.go(-1); // Only in Browser
@@ -535,6 +556,7 @@
 	});
 	onMount(() => {
 		usernameInputEl = document.getElementById("usernameInput");
+		animeGridEl = document.getElementById("anime-grid");
 		document
 			.getElementById("popup-container")
 			.addEventListener("scroll", () => {
@@ -653,6 +675,48 @@
 		_showConfirm = false;
 	}
 
+	let updateListIconSpinningTimeout;
+	async function updateList(event) {
+		if (
+			await $confirmPromise({
+				title: "List update is available",
+				text: "Are you sure you want to refresh the list?",
+			})
+		) {
+			let element = event.target;
+			let classList = element.classList;
+			let updateIcon;
+			if (classList.contains("list-update-container")) {
+				updateIcon = element.querySelector?.(".list-update-icon");
+			} else {
+				updateIcon = element
+					?.closest(".list-update-container")
+					?.querySelector?.(".list-update-icon");
+			}
+			if (updateListIconSpinningTimeout)
+				clearTimeout(updateListIconSpinningTimeout);
+			addClass(updateIcon, "fa-spin");
+			animeLoader()
+				.then(async (data) => {
+					$listUpdateAvailable = false;
+					updateListIconSpinningTimeout = setTimeout(() => {
+						removeClass(updateIcon, "fa-spin");
+					}, 300);
+					$animeLoaderWorker = data.animeLoaderWorker;
+					$searchedAnimeKeyword = "";
+					if (data?.isNew) {
+						$finalAnimeList = data.finalAnimeList;
+						$hiddenEntries = data.hiddenEntries;
+					}
+					$dataStatus = null;
+					return;
+				})
+				.catch((error) => {
+					throw error;
+				});
+		}
+	}
+
 	window.updateAppAlert = async () => {
 		if (
 			await $confirmPromise?.({
@@ -711,6 +775,17 @@
 		confirmLabel={_confirmLabel}
 		cancelLabel={_cancelLabel}
 	/>
+	{#if $listUpdateAvailable}
+		<div
+			class="list-update-container"
+			on:click={updateList}
+			on:keydown={(e) => e.key === "Enter" && updateList(e)}
+			transition:fly={{ x: 50, duration: 300 }}
+		>
+			<i class="list-update-icon fa-solid fa-arrows-rotate" />
+			<h3 class="list-update-label">List Update Available</h3>
+		</div>
+	{/if}
 </main>
 
 <style>
@@ -726,9 +801,42 @@
 		padding-left: 50px;
 		padding-right: 50px;
 	}
+	.list-update-container {
+		position: fixed;
+		bottom: 2em;
+		right: 2em;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		gap: 6px;
+		background-color: black;
+		padding: 1em;
+		border-radius: 6px;
+		cursor: pointer;
+	}
+	.list-update-icon {
+		color: white;
+		font-size: 1.25rem;
+		cursor: pointer;
+	}
+	.list-update-label {
+		color: white;
+		font-size: 1.25rem;
+		cursor: pointer;
+	}
+
 	@media screen and (max-width: 425px) {
 		.home {
 			padding: 0 1.5em;
+		}
+		.list-update-container {
+			border-radius: 50%;
+		}
+		.list-update-icon {
+			font-size: 1.75rem;
+		}
+		.list-update-label {
+			display: none;
 		}
 	}
 </style>

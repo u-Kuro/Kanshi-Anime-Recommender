@@ -1,5 +1,6 @@
 <script>
     import { onMount, tick } from "svelte";
+    import { fly } from "svelte/transition";
     import {
         finalAnimeList,
         animeLoaderWorker,
@@ -10,13 +11,15 @@
         popupVisible,
         openedAnimePopupIdx,
         android,
-        androidInApp,
+        inApp,
         confirmPromise,
         animeIdxRemoved,
         shownAllInList,
         dataStatus,
         initData,
         updateRecommendationList,
+        listUpdateAvailable,
+        searchedAnimeKeyword,
     } from "../../../js/globalValues.js";
     import {
         isJsonObject,
@@ -32,6 +35,7 @@
         ncsCompare,
     } from "../../../js/others/helper.js";
     import { retrieveJSON, saveJSON } from "../../../js/indexedDB.js";
+    import { animeLoader } from "../../../js/workerUtils.js";
 
     let isOnline = window.navigator.onLine;
 
@@ -312,11 +316,10 @@
                                 popupWrapper?.classList?.contains?.(
                                     "visible"
                                 ) &&
-                                ($androidInApp || !$android)
+                                $inApp
                             ) {
                                 prePlayYtPlayer($ytPlayers[i].ytPlayer);
                                 $ytPlayers[i].ytPlayer?.playVideo?.();
-                                currentYtPlayer = $ytPlayers[i].ytPlayer;
                             }
                         }
                         break;
@@ -384,13 +387,9 @@
                 let visibleTrailer =
                     mostVisiblePopupHeader?.querySelector?.(".trailer");
                 for (let i = 0; i < $ytPlayers.length; i++) {
-                    if (
-                        $ytPlayers[i].ytPlayer.g === visibleTrailer &&
-                        ($androidInApp || !$android)
-                    ) {
+                    if ($ytPlayers[i].ytPlayer.g === visibleTrailer && $inApp) {
                         prePlayYtPlayer($ytPlayers[i].ytPlayer);
                         $ytPlayers[i].ytPlayer?.playVideo?.();
-                        currentYtPlayer = $ytPlayers[i].ytPlayer;
                         break;
                     }
                 }
@@ -434,11 +433,10 @@
                     for (let i = 0; i < $ytPlayers.length; i++) {
                         if (
                             $ytPlayers[i].ytPlayer.g === visibleTrailer &&
-                            ($androidInApp || !$android)
+                            $inApp
                         ) {
                             prePlayYtPlayer($ytPlayers[i].ytPlayer);
                             $ytPlayers[i].ytPlayer?.playVideo?.();
-                            currentYtPlayer = $ytPlayers[i].ytPlayer;
                             break;
                         }
                     }
@@ -507,26 +505,23 @@
                     });
                 }, 300);
             }
-            // // Replay Most Visible Trailer
-            $ytPlayers?.forEach(async ({ ytPlayer }) => {
+            // Replay Most Visible Trailer
+            for (let i = 0; i < $ytPlayers.length; i++) {
                 if (
-                    ytPlayer.g === visibleTrailer &&
-                    ytPlayer?.getPlayerState?.() !== 1 &&
+                    $ytPlayers[i].ytPlayer.g === visibleTrailer &&
+                    $ytPlayers[i].ytPlayer?.getPlayerState?.() !== 1 &&
                     $autoPlay
                 ) {
                     await tick();
                     if (
                         popupWrapper?.classList?.contains?.("visible") &&
-                        ($androidInApp || !$android)
+                        $inApp
                     ) {
-                        prePlayYtPlayer(ytPlayer);
-                        ytPlayer?.playVideo?.();
-                        currentYtPlayer = ytPlayer;
+                        prePlayYtPlayer($ytPlayers[i].ytPlayer);
+                        $ytPlayers[i].ytPlayer?.playVideo?.();
                     }
-                } else if (ytPlayer.g !== visibleTrailer) {
-                    ytPlayer?.pauseVideo?.();
                 }
-            });
+            }
         } else {
             // Pause All Players
             $ytPlayers?.forEach(({ ytPlayer }) => ytPlayer?.pauseVideo?.());
@@ -631,7 +626,7 @@
                     cc_lang_pref: "en", // Set preferred caption language to English
                     cc_load_policy: 1, // Set on by default
                     enablejsapi: 1, // Enable the JavaScript API
-                    loop: 1, // Enable video looping
+                    // loop: 1, // Enable video looping
                     modestbranding: 1, // Enable modest branding (hide the YouTube logo)
                     playsinline: 1, // Enable inline video playback
                     playlist: youtubeID,
@@ -640,10 +635,16 @@
                     onReady: (event) => {
                         onPlayerReady(event);
                     },
+                    onStateChange: (event) => {
+                        onPlayerStateChange(event);
+                    },
+                    onError: (event) => {
+                        onPlayerError(event);
+                    },
                 },
             });
             // Add Trailer to Iframe
-            let trailerUrl = `https://www.youtube.com/embed/${youtubeID}?playlist=${youtubeID}&cc_load_policy=1&cc_lang_pref=en&enablejsapi=1&loop=1&modestbranding=1&playsinline=1`;
+            let trailerUrl = `https://www.youtube.com/embed/${youtubeID}`; //?playlist=${youtubeID}&cc_load_policy=1&cc_lang_pref=en&enablejsapi=1&loop=1&modestbranding=1&playsinline=1`;
             ytPlayerEl.setAttribute("src", trailerUrl);
             $ytPlayers.push({ ytPlayer, headerIdx });
         } else {
@@ -654,20 +655,62 @@
         }
     }
 
-    async function onPlayerReady(event) {
+    function onPlayerError(event) {
         let ytPlayer = event.target;
         let trailerEl = ytPlayer?.g;
-        trailerEl?.setAttribute?.("loading", "lazy");
         let popupHeader = trailerEl?.parentElement;
         let popupImg = popupHeader?.querySelector?.(".popup-img");
         let popupContent = popupHeader?.closest?.(".popup-content");
+        $ytPlayers = $ytPlayers.filter(
+            (_ytPlayer) => _ytPlayer.ytPlayer !== ytPlayer
+        );
+        ytPlayer.destroy();
+        addClass(trailerEl, "display-none");
+        removeClass(popupHeader, "loader");
+        let animeCoverImgEl = popupImg.querySelector(".coverImg");
+        addClass(animeCoverImgEl, "fade-out");
+        removeClass(animeCoverImgEl, "fade-in");
+        addClass(animeCoverImgEl, "fade-in");
+        removeClass(animeCoverImgEl, "display-none");
+        removeClass(animeCoverImgEl, "fade-out");
+        removeClass(popupImg, "display-none");
+    }
+
+    function onPlayerStateChange(event) {
+        let _ytPlayer = event.target;
+        let trailerEl = _ytPlayer?.g;
+        let popupHeader = trailerEl?.parentElement;
+        let popupImg = popupHeader?.querySelector?.(".popup-img");
+        let popupContent = popupHeader?.closest?.(".popup-content");
+        if (_ytPlayer?.getPlayerState?.() === 0) {
+            _ytPlayer?.seekTo?.(0, true);
+        }
+        if (_ytPlayer?.getPlayerState?.() === 1) {
+            $ytPlayers?.forEach(
+                ({ ytPlayer }) =>
+                    ytPlayer?.g !== _ytPlayer?.g && ytPlayer?.pauseVideo?.()
+            );
+            currentYtPlayer = _ytPlayer;
+            addClass(popupImg, "fade-out");
+            removeClass(popupHeader, "loader");
+            removeClass(trailerEl, "display-none");
+            setTimeout(() => {
+                addClass(popupImg, "display-none");
+                removeClass(popupImg, "fade-out");
+            }, 300);
+        } else if (mostVisiblePopupHeader !== popupHeader) {
+            addClass(trailerEl, "display-none");
+            removeClass(popupHeader, "loader");
+            removeClass(popupImg, "display-none");
+        }
+    }
+
+    async function onPlayerReady(event) {
+        let ytPlayer = event.target;
+        let trailerEl = ytPlayer?.g;
+        let popupHeader = trailerEl?.parentElement;
+        let popupContent = popupHeader?.closest?.(".popup-content");
         let anime = $finalAnimeList?.[getChildIndex(popupContent) ?? -1];
-        if (
-            !anime ||
-            !(trailerEl instanceof Element) ||
-            !(popupImg instanceof Element)
-        )
-            return;
         if (
             ytPlayer.getPlayerState() === -1 ||
             trailerEl.tagName !== "IFRAME" ||
@@ -677,27 +720,11 @@
             $ytPlayers = $ytPlayers.filter(
                 (_ytPlayer) => _ytPlayer.ytPlayer !== ytPlayer
             );
-            let animeBannerImg = anime?.bannerImageUrl;
-            let animeBannerImgEl = popupImg.querySelector(".bannerImg");
-            if (
-                animeBannerImg &&
-                (animeBannerImgEl?.naturalHeight === 0 ||
-                    animeBannerImgEl?.naturalWidth === 0)
-            ) {
-                animeBannerImgEl.src = animeBannerImg;
-            }
-            let animeCoverImg = anime.coverImageUrl;
-            let animeCoverImgEl = popupImg.querySelector(".coverImg");
-            if (
-                animeCoverImg &&
-                (animeCoverImgEl?.naturalHeight === 0 ||
-                    animeCoverImgEl?.naturalWidth === 0)
-            ) {
-                animeCoverImgEl.src = animeCoverImg;
-            }
             ytPlayer.destroy();
             addClass(trailerEl, "display-none");
             removeClass(popupHeader, "loader");
+            let popupImg = popupHeader?.querySelector?.(".popup-img");
+            let animeCoverImgEl = popupImg.querySelector(".coverImg");
             addClass(animeCoverImgEl, "fade-out");
             removeClass(animeCoverImgEl, "fade-in");
             addClass(animeCoverImgEl, "fade-in");
@@ -705,16 +732,8 @@
             removeClass(animeCoverImgEl, "fade-out");
             removeClass(popupImg, "display-none");
         } else {
-            addClass(popupImg, "fade-out");
-            setTimeout(() => {
-                removeClass(popupHeader, "loader");
-                removeClass(trailerEl, "display-none");
-                setTimeout(() => {
-                    addClass(popupImg, "display-none");
-                    removeClass(popupImg, "fade-out");
-                }, 300);
-            }, 1000);
             // Play Most Visible when 1 Succeed
+            trailerEl?.setAttribute?.("loading", "lazy");
             playMostVisibleTrailer();
             delete failingTrailers[anime.id];
         }
@@ -737,6 +756,48 @@
                 }
                 ytPlayer?.setVolume?.(savedYtVolume);
             }
+        }
+    }
+
+    let updateListIconSpinningTimeout;
+    async function updateList(event) {
+        if (
+            await $confirmPromise({
+                title: "List update is available",
+                text: "Are you sure you want to refresh the list?",
+            })
+        ) {
+            let element = event.target;
+            let classList = element.classList;
+            let updateIcon;
+            if (classList.contains("list-update-container")) {
+                updateIcon = element.querySelector?.(".list-update-icon");
+            } else {
+                updateIcon = element
+                    ?.closest(".list-update-container")
+                    ?.querySelector?.(".list-update-icon");
+            }
+            if (updateListIconSpinningTimeout)
+                clearTimeout(updateListIconSpinningTimeout);
+            addClass(updateIcon, "fa-spin");
+            animeLoader()
+                .then(async (data) => {
+                    $listUpdateAvailable = false;
+                    updateListIconSpinningTimeout = setTimeout(() => {
+                        removeClass(updateIcon, "fa-spin");
+                    }, 300);
+                    $animeLoaderWorker = data.animeLoaderWorker;
+                    $searchedAnimeKeyword = "";
+                    if (data?.isNew) {
+                        $finalAnimeList = data.finalAnimeList;
+                        $hiddenEntries = data.hiddenEntries;
+                    }
+                    $dataStatus = null;
+                    return;
+                })
+                .catch((error) => {
+                    throw error;
+                });
         }
     }
 
@@ -819,7 +880,6 @@
     }
 
     function getStudios(studios, favouriteStudios) {
-        // [studio, studioUrl]
         if (!studios?.length) return studios;
         let haveFavorite =
             isJsonObject(favouriteStudios) && !jsonIsEmpty(favouriteStudios);
@@ -942,42 +1002,75 @@
 
     // Global Function For Android
     let isCurrentlyPlaying = false;
-    window.returnedAppIsVisible = (inApp) => {
+    window.returnedAppIsVisible = (inAndroidApp) => {
         // Only For Android, and workaround for Alert visibility
-        if (!$popupVisible || !$android) return;
-        $androidInApp = inApp;
+        if (!$android) return;
+        $inApp = inAndroidApp;
+        if (!$popupVisible || $initData) return;
         let visibleTrailer =
             mostVisiblePopupHeader?.querySelector?.(".trailer");
         if (!visibleTrailer) return;
-        if ($popupVisible) {
-            if (inApp) {
-                for (var { ytPlayer } of $ytPlayers) {
-                    if (
-                        ytPlayer.g === visibleTrailer &&
-                        ((ytPlayer?.getPlayerState?.() === 2 &&
-                            isCurrentlyPlaying) ||
-                            $autoPlay)
-                    ) {
-                        prePlayYtPlayer(ytPlayer);
-                        ytPlayer?.playVideo?.();
-                        currentYtPlayer = ytPlayer;
-                        break;
-                    }
+        if ($inApp) {
+            for (let i = 0; i < $ytPlayers.length; i++) {
+                if (
+                    $ytPlayers[i]?.ytPlayer.g === visibleTrailer &&
+                    ($autoPlay ||
+                        ($ytPlayers[i]?.ytPlayer?.getPlayerState?.() === 2 &&
+                            isCurrentlyPlaying))
+                ) {
+                    prePlayYtPlayer($ytPlayers[i]?.ytPlayer);
+                    $ytPlayers[i]?.ytPlayer?.playVideo?.();
+                    break;
                 }
-            } else if (!inApp) {
-                isCurrentlyPlaying = false;
-                for (var { ytPlayer } of $ytPlayers) {
-                    if (
-                        ytPlayer.g === visibleTrailer &&
-                        ytPlayer?.getPlayerState?.() === 1
-                    ) {
-                        isCurrentlyPlaying = true;
-                    }
-                    ytPlayer?.pauseVideo?.();
+            }
+        } else {
+            isCurrentlyPlaying = false;
+            for (let i = 0; i < $ytPlayers.length; i++) {
+                if (
+                    $ytPlayers[i]?.ytPlayer.g === visibleTrailer &&
+                    $ytPlayers[i]?.ytPlayer?.getPlayerState?.() === 1
+                ) {
+                    isCurrentlyPlaying = true;
                 }
+                $ytPlayers[i]?.ytPlayer?.pauseVideo?.();
             }
         }
     };
+    document.addEventListener("visibilitychange", () => {
+        // Only for Browsers
+        if ($android) return;
+        $inApp = document.visibilityState === "visible";
+        if (!$popupVisible || $initData) return;
+        let visibleTrailer =
+            mostVisiblePopupHeader?.querySelector?.(".trailer");
+        if (!visibleTrailer) return;
+        if ($inApp) {
+            for (let i = 0; i < $ytPlayers.length; i++) {
+                if (
+                    $ytPlayers[i]?.ytPlayer.g === visibleTrailer &&
+                    ($autoPlay ||
+                        ($ytPlayers[i]?.ytPlayer?.getPlayerState?.() === 2 &&
+                            isCurrentlyPlaying))
+                ) {
+                    prePlayYtPlayer($ytPlayers[i]?.ytPlayer);
+                    $ytPlayers[i]?.ytPlayer?.playVideo?.();
+                    break;
+                }
+            }
+        } else {
+            isCurrentlyPlaying = false;
+            for (let i = 0; i < $ytPlayers.length; i++) {
+                if (
+                    $ytPlayers[i]?.ytPlayer.g === visibleTrailer &&
+                    $ytPlayers[i]?.ytPlayer?.getPlayerState?.() === 1
+                ) {
+                    isCurrentlyPlaying = true;
+                }
+                $ytPlayers[i]?.ytPlayer?.pauseVideo?.();
+            }
+        }
+    });
+
     window.addEventListener("online", () => {
         if ($android) {
             try {
@@ -1133,17 +1226,40 @@
                                 {/if}
                             </div>
                         </div>
-
-                        <div class="button-container">
-                            <h3 class="autoplay-label">Auto Play</h3>
-                            <label class="switch">
-                                <input
-                                    type="checkbox"
-                                    class="autoplayToggle"
-                                    bind:checked={$autoPlay}
-                                />
-                                <span class="slider round" />
-                            </label>
+                        <div class="popup-controls">
+                            {#if $listUpdateAvailable}
+                                <div
+                                    class="list-update-container"
+                                    on:click={updateList}
+                                    on:keydown={(e) =>
+                                        e.key === "Enter" && updateList(e)}
+                                    transition:fly={{ x: -50, duration: 300 }}
+                                >
+                                    <i
+                                        class="list-update-icon fa-solid fa-arrows-rotate"
+                                    />
+                                    <h3 class="list-update-label">
+                                        {windowWidth >= 350
+                                            ? "List Update Available"
+                                            : windowWidth >= 283
+                                            ? "Update Available"
+                                            : windowWidth >= 236
+                                            ? "Available"
+                                            : ""}
+                                    </h3>
+                                </div>
+                            {/if}
+                            <div class="autoPlay-container">
+                                <h3 class="autoplay-label">Auto Play</h3>
+                                <label class="switch">
+                                    <input
+                                        type="checkbox"
+                                        class="autoplayToggle"
+                                        bind:checked={$autoPlay}
+                                    />
+                                    <span class="slider round" />
+                                </label>
+                            </div>
                         </div>
                         <div class="popup-body">
                             <div class="anime-title-container">
@@ -1519,7 +1635,7 @@
     }
 
     .popup-img {
-        transition: opacity 0.3s ease 1s;
+        transition: opacity 0.3s ease;
         width: 100%;
         background-color: #000 !important;
         z-index: 2;
@@ -1736,15 +1852,40 @@
         overflow-x: auto !important;
     }
 
-    .button-container {
-        background-color: #000 !important;
+    .popup-controls {
+        background: #000 !important;
         display: flex;
-        justify-content: right;
         padding: 5px 2.4em;
-        align-items: center;
-        z-index: 1;
-        position: relative;
         user-select: none;
+        justify-content: space-between;
+        gap: 1em;
+    }
+
+    .list-update-container {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        color: #8d9abb;
+        cursor: pointer;
+    }
+    .list-update-icon {
+        font-size: 1.4rem;
+        cursor: pointer;
+    }
+
+    .list-update-label {
+        height: 14px;
+        line-height: 11px;
+        font-weight: 500;
+        color: #8d9abb;
+        white-space: nowrap;
+        cursor: pointer;
+    }
+
+    .autoPlay-container {
+        display: flex;
+        margin-left: auto;
+        align-items: center;
         gap: 6px;
     }
 
@@ -1753,6 +1894,7 @@
         line-height: 11px;
         font-weight: 500;
         color: #8d9abb;
+        white-space: nowrap;
     }
 
     .switch {

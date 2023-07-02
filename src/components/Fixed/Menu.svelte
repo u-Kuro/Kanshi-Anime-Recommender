@@ -16,8 +16,8 @@
         runExport,
         confirmPromise,
         initData,
-        updateRecommendationList,
-        loadAnime,
+        importantUpdate,
+        importantLoad,
         popupVisible,
     } from "../../js/globalValues.js";
     import { fly } from "svelte/transition";
@@ -78,7 +78,7 @@
                     .catch((error) => {
                         $dataStatus = error || "Something went wrong...";
                         importFileInput.value = null;
-                        updateRecommendationList.update((e) => !e);
+                        importantUpdate.update((e) => !e);
                     });
             } else {
                 if (importFileInput instanceof Element)
@@ -209,7 +209,7 @@
             await saveJSON($filterOptions, "filterOptions");
             await saveJSON($activeTagFilters, "activeTagFilters");
             await saveJSON({}, "hiddenEntries");
-            $loadAnime = !$loadAnime;
+            importantLoad.update((e) => !e);
         }
     }
 
