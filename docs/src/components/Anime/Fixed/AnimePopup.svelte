@@ -321,8 +321,8 @@
                                 prePlayYtPlayer($ytPlayers[i].ytPlayer);
                                 $ytPlayers[i].ytPlayer?.playVideo?.();
                             }
+                            break
                         }
-                        break;
                     }
                 }
                 openedAnimes.forEach(([openedAnime, openedAnimeIdx], idx) => {
@@ -390,11 +390,31 @@
                     if ($ytPlayers[i].ytPlayer.g === visibleTrailer && $inApp) {
                         prePlayYtPlayer($ytPlayers[i].ytPlayer);
                         $ytPlayers[i].ytPlayer?.playVideo?.();
-                        break;
+                    } else {
+                        $ytPlayers[i].ytPlayer?.pauseVideo?.();
+                        let trailerEl = $ytPlayers[i].ytPlayer.g;
+                        let popupHeader = trailerEl?.closest?.(".popup-header");
+                        let popupImg =
+                            popupHeader?.querySelector?.(".popup-img");
+                        addClass(trailerEl, "display-none");
+                        removeClass(popupHeader, "loader");
+                        removeClass(popupImg, "display-none");
                     }
                 }
             } else {
-                $ytPlayers?.forEach(({ ytPlayer }) => ytPlayer?.pauseVideo?.());
+                $ytPlayers.forEach(({ ytPlayer }) => {
+                    let trailerEl = ytPlayer.g;
+                    let popupHeader = trailerEl?.parentElement;
+                    let popupImg = popupHeader?.querySelector?.(".popup-img");
+                    addClass(popupImg, "fade-out");
+                    removeClass(popupHeader, "loader");
+                    removeClass(trailerEl, "display-none");
+                    setTimeout(() => {
+                        addClass(popupImg, "display-none");
+                        removeClass(popupImg, "fade-out");
+                    }, 300);
+                    ytPlayer?.pauseVideo?.();
+                });
             }
         }
     });
@@ -521,6 +541,8 @@
                         prePlayYtPlayer($ytPlayers[i].ytPlayer);
                         $ytPlayers[i].ytPlayer?.playVideo?.();
                     }
+                } else if ($ytPlayers[i].ytPlayer.g !== visibleTrailer) {
+                    $ytPlayers[i].ytPlayer?.pauseVideo?.();
                 }
             }
         } else {
@@ -653,16 +675,17 @@
             removeClass(popupHeader, "loader");
             removeClass(animeCoverImgEl, "display-none");
             removeClass(popupImg, "display-none");
-            if ($autoPlay) {
-                $ytPlayers.forEach(({ ytPlayer }) => {
+            $ytPlayers.forEach(({ ytPlayer }) => {
+                ytPlayer?.pauseVideo?.();
+                if ($autoPlay) {
                     let trailerEl = ytPlayer?.g;
                     let popupHeader = trailerEl?.parentElement;
                     let popupImg = popupHeader?.querySelector?.(".popup-img");
                     addClass(trailerEl, "display-none");
                     removeClass(popupHeader, "loader");
                     removeClass(popupImg, "display-none");
-                });
-            }
+                }
+            });
         }
     }
 
@@ -1040,7 +1063,8 @@
                 ) {
                     prePlayYtPlayer($ytPlayers[i]?.ytPlayer);
                     $ytPlayers[i]?.ytPlayer?.playVideo?.();
-                    break;
+                } else {
+                    $ytPlayers[i]?.ytPlayer?.pauseVideo?.();
                 }
             }
         } else {
@@ -1074,7 +1098,8 @@
                 ) {
                     prePlayYtPlayer($ytPlayers[i]?.ytPlayer);
                     $ytPlayers[i]?.ytPlayer?.playVideo?.();
-                    break;
+                } else {
+                    $ytPlayers[i]?.ytPlayer?.pauseVideo?.();
                 }
             }
         } else {
