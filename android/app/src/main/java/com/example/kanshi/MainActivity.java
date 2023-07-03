@@ -66,7 +66,7 @@ import androidx.core.splashscreen.SplashScreen;
 @SuppressWarnings("CommentedOutCode")
 public class MainActivity extends AppCompatActivity  {
 
-    public final int appID = 19;
+    public final int appID = 20;
     public boolean webviewIsLoaded = false;
     public SharedPreferences prefs;
     private SharedPreferences.Editor prefsEdit;
@@ -236,7 +236,7 @@ public class MainActivity extends AppCompatActivity  {
             }
             @Override public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
                 super.onReceivedError(view, request, error);
-                if (webView.getUrl().startsWith("https://kanshi.vercel.app") && !webviewIsLoaded){
+                if (webView.getUrl().startsWith("https://u-kuro.github.io/Kanshi.Anime-Recommendation") && !webviewIsLoaded){
                     showDialog(new AlertDialog.Builder(MainActivity.this)
                         .setTitle("Something failed to load")
                         .setMessage("Do you want to switch to the local app?")
@@ -322,7 +322,7 @@ public class MainActivity extends AppCompatActivity  {
         }
         isAppConnectionAvailable(isConnected -> webView.post(() -> {
             if (isConnected) {
-                webView.loadUrl("https://kanshi.vercel.app/");
+                webView.loadUrl("https://u-kuro.github.io/Kanshi.Anime-Recommendation/");
             } else {
                 webView.loadUrl("file:///android_asset/www/index.html");
                 showDialog(new AlertDialog.Builder(MainActivity.this)
@@ -584,7 +584,7 @@ public class MainActivity extends AppCompatActivity  {
         public void switchApp() {
             try {
                 webView.post(() -> {
-                    if (webView.getUrl().startsWith("https://kanshi.vercel.app")) {
+                    if (webView.getUrl().startsWith("https://u-kuro.github.io/Kanshi.Anime-Recommendation")) {
                         showDialog(new AlertDialog.Builder(MainActivity.this)
                                 .setTitle("Switch app mode")
                                 .setMessage("Do you want to switch to the local app?")
@@ -601,7 +601,7 @@ public class MainActivity extends AppCompatActivity  {
                                 showDialog(new AlertDialog.Builder(MainActivity.this)
                                         .setTitle("Switch app mode")
                                         .setMessage("Do you want to switch to the online app?")
-                                        .setPositiveButton("OK", (dialogInterface, i) -> webView.loadUrl("https://kanshi.vercel.app"))
+                                        .setPositiveButton("OK", (dialogInterface, i) -> webView.loadUrl("https://u-kuro.github.io/Kanshi.Anime-Recommendation/"))
                                         .setNegativeButton("CANCEL", null));
                             } else {
                                 showDialog(new AlertDialog.Builder(MainActivity.this)
@@ -629,7 +629,7 @@ public class MainActivity extends AppCompatActivity  {
                         showDialog(new AlertDialog.Builder(MainActivity.this)
                             .setTitle("Reconnected successfully")
                             .setMessage("Do you want to switch to the online app?")
-                            .setPositiveButton("OK", (dialogInterface, i) -> webView.loadUrl("https://kanshi.vercel.app"))
+                            .setPositiveButton("OK", (dialogInterface, i) -> webView.loadUrl("https://u-kuro.github.io/Kanshi.Anime-Recommendation/"))
                             .setNegativeButton("CANCEL", null));
                     }
                 }),10000);
@@ -718,7 +718,7 @@ public class MainActivity extends AppCompatActivity  {
 
     @Override
     public void onBackPressed() {
-        if(webView.getUrl().startsWith("file:///android_asset/www/index.html") || webView.getUrl().startsWith("https://kanshi.vercel.app")){
+        if(webView.getUrl().startsWith("file:///android_asset/www/index.html") || webView.getUrl().startsWith("https://u-kuro.github.io/Kanshi.Anime-Recommendation")){
             if(!shouldGoBack){
                 webView.post(() -> webView.loadUrl("javascript:window.backPressed();"));
             } else {
@@ -767,7 +767,7 @@ public class MainActivity extends AppCompatActivity  {
     }
     private boolean checkAppConnection(int timeout) {
         try {
-            URL url = new URL("https://kanshi.vercel.app");
+            URL url = new URL("https://u-kuro.github.io/Kanshi.Anime-Recommendation/");
             HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
             urlConnection.setRequestMethod("HEAD");
             Thread connectionThread = new Thread(() -> {
