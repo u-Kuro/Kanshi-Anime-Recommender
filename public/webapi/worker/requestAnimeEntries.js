@@ -717,7 +717,7 @@ self.onmessage = async ({ data }) => {
                         let hasNextPage = Page?.pageInfo?.hasNextPage ?? true
                         // Handle the successful response here
                         if (hasNextPage && media.length > 0 &&
-                            (lastAnimeUpdate <= recursingUpdatedAtDate) ||
+                            (lastAnimeUpdate < recursingUpdatedAtDate) ||
                             !(recursingUpdatedAtDate instanceof Date) ||
                             isNaN(recursingUpdatedAtDate) ||
                             !(lastAnimeUpdate instanceof Date) ||

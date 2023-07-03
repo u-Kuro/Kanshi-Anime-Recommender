@@ -20,7 +20,6 @@ import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.graphics.Bitmap;
@@ -66,7 +65,7 @@ import androidx.core.splashscreen.SplashScreen;
 @SuppressWarnings("CommentedOutCode")
 public class MainActivity extends AppCompatActivity  {
 
-    public final int appID = 20;
+    public final int appID = 21;
     public boolean webviewIsLoaded = false;
     public SharedPreferences prefs;
     private SharedPreferences.Editor prefsEdit;
@@ -317,9 +316,7 @@ public class MainActivity extends AppCompatActivity  {
 //                return true;
 //            }
         });
-        if (0 != (getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE)) {
-            WebView.setWebContentsDebuggingEnabled(true);
-        }
+        WebView.setWebContentsDebuggingEnabled(BuildConfig.DEBUG);
         isAppConnectionAvailable(isConnected -> webView.post(() -> {
             if (isConnected) {
                 webView.loadUrl("https://u-kuro.github.io/Kanshi.Anime-Recommendation/");
