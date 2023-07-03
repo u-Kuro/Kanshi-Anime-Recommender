@@ -20,6 +20,7 @@ import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.graphics.Bitmap;
@@ -65,7 +66,7 @@ import androidx.core.splashscreen.SplashScreen;
 @SuppressWarnings("CommentedOutCode")
 public class MainActivity extends AppCompatActivity  {
 
-    public final int appID = 17;
+    public final int appID = 18;
     public boolean webviewIsLoaded = false;
     public SharedPreferences prefs;
     private SharedPreferences.Editor prefsEdit;
@@ -316,8 +317,9 @@ public class MainActivity extends AppCompatActivity  {
 //                return true;
 //            }
         });
-//        if (0 != (getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE))
-//        { WebView.setWebContentsDebuggingEnabled(true); }
+        if (0 != (getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE)) {
+            WebView.setWebContentsDebuggingEnabled(true);
+        }
         isAppConnectionAvailable(isConnected -> webView.post(() -> {
             if (isConnected) {
                 webView.loadUrl("https://kanshi.vercel.app/");

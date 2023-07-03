@@ -199,37 +199,43 @@ self.onmessage = async ({ data }) => {
         // Filter and ADD Caution State below
         let recommendedAnimeList = await retrieveJSON("recommendedAnimeList") || []
         finalAnimeList = recommendedAnimeList.filter(anime => {
-            // favoriteContents
             if (showAiring) {
                 if (!ncsCompare(anime?.status, 'releasing')) {
                     return false;
                 }
             }
+
             if (hideMyAnime) {
                 if (!ncsCompare(anime?.userStatus, 'unwatched')) {
                     return false;
                 }
             }
+
             if (showMyAnime) {
                 if (ncsCompare(anime?.userStatus, 'unwatched')) {
                     return false;
                 }
             }
+
             if (hideWatched) {
                 if (['completed', 'dropped'].some((e) => ncsCompare(e, anime?.userStatus))) {
                     return false
                 }
             }
+
             if (hiddenList) {
                 // do hidden
                 if (hiddenEntries[anime.id] === undefined) {
                     return false
                 }
             } else {
+
+
                 if (hiddenEntries[anime.id] === true) {
                     return false
                 }
             }
+
             // Comparison Filter >=, >, <, <=, number
             if (comparisonFilter.userScore) {
                 let operator = comparisonFilter.userScore.operator?.trim?.(),
@@ -259,6 +265,7 @@ self.onmessage = async ({ data }) => {
                     if (anime.userScore !== value) return false
                 }
             }
+
             if (comparisonFilter.averageScore) {
                 let operator = comparisonFilter.averageScore.operator?.trim?.(),
                     value = comparisonFilter.averageScore.value
@@ -287,6 +294,7 @@ self.onmessage = async ({ data }) => {
                     if (anime.averageScore !== value) return false
                 }
             }
+
             if (comparisonFilter.popularity) {
                 let operator = comparisonFilter.popularity.operator?.trim?.(),
                     value = comparisonFilter.popularity.value
@@ -315,6 +323,7 @@ self.onmessage = async ({ data }) => {
                     if (anime.popularity !== value) return false
                 }
             }
+
             if (comparisonFilter.weightedScore) {
                 let operator = comparisonFilter.weightedScore.operator?.trim?.(),
                     value = comparisonFilter.weightedScore.value
@@ -343,6 +352,7 @@ self.onmessage = async ({ data }) => {
                     if (anime.weightedScore !== value) return false
                 }
             }
+
             if (comparisonFilter.score) {
                 let operator = comparisonFilter.score.operator?.trim?.(),
                     value = comparisonFilter.score.value
@@ -376,15 +386,19 @@ self.onmessage = async ({ data }) => {
             if (typeof anime?.season === 'string' && !jsonIsEmpty(exclude.season) && exclude.season[anime.season.toLowerCase()]) {
                 return false
             }
+
             if (typeof anime?.format === 'string' && !jsonIsEmpty(exclude.format) && exclude.format[anime.format.toLowerCase()]) {
                 return false
             }
+
             if (typeof anime?.userStatus === 'string' && !jsonIsEmpty(exclude.userStatus) && exclude.userStatus[anime.userStatus.toLowerCase()]) {
                 return false
             }
+
             if (typeof anime?.status === 'string' && !jsonIsEmpty(exclude.status) && exclude.status[anime.status.toLowerCase()]) {
                 return false
             }
+
             if (anime?.year && !jsonIsEmpty(exclude.year) && exclude.year[anime.year?.toString?.()?.toLowerCase?.()]) {
                 return false
             }
@@ -395,12 +409,14 @@ self.onmessage = async ({ data }) => {
                     return exclude.genres[e.toLowerCase()]
                 })) return false
             }
+
             if (!jsonIsEmpty(exclude.tags)) {
                 if (anime.tags.some(e => {
                     if (typeof e !== 'string') return false
                     return exclude.tags[e.toLowerCase()]
                 })) return false
             }
+
             if (!jsonIsEmpty(exclude.studios)) {
                 for (let studio in anime.studios) {
                     if (typeof studio === 'string' && exclude.studios[studio?.toLowerCase?.()]) {
@@ -416,24 +432,28 @@ self.onmessage = async ({ data }) => {
                     return false
                 }
             }
+
             // Should Include OR
             if (!jsonIsEmpty(include.format)) {
                 if (!include.format[anime?.format?.toLowerCase?.()]) {
                     return false
                 }
             }
+
             // Should Include OR
             if (!jsonIsEmpty(include.userStatus)) {
                 if (!include.userStatus[anime?.userStatus?.toLowerCase?.()]) {
                     return false
                 }
             }
+
             // Should Include OR
             if (!jsonIsEmpty(include.status)) {
                 if (!include.status[anime?.status?.toLowerCase?.()]) {
                     return false
                 }
             }
+
             // Should Include OR
             if (!jsonIsEmpty(include.year)) {
                 if (!include.year[anime?.year?.toString?.()?.toLowerCase?.()]) {
@@ -450,7 +470,7 @@ self.onmessage = async ({ data }) => {
                     }
                 }
             } else {
-                // Should Include AND
+                // Should Include AND                
                 for (let genre in include.genres) {
                     if (!anime.genres.some(e => {
                         return ncsCompare(e, genre)
@@ -475,7 +495,7 @@ self.onmessage = async ({ data }) => {
             }
 
             if (flexibleInclusion['studio']) {
-                // Should Include OR
+                // Should Include OR                               
                 if (!jsonIsEmpty(include.studios)) {
                     let isNotIncluded = true
                     for (let studio in anime.studios) {
@@ -509,6 +529,7 @@ self.onmessage = async ({ data }) => {
                     anime.contentCaution.semiCaution.push(genre)
                 }
             })
+
             // Add Tag Caution
             anime.tags.forEach(tag => {
                 if (cautionContents.tags[tag?.toLowerCase?.()]) {
@@ -517,7 +538,6 @@ self.onmessage = async ({ data }) => {
                     anime.contentCaution.semiCaution.push(tag)
                 }
             })
-
             // Limit Favorite Contents
             if (isJsonObject(anime.favoriteContents) && !jsonIsEmpty(anime.favoriteContents)) {
                 let sortedFavoriteContents = Object.entries(anime.favoriteContents.genres)
@@ -660,7 +680,7 @@ self.onmessage = async ({ data }) => {
         self.postMessage({
             isNew: true,
             finalAnimeList: finalAnimeList.slice(0, loadLimit),
-            hiddenEntries: hiddenEntries
+            hiddenEntries: hiddenEntries,
         });
         filteredList = finalAnimeList.slice(loadLimit)
     }

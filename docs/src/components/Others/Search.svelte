@@ -1137,6 +1137,10 @@
                 $animeLoaderWorker.postMessage({
                     reload: true,
                 });
+            } else {
+                $animeLoaderWorker = null;
+                $finalAnimeList = null;
+                $loadAnime = !$loadAnime
             }
             asyncAnimeReloadPromise = { resolve };
         });

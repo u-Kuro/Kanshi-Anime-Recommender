@@ -10,6 +10,7 @@
         hiddenEntries,
         animeLoaderWorker,
         confirmPromise,
+        loadAnime
     } from "../../../js/globalValues";
 
     let animeTitle;
@@ -90,11 +91,14 @@
             ) {
                 delete $hiddenEntries[animeID];
                 $hiddenEntries = $hiddenEntries;
-                if (
-                    $finalAnimeList.length &&
-                    $animeLoaderWorker instanceof Worker
-                ) {
-                    $animeLoaderWorker.postMessage({ removeID: animeID });
+                if ( $finalAnimeList.length ) {
+                    if ($animeLoaderWorker instanceof Worker) {
+                        $animeLoaderWorker.postMessage({ removeID: animeID });
+                    } else {
+                        $animeLoaderWorker = null;
+                        $finalAnimeList = null;
+                        $loadAnime = !$loadAnime
+                    }
                 }
                 $animeOptionVisible = false;
             }
@@ -105,11 +109,14 @@
                 )
             ) {
                 $hiddenEntries[animeID] = true;
-                if (
-                    $finalAnimeList.length &&
-                    $animeLoaderWorker instanceof Worker
-                ) {
-                    $animeLoaderWorker.postMessage({ removeID: animeID });
+                if ( $finalAnimeList.length ) {
+                    if ($animeLoaderWorker instanceof Worker) {
+                        $animeLoaderWorker.postMessage({ removeID: animeID });
+                    } else {
+                        $animeLoaderWorker = null;
+                        $finalAnimeList = null;
+                        $loadAnime = !$loadAnime
+                    }
                 }
                 $animeOptionVisible = false;
             }

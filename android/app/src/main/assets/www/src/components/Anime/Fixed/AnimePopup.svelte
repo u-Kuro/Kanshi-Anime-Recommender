@@ -20,6 +20,7 @@
         updateRecommendationList,
         listUpdateAvailable,
         searchedAnimeKeyword,
+        loadAnime,
     } from "../../../js/globalValues.js";
     import {
         isJsonObject,
@@ -130,11 +131,14 @@
             ) {
                 delete $hiddenEntries[animeID];
                 $hiddenEntries = $hiddenEntries;
-                if (
-                    $finalAnimeList.length &&
-                    $animeLoaderWorker instanceof Worker
-                ) {
-                    $animeLoaderWorker.postMessage({ removeID: animeID });
+                if ($finalAnimeList.length) {
+                    if ($animeLoaderWorker instanceof Worker) {
+                        $animeLoaderWorker.postMessage({ removeID: animeID });
+                    } else {
+                        $animeLoaderWorker = null;
+                        $finalAnimeList = null;
+                        $loadAnime = !$loadAnime;
+                    }
                 }
             }
         } else {
@@ -144,11 +148,14 @@
                 )
             ) {
                 $hiddenEntries[animeID] = true;
-                if (
-                    $finalAnimeList.length &&
-                    $animeLoaderWorker instanceof Worker
-                ) {
-                    $animeLoaderWorker.postMessage({ removeID: animeID });
+                if ($finalAnimeList.length) {
+                    if ($animeLoaderWorker instanceof Worker) {
+                        $animeLoaderWorker.postMessage({ removeID: animeID });
+                    } else {
+                        $animeLoaderWorker = null;
+                        $finalAnimeList = null;
+                        $loadAnime = !$loadAnime;
+                    }
                 }
             }
         }
@@ -321,7 +328,7 @@
                                 prePlayYtPlayer($ytPlayers[i].ytPlayer);
                                 $ytPlayers[i].ytPlayer?.playVideo?.();
                             }
-                            break
+                            break;
                         }
                     }
                 }
@@ -392,27 +399,10 @@
                         $ytPlayers[i].ytPlayer?.playVideo?.();
                     } else {
                         $ytPlayers[i].ytPlayer?.pauseVideo?.();
-                        let trailerEl = $ytPlayers[i].ytPlayer.g;
-                        let popupHeader = trailerEl?.closest?.(".popup-header");
-                        let popupImg =
-                            popupHeader?.querySelector?.(".popup-img");
-                        addClass(trailerEl, "display-none");
-                        removeClass(popupHeader, "loader");
-                        removeClass(popupImg, "display-none");
                     }
                 }
             } else {
                 $ytPlayers.forEach(({ ytPlayer }) => {
-                    let trailerEl = ytPlayer.g;
-                    let popupHeader = trailerEl?.parentElement;
-                    let popupImg = popupHeader?.querySelector?.(".popup-img");
-                    addClass(popupImg, "fade-out");
-                    removeClass(popupHeader, "loader");
-                    removeClass(trailerEl, "display-none");
-                    setTimeout(() => {
-                        addClass(popupImg, "display-none");
-                        removeClass(popupImg, "fade-out");
-                    }, 300);
                     ytPlayer?.pauseVideo?.();
                 });
             }
@@ -603,7 +593,7 @@
                 addClass(animeCoverImgEl, "display-none");
                 addClass(animeCoverImgEl, "fade-out");
             }
-            if ($ytPlayers.length >= 8) {
+            if ($ytPlayers.length >= 3) {
                 let destroyedPlayerIdx = 0;
                 let furthestDistance = -Infinity;
                 $ytPlayers.forEach((_ytPlayer, index) => {
@@ -652,6 +642,7 @@
                     modestbranding: 1, // Enable modest branding (hide the YouTube logo)
                     playsinline: 1, // Enable inline video playback
                     playlist: youtubeID,
+                    rel: 0,
                 },
                 events: {
                     onReady: (event) => {
@@ -675,17 +666,6 @@
             removeClass(popupHeader, "loader");
             removeClass(animeCoverImgEl, "display-none");
             removeClass(popupImg, "display-none");
-            $ytPlayers.forEach(({ ytPlayer }) => {
-                ytPlayer?.pauseVideo?.();
-                if ($autoPlay) {
-                    let trailerEl = ytPlayer?.g;
-                    let popupHeader = trailerEl?.parentElement;
-                    let popupImg = popupHeader?.querySelector?.(".popup-img");
-                    addClass(trailerEl, "display-none");
-                    removeClass(popupHeader, "loader");
-                    removeClass(popupImg, "display-none");
-                }
-            });
         }
     }
 
@@ -718,7 +698,11 @@
         if (_ytPlayer?.getPlayerState?.() === 0) {
             _ytPlayer?.seekTo?.(0, true);
         }
-        if (_ytPlayer?.getPlayerState?.() === 1) {
+        if (
+            _ytPlayer?.getPlayerState?.() === 1 &&
+            (trailerEl?.classList?.contains?.("display-none") ||
+                !popupImg?.classList?.contains?.("display-none"))
+        ) {
             $ytPlayers?.forEach(
                 ({ ytPlayer }) =>
                     ytPlayer?.g !== _ytPlayer?.g && ytPlayer?.pauseVideo?.()
@@ -731,10 +715,6 @@
                 addClass(popupImg, "display-none");
                 removeClass(popupImg, "fade-out");
             }, 300);
-        } else if (mostVisiblePopupHeader !== popupHeader && $autoPlay) {
-            addClass(trailerEl, "display-none");
-            removeClass(popupHeader, "loader");
-            removeClass(popupImg, "display-none");
         }
     }
 
@@ -823,6 +803,10 @@
             if (updateListIconSpinningTimeout)
                 clearTimeout(updateListIconSpinningTimeout);
             addClass(updateIcon, "fa-spin");
+            if ($animeLoaderWorker) {
+                $animeLoaderWorker.terminate();
+                $animeLoaderWorker = null;
+            }
             animeLoader()
                 .then(async (data) => {
                     $listUpdateAvailable = false;
@@ -1340,17 +1324,7 @@
                                 </div>
                                 <div>
                                     <div class="info-categ">Studio</div>
-                                    <div
-                                        class="studio-popup info"
-                                        title={JSON.stringify(
-                                            getStudios(
-                                                Object.entries(
-                                                    anime.studios || {}
-                                                ),
-                                                anime?.favoriteContents?.studios
-                                            )
-                                        )}
-                                    >
+                                    <div class="studio-popup info">
                                         {#if Object.entries(anime?.studios || {}).length}
                                             {#each getStudios(Object.entries(anime.studios || {}), anime?.favoriteContents?.studios) as { studio, studioColor } (studio)}
                                                 <span

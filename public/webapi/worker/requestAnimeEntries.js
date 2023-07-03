@@ -359,16 +359,16 @@ self.onmessage = async ({ data }) => {
                             media.forEach((anime) => {
                                 if (typeof anime?.id === "number") {
                                     airingAnimeIDs = airingAnimeIDs.filter(_id => _id !== anime.id)
-                                    if (currentNonProcessedLength > airingAnimeIDs.length) {
-                                        currentNonProcessedLength = airingAnimeIDs.length // Only Send when its done processing 1 anime
-                                        let processedLength = Math.max(animeLength - airingAnimeIDs.length, 0)
-                                        let percentage = (100 * (processedLength / animeLength))
-                                        percentage = percentage >= 0 ? percentage : 0
-                                        self.postMessage({ status: "Updating Entries " + (percentage.toFixed(2)) + "%" }) // Update Data Status
-                                    }
                                     animeEntries[anime.id] = anime
                                 }
                             })
+                        }
+                        if (currentNonProcessedLength > airingAnimeIDs.length) {
+                            currentNonProcessedLength = airingAnimeIDs.length // Only Send when its done processing 1 anime
+                            let processedLength = Math.max(animeLength - airingAnimeIDs.length, 0)
+                            let percentage = (100 * (processedLength / animeLength))
+                            percentage = percentage >= 0 ? percentage : 0
+                            self.postMessage({ status: "Updating Entries " + (percentage.toFixed(2)) + "%" }) // Update Data Status
                         }
                         retryCount = 0
                         let hasNextPage = Page?.pageInfo?.hasNextPage ?? true

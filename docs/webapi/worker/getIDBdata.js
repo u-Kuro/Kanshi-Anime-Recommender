@@ -2,8 +2,8 @@ let db;
 self.onmessage = async ({ data }) => {
     if (!db) await IDBinit()
     let _data
-    if (data.name === "animeEntriesLength") {
-        _data = Object.keys(await retrieveJSON("animeEntries") || {}).length
+    if (data.name === "animeEntriesIsEmpty") {
+        _data = jsonIsEmpty(await retrieveJSON("animeEntries") || {})
         self.postMessage(_data)
     } else if (data.name === "userEntriesLength") {
         _data = (await retrieveJSON("userEntries") || []).length
@@ -59,4 +59,10 @@ async function retrieveJSON(name) {
             return resolve();
         }
     });
+}
+function jsonIsEmpty(obj) {
+    for (const key in obj) {
+        return false;
+    }
+    return true;
 }

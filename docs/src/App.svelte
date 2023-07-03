@@ -89,9 +89,19 @@
 	// Check/Get/Update/Process Anime Entries
 	initDataPromises.push(
 		new Promise(async (resolve, reject) => {
-			let animeEntriesLen = await retrieveJSON("animeEntriesLength");
 			let _lastAnimeUpdate = await retrieveJSON("lastAnimeUpdate");
-			if (animeEntriesLen < 1 || !(_lastAnimeUpdate instanceof Date)) {
+			let shouldGetAnimeEntries = !(
+				_lastAnimeUpdate instanceof Date && !isNaN(_lastAnimeUpdate)
+			);
+			if (!shouldGetAnimeEntries) {
+				let animeEntriesIsEmpty = await retrieveJSON(
+					"animeEntriesIsEmpty"
+				);
+				if (animeEntriesIsEmpty) {
+					shouldGetAnimeEntries = true;
+				}
+			}
+			if (shouldGetAnimeEntries) {
 				$finalAnimeList = null;
 				getAnimeEntries()
 					.then(() => {
@@ -101,7 +111,6 @@
 						reject();
 					});
 			} else {
-				requestAnimeEntries({ onlyGetNewEntries: true });
 				resolve();
 			}
 		})
@@ -111,10 +120,7 @@
 	initDataPromises.push(
 		new Promise(async (resolve) => {
 			let _username = await retrieveJSON("username");
-			if (_username) {
-				$username = _username;
-				requestUserEntries({ username: $username });
-			}
+			if (_username) $username = _username;
 			resolve();
 		})
 	);
@@ -176,17 +182,19 @@
 	Promise.all(initDataPromises)
 		.then(async () => {
 			// Get/Show List
-			let recommendedAnimeListLen = await retrieveJSON(
-				"recommendedAnimeListLength"
-			);
 			let shouldProcessRecommendation = await retrieveJSON(
 				"shouldProcessRecommendation"
 			);
+			if (!shouldProcessRecommendation) {
+				let recommendedAnimeListLen = await retrieveJSON(
+					"recommendedAnimeListLength"
+				);
+				if (recommendedAnimeListLen < 1) {
+					shouldProcessRecommendation = true;
+				}
+			}
 			new Promise(async (resolve) => {
-				if (
-					recommendedAnimeListLen < 1 ||
-					shouldProcessRecommendation
-				) {
+				if (shouldProcessRecommendation) {
 					processRecommendedAnimeList()
 						.then(async () => {
 							await saveJSON(
@@ -202,14 +210,18 @@
 					resolve();
 				}
 			}).then(() => {
+				if ($animeLoaderWorker) {
+					$animeLoaderWorker.terminate();
+					$animeLoaderWorker = null;
+				}
 				animeLoader()
 					.then(async (data) => {
 						$animeLoaderWorker = data.animeLoaderWorker;
 						$searchedAnimeKeyword = "";
+						$initData = false;
 						if (data?.isNew) {
 							$finalAnimeList = data.finalAnimeList;
 							$hiddenEntries = data.hiddenEntries;
-							$initData = false;
 							// Should be After Getting the Dates for Reactive Change
 							$autoUpdate =
 								(await retrieveJSON("autoUpdate")) ?? false;
@@ -282,6 +294,10 @@
 	importantLoad.subscribe(async (val) => {
 		if (typeof val !== "boolean" || $initData) return;
 		$listUpdateAvailable = false;
+		if ($animeLoaderWorker) {
+			$animeLoaderWorker.terminate();
+			$animeLoaderWorker = null;
+		}
 		animeLoader()
 			.then(async (data) => {
 				$animeLoaderWorker = data.animeLoaderWorker;
@@ -331,10 +347,14 @@
 		if (typeof val !== "boolean" || $initData) return;
 		if (
 			($popupVisible || window.scrollY > animeGridEl?.offsetTop - 55) &&
-			$finalAnimeList
+			$finalAnimeList?.length
 		) {
 			$listUpdateAvailable = true;
 		} else {
+			if ($animeLoaderWorker) {
+				$animeLoaderWorker.terminate();
+				$animeLoaderWorker = null;
+			}
 			animeLoader()
 				.then(async (data) => {
 					$animeLoaderWorker = data.animeLoaderWorker;
@@ -696,6 +716,10 @@
 			if (updateListIconSpinningTimeout)
 				clearTimeout(updateListIconSpinningTimeout);
 			addClass(updateIcon, "fa-spin");
+			if ($animeLoaderWorker) {
+				$animeLoaderWorker.terminate();
+				$animeLoaderWorker = null;
+			}
 			animeLoader()
 				.then(async (data) => {
 					$listUpdateAvailable = false;

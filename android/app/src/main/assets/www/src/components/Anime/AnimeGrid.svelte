@@ -36,6 +36,7 @@
         isRunningIntersectEvent = false;
         $animeObserver = new IntersectionObserver(
             (entries) => {
+                if ($shownAllInList) return;
                 entries.forEach((entry) => {
                     if (entry.isIntersecting) {
                         loadingMore = true;
@@ -47,6 +48,8 @@
                                     loadMore: true,
                                 });
                             } else {
+                                $animeLoaderWorker = null;
+                                $finalAnimeList = null;
                                 $loadAnime = !$loadAnime;
                             }
                             isRunningIntersectEvent = false;
@@ -129,14 +132,11 @@
     });
 
     window.checkAnimeLoader = () => {
-        if (
-            (!($animeObserver instanceof IntersectionObserver) ||
-                !($animeLoaderWorker instanceof Worker) ||
-                typeof $animeLoaderWorker?.onmessage !== "function" ||
-                typeof $animeLoaderWorker?.postMessage !== "function") &&
-            $android &&
-            !$initData
-        ) {
+        if (!($animeLoaderWorker instanceof Worker)) {
+            if ($animeLoaderWorker) {
+                $animeLoaderWorker.terminate();
+                $animeLoaderWorker = null;
+            }
             $finalAnimeList = null;
             animeLoader()
                 .then(async (data) => {
@@ -209,11 +209,17 @@
     });
 
     searchedAnimeKeyword.subscribe(async (val) => {
-        if (typeof val === "string" && $animeLoaderWorker instanceof Worker) {
-            $shownAllInList = false;
-            $animeLoaderWorker.postMessage({
-                filterKeyword: val,
-            });
+        if (typeof val === "string") {
+            if ($animeLoaderWorker instanceof Worker) {
+                $shownAllInList = false;
+                $animeLoaderWorker.postMessage({
+                    filterKeyword: val,
+                });
+            } else {
+                $animeLoaderWorker = null;
+                $finalAnimeList = null;
+                $loadAnime = !$loadAnime;
+            }
         }
     });
 

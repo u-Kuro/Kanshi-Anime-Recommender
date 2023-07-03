@@ -25,14 +25,14 @@ const animeLoader = (_data) => {
         dataStatusPrio = true
         cacheRequest("./webapi/worker/animeLoader.js")
             .then(url => {
-                let _animeLoaderWorker = new Worker(url)
-                _animeLoaderWorker.postMessage(_data)
-                _animeLoaderWorker.onmessage = ({ data }) => {
-                    if (data.init) {
-                        if (animeLoaderWorker) animeLoaderWorker.terminate();
-                        animeLoaderWorker = _animeLoaderWorker
-                        _animeLoaderWorker = null
-                    } else if (data?.status !== undefined) {
+                if (animeLoaderWorker) {
+                    animeLoaderWorker.terminate()
+                    animeLoaderWorker = null
+                }
+                animeLoaderWorker = new Worker(url)
+                animeLoaderWorker.postMessage(_data)
+                animeLoaderWorker.onmessage = ({ data }) => {
+                    if (data?.status !== undefined) {
                         dataStatusPrio = true
                         dataStatus.set(data.status)
                     } else if (data?.isNew) {
@@ -41,7 +41,7 @@ const animeLoader = (_data) => {
                         resolve(Object.assign({}, data, { animeLoaderWorker: animeLoaderWorker }))
                     }
                 }
-                _animeLoaderWorker.onerror = (error) => {
+                animeLoaderWorker.onerror = (error) => {
                     reject(error)
                 }
             })
