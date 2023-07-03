@@ -116,7 +116,10 @@ async function IDBinit() {
         request.onupgradeneeded = (event) => {
             db = event.target.result;
             db.createObjectStore("MyObjectStore");
-            return resolve();
+            let transaction = event.target.transaction
+            transaction.oncomplete = () => {
+                return resolve();
+            }
         };
     });
 }
