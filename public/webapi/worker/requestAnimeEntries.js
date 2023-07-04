@@ -5,7 +5,6 @@ let maxStaffPerPage = 25;
 self.onmessage = async ({ data }) => {
     if (!db) await IDBinit()
     let currentYear = (new Date()).getFullYear();
-    let lastAnimeUpdate = await retrieveJSON("lastAnimeUpdate") || new Date(1670770349 * 1000)
     let onlyGetNewEntries = data?.onlyGetNewEntries ?? false
     let retryCount = 0;
     let animeEntries = await retrieveJSON("animeEntries") || {}
@@ -15,9 +14,10 @@ self.onmessage = async ({ data }) => {
     // Get all Existing IDs
     // set id_not_in the Existing IDs
     // add results to local list
-    function getNewEntries(animeEntries) {
+    async function getNewEntries(animeEntries) {
         let currentAnimeIDs = Object.keys(animeEntries).join(',')
         let entriesCount = 0
+
         self.postMessage({ status: "Checking New Entries..." }) // Update Data Status
         function recallGNE(page) {
             fetch('https://graphql.anilist.co', {
@@ -133,19 +133,25 @@ self.onmessage = async ({ data }) => {
                     } else {
                         let Page = result?.data?.Page
                         let media = Page?.media || []
+                        let hasAddedEntry = false
+
                         if (media instanceof Array && media.length) {
-                            self.postMessage({ status: "Getting New Entries: " + (entriesCount += media.length) }) // Update Data Status
                             media.forEach((anime) => {
                                 if (typeof anime?.id === "number") {
                                     animeEntries[anime.id] = anime
+                                    hasAddedEntry = true
                                 }
                             })
                         }
                         retryCount = 0;
                         let hasNextPage = Page?.pageInfo?.hasNextPage ?? true
                         if (hasNextPage && media.length > 0) {
-                            saveJSON(animeEntries, "animeEntries")
                             // Handle the successful response here
+                            if (hasAddedEntry) {
+                                await saveJSON(animeEntries, "animeEntries")
+                            }
+                            self.postMessage({ status: "Getting New Entries: " + (entriesCount += media.length) }) // Update Data Status
+
                             if (headers?.get('x-ratelimit-remaining') > 0) {
                                 return recallGNE(++page);
                             } else {
@@ -164,9 +170,10 @@ self.onmessage = async ({ data }) => {
                                 }, 60000);
                             }
                         } else {
-                            await saveJSON(animeEntries, "animeEntries")
+                            currentAnimeIDs = null
                             // Update User Recommendation List
-                            if (entriesCount > 0) {
+                            if (hasAddedEntry) {
+                                await saveJSON(animeEntries, "animeEntries")
                                 self.postMessage({ updateRecommendationList: true })
                             }
                             self.postMessage({ status: null })
@@ -229,7 +236,7 @@ self.onmessage = async ({ data }) => {
     // Get all Existing IDs
     // set id_in Existing IDs
     // update results to local list
-    function updateAiringAnime(animeEntries) {
+    async function updateAiringAnime(animeEntries) {
         let airingAnimeIDs = Object.values(animeEntries).filter(({ seasonYear, status }) => {
             // Either Currently Releasing or Not Yet Released but Its Release Year is >= Current Year
             return ncsCompare(status, 'releasing') || (ncsCompare(status, 'not_yet_released') && parseInt(seasonYear) >= currentYear)
@@ -240,7 +247,12 @@ self.onmessage = async ({ data }) => {
 
         let airingAnimeIDsString = airingAnimeIDs.join(',') // Get IDs
 
-        self.postMessage({ status: "Updating Entries 0.00%" }) // Init Data Status
+        self.postMessage({ status: "Checking Latest Entries..." }) // Init Data Status
+
+        let lastAnimeUpdate = await retrieveJSON("lastAnimeUpdate") || new Date(1670770349 * 1000)
+        let lastAiringUpdateDate = await retrieveJSON("lastAiringAnimeUpdate") || lastAnimeUpdate
+        let latestAiringUpdateAtDate
+
         function recallUAA(page) {
             fetch('https://graphql.anilist.co', {
                 method: 'POST',
@@ -259,7 +271,8 @@ self.onmessage = async ({ data }) => {
                                 type: ANIME,
                                 genre_not_in: ["Hentai"],
                                 format_not_in:[MUSIC,MANGA,NOVEL,ONE_SHOT],
-                                id_in: [${airingAnimeIDsString || ''}]
+                                id_in: [${airingAnimeIDsString || ''}],
+                                sort: [UPDATED_AT_DESC]
                                 ) {
                                 id
                                 updatedAt
@@ -355,26 +368,55 @@ self.onmessage = async ({ data }) => {
                     } else {
                         let Page = result?.data?.Page
                         let media = Page?.media || []
+                        let currentAnimeUpdateDate
+                        let hasUpdatedEntry = false
+
                         if (media instanceof Array) {
-                            media.forEach((anime) => {
+                            for (let anime of media) {
                                 if (typeof anime?.id === "number") {
+                                    currentAnimeUpdateDate = new Date(anime.updatedAt * 1000)
+                                    if (currentAnimeUpdateDate instanceof Date &&
+                                        !isNaN(currentAnimeUpdateDate)
+                                    ) {
+                                        if (latestAiringUpdateAtDate === undefined ||
+                                            currentAnimeUpdateDate > latestAiringUpdateAtDate
+                                        ) {
+                                            latestAiringUpdateAtDate = currentAnimeUpdateDate
+                                        }
+                                        if ((lastAiringUpdateDate >= currentAnimeUpdateDate) &&
+                                            lastAiringUpdateDate instanceof Date &&
+                                            !isNaN(lastAiringUpdateDate)
+                                        ) {
+                                            // Early Exit
+                                            break
+                                        }
+                                    }
                                     airingAnimeIDs = airingAnimeIDs.filter(_id => _id !== anime.id)
                                     animeEntries[anime.id] = anime
+                                    hasUpdatedEntry = true
                                 }
-                            })
-                        }
-                        if (currentNonProcessedLength > airingAnimeIDs.length) {
-                            currentNonProcessedLength = airingAnimeIDs.length // Only Send when its done processing 1 anime
-                            let processedLength = Math.max(animeLength - airingAnimeIDs.length, 0)
-                            let percentage = (100 * (processedLength / animeLength))
-                            percentage = percentage >= 0 ? percentage : 0
-                            self.postMessage({ status: "Updating Entries " + (percentage.toFixed(2)) + "%" }) // Update Data Status
+                            }
                         }
                         retryCount = 0
                         let hasNextPage = Page?.pageInfo?.hasNextPage ?? true
                         // Handle the successful response here
-                        if (hasNextPage && media.length > 0) {
-                            saveJSON(animeEntries, "animeEntries")
+                        if (hasNextPage && media.length > 0 &&
+                            ((lastAiringUpdateDate < currentAnimeUpdateDate) ||
+                                !(currentAnimeUpdateDate instanceof Date) ||
+                                isNaN(currentAnimeUpdateDate) ||
+                                !(lastAiringUpdateDate instanceof Date) ||
+                                isNaN(lastAiringUpdateDate))
+                        ) {
+                            if (currentNonProcessedLength > airingAnimeIDs.length) {
+                                currentNonProcessedLength = airingAnimeIDs.length // Only Send when its done processing 1 anime
+                                let processedLength = Math.max(animeLength - airingAnimeIDs.length, 0)
+                                let percentage = (100 * (processedLength / animeLength))
+                                percentage = percentage >= 0 ? percentage : 0
+                                self.postMessage({ status: "Updating Entries " + (percentage.toFixed(2)) + "%" }) // Update Data Status
+                            }
+                            if (hasUpdatedEntry) {
+                                saveJSON(animeEntries, "animeEntries")
+                            }
                             // Media Recursion
                             if (headers?.get('x-ratelimit-remaining') > 0) {
                                 return recallUAA(++page);
@@ -391,16 +433,28 @@ self.onmessage = async ({ data }) => {
                                 }, 60000);
                             }
                         } else {
-                            self.postMessage({ status: "Updating Entries 100%" }) // End Data Status
-                            await saveJSON(animeEntries, "animeEntries")
+                            airingAnimeIDsString = airingAnimeIDs = null
+
                             // Update User Recommendation List
-                            self.postMessage({ status: null })
-                            self.postMessage({ updateRecommendationList: true })
+                            if (hasUpdatedEntry) {
+                                self.postMessage({ status: "Updating Entries 100%" }) // End Data Status
+                                await saveJSON(animeEntries, "animeEntries")
+                                self.postMessage({ updateRecommendationList: true })
+
+                                if (latestAiringUpdateAtDate instanceof Date &&
+                                    !isNaN(latestAiringUpdateAtDate)) {
+                                    lastAiringUpdateDate = latestAiringUpdateAtDate
+                                    await saveJSON(lastAiringUpdateDate, "lastAiringUpdateDate")
+                                }
+                            }
+
                             let lastRunnedAutoUpdateDate = new Date();
-                            saveJSON(lastRunnedAutoUpdateDate, "lastRunnedAutoUpdateDate");
+                            await saveJSON(lastRunnedAutoUpdateDate, "lastRunnedAutoUpdateDate");
                             self.postMessage({ lastRunnedAutoUpdateDate: lastRunnedAutoUpdateDate })
+
                             // Call New
-                            updateNonRecentEntries(animeEntries)
+                            self.postMessage({ status: null })
+                            updateNonRecentEntries(animeEntries, lastAnimeUpdate)
                             animeEntries = null
                         }
                     }
@@ -451,11 +505,14 @@ self.onmessage = async ({ data }) => {
     // get results but first keep track of least updateAt Date in Media Recursion to see if we are past last Update
     // use results, and update local results
     // if the current track of Current least update gets less than Last Anime Update, then stop update and save new Last Anime Update Date
-    function updateNonRecentEntries(animeEntries) {
+    async function updateNonRecentEntries(animeEntries, lastAnimeUpdate) {
         let recursingUpdatedAtDate;
         let latestUpdateAtDate;
         let lastUpdateAtDate = lastAnimeUpdate || new Date(1670770349 * 1000)
         let largestDif = -Infinity;
+
+        self.postMessage({ status: "Checking Additional Entries..." }) // Init Data Status
+
         function recallGOUD() {
             fetch('https://graphql.anilist.co', {
                 method: 'POST',
@@ -543,7 +600,7 @@ self.onmessage = async ({ data }) => {
                     }
                 });
         }
-        let percentage;
+        let percentage, hasUpdatedEntry = false;
         function recallUNRE(page) {
             fetch('https://graphql.anilist.co', {
                 method: 'POST',
@@ -659,7 +716,7 @@ self.onmessage = async ({ data }) => {
                         let Page = result?.data?.Page
                         let media = Page?.media || []
                         if (media instanceof Array) {
-                            media.forEach((anime) => {
+                            for (let anime of media) {
                                 if (typeof anime?.id === "number") {
                                     // Handle Last Saved Update Date only in Media Recursion
                                     if (typeof anime.updatedAt === "number") {
@@ -679,7 +736,15 @@ self.onmessage = async ({ data }) => {
                                                 currentAnimeUpdateDate < recursingUpdatedAtDate
                                             ) {
                                                 recursingUpdatedAtDate = currentAnimeUpdateDate
-                                                if (
+                                                if ((lastAnimeUpdate >= recursingUpdatedAtDate) &&
+                                                    recursingUpdatedAtDate instanceof Date &&
+                                                    !isNaN(recursingUpdatedAtDate) &&
+                                                    lastAnimeUpdate instanceof Date &&
+                                                    !isNaN(lastAnimeUpdate)
+                                                ) {
+                                                    // Early Exit
+                                                    break
+                                                } else if (
                                                     latestUpdateAtDate instanceof Date &&
                                                     !isNaN(latestUpdateAtDate) &&
                                                     lastUpdateAtDate <= recursingUpdatedAtDate &&
@@ -691,7 +756,15 @@ self.onmessage = async ({ data }) => {
                                                 }
                                             } else if (recursingUpdatedAtDate === undefined) {
                                                 recursingUpdatedAtDate = currentAnimeUpdateDate
-                                                if (
+                                                if ((lastAnimeUpdate >= recursingUpdatedAtDate) &&
+                                                    recursingUpdatedAtDate instanceof Date &&
+                                                    !isNaN(recursingUpdatedAtDate) &&
+                                                    lastAnimeUpdate instanceof Date &&
+                                                    !isNaN(lastAnimeUpdate)
+                                                ) {
+                                                    // Early Exit
+                                                    break
+                                                } else if (
                                                     latestUpdateAtDate instanceof Date &&
                                                     !isNaN(latestUpdateAtDate) &&
                                                     lastUpdateAtDate <= recursingUpdatedAtDate &&
@@ -706,24 +779,27 @@ self.onmessage = async ({ data }) => {
                                     }
                                     // Handle Anime Entries Update
                                     animeEntries[anime.id] = anime
+                                    hasUpdatedEntry = true
                                 }
-                            })
-                        }
-                        if (percentage >= 0.01) {
-                            self.postMessage({ status: "Updating Additional Entries " + (percentage.toFixed(2)) + "%" })
-                        } else {
-                            self.postMessage({ status: "Updating Additional Entries..." })
+                            }
                         }
                         let hasNextPage = Page?.pageInfo?.hasNextPage ?? true
                         // Handle the successful response here
                         if (hasNextPage && media.length > 0 &&
-                            (lastAnimeUpdate < recursingUpdatedAtDate) ||
-                            !(recursingUpdatedAtDate instanceof Date) ||
-                            isNaN(recursingUpdatedAtDate) ||
-                            !(lastAnimeUpdate instanceof Date) ||
-                            isNaN(lastAnimeUpdate)
+                            ((lastAnimeUpdate < recursingUpdatedAtDate) ||
+                                !(recursingUpdatedAtDate instanceof Date) ||
+                                isNaN(recursingUpdatedAtDate) ||
+                                !(lastAnimeUpdate instanceof Date) ||
+                                isNaN(lastAnimeUpdate))
                         ) {
-                            saveJSON(animeEntries, "animeEntries")
+                            if (percentage >= 0.01) {
+                                self.postMessage({ status: "Updating Additional Entries " + (percentage.toFixed(2)) + "%" })
+                            } else {
+                                self.postMessage({ status: "Updating Additional Entries..." })
+                            }
+                            if (hasUpdatedEntry) {
+                                saveJSON(animeEntries, "animeEntries")
+                            }
                             // Media Recursion
                             if (headers?.get('x-ratelimit-remaining') > 0) {
                                 return recallUNRE(++page);
@@ -740,17 +816,23 @@ self.onmessage = async ({ data }) => {
                                 }, 60000);
                             }
                         } else {
-                            self.postMessage({ status: "Updating Additional Entries 100%" })
-                            await saveJSON(animeEntries, "animeEntries")
-                            animeEntries = null
-                            if (latestUpdateAtDate instanceof Date &&
-                                !isNaN(latestUpdateAtDate)) {
-                                lastAnimeUpdate = latestUpdateAtDate
-                                await saveJSON(lastAnimeUpdate, "lastAnimeUpdate")
-                            }
                             // Update User Recommendation List
+                            if (hasUpdatedEntry) {
+                                self.postMessage({ status: "Updating Additional Entries 100%" })
+                                await saveJSON(animeEntries, "animeEntries")
+                                animeEntries = null
+
+                                if (latestUpdateAtDate instanceof Date &&
+                                    !isNaN(latestUpdateAtDate)) {
+                                    lastAnimeUpdate = latestUpdateAtDate
+                                    await saveJSON(lastAnimeUpdate, "lastAnimeUpdate")
+                                }
+                                self.postMessage({ updateRecommendationList: true })
+                            } else {
+                                animeEntries = null
+                            }
+
                             self.postMessage({ status: null })
-                            self.postMessage({ updateRecommendationList: true })
                             self.postMessage({ done: true })
                         }
                     }

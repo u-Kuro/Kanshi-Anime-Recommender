@@ -4,7 +4,6 @@ self.onmessage = async ({ data }) => {
     if (!db) {
         await IDBinit();
     }
-    let currentAnimeUpdate = await retrieveJSON("lastAnimeUpdate") || new Date(1670770349 * 1000)
     self.postMessage({ status: "Importing User Data..." })
     const reader = new FileReader()
     reader.onload = async () => {
@@ -30,8 +29,15 @@ self.onmessage = async ({ data }) => {
             self.postMessage({ importedUsername: username })
 
             let lastAnimeUpdate = fileContent.lastAnimeUpdate ? new Date(fileContent.lastAnimeUpdate) : null
+            let currentAnimeUpdate = await retrieveJSON("lastAnimeUpdate") || new Date(1670770349 * 1000)
             if (lastAnimeUpdate instanceof Date && !isNaN(lastAnimeUpdate) && lastAnimeUpdate > currentAnimeUpdate) {
                 await saveJSON(lastAnimeUpdate, "lastAnimeUpdate")
+            }
+
+            let lastAiringUpdateDate = fileContent.lastAiringUpdateDate ? new Date(fileContent.lastAiringUpdateDate) : null
+            let currentAiringAnimeUpdate = await retrieveJSON("lastAiringUpdateDate") || new Date(1670770349 * 1000)
+            if (lastAiringUpdateDate instanceof Date && !isNaN(lastAiringUpdateDate) && lastAiringUpdateDate > currentAiringAnimeUpdate) {
+                await saveJSON(lastAiringUpdateDate, "lastAiringUpdateDate")
             }
 
             let lastUserAnimeUpdate = fileContent.lastUserAnimeUpdate ? new Date(fileContent.lastUserAnimeUpdate) : null

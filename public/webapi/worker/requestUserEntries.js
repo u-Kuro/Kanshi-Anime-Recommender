@@ -23,7 +23,7 @@ self.onmessage = async ({ data }) => {
     function recallUE() {
         if (lastUserAnimeUpdate instanceof Date && !isNaN(lastUserAnimeUpdate)) {
             if (retryCount < 2 && !visibilityChange) {
-                self.postMessage({ status: "Checking Latest User Entries" })
+                self.postMessage({ status: "Checking Latest User Entries..." })
             }
             fetch('https://graphql.anilist.co', {
                 method: 'POST',

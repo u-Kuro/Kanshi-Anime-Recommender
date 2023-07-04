@@ -12,6 +12,7 @@ self.onmessage = async ({ data }) => {
     let backUpData = {
         username: username,
         lastAnimeUpdate: await retrieveJSON("lastAnimeUpdate"),
+        lastAiringUpdateDate: await retrieveJSON("lastAiringUpdateDate"),
         lastUserAnimeUpdate: await retrieveJSON("lastUserAnimeUpdate"),
         lastRunnedAutoUpdateDate: await retrieveJSON("lastRunnedAutoUpdateDate"),
         lastRunnedAutoExportDate: new Date(),
