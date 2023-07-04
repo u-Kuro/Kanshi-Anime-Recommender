@@ -1584,6 +1584,7 @@
             ? ""
             : "none"}
     >
+        <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
         <div
             id="tagFilters"
             class="tagFilters"
@@ -1593,6 +1594,7 @@
                 style:display={$activeTagFilters ? "" : "none"}
                 class="fa-solid fa-ban"
                 title="Remove Filters"
+                tabindex="0"
                 on:click={removeAllActiveTag}
                 on:keydown={(e) => e.key === "Enter" && removeAllActiveTag(e)}
                 style:visibility={$activeTagFilters?.[
@@ -1608,6 +1610,7 @@
             {#each $activeTagFilters?.[$filterOptions?.filterSelection?.[$filterOptions?.filterSelection?.findIndex(({ isSelected }) => isSelected)]?.filterSelectionName] || [] as { optionName, optionIdx, selected, changeType, filterType, categIdx, optionValue, optionType } (optionName + optionIdx + (optionType ?? ""))}
                 <div
                     class="activeTagFilter"
+                    tabindex="0"
                     transition:fly={{ x: -10, duration: 300 }}
                     style:--activeTagFilterColor={selected === "included"
                         ? "#5f9ea0"
@@ -1647,6 +1650,7 @@
                     {/if}
                     <i
                         class="fa-solid fa-xmark"
+                        tabindex="0"
                         on:click|preventDefault={(e) =>
                             removeActiveTag(
                                 e,
@@ -1670,7 +1674,9 @@
                 </div>
             {/each}
         </div>
+        <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
         <div
+            tabindex="0"
             class="showHideActiveFilters"
             on:click={handleShowActiveFilters}
             on:keydown={(e) => e.key === "Enter" && handleShowActiveFilters()}
@@ -1682,7 +1688,7 @@
         </div>
     </div>
     {#if $filterOptions}
-    <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
+        <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
         <div class="sortFilter">
             <i
                 on:click={changeSortType}
