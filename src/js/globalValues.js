@@ -1,6 +1,6 @@
 import { writable } from "svelte/store";
 
-const appID = writable(24)
+const appID = writable(25)
 const android = writable(null)
 const inApp = writable(true)
 const lastAnimeUpdate = writable(null)
@@ -15,6 +15,7 @@ const finalAnimeList = writable(null)
 const animeLoaderWorker = writable(null)
 const dataStatus = writable(null)
 
+const userRequestIsRunning = writable(null)
 const autoUpdate = writable(null)
 const autoUpdateInterval = writable(null)
 const lastRunnedAutoUpdateDate = writable(null)
@@ -67,6 +68,7 @@ export {
     finalAnimeList,
     animeLoaderWorker,
     dataStatus,
+    userRequestIsRunning,
     autoUpdate,
     autoUpdateInterval,
     lastRunnedAutoUpdateDate,

@@ -20,7 +20,6 @@
         updateRecommendationList,
         listUpdateAvailable,
         searchedAnimeKeyword,
-        loadAnime,
         checkAnimeLoaderStatus,
     } from "../../../js/globalValues.js";
     import {
@@ -177,10 +176,8 @@
 
     async function handleSeeMore(anime, animeIdx) {
         if ($finalAnimeList[animeIdx]) {
-            console.log($finalAnimeList[animeIdx].isSeenMore, "here");
             $finalAnimeList[animeIdx].isSeenMore =
                 !$finalAnimeList[animeIdx].isSeenMore;
-            console.log($finalAnimeList[animeIdx].isSeenMore, "here");
             await tick();
             let targetEl =
                 anime.popupContent || popupContainer.children?.[animeIdx];

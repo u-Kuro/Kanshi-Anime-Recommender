@@ -16,17 +16,14 @@
         animeIdxRemoved,
         shownAllInList,
         importantLoad,
-        android,
-        hiddenEntries,
-        confirmPromise,
         checkAnimeLoaderStatus,
+        userRequestIsRunning,
     } from "../../js/globalValues.js";
     import {
         formatNumber,
         ncsCompare,
         removeClass,
     } from "../../js/others/helper.js";
-    import { animeLoader } from "../../js/workerUtils.js";
 
     let animeGridEl;
     let isRunningIntersectEvent;
@@ -84,6 +81,7 @@
                 }, 1000);
             })
                 .catch(() => {
+                    $userRequestIsRunning = false;
                     $animeLoaderWorker = null;
                     $finalAnimeList = null;
                     $importantLoad = !$importantLoad;

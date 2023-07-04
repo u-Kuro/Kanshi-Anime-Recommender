@@ -6,6 +6,7 @@
 	import { retrieveJSON, saveJSON } from "./js/indexedDB.js";
 	import {
 		appID,
+		inApp,
 		android,
 		username,
 		hiddenEntries,
@@ -16,6 +17,7 @@
 		initData,
 		searchedAnimeKeyword,
 		dataStatus,
+		userRequestIsRunning,
 		autoUpdate,
 		autoUpdateInterval,
 		lastRunnedAutoUpdateDate,
@@ -397,7 +399,7 @@
 				runUpdate.update((e) => !e);
 				if ($autoUpdateInterval) clearInterval($autoUpdateInterval);
 				$autoUpdateInterval = setInterval(() => {
-					if ($autoUpdate) {
+					if ($autoUpdate && ($inApp || !$android)) {
 						runUpdate.update((e) => !e);
 					}
 				}, hourINMS);
@@ -408,10 +410,12 @@
 							$lastRunnedAutoUpdateDate?.getTime()) || 0;
 				setTimeout(() => {
 					if ($autoUpdate === false) return;
-					runUpdate.update((e) => !e);
+					if ($inApp || !$android) {
+						runUpdate.update((e) => !e);
+					}
 					if ($autoUpdateInterval) clearInterval($autoUpdateInterval);
 					$autoUpdateInterval = setInterval(() => {
-						if ($autoUpdate) {
+						if ($autoUpdate && ($inApp || !$android)) {
 							runUpdate.update((e) => !e);
 						}
 					}, hourINMS);
@@ -422,17 +426,23 @@
 			saveJSON(false, "autoUpdate");
 		}
 	});
-	let userRequestIsRunning = false; // Workaround for Visibility Change
+	
 	runUpdate.subscribe((val) => {
-		if (typeof val !== "boolean" || $initData || !navigator.onLine) return;
-		userRequestIsRunning = true;
+		if (
+			typeof val !== "boolean" ||
+			$initData ||
+			!navigator.onLine ||
+			(!$inApp && $android)
+		)
+			return;
+		$userRequestIsRunning = true;
 		requestUserEntries()
 			.then(() => {
-				userRequestIsRunning = false;
+				$userRequestIsRunning = false;
 				requestAnimeEntries();
 			})
 			.catch((error) => {
-				userRequestIsRunning = false;
+				$userRequestIsRunning = false;
 				$dataStatus = "Something went wrong...";
 				console.error(error);
 			});
@@ -458,7 +468,7 @@
 				runExport.update((e) => !e);
 				if ($autoExportInterval) clearInterval($autoExportInterval);
 				$autoExportInterval = setInterval(() => {
-					if ($autoExport) {
+					if ($autoExport && ($inApp || !$android)) {
 						runExport.update((e) => !e);
 					}
 				}, hourINMS);
@@ -469,10 +479,12 @@
 							$lastRunnedAutoExportDate?.getTime()) || 0;
 				setTimeout(() => {
 					if ($autoExport === false) return;
-					runExport.update((e) => !e);
+					if ($inApp || !$android) {
+						runExport.update((e) => !e);
+					}
 					if ($autoExportInterval) clearInterval($autoExportInterval);
 					$autoExportInterval = setInterval(() => {
-						if ($autoExport) {
+						if ($autoExport && ($inApp || !$android)) {
 							runExport.update((e) => !e);
 						}
 					}, hourINMS);
@@ -501,8 +513,8 @@
 
 	// Global Function For Android/Browser
 	document.addEventListener("visibilitychange", () => {
-		if ($initData) return;
-		if (document.visibilityState === "visible" && !userRequestIsRunning) {
+		if ($initData || $android) return;
+		if (document.visibilityState === "visible" && !$userRequestIsRunning) {
 			requestUserEntries({ visibilityChange: true });
 		}
 	});
@@ -513,7 +525,7 @@
 	}
 	window.checkEntries = () => {
 		if ($initData) return;
-		if (!userRequestIsRunning) {
+		if (!$userRequestIsRunning) {
 			requestUserEntries({ visibilityChange: true });
 		}
 	};
