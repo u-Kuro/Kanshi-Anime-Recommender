@@ -35,8 +35,10 @@ import android.os.PowerManager;
 import android.provider.DocumentsContract;
 import android.provider.Settings;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
+import android.webkit.ConsoleMessage;
 import android.webkit.JavascriptInterface;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
@@ -62,10 +64,9 @@ import java.util.concurrent.CompletableFuture;
 import androidx.core.content.FileProvider;
 import androidx.core.splashscreen.SplashScreen;
 
-@SuppressWarnings("CommentedOutCode")
 public class MainActivity extends AppCompatActivity  {
 
-    public final int appID = 21;
+    public final int appID = 22;
     public boolean webviewIsLoaded = false;
     public SharedPreferences prefs;
     private SharedPreferences.Editor prefsEdit;
@@ -252,7 +253,6 @@ public class MainActivity extends AppCompatActivity  {
                 return true;
             }
         });
-        //noinspection CommentedOutCode
         webView.setWebChromeClient(new WebChromeClient() {
             private View mCustomView;
             private WebChromeClient.CustomViewCallback mCustomViewCallback;
@@ -308,13 +308,13 @@ public class MainActivity extends AppCompatActivity  {
                 getWindow().getDecorView().setSystemUiVisibility(3846 | View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
             }
             // Console Logs for Debugging
-//            @RequiresApi(api = Build.VERSION_CODES.R)
-//            @Override
-//            public boolean onConsoleMessage(ConsoleMessage consoleMessage) {
-//                String message = consoleMessage.message();
-//                Log.d("WebConsole",message);
-//                return true;
-//            }
+            @RequiresApi(api = Build.VERSION_CODES.R)
+            @Override
+            public boolean onConsoleMessage(ConsoleMessage consoleMessage) {
+                String message = consoleMessage.message();
+                Log.d("WebConsole",message);
+                return true;
+            }
         });
         WebView.setWebContentsDebuggingEnabled(BuildConfig.DEBUG);
         isAppConnectionAvailable(isConnected -> webView.post(() -> {

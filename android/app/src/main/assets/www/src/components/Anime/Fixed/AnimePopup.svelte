@@ -21,6 +21,7 @@
         listUpdateAvailable,
         searchedAnimeKeyword,
         loadAnime,
+        checkAnimeLoaderStatus
     } from "../../../js/globalValues.js";
     import {
         isJsonObject,
@@ -133,11 +134,9 @@
                 $hiddenEntries = $hiddenEntries;
                 if ($finalAnimeList.length) {
                     if ($animeLoaderWorker instanceof Worker) {
-                        $animeLoaderWorker.postMessage({ removeID: animeID });
-                    } else {
-                        $animeLoaderWorker = null;
-                        $finalAnimeList = null;
-                        $loadAnime = !$loadAnime;
+                        $checkAnimeLoaderStatus().then(() => {
+                            $animeLoaderWorker.postMessage({ removeID: animeID });
+                        })
                     }
                 }
             }
@@ -150,11 +149,9 @@
                 $hiddenEntries[animeID] = true;
                 if ($finalAnimeList.length) {
                     if ($animeLoaderWorker instanceof Worker) {
-                        $animeLoaderWorker.postMessage({ removeID: animeID });
-                    } else {
-                        $animeLoaderWorker = null;
-                        $finalAnimeList = null;
-                        $loadAnime = !$loadAnime;
+                        $checkAnimeLoaderStatus().then(() => {
+                            $animeLoaderWorker.postMessage({ removeID: animeID });
+                        })
                     }
                 }
             }

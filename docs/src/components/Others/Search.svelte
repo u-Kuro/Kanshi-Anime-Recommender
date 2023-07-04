@@ -14,6 +14,7 @@
         initData,
         confirmPromise,
         asyncAnimeReloaded,
+        checkAnimeLoaderStatus,
     } from "../../js/globalValues.js";
     import { fade, fly } from "svelte/transition";
     import {
@@ -1134,13 +1135,11 @@
         return new Promise((resolve) => {
             if ($animeLoaderWorker instanceof Worker) {
                 $finalAnimeList = null;
-                $animeLoaderWorker.postMessage({
-                    reload: true,
+                $checkAnimeLoaderStatus().then(() => {
+                    $animeLoaderWorker.postMessage({
+                        reload: true,
+                    });
                 });
-            } else {
-                $animeLoaderWorker = null;
-                $finalAnimeList = null;
-                $loadAnime = !$loadAnime
             }
             asyncAnimeReloadPromise = { resolve };
         });

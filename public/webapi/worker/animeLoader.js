@@ -6,7 +6,9 @@ let db,
     seasonOrder = { fall: 3, summer: 2, spring: 1, winter: 0 };
 
 self.onmessage = async ({ data }) => {
-    if (data?.reload !== undefined) { // Animation Async
+    if (data?.checkStatus) {
+        self.postMessage({ isAlive: true })
+    } else if (data?.reload !== undefined) { // Animation Async
         self.postMessage({
             reload: data?.reload,
             finalAnimeList: finalAnimeList.slice(0, loadLimit)
@@ -36,7 +38,6 @@ self.onmessage = async ({ data }) => {
         filteredList = filteredList.slice(loadLimit)
     } else {
         if (!db) await IDBinit()
-        self.postMessage({ init: true })
         self.postMessage({ status: "Initializing Filters" })
         let activeTagFilters = await retrieveJSON("activeTagFilters")
         let contentCaution = activeTagFilters?.['Content Caution'] || []

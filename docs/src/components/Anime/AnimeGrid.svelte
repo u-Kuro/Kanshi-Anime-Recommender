@@ -15,10 +15,11 @@
         asyncAnimeReloaded,
         animeIdxRemoved,
         shownAllInList,
-        loadAnime,
+        importantLoad,
         android,
         hiddenEntries,
         confirmPromise,
+        checkAnimeLoaderStatus,
     } from "../../js/globalValues.js";
     import {
         formatNumber,
@@ -44,13 +45,11 @@
                         isRunningIntersectEvent = true;
                         setTimeout(() => {
                             if ($animeLoaderWorker instanceof Worker) {
-                                $animeLoaderWorker.postMessage({
-                                    loadMore: true,
+                                $checkAnimeLoaderStatus().then(() => {
+                                    $animeLoaderWorker.postMessage({
+                                        loadMore: true,
+                                    });
                                 });
-                            } else {
-                                $animeLoaderWorker = null;
-                                $finalAnimeList = null;
-                                $loadAnime = !$loadAnime;
                             }
                             isRunningIntersectEvent = false;
                         }, observerDelay);
@@ -69,10 +68,42 @@
         animeGridEl = animeGridEl || document.getElementById("anime-grid");
     });
 
-    let isAsyncLoad = false;
+    let animeLoaderIsAlivePromise,
+        isAsyncLoad = false;
+
+    window.checkAnimeLoaderStatus = $checkAnimeLoaderStatus = () => {
+        if (
+            $animeLoaderWorker instanceof Worker &&
+            typeof $animeLoaderWorker.onmessage === "function"
+        ) {
+            return new Promise((resolve, reject) => {
+                animeLoaderIsAlivePromise = { resolve, reject };
+                $animeLoaderWorker?.postMessage?.({ checkStatus: true });
+                setTimeout(() => {
+                    reject();
+                }, 1000);
+            })
+                .catch(() => {
+                    $animeLoaderWorker = null;
+                    $finalAnimeList = null;
+                    $importantLoad = !$importantLoad;
+                    animeLoaderIsAlivePromise = null;
+                })
+                .finally(() => {
+                    animeLoaderIsAlivePromise = null;
+                });
+        }
+    };
+
     animeLoaderWorker.subscribe((val) => {
         if (val instanceof Worker) {
             val.onmessage = async ({ data }) => {
+                if (animeLoaderIsAlivePromise?.resolve) {
+                    if (data?.isAlive) {
+                        animeLoaderIsAlivePromise?.resolve?.();
+                        animeLoaderIsAlivePromise = null;
+                    }
+                }
                 await tick();
                 if (data?.status !== undefined) $dataStatus = data.status;
                 else if (data.finalAnimeList instanceof Array) {
@@ -131,42 +162,6 @@
         }
     });
 
-    window.checkAnimeLoader = () => {
-        if (!($animeLoaderWorker instanceof Worker)) {
-            if ($animeLoaderWorker) {
-                $animeLoaderWorker.terminate();
-                $animeLoaderWorker = null;
-            }
-            $finalAnimeList = null;
-            animeLoader()
-                .then(async (data) => {
-                    $animeLoaderWorker = data.animeLoaderWorker;
-                    $searchedAnimeKeyword = "";
-                    if (data?.isNew) {
-                        $finalAnimeList = data.finalAnimeList;
-                        $hiddenEntries = data.hiddenEntries;
-                    }
-                    $dataStatus = null;
-                    return;
-                })
-                .catch((error) => {
-                    if ($android) {
-                        $confirmPromise?.({
-                            isAlert: true,
-                            title: "Something Went Wrong",
-                            text: "App may not be working properly, you may want to restart and make sure you're running the latest version.",
-                        });
-                    } else {
-                        $confirmPromise?.({
-                            isAlert: true,
-                            title: "Something Went Wrong",
-                            text: "App may not be working properly, you may want to refresh the page, or if not clear the cookies but backup your data first.",
-                        });
-                    }
-                });
-        }
-    };
-
     finalAnimeList.subscribe(async (val) => {
         if (val instanceof Array && val.length) {
             if ($shownAllInList) {
@@ -212,13 +207,11 @@
         if (typeof val === "string") {
             if ($animeLoaderWorker instanceof Worker) {
                 $shownAllInList = false;
-                $animeLoaderWorker.postMessage({
-                    filterKeyword: val,
+                $checkAnimeLoaderStatus().then(() => {
+                    $animeLoaderWorker.postMessage({
+                        filterKeyword: val,
+                    });
                 });
-            } else {
-                $animeLoaderWorker = null;
-                $finalAnimeList = null;
-                $loadAnime = !$loadAnime;
             }
         }
     });
