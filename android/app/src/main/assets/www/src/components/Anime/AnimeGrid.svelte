@@ -341,10 +341,12 @@
                     title={getBriefInfo(anime)}
                 >
                     <div class="shimmer">
+                        <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                         <img
                             loading="lazy"
                             class="image-grid__card-thumb fade-out"
                             alt="anime-cover"
+                            tabindex={$popupVisible ? "" : "0"}
                             src={anime.coverImageUrl || ""}
                             on:load={(e) => removeClass(e.target, "fade-out")}
                             on:click={handleOpenPopup(animeIdx)}
@@ -520,6 +522,7 @@
         user-select: none;
     }
 
+    .image-grid__card:not(.skeleton):focus-within .image-grid__card-thumb,
     .image-grid__card:not(.skeleton):focus .image-grid__card-thumb,
     .image-grid__card:not(.skeleton):hover .image-grid__card-thumb {
         opacity: 0.5 !important;

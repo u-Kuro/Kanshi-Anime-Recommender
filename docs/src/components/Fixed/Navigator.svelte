@@ -281,10 +281,12 @@
                 {typedUsername || "Your Anilist Username"}
             </div>
         </div>
+        <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
         <img
             class="logo-icon"
             src="./images/Kanshi-Logo.png"
             alt="Kanshi Logo"
+            tabindex="0"
             on:pointerdown={handleGoUp}
             on:pointerup={cancelGoUp}
             on:pointercancel={cancelGoUp}

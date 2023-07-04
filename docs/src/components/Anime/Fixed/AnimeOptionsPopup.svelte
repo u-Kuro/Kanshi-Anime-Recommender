@@ -10,7 +10,6 @@
         hiddenEntries,
         animeLoaderWorker,
         confirmPromise,
-        loadAnime,
         checkAnimeLoaderStatus,
     } from "../../../js/globalValues";
 
@@ -137,8 +136,10 @@
         >
             <div class="option-header">
                 <span class="anime-title"><h1>{animeTitle}</h1></span>
+                <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                 <div
                     class="closing-x"
+                    tabindex="0"
                     on:click={handleAnimeOptionVisibility}
                     on:keydown={(e) =>
                         e.key === "Enter" && handleAnimeOptionVisibility(e)}

@@ -21,7 +21,7 @@
         listUpdateAvailable,
         searchedAnimeKeyword,
         loadAnime,
-        checkAnimeLoaderStatus
+        checkAnimeLoaderStatus,
     } from "../../../js/globalValues.js";
     import {
         isJsonObject,
@@ -135,8 +135,10 @@
                 if ($finalAnimeList.length) {
                     if ($animeLoaderWorker instanceof Worker) {
                         $checkAnimeLoaderStatus().then(() => {
-                            $animeLoaderWorker.postMessage({ removeID: animeID });
-                        })
+                            $animeLoaderWorker.postMessage({
+                                removeID: animeID,
+                            });
+                        });
                     }
                 }
             }
@@ -150,8 +152,10 @@
                 if ($finalAnimeList.length) {
                     if ($animeLoaderWorker instanceof Worker) {
                         $checkAnimeLoaderStatus().then(() => {
-                            $animeLoaderWorker.postMessage({ removeID: animeID });
-                        })
+                            $animeLoaderWorker.postMessage({
+                                removeID: animeID,
+                            });
+                        });
                     }
                 }
             }
@@ -173,8 +177,10 @@
 
     async function handleSeeMore(anime, animeIdx) {
         if ($finalAnimeList[animeIdx]) {
+            console.log($finalAnimeList[animeIdx].isSeenMore, "here");
             $finalAnimeList[animeIdx].isSeenMore =
                 !$finalAnimeList[animeIdx].isSeenMore;
+            console.log($finalAnimeList[animeIdx].isSeenMore, "here");
             await tick();
             let targetEl =
                 anime.popupContent || popupContainer.children?.[animeIdx];
@@ -449,6 +455,12 @@
                         }
                     }
                 }
+            } else if (e.ctrlKey && e.key?.toLowerCase?.() === "x") {
+                e.preventDefault();
+                $popupVisible = !$popupVisible;
+            } else if (e.ctrlKey && e.key?.toLowerCase?.() === "k") {
+                e.preventDefault();
+                $autoPlay = !$autoPlay;
             }
         });
     });
@@ -1283,7 +1295,14 @@
                                         class="autoplayToggle"
                                         bind:checked={$autoPlay}
                                     />
-                                    <span class="slider round" />
+                                    <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
+                                    <span
+                                        class="slider round"
+                                        tabindex="0"
+                                        on:keydown={(e) =>
+                                            e.key === "Enter" &&
+                                            (() => ($autoPlay = !$autoPlay))()}
+                                    />
                                 </label>
                             </div>
                         </div>
@@ -1502,9 +1521,7 @@
                                 <button
                                     class="seemoreless"
                                     on:click={handleSeeMore(anime, animeIdx)}
-                                    on:keydown={(e) =>
-                                        e.key === "Enter" &&
-                                        handleSeeMore(anime, animeIdx)}
+                                    on:keydown={(e) => e.key === "Enter"}
                                     >{"See " +
                                         (anime.isSeenMore
                                             ? "Less"
@@ -1761,7 +1778,6 @@
     .seemoreless {
         padding: 0.5em 1.5em 0.5em 1.5em;
         border-radius: 0.1em;
-        outline: 0;
         border: 0;
         background-color: #0b1622 !important;
         cursor: pointer;

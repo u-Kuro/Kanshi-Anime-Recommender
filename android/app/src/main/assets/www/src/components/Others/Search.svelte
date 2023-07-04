@@ -1248,8 +1248,10 @@
             bind:value={$searchedAnimeKeyword}
         />
         <div class="filterType">
+            <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
             <i
                 class="input-search-wrap-icon fa-solid fa-sliders"
+                tabindex={selectedFilterTypeElement ? "" : "0"}
                 on:click={handleShowFilterTypes}
                 on:keydown={(e) =>
                     e.key === "Enter" && handleShowFilterTypes(e)}
@@ -1268,8 +1270,10 @@
                     >
                         <div class="header">
                             <h2>Filters</h2>
+                            <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                             <div
                                 class="closing-x"
+                                tabindex="0"
                                 on:keydown={(e) =>
                                     e.key === "Enter" &&
                                     handleShowFilterTypes(e)}
@@ -1375,8 +1379,10 @@
                             >
                                 <div class="header">
                                     <h2>{Dropdown.filName}</h2>
+                                    <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                                     <div
                                         class="closing-x"
+                                        tabindex="0"
                                         on:keydown={(e) =>
                                             e.key === "Enter" &&
                                             closeFilterSelect(dropdownIdx)}
@@ -1676,10 +1682,12 @@
         </div>
     </div>
     {#if $filterOptions}
+    <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
         <div class="sortFilter">
             <i
                 on:click={changeSortType}
                 on:keydown={(e) => e.key === "Enter" && changeSortType(e)}
+                tabindex={selectedSortElement ? "" : "0"}
                 class={"fa-duotone fa-sort-" +
                     ($filterOptions?.sortFilter?.[
                         $filterOptions?.sortFilter?.findIndex(
@@ -1690,6 +1698,7 @@
                         : "down")}
             />
             <h2
+                tabindex={selectedSortElement ? "" : "0"}
                 on:click={handleSortFilterPopup}
                 on:keydown={(e) =>
                     e.key === "Enter" && handleSortFilterPopup(e)}
@@ -1711,8 +1720,10 @@
                 >
                     <div class="header">
                         <h2>Sort By</h2>
+                        <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                         <div
                             class="closing-x"
+                            tabindex="0"
                             on:keydown={(e) =>
                                 e.key === "Enter" && handleSortFilterPopup(e)}
                             on:click={handleSortFilterPopup}
