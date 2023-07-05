@@ -176,6 +176,8 @@
 			$lastRunnedAutoExportDate = await retrieveJSON(
 				"lastRunnedAutoExportDate"
 			);
+			$autoUpdate = (await retrieveJSON("autoUpdate")) ?? false;
+			$autoExport = (await retrieveJSON("autoExport")) ?? false;
 			resolve();
 		})
 	);
@@ -218,14 +220,9 @@
 						if (data?.isNew) {
 							$finalAnimeList = data.finalAnimeList;
 							$hiddenEntries = data.hiddenEntries;
-							$initData = false;
 							$dataStatus = null;
-							// Should be After Getting the Dates for Reactive Change
-							$autoUpdate =
-								(await retrieveJSON("autoUpdate")) ?? false;
-							$autoExport =
-								(await retrieveJSON("autoExport")) ?? false;
-							$runUpdate = !$runUpdate;
+							checkAutoFunctionsOnLoad();
+							$initData = false;
 						}
 						return;
 					})
@@ -235,10 +232,8 @@
 			});
 		})
 		.catch(async (error) => {
+			checkAutoFunctionsOnLoad();
 			$initData = false;
-			// Should be After Getting the Dates for Reactive Change
-			$autoUpdate = (await retrieveJSON("autoUpdate")) ?? false;
-			$autoExport = (await retrieveJSON("autoExport")) ?? false;
 			$dataStatus = "Something went wrong...";
 			if ($android) {
 				$confirmPromise?.({
@@ -255,6 +250,49 @@
 			}
 			console.error(error);
 		});
+
+	function checkAutoFunctionsOnLoad() {
+		// auto Update
+		requestUserEntries()
+			.then(() => {
+				$userRequestIsRunning = false;
+				requestAnimeEntries().finally(() => {
+					checkAutoExportOnLoad();
+				});
+			})
+			.catch((error) => {
+				checkAutoExportOnLoad();
+				$userRequestIsRunning = false;
+				$dataStatus = "Something went wrong...";
+				console.error(error);
+			});
+	}
+	function checkAutoExportOnLoad() {
+		if ($autoExport) {
+			let isPastDate = false;
+			if (!$lastRunnedAutoExportDate) isPastDate = true;
+			else if (
+				$lastRunnedAutoExportDate instanceof Date &&
+				!isNaN($lastRunnedAutoExportDate)
+			) {
+				if (
+					new Date().getTime() - $lastRunnedAutoExportDate.getTime() >
+					hourINMS
+				) {
+					isPastDate = true;
+				}
+			}
+			if (isPastDate) {
+				exportUserData().then(() => {
+					$lastRunnedAutoExportDate = new Date();
+					saveJSON(
+						$lastRunnedAutoExportDate,
+						"lastRunnedAutoExportDate"
+					);
+				});
+			}
+		}
+	}
 
 	window.focusInUsernameInput = () => {
 		let usernameInput = document.getElementById("usernameInput");
@@ -281,9 +319,6 @@
 		if (!$initData) return;
 		if (val?.length > 0 && $initData !== false) {
 			$initData = false;
-			// Should be After Getting the Dates for Reactive Change
-			$autoUpdate = (await retrieveJSON("autoUpdate")) ?? false;
-			$autoExport = (await retrieveJSON("autoExport")) ?? false;
 		} // Have Loaded Recommendations
 	});
 
@@ -378,7 +413,7 @@
 			saveJSON(true, "autoUpdate");
 			// Check Run First
 			let isPastDate = false;
-			if ($lastRunnedAutoUpdateDate === null) isPastDate = true;
+			if (!$lastRunnedAutoUpdateDate) isPastDate = true;
 			else if (
 				$lastRunnedAutoUpdateDate instanceof Date &&
 				!isNaN($lastRunnedAutoUpdateDate)
@@ -439,7 +474,7 @@
 			saveJSON(true, "autoExport");
 			// Check Run First
 			let isPastDate = false;
-			if ($lastRunnedAutoExportDate === null) isPastDate = true;
+			if (!$lastRunnedAutoExportDate) isPastDate = true;
 			else if (
 				$lastRunnedAutoExportDate instanceof Date &&
 				!isNaN($lastRunnedAutoExportDate)
