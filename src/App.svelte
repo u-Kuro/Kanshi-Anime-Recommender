@@ -6,7 +6,6 @@
 	import { retrieveJSON, saveJSON } from "./js/indexedDB.js";
 	import {
 		appID,
-		inApp,
 		android,
 		username,
 		hiddenEntries,
@@ -212,18 +211,15 @@
 					resolve();
 				}
 			}).then(() => {
-				if ($animeLoaderWorker) {
-					$animeLoaderWorker.terminate();
-					$animeLoaderWorker = null;
-				}
 				animeLoader()
 					.then(async (data) => {
 						$animeLoaderWorker = data.animeLoaderWorker;
 						$searchedAnimeKeyword = "";
-						$initData = false;
 						if (data?.isNew) {
 							$finalAnimeList = data.finalAnimeList;
 							$hiddenEntries = data.hiddenEntries;
+							$initData = false;
+							$dataStatus = null;
 							// Should be After Getting the Dates for Reactive Change
 							$autoUpdate =
 								(await retrieveJSON("autoUpdate")) ?? false;
@@ -231,7 +227,6 @@
 								(await retrieveJSON("autoExport")) ?? false;
 							$runUpdate = !$runUpdate;
 						}
-						$dataStatus = null;
 						return;
 					})
 					.catch((error) => {
@@ -399,7 +394,7 @@
 				runUpdate.update((e) => !e);
 				if ($autoUpdateInterval) clearInterval($autoUpdateInterval);
 				$autoUpdateInterval = setInterval(() => {
-					if ($autoUpdate && ($inApp || !$android)) {
+					if ($autoUpdate) {
 						runUpdate.update((e) => !e);
 					}
 				}, hourINMS);
@@ -410,12 +405,10 @@
 							$lastRunnedAutoUpdateDate?.getTime()) || 0;
 				setTimeout(() => {
 					if ($autoUpdate === false) return;
-					if ($inApp || !$android) {
-						runUpdate.update((e) => !e);
-					}
+					runUpdate.update((e) => !e);
 					if ($autoUpdateInterval) clearInterval($autoUpdateInterval);
 					$autoUpdateInterval = setInterval(() => {
-						if ($autoUpdate && ($inApp || !$android)) {
+						if ($autoUpdate) {
 							runUpdate.update((e) => !e);
 						}
 					}, hourINMS);
@@ -426,15 +419,9 @@
 			saveJSON(false, "autoUpdate");
 		}
 	});
-	
+
 	runUpdate.subscribe((val) => {
-		if (
-			typeof val !== "boolean" ||
-			$initData ||
-			!navigator.onLine ||
-			(!$inApp && $android)
-		)
-			return;
+		if (typeof val !== "boolean" || $initData || !navigator.onLine) return;
 		$userRequestIsRunning = true;
 		requestUserEntries()
 			.then(() => {
@@ -468,7 +455,7 @@
 				runExport.update((e) => !e);
 				if ($autoExportInterval) clearInterval($autoExportInterval);
 				$autoExportInterval = setInterval(() => {
-					if ($autoExport && ($inApp || !$android)) {
+					if ($autoExport) {
 						runExport.update((e) => !e);
 					}
 				}, hourINMS);
@@ -479,12 +466,10 @@
 							$lastRunnedAutoExportDate?.getTime()) || 0;
 				setTimeout(() => {
 					if ($autoExport === false) return;
-					if ($inApp || !$android) {
-						runExport.update((e) => !e);
-					}
+					runExport.update((e) => !e);
 					if ($autoExportInterval) clearInterval($autoExportInterval);
 					$autoExportInterval = setInterval(() => {
-						if ($autoExport && ($inApp || !$android)) {
+						if ($autoExport) {
 							runExport.update((e) => !e);
 						}
 					}, hourINMS);

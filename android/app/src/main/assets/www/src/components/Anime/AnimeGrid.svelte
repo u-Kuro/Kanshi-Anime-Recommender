@@ -17,7 +17,6 @@
         shownAllInList,
         importantLoad,
         checkAnimeLoaderStatus,
-        userRequestIsRunning,
     } from "../../js/globalValues.js";
     import {
         formatNumber,
@@ -68,7 +67,7 @@
     let animeLoaderIsAlivePromise,
         isAsyncLoad = false;
 
-    window.checkAnimeLoaderStatus = $checkAnimeLoaderStatus = () => {
+    window.checkAnimeLoaderStatus = $checkAnimeLoaderStatus = async () => {
         if (
             $animeLoaderWorker instanceof Worker &&
             typeof $animeLoaderWorker.onmessage === "function"
@@ -81,7 +80,6 @@
                 }, 1000);
             })
                 .catch(() => {
-                    $userRequestIsRunning = false;
                     $animeLoaderWorker = null;
                     $finalAnimeList = null;
                     $importantLoad = !$importantLoad;

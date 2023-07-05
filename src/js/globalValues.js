@@ -1,6 +1,6 @@
 import { writable } from "svelte/store";
 
-const appID = writable(25)
+const appID = writable(26)
 const android = writable(null)
 const inApp = writable(true)
 const lastAnimeUpdate = writable(null)
