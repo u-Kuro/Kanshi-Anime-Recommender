@@ -20,10 +20,12 @@
     } from "../../js/globalValues.js";
     import {
         formatNumber,
+        isJsonObject,
         ncsCompare,
         removeClass,
     } from "../../js/others/helper.js";
 
+    let date;
     let animeGridEl;
     let isRunningIntersectEvent;
     let observerDelay = 1000,
@@ -62,6 +64,9 @@
 
     onMount(() => {
         animeGridEl = animeGridEl || document.getElementById("anime-grid");
+        setInterval(() => {
+            date = new Date();
+        }, 1000);
     });
 
     let animeLoaderIsAlivePromise,
@@ -325,6 +330,39 @@
             return "lightgrey"; // Default Unwatched Icon Color
         }
     }
+
+    function getFinishedEpisode(episodes, nextAiringEpisode) {
+        let timeDifMS;
+        let nextEpisode;
+        if (
+            typeof nextAiringEpisode?.episode === "number" &&
+            typeof nextAiringEpisode?.airingAt === "number"
+        ) {
+            let nextAiringDate = new Date(nextAiringEpisode?.airingAt * 1000);
+            nextEpisode = nextAiringEpisode?.episode;
+            if (nextAiringDate instanceof Date && !isNaN(nextAiringDate)) {
+                timeDifMS = nextAiringDate.getTime() - new Date().getTime();
+            }
+        }
+        if (timeDifMS > 0 && nextEpisode > 1 && episodes > nextEpisode) {
+            return ` (${nextEpisode - 1}/${episodes})`;
+        } else if (
+            timeDifMS <= 0 &&
+            typeof nextEpisode === "number" &&
+            episodes > nextEpisode
+        ) {
+            return ` (${nextEpisode}/${episodes})`;
+        } else if (typeof episodes === "number") {
+            return ` (${episodes})`;
+        } else if (typeof nextEpisode === "number") {
+            if (timeDifMS > 0 && nextEpisode > 1) {
+                return ` (${nextEpisode - 1}")`;
+            } else {
+                return ` (${nextEpisode}")`;
+            }
+        }
+        return "";
+    }
 </script>
 
 <main>
@@ -365,12 +403,15 @@
                                         anime.userStatus
                                     )}-color fa-solid fa-circle`}
                                 />
-                                {#if anime?.nextAiringEpisode?.episode > 1 && anime?.episodes > 0}
-                                    {`${anime.format || "N/A"}
-                                     (${anime.nextAiringEpisode.episode - 1}/${
-                                        anime.episodes
-                                    })
-                                    `}
+                                {#if isJsonObject(anime?.nextAiringEpisode)}
+                                    {#key date.getSeconds()}
+                                        {`${anime.format || "N/A"}
+                                        ${getFinishedEpisode(
+                                            anime.episodes,
+                                            anime.nextAiringEpisode
+                                        )}
+                                        `}
+                                    {/key}
                                 {:else}
                                     {`${anime.format || "N/A"}${
                                         anime.episodes
