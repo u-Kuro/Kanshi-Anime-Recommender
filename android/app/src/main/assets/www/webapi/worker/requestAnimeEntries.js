@@ -97,6 +97,10 @@ self.onmessage = async ({ data }) => {
                                         role
                                     }
                                 }
+                                nextAiringEpisode {
+                                    episode
+                                    airingAt
+                                }
                             }
                         }
                     }`
@@ -334,6 +338,10 @@ self.onmessage = async ({ data }) => {
                                         }
                                         role
                                     }
+                                }
+                                nextAiringEpisode {
+                                    episode
+                                    airingAt
                                 }
                             }
                         }
@@ -681,6 +689,10 @@ self.onmessage = async ({ data }) => {
                                         }
                                         role
                                     }
+                                }
+                                nextAiringEpisode {
+                                    episode
+                                    airingAt
                                 }
                             }
                         }

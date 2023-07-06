@@ -40,6 +40,7 @@
 
     let isOnline = window.navigator.onLine;
 
+    let date;
     let savedYtVolume = 50;
     (async () => {
         savedYtVolume = (await retrieveJSON("savedYtVolume")) || 50;
@@ -410,6 +411,9 @@
     });
 
     onMount(() => {
+        setInterval(() => {
+            date = new Date();
+        }, 1000);
         popupWrapper = popupWrapper || document.getElementById("popup-wrapper");
         popupContainer =
             popupContainer || popupWrapper.querySelector("#popup-container");
@@ -1021,13 +1025,30 @@
             .concat(otherGenres);
     }
 
-    function getFormattedAnimeFormat({ episodes, format, duration }) {
+    function getFormattedAnimeFormat({
+        episodes,
+        format,
+        duration,
+        nextAiringEpisode,
+    }) {
         let _format = format;
-        if (episodes > 0 && format) {
-            _format = `${format} [${episodes}]`;
+        if (format) {
+            _format = `${format}`;
+            let timeDifMS;
+            if (episodes > 0 && nextAiringEpisode?.episode > 0 && nextAiringEpisode?.airingAt) {
+                let nextAiringDate = new Date(nextAiringEpisode?.airingAt * 1000);
+                if (nextAiringDate instanceof Date && !isNaN(nextAiringDate)) {
+                    timeDifMS = nextAiringDate.getTime() - new Date().getTime();
+                }
+            }
+            if (timeDifMS > 0) {
+                _format += ` (${nextAiringEpisode?.episode}/${episodes} in ${msToTime(timeDifMS, 1)})`
+            } else if (episodes > 0) {
+                _format += ` (${episodes})`;
+            }
             if (duration > 0) {
                 let time = msToTime(duration * 60 * 1000);
-                _format = `${_format} | ${time ? time : ""}`;
+                _format += ` | ${time ? time : ""}`;
             }
         }
         return _format;
@@ -1323,7 +1344,18 @@
                             >
                                 <div>
                                     <div class="info-categ">Format</div>
-                                    <div class="format-popup info">
+                                    <div class="format-popup info not-capitalize">
+                                        {#if anime?.nextAiringEpisode?.airingAt}
+                                            {#key date.getSeconds()}
+                                            <span
+                                                class="copy"
+                                                copy-value={
+                                                getFormattedAnimeFormat(anime) || ""}
+                                            >
+                                                {getFormattedAnimeFormat(anime) || "N/A"}
+                                            </span>
+                                            {/key}
+                                        {:else}
                                         <span
                                             class="copy"
                                             copy-value={getFormattedAnimeFormat(
@@ -1333,6 +1365,7 @@
                                             {getFormattedAnimeFormat(anime) ||
                                                 "N/A"}
                                         </span>
+                                        {/if}
                                     </div>
                                 </div>
                                 <div>
@@ -1860,6 +1893,10 @@
         display: flex;
         gap: 8px;
         width: 100%;
+    }
+
+    .not-capitalize {
+        text-transform: none !important;
     }
 
     .info::-webkit-scrollbar {

@@ -10,7 +10,7 @@ const jsonIsEmpty = (obj) => {
   return true;
 }
 
-function msToTime(duration) {
+function msToTime(duration, limit) {
   try {
     let seconds = Math.floor((duration / 1000) % 60),
       minutes = Math.floor((duration / (1000 * 60)) % 60),
@@ -33,6 +33,9 @@ function msToTime(duration) {
     if (hours > 0) time.push(`${hours}h`)
     if (minutes > 0) time.push(`${minutes}m`)
     if (seconds > 0) time.push(`${seconds}s`)
+    if (limit > 0) {
+      time = time.slice(0, limit)
+    }
     return time.join(" ")
   } catch (e) {
     return

@@ -365,11 +365,19 @@
                                         anime.userStatus
                                     )}-color fa-solid fa-circle`}
                                 />
-                                {`${anime.format || "N/A"}${
-                                    anime.episodes
-                                        ? " [" + anime.episodes + "]"
-                                        : ""
-                                }`}
+                                {#if anime?.nextAiringEpisode?.episode > 1 && anime?.episodes > 0}
+                                    {`${anime.format || "N/A"}
+                                     (${anime.nextAiringEpisode.episode - 1}/${
+                                        anime.episodes
+                                    })
+                                    `}
+                                {:else}
+                                    {`${anime.format || "N/A"}${
+                                        anime.episodes
+                                            ? " (" + anime.episodes + ")"
+                                            : ""
+                                    }`}
+                                {/if}
                             </div>
                             <div class="brief-info">
                                 <i

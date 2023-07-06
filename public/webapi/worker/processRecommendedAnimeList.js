@@ -1060,6 +1060,7 @@ self.onmessage = async ({ data }) => {
                 coverImageUrl: anime?.coverImage?.large,
                 trailerID: anime?.trailer?.id,
                 bannerImageUrl: anime?.bannerImage || anime?.trailer?.thumbnail,
+                nextAiringEpisode: anime?.nextAiringEpisode
             };
         }
         // After Loop
@@ -1331,6 +1332,7 @@ self.onmessage = async ({ data }) => {
                 coverImageUrl: anime?.coverImage?.large,
                 trailerID: anime?.trailer?.id,
                 bannerImageUrl: anime?.bannerImage || anime?.trailer?.thumbnail,
+                nextAiringEpisode: anime?.nextAiringEpisode
             };
         }
         // After Loop
