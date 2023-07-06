@@ -1035,14 +1035,40 @@
         if (format) {
             _format = `${format}`;
             let timeDifMS;
-            if (episodes > 0 && nextAiringEpisode?.episode > 0 && nextAiringEpisode?.airingAt) {
-                let nextAiringDate = new Date(nextAiringEpisode?.airingAt * 1000);
+            let nextEpisode;
+            if (
+                typeof nextAiringEpisode?.episode === "number" &&
+                typeof nextAiringEpisode?.airingAt === "number"
+            ) {
+                let nextAiringDate = new Date(
+                    nextAiringEpisode?.airingAt * 1000
+                );
+                nextEpisode = nextAiringEpisode?.episode;
                 if (nextAiringDate instanceof Date && !isNaN(nextAiringDate)) {
                     timeDifMS = nextAiringDate.getTime() - new Date().getTime();
                 }
             }
-            if (timeDifMS > 0) {
-                _format += ` (${nextAiringEpisode?.episode}/${episodes} in ${msToTime(timeDifMS, 1)})`
+            if (
+                timeDifMS > 0 &&
+                typeof nextEpisode === "number" &&
+                episodes > nextEpisode
+            ) {
+                _format += ` (${nextEpisode}/${episodes} in ${msToTime(
+                    timeDifMS,
+                    1
+                )})`;
+            } else if (
+                timeDifMS > 0 &&
+                typeof nextEpisode === "number" &&
+                typeof episodes !== "number"
+            ) {
+                _format += ` (Ep ${nextEpisode} in ${msToTime(timeDifMS, 1)})`;
+            } else if (
+                timeDifMS <= 0 &&
+                typeof nextEpisode === "number" &&
+                episodes > nextEpisode
+            ) {
+                _format += ` (${nextEpisode}/${episodes})`;
             } else if (episodes > 0) {
                 _format += ` (${episodes})`;
             }
@@ -1344,27 +1370,33 @@
                             >
                                 <div>
                                     <div class="info-categ">Format</div>
-                                    <div class="format-popup info not-capitalize">
+                                    <div
+                                        class="format-popup info not-capitalize"
+                                    >
                                         {#if anime?.nextAiringEpisode?.airingAt}
                                             {#key date.getSeconds()}
-                                            <span
-                                                class="copy"
-                                                copy-value={
-                                                getFormattedAnimeFormat(anime) || ""}
-                                            >
-                                                {getFormattedAnimeFormat(anime) || "N/A"}
-                                            </span>
+                                                <span
+                                                    class="copy"
+                                                    copy-value={getFormattedAnimeFormat(
+                                                        anime
+                                                    ) || ""}
+                                                >
+                                                    {getFormattedAnimeFormat(
+                                                        anime
+                                                    ) || "N/A"}
+                                                </span>
                                             {/key}
                                         {:else}
-                                        <span
-                                            class="copy"
-                                            copy-value={getFormattedAnimeFormat(
-                                                anime
-                                            ) || ""}
-                                        >
-                                            {getFormattedAnimeFormat(anime) ||
-                                                "N/A"}
-                                        </span>
+                                            <span
+                                                class="copy"
+                                                copy-value={getFormattedAnimeFormat(
+                                                    anime
+                                                ) || ""}
+                                            >
+                                                {getFormattedAnimeFormat(
+                                                    anime
+                                                ) || "N/A"}
+                                            </span>
                                         {/if}
                                     </div>
                                 </div>

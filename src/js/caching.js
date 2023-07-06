@@ -1,4 +1,6 @@
+import { get } from "svelte/store"
 import { isAndroid } from "./others/helper"
+import { appID } from "./globalValues"
 let loadedUrls = {}
 
 const cacheRequest = (url) => {
@@ -8,6 +10,7 @@ const cacheRequest = (url) => {
         } else if (loadedUrls[url]) {
             resolve(loadedUrls[url])
         } else {
+            url = url + "?v=" + (get(appID))
             fetch(url, {
                 headers: {
                     'Cache-Control': 'max-age=31536000, immutable'

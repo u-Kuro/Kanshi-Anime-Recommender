@@ -1614,6 +1614,8 @@
                     transition:fly={{ x: -10, duration: 300 }}
                     style:--activeTagFilterColor={selected === "included"
                         ? "#5f9ea0"
+                        : changeType === "read"
+                        ? "#000"
                         : "#e85d75"}
                     on:click={(e) =>
                         changeActiveSelect(
