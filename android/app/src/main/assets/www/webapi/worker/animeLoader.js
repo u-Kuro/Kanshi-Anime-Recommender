@@ -37,6 +37,7 @@ self.onmessage = async ({ data }) => {
         });
         filteredList = filteredList.slice(loadLimit)
     } else {
+        finalAnimeList = filteredList = []
         if (!db) await IDBinit()
         self.postMessage({ status: "Initializing Filters" })
         let activeTagFilters = await retrieveJSON("activeTagFilters")
