@@ -154,8 +154,8 @@ self.onmessage = async ({ data }) => {
                             if (hasAddedEntry) {
                                 await saveJSON(animeEntries, "animeEntries")
                             }
-                            self.postMessage({ status: "Getting New Entries: " + (entriesCount += media.length) }) // Update Data Status
-
+                            entriesCount += media.length
+                            self.postMessage({ status: `${entriesCount} Anime ${entriesCount > 1 ? 'Entries' : 'Entry'} has been added` })
                             if (headers?.get('x-ratelimit-remaining') > 0) {
                                 return recallGNE(++page);
                             } else {
@@ -420,7 +420,7 @@ self.onmessage = async ({ data }) => {
                                 let processedLength = Math.max(animeLength - airingAnimeIDs.length, 0)
                                 let percentage = (100 * (processedLength / animeLength))
                                 percentage = percentage >= 0 ? percentage : 0
-                                self.postMessage({ status: "Updating Entries " + (percentage.toFixed(2)) + "%" }) // Update Data Status
+                                self.postMessage({ status: `${percentage.toFixed(2)}% Updating Entries` }) // Update Data Status
                             }
                             if (hasUpdatedEntry) {
                                 saveJSON(animeEntries, "animeEntries")
@@ -445,7 +445,7 @@ self.onmessage = async ({ data }) => {
 
                             // Update User Recommendation List
                             if (hasUpdatedEntry) {
-                                self.postMessage({ status: "Updating Entries 100%" }) // End Data Status
+                                self.postMessage({ status: "100% Updating Entries" }) // End Data Status
                                 await saveJSON(animeEntries, "animeEntries")
                                 self.postMessage({ updateRecommendationList: true })
 
@@ -805,7 +805,7 @@ self.onmessage = async ({ data }) => {
                                 isNaN(lastAnimeUpdate))
                         ) {
                             if (percentage >= 0.01) {
-                                self.postMessage({ status: "Updating Additional Entries " + (percentage.toFixed(2)) + "%" })
+                                self.postMessage({ status: `${percentage.toFixed(2)}% Updating Additional Entries` })
                             } else {
                                 self.postMessage({ status: "Updating Additional Entries..." })
                             }
@@ -830,7 +830,7 @@ self.onmessage = async ({ data }) => {
                         } else {
                             // Update User Recommendation List
                             if (hasUpdatedEntry) {
-                                self.postMessage({ status: "Updating Additional Entries 100%" })
+                                self.postMessage({ status: "100% Updating Additional Entries" })
                                 await saveJSON(animeEntries, "animeEntries")
                                 animeEntries = null
 

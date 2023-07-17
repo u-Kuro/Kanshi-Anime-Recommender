@@ -1916,6 +1916,25 @@
         user-select: none !important;
     }
 
+    @media (pointer: fine) {
+        .info {
+            font-size: clamp(1.018rem, 1.099rem, 1.18rem);
+            text-transform: capitalize;
+            max-height: 30px;
+            overflow-y: auto !important;
+            overflow-x: hidden !important;
+            flex-wrap: wrap !important;
+            display: flex;
+            gap: 8px;
+            width: 100%;
+            scroll-snap-type: y mandatory !important;
+        }
+
+        .info > span {
+            scroll-snap-align: start !important;
+        }
+    }
+
     .info {
         font-size: clamp(1.018rem, 1.099rem, 1.18rem);
         text-transform: capitalize;

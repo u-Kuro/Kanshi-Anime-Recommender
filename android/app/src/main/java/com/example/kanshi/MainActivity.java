@@ -66,7 +66,7 @@ import androidx.core.splashscreen.SplashScreen;
 
 public class MainActivity extends AppCompatActivity  {
 
-    public final int appID = 32;
+    public final int appID = 33;
     public boolean webviewIsLoaded = false;
     public SharedPreferences prefs;
     private SharedPreferences.Editor prefsEdit;
@@ -660,12 +660,6 @@ public class MainActivity extends AppCompatActivity  {
                     showToast(Toast.makeText(getApplicationContext(), "You may still manually install the update.", Toast.LENGTH_LONG));
                     webView.post(() -> webView.loadUrl("javascript:window.updateAppAlert();"));
                 }));
-            }
-        }
-        @JavascriptInterface
-        public void requireUsernameFocus() {
-            if (currentDialog == null || !currentDialog.isShowing()) {
-                webView.post(() -> webView.loadUrl("javascript:window.focusInUsernameInput();"));
             }
         }
     }

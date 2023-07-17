@@ -8,6 +8,7 @@
         confirmPromise,
         popupVisible,
         finalAnimeList,
+        gridFullView,
     } from "../../js/globalValues.js";
     import { addClass, removeClass } from "../../js/others/helper.js";
     import { requestUserEntries } from "../../js/workerUtils.js";
@@ -16,7 +17,8 @@
     let writableSubscriptions = [];
     let typedUsername = "";
     let windowScrollY = window.scrollY;
-    let popupContainer,
+    let animeGrid,
+        popupContainer,
         navEl,
         inputUsernameEl,
         inputUsernameElFocused = false;
@@ -25,6 +27,7 @@
         navEl = navEl || document?.getElementById("nav");
         inputUsernameEl =
             inputUsernameEl || document?.getElementById("usernameInput");
+        animeGrid = animeGrid || document?.getElementById("anime-grid");
         popupContainer =
             popupContainer || document?.getElementById("popup-container");
         writableSubscriptions.push(
@@ -155,8 +158,35 @@
         $menuVisible = !$menuVisible;
     }
 
-    function focusInputUsernameEl() {
+    async function focusInputUsernameEl() {
+        // if (
+        //     await $confirmPromise(
+        //         `Do you want to connect to your account in Anilist?`
+        //     )
+        // ) {
+        //     let webURL = window.location.href;
+        //     let clientID;
+        //     if (
+        //         webURL.startsWith(
+        //             "https://u-kuro.github.io/Kanshi.Anime-Recommendation"
+        //         )
+        //     ) {
+        //         clientID = "13583";
+        //     } else if (webURL.startsWith("file:///")) {
+        //         clientID = "13584";
+        //     } else if (webURL.startsWith("http://localhost:")) {
+        //         clientID = "12476";
+        //     } else if (webURL.startsWith("https://kanshi.vercel.app")) {
+        //         clientID = "13582";
+        //     }
+        //     if (clientID) {
+        //         window.location.href = `https://anilist.co/api/v2/oauth/authorize?client_id=${clientID}&response_type=token`;
+        //     } else {
+        //         inputUsernameEl?.focus?.();
+        //     }
+        // } else {
         inputUsernameEl?.focus?.();
+        // }
     }
 
     function handleGoBack() {
@@ -186,9 +216,19 @@
                     block: "center",
                 });
             } else {
-                window.scrollY = window.scrollY;
-                window.scrollX = window.scrollX;
-                window.scrollTo({ top: -9999, behavior: "smooth" });
+                if ($gridFullView) {
+                    animeGrid.scrollTop = animeGrid.scrollTop;
+                    animeGrid.scrollLeft = animeGrid.scrollLeft;
+                    animeGrid?.children?.[0]?.scrollIntoView?.({
+                        container: animeGrid,
+                        behavior: "smooth",
+                        block: "center",
+                    });
+                } else {
+                    window.scrollY = window.scrollY;
+                    window.scrollX = window.scrollX;
+                    window.scrollTo({ top: -9999, behavior: "smooth" });
+                }
             }
         }, 500);
     }

@@ -14,6 +14,7 @@
 		finalAnimeList,
 		animeLoaderWorker,
 		initData,
+		gridFullView,
 		searchedAnimeKeyword,
 		dataStatus,
 		userRequestIsRunning,
@@ -42,6 +43,7 @@
 		animeOptionVisible,
 		runIsScrolling,
 		confirmPromise,
+		// anilistAccessToken,
 	} from "./js/globalValues.js";
 	import {
 		getAnimeEntries,
@@ -120,9 +122,78 @@
 	// Check/Update/Process User Anime Entries
 	initDataPromises.push(
 		new Promise(async (resolve) => {
+			// let accessToken = getAnilistAccessTokenFromURL();
+			// if (accessToken) {
+			// 	await saveIDBdata(accessToken, "access_token");
+			// 	$anilistAccessToken = accessToken;
+			// } else {
+			// 	$anilistAccessToken = await retrieveJSON("access_token");
+			// }
+			// if ($anilistAccessToken) {
+			// 	let getUsername = () => {
+			// 		fetch("https://graphql.anilist.co", {
+			// 			method: "POST",
+			// 			headers: {
+			// 				Authorization: "Bearer " + $anilistAccessToken,
+			// 				"Content-Type": "application/json",
+			// 				Accept: "application/json",
+			// 			},
+			// 			body: JSON.stringify({
+			// 				query: `{Viewer{name}}`,
+			// 			}),
+			// 		})
+			// 			.then(async (response) => {
+			// 				return await response.json();
+			// 			})
+			// 			.then(async (result) => {
+			// 				if (
+			// 					typeof result?.errors?.[0]?.message === "string"
+			// 				) {
+			// 					setTimeout(() => {
+			// 						return getUsername();
+			// 					}, 60000);
+			// 				} else {
+			// 					let savedUsername = await retrieveJSON(
+			// 						"username"
+			// 					);
+			// 					let _username = result.data.Viewer.name;
+			// 					if (_username && savedUsername !== _username) {
+			// 						requestUserEntries({
+			// 							username: _username,
+			// 						})
+			// 							.then(({ newusername }) => {
+			// 								if (newusername) {
+			// 									$username = newusername || "";
+			// 									importantUpdate.update(
+			// 										(e) => !e
+			// 									);
+			// 								}
+			// 							})
+			// 							.catch((error) => {
+			// 								$dataStatus =
+			// 									"Something went wrong...";
+			// 								console.error(error);
+			// 							});
+			// 					} else {
+			// 						$username =
+			// 							_username || savedUsername || "";
+			// 					}
+			// 					resolve();
+			// 				}
+			// 			})
+			// 			.catch(() => {
+			// 				setTimeout(() => {
+			// 					return getUsername();
+			// 				}, 60000);
+			// 				resolve();
+			// 			});
+			// 	};
+			// 	getUsername();
+			// } else {
 			let _username = await retrieveJSON("username");
 			if (_username) $username = _username;
 			resolve();
+			// }
 		})
 	);
 
@@ -167,6 +238,11 @@
 			// Auto Play
 			let _autoPlay = await retrieveJSON("autoPlay");
 			if (typeof _autoPlay === "boolean") $autoPlay = _autoPlay;
+			let portrait = screen.availHeight > screen.availWidth;
+			let _gridFullView =
+				(await retrieveJSON("gridFullView")) ?? portrait;
+			if (typeof _gridFullView === "boolean")
+				$gridFullView = _gridFullView;
 			// Hidden Entries
 			$hiddenEntries = (await retrieveJSON("hiddenEntries")) || {};
 			// Get Auto Functions
@@ -251,6 +327,11 @@
 			console.error(error);
 		});
 
+	// function getAnilistAccessTokenFromURL() {
+	// 	let urlParams = new URLSearchParams(window.location.hash.slice(1));
+	// 	return urlParams.get("access_token");
+	// }
+
 	function checkAutoFunctionsOnLoad() {
 		// auto Update
 		requestUserEntries()
@@ -294,23 +375,8 @@
 		}
 	}
 
-	window.focusInUsernameInput = () => {
-		let usernameInput = document.getElementById("usernameInput");
-		usernameInput?.setCustomValidity?.("Enter your Anilist Username");
-		usernameInput?.reportValidity?.();
-	};
 	initData.subscribe(async (val) => {
 		if (val === false) {
-			if (!$username) {
-				await tick();
-				if ($android) {
-					try {
-						JSBridge.requireUsernameFocus();
-					} catch (e) {}
-				} else {
-					window.focusInUsernameInput?.();
-				}
-			}
 			clearInterval(pleaseWaitStatusInterval);
 		}
 	});
@@ -378,7 +444,9 @@
 	loadAnime.subscribe(async (val) => {
 		if (typeof val !== "boolean" || $initData) return;
 		if (
-			($popupVisible || window.scrollY > animeGridEl?.offsetTop - 55) &&
+			($popupVisible ||
+				($gridFullView ? animeGridEl.scrollTop : window.scrollY) >
+					animeGridEl?.offsetTop - 55) &&
 			$finalAnimeList?.length
 		) {
 			$listUpdateAvailable = true;
@@ -583,9 +651,19 @@
 				window.closeDropdown?.();
 				return;
 			} else if (window.scrollY > 200) {
-				window.scrollY = window.scrollY;
-				window.scrollX = window.scrollX;
-				window.scrollTo({ top: -9999, behavior: "smooth" });
+				if ($gridFullView) {
+					animeGridEl.scrollTop = animeGridEl.scrollTop;
+					animeGridEl.scrollLeft = animeGridEl.scrollLeft;
+					animeGridEl?.children?.[0]?.scrollIntoView?.({
+						container: animeGridEl,
+						behavior: "smooth",
+						block: "center",
+					});
+				} else {
+					window.scrollY = window.scrollY;
+					window.scrollX = window.scrollX;
+					window.scrollTo({ top: -9999, behavior: "smooth" });
+				}
 				window.setShouldGoBack(true);
 				return;
 			} else {
@@ -845,12 +923,15 @@
 </main>
 
 <style>
+	:global(body) {
+		height: calc(100% - 55px) !important;
+	}
 	main {
-		height: 100%;
+		height: calc(100% - 55px);
 		width: 100%;
 	}
 	.home {
-		height: 100%;
+		height: calc(100% - 55px);
 		width: 100%;
 		margin: 55px auto 0;
 		max-width: 1140px;

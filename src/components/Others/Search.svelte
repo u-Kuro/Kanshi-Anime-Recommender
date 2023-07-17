@@ -15,6 +15,7 @@
         confirmPromise,
         asyncAnimeReloaded,
         checkAnimeLoaderStatus,
+        gridFullView
     } from "../../js/globalValues.js";
     import { fade, fly } from "svelte/transition";
     import {
@@ -23,6 +24,7 @@
         dragScroll,
         removeClass,
     } from "../../js/others/helper.js";
+    import { saveIDBdata } from "../../js/workerUtils.js";
 
     let Init = true;
 
@@ -40,6 +42,7 @@
     let filterIsScrolling;
 
     let showAllActiveFilters = false;
+    let showFilterOptions = false;
 
     let nameChangeUpdateProcessedList = ["Algorithm Filter"];
     let nameChangeUpdateFinalList = ["sort", "Anime Filter", "Content Caution"];
@@ -112,7 +115,7 @@
             // Close Filter Dropdown
             selectedSortElement = false;
             // Reload Anime for Async Animation
-            if ($finalAnimeList?.length > 18) {
+            if ($finalAnimeList?.length > 36) {
                 await callAsyncAnimeReload();
             }
             // Close Filter Selection Dropdown
@@ -1123,11 +1126,53 @@
         }
     }
 
-    async function handleShowActiveFilters() {
-        if ($finalAnimeList?.length > 18) {
+    let originalGridView
+    async function handleGridView() {
+        if (!$gridFullView) {
+            if(showFilterOptions){
+                await handleShowFilterOptions(false)
+            }
+            if(showAllActiveFilters){
+                await handleShowActiveFilters(false)
+            }
+        }
+        originalGridView = $gridFullView = !$gridFullView
+        saveIDBdata(originalGridView, "gridFullView");
+    }
+    gridFullView.subscribe((val)=>{
+        if(typeof originalGridView!=="boolean") {
+            originalGridView = val
+        }
+    })
+
+    async function handleShowFilterOptions(val=null) {
+        if ($finalAnimeList?.length > 36) {
             await callAsyncAnimeReload();
         }
-        showAllActiveFilters = !showAllActiveFilters;
+        $gridFullView = false
+        if(typeof val==="boolean") {
+            showFilterOptions = val;
+        } else {
+            showFilterOptions = !showFilterOptions;
+            if(originalGridView && !showFilterOptions && !showAllActiveFilters){
+                $gridFullView = true
+            }
+        }
+    }
+
+    async function handleShowActiveFilters(val=null) {
+        if ($finalAnimeList?.length > 36) {
+            await callAsyncAnimeReload();
+        }
+        $gridFullView = false
+        if(typeof val==="boolean") {
+            showAllActiveFilters = val
+        } else {
+            showAllActiveFilters = !showAllActiveFilters;
+            if(originalGridView && !showFilterOptions && !showAllActiveFilters){
+                $gridFullView = true
+            }
+        }
         scrollToFirstTagFilter();
     }
     let asyncAnimeReloadPromise;
@@ -1210,7 +1255,7 @@
     // Helper
 </script>
 
-<main>
+<main style:--filters-space={showFilterOptions ? "80px" : ""}>
     <div class="home-status">
         {#if $filterOptions}
             <span>
@@ -1273,7 +1318,10 @@
                             <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                             <div
                                 class="closing-x"
-                                tabindex="0"
+                                tabindex={selectedFilterTypeElement &&
+                                windowWidth <= 425
+                                    ? "0"
+                                    : ""}
                                 on:keydown={(e) =>
                                     e.key === "Enter" &&
                                     handleShowFilterTypes(e)}
@@ -1307,9 +1355,20 @@
                 {/if}
             </div>
         </div>
+        <div>
+            <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
+            <i
+                class={"showFilterOptions fa-solid fa-eye" +
+                    (showFilterOptions ? "-slash" : "")}
+                tabindex="0"
+                on:click={handleShowFilterOptions}
+                on:keydown={(e) =>
+                    e.key === "Enter" && handleShowFilterOptions(e)}
+            />
+        </div>
     </div>
     <div
-        class="filters"
+        class={"filters " + (showFilterOptions ? "" : "disable-interaction")}
         id="filters"
         style:--maxPaddingHeight="{windowHeight}px"
     >
@@ -1325,8 +1384,14 @@
                         <div class="filter-name">
                             <h2>{Dropdown.filName || ""}</h2>
                         </div>
+                        <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                         <div
                             class="select"
+                            tabindex={showFilterOptions &&
+                            windowWidth <= 425 &&
+                            filterSelection.isSelected
+                                ? "0"
+                                : ""}
                             on:keydown={(e) =>
                                 (e.key === "Enter" ||
                                     e.key === "ArrowDown" ||
@@ -1344,7 +1409,8 @@
                                     bind:value={$filterOptions.filterSelection[
                                         filSelIdx
                                     ].filters.Dropdown[dropdownIdx].optKeyword}
-                                    disabled={windowWidth <= 425 ||
+                                    disabled={!showFilterOptions ||
+                                        windowWidth <= 425 ||
                                         !filterSelection.isSelected}
                                 />
                             </div>
@@ -1382,7 +1448,10 @@
                                     <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                                     <div
                                         class="closing-x"
-                                        tabindex="0"
+                                        tabindex={showFilterOptions &&
+                                        Dropdown.selected
+                                            ? "0"
+                                            : ""}
                                         on:keydown={(e) =>
                                             e.key === "Enter" &&
                                             closeFilterSelect(dropdownIdx)}
@@ -1401,7 +1470,9 @@
                                     bind:value={$filterOptions.filterSelection[
                                         filSelIdx
                                     ].filters.Dropdown[dropdownIdx].optKeyword}
-                                    disabled={!filterSelection.isSelected}
+                                    disabled={!showFilterOptions ||
+                                        !filterSelection.isSelected ||
+                                        !Dropdown.selected}
                                 />
                                 <div class="options">
                                     {#if Dropdown.options?.filter?.(({ optionName }) => hasPartialMatch(optionName, Dropdown.optKeyword) || Dropdown.optKeyword === "")?.length}
@@ -1497,6 +1568,7 @@
                                             pleaseWaitAlert();
                                         }}
                                         checked={Checkbox.isSelected}
+                                        disabled={!showFilterOptions}
                                     />
                                 {:else}
                                     <input
@@ -1510,6 +1582,7 @@
                                                 filterSelection.filterSelectionName
                                             )}
                                         bind:checked={Checkbox.isSelected}
+                                        disabled={!showFilterOptions}
                                     />
                                 {/if}
                                 <div class="checkbox-label">
@@ -1555,6 +1628,7 @@
                                             inputNum.minValue,
                                             filterSelection.filterSelectionName
                                         )}
+                                    disabled={!showFilterOptions}
                                 />
                             </div>
                         </div>
@@ -1570,6 +1644,7 @@
             {/each}
         {/if}
     </div>
+    <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
     <div
         class="activeFilters"
         style:display={(
@@ -1584,29 +1659,30 @@
             ? ""
             : "none"}
     >
-        <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
+        <div
+            tabindex="0"
+            class="empty-tagFilter"
+            style:display={$activeTagFilters ? "" : "none"}
+            title="Remove Filters"
+            on:click={removeAllActiveTag}
+            on:keydown={(e) => e.key === "Enter" && removeAllActiveTag(e)}
+            style:visibility={$activeTagFilters?.[
+                $filterOptions?.filterSelection?.[
+                    $filterOptions?.filterSelection?.findIndex(
+                        ({ isSelected }) => isSelected
+                    )
+                ]?.filterSelectionName
+            ]?.length
+                ? "visible"
+                : "hidden"}
+        >
+            <i class="fa-solid fa-ban" />
+        </div>
         <div
             id="tagFilters"
             class="tagFilters"
             style:max-height={showAllActiveFilters ? "200px" : "28px"}
         >
-            <i
-                style:display={$activeTagFilters ? "" : "none"}
-                class="fa-solid fa-ban"
-                title="Remove Filters"
-                tabindex="0"
-                on:click={removeAllActiveTag}
-                on:keydown={(e) => e.key === "Enter" && removeAllActiveTag(e)}
-                style:visibility={$activeTagFilters?.[
-                    $filterOptions?.filterSelection?.[
-                        $filterOptions?.filterSelection?.findIndex(
-                            ({ isSelected }) => isSelected
-                        )
-                    ]?.filterSelectionName
-                ]?.length
-                    ? "visible"
-                    : "hidden"}
-            />
             {#each $activeTagFilters?.[$filterOptions?.filterSelection?.[$filterOptions?.filterSelection?.findIndex(({ isSelected }) => isSelected)]?.filterSelectionName] || [] as { optionName, optionIdx, selected, changeType, filterType, categIdx, optionValue, optionType } (optionName + optionIdx + (optionType ?? ""))}
                 <div
                     class="activeTagFilter"
@@ -1691,84 +1767,102 @@
     </div>
     {#if $filterOptions}
         <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
-        <div class="sortFilter">
-            <i
-                on:click={changeSortType}
-                on:keydown={(e) => e.key === "Enter" && changeSortType(e)}
-                tabindex={selectedSortElement ? "" : "0"}
-                class={"fa-duotone fa-sort-" +
-                    ($filterOptions?.sortFilter?.[
-                        $filterOptions?.sortFilter?.findIndex(
+        <div class="last-filter-option">
+            <div
+                tabindex="0"
+                class="changeGridView"
+                on:click={handleGridView}
+                on:keydown={(e) => e.key === "Enter" && handleGridView()}
+            >
+                <i
+                    class={"icon fa-solid fa-" +
+                        ($gridFullView ? "maximize" : "minimize")}
+                />
+            </div>
+            <div class="sortFilter">
+                <i
+                    on:click={changeSortType}
+                    on:keydown={(e) => e.key === "Enter" && changeSortType(e)}
+                    tabindex={selectedSortElement ? "" : "0"}
+                    class={"fa-duotone fa-sort-" +
+                        ($filterOptions?.sortFilter?.[
+                            $filterOptions?.sortFilter?.findIndex(
+                                ({ sortType }) => sortType !== "none"
+                            )
+                        ]?.sortType === "asc"
+                            ? "up"
+                            : "down")}
+                />
+                <h2
+                    tabindex={selectedSortElement ? "" : "0"}
+                    on:click={handleSortFilterPopup}
+                    on:keydown={(e) =>
+                        e.key === "Enter" && handleSortFilterPopup(e)}
+                >
+                    {$filterOptions?.sortFilter?.[
+                        $filterOptions?.sortFilter.findIndex(
                             ({ sortType }) => sortType !== "none"
                         )
-                    ]?.sortType === "asc"
-                        ? "up"
-                        : "down")}
-            />
-            <h2
-                tabindex={selectedSortElement ? "" : "0"}
-                on:click={handleSortFilterPopup}
-                on:keydown={(e) =>
-                    e.key === "Enter" && handleSortFilterPopup(e)}
-            >
-                {$filterOptions?.sortFilter?.[
-                    $filterOptions?.sortFilter.findIndex(
-                        ({ sortType }) => sortType !== "none"
-                    )
-                ]?.sortName || ""}
-            </h2>
-            <div
-                class={"options-wrap " +
-                    (selectedSortElement ? "" : "disable-interaction hide")}
-                style:--maxFilterSelectionHeight="{maxFilterSelectionHeight}px"
-            >
+                    ]?.sortName || ""}
+                </h2>
                 <div
-                    class={"options-wrap-filter-info " +
-                        (selectedSortElement ? "" : "hide")}
+                    class={"options-wrap " +
+                        (selectedSortElement ? "" : "disable-interaction hide")}
+                    style:--maxFilterSelectionHeight="{maxFilterSelectionHeight}px"
                 >
-                    <div class="header">
-                        <h2>Sort By</h2>
-                        <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
-                        <div
-                            class="closing-x"
-                            tabindex="0"
-                            on:keydown={(e) =>
-                                e.key === "Enter" && handleSortFilterPopup(e)}
-                            on:click={handleSortFilterPopup}
-                        >
-                            ×
-                        </div>
-                    </div>
-                    <div class="options">
-                        {#each $filterOptions?.sortFilter || [] as { sortName }, sortIdx (sortName + sortIdx)}
+                    <div
+                        class={"options-wrap-filter-info " +
+                            (selectedSortElement ? "" : "hide")}
+                    >
+                        <div class="header">
+                            <h2>Sort By</h2>
+                            <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                             <div
-                                class="option"
-                                on:click={changeSort(sortName)}
+                                class="closing-x"
+                                tabindex={selectedSortElement && windowWidth <= 425
+                                    ? "0"
+                                    : ""}
                                 on:keydown={(e) =>
-                                    e.key === "Enter" && changeSort(sortName)}
+                                    e.key === "Enter" && handleSortFilterPopup(e)}
+                                on:click={handleSortFilterPopup}
                             >
-                                <h3>{sortName || ""}</h3>
-                                {#if $filterOptions?.sortFilter?.[$filterOptions?.sortFilter?.findIndex(({ sortType }) => sortType !== "none")].sortName === sortName && sortName}
-                                    <i
-                                        class={"fa-duotone fa-sort-" +
-                                            ($filterOptions?.sortFilter?.[
-                                                $filterOptions?.sortFilter?.findIndex(
-                                                    ({ sortType }) =>
-                                                        sortType !== "none"
-                                                )
-                                            ].sortType === "asc"
-                                                ? "up"
-                                                : "down")}
-                                    />
-                                {/if}
+                                ×
                             </div>
-                        {/each}
+                        </div>
+                        <div class="options">
+                            {#each $filterOptions?.sortFilter || [] as { sortName }, sortIdx (sortName + sortIdx)}
+                                <div
+                                    class="option"
+                                    on:click={changeSort(sortName)}
+                                    on:keydown={(e) =>
+                                        e.key === "Enter" && changeSort(sortName)}
+                                >
+                                    <h3>{sortName || ""}</h3>
+                                    {#if $filterOptions?.sortFilter?.[$filterOptions?.sortFilter?.findIndex(({ sortType }) => sortType !== "none")].sortName === sortName && sortName}
+                                        <i
+                                            class={"fa-duotone fa-sort-" +
+                                                ($filterOptions?.sortFilter?.[
+                                                    $filterOptions?.sortFilter?.findIndex(
+                                                        ({ sortType }) =>
+                                                            sortType !== "none"
+                                                    )
+                                                ].sortType === "asc"
+                                                    ? "up"
+                                                    : "down")}
+                                        />
+                                    {/if}
+                                </div>
+                            {/each}
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     {:else}
-        <div class="sortFilter skeleton shimmer" />
+        <div class="last-filter-option">
+            <div class="showHideActiveFilters skeleton shimmer" />
+            <div class="sortFilter skeleton shimmer" />
+        </div>
     {/if}
     <slot />
 </main>
@@ -1786,7 +1880,7 @@
 
     main {
         display: grid;
-        grid-template-rows: 20px 55px 80px auto 37px auto;
+        grid-template-rows: 20px 55px var(--filters-space) auto 37px auto;
         padding-top: 1.5em;
     }
 
@@ -1797,7 +1891,7 @@
 
     .input-search-wrap {
         display: grid;
-        grid-template-columns: auto 20px;
+        grid-template-columns: auto 20px 20px;
         align-items: center;
         column-gap: 1em;
         padding: 10px 15px;
@@ -1858,6 +1952,11 @@
     .filterType .option h3 {
         cursor: pointer;
         text-transform: capitalize;
+    }
+
+    .showFilterOptions {
+        font-size: 20px;
+        cursor: pointer;
     }
 
     .home-status {
@@ -2066,13 +2165,24 @@
 
     .activeFilters {
         display: grid;
-        align-items: center;
+        align-items: top;
         justify-content: space-between;
         gap: 15px;
         min-height: 28px;
         width: 100%;
-        grid-template-columns: 100%;
+        grid-template-columns: 28px calc(100% - 56px - 30px) 28px;
         margin-top: 2em;
+    }
+
+    .activeFilters .empty-tagFilter {
+        display: flex;
+        justify-content: center;
+        background: rgb(21, 31, 46);
+        border-radius: 6px;
+        cursor: pointer;
+        padding: 0.9em 1.5em;
+        width: 28px;
+        height: 28px;
     }
 
     .tagFilters {
@@ -2081,6 +2191,7 @@
         align-items: center;
         justify-content: space-between;
         gap: 15px;
+        padding: 0px 6px;
         user-select: none;
         overflow-y: auto;
         scroll-snap-type: y mandatory;
@@ -2096,21 +2207,14 @@
         width: 90px;
     }
 
-    .tagFilters > i {
-        font-size: 1.5rem;
-        height: 28px;
-        line-height: 28px;
-        cursor: pointer;
-        padding: 0 4px;
-    }
     .tagFilters:after {
         content: "";
         flex: 1000 0 auto;
     }
-
     .tagFilters::-webkit-scrollbar {
-        display: none !important;
+        display: none;
     }
+
     .activeFilters .activeTagFilter {
         background-color: var(--activeTagFilterColor);
         padding: 8px 10px;
@@ -2133,13 +2237,35 @@
         font-size: 1.2rem;
     }
 
+    .changeGridView {
+        display: flex;
+        justify-content: center;
+        background: rgb(21, 31, 46);
+        border-radius: 6px;
+        cursor: pointer;
+        padding: 0.9em 1.5em;
+        width: 28px;
+        height: 28px;
+    }
+
     .showHideActiveFilters {
         display: flex;
         justify-content: center;
         background: rgb(21, 31, 46);
-        padding: 0.9em 1.5em;
         border-radius: 6px;
         cursor: pointer;
+        padding: 0.9em 1.5em;
+        width: 28px;
+        height: 28px;
+    }
+
+    .last-filter-option {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+        min-height: 17px;
+        margin-top: 2em;
     }
 
     .sortFilter {
@@ -2147,8 +2273,6 @@
         justify-content: end;
         align-items: center;
         gap: 8px;
-        min-height: 17px;
-        margin-top: 2em;
         margin-left: auto;
         position: relative;
     }

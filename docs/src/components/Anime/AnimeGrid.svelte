@@ -17,6 +17,7 @@
         shownAllInList,
         importantLoad,
         checkAnimeLoaderStatus,
+        gridFullView,
     } from "../../js/globalValues.js";
     import {
         formatNumber,
@@ -25,6 +26,7 @@
         removeClass,
     } from "../../js/others/helper.js";
 
+    let windowHeight = window.visualViewport.height;
     let date;
     let animeGridEl;
     let isRunningIntersectEvent;
@@ -63,7 +65,11 @@
     }
 
     onMount(() => {
+        windowHeight = window.visualViewport.height;
         animeGridEl = animeGridEl || document.getElementById("anime-grid");
+        window.addEventListener("resize", () => {
+            windowHeight = window.visualViewport.height;
+        });
         setInterval(() => {
             date = new Date();
         }, 1000);
@@ -345,20 +351,20 @@
             }
         }
         if (timeDifMS > 0 && nextEpisode > 1 && episodes > nextEpisode) {
-            return ` (${nextEpisode - 1}/${episodes})`;
+            return `(${nextEpisode - 1}/${episodes})`;
         } else if (
             timeDifMS <= 0 &&
             typeof nextEpisode === "number" &&
             episodes > nextEpisode
         ) {
-            return ` (${nextEpisode}/${episodes})`;
+            return `(${nextEpisode}/${episodes})`;
         } else if (typeof episodes === "number") {
-            return ` (${episodes})`;
+            return `(${episodes})`;
         } else if (typeof nextEpisode === "number") {
             if (timeDifMS > 0 && nextEpisode > 1) {
-                return ` (${nextEpisode - 1}")`;
+                return `(${nextEpisode - 1}")`;
             } else {
-                return ` (${nextEpisode}")`;
+                return `(${nextEpisode}")`;
             }
         }
         return "";
@@ -366,7 +372,12 @@
 </script>
 
 <main>
-    <div id="anime-grid" class="image-grid" bind:this={animeGridEl}>
+    <div
+        id="anime-grid"
+        class={"image-grid " + ($gridFullView ? "fullView" : "")}
+        bind:this={animeGridEl}
+        style:--anime-grid-height={windowHeight + "px"}
+    >
         {#if $finalAnimeList?.length}
             {#each $finalAnimeList || [] as anime, animeIdx (anime.id)}
                 <div
@@ -398,39 +409,45 @@
                         <span class="title">{anime.title || "N/A"}</span>
                         <span class="brief-info-wrapper">
                             <div class="brief-info">
-                                <i
-                                    class={`${getUserStatusColor(
-                                        anime.userStatus
-                                    )}-color fa-solid fa-circle`}
-                                />
-                                {#if isJsonObject(anime?.nextAiringEpisode)}
-                                    {#key date.getSeconds()}
-                                        {`${anime.format || "N/A"}
-                                        ${getFinishedEpisode(
-                                            anime.episodes,
-                                            anime.nextAiringEpisode
-                                        )}
+                                <span>
+                                    <i
+                                        class={`${getUserStatusColor(
+                                            anime.userStatus
+                                        )}-color fa-solid fa-circle`}
+                                    />
+                                    {#if isJsonObject(anime?.nextAiringEpisode)}
+                                        {#key date.getSeconds()}
+                                            {`${
+                                                anime.format || "N/A"
+                                            }${getFinishedEpisode(
+                                                anime.episodes,
+                                                anime.nextAiringEpisode
+                                            )}
                                         `}
-                                    {/key}
-                                {:else}
-                                    {`${anime.format || "N/A"}${
-                                        anime.episodes
-                                            ? " (" + anime.episodes + ")"
-                                            : ""
-                                    }`}
-                                {/if}
+                                        {/key}
+                                    {:else}
+                                        {`${anime.format || "N/A"}${
+                                            anime.episodes
+                                                ? "(" + anime.episodes + ")"
+                                                : ""
+                                        }`}
+                                    {/if}
+                                </span>
                             </div>
                             <div class="brief-info">
-                                <i
-                                    class={`${getCautionColor(
-                                        anime
-                                    )}-color fa-solid fa-star`}
-                                />
-                                {#if $filterOptions}
-                                    {getShownScore(anime) || "N/A"}
-                                {:else}
-                                    {formatNumber(anime.weightedScore) || "N/A"}
-                                {/if}
+                                <span>
+                                    <i
+                                        class={`${getCautionColor(
+                                            anime
+                                        )}-color fa-solid fa-star`}
+                                    />
+                                    {#if $filterOptions}
+                                        {getShownScore(anime) || "N/A"}
+                                    {:else}
+                                        {formatNumber(anime.weightedScore) ||
+                                            "N/A"}
+                                    {/if}
+                                </span>
                             </div>
                         </span>
                     </span>
@@ -472,7 +489,7 @@
     main {
         width: 100%;
         height: 100%;
-        margin: 2em 0;
+        padding: 2em 0;
     }
 
     .skeleton {
@@ -532,6 +549,16 @@
         );
     }
 
+    .image-grid.fullView {
+        height: max(calc(var(--anime-grid-height) - 55px - 230px), 312px);
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+
+    .image-grid::-webkit-scrollbar {
+        display: none;
+    }
+
     .image-grid__card {
         animation: fadeIn 0.3s ease-in;
         width: 100%;
@@ -589,12 +616,22 @@
     .brief-info,
     .brief-info-wrapper {
         display: flex;
-        gap: 0.5ch;
+        gap: 2px;
         flex-wrap: wrap;
         align-items: center;
         white-space: nowrap;
-        column-gap: 2px;
         user-select: none;
+    }
+    .brief-info-wrapper {
+        column-gap: 4px;
+    }
+
+    .brief-info::-webkit-scrollbar {
+        display: none;
+    }
+    .brief-info {
+        overflow-x: auto;
+        overflow-y: hidden;
     }
 
     .fa-circle::before {
