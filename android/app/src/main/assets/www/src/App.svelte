@@ -620,6 +620,7 @@
 	window.addEventListener("popstate", () => {
 		window.backPressed();
 	});
+
 	window.backPressed = () => {
 		if ($shouldGoBack && !$android) {
 			window.history.go(-1); // Only in Browser
@@ -650,7 +651,9 @@
 			} else if (window.checkOpenDropdown?.()) {
 				window.closeDropdown?.();
 				return;
-			} else if (window.scrollY > 200) {
+			} else if (
+				($gridFullView ? animeGridEl.scrollTop : window.scrollY) > 200
+			) {
 				if ($gridFullView) {
 					animeGridEl.scrollTop = animeGridEl.scrollTop;
 					animeGridEl.scrollLeft = animeGridEl.scrollLeft;
@@ -667,13 +670,35 @@
 				window.setShouldGoBack(true);
 				return;
 			} else {
-				window.scrollY = window.scrollY;
-				window.scrollX = window.scrollX;
-				window.scrollTo({ top: -9999, behavior: "smooth" });
+				if ($gridFullView) {
+					animeGridEl.scrollTop = animeGridEl.scrollTop;
+					animeGridEl.scrollLeft = animeGridEl.scrollLeft;
+					animeGridEl?.children?.[0]?.scrollIntoView?.({
+						container: animeGridEl,
+						behavior: "smooth",
+						block: "center",
+					});
+				} else {
+					window.scrollY = window.scrollY;
+					window.scrollX = window.scrollX;
+					window.scrollTo({ top: -9999, behavior: "smooth" });
+				}
 				window.setShouldGoBack(true);
 			}
 		}
 	};
+	gridFullView.subscribe(async (val) => {
+		await tick();
+		if (val) {
+			if (animeGridEl?.scrollTop > 200) {
+				window.setShouldGoBack(false);
+			}
+		} else {
+			if (window?.scrollY > 200) {
+				window.setShouldGoBack(false);
+			}
+		}
+	});
 	popupVisible.subscribe((val) => {
 		if (val === true) window.setShouldGoBack(false);
 	});
@@ -681,12 +706,18 @@
 		if (val === true) window.setShouldGoBack(false);
 	});
 	window.addEventListener("scroll", () => {
-		if (window.scrollY !== 0) window.setShouldGoBack(false);
+		if (window.scrollY !== 0 && !$gridFullView)
+			window.setShouldGoBack(false);
 		runIsScrolling.update((e) => !e);
 	});
 	onMount(() => {
 		usernameInputEl = document.getElementById("usernameInput");
 		animeGridEl = document.getElementById("anime-grid");
+		animeGridEl?.addEventListener("scroll", () => {
+			if (!$gridFullView) return;
+			if (animeGridEl.scrollTop !== 0) window.setShouldGoBack(false);
+			runIsScrolling.update((e) => !e);
+		});
 		document
 			.getElementById("popup-container")
 			.addEventListener("scroll", () => {

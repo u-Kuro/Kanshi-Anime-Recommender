@@ -245,6 +245,15 @@
         }
     }
 
+    async function refresh() {
+        if (await $confirmPromise("Are you sure want to refresh the app?")) {
+            if (!$android) return;
+            try {
+                JSBridge.refreshWeb();
+            } catch (e) {}
+        }
+    }
+
     function pleaseWaitAlert() {
         $confirmPromise({
             isAlert: true,
@@ -353,6 +362,12 @@
                         >Check for Updates</button
                     >
                 {/if}
+                <button
+                    class="button"
+                    on:keydown={(e) => e.key === "Enter" && refresh(e)}
+                    on:click={refresh}
+                    transition:fly={{ x: 50, duration: 300 }}>Refresh</button
+                >
             {/if}
         </div>
     </div>

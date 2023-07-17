@@ -1,6 +1,6 @@
 import { writable } from "svelte/store";
 
-const appID = writable(33)
+const appID = writable(34)
 const android = writable(null)
 const inApp = writable(true)
 // const anilistAccessToken = writable(null)
