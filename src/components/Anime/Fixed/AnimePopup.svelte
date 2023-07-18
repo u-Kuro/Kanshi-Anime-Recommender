@@ -1235,12 +1235,14 @@
             firstScriptTag.parentElement.insertBefore(tag, firstScriptTag);
         });
     }
-    function openDescription(event){
+    function openDescription(event) {
         let popupMain = event.target.closest(".popup-main");
-        let descriptionEl = popupMain?.querySelector?.(".anime-description-container")
+        let descriptionEl = popupMain?.querySelector?.(
+            ".anime-description-container"
+        );
         if (descriptionEl) {
             let classList = descriptionEl.classList;
-            if (classList.contains("display-none")){
+            if (classList.contains("display-none")) {
                 removeClass(descriptionEl, "display-none");
                 removeClass(descriptionEl, "fade-out");
                 addClass(descriptionEl, "fade-in");
@@ -1255,10 +1257,12 @@
         }
     }
     function closeDescription(event) {
-        let descriptionEl = event.target
-        let classList = descriptionEl.classList
+        let descriptionEl = event.target;
+        let classList = descriptionEl.classList;
         if (!classList.contains("anime-description-container")) {
-            descriptionEl = descriptionEl.closest(".anime-description-container")
+            descriptionEl = descriptionEl.closest(
+                ".anime-description-container"
+            );
         }
         if (descriptionEl) {
             removeClass(descriptionEl, "fade-in");
@@ -1287,21 +1291,21 @@
         // return span.textContent || span.innerText;
         var span = document.createElement("span");
         span.innerHTML = s;
-        let links = span.querySelectorAll("a")
-        Array.from(links).forEach((linkEl)=>{
-            linkEl?.setAttribute("rel","noopener noreferrer")
-            linkEl?.setAttribute("target","_blank")
-        })
+        let links = span.querySelectorAll("a");
+        Array.from(links).forEach((linkEl) => {
+            linkEl?.setAttribute("rel", "noopener noreferrer");
+            linkEl?.setAttribute("target", "_blank");
+        });
         return span.innerHTML;
     }
     function editHTMLString(s) {
         var span = document.createElement("span");
         span.innerHTML = s;
-        let links = span.querySelectorAll("a")
-        Array.from(links).forEach((linkEl)=>{
-            linkEl?.setAttribute("rel","noopener noreferrer")
-            linkEl?.setAttribute("target","_blank")
-        })
+        let links = span.querySelectorAll("a");
+        Array.from(links).forEach((linkEl) => {
+            linkEl?.setAttribute("rel", "noopener noreferrer");
+            linkEl?.setAttribute("target", "_blank");
+        });
         return span.innerHTML;
     }
 </script>
@@ -1328,7 +1332,8 @@
                                 (anime.trailerID ? "loader" : "")}
                             bind:this={anime.popupHeader}
                             on:click={openDescription}
-                            on:keydown={(e) => e.key === "Enter" && openDescription(e)}
+                            on:keydown={(e) =>
+                                e.key === "Enter" && openDescription(e)}
                         >
                             <div class="popup-header-loading">
                                 <i class="fa-solid fa-k fa-fade" />
@@ -1382,13 +1387,20 @@
                                 {/if}
                             </div>
                             {#if anime?.description}
-                                <div class="anime-description-container copy display-none fade-out"
-                                    copy-value={htmlToString(anime?.description)}
+                                <div
+                                    class="anime-description-container copy display-none fade-out"
+                                    copy-value={htmlToString(
+                                        anime?.description
+                                    )}
                                     on:click={closeDescription}
-                                    on:keydown={(e) => e.key === "Enter" && closeDescription(e)}
-                                 >
+                                    on:keydown={(e) =>
+                                        e.key === "Enter" &&
+                                        closeDescription(e)}
+                                >
                                     <div class="anime-description">
-                                        {@html editHTMLString(anime?.description)}
+                                        {@html editHTMLString(
+                                            anime?.description
+                                        )}
                                     </div>
                                 </div>
                             {/if}
@@ -1450,10 +1462,12 @@
                                     >{anime?.title?.userPreferred || "N/A"}</a
                                 >
                                 <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
-                                <i class="fa-solid fa-circle-info"
+                                <i
+                                    class="fa-solid fa-circle-info"
                                     tabindex="0"
                                     on:click={openDescription}
-                                    on:keydown={(e) => e.key === "Enter" && openDescription(e)}
+                                    on:keydown={(e) =>
+                                        e.key === "Enter" && openDescription(e)}
                                 />
                             </div>
                             <div
@@ -1994,7 +2008,11 @@
 
     .anime-description-container {
         position: absolute;
-        background: linear-gradient( to bottom, rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.34) );
+        background: linear-gradient(
+            to bottom,
+            rgba(0, 0, 0, 0.8),
+            rgba(0, 0, 0, 0.34)
+        );
         width: 100%;
         height: 100%;
         font-size: 1.5rem;
@@ -2045,6 +2063,7 @@
         overflow-x: auto;
         overflow-y: hidden;
         width: min-content;
+        max-width: 100%;
     }
 
     .anime-title::-webkit-scrollbar {
