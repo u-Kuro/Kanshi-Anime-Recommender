@@ -1286,17 +1286,9 @@
         }
     }
     function htmlToString(s) {
-        // var span = document.createElement("span");
-        // span.innerHTML = s;
-        // return span.textContent || span.innerText;
         var span = document.createElement("span");
         span.innerHTML = s;
-        let links = span.querySelectorAll("a");
-        Array.from(links).forEach((linkEl) => {
-            linkEl?.setAttribute("rel", "noopener noreferrer");
-            linkEl?.setAttribute("target", "_blank");
-        });
-        return span.innerHTML;
+        return span.textContent || span.innerText;
     }
     function editHTMLString(s) {
         var span = document.createElement("span");
