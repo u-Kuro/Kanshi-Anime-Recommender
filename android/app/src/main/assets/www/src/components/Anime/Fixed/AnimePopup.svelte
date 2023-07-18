@@ -21,6 +21,7 @@
         listUpdateAvailable,
         searchedAnimeKeyword,
         checkAnimeLoaderStatus,
+        hasWheel,
     } from "../../../js/globalValues.js";
     import {
         isJsonObject,
@@ -280,7 +281,9 @@
             );
             // Scroll To Opened Anime
             let openedAnimePopupEl =
-                popupContainer?.children[$openedAnimePopupIdx ?? 0];
+                popupContainer?.children[
+                    $openedAnimePopupIdx ?? currentHeaderIdx ?? 0
+                ];
             if (openedAnimePopupEl instanceof Element) {
                 scrollToElement(
                     popupContainer,
@@ -1232,6 +1235,75 @@
             firstScriptTag.parentElement.insertBefore(tag, firstScriptTag);
         });
     }
+    function openDescription(event){
+        let popupMain = event.target.closest(".popup-main");
+        let descriptionEl = popupMain?.querySelector?.(".anime-description-container")
+        if (descriptionEl) {
+            let classList = descriptionEl.classList;
+            if (classList.contains("display-none")){
+                removeClass(descriptionEl, "display-none");
+                removeClass(descriptionEl, "fade-out");
+                addClass(descriptionEl, "fade-in");
+            } else {
+                removeClass(descriptionEl, "fade-in");
+                addClass(descriptionEl, "fade-out");
+                setTimeout(() => {
+                    addClass(descriptionEl, "display-none");
+                    addClass(descriptionEl, "fade-out");
+                }, 300);
+            }
+        }
+    }
+    function closeDescription(event) {
+        let descriptionEl = event.target
+        let classList = descriptionEl.classList
+        if (!classList.contains("anime-description-container")) {
+            descriptionEl = descriptionEl.closest(".anime-description-container")
+        }
+        if (descriptionEl) {
+            removeClass(descriptionEl, "fade-in");
+            addClass(descriptionEl, "fade-out");
+            setTimeout(() => {
+                addClass(descriptionEl, "display-none");
+                addClass(descriptionEl, "fade-out");
+            }, 300);
+        }
+    }
+    function horizontalWheel(event, parentClass) {
+        let element = event.target;
+        let classList = element.classList;
+        if (!classList.contains(parentClass)) {
+            element = element.closest("." + parentClass);
+        }
+        if (element.scrollWidth <= element.clientWidth) return;
+        if (event.deltaY !== 0 && event.deltaX === 0) {
+            event.preventDefault();
+            element.scrollLeft = Math.max(0, element.scrollLeft + event.deltaY);
+        }
+    }
+    function htmlToString(s) {
+        // var span = document.createElement("span");
+        // span.innerHTML = s;
+        // return span.textContent || span.innerText;
+        var span = document.createElement("span");
+        span.innerHTML = s;
+        let links = span.querySelectorAll("a")
+        Array.from(links).forEach((linkEl)=>{
+            linkEl?.setAttribute("rel","noopener noreferrer")
+            linkEl?.setAttribute("target","_blank")
+        })
+        return span.innerHTML;
+    }
+    function editHTMLString(s) {
+        var span = document.createElement("span");
+        span.innerHTML = s;
+        let links = span.querySelectorAll("a")
+        Array.from(links).forEach((linkEl)=>{
+            linkEl?.setAttribute("rel","noopener noreferrer")
+            linkEl?.setAttribute("target","_blank")
+        })
+        return span.innerHTML;
+    }
 </script>
 
 <div
@@ -1255,6 +1327,8 @@
                             class={"popup-header " +
                                 (anime.trailerID ? "loader" : "")}
                             bind:this={anime.popupHeader}
+                            on:click={openDescription}
+                            on:keydown={(e) => e.key === "Enter" && openDescription(e)}
                         >
                             <div class="popup-header-loading">
                                 <i class="fa-solid fa-k fa-fade" />
@@ -1307,11 +1381,24 @@
                                     {/if}
                                 {/if}
                             </div>
+                            {#if anime?.description}
+                                <div class="anime-description-container copy display-none fade-out"
+                                    copy-value={htmlToString(anime?.description)}
+                                    on:click={closeDescription}
+                                    on:keydown={(e) => e.key === "Enter" && closeDescription(e)}
+                                 >
+                                    <div class="anime-description">
+                                        {@html editHTMLString(anime?.description)}
+                                    </div>
+                                </div>
+                            {/if}
                         </div>
                         <div class="popup-controls">
                             {#if $listUpdateAvailable}
+                                <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                                 <div
                                     class="list-update-container"
+                                    tabindex="0"
                                     on:click={updateList}
                                     on:keydown={(e) =>
                                         e.key === "Enter" && updateList(e)}
@@ -1358,9 +1445,16 @@
                                     href={anime.animeUrl || ""}
                                     class={getCautionColor(anime) +
                                         "-color anime-title copy"}
-                                    copy-value={anime.title || ""}
-                                    >{anime?.title || "N/A"}</a
+                                    copy-value={anime?.title?.userPreferred ||
+                                        ""}
+                                    >{anime?.title?.userPreferred || "N/A"}</a
                                 >
+                                <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
+                                <i class="fa-solid fa-circle-info"
+                                    tabindex="0"
+                                    on:click={openDescription}
+                                    on:keydown={(e) => e.key === "Enter" && openDescription(e)}
+                                />
                             </div>
                             <div
                                 class={"info-list " +
@@ -1368,13 +1462,29 @@
                                 style:--windowWidth={windowWidth + "px"}
                                 style:--windowHeight={windowHeight + "px"}
                             >
-                                <div>
-                                    <div class="info-categ">Format</div>
-                                    <div
-                                        class="format-popup info not-capitalize"
-                                    >
-                                        {#if anime?.nextAiringEpisode?.airingAt}
-                                            {#key date.getSeconds()}
+                                {#if getFormattedAnimeFormat(anime)}
+                                    <div>
+                                        <div class="info-categ">Format</div>
+                                        <div
+                                            class={"format-popup info not-capitalize" +
+                                                ($hasWheel ? " hasWheel" : "")}
+                                            on:wheel={(e) =>
+                                                horizontalWheel(e, "info")}
+                                        >
+                                            {#if anime?.nextAiringEpisode?.airingAt}
+                                                {#key date.getSeconds()}
+                                                    <span
+                                                        class="copy"
+                                                        copy-value={getFormattedAnimeFormat(
+                                                            anime
+                                                        ) || ""}
+                                                    >
+                                                        {getFormattedAnimeFormat(
+                                                            anime
+                                                        ) || "N/A"}
+                                                    </span>
+                                                {/key}
+                                            {:else}
                                                 <span
                                                     class="copy"
                                                     copy-value={getFormattedAnimeFormat(
@@ -1385,25 +1495,19 @@
                                                         anime
                                                     ) || "N/A"}
                                                 </span>
-                                            {/key}
-                                        {:else}
-                                            <span
-                                                class="copy"
-                                                copy-value={getFormattedAnimeFormat(
-                                                    anime
-                                                ) || ""}
-                                            >
-                                                {getFormattedAnimeFormat(
-                                                    anime
-                                                ) || "N/A"}
-                                            </span>
-                                        {/if}
+                                            {/if}
+                                        </div>
                                     </div>
-                                </div>
-                                <div>
-                                    <div class="info-categ">Studio</div>
-                                    <div class="studio-popup info">
-                                        {#if Object.entries(anime?.studios || {}).length}
+                                {/if}
+                                {#if Object.entries(anime?.studios || {}).length}
+                                    <div>
+                                        <div class="info-categ">Studio</div>
+                                        <div
+                                            class={"studio-popup info" +
+                                                ($hasWheel ? " hasWheel" : "")}
+                                            on:wheel={(e) =>
+                                                horizontalWheel(e, "info")}
+                                        >
                                             {#each getStudios(Object.entries(anime.studios || {}), anime?.favoriteContents?.studios) as { studio, studioColor } (studio)}
                                                 <span
                                                     class={"copy"}
@@ -1423,15 +1527,18 @@
                                                     >
                                                 </span>
                                             {/each}
-                                        {:else}
-                                            <span>N/A</span>
-                                        {/if}
+                                        </div>
                                     </div>
-                                </div>
-                                <div>
-                                    <div class="info-categ">Genres</div>
-                                    <div class="genres-popup info">
-                                        {#if anime.genres.length}
+                                {/if}
+                                {#if anime.genres.length}
+                                    <div>
+                                        <div class="info-categ">Genres</div>
+                                        <div
+                                            class={"genres-popup info" +
+                                                ($hasWheel ? " hasWheel" : "")}
+                                            on:wheel={(e) =>
+                                                horizontalWheel(e, "info")}
+                                        >
                                             {#each getGenres(anime.genres, anime?.favoriteContents?.genres, anime.contentCaution) as { genre, genreColor } (genre)}
                                                 <span
                                                     class={"copy " +
@@ -1442,15 +1549,18 @@
                                                     >{genre || "N/A"}
                                                 </span>
                                             {/each}
-                                        {:else}
-                                            <span>N/A</span>
-                                        {/if}
+                                        </div>
                                     </div>
-                                </div>
-                                <div>
-                                    <div class="info-categ">Tags</div>
-                                    <div class="tags-popup info">
-                                        {#if anime?.tags?.length}
+                                {/if}
+                                {#if anime?.tags?.length}
+                                    <div>
+                                        <div class="info-categ">Tags</div>
+                                        <div
+                                            class={"tags-popup info" +
+                                                ($hasWheel ? " hasWheel" : "")}
+                                            on:wheel={(e) =>
+                                                horizontalWheel(e, "info")}
+                                        >
                                             {#each getTags(anime.tags, anime?.favoriteContents?.tags, anime.contentCaution) as { tag, tagColor } (tag)}
                                                 <span
                                                     class={"copy " +
@@ -1461,17 +1571,20 @@
                                                     >{tag || "N/A"}
                                                 </span>
                                             {/each}
-                                        {:else}
-                                            <span>N/A</span>
-                                        {/if}
+                                        </div>
                                     </div>
-                                </div>
-                                <div>
-                                    <div class="info-categ">
-                                        Content Cautions
-                                    </div>
-                                    <div class="content-caution-popup info">
-                                        {#if getContentCaution(anime).length}
+                                {/if}
+                                {#if getContentCaution(anime).length}
+                                    <div>
+                                        <div class="info-categ">
+                                            Content Cautions
+                                        </div>
+                                        <div
+                                            class={"content-caution-popup info" +
+                                                ($hasWheel ? " hasWheel" : "")}
+                                            on:wheel={(e) =>
+                                                horizontalWheel(e, "info")}
+                                        >
                                             {#each getContentCaution(anime) as { caution, cautionColor } (caution + cautionColor)}
                                                 <span
                                                     class={cautionColor +
@@ -1481,103 +1594,162 @@
                                                     {caution || "N/A"}
                                                 </span>
                                             {/each}
-                                        {:else}
-                                            <span>N/A</span>
-                                        {/if}
+                                        </div>
                                     </div>
-                                </div>
-                                <div>
-                                    <div class="info-categ">Score</div>
-                                    <div class="score-popup info">
-                                        <span
-                                            class="copy"
-                                            copy-value={anime.score ?? ""}
+                                {/if}
+                                {#if formatNumber(anime.score) != null}
+                                    <div>
+                                        <div class="info-categ">Score</div>
+                                        <div
+                                            class={"score-popup info" +
+                                                ($hasWheel ? " hasWheel" : "")}
+                                            on:wheel={(e) =>
+                                                horizontalWheel(e, "info")}
                                         >
-                                            {formatNumber(anime.score) ?? "N/A"}
-                                        </span>
+                                            <span
+                                                class="copy"
+                                                copy-value={anime.score ?? ""}
+                                            >
+                                                {formatNumber(anime.score) ??
+                                                    "N/A"}
+                                            </span>
+                                        </div>
                                     </div>
-                                </div>
-                                <div>
-                                    <div class="info-categ">User Status</div>
-                                    <div class="user-status-popup info">
-                                        <span
-                                            class={"copy " +
-                                                (getUserStatusColor(
-                                                    anime.userStatus
-                                                ) +
-                                                    "-color")}
-                                            copy-value={anime.userStatus || ""}
+                                {/if}
+                                {#if anime.userStatus}
+                                    <div>
+                                        <div class="info-categ">
+                                            User Status
+                                        </div>
+                                        <div
+                                            class={"user-status-popup info" +
+                                                ($hasWheel ? " hasWheel" : "")}
+                                            on:wheel={(e) =>
+                                                horizontalWheel(e, "info")}
                                         >
-                                            {anime.userStatus || "N/A"}
-                                        </span>
+                                            <span
+                                                class={"copy " +
+                                                    (getUserStatusColor(
+                                                        anime.userStatus
+                                                    ) +
+                                                        "-color")}
+                                                copy-value={anime.userStatus ||
+                                                    ""}
+                                            >
+                                                {anime.userStatus || "N/A"}
+                                            </span>
+                                        </div>
                                     </div>
-                                </div>
-                                <div>
-                                    <div class="info-categ">Airing Status</div>
-                                    <div class="status-popup info">
-                                        <span
-                                            class="copy"
-                                            copy-value={anime.status || ""}
+                                {/if}
+                                {#if anime.status}
+                                    <div>
+                                        <div class="info-categ">
+                                            Airing Status
+                                        </div>
+                                        <div
+                                            class={"status-popup info" +
+                                                ($hasWheel ? " hasWheel" : "")}
+                                            on:wheel={(e) =>
+                                                horizontalWheel(e, "info")}
                                         >
-                                            {anime.status || "N/A"}
-                                        </span>
+                                            <span
+                                                class="copy"
+                                                copy-value={anime.status || ""}
+                                            >
+                                                {anime.status || "N/A"}
+                                            </span>
+                                        </div>
                                     </div>
-                                </div>
-                                <div>
-                                    <div class="info-categ">User Score</div>
-                                    <div class="user-score-popup info copy">
-                                        <span
-                                            class="copy"
-                                            copy-value={anime.userScore ?? ""}
+                                {/if}
+                                {#if anime.userScore != null}
+                                    <div>
+                                        <div class="info-categ">User Score</div>
+                                        <div
+                                            class={"user-score-popup info" +
+                                                ($hasWheel ? " hasWheel" : "")}
+                                            on:wheel={(e) =>
+                                                horizontalWheel(e, "info")}
                                         >
-                                            {anime.userScore ?? "N/A"}
-                                        </span>
+                                            <span
+                                                class="copy"
+                                                copy-value={anime.userScore ??
+                                                    ""}
+                                            >
+                                                {anime.userScore ?? "N/A"}
+                                            </span>
+                                        </div>
                                     </div>
-                                </div>
-                                <div>
-                                    <div class="info-categ">Season Year</div>
-                                    <div class="season-year-popup info">
-                                        <span
-                                            class="copy"
-                                            copy-value={`${
-                                                anime?.season || ""
-                                            }${
-                                                anime?.year
-                                                    ? " " + anime.year
-                                                    : ""
-                                            }` || ""}
+                                {/if}
+                                {#if anime?.season || anime?.year}
+                                    <div>
+                                        <div class="info-categ">
+                                            Season Year
+                                        </div>
+                                        <div
+                                            class={"season-year-popup info" +
+                                                ($hasWheel ? " hasWheel" : "")}
+                                            on:wheel={(e) =>
+                                                horizontalWheel(e, "info")}
                                         >
-                                            {`${anime?.season || ""}${
-                                                anime?.year
-                                                    ? " " + anime.year
-                                                    : ""
-                                            }` || "N/A"}
-                                        </span>
+                                            <span
+                                                class="copy"
+                                                copy-value={`${
+                                                    anime?.season || ""
+                                                }${
+                                                    anime?.year
+                                                        ? " " + anime.year
+                                                        : ""
+                                                }` || ""}
+                                            >
+                                                {`${anime?.season || ""}${
+                                                    anime?.year
+                                                        ? " " + anime.year
+                                                        : ""
+                                                }` || "N/A"}
+                                            </span>
+                                        </div>
                                     </div>
-                                </div>
-                                <div>
-                                    <div class="info-categ">Average Score</div>
-                                    <div class="average-score-popup info">
-                                        <span
-                                            class="copy"
-                                            copy-value={anime.averageScore ??
-                                                ""}
+                                {/if}
+                                {#if anime.averageScore != null}
+                                    <div>
+                                        <div class="info-categ">
+                                            Average Score
+                                        </div>
+                                        <div
+                                            class={"average-score-popup info" +
+                                                ($hasWheel ? " hasWheel" : "")}
+                                            on:wheel={(e) =>
+                                                horizontalWheel(e, "info")}
                                         >
-                                            {anime.averageScore ?? "N/A"}
-                                        </span>
+                                            <span
+                                                class="copy"
+                                                copy-value={anime.averageScore ??
+                                                    ""}
+                                            >
+                                                {anime.averageScore ?? "N/A"}
+                                            </span>
+                                        </div>
                                     </div>
-                                </div>
-                                <div>
-                                    <div class="info-categ">Popularity</div>
-                                    <div class="popularity-popup info">
-                                        <span
-                                            class="copy"
-                                            copy-value={anime.popularity ?? ""}
+                                {/if}
+                                {#if anime.popularity != null}
+                                    <div>
+                                        <div class="info-categ">Popularity</div>
+                                        <div
+                                            class={"popularity-popup info" +
+                                                ($hasWheel ? " hasWheel" : "")}
+                                            on:wheel={(e) =>
+                                                horizontalWheel(e, "info")}
                                         >
-                                            {anime.popularity || "N/A"}
-                                        </span>
+                                            <span
+                                                class="copy"
+                                                copy-value={anime.popularity ??
+                                                    ""}
+                                            >
+                                                {anime.popularity || "N/A"}
+                                            </span>
+                                        </div>
                                     </div>
-                                </div>
+                                {/if}
                             </div>
                             <div class="footer">
                                 <button
@@ -1805,18 +1977,78 @@
         overflow-x: auto;
         white-space: nowrap;
         align-items: center;
-        display: flex;
+        display: grid;
+        grid-template-columns: calc(100% - 26px - 1em) 2em;
+        grid-column-gap: 1em;
+        padding-right: 1px;
     }
 
     .anime-title-container::-webkit-scrollbar {
         display: none;
     }
 
+    .anime-title-container i {
+        font-size: 2em;
+        cursor: pointer;
+    }
+
+    .anime-description-container {
+        position: absolute;
+        background: linear-gradient( to bottom, rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.34) );
+        width: 100%;
+        height: 100%;
+        font-size: 1.5rem;
+        color: #fff;
+        transition: opacity 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .anime-description-container.fade-out {
+        animation: fadeOut 0.3s ease forwards;
+        opacity: 0;
+    }
+    .anime-description-container.fade-in {
+        animation: fadeIn 0.3s ease forwards;
+        opacity: 1;
+    }
+
+    .anime-description {
+        margin: 1em;
+        width: calc(100% - 2em);
+        height: calc(100% - 2em);
+        max-height: 240px;
+        max-width: 580px;
+        overflow: auto;
+        letter-spacing: 0.05rem;
+        line-height: 2.5rem;
+    }
+
+    :global(.anime-description *) {
+        font-size: 1.5rem !important;
+    }
+    :global(.anime-description a) {
+        color: rgb(0 168 255) !important;
+        text-decoration: none !important;
+    }
+
+    .anime-description::-webkit-scrollbar {
+        display: none;
+    }
+
     .anime-title {
-        padding: 0.5em;
+        margin: 0 0 0 0.2em;
+        padding: 0.5em 0.3em 0.5em 0.3em;
         border-radius: 6px;
         cursor: pointer;
         font-size: clamp(1.6309rem, 1.76545rem, 1.9rem);
+        overflow-x: auto;
+        overflow-y: hidden;
+        width: min-content;
+    }
+
+    .anime-title::-webkit-scrollbar {
+        display: none;
     }
 
     .anime-title:hover {
@@ -1878,13 +2110,6 @@
         max-height: unset !important;
     }
 
-    .info-list.seenmore .info {
-        max-height: 88px !important;
-        overflow-y: auto !important;
-        overflow-x: hidden !important;
-        flex-wrap: wrap;
-    }
-
     @media screen and (max-width: 425px) {
         .info-list {
             max-height: max(
@@ -1899,9 +2124,6 @@
             ) !important;
             grid-template-columns: 100% !important;
         }
-        .info-list.seenmore .info {
-            width: calc(100% - 48px) !important;
-        }
     }
 
     .info-list-wrapper,
@@ -1914,25 +2136,6 @@
         font-size: clamp(1.0631rem, 1.15155rem, 1.24rem);
         font-weight: 500;
         user-select: none !important;
-    }
-
-    @media (pointer: fine) {
-        .info {
-            font-size: clamp(1.018rem, 1.099rem, 1.18rem);
-            text-transform: capitalize;
-            max-height: 30px;
-            overflow-y: auto !important;
-            overflow-x: hidden !important;
-            flex-wrap: wrap !important;
-            display: flex;
-            gap: 8px;
-            width: 100%;
-            scroll-snap-type: y mandatory !important;
-        }
-
-        .info > span {
-            scroll-snap-align: start !important;
-        }
     }
 
     .info {
@@ -1965,12 +2168,8 @@
         display: none;
     }
 
-    .info-list.seenmore .info span {
-        overflow-x: auto !important;
-    }
-
     .popup-controls {
-        background: #000 !important;
+        background: #0b1622 !important;
         display: flex;
         padding: 5px 2.4em;
         user-select: none;

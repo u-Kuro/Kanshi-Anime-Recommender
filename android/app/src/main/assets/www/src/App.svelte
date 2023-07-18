@@ -43,6 +43,7 @@
 		animeOptionVisible,
 		runIsScrolling,
 		confirmPromise,
+		hasWheel,
 		// anilistAccessToken,
 	} from "./js/globalValues.js";
 	import {
@@ -445,8 +446,9 @@
 		if (typeof val !== "boolean" || $initData) return;
 		if (
 			($popupVisible ||
-				($gridFullView ? animeGridEl.scrollTop : window.scrollY) >
-					animeGridEl?.offsetTop - 55) &&
+				($gridFullView
+					? animeGridEl.scrollLeft > 500
+					: window.scrollY > animeGridEl?.offsetTop - 55)) &&
 			$finalAnimeList?.length
 		) {
 			$listUpdateAvailable = true;
@@ -611,6 +613,11 @@
 	if ("scrollRestoration" in window.history) {
 		window.history.scrollRestoration = "manual"; // Disable scrolling to top when navigating back
 	}
+	let windowWheel = () => {
+		$hasWheel = true;
+		window.removeEventListener("wheel", windowWheel);
+	};
+	window.addEventListener("wheel", windowWheel);
 	window.checkEntries = () => {
 		if ($initData) return;
 		if (!$userRequestIsRunning) {
@@ -652,7 +659,9 @@
 				window.closeDropdown?.();
 				return;
 			} else if (
-				($gridFullView ? animeGridEl.scrollTop : window.scrollY) > 200
+				$gridFullView
+					? animeGridEl.scrollLeft > 500
+					: window.scrollY > 200
 			) {
 				if ($gridFullView) {
 					animeGridEl.scrollTop = animeGridEl.scrollTop;
@@ -660,7 +669,8 @@
 					animeGridEl?.children?.[0]?.scrollIntoView?.({
 						container: animeGridEl,
 						behavior: "smooth",
-						block: "center",
+						block: "nearest",
+						inline: "start",
 					});
 				} else {
 					window.scrollY = window.scrollY;
@@ -676,7 +686,8 @@
 					animeGridEl?.children?.[0]?.scrollIntoView?.({
 						container: animeGridEl,
 						behavior: "smooth",
-						block: "center",
+						block: "nearest",
+						inline: "start",
 					});
 				} else {
 					window.scrollY = window.scrollY;
@@ -690,7 +701,7 @@
 	gridFullView.subscribe(async (val) => {
 		await tick();
 		if (val) {
-			if (animeGridEl?.scrollTop > 200) {
+			if (animeGridEl?.scrollLeft > 500) {
 				window.setShouldGoBack(false);
 			}
 		} else {
@@ -715,7 +726,7 @@
 		animeGridEl = document.getElementById("anime-grid");
 		animeGridEl?.addEventListener("scroll", () => {
 			if (!$gridFullView) return;
-			if (animeGridEl.scrollTop !== 0) window.setShouldGoBack(false);
+			if (animeGridEl.scrollLeft !== 0) window.setShouldGoBack(false);
 			runIsScrolling.update((e) => !e);
 		});
 		document
@@ -941,8 +952,10 @@
 		cancelLabel={_cancelLabel}
 	/>
 	{#if $listUpdateAvailable}
+		<!-- svelte-ignore a11y-no-noninteractive-tabindex -->
 		<div
 			class="list-update-container"
+			tabindex="0"
 			on:click={updateList}
 			on:keydown={(e) => e.key === "Enter" && updateList(e)}
 			transition:fly={{ x: 50, duration: 300 }}
@@ -995,7 +1008,7 @@
 
 	@media screen and (max-width: 425px) {
 		.home {
-			padding: 0 1.5em;
+			padding: 0 1em;
 		}
 		.list-update-container {
 			border-radius: 50%;

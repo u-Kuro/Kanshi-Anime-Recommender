@@ -20,14 +20,16 @@
         gridFullView,
     } from "../../js/globalValues.js";
     import {
+        addClass,
         formatNumber,
         isJsonObject,
         ncsCompare,
         removeClass,
     } from "../../js/others/helper.js";
+    import { fly } from "svelte/transition";
 
     let windowHeight = window.visualViewport.height;
-    let date;
+    let date = new Date();
     let animeGridEl;
     let isRunningIntersectEvent;
     let observerDelay = 1000,
@@ -160,7 +162,6 @@
                         $animeIdxRemoved = removedIdx;
                     }
                 }
-                loadingMore = false;
             };
             val.onerror = (error) => {
                 $dataStatus = "Something went wrong...";
@@ -198,6 +199,7 @@
                 $asyncAnimeReloaded = !$asyncAnimeReloaded;
                 isAsyncLoad = false;
             }
+            loadingMore = false;
         } else {
             if ($animeObserver) {
                 $animeObserver?.disconnect?.();
@@ -207,6 +209,7 @@
                 $asyncAnimeReloaded = !$asyncAnimeReloaded;
                 isAsyncLoad = false;
             }
+            loadingMore = false;
         }
     });
 
@@ -229,7 +232,10 @@
     }
 
     let openOptionTimeout;
-    function handleOpenOption(animeIdx) {
+    function handleOpenOption(event, animeIdx) {
+        let element = event.target;
+        let classList = element.classList;
+        if (classList.contains("copy") || element.closest(".copy")) return;
         if (openOptionTimeout) clearTimeout(openOptionTimeout);
         openOptionTimeout = setTimeout(() => {
             $openedAnimeOptionIdx = animeIdx;
@@ -369,6 +375,28 @@
         }
         return "";
     }
+    function horizontalWheel(event, parentClass) {
+        let element = event.target;
+        let classList = element.classList;
+        if (!classList.contains(parentClass)) {
+            element = element.closest("." + parentClass);
+        }
+        if (element.scrollWidth <= element.clientWidth) return;
+        if (event.deltaY !== 0 && event.deltaX === 0) {
+            event.preventDefault();
+            element.scrollLeft = Math.max(0, element.scrollLeft + event.deltaY);
+        }
+    }
+    function goBackGrid() {
+        animeGridEl.scrollTop = animeGridEl.scrollTop;
+        animeGridEl.scrollLeft = animeGridEl.scrollLeft;
+        animeGridEl?.children?.[0]?.scrollIntoView?.({
+            container: animeGridEl,
+            behavior: "smooth",
+            block: "nearest",
+            inline: "start",
+        });
+    }
 </script>
 
 <main>
@@ -376,6 +404,7 @@
         id="anime-grid"
         class={"image-grid " + ($gridFullView ? "fullView" : "")}
         bind:this={animeGridEl}
+        on:wheel={(e) => $gridFullView && horizontalWheel(e, "image-grid")}
         style:--anime-grid-height={windowHeight + "px"}
     >
         {#if $finalAnimeList?.length}
@@ -385,72 +414,85 @@
                     bind:this={anime.gridElement}
                     title={getBriefInfo(anime)}
                 >
-                    <div class="shimmer">
-                        <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
+                    <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
+                    <div
+                        class="shimmer"
+                        tabindex={$popupVisible ? "" : "0"}
+                        on:click={handleOpenPopup(animeIdx)}
+                        on:pointerdown={(e) => handleOpenOption(e, animeIdx)}
+                        on:pointerup={cancelOpenOption}
+                        on:pointercancel={cancelOpenOption}
+                        on:keydown={(e) =>
+                            e.key === "Enter" && handleOpenPopup(animeIdx)}
+                    >
                         <img
                             loading="lazy"
-                            class="image-grid__card-thumb fade-out"
+                            class={"image-grid__card-thumb fade-out"}
                             alt="anime-cover"
-                            tabindex={$popupVisible ? "" : "0"}
                             src={anime.coverImageUrl || ""}
-                            on:load={(e) => removeClass(e.target, "fade-out")}
-                            on:click={handleOpenPopup(animeIdx)}
-                            on:pointerdown={handleOpenOption(animeIdx)}
-                            on:pointerup={cancelOpenOption}
-                            on:pointercancel={cancelOpenOption}
-                            on:keydown={(e) =>
-                                e.key === "Enter" && handleOpenPopup(animeIdx)}
+                            on:load={(e) => {
+                                removeClass(e.target, "fade-out");
+                                addClass(
+                                    e.target?.closest?.(".shimmer"),
+                                    "loaded"
+                                );
+                            }}
                         />
-                    </div>
-                    <span
-                        class="image-grid__card-title copy"
-                        copy-value={anime.title || ""}
-                    >
-                        <span class="title">{anime.title || "N/A"}</span>
-                        <span class="brief-info-wrapper">
-                            <div class="brief-info">
-                                <span>
-                                    <i
-                                        class={`${getUserStatusColor(
-                                            anime.userStatus
-                                        )}-color fa-solid fa-circle`}
-                                    />
-                                    {#if isJsonObject(anime?.nextAiringEpisode)}
-                                        {#key date.getSeconds()}
-                                            {`${
-                                                anime.format || "N/A"
-                                            }${getFinishedEpisode(
-                                                anime.episodes,
-                                                anime.nextAiringEpisode
-                                            )}
+                        <span class="image-grid__card-title">
+                            <span
+                                class="title copy"
+                                copy-value={anime?.title?.userPreferred || ""}
+                                >{anime?.title?.userPreferred || "N/A"}</span
+                            >
+                            <span
+                                class="brief-info-wrapper copy"
+                                copy-value={anime?.title?.userPreferred || ""}
+                            >
+                                <div class="brief-info">
+                                    <span>
+                                        <i
+                                            class={`${getUserStatusColor(
+                                                anime.userStatus
+                                            )}-color fa-solid fa-circle`}
+                                        />
+                                        {#if isJsonObject(anime?.nextAiringEpisode)}
+                                            {#key date.getSeconds()}
+                                                {`${
+                                                    anime.format || "N/A"
+                                                }${getFinishedEpisode(
+                                                    anime.episodes,
+                                                    anime.nextAiringEpisode
+                                                )}
                                         `}
-                                        {/key}
-                                    {:else}
-                                        {`${anime.format || "N/A"}${
-                                            anime.episodes
-                                                ? "(" + anime.episodes + ")"
-                                                : ""
-                                        }`}
-                                    {/if}
-                                </span>
-                            </div>
-                            <div class="brief-info">
-                                <span>
-                                    <i
-                                        class={`${getCautionColor(
-                                            anime
-                                        )}-color fa-solid fa-star`}
-                                    />
-                                    {#if $filterOptions}
-                                        {getShownScore(anime) || "N/A"}
-                                    {:else}
-                                        {formatNumber(anime.weightedScore) ||
-                                            "N/A"}
-                                    {/if}
-                                </span>
-                            </div>
+                                            {/key}
+                                        {:else}
+                                            {`${anime.format || "N/A"}${
+                                                anime.episodes
+                                                    ? "(" + anime.episodes + ")"
+                                                    : ""
+                                            }`}
+                                        {/if}
+                                    </span>
+                                </div>
+                                <div class="brief-info">
+                                    <span>
+                                        <i
+                                            class={`${getCautionColor(
+                                                anime
+                                            )}-color fa-solid fa-star`}
+                                        />
+                                        {#if $filterOptions}
+                                            {getShownScore(anime) || "N/A"}
+                                        {:else}
+                                            {formatNumber(
+                                                anime.weightedScore
+                                            ) || "N/A"}
+                                        {/if}
+                                    </span>
+                                </div>
+                            </span>
                         </span>
-                    </span>
+                    </div>
                 </div>
             {/each}
             {#each Array(6) as _}
@@ -463,33 +505,42 @@
                             : "disable-interaction")}
                 >
                     <div class="shimmer" />
-                    <span class="image-grid__card-title">
-                        <span class="title skeleton shimmer" />
-                        <span class="brief-info skeleton shimmer" />
-                    </span>
                 </div>
             {/each}
         {:else if !$finalAnimeList || $initData}
-            {#each Array(10) as _}
+            {#each Array(15) as _}
                 <div class="image-grid__card skeleton">
                     <div class="shimmer" />
-                    <span class="image-grid__card-title">
-                        <span class="title skeleton shimmer" />
-                        <span class="brief-info skeleton shimmer" />
-                    </span>
                 </div>
             {/each}
         {:else}
             <div class="empty">No Results</div>
         {/if}
     </div>
+    {#if $gridFullView && animeGridEl?.scrollLeft > 500}
+        <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
+        <div
+            class="go-back-grid"
+            tabindex="0"
+            on:click={goBackGrid}
+            on:keydown={(e) => e.key === "Enter" && goBackGrid(e)}
+            transition:fly={{ x: -50, duration: 300 }}
+        >
+            <i class="fa-solid fa-arrow-left" />
+        </div>
+    {/if}
 </main>
 
 <style>
+    .n {
+        z-index: unset;
+    }
     main {
         width: 100%;
         height: 100%;
         padding: 2em 0;
+        position: relative;
+        overflow-x: hidden;
     }
 
     .skeleton {
@@ -541,18 +592,33 @@
         display: grid;
         justify-content: space-between;
         align-items: flex-start;
-        grid-column-gap: 0.8rem;
-        grid-row-gap: 1em;
+        grid-gap: 1rem;
         grid-template-columns: repeat(
-            auto-fit,
-            minmax(min(100%/2 - 0.8rem, 180px), 0)
+            auto-fill,
+            minmax(min(100%/2 - 1rem, 180px), 0)
         );
     }
 
+    @media screen and (max-width: 250px) {
+        .image-grid {
+            grid-template-columns: repeat(
+                auto-fill,
+                minmax(min(100% - 1rem, 180px), 0)
+            );
+        }
+    }
+
     .image-grid.fullView {
-        height: max(calc(var(--anime-grid-height) - 55px - 230px), 312px);
-        overflow-y: auto;
-        overflow-x: hidden;
+        display: flex;
+        flex-wrap: wrap;
+        flex-direction: column;
+        justify-content: start;
+        height: max(
+            calc(var(--anime-grid-height) - 55px - 230px),
+            calc(210px * 2 + 1em)
+        );
+        overflow-y: hidden;
+        overflow-x: auto;
     }
 
     .image-grid::-webkit-scrollbar {
@@ -564,7 +630,7 @@
         width: 100%;
         height: var(--popup-content-height);
         display: grid;
-        grid-template-rows: auto 57px;
+        grid-template-rows: auto;
         grid-template-columns: 100%;
     }
     :global(.image-grid__card.hidden > .shimmer),
@@ -572,6 +638,10 @@
         display: none;
     }
 
+    .image-grid.fullView .image-grid__card {
+        width: 150px;
+        height: 210px;
+    }
     .image-grid__card > .shimmer {
         position: relative;
         padding-bottom: calc(181 / 128 * 100%);
@@ -579,15 +649,20 @@
         border-radius: 0.25em;
     }
 
+    .image-grid.fullView .image-grid__card > .shimmer {
+        padding-bottom: unset !important;
+        /* padding-right: 150px; */
+    }
+
     .image-grid__card-thumb {
         position: absolute;
         background: rgba(30, 42, 56, 0.8);
         border-radius: 0.25em;
         display: block;
-        will-change: transform, opacity;
+        will-change: opacity;
         cursor: pointer;
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
-        transition: transform opacity 0.3s ease;
+        transition: opacity 0.3s ease;
         object-fit: cover;
         width: 100%;
         height: 100%;
@@ -607,10 +682,23 @@
     }
 
     .image-grid__card-title {
-        padding: clamp(0.1em, 0.3em, 0.5em);
-        font-size: clamp(1.2rem, 1.3rem, 1.4rem);
-        background-color: transparent;
-        height: 57px;
+        padding: 50% 4px 4px;
+        font-size: clamp(1.1rem, 1.2rem, 1.4rem);
+        position: absolute;
+        bottom: 0;
+        background: linear-gradient(
+            to top,
+            rgba(0, 0, 0, 0.75),
+            rgba(0, 0, 0, 0)
+        );
+        color: white;
+        width: 100%;
+        max-height: 100%;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+    .image-grid__card-title::-webkit-scrollbar {
+        display: none;
     }
 
     .brief-info,
@@ -641,6 +729,25 @@
         font-size: 10px;
     }
 
+    .go-back-grid {
+        position: absolute;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 6px;
+        background-color: rgba(0, 0, 0, 1);
+        padding: 0.5em 0.625em;
+        cursor: pointer;
+        top: 10px;
+        left: 6px;
+        transform: translateY(50%);
+        border-radius: 50%;
+    }
+
+    .go-back-grid i {
+        font-size: 2em;
+    }
+
     .empty {
         font-size: 2rem;
         font-weight: 700;
@@ -648,11 +755,16 @@
         padding: 30px;
         text-align: center;
         grid-column: 1 / -1;
+        margin: 0 auto;
     }
 
     .shimmer {
         position: relative;
         overflow: hidden;
+    }
+
+    .shimmer.loaded::before {
+        content: unset !important;
     }
 
     .shimmer::before {

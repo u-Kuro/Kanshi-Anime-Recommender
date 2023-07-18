@@ -419,7 +419,7 @@
     }
     @media screen and (max-width: 425px) {
         .menu {
-            padding: 1.5em;
+            padding: 1em;
         }
         .button {
             flex: none;

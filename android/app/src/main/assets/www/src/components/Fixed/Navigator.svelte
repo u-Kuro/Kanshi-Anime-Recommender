@@ -17,7 +17,7 @@
     let writableSubscriptions = [];
     let typedUsername = "";
     let windowScrollY = window.scrollY;
-    let animeGrid,
+    let animeGridEl,
         popupContainer,
         navEl,
         inputUsernameEl,
@@ -27,7 +27,7 @@
         navEl = navEl || document?.getElementById("nav");
         inputUsernameEl =
             inputUsernameEl || document?.getElementById("usernameInput");
-        animeGrid = animeGrid || document?.getElementById("anime-grid");
+        animeGridEl = animeGridEl || document?.getElementById("anime-grid");
         popupContainer =
             popupContainer || document?.getElementById("popup-container");
         writableSubscriptions.push(
@@ -213,16 +213,18 @@
                 popupContainer?.children?.[0]?.scrollIntoView?.({
                     container: popupContainer,
                     behavior: "smooth",
-                    block: "center",
+                    block: "start",
+                    inline: "nearest",
                 });
             } else {
                 if ($gridFullView) {
-                    animeGrid.scrollTop = animeGrid.scrollTop;
-                    animeGrid.scrollLeft = animeGrid.scrollLeft;
-                    animeGrid?.children?.[0]?.scrollIntoView?.({
-                        container: animeGrid,
+                    animeGridEl.scrollTop = animeGridEl.scrollTop;
+                    animeGridEl.scrollLeft = animeGridEl.scrollLeft;
+                    animeGridEl?.children?.[0]?.scrollIntoView?.({
+                        container: animeGridEl,
                         behavior: "smooth",
-                        block: "center",
+                        block: "nearest",
+                        inline: "start",
                     });
                 } else {
                     window.scrollY = window.scrollY;
@@ -468,7 +470,7 @@
     }
     @media screen and (max-width: 750px) {
         .nav.popupvisible {
-            padding: 0 1.5em;
+            padding: 0 1em;
             max-width: 640px;
         }
         .nav.popupvisible {
@@ -497,7 +499,7 @@
     }
     @media screen and (max-width: 425px) {
         .nav {
-            padding: 0 1.5em;
+            padding: 0 1em;
         }
     }
 </style>

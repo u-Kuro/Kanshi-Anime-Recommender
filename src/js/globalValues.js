@@ -1,9 +1,10 @@
 import { writable } from "svelte/store";
 
-const appID = writable(34)
+const appID = writable(35)
 const android = writable(null)
 const inApp = writable(true)
 // const anilistAccessToken = writable(null)
+const hasWheel = writable(false)
 const lastAnimeUpdate = writable(null)
 
 const username = writable(null)
@@ -61,6 +62,7 @@ export {
     appID,
     android,
     inApp,
+    hasWheel,
     // anilistAccessToken,
     lastAnimeUpdate,
     username,

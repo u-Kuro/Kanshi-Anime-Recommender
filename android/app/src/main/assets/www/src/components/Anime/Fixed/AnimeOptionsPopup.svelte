@@ -28,7 +28,7 @@
             }, 500);
             let openedAnime = $finalAnimeList[$openedAnimeOptionIdx];
             if (openedAnime) {
-                animeTitle = openedAnime.title;
+                animeTitle = openedAnime?.title?.userPreferred;
                 animeID = openedAnime.id;
                 animeUrl = openedAnime.animeUrl;
                 animeIdx = $openedAnimeOptionIdx;

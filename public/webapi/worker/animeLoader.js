@@ -16,7 +16,18 @@ self.onmessage = async ({ data }) => {
         filteredList = finalAnimeList.slice(loadLimit)
     } else if (data?.filterKeyword !== undefined) {
         keyword = data?.filterKeyword
-        filteredList = finalAnimeList.filter(({ title }) => title?.toLowerCase?.().includes(keyword?.trim()?.toLowerCase?.()) || !keyword)
+        if (!keyword) {
+            filteredList = finalAnimeList
+        } else {
+            filteredList = finalAnimeList.filter(({ title }) => {
+                if (isJsonObject(title)) {
+                    let titles = Object.values(title)
+                    return titles.some((_title) => _title?.toLowerCase?.().includes(keyword?.trim()?.toLowerCase?.()))
+                } else {
+                    return title?.toLowerCase?.().includes(keyword?.trim()?.toLowerCase?.())
+                }
+            })
+        }
         self.postMessage({
             isNew: true,
             finalAnimeList: filteredList.slice(0, loadLimit)

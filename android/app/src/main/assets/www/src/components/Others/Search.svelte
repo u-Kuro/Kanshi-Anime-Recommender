@@ -15,7 +15,8 @@
         confirmPromise,
         asyncAnimeReloaded,
         checkAnimeLoaderStatus,
-        gridFullView
+        gridFullView,
+        hasWheel,
     } from "../../js/globalValues.js";
     import { fade, fly } from "svelte/transition";
     import {
@@ -115,7 +116,7 @@
             // Close Filter Dropdown
             selectedSortElement = false;
             // Reload Anime for Async Animation
-            if ($finalAnimeList?.length > 36) {
+            if ($finalAnimeList?.length > 36 && !$gridFullView) {
                 await callAsyncAnimeReload();
             }
             // Close Filter Selection Dropdown
@@ -1126,52 +1127,30 @@
         }
     }
 
-    let originalGridView
     async function handleGridView() {
-        if (!$gridFullView) {
-            if(showFilterOptions){
-                await handleShowFilterOptions(false)
-            }
-            if(showAllActiveFilters){
-                await handleShowActiveFilters(false)
-            }
-        }
-        originalGridView = $gridFullView = !$gridFullView
-        saveIDBdata(originalGridView, "gridFullView");
+        $gridFullView = !$gridFullView;
+        saveIDBdata($gridFullView, "gridFullView");
     }
-    gridFullView.subscribe((val)=>{
-        if(typeof originalGridView!=="boolean") {
-            originalGridView = val
-        }
-    })
 
-    async function handleShowFilterOptions(val=null) {
-        if ($finalAnimeList?.length > 36) {
+    async function handleShowFilterOptions(val = null) {
+        if ($finalAnimeList?.length > 36 && !$gridFullView) {
             await callAsyncAnimeReload();
         }
-        $gridFullView = false
-        if(typeof val==="boolean") {
+        if (typeof val === "boolean") {
             showFilterOptions = val;
         } else {
             showFilterOptions = !showFilterOptions;
-            if(originalGridView && !showFilterOptions && !showAllActiveFilters){
-                $gridFullView = true
-            }
         }
     }
 
-    async function handleShowActiveFilters(val=null) {
-        if ($finalAnimeList?.length > 36) {
+    async function handleShowActiveFilters(val = null) {
+        if ($finalAnimeList?.length > 36 && !$gridFullView) {
             await callAsyncAnimeReload();
         }
-        $gridFullView = false
-        if(typeof val==="boolean") {
-            showAllActiveFilters = val
+        if (typeof val === "boolean") {
+            showAllActiveFilters = val;
         } else {
             showAllActiveFilters = !showAllActiveFilters;
-            if(originalGridView && !showFilterOptions && !showAllActiveFilters){
-                $gridFullView = true
-            }
         }
         scrollToFirstTagFilter();
     }
@@ -1252,10 +1231,36 @@
         });
     }
 
+    function horizontalWheel(event, parentClass) {
+        let element = event.target;
+        let classList = element.classList;
+        if (!classList.contains(parentClass)) {
+            element = element.closest("." + parentClass);
+        }
+        if (element.scrollWidth <= element.clientWidth) return;
+        if (event.deltaY !== 0 && event.deltaX === 0) {
+            event.preventDefault();
+            element.scrollLeft = Math.max(0, element.scrollLeft + event.deltaY);
+        }
+    }
+
     // Helper
 </script>
 
-<main style:--filters-space={showFilterOptions ? "80px" : ""}>
+<main
+    style:--filters-space={showFilterOptions ? "80px" : ""}
+    style:--active-filter-space={(
+        $activeTagFilters?.[
+            $filterOptions?.filterSelection?.[
+                $filterOptions?.filterSelection?.findIndex(
+                    ({ isSelected }) => isSelected
+                )
+            ]?.filterSelectionName
+        ] || []
+    ).length
+        ? "auto"
+        : ""}
+>
     <div class="home-status">
         {#if $filterOptions}
             <span>
@@ -1358,8 +1363,8 @@
         <div>
             <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
             <i
-                class={"showFilterOptions fa-solid fa-eye" +
-                    (showFilterOptions ? "-slash" : "")}
+                class={"showFilterOptions fa-solid fa-square-caret" +
+                    (showFilterOptions ? "-up" : "-down")}
                 tabindex="0"
                 on:click={handleShowFilterOptions}
                 on:keydown={(e) =>
@@ -1368,9 +1373,12 @@
         </div>
     </div>
     <div
-        class={"filters " + (showFilterOptions ? "" : "disable-interaction")}
+        class={"filters " +
+            (showFilterOptions ? "" : "disable-interaction") +
+            ($hasWheel ? " hasWheel" : "")}
         id="filters"
-        style:--maxPaddingHeight="{windowHeight}px"
+        on:wheel={(e) => horizontalWheel(e, "filters")}
+        style:--maxPaddingHeight={maxFilterSelectionHeight + 65 + "px"}
     >
         {#if $filterOptions}
             {#each $filterOptions?.filterSelection || [] as filterSelection, filSelIdx (filterSelection.filterSelectionName)}
@@ -1434,6 +1442,7 @@
                                     ? ""
                                     : "disable-interaction hide")}
                             style:--maxFilterSelectionHeight="{maxFilterSelectionHeight}px"
+                            on:wheel|stopPropagation={() => {}}
                         >
                             <div
                                 class={"options-wrap-filter-info " +
@@ -1474,7 +1483,10 @@
                                         !filterSelection.isSelected ||
                                         !Dropdown.selected}
                                 />
-                                <div class="options">
+                                <div
+                                    class="options"
+                                    on:wheel|stopPropagation={() => {}}
+                                >
                                     {#if Dropdown.options?.filter?.(({ optionName }) => hasPartialMatch(optionName, Dropdown.optKeyword) || Dropdown.optKeyword === "")?.length}
                                         {#each Dropdown.options || [] as option, optionIdx (filterSelection.filterSelectionName + Dropdown.filName + option.optionName)}
                                             <div
@@ -1646,7 +1658,7 @@
     </div>
     <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
     <div
-        class="activeFilters"
+        class={"activeFilters" + (showAllActiveFilters ? " seenMore" : "")}
         style:display={(
             $activeTagFilters?.[
                 $filterOptions?.filterSelection?.[
@@ -1659,30 +1671,54 @@
             ? ""
             : "none"}
     >
-        <div
-            tabindex="0"
-            class="empty-tagFilter"
-            style:display={$activeTagFilters ? "" : "none"}
-            title="Remove Filters"
-            on:click={removeAllActiveTag}
-            on:keydown={(e) => e.key === "Enter" && removeAllActiveTag(e)}
-            style:visibility={$activeTagFilters?.[
-                $filterOptions?.filterSelection?.[
-                    $filterOptions?.filterSelection?.findIndex(
-                        ({ isSelected }) => isSelected
-                    )
-                ]?.filterSelectionName
-            ]?.length
-                ? "visible"
-                : "hidden"}
-        >
-            <i class="fa-solid fa-ban" />
-        </div>
+        {#if !showAllActiveFilters}
+            <div
+                tabindex="0"
+                class="empty-tagFilter"
+                style:display={$activeTagFilters ? "" : "none"}
+                title="Remove Filters"
+                on:click={removeAllActiveTag}
+                on:keydown={(e) => e.key === "Enter" && removeAllActiveTag(e)}
+                style:visibility={$activeTagFilters?.[
+                    $filterOptions?.filterSelection?.[
+                        $filterOptions?.filterSelection?.findIndex(
+                            ({ isSelected }) => isSelected
+                        )
+                    ]?.filterSelectionName
+                ]?.length
+                    ? "visible"
+                    : "hidden"}
+            >
+                <i class="fa-solid fa-ban" />
+            </div>
+        {/if}
         <div
             id="tagFilters"
             class="tagFilters"
             style:max-height={showAllActiveFilters ? "200px" : "28px"}
         >
+            {#if showAllActiveFilters}
+                <div
+                    tabindex="0"
+                    class="empty-tagFilter"
+                    style:display={$activeTagFilters ? "" : "none"}
+                    title="Remove Filters"
+                    on:click={removeAllActiveTag}
+                    on:keydown={(e) =>
+                        e.key === "Enter" && removeAllActiveTag(e)}
+                    style:visibility={$activeTagFilters?.[
+                        $filterOptions?.filterSelection?.[
+                            $filterOptions?.filterSelection?.findIndex(
+                                ({ isSelected }) => isSelected
+                            )
+                        ]?.filterSelectionName
+                    ]?.length
+                        ? "visible"
+                        : "hidden"}
+                >
+                    <i class="fa-solid fa-ban" />
+                </div>
+            {/if}
             {#each $activeTagFilters?.[$filterOptions?.filterSelection?.[$filterOptions?.filterSelection?.findIndex(({ isSelected }) => isSelected)]?.filterSelectionName] || [] as { optionName, optionIdx, selected, changeType, filterType, categIdx, optionValue, optionType } (optionName + optionIdx + (optionType ?? ""))}
                 <div
                     class="activeTagFilter"
@@ -1775,8 +1811,8 @@
                 on:keydown={(e) => e.key === "Enter" && handleGridView()}
             >
                 <i
-                    class={"icon fa-solid fa-" +
-                        ($gridFullView ? "maximize" : "minimize")}
+                    class={"icon fa-solid fa-arrows-" +
+                        ($gridFullView ? "up-down" : "left-right")}
                 />
             </div>
             <div class="sortFilter">
@@ -1819,11 +1855,13 @@
                             <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                             <div
                                 class="closing-x"
-                                tabindex={selectedSortElement && windowWidth <= 425
+                                tabindex={selectedSortElement &&
+                                windowWidth <= 425
                                     ? "0"
                                     : ""}
                                 on:keydown={(e) =>
-                                    e.key === "Enter" && handleSortFilterPopup(e)}
+                                    e.key === "Enter" &&
+                                    handleSortFilterPopup(e)}
                                 on:click={handleSortFilterPopup}
                             >
                                 ×
@@ -1835,7 +1873,8 @@
                                     class="option"
                                     on:click={changeSort(sortName)}
                                     on:keydown={(e) =>
-                                        e.key === "Enter" && changeSort(sortName)}
+                                        e.key === "Enter" &&
+                                        changeSort(sortName)}
                                 >
                                     <h3>{sortName || ""}</h3>
                                     {#if $filterOptions?.sortFilter?.[$filterOptions?.sortFilter?.findIndex(({ sortType }) => sortType !== "none")].sortName === sortName && sortName}
@@ -1879,8 +1918,12 @@
     }
 
     main {
+        --active-filter-space: ;
+        --filters-space: ;
         display: grid;
-        grid-template-rows: 20px 55px var(--filters-space) auto 37px auto;
+        grid-template-rows: 20px 55px var(--filters-space) var(
+                --active-filter-space
+            ) 37px auto;
         padding-top: 1.5em;
     }
 
@@ -2165,13 +2208,16 @@
 
     .activeFilters {
         display: grid;
-        align-items: top;
+        align-items: start;
         justify-content: space-between;
         gap: 15px;
         min-height: 28px;
         width: 100%;
         grid-template-columns: 28px calc(100% - 56px - 30px) 28px;
         margin-top: 2em;
+    }
+    .activeFilters.seenMore {
+        grid-template-columns: calc(100% - 43px) 28px;
     }
 
     .activeFilters .empty-tagFilter {
@@ -2191,7 +2237,6 @@
         align-items: center;
         justify-content: space-between;
         gap: 15px;
-        padding: 0px 6px;
         user-select: none;
         overflow-y: auto;
         scroll-snap-type: y mandatory;
@@ -2395,14 +2440,11 @@
     .filters > * {
         scroll-snap-align: start;
     }
-
-    @media (pointer: fine) {
-        .filters {
-            scroll-snap-type: none !important;
-        }
-        .filters > * {
-            scroll-snap-align: none !important;
-        }
+    .filters.hasWheel {
+        scroll-snap-type: none !important;
+    }
+    .filters.hasWheel > * {
+        scroll-snap-align: none !important;
     }
 
     .disable-interaction {
@@ -2418,6 +2460,9 @@
     }
 
     @media screen and (max-width: 425px) {
+        .filters {
+            padding-bottom: 0;
+        }
         .filter-select .select {
             cursor: pointer !important;
         }

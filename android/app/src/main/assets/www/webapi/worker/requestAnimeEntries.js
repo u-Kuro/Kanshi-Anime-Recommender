@@ -42,6 +42,8 @@ self.onmessage = async ({ data }) => {
                                 id
                                 updatedAt
                                 title {
+                                    romaji
+                                    english
                                     userPreferred
                                 }
                                 relations {
@@ -53,6 +55,7 @@ self.onmessage = async ({ data }) => {
                                         }
                                     }
                                 }
+                                description
                                 siteUrl
                                 averageScore
                                 episodes
@@ -281,6 +284,8 @@ self.onmessage = async ({ data }) => {
                                 id
                                 updatedAt
                                 title {
+                                    romaji
+                                    english
                                     userPreferred
                                 }
                                 relations {
@@ -292,6 +297,7 @@ self.onmessage = async ({ data }) => {
                                         }
                                     }
                                 }
+                                description
                                 siteUrl
                                 averageScore
                                 episodes
@@ -632,6 +638,8 @@ self.onmessage = async ({ data }) => {
                                 id
                                 updatedAt
                                 title {
+                                    romaji
+                                    english
                                     userPreferred
                                 }
                                 relations {
@@ -643,6 +651,7 @@ self.onmessage = async ({ data }) => {
                                         }
                                     }
                                 }
+                                description
                                 siteUrl
                                 averageScore
                                 episodes

@@ -654,7 +654,6 @@ self.onmessage = async ({ data }) => {
         }
         for (let i = 0; i < animeEntries.length; i++) {
             let anime = animeEntries[i];
-            let title = anime?.title?.userPreferred;
             let animeID = anime?.id;
             let animeUrl = anime?.siteUrl;
             let format = anime?.format;
@@ -1038,7 +1037,7 @@ self.onmessage = async ({ data }) => {
             maxScoreTest = Math.max(score, maxScoreTest)
             recommendedAnimeList[animeID] = {
                 id: animeID,
-                title: title,
+                title: anime?.title,
                 animeUrl: animeUrl,
                 userScore: userEntriesStatus?.userScore?.[animeID],
                 averageScore: averageScore,
@@ -1048,6 +1047,7 @@ self.onmessage = async ({ data }) => {
                 userStatus: formatCustomString(userStatus),
                 status: formatCustomString(status),
                 // Others
+                description: anime?.description,
                 genres: genres.map(e => formatCustomString(e)),
                 tags: tags.map(e => formatCustomString(e)),
                 year: year,
@@ -1126,7 +1126,6 @@ self.onmessage = async ({ data }) => {
         let maxScore
         for (let i = 0; i < animeEntries.length; i++) {
             let anime = animeEntries[i];
-            let title = anime?.title?.userPreferred;
             let animeID = anime?.id;
             let animeUrl = anime?.siteUrl;
             let format = anime?.format;
@@ -1310,7 +1309,7 @@ self.onmessage = async ({ data }) => {
                 , {});
             recommendedAnimeList[animeID] = {
                 id: animeID,
-                title: title,
+                title: anime?.title,
                 animeUrl: animeUrl,
                 userScore: userEntriesStatus?.userScore?.[animeID],
                 averageScore: averageScore,
@@ -1320,6 +1319,7 @@ self.onmessage = async ({ data }) => {
                 userStatus: "UNWATCHED",
                 status: formatCustomString(status),
                 // Others
+                description: anime?.description,
                 genres: genres.map(e => formatCustomString(e)),
                 tags: tags.map(e => formatCustomString(e)),
                 year: year,
