@@ -1859,6 +1859,7 @@
         padding-bottom: 56.25%;
         background: #000;
         user-select: none !important;
+        cursor: pointer;
     }
 
     .popup-header-loading {
@@ -1905,6 +1906,7 @@
         left: 0;
         width: 100%;
         height: 100%;
+        cursor: unset;
     }
 
     .popup-img {

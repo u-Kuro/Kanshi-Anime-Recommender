@@ -994,6 +994,7 @@
 		padding: 1em;
 		border-radius: 6px;
 		cursor: pointer;
+		user-select: none;
 	}
 	.list-update-icon {
 		color: white;
