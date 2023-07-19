@@ -18,6 +18,7 @@
         importantLoad,
         checkAnimeLoaderStatus,
         gridFullView,
+        numberOfNextLoadedGrid,
     } from "../../js/globalValues.js";
     import {
         addClass,
@@ -32,6 +33,7 @@
     let date = new Date();
     let animeGridEl;
     let isRunningIntersectEvent;
+    let numberOfLoadedGrid = 13;
     let observerDelay = 1000,
         loadingMore = false;
 
@@ -48,7 +50,7 @@
                         setTimeout(() => {
                             if ($animeLoaderWorker instanceof Worker) {
                                 $checkAnimeLoaderStatus().then(() => {
-                                    $animeLoaderWorker.postMessage({
+                                    $animeLoaderWorker?.postMessage?.({
                                         loadMore: true,
                                     });
                                 });
@@ -78,6 +80,7 @@
     });
 
     let animeLoaderIsAlivePromise,
+        checkAnimeLoaderStatusTimeout,
         isAsyncLoad = false;
 
     window.checkAnimeLoaderStatus = $checkAnimeLoaderStatus = async () => {
@@ -88,7 +91,8 @@
             return new Promise((resolve, reject) => {
                 animeLoaderIsAlivePromise = { resolve, reject };
                 $animeLoaderWorker?.postMessage?.({ checkStatus: true });
-                setTimeout(() => {
+                clearTimeout(checkAnimeLoaderStatusTimeout);
+                checkAnimeLoaderStatusTimeout = setTimeout(() => {
                     reject();
                 }, 1000);
             })
@@ -119,8 +123,10 @@
                     if (data?.reload === true) {
                         $finalAnimeList = data.finalAnimeList;
                         isAsyncLoad = true;
+                        $numberOfNextLoadedGrid = data.numberOfNextLoadedGrid;
                     } else if (data.isNew === true) {
                         $finalAnimeList = data.finalAnimeList;
+                        $numberOfNextLoadedGrid = data.numberOfNextLoadedGrid;
                     } else if (data.isNew === false) {
                         if ($finalAnimeList instanceof Array) {
                             $finalAnimeList = $finalAnimeList.concat(
@@ -137,6 +143,7 @@
                                 }
                             }
                         }
+                        $numberOfNextLoadedGrid = data.numberOfNextLoadedGrid;
                     }
                 } else if (
                     data.isRemoved === true &&
@@ -161,6 +168,7 @@
                     if (removedIdx >= 0) {
                         $animeIdxRemoved = removedIdx;
                     }
+                    $numberOfNextLoadedGrid = data.numberOfNextLoadedGrid;
                 }
             };
             val.onerror = (error) => {
@@ -201,6 +209,7 @@
             }
             loadingMore = false;
         } else {
+            $numberOfNextLoadedGrid = null;
             if ($animeObserver) {
                 $animeObserver?.disconnect?.();
                 $animeObserver = null;
@@ -218,7 +227,7 @@
             if ($animeLoaderWorker instanceof Worker) {
                 $shownAllInList = false;
                 $checkAnimeLoaderStatus().then(() => {
-                    $animeLoaderWorker.postMessage({
+                    $animeLoaderWorker?.postMessage?.({
                         filterKeyword: val,
                     });
                 });
@@ -399,7 +408,7 @@
     }
 </script>
 
-<main>
+<main class={$gridFullView ? "fullView" : ""}>
     <div
         id="anime-grid"
         class={"image-grid " + ($gridFullView ? "fullView" : "")}
@@ -495,7 +504,7 @@
                     </div>
                 </div>
             {/each}
-            {#each Array(6) as _}
+            {#each Array($numberOfNextLoadedGrid ?? numberOfLoadedGrid) as _}
                 <div
                     class={"image-grid__card skeleton anime-loaded-padding " +
                         ($finalAnimeList?.length &&
@@ -507,11 +516,17 @@
                     <div class="shimmer" />
                 </div>
             {/each}
+            {#each Array(5) as _}
+                <div class="image-grid__card" />
+            {/each}
         {:else if !$finalAnimeList || $initData}
-            {#each Array(15) as _}
+            {#each Array(numberOfLoadedGrid) as _}
                 <div class="image-grid__card skeleton">
                     <div class="shimmer" />
                 </div>
+            {/each}
+            {#each Array(5) as _}
+                <div class="image-grid__card" />
             {/each}
         {:else}
             <div class="empty">No Results</div>
@@ -532,15 +547,15 @@
 </main>
 
 <style>
-    .n {
-        z-index: unset;
-    }
     main {
         width: 100%;
         height: 100%;
         padding: 2em 0;
         position: relative;
         overflow-x: hidden;
+    }
+    main.fullView {
+        padding: 8px 0;
     }
 
     .skeleton {
@@ -612,11 +627,9 @@
         display: flex;
         flex-wrap: wrap;
         flex-direction: column;
-        justify-content: start;
-        height: max(
-            calc(var(--anime-grid-height) - 55px - 230px),
-            calc(210px * 2 + 1em)
-        );
+        justify-content: space-evenly;
+        align-content: flex-start;
+        height: max(calc(var(--anime-grid-height) - 265px), 210px);
         overflow-y: hidden;
         overflow-x: auto;
     }
@@ -632,6 +645,14 @@
         display: grid;
         grid-template-rows: auto;
         grid-template-columns: 100%;
+    }
+    .image-grid__card.fullView:empty {
+        height: 0px !important;
+        /* width: 0px !important; */
+    }
+    .image-grid__card:not(.fullView):empty {
+        /* height: 0px !important; */
+        width: 0px !important;
     }
     :global(.image-grid__card.hidden > .shimmer),
     :global(.image-grid__card.hidden > .image-grid__card-title) {
@@ -735,13 +756,20 @@
         justify-content: center;
         align-items: center;
         gap: 6px;
-        background-color: rgba(0, 0, 0, 1);
-        padding: 0.5em 0.625em;
+        background-color: rgb(21, 31, 46);
         cursor: pointer;
-        top: 10px;
-        left: 6px;
-        transform: translateY(50%);
+        top: 50%;
+        left: 8px;
+        transform: translateY(-50%);
         border-radius: 50%;
+        width: 44px;
+        height: 44px;
+    }
+
+    @media screen and (max-width: 425px) {
+        .go-back-grid {
+            left: 0;
+        }
     }
 
     .go-back-grid i {
@@ -792,7 +820,7 @@
         }
     }
 
-    @media screen and (max-width: 656px) {
+    @media screen and (max-width: 660px) {
         .image-grid {
             justify-content: space-evenly;
         }

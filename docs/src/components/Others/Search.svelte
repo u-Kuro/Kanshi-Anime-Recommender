@@ -1360,11 +1360,10 @@
                 {/if}
             </div>
         </div>
-        <div>
+        <div class="showFilterOptions-container">
             <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
             <i
-                class={"showFilterOptions fa-solid fa-square-caret" +
-                    (showFilterOptions ? "-up" : "-down")}
+                class={"showFilterOptions fa-solid fa-filter"}
                 tabindex="0"
                 on:click={handleShowFilterOptions}
                 on:keydown={(e) =>
@@ -1695,7 +1694,7 @@
         <div
             id="tagFilters"
             class="tagFilters"
-            style:max-height={showAllActiveFilters ? "200px" : "28px"}
+            style:max-height={showAllActiveFilters ? "200px" : "30px"}
         >
             {#if showAllActiveFilters}
                 <div
@@ -1921,9 +1920,9 @@
         --active-filter-space: ;
         --filters-space: ;
         display: grid;
-        grid-template-rows: 20px 55px var(--filters-space) var(
-                --active-filter-space
-            ) 37px auto;
+        grid-template-rows:
+            20px 58.5px var(--filters-space) var(--active-filter-space)
+            50px auto;
         padding-top: 1.5em;
     }
 
@@ -1934,10 +1933,10 @@
 
     .input-search-wrap {
         display: grid;
-        grid-template-columns: auto 20px 20px;
+        grid-template-columns: auto 2.5em 2.5em;
         align-items: center;
-        column-gap: 1em;
-        padding: 10px 15px;
+        column-gap: 2em;
+        padding: 8px 15px;
         background-color: rgb(21, 31, 46);
         border-radius: 6px;
         width: 100%;
@@ -1954,8 +1953,13 @@
         cursor: text;
     }
     .input-search-wrap-icon {
-        font-size: 20px;
+        font-size: 2.5em;
         cursor: pointer;
+    }
+    .filterType {
+        display: flex;
+        justify-content: center;
+        align-items: center;
     }
     .filterType .options-wrap {
         position: absolute;
@@ -1997,8 +2001,14 @@
         text-transform: capitalize;
     }
 
+    .showFilterOptions-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
     .showFilterOptions {
-        font-size: 20px;
+        font-size: 2.5em;
         cursor: pointer;
     }
 
@@ -2213,7 +2223,7 @@
         gap: 15px;
         min-height: 28px;
         width: 100%;
-        grid-template-columns: 28px calc(100% - 56px - 30px) 28px;
+        grid-template-columns: 3em calc(100% - 56px - 34px) 3em;
         margin-top: 2em;
     }
     .activeFilters.seenMore {
@@ -2223,12 +2233,16 @@
     .activeFilters .empty-tagFilter {
         display: flex;
         justify-content: center;
+        align-items: center;
         background: rgb(21, 31, 46);
         border-radius: 6px;
         cursor: pointer;
-        padding: 0.9em 1.5em;
-        width: 28px;
-        height: 28px;
+        width: 3em;
+        height: 3em;
+    }
+
+    .empty-tagFilter i {
+        font-size: 1.5em;
     }
 
     .tagFilters {
@@ -2262,7 +2276,7 @@
 
     .activeFilters .activeTagFilter {
         background-color: var(--activeTagFilterColor);
-        padding: 8px 10px;
+        padding: 0.75em 10px;
         display: flex;
         flex: 1;
         justify-content: space-between;
@@ -2279,29 +2293,36 @@
         cursor: pointer;
     }
     .activeTagFilter i {
-        font-size: 1.2rem;
+        font-size: 1.5rem;
     }
 
     .changeGridView {
         display: flex;
         justify-content: center;
+        align-items: center;
         background: rgb(21, 31, 46);
         border-radius: 6px;
         cursor: pointer;
-        padding: 0.9em 1.5em;
-        width: 28px;
-        height: 28px;
+        width: 3em;
+        height: 3em;
+    }
+    .changeGridView i {
+        font-size: 1.5em;
     }
 
     .showHideActiveFilters {
         display: flex;
         justify-content: center;
+        align-items: center;
         background: rgb(21, 31, 46);
         border-radius: 6px;
         cursor: pointer;
-        padding: 0.9em 1.5em;
-        width: 28px;
-        height: 28px;
+        width: 3em;
+        height: 3em;
+    }
+
+    .showHideActiveFilters i {
+        font-size: 1.5em;
     }
 
     .last-filter-option {
@@ -2309,7 +2330,7 @@
         justify-content: space-between;
         align-items: center;
         gap: 8px;
-        min-height: 17px;
+        min-height: 3em;
         margin-top: 2em;
     }
 

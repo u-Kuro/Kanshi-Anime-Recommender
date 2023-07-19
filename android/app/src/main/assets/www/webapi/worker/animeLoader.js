@@ -2,7 +2,7 @@ let db,
     finalAnimeList,
     filteredList,
     keyword,
-    loadLimit = 18,
+    loadLimit = 13,
     seasonOrder = { fall: 3, summer: 2, spring: 1, winter: 0 };
 
 self.onmessage = async ({ data }) => {
@@ -11,7 +11,8 @@ self.onmessage = async ({ data }) => {
     } else if (data?.reload !== undefined) { // Animation Async
         self.postMessage({
             reload: data?.reload,
-            finalAnimeList: finalAnimeList.slice(0, loadLimit)
+            finalAnimeList: finalAnimeList.slice(0, loadLimit),
+            numberOfNextLoadedGrid: Math.min(Math.max(finalAnimeList.length - loadLimit, 0), loadLimit)
         });
         filteredList = finalAnimeList.slice(loadLimit)
     } else if (data?.filterKeyword !== undefined) {
@@ -30,7 +31,8 @@ self.onmessage = async ({ data }) => {
         }
         self.postMessage({
             isNew: true,
-            finalAnimeList: filteredList.slice(0, loadLimit)
+            finalAnimeList: filteredList.slice(0, loadLimit),
+            numberOfNextLoadedGrid: Math.min(Math.max(filteredList.length - loadLimit, 0), loadLimit)
         });
         filteredList = filteredList.slice(loadLimit)
     } else if (data?.removeID !== undefined) {
@@ -38,13 +40,15 @@ self.onmessage = async ({ data }) => {
         filteredList = filteredList.filter(({ id }) => id !== data.removeID)
         self.postMessage({
             isRemoved: true,
-            removedID: data.removeID
+            removedID: data.removeID,
+            numberOfNextLoadedGrid: Math.min(filteredList.length, loadLimit)
         });
     } else if (data?.loadMore !== undefined) {
         self.postMessage({
             isNew: false,
             isLast: filteredList.length <= loadLimit,//nextIdx >= filteredList.length,
-            finalAnimeList: filteredList.slice(0, loadLimit)
+            finalAnimeList: filteredList.slice(0, loadLimit),
+            numberOfNextLoadedGrid: Math.min(Math.max(filteredList.length - loadLimit, 0), loadLimit)
         });
         filteredList = filteredList.slice(loadLimit)
     } else {
@@ -694,6 +698,7 @@ self.onmessage = async ({ data }) => {
             isNew: true,
             finalAnimeList: finalAnimeList.slice(0, loadLimit),
             hiddenEntries: hiddenEntries,
+            numberOfNextLoadedGrid: Math.min(Math.max(finalAnimeList.length - loadLimit, 0), loadLimit)
         });
         filteredList = finalAnimeList.slice(loadLimit)
     }

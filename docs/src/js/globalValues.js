@@ -1,6 +1,6 @@
 import { writable } from "svelte/store";
 
-const appID = writable(35)
+const appID = writable(36)
 const android = writable(null)
 const inApp = writable(true)
 // const anilistAccessToken = writable(null)
@@ -37,6 +37,7 @@ const animeObserver = writable(null)
 const animeIdxRemoved = writable(null)
 const shownAllInList = writable(false)
 const searchedAnimeKeyword = writable("")
+const numberOfNextLoadedGrid = writable(null)
 const confirmPromise = writable(null)
 const menuVisible = writable(false)
 const animeOptionVisible = writable(false)
@@ -89,6 +90,7 @@ export {
     animeObserver,
     shownAllInList,
     searchedAnimeKeyword,
+    numberOfNextLoadedGrid,
     animeIdxRemoved,
     confirmPromise,
     menuVisible,

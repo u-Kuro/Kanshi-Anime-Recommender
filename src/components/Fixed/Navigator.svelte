@@ -357,7 +357,7 @@
     }
     .nav {
         display: grid;
-        grid-template-columns: calc(100% - 30px - 1.5em) 30px;
+        grid-template-columns: calc(100% - 3em - 1.5em) 3em;
         height: 100%;
         align-items: center;
         -ms-user-select: none;
@@ -372,9 +372,9 @@
     .logo-icon {
         cursor: pointer;
         justify-self: start;
-        width: 30px;
+        width: 3em;
         max-width: 100%;
-        height: 30px;
+        height: 3em;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -383,7 +383,7 @@
     .input-search {
         display: flex;
         gap: 1.5em;
-        height: 35px;
+        height: 3em;
         border-radius: 6px;
         justify-self: left;
         align-items: center;
@@ -402,7 +402,7 @@
         padding-left: 1ch;
         padding-right: 1ch;
         border-radius: 6px;
-        height: 35px;
+        height: 2.25em;
         max-width: 100%;
         width: 100%;
         cursor: auto;

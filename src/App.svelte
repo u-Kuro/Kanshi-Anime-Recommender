@@ -44,6 +44,7 @@
 		runIsScrolling,
 		confirmPromise,
 		hasWheel,
+		numberOfNextLoadedGrid,
 		// anilistAccessToken,
 	} from "./js/globalValues.js";
 	import {
@@ -297,6 +298,8 @@
 						if (data?.isNew) {
 							$finalAnimeList = data.finalAnimeList;
 							$hiddenEntries = data.hiddenEntries;
+							$numberOfNextLoadedGrid =
+								data.numberOfNextLoadedGrid;
 							$dataStatus = null;
 							checkAutoFunctionsOnLoad();
 							$initData = false;
@@ -404,6 +407,7 @@
 				if (data?.isNew) {
 					$finalAnimeList = data.finalAnimeList;
 					$hiddenEntries = data.hiddenEntries;
+					$numberOfNextLoadedGrid = data.numberOfNextLoadedGrid;
 				}
 				$dataStatus = null;
 				return;
@@ -464,6 +468,7 @@
 					if (data?.isNew) {
 						$finalAnimeList = data.finalAnimeList;
 						$hiddenEntries = data.hiddenEntries;
+						$numberOfNextLoadedGrid = data.numberOfNextLoadedGrid;
 					}
 					$dataStatus = null;
 					return;
@@ -883,6 +888,7 @@
 					if (data?.isNew) {
 						$finalAnimeList = data.finalAnimeList;
 						$hiddenEntries = data.hiddenEntries;
+						$numberOfNextLoadedGrid = data.numberOfNextLoadedGrid;
 					}
 					$dataStatus = null;
 					return;
@@ -989,20 +995,22 @@
 		display: flex;
 		justify-content: center;
 		align-items: center;
-		gap: 6px;
-		background-color: black;
-		padding: 1em;
+		gap: 8px;
+		background-color: rgb(21, 31, 46);
 		border-radius: 6px;
 		cursor: pointer;
 		user-select: none;
+		min-width: 44px;
+		min-height: 44px;
+		padding: 8px;
 	}
 	.list-update-icon {
-		color: white;
+		color: inherit;
 		font-size: 2rem;
 		cursor: pointer;
 	}
 	.list-update-label {
-		color: white;
+		color: inherit;
 		font-size: 1.5rem;
 		cursor: pointer;
 	}
@@ -1013,9 +1021,10 @@
 		}
 		.list-update-container {
 			border-radius: 50%;
+			padding: 0px;
 		}
 		.list-update-icon {
-			font-size: 3rem;
+			font-size: 2em;
 		}
 		.list-update-label {
 			display: none;

@@ -22,6 +22,7 @@
         searchedAnimeKeyword,
         checkAnimeLoaderStatus,
         hasWheel,
+        numberOfNextLoadedGrid,
     } from "../../../js/globalValues.js";
     import {
         isJsonObject,
@@ -831,6 +832,7 @@
                     if (data?.isNew) {
                         $finalAnimeList = data.finalAnimeList;
                         $hiddenEntries = data.hiddenEntries;
+                        $numberOfNextLoadedGrid = data.numberOfNextLoadedGrid
                     }
                     $dataStatus = null;
                     return;
@@ -1603,119 +1605,6 @@
                                         </div>
                                     </div>
                                 {/if}
-                                {#if formatNumber(anime.score) != null}
-                                    <div>
-                                        <div class="info-categ">Score</div>
-                                        <div
-                                            class={"score-popup info" +
-                                                ($hasWheel ? " hasWheel" : "")}
-                                            on:wheel={(e) =>
-                                                horizontalWheel(e, "info")}
-                                        >
-                                            <span
-                                                class="copy"
-                                                copy-value={anime.score ?? ""}
-                                            >
-                                                {formatNumber(anime.score) ??
-                                                    "N/A"}
-                                            </span>
-                                        </div>
-                                    </div>
-                                {/if}
-                                {#if anime.userStatus}
-                                    <div>
-                                        <div class="info-categ">
-                                            User Status
-                                        </div>
-                                        <div
-                                            class={"user-status-popup info" +
-                                                ($hasWheel ? " hasWheel" : "")}
-                                            on:wheel={(e) =>
-                                                horizontalWheel(e, "info")}
-                                        >
-                                            <span
-                                                class={"copy " +
-                                                    (getUserStatusColor(
-                                                        anime.userStatus
-                                                    ) +
-                                                        "-color")}
-                                                copy-value={anime.userStatus ||
-                                                    ""}
-                                            >
-                                                {anime.userStatus || "N/A"}
-                                            </span>
-                                        </div>
-                                    </div>
-                                {/if}
-                                {#if anime.status}
-                                    <div>
-                                        <div class="info-categ">
-                                            Airing Status
-                                        </div>
-                                        <div
-                                            class={"status-popup info" +
-                                                ($hasWheel ? " hasWheel" : "")}
-                                            on:wheel={(e) =>
-                                                horizontalWheel(e, "info")}
-                                        >
-                                            <span
-                                                class="copy"
-                                                copy-value={anime.status || ""}
-                                            >
-                                                {anime.status || "N/A"}
-                                            </span>
-                                        </div>
-                                    </div>
-                                {/if}
-                                {#if anime.userScore != null}
-                                    <div>
-                                        <div class="info-categ">User Score</div>
-                                        <div
-                                            class={"user-score-popup info" +
-                                                ($hasWheel ? " hasWheel" : "")}
-                                            on:wheel={(e) =>
-                                                horizontalWheel(e, "info")}
-                                        >
-                                            <span
-                                                class="copy"
-                                                copy-value={anime.userScore ??
-                                                    ""}
-                                            >
-                                                {anime.userScore ?? "N/A"}
-                                            </span>
-                                        </div>
-                                    </div>
-                                {/if}
-                                {#if anime?.season || anime?.year}
-                                    <div>
-                                        <div class="info-categ">
-                                            Season Year
-                                        </div>
-                                        <div
-                                            class={"season-year-popup info" +
-                                                ($hasWheel ? " hasWheel" : "")}
-                                            on:wheel={(e) =>
-                                                horizontalWheel(e, "info")}
-                                        >
-                                            <span
-                                                class="copy"
-                                                copy-value={`${
-                                                    anime?.season || ""
-                                                }${
-                                                    anime?.year
-                                                        ? " " + anime.year
-                                                        : ""
-                                                }` || ""}
-                                            >
-                                                {`${anime?.season || ""}${
-                                                    anime?.year
-                                                        ? " " + anime.year
-                                                        : ""
-                                                }` || "N/A"}
-                                            </span>
-                                        </div>
-                                    </div>
-                                {/if}
                                 {#if anime.averageScore != null}
                                     <div>
                                         <div class="info-categ">
@@ -1752,6 +1641,119 @@
                                                     ""}
                                             >
                                                 {anime.popularity || "N/A"}
+                                            </span>
+                                        </div>
+                                    </div>
+                                {/if}
+                                {#if anime?.season || anime?.year}
+                                    <div>
+                                        <div class="info-categ">
+                                            Season Year
+                                        </div>
+                                        <div
+                                            class={"season-year-popup info" +
+                                                ($hasWheel ? " hasWheel" : "")}
+                                            on:wheel={(e) =>
+                                                horizontalWheel(e, "info")}
+                                        >
+                                            <span
+                                                class="copy"
+                                                copy-value={`${
+                                                    anime?.season || ""
+                                                }${
+                                                    anime?.year
+                                                        ? " " + anime.year
+                                                        : ""
+                                                }` || ""}
+                                            >
+                                                {`${anime?.season || ""}${
+                                                    anime?.year
+                                                        ? " " + anime.year
+                                                        : ""
+                                                }` || "N/A"}
+                                            </span>
+                                        </div>
+                                    </div>
+                                {/if}
+                                {#if anime.status}
+                                    <div>
+                                        <div class="info-categ">
+                                            Airing Status
+                                        </div>
+                                        <div
+                                            class={"status-popup info" +
+                                                ($hasWheel ? " hasWheel" : "")}
+                                            on:wheel={(e) =>
+                                                horizontalWheel(e, "info")}
+                                        >
+                                            <span
+                                                class="copy"
+                                                copy-value={anime.status || ""}
+                                            >
+                                                {anime.status || "N/A"}
+                                            </span>
+                                        </div>
+                                    </div>
+                                {/if}
+                                {#if anime.userStatus}
+                                    <div>
+                                        <div class="info-categ">
+                                            User Status
+                                        </div>
+                                        <div
+                                            class={"user-status-popup info" +
+                                                ($hasWheel ? " hasWheel" : "")}
+                                            on:wheel={(e) =>
+                                                horizontalWheel(e, "info")}
+                                        >
+                                            <span
+                                                class={"copy " +
+                                                    (getUserStatusColor(
+                                                        anime.userStatus
+                                                    ) +
+                                                        "-color")}
+                                                copy-value={anime.userStatus ||
+                                                    ""}
+                                            >
+                                                {anime.userStatus || "N/A"}
+                                            </span>
+                                        </div>
+                                    </div>
+                                {/if}
+                                {#if anime.userScore != null}
+                                    <div>
+                                        <div class="info-categ">User Score</div>
+                                        <div
+                                            class={"user-score-popup info" +
+                                                ($hasWheel ? " hasWheel" : "")}
+                                            on:wheel={(e) =>
+                                                horizontalWheel(e, "info")}
+                                        >
+                                            <span
+                                                class="copy"
+                                                copy-value={anime.userScore ??
+                                                    ""}
+                                            >
+                                                {anime.userScore ?? "N/A"}
+                                            </span>
+                                        </div>
+                                    </div>
+                                {/if}
+                                {#if formatNumber(anime.score) != null}
+                                    <div>
+                                        <div class="info-categ">Score</div>
+                                        <div
+                                            class={"score-popup info" +
+                                                ($hasWheel ? " hasWheel" : "")}
+                                            on:wheel={(e) =>
+                                                horizontalWheel(e, "info")}
+                                        >
+                                            <span
+                                                class="copy"
+                                                copy-value={anime.score ?? ""}
+                                            >
+                                                {formatNumber(anime.score) ??
+                                                    "N/A"}
                                             </span>
                                         </div>
                                     </div>
@@ -2262,11 +2264,11 @@
     }
 
     .autoplayToggle:checked + .slider {
-        background-color: rgb(40 69 102);
+        background-color: rgb(35 45 65);
     }
 
     .autoplayToggle:focus + .slider {
-        box-shadow: 0 0 1px #2196f3;
+        box-shadow: 0 0 1px #767284;
     }
 
     .autoplayToggle:checked + .slider:before {
