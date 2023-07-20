@@ -566,6 +566,12 @@ function stopConflictingWorkers() {
     exportUserDataWorker?.terminate?.()
     isExporting = false
     getFilterOptionsWorker?.terminate?.()
+    clearInterval(gettingAnimeEntriesInterval)
+    gettingAnimeEntriesInterval = null
+    clearInterval(gettingAnimeFranchisesInterval)
+    gettingAnimeFranchisesInterval = null
+    clearInterval(getFilterOptionsInterval)
+    getFilterOptionsInterval = null
 }
 
 function alertError() {
