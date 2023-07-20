@@ -8,8 +8,6 @@
         activeTagFilters,
         searchedAnimeKeyword,
         dataStatus,
-        updateRecommendationList,
-        loadAnime,
         username,
         initData,
         confirmPromise,
@@ -17,6 +15,10 @@
         checkAnimeLoaderStatus,
         gridFullView,
         hasWheel,
+        updateFilters,
+        isImporting,
+        hiddenEntries,
+        numberOfNextLoadedGrid
     } from "../../js/globalValues.js";
     import { fade, fly } from "svelte/transition";
     import {
@@ -25,7 +27,7 @@
         dragScroll,
         removeClass,
     } from "../../js/others/helper.js";
-    import { saveIDBdata } from "../../js/workerUtils.js";
+    import { animeLoader, processRecommendedAnimeList, saveIDBdata } from "../../js/workerUtils.js";
 
     let Init = true;
 
@@ -54,41 +56,60 @@
         "user score",
         "popularity",
     ];
-    let saveFiltersTimeout;
-    let lastChangeName;
+    let isUpdatingRec = false,
+        isLoadingAnime = false;
 
-    function saveFilters(changeName) {
-        if (saveFiltersTimeout && lastChangeName === changeName) {
-            clearTimeout(saveFiltersTimeout);
+    async function saveFilters(changeName) {
+        if ($initData) return;
+        if (nameChangeUpdateProcessedList.includes(changeName)) {
+            isUpdatingRec = true
+            $dataStatus = "Updating List";
+            _processRecommendedAnimeList()
+        } else if (nameChangeUpdateFinalList.includes(changeName)) {
+            isLoadingAnime = true
+            $dataStatus = "Updating List";
+            _loadAnime()
+        } else if (!isLoadingAnime && !isUpdatingRec && !$isImporting) {
+            await saveJSON($filterOptions, "filterOptions");
+            await saveJSON($activeTagFilters, "activeTagFilters");
         }
-        lastChangeName = changeName;
-        saveFiltersTimeout = setTimeout(async () => {
-            if (nameChangeUpdateProcessedList.includes(changeName)) {
-                if ($animeLoaderWorker) {
-                    $animeLoaderWorker.terminate();
-                    $animeLoaderWorker = null;
+    }
+
+    function _loadAnime() {
+        if ($animeLoaderWorker) {
+            $animeLoaderWorker.terminate();
+            $animeLoaderWorker = null;
+        }
+        animeLoader({filterOptions: $filterOptions, activeTagFilters: $activeTagFilters})
+            .then(async (data) => {
+                isUpdatingRec = isLoadingAnime = false
+                $animeLoaderWorker = data.animeLoaderWorker;
+                $searchedAnimeKeyword = "";
+                if (data?.isNew) {
+                    $finalAnimeList = data.finalAnimeList;
+                    $hiddenEntries = data.hiddenEntries;
+                    $numberOfNextLoadedGrid = data.numberOfNextLoadedGrid;
                 }
-                $finalAnimeList = null;
-                $dataStatus = "Updating List";
-                await saveJSON(true, "shouldProcessRecommendation");
-                await saveJSON($filterOptions, "filterOptions");
-                await saveJSON($activeTagFilters, "activeTagFilters");
-                $updateRecommendationList = !$updateRecommendationList;
-            } else if (nameChangeUpdateFinalList.includes(changeName)) {
-                if ($animeLoaderWorker) {
-                    $animeLoaderWorker.terminate();
-                    $animeLoaderWorker = null;
-                }
-                $finalAnimeList = null;
-                $dataStatus = "Updating List";
-                await saveJSON($filterOptions, "filterOptions");
-                await saveJSON($activeTagFilters, "activeTagFilters");
-                $loadAnime = !$loadAnime;
-            } else {
-                await saveJSON($filterOptions, "filterOptions");
-                await saveJSON($activeTagFilters, "activeTagFilters");
-            }
-        }, 300);
+                $dataStatus = null;
+                return;
+            })
+            .catch((error) => {
+                throw error;
+            });
+    }
+
+    async function _processRecommendedAnimeList() {
+        await saveJSON(true, "shouldProcessRecommendation");
+        processRecommendedAnimeList({filterOptions: $filterOptions, activeTagFilters: $activeTagFilters})
+            .then(async () => {
+                await saveJSON(false, "shouldProcessRecommendation");
+                updateFilters.update((e) => !e);
+                _loadAnime()
+            })
+            .catch((error) => {
+                _loadAnime()
+                throw error;
+            });
     }
 
     async function scrollToFirstTagFilter() {

@@ -22,9 +22,32 @@ self.onmessage = async ({ data }) => {
         filterOptions: await retrieveJSON("filterOptions"),
         animeEntries: await retrieveJSON("animeEntries"),
     };
+    self.postMessage({ progress: 0 })
+    let maxRecursion = 0;
+    function countRecursiveCalls(x) {
+        maxRecursion++;
+        if (isJsonObject(x)) {
+            for (const value of Object.values(x)) {
+                if (value === undefined) continue
+                if (isJsonObject(value) || value instanceof Array) {
+                    countRecursiveCalls(value);
+                }
+            }
+        } else if (x instanceof Array) {
+            for (let i = 0; i < x.length; i++) {
+                let value = x[i]
+                if (isJsonObject(value) || value instanceof Array) {
+                    countRecursiveCalls(value);
+                }
+            }
+        }
+    }
+    countRecursiveCalls(backUpData)
     if (data === 'android') {
         const byteSize = 64 * 1024 // 64KB
         let chunkStr = ''
+        let completedRecursionCalls = 0;
+        let currentDate = performance.now()
         function stringify(x) {
             if (chunkStr.length >= byteSize) {
                 self.postMessage({
@@ -32,6 +55,11 @@ self.onmessage = async ({ data }) => {
                     state: 1
                 })
                 chunkStr = ''
+            }
+            completedRecursionCalls++;
+            if (Math.abs(performance.now() - currentDate) >= 16.66) {
+                self.postMessage({ progress: (completedRecursionCalls / maxRecursion) * 100 })
+                currentDate = performance.now()
             }
             let first = true;
             if (isJsonObject(x)) {
@@ -45,7 +73,7 @@ self.onmessage = async ({ data }) => {
                         } else {
                             chunkStr += `,${JSON.stringify(k)}:`
                         }
-                        stringify(v)
+                        stringify(v);
                     } else {
                         if (first) {
                             first = false
@@ -56,7 +84,6 @@ self.onmessage = async ({ data }) => {
                     }
                 }
                 chunkStr += '}'
-                return
             } else if (x instanceof Array) {
                 chunkStr += '[';
                 for (let i = 0; i < x.length; i++) {
@@ -64,7 +91,7 @@ self.onmessage = async ({ data }) => {
                     if (isJsonObject(v) || v instanceof Array) {
                         if (first) { first = false }
                         else { chunkStr += ',' }
-                        stringify(v)
+                        stringify(v);
                     } else {
                         if (first) {
                             first = false
@@ -75,12 +102,13 @@ self.onmessage = async ({ data }) => {
                     }
                 }
                 chunkStr += ']'
-                return
             }
+            return
         }
         stringify(backUpData)
         backUpData = null
         self.postMessage({ status: "Data has been Exported..." })
+        self.postMessage({ progress: 100 })
         self.postMessage({ status: null })
         self.postMessage({
             chunk: chunkStr,
@@ -88,10 +116,11 @@ self.onmessage = async ({ data }) => {
             username: username
         })
     } else {
-        let blob = JSONToBlob(backUpData)
+        let blob = JSONToBlob(backUpData, maxRecursion)
         backUpData = null
         let url = URL.createObjectURL(blob);
         self.postMessage({ status: "Data has been Exported..." })
+        self.postMessage({ progress: 100 })
         self.postMessage({ status: null })
         self.postMessage({ url: url, username: username });
     }
@@ -145,20 +174,28 @@ async function retrieveJSON(name) {
     });
 }
 
-function JSONToBlob(object) {
+function JSONToBlob(object, _maxRecursion) {
     let propertyStrings = [];
     let chunkStr = '';
+    const maxRecursion = _maxRecursion
     const maxByteSize = 4 * 1024 * 1024; // Maximum byte 4MB size for each chunk
     function isJsonObject(obj) {
         return Object.prototype.toString.call(obj) === "[object Object]"
     }
+    let currentDate = performance.now();
+    let completedRecursionCalls = 0
     function bloberize(x) {
-        let first = true;
         if (chunkStr.length >= maxByteSize) {
             const propertyBlob = new Blob([chunkStr], { type: 'text/plain' });
             propertyStrings.push(propertyBlob);
             chunkStr = '';
         }
+        completedRecursionCalls++;
+        if (Math.abs(performance.now() - currentDate) >= 16.66) {
+            self.postMessage({ progress: (completedRecursionCalls / maxRecursion) * 100 })
+            currentDate = performance.now()
+        }
+        let first = true;
         if (isJsonObject(x)) {
             chunkStr += '{';
             for (let [k, v] of Object.entries(x)) {
@@ -181,7 +218,6 @@ function JSONToBlob(object) {
                 }
             }
             chunkStr += '}';
-            return;
         } else if (x instanceof Array) {
             chunkStr += '[';
             for (let i = 0; i < x.length; i++) {
@@ -203,7 +239,6 @@ function JSONToBlob(object) {
                 }
             }
             chunkStr += ']';
-            return;
         }
     }
     bloberize(object)

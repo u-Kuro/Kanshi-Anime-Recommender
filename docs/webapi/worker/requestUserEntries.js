@@ -23,6 +23,7 @@ self.onmessage = async ({ data }) => {
     function recallUE() {
         if (lastUserAnimeUpdate instanceof Date && !isNaN(lastUserAnimeUpdate)) {
             if (retryCount < 2 && !visibilityChange) {
+                self.postMessage({ progress: 0 })
                 self.postMessage({ status: "Checking Latest User Entries..." })
             }
             fetch('https://graphql.anilist.co', {
@@ -44,6 +45,7 @@ self.onmessage = async ({ data }) => {
                         self.postMessage({ status: error || "Error in Checking Entries" })
                         self.postMessage({ message: error })
                     } else {
+                        self.postMessage({ progress: 100 })
                         let currentUserAnimeUpdate = new Date(result?.data?.User?.updatedAt * 1000)
                         if (currentUserAnimeUpdate instanceof Date && !isNaN(currentUserAnimeUpdate)) {
                             if (currentUserAnimeUpdate > lastUserAnimeUpdate) {
@@ -80,12 +82,14 @@ self.onmessage = async ({ data }) => {
                             if (retryCount < 2) {
                                 let secondsPassed = 60
                                 rateLimitInterval = setInterval(() => {
+                                    self.postMessage({ progress: ((60 - secondsPassed) / 60) * 100 })
                                     self.postMessage({ status: `Rate Limit: ${msToTime(secondsPassed * 1000)}` })
                                     --secondsPassed
                                 }, 1000)
                             }
                             setTimeout(() => {
                                 if (rateLimitInterval) clearInterval(rateLimitInterval)
+                                self.postMessage({ progress: 100 })
                                 self.postMessage({ status: "Retrying..." })
                                 return recallUE();
                             }, 60000);
@@ -102,6 +106,7 @@ self.onmessage = async ({ data }) => {
         let maxAnimePerChunk = 500
         let currentUserAnimeUpdate;
         if (retryCount < 2) {
+            self.postMessage({ progress: 30 })
             self.postMessage({ status: "Getting User Entries" })
         }
         function recallAV(chunk) {
@@ -169,16 +174,19 @@ self.onmessage = async ({ data }) => {
                             } else {
                                 let secondsPassed = 60
                                 let rateLimitInterval = setInterval(() => {
+                                    self.postMessage({ progress: ((60 - secondsPassed) / 60) * 100 })
                                     self.postMessage({ status: `Rate Limit: ${msToTime(secondsPassed * 1000)}` })
                                     --secondsPassed
                                 }, 1000)
                                 setTimeout(() => {
                                     clearInterval(rateLimitInterval)
+                                    self.postMessage({ progress: 100 })
                                     return recallAV(++chunk);
                                 }, 60000);
                             }
                         } else {
                             (async () => {
+                                self.postMessage({ progress: 100 })
                                 if (currentUserAnimeUpdate instanceof Date && !isNaN(currentUserAnimeUpdate)) {
                                     await saveJSON(currentUserAnimeUpdate, "lastUserAnimeUpdate")
                                 }
@@ -216,12 +224,14 @@ self.onmessage = async ({ data }) => {
                             if (retryCount < 2) {
                                 let secondsPassed = 60
                                 rateLimitInterval = setInterval(() => {
+                                    self.postMessage({ progress: ((60 - secondsPassed) / 60) * 100 })
                                     self.postMessage({ status: `Rate Limit: ${msToTime(secondsPassed * 1000)}` })
                                     --secondsPassed
                                 }, 1000)
                             }
                             setTimeout(() => {
                                 if (rateLimitInterval) clearInterval(rateLimitInterval)
+                                self.postMessage({ progress: 100 })
                                 self.postMessage({ status: "Retrying..." })
                                 return recallAV(chunk);
                             }, 60000);

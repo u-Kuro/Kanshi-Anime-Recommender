@@ -411,7 +411,9 @@
 <main class={$gridFullView ? "fullView" : ""}>
     <div
         id="anime-grid"
-        class={"image-grid " + ($gridFullView ? "fullView" : "")}
+        class={"image-grid " +
+            ($gridFullView ? "fullView" : "") +
+            ($finalAnimeList?.length === 0 && !$initData ? "empty" : "")}
         bind:this={animeGridEl}
         on:wheel={(e) => $gridFullView && horizontalWheel(e, "image-grid")}
         style:--anime-grid-height={windowHeight + "px"}
@@ -632,6 +634,10 @@
         height: max(calc(var(--anime-grid-height) - 265px), 210px);
         overflow-y: hidden;
         overflow-x: auto;
+    }
+    .image-grid.fullView.empty {
+        justify-content: start;
+        align-content: center;
     }
 
     .image-grid::-webkit-scrollbar {

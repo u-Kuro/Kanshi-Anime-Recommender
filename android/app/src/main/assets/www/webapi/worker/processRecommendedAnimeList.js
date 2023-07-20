@@ -29,7 +29,7 @@ self.onmessage = async ({ data }) => {
         exclude = {
             genres: {}, tags: {}, categories: {}, //studios: {}, staffs: {}, roles: {}
         }
-    let activeTagFilters = await retrieveJSON("activeTagFilters")
+    let activeTagFilters = data?.activeTagFilters || await retrieveJSON("activeTagFilters")
     let algorithmFilter = activeTagFilters?.['Algorithm Filter'] || []
     algorithmFilter.forEach(({ selected, filterType, optionName, optionType, optionValue }) => {
         if (selected === "included") {
@@ -144,6 +144,7 @@ self.onmessage = async ({ data }) => {
     let includedAnimeRelations = {}
     self.postMessage({ status: "Processing User Schema" })
     for (let i = 0; i < userEntries.length; i++) {
+        self.postMessage({ progress: ((i + 1) / userEntries.length) * 100 * 0.3 })
         let anime = userEntries[i].media
         let animeID = anime?.id
         let status = userEntries[i].status
@@ -653,6 +654,7 @@ self.onmessage = async ({ data }) => {
             meanUserScore = arrayMean(userScores);
         }
         for (let i = 0; i < animeEntries.length; i++) {
+            self.postMessage({ progress: (((i + 1) / animeEntries.length) * 100 * 0.7) + 30 })
             let anime = animeEntries[i];
             let animeID = anime?.id;
             let animeUrl = anime?.siteUrl;
@@ -1125,6 +1127,7 @@ self.onmessage = async ({ data }) => {
         let scoreBase = 100 // 0 causes problem so it should be > 0
         let maxScore
         for (let i = 0; i < animeEntries.length; i++) {
+            self.postMessage({ progress: ((i + 1) / animeEntries.length) * 100 })
             let anime = animeEntries[i];
             let animeID = anime?.id;
             let animeUrl = anime?.siteUrl;
@@ -1399,8 +1402,13 @@ self.onmessage = async ({ data }) => {
     await saveJSON(animeFranchises, 'animeFranchises')
     await saveJSON(filters, 'filters')
     await saveJSON(activeTagFilters, 'activeTagFilters')
+    let filterOptions = data?.filterOptions
+    if (filterOptions) {
+        await saveJSON(filterOptions, "filterOptions")
+    }
     await saveJSON(Object.values(recommendedAnimeList), 'recommendedAnimeList')
     self.postMessage({ status: null })
+    self.postMessage({ progress: 100 })
     self.postMessage({ message: 'success' })
 }
 function formatCustomString(str) {

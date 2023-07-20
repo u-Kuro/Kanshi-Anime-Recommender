@@ -1,7 +1,7 @@
 <script>
 	import C from "./components/index.js";
 	import { onMount, tick } from "svelte";
-	import { fly } from "svelte/transition";
+	import { fade, fly } from "svelte/transition";
 	import { inject } from "@vercel/analytics";
 	import { retrieveJSON, saveJSON } from "./js/indexedDB.js";
 	import {
@@ -45,6 +45,7 @@
 		confirmPromise,
 		hasWheel,
 		numberOfNextLoadedGrid,
+		progress,
 		// anilistAccessToken,
 	} from "./js/globalValues.js";
 	import {
@@ -936,6 +937,13 @@
 </script>
 
 <main>
+	{#if $progress > 0 && $progress < 100}
+		<div
+			out:fade={{ duration: 0, delay: 500 }}
+			class="progress"
+			style:--progress={"-" + (100 - $progress) + "%"}
+		/>
+	{/if}
 	<C.Fixed.Navigator />
 	<C.Fixed.Menu />
 
@@ -987,6 +995,16 @@
 		max-width: 1140px;
 		padding-left: 50px;
 		padding-right: 50px;
+	}
+	.progress {
+		background-color: #909cb8;
+		position: fixed;
+		top: 0;
+		z-index: 9999;
+		height: 1px;
+		width: 100%;
+		transform: translateX(var(--progress));
+		transition: transform 0.3s linear;
 	}
 	.list-update-container {
 		position: fixed;

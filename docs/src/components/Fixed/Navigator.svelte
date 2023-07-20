@@ -290,11 +290,15 @@
                 : "")}
         bind:this={navEl}
     >
-        <i
-            class={"goback fa-solid fa-arrow-left"}
-            on:click={handleGoBack}
-            on:keydown={(e) => e.key === "Enter" && handleGoBack(e)}
-        />
+        <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
+        <!-- svelte-ignore a11y-click-events-have-key-events -->
+        <div class="go-back-container" on:click={handleGoBack}>
+            <i
+                class={"goback fa-solid fa-arrow-left"}
+                tabindex="0"
+                on:keydown={(e) => e.key === "Enter" && handleGoBack(e)}
+            />
+        </div>
         <div class="input-search">
             <input
                 id="usernameInput"
@@ -309,14 +313,7 @@
                 bind:this={inputUsernameEl}
             />
             <div
-                class={"usernameText " +
-                    ($dataStatus &&
-                    ($popupVisible ||
-                        $menuVisible ||
-                        windowScrollY > 40 ||
-                        window.scrollY > 40)
-                        ? "animate"
-                        : "")}
+                class={"usernameText"}
                 on:click={focusInputUsernameEl}
                 on:keydown={(e) => e.key === "Enter" && focusInputUsernameEl(e)}
             >
@@ -324,15 +321,19 @@
             </div>
         </div>
         <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
-        <img
-            class="logo-icon"
-            src="./images/Kanshi-Logo.png"
-            alt="Kanshi Logo"
-            tabindex="0"
+        <div
+            class="logo-icon-container"
             on:pointerdown={handleGoUp}
             on:pointerup={cancelGoUp}
             on:pointercancel={cancelGoUp}
-        />
+        >
+            <img
+                class="logo-icon"
+                src="./images/Kanshi-Logo.png"
+                alt="Kanshi Logo"
+                on:keydown={(e) => e.key === "Enter" && handleMenuVisibility(e)}
+            />
+        </div>
     </nav>
 </div>
 
@@ -372,7 +373,8 @@
     .logo-icon {
         cursor: pointer;
         justify-self: start;
-        width: 3em;
+        min-width: 3em;
+        min-height: 3em;
         max-width: 100%;
         height: 3em;
         display: flex;
@@ -383,13 +385,10 @@
     .input-search {
         display: flex;
         gap: 1.5em;
-        height: 3em;
+        height: 56px;
         border-radius: 6px;
         justify-self: left;
         align-items: center;
-        max-width: 100%;
-    }
-    .input-search {
         max-width: min(165px, 100%);
     }
     #usernameInput {
@@ -402,7 +401,7 @@
         padding-left: 1ch;
         padding-right: 1ch;
         border-radius: 6px;
-        height: 2.25em;
+        height: 2.625em;
         max-width: 100%;
         width: 100%;
         cursor: auto;
@@ -419,14 +418,40 @@
         font-size: 1.5rem;
     }
     .goback {
-        display: none;
+        display: flex;
         font-size: 25px;
-        height: 25px;
-        width: 25px;
+        min-height: 25px;
+        min-width: 25px;
         align-items: center;
-        justify-content: center;
+        justify-content: start;
         color: white;
         cursor: pointer;
+    }
+    .logo-icon-container {
+        display: flex;
+        justify-content: end;
+    }
+    .go-back-container {
+        display: none;
+        justify-content: start;
+    }
+    @media screen and (max-width: 425px) {
+        .go-back-container {
+            min-width: 5em;
+            min-height: 56px;
+            padding: 0 1em;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+        }
+        .logo-icon-container {
+            min-width: 5em;
+            min-height: 56px;
+            padding: 0 1em;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+        }
     }
     .usernameText {
         display: flex;
@@ -434,23 +459,8 @@
     .nav.inputfocused .usernameText {
         display: none;
     }
-    .usernameText.animate {
-        animation: fadeInOut 1s ease infinite;
-    }
-    @keyframes fadeInOut {
-        from {
-            opacity: 1;
-        }
-        50% {
-            opacity: 0.5;
-        }
-        to {
-            opacity: 1;
-        }
-    }
     .usernameText {
         white-space: nowrap;
-        max-width: 165px;
         font-family: system-ui !important;
         font-size: 13.33px;
         font-weight: 400;
@@ -460,7 +470,7 @@
         cursor: pointer;
         align-items: center;
         justify-content: start;
-        height: 30px;
+        height: 56px;
         max-width: min(100%, 165px);
         min-width: 30px;
     }
@@ -470,36 +480,56 @@
     }
     @media screen and (max-width: 750px) {
         .nav.popupvisible {
-            padding: 0 1em;
-            max-width: 640px;
-        }
-        .nav.popupvisible {
-            grid-template-columns: 30px calc(100% - 60px - 3em) 30px !important;
+            grid-template-columns: 3em calc(100% - 3em - 6em) 3em !important;
+            gap: 1.5em !important;
         }
         .nav.popupvisible .input-search {
             justify-self: center !important;
         }
-        .nav.popupvisible .goback {
+        .nav.popupvisible .go-back-container {
             display: flex !important;
         }
         .nav.inputfocused .input-search {
             max-width: none !important;
             width: 100% !important;
+            padding-right: 0.5em !important;
         }
         .nav.inputfocused #usernameInput {
             max-width: none !important;
             width: 100% !important;
         }
         .nav.inputfocused {
-            grid-template-columns: 30px calc(100% - 60px - 3em) 30px !important;
+            grid-template-columns: 3em calc(100% - 3em - 6em) 3em !important;
+            gap: 1.5em !important;
         }
-        .nav.inputfocused .goback {
+        .nav.inputfocused .go-back-container {
             display: flex;
         }
     }
     @media screen and (max-width: 425px) {
         .nav {
-            padding: 0 1em;
+            grid-template-columns: calc(100% - 5em - 1.5em) 5em;
+            padding: 0;
+        }
+        .nav.popupvisible .usernameText {
+            padding-left: 0em !important;
+        }
+        .nav.popupvisible .usernameText {
+            padding-left: 0em !important;
+        }
+        .usernameText {
+            padding-left: 1em !important;
+        }
+        .nav.popupvisible {
+            grid-template-columns: 5em calc(100% - 10em) 5em !important;
+            gap: 0em !important;
+        }
+        .nav.inputfocused {
+            grid-template-columns: 5em calc(100% - 10em) 5em !important;
+            gap: 0em !important;
+        }
+        .nav.inputfocused .input-search {
+            padding-right: 0.812em !important;
         }
     }
 </style>

@@ -19,6 +19,7 @@ self.onmessage = async ({ data }) => {
         let entriesCount = 0
 
         self.postMessage({ status: "Checking New Entries..." }) // Update Data Status
+        self.postMessage({ progress: 30 })
         function recallGNE(page) {
             fetch('https://graphql.anilist.co', {
                 method: 'POST',
@@ -128,12 +129,14 @@ self.onmessage = async ({ data }) => {
                         if (retryCount < 2) {
                             let secondsPassed = 60
                             rateLimitInterval = setInterval(() => {
+                                self.postMessage({ progress: ((60 - secondsPassed) / 60) * 100 })
                                 self.postMessage({ status: (error ? (error + " ") : "") + `Rate Limit: ${msToTime(secondsPassed * 1000)}` })
                                 --secondsPassed
                             }, 1000)
                         }
                         setTimeout(() => {
                             if (rateLimitInterval) clearInterval(rateLimitInterval)
+                            self.postMessage({ progress: 100 })
                             self.postMessage({ status: "Retrying..." })
                             return recallGNE(page);
                         }, 60000);
@@ -167,16 +170,19 @@ self.onmessage = async ({ data }) => {
                                 }
                                 let secondsPassed = 60
                                 let rateLimitInterval = setInterval(() => {
+                                    self.postMessage({ progress: ((60 - secondsPassed) / 60) * 100 })
                                     self.postMessage({ status: `Rate Limit: ${msToTime(secondsPassed * 1000)}` })
                                     --secondsPassed
                                 }, 1000)
                                 setTimeout(() => {
                                     clearInterval(rateLimitInterval)
+                                    self.postMessage({ progress: 100 })
                                     self.postMessage({ status: "Retrying..." })
                                     return recallGNE(++page);
                                 }, 60000);
                             }
                         } else {
+                            self.postMessage({ progress: 100 })
                             currentAnimeIDs = null
                             // Update User Recommendation List
                             if (hasAddedEntry) {
@@ -222,12 +228,14 @@ self.onmessage = async ({ data }) => {
                             if (retryCount < 2) {
                                 let secondsPassed = 60
                                 rateLimitInterval = setInterval(() => {
+                                    self.postMessage({ progress: ((60 - secondsPassed) / 60) * 100 })
                                     self.postMessage({ status: `Rate Limit: ${msToTime(secondsPassed * 1000)}` })
                                     --secondsPassed
                                 }, 1000)
                             }
                             setTimeout(() => {
                                 if (rateLimitInterval) clearInterval(rateLimitInterval)
+                                self.postMessage({ progress: 100 })
                                 self.postMessage({ status: "Retrying..." })
                                 return recallGNE(page);
                             }, 60000);
@@ -255,6 +263,7 @@ self.onmessage = async ({ data }) => {
         let airingAnimeIDsString = airingAnimeIDs.join(',') // Get IDs
 
         self.postMessage({ status: "Checking Latest Entries..." }) // Init Data Status
+        self.postMessage({ progress: 0 })
 
         let lastAnimeUpdate = await retrieveJSON("lastAnimeUpdate") || new Date(1670770349 * 1000)
         let lastAiringUpdateDate = await retrieveJSON("lastAiringAnimeUpdate") || lastAnimeUpdate
@@ -370,12 +379,14 @@ self.onmessage = async ({ data }) => {
                         if (retryCount < 2) {
                             let secondsPassed = 60
                             rateLimitInterval = setInterval(() => {
+                                self.postMessage({ progress: ((60 - secondsPassed) / 60) * 100 })
                                 self.postMessage({ status: (error ? (error + " ") : "") + `Rate Limit: ${msToTime(secondsPassed * 1000)}` })
                                 --secondsPassed
                             }, 1000)
                         }
                         setTimeout(() => {
                             if (rateLimitInterval) clearInterval(rateLimitInterval)
+                            self.postMessage({ progress: 100 })
                             self.postMessage({ status: "Retrying..." })
                             return recallUAA(page);
                         }, 60000);
@@ -426,6 +437,7 @@ self.onmessage = async ({ data }) => {
                                 let processedLength = Math.max(animeLength - airingAnimeIDs.length, 0)
                                 let percentage = (100 * (processedLength / animeLength))
                                 percentage = percentage >= 0 ? percentage : 0
+                                self.postMessage({ progress: percentage })
                                 self.postMessage({ status: `${percentage.toFixed(2)}% Updating Entries` }) // Update Data Status
                             }
                             if (hasUpdatedEntry) {
@@ -437,16 +449,19 @@ self.onmessage = async ({ data }) => {
                             } else {
                                 let secondsPassed = 60
                                 let rateLimitInterval = setInterval(() => {
+                                    self.postMessage({ progress: ((60 - secondsPassed) / 60) * 100 })
                                     self.postMessage({ status: `Rate Limit: ${msToTime(secondsPassed * 1000)}` })
                                     --secondsPassed
                                 }, 1000)
                                 setTimeout(() => {
                                     clearInterval(rateLimitInterval)
+                                    self.postMessage({ progress: 100 })
                                     self.postMessage({ status: "Retrying..." })
                                     return recallUAA(++page);
                                 }, 60000);
                             }
                         } else {
+                            self.postMessage({ progress: 100 })
                             airingAnimeIDsString = airingAnimeIDs = null
 
                             // Update User Recommendation List
@@ -497,12 +512,14 @@ self.onmessage = async ({ data }) => {
                             if (retryCount < 2) {
                                 let secondsPassed = 60
                                 rateLimitInterval = setInterval(() => {
+                                    self.postMessage({ progress: ((60 - secondsPassed) / 60) * 100 })
                                     self.postMessage({ status: `Rate Limit: ${msToTime(secondsPassed * 1000)}` })
                                     --secondsPassed
                                 }, 1000)
                             }
                             setTimeout(() => {
                                 if (rateLimitInterval) clearInterval(rateLimitInterval)
+                                self.postMessage({ progress: 100 })
                                 self.postMessage({ status: "Retrying..." })
                                 return recallUAA(page);
                             }, 60000);
@@ -528,6 +545,7 @@ self.onmessage = async ({ data }) => {
         self.postMessage({ status: "Checking Additional Entries..." }) // Init Data Status
 
         function recallGOUD() {
+            self.postMessage({ progress: 30 })
             fetch('https://graphql.anilist.co', {
                 method: 'POST',
                 headers: {
@@ -566,22 +584,26 @@ self.onmessage = async ({ data }) => {
                         if (retryCount < 2) {
                             let secondsPassed = 60
                             rateLimitInterval = setInterval(() => {
+                                self.postMessage({ progress: ((60 - secondsPassed) / 60) * 100 })
                                 self.postMessage({ status: (error ? (error + " ") : "") + `Rate Limit: ${msToTime(secondsPassed * 1000)}` })
                                 --secondsPassed
                             }, 1000)
                         }
                         setTimeout(() => {
                             if (rateLimitInterval) clearInterval(rateLimitInterval)
+                            self.postMessage({ progress: 100 })
                             self.postMessage({ status: "Retrying..." })
                             return recallGOUD();
                         }, 60000);
                     } else {
+                        self.postMessage({ progress: 100 })
                         let currentOldestUpdateAtDate = new Date((result?.data?.Page?.media?.[0]?.updatedAt || 1670770349) * 1000)
                         if (currentOldestUpdateAtDate instanceof Date && !isNaN(currentOldestUpdateAtDate)) {
                             if (currentOldestUpdateAtDate.getTime() > lastUpdateAtDate.getTime()) {
                                 lastUpdateAtDate = currentOldestUpdateAtDate
                             }
                         }
+                        self.postMessage({ progress: 0 })
                         recallUNRE(1)
                     }
                 })
@@ -602,12 +624,14 @@ self.onmessage = async ({ data }) => {
                         if (retryCount < 2) {
                             let secondsPassed = 60
                             rateLimitInterval = setInterval(() => {
+                                self.postMessage({ progress: ((60 - secondsPassed) / 60) * 100 })
                                 self.postMessage({ status: `Rate Limit: ${msToTime(secondsPassed * 1000)}` })
                                 --secondsPassed
                             }, 1000)
                         }
                         setTimeout(() => {
                             if (rateLimitInterval) clearInterval(rateLimitInterval)
+                            self.postMessage({ progress: 100 })
                             self.postMessage({ status: "Retrying..." })
                             return recallGOUD();
                         }, 60000);
@@ -724,12 +748,14 @@ self.onmessage = async ({ data }) => {
                         if (retryCount < 2) {
                             let secondsPassed = 60
                             rateLimitInterval = setInterval(() => {
+                                self.postMessage({ progress: ((60 - secondsPassed) / 60) * 100 })
                                 self.postMessage({ status: (error ? (error + " ") : "") + `Rate Limit: ${msToTime(secondsPassed * 1000)}` })
                                 --secondsPassed
                             }, 1000)
                         }
                         setTimeout(() => {
                             if (rateLimitInterval) clearInterval(rateLimitInterval)
+                            self.postMessage({ progress: 100 })
                             self.postMessage({ status: "Retrying..." })
                             return recallUNRE(page);
                         }, 60000);
@@ -818,6 +844,7 @@ self.onmessage = async ({ data }) => {
                             } else {
                                 self.postMessage({ status: "Updating Additional Entries..." })
                             }
+                            self.postMessage({ progress: percentage })
                             if (hasUpdatedEntry) {
                                 saveJSON(animeEntries, "animeEntries")
                             }
@@ -827,17 +854,20 @@ self.onmessage = async ({ data }) => {
                             } else {
                                 let secondsPassed = 60
                                 rateLimitInterval = setInterval(() => {
+                                    self.postMessage({ progress: ((60 - secondsPassed) / 60) * 100 })
                                     self.postMessage({ status: (error ? (error + " ") : "") + `Rate Limit: ${msToTime(secondsPassed * 1000)}` })
                                     --secondsPassed
                                 }, 1000)
                                 setTimeout(() => {
                                     if (rateLimitInterval) clearInterval(rateLimitInterval)
+                                    self.postMessage({ progress: 100 })
                                     self.postMessage({ status: "Retrying..." })
                                     return recallUNRE(++page);
                                 }, 60000);
                             }
                         } else {
                             // Update User Recommendation List
+                            self.postMessage({ progress: 100 })
                             if (hasUpdatedEntry) {
                                 self.postMessage({ status: "100% Updating Additional Entries" })
                                 await saveJSON(animeEntries, "animeEntries")
@@ -882,12 +912,14 @@ self.onmessage = async ({ data }) => {
                             if (retryCount < 2) {
                                 let secondsPassed = 60
                                 rateLimitInterval = setInterval(() => {
+                                    self.postMessage({ progress: ((60 - secondsPassed) / 60) * 100 })
                                     self.postMessage({ status: `Rate Limit: ${msToTime(secondsPassed * 1000)}` })
                                     --secondsPassed
                                 }, 1000)
                             }
                             setTimeout(() => {
                                 if (rateLimitInterval) clearInterval(rateLimitInterval)
+                                self.postMessage({ progress: 100 })
                                 self.postMessage({ status: "Retrying..." })
                                 return recallUNRE(page);
                             }, 60000);

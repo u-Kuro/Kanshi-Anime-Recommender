@@ -55,10 +55,7 @@ self.onmessage = async ({ data }) => {
         finalAnimeList = filteredList = []
         if (!db) await IDBinit()
         self.postMessage({ status: "Initializing Filters" })
-        let activeTagFilters = await retrieveJSON("activeTagFilters")
-        let contentCaution = activeTagFilters?.['Content Caution'] || []
-        let animeFilter = activeTagFilters?.['Anime Filter'] || []
-        activeTagFilters = null
+        let activeTagFilters = data?.activeTagFilters || await retrieveJSON("activeTagFilters")
         // Init Content Caution
         let semiCautionContents = {
             genres: {},
@@ -68,7 +65,7 @@ self.onmessage = async ({ data }) => {
                 genres: {},
                 tags: {},
             };
-        contentCaution.forEach(({ selected, filterType, optionName, optionType }) => {
+        activeTagFilters?.['Content Caution']?.forEach(({ selected, filterType, optionName, optionType }) => {
             // Included is Semi Caution and Excluded is Caution
             if (selected === "included") {
                 if (filterType === 'dropdown') {
@@ -88,7 +85,6 @@ self.onmessage = async ({ data }) => {
                 }
             }
         })
-        contentCaution = null
         // Init Anime Filter
         let flexibleInclusion = {},
             include = {
@@ -124,7 +120,7 @@ self.onmessage = async ({ data }) => {
             showMyAnime = false,
             showAiring = false,
             favoriteContentsLimit = 5;
-        animeFilter.forEach(({ selected, filterType, optionName, optionType, optionValue, CMPoperator, CMPNumber }) => {
+        activeTagFilters?.['Anime Filter']?.forEach(({ selected, filterType, optionName, optionType, optionValue, CMPoperator, CMPNumber }) => {
             if (selected === "included") {
                 if (filterType === 'dropdown') {
                     if (optionType === 'flexible inclusion') {
@@ -208,14 +204,14 @@ self.onmessage = async ({ data }) => {
                 }
             }
         })
-        animeFilter = null
         self.postMessage({ status: "Filtering Recommendation List" })
 
         // Get Hidden Entries
         let hiddenEntries = (await retrieveJSON("hiddenEntries")) || {}
         // Filter and ADD Caution State below
         let recommendedAnimeList = await retrieveJSON("recommendedAnimeList") || []
-        finalAnimeList = recommendedAnimeList.filter(anime => {
+        finalAnimeList = recommendedAnimeList.filter((anime, idx) => {
+            self.postMessage({ progress: ((idx + 1) / recommendedAnimeList.length) * 100 })
             if (showAiring) {
                 if (!ncsCompare(anime?.status, 'releasing')) {
                     return false;
@@ -692,8 +688,14 @@ self.onmessage = async ({ data }) => {
             }
         }
         sortName = sortType = null
+        await saveJSON(activeTagFilters, 'activeTagFilters')
+        let filterOptions = data?.filterOptions
+        if (filterOptions) {
+            await saveJSON(filterOptions, "filterOptions")
+        }
         await saveJSON(finalAnimeList, "finalAnimeList")
         self.postMessage({ status: null })
+        self.postMessage({ progress: 100 })
         self.postMessage({
             isNew: true,
             finalAnimeList: finalAnimeList.slice(0, loadLimit),

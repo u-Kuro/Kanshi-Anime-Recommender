@@ -9,13 +9,18 @@ self.onmessage = async ({ data }) => {
     reader.onload = async () => {
         let fileContent;
         try {
+            self.postMessage({ progress: 0 })
+            self.postMessage({ progress: 30 })
             fileContent = JSON.parse(reader.result)
+            self.postMessage({ progress: 75 })
         } catch (e) {
             fileContent = undefined;
         }
         try {
             if (!fileContent) {
+                self.postMessage({ progress: 0 })
                 fileContent = await parseAsync(reader.result)
+                self.postMessage({ progress: 75 })
             }
             if (!fileContent) {
                 self.postMessage({ status: "File parsing has failed..." })
@@ -28,35 +33,41 @@ self.onmessage = async ({ data }) => {
             }
             self.postMessage({ importedUsername: username })
 
+            self.postMessage({ progress: 76.10993657505286 })
             let lastAnimeUpdate = fileContent.lastAnimeUpdate ? new Date(fileContent.lastAnimeUpdate) : null
             let currentAnimeUpdate = await retrieveJSON("lastAnimeUpdate") || new Date(1670770349 * 1000)
             if (lastAnimeUpdate instanceof Date && !isNaN(lastAnimeUpdate) && lastAnimeUpdate > currentAnimeUpdate) {
                 await saveJSON(lastAnimeUpdate, "lastAnimeUpdate")
             }
 
+            self.postMessage({ progress: 76.74418604651163 })
             let lastAiringUpdateDate = fileContent.lastAiringUpdateDate ? new Date(fileContent.lastAiringUpdateDate) : null
             let currentAiringAnimeUpdate = await retrieveJSON("lastAiringUpdateDate") || new Date(1670770349 * 1000)
             if (lastAiringUpdateDate instanceof Date && !isNaN(lastAiringUpdateDate) && lastAiringUpdateDate > currentAiringAnimeUpdate) {
                 await saveJSON(lastAiringUpdateDate, "lastAiringUpdateDate")
             }
 
+            self.postMessage({ progress: 77.3784355179704 })
             let lastUserAnimeUpdate = fileContent.lastUserAnimeUpdate ? new Date(fileContent.lastUserAnimeUpdate) : null
             if (lastUserAnimeUpdate instanceof Date && !isNaN(lastUserAnimeUpdate)) {
                 await saveJSON(lastUserAnimeUpdate, "lastUserAnimeUpdate")
             }
 
+            self.postMessage({ progress: 77.80126849894292 })
             let lastRunnedAutoUpdateDate = fileContent.lastRunnedAutoUpdateDate ? new Date(fileContent.lastRunnedAutoUpdateDate) : null
             if (lastRunnedAutoUpdateDate instanceof Date && !isNaN(lastRunnedAutoUpdateDate)) {
                 await saveJSON(lastRunnedAutoUpdateDate, "lastRunnedAutoUpdateDate")
             }
             self.postMessage({ importedlastRunnedAutoUpdateDate: lastRunnedAutoUpdateDate })
 
+            self.postMessage({ progress: 78.43551797040169 })
             let lastRunnedAutoExportDate = fileContent.lastRunnedAutoExportDate ? new Date(fileContent.lastRunnedAutoExportDate) : null
             if (lastRunnedAutoExportDate instanceof Date && !isNaN(lastRunnedAutoExportDate)) {
                 await saveJSON(lastRunnedAutoExportDate, "lastRunnedAutoExportDate")
             }
             self.postMessage({ importedlastRunnedAutoExportDate: lastRunnedAutoExportDate })
 
+            self.postMessage({ progress: 79.49260042283298 })
             let activeTagFilters = fileContent.activeTagFilters
             fileContent.activeTagFilters = null
             if (isJsonObject(activeTagFilters) && !jsonIsEmpty(activeTagFilters)) {
@@ -64,6 +75,7 @@ self.onmessage = async ({ data }) => {
                 activeTagFilters = null
             }
 
+            self.postMessage({ progress: 80.54968287526427 })
             let hiddenEntries = fileContent.hiddenEntries
             fileContent.hiddenEntries = null
             if (isJsonObject(hiddenEntries)) {
@@ -72,6 +84,7 @@ self.onmessage = async ({ data }) => {
             self.postMessage({ importedHiddenEntries: hiddenEntries })
             hiddenEntries = null
 
+            self.postMessage({ progress: 81.60676532769556 })
             let userEntries = fileContent.userEntries
             fileContent.userEntries = null
             if (userEntries instanceof Array) {
@@ -79,6 +92,7 @@ self.onmessage = async ({ data }) => {
                 userEntries = null
             }
 
+            self.postMessage({ progress: 82.87526427061312 })
             let filterOptions = fileContent.filterOptions
             fileContent.filterOptions = null
             if (isJsonObject(filterOptions) && !jsonIsEmpty(filterOptions)) {
@@ -86,6 +100,7 @@ self.onmessage = async ({ data }) => {
                 filterOptions = null
             }
 
+            self.postMessage({ progress: 94.08033826638479 })
             let animeEntries = fileContent.animeEntries
             fileContent = null
             if (lastAnimeUpdate instanceof Date && !isNaN(lastAnimeUpdate) && lastAnimeUpdate > currentAnimeUpdate && isJsonObject(animeEntries) && !jsonIsEmpty(animeEntries)) {
@@ -97,16 +112,19 @@ self.onmessage = async ({ data }) => {
             self.postMessage({ updateFilters: true })
             self.postMessage({ updateRecommendationList: true })
             self.postMessage({ status: null })
+            self.postMessage({ progress: 100 })
             self.postMessage({ message: "success" })
         } catch (error) {
             console.error(error);
             self.postMessage({ status: typeof error === "string" ? error : "Something went wrong..." })
+            self.postMessage({ progress: 100 })
             self.postMessage({ error: error })
         }
     }
     reader.onerror = (error) => {
         console.error(error);
         self.postMessage({ status: typeof error === "string" ? error : "Something went wrong..." })
+        self.postMessage({ progress: 100 })
         self.postMessage({ error: error })
     }
     if (reader.readyState !== 1) {// Not Loaded
