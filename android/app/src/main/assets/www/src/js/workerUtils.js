@@ -533,7 +533,6 @@ const getFilterOptions = (_data) => {
                         dataStatusPrio = true
                         dataStatus.set(data.status)
                     } else {
-                        progress.set(100)
                         dataStatusPrio = false
                         getFilterOptionsTerminateTimeout = setTimeout(() => {
                             getFilterOptionsWorker.terminate();
@@ -572,6 +571,7 @@ function stopConflictingWorkers() {
     gettingAnimeFranchisesInterval = null
     clearInterval(getFilterOptionsInterval)
     getFilterOptionsInterval = null
+    dataStatus.set(null)
 }
 
 function alertError() {
