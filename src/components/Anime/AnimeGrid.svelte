@@ -6,6 +6,7 @@
         animeLoaderWorker,
         dataStatus,
         filterOptions,
+        activeTagFilters,
         animeObserver,
         popupVisible,
         openedAnimePopupIdx,
@@ -406,6 +407,18 @@
             inline: "start",
         });
     }
+
+    $: gridHeight = (
+        $activeTagFilters?.[
+            $filterOptions?.filterSelection?.[
+                $filterOptions?.filterSelection?.findIndex(
+                    ({ isSelected }) => isSelected
+                )
+            ]?.filterSelectionName
+        ] || []
+    ).length
+        ? windowHeight
+        : windowHeight + 50;
 </script>
 
 <main class={$gridFullView ? "fullView" : ""}>
@@ -416,7 +429,7 @@
             ($finalAnimeList?.length === 0 && !$initData ? "empty" : "")}
         bind:this={animeGridEl}
         on:wheel={(e) => $gridFullView && horizontalWheel(e, "image-grid")}
-        style:--anime-grid-height={windowHeight + "px"}
+        style:--anime-grid-height={gridHeight + "px"}
     >
         {#if $finalAnimeList?.length}
             {#each $finalAnimeList || [] as anime, animeIdx (anime.id)}
@@ -518,7 +531,7 @@
                     <div class="shimmer" />
                 </div>
             {/each}
-            {#each Array(5) as _}
+            {#each Array($gridFullView ? Math.floor((windowHeight ?? 1100) / 220) : 5) as _}
                 <div class="image-grid__card" />
             {/each}
         {:else if !$finalAnimeList || $initData}

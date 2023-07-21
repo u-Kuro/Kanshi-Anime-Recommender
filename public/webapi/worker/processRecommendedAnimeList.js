@@ -654,7 +654,7 @@ self.onmessage = async ({ data }) => {
             meanUserScore = arrayMean(userScores);
         }
         for (let i = 0; i < animeEntries.length; i++) {
-            self.postMessage({ progress: (((i + 1) / animeEntries.length) * 100 * 0.7) + 30 })
+            self.postMessage({ progress: ((i / animeEntries.length) * 100 * 0.7) + 30 })
             let anime = animeEntries[i];
             let animeID = anime?.id;
             let animeUrl = anime?.siteUrl;
@@ -1127,7 +1127,7 @@ self.onmessage = async ({ data }) => {
         let scoreBase = 100 // 0 causes problem so it should be > 0
         let maxScore
         for (let i = 0; i < animeEntries.length; i++) {
-            self.postMessage({ progress: ((i + 1) / animeEntries.length) * 100 })
+            self.postMessage({ progress: (i / animeEntries.length) * 100 })
             let anime = animeEntries[i];
             let animeID = anime?.id;
             let animeUrl = anime?.siteUrl;

@@ -15,12 +15,14 @@ self.onmessage = async ({ data }) => {
     // set id_not_in the Existing IDs
     // add results to local list
     async function getNewEntries(animeEntries) {
+        self.postMessage({ progress: 0 })
         let currentAnimeIDs = Object.keys(animeEntries).join(',')
         let entriesCount = 0
 
         self.postMessage({ status: "Checking New Entries..." }) // Update Data Status
-        self.postMessage({ progress: 30 })
+
         function recallGNE(page) {
+            self.postMessage({ progress: 25 })
             fetch('https://graphql.anilist.co', {
                 method: 'POST',
                 headers: {
@@ -252,6 +254,7 @@ self.onmessage = async ({ data }) => {
     // set id_in Existing IDs
     // update results to local list
     async function updateAiringAnime(animeEntries) {
+        self.postMessage({ progress: 0 })
         let airingAnimeIDs = Object.values(animeEntries).filter(({ seasonYear, status }) => {
             // Either Currently Releasing or Not Yet Released but Its Release Year is >= Current Year
             return ncsCompare(status, 'releasing') || (ncsCompare(status, 'not_yet_released') && parseInt(seasonYear) >= currentYear)
@@ -263,7 +266,6 @@ self.onmessage = async ({ data }) => {
         let airingAnimeIDsString = airingAnimeIDs.join(',') // Get IDs
 
         self.postMessage({ status: "Checking Latest Entries..." }) // Init Data Status
-        self.postMessage({ progress: 0 })
 
         let lastAnimeUpdate = await retrieveJSON("lastAnimeUpdate") || new Date(1670770349 * 1000)
         let lastAiringUpdateDate = await retrieveJSON("lastAiringAnimeUpdate") || lastAnimeUpdate
@@ -545,7 +547,7 @@ self.onmessage = async ({ data }) => {
         self.postMessage({ status: "Checking Additional Entries..." }) // Init Data Status
 
         function recallGOUD() {
-            self.postMessage({ progress: 30 })
+            self.postMessage({ progress: 25 })
             fetch('https://graphql.anilist.co', {
                 method: 'POST',
                 headers: {

@@ -28,6 +28,7 @@ let animeLoaderWorker;
 const animeLoader = (_data) => {
     return new Promise((resolve, reject) => {
         dataStatusPrio = true
+        progress.set(0)
         cacheRequest("./webapi/worker/animeLoader.js")
             .then(url => {
                 if (animeLoaderWorker) {
@@ -67,6 +68,7 @@ const processRecommendedAnimeList = (_data) => {
     return new Promise((resolve, reject) => {
         dataStatusPrio = true
         if (processRecommendedAnimeListWorker) processRecommendedAnimeListWorker.terminate();
+        progress.set(0)
         cacheRequest("./webapi/worker/processRecommendedAnimeList.js")
             .then(url => {
                 processRecommendedAnimeListWorker = new Worker(url);
@@ -102,6 +104,7 @@ let requestAnimeEntriesTerminateTimeout, requestAnimeEntriesWorker;
 const requestAnimeEntries = (_data) => {
     return new Promise((resolve, reject) => {
         if (requestAnimeEntriesWorker) requestAnimeEntriesWorker.terminate()
+        progress.set(0)
         cacheRequest("./webapi/worker/requestAnimeEntries.js")
             .then(url => {
                 requestAnimeEntriesWorker = new Worker(url)
@@ -154,6 +157,7 @@ const requestUserEntries = (_data) => {
             }
         }
         if (requestUserEntriesWorker) requestUserEntriesWorker.terminate()
+        progress.set(0)
         cacheRequest("./webapi/worker/requestUserEntries.js")
             .then(url => {
                 requestUserEntriesWorker = new Worker(url)
@@ -223,6 +227,7 @@ const exportUserData = (_data) => {
             isExporting = true
         }
         if (exportUserDataWorker) exportUserDataWorker.terminate()
+        progress.set(0)
         cacheRequest("./webapi/worker/exportUserData.js")
             .then(url => {
                 exportUserDataWorker = new Worker(url)
@@ -291,6 +296,7 @@ const importUserData = (_data) => {
             isImporting.set(true)
         }
         if (importUserDataWorker) importUserDataWorker.terminate()
+        progress.set(0)
         cacheRequest("./webapi/worker/importUserData.js")
             .then(url => {
                 importUserDataWorker = new Worker(url)
@@ -420,9 +426,10 @@ const getAnimeEntries = (_data) => {
         gettingAnimeEntriesInterval = setInterval(() => {
             dataStatus.set("Getting Anime Entries")
         }, 300)
-        progress.set(30)
+        progress.set(0)
         cacheRequest("./webapi/worker/getAnimeEntries.js")
             .then(url => {
+                progress.set(25)
                 if (gettingAnimeEntriesInterval) {
                     clearInterval(gettingAnimeEntriesInterval)
                     gettingAnimeEntriesInterval = null
@@ -469,9 +476,10 @@ const getAnimeFranchises = (_data) => {
                 dataStatus.set("Getting Anime Franchise")
             }
         }, 300)
-        progress.set(30)
+        progress.set(0)
         cacheRequest("./webapi/worker/getAnimeFranchises.js")
             .then(url => {
+                progress.set(25)
                 if (gettingAnimeFranchisesInterval) {
                     clearInterval(gettingAnimeFranchisesInterval)
                     gettingAnimeFranchisesInterval = null
@@ -556,7 +564,7 @@ const getFilterOptions = (_data) => {
 }
 
 function stopConflictingWorkers() {
-    progress.set(100)
+    progress.set(0)
     requestAnimeEntriesWorker?.terminate?.()
     requestUserEntriesWorker?.terminate?.()
     userRequestIsRunning.set(false)

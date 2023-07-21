@@ -43,9 +43,10 @@
     let isOnline = window.navigator.onLine;
 
     let date;
-    let savedYtVolume = 50;
+    let savedYtVolume = $android? 100 : 50;
+    
     (async () => {
-        savedYtVolume = (await retrieveJSON("savedYtVolume")) || 50;
+        savedYtVolume = (await retrieveJSON("savedYtVolume")) || savedYtVolume;
     })();
 
     let animeGridParentEl,

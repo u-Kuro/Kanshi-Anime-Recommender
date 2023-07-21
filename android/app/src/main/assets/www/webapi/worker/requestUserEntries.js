@@ -23,7 +23,7 @@ self.onmessage = async ({ data }) => {
     function recallUE() {
         if (lastUserAnimeUpdate instanceof Date && !isNaN(lastUserAnimeUpdate)) {
             if (retryCount < 2 && !visibilityChange) {
-                self.postMessage({ progress: 0 })
+                self.postMessage({ progress: 25 })
                 self.postMessage({ status: "Checking Latest User Entries..." })
             }
             fetch('https://graphql.anilist.co', {
@@ -105,8 +105,8 @@ self.onmessage = async ({ data }) => {
         let userEntries = [];
         let maxAnimePerChunk = 500
         let currentUserAnimeUpdate;
+        self.postMessage({ progress: 0 })
         if (retryCount < 2) {
-            self.postMessage({ progress: 30 })
             self.postMessage({ status: "Getting User Entries" })
         }
         function recallAV(chunk) {

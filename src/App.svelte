@@ -60,6 +60,7 @@
 	} from "./js/workerUtils.js";
 	import { isAndroid, addClass, removeClass } from "./js/others/helper.js";
 
+	let windowWidth = window.visualViewport.width;
 	let usernameInputEl, animeGridEl;
 	$android = isAndroid(); // Android/Browser Identifier
 
@@ -453,7 +454,8 @@
 			($popupVisible ||
 				($gridFullView
 					? animeGridEl.scrollLeft > 500
-					: window.scrollY > animeGridEl?.offsetTop - 55)) &&
+					: window.scrollY >
+					  Math.max(0, animeGridEl?.offsetTop - 55))) &&
 			$finalAnimeList?.length
 		) {
 			$listUpdateAvailable = true;
@@ -727,7 +729,11 @@
 			window.setShouldGoBack(false);
 		runIsScrolling.update((e) => !e);
 	});
+	window.addEventListener("resize", () => {
+		windowWidth = window.visualViewport.width;
+	});
 	onMount(() => {
+		windowWidth = window.visualViewport.width;
 		usernameInputEl = document.getElementById("usernameInput");
 		animeGridEl = document.getElementById("anime-grid");
 		animeGridEl?.addEventListener("scroll", () => {
@@ -934,14 +940,26 @@
 			window.updateAppAlert?.();
 		}
 	}
+
+	let _progress = 0,
+		progressFrame;
+	progress.subscribe((val) => {
+		cancelAnimationFrame(progressFrame);
+		progressFrame = requestAnimationFrame(() => {
+			_progress = val;
+		});
+	});
 </script>
 
 <main>
-	{#if $progress > 0 && $progress < 100}
+	{#if _progress > 0 && _progress < 100}
 		<div
-			out:fade={{ duration: 0, delay: 500 }}
+			out:fade={{ duration: 0, delay: 400 }}
+			on:outrostart={(e) => {
+				e.target.style.setProperty("--progress", "0%");
+			}}
 			class="progress"
-			style:--progress={"-" + (100 - $progress) + "%"}
+			style:--progress={"-" + (100 - _progress) + "%"}
 		/>
 	{/if}
 	<C.Fixed.Navigator />
@@ -999,12 +1017,12 @@
 	.progress {
 		background-color: #909cb8;
 		position: fixed;
-		top: 0;
+		top: 53px;
 		z-index: 9999;
 		height: 1px;
 		width: 100%;
 		transform: translateX(var(--progress));
-		transition: transform 0.3s linear;
+		transition: transform 0.3s ease-in;
 	}
 	.list-update-container {
 		position: fixed;
