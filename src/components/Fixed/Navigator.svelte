@@ -355,6 +355,7 @@
         height: 55px;
         background-color: #152232;
         color: white;
+        border-bottom: 1px solid rgb(35 45 65);
     }
     .nav {
         display: grid;
@@ -368,7 +369,6 @@
         margin: auto;
         gap: 1.5em;
         padding: 0 50px;
-        border-bottom: 1px solid rgb(35 45 65);
     }
     .logo-icon {
         cursor: pointer;
