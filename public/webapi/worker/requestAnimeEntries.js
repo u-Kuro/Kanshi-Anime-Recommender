@@ -545,6 +545,7 @@ self.onmessage = async ({ data }) => {
         let largestDif = -Infinity;
 
         self.postMessage({ status: "Checking Additional Entries..." }) // Init Data Status
+        self.postMessage({ progress: 0 })
 
         function recallGOUD() {
             self.postMessage({ progress: 25 })

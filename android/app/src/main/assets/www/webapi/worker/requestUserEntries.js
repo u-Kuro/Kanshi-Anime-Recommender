@@ -21,6 +21,7 @@ self.onmessage = async ({ data }) => {
     }
 
     function recallUE() {
+        self.postMessage({ progress: 0 })
         if (lastUserAnimeUpdate instanceof Date && !isNaN(lastUserAnimeUpdate)) {
             if (retryCount < 2 && !visibilityChange) {
                 self.postMessage({ progress: 25 })
