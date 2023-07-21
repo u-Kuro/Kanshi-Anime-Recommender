@@ -242,9 +242,7 @@
 			// Auto Play
 			let _autoPlay = await retrieveJSON("autoPlay");
 			if (typeof _autoPlay === "boolean") $autoPlay = _autoPlay;
-			let portrait = screen.availHeight > screen.availWidth;
-			let _gridFullView =
-				(await retrieveJSON("gridFullView")) ?? portrait;
+			let _gridFullView = (await retrieveJSON("gridFullView")) ?? true;
 			if (typeof _gridFullView === "boolean")
 				$gridFullView = _gridFullView;
 			// Hidden Entries
