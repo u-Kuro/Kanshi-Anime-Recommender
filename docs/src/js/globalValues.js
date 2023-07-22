@@ -1,6 +1,6 @@
 import { writable } from "svelte/store";
 
-const appID = writable(38)
+const appID = writable(39)
 const android = writable(null)
 const inApp = writable(true)
 const progress = writable(0)
@@ -48,6 +48,7 @@ const popupVisible = writable(false)
 const openedAnimePopupIdx = writable(null)
 const shouldGoBack = writable(true)
 const listUpdateAvailable = writable(false)
+const popupIsGoingBack = writable(false)
 const isScrolling = writable(null)
 const scrollingTimeout = writable(null)
 const asyncAnimeReloaded = writable(null)
@@ -104,6 +105,7 @@ export {
     openedAnimePopupIdx,
     shouldGoBack,
     listUpdateAvailable,
+    popupIsGoingBack,
     isScrolling,
     scrollingTimeout,
     asyncAnimeReloaded,

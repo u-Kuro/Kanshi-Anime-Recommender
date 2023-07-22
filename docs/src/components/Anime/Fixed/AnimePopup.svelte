@@ -23,6 +23,8 @@
         checkAnimeLoaderStatus,
         hasWheel,
         numberOfNextLoadedGrid,
+        isScrolling,
+        popupIsGoingBack,
     } from "../../../js/globalValues.js";
     import {
         isJsonObject,
@@ -43,8 +45,8 @@
     let isOnline = window.navigator.onLine;
 
     let date;
-    let savedYtVolume = $android? 100 : 50;
-    
+    let savedYtVolume = $android ? 100 : 50;
+
     (async () => {
         savedYtVolume = (await retrieveJSON("savedYtVolume")) || savedYtVolume;
     })();
@@ -833,7 +835,7 @@
                     if (data?.isNew) {
                         $finalAnimeList = data.finalAnimeList;
                         $hiddenEntries = data.hiddenEntries;
-                        $numberOfNextLoadedGrid = data.numberOfNextLoadedGrid
+                        $numberOfNextLoadedGrid = data.numberOfNextLoadedGrid;
                     }
                     $dataStatus = null;
                     return;
@@ -1219,13 +1221,13 @@
     });
     function loadYouTubeAPI() {
         return new Promise((resolve) => {
-            var existingScript = document.getElementById(
+            let existingScript = document.getElementById(
                 "www-widgetapi-script"
             );
             if (existingScript) {
                 existingScript.parentElement.removeChild(existingScript);
             }
-            var tag = document.createElement("script");
+            let tag = document.createElement("script");
             tag.src = "https://www.youtube.com/iframe_api?v=16";
             tag.onerror = () => {
                 resolve();
@@ -1234,7 +1236,7 @@
                 window?.onYouTubeIframeAPIReady?.();
                 resolve();
             };
-            var firstScriptTag = document.getElementsByTagName("script")[0];
+            let firstScriptTag = document.getElementsByTagName("script")[0];
             firstScriptTag.parentElement.insertBefore(tag, firstScriptTag);
         });
     }
@@ -1244,6 +1246,7 @@
             ".anime-description-container"
         );
         if (descriptionEl) {
+            event.stopPropagation();
             let classList = descriptionEl.classList;
             if (classList.contains("display-none")) {
                 removeClass(descriptionEl, "display-none");
@@ -1268,6 +1271,7 @@
             );
         }
         if (descriptionEl) {
+            event.stopPropagation();
             removeClass(descriptionEl, "fade-in");
             addClass(descriptionEl, "fade-out");
             setTimeout(() => {
@@ -1289,12 +1293,12 @@
         }
     }
     function htmlToString(s) {
-        var span = document.createElement("span");
+        let span = document.createElement("span");
         span.innerHTML = s;
         return span.textContent || span.innerText;
     }
     function editHTMLString(s) {
-        var span = document.createElement("span");
+        let span = document.createElement("span");
         span.innerHTML = s;
         let links = span.querySelectorAll("a");
         Array.from(links).forEach((linkEl) => {
@@ -1302,6 +1306,170 @@
             linkEl?.setAttribute("target", "_blank");
         });
         return span.innerHTML;
+    }
+    window.addEventListener("click", (event) => {
+        let element = event.target;
+        let classList = element.classList;
+
+        let parentElement;
+        if (classList?.contains?.("popup-main")) {
+            parentElement = element;
+        } else {
+            parentElement = element?.closest?.(".popup-main");
+        }
+        if (parentElement) {
+            let descriptionEl = parentElement.querySelector(
+                ".anime-description-container"
+            );
+            if (
+                descriptionEl &&
+                !descriptionEl?.classList?.contains?.("fade-out")
+            ) {
+                removeClass(descriptionEl, "fade-in");
+                addClass(descriptionEl, "fade-out");
+                setTimeout(() => {
+                    addClass(descriptionEl, "display-none");
+                    addClass(descriptionEl, "fade-out");
+                }, 300);
+            }
+        }
+    });
+
+    let willOpenDescription,
+        touchID,
+        checkPointer,
+        startX,
+        endX,
+        startY,
+        endY,
+        pointerDownTimeout,
+        goBackPercent;
+    isScrolling.subscribe((val) => {
+        if (val === true) {
+            clearTimeout(pointerDownTimeout);
+            $popupIsGoingBack = willOpenDescription = false;
+            goBackPercent = 0;
+        }
+    });
+    function handlePopupContainerDown(event) {
+        startX = event.touches[0].clientX;
+        startY = event.touches[0].clientY;
+        touchID = event.touches[0].identifier;
+        clearTimeout(pointerDownTimeout);
+        let element = event.target;
+        let closestScrollableLeftElement = element;
+        let hasScrollableLeftElement = false;
+        while (
+            closestScrollableLeftElement &&
+            closestScrollableLeftElement !== document.body
+        ) {
+            const isScrollableLeft =
+                closestScrollableLeftElement.scrollWidth >
+                    closestScrollableLeftElement.clientWidth &&
+                closestScrollableLeftElement.scrollLeft >= 7.5;
+            if (isScrollableLeft) {
+                if (closestScrollableLeftElement.id === "popup-container") {
+                    hasScrollableLeftElement = false;
+                } else {
+                    hasScrollableLeftElement = true;
+                }
+                break;
+            }
+            closestScrollableLeftElement =
+                closestScrollableLeftElement.parentElement;
+        }
+        if (hasScrollableLeftElement) return;
+        pointerDownTimeout = setTimeout(() => {
+            checkPointer = true;
+        }, 0);
+    }
+    function handlePopupContainerMove(event) {
+        if (checkPointer) {
+            checkPointer = false;
+            endX = event.touches[0].clientX;
+            endY = event.touches[0].clientY;
+            const deltaX = endX - startX;
+            const deltaY = endY - startY;
+            if (Math.abs(deltaX) > Math.abs(deltaY)) {
+                if (deltaX > 0) {
+                    event.stopImmediatePropagation();
+                    $popupIsGoingBack = true;
+                } else if (deltaX < 0) {
+                    willOpenDescription = true
+                }
+            }
+        } else if ($popupIsGoingBack) {
+            endX = event.touches[0].clientX;
+            const deltaX = endX - startX;
+            if (deltaX > 0) {
+                goBackPercent = Math.min(
+                    (deltaX / 48) * 100,
+                    100
+                );
+            } else {
+                goBackPercent = 0;
+            }
+        }
+    }
+    function handlePopupContainerUp(event) {
+        clearTimeout(pointerDownTimeout);
+        if ($popupIsGoingBack || willOpenDescription) {
+            endX = Array.from(event.changedTouches).find(touch=>touch.identifier===touchID).clientX;
+            let xThreshold = 48;
+            let deltaX = endX - startX;
+            if (deltaX >= xThreshold) {
+                $popupVisible = false;
+            } else if (deltaX <= -xThreshold) {
+                let hasScrollableXElement
+                let closestScrollableXElement = event.target
+                while (
+                    closestScrollableXElement &&
+                    closestScrollableXElement !== document.body
+                ) {
+                    const isScrollableX = closestScrollableXElement.scrollWidth > closestScrollableXElement.clientWidth
+                    if (isScrollableX) {
+                        hasScrollableXElement = true;
+                        break;
+                    }
+                    closestScrollableXElement = closestScrollableXElement.parentElement;
+                }
+                if (!hasScrollableXElement) {
+                    let popupMain = event.target.closest(".popup-main");
+                    let descriptionEl = popupMain?.querySelector?.(
+                        ".anime-description-container"
+                    );
+                    if (descriptionEl) {
+                        event.stopPropagation();
+                        let classList = descriptionEl.classList;
+                        if (classList.contains("display-none")) {
+                            removeClass(descriptionEl, "display-none");
+                            removeClass(descriptionEl, "fade-out");
+                            addClass(descriptionEl, "fade-in");
+                        } else {
+                            removeClass(descriptionEl, "fade-in");
+                            addClass(descriptionEl, "fade-out");
+                            setTimeout(() => {
+                                addClass(descriptionEl, "display-none");
+                                addClass(descriptionEl, "fade-out");
+                            }, 300);
+                        }
+                    }
+                }
+            }
+            touchID = null
+            $popupIsGoingBack = willOpenDescription = false;
+            goBackPercent = 0;
+        } else {
+            touchID = null
+            $popupIsGoingBack = willOpenDescription = false;
+            goBackPercent = 0;
+        }
+    }
+    function handlePopupContainerCancel() {
+        clearTimeout(pointerDownTimeout);
+        touchID = null
+        $popupIsGoingBack = willOpenDescription = false;
+        goBackPercent = 0;
     }
 </script>
 
@@ -1317,6 +1485,10 @@
         class="popup-container hide"
         style:--translateY={windowHeight + "px"}
         bind:this={popupContainer}
+        on:touchstart={handlePopupContainerDown}
+        on:touchmove={handlePopupContainerMove}
+        on:touchend={handlePopupContainerUp}
+        on:touchcancel={handlePopupContainerCancel}
     >
         {#if $finalAnimeList?.length}
             {#each $finalAnimeList || [] as anime, animeIdx (anime.id)}
@@ -1445,7 +1617,9 @@
                             </div>
                         </div>
                         <div class="popup-body">
-                            <div class="anime-title-container">
+                            <div class="anime-title-container"
+                                style:overflow={$popupIsGoingBack?"hidden":""}
+                            >
                                 <a
                                     rel="noopener noreferrer"
                                     target="_blank"
@@ -1454,16 +1628,20 @@
                                         "-color anime-title copy"}
                                     copy-value={anime?.title?.userPreferred ||
                                         ""}
+                                    style:overflow={$popupIsGoingBack?"hidden":""}
                                     >{anime?.title?.userPreferred || "N/A"}</a
                                 >
                                 <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
-                                <i
-                                    class="fa-solid fa-circle-info"
-                                    tabindex="0"
-                                    on:click={openDescription}
-                                    on:keydown={(e) =>
-                                        e.key === "Enter" && openDescription(e)}
-                                />
+                                {#if anime?.description}
+                                    <i
+                                        class="fa-solid fa-circle-info"
+                                        tabindex="0"
+                                        on:click={openDescription}
+                                        on:keydown={(e) =>
+                                            e.key === "Enter" &&
+                                            openDescription(e)}
+                                    />
+                                {/if}
                             </div>
                             <div
                                 class={"info-list " +
@@ -1479,6 +1657,7 @@
                                                 ($hasWheel ? " hasWheel" : "")}
                                             on:wheel={(e) =>
                                                 horizontalWheel(e, "info")}
+                                            style:overflow={$popupIsGoingBack?"hidden":""}
                                         >
                                             {#if anime?.nextAiringEpisode?.airingAt}
                                                 {#key date.getSeconds()}
@@ -1516,6 +1695,7 @@
                                                 ($hasWheel ? " hasWheel" : "")}
                                             on:wheel={(e) =>
                                                 horizontalWheel(e, "info")}
+                                            style:overflow={$popupIsGoingBack?"hidden":""}
                                         >
                                             {#each getStudios(Object.entries(anime.studios || {}), anime?.favoriteContents?.studios) as { studio, studioColor } (studio)}
                                                 <span
@@ -1547,6 +1727,7 @@
                                                 ($hasWheel ? " hasWheel" : "")}
                                             on:wheel={(e) =>
                                                 horizontalWheel(e, "info")}
+                                            style:overflow={$popupIsGoingBack?"hidden":""}
                                         >
                                             {#each getGenres(anime.genres, anime?.favoriteContents?.genres, anime.contentCaution) as { genre, genreColor } (genre)}
                                                 <span
@@ -1569,6 +1750,7 @@
                                                 ($hasWheel ? " hasWheel" : "")}
                                             on:wheel={(e) =>
                                                 horizontalWheel(e, "info")}
+                                            style:overflow={$popupIsGoingBack?"hidden":""}
                                         >
                                             {#each getTags(anime.tags, anime?.favoriteContents?.tags, anime.contentCaution) as { tag, tagColor } (tag)}
                                                 <span
@@ -1593,6 +1775,7 @@
                                                 ($hasWheel ? " hasWheel" : "")}
                                             on:wheel={(e) =>
                                                 horizontalWheel(e, "info")}
+                                            style:overflow={$popupIsGoingBack?"hidden":""}
                                         >
                                             {#each getContentCaution(anime) as { caution, cautionColor } (caution + cautionColor)}
                                                 <span
@@ -1616,6 +1799,7 @@
                                                 ($hasWheel ? " hasWheel" : "")}
                                             on:wheel={(e) =>
                                                 horizontalWheel(e, "info")}
+                                            style:overflow={$popupIsGoingBack?"hidden":""}
                                         >
                                             <span
                                                 class="copy"
@@ -1635,6 +1819,7 @@
                                                 ($hasWheel ? " hasWheel" : "")}
                                             on:wheel={(e) =>
                                                 horizontalWheel(e, "info")}
+                                            style:overflow={$popupIsGoingBack?"hidden":""}
                                         >
                                             <span
                                                 class="copy"
@@ -1656,6 +1841,7 @@
                                                 ($hasWheel ? " hasWheel" : "")}
                                             on:wheel={(e) =>
                                                 horizontalWheel(e, "info")}
+                                            style:overflow={$popupIsGoingBack?"hidden":""}
                                         >
                                             <span
                                                 class="copy"
@@ -1686,6 +1872,7 @@
                                                 ($hasWheel ? " hasWheel" : "")}
                                             on:wheel={(e) =>
                                                 horizontalWheel(e, "info")}
+                                            style:overflow={$popupIsGoingBack?"hidden":""}
                                         >
                                             <span
                                                 class="copy"
@@ -1706,6 +1893,7 @@
                                                 ($hasWheel ? " hasWheel" : "")}
                                             on:wheel={(e) =>
                                                 horizontalWheel(e, "info")}
+                                            style:overflow={$popupIsGoingBack?"hidden":""}
                                         >
                                             <span
                                                 class={"copy " +
@@ -1729,6 +1917,7 @@
                                                 ($hasWheel ? " hasWheel" : "")}
                                             on:wheel={(e) =>
                                                 horizontalWheel(e, "info")}
+                                            style:overflow={$popupIsGoingBack?"hidden":""}
                                         >
                                             <span
                                                 class="copy"
@@ -1748,6 +1937,7 @@
                                                 ($hasWheel ? " hasWheel" : "")}
                                             on:wheel={(e) =>
                                                 horizontalWheel(e, "info")}
+                                            style:overflow={$popupIsGoingBack?"hidden":""}
                                         >
                                             <span
                                                 class="copy"
@@ -1765,6 +1955,7 @@
                                     class="seemoreless"
                                     on:click={handleSeeMore(anime, animeIdx)}
                                     on:keydown={(e) => e.key === "Enter"}
+                                    style:overflow={$popupIsGoingBack?"hidden":""}
                                     >{"See " +
                                         (anime.isSeenMore
                                             ? "Less"
@@ -1794,6 +1985,20 @@
         {/if}
     </div>
 </div>
+{#if $popupVisible && $popupIsGoingBack}
+    <div
+        class="go-back-grid-highlight"
+        style:--scale={Math.max(1, (goBackPercent ?? 1) * 0.01 * 2)}
+        style:--position={"-" + (100 - (goBackPercent ?? 0)) + "%"}
+        out:fly={{ x: -176, duration: 1000 }}
+    >
+        <div
+            class={"go-back-grid" + (goBackPercent >= 100 ? " willGoBack" : "")}
+        >
+            <i class="fa-solid fa-arrow-left" />
+        </div>
+    </div>
+{/if}
 
 <style>
     .popup-wrapper {
@@ -1819,7 +2024,8 @@
         will-change: transform;
         width: 100%;
         max-width: 640px;
-        overflow: auto;
+        overflow-y: auto;
+        overflow-x: hidden;
         overscroll-behavior: contain;
         background-color: #151f2e;
         transition: transform 0.3s ease;
@@ -1836,6 +2042,46 @@
 
     .popup-container::-webkit-scrollbar {
         display: none;
+    }
+
+    .go-back-grid-highlight {
+        position: fixed;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        top: 50%;
+        left: 0;
+        transform: translateY(-50%) translateX(var(--position));
+        background-color: rgb(103, 187, 254, 0.5);
+        width: calc(44px * var(--scale));
+        height: calc(44px * var(--scale));
+        border-radius: 50%;
+        z-index: 9000;
+    }
+
+    .go-back-grid {
+        position: absolute;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 6px;
+        background-color: white;
+        color: black;
+        cursor: pointer;
+        border-radius: 50%;
+        max-width: 44px;
+        max-height: 44px;
+        min-width: 44px;
+        min-height: 44px;
+    }
+
+    .go-back-grid.willGoBack {
+        background-color: black;
+        color: white;
+    }
+
+    .go-back-grid i {
+        font-size: 2em;
     }
 
     .popup-content {
@@ -1986,6 +2232,7 @@
         height: 38px;
         width: 100%;
         overflow-x: auto;
+        overflow-y: hidden;
         white-space: nowrap;
         align-items: center;
         display: grid;
@@ -2034,7 +2281,8 @@
         height: calc(100% - 2em);
         max-height: 240px;
         max-width: 580px;
-        overflow: auto;
+        overflow-y: auto;
+        overflow-x: hidden;
         letter-spacing: 0.05rem;
         line-height: 2.5rem;
     }
@@ -2095,7 +2343,8 @@
         white-space: nowrap;
         max-width: 95px;
         flex: 1;
-        overflow: auto;
+        overflow-x: auto;
+        overflow-y: hidden;
     }
 
     .seemoreless::-webkit-scrollbar,

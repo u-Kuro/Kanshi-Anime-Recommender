@@ -421,14 +421,15 @@
         : windowHeight + 50;
 </script>
 
-<main class={$gridFullView ? "fullView" : ""}>
+<main class={$gridFullView ?? true ? "fullView" : ""}>
     <div
         id="anime-grid"
         class={"image-grid " +
-            ($gridFullView ? "fullView" : "") +
+            ($gridFullView ?? true ? "fullView" : "") +
             ($finalAnimeList?.length === 0 && !$initData ? "empty" : "")}
         bind:this={animeGridEl}
-        on:wheel={(e) => $gridFullView && horizontalWheel(e, "image-grid")}
+        on:wheel={(e) =>
+            ($gridFullView ?? true) && horizontalWheel(e, "image-grid")}
         style:--anime-grid-height={gridHeight + "px"}
     >
         {#if $finalAnimeList?.length}
@@ -531,11 +532,11 @@
                     <div class="shimmer" />
                 </div>
             {/each}
-            {#each Array($gridFullView ? Math.floor((windowHeight ?? 1100) / 220) : 5) as _}
+            {#each Array($gridFullView ?? true ? Math.floor((windowHeight ?? 1100) / 220) : 5) as _}
                 <div class="image-grid__card" />
             {/each}
         {:else if !$finalAnimeList || $initData}
-            {#each Array(numberOfLoadedGrid) as _}
+            {#each Array(21) as _}
                 <div class="image-grid__card skeleton">
                     <div class="shimmer" />
                 </div>

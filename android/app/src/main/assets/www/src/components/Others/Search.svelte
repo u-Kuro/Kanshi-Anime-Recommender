@@ -1832,7 +1832,7 @@
             >
                 <i
                     class={"icon fa-solid fa-arrows-" +
-                        ($gridFullView ? "up-down" : "left-right")}
+                        (($gridFullView ?? true) ? "up-down" : "left-right")}
                 />
             </div>
             <div class="sortFilter">

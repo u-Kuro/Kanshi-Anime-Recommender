@@ -46,6 +46,7 @@
 		hasWheel,
 		numberOfNextLoadedGrid,
 		progress,
+		popupIsGoingBack,
 		// anilistAccessToken,
 	} from "./js/globalValues.js";
 	import {
@@ -604,7 +605,7 @@
 		if ($scrollingTimeout) clearTimeout($scrollingTimeout);
 		$scrollingTimeout = setTimeout(() => {
 			$isScrolling = false;
-		}, 1000);
+		}, 500);
 	});
 
 	// Global Function For Android/Browser
@@ -770,6 +771,14 @@
 		}
 	};
 
+	let isChangingPopupVisible, isChangingPopupVisibleTimeout;
+	popupIsGoingBack.subscribe(() => {
+		clearTimeout(isChangingPopupVisibleTimeout);
+		isChangingPopupVisible = true;
+		isChangingPopupVisibleTimeout = setTimeout(() => {
+			isChangingPopupVisible = false;
+		}, 500);
+	});
 	let copytimeoutId;
 	let copyhold = false;
 	document.addEventListener("pointerdown", (e) => {
@@ -778,12 +787,16 @@
 		let classList = target.classList;
 		if (!classList.contains("copy")) target = target.closest(".copy");
 		if (target) {
-			// e.preventDefault();
 			copyhold = true;
 			if (copytimeoutId) clearTimeout(copytimeoutId);
 			copytimeoutId = setTimeout(() => {
 				let text = target.getAttribute("copy-value");
-				if (text && !$isScrolling && copyhold) {
+				if (
+					text &&
+					!$isScrolling &&
+					copyhold &&
+					!isChangingPopupVisible
+				) {
 					target.style.pointerEvents = "none";
 					setTimeout(() => {
 						target.style.pointerEvents = "";
