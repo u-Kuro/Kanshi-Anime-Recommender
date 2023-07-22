@@ -1417,9 +1417,9 @@
             endX = Array.from(event.changedTouches).find(touch=>touch.identifier===touchID).clientX;
             let xThreshold = 48;
             let deltaX = endX - startX;
-            if (deltaX >= xThreshold) {
+            if (deltaX >= xThreshold && $popupIsGoingBack) {
                 $popupVisible = false;
-            } else if (deltaX <= -xThreshold) {
+            } else if (deltaX <= -xThreshold && willOpenDescription) {
                 let hasScrollableXElement
                 let closestScrollableXElement = event.target
                 while (
