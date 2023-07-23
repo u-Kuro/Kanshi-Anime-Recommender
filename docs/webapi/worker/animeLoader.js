@@ -425,8 +425,9 @@ self.onmessage = async ({ data }) => {
 
             if (!jsonIsEmpty(exclude.tags)) {
                 if (anime.tags.some(e => {
-                    if (typeof e !== 'string') return false
-                    return exclude.tags[e.toLowerCase()]
+                    let tagName = e?.name || e
+                    if (typeof tagName !== 'string') return false
+                    return exclude.tags[tagName.toLowerCase()]
                 })) return false
             }
 
@@ -494,7 +495,10 @@ self.onmessage = async ({ data }) => {
             if (flexibleInclusion['tag']) {
                 // Should Include OR
                 if (!jsonIsEmpty(include.tags)) {
-                    if (!anime.tags.some(tag => include.tags[tag.toLowerCase()])) {
+                    if (!anime.tags.some(tag => {
+                        let tagName = tag?.name || tag
+                        include.tags[tagName.toLowerCase()]
+                    })) {
                         return false
                     }
                 }
@@ -502,7 +506,8 @@ self.onmessage = async ({ data }) => {
                 // Should Include AND
                 for (let tag in include.tags) {
                     if (!anime.tags.some(e => {
-                        return ncsCompare(e, tag)
+                        let tagName = e?.name || e
+                        return ncsCompare(tagName, tag)
                     })) return false
                 }
             }
@@ -545,10 +550,11 @@ self.onmessage = async ({ data }) => {
 
             // Add Tag Caution
             anime.tags.forEach(tag => {
-                if (cautionContents.tags[tag?.toLowerCase?.()]) {
-                    anime.contentCaution.caution.push(tag)
-                } else if (semiCautionContents.tags[tag?.toLowerCase?.()]) {
-                    anime.contentCaution.semiCaution.push(tag)
+                let tagName = tag?.name || tag
+                if (cautionContents.tags[tagName?.toLowerCase?.()]) {
+                    anime.contentCaution.caution.push(tagName)
+                } else if (semiCautionContents.tags[tagName?.toLowerCase?.()]) {
+                    anime.contentCaution.semiCaution.push(tagName)
                 }
             })
             // Limit Favorite Contents

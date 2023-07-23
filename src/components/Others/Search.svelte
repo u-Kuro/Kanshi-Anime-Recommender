@@ -1219,7 +1219,7 @@
             window.visualViewport.width <= 425
         );
     };
-    window.closeDropdown = () => {
+    function closeDropdown() {
         // Small Screen Width
         if (highlightedEl instanceof Element) {
             removeClass(highlightedEl, "highlight");
@@ -1241,7 +1241,8 @@
         $filterOptions.filterSelection[idxTypeSelected] =
             $filterOptions?.filterSelection?.[idxTypeSelected];
         selectedFilterElement = null;
-    };
+    }
+    window.closeDropdown = closeDropdown
 
     onMount(() => {
         // Init
@@ -1275,7 +1276,65 @@
         }
     }
 
-    // Helper
+    let isGoingBack,
+        touchID,
+        checkPointer,
+        startX,
+        endX,
+        startY,
+        endY,
+        goBackPercent;
+
+    function itemScroll() {
+        isGoingBack = false;
+        goBackPercent = 0;
+    }
+
+    function handlePopupContainerDown(event) {
+        startX = event.touches[0].clientX;
+        startY = event.touches[0].clientY;
+        touchID = event.touches[0].identifier;
+        checkPointer = true;
+    }
+    function handlePopupContainerMove(event) {
+        if (checkPointer) {
+            checkPointer = false;
+            endX = event.touches[0].clientX;
+            endY = event.touches[0].clientY;
+            const deltaX = endX - startX;
+            const deltaY = endY - startY;
+            if (Math.abs(deltaX) > Math.abs(deltaY) && deltaX > 0) {
+                isGoingBack = true;
+            }
+        } else if (isGoingBack) {
+            endX = event.touches[0].clientX;
+            const deltaX = endX - startX;
+            if (deltaX > 0) {
+                goBackPercent = Math.min((deltaX / 48) * 100, 100);
+            } else {
+                goBackPercent = 0;
+            }
+        }
+    }
+    function handlePopupContainerUp(event) {
+        endX = Array.from(event.changedTouches).find(
+            (touch) => touch.identifier === touchID
+        ).clientX;
+        let xThreshold = 48;
+        let deltaX = endX - startX;
+        if (isGoingBack && deltaX >= xThreshold) {
+            closeDropdown()
+            selectedFilterElement = selectedFilterTypeElement = selectedSortElement = null
+        }
+        touchID = null;
+        isGoingBack = false;
+        goBackPercent = 0;
+    }
+    function handlePopupContainerCancel(event) {
+        touchID = null;
+        isGoingBack = false;
+        goBackPercent = 0;
+    }
 </script>
 
 <main
@@ -1343,6 +1402,10 @@
                         ? ""
                         : "disable-interaction hide")}
                 style:--maxFilterSelectionHeight="{maxFilterSelectionHeight}px"
+                on:touchstart={e=>windowWidth <= 425 && handlePopupContainerDown(e)}
+                on:touchmove={e=>windowWidth <= 425 && handlePopupContainerMove(e)}
+                on:touchend={e=>windowWidth <= 425 && handlePopupContainerUp(e)}
+                on:touchcancel={e=>windowWidth <= 425 && handlePopupContainerCancel(e)}
             >
                 {#if $filterOptions}
                     <div
@@ -1366,7 +1429,9 @@
                                 ×
                             </div>
                         </div>
-                        <div class="options">
+                        <div class="options"
+                            on:scroll={itemScroll}
+                        >
                             {#each $filterOptions?.filterSelection || [] as { filterSelectionName, isSelected } (filterSelectionName)}
                                 <div
                                     class="option"
@@ -1473,6 +1538,10 @@
                                     : "disable-interaction hide")}
                             style:--maxFilterSelectionHeight="{maxFilterSelectionHeight}px"
                             on:wheel|stopPropagation={() => {}}
+                            on:touchstart={e=>windowWidth <= 425 && handlePopupContainerDown(e)}
+                            on:touchmove={e=>windowWidth <= 425 && handlePopupContainerMove(e)}
+                            on:touchend={e=>windowWidth <= 425 && handlePopupContainerUp(e)}
+                            on:touchcancel={e=>windowWidth <= 425 && handlePopupContainerCancel(e)}
                         >
                             <div
                                 class={"options-wrap-filter-info " +
@@ -1516,6 +1585,7 @@
                                 <div
                                     class="options"
                                     on:wheel|stopPropagation={() => {}}
+                                    on:scroll={itemScroll}
                                 >
                                     {#if Dropdown.options?.filter?.(({ optionName }) => hasPartialMatch(optionName, Dropdown.optKeyword) || Dropdown.optKeyword === "")?.length}
                                         {#each Dropdown.options || [] as option, optionIdx (filterSelection.filterSelectionName + Dropdown.filName + option.optionName)}
@@ -1875,6 +1945,10 @@
                     class={"options-wrap " +
                         (selectedSortElement ? "" : "disable-interaction hide")}
                     style:--maxFilterSelectionHeight="{maxFilterSelectionHeight}px"
+                    on:touchstart={e=>windowWidth <= 425 && handlePopupContainerDown(e)}
+                    on:touchmove={e=>windowWidth <= 425 && handlePopupContainerMove(e)}
+                    on:touchend={e=>windowWidth <= 425 && handlePopupContainerUp(e)}
+                    on:touchcancel={e=>windowWidth <= 425 && handlePopupContainerCancel(e)}
                 >
                     <div
                         class={"options-wrap-filter-info " +
@@ -1897,7 +1971,9 @@
                                 ×
                             </div>
                         </div>
-                        <div class="options">
+                        <div class="options"
+                        on:scroll={itemScroll}
+                        >
                             {#each $filterOptions?.sortFilter || [] as { sortName }, sortIdx (sortName + sortIdx)}
                                 <div
                                     class="option"
@@ -1935,6 +2011,23 @@
     {/if}
     <slot />
 </main>
+{#if (selectedFilterElement || selectedFilterTypeElement || selectedSortElement) &&
+    window.visualViewport.width <= 425 && 
+    isGoingBack
+}   
+    <div
+        class="go-back-grid-highlight"
+        style:--scale={Math.max(1, (goBackPercent ?? 1) * 0.01 * 2)}
+        style:--position={"-" + (100 - (goBackPercent ?? 0)) + "%"}
+        out:fly={{ x: -176, duration: 1000 }}
+    >
+        <div
+            class={"go-back-grid" + (goBackPercent >= 100 ? " willGoBack" : "")}
+        >
+            <i class="fa-solid fa-arrow-left" />
+        </div>
+    </div>
+{/if}
 
 <style>
     ::placeholder {
@@ -2609,5 +2702,45 @@
         .option i {
             font-size: 1.6rem !important;
         }
+    }
+
+    .go-back-grid-highlight {
+        position: fixed;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        top: 50%;
+        left: 0;
+        transform: translateY(-50%) translateX(var(--position));
+        background-color: rgb(103, 187, 254, 0.5);
+        width: calc(44px * var(--scale));
+        height: calc(44px * var(--scale));
+        border-radius: 50%;
+        z-index: 9000;
+    }
+
+    .go-back-grid {
+        position: absolute;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 6px;
+        background-color: white;
+        color: black;
+        cursor: pointer;
+        border-radius: 50%;
+        max-width: 44px;
+        max-height: 44px;
+        min-width: 44px;
+        min-height: 44px;
+    }
+
+    .go-back-grid.willGoBack {
+        background-color: black;
+        color: white;
+    }
+
+    .go-back-grid i {
+        font-size: 2em;
     }
 </style>

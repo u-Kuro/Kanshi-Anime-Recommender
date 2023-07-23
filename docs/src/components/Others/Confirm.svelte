@@ -59,17 +59,18 @@
         endX,
         startY,
         endY,
-        pointerDownTimeout,
         goBackPercent;
+
+    function itemScroll() {
+        isGoingBack = false;
+        goBackPercent = 0;
+    }
 
     function handlePopupContainerDown(event) {
         startX = event.touches[0].clientX;
         startY = event.touches[0].clientY;
         touchID = event.touches[0].identifier;
-        clearTimeout(pointerDownTimeout);
-        pointerDownTimeout = setTimeout(() => {
-            checkPointer = true;
-        }, 0);
+        checkPointer = true;
     }
     function handlePopupContainerMove(event) {
         if (checkPointer) {
@@ -92,7 +93,6 @@
         }
     }
     function handlePopupContainerUp(event) {
-        clearTimeout(pointerDownTimeout);
         endX = Array.from(event.changedTouches).find(
             (touch) => touch.identifier === touchID
         ).clientX;
@@ -104,10 +104,13 @@
             goBackPercent = 0;
             showConfirm = false;
             dispatch("cancelled");
+        } else {
+            touchID = null;
+            isGoingBack = false;
+            goBackPercent = 0;
         }
     }
     function handlePopupContainerCancel() {
-        clearTimeout(pointerDownTimeout);
         touchID = null;
         isGoingBack = false;
         goBackPercent = 0;
@@ -123,6 +126,7 @@
         on:touchmove={handlePopupContainerMove}
         on:touchend={handlePopupContainerUp}
         on:touchcancel={handlePopupContainerCancel}
+        on:scroll={itemScroll}
     >
         <div
             class="confirm-wrapper"
@@ -134,7 +138,9 @@
             >
                 <div class="confirm-info-container">
                     <h2 class="confirm-title">{confirmTitle}</h2>
-                    <h2 class="confirm-text">{confirmText}</h2>
+                    <h2 class="confirm-text" on:scroll={itemScroll}>
+                        {confirmText}
+                    </h2>
                 </div>
                 <div class="confirm-button-container">
                     {#if !isAlert}

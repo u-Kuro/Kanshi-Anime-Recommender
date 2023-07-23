@@ -1019,7 +1019,7 @@ self.onmessage = async ({ data }) => {
             maxScore = Math.pow(userScoreBase, 2)
             // Process other Anime Info
             genres = genres.length ? genres : [];
-            tags = tags.length ? tags.map((e) => e?.name || "") : [];
+            tags = tags.length ? tags.map((e) => { return { name: e?.name, rank: e?.rank } }) : [];
             studios = studios.reduce(
                 (result, e) => Object.assign(result, { [formatCustomString(e?.name)]: e?.siteUrl }),
                 {}
@@ -1301,7 +1301,7 @@ self.onmessage = async ({ data }) => {
             maxScore = 100 // favepopupRatio * averageScore = 1 * 100 = 100 max score
             // Other Anime Recommendation Info
             genres = genres.length ? genres : [];
-            tags = tags.length ? tags.map((e) => e?.name || "") : [];
+            tags = tags.length ? tags.map((e) => { return { name: e?.name, rank: e?.rank } }) : [];
             studios = studios.reduce((result, e) =>
                 Object.assign(result, { [formatCustomString(e?.name)]: e?.siteUrl })
                 , {});

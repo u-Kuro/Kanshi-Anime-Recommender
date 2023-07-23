@@ -23,7 +23,6 @@
         checkAnimeLoaderStatus,
         hasWheel,
         numberOfNextLoadedGrid,
-        isScrolling,
         popupIsGoingBack,
     } from "../../../js/globalValues.js";
     import {
@@ -37,7 +36,7 @@
         removeClass,
         getMostVisibleElementFromArray,
         jsonIsEmpty,
-        ncsCompare
+        ncsCompare,
     } from "../../../js/others/helper.js";
     import { retrieveJSON, saveJSON } from "../../../js/indexedDB.js";
     import { animeLoader } from "../../../js/workerUtils.js";
@@ -884,36 +883,59 @@
             tagSemiCaution = [],
             otherTags = [];
         let tagsRunnned = {};
+        tags.sort((a, b) => {
+            return b?.rank - a?.rank;
+        });
         tags.forEach((tag) => {
-            let trimmedTag = tag?.trim?.().toLowerCase?.();
+            let tagName = tag?.name || tag;
+            let tagRank = tag?.rank;
+            if (!tagName) return;
+            let trimmedTag = tagName?.trim?.().toLowerCase?.();
             if (haveCaution) {
                 if (caution[trimmedTag]) {
-                    tagsRunnned[tag] = true;
-                    tagCaution.push({ tag: tag, tagColor: "red" });
+                    tagsRunnned[tagName] = true;
+                    tagCaution.push({
+                        tag: `${tagName}${
+                            tagRank ? " | " + tagRank + "%" : ""
+                        }`,
+                        tagColor: "red",
+                    });
                 } else if (semiCaution[trimmedTag]) {
-                    tagsRunnned[tag] = true;
-                    tagSemiCaution.push({ tag: tag, tagColor: "teal" });
+                    tagsRunnned[tagName] = true;
+                    tagSemiCaution.push({
+                        tag: `${tagName}${
+                            tagRank ? " | " + tagRank + "%" : ""
+                        }`,
+                        tagColor: "teal",
+                    });
                 }
             }
-            if (haveFavorite && !tagsRunnned[tag]) {
+            if (haveFavorite && !tagsRunnned[tagName]) {
                 if (favouriteTags[trimmedTag]) {
-                    tagsRunnned[tag] = true;
+                    tagsRunnned[tagName] = true;
                     _favouriteTags.push({
                         tag: tag,
                         score: favouriteTags[trimmedTag],
                     });
                 }
             }
-            if (!tagsRunnned[tag]) {
-                otherTags.push({ tag: tag, tagColor: null });
+            if (!tagsRunnned[tagName]) {
+                otherTags.push({
+                    tag: `${tagName}${tagRank ? " | " + tagRank + "%" : ""}`,
+                    tagColor: null,
+                });
             }
         });
         _favouriteTags.sort((a, b) => {
             return b.score - a.score;
         });
         _favouriteTags = _favouriteTags.map((e) => {
+            let tagName = e?.tag?.name || e?.tag;
+            let tagRank = e?.tag?.rank;
             return {
-                tag: `${e.tag} (${formatNumber(e.score)})`,
+                tag: `${tagName} (${formatNumber(e.score)})${
+                    tagRank ? " | " + tagRank + "%" : ""
+                }`,
                 tagColor: "green",
             };
         });
@@ -1278,68 +1300,6 @@
             }, 300);
         }
     }
-    let willHandleDescription, willCloseDescRight;
-    let semiSeeDescTimeout, descIsSemiSeen;
-    function handleSemiSeeDesc(event) {
-        if (willHandleDescription || $popupIsGoingBack || willCloseDescRight)
-            return;
-        let element = event.target;
-        let classList = element.classList;
-        let shouldReturnClassNames = ["switch", "list-update-container"];
-        if (event.pointerType !== "mouse") {
-            shouldReturnClassNames.push("copy");
-        }
-        let shouldReturn = shouldReturnClassNames.some((_class) => {
-            return (
-                classList.contains(_class) ||
-                element.closest(`.${_class}`) ||
-                ["a", "button"].some(
-                    (tagName) => tagName === element.tagName.toLowerCase()
-                )
-            );
-        });
-        if (shouldReturn) return;
-        let popupMain = element.closest(".popup-main");
-        let descriptionEl = popupMain?.querySelector?.(
-            ".anime-description-container"
-        );
-        classList = descriptionEl?.classList;
-        if (descriptionEl && classList.contains("display-none")) {
-            if (semiSeeDescTimeout) clearTimeout(semiSeeDescTimeout);
-            semiSeeDescTimeout = setTimeout(() => {
-                descIsSemiSeen = true;
-                removeClass(descriptionEl, "display-none");
-                removeClass(descriptionEl, "fade-out");
-                addClass(descriptionEl, "fade-in");
-            }, 500);
-        }
-    }
-    function cancelSemiSeeDesc(event) {
-        if (semiSeeDescTimeout) clearTimeout(semiSeeDescTimeout);
-        if (
-            willHandleDescription ||
-            ($popupIsGoingBack && !descIsSemiSeen) ||
-            willCloseDescRight
-        )
-            return;
-        let popupMain = event.target.closest(".popup-main");
-        let descriptionEl = popupMain?.querySelector?.(
-            ".anime-description-container"
-        );
-        let classList = descriptionEl?.classList;
-        if (
-            descriptionEl &&
-            !classList.contains("display-none") &&
-            !($popupVisible && descIsSemiSeen)
-        ) {
-            descIsSemiSeen = false;
-            removeClass(descriptionEl, "fade-in");
-            addClass(descriptionEl, "fade-out");
-            setTimeout(() => {
-                addClass(descriptionEl, "display-none");
-            }, 300);
-        }
-    }
 
     function horizontalWheel(event, parentClass) {
         let element = event.target;
@@ -1395,30 +1355,25 @@
         }
     });
 
-    let touchID,
+    let willHandleDescription,
+        isOpeningDesc,
+        willCloseDescRight,
+        touchID,
         checkPointer,
         startX,
         endX,
         startY,
         endY,
-        pointerDownTimeout,
         goBackPercent,
         showDescPercent;
-    isScrolling.subscribe((val) => {
-        if (val === true) {
-            clearTimeout(pointerDownTimeout);
-            $popupIsGoingBack =
-                willHandleDescription =
-                willCloseDescRight =
-                    false;
-            goBackPercent = 0;
-        }
-    });
+    function itemScroll() {
+        $popupIsGoingBack = willHandleDescription = willCloseDescRight = false;
+        goBackPercent = 0;
+    }
     function handlePopupContainerDown(event) {
         startX = event.touches[0].clientX;
         startY = event.touches[0].clientY;
         touchID = event.touches[0].identifier;
-        clearTimeout(pointerDownTimeout);
         let element = event.target;
         let closestScrollableLeftElement = element;
         let hasScrollableLeftElement = false;
@@ -1442,9 +1397,7 @@
                 closestScrollableLeftElement.parentElement;
         }
         if (hasScrollableLeftElement) return;
-        pointerDownTimeout = setTimeout(() => {
-            checkPointer = true;
-        }, 0);
+        checkPointer = true;
     }
     function handlePopupContainerMove(event) {
         if (checkPointer) {
@@ -1456,47 +1409,19 @@
             if (Math.abs(deltaX) > Math.abs(deltaY)) {
                 if (deltaX > 0) {
                     event.stopImmediatePropagation();
-                    if (semiSeeDescTimeout) clearTimeout(semiSeeDescTimeout);
-                    let hasScrollableXElement;
-                    let closestScrollableXElement = event.target;
-                    while (
-                        closestScrollableXElement &&
-                        closestScrollableXElement !== document.body
-                    ) {
-                        const isScrollableX =
-                            closestScrollableXElement.scrollWidth >
-                            closestScrollableXElement.clientWidth;
-                        if (isScrollableX) {
-                            hasScrollableXElement = true;
-                            break;
-                        }
-                        closestScrollableXElement =
-                            closestScrollableXElement.parentElement;
-                    }
                     let popupMain = event.target.closest(".popup-main");
                     let descriptionEl = popupMain?.querySelector?.(
                         ".anime-description-container"
                     );
                     if (
-                        !descIsSemiSeen &&
                         descriptionEl &&
-                        !descriptionEl?.classList.contains("display-none") &&
-                        !hasScrollableXElement
+                        !descriptionEl?.classList.contains("display-none")
                     ) {
                         willHandleDescription = willCloseDescRight = true;
                         removeClass(descriptionEl, "fade-out");
                         removeClass(descriptionEl, "fade-in");
                         removeClass(descriptionEl, "display-none");
                     } else {
-                        if (
-                            descIsSemiSeen &&
-                            descriptionEl &&
-                            !descriptionEl?.classList.contains("display-none")
-                        ) {
-                            removeClass(descriptionEl, "fade-out");
-                            removeClass(descriptionEl, "fade-in");
-                            removeClass(descriptionEl, "display-none");
-                        }
                         $popupIsGoingBack = true;
                     }
                 } else if (deltaX < 0) {
@@ -1517,19 +1442,18 @@
                             closestScrollableXElement.parentElement;
                     }
                     if (!hasScrollableXElement) {
-                        event.stopImmediatePropagation();
-                        if (semiSeeDescTimeout)
-                            clearTimeout(semiSeeDescTimeout);
-                        descIsSemiSeen = false;
-                        willHandleDescription = true;
                         let popupMain = event.target.closest(".popup-main");
                         let descriptionEl = popupMain?.querySelector?.(
                             ".anime-description-container"
                         );
                         if (descriptionEl) {
+                            event.stopImmediatePropagation();
+                            willHandleDescription = true;
                             let classList = descriptionEl?.classList;
-                            if (!classList.contains("display-none")) {
-                                showDescPercent = 1;
+                            if (classList.contains("display-none")) {
+                                isOpeningDesc = true
+                            } else {
+                                isOpeningDesc = false
                             }
                             removeClass(descriptionEl, "fade-in");
                             removeClass(descriptionEl, "fade-out");
@@ -1543,14 +1467,8 @@
             const deltaX = endX - startX;
             if (deltaX > 0) {
                 goBackPercent = Math.min((deltaX / 48) * 100, 100);
-                if (descIsSemiSeen) {
-                    showDescPercent = Math.max(1 - deltaX / 48, 0);
-                }
             } else {
                 goBackPercent = 0;
-                if (descIsSemiSeen) {
-                    showDescPercent = 1;
-                }
             }
         } else if (willHandleDescription) {
             endX = event.touches[0].clientX;
@@ -1562,41 +1480,33 @@
                     showDescPercent = 1;
                 }
             } else {
-                if (deltaX < 0) {
-                    showDescPercent = Math.min(Math.abs(deltaX) / 48, 1);
+                if (isOpeningDesc) {
+                    if (deltaX < 0) {
+                        showDescPercent = Math.min(Math.abs(deltaX) / 48, 1);
+                    } else {
+                        showDescPercent = 0;
+                    }
                 } else {
-                    showDescPercent = 0;
+                    if (deltaX < 0) {
+                        showDescPercent = Math.max(1 - (Math.abs(deltaX) / 48), 0);
+                    } else {
+                        showDescPercent = 1;
+                    }
                 }
             }
         }
     }
     function handlePopupContainerUp(event) {
-        clearTimeout(pointerDownTimeout);
         if ($popupIsGoingBack || willHandleDescription) {
             endX = Array.from(event.changedTouches).find(
                 (touch) => touch.identifier === touchID
             ).clientX;
             let xThreshold = 48;
             let deltaX = endX - startX;
-            if ($popupIsGoingBack) {
-                if (deltaX >= xThreshold) {
-                    $popupVisible = false;
-                }
-                if (descIsSemiSeen) {
-                    descIsSemiSeen = false;
-                    let popupMain = event.target.closest(".popup-main");
-                    let descriptionEl = popupMain?.querySelector?.(
-                        ".anime-description-container"
-                    );
-                    removeClass(descriptionEl, "fade-in");
-                    showDescPercent = 0;
-                    setTimeout(() => {
-                        addClass(descriptionEl, "display-none");
-                        addClass(descriptionEl, "fade-out");
-                    }, 300);
-                }
+            if ($popupIsGoingBack && deltaX >= xThreshold) {
+                $popupVisible = false
             } else if (willCloseDescRight) {
-                if (deltaX >= xThreshold * 0.5) {
+                if (deltaX >= xThreshold) {
                     let popupMain = event.target.closest(".popup-main");
                     let descriptionEl = popupMain?.querySelector?.(
                         ".anime-description-container"
@@ -1621,28 +1531,36 @@
                     }
                 }
             } else if (willHandleDescription) {
-                if (deltaX < xThreshold * 0.5) {
-                    let popupMain = event.target.closest(".popup-main");
-                    let descriptionEl = popupMain?.querySelector?.(
-                        ".anime-description-container"
-                    );
-                    if (descriptionEl) {
-                        event.stopPropagation();
-                        showDescPercent = 1;
-                        setTimeout(() => {
-                            removeClass(descriptionEl, "display-none");
-                        }, 300);
-                    }
-                } else {
-                    let popupMain = event.target.closest(".popup-main");
-                    let descriptionEl = popupMain?.querySelector?.(
-                        ".anime-description-container"
-                    );
-                    if (descriptionEl) {
-                        showDescPercent = 0;
-                        setTimeout(() => {
-                            addClass(descriptionEl, "display-none");
-                        }, 300);
+                let popupMain = event.target.closest(".popup-main");
+                let descriptionEl = popupMain?.querySelector?.(
+                    ".anime-description-container"
+                );
+                if (descriptionEl) {
+                    event.stopPropagation();
+                    if (isOpeningDesc) {
+                        if (deltaX <= -xThreshold) {
+                            showDescPercent = 1;
+                            setTimeout(() => {
+                                removeClass(descriptionEl, "display-none");
+                            }, 300);
+                        } else {
+                            showDescPercent = 0;
+                            setTimeout(() => {
+                                addClass(descriptionEl, "display-none");
+                            }, 300);
+                        }
+                    } else {
+                        if (deltaX <= -xThreshold) {
+                            showDescPercent = 0;
+                            setTimeout(() => {
+                                addClass(descriptionEl, "display-none");
+                            }, 300);
+                        } else {
+                            showDescPercent = 1;
+                            setTimeout(() => {
+                                removeClass(descriptionEl, "display-none");
+                            }, 300);
+                        }
                     }
                 }
             }
@@ -1662,7 +1580,6 @@
         }
     }
     function handlePopupContainerCancel() {
-        clearTimeout(pointerDownTimeout);
         touchID = null;
         $popupIsGoingBack = willHandleDescription = willCloseDescRight = false;
         goBackPercent = 0;
@@ -1685,6 +1602,7 @@
         on:touchmove={handlePopupContainerMove}
         on:touchend={handlePopupContainerUp}
         on:touchcancel={handlePopupContainerCancel}
+        on:scroll={itemScroll}
     >
         {#if $finalAnimeList?.length}
             {#each $finalAnimeList || [] as anime, animeIdx (anime.id)}
@@ -1769,13 +1687,7 @@
                                 </div>
                             {/if}
                         </div>
-                        <div
-                            class="popup-controls"
-                            on:pointerdown={(e) =>
-                                handleSemiSeeDesc(e, animeIdx)}
-                            on:pointerup={cancelSemiSeeDesc}
-                            on:pointercancel={cancelSemiSeeDesc}
-                        >
+                        <div class="popup-controls">
                             {#if $listUpdateAvailable}
                                 <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                                 <div
@@ -1819,13 +1731,7 @@
                                 </label>
                             </div>
                         </div>
-                        <div
-                            class="popup-body"
-                            on:pointerdown={(e) =>
-                                handleSemiSeeDesc(e, animeIdx)}
-                            on:pointerup={cancelSemiSeeDesc}
-                            on:pointercancel={cancelSemiSeeDesc}
-                        >
+                        <div class="popup-body">
                             <div
                                 class="anime-title-container"
                                 style:overflow={$popupIsGoingBack
@@ -2001,7 +1907,7 @@
                                                 ? "hidden"
                                                 : ""}
                                         >
-                                            {#each getContentCaution(anime) || [] as { caution, cautionColor } (caution + cautionColor)}
+                                            {#each getContentCaution(anime) || [] as { caution, cautionColor } (caution)}
                                                 <span
                                                     class={cautionColor +
                                                         "-color copy"}
@@ -2327,7 +2233,7 @@
     .popup-content {
         display: grid;
         grid-template-columns: 100%;
-        color: #909cb8;
+        color: #a2a8bd;
         background-color: #151f2e;
         max-width: 640px;
     }
@@ -2507,6 +2413,7 @@
         justify-content: center;
         opacity: var(--showDescPercent);
         transition: opacity 0.3s ease;
+        z-index: 4;
     }
     .anime-description-container.fade-out {
         transition: unset !important;
@@ -2583,7 +2490,7 @@
         border: 0;
         background-color: #0b1622 !important;
         cursor: pointer;
-        color: #798695 !important;
+        color: #9ba0b2;
         white-space: nowrap;
         max-width: 95px;
         flex: 1;
@@ -2667,7 +2574,8 @@
     }
 
     .info span {
-        background: rgb(35 45 65);
+        color: #9ba0b2;
+        background: #0b1622;
         padding: 8px 10px;
         border-radius: 6px;
         white-space: nowrap;
@@ -2690,7 +2598,7 @@
         display: flex;
         align-items: center;
         gap: 6px;
-        color: #8d9abb;
+        color: #9ba0b2;
         cursor: pointer;
     }
     .list-update-icon {
@@ -2702,7 +2610,7 @@
         height: 14px;
         line-height: 14px;
         font-weight: 500;
-        color: #8d9abb;
+        color: #9ba0b2;
         white-space: nowrap;
         cursor: pointer;
     }
@@ -2718,7 +2626,7 @@
         height: 14px;
         line-height: 14px;
         font-weight: 500;
-        color: #8d9abb;
+        color: #9ba0b2;
         white-space: nowrap;
     }
 
@@ -2758,7 +2666,7 @@
     }
 
     .autoplayToggle:checked + .slider {
-        background-color: rgb(35 45 65);
+        background-color: #596373;
     }
 
     .autoplayToggle:focus + .slider {

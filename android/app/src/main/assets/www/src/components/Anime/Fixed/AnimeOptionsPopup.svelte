@@ -130,17 +130,18 @@
         endX,
         startY,
         endY,
-        pointerDownTimeout,
         goBackPercent;
+
+    function itemScroll() {
+        isGoingBack = false;
+        goBackPercent = 0;
+    }
 
     function handlePopupContainerDown(event) {
         startX = event.touches[0].clientX;
         startY = event.touches[0].clientY;
         touchID = event.touches[0].identifier;
-        clearTimeout(pointerDownTimeout);
-        pointerDownTimeout = setTimeout(() => {
-            checkPointer = true;
-        }, 0);
+        checkPointer = true;
     }
     function handlePopupContainerMove(event) {
         if (checkPointer) {
@@ -163,7 +164,6 @@
         }
     }
     function handlePopupContainerUp(event) {
-        clearTimeout(pointerDownTimeout);
         endX = Array.from(event.changedTouches).find(
             (touch) => touch.identifier === touchID
         ).clientX;
@@ -171,13 +171,12 @@
         let deltaX = endX - startX;
         if (isGoingBack && deltaX >= xThreshold) {
             $animeOptionVisible = false;
-            touchID = null;
-            isGoingBack = false;
-            goBackPercent = 0;
         }
+        touchID = null;
+        isGoingBack = false;
+        goBackPercent = 0;
     }
     function handlePopupContainerCancel() {
-        clearTimeout(pointerDownTimeout);
         touchID = null;
         isGoingBack = false;
         goBackPercent = 0;
@@ -193,13 +192,16 @@
         on:touchmove={handlePopupContainerMove}
         on:touchend={handlePopupContainerUp}
         on:touchcancel={handlePopupContainerCancel}
+        on:scroll={itemScroll}
     >
         <div
             class="anime-options-container"
             transition:fly={{ y: 20, duration: 300 }}
         >
             <div class="option-header">
-                <span class="anime-title"><h1>{animeTitle}</h1></span>
+                <span class="anime-title" on:scroll={itemScroll}
+                    ><h1>{animeTitle}</h1></span
+                >
                 <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                 <div
                     class="closing-x"
