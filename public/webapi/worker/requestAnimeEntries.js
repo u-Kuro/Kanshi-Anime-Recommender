@@ -175,7 +175,7 @@ self.onmessage = async ({ data }) => {
                                     }
                                     if (anime?.studios?.nodes instanceof Array) {
                                         let unique = {}
-                                        anime.tags = anime.studios.nodes.filter((studio) => {
+                                        anime.studios.nodes = anime.studios.nodes.filter((studio) => {
                                             let _studio = studio?.name
                                             if (_studio && !unique[_studio]) {
                                                 unique[_studio] = true
@@ -479,7 +479,7 @@ self.onmessage = async ({ data }) => {
                                     }
                                     if (anime?.studios?.nodes instanceof Array) {
                                         let unique = {}
-                                        anime.tags = anime.studios.nodes.filter((studio) => {
+                                        anime.studios.nodes = anime.studios.nodes.filter((studio) => {
                                             let _studio = studio?.name
                                             if (_studio && !unique[_studio]) {
                                                 unique[_studio] = true
@@ -923,7 +923,7 @@ self.onmessage = async ({ data }) => {
                                     }
                                     if (anime?.studios?.nodes instanceof Array) {
                                         let unique = {}
-                                        anime.tags = anime.studios.nodes.filter((studio) => {
+                                        anime.studios.nodes = anime.studios.nodes.filter((studio) => {
                                             let _studio = studio?.name
                                             if (_studio && !unique[_studio]) {
                                                 unique[_studio] = true
