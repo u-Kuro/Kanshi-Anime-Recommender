@@ -1384,7 +1384,7 @@
             const isScrollableLeft =
                 closestScrollableLeftElement.scrollWidth >
                     closestScrollableLeftElement.clientWidth &&
-                closestScrollableLeftElement.scrollLeft >= 7.5;
+                closestScrollableLeftElement.scrollLeft > 0;
             if (isScrollableLeft) {
                 if (closestScrollableLeftElement.id === "popup-container") {
                     hasScrollableLeftElement = false;
