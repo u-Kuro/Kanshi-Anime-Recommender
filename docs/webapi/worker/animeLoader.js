@@ -579,7 +579,6 @@ self.onmessage = async ({ data }) => {
         let sortFilter = filterOptions.sortFilter
         let { sortName, sortType } = sortFilter?.filter(({ sortType }) => sortType === "desc" || sortType === "asc")?.[0] || { sortName: 'weighted score', sortType: 'desc' }
         sortFilter = null
-        console.log(sortType, sortName)
         if (sortType === "desc") {
             if (sortName === "weighted score") {
                 finalAnimeList.sort((a, b) => {
