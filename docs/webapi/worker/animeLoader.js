@@ -575,9 +575,11 @@ self.onmessage = async ({ data }) => {
         });
         recommendedAnimeList = null
         // Sort List
-        let sortFilter = (await retrieveJSON("filterOptions") || []).sortFilter
+        let filterOptions = data?.filterOptions || await retrieveJSON("filterOptions") || []
+        let sortFilter = filterOptions.sortFilter
         let { sortName, sortType } = sortFilter?.filter(({ sortType }) => sortType === "desc" || sortType === "asc")?.[0] || { sortName: 'weighted score', sortType: 'desc' }
         sortFilter = null
+        console.log(sortType, sortName)
         if (sortType === "desc") {
             if (sortName === "weighted score") {
                 finalAnimeList.sort((a, b) => {
@@ -695,10 +697,7 @@ self.onmessage = async ({ data }) => {
         }
         sortName = sortType = null
         await saveJSON(activeTagFilters, 'activeTagFilters')
-        let filterOptions = data?.filterOptions
-        if (filterOptions) {
-            await saveJSON(filterOptions, "filterOptions")
-        }
+        await saveJSON(filterOptions, "filterOptions")
         await saveJSON(finalAnimeList, "finalAnimeList")
         self.postMessage({ status: null })
         self.postMessage({ progress: 100 })
