@@ -18,7 +18,7 @@
         updateFilters,
         isImporting,
         hiddenEntries,
-        numberOfNextLoadedGrid
+        numberOfNextLoadedGrid,
     } from "../../js/globalValues.js";
     import { fade, fly } from "svelte/transition";
     import {
@@ -27,7 +27,11 @@
         dragScroll,
         removeClass,
     } from "../../js/others/helper.js";
-    import { animeLoader, processRecommendedAnimeList, saveIDBdata } from "../../js/workerUtils.js";
+    import {
+        animeLoader,
+        processRecommendedAnimeList,
+        saveIDBdata,
+    } from "../../js/workerUtils.js";
 
     let Init = true;
 
@@ -62,13 +66,13 @@
     async function saveFilters(changeName) {
         if ($initData) return;
         if (nameChangeUpdateProcessedList.includes(changeName)) {
-            isUpdatingRec = true
+            isUpdatingRec = true;
             $dataStatus = "Updating List";
-            _processRecommendedAnimeList()
+            _processRecommendedAnimeList();
         } else if (nameChangeUpdateFinalList.includes(changeName)) {
-            isLoadingAnime = true
+            isLoadingAnime = true;
             $dataStatus = "Updating List";
-            _loadAnime()
+            _loadAnime();
         } else if (!isLoadingAnime && !isUpdatingRec && !$isImporting) {
             await saveJSON($filterOptions, "filterOptions");
             await saveJSON($activeTagFilters, "activeTagFilters");
@@ -80,9 +84,12 @@
             $animeLoaderWorker.terminate();
             $animeLoaderWorker = null;
         }
-        animeLoader({filterOptions: $filterOptions, activeTagFilters: $activeTagFilters})
+        animeLoader({
+            filterOptions: $filterOptions,
+            activeTagFilters: $activeTagFilters,
+        })
             .then(async (data) => {
-                isUpdatingRec = isLoadingAnime = false
+                isUpdatingRec = isLoadingAnime = false;
                 $animeLoaderWorker = data.animeLoaderWorker;
                 $searchedAnimeKeyword = "";
                 if (data?.isNew) {
@@ -100,14 +107,17 @@
 
     async function _processRecommendedAnimeList() {
         await saveJSON(true, "shouldProcessRecommendation");
-        processRecommendedAnimeList({filterOptions: $filterOptions, activeTagFilters: $activeTagFilters})
+        processRecommendedAnimeList({
+            filterOptions: $filterOptions,
+            activeTagFilters: $activeTagFilters,
+        })
             .then(async () => {
                 await saveJSON(false, "shouldProcessRecommendation");
                 updateFilters.update((e) => !e);
-                _loadAnime()
+                _loadAnime();
             })
             .catch((error) => {
-                _loadAnime()
+                _loadAnime();
                 throw error;
             });
     }
@@ -1832,7 +1842,7 @@
             >
                 <i
                     class={"icon fa-solid fa-arrows-" +
-                        (($gridFullView ?? true) ? "up-down" : "left-right")}
+                        ($gridFullView ?? true ? "up-down" : "left-right")}
                 />
             </div>
             <div class="sortFilter">

@@ -150,6 +150,15 @@ self.onmessage = async ({ data }) => {
                         if (media instanceof Array && media.length) {
                             media.forEach((anime) => {
                                 if (typeof anime?.id === "number") {
+                                    if (anime?.genres instanceof Array) {
+                                        anime.genres = makeArrayUnique(anime.genres)
+                                    }
+                                    if (anime?.tags instanceof Array) {
+                                        anime.tags = makeArrayUnique(anime.tags)
+                                    }
+                                    if (anime?.studios?.nodes instanceof Array) {
+                                        anime.studios.nodes = makeArrayUnique(anime.studios.nodes)
+                                    }
                                     animeEntries[anime.id] = anime
                                     hasAddedEntry = true
                                 }
@@ -419,6 +428,15 @@ self.onmessage = async ({ data }) => {
                                         }
                                     }
                                     airingAnimeIDs = airingAnimeIDs.filter(_id => _id !== anime.id)
+                                    if (anime?.genres instanceof Array) {
+                                        anime.genres = makeArrayUnique(anime.genres)
+                                    }
+                                    if (anime?.tags instanceof Array) {
+                                        anime.tags = makeArrayUnique(anime.tags)
+                                    }
+                                    if (anime?.studios?.nodes instanceof Array) {
+                                        anime.studios.nodes = makeArrayUnique(anime.studios.nodes)
+                                    }
                                     animeEntries[anime.id] = anime
                                     hasUpdatedEntry = true
                                 }
@@ -828,6 +846,15 @@ self.onmessage = async ({ data }) => {
                                         }
                                     }
                                     // Handle Anime Entries Update
+                                    if (anime?.genres instanceof Array) {
+                                        anime.genres = makeArrayUnique(anime.genres)
+                                    }
+                                    if (anime?.tags instanceof Array) {
+                                        anime.tags = makeArrayUnique(anime.tags)
+                                    }
+                                    if (anime?.studios?.nodes instanceof Array) {
+                                        anime.studios.nodes = makeArrayUnique(anime.studios.nodes)
+                                    }
                                     animeEntries[anime.id] = anime
                                     hasUpdatedEntry = true
                                 }
@@ -1047,6 +1074,19 @@ function ncsCompare(str1, str2) {
         return false;
     }
     return str1.toLowerCase() === str2.toLowerCase();
+}
+
+function makeArrayUnique(arr) {
+    const uniqueArray = [];
+    const seenValues = {};
+    for (const element of (arr || [])) {
+        let strElement = JSON.stringify(element)
+        if (!seenValues[strElement]) {
+            uniqueArray.push(element);
+            seenValues[strElement] = true;
+        }
+    }
+    return uniqueArray;
 }
 // function mergeArraysByUniqueProperties(array1, array2, uniqueProperties) {
 //     try {

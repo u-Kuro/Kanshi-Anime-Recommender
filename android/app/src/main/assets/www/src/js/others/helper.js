@@ -383,7 +383,22 @@ const removeClass = (element, className) => {
   element?.classList?.remove?.(className)
 }
 
+function makeArrayUnique(arr) {
+  const uniqueArray = [];
+  const seenValues = {};
+  for (const element of (arr || [])) {
+    let strElement = JSON.stringify(element)
+    if (!seenValues[strElement]) {
+      uniqueArray.push(element);
+      seenValues[strElement] = true;
+    }
+  }
+  return uniqueArray;
+}
+
+
 export {
+  makeArrayUnique,
   getMostVisibleElementFromArray,
   addClass,
   removeClass,
