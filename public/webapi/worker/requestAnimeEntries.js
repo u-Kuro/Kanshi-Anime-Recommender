@@ -151,13 +151,39 @@ self.onmessage = async ({ data }) => {
                             media.forEach((anime) => {
                                 if (typeof anime?.id === "number") {
                                     if (anime?.genres instanceof Array) {
-                                        anime.genres = makeArrayUnique(anime.genres)
+                                        let unique = {}
+                                        anime.genres = anime.genres.filter((genre) => {
+                                            if (genre && !unique[genre]) {
+                                                unique[genre] = true
+                                                return true
+                                            } else {
+                                                return false
+                                            }
+                                        })
                                     }
                                     if (anime?.tags instanceof Array) {
-                                        anime.tags = makeArrayUnique(anime.tags)
+                                        let unique = {}
+                                        anime.tags = anime.tags.filter((tag) => {
+                                            let _tag = tag?.name
+                                            if (_tag && !unique[_tag]) {
+                                                unique[_tag] = true
+                                                return true
+                                            } else {
+                                                return false
+                                            }
+                                        })
                                     }
                                     if (anime?.studios?.nodes instanceof Array) {
-                                        anime.studios.nodes = makeArrayUnique(anime.studios.nodes)
+                                        let unique = {}
+                                        anime.tags = anime.studios.nodes.filter((studio) => {
+                                            let _studio = studio?.name
+                                            if (_studio && !unique[_studio]) {
+                                                unique[_studio] = true
+                                                return true
+                                            } else {
+                                                return false
+                                            }
+                                        })
                                     }
                                     animeEntries[anime.id] = anime
                                     hasAddedEntry = true
@@ -429,13 +455,39 @@ self.onmessage = async ({ data }) => {
                                     }
                                     airingAnimeIDs = airingAnimeIDs.filter(_id => _id !== anime.id)
                                     if (anime?.genres instanceof Array) {
-                                        anime.genres = makeArrayUnique(anime.genres)
+                                        let unique = {}
+                                        anime.genres = anime.genres.filter((genre) => {
+                                            if (genre && !unique[genre]) {
+                                                unique[genre] = true
+                                                return true
+                                            } else {
+                                                return false
+                                            }
+                                        })
                                     }
                                     if (anime?.tags instanceof Array) {
-                                        anime.tags = makeArrayUnique(anime.tags)
+                                        let unique = {}
+                                        anime.tags = anime.tags.filter((tag) => {
+                                            let _tag = tag?.name
+                                            if (_tag && !unique[_tag]) {
+                                                unique[_tag] = true
+                                                return true
+                                            } else {
+                                                return false
+                                            }
+                                        })
                                     }
                                     if (anime?.studios?.nodes instanceof Array) {
-                                        anime.studios.nodes = makeArrayUnique(anime.studios.nodes)
+                                        let unique = {}
+                                        anime.tags = anime.studios.nodes.filter((studio) => {
+                                            let _studio = studio?.name
+                                            if (_studio && !unique[_studio]) {
+                                                unique[_studio] = true
+                                                return true
+                                            } else {
+                                                return false
+                                            }
+                                        })
                                     }
                                     animeEntries[anime.id] = anime
                                     hasUpdatedEntry = true
@@ -847,13 +899,39 @@ self.onmessage = async ({ data }) => {
                                     }
                                     // Handle Anime Entries Update
                                     if (anime?.genres instanceof Array) {
-                                        anime.genres = makeArrayUnique(anime.genres)
+                                        let unique = {}
+                                        anime.genres = anime.genres.filter((genre) => {
+                                            if (genre && !unique[genre]) {
+                                                unique[genre] = true
+                                                return true
+                                            } else {
+                                                return false
+                                            }
+                                        })
                                     }
                                     if (anime?.tags instanceof Array) {
-                                        anime.tags = makeArrayUnique(anime.tags)
+                                        let unique = {}
+                                        anime.tags = anime.tags.filter((tag) => {
+                                            let _tag = tag?.name
+                                            if (_tag && !unique[_tag]) {
+                                                unique[_tag] = true
+                                                return true
+                                            } else {
+                                                return false
+                                            }
+                                        })
                                     }
                                     if (anime?.studios?.nodes instanceof Array) {
-                                        anime.studios.nodes = makeArrayUnique(anime.studios.nodes)
+                                        let unique = {}
+                                        anime.tags = anime.studios.nodes.filter((studio) => {
+                                            let _studio = studio?.name
+                                            if (_studio && !unique[_studio]) {
+                                                unique[_studio] = true
+                                                return true
+                                            } else {
+                                                return false
+                                            }
+                                        })
                                     }
                                     animeEntries[anime.id] = anime
                                     hasUpdatedEntry = true
@@ -1076,7 +1154,7 @@ function ncsCompare(str1, str2) {
     return str1.toLowerCase() === str2.toLowerCase();
 }
 
-function makeArrayUnique(arr) {
+function makeArrayUnique(arr, identifier = []) {
     const uniqueArray = [];
     const seenValues = {};
     for (const element of (arr || [])) {
