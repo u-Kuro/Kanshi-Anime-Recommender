@@ -1,6 +1,6 @@
 import { writable } from "svelte/store";
 
-const appID = writable(46)
+const appID = writable(null)
 const android = writable(null)
 const inApp = writable(true)
 const progress = writable(0)

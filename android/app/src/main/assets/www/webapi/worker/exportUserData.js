@@ -107,6 +107,7 @@ self.onmessage = async ({ data }) => {
         }
         stringify(backUpData)
         backUpData = null
+        await saveJSON(new Date(), "lastRunnedAutoExportDate");
         self.postMessage({ status: "Data has been Exported..." })
         self.postMessage({ progress: 100 })
         self.postMessage({ status: null })
@@ -119,6 +120,7 @@ self.onmessage = async ({ data }) => {
         let blob = JSONToBlob(backUpData, maxRecursion)
         backUpData = null
         let url = URL.createObjectURL(blob);
+        await saveJSON(new Date(), "lastRunnedAutoExportDate");
         self.postMessage({ status: "Data has been Exported..." })
         self.postMessage({ progress: 100 })
         self.postMessage({ status: null })
@@ -173,7 +175,34 @@ async function retrieveJSON(name) {
         }
     });
 }
-
+async function saveJSON(data, name) {
+    return await new Promise(async (resolve, reject) => {
+        try {
+            let write = db
+                .transaction("MyObjectStore", "readwrite")
+                .objectStore("MyObjectStore")
+                .openCursor();
+            write.onsuccess = async (event) => {
+                let put = await db
+                    .transaction("MyObjectStore", "readwrite")
+                    .objectStore("MyObjectStore")
+                    .put(data, name);
+                put.onsuccess = (event) => {
+                    return resolve();
+                }
+                put.onerror = (event) => {
+                    return resolve();
+                }
+            };
+            write.onerror = async (error) => {
+                console.error(error);
+                return reject()
+            };
+        } catch (ex) {
+            console.error(ex)
+        }
+    });
+}
 function JSONToBlob(object, _maxRecursion) {
     let propertyStrings = [];
     let chunkStr = '';

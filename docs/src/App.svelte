@@ -1,4 +1,5 @@
 <script>
+	import getWebVersion from "./version";
 	import C from "./components/index.js";
 	import { onMount, tick } from "svelte";
 	import { fade, fly } from "svelte/transition";
@@ -65,11 +66,6 @@
 	let usernameInputEl, animeGridEl;
 	$android = isAndroid(); // Android/Browser Identifier
 
-	// Get Export Folder for Android
-	(async () => {
-		$exportPathIsAvailable = await retrieveJSON("exportPathIsAvailable");
-	})();
-
 	inject(); // Vercel Analytics
 
 	window.onload = () => {
@@ -94,288 +90,311 @@
 		}
 	}, 300);
 
-	// Check/Get/Update/Process Anime Entries
-	initDataPromises.push(
-		new Promise(async (resolve, reject) => {
-			let _lastAnimeUpdate = await retrieveJSON("lastAnimeUpdate");
-			let shouldGetAnimeEntries = !(
-				_lastAnimeUpdate instanceof Date && !isNaN(_lastAnimeUpdate)
-			);
-			if (!shouldGetAnimeEntries) {
-				let animeEntriesIsEmpty = await retrieveJSON(
-					"animeEntriesIsEmpty"
-				);
-				if (animeEntriesIsEmpty) {
-					shouldGetAnimeEntries = true;
+	new Promise(async (resolve) => {
+		// Check App ID
+		$appID = await getWebVersion();
+		console.log();
+		if ($android && navigator.onLine) {
+			try {
+				if ($appID) {
+					JSBridge.checkAppID($appID, false);
 				}
+			} catch (e) {
+				window.updateAppAlert?.();
 			}
-			if (shouldGetAnimeEntries) {
-				$finalAnimeList = null;
-				getAnimeEntries()
-					.then(() => {
-						resolve();
-					})
-					.catch(async () => {
-						reject();
-					});
-			} else {
+		}
+		resolve();
+	}).then(() => {
+		// Get Export Folder for Android
+		(async () =>
+			($exportPathIsAvailable = await retrieveJSON(
+				"exportPathIsAvailable"
+			)))();
+		// Check/Get/Update/Process Anime Entries
+		initDataPromises.push(
+			new Promise(async (resolve, reject) => {
+				let _lastAnimeUpdate = await retrieveJSON("lastAnimeUpdate");
+				let shouldGetAnimeEntries = !(
+					_lastAnimeUpdate instanceof Date && !isNaN(_lastAnimeUpdate)
+				);
+				if (!shouldGetAnimeEntries) {
+					let animeEntriesIsEmpty = await retrieveJSON(
+						"animeEntriesIsEmpty"
+					);
+					if (animeEntriesIsEmpty) {
+						shouldGetAnimeEntries = true;
+					}
+				}
+				if (shouldGetAnimeEntries) {
+					$finalAnimeList = null;
+					getAnimeEntries()
+						.then(() => {
+							resolve();
+						})
+						.catch(async () => {
+							reject();
+						});
+				} else {
+					resolve();
+				}
+			})
+		);
+
+		// Check/Update/Process User Anime Entries
+		initDataPromises.push(
+			new Promise(async (resolve) => {
+				// let accessToken = getAnilistAccessTokenFromURL();
+				// if (accessToken) {
+				// 	await saveIDBdata(accessToken, "access_token");
+				// 	$anilistAccessToken = accessToken;
+				// } else {
+				// 	$anilistAccessToken = await retrieveJSON("access_token");
+				// }
+				// if ($anilistAccessToken) {
+				// 	let getUsername = () => {
+				// 		fetch("https://graphql.anilist.co", {
+				// 			method: "POST",
+				// 			headers: {
+				// 				Authorization: "Bearer " + $anilistAccessToken,
+				// 				"Content-Type": "application/json",
+				// 				Accept: "application/json",
+				// 			},
+				// 			body: JSON.stringify({
+				// 				query: `{Viewer{name}}`,
+				// 			}),
+				// 		})
+				// 			.then(async (response) => {
+				// 				return await response.json();
+				// 			})
+				// 			.then(async (result) => {
+				// 				if (
+				// 					typeof result?.errors?.[0]?.message === "string"
+				// 				) {
+				// 					setTimeout(() => {
+				// 						return getUsername();
+				// 					}, 60000);
+				// 				} else {
+				// 					let savedUsername = await retrieveJSON(
+				// 						"username"
+				// 					);
+				// 					let _username = result.data.Viewer.name;
+				// 					if (_username && savedUsername !== _username) {
+				// 						requestUserEntries({
+				// 							username: _username,
+				// 						})
+				// 							.then(({ newusername }) => {
+				// 								if (newusername) {
+				// 									$username = newusername || "";
+				// 									importantUpdate.update(
+				// 										(e) => !e
+				// 									);
+				// 								}
+				// 							})
+				// 							.catch((error) => {
+				// 								$dataStatus =
+				// 									"Something went wrong...";
+				// 								console.error(error);
+				// 							});
+				// 					} else {
+				// 						$username =
+				// 							_username || savedUsername || "";
+				// 					}
+				// 					resolve();
+				// 				}
+				// 			})
+				// 			.catch(() => {
+				// 				setTimeout(() => {
+				// 					return getUsername();
+				// 				}, 60000);
+				// 				resolve();
+				// 			});
+				// 	};
+				// 	getUsername();
+				// } else {
+				let _username = await retrieveJSON("username");
+				if (_username) $username = _username;
 				resolve();
-			}
-		})
-	);
+				// }
+			})
+		);
 
-	// Check/Update/Process User Anime Entries
-	initDataPromises.push(
-		new Promise(async (resolve) => {
-			// let accessToken = getAnilistAccessTokenFromURL();
-			// if (accessToken) {
-			// 	await saveIDBdata(accessToken, "access_token");
-			// 	$anilistAccessToken = accessToken;
-			// } else {
-			// 	$anilistAccessToken = await retrieveJSON("access_token");
-			// }
-			// if ($anilistAccessToken) {
-			// 	let getUsername = () => {
-			// 		fetch("https://graphql.anilist.co", {
-			// 			method: "POST",
-			// 			headers: {
-			// 				Authorization: "Bearer " + $anilistAccessToken,
-			// 				"Content-Type": "application/json",
-			// 				Accept: "application/json",
-			// 			},
-			// 			body: JSON.stringify({
-			// 				query: `{Viewer{name}}`,
-			// 			}),
-			// 		})
-			// 			.then(async (response) => {
-			// 				return await response.json();
-			// 			})
-			// 			.then(async (result) => {
-			// 				if (
-			// 					typeof result?.errors?.[0]?.message === "string"
-			// 				) {
-			// 					setTimeout(() => {
-			// 						return getUsername();
-			// 					}, 60000);
-			// 				} else {
-			// 					let savedUsername = await retrieveJSON(
-			// 						"username"
-			// 					);
-			// 					let _username = result.data.Viewer.name;
-			// 					if (_username && savedUsername !== _username) {
-			// 						requestUserEntries({
-			// 							username: _username,
-			// 						})
-			// 							.then(({ newusername }) => {
-			// 								if (newusername) {
-			// 									$username = newusername || "";
-			// 									importantUpdate.update(
-			// 										(e) => !e
-			// 									);
-			// 								}
-			// 							})
-			// 							.catch((error) => {
-			// 								$dataStatus =
-			// 									"Something went wrong...";
-			// 								console.error(error);
-			// 							});
-			// 					} else {
-			// 						$username =
-			// 							_username || savedUsername || "";
-			// 					}
-			// 					resolve();
-			// 				}
-			// 			})
-			// 			.catch(() => {
-			// 				setTimeout(() => {
-			// 					return getUsername();
-			// 				}, 60000);
-			// 				resolve();
-			// 			});
-			// 	};
-			// 	getUsername();
-			// } else {
-			let _username = await retrieveJSON("username");
-			if (_username) $username = _username;
-			resolve();
-			// }
-		})
-	);
+		// Check/Get Anime Franchises
+		initDataPromises.push(
+			new Promise(async (resolve) => {
+				let animeFranchisesLen = await retrieveJSON(
+					"animeFranchisesLength"
+				);
+				if (animeFranchisesLen < 1) {
+					getAnimeFranchises()
+						.then(() => {
+							resolve();
+						})
+						.catch(() => {
+							reject();
+						});
+				} else {
+					resolve();
+				}
+			})
+		);
 
-	// Check/Get Anime Franchises
-	initDataPromises.push(
-		new Promise(async (resolve) => {
-			let animeFranchisesLen = await retrieveJSON(
-				"animeFranchisesLength"
-			);
-			if (animeFranchisesLen < 1) {
-				getAnimeFranchises()
-					.then(() => {
+		// Check/Get/Update Filter Options Selection
+		initDataPromises.push(
+			new Promise(async (resolve) => {
+				getFilterOptions()
+					.then((data) => {
+						$activeTagFilters = data.activeTagFilters;
+						$filterOptions = data.filterOptions;
 						resolve();
 					})
 					.catch(() => {
 						reject();
 					});
-			} else {
-				resolve();
-			}
-		})
-	);
+			})
+		);
 
-	// Check/Get/Update Filter Options Selection
-	initDataPromises.push(
-		new Promise(async (resolve) => {
-			getFilterOptions()
-				.then((data) => {
-					$activeTagFilters = data.activeTagFilters;
-					$filterOptions = data.filterOptions;
-					resolve();
-				})
-				.catch(() => {
-					reject();
-				});
-		})
-	);
-
-	// Get Existing Data If there are any
-	initDataPromises.push(
-		new Promise(async (resolve) => {
-			// Auto Play
-			let _autoPlay = await retrieveJSON("autoPlay");
-			if (typeof _autoPlay === "boolean") $autoPlay = _autoPlay;
-			let _gridFullView = (await retrieveJSON("gridFullView")) ?? true;
-			if (typeof _gridFullView === "boolean")
-				$gridFullView = _gridFullView;
-			// Hidden Entries
-			$hiddenEntries = (await retrieveJSON("hiddenEntries")) || {};
-			// Get Auto Functions
-			$lastRunnedAutoUpdateDate = await retrieveJSON(
-				"lastRunnedAutoUpdateDate"
-			);
-			$lastRunnedAutoExportDate = await retrieveJSON(
-				"lastRunnedAutoExportDate"
-			);
-			$autoUpdate = (await retrieveJSON("autoUpdate")) ?? false;
-			$autoExport = (await retrieveJSON("autoExport")) ?? false;
-			resolve();
-		})
-	);
-
-	Promise.all(initDataPromises)
-		.then(async () => {
-			// Get/Show List
-			let shouldProcessRecommendation = await retrieveJSON(
-				"shouldProcessRecommendation"
-			);
-			if (!shouldProcessRecommendation) {
-				let recommendedAnimeListLen = await retrieveJSON(
-					"recommendedAnimeListLength"
-				);
-				if (recommendedAnimeListLen < 1) {
-					shouldProcessRecommendation = true;
-				}
-			}
+		// Get Existing Data If there are any
+		initDataPromises.push(
 			new Promise(async (resolve) => {
-				if (shouldProcessRecommendation) {
-					processRecommendedAnimeList()
-						.then(async () => {
-							await saveJSON(
-								false,
-								"shouldProcessRecommendation"
-							);
-							resolve();
+				// Auto Play
+				let _autoPlay = await retrieveJSON("autoPlay");
+				if (typeof _autoPlay === "boolean") $autoPlay = _autoPlay;
+				let _gridFullView =
+					(await retrieveJSON("gridFullView")) ?? true;
+				if (typeof _gridFullView === "boolean")
+					$gridFullView = _gridFullView;
+				// Hidden Entries
+				$hiddenEntries = (await retrieveJSON("hiddenEntries")) || {};
+				// Get Auto Functions
+				$lastRunnedAutoUpdateDate = await retrieveJSON(
+					"lastRunnedAutoUpdateDate"
+				);
+				$lastRunnedAutoExportDate = await retrieveJSON(
+					"lastRunnedAutoExportDate"
+				);
+				$autoUpdate = (await retrieveJSON("autoUpdate")) ?? false;
+				$autoExport = (await retrieveJSON("autoExport")) ?? false;
+				resolve();
+			})
+		);
+
+		Promise.all(initDataPromises)
+			.then(async () => {
+				// Get/Show List
+				let shouldProcessRecommendation = await retrieveJSON(
+					"shouldProcessRecommendation"
+				);
+				if (!shouldProcessRecommendation) {
+					let recommendedAnimeListLen = await retrieveJSON(
+						"recommendedAnimeListLength"
+					);
+					if (recommendedAnimeListLen < 1) {
+						shouldProcessRecommendation = true;
+					}
+				}
+				new Promise(async (resolve) => {
+					if (shouldProcessRecommendation) {
+						processRecommendedAnimeList()
+							.then(async () => {
+								await saveJSON(
+									false,
+									"shouldProcessRecommendation"
+								);
+								resolve();
+							})
+							.catch((error) => {
+								throw error;
+							});
+					} else {
+						resolve();
+					}
+				}).then(() => {
+					animeLoader()
+						.then(async (data) => {
+							$animeLoaderWorker = data.animeLoaderWorker;
+							$searchedAnimeKeyword = "";
+							if (data?.isNew) {
+								$finalAnimeList = data.finalAnimeList;
+								$hiddenEntries = data.hiddenEntries;
+								$numberOfNextLoadedGrid =
+									data.numberOfNextLoadedGrid;
+								$dataStatus = null;
+								checkAutoFunctions(true);
+								$initData = false;
+							}
+							return;
 						})
 						.catch((error) => {
 							throw error;
 						});
-				} else {
-					resolve();
-				}
-			}).then(() => {
-				animeLoader()
-					.then(async (data) => {
-						$animeLoaderWorker = data.animeLoaderWorker;
-						$searchedAnimeKeyword = "";
-						if (data?.isNew) {
-							$finalAnimeList = data.finalAnimeList;
-							$hiddenEntries = data.hiddenEntries;
-							$numberOfNextLoadedGrid =
-								data.numberOfNextLoadedGrid;
-							$dataStatus = null;
-							checkAutoFunctionsOnLoad();
-							$initData = false;
-						}
-						return;
-					})
-					.catch((error) => {
-						throw error;
+				});
+			})
+			.catch(async (error) => {
+				checkAutoFunctions(true);
+				$initData = false;
+				$dataStatus = "Something went wrong...";
+				if ($android) {
+					$confirmPromise?.({
+						isAlert: true,
+						title: "Something Went Wrong",
+						text: "App may not be working properly, you may want to restart and make sure you're running the latest version.",
 					});
+				} else {
+					$confirmPromise?.({
+						isAlert: true,
+						title: "Something Went Wrong",
+						text: "App may not be working properly, you may want to refresh the page, or if not clear the cookies but backup your data first.",
+					});
+				}
+				console.error(error);
 			});
-		})
-		.catch(async (error) => {
-			checkAutoFunctionsOnLoad();
-			$initData = false;
-			$dataStatus = "Something went wrong...";
-			if ($android) {
-				$confirmPromise?.({
-					isAlert: true,
-					title: "Something Went Wrong",
-					text: "App may not be working properly, you may want to restart and make sure you're running the latest version.",
-				});
-			} else {
-				$confirmPromise?.({
-					isAlert: true,
-					title: "Something Went Wrong",
-					text: "App may not be working properly, you may want to refresh the page, or if not clear the cookies but backup your data first.",
-				});
-			}
-			console.error(error);
-		});
+	});
 
 	// function getAnilistAccessTokenFromURL() {
 	// 	let urlParams = new URLSearchParams(window.location.hash.slice(1));
 	// 	return urlParams.get("access_token");
 	// }
 
-	function checkAutoFunctionsOnLoad() {
+	function checkAutoFunctions(initCheck = false) {
 		// auto Update
-		requestUserEntries()
-			.then(() => {
-				$userRequestIsRunning = false;
-				requestAnimeEntries().finally(() => {
+		if (initCheck) {
+			requestUserEntries()
+				.then(() => {
+					$userRequestIsRunning = false;
+					requestAnimeEntries().finally(() => {
+						checkAutoExportOnLoad();
+					});
+				})
+				.catch((error) => {
 					checkAutoExportOnLoad();
+					$userRequestIsRunning = false;
+					$dataStatus = "Something went wrong...";
+					console.error(error);
 				});
-			})
-			.catch((error) => {
+		} else {
+			if (autoUpdateIsPastDate() && $autoUpdate) {
+				requestUserEntries()
+					.then(() => {
+						$userRequestIsRunning = false;
+						requestAnimeEntries().finally(() => {
+							checkAutoExportOnLoad();
+						});
+					})
+					.catch((error) => {
+						checkAutoExportOnLoad();
+						$userRequestIsRunning = false;
+						$dataStatus = "Something went wrong...";
+						console.error(error);
+					});
+			} else {
 				checkAutoExportOnLoad();
-				$userRequestIsRunning = false;
-				$dataStatus = "Something went wrong...";
-				console.error(error);
-			});
+			}
+		}
 	}
 	function checkAutoExportOnLoad() {
 		if ($autoExport) {
-			let isPastDate = false;
-			if (!$lastRunnedAutoExportDate) isPastDate = true;
-			else if (
-				$lastRunnedAutoExportDate instanceof Date &&
-				!isNaN($lastRunnedAutoExportDate)
-			) {
-				if (
-					new Date().getTime() - $lastRunnedAutoExportDate.getTime() >
-					hourINMS
-				) {
-					isPastDate = true;
-				}
-			}
-			if (isPastDate) {
-				exportUserData().then(() => {
-					$lastRunnedAutoExportDate = new Date();
-					saveJSON(
-						$lastRunnedAutoExportDate,
-						"lastRunnedAutoExportDate"
-					);
-				});
+			if (autoExportIsPastDate()) {
+				exportUserData();
 			}
 		}
 	}
@@ -489,25 +508,12 @@
 		if (val === true) {
 			saveJSON(true, "autoUpdate");
 			// Check Run First
-			let isPastDate = false;
-			if (!$lastRunnedAutoUpdateDate) isPastDate = true;
-			else if (
-				$lastRunnedAutoUpdateDate instanceof Date &&
-				!isNaN($lastRunnedAutoUpdateDate)
-			) {
-				if (
-					new Date().getTime() - $lastRunnedAutoUpdateDate.getTime() >
-					hourINMS
-				) {
-					isPastDate = true;
-				}
-			}
-			if (isPastDate) {
-				runUpdate.update((e) => !e);
+			if (autoUpdateIsPastDate()) {
+				checkAutoFunctions();
 				if ($autoUpdateInterval) clearInterval($autoUpdateInterval);
 				$autoUpdateInterval = setInterval(() => {
 					if ($autoUpdate) {
-						runUpdate.update((e) => !e);
+						checkAutoFunctions();
 					}
 				}, hourINMS);
 			} else {
@@ -517,11 +523,11 @@
 							$lastRunnedAutoUpdateDate?.getTime()) || 0;
 				setTimeout(() => {
 					if ($autoUpdate === false) return;
-					runUpdate.update((e) => !e);
+					checkAutoFunctions();
 					if ($autoUpdateInterval) clearInterval($autoUpdateInterval);
 					$autoUpdateInterval = setInterval(() => {
 						if ($autoUpdate) {
-							runUpdate.update((e) => !e);
+							checkAutoFunctions();
 						}
 					}, hourINMS);
 				}, timeLeft);
@@ -531,7 +537,22 @@
 			saveJSON(false, "autoUpdate");
 		}
 	});
-
+	function autoUpdateIsPastDate() {
+		let isPastDate = false;
+		if (!$lastRunnedAutoUpdateDate) isPastDate = true;
+		else if (
+			$lastRunnedAutoUpdateDate instanceof Date &&
+			!isNaN($lastRunnedAutoUpdateDate)
+		) {
+			if (
+				new Date().getTime() - $lastRunnedAutoUpdateDate.getTime() >
+				hourINMS
+			) {
+				isPastDate = true;
+			}
+		}
+		return isPastDate;
+	}
 	runUpdate.subscribe((val) => {
 		if (typeof val !== "boolean" || $initData || !navigator.onLine) return;
 		$userRequestIsRunning = true;
@@ -549,26 +570,12 @@
 	autoExport.subscribe(async (val) => {
 		if (val === true) {
 			saveJSON(true, "autoExport");
-			// Check Run First
-			let isPastDate = false;
-			if (!$lastRunnedAutoExportDate) isPastDate = true;
-			else if (
-				$lastRunnedAutoExportDate instanceof Date &&
-				!isNaN($lastRunnedAutoExportDate)
-			) {
-				if (
-					new Date().getTime() - $lastRunnedAutoExportDate.getTime() >
-					hourINMS
-				) {
-					isPastDate = true;
-				}
-			}
-			if (isPastDate) {
-				runExport.update((e) => !e);
+			if (autoExportIsPastDate()) {
+				checkAutoFunctions();
 				if ($autoExportInterval) clearInterval($autoExportInterval);
 				$autoExportInterval = setInterval(() => {
 					if ($autoExport) {
-						runExport.update((e) => !e);
+						checkAutoFunctions();
 					}
 				}, hourINMS);
 			} else {
@@ -578,11 +585,11 @@
 							$lastRunnedAutoExportDate?.getTime()) || 0;
 				setTimeout(() => {
 					if ($autoExport === false) return;
-					runExport.update((e) => !e);
+					checkAutoFunctions();
 					if ($autoExportInterval) clearInterval($autoExportInterval);
 					$autoExportInterval = setInterval(() => {
 						if ($autoExport) {
-							runExport.update((e) => !e);
+							checkAutoFunctions();
 						}
 					}, hourINMS);
 				}, timeLeft);
@@ -592,12 +599,26 @@
 			saveJSON(false, "autoExport");
 		}
 	});
+	function autoExportIsPastDate() {
+		// Check Run First
+		let isPastDate = false;
+		if (!$lastRunnedAutoExportDate) isPastDate = true;
+		else if (
+			$lastRunnedAutoExportDate instanceof Date &&
+			!isNaN($lastRunnedAutoExportDate)
+		) {
+			if (
+				new Date().getTime() - $lastRunnedAutoExportDate.getTime() >
+				hourINMS
+			) {
+				isPastDate = true;
+			}
+		}
+		return isPastDate;
+	}
 	runExport.subscribe((val) => {
 		if (typeof val !== "boolean" || $initData) return;
-		exportUserData().then(() => {
-			$lastRunnedAutoExportDate = new Date();
-			saveJSON($lastRunnedAutoExportDate, "lastRunnedAutoExportDate");
-		});
+		exportUserData();
 	});
 	runIsScrolling.subscribe((val) => {
 		if (typeof val !== "boolean") return;
@@ -611,7 +632,12 @@
 	// Global Function For Android/Browser
 	document.addEventListener("visibilitychange", () => {
 		if ($initData || $android) return;
-		if (document.visibilityState === "visible" && !$userRequestIsRunning) {
+		if (
+			document.visibilityState === "visible" &&
+			!$userRequestIsRunning &&
+			!autoUpdateIsPastDate() &&
+			!autoExportIsPastDate()
+		) {
 			requestUserEntries({ visibilityChange: true });
 		}
 	});
@@ -627,7 +653,11 @@
 	window.addEventListener("wheel", windowWheel);
 	window.checkEntries = () => {
 		if ($initData) return;
-		if (!$userRequestIsRunning) {
+		if (
+			!$userRequestIsRunning &&
+			!autoUpdateIsPastDate() &&
+			!autoExportIsPastDate()
+		) {
 			requestUserEntries({ visibilityChange: true });
 		}
 	};
@@ -942,15 +972,6 @@
 			text: "There are currently no updates available.",
 		});
 	};
-
-	// Check App ID
-	if ($android && navigator.onLine) {
-		try {
-			JSBridge.checkAppID($appID, false);
-		} catch (e) {
-			window.updateAppAlert?.();
-		}
-	}
 
 	let _progress = 0,
 		progressFrame;

@@ -66,7 +66,7 @@ import androidx.core.splashscreen.SplashScreen;
 
 public class MainActivity extends AppCompatActivity  {
 
-    public final int appID = 46;
+    public final int appID = 48;
     public boolean webviewIsLoaded = false;
     public SharedPreferences prefs;
     private SharedPreferences.Editor prefsEdit;
@@ -643,7 +643,10 @@ public class MainActivity extends AppCompatActivity  {
         }
         @JavascriptInterface
         public void refreshWeb(){
-            webView.post(() -> webView.reload());
+            webView.post(() -> {
+                webView.clearCache(true);
+                webView.reload();
+            });
         }
         @RequiresApi(api = Build.VERSION_CODES.O)
         @JavascriptInterface

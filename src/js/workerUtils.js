@@ -38,9 +38,11 @@ const animeLoader = (_data) => {
                 animeLoaderWorker = new Worker(url)
                 animeLoaderWorker.postMessage(_data)
                 animeLoaderWorker.onmessage = ({ data }) => {
-                    if (data?.progress >= 0 && data?.progress <= 100) {
-                        progress.set(data.progress)
-                    } else if (data?.status !== undefined) {
+                    if (data?.hasOwnProperty("progress")) {
+                        if (data?.progress >= 0 && data?.progress <= 100) {
+                            progress.set(data.progress)
+                        }
+                    } else if (data?.hasOwnProperty("status")) {
                         dataStatusPrio = true
                         dataStatus.set(data.status)
                     } else if (data?.isNew) {
@@ -75,9 +77,11 @@ const processRecommendedAnimeList = (_data) => {
                 if (processRecommendedAnimeListTerminateTimeout) clearTimeout(processRecommendedAnimeListTerminateTimeout);
                 processRecommendedAnimeListWorker.postMessage(_data);
                 processRecommendedAnimeListWorker.onmessage = ({ data }) => {
-                    if (data?.progress >= 0 && data?.progress <= 100) {
-                        progress.set(data.progress)
-                    } else if (data?.status !== undefined) {
+                    if (data?.hasOwnProperty("progress")) {
+                        if (data?.progress >= 0 && data?.progress <= 100) {
+                            progress.set(data.progress)
+                        }
+                    } else if (data?.hasOwnProperty("status")) {
                         dataStatusPrio = true
                         dataStatus.set(data.status);
                     } else {
@@ -111,11 +115,11 @@ const requestAnimeEntries = (_data) => {
                 if (requestAnimeEntriesTerminateTimeout) clearTimeout(requestAnimeEntriesTerminateTimeout)
                 requestAnimeEntriesWorker.postMessage(_data)
                 requestAnimeEntriesWorker.onmessage = ({ data }) => {
-                    if (data?.progress >= 0 && data?.progress <= 100) {
-                        if (!dataStatusPrio) {
+                    if (data?.hasOwnProperty("progress")) {
+                        if (!dataStatusPrio && data?.progress >= 0 && data?.progress <= 100) {
                             progress.set(data.progress)
                         }
-                    } else if (data?.status !== undefined) {
+                    } else if (data?.hasOwnProperty("status")) {
                         if (!dataStatusPrio) {
                             dataStatus.set(data.status)
                         }
@@ -164,11 +168,11 @@ const requestUserEntries = (_data) => {
                 if (requestUserEntriesTerminateTimeout) clearTimeout(requestUserEntriesTerminateTimeout)
                 requestUserEntriesWorker.postMessage(_data)
                 requestUserEntriesWorker.onmessage = ({ data }) => {
-                    if (data?.progress >= 0 && data?.progress <= 100) {
-                        if (!dataStatusPrio) {
+                    if (data?.hasOwnProperty("progress")) {
+                        if (!dataStatusPrio && data?.progress >= 0 && data?.progress <= 100) {
                             progress.set(data.progress)
                         }
-                    } else if (data?.status !== undefined) {
+                    } else if (data?.hasOwnProperty("status")) {
                         if (!dataStatusPrio) {
                             dataStatus.set(data.status)
                             if (data.status === "User not found") {
@@ -237,9 +241,11 @@ const exportUserData = (_data) => {
                     exportUserDataWorker.postMessage('browser')
                 }
                 exportUserDataWorker.onmessage = ({ data }) => {
-                    if (data?.progress >= 0 && data?.progress <= 100) {
-                        progress.set(data.progress)
-                    } else if (data?.status !== undefined) {
+                    if (data?.hasOwnProperty("progress")) {
+                        if (data?.progress >= 0 && data?.progress <= 100) {
+                            progress.set(data.progress)
+                        }
+                    } else if (data?.hasOwnProperty("status")) {
                         dataStatusPrio = true
                         dataStatus.set(data.status)
                     } else if (isAndroid()) {
@@ -303,8 +309,10 @@ const importUserData = (_data) => {
                 if (importUserDataTerminateTimeout) clearTimeout(importUserDataTerminateTimeout)
                 importUserDataWorker.postMessage(_data)
                 importUserDataWorker.onmessage = ({ data }) => {
-                    if (data?.progress >= 0 && data?.progress <= 100) {
-                        progress.set(data.progress)
+                    if (data?.hasOwnProperty("progress")) {
+                        if (data?.progress >= 0 && data?.progress <= 100) {
+                            progress.set(data.progress)
+                        }
                     } else if (data?.error !== undefined) {
                         isImporting.set(false)
                         loadAnime.update((e) => !e)
@@ -315,7 +323,7 @@ const importUserData = (_data) => {
                         })
                         progress.set(100)
                         reject(data?.error || "Something went wrong...")
-                    } else if (data?.status !== undefined) {
+                    } else if (data?.hasOwnProperty("status")) {
                         dataStatusPrio = true
                         dataStatus.set(data.status)
                     } else if (typeof data?.importedUsername === "string") {
@@ -376,7 +384,7 @@ const getIDBdata = (name) => {
                 let worker = new Worker(url)
                 worker.postMessage({ name: name })
                 worker.onmessage = ({ data }) => {
-                    if (data?.status !== undefined) {
+                    if (data?.hasOwnProperty("status")) {
                         dataStatus.set(data.status)
                     } else {
                         worker.terminate()
@@ -398,7 +406,7 @@ const saveIDBdata = (data, name) => {
             .then(url => {
                 let worker = new Worker(url)
                 worker.onmessage = ({ data }) => {
-                    if (data?.status !== undefined) {
+                    if (data?.hasOwnProperty("status")) {
                         dataStatus.set(data.status)
                     } else {
                         setTimeout(() => {
@@ -438,7 +446,7 @@ const getAnimeEntries = (_data) => {
                 if (getAnimeEntriesTerminateTimeout) clearTimeout(getAnimeEntriesTerminateTimeout)
                 worker.postMessage(_data)
                 worker.onmessage = ({ data }) => {
-                    if (data?.status !== undefined) {
+                    if (data?.hasOwnProperty("status")) {
                         dataStatusPrio = true
                         dataStatus.set(data.status)
                     } else {
@@ -488,7 +496,7 @@ const getAnimeFranchises = (_data) => {
                 if (getAnimeFranchisesTerminateTimeout) clearTimeout(getAnimeFranchisesTerminateTimeout)
                 worker.postMessage(_data)
                 worker.onmessage = ({ data }) => {
-                    if (data?.status !== undefined) {
+                    if (data?.hasOwnProperty("status")) {
                         dataStatusPrio = true
                         dataStatus.set(data.status)
                     } else {
@@ -537,7 +545,7 @@ const getFilterOptions = (_data) => {
                 if (getFilterOptionsTerminateTimeout) clearTimeout(getFilterOptionsTerminateTimeout)
                 getFilterOptionsWorker.postMessage(_data)
                 getFilterOptionsWorker.onmessage = ({ data }) => {
-                    if (data?.status !== undefined) {
+                    if (data?.hasOwnProperty("status")) {
                         dataStatusPrio = true
                         dataStatus.set(data.status)
                     } else {

@@ -1,16 +1,22 @@
 import { get } from "svelte/store"
 import { isAndroid } from "./others/helper"
 import { appID } from "./globalValues"
+import getWebVersion from "../version"
 let loadedUrls = {}
 
 const cacheRequest = (url) => {
-    return new Promise((resolve) => {
+    return new Promise(async (resolve) => {
         if (isAndroid()) {
             resolve(url)
         } else if (loadedUrls[url]) {
             resolve(loadedUrls[url])
         } else {
-            url = url + "?v=" + (get(appID))
+            let _appID = get(appID)
+            if (!_appID) {
+                _appID = await getWebVersion()
+                appID.set(_appID)
+            }
+            url = url + "?v=" + _appID
             fetch(url, {
                 headers: {
                     'Cache-Control': 'max-age=31536000, immutable'

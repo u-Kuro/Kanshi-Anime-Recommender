@@ -711,7 +711,7 @@ self.onmessage = async ({ data }) => {
                     }
                 });
         }
-        let percentage, hasUpdatedEntry = false;
+        let percentage = 0, hasUpdatedEntry = false;
         function recallUNRE(page) {
             fetch('https://graphql.anilist.co', {
                 method: 'POST',
@@ -1152,19 +1152,6 @@ function ncsCompare(str1, str2) {
         return false;
     }
     return str1.toLowerCase() === str2.toLowerCase();
-}
-
-function makeArrayUnique(arr, identifier = []) {
-    const uniqueArray = [];
-    const seenValues = {};
-    for (const element of (arr || [])) {
-        let strElement = JSON.stringify(element)
-        if (!seenValues[strElement]) {
-            uniqueArray.push(element);
-            seenValues[strElement] = true;
-        }
-    }
-    return uniqueArray;
 }
 // function mergeArraysByUniqueProperties(array1, array2, uniqueProperties) {
 //     try {
