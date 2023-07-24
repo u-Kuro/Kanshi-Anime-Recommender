@@ -1067,11 +1067,12 @@
             _format = `${format}`;
             let timeDifMS;
             let nextEpisode;
+            let nextAiringDate
             if (
                 typeof nextAiringEpisode?.episode === "number" &&
                 typeof nextAiringEpisode?.airingAt === "number"
             ) {
-                let nextAiringDate = new Date(
+                nextAiringDate = new Date(
                     nextAiringEpisode?.airingAt * 1000
                 );
                 nextEpisode = nextAiringEpisode?.episode;
@@ -1084,15 +1085,15 @@
                 typeof nextEpisode === "number" &&
                 episodes > nextEpisode
             ) {
-                _format += ` (${nextEpisode}/${episodes} in ${msToTime(
-                    timeDifMS,
-                    2
+                _format += ` (${nextEpisode}/${episodes} in ${formatDateDifference(
+                    nextAiringDate,
+                    timeDifMS
                 )})`;
             } else if (
                 timeDifMS > 0 &&
                 typeof nextEpisode === "number"
             ) {
-                _format += ` (Ep ${nextEpisode} in ${msToTime(timeDifMS, 2)})`;
+                _format += ` (Ep ${nextEpisode} in ${formatDateDifference(nextAiringDate, timeDifMS)})`;
             } else if (
                 timeDifMS <= 0 &&
                 typeof nextEpisode === "number" &&
@@ -1108,6 +1109,25 @@
             }
         }
         return _format;
+    }
+    function formatDateDifference(endDate, timeDifference) {
+        const oneMinute = 60 * 1000; // Number of milliseconds in one minute
+        const oneHour = 60 * oneMinute; // Number of milliseconds in one hour
+        const oneDay = 24 * oneHour; // Number of milliseconds in one day
+        const oneWeek = 7 * oneDay; // Number of milliseconds in one day
+
+        const formatYear = (date) => date.toLocaleDateString(undefined, { year: 'numeric' });
+        const formatMonthAndDay = (date) => date.toLocaleDateString(undefined, { month: 'short', day: 'numeric'});
+        const formatTime = (date) => date.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit', hour12: true });
+        const formatWeekday = (date) => date.toLocaleDateString(undefined, { weekday: 'short' });
+
+        if (timeDifference>oneWeek) {
+            return `${msToTime(timeDifference, 1)}, ${formatMonthAndDay(endDate)} ${formatYear(endDate)}`;
+        } else if (timeDifference<=oneWeek && timeDifference>oneDay) {
+            return `${msToTime(timeDifference, 1)}, ${formatWeekday(endDate)}, ${formatTime(endDate).toLowerCase()}`;
+        } else {
+            return `${msToTime(timeDifference, 2)}, ${formatTime(endDate).toLowerCase()}`;
+        }
     }
 
     // Global Function For Android

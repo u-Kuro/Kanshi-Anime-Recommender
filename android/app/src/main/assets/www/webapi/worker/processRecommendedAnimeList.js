@@ -1030,7 +1030,8 @@ self.onmessage = async ({ data }) => {
                 }),
                 {});
             if (!isJsonObject(anime?.nextAiringEpisode) && year) {
-                let possibleAiringDate = getJapaneseSeasonStartDate(season, year)
+                let { month, day } = anime?.startDate || {}
+                let possibleAiringDate = getJapaneseStartDate({ season, year, month, day })
                 if (possibleAiringDate && possibleAiringDate > new Date()) {
                     anime.nextAiringEpisode = {
                         airingAt: Math.floor(possibleAiringDate.getTime() / 1000),
@@ -1320,7 +1321,8 @@ self.onmessage = async ({ data }) => {
                 })
                 , {});
             if (!isJsonObject(anime?.nextAiringEpisode) && year) {
-                let possibleAiringDate = getJapaneseSeasonStartDate(season, year)
+                let { month, day } = anime?.startDate || {}
+                let possibleAiringDate = getJapaneseStartDate({ season, year, month, day })
                 if (possibleAiringDate && possibleAiringDate > new Date()) {
                     anime.nextAiringEpisode = {
                         airingAt: Math.floor(possibleAiringDate.getTime() / 1000),
@@ -1659,20 +1661,22 @@ async function retrieveJSON(name) {
         }
     });
 }
-function getJapaneseSeasonStartDate(season, year) {
-    if (!isNaN(year)) {
-        const seasons = {
-            spring: new Date(parseInt(year), 1, 4),  // February 4
-            summer: new Date(parseInt(year), 4, 6),  // May 6
-            fall: new Date(parseInt(year), 7, 8),  // August 8
-            winter: new Date(parseInt(year), 10, 7), // November 7
-        };
-        const seasonKey = season?.trim()?.toLowerCase?.();
-        if (seasons.hasOwnProperty(seasonKey) && !isNaN(year)) {
-            return seasons[seasonKey];
-        } else {
-            return new Date(parseInt(year), 0, 1);
+function getJapaneseStartDate({ season, year, month, day }) {
+    if (parseInt(year) >= 0) {
+        if (parseInt(month) >= 0) {
+            return new Date(parseInt(year), parseInt(month), parseInt(day || 1))
         }
+        const seasonKey = season?.trim()?.toLowerCase?.();
+        if (["winter", "spring", "summer", "fall"].includes(seasonKey) && !isNaN(year)) {
+            const seasons = {
+                winter: new Date(parseInt(year), 0, 1),  // January 1
+                spring: new Date(parseInt(year), 3, 1),  // April 1
+                summer: new Date(parseInt(year), 6, 1),  // July 1
+                fall: new Date(parseInt(year), 9, 1),    // October 1
+            };
+            return seasons[seasonKey];
+        }
+        return new Date(parseInt(year), 0, 1);
     } else {
         return null;
     }

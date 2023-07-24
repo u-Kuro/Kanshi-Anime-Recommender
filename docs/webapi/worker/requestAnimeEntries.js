@@ -90,6 +90,10 @@ self.onmessage = async ({ data }) => {
                                         isAnimationStudio
                                     }
                                 }
+                                startDate {
+                                    month
+                                    day
+                                }
                                 seasonYear
                                 season
                                 staff(perPage:${maxStaffPerPage}, page:1, sort:[RELEVANCE]) {
@@ -374,6 +378,10 @@ self.onmessage = async ({ data }) => {
                                         siteUrl
                                         isAnimationStudio
                                     }
+                                }
+                                startDate {
+                                    month
+                                    day
                                 }
                                 seasonYear
                                 season
@@ -779,6 +787,10 @@ self.onmessage = async ({ data }) => {
                                         siteUrl
                                         isAnimationStudio
                                     }
+                                }
+                                startDate {
+                                    month
+                                    day
                                 }
                                 seasonYear
                                 season
