@@ -1056,6 +1056,7 @@
     }
 
     function getFormattedAnimeFormat({
+        title,
         episodes,
         format,
         duration,
@@ -1085,14 +1086,13 @@
             ) {
                 _format += ` (${nextEpisode}/${episodes} in ${msToTime(
                     timeDifMS,
-                    1
+                    2
                 )})`;
             } else if (
                 timeDifMS > 0 &&
-                typeof nextEpisode === "number" &&
-                typeof episodes !== "number"
+                typeof nextEpisode === "number"
             ) {
-                _format += ` (Ep ${nextEpisode} in ${msToTime(timeDifMS, 1)})`;
+                _format += ` (Ep ${nextEpisode} in ${msToTime(timeDifMS, 2)})`;
             } else if (
                 timeDifMS <= 0 &&
                 typeof nextEpisode === "number" &&

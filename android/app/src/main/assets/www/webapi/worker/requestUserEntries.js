@@ -328,10 +328,10 @@ function msToTime(duration) {
     millenium = Math.floor((duration / (1000 * 60 * 60 * 24 * 7 * 4 * 12 * 10 * 10 * 10)) % 10)
     let time = []
     if (millenium <= 0 && century <= 0 && decades <= 0 && years <= 0 && months <= 0 && weeks <= 0 && days <= 0 && hours <= 0 && minutes <= 0 && seconds <= 0) return "0s"
-    if (millenium > 0) time.push(millenium === 1 ? `${millenium}mil` : `${millenium}mils`)
-    if (decades > 0) time.push(decades === 1 ? `${decades}de` : `${decades}des`)
+    if (millenium > 0) time.push(`${millenium}mil`)
+    if (decades > 0) time.push(`${decades}dec`)
     if (years > 0) time.push(`${years}y`)
-    if (months > 0) time.push(months === 1 ? `${months}mo` : `${months}mos`)
+    if (months > 0) time.push(`${months}mon`)
     if (weeks > 0) time.push(`${weeks}w`)
     if (days > 0) time.push(`${days}d`)
     if (hours > 0) time.push(`${hours}h`)

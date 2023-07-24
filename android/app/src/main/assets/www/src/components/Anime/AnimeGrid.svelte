@@ -379,7 +379,7 @@
         } else if (typeof nextEpisode === "number") {
             if (timeDifMS > 0 && nextEpisode > 1) {
                 return `(${nextEpisode - 1}")`;
-            } else {
+            } else if (timeDifMS <= 0) {
                 return `(${nextEpisode}")`;
             }
         }
@@ -473,7 +473,12 @@
                                 class="brief-info-wrapper copy"
                                 copy-value={anime?.title?.userPreferred || ""}
                             >
-                                <div class="brief-info">
+                                <div
+                                    class="brief-info"
+                                    date={JSON.stringify(
+                                        anime?.nextAiringEpisode
+                                    )}
+                                >
                                     <span>
                                         <i
                                             class={`${getUserStatusColor(
