@@ -93,7 +93,6 @@
 	new Promise(async (resolve) => {
 		// Check App ID
 		$appID = await getWebVersion();
-		console.log();
 		if ($android && navigator.onLine) {
 			try {
 				if ($appID) {

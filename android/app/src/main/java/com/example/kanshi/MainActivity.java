@@ -66,7 +66,7 @@ import androidx.core.splashscreen.SplashScreen;
 
 public class MainActivity extends AppCompatActivity  {
 
-    public final int appID = 48;
+    public final int appID = 50;
     public boolean webviewIsLoaded = false;
     public SharedPreferences prefs;
     private SharedPreferences.Editor prefsEdit;
@@ -635,6 +635,7 @@ public class MainActivity extends AppCompatActivity  {
         }
         @JavascriptInterface
         public void checkAppID(int _appID, boolean manualCheck) {
+            webView.post(() -> webView.clearCache(true));
             if (_appID > appID) {
                 webView.post(() -> webView.loadUrl("javascript:window.updateAppAlert();"));
             } else if (manualCheck) {
@@ -672,6 +673,7 @@ public class MainActivity extends AppCompatActivity  {
     }
 
     public void _downloadUpdate() {
+        webView.post(() -> webView.clearCache(true));
         String fileUrl = "https://github.com/u-Kuro/Kanshi.Anime-Recommendation/raw/main/Kanshi.apk";
         String fileName = "Kanshi.apk";
         DownloadUtils.downloadFile(MainActivity.this, fileUrl, fileName, new DownloadUtils.DownloadCallback() {
