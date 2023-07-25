@@ -27,7 +27,7 @@ let passedFilterOptions, passedActiveTagFilters
 
 // Reactinve Functions
 let animeLoaderWorker;
-const animeLoader = (_data) => {
+const animeLoader = (_data = {}) => {
     return new Promise((resolve, reject) => {
         dataStatusPrio = true
         progress.set(0)
@@ -80,7 +80,7 @@ const animeLoader = (_data) => {
 }
 let processRecommendedAnimeListTerminateTimeout;
 let processRecommendedAnimeListWorker;
-const processRecommendedAnimeList = (_data) => {
+const processRecommendedAnimeList = (_data = {}) => {
     return new Promise((resolve, reject) => {
         dataStatusPrio = true
         if (processRecommendedAnimeListWorker) processRecommendedAnimeListWorker.terminate();
