@@ -622,6 +622,7 @@ self.onmessage = async ({ data }) => {
     animeEntries = Object.values(animeEntries ?? {});
     let recommendedAnimeList = {};
     let maxScore;
+    let hasAnimeQuality = false
     // let averageScoresArray = animeEntries.filter(({ averageScore }) => averageScore >= 1)
     //     .map(({ averageScore }) => averageScore);
     let popularityArray = animeEntries.filter(({ popularity }) => popularity >= 1)
@@ -638,7 +639,6 @@ self.onmessage = async ({ data }) => {
     // let averageScoreMean = arrayMean(averageScoresArray)
     if (!jsonIsEmpty(varScheme)) {
         animeFranchises = []
-        let maxScoreTest = 0
         let userScoreBase = 100
         let userScores = Object.values(userEntriesStatus.userScore);
         let meanUserScore, meanScoreAll, meanScoreAbove;
@@ -1016,7 +1016,14 @@ self.onmessage = async ({ data }) => {
                         : arrayMean(animeContent)
                     : 1
             let score = finalAnimeContent * finalAnimeQuality
-            maxScore = Math.pow(userScoreBase, 2)
+            if (!hasAnimeQuality) {
+                maxScore = userScoreBase
+                if (finalAnimeQuality > 1) {
+                    hasAnimeQuality = true
+                }
+            } else {
+                maxScore = Math.pow(userScoreBase, 2)
+            }
             // Process other Anime Info
             genres = genres.length ? genres : [];
             tags = tags.length ? tags.map((e) => { return { name: e?.name, rank: e?.rank } }) : [];
@@ -1046,7 +1053,6 @@ self.onmessage = async ({ data }) => {
                 studios: studiosIncluded
             }
             // Add To Processed Recommendation List
-            maxScoreTest = Math.max(score, maxScoreTest)
             recommendedAnimeList[animeID] = {
                 id: animeID,
                 title: anime?.title,

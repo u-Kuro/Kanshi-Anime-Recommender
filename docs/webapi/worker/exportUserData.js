@@ -57,7 +57,7 @@ self.onmessage = async ({ data }) => {
                 chunkStr = ''
             }
             completedRecursionCalls++;
-            if (Math.abs(performance.now() - currentDate) >= 16.66) {
+            if (Math.abs(performance.now() - currentDate) >= 50) {
                 self.postMessage({ progress: (completedRecursionCalls / maxRecursion) * 100 })
                 currentDate = performance.now()
             }
@@ -220,7 +220,7 @@ function JSONToBlob(object, _maxRecursion) {
             chunkStr = '';
         }
         completedRecursionCalls++;
-        if (Math.abs(performance.now() - currentDate) >= 16.66) {
+        if (Math.abs(performance.now() - currentDate) >= 50) {
             self.postMessage({ progress: (completedRecursionCalls / maxRecursion) * 100 })
             currentDate = performance.now()
         }

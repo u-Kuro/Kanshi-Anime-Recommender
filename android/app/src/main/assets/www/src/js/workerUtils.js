@@ -202,6 +202,7 @@ const requestUserEntries = (_data) => {
                         if (!dataStatusPrio) {
                             dataStatus.set(data.status)
                             if (data.status === "User not found") {
+                                userRequestIsRunning.set(false)
                                 loadAnime.update((e) => !e)
                                 window.confirmPromise({
                                     isAlert: true,
@@ -215,6 +216,7 @@ const requestUserEntries = (_data) => {
                             }
                         }
                     } else if (data?.error) {
+                        userRequestIsRunning.set(false)
                         loadAnime.update((e) => !e)
                         requestUserEntriesTerminateTimeout = setTimeout(() => {
                             requestUserEntriesWorker.terminate();
@@ -224,6 +226,7 @@ const requestUserEntries = (_data) => {
                     } else if (data?.updateRecommendationList !== undefined) {
                         updateRecommendationList.update(e => !e)
                     } else {
+                        userRequestIsRunning.set(false)
                         requestUserEntriesTerminateTimeout = setTimeout(() => {
                             requestUserEntriesWorker.terminate();
                         }, terminateDelay)
@@ -232,6 +235,7 @@ const requestUserEntries = (_data) => {
                     }
                 }
                 requestUserEntriesWorker.onerror = (error) => {
+                    userRequestIsRunning.set(false)
                     loadAnime.update((e) => !e)
                     requestUserEntriesTerminateTimeout = setTimeout(() => {
                         requestUserEntriesWorker.terminate();
@@ -240,6 +244,7 @@ const requestUserEntries = (_data) => {
                     reject(error)
                 }
             }).catch((error) => {
+                userRequestIsRunning.set(false)
                 progress.set(100)
                 loadAnime.update((e) => !e)
                 alertError()

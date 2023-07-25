@@ -357,6 +357,7 @@
 	function checkAutoFunctions(initCheck = false) {
 		// auto Update
 		if (initCheck) {
+			$userRequestIsRunning = true;
 			requestUserEntries()
 				.then(() => {
 					$userRequestIsRunning = false;
@@ -372,6 +373,7 @@
 				});
 		} else {
 			if (autoUpdateIsPastDate() && $autoUpdate) {
+				$userRequestIsRunning = true;
 				requestUserEntries()
 					.then(() => {
 						$userRequestIsRunning = false;
@@ -630,14 +632,24 @@
 
 	// Global Function For Android/Browser
 	document.addEventListener("visibilitychange", () => {
-		if ($initData || $android) return;
+		if ($initData || $android || document.visibilityState !== "visible")
+			return;
 		if (
-			document.visibilityState === "visible" &&
-			!$userRequestIsRunning &&
-			!autoUpdateIsPastDate() &&
-			!autoExportIsPastDate()
+			$userRequestIsRunning &&
+			(autoUpdateIsPastDate() || autoExportIsPastDate())
 		) {
-			requestUserEntries({ visibilityChange: true });
+			checkAutoFunctions();
+			if ($autoExport && !$autoExportInterval) {
+				autoExport.update((e) => e);
+			}
+			if ($autoUpdate && !$autoUpdateInterval) {
+				autoUpdate.update((e) => e);
+			}
+		} else if (!$userRequestIsRunning) {
+			$userRequestIsRunning = true;
+			requestUserEntries({ visibilityChange: true }).then(
+				() => ($userRequestIsRunning = false)
+			);
 		}
 	});
 
@@ -653,11 +665,21 @@
 	window.checkEntries = () => {
 		if ($initData) return;
 		if (
-			!$userRequestIsRunning &&
-			!autoUpdateIsPastDate() &&
-			!autoExportIsPastDate()
+			$userRequestIsRunning &&
+			(autoUpdateIsPastDate() || autoExportIsPastDate())
 		) {
-			requestUserEntries({ visibilityChange: true });
+			checkAutoFunctions();
+			if (!$autoExportInterval) {
+				autoExport.update((e) => e);
+			}
+			if (!$autoUpdateInterval) {
+				autoUpdate.update((e) => e);
+			}
+		} else if (!$userRequestIsRunning) {
+			$userRequestIsRunning = true;
+			requestUserEntries({ visibilityChange: true }).then(
+				() => ($userRequestIsRunning = false)
+			);
 		}
 	};
 	window.addEventListener("popstate", () => {
@@ -973,12 +995,20 @@
 	};
 
 	let _progress = 0,
-		progressFrame;
+		progressFrame,
+		progressChangeStart = performance.now();
 	progress.subscribe((val) => {
-		cancelAnimationFrame(progressFrame);
-		progressFrame = requestAnimationFrame(() => {
-			_progress = val;
-		});
+		if (
+			val >= 100 ||
+			val <= 0 ||
+			performance.now() - progressChangeStart > 300
+		) {
+			cancelAnimationFrame(progressFrame);
+			progressFrame = requestAnimationFrame(() => {
+				_progress = val;
+			});
+			progressChangeStart = performance.now();
+		}
 	});
 </script>
 
@@ -1053,7 +1083,7 @@
 		height: 1px;
 		width: 100%;
 		transform: translateX(var(--progress));
-		transition: transform 0.3s ease-in;
+		transition: transform 0.3s linear;
 	}
 	.list-update-container {
 		position: fixed;
