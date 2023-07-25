@@ -9,6 +9,7 @@
         popupVisible,
         finalAnimeList,
         gridFullView,
+        userRequestIsRunning,
     } from "../../js/globalValues.js";
     import { addClass, removeClass } from "../../js/others/helper.js";
     import { requestUserEntries } from "../../js/workerUtils.js";
@@ -81,10 +82,12 @@
                                 $finalAnimeList = null;
                             }
                             $dataStatus = "Getting User Entries";
+                            $userRequestIsRunning = true;
                             requestUserEntries({
                                 username: typedUsername,
                             })
                                 .then(({ newusername }) => {
+                                    $userRequestIsRunning = false;
                                     if (newusername) {
                                         typedUsername = $username =
                                             newusername || "";
@@ -115,10 +118,12 @@
                                 $finalAnimeList = null;
                             }
                             $dataStatus = "Getting User Entries";
+                            $userRequestIsRunning = true;
                             await requestUserEntries({
                                 username: typedUsername,
                             })
                                 .then(({ newusername }) => {
+                                    $userRequestIsRunning = false;
                                     if (newusername)
                                         typedUsername = $username =
                                             newusername || "";
