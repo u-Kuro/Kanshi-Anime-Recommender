@@ -1056,7 +1056,6 @@
     }
 
     function getFormattedAnimeFormat({
-        title,
         episodes,
         format,
         duration,
@@ -1117,12 +1116,13 @@
         const oneWeek = 7 * oneDay; // Number of milliseconds in one day
 
         const formatYear = (date) => date.toLocaleDateString(undefined, { year: 'numeric' });
-        const formatMonthAndDay = (date) => date.toLocaleDateString(undefined, { month: 'short', day: 'numeric'});
+        const formatMonth = (date) => date.toLocaleDateString(undefined, { month: 'short' });
+        const formatDay = (date) => date.toLocaleDateString(undefined, { day: 'numeric' });
         const formatTime = (date) => date.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit', hour12: true });
         const formatWeekday = (date) => date.toLocaleDateString(undefined, { weekday: 'short' });
 
         if (timeDifference>oneWeek) {
-            return `${msToTime(timeDifference, 1)}, ${formatMonthAndDay(endDate)} ${formatYear(endDate)}`;
+            return `${msToTime(timeDifference, 1)}, ${formatMonth(endDate)} ${formatDay(endDate)} ${formatYear(endDate)}`;
         } else if (timeDifference<=oneWeek && timeDifference>oneDay) {
             return `${msToTime(timeDifference, 1)}, ${formatWeekday(endDate)}, ${formatTime(endDate).toLowerCase()}`;
         } else {
