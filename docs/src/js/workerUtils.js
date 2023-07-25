@@ -23,6 +23,8 @@ let terminateDelay = 1000;
 let dataStatusPrio = false
 let isExporting = false;
 
+let passedFilterOptions, passedActiveTagFilters
+
 // Reactinve Functions
 let animeLoaderWorker;
 const animeLoader = (_data) => {
@@ -35,6 +37,15 @@ const animeLoader = (_data) => {
                     animeLoaderWorker.terminate()
                     animeLoaderWorker = null
                 }
+                if (_data?.filterOptions && _data?.activeTagFilters) {
+                    passedFilterOptions = _data?.filterOptions
+                    passedActiveTagFilters = _data?.activeTagFilters
+                    _data.hasPassedFilters = true;
+                } else if (passedFilterOptions && passedActiveTagFilters) {
+                    _data.filterOptions = passedFilterOptions
+                    _data.activeTagFilters = passedActiveTagFilters
+                    _data.hasPassedFilters = true;
+                }
                 animeLoaderWorker = new Worker(url)
                 animeLoaderWorker.postMessage(_data)
                 animeLoaderWorker.onmessage = ({ data }) => {
@@ -46,6 +57,9 @@ const animeLoader = (_data) => {
                         dataStatusPrio = true
                         dataStatus.set(data.status)
                     } else if (data?.isNew) {
+                        if (data?.hasPassedFilters === true) {
+                            passedFilterOptions = passedActiveTagFilters = undefined
+                        }
                         dataStatusPrio = false
                         animeLoaderWorker.onmessage = null
                         progress.set(100)
@@ -73,8 +87,17 @@ const processRecommendedAnimeList = (_data) => {
         progress.set(0)
         cacheRequest("./webapi/worker/processRecommendedAnimeList.js")
             .then(url => {
-                processRecommendedAnimeListWorker = new Worker(url);
                 if (processRecommendedAnimeListTerminateTimeout) clearTimeout(processRecommendedAnimeListTerminateTimeout);
+                if (_data?.filterOptions && _data?.activeTagFilters) {
+                    passedFilterOptions = _data?.filterOptions
+                    passedActiveTagFilters = _data?.activeTagFilters
+                    _data.hasPassedFilters = true;
+                } else if (passedFilterOptions && passedActiveTagFilters) {
+                    _data.filterOptions = passedFilterOptions
+                    _data.activeTagFilters = passedActiveTagFilters
+                    _data.hasPassedFilters = true;
+                }
+                processRecommendedAnimeListWorker = new Worker(url);
                 processRecommendedAnimeListWorker.postMessage(_data);
                 processRecommendedAnimeListWorker.onmessage = ({ data }) => {
                     if (data?.hasOwnProperty("progress")) {
@@ -85,6 +108,9 @@ const processRecommendedAnimeList = (_data) => {
                         dataStatusPrio = true
                         dataStatus.set(data.status);
                     } else {
+                        if (data?.hasPassedFilters === true) {
+                            passedFilterOptions = passedActiveTagFilters = undefined
+                        }
                         dataStatusPrio = false
                         processRecommendedAnimeListTerminateTimeout = setTimeout(() => {
                             processRecommendedAnimeListWorker.terminate();

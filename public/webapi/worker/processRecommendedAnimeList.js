@@ -1429,7 +1429,7 @@ self.onmessage = async ({ data }) => {
     await saveJSON(Object.values(recommendedAnimeList), 'recommendedAnimeList')
     self.postMessage({ status: null })
     self.postMessage({ progress: 100 })
-    self.postMessage({ message: 'success' })
+    self.postMessage({ message: 'success', hasPassedFilters: data?.hasPassedFilters })
 }
 function formatCustomString(str) {
     if (typeof str === 'string') {

@@ -704,7 +704,8 @@ self.onmessage = async ({ data }) => {
             isNew: true,
             finalAnimeList: finalAnimeList.slice(0, loadLimit),
             hiddenEntries: hiddenEntries,
-            numberOfNextLoadedGrid: Math.min(Math.max(finalAnimeList.length - loadLimit, 0), loadLimit)
+            numberOfNextLoadedGrid: Math.min(Math.max(finalAnimeList.length - loadLimit, 0), loadLimit),
+            hasPassedFilters: data?.hasPassedFilters
         });
         filteredList = finalAnimeList.slice(loadLimit)
     }
