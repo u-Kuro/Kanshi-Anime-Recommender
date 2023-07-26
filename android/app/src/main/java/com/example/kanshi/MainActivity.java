@@ -66,7 +66,7 @@ import androidx.core.splashscreen.SplashScreen;
 
 public class MainActivity extends AppCompatActivity  {
 
-    public final int appID = 50;
+    public final int appID = 51;
     public boolean webviewIsLoaded = false;
     public SharedPreferences prefs;
     private SharedPreferences.Editor prefsEdit;
@@ -635,7 +635,6 @@ public class MainActivity extends AppCompatActivity  {
         }
         @JavascriptInterface
         public void checkAppID(int _appID, boolean manualCheck) {
-            webView.post(() -> webView.clearCache(true));
             if (_appID > appID) {
                 webView.post(() -> webView.loadUrl("javascript:window.updateAppAlert();"));
             } else if (manualCheck) {
