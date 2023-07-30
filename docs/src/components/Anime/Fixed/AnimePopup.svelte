@@ -250,15 +250,15 @@
         if (contentCaution?.caution?.length) {
             // Caution
             return "red";
+        } else if (contentCaution?.semiCaution?.length) {
+            // Semi Caution
+            return "teal";
         } else if (score < meanScoreAll) {
             // Very Low Score
             return "purple";
         } else if (score < meanScoreAbove) {
             // Low Score
             return "orange";
-        } else if (contentCaution?.semiCaution?.length) {
-            // Semi Caution
-            return "teal";
         } else {
             return "green";
         }
@@ -859,6 +859,8 @@
             return "peach";
         } else if (ncsCompare(userStatus, "dropped")) {
             return "red";
+        } else {
+            return "lightgrey"; // Default Unwatched Icon Color
         }
     }
 
@@ -1774,12 +1776,22 @@
                                 <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                                 {#if anime?.description}
                                     <i
-                                        class="fa-solid fa-circle-info"
+                                        class={"fa-solid fa-circle-info "+(getUserStatusColor(
+                                            anime.userStatus
+                                        ) +
+                                            "-color")}
                                         tabindex="0"
                                         on:click={openDescription}
                                         on:keydown={(e) =>
                                             e.key === "Enter" &&
                                             openDescription(e)}
+                                    />
+                                {:else}
+                                    <i
+                                        class={"cursor-default fa-solid fa-circle "+(getUserStatusColor(
+                                            anime.userStatus
+                                        ) +
+                                            "-color")}
                                     />
                                 {/if}
                             </div>
@@ -2705,5 +2717,9 @@
 
     .slider:before {
         border-radius: 50%;
+    }
+
+    .cursor-default {
+        cursor: default !important;
     }
 </style>

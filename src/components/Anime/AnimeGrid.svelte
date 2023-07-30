@@ -320,15 +320,15 @@
         if (contentCaution?.caution?.length) {
             // Caution
             return "red";
+        } else if (contentCaution?.semiCaution?.length) {
+            // Semi Caution
+            return "teal";
         } else if (score < meanScoreAll) {
             // Very Low Score
             return "purple";
         } else if (score < meanScoreAbove) {
             // Low Score
             return "orange";
-        } else if (contentCaution?.semiCaution?.length) {
-            // Semi Caution
-            return "teal";
         } else {
             return "green";
         }
