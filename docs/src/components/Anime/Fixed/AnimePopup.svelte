@@ -21,7 +21,6 @@
         listUpdateAvailable,
         searchedAnimeKeyword,
         checkAnimeLoaderStatus,
-        hasWheel,
         numberOfNextLoadedGrid,
         popupIsGoingBack,
     } from "../../../js/globalValues.js";
@@ -164,6 +163,25 @@
                 }
             }
         }
+    }
+
+    async function handleMoreVideos(title) {
+        let animeTitle;
+        if (typeof title === "string") {
+            animeTitle = title;
+        } else if (isJsonObject(title)) {
+            animeTitle =
+                title?.userPreferred ||
+                title?.romaji ||
+                title?.english ||
+                title?.native;
+        }
+        if (typeof animeTitle !== "string" || animeTitle === "") return;
+        let youtubeSearchURL =
+            "https://www.youtube.com/results?search_query=" +
+            animeTitle +
+            " anime";
+        window.open(youtubeSearchURL, "_blank");
     }
 
     animeIdxRemoved.subscribe(async (removedIdx) => {
@@ -1068,14 +1086,12 @@
             _format = `${format}`;
             let timeDifMS;
             let nextEpisode;
-            let nextAiringDate
+            let nextAiringDate;
             if (
                 typeof nextAiringEpisode?.episode === "number" &&
                 typeof nextAiringEpisode?.airingAt === "number"
             ) {
-                nextAiringDate = new Date(
-                    nextAiringEpisode?.airingAt * 1000
-                );
+                nextAiringDate = new Date(nextAiringEpisode?.airingAt * 1000);
                 nextEpisode = nextAiringEpisode?.episode;
                 if (nextAiringDate instanceof Date && !isNaN(nextAiringDate)) {
                     timeDifMS = nextAiringDate.getTime() - new Date().getTime();
@@ -1090,11 +1106,11 @@
                     nextAiringDate,
                     timeDifMS
                 )})`;
-            } else if (
-                timeDifMS > 0 &&
-                typeof nextEpisode === "number"
-            ) {
-                _format += ` (Ep ${nextEpisode} in ${formatDateDifference(nextAiringDate, timeDifMS)})`;
+            } else if (timeDifMS > 0 && typeof nextEpisode === "number") {
+                _format += ` (Ep ${nextEpisode} in ${formatDateDifference(
+                    nextAiringDate,
+                    timeDifMS
+                )})`;
             } else if (
                 timeDifMS <= 0 &&
                 typeof nextEpisode === "number" &&
@@ -1117,18 +1133,33 @@
         const oneDay = 24 * oneHour; // Number of milliseconds in one day
         const oneWeek = 7 * oneDay; // Number of milliseconds in one day
 
-        const formatYear = (date) => date.toLocaleDateString(undefined, { year: 'numeric' });
-        const formatMonth = (date) => date.toLocaleDateString(undefined, { month: 'short' });
-        const formatDay = (date) => date.toLocaleDateString(undefined, { day: 'numeric' });
-        const formatTime = (date) => date.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit', hour12: true });
-        const formatWeekday = (date) => date.toLocaleDateString(undefined, { weekday: 'short' });
+        const formatYear = (date) =>
+            date.toLocaleDateString(undefined, { year: "numeric" });
+        const formatMonth = (date) =>
+            date.toLocaleDateString(undefined, { month: "short" });
+        const formatDay = (date) =>
+            date.toLocaleDateString(undefined, { day: "numeric" });
+        const formatTime = (date) =>
+            date.toLocaleTimeString(undefined, {
+                hour: "numeric",
+                minute: "2-digit",
+                hour12: true,
+            });
+        const formatWeekday = (date) =>
+            date.toLocaleDateString(undefined, { weekday: "short" });
 
-        if (timeDifference>oneWeek) {
-            return `${msToTime(timeDifference, 1)}, ${formatMonth(endDate)} ${formatDay(endDate)} ${formatYear(endDate)}`;
-        } else if (timeDifference<=oneWeek && timeDifference>oneDay) {
-            return `${msToTime(timeDifference, 1)}, ${formatWeekday(endDate)}, ${formatTime(endDate).toLowerCase()}`;
+        if (timeDifference > oneWeek) {
+            return `${msToTime(timeDifference, 1)}, ${formatMonth(
+                endDate
+            )} ${formatDay(endDate)} ${formatYear(endDate)}`;
+        } else if (timeDifference <= oneWeek && timeDifference > oneDay) {
+            return `${msToTime(timeDifference, 1)}, ${formatWeekday(
+                endDate
+            )}, ${formatTime(endDate).toLowerCase()}`;
         } else {
-            return `${msToTime(timeDifference, 2)}, ${formatTime(endDate).toLowerCase()}`;
+            return `${msToTime(timeDifference, 2)}, ${formatTime(
+                endDate
+            ).toLowerCase()}`;
         }
     }
 
@@ -1473,9 +1504,9 @@
                             willHandleDescription = true;
                             let classList = descriptionEl?.classList;
                             if (classList.contains("display-none")) {
-                                isOpeningDesc = true
+                                isOpeningDesc = true;
                             } else {
-                                isOpeningDesc = false
+                                isOpeningDesc = false;
                             }
                             removeClass(descriptionEl, "fade-in");
                             removeClass(descriptionEl, "fade-out");
@@ -1510,7 +1541,10 @@
                     }
                 } else {
                     if (deltaX < 0) {
-                        showDescPercent = Math.max(1 - (Math.abs(deltaX) / 48), 0);
+                        showDescPercent = Math.max(
+                            1 - Math.abs(deltaX) / 48,
+                            0
+                        );
                     } else {
                         showDescPercent = 1;
                     }
@@ -1526,7 +1560,7 @@
             let xThreshold = 48;
             let deltaX = endX - startX;
             if ($popupIsGoingBack && deltaX >= xThreshold) {
-                $popupVisible = false
+                $popupVisible = false;
             } else if (willCloseDescRight) {
                 if (deltaX >= xThreshold) {
                     let popupMain = event.target.closest(".popup-main");
@@ -1776,10 +1810,11 @@
                                 <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                                 {#if anime?.description}
                                     <i
-                                        class={"fa-solid fa-circle-info "+(getUserStatusColor(
-                                            anime.userStatus
-                                        ) +
-                                            "-color")}
+                                        class={"fa-duotone fa-circle-info " +
+                                            (getUserStatusColor(
+                                                anime.userStatus
+                                            ) +
+                                                "-color")}
                                         tabindex="0"
                                         on:click={openDescription}
                                         on:keydown={(e) =>
@@ -1788,10 +1823,11 @@
                                     />
                                 {:else}
                                     <i
-                                        class={"cursor-default fa-solid fa-circle "+(getUserStatusColor(
-                                            anime.userStatus
-                                        ) +
-                                            "-color")}
+                                        class={"cursor-default fa-solid fa-circle " +
+                                            (getUserStatusColor(
+                                                anime.userStatus
+                                            ) +
+                                                "-color")}
                                     />
                                 {/if}
                             </div>
@@ -1805,8 +1841,7 @@
                                     <div>
                                         <div class="info-categ">Format</div>
                                         <div
-                                            class={"format-popup info not-capitalize" +
-                                                ($hasWheel ? " hasWheel" : "")}
+                                            class={"format-popup info not-capitalize"}
                                             on:wheel={(e) =>
                                                 horizontalWheel(e, "info")}
                                             style:overflow={$popupIsGoingBack
@@ -1845,8 +1880,7 @@
                                     <div>
                                         <div class="info-categ">Studio</div>
                                         <div
-                                            class={"studio-popup info" +
-                                                ($hasWheel ? " hasWheel" : "")}
+                                            class={"studio-popup info"}
                                             on:wheel={(e) =>
                                                 horizontalWheel(e, "info")}
                                             style:overflow={$popupIsGoingBack
@@ -1879,8 +1913,7 @@
                                     <div>
                                         <div class="info-categ">Genres</div>
                                         <div
-                                            class={"genres-popup info" +
-                                                ($hasWheel ? " hasWheel" : "")}
+                                            class={"genres-popup info"}
                                             on:wheel={(e) =>
                                                 horizontalWheel(e, "info")}
                                             style:overflow={$popupIsGoingBack
@@ -1904,8 +1937,7 @@
                                     <div>
                                         <div class="info-categ">Tags</div>
                                         <div
-                                            class={"tags-popup info" +
-                                                ($hasWheel ? " hasWheel" : "")}
+                                            class={"tags-popup info"}
                                             on:wheel={(e) =>
                                                 horizontalWheel(e, "info")}
                                             style:overflow={$popupIsGoingBack
@@ -1931,8 +1963,7 @@
                                             Content Cautions
                                         </div>
                                         <div
-                                            class={"content-caution-popup info" +
-                                                ($hasWheel ? " hasWheel" : "")}
+                                            class={"content-caution-popup info"}
                                             on:wheel={(e) =>
                                                 horizontalWheel(e, "info")}
                                             style:overflow={$popupIsGoingBack
@@ -1957,8 +1988,7 @@
                                             Average Score
                                         </div>
                                         <div
-                                            class={"average-score-popup info" +
-                                                ($hasWheel ? " hasWheel" : "")}
+                                            class={"average-score-popup info"}
                                             on:wheel={(e) =>
                                                 horizontalWheel(e, "info")}
                                             style:overflow={$popupIsGoingBack
@@ -1979,8 +2009,7 @@
                                     <div>
                                         <div class="info-categ">Popularity</div>
                                         <div
-                                            class={"popularity-popup info" +
-                                                ($hasWheel ? " hasWheel" : "")}
+                                            class={"popularity-popup info"}
                                             on:wheel={(e) =>
                                                 horizontalWheel(e, "info")}
                                             style:overflow={$popupIsGoingBack
@@ -2003,8 +2032,7 @@
                                             Season Year
                                         </div>
                                         <div
-                                            class={"season-year-popup info" +
-                                                ($hasWheel ? " hasWheel" : "")}
+                                            class={"season-year-popup info"}
                                             on:wheel={(e) =>
                                                 horizontalWheel(e, "info")}
                                             style:overflow={$popupIsGoingBack
@@ -2036,8 +2064,7 @@
                                             Airing Status
                                         </div>
                                         <div
-                                            class={"status-popup info" +
-                                                ($hasWheel ? " hasWheel" : "")}
+                                            class={"status-popup info"}
                                             on:wheel={(e) =>
                                                 horizontalWheel(e, "info")}
                                             style:overflow={$popupIsGoingBack
@@ -2059,8 +2086,7 @@
                                             User Status
                                         </div>
                                         <div
-                                            class={"user-status-popup info" +
-                                                ($hasWheel ? " hasWheel" : "")}
+                                            class={"user-status-popup info"}
                                             on:wheel={(e) =>
                                                 horizontalWheel(e, "info")}
                                             style:overflow={$popupIsGoingBack
@@ -2085,8 +2111,7 @@
                                     <div>
                                         <div class="info-categ">User Score</div>
                                         <div
-                                            class={"user-score-popup info" +
-                                                ($hasWheel ? " hasWheel" : "")}
+                                            class={"user-score-popup info"}
                                             on:wheel={(e) =>
                                                 horizontalWheel(e, "info")}
                                             style:overflow={$popupIsGoingBack
@@ -2107,8 +2132,7 @@
                                     <div>
                                         <div class="info-categ">Score</div>
                                         <div
-                                            class={"score-popup info" +
-                                                ($hasWheel ? " hasWheel" : "")}
+                                            class={"score-popup info"}
                                             on:wheel={(e) =>
                                                 horizontalWheel(e, "info")}
                                             style:overflow={$popupIsGoingBack
@@ -2138,6 +2162,14 @@
                                         (anime.isSeenMore
                                             ? "Less"
                                             : "More")}</button
+                                >
+                                <button
+                                    class="morevideos"
+                                    on:click={handleMoreVideos(anime.title)}
+                                    on:keydown={(e) =>
+                                        e.key === "Enter" &&
+                                        handleMoreVideos(anime.title)}
+                                    >YT Videos</button
                                 >
                                 <button
                                     class="hideshowbtn"
@@ -2398,7 +2430,7 @@
     .popup-body {
         overflow: hidden;
         touch-action: pan-y;
-        margin: 2em 2.4em;
+        margin: 1em 1em;
     }
 
     .popup-body a {
@@ -2414,9 +2446,8 @@
         white-space: nowrap;
         align-items: center;
         display: grid;
-        grid-template-columns: calc(100% - 26px - 1em) 2em;
-        grid-column-gap: 1em;
-        padding-right: 1px;
+        grid-template-columns: calc(100% - 26px - 2em) 2em;
+        grid-column-gap: 2em;
     }
 
     .anime-title-container::-webkit-scrollbar {
@@ -2483,8 +2514,7 @@
     }
 
     .anime-title {
-        margin: 0 0 0 0.2em;
-        padding: 0.5em 0.3em 0.5em 0.3em;
+        padding: 8px;
         border-radius: 6px;
         cursor: pointer;
         font-size: clamp(1.6309rem, 1.76545rem, 1.9rem);
@@ -2496,10 +2526,6 @@
 
     .anime-title::-webkit-scrollbar {
         display: none;
-    }
-
-    .anime-title:hover {
-        background-color: rgba(0, 0, 0, 0.5);
     }
 
     .anime-title {
@@ -2516,7 +2542,8 @@
     }
 
     .hideshowbtn,
-    .seemoreless {
+    .seemoreless,
+    .morevideos {
         padding: 0.5em 1.5em 0.5em 1.5em;
         border-radius: 0.1em;
         border: 0;
@@ -2524,14 +2551,15 @@
         cursor: pointer;
         color: #9ba0b2;
         white-space: nowrap;
-        max-width: 95px;
+        max-width: 100px;
         flex: 1;
         overflow-x: auto;
         overflow-y: hidden;
     }
 
     .seemoreless::-webkit-scrollbar,
-    .hideshowbtn::-webkit-scrollbar {
+    .hideshowbtn::-webkit-scrollbar,
+    .morevideos::-webkit-scrollbar {
         display: none;
     }
 
@@ -2541,7 +2569,7 @@
                 var(--windowHeight) -
                     calc(
                         (calc(360 * min(var(--windowWidth), 640px)) / 640) +
-                            55px + 30px + 4em + 38px + 2.1em + 30px
+                            55px + 30px + 2em + 38px + 30px + 20px + 0.032em
                     )
             ),
             120px
@@ -2565,7 +2593,7 @@
                     var(--windowHeight) -
                         calc(
                             (calc(360 * min(var(--windowWidth), 640px)) / 640) +
-                                55px + 30px + 4em + 38px + 2.1em + 30px
+                                55px + 30px + 2em + 38px + 30px + 20px + 0.033em
                         )
                 ),
                 240px
@@ -2620,7 +2648,7 @@
     .popup-controls {
         background: #0b1622 !important;
         display: flex;
-        padding: 5px 2.4em;
+        padding: 5px 1em;
         user-select: none;
         justify-content: space-between;
         gap: 1em;

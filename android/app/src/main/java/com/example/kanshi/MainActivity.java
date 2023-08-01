@@ -8,13 +8,9 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.constraintlayout.widget.ConstraintLayout;
-import androidx.constraintlayout.widget.ConstraintSet;
 
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
@@ -34,7 +30,6 @@ import android.os.Environment;
 import android.os.PowerManager;
 import android.provider.DocumentsContract;
 import android.provider.Settings;
-import android.util.AttributeSet;
 import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
@@ -48,7 +43,6 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.FrameLayout;
-import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import java.io.BufferedWriter;
@@ -64,9 +58,9 @@ import java.util.concurrent.CompletableFuture;
 import androidx.core.content.FileProvider;
 import androidx.core.splashscreen.SplashScreen;
 
-public class MainActivity extends AppCompatActivity  {
+public class MainActivity extends AppCompatActivity {
 
-    public final int appID = 51;
+    public final int appID = 52;
     public boolean webviewIsLoaded = false;
     public SharedPreferences prefs;
     private SharedPreferences.Editor prefsEdit;
@@ -145,7 +139,7 @@ public class MainActivity extends AppCompatActivity  {
                     }
             );
     @RequiresApi(api = Build.VERSION_CODES.N)
-    @SuppressLint("SetJavaScriptEnabled")
+    @SuppressLint({"SetJavaScriptEnabled", "WrongViewCast"})
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
         // Shared Preference
@@ -154,11 +148,9 @@ public class MainActivity extends AppCompatActivity  {
         // Saved Data
         exportPath = prefs.getString("savedExportPath", "");
         // Create WebView App Instance
+
         SplashScreen splashScreen = SplashScreen.installSplashScreen(this);
         splashScreen.setKeepOnScreenCondition(() -> !webviewIsLoaded);
-        if(getSupportActionBar()!=null){
-            getSupportActionBar().hide(); // After Applying Theme
-        }
         // Show status bar
         getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
         getWindow().getDecorView().setBackgroundColor(Color.BLACK);
@@ -169,22 +161,8 @@ public class MainActivity extends AppCompatActivity  {
         wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "KeepAwake:");
         wakeLock.acquire(10*60*1000L);
         // Add WebView on Layout
-        ConstraintLayout constraintLayout = findViewById(R.id.activity_main);
-        webView = new MediaWebView(MainActivity.this);
+        webView = findViewById(R.id.webView);
         webView.setWebChromeClient(new WebChromeClient());
-        webView.setId(R.id.webView);
-        constraintLayout.addView(webView);
-        // Add WebView Layout Style
-        webView.setLayoutParams(new ConstraintLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.MATCH_PARENT
-        ));
-        ConstraintSet constraintSet = new ConstraintSet();
-        constraintSet.clone(constraintLayout);
-        constraintSet.connect(webView.getId(),ConstraintSet.BOTTOM,ConstraintSet.PARENT_ID,ConstraintSet.BOTTOM,0);
-        constraintSet.connect(webView.getId(),ConstraintSet.END,ConstraintSet.PARENT_ID,ConstraintSet.END,0);
-        constraintSet.connect(webView.getId(),ConstraintSet.START,ConstraintSet.PARENT_ID,ConstraintSet.START,0);
-        constraintSet.applyTo(constraintLayout);
         webView.setBackgroundColor(Color.BLACK);
         webView.setOverScrollMode(View.OVER_SCROLL_NEVER);
         // Set WebView Settings
@@ -206,15 +184,10 @@ public class MainActivity extends AppCompatActivity  {
         }
         // prevent the default behavior of WebView for long press events
         webView.setOnLongClickListener(v -> true);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            NotificationChannel channel = new NotificationChannel("My Notification","My Notification", NotificationManager.IMPORTANCE_DEFAULT);
-            NotificationManager manager = getSystemService(NotificationManager.class);
-            manager.createNotificationChannel(channel);
-        }
         // Set WebView Configs
         webView.setVerticalScrollBarEnabled(false);
         webView.setHorizontalScrollBarEnabled(false);
-        webView.setScrollBarStyle(View.SCROLLBARS_INSIDE_OVERLAY);
+        webView.setScrollBarStyle(View.SCROLLBARS_OUTSIDE_OVERLAY);
         webView.setLongClickable(true);
         webView.setKeepScreenOn(true);
         getWindow().setFlags(
@@ -246,10 +219,12 @@ public class MainActivity extends AppCompatActivity  {
             }
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
-                // Prevent In App Browsing
+                // In App Browsing
                 String url = request.getUrl().toString();
-                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+                Intent intent = new Intent(MainActivity.this, WebViewActivity.class);
+                intent.putExtra("url", url);
                 startActivity(intent);
+                overridePendingTransition(R.anim.right_to_center, R.anim.center_to_left);
                 return true;
             }
         });
@@ -351,43 +326,6 @@ public class MainActivity extends AppCompatActivity  {
         MainActivity.this.requestVisibleBehind(true);
     }
 
-    // Keep WebView Running on Background
-    class MediaWebView extends WebView {
-        public MediaWebView(Context context) {
-            super(context);
-        }
-        public MediaWebView(Context context, AttributeSet attrs) {
-            super(context, attrs);
-        }
-        public MediaWebView(Context context, AttributeSet attrs, int defStyleAttr) {
-            super(context, attrs, defStyleAttr);
-        }
-        @Override
-        public void onWindowSystemUiVisibilityChanged(int visibility) {
-            if(visibility != View.GONE) {
-                super.resumeTimers();
-                super.setVisibility(View.VISIBLE);
-                super.setKeepScreenOn(true);
-                super.onWindowSystemUiVisibilityChanged(View.VISIBLE);
-                super.onWindowVisibilityChanged(View.VISIBLE);
-                MainActivity.this.setVisible(true);
-                MainActivity.this.requestVisibleBehind(true);
-            }
-        }
-        @Override
-        protected void onWindowVisibilityChanged(int visibility) {
-            if(visibility != View.GONE) {
-                super.resumeTimers();
-                super.setVisibility(View.VISIBLE);
-                super.setKeepScreenOn(true);
-                super.onWindowSystemUiVisibilityChanged(View.VISIBLE);
-                super.onWindowVisibilityChanged(View.VISIBLE);
-                MainActivity.this.setVisible(true);
-                MainActivity.this.requestVisibleBehind(true);
-            }
-        }
-    }
-
     @Override
     protected void onPause() {
         super.onPause();
@@ -398,6 +336,9 @@ public class MainActivity extends AppCompatActivity  {
 
     @Override
     protected void onResume() {
+        if (webviewIsLoaded) {
+            overridePendingTransition(R.anim.left_to_center, R.anim.center_to_right);
+        }
         super.onResume();
         webView.post(() -> webView.loadUrl("javascript:" +
             "window.returnedAppIsVisible(true);" + // Should Be Runned First

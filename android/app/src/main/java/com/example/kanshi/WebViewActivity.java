@@ -1,0 +1,150 @@
+package com.example.kanshi;
+
+import android.annotation.SuppressLint;
+import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.Color;
+import android.net.Uri;
+import android.os.Build;
+import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.view.MenuItem;
+import android.view.View;
+import android.view.WindowManager;
+import android.webkit.WebChromeClient;
+import android.webkit.WebResourceRequest;
+import android.webkit.WebSettings;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
+import android.widget.ImageView;
+import android.widget.TextView;
+
+import androidx.annotation.RequiresApi;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
+
+public class WebViewActivity extends AppCompatActivity {
+    TextView webTitle;
+    MediaWebView webView;
+    private boolean canStartNewActivity = false;
+    private boolean webviewIsLoaded = false;
+
+    @RequiresApi(api = Build.VERSION_CODES.Q)
+    @SuppressLint("SetJavaScriptEnabled")
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        // Show status bar
+        getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        getWindow().getDecorView().setBackgroundColor(Color.BLACK);
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_web);
+
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+
+        webTitle = findViewById(R.id.site);
+
+        // Set click listeners for the custom ActionBar buttons
+        View btnClose = findViewById(R.id.btnClose);
+        btnClose.setClickable(true);
+        btnClose.setOnClickListener(v -> WebViewActivity.super.onBackPressed());
+
+        ImageView dropdownMenu = findViewById(R.id.launchURL);
+
+        dropdownMenu.setOnClickListener(v -> {
+            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(webView.getUrl()));
+            startActivity(intent);
+        });
+        // Add WebView on Layout
+        webView = findViewById(R.id.webView);
+        webView.setWebChromeClient(new WebChromeClient());
+        webView.setBackgroundColor(Color.BLACK);
+        webView.setOverScrollMode(View.OVER_SCROLL_NEVER);
+        // Set WebView Settings
+        WebSettings webSettings = webView.getSettings();
+        webSettings.setJavaScriptEnabled(true);
+        webSettings.setDomStorageEnabled(true);
+        webSettings.setAllowFileAccess(true);
+        webSettings.setAllowContentAccess(true);
+        webSettings.setLoadsImagesAutomatically(true);
+        webSettings.setDatabaseEnabled(true);
+        webSettings.setJavaScriptCanOpenWindowsAutomatically(true);
+        webSettings.setAllowFileAccessFromFileURLs(true);
+        webSettings.setBlockNetworkLoads(false);
+        webSettings.setCacheMode(WebSettings.LOAD_DEFAULT);
+        webSettings.setAllowUniversalAccessFromFileURLs(true);
+        webSettings.setMediaPlaybackRequiresUserGesture(false);
+        webSettings.setForceDark(WebSettings.FORCE_DARK_ON);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            webSettings.setOffscreenPreRaster(true);
+        }
+        // Set WebView Configs
+        webView.setVerticalScrollBarEnabled(false);
+        webView.setHorizontalScrollBarEnabled(false);
+        webView.setScrollBarStyle(View.SCROLLBARS_OUTSIDE_OVERLAY);
+        webView.setLongClickable(true);
+        webView.setKeepScreenOn(true);
+        getWindow().setFlags(
+                WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
+                WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED);
+        webView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
+        webView.setWebViewClient(new WebViewClient(){
+            @Override
+            public void onPageStarted(WebView view, String url, Bitmap favicon) {
+                super.onPageStarted(view, url, favicon);
+                webviewIsLoaded = false;
+            }
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                if (!webviewIsLoaded) {
+                    webTitle.setText(view.getTitle());
+                }
+                super.onPageFinished(view, url);
+                webviewIsLoaded = true;
+            }
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+                String url = request.getUrl().toString();
+                if (canStartNewActivity) {
+                    Intent intent = new Intent(WebViewActivity.this, WebViewActivity.class);
+                    intent.putExtra("url", url);
+                    startActivity(intent);
+                    overridePendingTransition(R.anim.right_to_center, R.anim.center_to_left);
+                    return true;
+                } else {
+                    return false;
+                }
+            }
+        });
+        String url = getIntent().getStringExtra("url");
+        if (url != null) {
+            webView.loadUrl(url);
+        }
+        new Handler(Looper.getMainLooper()).postDelayed(() -> canStartNewActivity = true,1000);
+    }
+    @Override
+    protected void onResume() {
+        if (webviewIsLoaded) {
+            overridePendingTransition(R.anim.left_to_center, R.anim.center_to_right);
+        }
+        super.onResume();
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == android.R.id.home) {
+            super.onBackPressed();
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+    @Override
+    public void onBackPressed() {
+        if (webView.canGoBack()) {
+            webView.goBack();
+        } else {
+            super.onBackPressed();
+        }
+    }
+}
