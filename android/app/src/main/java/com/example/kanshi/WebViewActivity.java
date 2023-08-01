@@ -133,7 +133,16 @@ public class WebViewActivity extends AppCompatActivity {
         if (webviewIsLoaded) {
             overridePendingTransition(R.anim.left_to_center, R.anim.center_to_right);
         }
+        webView.onResume();
+        webView.resumeTimers();
         super.onResume();
+    }
+
+    @Override
+    protected void onPause() {
+        webView.onPause();
+        webView.pauseTimers();
+        super.onPause();
     }
 
     @Override
@@ -150,6 +159,7 @@ public class WebViewActivity extends AppCompatActivity {
             webView.goBack();
         } else {
             super.onBackPressed();
+            finish();
         }
     }
 }
