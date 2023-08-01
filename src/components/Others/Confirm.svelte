@@ -183,7 +183,7 @@
 <style>
     .confirm {
         position: fixed;
-        z-index: 1000;
+        z-index: 1002;
         left: 0;
         top: 0;
         width: 100%;

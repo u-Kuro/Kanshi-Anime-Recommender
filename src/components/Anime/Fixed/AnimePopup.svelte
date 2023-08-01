@@ -1744,6 +1744,24 @@
                             {/if}
                         </div>
                         <div class="popup-controls">
+                            <div class="autoPlay-container">
+                                <label class="switch">
+                                    <input
+                                        type="checkbox"
+                                        class="autoplayToggle"
+                                        bind:checked={$autoPlay}
+                                    />
+                                    <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
+                                    <span
+                                        class="slider round"
+                                        tabindex="0"
+                                        on:keydown={(e) =>
+                                            e.key === "Enter" &&
+                                            (() => ($autoPlay = !$autoPlay))()}
+                                    />
+                                </label>
+                                <h3 class="autoplay-label">Auto Play</h3>
+                            </div>
                             {#if $listUpdateAvailable}
                                 <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                                 <div
@@ -1768,24 +1786,6 @@
                                     </h3>
                                 </div>
                             {/if}
-                            <div class="autoPlay-container">
-                                <h3 class="autoplay-label">Auto Play</h3>
-                                <label class="switch">
-                                    <input
-                                        type="checkbox"
-                                        class="autoplayToggle"
-                                        bind:checked={$autoPlay}
-                                    />
-                                    <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
-                                    <span
-                                        class="slider round"
-                                        tabindex="0"
-                                        on:keydown={(e) =>
-                                            e.key === "Enter" &&
-                                            (() => ($autoPlay = !$autoPlay))()}
-                                    />
-                                </label>
-                            </div>
                         </div>
                         <div class="popup-body">
                             <div
@@ -2152,16 +2152,13 @@
                             </div>
                             <div class="footer">
                                 <button
-                                    class="seemoreless"
-                                    on:click={handleSeeMore(anime, animeIdx)}
-                                    on:keydown={(e) => e.key === "Enter"}
-                                    style:overflow={$popupIsGoingBack
-                                        ? "hidden"
-                                        : ""}
-                                    >{"See " +
-                                        (anime.isSeenMore
-                                            ? "Less"
-                                            : "More")}</button
+                                    class="hideshowbtn"
+                                    on:click={handleHideShow(anime.id)}
+                                    on:keydown={(e) =>
+                                        e.key === "Enter" &&
+                                        handleHideShow(anime.id)}
+                                    >{getHiddenStatus(anime.id) ||
+                                        "N/A"}</button
                                 >
                                 <button
                                     class="morevideos"
@@ -2172,13 +2169,16 @@
                                     >YT Videos</button
                                 >
                                 <button
-                                    class="hideshowbtn"
-                                    on:click={handleHideShow(anime.id)}
-                                    on:keydown={(e) =>
-                                        e.key === "Enter" &&
-                                        handleHideShow(anime.id)}
-                                    >{getHiddenStatus(anime.id) ||
-                                        "N/A"}</button
+                                    class="seemoreless"
+                                    on:click={handleSeeMore(anime, animeIdx)}
+                                    on:keydown={(e) => e.key === "Enter"}
+                                    style:overflow={$popupIsGoingBack
+                                        ? "hidden"
+                                        : ""}
+                                    >{"See " +
+                                        (anime.isSeenMore
+                                            ? "Less"
+                                            : "More")}</button
                                 >
                             </div>
                         </div>
@@ -2602,6 +2602,24 @@
         }
     }
 
+    @media screen and (min-width: 750px) {
+        .popup-container {
+            margin-top: 0 !important;
+        }
+        .info-list {
+            max-height: max(
+                calc(
+                    var(--windowHeight) -
+                        calc(
+                            (calc(360 * min(var(--windowWidth), 640px)) / 640) +
+                                30px + 2em + 38px + 30px + 20px + 0.033em
+                        )
+                ),
+                120px
+            ) !important;
+        }
+    }
+
     .info-list-wrapper,
     .info-categ,
     .info {
@@ -2677,7 +2695,7 @@
 
     .autoPlay-container {
         display: flex;
-        margin-left: auto;
+        margin-right: auto;
         align-items: center;
         gap: 6px;
     }

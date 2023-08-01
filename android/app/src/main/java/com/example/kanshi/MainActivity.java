@@ -34,6 +34,7 @@ import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
 import android.webkit.ConsoleMessage;
+import android.webkit.CookieManager;
 import android.webkit.JavascriptInterface;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
@@ -165,6 +166,9 @@ public class MainActivity extends AppCompatActivity {
         webView.setWebChromeClient(new WebChromeClient());
         webView.setBackgroundColor(Color.BLACK);
         webView.setOverScrollMode(View.OVER_SCROLL_NEVER);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            webView.setImportantForAutofill(View.IMPORTANT_FOR_AUTOFILL_YES);
+        }
         // Set WebView Settings
         WebSettings webSettings = webView.getSettings();
         webSettings.setJavaScriptEnabled(true);
@@ -205,6 +209,11 @@ public class MainActivity extends AppCompatActivity {
             }
             @Override
             public void onPageFinished(WebView view, String url) {
+                CookieManager cookieManager = CookieManager.getInstance();
+                cookieManager.setAcceptCookie(true);
+                cookieManager.setAcceptThirdPartyCookies(webView,true);
+                CookieManager.getInstance().acceptCookie();
+                CookieManager.getInstance().flush();
                 super.onPageFinished(view, url);
                 webviewIsLoaded = true;
             }
@@ -231,7 +240,7 @@ public class MainActivity extends AppCompatActivity {
         });
         webView.setWebChromeClient(new WebChromeClient() {
             private View mCustomView;
-            private WebChromeClient.CustomViewCallback mCustomViewCallback;
+            private CustomViewCallback mCustomViewCallback;
             private int mOriginalOrientation;
             private int mOriginalSystemUiVisibility;
             // Import
@@ -271,7 +280,7 @@ public class MainActivity extends AppCompatActivity {
                 this.mCustomViewCallback = null;
             }
             @Override
-            public void onShowCustomView(View paramView, WebChromeClient.CustomViewCallback paramCustomViewCallback) {
+            public void onShowCustomView(View paramView, CustomViewCallback paramCustomViewCallback) {
                 if (this.mCustomView != null) {
                     onHideCustomView();
                     return;

@@ -458,10 +458,10 @@
         width: 100%;
         height: 100%;
         background-color: rgb(0, 0, 0, 0.7);
-        z-index: 997;
+        z-index: 998;
     }
     .menu {
-        padding: 1.5em 50px;
+        padding: 1.5em 1em;
         display: flex;
         flex-wrap: wrap;
         gap: 1.5em;
@@ -545,5 +545,13 @@
 
     .go-back-grid i {
         font-size: 2em;
+    }
+    @media screen and (min-width: 750px) {
+        .menu-container {
+            z-index: 994 !important;
+        }
+        .menu {
+            padding: 1.5em 50px !important;
+        }
     }
 </style>

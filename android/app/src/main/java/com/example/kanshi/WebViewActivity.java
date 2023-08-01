@@ -12,6 +12,7 @@ import android.os.Looper;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.WindowManager;
+import android.webkit.CookieManager;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
@@ -21,8 +22,11 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.RequiresApi;
+import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+
+import java.util.Objects;
 
 public class WebViewActivity extends AppCompatActivity {
     TextView webTitle;
@@ -31,7 +35,7 @@ public class WebViewActivity extends AppCompatActivity {
     private boolean webviewIsLoaded = false;
 
     @RequiresApi(api = Build.VERSION_CODES.Q)
-    @SuppressLint("SetJavaScriptEnabled")
+    @SuppressLint({"SetJavaScriptEnabled", "RestrictedApi"})
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         // Show status bar
@@ -42,6 +46,8 @@ public class WebViewActivity extends AppCompatActivity {
 
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+        ActionBar actionBar = getSupportActionBar();
+
 
         webTitle = findViewById(R.id.site);
 
@@ -62,9 +68,15 @@ public class WebViewActivity extends AppCompatActivity {
         });
         // Add WebView on Layout
         webView = findViewById(R.id.webView);
+        webView.setMediaWebView(webView);
+        webView.setToolBar(toolbar);
+        webView.setActionBar(getSupportActionBar());
+        Objects.requireNonNull(actionBar).setShowHideAnimationEnabled(true);
+        Objects.requireNonNull(actionBar).setHideOffset(-actionBar.getHeight());
         webView.setWebChromeClient(new WebChromeClient());
         webView.setBackgroundColor(Color.BLACK);
         webView.setOverScrollMode(View.OVER_SCROLL_NEVER);
+        webView.setImportantForAutofill(View.IMPORTANT_FOR_AUTOFILL_YES);
         // Set WebView Settings
         WebSettings webSettings = webView.getSettings();
         webSettings.setJavaScriptEnabled(true);
@@ -102,6 +114,11 @@ public class WebViewActivity extends AppCompatActivity {
             }
             @Override
             public void onPageFinished(WebView view, String url) {
+                CookieManager cookieManager = CookieManager.getInstance();
+                cookieManager.setAcceptCookie(true);
+                cookieManager.setAcceptThirdPartyCookies(webView,true);
+                CookieManager.getInstance().acceptCookie();
+                CookieManager.getInstance().flush();
                 if (!webviewIsLoaded) {
                     webTitle.setText(view.getTitle());
                 }
