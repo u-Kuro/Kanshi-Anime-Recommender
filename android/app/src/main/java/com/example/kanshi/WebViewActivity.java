@@ -40,7 +40,7 @@ public class WebViewActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_web);
 
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
         webTitle = findViewById(R.id.site);
@@ -48,7 +48,11 @@ public class WebViewActivity extends AppCompatActivity {
         // Set click listeners for the custom ActionBar buttons
         View btnClose = findViewById(R.id.btnClose);
         btnClose.setClickable(true);
-        btnClose.setOnClickListener(v -> WebViewActivity.super.onBackPressed());
+        btnClose.setOnClickListener(v -> {
+            Intent i = new Intent(this, MainActivity.class);
+            i.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+            startActivity(i);
+        });
 
         ImageView dropdownMenu = findViewById(R.id.launchURL);
 
