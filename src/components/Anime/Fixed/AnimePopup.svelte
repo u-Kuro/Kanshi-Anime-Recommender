@@ -167,21 +167,16 @@
 
     async function handleMoreVideos(title) {
         let animeTitle;
-        if (typeof title === "string") {
-            animeTitle = title;
-        } else if (isJsonObject(title)) {
-            animeTitle =
-                title?.userPreferred ||
+        if (isJsonObject(title)) {
+            animeTitle = title?.userPreferred ||
                 title?.romaji ||
                 title?.english ||
                 title?.native;
+        } else if (typeof title === "string") {
+            animeTitle = title;
         }
         if (typeof animeTitle !== "string" || animeTitle === "") return;
-        let youtubeSearchURL =
-            "https://www.youtube.com/results?search_query=" +
-            animeTitle +
-            " anime";
-        window.open(youtubeSearchURL, "_blank");
+        window.open(`https://www.youtube.com/results?search_query=${animeTitle} Anime`, "_blank");
     }
 
     animeIdxRemoved.subscribe(async (removedIdx) => {
@@ -296,10 +291,17 @@
             return;
         if (val === true) {
             // Init Height
-            popupContainer.style.setProperty(
-                "--translateY",
-                windowHeight + "px"
-            );
+            if (windowWidth >= 750) {
+                popupContainer.style.setProperty(
+                    "--translateX",
+                    windowWidth + "px"
+                );
+            } else {
+                popupContainer.style.setProperty(
+                    "--translateY",
+                    windowHeight + "px"
+                );
+            }
             // Scroll To Opened Anime
             let openedAnimePopupEl =
                 popupContainer?.children[
@@ -1652,6 +1654,7 @@
     <div
         id="popup-container"
         class="popup-container hide"
+        style:--translateX={windowWidth + "px"}
         style:--translateY={windowHeight + "px"}
         bind:this={popupContainer}
         on:touchstart={handlePopupContainerDown}
@@ -2243,11 +2246,11 @@
     }
 
     .popup-container.hide {
-        transform: translateY(var(--translateY));
+        transform: translateX(var(--translateX));
     }
 
     .popup-container.show {
-        transform: translateY(0px);
+        transform: translateX(0px);
     }
 
     .popup-container::-webkit-scrollbar {
@@ -2617,6 +2620,13 @@
                 ),
                 120px
             ) !important;
+        }
+        .popup-container.hide {
+            transform: translateY(var(--translateY));
+        }
+
+        .popup-container.show {
+            transform: translateY(0px);
         }
     }
 

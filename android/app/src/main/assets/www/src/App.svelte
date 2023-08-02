@@ -1078,9 +1078,9 @@
 	.progress {
 		background-color: #909cb8;
 		position: fixed;
-		top: 53px;
-		z-index: 9999;
-		height: 1px;
+		top: 0px;
+		z-index: 1003;
+		height: 0.12em;
 		width: 100%;
 		transform: translateX(var(--progress));
 		transition: transform 0.3s linear;
@@ -1112,10 +1112,18 @@
 		cursor: pointer;
 	}
 
-	@media screen and (max-width: 425px) {
+	@media screen and (max-width: 750px) {
+		.progress {
+			z-index: 1000 !important;
+			top: 53px !important;
+			height: 1px !important;
+		}
 		.home {
 			padding: 0 1em;
 		}
+	}
+
+	@media screen and (max-width: 425px) {
 		.list-update-container {
 			border-radius: 50%;
 			padding: 0px;

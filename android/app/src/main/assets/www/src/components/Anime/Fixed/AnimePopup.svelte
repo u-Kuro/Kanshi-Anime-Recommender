@@ -167,21 +167,16 @@
 
     async function handleMoreVideos(title) {
         let animeTitle;
-        if (typeof title === "string") {
-            animeTitle = title;
-        } else if (isJsonObject(title)) {
-            animeTitle =
-                title?.userPreferred ||
+        if (isJsonObject(title)) {
+            animeTitle = title?.userPreferred ||
                 title?.romaji ||
                 title?.english ||
                 title?.native;
+        } else if (typeof title === "string") {
+            animeTitle = title;
         }
         if (typeof animeTitle !== "string" || animeTitle === "") return;
-        let youtubeSearchURL =
-            "https://www.youtube.com/results?search_query=" +
-            animeTitle +
-            " anime";
-        window.open(youtubeSearchURL, "_blank");
+        window.open(`https://www.youtube.com/results?search_query=${animeTitle} Anime`, "_blank");
     }
 
     animeIdxRemoved.subscribe(async (removedIdx) => {
@@ -296,10 +291,17 @@
             return;
         if (val === true) {
             // Init Height
-            popupContainer.style.setProperty(
-                "--translateY",
-                windowHeight + "px"
-            );
+            if (windowWidth >= 750) {
+                popupContainer.style.setProperty(
+                    "--translateX",
+                    windowWidth + "px"
+                );
+            } else {
+                popupContainer.style.setProperty(
+                    "--translateY",
+                    windowHeight + "px"
+                );
+            }
             // Scroll To Opened Anime
             let openedAnimePopupEl =
                 popupContainer?.children[
@@ -1652,6 +1654,7 @@
     <div
         id="popup-container"
         class="popup-container hide"
+        style:--translateX={windowWidth + "px"}
         style:--translateY={windowHeight + "px"}
         bind:this={popupContainer}
         on:touchstart={handlePopupContainerDown}
@@ -1744,6 +1747,24 @@
                             {/if}
                         </div>
                         <div class="popup-controls">
+                            <div class="autoPlay-container">
+                                <label class="switch">
+                                    <input
+                                        type="checkbox"
+                                        class="autoplayToggle"
+                                        bind:checked={$autoPlay}
+                                    />
+                                    <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
+                                    <span
+                                        class="slider round"
+                                        tabindex="0"
+                                        on:keydown={(e) =>
+                                            e.key === "Enter" &&
+                                            (() => ($autoPlay = !$autoPlay))()}
+                                    />
+                                </label>
+                                <h3 class="autoplay-label">Auto Play</h3>
+                            </div>
                             {#if $listUpdateAvailable}
                                 <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                                 <div
@@ -1768,24 +1789,6 @@
                                     </h3>
                                 </div>
                             {/if}
-                            <div class="autoPlay-container">
-                                <h3 class="autoplay-label">Auto Play</h3>
-                                <label class="switch">
-                                    <input
-                                        type="checkbox"
-                                        class="autoplayToggle"
-                                        bind:checked={$autoPlay}
-                                    />
-                                    <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
-                                    <span
-                                        class="slider round"
-                                        tabindex="0"
-                                        on:keydown={(e) =>
-                                            e.key === "Enter" &&
-                                            (() => ($autoPlay = !$autoPlay))()}
-                                    />
-                                </label>
-                            </div>
                         </div>
                         <div class="popup-body">
                             <div
@@ -2152,16 +2155,13 @@
                             </div>
                             <div class="footer">
                                 <button
-                                    class="seemoreless"
-                                    on:click={handleSeeMore(anime, animeIdx)}
-                                    on:keydown={(e) => e.key === "Enter"}
-                                    style:overflow={$popupIsGoingBack
-                                        ? "hidden"
-                                        : ""}
-                                    >{"See " +
-                                        (anime.isSeenMore
-                                            ? "Less"
-                                            : "More")}</button
+                                    class="hideshowbtn"
+                                    on:click={handleHideShow(anime.id)}
+                                    on:keydown={(e) =>
+                                        e.key === "Enter" &&
+                                        handleHideShow(anime.id)}
+                                    >{getHiddenStatus(anime.id) ||
+                                        "N/A"}</button
                                 >
                                 <button
                                     class="morevideos"
@@ -2172,13 +2172,16 @@
                                     >YT Videos</button
                                 >
                                 <button
-                                    class="hideshowbtn"
-                                    on:click={handleHideShow(anime.id)}
-                                    on:keydown={(e) =>
-                                        e.key === "Enter" &&
-                                        handleHideShow(anime.id)}
-                                    >{getHiddenStatus(anime.id) ||
-                                        "N/A"}</button
+                                    class="seemoreless"
+                                    on:click={handleSeeMore(anime, animeIdx)}
+                                    on:keydown={(e) => e.key === "Enter"}
+                                    style:overflow={$popupIsGoingBack
+                                        ? "hidden"
+                                        : ""}
+                                    >{"See " +
+                                        (anime.isSeenMore
+                                            ? "Less"
+                                            : "More")}</button
                                 >
                             </div>
                         </div>
@@ -2243,11 +2246,11 @@
     }
 
     .popup-container.hide {
-        transform: translateY(var(--translateY));
+        transform: translateX(var(--translateX));
     }
 
     .popup-container.show {
-        transform: translateY(0px);
+        transform: translateX(0px);
     }
 
     .popup-container::-webkit-scrollbar {
@@ -2602,6 +2605,31 @@
         }
     }
 
+    @media screen and (min-width: 750px) {
+        .popup-container {
+            margin-top: 0 !important;
+        }
+        .info-list {
+            max-height: max(
+                calc(
+                    var(--windowHeight) -
+                        calc(
+                            (calc(360 * min(var(--windowWidth), 640px)) / 640) +
+                                30px + 2em + 38px + 30px + 20px + 0.033em
+                        )
+                ),
+                120px
+            ) !important;
+        }
+        .popup-container.hide {
+            transform: translateY(var(--translateY));
+        }
+
+        .popup-container.show {
+            transform: translateY(0px);
+        }
+    }
+
     .info-list-wrapper,
     .info-categ,
     .info {
@@ -2677,7 +2705,7 @@
 
     .autoPlay-container {
         display: flex;
-        margin-left: auto;
+        margin-right: auto;
         align-items: center;
         gap: 6px;
     }

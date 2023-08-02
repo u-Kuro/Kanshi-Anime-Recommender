@@ -353,7 +353,7 @@
         color: white !important;
     }
     .nav-container {
-        z-index: 999;
+        z-index: 995;
         position: fixed;
         top: 0;
         width: 100%;
@@ -484,6 +484,14 @@
         text-transform: none;
     }
     @media screen and (max-width: 750px) {
+        .nav {
+            padding: 0 1em !important;
+        }
+    }
+    @media screen and (max-width: 750px) {
+        .nav-container {
+            z-index: 999 !important;
+        }
         .nav.popupvisible {
             grid-template-columns: 3em calc(100% - 3em - 6em) 3em !important;
             gap: 1.5em !important;
@@ -514,7 +522,7 @@
     @media screen and (max-width: 425px) {
         .nav {
             grid-template-columns: calc(100% - 5em - 1.5em) 5em;
-            padding: 0;
+            padding: 0 !important;
         }
         .nav.popupvisible .usernameText {
             padding-left: 0em !important;
