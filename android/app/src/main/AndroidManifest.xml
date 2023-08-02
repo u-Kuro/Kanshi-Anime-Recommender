@@ -45,6 +45,7 @@
             </intent-filter>
         </activity>
         <activity
+            android:theme="@style/Theme.Kanshi"
             android:name=".WebViewActivity"
             android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|uiMode|screenSize|smallestScreenSize"
             android:exported="true">

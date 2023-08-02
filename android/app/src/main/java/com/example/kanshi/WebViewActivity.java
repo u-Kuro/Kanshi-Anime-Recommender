@@ -13,7 +13,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.MenuItem;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.webkit.CookieManager;
@@ -26,18 +25,14 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.RequiresApi;
-import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
-
-import java.util.Objects;
 
 public class WebViewActivity extends AppCompatActivity {
     TextView webTitle;
     MediaWebView webView;
     private boolean canStartNewActivity = false;
     private boolean webviewIsLoaded = false;
-    private float toolBarTouchStartY;
 
     @RequiresApi(api = Build.VERSION_CODES.Q)
     @SuppressLint({"SetJavaScriptEnabled", "RestrictedApi", "ClickableViewAccessibility"})
@@ -51,7 +46,6 @@ public class WebViewActivity extends AppCompatActivity {
 
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-        ActionBar actionBar = getSupportActionBar();
 
         webTitle = findViewById(R.id.site);
 
@@ -83,25 +77,7 @@ public class WebViewActivity extends AppCompatActivity {
         });
         // Add WebView on Layout
         webView = findViewById(R.id.webView);
-        toolbar.setOnTouchListener((v, event) -> {
-            switch (event.getAction()) {
-                case MotionEvent.ACTION_DOWN:
-                    toolBarTouchStartY = event.getRawY();
-                    break;
-                case MotionEvent.ACTION_UP:
-                    float endY = event.getRawY();
-                    if (endY - toolBarTouchStartY < 0) {
-                        webView.hideActionBar();
-                    }
-                    break;
-            }
-            return true;
-        });
-        webView.setMediaWebView(webView);
-        webView.setToolBar(toolbar);
-        webView.setActionBar(getSupportActionBar());
-        Objects.requireNonNull(actionBar).setShowHideAnimationEnabled(true);
-        Objects.requireNonNull(actionBar).setHideOffset(-actionBar.getHeight());
+        // Get the outer LinearLayout
         webView.setWebChromeClient(new WebChromeClient());
         webView.setBackgroundColor(Color.BLACK);
         webView.setOverScrollMode(View.OVER_SCROLL_NEVER);
