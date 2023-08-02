@@ -44,15 +44,20 @@
                 android:id="@+id/site"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_centerInParent="true"
-                android:text=""
+                android:longClickable="true"
+                android:layout_centerVertical="true"
+                android:layout_marginStart="28dp"
+                android:layout_marginEnd="28dp"
+                android:layout_toStartOf="@+id/launchURL"
+                android:layout_toEndOf="@+id/btnClose"
+                android:textAlignment="center"
                 android:ellipsize="end"
-                android:minWidth="48dp"
                 android:maxWidth="275dp"
+                android:singleLine="true"
+                android:text=""
+                android:textColor="@android:color/white"
                 android:textSize="18sp"
                 android:textStyle="bold"
-                android:textColor="@android:color/white"
-                android:singleLine="true"
                 tools:ignore="RelativeOverlap" />
 
             <ImageView
@@ -73,17 +78,17 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="@color/black">
-    <com.example.kanshi.MediaWebView
-        android:id="@+id/webView"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        android:overScrollMode="never"
-        android:background="@color/black"
-        android:translationY="40dp">
-    </com.example.kanshi.MediaWebView>
+
+        <com.example.kanshi.MediaWebView
+            android:id="@+id/webView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@color/black"
+            android:overScrollMode="never"
+            android:translationY="?attr/actionBarSize"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
     </RelativeLayout>
 </FrameLayout>

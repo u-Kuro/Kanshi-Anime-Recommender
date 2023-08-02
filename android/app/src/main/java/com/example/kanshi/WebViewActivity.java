@@ -1,6 +1,9 @@
 package com.example.kanshi;
 
 import android.annotation.SuppressLint;
+import android.content.ClipData;
+import android.content.ClipboardManager;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Color;
@@ -10,6 +13,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.webkit.CookieManager;
@@ -33,9 +37,10 @@ public class WebViewActivity extends AppCompatActivity {
     MediaWebView webView;
     private boolean canStartNewActivity = false;
     private boolean webviewIsLoaded = false;
+    private float toolBarTouchStartY;
 
     @RequiresApi(api = Build.VERSION_CODES.Q)
-    @SuppressLint({"SetJavaScriptEnabled", "RestrictedApi"})
+    @SuppressLint({"SetJavaScriptEnabled", "RestrictedApi", "ClickableViewAccessibility"})
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         // Show status bar
@@ -48,7 +53,6 @@ public class WebViewActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
         ActionBar actionBar = getSupportActionBar();
 
-
         webTitle = findViewById(R.id.site);
 
         // Set click listeners for the custom ActionBar buttons
@@ -60,6 +64,17 @@ public class WebViewActivity extends AppCompatActivity {
             startActivity(i);
         });
 
+        @SuppressLint("CutPasteId") TextView siteName = findViewById(R.id.site);
+        siteName.setOnLongClickListener(v -> {
+            String siteUrl = webView.getUrl();
+            if (siteUrl!=null && siteUrl.length()>0) {
+                ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+                ClipData clip = ClipData.newPlainText("Copied Text", siteUrl);
+                clipboard.setPrimaryClip(clip);
+            }
+            return true;
+        });
+
         ImageView dropdownMenu = findViewById(R.id.launchURL);
 
         dropdownMenu.setOnClickListener(v -> {
@@ -68,6 +83,20 @@ public class WebViewActivity extends AppCompatActivity {
         });
         // Add WebView on Layout
         webView = findViewById(R.id.webView);
+        toolbar.setOnTouchListener((v, event) -> {
+            switch (event.getAction()) {
+                case MotionEvent.ACTION_DOWN:
+                    toolBarTouchStartY = event.getRawY();
+                    break;
+                case MotionEvent.ACTION_UP:
+                    float endY = event.getRawY();
+                    if (endY - toolBarTouchStartY < 0) {
+                        webView.hideActionBar();
+                    }
+                    break;
+            }
+            return true;
+        });
         webView.setMediaWebView(webView);
         webView.setToolBar(toolbar);
         webView.setActionBar(getSupportActionBar());

@@ -10,8 +10,8 @@ import android.webkit.WebView;
 import androidx.appcompat.app.ActionBar;
 
 public class MediaWebView extends WebView {
-    private boolean animatingShow = false;
-    private boolean animatingHide = false;
+    private int currentScrollY = 0;
+    private long startTime = System.currentTimeMillis();
     private androidx.appcompat.widget.Toolbar toolbar;
     private long toolbarHeight;
     private ActionBar actionBar;
@@ -45,31 +45,24 @@ public class MediaWebView extends WebView {
             super.onWindowVisibilityChanged(View.VISIBLE);
         }
     }
+
     @Override
     protected void onScrollChanged(int scrollX, int scrollY, int oldScrollX, int oldScrollY) {
+        currentScrollY = scrollY;
         if (toolbar!=null) {
             if (toolbarHeight<100) {
                 toolbarHeight = toolbar.getHeight();
             }
-            if (scrollY <= 0) {
-                actionBar.show();
-                toolbar.animate().translationY(0).start();
-                mediaWebView.animate().translationY(toolbarHeight).start();
-            } else if (scrollY - oldScrollY > 0 && !animatingHide) {
-                animatingShow = false;
-                animatingHide = true;
-                toolbar.animate().translationY(-toolbarHeight).
-                    setInterpolator(new AccelerateInterpolator()).withEndAction(() -> actionBar.hide()).start();
-                mediaWebView.animate().translationY(0).setInterpolator(new DecelerateInterpolator()).start();
-            } else if (oldScrollY - scrollY > 50 && !animatingShow) {
-                animatingShow = true;
-                animatingHide = false;
-                actionBar.show();
-                toolbar.animate().translationY(0).
-                        setInterpolator(new DecelerateInterpolator()).start();
-                mediaWebView.animate().translationY(toolbarHeight).setInterpolator(new DecelerateInterpolator()).start();
+            if (scrollY >= 0 && scrollY <= toolbarHeight) {
+                showActionBar();
+            } else if (isPastAnimationDuration()) {
+                startTime = System.currentTimeMillis();
+                if (scrollY - oldScrollY > 0) {
+                    hideActionBar();
+                } else if (oldScrollY - scrollY > 0) {
+                    showActionBar();
+                }
             }
-
         }
         super.onScrollChanged(scrollX, scrollY, oldScrollX, oldScrollY);
     }
@@ -85,5 +78,26 @@ public class MediaWebView extends WebView {
 
     public void setMediaWebView(MediaWebView mediaWebView) {
         this.mediaWebView = mediaWebView;
+    }
+
+    private boolean isPastAnimationDuration() {
+        return System.currentTimeMillis() - startTime > 300;
+    }
+    public void hideActionBar() {
+        if (currentScrollY > toolbarHeight) {
+            toolbar.clearAnimation();
+            mediaWebView.clearAnimation();
+
+            toolbar.animate().translationY(-toolbarHeight).setInterpolator(new DecelerateInterpolator()).withEndAction(() -> actionBar.hide()).start();
+            mediaWebView.animate().translationY(0).setInterpolator(new DecelerateInterpolator()).start();
+        }
+    }
+    public void showActionBar() {
+        toolbar.clearAnimation();
+        mediaWebView.clearAnimation();
+
+        actionBar.show();
+        toolbar.animate().translationY(0).setInterpolator(new AccelerateInterpolator()).start();
+        mediaWebView.animate().translationY(toolbarHeight).setInterpolator(new AccelerateInterpolator()).start();
     }
 }
