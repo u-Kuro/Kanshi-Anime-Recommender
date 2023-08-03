@@ -77,6 +77,7 @@ public class WebViewActivity extends AppCompatActivity {
             Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(webView.getUrl()));
             startActivity(intent);
         });
+
         // Add WebView on Layout
         webView = findViewById(R.id.webView);
         ProgressBar progressbar = findViewById(R.id.progressbar);
@@ -160,6 +161,13 @@ public class WebViewActivity extends AppCompatActivity {
                 }
             }
         });
+
+        CookieManager cookieManager = CookieManager.getInstance();
+        cookieManager.setAcceptCookie(true);
+        cookieManager.setAcceptThirdPartyCookies(webView,true);
+        CookieManager.getInstance().acceptCookie();
+        CookieManager.getInstance().flush();
+
         String url = getIntent().getStringExtra("url");
         if (url != null) {
             webView.loadUrl(url);

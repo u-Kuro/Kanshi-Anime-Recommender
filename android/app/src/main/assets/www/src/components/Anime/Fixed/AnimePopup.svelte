@@ -57,7 +57,8 @@
         popupContainer,
         popupAnimeObserver,
         windowWidth = window.visualViewport.width,
-        windowHeight = window.visualViewport.height;
+        windowHeight = window.visualViewport.height,
+        videoLoops = {};
 
     let count = 0;
     function addPopupObserver() {
@@ -732,16 +733,28 @@
         let popupHeader = trailerEl?.parentElement;
         let popupImg = popupHeader?.querySelector?.(".popup-img");
         if (_ytPlayer?.getPlayerState?.() === 0) {
-            _ytPlayer?.seekTo?.(0, true);
+            _ytPlayer?.stopVideo?.()
+            let popupContent = popupHeader?.closest?.(".popup-content");
+            let loopedAnimeID = $finalAnimeList?.[getChildIndex(popupContent) ?? -1]?.id;
+            if (loopedAnimeID!=null) {
+                if (videoLoops[loopedAnimeID]) {
+                    clearTimeout(videoLoops[loopedAnimeID])
+                    videoLoops[loopedAnimeID] = null
+                }
+                videoLoops[loopedAnimeID] = setTimeout(()=>{
+                    if (mostVisiblePopupHeader===popupHeader && _ytPlayer?.getPlayerState?.() === 5 && _ytPlayer.g && $inApp && $popupVisible && $autoPlay) {
+                        _ytPlayer?.playVideo?.()
+                    }
+                },8 * 1000) // Play Again after 8 seconds
+            }
         }
         if (
             _ytPlayer?.getPlayerState?.() === 1 &&
             (trailerEl?.classList?.contains?.("display-none") ||
                 !popupImg?.classList?.contains?.("display-none"))
         ) {
-            $ytPlayers?.forEach(
-                ({ ytPlayer }) =>
-                    ytPlayer?.g !== _ytPlayer?.g && ytPlayer?.pauseVideo?.()
+            $ytPlayers?.forEach(({ ytPlayer }) => 
+                ytPlayer?.g !== _ytPlayer?.g && ytPlayer?.pauseVideo?.()
             );
             currentYtPlayer = _ytPlayer;
             addClass(popupImg, "fade-out");
