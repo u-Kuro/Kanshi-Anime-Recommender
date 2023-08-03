@@ -1,5 +1,6 @@
 package com.example.kanshi;
 
+import android.animation.ObjectAnimator;
 import android.annotation.SuppressLint;
 import android.content.ClipData;
 import android.content.ClipboardManager;
@@ -22,6 +23,7 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import androidx.annotation.RequiresApi;
@@ -77,8 +79,22 @@ public class WebViewActivity extends AppCompatActivity {
         });
         // Add WebView on Layout
         webView = findViewById(R.id.webView);
-        // Get the outer LinearLayout
-        webView.setWebChromeClient(new WebChromeClient());
+        ProgressBar progressbar = findViewById(R.id.progressbar);
+        progressbar.setMax((int) Math.pow(10,6));
+        webView.setWebChromeClient(new WebChromeClient() {
+            public void onProgressChanged(WebView view, int progress) {
+                int newProgress = (int) Math.pow(10,4) * progress;
+                ObjectAnimator.ofInt(progressbar, "progress", newProgress)
+                    .setDuration(300)
+                    .start();
+                if (progress==100) {
+                    ObjectAnimator animator = ObjectAnimator.ofInt(progressbar, "progress", 0);
+                    animator.setDuration(0);
+                    animator.setStartDelay(300);
+                    animator.start();
+                }
+            }
+        });
         webView.setBackgroundColor(Color.BLACK);
         webView.setOverScrollMode(View.OVER_SCROLL_NEVER);
         webView.setImportantForAutofill(View.IMPORTANT_FOR_AUTOFILL_YES);
