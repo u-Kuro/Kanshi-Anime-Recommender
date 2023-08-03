@@ -40,6 +40,7 @@ public class WebViewActivity extends AppCompatActivity {
     @SuppressLint({"SetJavaScriptEnabled", "RestrictedApi", "ClickableViewAccessibility"})
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        String url = getIntent().getStringExtra("url");
         // Show status bar
         getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
         getWindow().getDecorView().setBackgroundColor(Color.BLACK);
@@ -89,6 +90,14 @@ public class WebViewActivity extends AppCompatActivity {
                     .setDuration(300)
                     .start();
                 if (progress==100) {
+                    String url = view.getUrl();
+                    if (webView.scrollPositionsX.containsKey(url) && webView.scrollPositionsY.containsKey(url) && webView.getScrollY()==0) {
+                        try {
+                            @SuppressWarnings("ConstantConditions") int scrollPositionX = webView.scrollPositionsX.get(url);
+                            @SuppressWarnings("ConstantConditions") int scrollPositionY = webView.scrollPositionsY.get(url);
+                            webView.scrollTo(scrollPositionX, scrollPositionY);
+                        } catch (Exception ignored) {}
+                    }
                     ObjectAnimator animator = ObjectAnimator.ofInt(progressbar, "progress", 0);
                     animator.setDuration(0);
                     animator.setStartDelay(300);
@@ -131,22 +140,23 @@ public class WebViewActivity extends AppCompatActivity {
         webView.setWebViewClient(new WebViewClient(){
             @Override
             public void onPageStarted(WebView view, String url, Bitmap favicon) {
-                super.onPageStarted(view, url, favicon);
                 webviewIsLoaded = false;
+                super.onPageStarted(view, url, favicon);
             }
             @Override
             public void onPageFinished(WebView view, String url) {
+                if (!webviewIsLoaded) {
+                    webviewIsLoaded = true;
+                    webTitle.setText(view.getTitle());
+                }
                 CookieManager cookieManager = CookieManager.getInstance();
                 cookieManager.setAcceptCookie(true);
                 cookieManager.setAcceptThirdPartyCookies(webView,true);
                 CookieManager.getInstance().acceptCookie();
                 CookieManager.getInstance().flush();
-                if (!webviewIsLoaded) {
-                    webTitle.setText(view.getTitle());
-                }
                 super.onPageFinished(view, url);
-                webviewIsLoaded = true;
             }
+
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 String url = request.getUrl().toString();
@@ -168,7 +178,6 @@ public class WebViewActivity extends AppCompatActivity {
         CookieManager.getInstance().acceptCookie();
         CookieManager.getInstance().flush();
 
-        String url = getIntent().getStringExtra("url");
         if (url != null) {
             webView.loadUrl(url);
         }

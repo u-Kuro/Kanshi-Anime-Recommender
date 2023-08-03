@@ -5,7 +5,12 @@ import android.util.AttributeSet;
 import android.view.View;
 import android.webkit.WebView;
 
+import java.util.HashMap;
+
 public class MediaWebView extends WebView {
+
+    public final HashMap<String, Integer> scrollPositionsX = new HashMap<>();
+    public final HashMap<String, Integer> scrollPositionsY = new HashMap<>();
 
     public MediaWebView(Context context) {
         super(context);
@@ -35,5 +40,14 @@ public class MediaWebView extends WebView {
             super.onWindowSystemUiVisibilityChanged(View.VISIBLE);
             super.onWindowVisibilityChanged(View.VISIBLE);
         }
+    }
+
+    @Override
+    protected void onScrollChanged(int l, int t, int oldl, int oldt) {
+        if (l>0 || t>0) {
+            scrollPositionsX.put(this.getUrl(), l);
+            scrollPositionsY.put(this.getUrl(), t);
+        }
+        super.onScrollChanged(l, t, oldl, oldt);
     }
 }
