@@ -31,8 +31,9 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
 public class WebViewActivity extends AppCompatActivity {
-    TextView webTitle;
-    MediaWebView webView;
+    private final Handler scrollHandler = new Handler();
+    private TextView webTitle;
+    private MediaWebView webView;
     private boolean canStartNewActivity = false;
     private boolean webviewIsLoaded = false;
 
@@ -91,11 +92,14 @@ public class WebViewActivity extends AppCompatActivity {
                     .start();
                 if (progress==100) {
                     String url = view.getUrl();
-                    if (webView.scrollPositionsX.containsKey(url) && webView.scrollPositionsY.containsKey(url) && webView.getScrollY()==0) {
+                    if (webView.scrollPositionsX.containsKey(url) && webView.scrollPositionsY.containsKey(url)) {
                         try {
                             @SuppressWarnings("ConstantConditions") int scrollPositionX = webView.scrollPositionsX.get(url);
                             @SuppressWarnings("ConstantConditions") int scrollPositionY = webView.scrollPositionsY.get(url);
-                            webView.scrollTo(scrollPositionX, scrollPositionY);
+                            scrollHandler.postDelayed(() -> {
+                                webView.setScrollX(scrollPositionX);
+                                webView.setScrollY(scrollPositionY);
+                            }, 1000);
                         } catch (Exception ignored) {}
                     }
                     ObjectAnimator animator = ObjectAnimator.ofInt(progressbar, "progress", 0);
@@ -145,15 +149,16 @@ public class WebViewActivity extends AppCompatActivity {
             }
             @Override
             public void onPageFinished(WebView view, String url) {
-                if (!webviewIsLoaded) {
-                    webviewIsLoaded = true;
-                    webTitle.setText(view.getTitle());
-                }
                 CookieManager cookieManager = CookieManager.getInstance();
                 cookieManager.setAcceptCookie(true);
                 cookieManager.setAcceptThirdPartyCookies(webView,true);
                 CookieManager.getInstance().acceptCookie();
                 CookieManager.getInstance().flush();
+
+                if (!webviewIsLoaded) {
+                    webviewIsLoaded = true;
+                    webTitle.setText(view.getTitle());
+                }
                 super.onPageFinished(view, url);
             }
 

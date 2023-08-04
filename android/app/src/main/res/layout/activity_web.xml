@@ -102,6 +102,7 @@
 
     </com.google.android.material.appbar.AppBarLayout>
 
+
     <com.example.kanshi.MediaWebView
         android:id="@+id/webView"
         android:layout_width="match_parent"
@@ -109,5 +110,5 @@
         android:background="@color/black"
         android:overScrollMode="never"
         android:layout_marginTop="?attr/actionBarSize"
-     />
+    />
 </FrameLayout>
