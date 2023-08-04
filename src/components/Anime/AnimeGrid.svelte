@@ -633,17 +633,23 @@
         grid-gap: 1rem;
         grid-template-columns: repeat(
             auto-fill,
-            minmax(min(100%/2 - 1rem, 180px), 0)
+            minmax(min(100% / 2 - 1rem, 180px), 180px)
         );
         -ms-overflow-style: none;
         scrollbar-width: none;
+    }
+
+    @media screen and (max-width: 390px) {
+        .image-grid {
+            grid-template-columns: repeat(auto-fill, calc(100% / 2 - 1rem));
+        }
     }
 
     @media screen and (max-width: 250px) {
         .image-grid {
             grid-template-columns: repeat(
                 auto-fill,
-                minmax(min(100% - 1rem, 180px), 0)
+                minmax(min(100%, 180px), 180px)
             );
         }
     }
