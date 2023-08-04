@@ -2256,6 +2256,8 @@
         background-color: #151f2e;
         transition: transform 0.3s ease;
         margin-top: 55px;
+        -ms-overflow-style: none;
+        scrollbar-width: none;
     }
 
     .popup-container.hide {
@@ -2464,6 +2466,8 @@
         display: grid;
         grid-template-columns: calc(100% - 26px - 2em) 2em;
         grid-column-gap: 2em;
+        -ms-overflow-style: none;
+        scrollbar-width: none;
     }
 
     .anime-title-container::-webkit-scrollbar {
@@ -2515,6 +2519,8 @@
         overflow-x: hidden;
         letter-spacing: 0.05rem;
         line-height: 2.5rem;
+        -ms-overflow-style: none;
+        scrollbar-width: none;
     }
 
     :global(.anime-description *) {
@@ -2538,6 +2544,8 @@
         overflow-y: hidden;
         width: min-content;
         max-width: 100%;
+        -ms-overflow-style: none;
+        scrollbar-width: none;
     }
 
     .anime-title::-webkit-scrollbar {
@@ -2571,6 +2579,8 @@
         flex: 1;
         overflow-x: auto;
         overflow-y: hidden;
+        -ms-overflow-style: none;
+        scrollbar-width: none;
     }
 
     .seemoreless::-webkit-scrollbar,
@@ -2664,6 +2674,8 @@
         display: flex;
         gap: 8px;
         width: 100%;
+        -ms-overflow-style: none;
+        scrollbar-width: none;
     }
 
     .not-capitalize {
@@ -2680,6 +2692,8 @@
         padding: 8px 10px;
         border-radius: 6px;
         white-space: nowrap;
+        -ms-overflow-style: none;
+        scrollbar-width: none;
     }
 
     .info span::-webkit-scrollbar {

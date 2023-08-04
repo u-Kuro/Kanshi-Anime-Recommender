@@ -610,6 +610,8 @@
         overflow-y: hidden;
         white-space: nowrap;
         display: block;
+        -ms-overflow-style: none;
+        scrollbar-width: none;
     }
 
     .title::-webkit-scrollbar {
@@ -633,6 +635,8 @@
             auto-fill,
             minmax(min(100%/2 - 1rem, 180px), 0)
         );
+        -ms-overflow-style: none;
+        scrollbar-width: none;
     }
 
     @media screen and (max-width: 250px) {
@@ -742,6 +746,8 @@
         max-height: 100%;
         overflow-y: auto;
         overflow-x: hidden;
+        -ms-overflow-style: none;
+        scrollbar-width: none;
     }
     .image-grid__card-title::-webkit-scrollbar {
         display: none;
@@ -766,6 +772,8 @@
     .brief-info {
         overflow-x: auto;
         overflow-y: hidden;
+        -ms-overflow-style: none;
+        scrollbar-width: none;
     }
 
     .fa-circle::before {

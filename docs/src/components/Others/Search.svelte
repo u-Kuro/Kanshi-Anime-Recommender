@@ -2154,6 +2154,8 @@
     .home-status span {
         overflow-x: auto;
         overflow-y: hidden;
+        -ms-overflow-style: none;
+        scrollbar-width: none;
     }
     .home-status span::-webkit-scrollbar {
         display: none;
@@ -2177,6 +2179,8 @@
         padding-bottom: var(--maxPaddingHeight);
         margin-top: 2em;
         user-select: none;
+        -ms-overflow-style: none;
+        scrollbar-width: none;
     }
     .filters::-webkit-scrollbar {
         display: none;
@@ -2266,6 +2270,10 @@
         border-radius: 5px;
     }
 
+    .options {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
     .options::-webkit-scrollbar {
         display: none;
     }
@@ -2393,6 +2401,10 @@
     .tagFilters:after {
         content: "";
         flex: 1000 0 auto;
+    }
+    .tagFilters {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
     }
     .tagFilters::-webkit-scrollbar {
         display: none;
@@ -2631,6 +2643,10 @@
             margin: 0 !important;
             border-radius: 0 !important;
             padding: 0 !important;
+        }
+        .options-wrap {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
         }
         .options-wrap::-webkit-scrollbar {
             display: none;

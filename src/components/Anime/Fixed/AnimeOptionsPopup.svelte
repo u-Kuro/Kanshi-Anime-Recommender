@@ -271,6 +271,8 @@
         align-items: center;
         overflow-y: auto;
         overscroll-behavior: contain;
+        -ms-overflow-style: none;
+        scrollbar-width: none;
     }
 
     .anime-options::-webkit-scrollbar {
@@ -300,6 +302,8 @@
         overflow-y: hidden;
         margin: 1em 0 1em 1em !important;
         padding: 0 !important;
+        -ms-overflow-style: none;
+        scrollbar-width: none;
     }
 
     .anime-title::-webkit-scrollbar {

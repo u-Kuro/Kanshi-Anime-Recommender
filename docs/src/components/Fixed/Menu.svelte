@@ -472,6 +472,8 @@
         overflow-x: hidden;
         overflow-y: auto;
         overscroll-behavior: contain;
+        -ms-overflow-style: none;
+        scrollbar-width: none;
     }
     .menu::-webkit-scrollbar {
         display: none;

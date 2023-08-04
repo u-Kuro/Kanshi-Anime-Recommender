@@ -193,6 +193,8 @@
         overflow-x: hidden;
         overscroll-behavior: contain;
         user-select: none;
+        -ms-overflow-style: none;
+        scrollbar-width: none;
     }
 
     .confirm::-webkit-scrollbar {
@@ -205,6 +207,8 @@
         justify-content: center;
         align-items: center;
         display: flex;
+        -ms-overflow-style: none;
+        scrollbar-width: none;
     }
 
     .confirm-wrapper::-webkit-scrollbar {
@@ -241,6 +245,8 @@
         overflow-y: auto;
         max-height: 75px;
         overflow-x: hidden;
+        -ms-overflow-style: none;
+        scrollbar-width: none;
     }
 
     .confirm-text::-webkit-scrollbar {
