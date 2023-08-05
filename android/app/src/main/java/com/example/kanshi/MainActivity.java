@@ -61,7 +61,7 @@ import androidx.core.splashscreen.SplashScreen;
 
 public class MainActivity extends AppCompatActivity {
 
-    public final int appID = 60;
+    public final int appID = 61;
     public boolean webviewIsLoaded = false;
     public SharedPreferences prefs;
     private SharedPreferences.Editor prefsEdit;
@@ -318,6 +318,15 @@ public class MainActivity extends AppCompatActivity {
             webSettings.setDisplayZoomControls(false);
             webSettings.setSupportZoom(false);
         }),3000);
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        if (intent.getIntExtra("notificationID",0)>0) {
+            AnimeNotificationManager.cancelCurrentNotification(MainActivity.this, intent.getIntExtra("notificationID",0));
+        }
+        super.onNewIntent(intent);
+        setIntent(intent);
     }
 
     // Get Path From MainActivity Context
@@ -619,6 +628,10 @@ public class MainActivity extends AppCompatActivity {
                     webView.post(() -> webView.loadUrl("javascript:window.updateAppAlert();"));
                 }));
             }
+        }
+        @JavascriptInterface
+        public void addAnimeReleaseNotification(int animeId, String title, int releaseEpisode, int maxEpisode, long releaseDateMillis, String imageUrl, boolean isMyAnime) {
+            AnimeNotificationManager.scheduleAnimeNotification(MainActivity.this, animeId, title, releaseEpisode, maxEpisode, releaseDateMillis, imageUrl, isMyAnime);
         }
     }
 

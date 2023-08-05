@@ -4,6 +4,8 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" tools:ignore="ScopedStorage" />
@@ -24,7 +26,8 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Kanshi"
         android:requestLegacyExternalStorage="true"
-        tools:targetApi="33">
+        tools:targetApi="33"
+        android:launchMode="singleTask">
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="com.example.kanshi.provider"
@@ -38,7 +41,8 @@
             android:theme="@style/Theme.Kanshi.SplashScreen"
             android:name=".MainActivity"
             android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|uiMode|screenSize|smallestScreenSize"
-            android:exported="true">
+            android:exported="true"
+            android:launchMode="singleTask">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -48,8 +52,16 @@
             android:theme="@style/Theme.Kanshi"
             android:name=".WebViewActivity"
             android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|uiMode|screenSize|smallestScreenSize"
-            android:exported="true">
+            android:exported="true"
+            android:launchMode="singleTask">
         </activity>
+        <receiver android:name="AnimeNotificationManager$NotificationReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.AIRPLANE_MODE">
+                </action>
+            </intent-filter>
+        </receiver>
     </application>
     <queries>
         <intent>

@@ -1045,6 +1045,25 @@ self.onmessage = async ({ data }) => {
                         episode: 1
                     }
                 }
+            } else if (isJsonObject(anime?.nextAiringEpisode)) {
+                let _title = anime?.title?.userPreferred ||
+                    anime?.title?.romaji ||
+                    anime?.title?.english ||
+                    anime?.title?.native;
+                let _releaseEpisode = anime?.nextAiringEpisode?.episode;
+                let _releaseDateMillis = anime?.nextAiringEpisode?.airingAt * 1000
+                let _imageURL = anime?.coverImage?.large || ""
+                self.postMessage({
+                    animeReleaseNotification: {
+                        id: animeID,
+                        title: _title,
+                        releaseEpisodes: _releaseEpisode,
+                        maxEpisode: episodes >= 0 ? episodes : -1,
+                        releaseDateMillis: _releaseDateMillis,
+                        imageURL: _imageURL,
+                        isMyAnime: userStatus !== "UNWATCHED"
+                    }
+                })
             }
             // Sort all Top Similarities
             let favoriteContents = {
@@ -1335,6 +1354,25 @@ self.onmessage = async ({ data }) => {
                         episode: 1
                     }
                 }
+            } else if (isJsonObject(anime?.nextAiringEpisode)) {
+                let _title = anime?.title?.userPreferred ||
+                    anime?.title?.romaji ||
+                    anime?.title?.english ||
+                    anime?.title?.native;
+                let _releaseEpisode = anime?.nextAiringEpisode?.episode;
+                let _releaseDateMillis = anime?.nextAiringEpisode?.airingAt * 1000
+                let _imageURL = anime?.coverImage?.large || ""
+                self.postMessage({
+                    animeReleaseNotification: {
+                        id: animeID,
+                        title: _title,
+                        releaseEpisodes: _releaseEpisode,
+                        maxEpisode: episodes >= 0 ? episodes : -1,
+                        releaseDateMillis: _releaseDateMillis,
+                        imageURL: _imageURL,
+                        isMyAnime: false
+                    }
+                })
             }
             recommendedAnimeList[animeID] = {
                 id: animeID,
