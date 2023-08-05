@@ -1,5 +1,6 @@
 package com.example.kanshi;
 
+import static android.Manifest.permission.POST_NOTIFICATIONS;
 import static com.example.kanshi.Utils.*;
 
 import androidx.activity.result.ActivityResult;
@@ -56,13 +57,15 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
+import androidx.core.app.ActivityCompat;
 import androidx.core.content.FileProvider;
 import androidx.core.splashscreen.SplashScreen;
 
 public class MainActivity extends AppCompatActivity {
 
-    public final int appID = 61;
+    public final int appID = 62;
     public boolean webviewIsLoaded = false;
+    public boolean permissionIsAsked = false;
     public SharedPreferences prefs;
     private SharedPreferences.Editor prefsEdit;
 
@@ -139,6 +142,10 @@ public class MainActivity extends AppCompatActivity {
                         }
                     }
             );
+    private final ActivityResultLauncher<String> requestPermissionLauncher =
+            registerForActivityResult(new ActivityResultContracts.RequestPermission(),
+                    isGranted -> prefsEdit.putBoolean("permissionIsAsked", true).apply()
+            );
     @RequiresApi(api = Build.VERSION_CODES.N)
     @SuppressLint({"SetJavaScriptEnabled", "WrongViewCast"})
     @Override
@@ -148,6 +155,7 @@ public class MainActivity extends AppCompatActivity {
         prefsEdit = prefs.edit();
         // Saved Data
         exportPath = prefs.getString("savedExportPath", "");
+        permissionIsAsked = prefs.getBoolean("permissionIsAsked", false);
         // Create WebView App Instance
 
         SplashScreen splashScreen = SplashScreen.installSplashScreen(this);
@@ -312,6 +320,13 @@ public class MainActivity extends AppCompatActivity {
                         .setMessage("Switched to local app and cached data.")
                         .setPositiveButton("OK", null)
                 );
+            }
+            if (!permissionIsAsked) {
+                if (ActivityCompat.checkSelfPermission(this, POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        requestPermissionLauncher.launch(POST_NOTIFICATIONS);
+                    }
+                }
             }
             // Only works after first page load
             webSettings.setBuiltInZoomControls(false);
@@ -603,6 +618,7 @@ public class MainActivity extends AppCompatActivity {
         }
         @JavascriptInterface
         public void refreshWeb(){
+            prefsEdit.putBoolean("permissionIsAsked", false).apply();
             webView.post(() -> {
                 webView.clearCache(true);
                 webView.reload();
@@ -637,6 +653,7 @@ public class MainActivity extends AppCompatActivity {
 
     public void _downloadUpdate() {
         webView.post(() -> webView.clearCache(true));
+        prefsEdit.putBoolean("permissionIsAsked", false).apply();
         String fileUrl = "https://github.com/u-Kuro/Kanshi.Anime-Recommendation/raw/main/Kanshi.apk";
         String fileName = "Kanshi.apk";
         DownloadUtils.downloadFile(MainActivity.this, fileUrl, fileName, new DownloadUtils.DownloadCallback() {
@@ -696,7 +713,6 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
-
     public void showDialog(AlertDialog.Builder alertDialog) {
         if (currentDialog != null && currentDialog.isShowing()) {
             currentDialog.dismiss();
