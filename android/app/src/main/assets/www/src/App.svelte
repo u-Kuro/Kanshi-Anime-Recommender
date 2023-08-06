@@ -74,7 +74,11 @@
 			dataLayer.push(arguments);
 		}
 		gtag("js", new Date());
-		gtag("config", "G-PPMY92TJCE");
+		if (window.location.origin === "https://kanshi.vercel.app") {
+			gtag("config", "G-F5E8XNQS20");
+		} else {
+			gtag("config", "G-PPMY92TJCE");
+		}
 	}; // Google Analytics
 
 	// For Youtube API
