@@ -313,7 +313,6 @@ public class MainActivity extends AppCompatActivity {
         isAppConnectionAvailable(isConnected -> webView.post(() -> {
             if (isConnected) {
                 webView.loadUrl("https://u-kuro.github.io/Kanshi.Anime-Recommendation/");
-                AnimeNotificationManager.scheduleAnimeNotification(MainActivity.this, 1, "title", 1, 1, System.currentTimeMillis()+5000, "", true);
             } else {
                 webView.loadUrl("file:///android_asset/www/index.html");
                 showDialog(new AlertDialog.Builder(MainActivity.this)

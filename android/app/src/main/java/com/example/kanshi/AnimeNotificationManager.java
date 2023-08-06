@@ -64,7 +64,6 @@ public class AnimeNotificationManager {
     private static final String ANIME_RELEASE_NOTIFICATION_GROUP = "anime_release_notification_group";
     private static Bitmap dummyAnimeImage;
 
-
     public static void scheduleAnimeNotification(Context context, int animeId, String title, int releaseEpisode, int maxEpisode, long releaseDateMillis, String imageUrl, boolean isMyAnime) {
         context = context.getApplicationContext();
         if (dummyAnimeImage==null) {
