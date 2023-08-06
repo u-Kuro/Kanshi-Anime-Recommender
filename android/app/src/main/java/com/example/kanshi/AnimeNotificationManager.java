@@ -234,9 +234,9 @@ public class AnimeNotificationManager {
 
         PackageManager pm = context.getPackageManager();
         Intent intent = pm.getLaunchIntentForPackage("com.example.kanshi");
-        PendingIntent pendingIntent = PendingIntent.getActivity(context, NOTIFICATION_MY_ANIME, intent, PendingIntent.FLAG_IMMUTABLE);
+        PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_IMMUTABLE);
         pendingIntent.cancel();
-        pendingIntent = PendingIntent.getActivity(context, NOTIFICATION_ID_BASE, intent, PendingIntent.FLAG_IMMUTABLE);
+        pendingIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_IMMUTABLE);
 
         Notification notificationMA = new Notification.Builder(context, CHANNEL_ID)
                 .setContentTitle(notificationTitleMA)

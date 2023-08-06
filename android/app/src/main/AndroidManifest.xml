@@ -41,8 +41,7 @@
             android:theme="@style/Theme.Kanshi.SplashScreen"
             android:name=".MainActivity"
             android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|uiMode|screenSize|smallestScreenSize"
-            android:exported="true"
-            android:launchMode="singleTask">
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -52,8 +51,7 @@
             android:theme="@style/Theme.Kanshi"
             android:name=".WebViewActivity"
             android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|uiMode|screenSize|smallestScreenSize"
-            android:exported="true"
-            android:launchMode="singleTask">
+            android:exported="true">
         </activity>
         <receiver android:name="AnimeNotificationManager$NotificationReceiver"
             android:exported="false"
