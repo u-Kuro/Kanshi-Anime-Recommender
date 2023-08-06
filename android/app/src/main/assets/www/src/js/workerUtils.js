@@ -14,7 +14,8 @@ import {
     userRequestIsRunning,
     isImporting,
     progress,
-    android
+    android,
+    lastNotificationSent
 } from "./globalValues";
 import { get } from "svelte/store";
 import { downloadLink, isJsonObject } from "../js/others/helper.js"
@@ -84,6 +85,7 @@ let processRecommendedAnimeListWorker;
 const processRecommendedAnimeList = (_data = {}) => {
     return new Promise((resolve, reject) => {
         dataStatusPrio = true
+        let sentAnimeReleaseNotificationDate;
         if (processRecommendedAnimeListWorker) processRecommendedAnimeListWorker.terminate();
         progress.set(0)
         cacheRequest("./webapi/worker/processRecommendedAnimeList.js")
@@ -111,9 +113,10 @@ const processRecommendedAnimeList = (_data = {}) => {
                     } else if (data?.animeReleaseNotification) {
                         if (get(android)) {
                             try {
+                                sentAnimeReleaseNotificationDate = new Date();
                                 let aniReleaseNotif = data?.animeReleaseNotification
                                 if (
-                                    aniReleaseNotif?.releaseDateMillis >= new Date().getTime()
+                                    aniReleaseNotif?.releaseDateMillis >= get(lastNotificationSent)
                                     && typeof aniReleaseNotif?.releaseEpisodes === "number"
                                     && typeof aniReleaseNotif?.releaseDateMillis === "number"
                                     && typeof aniReleaseNotif?.maxEpisode === "number"
@@ -134,6 +137,10 @@ const processRecommendedAnimeList = (_data = {}) => {
                             } catch (e) { }
                         }
                     } else {
+                        if (sentAnimeReleaseNotificationDate instanceof Date && !isNaN(sentAnimeReleaseNotificationDate)) {
+                            saveIDBdata(sentAnimeReleaseNotificationDate, "lastNotificationSent")
+                            lastNotificationSent.set(sentAnimeReleaseNotificationDate)
+                        }
                         if (data?.hasPassedFilters === true) {
                             passedFilterOptions = passedActiveTagFilters = undefined
                         }

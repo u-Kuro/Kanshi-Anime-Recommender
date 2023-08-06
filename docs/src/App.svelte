@@ -48,6 +48,7 @@
 		numberOfNextLoadedGrid,
 		progress,
 		popupIsGoingBack,
+		lastNotificationSent,
 		// anilistAccessToken,
 	} from "./js/globalValues.js";
 	import {
@@ -277,6 +278,11 @@
 				);
 				$autoUpdate = (await retrieveJSON("autoUpdate")) ?? false;
 				$autoExport = (await retrieveJSON("autoExport")) ?? false;
+				if ($android) {
+					$lastNotificationSent =
+						(await retrieveJSON("lastNotificationSent")) ??
+						$lastNotificationSent;
+				}
 				resolve();
 			})
 		);

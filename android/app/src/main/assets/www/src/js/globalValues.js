@@ -4,6 +4,7 @@ const appID = writable(null)
 const android = writable(null)
 const inApp = writable(true)
 const progress = writable(0)
+const lastNotificationSent = writable(new Date(0))
 // const anilistAccessToken = writable(null)
 const hasWheel = writable(false)
 const lastAnimeUpdate = writable(null)
@@ -68,6 +69,7 @@ export {
     inApp,
     hasWheel,
     progress,
+    lastNotificationSent,
     // anilistAccessToken,
     lastAnimeUpdate,
     username,
