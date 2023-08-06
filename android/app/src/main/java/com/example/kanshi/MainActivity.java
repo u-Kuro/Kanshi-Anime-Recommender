@@ -51,6 +51,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.lang.ref.WeakReference;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.List;
@@ -63,7 +64,7 @@ import androidx.core.splashscreen.SplashScreen;
 
 public class MainActivity extends AppCompatActivity {
 
-    public final int appID = 65;
+    public final int appID = 66;
     public boolean webviewIsLoaded = false;
     public boolean permissionIsAsked = false;
     public SharedPreferences prefs;
@@ -77,6 +78,7 @@ public class MainActivity extends AppCompatActivity {
     public boolean shouldGoBack;
     public Toast currentToast;
     public AlertDialog currentDialog;
+    public static WeakReference<MainActivity> weakActivity;
 
     // Activity Results
     final ActivityResultLauncher<Intent> allowApplicationUpdate =
@@ -156,6 +158,8 @@ public class MainActivity extends AppCompatActivity {
         // Saved Data
         exportPath = prefs.getString("savedExportPath", "");
         permissionIsAsked = prefs.getBoolean("permissionIsAsked", false);
+        // Get Activity Reference
+        weakActivity = new WeakReference<>(MainActivity.this);
         // Create WebView App Instance
 
         SplashScreen splashScreen = SplashScreen.installSplashScreen(this);
@@ -333,6 +337,14 @@ public class MainActivity extends AppCompatActivity {
             webSettings.setDisplayZoomControls(false);
             webSettings.setSupportZoom(false);
         }),3000);
+    }
+
+    public static MainActivity getInstanceActivity() {
+        if (weakActivity!=null) {
+            return weakActivity.get();
+        } else {
+            return null;
+        }
     }
 
     // Get Path From MainActivity Context
@@ -686,6 +698,12 @@ public class MainActivity extends AppCompatActivity {
                     .setNegativeButton("CANCEL", null));
             }
         });
+    }
+
+    public void setLastNotificationSentDate() {
+        if (webView!=null) {
+            webView.post(() -> webView.loadUrl("javascript:window?.setLastNotificationSentDate();"));
+        }
     }
 
     @Override

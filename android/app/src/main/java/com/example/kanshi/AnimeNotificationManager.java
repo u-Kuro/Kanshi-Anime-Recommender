@@ -327,6 +327,11 @@ public class AnimeNotificationManager {
             }
             notificationManager.notify(NOTIFICATION_ID_BASE, notificationSummary);
         }
+
+        MainActivity mainActivity = MainActivity.getInstanceActivity();
+        if (mainActivity!=null) {
+            mainActivity.setLastNotificationSentDate();
+        }
     }
     @RequiresApi(api = Build.VERSION_CODES.M)
     public static Icon createRoundIcon(Bitmap bitmap) {

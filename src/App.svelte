@@ -281,7 +281,8 @@
 				if ($android) {
 					$lastNotificationSent =
 						(await retrieveJSON("lastNotificationSent")) ??
-						$lastNotificationSent;
+						$lastNotificationSent ??
+						new Date();
 				}
 				resolve();
 			})
@@ -978,6 +979,10 @@
 		}
 	}
 
+	window.setLastNotificationSentDate = async () => {
+		$lastNotificationSent = new Date();
+		saveJSON($lastNotificationSent, "lastNotificationSent");
+	};
 	window.updateAppAlert = async () => {
 		if (
 			await $confirmPromise?.({
