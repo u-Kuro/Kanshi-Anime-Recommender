@@ -114,7 +114,7 @@ const processRecommendedAnimeList = (_data = {}) => {
                             try {
                                 let aniReleaseNotif = data?.animeReleaseNotification
                                 if (
-                                    aniReleaseNotif?.releaseDateMillis >= get(lastNotificationSent)
+                                    aniReleaseNotif?.releaseDateMillis >= (get(lastNotificationSent)?.getTime?.() || new Date().getTime())
                                     && typeof aniReleaseNotif?.releaseEpisodes === "number"
                                     && typeof aniReleaseNotif?.releaseDateMillis === "number"
                                     && typeof aniReleaseNotif?.maxEpisode === "number"

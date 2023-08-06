@@ -982,7 +982,10 @@
 	window.setLastNotificationSentDate = async (dateInMillis) => {
 		if (dateInMillis) {
 			let newNotificationSent = new Date(dateInMillis);
-			if (newNotificationSent > $lastNotificationSent) {
+			if (
+				newNotificationSent?.getTime?.() >
+				$lastNotificationSent.getTime()
+			) {
 				$lastNotificationSent = newNotificationSent;
 				saveJSON($lastNotificationSent, "lastNotificationSent");
 			}
