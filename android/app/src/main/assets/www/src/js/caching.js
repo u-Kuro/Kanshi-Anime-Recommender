@@ -1,12 +1,11 @@
 import { get } from "svelte/store"
-import { isAndroid } from "./others/helper"
-import { appID } from "./globalValues"
+import { android, appID } from "./globalValues"
 import getWebVersion from "../version"
 let loadedUrls = {}
 
 const cacheRequest = (url) => {
     return new Promise(async (resolve) => {
-        if (isAndroid()) {
+        if (get(android)) {
             resolve(url)
         } else {
             let _appID = get(appID)

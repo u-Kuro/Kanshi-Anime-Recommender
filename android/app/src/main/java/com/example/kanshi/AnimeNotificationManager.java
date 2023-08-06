@@ -233,12 +233,11 @@ public class AnimeNotificationManager {
             }
         }
 
-        Intent intentMA = new Intent(context, MainActivity.class);
-        intentMA.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
-        intentMA.putExtra("notificationID",NOTIFICATION_MY_ANIME);
-        PendingIntent pendingIntentMA = PendingIntent.getActivity(context, NOTIFICATION_MY_ANIME, intentMA, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_CANCEL_CURRENT);
-        pendingIntentMA.cancel();
-        pendingIntentMA = PendingIntent.getActivity(context, NOTIFICATION_MY_ANIME, intentMA, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_CANCEL_CURRENT);
+        PackageManager pm = context.getPackageManager();
+        Intent intent = pm.getLaunchIntentForPackage("com.example.kanshi");
+        PendingIntent pendingIntent = PendingIntent.getActivity(context, NOTIFICATION_MY_ANIME, intent, PendingIntent.FLAG_IMMUTABLE);
+        pendingIntent.cancel();
+        pendingIntent = PendingIntent.getActivity(context, NOTIFICATION_ID_BASE, intent, PendingIntent.FLAG_IMMUTABLE);
 
         Notification notificationMA = new Notification.Builder(context, CHANNEL_ID)
                 .setContentTitle(notificationTitleMA)
@@ -246,7 +245,7 @@ public class AnimeNotificationManager {
                 .setColor(Color.BLACK)
                 .setStyle(styleMA)
                 .setPriority(Notification.PRIORITY_DEFAULT)
-                .setContentIntent(pendingIntentMA)
+                .setContentIntent(pendingIntent)
                 .setGroup(ANIME_RELEASE_NOTIFICATION_GROUP)
                 .build();
 
@@ -289,20 +288,13 @@ public class AnimeNotificationManager {
             }
         }
 
-        Intent intentOA = new Intent(context, MainActivity.class);
-        intentOA.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
-        intentOA.putExtra("notificationID",NOTIFICATION_OTHER_ANIME);
-        PendingIntent pendingIntentOA = PendingIntent.getActivity(context, NOTIFICATION_OTHER_ANIME, intentOA, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_CANCEL_CURRENT);
-        pendingIntentOA.cancel();
-
-        pendingIntentOA = PendingIntent.getActivity(context, NOTIFICATION_OTHER_ANIME, intentOA, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_CANCEL_CURRENT);
         Notification notificationOA = new Notification.Builder(context, CHANNEL_ID)
                 .setContentTitle(notificationTitleOA)
                 .setSmallIcon(R.drawable.ic_stat_name)
                 .setColor(Color.BLACK)
                 .setStyle(styleOA)
                 .setPriority(Notification.PRIORITY_LOW)
-                .setContentIntent(pendingIntentOA)
+                .setContentIntent(pendingIntent)
                 .setGroup(ANIME_RELEASE_NOTIFICATION_GROUP)
                 .build();
 
@@ -312,13 +304,6 @@ public class AnimeNotificationManager {
             notificationTitle = notificationTitle+" +"+animeReleaseNotificationSize;
         }
 
-        Intent intent = new Intent(context, MainActivity.class);
-        intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
-        intent.putExtra("notificationID",NOTIFICATION_ID_BASE);
-        PendingIntent pendingIntent = PendingIntent.getActivity(context, NOTIFICATION_ID_BASE, intentOA, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_CANCEL_CURRENT);
-        pendingIntent.cancel();
-
-        pendingIntent = PendingIntent.getActivity(context, NOTIFICATION_ID_BASE, intentOA, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_CANCEL_CURRENT);
         Notification notificationSummary = new Notification.Builder(context, CHANNEL_ID)
                 .setContentTitle(notificationTitle)
                 .setSmallIcon(R.drawable.ic_stat_name)
@@ -343,10 +328,6 @@ public class AnimeNotificationManager {
             }
             notificationManager.notify(NOTIFICATION_ID_BASE, notificationSummary);
         }
-    }
-    public static void cancelCurrentNotification(Context context, int id) {
-        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
-        notificationManager.cancel(id);
     }
     @RequiresApi(api = Build.VERSION_CODES.M)
     public static Icon createRoundIcon(Bitmap bitmap) {

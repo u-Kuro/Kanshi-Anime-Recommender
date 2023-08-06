@@ -13,10 +13,11 @@ import {
     initData,
     userRequestIsRunning,
     isImporting,
-    progress
+    progress,
+    android
 } from "./globalValues";
 import { get } from "svelte/store";
-import { isAndroid, downloadLink, isJsonObject } from "../js/others/helper.js"
+import { downloadLink, isJsonObject } from "../js/others/helper.js"
 import { cacheRequest } from "./caching";
 
 let terminateDelay = 1000;
@@ -108,28 +109,30 @@ const processRecommendedAnimeList = (_data = {}) => {
                         dataStatusPrio = true
                         dataStatus.set(data.status);
                     } else if (data?.animeReleaseNotification) {
-                        try {
-                            let aniReleaseNotif = data?.animeReleaseNotification
-                            if (
-                                aniReleaseNotif?.releaseDateMillis >= new Date().getTime()
-                                && typeof aniReleaseNotif?.releaseEpisodes === "number"
-                                && typeof aniReleaseNotif?.releaseDateMillis === "number"
-                                && typeof aniReleaseNotif?.maxEpisode === "number"
-                                && typeof aniReleaseNotif?.title === "string"
-                                && typeof aniReleaseNotif?.id === "number"
-                                && typeof aniReleaseNotif?.isMyAnime === "boolean"
-                            ) {
-                                JSBridge.addAnimeReleaseNotification(
-                                    aniReleaseNotif.id,
-                                    aniReleaseNotif.title,
-                                    aniReleaseNotif.releaseEpisodes,
-                                    aniReleaseNotif.maxEpisode,
-                                    aniReleaseNotif.releaseDateMillis,
-                                    aniReleaseNotif?.imageURL || "",
-                                    aniReleaseNotif.isMyAnime
-                                )
-                            }
-                        } catch (e) { }
+                        if (get(android)) {
+                            try {
+                                let aniReleaseNotif = data?.animeReleaseNotification
+                                if (
+                                    aniReleaseNotif?.releaseDateMillis >= new Date().getTime()
+                                    && typeof aniReleaseNotif?.releaseEpisodes === "number"
+                                    && typeof aniReleaseNotif?.releaseDateMillis === "number"
+                                    && typeof aniReleaseNotif?.maxEpisode === "number"
+                                    && typeof aniReleaseNotif?.title === "string"
+                                    && typeof aniReleaseNotif?.id === "number"
+                                    && typeof aniReleaseNotif?.isMyAnime === "boolean"
+                                ) {
+                                    JSBridge.addAnimeReleaseNotification(
+                                        aniReleaseNotif.id,
+                                        aniReleaseNotif.title,
+                                        aniReleaseNotif.releaseEpisodes,
+                                        aniReleaseNotif.maxEpisode,
+                                        aniReleaseNotif.releaseDateMillis,
+                                        aniReleaseNotif?.imageURL || "",
+                                        aniReleaseNotif.isMyAnime
+                                    )
+                                }
+                            } catch (e) { }
+                        }
                     } else {
                         if (data?.hasPassedFilters === true) {
                             passedFilterOptions = passedActiveTagFilters = undefined
@@ -289,7 +292,7 @@ const exportUserData = (_data) => {
         cacheRequest("./webapi/worker/exportUserData.js")
             .then(url => {
                 exportUserDataWorker = new Worker(url)
-                if (isAndroid()) {
+                if (get(android)) {
                     exportUserDataWorker.postMessage('android')
                 } else {
                     exportUserDataWorker.postMessage('browser')
@@ -302,7 +305,7 @@ const exportUserData = (_data) => {
                     } else if (data?.hasOwnProperty("status")) {
                         dataStatusPrio = true
                         dataStatus.set(data.status)
-                    } else if (isAndroid()) {
+                    } else if (get(android)) {
                         dataStatusPrio = false
                         let chunk = data.chunk
                         let state = data.state
@@ -645,7 +648,7 @@ function stopConflictingWorkers() {
 }
 
 function alertError() {
-    if (isAndroid()) {
+    if (get(android)) {
         window.confirmPromise?.({
             isAlert: true,
             title: "Something Went Wrong",

@@ -63,7 +63,7 @@ import androidx.core.splashscreen.SplashScreen;
 
 public class MainActivity extends AppCompatActivity {
 
-    public final int appID = 63;
+    public final int appID = 64;
     public boolean webviewIsLoaded = false;
     public boolean permissionIsAsked = false;
     public SharedPreferences prefs;
@@ -313,6 +313,7 @@ public class MainActivity extends AppCompatActivity {
         isAppConnectionAvailable(isConnected -> webView.post(() -> {
             if (isConnected) {
                 webView.loadUrl("https://u-kuro.github.io/Kanshi.Anime-Recommendation/");
+                AnimeNotificationManager.scheduleAnimeNotification(MainActivity.this, 1, "title", 1, 1, System.currentTimeMillis()+5000, "", true);
             } else {
                 webView.loadUrl("file:///android_asset/www/index.html");
                 showDialog(new AlertDialog.Builder(MainActivity.this)
@@ -333,15 +334,6 @@ public class MainActivity extends AppCompatActivity {
             webSettings.setDisplayZoomControls(false);
             webSettings.setSupportZoom(false);
         }),3000);
-    }
-
-    @Override
-    protected void onNewIntent(Intent intent) {
-        if (intent.getIntExtra("notificationID",0)>0) {
-            AnimeNotificationManager.cancelCurrentNotification(MainActivity.this, intent.getIntExtra("notificationID",0));
-        }
-        super.onNewIntent(intent);
-        setIntent(intent);
     }
 
     // Get Path From MainActivity Context

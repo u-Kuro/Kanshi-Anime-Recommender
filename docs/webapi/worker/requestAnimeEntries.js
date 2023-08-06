@@ -304,7 +304,7 @@ self.onmessage = async ({ data }) => {
                 let releaseDate = new Date(anime?.nextAiringEpisode?.airingAt * 1000)
                 if (releaseDate instanceof Date &&
                     !isNaN(releaseDate) &&
-                    releaseDate <= new Date.getTime()
+                    releaseDate <= (new Date().getTime())
                 ) {
                     return true
                 } else {
@@ -457,7 +457,6 @@ self.onmessage = async ({ data }) => {
                         let media = Page?.media || []
                         let currentAnimeUpdateDate
                         let hasUpdatedEntry = false
-
                         if (media instanceof Array) {
                             for (let anime of media) {
                                 if (typeof anime?.id === "number") {
@@ -531,7 +530,7 @@ self.onmessage = async ({ data }) => {
                         ) {
                             if (currentNonProcessedLength > (airingAnimeIDs.length + pastAiringEpisodeIDs.length)) {
                                 currentNonProcessedLength = airingAnimeIDs.length + pastAiringEpisodeIDs.length // Only Send when its done processing 1 anime
-                                let processedLength = Math.max(animeLength - airingAnimeIDs.length + pastAiringEpisodeIDs.length, 0)
+                                let processedLength = Math.max(animeLength - (airingAnimeIDs.length + pastAiringEpisodeIDs.length), 0)
                                 let percentage = (100 * (processedLength / animeLength))
                                 percentage = percentage >= 0 ? percentage : 0
                                 self.postMessage({ progress: percentage })
@@ -558,12 +557,10 @@ self.onmessage = async ({ data }) => {
                                 }, 60000);
                             }
                         } else {
-                            self.postMessage({ progress: 100 })
                             airingAnimeIDsString = airingAnimeIDs = null
 
                             // Update User Recommendation List
                             if (hasUpdatedEntry) {
-                                self.postMessage({ status: "100% Updating Entries" }) // End Data Status
                                 await saveJSON(animeEntries, "animeEntries")
                                 self.postMessage({ updateRecommendationList: true })
 
@@ -575,8 +572,22 @@ self.onmessage = async ({ data }) => {
                             }
 
                             // Call New
-                            self.postMessage({ status: null })
-                            recallUNAE(1)
+                            if (pastAiringEpisodeIDs.length > 0) {
+                                currentNonProcessedLength = pastAiringEpisodeIDs.length
+                                self.postMessage({ status: null })
+                                recallUNAE(1)
+                            } else {
+                                self.postMessage({ progress: 100 })
+                                self.postMessage({ status: "100% Updating Entries" }) // End Data Status
+
+                                let lastRunnedAutoUpdateDate = new Date();
+                                await saveJSON(lastRunnedAutoUpdateDate, "lastRunnedAutoUpdateDate");
+                                self.postMessage({ lastRunnedAutoUpdateDate: lastRunnedAutoUpdateDate })
+                                self.postMessage({ status: null })
+
+                                updateNonRecentEntries(animeEntries, lastAnimeUpdate)
+                                animeEntries = null
+                            }
                         }
                     }
                 })
@@ -688,8 +699,7 @@ self.onmessage = async ({ data }) => {
                                 if (typeof anime?.id === "number") {
                                     pastAiringEpisodeIDs = pastAiringEpisodeIDs.filter(_id => _id !== anime.id)
                                     if (isJsonObject(animeEntries?.[anime.id])) {
-                                        animeEntries[anime.id]?.nextAiringEpisode = anime?.nextAiringEpisode
-                                        console.log("Here", anime?.nextAiringEpisode)
+                                        animeEntries[anime.id].nextAiringEpisode = anime?.nextAiringEpisode
                                     }
                                     hasUpdatedEntry = true
                                 }

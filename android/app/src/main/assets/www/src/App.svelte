@@ -62,9 +62,9 @@
 	} from "./js/workerUtils.js";
 	import { isAndroid, addClass, removeClass } from "./js/others/helper.js";
 
+	$android = isAndroid(); // Android/Browser Identifier
 	let windowWidth = window.visualViewport.width;
 	let usernameInputEl, animeGridEl;
-	$android = isAndroid(); // Android/Browser Identifier
 
 	inject(); // Vercel Analytics
 
