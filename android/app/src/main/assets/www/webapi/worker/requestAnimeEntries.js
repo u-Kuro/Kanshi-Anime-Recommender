@@ -294,15 +294,32 @@ self.onmessage = async ({ data }) => {
     // update results to local list
     async function updateAiringAnime(animeEntries) {
         self.postMessage({ progress: 0 })
-        let airingAnimeIDs = Object.values(animeEntries).filter(({ seasonYear, status }) => {
+        let airingAnime = Object.values(animeEntries).filter(({ seasonYear, status }) => {
             // Either Currently Releasing or Not Yet Released but Its Release Year is >= Current Year
             return ncsCompare(status, 'releasing') || (ncsCompare(status, 'not_yet_released') && parseInt(seasonYear) >= currentYear)
+        })
+        let airingAnimeIDs = airingAnime.map(({ id }) => id)
+        let pastAiringEpisodeIDs = airingAnime.filter((anime) => {
+            if (isJsonObject(anime?.nextAiringEpisode)) {
+                let releaseDate = new Date(anime?.nextAiringEpisode?.airingAt * 1000)
+                if (releaseDate instanceof Date &&
+                    !isNaN(releaseDate) &&
+                    releaseDate <= new Date.getTime()
+                ) {
+                    return true
+                } else {
+                    return false
+                }
+            } else {
+                return false
+            }
         }).map(({ id }) => id)
 
-        let animeLength = airingAnimeIDs.length
+        let animeLength = airingAnimeIDs.length + pastAiringEpisodeIDs.length
         let currentNonProcessedLength = animeLength
 
         let airingAnimeIDsString = airingAnimeIDs.join(',') // Get IDs
+        let pastAiringEpisodeIDsString = pastAiringEpisodeIDs.join(',')
 
         self.postMessage({ status: "Checking Latest Entries..." }) // Init Data Status
 
@@ -512,9 +529,9 @@ self.onmessage = async ({ data }) => {
                                 !(lastAiringUpdateDate instanceof Date) ||
                                 isNaN(lastAiringUpdateDate))
                         ) {
-                            if (currentNonProcessedLength > airingAnimeIDs.length) {
-                                currentNonProcessedLength = airingAnimeIDs.length // Only Send when its done processing 1 anime
-                                let processedLength = Math.max(animeLength - airingAnimeIDs.length, 0)
+                            if (currentNonProcessedLength > (airingAnimeIDs.length + pastAiringEpisodeIDs.length)) {
+                                currentNonProcessedLength = airingAnimeIDs.length + pastAiringEpisodeIDs.length // Only Send when its done processing 1 anime
+                                let processedLength = Math.max(animeLength - airingAnimeIDs.length + pastAiringEpisodeIDs.length, 0)
                                 let percentage = (100 * (processedLength / animeLength))
                                 percentage = percentage >= 0 ? percentage : 0
                                 self.postMessage({ progress: percentage })
@@ -557,14 +574,9 @@ self.onmessage = async ({ data }) => {
                                 }
                             }
 
-                            let lastRunnedAutoUpdateDate = new Date();
-                            await saveJSON(lastRunnedAutoUpdateDate, "lastRunnedAutoUpdateDate");
-                            self.postMessage({ lastRunnedAutoUpdateDate: lastRunnedAutoUpdateDate })
-
                             // Call New
                             self.postMessage({ status: null })
-                            updateNonRecentEntries(animeEntries, lastAnimeUpdate)
-                            animeEntries = null
+                            recallUNAE(1)
                         }
                     }
                 })
@@ -602,6 +614,175 @@ self.onmessage = async ({ data }) => {
                                 self.postMessage({ progress: 100 })
                                 self.postMessage({ status: "Retrying..." })
                                 return recallUAA(page);
+                            }, 60000);
+                        }
+                    }
+                    console.error(error)
+                });
+        }
+
+        function recallUNAE(page) {
+            fetch('https://graphql.anilist.co', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'Cache-Control': 'max-age=31536000, immutable'
+                },
+                body: JSON.stringify({
+                    query: `{
+                        Page(page: ${page}, perPage: ${maxAnimePerPage}) {
+                            pageInfo{
+                                hasNextPage
+                            }
+                            media(
+                                type: ANIME,
+                                genre_not_in: ["Hentai"],
+                                format_not_in:[MUSIC,MANGA,NOVEL,ONE_SHOT],
+                                id_in: [${pastAiringEpisodeIDsString || ''}]
+                                ) {
+                                id
+                                nextAiringEpisode {
+                                    episode
+                                    airingAt
+                                }
+                            }
+                        }
+                    }`
+                })
+            })
+                .then(async (response) => {
+                    let headers = response.headers
+                    let result = await response.json()
+                    return { result, headers }
+                })
+                .then(async ({ result, headers }) => {
+                    let error;
+                    if (typeof (error = result?.errors?.[0]?.message) === "string") {
+                        ++retryCount
+                        if (retryCount >= 2) {
+                            self.postMessage({ status: "Request Timeout" })
+                        }
+                        let rateLimitInterval;
+                        if (retryCount < 2) {
+                            let secondsPassed = 60
+                            rateLimitInterval = setInterval(() => {
+                                self.postMessage({ progress: ((60 - secondsPassed) / 60) * 100 })
+                                self.postMessage({ status: (error ? (error + " ") : "") + `Rate Limit: ${msToTime(secondsPassed * 1000)}` })
+                                --secondsPassed
+                            }, 1000)
+                        }
+                        setTimeout(() => {
+                            if (rateLimitInterval) clearInterval(rateLimitInterval)
+                            self.postMessage({ progress: 100 })
+                            self.postMessage({ status: "Retrying..." })
+                            return recallUNAE(page);
+                        }, 60000);
+                    } else {
+                        let Page = result?.data?.Page
+                        let media = Page?.media || []
+                        let hasUpdatedEntry = false
+
+                        if (media instanceof Array) {
+                            for (let anime of media) {
+                                if (typeof anime?.id === "number") {
+                                    pastAiringEpisodeIDs = pastAiringEpisodeIDs.filter(_id => _id !== anime.id)
+                                    if (isJsonObject(animeEntries?.[anime.id])) {
+                                        animeEntries[anime.id]?.nextAiringEpisode = anime?.nextAiringEpisode
+                                        console.log("Here", anime?.nextAiringEpisode)
+                                    }
+                                    hasUpdatedEntry = true
+                                }
+                            }
+                        }
+                        retryCount = 0
+                        let hasNextPage = Page?.pageInfo?.hasNextPage ?? true
+                        // Handle the successful response here
+                        if (hasNextPage && media.length > 0) {
+                            if (currentNonProcessedLength > pastAiringEpisodeIDs.length) {
+                                currentNonProcessedLength = pastAiringEpisodeIDs.length // Only Send when its done processing 1 anime
+                                let processedLength = Math.max(animeLength - pastAiringEpisodeIDs.length, 0)
+                                let percentage = (100 * (processedLength / animeLength))
+                                percentage = percentage >= 0 ? percentage : 0
+                                self.postMessage({ progress: percentage })
+                                self.postMessage({ status: `${percentage.toFixed(2)}% Updating Entries` }) // Update Data Status
+                            }
+                            if (hasUpdatedEntry) {
+                                saveJSON(animeEntries, "animeEntries")
+                            }
+                            // Media Recursion
+                            if (headers?.get('x-ratelimit-remaining') > 0) {
+                                return recallUNAE(++page);
+                            } else {
+                                let secondsPassed = 60
+                                let rateLimitInterval = setInterval(() => {
+                                    self.postMessage({ progress: ((60 - secondsPassed) / 60) * 100 })
+                                    self.postMessage({ status: `Rate Limit: ${msToTime(secondsPassed * 1000)}` })
+                                    --secondsPassed
+                                }, 1000)
+                                setTimeout(() => {
+                                    clearInterval(rateLimitInterval)
+                                    self.postMessage({ progress: 100 })
+                                    self.postMessage({ status: "Retrying..." })
+                                    return recallUNAE(++page);
+                                }, 60000);
+                            }
+                        } else {
+                            self.postMessage({ progress: 100 })
+                            pastAiringEpisodeIDsString = pastAiringEpisodeIDs = null
+
+                            // Update User Recommendation List
+                            if (hasUpdatedEntry) {
+                                self.postMessage({ status: "100% Updating Entries" }) // End Data Status
+                                await saveJSON(animeEntries, "animeEntries")
+                                self.postMessage({ updateRecommendationList: true })
+                            }
+
+                            let lastRunnedAutoUpdateDate = new Date();
+                            await saveJSON(lastRunnedAutoUpdateDate, "lastRunnedAutoUpdateDate");
+                            self.postMessage({ lastRunnedAutoUpdateDate: lastRunnedAutoUpdateDate })
+
+                            // Call New
+                            self.postMessage({ status: null })
+                            updateNonRecentEntries(animeEntries, lastAnimeUpdate)
+                            animeEntries = null
+                        }
+                    }
+                })
+                .catch((error) => {
+                    if (!navigator.onLine) {
+                        self.postMessage({ status: "Currently Offline..." })
+                        self.postMessage({ message: 'Currently Offline...' })
+                        return
+                    }
+                    let headers = error.headers;
+                    let errorText = error.message;
+                    if (errorText === 'User not found') {
+                        // Handle the specific error here
+                        self.postMessage({ status: null })
+                        self.postMessage({ message: 'User not found' })
+                    } else {
+                        if (headers?.get('x-ratelimit-remaining') > 0) {
+                            return recallUNAE(page);
+                        } else {
+                            ++retryCount
+                            if (retryCount >= 2) {
+                                self.postMessage({ status: "Request Timeout" })
+                            }
+                            let rateLimitInterval;
+                            if (retryCount < 2) {
+                                let secondsPassed = 60
+                                rateLimitInterval = setInterval(() => {
+                                    self.postMessage({ progress: ((60 - secondsPassed) / 60) * 100 })
+                                    self.postMessage({ status: `Rate Limit: ${msToTime(secondsPassed * 1000)}` })
+                                    --secondsPassed
+                                }, 1000)
+                            }
+                            setTimeout(() => {
+                                if (rateLimitInterval) clearInterval(rateLimitInterval)
+                                self.postMessage({ progress: 100 })
+                                self.postMessage({ status: "Retrying..." })
+                                return recallUNAE(page);
                             }, 60000);
                         }
                     }

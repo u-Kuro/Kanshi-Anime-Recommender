@@ -43,12 +43,14 @@ public class AnimeNotificationManager {
         final String title;
         final int releaseEpisode;
         final int maxEpisode;
+        final long releaseDateMillis;
         final Bitmap image;
-        public AnimeNotification(int notificationId, String title, int releaseEpisode, int maxEpisode, Bitmap image) {
+        public AnimeNotification(int notificationId, String title, int releaseEpisode, int maxEpisode, long releaseDateMillis, Bitmap image) {
             this.notificationId = notificationId;
             this.title = title;
             this.releaseEpisode = releaseEpisode;
             this.maxEpisode = maxEpisode;
+            this.releaseDateMillis = releaseDateMillis;
             this.image = image;
         }
     }
@@ -78,6 +80,7 @@ public class AnimeNotificationManager {
         intent.putExtra("maxEpisode", maxEpisode);
         intent.putExtra("imageUrl", imageUrl);
         intent.putExtra("isMyAnime", isMyAnime);
+        intent.putExtra("releaseDateMillis", releaseDateMillis);
 
         int notificationId = NOTIFICATION_ID_BASE + animeId;
         PendingIntent pendingIntent = PendingIntent.getBroadcast(context, notificationId, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
@@ -88,7 +91,11 @@ public class AnimeNotificationManager {
         alarmManager.cancel(pendingIntent);
         // Create New
         pendingIntent = PendingIntent.getBroadcast(context, notificationId, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
-        alarmManager.set(AlarmManager.RTC_WAKEUP, releaseDateMillis, pendingIntent);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, releaseDateMillis, pendingIntent);
+        } else {
+            alarmManager.setExact(AlarmManager.RTC_WAKEUP, releaseDateMillis, pendingIntent);
+        }
     }
 
     private static void createNotificationChannel(Context context) {
@@ -119,15 +126,16 @@ public class AnimeNotificationManager {
                     int maxEpisode = extras.getInt("maxEpisode");
                     String imageUrl = extras.getString("imageUrl");
                     boolean isMyAnime = extras.getBoolean("isMyAnime");
+                    long releaseDateMillis = extras.getLong("releaseDateMillis");
 
-                    performNotificationTask(context, animeId, title, releaseEpisode, maxEpisode, imageUrl, isMyAnime);
+                    performNotificationTask(context, animeId, title, releaseEpisode, maxEpisode, releaseDateMillis, imageUrl, isMyAnime);
                 }
             }
         }
     }
 
     @RequiresApi(api = Build.VERSION_CODES.P)
-    private static void performNotificationTask(Context context, int animeId, String title, int releaseEpisode, int maxEpisode, String imageUrl, boolean isMyAnime) {
+    private static void performNotificationTask(Context context, int animeId, String title, int releaseEpisode, int maxEpisode, long releaseDateMillis, String imageUrl, boolean isMyAnime) {
         ExecutorService executor = Executors.newSingleThreadExecutor();
         Handler handler = new Handler(Looper.getMainLooper());
         Context finalContext = context.getApplicationContext();
@@ -139,7 +147,7 @@ public class AnimeNotificationManager {
             Bitmap imageBitmap = downloadImage(finalContext, finalImageUrl);
             handler.post(() -> {
                 int notificationId = NOTIFICATION_ID_BASE + animeId;
-                showNotification(finalContext, notificationId, title, releaseEpisode, maxEpisode, imageBitmap, isMyAnime);
+                showNotification(finalContext, notificationId, title, releaseEpisode, maxEpisode, releaseDateMillis, imageBitmap, isMyAnime);
             });
         });
     }
@@ -171,7 +179,7 @@ public class AnimeNotificationManager {
     }
 
     @RequiresApi(api = Build.VERSION_CODES.P)
-    private static void showNotification(Context context, int notificationId, String title, int releaseEpisode, int maxEpisode, Bitmap imageBitmap, boolean isMyAnime) {
+    private static void showNotification(Context context, int notificationId, String title, int releaseEpisode, int maxEpisode, long releaseDateMillis, Bitmap imageBitmap, boolean isMyAnime) {
         context = context.getApplicationContext();
         if (ActivityCompat.checkSelfPermission(context, android.Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
             return;
@@ -182,9 +190,9 @@ public class AnimeNotificationManager {
         notificationManager.cancelAll();
 
         if (isMyAnime) {
-            myAnimeNotifications.put(String.valueOf(notificationId), new AnimeNotification(notificationId, title, releaseEpisode, maxEpisode, imageBitmap));
+            myAnimeNotifications.put(String.valueOf(notificationId), new AnimeNotification(notificationId, title, releaseEpisode, maxEpisode, releaseDateMillis, imageBitmap));
         } else {
-            animeNotifications.put(String.valueOf(notificationId), new AnimeNotification(notificationId, title, releaseEpisode, maxEpisode, imageBitmap));
+            animeNotifications.put(String.valueOf(notificationId), new AnimeNotification(notificationId, title, releaseEpisode, maxEpisode, releaseDateMillis, imageBitmap));
         }
 
         String notificationTitleMA = "My Anime Aired";
@@ -213,14 +221,14 @@ public class AnimeNotificationManager {
                 nextLine = "";
             }
             if (anime.maxEpisode<0) { // No Given Max Episodes
-                styleMA.addMessage("Episode " + anime.releaseEpisode + " is now available." + nextLine, anime.releaseEpisode, item);
+                styleMA.addMessage("Episode " + anime.releaseEpisode + " is now available." + nextLine, anime.releaseDateMillis, item);
             } else if (anime.releaseEpisode>=anime.maxEpisode) {
-                styleMA.addMessage("Finished airing: Episode " + anime.releaseEpisode + " is now available." + nextLine, anime.releaseEpisode, item);
+                styleMA.addMessage("Finished airing: Episode " + anime.releaseEpisode + " is now available." + nextLine, anime.releaseDateMillis, item);
             } else {
                 if (anime.maxEpisode-anime.releaseEpisode>1) {
-                    styleMA.addMessage("Episode " + anime.releaseEpisode + " is now available. There are " + (anime.maxEpisode-anime.releaseEpisode) +" episodes left." + nextLine, anime.releaseEpisode, item);
+                    styleMA.addMessage("Episode " + anime.releaseEpisode + " is now available. There are " + (anime.maxEpisode-anime.releaseEpisode) +" episodes left." + nextLine, anime.releaseDateMillis, item);
                 } else {
-                    styleMA.addMessage("Episode " + anime.releaseEpisode + " is now available. " + anime.maxEpisode +" will be the last." + nextLine, anime.releaseEpisode, item);
+                    styleMA.addMessage("Episode " + anime.releaseEpisode + " is now available. " + anime.maxEpisode +" will be the last." + nextLine, anime.releaseDateMillis, item);
                 }
             }
         }
@@ -269,14 +277,14 @@ public class AnimeNotificationManager {
                 nextLine = "";
             }
             if (anime.maxEpisode<0) { // No Given Max Episodes
-                styleOA.addMessage("Episode " + anime.releaseEpisode + " is now available." + nextLine, anime.releaseEpisode, item);
+                styleOA.addMessage("Episode " + anime.releaseEpisode + " is now available." + nextLine, anime.releaseDateMillis, item);
             } else if (anime.releaseEpisode>=anime.maxEpisode) {
-                styleOA.addMessage("Finished airing: Episode " + anime.releaseEpisode + " is now available." + nextLine, anime.releaseEpisode, item);
+                styleOA.addMessage("Finished airing: Episode " + anime.releaseEpisode + " is now available." + nextLine, anime.releaseDateMillis, item);
             } else {
                 if (anime.maxEpisode-anime.releaseEpisode>1) {
-                    styleOA.addMessage("Episode " + anime.releaseEpisode + " is now available. There are " + (anime.maxEpisode-anime.releaseEpisode) +" episodes left." + nextLine, anime.releaseEpisode, item);
+                    styleOA.addMessage("Episode " + anime.releaseEpisode + " is now available. There are " + (anime.maxEpisode-anime.releaseEpisode) +" episodes left." + nextLine, anime.releaseDateMillis, item);
                 } else {
-                    styleOA.addMessage("Episode " + anime.releaseEpisode + " is now available. " + anime.maxEpisode +" will be the last." + nextLine, anime.releaseEpisode, item);
+                    styleOA.addMessage("Episode " + anime.releaseEpisode + " is now available. " + anime.maxEpisode +" will be the last." + nextLine, anime.releaseDateMillis, item);
                 }
             }
         }
@@ -321,6 +329,10 @@ public class AnimeNotificationManager {
                 .setGroup(ANIME_RELEASE_NOTIFICATION_GROUP)
                 .setGroupSummary(true)
                 .build();
+
+        notificationOA.flags |= Notification.FLAG_AUTO_CANCEL;
+        notificationMA.flags |= Notification.FLAG_AUTO_CANCEL;
+        notificationSummary.flags |= Notification.FLAG_AUTO_CANCEL;
 
         if (animeNotifications.size() > 0 || myAnimeNotifications.size() > 0) {
             if (animeNotifications.size() > 0) {

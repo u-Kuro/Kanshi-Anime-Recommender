@@ -56,10 +56,11 @@
             android:launchMode="singleTask">
         </activity>
         <receiver android:name="AnimeNotificationManager$NotificationReceiver"
-            android:exported="false">
+            android:exported="false"
+            android:enabled="true">
             <intent-filter>
-                <action android:name="android.intent.action.AIRPLANE_MODE">
-                </action>
+                <action android:name="ANIME_NOTIFICATION"/>
+                <action android:name="android.intent.action.AIRPLANE_MODE"/>
             </intent-filter>
         </receiver>
     </application>
