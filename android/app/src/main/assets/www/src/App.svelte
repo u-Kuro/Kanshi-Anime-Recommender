@@ -979,9 +979,17 @@
 		}
 	}
 
-	window.setLastNotificationSentDate = async () => {
-		$lastNotificationSent = new Date();
-		saveJSON($lastNotificationSent, "lastNotificationSent");
+	window.setLastNotificationSentDate = async (dateInMillis) => {
+		if (dateInMillis) {
+			let newNotificationSent = new Date(dateInMillis);
+			if (newNotificationSent > $lastNotificationSent) {
+				$lastNotificationSent = newNotificationSent;
+				saveJSON($lastNotificationSent, "lastNotificationSent");
+			}
+		} else {
+			$lastNotificationSent = new Date();
+			saveJSON($lastNotificationSent, "lastNotificationSent");
+		}
 	};
 	window.updateAppAlert = async () => {
 		if (

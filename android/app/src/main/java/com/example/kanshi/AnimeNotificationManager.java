@@ -9,6 +9,7 @@ import android.app.Person;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -330,7 +331,11 @@ public class AnimeNotificationManager {
 
         MainActivity mainActivity = MainActivity.getInstanceActivity();
         if (mainActivity!=null) {
-            mainActivity.setLastNotificationSentDate();
+            mainActivity.setLastNotificationSentDate(releaseDateMillis);
+        } else {
+            SharedPreferences prefs = context.getSharedPreferences("com.example.kanshi", Context.MODE_PRIVATE);
+            SharedPreferences.Editor prefsEdit = prefs.edit();
+            prefsEdit.putLong("lastNotificationSentDate", releaseDateMillis).apply();
         }
     }
     @RequiresApi(api = Build.VERSION_CODES.M)

@@ -64,7 +64,7 @@ import androidx.core.splashscreen.SplashScreen;
 
 public class MainActivity extends AppCompatActivity {
 
-    public final int appID = 66;
+    public final int appID = 67;
     public boolean webviewIsLoaded = false;
     public boolean permissionIsAsked = false;
     public SharedPreferences prefs;
@@ -87,7 +87,7 @@ public class MainActivity extends AppCompatActivity {
                     new ActivityResultCallback<>() {
                         @Override
                         public void onActivityResult(ActivityResult activityResult) {
-                            webView.post(() -> webView.loadUrl("javascript:window.updateAppAlert();"));
+                            webView.post(() -> webView.loadUrl("javascript:window?.updateAppAlert?.();"));
                         }
                     }
             );
@@ -137,7 +137,7 @@ public class MainActivity extends AppCompatActivity {
                                 exportPath = getThisPath(docUri);
                                 showToast(Toast.makeText(getApplicationContext(), "Export folder is selected, you may now use the export feature.", Toast.LENGTH_LONG));
                                 prefsEdit.putString("savedExportPath", exportPath).apply();
-                                webView.loadUrl("javascript:window.setExportPathAvailability(true)");
+                                webView.loadUrl("javascript:window?.setExportPathAvailability?.(true)");
                             } catch (Exception e) {
                                 e.printStackTrace();
                             }
@@ -227,6 +227,10 @@ public class MainActivity extends AppCompatActivity {
                 CookieManager.getInstance().acceptCookie();
                 CookieManager.getInstance().flush();
                 super.onPageFinished(view, url);
+                long lastSentNotificationDate = prefs.getLong("lastNotificationSentDate", 0);
+                if (!webviewIsLoaded && lastSentNotificationDate!=0) {
+                    setLastNotificationSentDate(lastSentNotificationDate);
+                }
                 webviewIsLoaded = true;
             }
             @Override public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
@@ -367,7 +371,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onPause() {
         super.onPause();
         webView.post(() -> webView.loadUrl("javascript:" +
-            "window.returnedAppIsVisible(false);" // Should Be Runned First
+            "window?.returnedAppIsVisible?.(false);" // Should Be Runned First
         ));
     }
 
@@ -378,8 +382,8 @@ public class MainActivity extends AppCompatActivity {
         }
         super.onResume();
         webView.post(() -> webView.loadUrl("javascript:" +
-            "window.returnedAppIsVisible(true);" + // Should Be Runned First
-            "window.checkEntries();"
+            "window?.returnedAppIsVisible?.(true);" + // Should Be Runned First
+            "window?.checkEntries?.();"
         ));
     }
 
@@ -614,9 +618,9 @@ public class MainActivity extends AppCompatActivity {
         @JavascriptInterface
         public void checkAppID(int _appID, boolean manualCheck) {
             if (_appID > appID) {
-                webView.post(() -> webView.loadUrl("javascript:window.updateAppAlert();"));
+                webView.post(() -> webView.loadUrl("javascript:window?.updateAppAlert?.();"));
             } else if (manualCheck) {
-                webView.post(() -> webView.loadUrl("javascript:window.appIsUpToDate();"));
+                webView.post(() -> webView.loadUrl("javascript:window?.appIsUpToDate?.();"));
             }
         }
         @JavascriptInterface
@@ -644,7 +648,7 @@ public class MainActivity extends AppCompatActivity {
                 })
                 .setNegativeButton("CANCEL", (dialogInterface, i) -> {
                     showToast(Toast.makeText(getApplicationContext(), "You may still manually install the update.", Toast.LENGTH_LONG));
-                    webView.post(() -> webView.loadUrl("javascript:window.updateAppAlert();"));
+                    webView.post(() -> webView.loadUrl("javascript:window?.updateAppAlert?.();"));
                 }));
             }
         }
@@ -700,9 +704,10 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    public void setLastNotificationSentDate() {
+    public void setLastNotificationSentDate(long lastNotificationDate) {
+        prefsEdit.putLong("lastNotificationSentDate", lastNotificationDate).apply();
         if (webView!=null) {
-            webView.post(() -> webView.loadUrl("javascript:window?.setLastNotificationSentDate();"));
+            webView.post(() -> webView.loadUrl("javascript:window?.setLastNotificationSentDate?.(" + lastNotificationDate + ");"));
         }
     }
 
@@ -710,7 +715,7 @@ public class MainActivity extends AppCompatActivity {
     public void onBackPressed() {
         if(webView.getUrl().startsWith("file:///android_asset/www/index.html") || webView.getUrl().startsWith("https://u-kuro.github.io/Kanshi.Anime-Recommendation")){
             if(!shouldGoBack){
-                webView.post(() -> webView.loadUrl("javascript:window.backPressed();"));
+                webView.post(() -> webView.loadUrl("javascript:window?.backPressed?.();"));
             } else {
                 moveTaskToBack(true);
             }
@@ -727,7 +732,6 @@ public class MainActivity extends AppCompatActivity {
             currentDialog.dismiss();
         }
         currentDialog = alertDialog.show();
-        webView.post(() -> webView.loadUrl("javascript:document?.querySelectorAll?.('input:focus')?.forEach(input => input?.blur?.());"));
     }
     public void showToast(Toast toast) {
         if (currentToast != null) {
