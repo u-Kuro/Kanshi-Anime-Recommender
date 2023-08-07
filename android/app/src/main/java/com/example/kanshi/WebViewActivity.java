@@ -188,6 +188,7 @@ public class WebViewActivity extends AppCompatActivity {
         }
         new Handler(Looper.getMainLooper()).postDelayed(() -> canStartNewActivity = true,1000);
     }
+
     @Override
     protected void onResume() {
         if (webviewIsLoaded) {

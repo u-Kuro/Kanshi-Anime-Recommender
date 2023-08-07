@@ -64,7 +64,7 @@ import androidx.core.splashscreen.SplashScreen;
 
 public class MainActivity extends AppCompatActivity {
 
-    public final int appID = 70;
+    public final int appID = 71;
     public boolean webviewIsLoaded = false;
     public boolean permissionIsAsked = false;
     public SharedPreferences prefs;
