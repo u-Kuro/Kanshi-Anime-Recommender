@@ -73,7 +73,7 @@ public class AnimeNotificationManager {
     private static long nearestNotificationTime = 0;
     private static AnimeNotification nearestNotificationInfo = null;
     private static final String ANIME_RELEASE_NOTIFICATION_GROUP = "anime_release_notification_group";
-    private static final int WEEK_IN_MILLIS = 1000 * 60 * 60 * 24 * 7;
+    private static final int DAY_IN_MILLIS = 1000 * 60 * 60 * 24;
 
     public static void scheduleAnimeNotification(Context context, int animeId, String title, int releaseEpisode, int maxEpisode, long releaseDateMillis, String imageUrl, boolean isMyAnime) {
         context = context.getApplicationContext();
@@ -377,8 +377,8 @@ public class AnimeNotificationManager {
         }
         HashSet<String> animeNotificationsToBeRemoved = new HashSet<>();
         for (AnimeNotification anime : allAnimeNotification.values()) {
-            // If ReleaseDate was Before 1 week ago
-            if (anime.releaseDateMillis < (System.currentTimeMillis() - WEEK_IN_MILLIS)) {
+            // If ReleaseDate was Before 1 day ago
+            if (anime.releaseDateMillis < (System.currentTimeMillis() - DAY_IN_MILLIS)) {
                 animeNotificationsToBeRemoved.add(String.valueOf(anime.animeId));
             }
         }
