@@ -7,6 +7,7 @@ import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
@@ -17,15 +18,21 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.WindowManager;
 import android.webkit.CookieManager;
+import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import androidx.activity.result.ActivityResult;
+import androidx.activity.result.ActivityResultCallback;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
@@ -36,6 +43,34 @@ public class WebViewActivity extends AppCompatActivity {
     private MediaWebView webView;
     private boolean canStartNewActivity = false;
     private boolean webviewIsLoaded = false;
+    private ValueCallback<Uri[]> mUploadMessage;
+    final ActivityResultLauncher<Intent> chooseImportFile =
+            registerForActivityResult(
+                    new ActivityResultContracts.StartActivityForResult(),
+                    new ActivityResultCallback<>() {
+                        @Override
+                        public void onActivityResult(ActivityResult activityResult) {
+                            int resultCode = activityResult.getResultCode();
+                            Intent intent = activityResult.getData();
+                            try {
+                                Uri[] result = null;
+                                if (null == mUploadMessage || resultCode != RESULT_OK) {
+                                    result = new Uri[]{Uri.parse("")};
+                                } else {
+                                    assert intent != null;
+                                    String dataString = intent.getDataString();
+                                    if (dataString != null) {
+                                        result = new Uri[]{Uri.parse(dataString)};
+                                    }
+                                }
+                                mUploadMessage.onReceiveValue(result);
+                                mUploadMessage = null;
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    }
+            );
 
     @RequiresApi(api = Build.VERSION_CODES.Q)
     @SuppressLint({"SetJavaScriptEnabled", "RestrictedApi", "ClickableViewAccessibility"})
@@ -85,6 +120,27 @@ public class WebViewActivity extends AppCompatActivity {
         ProgressBar progressbar = findViewById(R.id.progressbar);
         progressbar.setMax((int) Math.pow(10,6));
         webView.setWebChromeClient(new WebChromeClient() {
+            private View mCustomView;
+            private CustomViewCallback mCustomViewCallback;
+            private int mOriginalOrientation;
+            private int mOriginalSystemUiVisibility;
+            // Import
+            @Override
+            public boolean onShowFileChooser(WebView webView, ValueCallback<Uri[]> filePathCallback, FileChooserParams fileChooserParams) {
+                try {
+                    if (mUploadMessage != null) {
+                        mUploadMessage.onReceiveValue(null);
+                    }
+                    mUploadMessage = filePathCallback;
+                    Intent i = new Intent(Intent.ACTION_GET_CONTENT)
+                            .addCategory(Intent.CATEGORY_OPENABLE);// set MIME type to filter
+                    chooseImportFile.launch(i);
+                    return true;
+                } catch (Exception e){
+                    e.printStackTrace();
+                    return true;
+                }
+            }
             public void onProgressChanged(WebView view, int progress) {
                 int newProgress = (int) Math.pow(10,4) * progress;
                 ObjectAnimator.ofInt(progressbar, "progress", newProgress)
@@ -107,6 +163,36 @@ public class WebViewActivity extends AppCompatActivity {
                     animator.setStartDelay(300);
                     animator.start();
                 }
+            }
+            // Fullscreen
+            @Override
+            public Bitmap getDefaultVideoPoster(){
+                if (mCustomView == null) {
+                    return null;
+                }
+                return BitmapFactory.decodeResource(getApplicationContext().getResources(), 2130837573);
+            }
+            @Override
+            public void onHideCustomView() {
+                ((FrameLayout)getWindow().getDecorView()).removeView(this.mCustomView);
+                this.mCustomView = null;
+                getWindow().getDecorView().setSystemUiVisibility(this.mOriginalSystemUiVisibility);
+                setRequestedOrientation(this.mOriginalOrientation);
+                this.mCustomViewCallback.onCustomViewHidden();
+                this.mCustomViewCallback = null;
+            }
+            @Override
+            public void onShowCustomView(View paramView, CustomViewCallback paramCustomViewCallback) {
+                if (this.mCustomView != null) {
+                    onHideCustomView();
+                    return;
+                }
+                this.mCustomView = paramView;
+                this.mOriginalSystemUiVisibility = getWindow().getDecorView().getSystemUiVisibility();
+                this.mOriginalOrientation = getRequestedOrientation();
+                this.mCustomViewCallback = paramCustomViewCallback;
+                ((FrameLayout)getWindow().getDecorView()).addView(this.mCustomView, new FrameLayout.LayoutParams(-1, -1));
+                getWindow().getDecorView().setSystemUiVisibility(3846 | View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
             }
         });
         webView.setBackgroundColor(Color.BLACK);
@@ -161,7 +247,6 @@ public class WebViewActivity extends AppCompatActivity {
                 }
                 super.onPageFinished(view, url);
             }
-
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 String url = request.getUrl().toString();
