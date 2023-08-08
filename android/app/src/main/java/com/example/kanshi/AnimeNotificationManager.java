@@ -68,7 +68,7 @@ public class AnimeNotificationManager {
     private static final int NOTIFICATION_ID_BASE = 1000;
     private static final int NOTIFICATION_MY_ANIME = 999;
     private static final int NOTIFICATION_OTHER_ANIME = 998;
-    private static final String CHANNEL_ID = "anime_channel";
+    private static final String CHANNEL_ID = "anime_releases_channel";
     private static final HashMap<String, AnimeNotification> allAnimeNotification = new HashMap<>();
     private static long nearestNotificationTime = 0;
     private static AnimeNotification nearestNotificationInfo = null;
@@ -129,8 +129,8 @@ public class AnimeNotificationManager {
     private static void createNotificationChannel(Context context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             context = context.getApplicationContext();
-            CharSequence name = "Anime Channel";
-            String description = "Notifications for anime releases";
+            CharSequence name = "Anime Channel Releases";
+            String description = "Notifications for Anime Releases";
             int importance = NotificationManager.IMPORTANCE_DEFAULT;
             NotificationChannel channel = new NotificationChannel(CHANNEL_ID, name, importance);
             channel.setDescription(description);
@@ -141,6 +141,7 @@ public class AnimeNotificationManager {
     }
 
     public static class NotificationReceiver extends BroadcastReceiver {
+
 
         @RequiresApi(api = Build.VERSION_CODES.P)
         @Override
@@ -158,6 +159,7 @@ public class AnimeNotificationManager {
             }
         }
     }
+
 
     @RequiresApi(api = Build.VERSION_CODES.P)
     private static void performNotificationTask(Context context, long releaseDateMillis, HashMap<String, AnimeNotification> allAnimeNotification) {
@@ -210,6 +212,7 @@ public class AnimeNotificationManager {
         return bitmap;
     }
 
+
     @RequiresApi(api = Build.VERSION_CODES.P)
     private static void showNotification(Context context, long releaseDateMillis, HashMap<String, AnimeNotification> allAnimeNotification) {
         context = context.getApplicationContext();
@@ -227,7 +230,9 @@ public class AnimeNotificationManager {
         for (AnimeNotification anime : allAnimeNotification.values()) {
             if (anime.releaseDateMillis <= releaseDateMillis) {
                 if (anime.isMyAnime) {
-                    hasMyAnime = true;
+                    if (anime.releaseDateMillis==releaseDateMillis) {
+                        hasMyAnime = true;
+                    }
                     myAnimeNotifications.put(String.valueOf(anime.animeId), anime);
                 } else {
                     animeNotifications.put(String.valueOf(anime.animeId), anime);
@@ -241,7 +246,7 @@ public class AnimeNotificationManager {
         Notification.MessagingStyle styleMA = new Notification.MessagingStyle("")
                 .setConversationTitle(notificationTitleMA)
                 .setGroupConversation(true);
-        int totalNotifications = myAnimeNotifications.size();
+        int totalMyNotifications = myAnimeNotifications.size();
         int currentIndex = 0;
         for (AnimeNotification anime : myAnimeNotifications.values()) {
             Person.Builder itemBuilder = new Person.Builder()
@@ -255,7 +260,7 @@ public class AnimeNotificationManager {
             Person item = itemBuilder.build();
             String nextLine = "\n";
             ++currentIndex;
-            if (currentIndex >= totalNotifications) {
+            if (currentIndex >= totalMyNotifications) {
                 nextLine = "";
             }
             if (anime.maxEpisode<0) { // No Given Max Episodes
@@ -284,6 +289,7 @@ public class AnimeNotificationManager {
                 .setPriority(Notification.PRIORITY_DEFAULT)
                 .setContentIntent(pendingIntent)
                 .setGroup(ANIME_RELEASE_NOTIFICATION_GROUP)
+                .setGroupAlertBehavior(Notification.GROUP_ALERT_SUMMARY)
                 .build();
 
         // Other Anime Released
@@ -295,7 +301,7 @@ public class AnimeNotificationManager {
         Notification.MessagingStyle styleOA = new Notification.MessagingStyle("")
                 .setConversationTitle(notificationTitleOA)
                 .setGroupConversation(true);
-        totalNotifications = animeNotifications.size();
+        int totalOtherNotifications = animeNotifications.size();
         currentIndex = 0;
         for (AnimeNotification anime : animeNotifications.values()) {
             Person.Builder itemBuilder = new Person.Builder()
@@ -309,7 +315,7 @@ public class AnimeNotificationManager {
             Person item = itemBuilder.build();
             String nextLine = "\n";
             ++currentIndex;
-            if (currentIndex >= totalNotifications) {
+            if (currentIndex >= totalOtherNotifications) {
                 nextLine = "";
             }
             if (anime.maxEpisode<0) { // No Given Max Episodes
@@ -332,6 +338,7 @@ public class AnimeNotificationManager {
                 .setPriority(Notification.PRIORITY_LOW)
                 .setContentIntent(pendingIntent)
                 .setGroup(ANIME_RELEASE_NOTIFICATION_GROUP)
+                .setGroupAlertBehavior(Notification.GROUP_ALERT_SUMMARY)
                 .build();
 
         String notificationTitle = "Anime Aired";
@@ -351,8 +358,12 @@ public class AnimeNotificationManager {
 
         if (!hasMyAnime) {
             notificationSummaryBuilder
+                    .setGroupAlertBehavior(Notification.GROUP_ALERT_CHILDREN)
                     .setDefaults(Notification.DEFAULT_ALL)
                     .setVibrate(new long[]{0L});
+        } else {
+            notificationSummaryBuilder
+                    .setGroupAlertBehavior(Notification.GROUP_ALERT_SUMMARY);
         }
         Notification notificationSummary = notificationSummaryBuilder.build();
 
@@ -423,6 +434,7 @@ public class AnimeNotificationManager {
             }
         }
     }
+
     @RequiresApi(api = Build.VERSION_CODES.M)
     public static Icon createRoundIcon(Bitmap bitmap) {
         Bitmap output = Bitmap.createBitmap(bitmap.getWidth(),

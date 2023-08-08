@@ -64,7 +64,7 @@ import androidx.core.splashscreen.SplashScreen;
 
 public class MainActivity extends AppCompatActivity {
 
-    public final int appID = 75;
+    public final int appID = 76;
     public boolean webviewIsLoaded = false;
     public boolean permissionIsAsked = false;
     public SharedPreferences prefs;
@@ -148,6 +148,7 @@ public class MainActivity extends AppCompatActivity {
             registerForActivityResult(new ActivityResultContracts.RequestPermission(),
                     isGranted -> prefsEdit.putBoolean("permissionIsAsked", true).apply()
             );
+
     @RequiresApi(api = Build.VERSION_CODES.N)
     @SuppressLint({"SetJavaScriptEnabled", "WrongViewCast"})
     @Override
@@ -309,7 +310,7 @@ public class MainActivity extends AppCompatActivity {
                 getWindow().getDecorView().setSystemUiVisibility(3846 | View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
             }
             // Console Logs for Debugging
-            @RequiresApi(api = Build.VERSION_CODES.R)
+
             @Override
             public boolean onConsoleMessage(ConsoleMessage consoleMessage) {
                 String message = consoleMessage.message();
@@ -400,6 +401,7 @@ public class MainActivity extends AppCompatActivity {
         BufferedWriter writer;
         File tempFile;
         String directoryPath;
+
         @RequiresApi(api = Build.VERSION_CODES.R)
         @JavascriptInterface
         public void exportJSON(String chunk, int status, String fileName){
@@ -559,6 +561,7 @@ public class MainActivity extends AppCompatActivity {
             }
         }
         public boolean connectionChecking = false;
+
         @RequiresApi(api = Build.VERSION_CODES.N)
         @JavascriptInterface
         public void switchApp() {
@@ -600,6 +603,7 @@ public class MainActivity extends AppCompatActivity {
                         .setPositiveButton("OK", null));
             }
         }
+
         @RequiresApi(api = Build.VERSION_CODES.N)
         @JavascriptInterface
         public void isOnline(boolean isOnline) {
@@ -631,6 +635,7 @@ public class MainActivity extends AppCompatActivity {
                 webView.reload();
             });
         }
+
         @RequiresApi(api = Build.VERSION_CODES.O)
         @JavascriptInterface
         public void downloadUpdate() {
@@ -664,6 +669,7 @@ public class MainActivity extends AppCompatActivity {
         String fileUrl = "https://github.com/u-Kuro/Kanshi.Anime-Recommendation/raw/main/Kanshi.apk";
         String fileName = "Kanshi.apk";
         DownloadUtils.downloadFile(MainActivity.this, fileUrl, fileName, new DownloadUtils.DownloadCallback() {
+
             @RequiresApi(api = Build.VERSION_CODES.O)
             @Override
             public void onDownloadCompleted(String apkFilePath) {
@@ -746,6 +752,7 @@ public class MainActivity extends AppCompatActivity {
         }
         currentToast = null;
     }
+
     @RequiresApi(api = Build.VERSION_CODES.N)
     private void isAppConnectionAvailable(ConnectivityCallback callback, int timeout) {
         ConnectivityManager connectivityManager =

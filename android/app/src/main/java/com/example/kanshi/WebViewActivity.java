@@ -33,7 +33,6 @@ import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
@@ -72,7 +71,7 @@ public class WebViewActivity extends AppCompatActivity {
                     }
             );
 
-    @RequiresApi(api = Build.VERSION_CODES.Q)
+
     @SuppressLint({"SetJavaScriptEnabled", "RestrictedApi", "ClickableViewAccessibility"})
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -197,7 +196,9 @@ public class WebViewActivity extends AppCompatActivity {
         });
         webView.setBackgroundColor(Color.BLACK);
         webView.setOverScrollMode(View.OVER_SCROLL_NEVER);
-        webView.setImportantForAutofill(View.IMPORTANT_FOR_AUTOFILL_YES);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            webView.setImportantForAutofill(View.IMPORTANT_FOR_AUTOFILL_YES);
+        }
         // Set WebView Settings
         WebSettings webSettings = webView.getSettings();
         webSettings.setJavaScriptEnabled(true);
@@ -213,7 +214,9 @@ public class WebViewActivity extends AppCompatActivity {
         webSettings.setCacheMode(WebSettings.LOAD_DEFAULT);
         webSettings.setAllowUniversalAccessFromFileURLs(true);
         webSettings.setMediaPlaybackRequiresUserGesture(false);
-        webSettings.setForceDark(WebSettings.FORCE_DARK_ON);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            webSettings.setForceDark(WebSettings.FORCE_DARK_ON);
+        }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             webSettings.setOffscreenPreRaster(true);
         }
