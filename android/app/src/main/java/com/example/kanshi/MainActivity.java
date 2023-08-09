@@ -64,7 +64,7 @@ import androidx.core.splashscreen.SplashScreen;
 
 public class MainActivity extends AppCompatActivity {
 
-    public final int appID = 76;
+    public final int appID = 80;
     public boolean webviewIsLoaded = false;
     public boolean permissionIsAsked = false;
     public SharedPreferences prefs;
@@ -144,7 +144,7 @@ public class MainActivity extends AppCompatActivity {
                         }
                     }
             );
-    private final ActivityResultLauncher<String> requestPermissionLauncher =
+    private final ActivityResultLauncher<String> notificationPermission =
             registerForActivityResult(new ActivityResultContracts.RequestPermission(),
                     isGranted -> prefsEdit.putBoolean("permissionIsAsked", true).apply()
             );
@@ -333,7 +333,7 @@ public class MainActivity extends AppCompatActivity {
             if (!permissionIsAsked) {
                 if (ActivityCompat.checkSelfPermission(this, POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                        requestPermissionLauncher.launch(POST_NOTIFICATIONS);
+                        notificationPermission.launch(POST_NOTIFICATIONS);
                     }
                 }
             }
@@ -660,6 +660,20 @@ public class MainActivity extends AppCompatActivity {
         @JavascriptInterface
         public void addAnimeReleaseNotification(int animeId, String title, int releaseEpisode, int maxEpisode, long releaseDateMillis, String imageUrl, boolean isMyAnime) {
             AnimeNotificationManager.scheduleAnimeNotification(MainActivity.this, animeId, title, releaseEpisode, maxEpisode, releaseDateMillis, imageUrl, isMyAnime);
+        }
+        @RequiresApi(api = Build.VERSION_CODES.P)
+        @JavascriptInterface
+        public void showRecentReleases() {
+            String message = AnimeNotificationManager.showRecentReleases(MainActivity.this);
+            if (message==null) return;
+            if (message.equals("Require Permission for Notification.")) {
+                showToast(Toast.makeText(getApplicationContext(), message, Toast.LENGTH_LONG));
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    notificationPermission.launch(POST_NOTIFICATIONS);
+                }
+            } else {
+                showToast(Toast.makeText(getApplicationContext(), message, Toast.LENGTH_LONG));
+            }
         }
     }
 

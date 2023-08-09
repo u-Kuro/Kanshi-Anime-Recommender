@@ -223,6 +223,13 @@
         }
     }
 
+    function showRecentReleases() {
+        if (!$android) return;
+        try {
+            JSBridge.showRecentReleases();
+        } catch (e) {}
+    }
+
     function switchAppMode() {
         if (!$android) return;
         try {
@@ -410,10 +417,10 @@
             {#if $android}
                 <button
                     class="button"
-                    on:keydown={(e) => e.key === "Enter" && switchAppMode(e)}
-                    on:click={switchAppMode}
+                    on:keydown={(e) => e.key === "Enter" && showRecentReleases(e)}
+                    on:click={showRecentReleases}
                     transition:fly={{ x: 50, duration: 300 }}
-                    >Switch App Mode</button
+                    >Show Recent Releases</button
                 >
                 {#if !window.location.protocol.startsWith("file:")}
                     <button
@@ -425,6 +432,13 @@
                         >Check for Updates</button
                     >
                 {/if}
+                <button
+                    class="button"
+                    on:keydown={(e) => e.key === "Enter" && switchAppMode(e)}
+                    on:click={switchAppMode}
+                    transition:fly={{ x: 50, duration: 300 }}
+                    >Switch App Mode</button
+                >
                 <button
                     class="button"
                     on:keydown={(e) => e.key === "Enter" && refresh(e)}
