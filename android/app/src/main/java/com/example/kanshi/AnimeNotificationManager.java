@@ -22,8 +22,6 @@ import android.graphics.Rect;
 import android.graphics.drawable.Icon;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
 
 import androidx.annotation.RequiresApi;
 import androidx.core.app.ActivityCompat;
@@ -37,9 +35,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -51,19 +47,15 @@ public class AnimeNotificationManager {
         final int releaseEpisode;
         final int maxEpisode;
         final long releaseDateMillis;
-        final String imageUrl;
         final byte[] imageByte;
-        final boolean imageIsRequested;
         final boolean isMyAnime;
-        public AnimeNotification(int animeId, String title, int releaseEpisode, int maxEpisode, long releaseDateMillis, String imageUrl, boolean imageIsRequested, byte[] imageByte, boolean isMyAnime) {
+        public AnimeNotification(int animeId, String title, int releaseEpisode, int maxEpisode, long releaseDateMillis, byte[] imageByte, boolean isMyAnime) {
             this.animeId = animeId;
             this.title = title;
             this.releaseEpisode = releaseEpisode;
             this.maxEpisode = maxEpisode;
             this.releaseDateMillis = releaseDateMillis;
-            this.imageUrl = imageUrl;
             this.imageByte = imageByte;
-            this.imageIsRequested = imageIsRequested;
             this.isMyAnime = isMyAnime;
         }
     }
@@ -71,27 +63,70 @@ public class AnimeNotificationManager {
     private static final int NOTIFICATION_MY_ANIME = 999;
     private static final int NOTIFICATION_OTHER_ANIME = 998;
     private static final String CHANNEL_ID = "anime_releases_channel";
-    private static final Map<String, AnimeNotification> allAnimeNotification = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<String, AnimeNotification> allAnimeNotification = new ConcurrentHashMap<>();
     private static long nearestNotificationTime = 0;
     private static AnimeNotification nearestNotificationInfo = null;
     private static final String ANIME_RELEASE_NOTIFICATION_GROUP = "anime_release_notification_group";
     private static final int DAY_IN_MILLIS = 1000 * 60 * 60 * 24;
+    private static final ExecutorService executorService = Executors.newFixedThreadPool(10); // Adjust the pool size as needed
+    private static final ConcurrentHashMap<String, Boolean> ongoingImageDownloads = new ConcurrentHashMap<>();
 
     public static void scheduleAnimeNotification(Context context, int animeId, String title, int releaseEpisode, int maxEpisode, long releaseDateMillis, String imageUrl, boolean isMyAnime) {
         context = context.getApplicationContext();
         createNotificationChannel(context);
+        if (allAnimeNotification.size()==0) {
+            @SuppressWarnings("unchecked") ConcurrentHashMap<String, AnimeNotification> $allAnimeNotification = (ConcurrentHashMap<String, AnimeNotification>) LocalPersistence.readObjectFromFile(context, "allAnimeNotification");
+            if ($allAnimeNotification != null && $allAnimeNotification.size() > 0) {
+                allAnimeNotification.putAll($allAnimeNotification);
+            }
+        }
+        AnimeNotification checkingAnime = allAnimeNotification.get(animeId+"-"+releaseEpisode);
+        if (checkingAnime==null || checkingAnime.imageByte==null || checkingAnime.imageByte.length==0) {
+            if (ongoingImageDownloads.putIfAbsent(imageUrl, true) == null) {
+                Context finalContext = context;
+                executorService.execute(() -> {
+                    Bitmap imageBitmap = downloadImage(imageUrl);
+                    byte[] imageByte;
+                    ByteArrayOutputStream stream = new ByteArrayOutputStream();
+                    if (imageBitmap != null) {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                            imageBitmap.compress(Bitmap.CompressFormat.WEBP_LOSSY, 25, stream);
+                        } else {
+                            imageBitmap.compress(Bitmap.CompressFormat.WEBP, 25, stream);
+                        }
+                        imageByte = stream.toByteArray();
+                    } else {
+                        byte[] $imageBitmap = (byte[]) LocalPersistence.readObjectFromFile(finalContext, "notificationLogoIcon");
+                        if ($imageBitmap==null || $imageBitmap.length==0) {
+                            imageBitmap = BitmapFactory.decodeResource(finalContext.getResources(), R.drawable.ic_launcher_round);
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                                imageBitmap.compress(Bitmap.CompressFormat.WEBP_LOSSY, 25, stream);
+                            } else {
+                                imageBitmap.compress(Bitmap.CompressFormat.WEBP, 25, stream);
+                            }
+                            imageByte = stream.toByteArray();
+                            LocalPersistence.writeObjectToFile(finalContext, imageByte, "notificationLogoIcon");
+                        } else {
+                            imageByte = $imageBitmap;
+                        }
+                    }
+                    AnimeNotification anime = new AnimeNotification(animeId, title, releaseEpisode, maxEpisode, releaseDateMillis, imageByte, isMyAnime);
+                    addAnimeNotification(finalContext, anime);
+                    ongoingImageDownloads.remove(imageUrl);
+                });
+            }
+        } else {
+            AnimeNotification anime = new AnimeNotification(animeId, title, releaseEpisode, maxEpisode, releaseDateMillis, checkingAnime.imageByte, isMyAnime);
+            addAnimeNotification(context, anime);
+        }
+    }
 
+    public static void addAnimeNotification(Context context, AnimeNotification anime) {
         Intent intent = new Intent(context, NotificationReceiver.class);
-        if (nearestNotificationTime==0 || releaseDateMillis<nearestNotificationTime) {
+        if (nearestNotificationTime==0 || anime.releaseDateMillis<nearestNotificationTime) {
             if (nearestNotificationInfo!=null) {
                 Intent oldIntent = new Intent(context, NotificationReceiver.class);
                 oldIntent.setAction("ANIME_NOTIFICATION");
-                oldIntent.putExtra("animeId", nearestNotificationInfo.animeId);
-                oldIntent.putExtra("title", nearestNotificationInfo.title);
-                oldIntent.putExtra("releaseEpisode", nearestNotificationInfo.releaseEpisode);
-                oldIntent.putExtra("maxEpisode", nearestNotificationInfo.maxEpisode);
-                oldIntent.putExtra("imageUrl", nearestNotificationInfo.imageUrl);
-                oldIntent.putExtra("isMyAnime", nearestNotificationInfo.isMyAnime);
                 oldIntent.putExtra("releaseDateMillis", nearestNotificationInfo.releaseDateMillis);
                 int notificationId = nearestNotificationInfo.animeId;
                 PendingIntent oldPendingIntent = PendingIntent.getBroadcast(context, notificationId, oldIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
@@ -100,22 +135,15 @@ public class AnimeNotificationManager {
                 oldPendingIntent.cancel();
                 alarmManager.cancel(oldPendingIntent);
             }
-            nearestNotificationTime = releaseDateMillis;
-            nearestNotificationInfo = new AnimeNotification(animeId, title, releaseEpisode, maxEpisode, releaseDateMillis, imageUrl, false, null, isMyAnime);
+            nearestNotificationTime = anime.releaseDateMillis;
+            nearestNotificationInfo = anime;
             intent.setAction("ANIME_NOTIFICATION");
-            intent.putExtra("releaseDateMillis", releaseDateMillis);
+            intent.putExtra("releaseDateMillis", anime.releaseDateMillis);
         } else {
             intent.setAction("ANIME_NOTIFICATION");
             intent.putExtra("releaseDateMillis", nearestNotificationInfo.releaseDateMillis);
         }
-        if (allAnimeNotification.size()==0) {
-            @SuppressWarnings("unchecked") ConcurrentHashMap<String, AnimeNotification> $allAnimeNotification = (ConcurrentHashMap<String, AnimeNotification>) LocalPersistence.readObjectFromFile(context, "allAnimeNotification");
-            if ($allAnimeNotification != null && $allAnimeNotification.size() > 0) {
-                allAnimeNotification.putAll($allAnimeNotification);
-            }
-        }
-        AnimeNotification anime = new AnimeNotification(animeId, title, releaseEpisode, maxEpisode, releaseDateMillis, imageUrl, false, null, isMyAnime);
-        allAnimeNotification.put(String.valueOf(animeId), anime);
+        allAnimeNotification.put(anime.animeId+"-"+anime.releaseEpisode, anime);
         LocalPersistence.writeObjectToFile(context, allAnimeNotification, "allAnimeNotification");
         int notificationId = nearestNotificationInfo.animeId;
 
@@ -149,7 +177,6 @@ public class AnimeNotificationManager {
 
     public static class NotificationReceiver extends BroadcastReceiver {
 
-
         @RequiresApi(api = Build.VERSION_CODES.P)
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -164,84 +191,24 @@ public class AnimeNotificationManager {
                             allAnimeNotification.putAll($allAnimeNotification);
                         }
                     }
-                    performNotificationTask(context, releaseDateMillis);
+                    showNotification(context, releaseDateMillis);
                 }
             }
-        }
-    }
-
-
-    @RequiresApi(api = Build.VERSION_CODES.P)
-    private static void performNotificationTask(Context context, long releaseDateMillis) {
-        ExecutorService executor = Executors.newSingleThreadExecutor();
-        Handler handler = new Handler(Looper.getMainLooper());
-        Context finalContext = context.getApplicationContext();
-        CountDownLatch latch = new CountDownLatch(allAnimeNotification.size());
-        for (AnimeNotification anime : allAnimeNotification.values()) {
-            executor.execute(() -> {
-                if (anime.releaseDateMillis <= releaseDateMillis && !anime.imageIsRequested) {
-                    Bitmap imageBitmap = anime.imageUrl!=null? downloadImage(anime.imageUrl) : null;
-                    byte[] imageByte;
-                    ByteArrayOutputStream stream = new ByteArrayOutputStream();
-                    if (imageBitmap == null) {
-                        byte[] $imageBitmap = (byte[]) LocalPersistence.readObjectFromFile(finalContext, "notificationLogoIcon");
-                        if ($imageBitmap==null || $imageBitmap.length==0) {
-                            imageBitmap = BitmapFactory.decodeResource(finalContext.getResources(), R.drawable.ic_launcher_round);
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                                imageBitmap.compress(Bitmap.CompressFormat.WEBP_LOSSY, 25, stream);
-                            } else {
-                                imageBitmap.compress(Bitmap.CompressFormat.WEBP, 25, stream);
-                            }
-                            imageByte = stream.toByteArray();
-                            LocalPersistence.writeObjectToFile(finalContext, imageByte, "notificationLogoIcon");
-                        } else {
-                            imageByte = $imageBitmap;
-                        }
-                    } else {
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                            imageBitmap.compress(Bitmap.CompressFormat.WEBP_LOSSY, 25, stream);
-                        } else {
-                            imageBitmap.compress(Bitmap.CompressFormat.WEBP, 25, stream);
-                        }
-                        imageByte = stream.toByteArray();
-                    }
-                    allAnimeNotification.put(String.valueOf(anime.animeId), new AnimeNotification(anime.animeId, anime.title, anime.releaseEpisode, anime.maxEpisode, anime.releaseDateMillis, anime.imageUrl, true, imageByte, anime.isMyAnime));
-                    LocalPersistence.writeObjectToFile(finalContext, allAnimeNotification, "allAnimeNotification");
-                }
-                latch.countDown();
-            });
-        }
-        try {
-            latch.await();
-            handler.post(() -> showNotification(finalContext, releaseDateMillis));
-        } catch (InterruptedException e) {
-            long newNearestNotificationTime = 0;
-            AnimeNotification newNearestNotificationInfo = null;
-            for (AnimeNotification anime : allAnimeNotification.values()) {
-                if (anime.releaseDateMillis>releaseDateMillis) {
-                    if (anime.releaseDateMillis<newNearestNotificationTime || newNearestNotificationTime==0) {
-                        newNearestNotificationTime = anime.releaseDateMillis;
-                        newNearestNotificationInfo = anime;
-                    }
-                }
-            }
-            getNewNotification(finalContext, newNearestNotificationInfo);
         }
     }
 
     private static Bitmap downloadImage(String imageUrl) {
-        Bitmap bitmap = null;
         try {
             URL url = new URL(imageUrl);
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             connection.setDoInput(true);
             connection.connect();
             InputStream input = connection.getInputStream();
-            bitmap = BitmapFactory.decodeStream(input);
+            return BitmapFactory.decodeStream(input);
         } catch (IOException e) {
             e.printStackTrace();
+            return null;
         }
-        return bitmap;
     }
 
     @RequiresApi(api = Build.VERSION_CODES.P)
@@ -270,9 +237,23 @@ public class AnimeNotificationManager {
                     if (anime.releaseDateMillis==releaseDateMillis) {
                         hasMyAnime = true;
                     }
-                    myAnimeNotifications.put(String.valueOf(anime.animeId), anime);
+                    if (myAnimeNotifications.get(String.valueOf(anime.animeId))==null) {
+                        myAnimeNotifications.put(String.valueOf(anime.animeId), anime);
+                    } else {
+                        AnimeNotification $anime = myAnimeNotifications.get(String.valueOf(anime.animeId));
+                        if ($anime!=null && $anime.releaseDateMillis<anime.releaseDateMillis) {
+                            myAnimeNotifications.put(String.valueOf(anime.animeId), anime);
+                        }
+                    }
                 } else {
-                    animeNotifications.put(String.valueOf(anime.animeId), anime);
+                    if (animeNotifications.get(String.valueOf(anime.animeId))==null) {
+                        animeNotifications.put(String.valueOf(anime.animeId), anime);
+                    } else {
+                        AnimeNotification $anime = animeNotifications.get(String.valueOf(anime.animeId));
+                        if ($anime!=null && $anime.releaseDateMillis<anime.releaseDateMillis) {
+                            animeNotifications.put(String.valueOf(anime.animeId), anime);
+                        }
+                    }
                 }
             } else {
                 if (anime.isMyAnime) {
@@ -290,7 +271,7 @@ public class AnimeNotificationManager {
         }
         String notificationTitleMA = "Your Anime Aired";
         if (myAnimeNotifications.size() > 1) {
-            notificationTitleMA = notificationTitleMA+" "+myAnimeNotifications.size()+"+";
+            notificationTitleMA = notificationTitleMA+" +"+myAnimeNotifications.size();
         }
         Notification.MessagingStyle styleMA = new Notification.MessagingStyle("")
                 .setConversationTitle(notificationTitleMA)
@@ -352,7 +333,7 @@ public class AnimeNotificationManager {
         String notificationTitleOA = "Some Anime Aired";
 
         if (animeNotifications.size() > 1) {
-            notificationTitleOA = notificationTitleOA+" "+animeNotifications.size()+"+";
+            notificationTitleOA = notificationTitleOA+" +"+animeNotifications.size();
         }
         Notification.MessagingStyle styleOA = new Notification.MessagingStyle("")
                 .setConversationTitle(notificationTitleOA)
@@ -408,7 +389,7 @@ public class AnimeNotificationManager {
         String notificationTitle = "Anime Aired";
         int animeReleaseNotificationSize = myAnimeNotifications.size() + animeNotifications.size();
         if (animeReleaseNotificationSize > 1) {
-            notificationTitle = notificationTitle+" "+animeReleaseNotificationSize+"+";
+            notificationTitle = notificationTitle+" +"+animeReleaseNotificationSize;
         }
 
         Notification.Builder notificationSummaryBuilder = new Notification.Builder(context, CHANNEL_ID)
@@ -454,11 +435,10 @@ public class AnimeNotificationManager {
         for (AnimeNotification anime : allAnimeNotification.values()) {
             // If ReleaseDate was Before 1 day ago
             if (anime.releaseDateMillis < (System.currentTimeMillis() - DAY_IN_MILLIS)) {
-                animeNotificationsToBeRemoved.add(String.valueOf(anime.animeId));
+                animeNotificationsToBeRemoved.add(anime.animeId+"-"+anime.releaseEpisode);
             }
         }
         for (String animeKey : animeNotificationsToBeRemoved) {
-            AnimeNotificationManager.allAnimeNotification.remove(animeKey);
             allAnimeNotification.remove(animeKey);
         }
         LocalPersistence.writeObjectToFile(context, allAnimeNotification, "allAnimeNotification");
@@ -514,7 +494,7 @@ public class AnimeNotificationManager {
         }
         @SuppressWarnings("unchecked") ConcurrentHashMap<String, AnimeNotification> $allAnimeNotification = (ConcurrentHashMap<String, AnimeNotification>) LocalPersistence.readObjectFromFile(context, "allAnimeNotification");
         if ($allAnimeNotification == null || $allAnimeNotification.size() == 0) {
-            return "There is no recently released anime.";
+            return "There are no recently released anime.";
         }
 
         allAnimeNotification.putAll($allAnimeNotification);
@@ -528,7 +508,7 @@ public class AnimeNotificationManager {
             }
         }
         if (lastNotifiedTime==0) {
-            return "There is no recently released anime.";
+            return "There are no recently released anime.";
         }
 
         NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
@@ -543,12 +523,30 @@ public class AnimeNotificationManager {
 
         long newNearestOtherAnimeNotificationTime = 0;
         AnimeNotification newNearestOtherAnimeNotificationInfo = null;
+        boolean hasMyAnime = false;
         for (AnimeNotification anime : allAnimeNotification.values()) {
             if (anime.releaseDateMillis <= lastNotifiedTime) {
                 if (anime.isMyAnime) {
-                    myAnimeNotifications.put(String.valueOf(anime.animeId), anime);
+                    if (anime.releaseDateMillis==lastNotifiedTime) {
+                        hasMyAnime = true;
+                    }
+                    if (myAnimeNotifications.get(String.valueOf(anime.animeId))==null) {
+                        myAnimeNotifications.put(String.valueOf(anime.animeId), anime);
+                    } else {
+                        AnimeNotification $anime = myAnimeNotifications.get(String.valueOf(anime.animeId));
+                        if ($anime!=null && $anime.releaseDateMillis<anime.releaseDateMillis) {
+                            myAnimeNotifications.put(String.valueOf(anime.animeId), anime);
+                        }
+                    }
                 } else {
-                    animeNotifications.put(String.valueOf(anime.animeId), anime);
+                    if (animeNotifications.get(String.valueOf(anime.animeId))==null) {
+                        animeNotifications.put(String.valueOf(anime.animeId), anime);
+                    } else {
+                        AnimeNotification $anime = animeNotifications.get(String.valueOf(anime.animeId));
+                        if ($anime!=null && $anime.releaseDateMillis<anime.releaseDateMillis) {
+                            animeNotifications.put(String.valueOf(anime.animeId), anime);
+                        }
+                    }
                 }
             } else {
                 if (anime.isMyAnime) {
@@ -566,7 +564,7 @@ public class AnimeNotificationManager {
         }
         String notificationTitleMA = "Your Anime Aired";
         if (myAnimeNotifications.size() > 1) {
-            notificationTitleMA = notificationTitleMA+" "+myAnimeNotifications.size()+"+";
+            notificationTitleMA = notificationTitleMA+" +"+myAnimeNotifications.size();
         }
         Notification.MessagingStyle styleMA = new Notification.MessagingStyle("")
                 .setConversationTitle(notificationTitleMA)
@@ -628,7 +626,7 @@ public class AnimeNotificationManager {
         String notificationTitleOA = "Some Anime Aired";
 
         if (animeNotifications.size() > 1) {
-            notificationTitleOA = notificationTitleOA+" "+animeNotifications.size()+"+";
+            notificationTitleOA = notificationTitleOA+" +"+animeNotifications.size();
         }
         Notification.MessagingStyle styleOA = new Notification.MessagingStyle("")
                 .setConversationTitle(notificationTitleOA)
@@ -684,19 +682,28 @@ public class AnimeNotificationManager {
         String notificationTitle = "Anime Aired";
         int animeReleaseNotificationSize = myAnimeNotifications.size() + animeNotifications.size();
         if (animeReleaseNotificationSize > 1) {
-            notificationTitle = notificationTitle+" "+animeReleaseNotificationSize+"+";
+            notificationTitle = notificationTitle+" +"+animeReleaseNotificationSize;
         }
 
-        Notification notificationSummary = new Notification.Builder(context, CHANNEL_ID)
+        Notification.Builder notificationSummaryBuilder = new Notification.Builder(context, CHANNEL_ID)
                 .setContentTitle(notificationTitle)
                 .setSmallIcon(R.drawable.ic_stat_name)
                 .setStyle(styleOA)
                 .setPriority(Notification.PRIORITY_DEFAULT)
                 .setContentIntent(pendingIntent)
                 .setGroup(ANIME_RELEASE_NOTIFICATION_GROUP)
-                .setGroupSummary(true)
-                .setGroupAlertBehavior(Notification.GROUP_ALERT_SUMMARY)
-                .build();
+                .setGroupSummary(true);
+
+        if (!hasMyAnime) {
+            notificationSummaryBuilder
+                    .setGroupAlertBehavior(Notification.GROUP_ALERT_CHILDREN)
+                    .setDefaults(Notification.DEFAULT_ALL)
+                    .setVibrate(new long[]{0L});
+        } else {
+            notificationSummaryBuilder
+                    .setGroupAlertBehavior(Notification.GROUP_ALERT_SUMMARY);
+        }
+        Notification notificationSummary = notificationSummaryBuilder.build();
 
         if (animeNotifications.size() > 0 || myAnimeNotifications.size() > 0) {
             if (animeNotifications.size() > 0) {

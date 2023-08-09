@@ -39,7 +39,6 @@ import android.webkit.CookieManager;
 import android.webkit.JavascriptInterface;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
-import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
@@ -64,7 +63,7 @@ import androidx.core.splashscreen.SplashScreen;
 
 public class MainActivity extends AppCompatActivity {
 
-    public final int appID = 90;
+    public final int appID = 100;
     public boolean webviewIsLoaded = false;
     public boolean permissionIsAsked = false;
     public SharedPreferences prefs;
@@ -79,6 +78,7 @@ public class MainActivity extends AppCompatActivity {
     public Toast currentToast;
     public AlertDialog currentDialog;
     public static WeakReference<MainActivity> weakActivity;
+    public long lastSentNotificationDate = 0;
 
     // Activity Results
     final ActivityResultLauncher<Intent> allowApplicationUpdate =
@@ -159,6 +159,7 @@ public class MainActivity extends AppCompatActivity {
         // Saved Data
         exportPath = prefs.getString("savedExportPath", "");
         permissionIsAsked = prefs.getBoolean("permissionIsAsked", false);
+        lastSentNotificationDate = prefs.getLong("lastNotificationSentDate", 0);
         // Get Activity Reference
         weakActivity = new WeakReference<>(MainActivity.this);
         // Create WebView App Instance
@@ -228,21 +229,11 @@ public class MainActivity extends AppCompatActivity {
                 CookieManager.getInstance().acceptCookie();
                 CookieManager.getInstance().flush();
                 super.onPageFinished(view, url);
-                long lastSentNotificationDate = prefs.getLong("lastNotificationSentDate", 0);
+                lastSentNotificationDate = prefs.getLong("lastNotificationSentDate", 0);
                 if (!webviewIsLoaded && lastSentNotificationDate!=0) {
                     setLastNotificationSentDate(lastSentNotificationDate);
                 }
                 webviewIsLoaded = true;
-            }
-            @Override public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
-                super.onReceivedError(view, request, error);
-                if (webView.getUrl().startsWith("https://u-kuro.github.io/Kanshi.Anime-Recommendation") && !webviewIsLoaded){
-                    showDialog(new AlertDialog.Builder(MainActivity.this)
-                        .setTitle("Something failed to load")
-                        .setMessage("Do you want to switch to the local app?")
-                        .setPositiveButton("OK", (dialogInterface, i) -> webView.loadUrl("file:///android_asset/www/index.html"))
-                        .setNegativeButton("CANCEL", null));
-                }
             }
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
@@ -660,7 +651,9 @@ public class MainActivity extends AppCompatActivity {
         }
         @JavascriptInterface
         public void addAnimeReleaseNotification(int animeId, String title, int releaseEpisode, int maxEpisode, long releaseDateMillis, String imageUrl, boolean isMyAnime) {
-            AnimeNotificationManager.scheduleAnimeNotification(MainActivity.this, animeId, title, releaseEpisode, maxEpisode, releaseDateMillis, imageUrl, isMyAnime);
+            if (releaseDateMillis>lastSentNotificationDate) {
+                AnimeNotificationManager.scheduleAnimeNotification(MainActivity.this, animeId, title, releaseEpisode, maxEpisode, releaseDateMillis, imageUrl, isMyAnime);
+            }
         }
         @RequiresApi(api = Build.VERSION_CODES.P)
         @JavascriptInterface
@@ -748,6 +741,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void setLastNotificationSentDate(long lastNotificationDate) {
+        lastSentNotificationDate = lastNotificationDate;
         prefsEdit.putLong("lastNotificationSentDate", lastNotificationDate).apply();
         if (webView!=null) {
             webView.post(() -> webView.loadUrl("javascript:window?.setLastNotificationSentDate?.(" + lastNotificationDate + ");"));

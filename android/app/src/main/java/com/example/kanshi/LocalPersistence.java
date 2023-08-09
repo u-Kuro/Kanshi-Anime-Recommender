@@ -9,7 +9,7 @@ import android.app.Activity;
 import android.content.Context;
 
 public class LocalPersistence {
-    public synchronized static void writeObjectToFile(Context context, Object object, String filename) {
+    public static void writeObjectToFile(Context context, Object object, String filename) {
         ObjectOutputStream objectOut = null;
         try {
             FileOutputStream fileOut = context.openFileOutput(filename, Activity.MODE_PRIVATE);
@@ -26,7 +26,7 @@ public class LocalPersistence {
         }
     }
 
-    public synchronized static Object readObjectFromFile(Context context, String filename) {
+    public static Object readObjectFromFile(Context context, String filename) {
 
         ObjectInputStream objectIn = null;
         Object object = null;

@@ -207,10 +207,6 @@ const requestUserEntries = (_data) => {
         if (!get(initData)) {
             if (isExporting || get(isImporting)) {
                 userRequestIsRunning.set(false)
-                window.confirmPromise({
-                    isAlert: true,
-                    text: "Getting user entries is terminated, currently importing/exporting..."
-                })
             }
         }
         if (requestUserEntriesWorker) requestUserEntriesWorker.terminate()
