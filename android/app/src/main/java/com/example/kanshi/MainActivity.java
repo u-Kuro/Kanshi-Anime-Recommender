@@ -64,7 +64,7 @@ import androidx.core.splashscreen.SplashScreen;
 
 public class MainActivity extends AppCompatActivity {
 
-    public final int appID = 80;
+    public final int appID = 90;
     public boolean webviewIsLoaded = false;
     public boolean permissionIsAsked = false;
     public SharedPreferences prefs;
@@ -325,9 +325,10 @@ public class MainActivity extends AppCompatActivity {
             } else {
                 webView.loadUrl("file:///android_asset/www/index.html");
                 showDialog(new AlertDialog.Builder(MainActivity.this)
-                        .setTitle("Connection unreachable")
-                        .setMessage("Switched to local app and cached data.")
-                        .setPositiveButton("OK", null)
+                    .setTitle("Connection unreachable")
+                    .setMessage("Connection unreachable, do you want to reconnect indefinitely?")
+                    .setPositiveButton("OK", ((dialog, i) -> reconnectLonger()))
+                    .setNegativeButton("CANCEL",null)
                 );
             }
             if (!permissionIsAsked) {
@@ -616,7 +617,7 @@ public class MainActivity extends AppCompatActivity {
                             .setPositiveButton("OK", (dialogInterface, i) -> webView.loadUrl("https://u-kuro.github.io/Kanshi.Anime-Recommendation/"))
                             .setNegativeButton("CANCEL", null));
                     }
-                }),10000);
+                }),999999999);
             } catch (Exception ignored) {}
         }
         @JavascriptInterface
@@ -722,6 +723,28 @@ public class MainActivity extends AppCompatActivity {
                     .setNegativeButton("CANCEL", null));
             }
         });
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.N)
+    public void reconnectLonger() {
+        showToast(Toast.makeText(getApplicationContext(), "Connecting...", Toast.LENGTH_LONG));
+        isAppConnectionAvailable(isConnected -> webView.post(() -> {
+            hideToast();
+            if (isConnected) {
+                showDialog(new AlertDialog.Builder(MainActivity.this)
+                        .setTitle("Connected successfully")
+                        .setMessage("Connection established, do you want to switch to the online app?")
+                        .setPositiveButton("OK", (dialogInterface, i) -> webView.loadUrl("https://u-kuro.github.io/Kanshi.Anime-Recommendation/"))
+                        .setNegativeButton("CANCEL", null));
+            } else {
+                showDialog(new AlertDialog.Builder(MainActivity.this)
+                        .setTitle("Connection unreachable")
+                        .setMessage("Connection unreachable, do you want to connect indefinitely?")
+                        .setPositiveButton("OK", ((dialog, i) -> reconnectLonger()))
+                        .setNegativeButton("CANCEL",null)
+                );
+            }
+        }),999999999);
     }
 
     public void setLastNotificationSentDate(long lastNotificationDate) {

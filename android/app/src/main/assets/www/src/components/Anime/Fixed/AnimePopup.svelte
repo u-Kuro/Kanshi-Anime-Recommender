@@ -169,10 +169,7 @@
     async function handleMoreVideos(title) {
         let animeTitle;
         if (isJsonObject(title)) {
-            animeTitle = title?.userPreferred ||
-                title?.romaji ||
-                title?.english ||
-                title?.native;
+            animeTitle = getTitle(title);
         } else if (typeof title === "string") {
             animeTitle = title;
         }
@@ -1650,6 +1647,15 @@
             goBackPercent = 0;
         }
     }
+    function getTitle(title) {
+        return (
+            title?.english ||
+            title?.userPreferred ||
+            title?.romaji ||
+            title?.native ||
+            ""
+        );
+    }
     function handlePopupContainerCancel() {
         touchID = null;
         $popupIsGoingBack = willHandleDescription = willCloseDescRight = false;
@@ -1816,12 +1822,12 @@
                                     href={anime.animeUrl || ""}
                                     class={getCautionColor(anime) +
                                         "-color anime-title copy"}
-                                    copy-value={anime?.title?.userPreferred ||
+                                    copy-value={getTitle(anime?.title) ||
                                         ""}
                                     style:overflow={$popupIsGoingBack
                                         ? "hidden"
                                         : ""}
-                                    >{anime?.title?.userPreferred || "N/A"}</a
+                                    >{getTitle(anime?.title) || "N/A"}</a
                                 >
                                 <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                                 {#if anime?.description}

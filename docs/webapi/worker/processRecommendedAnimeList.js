@@ -1031,11 +1031,11 @@ self.onmessage = async ({ data }) => {
                 (result, e) => Object.assign(result, { [formatCustomString(e?.name)]: e?.siteUrl }),
                 {}
             );
-            staffs = staffs.reduce((result, e) =>
-                Object.assign(result, {
-                    [e?.node?.name?.userPreferred]: e?.node?.siteUrl,
-                }),
-                {});
+            // staffs = staffs.reduce((result, e) =>
+            //     Object.assign(result, {
+            //         [e?.node?.name?.userPreferred]: e?.node?.siteUrl,
+            //     }),
+            //     {});
             if (!isJsonObject(anime?.nextAiringEpisode) && year) {
                 let { month, day } = anime?.startDate || {}
                 let possibleAiringDate = getJapaneseStartDate({ season, year, month, day })
@@ -1046,9 +1046,9 @@ self.onmessage = async ({ data }) => {
                     }
                 }
             } else if (isJsonObject(anime?.nextAiringEpisode)) {
-                let _title = anime?.title?.userPreferred ||
+                let _title = anime?.title?.english ||
+                    anime?.title?.userPreferred ||
                     anime?.title?.romaji ||
-                    anime?.title?.english ||
                     anime?.title?.native;
                 let _releaseEpisode = anime?.nextAiringEpisode?.episode;
                 let _releaseDateMillis = anime?.nextAiringEpisode?.airingAt * 1000
@@ -1091,7 +1091,7 @@ self.onmessage = async ({ data }) => {
                 season: formatCustomString(season),
                 format: formatCustomString(format),
                 studios: studios,
-                staffs: staffs,
+                // staffs: staffs,
                 episodes: episodes,
                 duration: duration,
                 coverImageUrl: anime?.coverImage?.large,
@@ -1340,11 +1340,11 @@ self.onmessage = async ({ data }) => {
             studios = studios.reduce((result, e) =>
                 Object.assign(result, { [formatCustomString(e?.name)]: e?.siteUrl })
                 , {});
-            staffs = staffs.reduce((result, e) =>
-                Object.assign(result, {
-                    [e?.node?.name?.userPreferred]: e?.node?.siteUrl,
-                })
-                , {});
+            // staffs = staffs.reduce((result, e) =>
+            //     Object.assign(result, {
+            //         [e?.node?.name?.userPreferred]: e?.node?.siteUrl,
+            //     })
+            //     , {});
             if (!isJsonObject(anime?.nextAiringEpisode) && year) {
                 let { month, day } = anime?.startDate || {}
                 let possibleAiringDate = getJapaneseStartDate({ season, year, month, day })
@@ -1355,9 +1355,9 @@ self.onmessage = async ({ data }) => {
                     }
                 }
             } else if (isJsonObject(anime?.nextAiringEpisode)) {
-                let _title = anime?.title?.userPreferred ||
+                let _title = anime?.title?.english ||
+                    anime?.title?.userPreferred ||
                     anime?.title?.romaji ||
-                    anime?.title?.english ||
                     anime?.title?.native;
                 let _releaseEpisode = anime?.nextAiringEpisode?.episode;
                 let _releaseDateMillis = anime?.nextAiringEpisode?.airingAt * 1000
@@ -1393,7 +1393,7 @@ self.onmessage = async ({ data }) => {
                 season: formatCustomString(season),
                 format: formatCustomString(format),
                 studios: studios,
-                staffs: staffs,
+                // staffs: staffs,
                 episodes: episodes,
                 duration: duration,
                 coverImageUrl: anime?.coverImage?.large,

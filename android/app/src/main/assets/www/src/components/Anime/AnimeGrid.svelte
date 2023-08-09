@@ -407,6 +407,15 @@
             inline: "start",
         });
     }
+    function getTitle(title) {
+        return (
+            title?.english ||
+            title?.userPreferred ||
+            title?.romaji ||
+            title?.native ||
+            ""
+        );
+    }
 
     $: gridHeight = (
         $activeTagFilters?.[
@@ -466,12 +475,12 @@
                         <span class="image-grid__card-title">
                             <span
                                 class="title copy"
-                                copy-value={anime?.title?.userPreferred || ""}
-                                >{anime?.title?.userPreferred || "N/A"}</span
+                                copy-value={getTitle(anime?.title) || ""}
+                                >{getTitle(anime?.title) || "N/A"}</span
                             >
                             <span
                                 class="brief-info-wrapper copy"
-                                copy-value={anime?.title?.userPreferred || ""}
+                                copy-value={getTitle(anime?.title) || ""}
                             >
                                 <div
                                     class="brief-info"
