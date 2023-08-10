@@ -14,13 +14,16 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.WindowManager;
+import android.webkit.ConsoleMessage;
 import android.webkit.CookieManager;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
+import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -33,15 +36,15 @@ import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
 public class WebViewActivity extends AppCompatActivity {
-    private final Handler scrollHandler = new Handler();
     private TextView webTitle;
     private MediaWebView webView;
     private boolean canStartNewActivity = false;
-    private boolean webviewIsLoaded = false;
+    private boolean webViewIsLoaded = false;
     private ValueCallback<Uri[]> mUploadMessage;
     final ActivityResultLauncher<Intent> chooseImportFile =
             registerForActivityResult(
@@ -146,17 +149,7 @@ public class WebViewActivity extends AppCompatActivity {
                     .setDuration(300)
                     .start();
                 if (progress==100) {
-                    String url = view.getUrl();
-                    if (webView.scrollPositionsX.containsKey(url) && webView.scrollPositionsY.containsKey(url)) {
-                        try {
-                            @SuppressWarnings("ConstantConditions") int scrollPositionX = webView.scrollPositionsX.get(url);
-                            @SuppressWarnings("ConstantConditions") int scrollPositionY = webView.scrollPositionsY.get(url);
-                            scrollHandler.postDelayed(() -> {
-                                webView.setScrollX(scrollPositionX);
-                                webView.setScrollY(scrollPositionY);
-                            }, 1000);
-                        } catch (Exception ignored) {}
-                    }
+                    initAnchor(view);
                     ObjectAnimator animator = ObjectAnimator.ofInt(progressbar, "progress", 0);
                     animator.setDuration(0);
                     animator.setStartDelay(300);
@@ -192,6 +185,12 @@ public class WebViewActivity extends AppCompatActivity {
                 this.mCustomViewCallback = paramCustomViewCallback;
                 ((FrameLayout)getWindow().getDecorView()).addView(this.mCustomView, new FrameLayout.LayoutParams(-1, -1));
                 getWindow().getDecorView().setSystemUiVisibility(3846 | View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
+            }
+            @Override
+            public boolean onConsoleMessage(ConsoleMessage consoleMessage) {
+                String message = consoleMessage.message();
+                Log.d("WebConsole",message);
+                return true;
             }
         });
         webView.setBackgroundColor(Color.BLACK);
@@ -233,22 +232,34 @@ public class WebViewActivity extends AppCompatActivity {
         webView.setWebViewClient(new WebViewClient(){
             @Override
             public void onPageStarted(WebView view, String url, Bitmap favicon) {
-                webviewIsLoaded = false;
+                webViewIsLoaded = false;
                 super.onPageStarted(view, url, favicon);
             }
             @Override
             public void onPageFinished(WebView view, String url) {
+                initAnchor(view);
                 CookieManager cookieManager = CookieManager.getInstance();
                 cookieManager.setAcceptCookie(true);
                 cookieManager.setAcceptThirdPartyCookies(webView,true);
                 CookieManager.getInstance().acceptCookie();
                 CookieManager.getInstance().flush();
 
-                if (!webviewIsLoaded) {
-                    webviewIsLoaded = true;
+                if (!webViewIsLoaded) {
+                    webViewIsLoaded = true;
                     webTitle.setText(view.getTitle());
                 }
                 super.onPageFinished(view, url);
+            }
+            @Nullable
+            @Override
+            public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
+                initAnchor(view);
+                return super.shouldInterceptRequest(view, request);
+            }
+            @Override
+            public void doUpdateVisitedHistory(WebView view, String url, boolean isReload) {
+                initAnchor(view);
+                super.doUpdateVisitedHistory(view, url, isReload);
             }
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
@@ -279,7 +290,7 @@ public class WebViewActivity extends AppCompatActivity {
 
     @Override
     protected void onResume() {
-        if (webviewIsLoaded) {
+        if (webViewIsLoaded) {
             overridePendingTransition(R.anim.left_to_center, R.anim.center_to_right);
         }
         webView.onResume();
@@ -308,7 +319,11 @@ public class WebViewActivity extends AppCompatActivity {
             webView.goBack();
         } else {
             super.onBackPressed();
-            finish();
         }
+    }
+
+    public void initAnchor(WebView view) {
+        String javascript = "javascript:(()=>{if(!window.KanshiAnimeRecommendationAttributesAdded){window.KanshiAnimeRecommendationAttributesAdded=!0;for(var e=document.querySelectorAll(\"a\"),n=0;n<e.length;n++)e[n].setAttribute(\"rel\",\"noopener noreferrer\"),e[n].setAttribute(\"target\",\"_blank\")}window.KanshiAnimeRecommendationObserver instanceof MutationObserver||(window.KanshiAnimeRecommendationObserver=new MutationObserver(e=>{e.forEach(function(e){if(e.addedNodes)for(var n=0;n<e.addedNodes.length;n++){var o=e.addedNodes[n];\"A\"===o.nodeName&&(o.setAttribute(\"rel\",\"noopener noreferrer\"),o.setAttribute(\"target\",\"_blank\"))}})})),!window.KanshiAnimeRecommendationObserverObserved&&window.KanshiAnimeRecommendationObserver instanceof MutationObserver&&document.body instanceof Node&&(window.KanshiAnimeRecommendationObserver.observe(document.body,{childList:!0,subtree:!0}),window.KanshiAnimeRecommendationObserverObserved=!0)})();";
+        view.post(() -> view.loadUrl(javascript));
     }
 }
