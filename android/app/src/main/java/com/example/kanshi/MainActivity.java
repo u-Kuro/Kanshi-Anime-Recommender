@@ -63,8 +63,8 @@ import androidx.core.splashscreen.SplashScreen;
 
 public class MainActivity extends AppCompatActivity {
 
-    public final int appID = 101;
-    public boolean webviewIsLoaded = false;
+    public final int appID = 105;
+    public boolean webViewIsLoaded = false;
     public boolean permissionIsAsked = false;
     public SharedPreferences prefs;
     private SharedPreferences.Editor prefsEdit;
@@ -165,7 +165,7 @@ public class MainActivity extends AppCompatActivity {
         // Create WebView App Instance
 
         SplashScreen splashScreen = SplashScreen.installSplashScreen(this);
-        splashScreen.setKeepOnScreenCondition(() -> !webviewIsLoaded);
+        splashScreen.setKeepOnScreenCondition(() -> !webViewIsLoaded);
         // Show status bar
         getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
         getWindow().getDecorView().setBackgroundColor(Color.BLACK);
@@ -213,13 +213,13 @@ public class MainActivity extends AppCompatActivity {
                 WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
                 WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED);
         webView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
-        // Add Bridge to Webview
+        // Add Bridge to WebView
         webView.addJavascriptInterface(new JSBridge(),"JSBridge");
         webView.setWebViewClient(new WebViewClient(){
             @Override
             public void onPageStarted(WebView view, String url, Bitmap favicon) {
                 super.onPageStarted(view, url, favicon);
-                webviewIsLoaded = false;
+                webViewIsLoaded = false;
             }
             @Override
             public void onPageFinished(WebView view, String url) {
@@ -230,10 +230,10 @@ public class MainActivity extends AppCompatActivity {
                 CookieManager.getInstance().flush();
                 super.onPageFinished(view, url);
                 lastSentNotificationDate = prefs.getLong("lastNotificationSentDate", 0);
-                if (!webviewIsLoaded && lastSentNotificationDate!=0) {
+                if (!webViewIsLoaded && lastSentNotificationDate!=0) {
                     setLastNotificationSentDate(lastSentNotificationDate);
                 }
-                webviewIsLoaded = true;
+                webViewIsLoaded = true;
             }
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
@@ -370,7 +370,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onResume() {
-        if (webviewIsLoaded) {
+        if (webViewIsLoaded) {
             overridePendingTransition(R.anim.left_to_center, R.anim.center_to_right);
         }
         super.onResume();
@@ -660,7 +660,7 @@ public class MainActivity extends AppCompatActivity {
         public void showRecentReleases() {
             String message = AnimeNotificationManager.showRecentReleases(MainActivity.this);
             if (message==null) return;
-            if (message.equals("Require Permission for Notification.")) {
+            if (message.equals("Requires Permission for Notification.")) {
                 showToast(Toast.makeText(getApplicationContext(), message, Toast.LENGTH_LONG));
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                     notificationPermission.launch(POST_NOTIFICATIONS);
