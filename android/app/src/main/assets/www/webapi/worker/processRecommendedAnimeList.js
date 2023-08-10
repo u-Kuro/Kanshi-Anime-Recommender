@@ -1045,25 +1045,6 @@ self.onmessage = async ({ data }) => {
                         episode: 1
                     }
                 }
-            } else if (isJsonObject(anime?.nextAiringEpisode)) {
-                let _title = anime?.title?.english ||
-                    anime?.title?.userPreferred ||
-                    anime?.title?.romaji ||
-                    anime?.title?.native;
-                let _releaseEpisode = anime?.nextAiringEpisode?.episode;
-                let _releaseDateMillis = anime?.nextAiringEpisode?.airingAt * 1000
-                let _imageURL = anime?.coverImage?.large || ""
-                self.postMessage({
-                    animeReleaseNotification: {
-                        id: animeID,
-                        title: _title,
-                        releaseEpisodes: _releaseEpisode,
-                        maxEpisode: episodes >= 0 ? episodes : -1,
-                        releaseDateMillis: _releaseDateMillis,
-                        imageURL: _imageURL,
-                        isMyAnime: userStatus !== "UNWATCHED"
-                    }
-                })
             }
             // Sort all Top Similarities
             let favoriteContents = {
@@ -1129,6 +1110,28 @@ self.onmessage = async ({ data }) => {
             }
             if (!anime.score || !isFinite(anime.score)) {
                 anime.score = 1;
+            }
+            if (isJsonObject(anime?.nextAiringEpisode)) {
+                let _title = anime?.title?.english ||
+                    anime?.title?.userPreferred ||
+                    anime?.title?.romaji ||
+                    anime?.title?.native;
+                let _releaseEpisode = anime?.nextAiringEpisode?.episode;
+                let _releaseDateMillis = anime?.nextAiringEpisode?.airingAt * 1000
+                let _imageURL = anime?.coverImageUrl || ""
+                if (!equalsNCS(anime.userStatus, "DROPPED") && (!equalsNCS(anime.userStatus, "UNWATCHED") || anime.weightedScore > 1)) {
+                    self.postMessage({
+                        animeReleaseNotification: {
+                            id: anime.id,
+                            title: _title,
+                            releaseEpisodes: _releaseEpisode,
+                            maxEpisode: anime.episodes >= 0 ? anime.episodes : -1,
+                            releaseDateMillis: _releaseDateMillis,
+                            imageURL: _imageURL,
+                            isMyAnime: anime.userStatus !== "UNWATCHED"
+                        }
+                    })
+                }
             }
             return anime
         })
@@ -1362,17 +1365,19 @@ self.onmessage = async ({ data }) => {
                 let _releaseEpisode = anime?.nextAiringEpisode?.episode;
                 let _releaseDateMillis = anime?.nextAiringEpisode?.airingAt * 1000
                 let _imageURL = anime?.coverImage?.large || ""
-                self.postMessage({
-                    animeReleaseNotification: {
-                        id: animeID,
-                        title: _title,
-                        releaseEpisodes: _releaseEpisode,
-                        maxEpisode: episodes >= 0 ? episodes : -1,
-                        releaseDateMillis: _releaseDateMillis,
-                        imageURL: _imageURL,
-                        isMyAnime: false
-                    }
-                })
+                if (!isaN(popularity) || popularity >= popularityMode) {
+                    self.postMessage({
+                        animeReleaseNotification: {
+                            id: animeID,
+                            title: _title,
+                            releaseEpisodes: _releaseEpisode,
+                            maxEpisode: episodes >= 0 ? episodes : -1,
+                            releaseDateMillis: _releaseDateMillis,
+                            imageURL: _imageURL,
+                            isMyAnime: false
+                        }
+                    })
+                }
             }
             recommendedAnimeList[animeID] = {
                 id: animeID,
