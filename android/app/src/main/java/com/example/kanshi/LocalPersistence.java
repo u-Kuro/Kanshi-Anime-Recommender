@@ -1,4 +1,5 @@
 package com.example.kanshi;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -12,10 +13,17 @@ public class LocalPersistence {
     public static void writeObjectToFile(Context context, Object object, String filename) {
         ObjectOutputStream objectOut = null;
         try {
-            FileOutputStream fileOut = context.openFileOutput(filename, Activity.MODE_PRIVATE);
+            FileOutputStream fileOut = context.openFileOutput(filename + ".tmp", Activity.MODE_PRIVATE);
             objectOut = new ObjectOutputStream(fileOut);
             objectOut.writeObject(object);
             fileOut.getFD().sync();
+            fileOut.close();
+            File tempFile = new File(context.getFilesDir(), filename + ".tmp");
+            File finalFile = new File(context.getFilesDir(), filename);
+            if (!tempFile.renameTo(finalFile) && tempFile.exists()) {
+                //noinspection ResultOfMethodCallIgnored
+                tempFile.delete();
+            }
         } catch (IOException ignored) {
         } finally {
             if (objectOut != null) {
@@ -26,12 +34,11 @@ public class LocalPersistence {
         }
     }
 
-    public static Object readObjectFromFile(Context context, String filename) {
 
+    public static Object readObjectFromFile(Context context, String filename) {
         ObjectInputStream objectIn = null;
         Object object = null;
         try {
-
             FileInputStream fileIn = context.getApplicationContext().openFileInput(filename);
             objectIn = new ObjectInputStream(fileIn);
             object = objectIn.readObject();
@@ -45,5 +52,4 @@ public class LocalPersistence {
         }
         return object;
     }
-
 }

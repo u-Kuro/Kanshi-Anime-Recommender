@@ -63,7 +63,7 @@ import androidx.core.splashscreen.SplashScreen;
 
 public class MainActivity extends AppCompatActivity {
 
-    public final int appID = 107;
+    public final int appID = 110;
     public boolean webViewIsLoaded = false;
     public boolean permissionIsAsked = false;
     public SharedPreferences prefs;
@@ -658,15 +658,12 @@ public class MainActivity extends AppCompatActivity {
         @RequiresApi(api = Build.VERSION_CODES.P)
         @JavascriptInterface
         public void showRecentReleases() {
-            String message = AnimeNotificationManager.showRecentReleases(MainActivity.this);
-            if (message==null) return;
-            if (message.equals("Requires Permission for Notification.")) {
-                showToast(Toast.makeText(getApplicationContext(), message, Toast.LENGTH_LONG));
+            boolean success = AnimeNotificationManager.showRecentReleases(MainActivity.this);
+            if (!success) {
+                showToast(Toast.makeText(getApplicationContext(), "Requires Permission for Notification.", Toast.LENGTH_LONG));
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                     notificationPermission.launch(POST_NOTIFICATIONS);
                 }
-            } else {
-                showToast(Toast.makeText(getApplicationContext(), message, Toast.LENGTH_LONG));
             }
         }
     }
