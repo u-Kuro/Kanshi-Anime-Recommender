@@ -1046,12 +1046,6 @@ self.onmessage = async ({ data }) => {
                     }
                 }
             }
-            // Sort all Top Similarities
-            let favoriteContents = {
-                genres: genresIncluded,
-                tags: tagsIncluded,
-                studios: studiosIncluded
-            }
             // Add To Processed Recommendation List
             recommendedAnimeList[animeID] = {
                 id: animeID,
@@ -1061,7 +1055,6 @@ self.onmessage = async ({ data }) => {
                 averageScore: averageScore,
                 popularity: popularity,
                 score: score,
-                favoriteContents: favoriteContents,
                 userStatus: formatCustomString(userStatus),
                 status: formatCustomString(status),
                 // Others
@@ -1112,9 +1105,9 @@ self.onmessage = async ({ data }) => {
                 anime.score = 1;
             }
             if (isJsonObject(anime?.nextAiringEpisode)) {
-                let _title = anime?.title?.english ||
+                let _title = anime?.title?.romaji ||
                     anime?.title?.userPreferred ||
-                    anime?.title?.romaji ||
+                    anime?.title?.english ||
                     anime?.title?.native;
                 let _releaseEpisode = anime?.nextAiringEpisode?.episode;
                 let _releaseDateMillis = anime?.nextAiringEpisode?.airingAt * 1000
@@ -1358,9 +1351,9 @@ self.onmessage = async ({ data }) => {
                     }
                 }
             } else if (isJsonObject(anime?.nextAiringEpisode)) {
-                let _title = anime?.title?.english ||
+                let _title = anime?.title?.romaji ||
                     anime?.title?.userPreferred ||
-                    anime?.title?.romaji ||
+                    anime?.title?.english ||
                     anime?.title?.native;
                 let _releaseEpisode = anime?.nextAiringEpisode?.episode;
                 let _releaseDateMillis = anime?.nextAiringEpisode?.airingAt * 1000
@@ -1387,7 +1380,6 @@ self.onmessage = async ({ data }) => {
                 averageScore: averageScore,
                 popularity: popularity,
                 score: score,
-                favoriteContents: {},
                 userStatus: "UNWATCHED",
                 status: formatCustomString(status),
                 // Others

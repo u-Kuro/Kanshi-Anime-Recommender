@@ -110,9 +110,9 @@ public class WebViewActivity extends AppCompatActivity {
             return true;
         });
 
-        ImageView dropdownMenu = findViewById(R.id.launchURL);
+        ImageView launchUrl = findViewById(R.id.launchURL);
 
-        dropdownMenu.setOnClickListener(v -> {
+        launchUrl.setOnClickListener(v -> {
             Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(webView.getUrl()));
             startActivity(intent);
         });
@@ -212,7 +212,7 @@ public class WebViewActivity extends AppCompatActivity {
         webSettings.setBlockNetworkLoads(false);
         webSettings.setCacheMode(WebSettings.LOAD_DEFAULT);
         webSettings.setAllowUniversalAccessFromFileURLs(true);
-        webSettings.setMediaPlaybackRequiresUserGesture(false);
+        webSettings.setMediaPlaybackRequiresUserGesture(true);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             webSettings.setForceDark(WebSettings.FORCE_DARK_ON);
         }
@@ -237,13 +237,13 @@ public class WebViewActivity extends AppCompatActivity {
             }
             @Override
             public void onPageFinished(WebView view, String url) {
+                unMuteVideo(view);
                 initAnchor(view);
                 CookieManager cookieManager = CookieManager.getInstance();
                 cookieManager.setAcceptCookie(true);
                 cookieManager.setAcceptThirdPartyCookies(webView,true);
                 CookieManager.getInstance().acceptCookie();
                 CookieManager.getInstance().flush();
-
                 if (!webViewIsLoaded) {
                     webViewIsLoaded = true;
                     webTitle.setText(view.getTitle());
@@ -300,6 +300,7 @@ public class WebViewActivity extends AppCompatActivity {
 
     @Override
     protected void onPause() {
+        autoPlayVideo(webView);
         webView.onPause();
         webView.pauseTimers();
         super.onPause();
@@ -309,6 +310,7 @@ public class WebViewActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == android.R.id.home) {
             super.onBackPressed();
+            finish();
             return true;
         }
         return super.onOptionsItemSelected(item);
@@ -319,11 +321,20 @@ public class WebViewActivity extends AppCompatActivity {
             webView.goBack();
         } else {
             super.onBackPressed();
+            finish();
         }
     }
 
     public void initAnchor(WebView view) {
-        String javascript = "javascript:(()=>{if(!window.KanshiAnimeRecommendationAttributesAdded){window.KanshiAnimeRecommendationAttributesAdded=!0;for(var e=document.querySelectorAll(\"a\"),n=0;n<e.length;n++)e[n].setAttribute(\"rel\",\"noopener noreferrer\"),e[n].setAttribute(\"target\",\"_blank\")}window.KanshiAnimeRecommendationObserver instanceof MutationObserver||(window.KanshiAnimeRecommendationObserver=new MutationObserver(e=>{e.forEach(function(e){if(e.addedNodes)for(var n=0;n<e.addedNodes.length;n++){var o=e.addedNodes[n];\"A\"===o.nodeName&&(o.setAttribute(\"rel\",\"noopener noreferrer\"),o.setAttribute(\"target\",\"_blank\"))}})})),!window.KanshiAnimeRecommendationObserverObserved&&window.KanshiAnimeRecommendationObserver instanceof MutationObserver&&document.body instanceof Node&&(window.KanshiAnimeRecommendationObserver.observe(document.body,{childList:!0,subtree:!0}),window.KanshiAnimeRecommendationObserverObserved=!0)})();";
+        String javascript = "javascript:(()=>{if(!window.KanshiAnimeRecommendationAttributesAdded){window.KanshiAnimeRecommendationAttributesAdded=!0;for(var e=document.querySelectorAll('a'),n=0;n<e.length;n++)e[n].setAttribute('rel','noopener noreferrer'),e[n].setAttribute('target','_blank')}window.KanshiAnimeRecommendationObserver instanceof MutationObserver||(window.KanshiAnimeRecommendationObserver=new MutationObserver(e=>{e.forEach(function(e){if(e.addedNodes)for(var n=0;n<e.addedNodes.length;n++){var o=e.addedNodes[n];'A'===o.nodeName&&(o.setAttribute('rel','noopener noreferrer'),o.setAttribute('target','_blank'))}})})),!window.KanshiAnimeRecommendationObserverObserved&&window.KanshiAnimeRecommendationObserver instanceof MutationObserver&&document.body instanceof Node&&(window.KanshiAnimeRecommendationObserver.observe(document.body,{childList:!0,subtree:!0}),window.KanshiAnimeRecommendationObserverObserved=!0)})();";
+        view.post(() -> view.loadUrl(javascript));
+    }
+    public void autoPlayVideo(WebView view) {
+        String javascript = "javascript:(()=>{const e=document?.querySelector?.('video.html5-main-video');e instanceof Element&&!0!==e.autoplay&&(e.autoplay=!0)})();";
+        view.post(() -> view.loadUrl(javascript));
+    }
+    public void unMuteVideo(WebView view) {
+        String javascript = "javascript:(()=>{document?.querySelector?.('button.ytp-unmute')?.click?.()})();";
         view.post(() -> view.loadUrl(javascript));
     }
 }

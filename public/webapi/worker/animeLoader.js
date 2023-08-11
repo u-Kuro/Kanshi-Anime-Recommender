@@ -118,8 +118,7 @@ self.onmessage = async ({ data }) => {
             hiddenList = false,
             hideWatched = false,
             showMyAnime = false,
-            showAiring = false,
-            favoriteContentsLimit = 5;
+            showAiring = false;
         activeTagFilters?.['Anime Filter']?.forEach(({ selected, filterType, optionName, optionType, optionValue, CMPoperator, CMPNumber }) => {
             if (selected === "included") {
                 if (filterType === 'dropdown') {
@@ -180,8 +179,6 @@ self.onmessage = async ({ data }) => {
                             operator: CMPoperator,
                             value: parseFloat(CMPNumber ?? optionValue)
                         }
-                    } else if (optionName.toLowerCase() === "limit favourites") {
-                        favoriteContentsLimit = parseFloat(optionValue)
                     }
                 }
             } else if (selected === 'excluded') {
@@ -557,20 +554,6 @@ self.onmessage = async ({ data }) => {
                     anime.contentCaution.semiCaution.push(tagName)
                 }
             })
-            // Limit Favorite Contents
-            if (isJsonObject(anime.favoriteContents) && !jsonIsEmpty(anime.favoriteContents)) {
-                let sortedFavoriteContents = Object.entries(anime.favoriteContents.genres)
-                    .concat(Object.entries(anime.favoriteContents.tags))
-                    .concat(Object.entries(anime.favoriteContents.studios))
-                    .sort((a, b) => {
-                        return b[1] - a[1]
-                    })
-                    .map(([k, v]) => `${k}: (${formatNumber(v)})`)
-                anime.sortedFavoriteContents = sortedFavoriteContents?.slice?.(0, favoriteContentsLimit) || []
-            } else {
-                anime.sortedFavoriteContents = []
-            }
-
             return true;
         });
         recommendedAnimeList = null

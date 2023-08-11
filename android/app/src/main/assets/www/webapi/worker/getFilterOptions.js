@@ -4440,13 +4440,6 @@ self.onmessage = async ({ data }) => {
                         maxValue: Infinity,
                         minValue: 0,
                         numberValue: ""
-                    },
-                    {
-                        filName: "limit favourites",
-                        defaultValue: 5,
-                        maxValue: Infinity,
-                        minValue: 0,
-                        numberValue: ""
                     }
                 ]
             } else if (filterSelectionName === "Content Caution") {
