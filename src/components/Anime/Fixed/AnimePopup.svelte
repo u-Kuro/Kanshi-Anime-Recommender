@@ -169,7 +169,10 @@
     async function handleMoreVideos(title) {
         let animeTitle;
         if (isJsonObject(title)) {
-            animeTitle = getTitle(title);
+            animeTitle = anime?.title?.romaji ||
+                anime?.title?.userPreferred ||
+                anime?.title?.english || 
+                anime?.title?.native;
         } else if (typeof title === "string") {
             animeTitle = title;
         }

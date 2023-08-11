@@ -1105,9 +1105,9 @@ self.onmessage = async ({ data }) => {
                 anime.score = 1;
             }
             if (isJsonObject(anime?.nextAiringEpisode)) {
-                let _title = anime?.title?.romaji ||
+                let _title = anime?.title?.english ||
                     anime?.title?.userPreferred ||
-                    anime?.title?.english ||
+                    anime?.title?.romaji ||
                     anime?.title?.native;
                 let _releaseEpisode = anime?.nextAiringEpisode?.episode;
                 let _releaseDateMillis = anime?.nextAiringEpisode?.airingAt * 1000
@@ -1351,9 +1351,9 @@ self.onmessage = async ({ data }) => {
                     }
                 }
             } else if (isJsonObject(anime?.nextAiringEpisode)) {
-                let _title = anime?.title?.romaji ||
+                let _title = anime?.title?.english ||
                     anime?.title?.userPreferred ||
-                    anime?.title?.english ||
+                    anime?.title?.romaji ||
                     anime?.title?.native;
                 let _releaseEpisode = anime?.nextAiringEpisode?.episode;
                 let _releaseDateMillis = anime?.nextAiringEpisode?.airingAt * 1000
