@@ -14,8 +14,7 @@ import {
     userRequestIsRunning,
     isImporting,
     progress,
-    android,
-    lastNotificationSent
+    android
 } from "./globalValues";
 import { get } from "svelte/store";
 import { downloadLink, isJsonObject } from "../js/others/helper.js"
@@ -114,8 +113,7 @@ const processRecommendedAnimeList = (_data = {}) => {
                             try {
                                 let aniReleaseNotif = data?.animeReleaseNotification
                                 if (
-                                    aniReleaseNotif?.releaseDateMillis > (get(lastNotificationSent)?.getTime?.() || new Date().getTime())
-                                    && typeof aniReleaseNotif?.releaseEpisodes === "number"
+                                    typeof aniReleaseNotif?.releaseEpisodes === "number"
                                     && typeof aniReleaseNotif?.releaseDateMillis === "number"
                                     && typeof aniReleaseNotif?.maxEpisode === "number"
                                     && typeof aniReleaseNotif?.title === "string"

@@ -48,7 +48,6 @@
 		numberOfNextLoadedGrid,
 		progress,
 		popupIsGoingBack,
-		lastNotificationSent,
 		// anilistAccessToken,
 	} from "./js/globalValues.js";
 	import {
@@ -278,12 +277,6 @@
 				);
 				$autoUpdate = (await retrieveJSON("autoUpdate")) ?? false;
 				$autoExport = (await retrieveJSON("autoExport")) ?? false;
-				if ($android) {
-					$lastNotificationSent =
-						(await retrieveJSON("lastNotificationSent")) ??
-						$lastNotificationSent ??
-						new Date();
-				}
 				resolve();
 			})
 		);
@@ -979,21 +972,6 @@
 		}
 	}
 
-	window.setLastNotificationSentDate = async (dateInMillis) => {
-		if (dateInMillis) {
-			let newNotificationSent = new Date(dateInMillis);
-			if (
-				newNotificationSent?.getTime?.() >
-				$lastNotificationSent.getTime()
-			) {
-				$lastNotificationSent = newNotificationSent;
-				saveJSON($lastNotificationSent, "lastNotificationSent");
-			}
-		} else {
-			$lastNotificationSent = new Date();
-			saveJSON($lastNotificationSent, "lastNotificationSent");
-		}
-	};
 	window.updateAppAlert = async () => {
 		if (
 			await $confirmPromise?.({

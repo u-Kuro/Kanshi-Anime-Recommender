@@ -2,6 +2,7 @@
 let db;
 let mediaRelationTypes = ["adaptation", "prequel", "sequel", "parent", "side_story", "summary", "alternative", "spin_off"]
 let minNumber = 1 - 6e-17 !== 1 ? 6e-17 : 1e-16;
+let dayInMillis = 1000 * 60 * 60 * 24;
 self.onmessage = async ({ data }) => {
     if (!db) await IDBinit()
     // Retrieve Data
@@ -1112,7 +1113,13 @@ self.onmessage = async ({ data }) => {
                 let _releaseEpisode = anime?.nextAiringEpisode?.episode;
                 let _releaseDateMillis = anime?.nextAiringEpisode?.airingAt * 1000
                 let _imageURL = anime?.coverImageUrl || ""
-                if (!equalsNCS(anime.userStatus, "DROPPED") && (!equalsNCS(anime.userStatus, "UNWATCHED") || anime.weightedScore > 1)) {
+                if (!equalsNCS(anime.userStatus, "DROPPED") &&
+                    (
+                        !equalsNCS(anime.userStatus, "UNWATCHED") ||
+                        anime.weightedScore > 1
+                    ) &&
+                    typeof _releaseDateMillis === "number" &&
+                    _releaseDateMillis >= (new Date().getTime() - dayInMillis)) {
                     self.postMessage({
                         animeReleaseNotification: {
                             id: anime.id,
@@ -1358,7 +1365,12 @@ self.onmessage = async ({ data }) => {
                 let _releaseEpisode = anime?.nextAiringEpisode?.episode;
                 let _releaseDateMillis = anime?.nextAiringEpisode?.airingAt * 1000
                 let _imageURL = anime?.coverImage?.large || ""
-                if (!isaN(popularity) || popularity >= popularityMode) {
+                if (
+                    (!isaN(popularity) ||
+                        popularity >= popularityMode) &&
+                    typeof _releaseDateMillis === "number" &&
+                    _releaseDateMillis >= (new Date().getTime() - dayInMillis)
+                ) {
                     self.postMessage({
                         animeReleaseNotification: {
                             id: animeID,

@@ -62,7 +62,7 @@ import androidx.core.content.FileProvider;
 import androidx.core.splashscreen.SplashScreen;
 
 public class MainActivity extends AppCompatActivity {
-    public final int appID = 115;
+    public final int appID = 116;
     public boolean webViewIsLoaded = false;
     public boolean permissionIsAsked = false;
     public SharedPreferences prefs;
@@ -77,7 +77,6 @@ public class MainActivity extends AppCompatActivity {
     public Toast currentToast;
     public AlertDialog currentDialog;
     public static WeakReference<MainActivity> weakActivity;
-    public long lastSentNotificationDate = 0;
 
     // Activity Results
     final ActivityResultLauncher<Intent> allowApplicationUpdate =
@@ -158,7 +157,6 @@ public class MainActivity extends AppCompatActivity {
         // Saved Data
         exportPath = prefs.getString("savedExportPath", "");
         permissionIsAsked = prefs.getBoolean("permissionIsAsked", false);
-        lastSentNotificationDate = prefs.getLong("lastNotificationSentDate", 0);
         // Get Activity Reference
         weakActivity = new WeakReference<>(MainActivity.this);
         // Create WebView App Instance
@@ -228,10 +226,6 @@ public class MainActivity extends AppCompatActivity {
                 CookieManager.getInstance().acceptCookie();
                 CookieManager.getInstance().flush();
                 super.onPageFinished(view, url);
-                lastSentNotificationDate = prefs.getLong("lastNotificationSentDate", 0);
-                if (!webViewIsLoaded && lastSentNotificationDate!=0) {
-                    setLastNotificationSentDate(lastSentNotificationDate);
-                }
                 webViewIsLoaded = true;
             }
             @Override
@@ -648,9 +642,10 @@ public class MainActivity extends AppCompatActivity {
                 }));
             }
         }
+        final int DAY_IN_MILLIS = 1000 * 60 * 60 * 24;
         @JavascriptInterface
         public void addAnimeReleaseNotification(int animeId, String title, int releaseEpisode, int maxEpisode, long releaseDateMillis, String imageUrl, boolean isMyAnime) {
-            if (releaseDateMillis>lastSentNotificationDate) {
+            if (releaseDateMillis >= (System.currentTimeMillis() - DAY_IN_MILLIS)) {
                 AnimeNotificationManager.scheduleAnimeNotification(MainActivity.this, animeId, title, releaseEpisode, maxEpisode, releaseDateMillis, imageUrl, isMyAnime);
             }
         }
@@ -734,14 +729,6 @@ public class MainActivity extends AppCompatActivity {
                 );
             }
         }),999999999);
-    }
-
-    public void setLastNotificationSentDate(long lastNotificationDate) {
-        lastSentNotificationDate = lastNotificationDate;
-        prefsEdit.putLong("lastNotificationSentDate", lastNotificationDate).apply();
-        if (webView!=null) {
-            webView.post(() -> webView.loadUrl("javascript:window?.setLastNotificationSentDate?.(" + lastNotificationDate + ");"));
-        }
     }
 
     @Override

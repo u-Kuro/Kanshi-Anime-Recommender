@@ -124,6 +124,10 @@ public class Utils {
 
     @RequiresApi(api = Build.VERSION_CODES.M)
     public static Icon createRoundIcon(Bitmap bitmap) {
+        return Icon.createWithBitmap(createRoundBitmap(bitmap));
+    }
+
+    public static Bitmap createRoundBitmap(Bitmap bitmap) {
         Bitmap output = Bitmap.createBitmap(bitmap.getWidth(),
                 bitmap.getHeight(), Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(output);
@@ -140,7 +144,7 @@ public class Utils {
         paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC_IN));
         canvas.drawBitmap(bitmap, rect, rect, paint);
 
-        return Icon.createWithBitmap(output);
+        return output;
     }
 }
 
