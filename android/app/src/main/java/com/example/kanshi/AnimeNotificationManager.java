@@ -167,7 +167,6 @@ public class AnimeNotificationManager {
     }
 
     public static class NotificationReceiver extends BroadcastReceiver {
-
         @RequiresApi(api = Build.VERSION_CODES.P)
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -184,6 +183,13 @@ public class AnimeNotificationManager {
                             .build();
                     WorkManager.getInstance(context).enqueue(workRequest);
                 }
+            } else if ("android.intent.action.BOOT_COMPLETED".equals(intent.getAction())
+                    || "android.intent.action.QUICKBOOT_POWERON".equals(intent.getAction())) {
+                OneTimeWorkRequest workRequest = new OneTimeWorkRequest.Builder(BootCompleteWorkManager.class)
+                        .setConstraints(Constraints.NONE)
+                        .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
+                        .build();
+                WorkManager.getInstance(context).enqueue(workRequest);
             }
         }
     }
