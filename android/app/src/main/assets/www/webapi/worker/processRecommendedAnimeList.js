@@ -1118,9 +1118,9 @@ self.onmessage = async ({ data }) => {
                             id: anime.id,
                             title: _title,
                             releaseEpisodes: _releaseEpisode,
-                            maxEpisode: anime.episodes >= 0 ? anime.episodes : -1,
+                            maxEpisode: typeof anime.episodes === "number" ? anime.episodes : -1,
                             releaseDateMillis: _releaseDateMillis,
-                            imageURL: _imageURL,
+                            imageURL: typeof _imageURL === "string" ? _imageURL : "",
                             isMyAnime: anime.userStatus !== "UNWATCHED"
                         }
                     })
@@ -1364,9 +1364,9 @@ self.onmessage = async ({ data }) => {
                             id: animeID,
                             title: _title,
                             releaseEpisodes: _releaseEpisode,
-                            maxEpisode: episodes >= 0 ? episodes : -1,
+                            maxEpisode: typeof anime.episodes === "number" ? anime.episodes : -1,
                             releaseDateMillis: _releaseDateMillis,
-                            imageURL: _imageURL,
+                            imageURL: typeof _imageURL === "string" ? _imageURL : "",
                             isMyAnime: false
                         }
                     })

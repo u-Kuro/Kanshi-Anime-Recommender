@@ -121,6 +121,7 @@ const processRecommendedAnimeList = (_data = {}) => {
                                     && typeof aniReleaseNotif?.title === "string"
                                     && typeof aniReleaseNotif?.id === "number"
                                     && typeof aniReleaseNotif?.isMyAnime === "boolean"
+                                    && typeof aniReleaseNotif?.imageURL === "string"
                                 ) {
                                     JSBridge.addAnimeReleaseNotification(
                                         aniReleaseNotif.id,
@@ -128,7 +129,7 @@ const processRecommendedAnimeList = (_data = {}) => {
                                         aniReleaseNotif.releaseEpisodes,
                                         aniReleaseNotif.maxEpisode,
                                         aniReleaseNotif.releaseDateMillis,
-                                        aniReleaseNotif?.imageURL || "",
+                                        aniReleaseNotif?.imageURL,
                                         aniReleaseNotif.isMyAnime
                                     )
                                 }
