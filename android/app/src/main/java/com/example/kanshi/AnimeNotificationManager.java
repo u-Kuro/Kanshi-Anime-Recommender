@@ -24,8 +24,10 @@ import android.widget.Toast;
 import androidx.annotation.RequiresApi;
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationManagerCompat;
+import androidx.work.Constraints;
 import androidx.work.Data;
 import androidx.work.OneTimeWorkRequest;
+import androidx.work.OutOfQuotaPolicy;
 import androidx.work.WorkManager;
 
 import java.io.ByteArrayOutputStream;
@@ -153,7 +155,7 @@ public class AnimeNotificationManager {
     private static void createNotificationChannel(Context context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             context = context.getApplicationContext();
-            CharSequence name = "Anime Channel Releases";
+            CharSequence name = "Anime Releases";
             String description = "Notifications for Anime Releases";
             int importance = NotificationManager.IMPORTANCE_DEFAULT;
             NotificationChannel channel = new NotificationChannel(CHANNEL_ID, name, importance);
@@ -176,6 +178,8 @@ public class AnimeNotificationManager {
                             .putLong("releaseDateMillis", extras.getLong("releaseDateMillis"))
                             .build();
                     OneTimeWorkRequest workRequest = new OneTimeWorkRequest.Builder(AnimeNotificationWorkManager.class)
+                            .setConstraints(Constraints.NONE)
+                            .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
                             .setInputData(data)
                             .build();
                     WorkManager.getInstance(context).enqueue(workRequest);
