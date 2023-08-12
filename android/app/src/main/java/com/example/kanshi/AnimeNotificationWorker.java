@@ -74,14 +74,14 @@ public class AnimeNotificationWorker extends Worker {
         boolean shouldNotifyAfterBoot = false;
         for (AnimeNotification anime : AnimeNotificationManager.allAnimeNotification.values()) {
             if (anime.releaseDateMillis <= System.currentTimeMillis()) {
-                if (isBooted && lastSentNotificationTime != 0 && anime.releaseDateMillis > lastSentNotificationTime) {
+                if (isBooted && (lastSentNotificationTime == 0 || anime.releaseDateMillis > lastSentNotificationTime)) {
                     shouldNotifyAfterBoot = true;
                 }
                 if (anime.releaseDateMillis > currentSentNotificationTime) {
                     currentSentNotificationTime = anime.releaseDateMillis;
                 }
                 if (anime.isMyAnime) {
-                    if (lastSentNotificationTime == 0 || (anime.releaseDateMillis <= System.currentTimeMillis() && anime.releaseDateMillis >= lastSentNotificationTime)) {
+                    if (lastSentNotificationTime == 0 || anime.releaseDateMillis > lastSentNotificationTime) {
                         hasMyAnime = true;
                     }
                     if (myAnimeNotifications.get(String.valueOf(anime.animeId)) == null) {
