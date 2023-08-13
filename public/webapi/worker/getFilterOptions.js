@@ -4387,7 +4387,7 @@ self.onmessage = async ({ data }) => {
                 filters.Checkbox = [
                     {
                         filName: "hide my anime",
-                        isSelected: false
+                        isSelected: true
                     },
                     {
                         filName: "hide watched",
