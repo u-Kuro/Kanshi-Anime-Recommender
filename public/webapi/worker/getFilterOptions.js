@@ -4694,6 +4694,7 @@ self.onmessage = async ({ data }) => {
             }
             return r;
         }, {}) || {};
+        await saveJSON(activeTagFilters, "activeTagFilters")
     }
     self.postMessage({ status: null })
     self.postMessage({
