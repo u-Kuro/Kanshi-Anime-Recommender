@@ -554,6 +554,21 @@ self.onmessage = async ({ data }) => {
                     anime.contentCaution.semiCaution.push(tagName)
                 }
             })
+
+            // Limit Favorite Contents
+            if (isJsonObject(anime.favoriteContents) && !jsonIsEmpty(anime.favoriteContents)) {
+                let sortedFavoriteContents = Object.entries(anime.favoriteContents.genres)
+                    .concat(Object.entries(anime.favoriteContents.tags))
+                    .concat(Object.entries(anime.favoriteContents.studios))
+                    .sort((a, b) => {
+                        return b[1] - a[1]
+                    })
+                    .map(([k, v]) => `${k}: (${formatNumber(v)})`)
+                anime.sortedFavoriteContents = sortedFavoriteContents || []
+            } else {
+                anime.sortedFavoriteContents = []
+            }
+
             return true;
         });
         recommendedAnimeList = null

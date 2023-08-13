@@ -1047,6 +1047,12 @@ self.onmessage = async ({ data }) => {
                     }
                 }
             }
+            // Sort all Top Similarities
+            let favoriteContents = {
+                genres: genresIncluded,
+                tags: tagsIncluded,
+                studios: studiosIncluded
+            }
             // Add To Processed Recommendation List
             recommendedAnimeList[animeID] = {
                 id: animeID,
@@ -1056,6 +1062,7 @@ self.onmessage = async ({ data }) => {
                 averageScore: averageScore,
                 popularity: popularity,
                 score: score,
+                favoriteContents: favoriteContents,
                 userStatus: formatCustomString(userStatus),
                 status: formatCustomString(status),
                 // Others
