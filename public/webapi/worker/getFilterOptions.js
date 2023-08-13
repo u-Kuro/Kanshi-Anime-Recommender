@@ -4681,7 +4681,17 @@ self.onmessage = async ({ data }) => {
     let activeTagFilters = await retrieveJSON("activeTagFilters")
     if (jsonIsEmpty(activeTagFilters)) {
         activeTagFilters = filterOptions.filterSelection.reduce((r, { filterSelectionName }) => {
-            r[filterSelectionName] = [];
+            if (filterSelectionName === "Anime Filter") {
+                r[filterSelectionName] = [{
+                    changeType: "read",
+                    filterType: "checkbox",
+                    optionIdx: 0,
+                    optionName: "hide my anime",
+                    selected: "included"
+                }];
+            } else {
+                r[filterSelectionName] = [];
+            }
             return r;
         }, {}) || {};
     }
