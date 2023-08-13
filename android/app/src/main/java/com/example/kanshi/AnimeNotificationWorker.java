@@ -68,6 +68,8 @@ public class AnimeNotificationWorker extends Worker {
         long lastSentNotificationTime = prefs.getLong("lastSentNotificationTime", 0);
         long currentSentNotificationTime = lastSentNotificationTime;
         long newNearestNotificationTime = 0;
+        long lastSentMyAnimeNotificationTime = 0;
+        long lastSentOtherAnimeNotificationTime = 0;
         AnimeNotification newNearestNotificationInfo = null;
 
         boolean hasMyAnime = false;
@@ -81,6 +83,9 @@ public class AnimeNotificationWorker extends Worker {
                     currentSentNotificationTime = anime.releaseDateMillis;
                 }
                 if (anime.isMyAnime) {
+                    if (lastSentMyAnimeNotificationTime==0 || anime.releaseDateMillis>lastSentMyAnimeNotificationTime){
+                        lastSentMyAnimeNotificationTime = anime.releaseDateMillis;
+                    }
                     if (lastSentNotificationTime == 0 || anime.releaseDateMillis > lastSentNotificationTime) {
                         hasMyAnime = true;
                     }
@@ -93,6 +98,9 @@ public class AnimeNotificationWorker extends Worker {
                         }
                     }
                 } else {
+                    if (lastSentOtherAnimeNotificationTime==0 || anime.releaseDateMillis>lastSentOtherAnimeNotificationTime){
+                        lastSentOtherAnimeNotificationTime = anime.releaseDateMillis;
+                    }
                     if (animeNotifications.get(String.valueOf(anime.animeId)) == null) {
                         animeNotifications.put(String.valueOf(anime.animeId), anime);
                     } else {
@@ -109,6 +117,14 @@ public class AnimeNotificationWorker extends Worker {
                 }
             }
         }
+
+        if (lastSentMyAnimeNotificationTime==0) {
+            lastSentMyAnimeNotificationTime = System.currentTimeMillis();
+        }
+        if (lastSentOtherAnimeNotificationTime==0) {
+            lastSentOtherAnimeNotificationTime = System.currentTimeMillis();
+        }
+
         String notificationTitleMA = "Your Anime Aired";
         if (myAnimeNotifications.size() > 1) {
             notificationTitleMA = notificationTitleMA + " +" + myAnimeNotifications.size();
@@ -144,15 +160,11 @@ public class AnimeNotificationWorker extends Worker {
             }
             Person item = itemBuilder.build();
             if (anime.maxEpisode < 0) { // No Given Max Episodes
-                styleMA.addMessage("Episode " + anime.releaseEpisode + " is now available.", anime.releaseDateMillis, item);
+                styleMA.addMessage("Episode " + anime.releaseEpisode + " aired.", anime.releaseDateMillis, item);
             } else if (anime.releaseEpisode >= anime.maxEpisode) {
-                styleMA.addMessage("Finished airing: Episode " + anime.releaseEpisode + " is now available.", anime.releaseDateMillis, item);
+                styleMA.addMessage("Finished Airing: Episode " + anime.releaseEpisode + " aired.", anime.releaseDateMillis, item);
             } else {
-                if (anime.maxEpisode - anime.releaseEpisode > 1) {
-                    styleMA.addMessage("Episode " + anime.releaseEpisode + " is now available. There are " + (anime.maxEpisode - anime.releaseEpisode) + " episodes left.", anime.releaseDateMillis, item);
-                } else {
-                    styleMA.addMessage("Episode " + anime.releaseEpisode + " is now available. " + anime.maxEpisode + " will be the last.", anime.releaseDateMillis, item);
-                }
+                styleMA.addMessage("Episode " + anime.releaseEpisode + " / " + anime.maxEpisode + " aired.", anime.releaseDateMillis, item);
             }
         }
 
@@ -170,10 +182,13 @@ public class AnimeNotificationWorker extends Worker {
                 .setStyle(styleMA)
                 .setContentIntent(pendingIntent)
                 .setGroup(ANIME_RELEASE_NOTIFICATION_GROUP)
-                .setGroupAlertBehavior(Notification.GROUP_ALERT_SUMMARY);
+                .setGroupAlertBehavior(Notification.GROUP_ALERT_SUMMARY)
+                .setNumber(myAnimeNotifications.size())
+                .setWhen(lastSentMyAnimeNotificationTime)
+                .setShowWhen(true);
 
         // Other Anime Released
-        String notificationTitleOA = "Some Anime Aired";
+        String notificationTitleOA = "Other Anime Aired";
 
         if (animeNotifications.size() > 1) {
             notificationTitleOA = notificationTitleOA + " +" + animeNotifications.size();
@@ -209,15 +224,11 @@ public class AnimeNotificationWorker extends Worker {
             }
             Person item = itemBuilder.build();
             if (anime.maxEpisode < 0) { // No Given Max Episodes
-                styleOA.addMessage("Episode " + anime.releaseEpisode + " is now available.", anime.releaseDateMillis, item);
+                styleOA.addMessage("Episode " + anime.releaseEpisode + " aired.", anime.releaseDateMillis, item);
             } else if (anime.releaseEpisode >= anime.maxEpisode) {
-                styleOA.addMessage("Finished airing: Episode " + anime.releaseEpisode + " is now available.", anime.releaseDateMillis, item);
+                styleOA.addMessage("Finished Airing: Episode " + anime.releaseEpisode + " aired.", anime.releaseDateMillis, item);
             } else {
-                if (anime.maxEpisode - anime.releaseEpisode > 1) {
-                    styleOA.addMessage("Episode " + anime.releaseEpisode + " is now available. There are " + (anime.maxEpisode - anime.releaseEpisode) + " episodes left.", anime.releaseDateMillis, item);
-                } else {
-                    styleOA.addMessage("Episode " + anime.releaseEpisode + " is now available. " + anime.maxEpisode + " will be the last.", anime.releaseDateMillis, item);
-                }
+                styleOA.addMessage("Episode " + anime.releaseEpisode + " / " + anime.maxEpisode + " aired.", anime.releaseDateMillis, item);
             }
         }
 
@@ -228,7 +239,10 @@ public class AnimeNotificationWorker extends Worker {
                 .setPriority(Notification.PRIORITY_LOW)
                 .setContentIntent(pendingIntent)
                 .setGroup(ANIME_RELEASE_NOTIFICATION_GROUP)
-                .setGroupAlertBehavior(Notification.GROUP_ALERT_SUMMARY);
+                .setGroupAlertBehavior(Notification.GROUP_ALERT_SUMMARY)
+                .setNumber(animeNotifications.size())
+                .setWhen(lastSentOtherAnimeNotificationTime)
+                .setShowWhen(true);
 
         String notificationTitle = "Anime Aired";
         int animeReleaseNotificationSize = myAnimeNotifications.size() + animeNotifications.size();
@@ -243,7 +257,9 @@ public class AnimeNotificationWorker extends Worker {
                 .setPriority(Notification.PRIORITY_DEFAULT)
                 .setContentIntent(pendingIntent)
                 .setGroup(ANIME_RELEASE_NOTIFICATION_GROUP)
-                .setGroupSummary(true);
+                .setGroupSummary(true)
+                .setWhen(Math.max(lastSentOtherAnimeNotificationTime, lastSentMyAnimeNotificationTime))
+                .setShowWhen(true);
 
         if (!hasMyAnime || isBooted) {
             notificationSummaryBuilder
