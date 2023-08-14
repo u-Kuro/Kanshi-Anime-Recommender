@@ -14,6 +14,7 @@
     } from "../../../js/globalValues";
 
     let animeTitle;
+    let youtubeSearchTitle;
     let animeID;
     let animeUrl;
     let animeIdx;
@@ -32,6 +33,11 @@
                     openedAnime?.title?.english ||
                     openedAnime?.title?.userPreferred ||
                     openedAnime?.title?.romaji ||
+                    openedAnime?.title?.native;
+                youtubeSearchTitle =
+                    openedAnime?.title?.romaji ||
+                    openedAnime?.title?.userPreferred ||
+                    openedAnime?.title?.english ||
                     openedAnime?.title?.native;
                 animeID = openedAnime.id;
                 animeUrl = openedAnime.animeUrl;
@@ -70,6 +76,16 @@
             window.open(animeUrl, "_blank");
         }
         $animeOptionVisible = false;
+    }
+
+    async function openInYoutube(e) {
+        if (isRecentlyOpened && e.type !== "keydown") return;
+        if (typeof youtubeSearchTitle !== "string" || youtubeSearchTitle === "")
+            return;
+        window.open(
+            `https://www.youtube.com/results?search_query=${youtubeSearchTitle} Anime`,
+            "_blank"
+        );
     }
 
     function copyTitle(e) {
@@ -221,13 +237,19 @@
                 class="anime-option"
                 on:click={openAnimePopup}
                 on:keydown={(e) => e.key === "Enter" && openAnimePopup(e)}
-                ><h2 class="option-title">Open Anime</h2></span
+                ><h2 class="option-title">Information</h2></span
             >
             <span
                 class="anime-option"
                 on:click={openInAnilist}
                 on:keydown={(e) => e.key === "Enter" && openInAnilist(e)}
-                ><h2 class="option-title">Open In Anilist</h2></span
+                ><h2 class="option-title">Open in Anilist</h2></span
+            >
+            <span
+                class="anime-option"
+                on:click={openInYoutube}
+                on:keydown={(e) => e.key === "Enter" && openInYoutube(e)}
+                ><h2 class="option-title">See Youtube Videos</h2></span
             >
             <span
                 class="anime-option"
