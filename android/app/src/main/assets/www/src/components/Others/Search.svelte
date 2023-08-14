@@ -2,6 +2,7 @@
     import { onMount, tick } from "svelte";
     import { saveJSON } from "../../js/indexedDB.js";
     import {
+        android,
         finalAnimeList,
         animeLoaderWorker,
         filterOptions,
@@ -1912,7 +1913,7 @@
             >
                 <i
                     class={"icon fa-solid fa-arrows-" +
-                        ($gridFullView ?? true ? "up-down" : "left-right")}
+                        ($gridFullView ?? (!$android) ? "up-down" : "left-right")}
                 />
             </div>
             <div class="sortFilter">
