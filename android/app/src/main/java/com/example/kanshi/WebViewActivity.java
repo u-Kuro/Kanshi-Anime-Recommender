@@ -12,10 +12,7 @@ import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
 import android.util.Log;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.WindowManager;
 import android.webkit.ConsoleMessage;
@@ -43,7 +40,6 @@ import androidx.appcompat.widget.Toolbar;
 public class WebViewActivity extends AppCompatActivity {
     private TextView webTitle;
     private MediaWebView webView;
-    private boolean canStartNewActivity = false;
     private boolean webViewIsLoaded = false;
     private ValueCallback<Uri[]> mUploadMessage;
     final ActivityResultLauncher<Intent> chooseImportFile =
@@ -78,6 +74,7 @@ public class WebViewActivity extends AppCompatActivity {
     @SuppressLint({"SetJavaScriptEnabled", "RestrictedApi", "ClickableViewAccessibility"})
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        overridePendingTransition(R.anim.right_to_center, R.anim.center_to_left);
         String url = getIntent().getStringExtra("url");
         // Show status bar
         getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
@@ -264,7 +261,7 @@ public class WebViewActivity extends AppCompatActivity {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 String url = request.getUrl().toString();
-                if (canStartNewActivity) {
+                if (webViewIsLoaded) {
                     Intent intent = new Intent(WebViewActivity.this, WebViewActivity.class);
                     intent.putExtra("url", url);
                     startActivity(intent);
@@ -285,7 +282,6 @@ public class WebViewActivity extends AppCompatActivity {
         if (url != null) {
             webView.loadUrl(url);
         }
-        new Handler(Looper.getMainLooper()).postDelayed(() -> canStartNewActivity = true,1000);
     }
 
     @Override
@@ -307,34 +303,26 @@ public class WebViewActivity extends AppCompatActivity {
     }
 
     @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        if (item.getItemId() == android.R.id.home) {
-            super.onBackPressed();
-            finish();
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
-    }
-    @Override
     public void onBackPressed() {
         if (webView.canGoBack()) {
             webView.goBack();
         } else {
             super.onBackPressed();
+            webView.loadUrl("");
             finish();
         }
     }
 
     public void initAnchor(WebView view) {
-        String javascript = "javascript:(()=>{if(!window.KanshiAnimeRecommendationAttributesAdded){window.KanshiAnimeRecommendationAttributesAdded=!0;for(var e=document.querySelectorAll('a'),n=0;n<e.length;n++)e[n].setAttribute('rel','noopener noreferrer'),e[n].setAttribute('target','_blank')}window.KanshiAnimeRecommendationObserver instanceof MutationObserver||(window.KanshiAnimeRecommendationObserver=new MutationObserver(e=>{e.forEach(function(e){if(e.addedNodes)for(var n=0;n<e.addedNodes.length;n++){var o=e.addedNodes[n];'A'===o.nodeName&&(o.setAttribute('rel','noopener noreferrer'),o.setAttribute('target','_blank'))}})})),!window.KanshiAnimeRecommendationObserverObserved&&window.KanshiAnimeRecommendationObserver instanceof MutationObserver&&document.body instanceof Node&&(window.KanshiAnimeRecommendationObserver.observe(document.body,{childList:!0,subtree:!0}),window.KanshiAnimeRecommendationObserverObserved=!0)})();";
+        String javascript = "javascript:(()=>{if(!window.KanshiAnimeRecommendationAttributesAdded){window.KanshiAnimeRecommendationAttributesAdded=!0;for(var e=document.querySelectorAll('a'),n=0;n<e.length;n++)e[n].setAttribute('rel','noopener noreferrer'),e[n].setAttribute('target','_blank')}window.KanshiAnimeRecommendationObserver instanceof MutationObserver||(window.KanshiAnimeRecommendationObserver=new MutationObserver(e=>{e.forEach(function(e){if(e.addedNodes)for(var n=0;n<e.addedNodes.length;n++){var o=e.addedNodes[n];'A'===o.nodeName&&(o.setAttribute('rel','noopener noreferrer'),o.setAttribute('target','_blank'))}})})),!window.KanshiAnimeRecommendationObserverObserved&&window.KanshiAnimeRecommendationObserver instanceof MutationObserver&&document.body instanceof Node&&(window.KanshiAnimeRecommendationObserver.observe(document.body,{childList:!0,subtree:!0}),window.KanshiAnimeRecommendationObserverObserved=!0)})()";
         view.post(() -> view.loadUrl(javascript));
     }
     public void autoPlayVideo(WebView view) {
-        String javascript = "javascript:(()=>{const e=document?.querySelector?.('video.html5-main-video');e instanceof Element&&!0!==e.autoplay&&(e.autoplay=!0)})();";
+        String javascript = "javascript:(()=>{const e=document?.querySelector?.('video.html5-main-video');e instanceof Element&&!0!==e.autoplay&&(e.autoplay=!0)})()";
         view.post(() -> view.loadUrl(javascript));
     }
     public void unMuteVideo(WebView view) {
-        String javascript = "javascript:(()=>{document?.querySelector?.('button.ytp-unmute')?.click?.()})();";
+        String javascript = "javascript:(()=>{const e=document?.querySelector?.('video.html5-main-video'),t=e instanceof Element&&!1===e.paused;document?.querySelector?.('button.ytp-unmute')?.click?.();t&&e.paused&&e.play?.()})()";
         view.post(() -> view.loadUrl(javascript));
     }
 }
