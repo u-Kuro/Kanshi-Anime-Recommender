@@ -159,12 +159,14 @@ public class AnimeNotificationWorker extends Worker {
                 }
             }
             Person item = itemBuilder.build();
+            boolean justAired = anime.releaseDateMillis > lastSentNotificationTime;
+            String addedInfo = justAired? " just aired." : " aired.";
             if (anime.maxEpisode < 0) { // No Given Max Episodes
-                styleMA.addMessage("Episode " + anime.releaseEpisode + " aired.", anime.releaseDateMillis, item);
+                styleMA.addMessage("Episode " + anime.releaseEpisode + addedInfo, anime.releaseDateMillis, item);
             } else if (anime.releaseEpisode >= anime.maxEpisode) {
-                styleMA.addMessage("Finished Airing: Episode " + anime.releaseEpisode + " aired.", anime.releaseDateMillis, item);
+                styleMA.addMessage("Finished Airing: Episode " + anime.releaseEpisode + addedInfo, anime.releaseDateMillis, item);
             } else {
-                styleMA.addMessage("Episode " + anime.releaseEpisode + " / " + anime.maxEpisode + " aired.", anime.releaseDateMillis, item);
+                styleMA.addMessage("Episode " + anime.releaseEpisode + " / " + anime.maxEpisode + addedInfo, anime.releaseDateMillis, item);
             }
         }
 
@@ -223,12 +225,14 @@ public class AnimeNotificationWorker extends Worker {
                 }
             }
             Person item = itemBuilder.build();
+            boolean justAired = anime.releaseDateMillis > lastSentNotificationTime;
+            String addedInfo = justAired? " just aired." : " aired.";
             if (anime.maxEpisode < 0) { // No Given Max Episodes
-                styleOA.addMessage("Episode " + anime.releaseEpisode + " aired.", anime.releaseDateMillis, item);
+                styleOA.addMessage("Episode " + anime.releaseEpisode + addedInfo, anime.releaseDateMillis, item);
             } else if (anime.releaseEpisode >= anime.maxEpisode) {
-                styleOA.addMessage("Finished Airing: Episode " + anime.releaseEpisode + " aired.", anime.releaseDateMillis, item);
+                styleOA.addMessage("Finished Airing: Episode " + anime.releaseEpisode + addedInfo, anime.releaseDateMillis, item);
             } else {
-                styleOA.addMessage("Episode " + anime.releaseEpisode + " / " + anime.maxEpisode + " aired.", anime.releaseDateMillis, item);
+                styleOA.addMessage("Episode " + anime.releaseEpisode + " / " + anime.maxEpisode + addedInfo, anime.releaseDateMillis, item);
             }
         }
 

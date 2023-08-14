@@ -72,10 +72,8 @@
 
     function openInAnilist(e) {
         if (isRecentlyOpened && e.type !== "keydown") return;
-        if (animeUrl) {
-            window.open(animeUrl, "_blank");
-        }
-        $animeOptionVisible = false;
+        if (typeof animeUrl !== "string" || animeUrl === "") return;
+        window.open(animeUrl, "_blank");
     }
 
     async function openInYoutube(e) {
@@ -249,7 +247,7 @@
                 class="anime-option"
                 on:click={openInYoutube}
                 on:keydown={(e) => e.key === "Enter" && openInYoutube(e)}
-                ><h2 class="option-title">See Youtube Videos</h2></span
+                ><h2 class="option-title">Open in Youtube</h2></span
             >
             <span
                 class="anime-option"
