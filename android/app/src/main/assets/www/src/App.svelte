@@ -779,11 +779,7 @@
 		if (val === true) window.setShouldGoBack(false);
 	});
 	window.addEventListener("scroll", () => {
-		if (
-			$gridFullView ? animeGridEl.scrollLeft > 500 : window.scrollY > 200
-		) {
-			window.setShouldGoBack(false);
-		}
+		if (window?.scrollY > 200) window.setShouldGoBack(false);
 		runIsScrolling.update((e) => !e);
 	});
 	window.addEventListener("resize", () => {
@@ -794,8 +790,8 @@
 		usernameInputEl = document.getElementById("usernameInput");
 		animeGridEl = document.getElementById("anime-grid");
 		animeGridEl?.addEventListener("scroll", () => {
+			if (animeGridEl.scrollLeft > 500) window.setShouldGoBack(false);
 			if (!$gridFullView) return;
-			if (animeGridEl.scrollLeft !== 0) window.setShouldGoBack(false);
 			runIsScrolling.update((e) => !e);
 		});
 		document

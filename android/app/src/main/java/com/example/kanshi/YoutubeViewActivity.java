@@ -47,6 +47,7 @@ public class YoutubeViewActivity extends AppCompatActivity {
     private MediaWebView webView;
     private boolean webViewIsLoaded = false;
     private ValueCallback<Uri[]> mUploadMessage;
+    private boolean isFinished = false;
     final ActivityResultLauncher<Intent> chooseImportFile =
             registerForActivityResult(
                     new ActivityResultContracts.StartActivityForResult(),
@@ -250,7 +251,7 @@ public class YoutubeViewActivity extends AppCompatActivity {
                 cookieManager.setAcceptThirdPartyCookies(webView,true);
                 CookieManager.getInstance().acceptCookie();
                 CookieManager.getInstance().flush();
-                if (!webViewIsLoaded) {
+                if (!webViewIsLoaded && !isFinished) {
                     webViewIsLoaded = true;
                     webTitle.setText(view.getTitle());
                 }
@@ -359,7 +360,9 @@ public class YoutubeViewActivity extends AppCompatActivity {
             webView.goBack();
         } else {
             super.onBackPressed();
-            webTitle.setVisibility(View.INVISIBLE);
+            isFinished = true;
+            webView.onPause();
+            webView.pauseTimers();
             webView.loadUrl("");
             webView.onPause();
             webView.pauseTimers();
