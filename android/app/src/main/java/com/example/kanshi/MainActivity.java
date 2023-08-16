@@ -66,7 +66,7 @@ import androidx.core.content.FileProvider;
 import androidx.core.splashscreen.SplashScreen;
 
 public class MainActivity extends AppCompatActivity {
-    public final int appID = 122;
+    public final int appID = 123;
     public boolean webViewIsLoaded = false;
     public boolean permissionIsAsked = false;
     public SharedPreferences prefs;
@@ -356,7 +356,8 @@ public class MainActivity extends AppCompatActivity {
         WebView.setWebContentsDebuggingEnabled(BuildConfig.DEBUG);
         isAppConnectionAvailable(isConnected -> webView.post(() -> {
             if (isConnected) {
-                webView.loadUrl("https://u-kuro.github.io/Kanshi.Anime-Recommendation/");
+//                webView.loadUrl("https://u-kuro.github.io/Kanshi.Anime-Recommendation/");
+                webView.loadUrl("file:///android_asset/www/index.html");
             } else {
                 webView.loadUrl("file:///android_asset/www/index.html");
                 showDialog(new AlertDialog.Builder(MainActivity.this)
@@ -574,7 +575,14 @@ public class MainActivity extends AppCompatActivity {
             clipboard.setPrimaryClip(clip);
         }
         @JavascriptInterface
-        public void setShouldGoBack(boolean _shouldGoBack) { shouldGoBack = _shouldGoBack; }
+        public void willExit() { showToast(Toast.makeText(getApplicationContext(), "Press back again to exit.", Toast.LENGTH_SHORT)); }
+        @JavascriptInterface
+        public void setShouldGoBack(boolean _shouldGoBack) {
+            if (shouldGoBack && !_shouldGoBack && currentToast != null) {
+                currentToast.cancel();
+            }
+            shouldGoBack = _shouldGoBack;
+        }
         @JavascriptInterface
         public void chooseExportFolder() {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {

@@ -17,7 +17,6 @@
 
     let writableSubscriptions = [];
     let typedUsername = "";
-    let windowScrollY = window.scrollY;
     let animeGridEl,
         popupContainer,
         navEl,
@@ -36,9 +35,6 @@
                 typedUsername = val || "";
             })
         );
-        document.addEventListener("scroll", () => {
-            windowScrollY = window.scrollY;
-        });
     });
 
     async function updateUsername(event) {
@@ -73,8 +69,9 @@
                         ) {
                             $menuVisible = false;
                             if (!$popupVisible) {
-                                window.scrollY = window.scrollY;
-                                window.scrollX = window.scrollX;
+                                document.documentElement.style.overflow =
+                                    "hidden";
+                                document.documentElement.style.overflow = "";
                                 window?.scrollTo?.({
                                     top: -9999,
                                     behavior: "smooth",
@@ -109,8 +106,9 @@
                         ) {
                             $menuVisible = false;
                             if (!$popupVisible) {
-                                window.scrollY = window.scrollY;
-                                window.scrollX = window.scrollX;
+                                document.documentElement.style.overflow =
+                                    "hidden";
+                                document.documentElement.style.overflow = "";
                                 window?.scrollTo?.({
                                     top: -9999,
                                     behavior: "smooth",
@@ -213,8 +211,8 @@
         goUpTimeout = setTimeout(() => {
             goUpIsLongPressed = true;
             if ($popupVisible) {
-                popupContainer.scrollTop = popupContainer.scrollTop;
-                popupContainer.scrollLeft = popupContainer.scrollLeft;
+                popupContainer.style.overflow = "hidden";
+                popupContainer.style.overflow = "";
                 popupContainer?.children?.[0]?.scrollIntoView?.({
                     container: popupContainer,
                     behavior: "smooth",
@@ -223,8 +221,8 @@
                 });
             } else {
                 if ($gridFullView) {
-                    animeGridEl.scrollTop = animeGridEl.scrollTop;
-                    animeGridEl.scrollLeft = animeGridEl.scrollLeft;
+                    animeGridEl.style.overflow = "hidden";
+                    animeGridEl.style.overflow = "";
                     animeGridEl?.children?.[0]?.scrollIntoView?.({
                         container: animeGridEl,
                         behavior: "smooth",
@@ -232,8 +230,8 @@
                         inline: "start",
                     });
                 } else {
-                    window.scrollY = window.scrollY;
-                    window.scrollX = window.scrollX;
+                    document.documentElement.style.overflow = "hidden";
+                    document.documentElement.style.overflow = "";
                     window.scrollTo({ top: -9999, behavior: "smooth" });
                 }
             }

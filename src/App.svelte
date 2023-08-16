@@ -477,7 +477,7 @@
 			($popupVisible ||
 				($gridFullView
 					? animeGridEl.scrollLeft > 500
-					: window.scrollY >
+					: document.documentElement.scrollTop >
 					  Math.max(0, animeGridEl?.offsetTop - 55))) &&
 			$finalAnimeList?.length
 		) {
@@ -690,6 +690,8 @@
 		window.backPressed();
 	});
 
+	let willExit = false,
+		exitScrollTimeout;
 	window.backPressed = () => {
 		if ($shouldGoBack && !$android) {
 			window.history.go(-1); // Only in Browser
@@ -700,6 +702,7 @@
 			if (_showConfirm) {
 				handleConfirmationCancelled();
 				_showConfirm = false;
+				willExit = false;
 				return;
 			} else if (
 				usernameInputEl &&
@@ -708,26 +711,29 @@
 			) {
 				usernameInputEl?.focus?.();
 				usernameInputEl?.blur?.();
+				willExit = false;
+				return;
 			} else if ($menuVisible) {
 				$menuVisible = false;
+				willExit = false;
 				return;
 			} else if ($popupVisible) {
 				$popupVisible = false;
+				willExit = false;
 				return;
 			} else if ($animeOptionVisible) {
 				$animeOptionVisible = false;
+				willExit = false;
 				return;
 			} else if (window.checkOpenDropdown?.()) {
 				window.closeDropdown?.();
+				willExit = false;
 				return;
-			} else if (
-				$gridFullView
-					? animeGridEl.scrollLeft > 500
-					: window.scrollY > 200
-			) {
+			} else if (!willExit) {
+				willExit = true;
 				if ($gridFullView) {
-					animeGridEl.scrollTop = animeGridEl.scrollTop;
-					animeGridEl.scrollLeft = animeGridEl.scrollLeft;
+					animeGridEl.style.overflow = "hidden";
+					animeGridEl.style.overflow = "";
 					animeGridEl?.children?.[0]?.scrollIntoView?.({
 						container: animeGridEl,
 						behavior: "smooth",
@@ -735,28 +741,34 @@
 						inline: "start",
 					});
 				} else {
-					window.scrollY = window.scrollY;
-					window.scrollX = window.scrollX;
+					document.documentElement.style.overflow = "hidden";
+					document.documentElement.style.overflow = "";
 					window.scrollTo({ top: -9999, behavior: "smooth" });
 				}
-				window.setShouldGoBack(true);
 				return;
 			} else {
 				if ($gridFullView) {
-					animeGridEl.scrollTop = animeGridEl.scrollTop;
-					animeGridEl.scrollLeft = animeGridEl.scrollLeft;
-					animeGridEl?.children?.[0]?.scrollIntoView?.({
-						container: animeGridEl,
-						behavior: "smooth",
-						block: "nearest",
-						inline: "start",
-					});
+					animeGridEl.style.overflow = "hidden";
+					animeGridEl.scrollLeft = 0;
+					clearTimeout(exitScrollTimeout);
+					exitScrollTimeout = setTimeout(() => {
+						animeGridEl.style.overflow = "";
+					}, 100);
 				} else {
-					window.scrollY = window.scrollY;
-					window.scrollX = window.scrollX;
-					window.scrollTo({ top: -9999, behavior: "smooth" });
+					document.documentElement.style.overflow = "hidden";
+					document.documentElement.scrollTop = 0;
+					document.body.scrollTop = 0;
+					window.scrollY = 0;
+					clearTimeout(exitScrollTimeout);
+					exitScrollTimeout = setTimeout(() => {
+						document.documentElement.style.overflow = "";
+					}, 100);
 				}
+				try {
+					JSBridge.willExit();
+				} catch (e) {}
 				window.setShouldGoBack(true);
+				willExit = false;
 			}
 		}
 	};
@@ -767,7 +779,10 @@
 				window.setShouldGoBack(false);
 			}
 		} else {
-			if (window?.scrollY > 200) {
+			if (
+				document.documentElement.scrollTop >
+				Math.max(0, animeGridEl?.offsetTop - 55)
+			) {
 				window.setShouldGoBack(false);
 			}
 		}
@@ -779,7 +794,12 @@
 		if (val === true) window.setShouldGoBack(false);
 	});
 	window.addEventListener("scroll", () => {
-		if (window?.scrollY > 200) window.setShouldGoBack(false);
+		if (
+			document.documentElement.scrollTop >
+				Math.max(0, animeGridEl?.offsetTop - 55) &&
+			!willExit
+		)
+			window.setShouldGoBack(false);
 		runIsScrolling.update((e) => !e);
 	});
 	window.addEventListener("resize", () => {
@@ -790,7 +810,12 @@
 		usernameInputEl = document.getElementById("usernameInput");
 		animeGridEl = document.getElementById("anime-grid");
 		animeGridEl?.addEventListener("scroll", () => {
-			if (animeGridEl.scrollLeft > 500) window.setShouldGoBack(false);
+			if (
+				animeGridEl.scrollLeft >
+					Math.max(0, animeGridEl?.offsetTop - 55) &&
+				!willExit
+			)
+				window.setShouldGoBack(false);
 			if (!$gridFullView) return;
 			runIsScrolling.update((e) => !e);
 		});
@@ -802,6 +827,7 @@
 	});
 
 	window.setShouldGoBack = (_shouldGoBack) => {
+		if (!_shouldGoBack) willExit = false;
 		if ($android) {
 			try {
 				JSBridge.setShouldGoBack(_shouldGoBack);

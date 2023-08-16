@@ -63,8 +63,8 @@
                 await saveJSON(true, "shouldProcessRecommendation");
                 $menuVisible = false;
                 if (!$popupVisible) {
-                    window.scrollY = window.scrollY;
-                    window.scrollX = window.scrollX;
+                    document.documentElement.style.overflow = "hidden";
+                    document.documentElement.style.overflow = "";
                     window?.scrollTo?.({ top: -9999, behavior: "smooth" });
                     $finalAnimeList = null;
                 }
@@ -417,7 +417,8 @@
             {#if $android}
                 <button
                     class="button"
-                    on:keydown={(e) => e.key === "Enter" && showRecentReleases(e)}
+                    on:keydown={(e) =>
+                        e.key === "Enter" && showRecentReleases(e)}
                     on:click={showRecentReleases}
                     transition:fly={{ x: 50, duration: 300 }}
                     >Show Recent Releases</button

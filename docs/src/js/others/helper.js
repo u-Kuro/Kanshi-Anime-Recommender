@@ -383,7 +383,7 @@ const removeClass = (element, className) => {
   element?.classList?.remove?.(className)
 }
 
-function makeArrayUnique(arr) {
+const makeArrayUnique = (arr) => {
   const uniqueArray = [];
   const seenValues = {};
   for (const element of (arr || [])) {

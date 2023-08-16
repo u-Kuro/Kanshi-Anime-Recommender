@@ -515,8 +515,10 @@
                 animeGrid instanceof Element &&
                 !isElementVisible(animeGridParentEl, animeGrid, 0.5)
             ) {
-                window.scrollY = window.scrollY;
-                window.scrollX = window.scrollX; // Stop Current Scroll
+                document.documentElement.style.overflow = "hidden";
+                document.documentElement.style.overflow = "";
+                animeGridParentEl.style.overflow = "hidden";
+                animeGridParentEl.style.overflow = "";
                 animeGrid.scrollIntoView({
                     behavior: "smooth",
                     block: "nearest",
