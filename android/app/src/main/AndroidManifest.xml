@@ -50,7 +50,7 @@
         </activity>
         <activity
             android:theme="@style/Theme.Kanshi"
-            android:name=".WebViewActivity"
+            android:name=".YoutubeViewActivity"
             android:alwaysRetainTaskState="true"
             android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|uiMode|screenSize|smallestScreenSize"
             android:exported="true">

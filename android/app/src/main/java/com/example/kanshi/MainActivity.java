@@ -10,6 +10,7 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.animation.ObjectAnimator;
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.ClipData;
@@ -44,6 +45,7 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.FrameLayout;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import java.io.BufferedWriter;
@@ -57,12 +59,14 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
+import androidx.browser.customtabs.CustomTabColorSchemeParams;
+import androidx.browser.customtabs.CustomTabsIntent;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.FileProvider;
 import androidx.core.splashscreen.SplashScreen;
 
 public class MainActivity extends AppCompatActivity {
-    public final int appID = 120;
+    public final int appID = 121;
     public boolean webViewIsLoaded = false;
     public boolean permissionIsAsked = false;
     public SharedPreferences prefs;
@@ -174,7 +178,8 @@ public class MainActivity extends AppCompatActivity {
         wakeLock.acquire(10*60*1000L);
         // Add WebView on Layout
         webView = findViewById(R.id.webView);
-        webView.setWebChromeClient(new WebChromeClient());
+        ProgressBar progressbar = findViewById(R.id.progressbar);
+        progressbar.setMax((int) Math.pow(10,6));
         webView.setBackgroundColor(Color.BLACK);
         webView.setOverScrollMode(View.OVER_SCROLL_NEVER);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -232,10 +237,44 @@ public class MainActivity extends AppCompatActivity {
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 // In App Browsing
                 String url = request.getUrl().toString();
-                Intent intent = new Intent(MainActivity.this, WebViewActivity.class);
-                intent.putExtra("url", url);
-                startActivity(intent);
-                overridePendingTransition(R.anim.right_to_center, R.anim.center_to_left);
+                if (url.startsWith("intent://")) {
+                    try {
+                        Context context = view.getContext();
+                        Intent intent = Intent.parseUri(url, Intent.URI_INTENT_SCHEME);
+                        if (intent != null) {
+                            PackageManager packageManager = context.getPackageManager();
+                            ResolveInfo info = packageManager.resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY);
+                            if (info != null) {
+                                context.startActivity(intent);
+                            } else {
+                                Toast.makeText(getApplicationContext(), "Can't open the link.", Toast.LENGTH_LONG).show();
+                            }
+                        }
+                    } catch (Exception ignored) {
+                        Toast.makeText(getApplicationContext(), "Can't open the link.", Toast.LENGTH_LONG).show();
+                    }
+                } else if (url.startsWith("https://www.youtube.com") || url.startsWith("https://m.youtube.com") || url.startsWith("https://youtu.be")) {
+                    Intent intent = new Intent(MainActivity.this, YoutubeViewActivity.class);
+                    intent.putExtra("url", url);
+                    startActivity(intent);
+                    overridePendingTransition(R.anim.right_to_center, R.anim.center_to_left);
+                } else {
+                    try {
+                        CustomTabsIntent customTabsIntent = new CustomTabsIntent.Builder()
+                                .setDefaultColorSchemeParams(new CustomTabColorSchemeParams.Builder().setToolbarColor(Color.BLACK).build())
+                                .setColorSchemeParams(CustomTabsIntent.COLOR_SCHEME_DARK, new CustomTabColorSchemeParams.Builder().setToolbarColor(Color.BLACK).build())
+                                .setUrlBarHidingEnabled(true)
+                                .setShowTitle(true)
+                                .setCloseButtonPosition(CustomTabsIntent.CLOSE_BUTTON_POSITION_START)
+                                .setCloseButtonIcon(BitmapFactory.decodeResource(MainActivity.this.getResources(), R.drawable.xclose_white))
+                                .setStartAnimations(MainActivity.this, R.anim.right_to_center, R.anim.center_to_left)
+                                .setExitAnimations(MainActivity.this, R.anim.left_to_center, R.anim.center_to_right)
+                                .build();
+                        customTabsIntent.launchUrl(MainActivity.this, Uri.parse(url));
+                    } catch (Exception ignored) {
+                        Toast.makeText(getApplicationContext(), "Can't open the link.", Toast.LENGTH_LONG).show();
+                    }
+                }
                 return true;
             }
         });
@@ -293,8 +332,20 @@ public class MainActivity extends AppCompatActivity {
                 ((FrameLayout)getWindow().getDecorView()).addView(this.mCustomView, new FrameLayout.LayoutParams(-1, -1));
                 getWindow().getDecorView().setSystemUiVisibility(3846 | View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
             }
+            public void onProgressChanged(WebView view, int progress) {
+                if (webViewIsLoaded) return;
+                int newProgress = (int) Math.pow(10,4) * progress;
+                ObjectAnimator.ofInt(progressbar, "progress", newProgress)
+                        .setDuration(300)
+                        .start();
+                if (progress==100) {
+                    ObjectAnimator animator = ObjectAnimator.ofInt(progressbar, "progress", 0);
+                    animator.setDuration(0);
+                    animator.setStartDelay(300);
+                    animator.start();
+                }
+            }
             // Console Logs for Debugging
-
             @Override
             public boolean onConsoleMessage(ConsoleMessage consoleMessage) {
                 String message = consoleMessage.message();
@@ -552,6 +603,7 @@ public class MainActivity extends AppCompatActivity {
         public void switchApp() {
             try {
                 webView.post(() -> {
+                    if (webView.getUrl()==null) return;
                     if (webView.getUrl().startsWith("https://u-kuro.github.io/Kanshi.Anime-Recommendation")) {
                         showDialog(new AlertDialog.Builder(MainActivity.this)
                                 .setTitle("Switch app mode")
@@ -594,6 +646,7 @@ public class MainActivity extends AppCompatActivity {
         public void isOnline(boolean isOnline) {
             try {
                 isAppConnectionAvailable(isConnected -> webView.post(() -> {
+                    if (webView.getUrl()==null) return;
                     if (isConnected && isOnline && webView.getUrl().startsWith("file:///android_asset/www/index.html")) {
                         showDialog(new AlertDialog.Builder(MainActivity.this)
                             .setTitle("Reconnected successfully")
@@ -733,7 +786,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public void onBackPressed() {
-        if(webView.getUrl().startsWith("file:///android_asset/www/index.html") || webView.getUrl().startsWith("https://u-kuro.github.io/Kanshi.Anime-Recommendation")){
+        if(webView.getUrl()!=null && (webView.getUrl().startsWith("file:///android_asset/www/index.html") || webView.getUrl().startsWith("https://u-kuro.github.io/Kanshi.Anime-Recommendation"))){
             if(!shouldGoBack){
                 webView.post(() -> webView.loadUrl("javascript:window?.backPressed?.();"));
             } else {

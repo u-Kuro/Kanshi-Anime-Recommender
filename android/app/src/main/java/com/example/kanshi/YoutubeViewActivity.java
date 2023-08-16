@@ -6,6 +6,8 @@ import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
@@ -28,6 +30,7 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultCallback;
@@ -36,8 +39,10 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.browser.customtabs.CustomTabColorSchemeParams;
+import androidx.browser.customtabs.CustomTabsIntent;
 
-public class WebViewActivity extends AppCompatActivity {
+public class YoutubeViewActivity extends AppCompatActivity {
     private TextView webTitle;
     private MediaWebView webView;
     private boolean webViewIsLoaded = false;
@@ -75,7 +80,7 @@ public class WebViewActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         overridePendingTransition(R.anim.right_to_center, R.anim.center_to_left);
-        String url = getIntent().getStringExtra("url");
+        String passedUrl = getIntent().getStringExtra("url");
         // Show status bar
         getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
         getWindow().getDecorView().setBackgroundColor(Color.BLACK);
@@ -110,8 +115,12 @@ public class WebViewActivity extends AppCompatActivity {
         ImageView launchUrl = findViewById(R.id.launchURL);
 
         launchUrl.setOnClickListener(v -> {
-            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(webView.getUrl()));
-            startActivity(intent);
+            try {
+                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(webView.getUrl()));
+                startActivity(intent);
+            } catch (Exception ignored) {
+                Toast.makeText(getApplicationContext(), "Can't open the link.", Toast.LENGTH_LONG).show();
+            }
         });
 
         // Add WebView on Layout
@@ -261,15 +270,57 @@ public class WebViewActivity extends AppCompatActivity {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 String url = request.getUrl().toString();
-                if (webViewIsLoaded) {
-                    Intent intent = new Intent(WebViewActivity.this, WebViewActivity.class);
-                    intent.putExtra("url", url);
-                    startActivity(intent);
-                    overridePendingTransition(R.anim.right_to_center, R.anim.center_to_left);
-                    return true;
+                if (url.startsWith("intent://")) {
+                    try {
+                        Context context = view.getContext();
+                        Intent intent = Intent.parseUri(url, Intent.URI_INTENT_SCHEME);
+                        if (intent != null) {
+                            PackageManager packageManager = context.getPackageManager();
+                            ResolveInfo info = packageManager.resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY);
+                            if (info != null) {
+                                context.startActivity(intent);
+                            } else {
+                                Toast.makeText(getApplicationContext(), "Can't open the link.", Toast.LENGTH_LONG).show();
+                            }
+                        }
+                    } catch (Exception ignored) {
+                        Toast.makeText(getApplicationContext(), "Can't open the link.", Toast.LENGTH_LONG).show();
+                    }
+                } else if (url.startsWith("https://www.youtube.com")
+                        || url.startsWith("https://m.youtube.com")
+                        || url.startsWith("https://youtu.be")
+                        || url.startsWith("https://accounts.google.com")
+                        || url.startsWith("https://accounts.youtube.com")
+                ) {
+                    if (webViewIsLoaded) {
+                        Intent intent = new Intent(YoutubeViewActivity.this, YoutubeViewActivity.class);
+                        intent.putExtra("url", url);
+                        startActivity(intent);
+                        overridePendingTransition(R.anim.right_to_center, R.anim.center_to_left);
+                    } else {
+                        return false;
+                    }
                 } else {
-                    return false;
+                    try {
+                        CustomTabsIntent customTabsIntent = new CustomTabsIntent.Builder()
+                                .setDefaultColorSchemeParams(new CustomTabColorSchemeParams.Builder().setToolbarColor(Color.BLACK).build())
+                                .setColorSchemeParams(CustomTabsIntent.COLOR_SCHEME_DARK, new CustomTabColorSchemeParams.Builder().setToolbarColor(Color.BLACK).build())
+                                .setUrlBarHidingEnabled(true)
+                                .setShowTitle(true)
+                                .setCloseButtonPosition(CustomTabsIntent.CLOSE_BUTTON_POSITION_START)
+                                .setCloseButtonIcon(BitmapFactory.decodeResource(YoutubeViewActivity.this.getResources(), R.drawable.xclose_white))
+                                .setStartAnimations(YoutubeViewActivity.this, R.anim.right_to_center, R.anim.center_to_left)
+                                .setExitAnimations(YoutubeViewActivity.this, R.anim.left_to_center, R.anim.center_to_right)
+                                .build();
+                        customTabsIntent.launchUrl(YoutubeViewActivity.this, Uri.parse(url));
+                    } catch (Exception ex) {
+                        Toast.makeText(getApplicationContext(), "Can't open the link.", Toast.LENGTH_LONG).show();
+                    }
+                    if (view.getUrl()==null || view.getUrl().startsWith("https://www.youtube.com/redirect")) {
+                        onBackPressed();
+                    }
                 }
+                return true;
             }
         });
 
@@ -279,8 +330,8 @@ public class WebViewActivity extends AppCompatActivity {
         CookieManager.getInstance().acceptCookie();
         CookieManager.getInstance().flush();
 
-        if (url != null) {
-            webView.loadUrl(url);
+        if (passedUrl != null) {
+            webView.loadUrl(passedUrl);
         }
     }
 
@@ -308,13 +359,16 @@ public class WebViewActivity extends AppCompatActivity {
             webView.goBack();
         } else {
             super.onBackPressed();
+            webTitle.setVisibility(View.INVISIBLE);
             webView.loadUrl("");
+            webView.onPause();
+            webView.pauseTimers();
             finish();
         }
     }
 
     public void initAnchor(WebView view) {
-        String javascript = "javascript:(()=>{if(!window.KanshiAnimeRecommendationAttributesAdded){window.KanshiAnimeRecommendationAttributesAdded=!0;for(var e=document.querySelectorAll('a'),n=0;n<e.length;n++)e[n].setAttribute('rel','noopener noreferrer'),e[n].setAttribute('target','_blank')}window.KanshiAnimeRecommendationObserver instanceof MutationObserver||(window.KanshiAnimeRecommendationObserver=new MutationObserver(e=>{e.forEach(function(e){if(e.addedNodes)for(var n=0;n<e.addedNodes.length;n++){var o=e.addedNodes[n];'A'===o.nodeName&&(o.setAttribute('rel','noopener noreferrer'),o.setAttribute('target','_blank'))}})})),!window.KanshiAnimeRecommendationObserverObserved&&window.KanshiAnimeRecommendationObserver instanceof MutationObserver&&document.body instanceof Node&&(window.KanshiAnimeRecommendationObserver.observe(document.body,{childList:!0,subtree:!0}),window.KanshiAnimeRecommendationObserverObserved=!0)})()";
+        String javascript = "javascript:(()=>{for(var e=document.querySelectorAll('a'),n=0;n<e.length;n++)e[n].setAttribute('rel','noopener noreferrer'),e[n].setAttribute('target','_blank');window.KanshiAnimeRecommendationObserver instanceof MutationObserver||(window.KanshiAnimeRecommendationObserver=new MutationObserver(e=>{e.forEach(function(e){if(e.addedNodes)for(var n=0;n<e.addedNodes.length;n++){var o=e.addedNodes[n];'A'===o.nodeName&&(o.setAttribute('rel','noopener noreferrer'),o.setAttribute('target','_blank'))}})})),!window.KanshiAnimeRecommendationObserverObserved&&window.KanshiAnimeRecommendationObserver instanceof MutationObserver&&document.body instanceof Node&&(window.KanshiAnimeRecommendationObserver.observe(document.body,{childList:!0,subtree:!0}),window.KanshiAnimeRecommendationObserverObserved=!0)})()";
         view.post(() -> view.loadUrl(javascript));
     }
     public void autoPlayVideo(WebView view) {

@@ -137,10 +137,22 @@ public class AnimeNotificationManager {
             // Create New
             AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
             PendingIntent pendingIntent = PendingIntent.getBroadcast(context, notificationId, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, nearestNotificationTime, pendingIntent);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                if (alarmManager.canScheduleExactAlarms()) {
+                    alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, nearestNotificationTime, pendingIntent);
+                } else {
+                    alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, nearestNotificationTime, pendingIntent);
+                }
             } else {
-                alarmManager.setExact(AlarmManager.RTC_WAKEUP, nearestNotificationTime, pendingIntent);
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, nearestNotificationTime, pendingIntent);
+                } else {
+                    try {
+                        alarmManager.setExact(AlarmManager.RTC_WAKEUP, nearestNotificationTime, pendingIntent);
+                    } catch (SecurityException ignored) {
+                        alarmManager.set(AlarmManager.RTC_WAKEUP, nearestNotificationTime, pendingIntent);
+                    }
+                }
             }
         } else {
             allAnimeNotification.put(anime.animeId+"-"+anime.releaseEpisode, anime);
@@ -173,9 +185,9 @@ public class AnimeNotificationManager {
         @RequiresApi(api = Build.VERSION_CODES.P)
         @Override
         public void onReceive(Context context, Intent intent) {
-            if (intent.getAction().equals("ANIME_NOTIFICATION") ||
-                intent.getAction().equals("android.intent.action.BOOT_COMPLETED") ||
-                intent.getAction().equals("android.intent.action.QUICKBOOT_POWERON")
+            if ("ANIME_NOTIFICATION".equals(intent.getAction()) ||
+                "android.intent.action.BOOT_COMPLETED".equals(intent.getAction()) ||
+                "android.intent.action.QUICKBOOT_POWERON".equals(intent.getAction())
             ) {
                 Data data = new Data.Builder()
                         .putBoolean("isBooted", !(intent.getAction().equals("ANIME_NOTIFICATION")))
@@ -311,12 +323,14 @@ public class AnimeNotificationManager {
                             }
                         }
                         Person item = itemBuilder.build();
+                        boolean justAired = anime.releaseDateMillis > System.currentTimeMillis()-(1000*60);
+                        String addedInfo = justAired? " just aired." : " aired.";
                         if (anime.maxEpisode < 0) { // No Given Max Episodes
-                            styleMA.addMessage("Episode " + anime.releaseEpisode + " aired.", anime.releaseDateMillis, item);
+                            styleMA.addMessage("Episode " + anime.releaseEpisode + addedInfo, anime.releaseDateMillis, item);
                         } else if (anime.releaseEpisode >= anime.maxEpisode) {
-                            styleMA.addMessage("Finished Airing: Episode " + anime.releaseEpisode + " aired.", anime.releaseDateMillis, item);
+                            styleMA.addMessage("Finished Airing: Episode " + anime.releaseEpisode + addedInfo, anime.releaseDateMillis, item);
                         } else {
-                            styleMA.addMessage("Episode " + anime.releaseEpisode + " / " + anime.maxEpisode + " aired.", anime.releaseDateMillis, item);
+                            styleMA.addMessage("Episode " + anime.releaseEpisode + " / " + anime.maxEpisode + addedInfo, anime.releaseDateMillis, item);
                         }
                     }
 
@@ -373,12 +387,14 @@ public class AnimeNotificationManager {
                             }
                         }
                         Person item = itemBuilder.build();
+                        boolean justAired = anime.releaseDateMillis > System.currentTimeMillis()-(1000*60);
+                        String addedInfo = justAired? " just aired." : " aired.";
                         if (anime.maxEpisode < 0) { // No Given Max Episodes
-                            styleOA.addMessage("Episode " + anime.releaseEpisode + " aired.", anime.releaseDateMillis, item);
+                            styleOA.addMessage("Episode " + anime.releaseEpisode + addedInfo, anime.releaseDateMillis, item);
                         } else if (anime.releaseEpisode >= anime.maxEpisode) {
-                            styleOA.addMessage("Finished Airing: Episode " + anime.releaseEpisode + " aired.", anime.releaseDateMillis, item);
+                            styleOA.addMessage("Finished Airing: Episode " + anime.releaseEpisode + addedInfo, anime.releaseDateMillis, item);
                         } else {
-                            styleOA.addMessage("Episode " + anime.releaseEpisode + " / " + anime.maxEpisode + " aired.", anime.releaseDateMillis, item);
+                            styleOA.addMessage("Episode " + anime.releaseEpisode + " / " + anime.maxEpisode + addedInfo, anime.releaseDateMillis, item);
                         }
                     }
 

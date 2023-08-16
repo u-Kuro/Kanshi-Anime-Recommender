@@ -159,7 +159,7 @@ public class AnimeNotificationWorker extends Worker {
                 }
             }
             Person item = itemBuilder.build();
-            boolean justAired = anime.releaseDateMillis > lastSentNotificationTime;
+            boolean justAired = anime.releaseDateMillis > Math.min(lastSentNotificationTime, System.currentTimeMillis()-(1000*60));
             String addedInfo = justAired? " just aired." : " aired.";
             if (anime.maxEpisode < 0) { // No Given Max Episodes
                 styleMA.addMessage("Episode " + anime.releaseEpisode + addedInfo, anime.releaseDateMillis, item);
@@ -225,7 +225,7 @@ public class AnimeNotificationWorker extends Worker {
                 }
             }
             Person item = itemBuilder.build();
-            boolean justAired = anime.releaseDateMillis > lastSentNotificationTime;
+            boolean justAired = anime.releaseDateMillis > Math.min(lastSentNotificationTime, System.currentTimeMillis()-(1000*60));
             String addedInfo = justAired? " just aired." : " aired.";
             if (anime.maxEpisode < 0) { // No Given Max Episodes
                 styleOA.addMessage("Episode " + anime.releaseEpisode + addedInfo, anime.releaseDateMillis, item);
@@ -327,10 +327,22 @@ public class AnimeNotificationWorker extends Worker {
             alarmManager.cancel(newPendingIntent);
             // Create New
             newPendingIntent = PendingIntent.getBroadcast(this.getApplicationContext(), notificationId, newIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, newNearestNotificationInfo.releaseDateMillis, newPendingIntent);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                if (alarmManager.canScheduleExactAlarms()) {
+                    alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, newNearestNotificationInfo.releaseDateMillis, newPendingIntent);
+                } else {
+                    alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, newNearestNotificationInfo.releaseDateMillis, newPendingIntent);
+                }
             } else {
-                alarmManager.setExact(AlarmManager.RTC_WAKEUP, newNearestNotificationInfo.releaseDateMillis, newPendingIntent);
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, newNearestNotificationInfo.releaseDateMillis, newPendingIntent);
+                } else {
+                    try {
+                        alarmManager.setExact(AlarmManager.RTC_WAKEUP, newNearestNotificationInfo.releaseDateMillis, newPendingIntent);
+                    } catch (SecurityException ignored) {
+                        alarmManager.set(AlarmManager.RTC_WAKEUP, newNearestNotificationInfo.releaseDateMillis, newPendingIntent);
+                    }
+                }
             }
         }
     }

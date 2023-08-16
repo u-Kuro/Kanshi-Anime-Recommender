@@ -779,8 +779,11 @@
 		if (val === true) window.setShouldGoBack(false);
 	});
 	window.addEventListener("scroll", () => {
-		if (window.scrollY !== 0 && !$gridFullView)
+		if (
+			$gridFullView ? animeGridEl.scrollLeft > 500 : window.scrollY > 200
+		) {
 			window.setShouldGoBack(false);
+		}
 		runIsScrolling.update((e) => !e);
 	});
 	window.addEventListener("resize", () => {
