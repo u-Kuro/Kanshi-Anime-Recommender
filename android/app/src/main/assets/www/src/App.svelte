@@ -1016,13 +1016,6 @@
 		}
 	};
 
-	window.appIsUpToDate = () => {
-		$confirmPromise?.({
-			isAlert: true,
-			text: "There are currently no updates available.",
-		});
-	};
-
 	let _progress = 0,
 		progressFrame,
 		progressChangeStart = performance.now();

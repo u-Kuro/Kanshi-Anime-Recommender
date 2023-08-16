@@ -66,7 +66,7 @@ import androidx.core.content.FileProvider;
 import androidx.core.splashscreen.SplashScreen;
 
 public class MainActivity extends AppCompatActivity {
-    public final int appID = 123;
+    public final int appID = 124;
     public boolean webViewIsLoaded = false;
     public boolean permissionIsAsked = false;
     public SharedPreferences prefs;
@@ -356,8 +356,7 @@ public class MainActivity extends AppCompatActivity {
         WebView.setWebContentsDebuggingEnabled(BuildConfig.DEBUG);
         isAppConnectionAvailable(isConnected -> webView.post(() -> {
             if (isConnected) {
-//                webView.loadUrl("https://u-kuro.github.io/Kanshi.Anime-Recommendation/");
-                webView.loadUrl("file:///android_asset/www/index.html");
+                webView.loadUrl("https://u-kuro.github.io/Kanshi.Anime-Recommendation/");
             } else {
                 webView.loadUrl("file:///android_asset/www/index.html");
                 showDialog(new AlertDialog.Builder(MainActivity.this)
@@ -579,7 +578,7 @@ public class MainActivity extends AppCompatActivity {
         @JavascriptInterface
         public void setShouldGoBack(boolean _shouldGoBack) {
             if (shouldGoBack && !_shouldGoBack && currentToast != null) {
-                currentToast.cancel();
+                hideToast();
             }
             shouldGoBack = _shouldGoBack;
         }
@@ -653,16 +652,22 @@ public class MainActivity extends AppCompatActivity {
         @JavascriptInterface
         public void isOnline(boolean isOnline) {
             try {
-                isAppConnectionAvailable(isConnected -> webView.post(() -> {
-                    if (webView.getUrl()==null) return;
-                    if (isConnected && isOnline && webView.getUrl().startsWith("file:///android_asset/www/index.html")) {
-                        showDialog(new AlertDialog.Builder(MainActivity.this)
-                            .setTitle("Reconnected successfully")
-                            .setMessage("Do you want to switch to the online app?")
-                            .setPositiveButton("OK", (dialogInterface, i) -> webView.loadUrl("https://u-kuro.github.io/Kanshi.Anime-Recommendation/"))
-                            .setNegativeButton("CANCEL", null));
-                    }
-                }),999999999);
+                if (isOnline) {
+                    isAppConnectionAvailable(isConnected -> webView.post(() -> {
+                        if (webView.getUrl() == null) return;
+                        if (isConnected && webView.getUrl().startsWith("file:///android_asset/www/index.html")) {
+                            showDialog(new AlertDialog.Builder(MainActivity.this)
+                                    .setTitle("Reconnected successfully")
+                                    .setMessage("Do you want to switch to the online app?")
+                                    .setPositiveButton("OK", (dialogInterface, i) -> webView.loadUrl("https://u-kuro.github.io/Kanshi.Anime-Recommendation/"))
+                                    .setNegativeButton("CANCEL", null));
+                        } else if (isConnected) {
+                            showToast(Toast.makeText(getApplicationContext(), "Your internet has been restored.", Toast.LENGTH_LONG));
+                        }
+                    }), 999999999);
+                } else {
+                    showToast(Toast.makeText(getApplicationContext(), "You are currently offline.", Toast.LENGTH_LONG));
+                }
             } catch (Exception ignored) {}
         }
         @JavascriptInterface
@@ -670,18 +675,21 @@ public class MainActivity extends AppCompatActivity {
             if (_appID > appID) {
                 webView.post(() -> webView.loadUrl("javascript:window?.updateAppAlert?.();"));
             } else if (manualCheck) {
-                webView.post(() -> webView.loadUrl("javascript:window?.appIsUpToDate?.();"));
+                showToast(Toast.makeText(getApplicationContext(), "No recent application updates.", Toast.LENGTH_LONG));
             }
         }
         @JavascriptInterface
         public void refreshWeb(){
-            prefsEdit.putBoolean("permissionIsAsked", false).apply();
-            webView.post(() -> {
-                webView.clearCache(true);
-                webView.reload();
-            });
+            Intent intent = new Intent(getApplicationContext(), MainActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            startActivity(intent);
+            finish();
         }
-
+        @JavascriptInterface
+        public void clearCache(){
+            prefsEdit.putBoolean("permissionIsAsked", false).apply();
+            webView.post(() -> webView.clearCache(true));
+        }
         @RequiresApi(api = Build.VERSION_CODES.O)
         @JavascriptInterface
         public void downloadUpdate() {
@@ -798,12 +806,14 @@ public class MainActivity extends AppCompatActivity {
             if(!shouldGoBack){
                 webView.post(() -> webView.loadUrl("javascript:window?.backPressed?.();"));
             } else {
+                hideToast();
                 moveTaskToBack(true);
             }
         } else {
             if (webView.canGoBack()) {
                 webView.goBack();
             } else {
+                hideToast();
                 super.onBackPressed();
             }
         }

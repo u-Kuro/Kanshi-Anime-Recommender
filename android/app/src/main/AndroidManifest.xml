@@ -28,7 +28,8 @@
         android:theme="@style/Theme.Kanshi"
         android:requestLegacyExternalStorage="true"
         tools:targetApi="33"
-        android:launchMode="singleTask">
+        android:alwaysRetainTaskState="true"
+        android:launchMode="singleInstance">
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="com.example.kanshi.provider"
@@ -42,7 +43,8 @@
             android:theme="@style/Theme.Kanshi.SplashScreen"
             android:name=".MainActivity"
             android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|uiMode|screenSize|smallestScreenSize"
-            android:exported="true">
+            android:exported="true"
+            android:alwaysRetainTaskState="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -51,9 +53,9 @@
         <activity
             android:theme="@style/Theme.Kanshi"
             android:name=".YoutubeViewActivity"
-            android:alwaysRetainTaskState="true"
             android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|uiMode|screenSize|smallestScreenSize"
-            android:exported="true">
+            android:exported="true"
+            android:alwaysRetainTaskState="true">
         </activity>
         <receiver android:name="AnimeNotificationManager$NotificationReceiver"
             android:exported="false"

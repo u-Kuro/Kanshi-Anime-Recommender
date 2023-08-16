@@ -27,13 +27,6 @@
 
     let importFileInput;
 
-    async function stillFixing() {
-        $confirmPromise({
-            isAlert: true,
-            text: "Sorry, this is still not working.",
-        });
-    }
-
     async function importData() {
         if ($initData) return pleaseWaitAlert();
         if (!(importFileInput instanceof Element))
@@ -252,11 +245,41 @@
         }
     }
 
+    async function reload() {
+        if (
+            await $confirmPromise("Are you sure want to reload the resources?")
+        ) {
+            document.querySelectorAll("script")?.forEach((script) => {
+                if (
+                    script.src &&
+                    script.src !== "https://www.youtube.com/iframe_api?v=16"
+                ) {
+                    script.src = script.src;
+                }
+            });
+            document.querySelectorAll("img")?.forEach((image) => {
+                if (!image.naturalHeight) {
+                    image.src = image.src;
+                }
+            });
+            window.reloadYoutube?.();
+        }
+    }
+
     async function refresh() {
+        if (!$android) return;
         if (await $confirmPromise("Are you sure want to refresh the app?")) {
-            if (!$android) return;
             try {
                 JSBridge.refreshWeb();
+            } catch (e) {}
+        }
+    }
+
+    async function clearCache() {
+        if (!$android) return;
+        if (await $confirmPromise("Are you sure want to clear the cache?")) {
+            try {
+                JSBridge.clearCache();
             } catch (e) {}
         }
     }
@@ -385,13 +408,6 @@
                 </button>
             {/if}
             <button
-                class="button selected"
-                transition:fly={{ x: 50, duration: 300 }}
-                on:click={stillFixing}
-                on:keydown={(e) => e.key === "Enter" && stillFixing(e)}
-                >Dark Mode</button
-            >
-            <button
                 transition:fly={{ x: 50, duration: 300 }}
                 class={"button " + ($autoUpdate ? "selected" : "")}
                 on:click={handleUpdateEveryHour}
@@ -399,14 +415,16 @@
                     e.key === "Enter" && handleUpdateEveryHour(e)}
                 >Auto Update</button
             >
-            <button
-                transition:fly={{ x: 50, duration: 300 }}
-                class={"button " + ($autoExport ? "selected" : "")}
-                on:click={handleExportEveryHour}
-                on:keydown={(e) =>
-                    e.key === "Enter" && handleExportEveryHour(e)}
-                >Auto Export</button
-            >
+            {#if $android}
+                <button
+                    transition:fly={{ x: 50, duration: 300 }}
+                    class={"button " + ($autoExport ? "selected" : "")}
+                    on:click={handleExportEveryHour}
+                    on:keydown={(e) =>
+                        e.key === "Enter" && handleExportEveryHour(e)}
+                    >Auto Export</button
+                >
+            {/if}
             <button
                 transition:fly={{ x: 50, duration: 300 }}
                 class="button"
@@ -442,11 +460,24 @@
                 >
                 <button
                     class="button"
+                    on:keydown={(e) => e.key === "Enter" && clearCache(e)}
+                    on:click={clearCache}
+                    transition:fly={{ x: 50, duration: 300 }}
+                    >Clear Cache</button
+                >
+                <button
+                    class="button"
                     on:keydown={(e) => e.key === "Enter" && refresh(e)}
                     on:click={refresh}
                     transition:fly={{ x: 50, duration: 300 }}>Refresh</button
                 >
             {/if}
+            <button
+                class="button"
+                on:keydown={(e) => e.key === "Enter" && reload(e)}
+                on:click={reload}
+                transition:fly={{ x: 50, duration: 300 }}>Reload</button
+            >
         </div>
     </div>
 {/if}

@@ -1267,11 +1267,6 @@
             $updateRecommendationList = !$updateRecommendationList;
         }
         isOnline = true;
-        document.querySelectorAll("link")?.forEach((link) => {
-            if (link.href) {
-                link.href = link.href;
-            }
-        });
         document.querySelectorAll("script")?.forEach((script) => {
             if (
                 script.src &&
@@ -1285,6 +1280,9 @@
                 image.src = image.src;
             }
         });
+        reloadYoutube();
+    });
+    function reloadYoutube() {
         loadYouTubeAPI().then(() => {
             $ytPlayers = $ytPlayers.filter(({ ytPlayer }) => {
                 if (
@@ -1306,8 +1304,14 @@
             });
             playMostVisibleTrailer();
         });
-    });
+    }
+    window.reloadYoutube = reloadYoutube;
     window.addEventListener("offline", () => {
+        if ($android) {
+            try {
+                JSBridge.isOnline(false);
+            } catch (e) {}
+        }
         $dataStatus = "Currently Offline...";
         isOnline = false;
     });
