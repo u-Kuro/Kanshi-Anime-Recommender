@@ -2448,7 +2448,7 @@
         max-height: unset !important;
     }
 
-    @media screen and (min-height: 780px) {
+    @media screen and (min-height: 700px) {
         .info-categ {
             align-self: start !important;
         }
