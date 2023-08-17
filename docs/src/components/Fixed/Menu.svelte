@@ -291,65 +291,6 @@
             text: "Please wait a moment...",
         });
     }
-
-    let isGoingBack,
-        touchID,
-        checkPointer,
-        startX,
-        endX,
-        startY,
-        endY,
-        goBackPercent;
-
-    function itemScroll() {
-        isGoingBack = false;
-        goBackPercent = 0;
-    }
-
-    function handlePopupContainerDown(event) {
-        startX = event.touches[0].clientX;
-        startY = event.touches[0].clientY;
-        touchID = event.touches[0].identifier;
-        checkPointer = true;
-    }
-    function handlePopupContainerMove(event) {
-        if (checkPointer) {
-            checkPointer = false;
-            endX = event.touches[0].clientX;
-            endY = event.touches[0].clientY;
-            const deltaX = endX - startX;
-            const deltaY = endY - startY;
-            if (Math.abs(deltaX) > Math.abs(deltaY) && deltaX > 0) {
-                isGoingBack = true;
-            }
-        } else if (isGoingBack) {
-            endX = event.touches[0].clientX;
-            const deltaX = endX - startX;
-            if (deltaX > 0) {
-                goBackPercent = Math.min((deltaX / 48) * 100, 100);
-            } else {
-                goBackPercent = 0;
-            }
-        }
-    }
-    function handlePopupContainerUp(event) {
-        endX = Array.from(event.changedTouches).find(
-            (touch) => touch.identifier === touchID
-        ).clientX;
-        let xThreshold = 48;
-        let deltaX = endX - startX;
-        if (isGoingBack && deltaX >= xThreshold) {
-            $menuVisible = false;
-        }
-        touchID = null;
-        isGoingBack = false;
-        goBackPercent = 0;
-    }
-    function handlePopupContainerCancel() {
-        touchID = null;
-        isGoingBack = false;
-        goBackPercent = 0;
-    }
 </script>
 
 <input
@@ -364,12 +305,8 @@
         class="menu-container"
         on:click={handleMenuVisibility}
         on:keydown={(e) => e.key === "Enter" && handleMenuVisibility(e)}
-        on:touchstart={handlePopupContainerDown}
-        on:touchmove={handlePopupContainerMove}
-        on:touchend={handlePopupContainerUp}
-        on:touchcancel={handlePopupContainerCancel}
     >
-        <div class="menu" on:scroll={itemScroll}>
+        <div class="menu">
             <button
                 class="button"
                 on:click={updateList}
@@ -481,20 +418,6 @@
         </div>
     </div>
 {/if}
-{#if $menuVisible && isGoingBack}
-    <div
-        class="go-back-grid-highlight"
-        style:--scale={Math.max(1, (goBackPercent ?? 1) * 0.01 * 2)}
-        style:--position={"-" + (100 - (goBackPercent ?? 0)) + "%"}
-        out:fly={{ x: -176, duration: 1000 }}
-    >
-        <div
-            class={"go-back-grid" + (goBackPercent >= 100 ? " willGoBack" : "")}
-        >
-            <i class="fa-solid fa-arrow-left" />
-        </div>
-    </div>
-{/if}
 
 <style>
     .menu-container {
@@ -555,45 +478,6 @@
         color: #b9cadd !important;
     }
 
-    .go-back-grid-highlight {
-        position: fixed;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        top: 50%;
-        left: 0;
-        transform: translateY(-50%) translateX(var(--position));
-        background-color: rgb(103, 187, 254, 0.5);
-        width: calc(44px * var(--scale));
-        height: calc(44px * var(--scale));
-        border-radius: 50%;
-        z-index: 9000;
-    }
-
-    .go-back-grid {
-        position: absolute;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 6px;
-        background-color: white;
-        color: black;
-        cursor: pointer;
-        border-radius: 50%;
-        max-width: 44px;
-        max-height: 44px;
-        min-width: 44px;
-        min-height: 44px;
-    }
-
-    .go-back-grid.willGoBack {
-        background-color: black;
-        color: white;
-    }
-
-    .go-back-grid i {
-        font-size: 2em;
-    }
     @media screen and (min-width: 750px) {
         .menu-container {
             z-index: 994 !important;

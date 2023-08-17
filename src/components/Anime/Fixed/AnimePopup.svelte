@@ -53,8 +53,10 @@
         mostVisiblePopupHeader,
         currentHeaderIdx,
         currentYtPlayer,
+        mainHome,
         popupWrapper,
         popupContainer,
+        popupContainerIsScrolling,
         popupAnimeObserver,
         windowWidth = window.visualViewport.width,
         windowHeight = window.visualViewport.height,
@@ -166,18 +168,59 @@
         }
     }
 
-    async function handleMoreVideos(title) {
+    async function askToOpenInAnilist(url) {
+        if (!url) return;
+        if (
+            await $confirmPromise({
+                title: "Open in Anilist",
+                text: "Are you sure you want open this anime in Anilist?",
+            })
+        ) {
+            window.open(
+                url,
+                "_blank"
+            );
+        }
+    }
+
+    async function askToOpenYoutube(title) {
         let animeTitle;
         if (isJsonObject(title)) {
-            animeTitle = title?.romaji ||
+            animeTitle =
+                title?.romaji ||
                 title?.userPreferred ||
-                title?.english || 
+                title?.english ||
                 title?.native;
         } else if (typeof title === "string") {
             animeTitle = title;
         }
         if (typeof animeTitle !== "string" || animeTitle === "") return;
-        window.open(`https://www.youtube.com/results?search_query=${animeTitle} Anime`, "_blank");
+        if (
+            await $confirmPromise({
+                title: "See Related Videos",
+                text: "Are you sure you want see more related videos in Youtube?",
+            })
+        ) {
+            handleMoreVideos(animeTitle)
+        }
+    }
+
+    async function handleMoreVideos(title) {
+        let animeTitle;
+        if (isJsonObject(title)) {
+            animeTitle =
+                title?.romaji ||
+                title?.userPreferred ||
+                title?.english ||
+                title?.native;
+        } else if (typeof title === "string") {
+            animeTitle = title;
+        }
+        if (typeof animeTitle !== "string" || animeTitle === "") return;
+        window.open(
+            `https://www.youtube.com/results?search_query=${animeTitle} Anime`,
+            "_blank"
+        );
     }
 
     animeIdxRemoved.subscribe(async (removedIdx) => {
@@ -318,6 +361,8 @@
                 // Animate Opening
                 addClass(popupWrapper, "visible");
                 addClass(popupContainer, "show");
+                addClass(mainHome, "hide");
+                removeClass(mainHome, "show");
                 // Try to Add YT player
                 currentHeaderIdx = $openedAnimePopupIdx;
                 let openedAnimes = [
@@ -373,7 +418,9 @@
             }
         } else if (val === false) {
             removeClass(popupContainer, "show");
+            removeClass(mainHome, "hide");
             addClass(popupContainer, "hide");
+            addClass(mainHome, "show");
             setTimeout(() => {
                 // Stop All Player
                 $ytPlayers?.forEach(({ ytPlayer }) => ytPlayer?.pauseVideo?.());
@@ -442,8 +489,17 @@
             date = new Date();
         }, 1000);
         popupWrapper = popupWrapper || document.getElementById("popup-wrapper");
+        mainHome = document.getElementById("main-home");
         popupContainer =
             popupContainer || popupWrapper.querySelector("#popup-container");
+        let popupContainerScrollTimeout;
+        popupContainer.addEventListener("scroll", () => {
+            popupContainerIsScrolling = true;
+            clearTimeout(popupContainerScrollTimeout);
+            popupContainerScrollTimeout = setTimeout(() => {
+                popupContainerIsScrolling = false;
+            }, 500);
+        });
         animeGridParentEl = document.getElementById("anime-grid");
         window.addEventListener("resize", () => {
             if (
@@ -735,19 +791,27 @@
         let popupHeader = trailerEl?.parentElement;
         let popupImg = popupHeader?.querySelector?.(".popup-img");
         if (_ytPlayer?.getPlayerState?.() === 0) {
-            _ytPlayer?.stopVideo?.()
+            _ytPlayer?.stopVideo?.();
             let popupContent = popupHeader?.closest?.(".popup-content");
-            let loopedAnimeID = $finalAnimeList?.[getChildIndex(popupContent) ?? -1]?.id;
-            if (loopedAnimeID!=null) {
+            let loopedAnimeID =
+                $finalAnimeList?.[getChildIndex(popupContent) ?? -1]?.id;
+            if (loopedAnimeID != null) {
                 if (videoLoops[loopedAnimeID]) {
-                    clearTimeout(videoLoops[loopedAnimeID])
-                    videoLoops[loopedAnimeID] = null
+                    clearTimeout(videoLoops[loopedAnimeID]);
+                    videoLoops[loopedAnimeID] = null;
                 }
-                videoLoops[loopedAnimeID] = setTimeout(()=>{
-                    if (mostVisiblePopupHeader===popupHeader && _ytPlayer?.getPlayerState?.() === 5 && _ytPlayer.g && $inApp && $popupVisible && $autoPlay) {
-                        _ytPlayer?.playVideo?.()
+                videoLoops[loopedAnimeID] = setTimeout(() => {
+                    if (
+                        mostVisiblePopupHeader === popupHeader &&
+                        _ytPlayer?.getPlayerState?.() === 5 &&
+                        _ytPlayer.g &&
+                        $inApp &&
+                        $popupVisible &&
+                        $autoPlay
+                    ) {
+                        _ytPlayer?.playVideo?.();
                     }
-                },8 * 1000) // Play Again after 8 seconds
+                }, 8 * 1000); // Play Again after 8 seconds
             }
         }
         if (
@@ -755,8 +819,9 @@
             (trailerEl?.classList?.contains?.("display-none") ||
                 !popupImg?.classList?.contains?.("display-none"))
         ) {
-            $ytPlayers?.forEach(({ ytPlayer }) => 
-                ytPlayer?.g !== _ytPlayer?.g && ytPlayer?.pauseVideo?.()
+            $ytPlayers?.forEach(
+                ({ ytPlayer }) =>
+                    ytPlayer?.g !== _ytPlayer?.g && ytPlayer?.pauseVideo?.()
             );
             currentYtPlayer = _ytPlayer;
             addClass(popupImg, "fade-out");
@@ -1097,10 +1162,14 @@
         format,
         duration,
         nextAiringEpisode,
+        score,
+        meanScoreAll,
+        meanScoreAbove,
     }) {
-        let _format = format;
+        // ONA · 12 · 24m · LOW SCORE
+        let text = "";
         if (format) {
-            _format = `${format}`;
+            text = `${format}`;
             let timeDifMS;
             let nextEpisode;
             let nextAiringDate;
@@ -1119,30 +1188,37 @@
                 typeof nextEpisode === "number" &&
                 episodes > nextEpisode
             ) {
-                _format += ` (${nextEpisode}/${episodes} in ${formatDateDifference(
+                text += ` · <span style="color:rgb(61, 180, 242);">${nextEpisode}/${episodes} in ${formatDateDifference(
                     nextAiringDate,
                     timeDifMS
-                )})`;
+                )}</span>`;
             } else if (timeDifMS > 0 && typeof nextEpisode === "number") {
-                _format += ` (Ep ${nextEpisode} in ${formatDateDifference(
+                text += ` · <span style="color:rgb(61, 180, 242);">Ep ${nextEpisode} in ${formatDateDifference(
                     nextAiringDate,
                     timeDifMS
-                )})`;
+                )}</span>`;
             } else if (
                 timeDifMS <= 0 &&
                 typeof nextEpisode === "number" &&
                 episodes > nextEpisode
             ) {
-                _format += ` (${nextEpisode}/${episodes})`;
+                text += ` · ${nextEpisode}/${episodes}`;
             } else if (episodes > 0) {
-                _format += ` (${episodes})`;
+                text += ` · ${episodes}`;
             }
             if (duration > 0) {
                 let time = msToTime(duration * 60 * 1000);
-                _format += ` | ${time ? time : ""}`;
+                text += ` · ${time ? time : ""}`;
+            }
+            if (score < meanScoreAll) {
+                // Very Low Score
+                text += ` · <span class="purple-color">VERY LOW SCORE</span>`;
+            } else if (score < meanScoreAbove) {
+                // Low Score
+                text += ` · <span class="orange-color">LOW SCORE</span>`;
             }
         }
-        return _format;
+        return text;
     }
     function formatDateDifference(endDate, timeDifference) {
         const oneMinute = 60 * 1000; // Number of milliseconds in one minute
@@ -1336,44 +1412,6 @@
             firstScriptTag.parentElement.insertBefore(tag, firstScriptTag);
         });
     }
-    function openDescription(event) {
-        let popupMain = event.target.closest(".popup-main");
-        let descriptionEl = popupMain?.querySelector?.(
-            ".anime-description-container"
-        );
-        if (descriptionEl) {
-            event.stopPropagation();
-            let classList = descriptionEl?.classList;
-            if (classList.contains("display-none")) {
-                removeClass(descriptionEl, "display-none");
-                removeClass(descriptionEl, "fade-out");
-                addClass(descriptionEl, "fade-in");
-            } else {
-                removeClass(descriptionEl, "fade-in");
-                addClass(descriptionEl, "fade-out");
-                setTimeout(() => {
-                    addClass(descriptionEl, "display-none");
-                }, 300);
-            }
-        }
-    }
-    function closeDescription(event) {
-        let descriptionEl = event.target;
-        let classList = descriptionEl?.classList;
-        if (!classList.contains("anime-description-container")) {
-            descriptionEl = descriptionEl.closest(
-                ".anime-description-container"
-            );
-        }
-        if (descriptionEl) {
-            event.stopPropagation();
-            removeClass(descriptionEl, "fade-in");
-            addClass(descriptionEl, "fade-out");
-            setTimeout(() => {
-                addClass(descriptionEl, "display-none");
-            }, 300);
-        }
-    }
 
     function horizontalWheel(event, parentClass) {
         let element = event.target;
@@ -1402,46 +1440,10 @@
         });
         return span.innerHTML;
     }
-    window.addEventListener("click", (event) => {
-        let element = event.target;
-        let classList = element.classList;
 
-        let parentElement;
-        if (classList?.contains?.("popup-main")) {
-            parentElement = element;
-        } else {
-            parentElement = element?.closest?.(".popup-main");
-        }
-        if (parentElement) {
-            let descriptionEl = parentElement.querySelector(
-                ".anime-description-container"
-            );
-            if (
-                descriptionEl &&
-                !descriptionEl?.classList?.contains?.("fade-out")
-            ) {
-                removeClass(descriptionEl, "fade-in");
-                addClass(descriptionEl, "fade-out");
-                setTimeout(() => {
-                    addClass(descriptionEl, "display-none");
-                }, 300);
-            }
-        }
-    });
-
-    let willHandleDescription,
-        isOpeningDesc,
-        willCloseDescRight,
-        touchID,
-        checkPointer,
-        startX,
-        endX,
-        startY,
-        endY,
-        goBackPercent,
-        showDescPercent;
+    let touchID, checkPointer, startX, endX, startY, endY, goBackPercent;
     function itemScroll() {
-        $popupIsGoingBack = willHandleDescription = willCloseDescRight = false;
+        $popupIsGoingBack = false;
         goBackPercent = 0;
     }
     function handlePopupContainerDown(event) {
@@ -1480,61 +1482,8 @@
             endY = event.touches[0].clientY;
             const deltaX = endX - startX;
             const deltaY = endY - startY;
-            if (Math.abs(deltaX) > Math.abs(deltaY)) {
-                if (deltaX > 0) {
-                    event.stopImmediatePropagation();
-                    let popupMain = event.target.closest(".popup-main");
-                    let descriptionEl = popupMain?.querySelector?.(
-                        ".anime-description-container"
-                    );
-                    if (
-                        descriptionEl &&
-                        !descriptionEl?.classList.contains("display-none")
-                    ) {
-                        willHandleDescription = willCloseDescRight = true;
-                        removeClass(descriptionEl, "fade-out");
-                        removeClass(descriptionEl, "fade-in");
-                        removeClass(descriptionEl, "display-none");
-                    } else {
-                        $popupIsGoingBack = true;
-                    }
-                } else if (deltaX < 0) {
-                    let hasScrollableXElement;
-                    let closestScrollableXElement = event.target;
-                    while (
-                        closestScrollableXElement &&
-                        closestScrollableXElement !== document.body
-                    ) {
-                        const isScrollableX =
-                            closestScrollableXElement.scrollWidth >
-                            closestScrollableXElement.clientWidth;
-                        if (isScrollableX) {
-                            hasScrollableXElement = true;
-                            break;
-                        }
-                        closestScrollableXElement =
-                            closestScrollableXElement.parentElement;
-                    }
-                    if (!hasScrollableXElement) {
-                        let popupMain = event.target.closest(".popup-main");
-                        let descriptionEl = popupMain?.querySelector?.(
-                            ".anime-description-container"
-                        );
-                        if (descriptionEl) {
-                            event.stopImmediatePropagation();
-                            willHandleDescription = true;
-                            let classList = descriptionEl?.classList;
-                            if (classList.contains("display-none")) {
-                                isOpeningDesc = true;
-                            } else {
-                                isOpeningDesc = false;
-                            }
-                            removeClass(descriptionEl, "fade-in");
-                            removeClass(descriptionEl, "fade-out");
-                            removeClass(descriptionEl, "display-none");
-                        }
-                    }
-                }
+            if (Math.abs(deltaX) > Math.abs(deltaY) && deltaX > 0) {
+                $popupIsGoingBack = true;
             }
         } else if ($popupIsGoingBack) {
             endX = event.touches[0].clientX;
@@ -1544,37 +1493,10 @@
             } else {
                 goBackPercent = 0;
             }
-        } else if (willHandleDescription) {
-            endX = event.touches[0].clientX;
-            const deltaX = endX - startX;
-            if (willCloseDescRight) {
-                if (deltaX > 0) {
-                    showDescPercent = Math.max(1 - deltaX / 48, 0);
-                } else {
-                    showDescPercent = 1;
-                }
-            } else {
-                if (isOpeningDesc) {
-                    if (deltaX < 0) {
-                        showDescPercent = Math.min(Math.abs(deltaX) / 48, 1);
-                    } else {
-                        showDescPercent = 0;
-                    }
-                } else {
-                    if (deltaX < 0) {
-                        showDescPercent = Math.max(
-                            1 - Math.abs(deltaX) / 48,
-                            0
-                        );
-                    } else {
-                        showDescPercent = 1;
-                    }
-                }
-            }
         }
     }
     function handlePopupContainerUp(event) {
-        if ($popupIsGoingBack || willHandleDescription) {
+        if ($popupIsGoingBack) {
             endX = Array.from(event.changedTouches).find(
                 (touch) => touch.identifier === touchID
             ).clientX;
@@ -1582,77 +1504,13 @@
             let deltaX = endX - startX;
             if ($popupIsGoingBack && deltaX >= xThreshold) {
                 $popupVisible = false;
-            } else if (willCloseDescRight) {
-                if (deltaX >= xThreshold) {
-                    let popupMain = event.target.closest(".popup-main");
-                    let descriptionEl = popupMain?.querySelector?.(
-                        ".anime-description-container"
-                    );
-                    if (descriptionEl) {
-                        event.stopPropagation();
-                        showDescPercent = 0;
-                        setTimeout(() => {
-                            addClass(descriptionEl, "display-none");
-                        }, 300);
-                    }
-                } else {
-                    let popupMain = event.target.closest(".popup-main");
-                    let descriptionEl = popupMain?.querySelector?.(
-                        ".anime-description-container"
-                    );
-                    if (descriptionEl) {
-                        showDescPercent = 1;
-                        setTimeout(() => {
-                            removeClass(descriptionEl, "display-none");
-                        }, 300);
-                    }
-                }
-            } else if (willHandleDescription) {
-                let popupMain = event.target.closest(".popup-main");
-                let descriptionEl = popupMain?.querySelector?.(
-                    ".anime-description-container"
-                );
-                if (descriptionEl) {
-                    event.stopPropagation();
-                    if (isOpeningDesc) {
-                        if (deltaX <= -xThreshold) {
-                            showDescPercent = 1;
-                            setTimeout(() => {
-                                removeClass(descriptionEl, "display-none");
-                            }, 300);
-                        } else {
-                            showDescPercent = 0;
-                            setTimeout(() => {
-                                addClass(descriptionEl, "display-none");
-                            }, 300);
-                        }
-                    } else {
-                        if (deltaX <= -xThreshold) {
-                            showDescPercent = 0;
-                            setTimeout(() => {
-                                addClass(descriptionEl, "display-none");
-                            }, 300);
-                        } else {
-                            showDescPercent = 1;
-                            setTimeout(() => {
-                                removeClass(descriptionEl, "display-none");
-                            }, 300);
-                        }
-                    }
-                }
             }
             touchID = null;
-            $popupIsGoingBack =
-                willHandleDescription =
-                willCloseDescRight =
-                    false;
+            $popupIsGoingBack = false;
             goBackPercent = 0;
         } else {
             touchID = null;
-            $popupIsGoingBack =
-                willHandleDescription =
-                willCloseDescRight =
-                    false;
+            $popupIsGoingBack = false;
             goBackPercent = 0;
         }
     }
@@ -1667,7 +1525,7 @@
     }
     function handlePopupContainerCancel() {
         touchID = null;
-        $popupIsGoingBack = willHandleDescription = willCloseDescRight = false;
+        $popupIsGoingBack = false;
         goBackPercent = 0;
     }
 </script>
@@ -1699,9 +1557,8 @@
                             class={"popup-header " +
                                 (anime.trailerID ? "loader" : "")}
                             bind:this={anime.popupHeader}
-                            on:click={openDescription}
-                            on:keydown={(e) =>
-                                e.key === "Enter" && openDescription(e)}
+                            on:click={()=>askToOpenYoutube(anime.title)}
+                            on:keydown={(e) =>e.key === "Enter" &&askToOpenYoutube(anime.title)}
                         >
                             <div class="popup-header-loading">
                                 <i class="fa-solid fa-k fa-fade" />
@@ -1722,57 +1579,7 @@
                                         }}
                                     />
                                 {/if}
-                                {#if anime.coverImageUrl}
-                                    {#if anime.bannerImageUrl}
-                                        <img
-                                            loading="lazy"
-                                            src={anime.coverImageUrl}
-                                            alt="coverImg"
-                                            class="coverImg display-none fade-out"
-                                            on:load={(e) => {
-                                                removeClass(
-                                                    e.target,
-                                                    "fade-out"
-                                                );
-                                                addClass(e.target, "fade-in");
-                                            }}
-                                        />
-                                    {:else}
-                                        <img
-                                            loading="lazy"
-                                            src={anime.coverImageUrl}
-                                            alt="coverImg"
-                                            class="coverImg fade-out"
-                                            on:load={(e) => {
-                                                removeClass(
-                                                    e.target,
-                                                    "fade-out"
-                                                );
-                                                addClass(e.target, "fade-in");
-                                            }}
-                                        />
-                                    {/if}
-                                {/if}
                             </div>
-                            {#if anime?.description}
-                                <div
-                                    class="anime-description-container copy display-none fade-out"
-                                    copy-value={htmlToString(
-                                        anime?.description
-                                    )}
-                                    on:click={closeDescription}
-                                    on:keydown={(e) =>
-                                        e.key === "Enter" &&
-                                        closeDescription(e)}
-                                    style:--showDescPercent={showDescPercent}
-                                >
-                                    <div class="anime-description">
-                                        {@html editHTMLString(
-                                            anime?.description
-                                        )}
-                                    </div>
-                                </div>
-                            {/if}
                         </div>
                         <div class="popup-controls">
                             <div class="autoPlay-container">
@@ -1819,367 +1626,262 @@
                             {/if}
                         </div>
                         <div class="popup-body">
-                            <div
-                                class="anime-title-container"
-                                style:overflow={$popupIsGoingBack
-                                    ? "hidden"
-                                    : ""}
-                            >
-                                <a
-                                    rel="noopener noreferrer"
-                                    target="_blank"
-                                    href={anime.animeUrl || ""}
-                                    class={getCautionColor(anime) +
-                                        "-color anime-title copy"}
-                                    copy-value={getTitle(anime?.title) ||
-                                        ""}
-                                    style:overflow={$popupIsGoingBack
-                                        ? "hidden"
-                                        : ""}
-                                    >{getTitle(anime?.title) || "N/A"}</a
-                                >
-                                <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
-                                {#if anime?.description}
-                                    <i
-                                        class={"fa-duotone fa-circle-info " +
-                                            (getUserStatusColor(
-                                                anime.userStatus
-                                            ) +
-                                                "-color")}
-                                        tabindex="0"
-                                        on:click={openDescription}
-                                        on:keydown={(e) =>
-                                            e.key === "Enter" &&
-                                            openDescription(e)}
-                                    />
-                                {:else}
-                                    <i
-                                        class={"cursor-default fa-solid fa-circle " +
-                                            (getUserStatusColor(
-                                                anime.userStatus
-                                            ) +
-                                                "-color")}
-                                    />
-                                {/if}
-                            </div>
-                            <div
-                                class={"info-list " +
-                                    (anime.isSeenMore ? "seenmore" : "")}
+                            <div class={"popup-info"+(anime.isSeenMore ? " seenmore" : "")}
                                 style:--windowWidth={windowWidth + "px"}
                                 style:--windowHeight={windowHeight + "px"}
                             >
-                                {#if getFormattedAnimeFormat(anime)}
-                                    <div>
-                                        <div class="info-categ">Format</div>
-                                        <div
-                                            class={"format-popup info not-capitalize"}
-                                            on:wheel={(e) =>
-                                                horizontalWheel(e, "info")}
-                                            style:overflow={$popupIsGoingBack
-                                                ? "hidden"
-                                                : ""}
+                                <div class="anime-title-container">
+                                    <a
+                                        rel="noopener noreferrer"
+                                        target="_blank"
+                                        href={anime.animeUrl || ""}
+                                        class={getCautionColor(anime) +
+                                            "-color anime-title copy"}
+                                        copy-value={getTitle(anime?.title) ||
+                                            ""}
+                                        style:overflow={$popupIsGoingBack
+                                            ? "hidden"
+                                            : ""}
+                                    >
+                                        {getTitle(anime?.title) || "NA"}
+                                    </a>
+                                    <div class="info-rating-wrapper">
+                                        <i class="fa-regular fa-star" />
+                                        <h3
+                                            class="copy"
+                                            copy-value={(anime.averageScore !=
+                                            null
+                                                ? formatNumber(
+                                                      anime.averageScore * 0.1,
+                                                      1
+                                                  )
+                                                : "NA") +
+                                                "/10 · " +
+                                                (anime.popularity != null
+                                                    ? formatNumber(
+                                                          anime.popularity,
+                                                          0
+                                                      )
+                                                    : "NA")}
                                         >
-                                            {#if anime?.nextAiringEpisode?.airingAt}
-                                                {#key date.getSeconds()}
+                                            <b
+                                                >{anime.averageScore != null
+                                                    ? formatNumber(
+                                                          anime.averageScore *
+                                                              0.1,
+                                                          1
+                                                      )
+                                                    : "NA"}</b
+                                            >
+                                            {"/10 · " +
+                                                (anime.popularity != null
+                                                    ? formatNumber(
+                                                          anime.popularity,
+                                                          0
+                                                      )
+                                                    : "NA")}
+                                        </h3>
+                                    </div>
+                                </div>
+                                <div class="info-format">
+                                    {#if anime?.nextAiringEpisode?.airingAt}
+                                        {#key date.getSeconds()}
+                                            <h4
+                                                class="copy"
+                                                copy-value={htmlToString(
+                                                    getFormattedAnimeFormat(
+                                                        anime
+                                                    )
+                                                ) || ""}
+                                            >
+                                                {@html getFormattedAnimeFormat(
+                                                    anime
+                                                ) || "NA"}
+                                            </h4>
+                                        {/key}
+                                    {:else}
+                                        <h4
+                                            class="copy"
+                                            copy-value={htmlToString(
+                                                getFormattedAnimeFormat(anime)
+                                            ) || ""}
+                                        >
+                                            {@html getFormattedAnimeFormat(
+                                                anime
+                                            ) || "NA"}
+                                        </h4>
+                                    {/if}
+                                    {#if anime?.season || anime?.year}
+                                        <span
+                                            class="copy"
+                                            copy-value={`${
+                                                anime?.season || ""
+                                            }${
+                                                anime?.year
+                                                    ? " " + anime.year
+                                                    : ""
+                                            }` || "NA"}
+                                        >
+                                            {`${anime?.season || ""}${
+                                                anime?.year
+                                                    ? " " + anime.year
+                                                    : ""
+                                            }` || "NA"}
+                                        </span>
+                                    {:else}
+                                        <h4>NA</h4>
+                                    {/if}
+                                </div>
+                                <div class="info-status">
+                                    <h4
+                                        class="copy"
+                                        copy-value={(anime.userStatus || "NA") +
+                                            (anime.userScore != null
+                                                ? " · " + anime.userScore
+                                                : "")}
+                                    >
+                                        <span
+                                            class={getUserStatusColor(
+                                                anime.userStatus
+                                            ) + "-color"}
+                                            >{anime.userStatus || "NA"}</span
+                                        >
+                                        {#if anime.userScore != null}
+                                            {" · "}
+                                            <i class="fa-regular fa-star" />
+                                            {anime.userScore}
+                                        {/if}
+                                    </h4>
+                                    <h4
+                                        class="copy"
+                                        copy-value={anime.status || ""}
+                                    >
+                                        {anime.status || "NA"}
+                                    </h4>
+                                </div>
+                                <div class="info-contents">
+                                    {#if Object.entries(anime?.studios || {}).length}
+                                        <div>
+                                            <div class="info-categ">
+                                                Studios
+                                            </div>
+                                            <div
+                                                class={"studio-popup info"}
+                                                on:wheel={(e) =>
+                                                    !popupContainerIsScrolling &&
+                                                    horizontalWheel(e, "info")}
+                                                style:overflow={$popupIsGoingBack
+                                                    ? "hidden"
+                                                    : ""}
+                                            >
+                                                {#each getStudios(Object.entries(anime.studios || {}), anime?.favoriteContents?.studios) as { studio, studioColor } (studio)}
                                                     <span
-                                                        class="copy"
-                                                        copy-value={getFormattedAnimeFormat(
-                                                            anime
-                                                        ) || ""}
-                                                    >
-                                                        {getFormattedAnimeFormat(
-                                                            anime
-                                                        ) || "N/A"}
-                                                    </span>
-                                                {/key}
-                                            {:else}
-                                                <span
-                                                    class="copy"
-                                                    copy-value={getFormattedAnimeFormat(
-                                                        anime
-                                                    ) || ""}
-                                                >
-                                                    {getFormattedAnimeFormat(
-                                                        anime
-                                                    ) || "N/A"}
-                                                </span>
-                                            {/if}
-                                        </div>
-                                    </div>
-                                {/if}
-                                {#if Object.entries(anime?.studios || {}).length}
-                                    <div>
-                                        <div class="info-categ">Studio</div>
-                                        <div
-                                            class={"studio-popup info"}
-                                            on:wheel={(e) =>
-                                                horizontalWheel(e, "info")}
-                                            style:overflow={$popupIsGoingBack
-                                                ? "hidden"
-                                                : ""}
-                                        >
-                                            {#each getStudios(Object.entries(anime.studios || {}), anime?.favoriteContents?.studios) as { studio, studioColor } (studio)}
-                                                <span
-                                                    class={"copy"}
-                                                    copy-value={studio.studioName ||
-                                                        ""}
-                                                >
-                                                    <a
-                                                        class={studioColor
-                                                            ? `${studioColor}-color`
-                                                            : ""}
-                                                        rel="noopener noreferrer"
-                                                        target="_blank"
-                                                        href={studio.studioUrl ||
+                                                        class={"copy"}
+                                                        copy-value={studio.studioName ||
                                                             ""}
-                                                        >{studio.studioName ||
-                                                            "N/A"}</a
                                                     >
-                                                </span>
-                                            {/each}
+                                                        <a
+                                                            class={studioColor
+                                                                ? `${studioColor}-color`
+                                                                : ""}
+                                                            rel="noopener noreferrer"
+                                                            target="_blank"
+                                                            href={studio.studioUrl ||
+                                                                ""}
+                                                            >{studio.studioName ||
+                                                                "N/A"}</a
+                                                        >
+                                                    </span>
+                                                {/each}
+                                            </div>
                                         </div>
-                                    </div>
-                                {/if}
-                                {#if anime.genres.length}
-                                    <div>
-                                        <div class="info-categ">Genres</div>
-                                        <div
-                                            class={"genres-popup info"}
-                                            on:wheel={(e) =>
-                                                horizontalWheel(e, "info")}
-                                            style:overflow={$popupIsGoingBack
-                                                ? "hidden"
-                                                : ""}
-                                        >
-                                            {#each getGenres(anime.genres, anime?.favoriteContents?.genres, anime.contentCaution) as { genre, genreColor } (genre)}
-                                                <span
-                                                    class={"copy " +
-                                                        (genreColor
-                                                            ? `${genreColor}-color`
-                                                            : "")}
-                                                    copy-value={genre || ""}
-                                                    >{genre || "N/A"}
-                                                </span>
-                                            {/each}
-                                        </div>
-                                    </div>
-                                {/if}
-                                {#if anime?.tags?.length}
-                                    <div>
-                                        <div class="info-categ">Tags</div>
-                                        <div
-                                            class={"tags-popup info"}
-                                            on:wheel={(e) =>
-                                                horizontalWheel(e, "info")}
-                                            style:overflow={$popupIsGoingBack
-                                                ? "hidden"
-                                                : ""}
-                                        >
-                                            {#each getTags(anime.tags, anime?.favoriteContents?.tags, anime.contentCaution) as { tag, tagColor } (tag)}
-                                                <span
-                                                    class={"copy " +
-                                                        (tagColor
-                                                            ? `${tagColor}-color`
-                                                            : "")}
-                                                    copy-value={tag || ""}
-                                                    >{tag || "N/A"}
-                                                </span>
-                                            {/each}
-                                        </div>
-                                    </div>
-                                {/if}
-                                {#if getContentCaution(anime).length}
-                                    <div>
-                                        <div class="info-categ">
-                                            Content Cautions
-                                        </div>
-                                        <div
-                                            class={"content-caution-popup info"}
-                                            on:wheel={(e) =>
-                                                horizontalWheel(e, "info")}
-                                            style:overflow={$popupIsGoingBack
-                                                ? "hidden"
-                                                : ""}
-                                        >
-                                            {#each getContentCaution(anime) || [] as { caution, cautionColor } (caution)}
-                                                <span
-                                                    class={cautionColor +
-                                                        "-color copy"}
-                                                    copy-value={caution || ""}
-                                                >
-                                                    {caution || "N/A"}
-                                                </span>
-                                            {/each}
-                                        </div>
-                                    </div>
-                                {/if}
-                                {#if anime.averageScore != null}
-                                    <div>
-                                        <div class="info-categ">
-                                            Average Score
-                                        </div>
-                                        <div
-                                            class={"average-score-popup info"}
-                                            on:wheel={(e) =>
-                                                horizontalWheel(e, "info")}
-                                            style:overflow={$popupIsGoingBack
-                                                ? "hidden"
-                                                : ""}
-                                        >
-                                            <span
-                                                class="copy"
-                                                copy-value={anime.averageScore ??
-                                                    ""}
+                                    {/if}
+                                    {#if anime.genres.length}
+                                        <div>
+                                            <div class="info-categ">Genres</div>
+                                            <div
+                                                class={"genres-popup info"}
+                                                on:wheel={(e) =>
+                                                    !popupContainerIsScrolling &&
+                                                    horizontalWheel(e, "info")}
+                                                style:overflow={$popupIsGoingBack
+                                                    ? "hidden"
+                                                    : ""}
                                             >
-                                                {anime.averageScore ?? "N/A"}
-                                            </span>
+                                                {#each getGenres(anime.genres, anime?.favoriteContents?.genres, anime.contentCaution) as { genre, genreColor } (genre)}
+                                                    <span
+                                                        class={"copy " +
+                                                            (genreColor
+                                                                ? `${genreColor}-color`
+                                                                : "")}
+                                                        copy-value={genre || ""}
+                                                        >{genre || "N/A"}
+                                                    </span>
+                                                {/each}
+                                            </div>
                                         </div>
-                                    </div>
-                                {/if}
-                                {#if anime.popularity != null}
-                                    <div>
-                                        <div class="info-categ">Popularity</div>
-                                        <div
-                                            class={"popularity-popup info"}
-                                            on:wheel={(e) =>
-                                                horizontalWheel(e, "info")}
-                                            style:overflow={$popupIsGoingBack
-                                                ? "hidden"
-                                                : ""}
-                                        >
-                                            <span
-                                                class="copy"
-                                                copy-value={anime.popularity ??
-                                                    ""}
+                                    {/if}
+                                    {#if anime?.tags?.length}
+                                        <div>
+                                            <div class="info-categ">Tags</div>
+                                            <div
+                                                class={"tags-popup info"}
+                                                on:wheel={(e) =>
+                                                    !popupContainerIsScrolling &&
+                                                    horizontalWheel(e, "info")}
+                                                style:overflow={$popupIsGoingBack
+                                                    ? "hidden"
+                                                    : ""}
                                             >
-                                                {anime.popularity || "N/A"}
-                                            </span>
+                                                {#each getTags(anime.tags, anime?.favoriteContents?.tags, anime.contentCaution) as { tag, tagColor } (tag)}
+                                                    <span
+                                                        class={"copy " +
+                                                            (tagColor
+                                                                ? `${tagColor}-color`
+                                                                : "")}
+                                                        copy-value={tag || ""}
+                                                        >{tag || "N/A"}
+                                                    </span>
+                                                {/each}
+                                            </div>
                                         </div>
-                                    </div>
-                                {/if}
-                                {#if anime?.season || anime?.year}
-                                    <div>
-                                        <div class="info-categ">
-                                            Season Year
-                                        </div>
-                                        <div
-                                            class={"season-year-popup info"}
-                                            on:wheel={(e) =>
-                                                horizontalWheel(e, "info")}
-                                            style:overflow={$popupIsGoingBack
-                                                ? "hidden"
-                                                : ""}
-                                        >
-                                            <span
-                                                class="copy"
-                                                copy-value={`${
-                                                    anime?.season || ""
-                                                }${
-                                                    anime?.year
-                                                        ? " " + anime.year
-                                                        : ""
-                                                }` || ""}
+                                    {/if}
+                                </div>
+                                <div class="info-profile">
+                                    <img
+                                        loading="lazy"
+                                        src={anime.coverImageUrl}
+                                        alt="coverImg"
+                                        class="fade-in"
+                                        on:error={(e) => {
+                                            removeClass(e.target, "fade-in");
+                                            addClass(e.target, "fade-out");
+                                            setTimeout(() => {
+                                                addClass(
+                                                    e.target,
+                                                    "display-none"
+                                                );
+                                            }, 300);
+                                        }}
+                                        on:click={()=>askToOpenInAnilist(anime.animeUrl)}
+                                        on:keydown={(e) =>e.key === "Enter" &&askToOpenInAnilist(anime.animeUrl)}
+                                    />
+                                    {#if anime?.description}
+                                        <div class="anime-description-wrapper">
+                                            <h3>Description</h3>
+                                            <div
+                                                class="anime-description copy"
+                                                copy-value={htmlToString(
+                                                    anime?.description
+                                                ) || ""}
                                             >
-                                                {`${anime?.season || ""}${
-                                                    anime?.year
-                                                        ? " " + anime.year
-                                                        : ""
-                                                }` || "N/A"}
-                                            </span>
+                                                {@html editHTMLString(
+                                                    anime?.description
+                                                )}
+                                            </div>
                                         </div>
-                                    </div>
-                                {/if}
-                                {#if anime.status}
-                                    <div>
-                                        <div class="info-categ">
-                                            Airing Status
-                                        </div>
-                                        <div
-                                            class={"status-popup info"}
-                                            on:wheel={(e) =>
-                                                horizontalWheel(e, "info")}
-                                            style:overflow={$popupIsGoingBack
-                                                ? "hidden"
-                                                : ""}
-                                        >
-                                            <span
-                                                class="copy"
-                                                copy-value={anime.status || ""}
-                                            >
-                                                {anime.status || "N/A"}
-                                            </span>
-                                        </div>
-                                    </div>
-                                {/if}
-                                {#if anime.userStatus}
-                                    <div>
-                                        <div class="info-categ">
-                                            User Status
-                                        </div>
-                                        <div
-                                            class={"user-status-popup info"}
-                                            on:wheel={(e) =>
-                                                horizontalWheel(e, "info")}
-                                            style:overflow={$popupIsGoingBack
-                                                ? "hidden"
-                                                : ""}
-                                        >
-                                            <span
-                                                class={"copy " +
-                                                    (getUserStatusColor(
-                                                        anime.userStatus
-                                                    ) +
-                                                        "-color")}
-                                                copy-value={anime.userStatus ||
-                                                    ""}
-                                            >
-                                                {anime.userStatus || "N/A"}
-                                            </span>
-                                        </div>
-                                    </div>
-                                {/if}
-                                {#if anime.userScore != null}
-                                    <div>
-                                        <div class="info-categ">User Score</div>
-                                        <div
-                                            class={"user-score-popup info"}
-                                            on:wheel={(e) =>
-                                                horizontalWheel(e, "info")}
-                                            style:overflow={$popupIsGoingBack
-                                                ? "hidden"
-                                                : ""}
-                                        >
-                                            <span
-                                                class="copy"
-                                                copy-value={anime.userScore ??
-                                                    ""}
-                                            >
-                                                {anime.userScore ?? "N/A"}
-                                            </span>
-                                        </div>
-                                    </div>
-                                {/if}
-                                {#if formatNumber(anime.score) != null}
-                                    <div>
-                                        <div class="info-categ">Score</div>
-                                        <div
-                                            class={"score-popup info"}
-                                            on:wheel={(e) =>
-                                                horizontalWheel(e, "info")}
-                                            style:overflow={$popupIsGoingBack
-                                                ? "hidden"
-                                                : ""}
-                                        >
-                                            <span
-                                                class="copy"
-                                                copy-value={anime.score ?? ""}
-                                            >
-                                                {formatNumber(anime.score) ??
-                                                    "N/A"}
-                                            </span>
-                                        </div>
-                                    </div>
-                                {/if}
+                                    {/if}
+                                </div>
                             </div>
                             <div class="footer">
                                 <button
@@ -2249,7 +1951,7 @@
         top: 0;
         width: 100%;
         height: 100%;
-        background-color: rgba(0, 0, 0, 0.7);
+        background-color: transparent;
         display: flex;
         justify-content: center;
         overflow: hidden;
@@ -2273,6 +1975,14 @@
         margin-top: 55px;
         -ms-overflow-style: none;
         scrollbar-width: none;
+    }
+
+    :global(#main-home.hide) {
+        transform: translateX(var(--translateX));
+    }
+
+    :global(#main-home.show) {
+        transform: translateX(0px);
     }
 
     .popup-container.hide {
@@ -2466,23 +2176,69 @@
         margin: 1em 1em;
     }
 
+    .popup-info {
+        max-height: max(
+            calc(
+                var(--windowHeight) -
+                    calc(
+                        (calc(360 * min(var(--windowWidth), 640px)) / 640) +
+                            55px + 30px + 2em + 1em + 2.9325em
+                    )
+            ),
+            120px
+        );
+        overflow: hidden;
+        margin-bottom: 1em;
+    }
+
+    .popup-info.seenmore {
+        max-height: unset !important;
+    }
+
+    .popup-info.seenmore .info-contents {
+        margin: 1em !important;
+        width: calc(100% - 2em - 4.5em);
+        display: flex !important;
+        flex-wrap: wrap !important;
+        gap: 1em !important;
+    }
+
+    .popup-info.seenmore .info-contents > div {
+        width: 100% !important;
+        display: flex !important;
+        flex-wrap: wrap !important;
+        align-items: center !important;
+        gap: 0.5em !important;
+    }
+
+    .popup-info.seenmore .info {
+        font-size: clamp(1.018rem, 1.099rem, 1.18rem) !important;
+        text-transform: capitalize !important;
+        overflow-x: unset !important;
+        overflow-x: unset !important;
+        display: flex !important;
+        flex-wrap: wrap !important;
+        gap: 8px !important;
+        width: 100% !important;
+        flex-direction: unset !important;
+        max-height: unset !important;
+    }
+
     .popup-body a {
         color: rgb(61, 180, 242);
         text-decoration: none;
     }
 
     .anime-title-container {
-        height: 38px;
+        padding: 8px 8px 5px 8px;
         width: 100%;
         overflow-x: auto;
         overflow-y: hidden;
         white-space: nowrap;
         align-items: center;
-        display: grid;
-        grid-template-columns: calc(100% - 26px - 2em) 2em;
+        display: flex;
         grid-column-gap: 2em;
-        -ms-overflow-style: none;
-        scrollbar-width: none;
+        justify-content: space-between;
     }
 
     .anime-title-container::-webkit-scrollbar {
@@ -2491,7 +2247,82 @@
 
     .anime-title-container i {
         font-size: 2em;
+    }
+
+    .info-rating-wrapper {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 0.2em;
+        white-space: nowrap;
+    }
+
+    .info-rating-wrapper > i {
+        font-size: 1.5em;
+        color: rgb(245, 197, 24);
+    }
+
+    .info-rating-wrapper > h3 {
+        white-space: nowrap;
+    }
+
+    .info-rating-wrapper b {
+        font-size: 1.5rem;
+    }
+
+    .info-format {
+        padding: 0 8px 5px 8px;
+        display: flex;
+        justify-content: space-between;
+    }
+
+    .info-status {
+        padding: 0 8px;
+        display: flex;
+        justify-content: space-between;
+    }
+
+    .info-status i {
+        font-size: 1em;
+        color: rgb(245, 197, 24);
+    }
+
+    .info-contents {
+        margin: 1em;
+        width: calc(100% - 2em - 4.5em);
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5em;
+    }
+
+    .info-contents > div {
+        width: 100%;
+        display: grid;
+        grid-template-columns: 40px auto;
+        align-items: center;
+        gap: 0.5em;
+    }
+
+    .info-profile {
+        display: flex;
+        align-items: start;
+        padding: 1em;
+        gap: 1em;
+        width: 100%;
+    }
+
+    .info-profile > img {
+        height: 150px;
+        width: 100px;
+        user-select: none;
         cursor: pointer;
+    }
+
+    .anime-description-wrapper {
+        background-color: #0b1622;
+        border-radius: 6px;
+        padding: 1em;
+        flex: 1;
     }
 
     .anime-description-container {
@@ -2526,12 +2357,6 @@
 
     .anime-description {
         margin: 1em;
-        width: calc(100% - 2em);
-        height: calc(100% - 2em);
-        max-height: 240px;
-        max-width: 580px;
-        overflow-y: auto;
-        overflow-x: hidden;
         letter-spacing: 0.05rem;
         line-height: 2.5rem;
         -ms-overflow-style: none;
@@ -2551,16 +2376,12 @@
     }
 
     .anime-title {
-        padding: 8px;
-        border-radius: 6px;
         cursor: pointer;
         font-size: clamp(1.6309rem, 1.76545rem, 1.9rem);
         overflow-x: auto;
         overflow-y: hidden;
         width: min-content;
         max-width: 100%;
-        -ms-overflow-style: none;
-        scrollbar-width: none;
     }
 
     .anime-title::-webkit-scrollbar {
@@ -2627,6 +2448,17 @@
         max-height: unset !important;
     }
 
+    @media screen and (min-height: 780px) {
+        .info-categ {
+            align-self: start !important;
+        }
+        .info {
+            flex-wrap: wrap;
+            flex-direction: column;
+            max-height: 6em;
+        }
+    }
+
     @media screen and (max-width: 425px) {
         .info-list {
             max-height: max(
@@ -2640,6 +2472,47 @@
                 240px
             ) !important;
             grid-template-columns: 100% !important;
+        }
+        .popup-info {
+            max-height: max(
+                calc(
+                    var(--windowHeight) -
+                        calc(
+                            (calc(360 * min(var(--windowWidth), 640px)) / 640) +
+                                55px + 30px + 2em + 1em + 2.9325em
+                        )
+                ),
+                240px
+            ) !important;
+            overflow: hidden;
+            margin-bottom: 1em;
+        }
+        .info-contents {
+            margin: 1em;
+            width: calc(100% - 2em) !important;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5em;
+        }
+    }
+
+    @media screen and (min-width: 641px) {
+        :global(#main-home.hide) {
+            transform: none !important;
+        }
+
+        :global(#main-home.show) {
+            transform: none !important;
+        }
+        .popup-wrapper {
+            background-color: rgba(0, 0, 0, 0.7) !important;
+        }
+        .popup-container.hide {
+            transform: translateY(var(--translateY));
+        }
+
+        .popup-container.show {
+            transform: translateY(0px);
         }
     }
 
@@ -2659,38 +2532,37 @@
                 120px
             ) !important;
         }
-        .popup-container.hide {
-            transform: translateY(var(--translateY));
+        .popup-info {
+            max-height: max(
+                calc(
+                    var(--windowHeight) -
+                        calc(
+                            (calc(360 * min(var(--windowWidth), 640px)) / 640) +
+                                30px + 2em + 1em + 2.9325em
+                        )
+                ),
+                120px
+            ) !important;
+            overflow: hidden;
+            margin-bottom: 1em;
         }
-
-        .popup-container.show {
-            transform: translateY(0px);
-        }
-    }
-
-    .info-list-wrapper,
-    .info-categ,
-    .info {
-        margin-bottom: 0.8em;
     }
 
     .info-categ {
         font-size: clamp(1.0631rem, 1.15155rem, 1.24rem);
-        font-weight: 500;
         user-select: none !important;
     }
 
     .info {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
         font-size: clamp(1.018rem, 1.099rem, 1.18rem);
         text-transform: capitalize;
-        max-height: 30px;
         overflow-y: hidden;
         overflow-x: auto;
         display: flex;
         gap: 8px;
         width: 100%;
-        -ms-overflow-style: none;
-        scrollbar-width: none;
     }
 
     .not-capitalize {

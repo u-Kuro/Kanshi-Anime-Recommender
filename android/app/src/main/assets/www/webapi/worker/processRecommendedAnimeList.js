@@ -665,9 +665,14 @@ self.onmessage = async ({ data }) => {
             let genres = anime?.genres || [];
             let tags = anime?.tags || [];
             let studios =
-                anime?.studios?.nodes?.filter(
-                    (studio) => studio?.isAnimationStudio
+                (anime?.studios?.nodes?.every((studio) => !studio?.isAnimationStudio) && anime?.studios?.nodes?.length ?
+                    [anime?.studios?.nodes?.[0]]
+                    :
+                    anime?.studios?.nodes?.filter(
+                        (studio) => studio?.isAnimationStudio
+                    )
                 ) || [];
+            studios = studios?.length && studios instanceof Array ? studios : []
             let staffs = anime?.staff?.edges || [];
             let status = anime?.status;
             let popularity = anime?.popularity;
@@ -1182,9 +1187,14 @@ self.onmessage = async ({ data }) => {
             let genres = anime?.genres || [];
             let tags = anime?.tags || [];
             let studios =
-                anime?.studios?.nodes?.filter(
-                    (studio) => studio?.isAnimationStudio
-                ) || [];
+                (anime?.studios?.nodes?.every((studio) => !studio?.isAnimationStudio) && anime?.studios?.nodes?.length ?
+                    [anime?.studios?.nodes?.[0]]
+                    :
+                    anime?.studios?.nodes?.filter(
+                        (studio) => studio?.isAnimationStudio
+                    )
+                );
+            studios = studios?.length && studios instanceof Array ? studios : []
             let staffs = anime?.staff?.edges || [];
             let status = anime?.status;
             let episodes = anime?.episodes
