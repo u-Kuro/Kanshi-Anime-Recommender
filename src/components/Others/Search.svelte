@@ -1100,7 +1100,7 @@
                         highlightedEl.scrollIntoView({
                             behavior: isFirstOrLast ? "auto" : "smooth",
                             container: parent,
-                            block: "center",
+                            block: "nearest",
                             inline: "nearest",
                         });
                     }
@@ -1114,7 +1114,7 @@
                         highlightedEl.scrollIntoView({
                             behavior: "smooth",
                             container: parent,
-                            block: "center",
+                            block: "nearest",
                             inline: "nearest",
                         });
                     }
@@ -1243,7 +1243,7 @@
             $filterOptions?.filterSelection?.[idxTypeSelected];
         selectedFilterElement = null;
     }
-    window.closeDropdown = closeDropdown;
+    window.closeDropdown = closeDropdown
 
     onMount(() => {
         // Init
@@ -1279,8 +1279,6 @@
 </script>
 
 <main
-    id="main-home"
-    style:--translateX={"-" + windowWidth + "px"}
     style:--filters-space={showFilterOptions ? "80px" : ""}
     style:--active-filter-space={(
         $activeTagFilters?.[
@@ -1295,107 +1293,124 @@
         : ""}
 >
     <div class="home-status">
-        <span out:fade={{ duration: 300 }} class="data-status">
-            <h2>
-                {#if $dataStatus}
-                    {$dataStatus}
-                {:else if !$username && !$initData}
-                    {"No Anilist Username Found"}
-                {:else if !$initData}
-                    {"Nothing to show here..."}
-                {/if}
-            </h2>
-        </span>
-    </div>
-    <div class={"filters-wrapper"+($filterOptions?"":" skeleton shimmer")}>
         {#if $filterOptions}
-            <div class="filter-settings">
-                <span class="filterType">
-                    <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
-                    <h2
-                        tabindex={selectedFilterTypeElement ? "" : "0"}
-                        on:click={handleShowFilterTypes}
-                        on:keydown={(e) =>
-                            e.key === "Enter" && handleShowFilterTypes(e)}
-                    >
-                        <i class="fa-solid fa-angle-right"></i>
-                        {" "+($filterOptions?.filterSelection?.filter?.(
-                            ({ isSelected }) => isSelected
-                        )?.[0]?.filterSelectionName || "")}
-                    </h2>
-                    <div
-                        class={"options-wrap " +
-                            (selectedFilterTypeElement
-                                ? ""
-                                : "disable-interaction hide")}
-                        style:--maxFilterSelectionHeight="{maxFilterSelectionHeight}px"
-                    >
-                        {#if $filterOptions}
-                            <div
-                                class={"options-wrap-filter-info " +
-                                    (selectedFilterTypeElement ? "" : "hide")}
-                            >
-                                <div class="header">
-                                    <h2>Filters</h2>
-                                    <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
-                                    <div
-                                        class="closing-x"
-                                        tabindex={selectedFilterTypeElement &&
-                                        windowWidth <= 425
-                                            ? "0"
-                                            : ""}
-                                        on:keydown={(e) =>
-                                            e.key === "Enter" &&
-                                            handleShowFilterTypes(e)}
-                                        on:click={handleShowFilterTypes}
-                                    >
-                                        ×
-                                    </div>
-                                </div>
-                                <div class="options">
-                                    {#each $filterOptions?.filterSelection || [] as { filterSelectionName, isSelected } (filterSelectionName)}
-                                        <div
-                                            class="option"
-                                            on:click={handleFilterTypes(
-                                                filterSelectionName
-                                            )}
-                                            on:keydown={(e) =>
-                                                e.key === "Enter" &&
-                                                handleFilterTypes(
-                                                    filterSelectionName
-                                                )}
-                                        >
-                                            <h3
-                                                style:color={isSelected
-                                                    ? "#41dee3"
-                                                    : "inherit"}
-                                            >
-                                                {filterSelectionName || ""}
-                                            </h3>
-                                        </div>
-                                    {/each}
-                                </div>
-                            </div>
-                        {/if}
-                    </div>
-                </span>
-                <div class="showFilterOptions-container">
-                    <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
-                    <i
-                        class={"showFilterOptions fa-solid fa-filter"}
-                        tabindex="0"
-                        on:click={handleShowFilterOptions}
-                        on:keydown={(e) =>
-                            e.key === "Enter" && handleShowFilterOptions(e)}
-                    />
-                </div>
-            </div>
+            <span>
+                <h2>
+                    {$filterOptions?.filterSelection?.filter?.(
+                        ({ isSelected }) => isSelected
+                    )?.[0]?.filterSelectionName || ""}
+                </h2>
+            </span>
+        {:else}
+            <div class="skeleton shimmer" />
         {/if}
-        <div
-            class={"filters" +
-                (showFilterOptions ? "" : " disable-interaction")}
-            id="filters"
-        >
+        {#if $dataStatus || !$username}
+            <span out:fade={{ duration: 300 }} class="data-status">
+                <h2>
+                    {#if $dataStatus}
+                        {$dataStatus}
+                    {:else if !$username && !$initData}
+                        {"No Anilist Username Found"}
+                    {:else}
+                        {""}
+                    {/if}
+                </h2>
+            </span>
+        {/if}
+    </div>
+    <div class="input-search-wrap">
+        <input
+            id="input-search"
+            class="input-search"
+            type="search"
+            enterkeyhint="search"
+            autocomplete="off"
+            placeholder="Search"
+            bind:value={$searchedAnimeKeyword}
+        />
+        <div class="filterType">
+            <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
+            <i
+                class="input-search-wrap-icon fa-solid fa-sliders"
+                tabindex={selectedFilterTypeElement ? "" : "0"}
+                on:click={handleShowFilterTypes}
+                on:keydown={(e) =>
+                    e.key === "Enter" && handleShowFilterTypes(e)}
+            />
+            <div
+                class={"options-wrap " +
+                    (selectedFilterTypeElement
+                        ? ""
+                        : "disable-interaction hide")}
+                style:--maxFilterSelectionHeight="{maxFilterSelectionHeight}px"
+            >
+                {#if $filterOptions}
+                    <div
+                        class={"options-wrap-filter-info " +
+                            (selectedFilterTypeElement ? "" : "hide")}
+                    >
+                        <div class="header">
+                            <h2>Filters</h2>
+                            <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
+                            <div
+                                class="closing-x"
+                                tabindex={selectedFilterTypeElement &&
+                                windowWidth <= 425
+                                    ? "0"
+                                    : ""}
+                                on:keydown={(e) =>
+                                    e.key === "Enter" &&
+                                    handleShowFilterTypes(e)}
+                                on:click={handleShowFilterTypes}
+                            >
+                                ×
+                            </div>
+                        </div>
+                        <div class="options">
+                            {#each $filterOptions?.filterSelection || [] as { filterSelectionName, isSelected } (filterSelectionName)}
+                                <div
+                                    class="option"
+                                    on:click={handleFilterTypes(
+                                        filterSelectionName
+                                    )}
+                                    on:keydown={(e) =>
+                                        e.key === "Enter" &&
+                                        handleFilterTypes(filterSelectionName)}
+                                >
+                                    <h3
+                                        style:color={isSelected
+                                            ? "#3db4f2"
+                                            : "inherit"}
+                                    >
+                                        {filterSelectionName || ""}
+                                    </h3>
+                                </div>
+                            {/each}
+                        </div>
+                    </div>
+                {/if}
+            </div>
+        </div>
+        <div class="showFilterOptions-container">
+            <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
+            <i
+                class={"showFilterOptions fa-solid fa-filter"}
+                tabindex="0"
+                on:click={handleShowFilterOptions}
+                on:keydown={(e) =>
+                    e.key === "Enter" && handleShowFilterOptions(e)}
+            />
+        </div>
+    </div>
+    <div
+        class={"filters " +
+            (showFilterOptions ? "" : "disable-interaction") +
+            ($hasWheel ? " hasWheel" : "")}
+        id="filters"
+        on:wheel={(e) => horizontalWheel(e, "filters")}
+        style:--maxPaddingHeight={maxFilterSelectionHeight + 65 + "px"}
+    >
+        {#if $filterOptions}
             {#each $filterOptions?.filterSelection || [] as filterSelection, filSelIdx (filterSelection.filterSelectionName)}
                 {#each filterSelection.filters.Dropdown || [] as Dropdown, dropdownIdx (filterSelection.filterSelectionName + Dropdown.filName)}
                     <div
@@ -1457,6 +1472,7 @@
                                     ? ""
                                     : "disable-interaction hide")}
                             style:--maxFilterSelectionHeight="{maxFilterSelectionHeight}px"
+                            on:wheel|stopPropagation={() => {}}
                         >
                             <div
                                 class={"options-wrap-filter-info " +
@@ -1499,6 +1515,7 @@
                                 />
                                 <div
                                     class="options"
+                                    on:wheel|stopPropagation={() => {}}
                                 >
                                     {#if Dropdown.options?.filter?.(({ optionName }) => hasPartialMatch(optionName, Dropdown.optKeyword) || Dropdown.optKeyword === "")?.length}
                                         {#each Dropdown.options || [] as option, optionIdx (filterSelection.filterSelectionName + Dropdown.filName + option.optionName)}
@@ -1565,6 +1582,7 @@
                 {#each filterSelection.filters.Checkbox || [] as Checkbox, checkboxIdx (filterSelection.filterSelectionName + Checkbox.filName)}
                     {#if filterSelection.isSelected}
                         <div class="filter-checkbox">
+                            <div style:visibility="none" />
                             <div
                                 class="checkbox-wrap"
                                 on:click={(e) =>
@@ -1659,33 +1677,57 @@
                     {/if}
                 {/each}
             {/each}
-            <div class="close-shown">
-                <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
-                <i
-                    class={"close-shown-items fa-solid fa-minus"}
-                    tabindex="0"
-                    on:click={handleShowFilterOptions}
-                    on:keydown={(e) =>
-                        e.key === "Enter" && handleShowFilterOptions(e)}
-                />
-            </div>
-        </div>
-        <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
-        <div
-            class={"activeFilters" + (showAllActiveFilters ? " seenMore" : "")}
-            style:display={(
-                $activeTagFilters?.[
+        {:else}
+            {#each Array(10) as _}
+                <div class="filter-select">
+                    <div class="filter-name skeleton shimmer" />
+                    <div class="select skeleton shimmer" />
+                </div>
+            {/each}
+        {/if}
+    </div>
+    <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
+    <div
+        class={"activeFilters" + (showAllActiveFilters ? " seenMore" : "")}
+        style:display={(
+            $activeTagFilters?.[
+                $filterOptions?.filterSelection?.[
+                    $filterOptions?.filterSelection?.findIndex(
+                        ({ isSelected }) => isSelected
+                    )
+                ]?.filterSelectionName
+            ] || []
+        ).length
+            ? ""
+            : "none"}
+    >
+        {#if !showAllActiveFilters}
+            <div
+                tabindex="0"
+                class="empty-tagFilter"
+                style:display={$activeTagFilters ? "" : "none"}
+                title="Remove Filters"
+                on:click={removeAllActiveTag}
+                on:keydown={(e) => e.key === "Enter" && removeAllActiveTag(e)}
+                style:visibility={$activeTagFilters?.[
                     $filterOptions?.filterSelection?.[
                         $filterOptions?.filterSelection?.findIndex(
                             ({ isSelected }) => isSelected
                         )
                     ]?.filterSelectionName
-                ] || []
-            ).length
-                ? ""
-                : "none"}
+                ]?.length
+                    ? "visible"
+                    : "hidden"}
+            >
+                <i class="fa-solid fa-ban" />
+            </div>
+        {/if}
+        <div
+            id="tagFilters"
+            class="tagFilters"
+            style:max-height={showAllActiveFilters ? "200px" : "30px"}
         >
-            {#if !showAllActiveFilters}
+            {#if showAllActiveFilters}
                 <div
                     tabindex="0"
                     class="empty-tagFilter"
@@ -1707,144 +1749,88 @@
                     <i class="fa-solid fa-ban" />
                 </div>
             {/if}
-            <div
-                id="tagFilters"
-                class="tagFilters"
-                style:max-height={showAllActiveFilters ? "" : "30px"}
-            >
-                {#if showAllActiveFilters}
-                    <div
+            {#each $activeTagFilters?.[$filterOptions?.filterSelection?.[$filterOptions?.filterSelection?.findIndex(({ isSelected }) => isSelected)]?.filterSelectionName] || [] as { optionName, optionIdx, selected, changeType, filterType, categIdx, optionValue, optionType } (optionName + optionIdx + (optionType ?? ""))}
+                <div
+                    class="activeTagFilter"
+                    tabindex="0"
+                    transition:fly={{ x: -10, duration: 300 }}
+                    style:--activeTagFilterColor={selected === "included"
+                        ? "#5f9ea0"
+                        : changeType === "read"
+                        ? "#000"
+                        : "#e85d75"}
+                    on:click={(e) =>
+                        changeActiveSelect(
+                            e,
+                            optionIdx,
+                            optionName,
+                            filterType,
+                            categIdx,
+                            changeType,
+                            optionType,
+                            optionValue
+                        )}
+                    on:keydown={(e) =>
+                        e.key === "Enter" &&
+                        changeActiveSelect(
+                            e,
+                            optionIdx,
+                            optionName,
+                            filterType,
+                            categIdx,
+                            changeType,
+                            optionType,
+                            optionValue
+                        )}
+                >
+                    {#if filterType === "input number"}
+                        <h3>
+                            {optionName + ": " + optionValue || ""}
+                        </h3>
+                    {:else if optionType}
+                        <h3>{optionType + ": " + optionName || ""}</h3>
+                    {:else}
+                        <h3>{optionName || ""}</h3>
+                    {/if}
+                    <i
+                        class="fa-solid fa-xmark"
                         tabindex="0"
-                        class="empty-tagFilter"
-                        style:display={$activeTagFilters ? "" : "none"}
-                        title="Remove Filters"
-                        on:click={removeAllActiveTag}
-                        on:keydown={(e) =>
-                            e.key === "Enter" && removeAllActiveTag(e)}
-                        style:visibility={$activeTagFilters?.[
-                            $filterOptions?.filterSelection?.[
-                                $filterOptions?.filterSelection?.findIndex(
-                                    ({ isSelected }) => isSelected
-                                )
-                            ]?.filterSelectionName
-                        ]?.length
-                            ? "visible"
-                            : "hidden"}
-                    >
-                        <i class="fa-solid fa-ban" />
-                    </div>
-                {/if}
-                {#each $activeTagFilters?.[$filterOptions?.filterSelection?.[$filterOptions?.filterSelection?.findIndex(({ isSelected }) => isSelected)]?.filterSelectionName] || [] as { optionName, optionIdx, selected, changeType, filterType, categIdx, optionValue, optionType } (optionName + optionIdx + (optionType ?? ""))}
-                    <div
-                        class="activeTagFilter"
-                        tabindex="0"
-                        transition:fly={{ x: -10, duration: 300 }}
-                        style:--activeTagFilterColor={selected === "included"
-                            ? "#5f9ea0"
-                            : changeType === "read"
-                            ? "#000"
-                            : "#e85d75"}
-                        on:click={(e) =>
-                            changeActiveSelect(
+                        on:click|preventDefault={(e) =>
+                            removeActiveTag(
                                 e,
                                 optionIdx,
                                 optionName,
                                 filterType,
                                 categIdx,
-                                changeType,
-                                optionType,
-                                optionValue
+                                optionType
                             )}
                         on:keydown={(e) =>
                             e.key === "Enter" &&
-                            changeActiveSelect(
+                            removeActiveTag(
                                 e,
                                 optionIdx,
                                 optionName,
                                 filterType,
                                 categIdx,
-                                changeType,
-                                optionType,
-                                optionValue
+                                optionType
                             )}
-                    >
-                        {#if filterType === "input number"}
-                            <h3>
-                                {optionName + ": " + optionValue || ""}
-                            </h3>
-                        {:else if optionType}
-                            <h3>{optionType + ": " + optionName || ""}</h3>
-                        {:else}
-                            <h3>{optionName || ""}</h3>
-                        {/if}
-                        <i
-                            class="fa-solid fa-xmark"
-                            tabindex="0"
-                            on:click|preventDefault={(e) =>
-                                removeActiveTag(
-                                    e,
-                                    optionIdx,
-                                    optionName,
-                                    filterType,
-                                    categIdx,
-                                    optionType
-                                )}
-                            on:keydown={(e) =>
-                                e.key === "Enter" &&
-                                removeActiveTag(
-                                    e,
-                                    optionIdx,
-                                    optionName,
-                                    filterType,
-                                    categIdx,
-                                    optionType
-                                )}
-                        />
-                    </div>
-                {/each}
-                {#if showAllActiveFilters}
-                    <div class="close-shown">
-                        <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
-                        <i
-                            class={"close-shown-items fa-solid fa-minus"}
-                            tabindex="0"
-                            on:click={handleShowActiveFilters}
-                            on:keydown={(e) =>
-                                e.key === "Enter" && handleShowActiveFilters()}
-                        />
-                    </div>
-                {/if}
-            </div>
-            <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
-            <div
-                tabindex="0"
-                class="showHideActiveFilters"
-                on:click={handleShowActiveFilters}
-                on:keydown={(e) =>
-                    e.key === "Enter" && handleShowActiveFilters()}
-            >
-                <i
-                    class={"icon fa-solid fa-angle-" +
-                        (showAllActiveFilters ? "up" : "down")}
-                />
-            </div>
+                    />
+                </div>
+            {/each}
+        </div>
+        <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
+        <div
+            tabindex="0"
+            class="showHideActiveFilters"
+            on:click={handleShowActiveFilters}
+            on:keydown={(e) => e.key === "Enter" && handleShowActiveFilters()}
+        >
+            <i
+                class={"icon fa-solid fa-angle-" +
+                    (showAllActiveFilters ? "up" : "down")}
+            />
         </div>
     </div>
-    {#if $filterOptions}
-    <div class="input-search-wrap">
-        <input
-            id="input-search"
-            class="input-search"
-            type="search"
-            enterkeyhint="search"
-            autocomplete="off"
-            placeholder="Search"
-            bind:value={$searchedAnimeKeyword}
-        />
-    </div>
-    {:else}
-    <div class="input-search-wrap skeleton shimmer"/>
-    {/if}
     {#if $filterOptions}
         <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
         <div class="last-filter-option">
@@ -1856,7 +1842,7 @@
             >
                 <i
                     class={"icon fa-solid fa-arrows-" +
-                        ($gridFullView ?? false ? "up-down" : "left-right")}
+                        ($gridFullView ?? (!$android) ? "up-down" : "left-right")}
                 />
             </div>
             <div class="sortFilter">
@@ -1911,7 +1897,8 @@
                                 ×
                             </div>
                         </div>
-                        <div class="options">
+                        <div class="options"
+                        >
                             {#each $filterOptions?.sortFilter || [] as { sortName }, sortIdx (sortName + sortIdx)}
                                 <div
                                     class="option"
@@ -1965,10 +1952,10 @@
         --active-filter-space: ;
         --filters-space: ;
         display: grid;
-        grid-template-rows: auto;
+        grid-template-rows:
+            20px 58.5px var(--filters-space) var(--active-filter-space)
+            50px auto;
         padding-top: 1.5em;
-        transition: transform 0.3s ease;
-        overflow-x: hidden !important;
     }
 
     .skeleton {
@@ -1978,12 +1965,14 @@
 
     .input-search-wrap {
         display: grid;
+        grid-template-columns: auto 2.5em 2.5em;
         align-items: center;
         column-gap: 2em;
-        padding: 15px;
+        padding: 8px 15px;
         background-color: rgb(21, 31, 46);
         border-radius: 6px;
         width: 100%;
+        height: max-content;
         position: relative;
         margin-top: 1.5em;
     }
@@ -1999,25 +1988,16 @@
         font-size: 2.5em;
         cursor: pointer;
     }
-    .input-search-wrap.skeleton.shimmer {
-        padding: 0;
-        height: 46px;
-    }
     .filterType {
         display: flex;
-        justify-content: start;
+        justify-content: center;
         align-items: center;
-        position: relative;
-    }
-    .filterType > h2 {
-        user-select: none;
-        cursor: pointer;
     }
     .filterType .options-wrap {
         position: absolute;
-        left: 0;
-        top: 2.5em;
-        background-color: #0b1622;
+        right: 0;
+        top: 41px;
+        background-color: rgb(21, 31, 46);
         overflow-y: auto;
         overflow-x: hidden;
         overscroll-behavior: contain;
@@ -2027,7 +2007,6 @@
         padding: 6px;
         z-index: 1;
         cursor: default;
-        border: 1px solid #3d4456;
     }
     .filterType .options {
         display: flex;
@@ -2054,17 +2033,6 @@
         text-transform: capitalize;
     }
 
-    .close-shown {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-    }
-
-    .close-shown-items {
-        font-size: 2em;
-        cursor: pointer;
-    }
-
     .showFilterOptions-container {
         display: flex;
         justify-content: center;
@@ -2077,8 +2045,18 @@
     }
 
     .home-status {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        justify-content: space-between;
+        align-items: center;
         width: 100%;
+        column-gap: 10px;
         height: 20px;
+    }
+
+    .home-status .skeleton {
+        height: 18px;
+        width: 100px;
     }
 
     .home-status span {
@@ -2096,33 +2074,22 @@
         user-select: none;
     }
 
-    .filters-wrapper {
-        padding: 15px;
-        background-color: rgb(21, 31, 46);
-        border-radius: 6px;
-        margin-top: 2em;
-    }
-
-    .filters-wrapper.skeleton.shimmer {
-        padding: 0;
-        height: 105px;
-    }
-
-    .filter-settings {
-        display: grid;
-        grid-template-columns: auto 2.5em;
-        grid-gap: 2em;
-        align-items: center;
+    .home-status .data-status h2 {
+        margin-left: auto;
     }
 
     .filters {
+        overflow-x: auto;
+        overflow-y: hidden;
         display: flex;
-        flex-wrap: wrap;
-        margin: 2em 0;
-        grid-gap: 2em;
+        gap: 1em;
+        flex-wrap: nowrap;
+        padding-bottom: var(--maxPaddingHeight);
+        margin-top: 2em;
         user-select: none;
-        justify-content: space-evenly;
-        overscroll-behavior: contain;
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+        justify-content: start;
     }
     .filters::-webkit-scrollbar {
         display: none;
@@ -2135,9 +2102,9 @@
     .filter-select,
     .filter-input-number {
         display: grid;
-        grid-template-rows: 18px auto;
+        grid-template-rows: 18px 30px;
         grid-row-gap: 5px;
-        flex: 1;
+        width: 165px;
         min-width: 165px;
     }
 
@@ -2159,7 +2126,7 @@
     }
     .filter-select .select {
         align-items: center;
-        background: #0b1622;
+        background: rgb(21, 31, 46);
         border-radius: 6px;
         display: grid;
         grid-template-columns: auto 24px;
@@ -2191,7 +2158,8 @@
     .filter-select .options-wrap {
         position: absolute;
         top: 61px;
-        background-color: #0b1622;
+        background-color: rgb(21, 31, 46);
+        width: 165px;
         overflow-y: auto;
         overscroll-behavior: contain;
         max-height: var(--maxFilterSelectionHeight);
@@ -2199,8 +2167,6 @@
         border-radius: 6px;
         padding: 6px;
         z-index: 1;
-        border: 1px solid #3d4456;
-        width: 100%;
     }
     .options-wrap::-webkit-scrollbar {
         width: 7px !important;
@@ -2222,7 +2188,6 @@
     }
     .highlight {
         background-color: rgba(0, 0, 0, 0.25);
-        color: #41dee3 !important;
     }
 
     .filter-select .options {
@@ -2255,10 +2220,9 @@
     }
     .filter-checkbox {
         display: grid;
-        grid-template-rows: auto;
-        align-self: flex-end;
+        grid-template-rows: 18px 30px;
         grid-row-gap: 5px;
-        flex: 1;
+        width: 165px;
     }
     .filter-checkbox .checkbox-wrap {
         min-width: 165px;
@@ -2267,14 +2231,13 @@
     }
     .filter-checkbox .checkbox-wrap,
     .filter-input-number .value-input-number-wrap {
-        background: #0b1622;
+        background: rgb(21, 31, 46);
         border-radius: 6px;
         display: flex;
         column-gap: 8px;
         height: 36px;
         padding: 10px 10px;
         align-items: center;
-        width: 100%;
     }
     .filter-checkbox .checkbox {
         width: 14px;
@@ -2298,22 +2261,21 @@
         display: grid;
         align-items: start;
         justify-content: space-between;
-        gap: 2em;
+        gap: 15px;
         min-height: 28px;
         width: 100%;
-        grid-template-columns: 3em calc(100% - 6em - 4em) 3em;
+        grid-template-columns: 3em calc(100% - 56px - 34px) 3em;
         margin-top: 2em;
-        background-color: rgb(21, 31, 46);
-        border-radius: 6px;
     }
     .activeFilters.seenMore {
-        grid-template-columns: calc(100% - 2em - 3em) 3em;
+        grid-template-columns: calc(100% - 43px) 28px;
     }
 
     .activeFilters .empty-tagFilter {
         display: flex;
         justify-content: center;
         align-items: center;
+        border-radius: 6px;
         cursor: pointer;
         width: 3em;
         height: 3em;
@@ -2331,7 +2293,6 @@
         gap: 15px;
         user-select: none;
         overflow-y: auto;
-        overscroll-behavior: contain;
         scroll-snap-type: y mandatory;
         will-change: max-height;
     }
@@ -2397,13 +2358,14 @@
         display: flex;
         justify-content: center;
         align-items: center;
+        border-radius: 6px;
         cursor: pointer;
         width: 3em;
         height: 3em;
     }
 
     .showHideActiveFilters i {
-        font-size: 2em;
+        font-size: 2.5em;
     }
 
     .last-filter-option {
@@ -2440,17 +2402,16 @@
         display: flex;
         right: 0;
         top: 20px;
-        background-color: #0b1622;
+        background-color: rgb(21, 31, 46);
         overflow-y: auto;
         overflow-x: hidden;
         overscroll-behavior: contain;
         max-height: var(--maxFilterSelectionHeight);
         margin-top: 1px;
         border-radius: 6px;
-        padding: 8px;
+        padding: 6px;
         z-index: 1;
         cursor: default;
-        border: 1px solid #3d4456;
     }
     .sortFilter .options {
         display: flex;
@@ -2464,7 +2425,7 @@
         color: inherit;
         display: grid;
         align-items: center;
-        padding: 8px;
+        padding: 5px;
         width: 100%;
         grid-template-columns: auto 12px;
         grid-column-gap: 8px;
@@ -2564,7 +2525,7 @@
 
     @media screen and (max-width: 425px) {
         .filters {
-            overflow: auto !important;
+            padding-bottom: 0;
         }
         .filter-select .select {
             cursor: pointer !important;
@@ -2589,7 +2550,6 @@
             margin: 0 !important;
             border-radius: 0 !important;
             padding: 0 !important;
-            border: none !important;
         }
         .options-wrap {
             -ms-overflow-style: none;

@@ -263,7 +263,7 @@
 				let _autoPlay = await retrieveJSON("autoPlay");
 				if (typeof _autoPlay === "boolean") $autoPlay = _autoPlay;
 				let _gridFullView =
-					(await retrieveJSON("gridFullView")) ?? false;
+					(await retrieveJSON("gridFullView")) ?? !$android;
 				if (typeof _gridFullView === "boolean")
 					$gridFullView = _gridFullView;
 				// Hidden Entries

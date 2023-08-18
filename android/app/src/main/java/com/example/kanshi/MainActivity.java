@@ -66,7 +66,7 @@ import androidx.core.content.FileProvider;
 import androidx.core.splashscreen.SplashScreen;
 
 public class MainActivity extends AppCompatActivity {
-    public final int appID = 125;
+    public final int appID = 126;
     public boolean webViewIsLoaded = false;
     public boolean permissionIsAsked = false;
     public SharedPreferences prefs;
@@ -689,6 +689,10 @@ public class MainActivity extends AppCompatActivity {
         public void clearCache(){
             prefsEdit.putBoolean("permissionIsAsked", false).apply();
             webView.post(() -> webView.clearCache(true));
+            Intent intent = new Intent(getApplicationContext(), MainActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            startActivity(intent);
+            finish();
         }
         @RequiresApi(api = Build.VERSION_CODES.O)
         @JavascriptInterface

@@ -30,6 +30,7 @@
         removeClass,
     } from "../../js/others/helper.js";
     import { fly } from "svelte/transition";
+    import { children } from "svelte/internal";
 
     let windowHeight = window.visualViewport.height;
     let date = new Date();
@@ -429,17 +430,35 @@
     ).length
         ? windowHeight
         : windowHeight + 50;
+
+    let scrollingToBottom;
 </script>
 
-<main class={$gridFullView ?? false ? "fullView" : ""}>
+<main class={$gridFullView ?? !$android ? "fullView" : ""}>
     <div
         id="anime-grid"
         class={"image-grid " +
-            ($gridFullView ?? false ? "fullView" : "") +
+            ($gridFullView ?? !$android ? "fullView" : "") +
             ($finalAnimeList?.length === 0 && !$initData ? "empty" : "")}
         bind:this={animeGridEl}
-        on:wheel={(e) =>
-            ($gridFullView ?? false) && horizontalWheel(e, "image-grid")}
+        on:wheel={(e) => {
+            if ($gridFullView ?? !$android) {
+                horizontalWheel(e, "image-grid");
+                if (!scrollingToBottom) {
+                    let target = e.target.closest("#anime-grid") || e.target;
+                    scrollingToBottom = true;
+                    let windowScroll = window.scrollY;
+                    let animeGridBottom =
+                        target.getBoundingClientRect().bottom + windowScroll;
+                    let windowBottom = windowScroll + windowHeight;
+                    if (windowBottom < animeGridBottom) {
+                        let newScrollPosition = Number.MAX_SAFE_INTEGER;
+                        document.documentElement.scrollTop = newScrollPosition;
+                    }
+                    scrollingToBottom = false;
+                }
+            }
+        }}
         style:--anime-grid-height={gridHeight + "px"}
     >
         {#if $finalAnimeList?.length}
@@ -547,7 +566,7 @@
                     <div class="shimmer" />
                 </div>
             {/each}
-            {#each Array($gridFullView ?? false ? Math.floor((windowHeight ?? 1100) / 220) : 5) as _}
+            {#each Array($gridFullView ?? !$android ? Math.floor((windowHeight ?? 1100) / 220) : 5) as _}
                 <div class="image-grid__card" />
             {/each}
         {:else if !$finalAnimeList || $initData}

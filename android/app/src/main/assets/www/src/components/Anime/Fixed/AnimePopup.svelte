@@ -176,10 +176,7 @@
                 text: "Are you sure you want open this anime in Anilist?",
             })
         ) {
-            window.open(
-                url,
-                "_blank"
-            );
+            window.open(url, "_blank");
         }
     }
 
@@ -201,7 +198,7 @@
                 text: "Are you sure you want see more related videos in Youtube?",
             })
         ) {
-            handleMoreVideos(animeTitle)
+            handleMoreVideos(animeTitle);
         }
     }
 
@@ -251,51 +248,6 @@
                 playMostVisibleTrailer();
             }
         }
-    }
-
-    function getContentCaution({
-        contentCaution,
-        meanScoreAll,
-        meanScoreAbove,
-        score,
-    }) {
-        let _contentCaution = [];
-        if (score < meanScoreAll) {
-            // Very Low Score
-            _contentCaution.push({
-                caution: `Very Low Score (mean: ${formatNumber(meanScoreAll)})`,
-                cautionColor: "purple",
-            });
-        } else if (score < meanScoreAbove) {
-            // Low Score
-            _contentCaution.push({
-                caution: `Low Score (mean: ${formatNumber(meanScoreAbove)})`,
-                cautionColor: "orange",
-            });
-        }
-        if (contentCaution?.caution?.length) {
-            // Caution
-            _contentCaution = _contentCaution.concat(
-                contentCaution?.caution.map((caution) => {
-                    return {
-                        caution: caution,
-                        cautionColor: "red",
-                    };
-                })
-            );
-        }
-        if (contentCaution?.semiCaution?.length) {
-            // Semi Caution
-            _contentCaution = _contentCaution.concat(
-                contentCaution?.semiCaution.map((caution) => {
-                    return {
-                        caution: caution,
-                        cautionColor: "teal",
-                    };
-                })
-            );
-        }
-        return _contentCaution;
     }
 
     function getCautionColor({
@@ -680,14 +632,6 @@
                 return;
             addClass(popupHeader, "loader");
             let popupImg = popupHeader?.querySelector?.(".popup-img");
-            if (
-                openedAnime?.bannerImageUrl &&
-                !failingTrailers[openedAnime.id]
-            ) {
-                let animeCoverImgEl = popupImg.querySelector(".coverImg");
-                addClass(animeCoverImgEl, "display-none");
-                addClass(animeCoverImgEl, "fade-out");
-            }
             if ($ytPlayers.length >= 3) {
                 let destroyedPlayerIdx = 0;
                 let furthestDistance = -Infinity;
@@ -757,9 +701,7 @@
             $ytPlayers.push({ ytPlayer, headerIdx });
         } else {
             let popupImg = popupHeader?.querySelector?.(".popup-img");
-            let animeCoverImgEl = popupImg.querySelector(".coverImg");
             removeClass(popupHeader, "loader");
-            removeClass(animeCoverImgEl, "display-none");
             removeClass(popupImg, "display-none");
         }
     }
@@ -775,12 +717,6 @@
         ytPlayer.destroy();
         addClass(trailerEl, "display-none");
         removeClass(popupHeader, "loader");
-        let animeCoverImgEl = popupImg.querySelector(".coverImg");
-        addClass(animeCoverImgEl, "fade-out");
-        removeClass(animeCoverImgEl, "fade-in");
-        addClass(animeCoverImgEl, "fade-in");
-        removeClass(animeCoverImgEl, "display-none");
-        removeClass(animeCoverImgEl, "fade-out");
         removeClass(popupImg, "display-none");
     }
 
@@ -853,12 +789,6 @@
             addClass(trailerEl, "display-none");
             removeClass(popupHeader, "loader");
             let popupImg = popupHeader?.querySelector?.(".popup-img");
-            let animeCoverImgEl = popupImg.querySelector(".coverImg");
-            addClass(animeCoverImgEl, "fade-out");
-            removeClass(animeCoverImgEl, "fade-in");
-            addClass(animeCoverImgEl, "fade-in");
-            removeClass(animeCoverImgEl, "display-none");
-            removeClass(animeCoverImgEl, "fade-out");
             removeClass(popupImg, "display-none");
         } else {
             // Play Most Visible when 1 Succeed
@@ -960,7 +890,7 @@
         } else if (ncsCompare(userStatus, "dropped")) {
             return "red";
         } else {
-            return "lightgrey"; // Default Unwatched Icon Color
+            return ""; // Default Unwatched Icon Color
         }
     }
 
@@ -997,17 +927,17 @@
                 if (caution[trimmedTag]) {
                     tagsRunnned[tagName] = true;
                     tagCaution.push({
-                        tag: `${tagName}${
-                            tagRank ? " | " + tagRank + "%" : ""
-                        }`,
+                        tag: `<span>${tagName}${
+                            tagRank ? "</span><span>" + tagRank + "%" : ""
+                        }</span>`,
                         tagColor: "red",
                     });
                 } else if (semiCaution[trimmedTag]) {
                     tagsRunnned[tagName] = true;
                     tagSemiCaution.push({
-                        tag: `${tagName}${
-                            tagRank ? " | " + tagRank + "%" : ""
-                        }`,
+                        tag: `<span>${tagName}${
+                            tagRank ? "</span><span>" + tagRank + "%" : ""
+                        }</span>`,
                         tagColor: "teal",
                     });
                 }
@@ -1023,7 +953,9 @@
             }
             if (!tagsRunnned[tagName]) {
                 otherTags.push({
-                    tag: `${tagName}${tagRank ? " | " + tagRank + "%" : ""}`,
+                    tag: `<span>${tagName}${
+                        tagRank ? "</span><span>" + tagRank + "%" : ""
+                    }</span>`,
                     tagColor: null,
                 });
             }
@@ -1035,9 +967,9 @@
             let tagName = e?.tag?.name || e?.tag;
             let tagRank = e?.tag?.rank;
             return {
-                tag: `${tagName} (${formatNumber(e.score)})${
-                    tagRank ? " | " + tagRank + "%" : ""
-                }`,
+                tag: `<span>${tagName} (${formatNumber(e.score)})${
+                    tagRank ? "</span><span>" + tagRank + "%" : ""
+                }</span>`,
                 tagColor: "green",
             };
         });
@@ -1162,9 +1094,6 @@
         format,
         duration,
         nextAiringEpisode,
-        score,
-        meanScoreAll,
-        meanScoreAbove,
     }) {
         // ONA · 12 · 24m · LOW SCORE
         let text = "";
@@ -1210,13 +1139,6 @@
                 let time = msToTime(duration * 60 * 1000);
                 text += ` · ${time ? time : ""}`;
             }
-            if (score < meanScoreAll) {
-                // Very Low Score
-                text += ` · <span class="purple-color">VERY LOW SCORE</span>`;
-            } else if (score < meanScoreAbove) {
-                // Low Score
-                text += ` · <span class="orange-color">LOW SCORE</span>`;
-            }
         }
         return text;
     }
@@ -1253,6 +1175,22 @@
             return `${msToTime(timeDifference, 2)}, ${formatTime(
                 endDate
             ).toLowerCase()}`;
+        }
+    }
+
+    function getRecommendationRatingInfo({
+        score,
+        meanScoreAll,
+        meanScoreAbove,
+    }) {
+        if (score < meanScoreAll) {
+            // Very Low Score
+            return `<i class="purple-color fa-solid fa-k"/>`;
+        } else if (score < meanScoreAbove) {
+            // Low Score
+            return `<i class="purple-color fa-solid fa-k"/>`;
+        } else {
+            return `<i class="green-color fa-solid fa-k"/>`;
         }
     }
 
@@ -1557,8 +1495,10 @@
                             class={"popup-header " +
                                 (anime.trailerID ? "loader" : "")}
                             bind:this={anime.popupHeader}
-                            on:click={()=>askToOpenYoutube(anime.title)}
-                            on:keydown={(e) =>e.key === "Enter" &&askToOpenYoutube(anime.title)}
+                            on:click={() => askToOpenYoutube(anime.title)}
+                            on:keydown={(e) =>
+                                e.key === "Enter" &&
+                                askToOpenYoutube(anime.title)}
                         >
                             <div class="popup-header-loading">
                                 <i class="fa-solid fa-k fa-fade" />
@@ -1568,11 +1508,13 @@
                             {/if}
                             <div class="popup-img">
                                 {#if anime.bannerImageUrl}
+                                    <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                                     <img
                                         loading="lazy"
                                         src={anime.bannerImageUrl}
                                         alt="bannerImg"
                                         class="bannerImg fade-out"
+                                        tabindex="0"
                                         on:load={(e) => {
                                             removeClass(e.target, "fade-out");
                                             addClass(e.target, "fade-in");
@@ -1626,7 +1568,9 @@
                             {/if}
                         </div>
                         <div class="popup-body">
-                            <div class={"popup-info"+(anime.isSeenMore ? " seenmore" : "")}
+                            <div
+                                class={"popup-info" +
+                                    (anime.isSeenMore ? " seenmore" : "")}
                                 style:--windowWidth={windowWidth + "px"}
                                 style:--windowHeight={windowHeight + "px"}
                             >
@@ -1660,7 +1604,7 @@
                                                 (anime.popularity != null
                                                     ? formatNumber(
                                                           anime.popularity,
-                                                          0
+                                                          1
                                                       )
                                                     : "NA")}
                                         >
@@ -1676,10 +1620,11 @@
                                             {"/10 · " +
                                                 (anime.popularity != null
                                                     ? formatNumber(
-                                                          anime.popularity,
-                                                          0
+                                                        anime.popularity,
+                                                        1
                                                       )
                                                     : "NA")}
+                                            {" · "}{@html getRecommendationRatingInfo(anime)}
                                         </h3>
                                     </div>
                                 </div>
@@ -1713,6 +1658,7 @@
                                     {/if}
                                     {#if anime?.season || anime?.year}
                                         <span
+                                            style="text-align: right;"
                                             class="copy"
                                             copy-value={`${
                                                 anime?.season || ""
@@ -1753,6 +1699,7 @@
                                         {/if}
                                     </h4>
                                     <h4
+                                        style="text-align: right;"
                                         class="copy"
                                         copy-value={anime.status || ""}
                                     >
@@ -1822,10 +1769,9 @@
                                         </div>
                                     {/if}
                                     {#if anime?.tags?.length}
-                                        <div>
-                                            <div class="info-categ">Tags</div>
+                                        <div class="tag-info">
                                             <div
-                                                class={"tags-popup info"}
+                                                class={"tags-info-content info"}
                                                 on:wheel={(e) =>
                                                     !popupContainerIsScrolling &&
                                                     horizontalWheel(e, "info")}
@@ -1839,8 +1785,10 @@
                                                             (tagColor
                                                                 ? `${tagColor}-color`
                                                                 : "")}
-                                                        copy-value={tag || ""}
-                                                        >{tag || "N/A"}
+                                                        copy-value={htmlToString(
+                                                            tag
+                                                        ) || ""}
+                                                        >{@html tag || "N/A"}
                                                     </span>
                                                 {/each}
                                             </div>
@@ -1848,24 +1796,41 @@
                                     {/if}
                                 </div>
                                 <div class="info-profile">
+                                    {#if anime.coverImageUrl}
+                                    <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                                     <img
                                         loading="lazy"
                                         src={anime.coverImageUrl}
                                         alt="coverImg"
-                                        class="fade-in"
-                                        on:error={(e) => {
-                                            removeClass(e.target, "fade-in");
-                                            addClass(e.target, "fade-out");
-                                            setTimeout(() => {
-                                                addClass(
-                                                    e.target,
-                                                    "display-none"
-                                                );
-                                            }, 300);
+                                        tabindex={anime.isSeenMore?"0":"-1"}
+                                        class={"coverImg display-none fade-out"+(anime?.description?"":" nodesc")}
+                                        on:load={(e) => {
+                                            removeClass(e.target, "display-none");
+                                            removeClass(e.target, "fade-out");
+                                            addClass(e.target, "fade-in");
                                         }}
-                                        on:click={()=>askToOpenInAnilist(anime.animeUrl)}
-                                        on:keydown={(e) =>e.key === "Enter" &&askToOpenInAnilist(anime.animeUrl)}
+                                        on:click={() =>
+                                            askToOpenInAnilist(anime.animeUrl)}
+                                        on:keydown={(e) =>
+                                            e.key === "Enter" &&
+                                            askToOpenInAnilist(anime.animeUrl)}
                                     />
+                                    {/if}
+                                    {#if anime.bannerImageUrl}
+                                    <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
+                                    <img
+                                        loading="lazy"
+                                        src={anime.bannerImageUrl}
+                                        alt="bannerImg"
+                                        class={"extra-bannerImg fade-in"+(anime.isSeenMore?"":" display-none")}
+                                        tabindex={anime.isSeenMore?"0":"-1"}
+                                        on:click={() =>
+                                            askToOpenInAnilist(anime.animeUrl)}
+                                        on:keydown={(e) =>
+                                            e.key === "Enter" &&
+                                            askToOpenInAnilist(anime.animeUrl)}
+                                    />
+                                    {/if}
                                     {#if anime?.description}
                                         <div class="anime-description-wrapper">
                                             <h3>Description</h3>
@@ -1982,7 +1947,7 @@
     }
 
     :global(#main-home.show) {
-        transform: translateX(0px);
+        transform: unset !important;
     }
 
     .popup-container.hide {
@@ -2148,28 +2113,6 @@
         opacity: 1;
     }
 
-    .coverImg {
-        height: 100%;
-        max-height: clamp(1px, 70%, 20em);
-        width: auto;
-        object-fit: cover;
-        position: absolute;
-        left: 50%;
-        bottom: 0;
-        transform: translateX(-50%);
-        border-radius: 2px 2px 0 0;
-        box-shadow: 0 14px 28px rgba(0, 0, 0, 0.25),
-            0 10px 10px rgba(0, 0, 0, 0.22);
-    }
-    .coverImg.fade-out {
-        animation: fadeOut 0.3s ease forwards;
-        opacity: 0;
-    }
-    .coverImg.fade-in {
-        animation: fadeIn 0.3s ease forwards;
-        opacity: 1;
-    }
-
     .popup-body {
         overflow: hidden;
         touch-action: pan-y;
@@ -2185,7 +2128,7 @@
                             55px + 30px + 2em + 1em + 2.9325em
                     )
             ),
-            120px
+            249px
         );
         overflow: hidden;
         margin-bottom: 1em;
@@ -2196,8 +2139,8 @@
     }
 
     .popup-info.seenmore .info-contents {
-        margin: 1em !important;
-        width: calc(100% - 2em - 4.5em);
+        margin: 1em 0 !important;
+        width: 100%;
         display: flex !important;
         flex-wrap: wrap !important;
         gap: 1em !important;
@@ -2224,13 +2167,26 @@
         max-height: unset !important;
     }
 
+    .popup-info.seenmore .info-profile {
+        flex-wrap: wrap;
+    }
+    .popup-info.seenmore .coverImg {
+        width: min(100%, 150px);
+        margin: 0 auto;
+    }
+    .popup-info.seenmore .anime-description-wrapper {
+        min-height: unset;
+        width: 100%;
+        min-width: 100%;
+    }
+
     .popup-body a {
         color: rgb(61, 180, 242);
         text-decoration: none;
     }
 
     .anime-title-container {
-        padding: 8px 8px 5px 8px;
+        padding: 8px 0 5px 0;
         width: 100%;
         overflow-x: auto;
         overflow-y: hidden;
@@ -2271,15 +2227,35 @@
     }
 
     .info-format {
-        padding: 0 8px 5px 8px;
+        padding-bottom: 5px;
         display: flex;
         justify-content: space-between;
+        gap: 1em;
+        overflow-x: auto;
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+    .info-format::-webkit-scrollbar {
+        display: none;
+    }
+    .info-format > span,
+    .info-format > h4 {
+        white-space: nowrap;
     }
 
     .info-status {
-        padding: 0 8px;
         display: flex;
         justify-content: space-between;
+        gap: 1em;
+        overflow-x: auto;
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+    .info-status::-webkit-scrollbar {
+        display: none;
+    }
+    .info-status > h4 {
+        white-space: nowrap;
     }
 
     .info-status i {
@@ -2288,8 +2264,8 @@
     }
 
     .info-contents {
-        margin: 1em;
-        width: calc(100% - 2em - 4.5em);
+        margin: 1em 0;
+        width: 100%;
         display: flex;
         flex-wrap: wrap;
         gap: 0.5em;
@@ -2298,7 +2274,15 @@
     .info-contents > div {
         width: 100%;
         display: grid;
-        grid-template-columns: 40px auto;
+        grid-template-columns: 37px auto;
+        align-items: center;
+        gap: 0.5em;
+    }
+
+    .info-contents > div.tag-info {
+        width: 100%;
+        display: flex;
+        flex-wrap: wrap;
         align-items: center;
         gap: 0.5em;
     }
@@ -2306,16 +2290,56 @@
     .info-profile {
         display: flex;
         align-items: start;
-        padding: 1em;
         gap: 1em;
         width: 100%;
     }
 
-    .info-profile > img {
-        height: 150px;
-        width: 100px;
+    .coverImg {
+        height: 210px;
+        object-fit: cover;
+        border-radius: 6px;
+        box-shadow: 0 14px 28px rgba(0, 0, 0, 0.25),
+            0 10px 10px rgba(0, 0, 0, 0.22);
+    }
+    .coverImg.fade-out {
+        animation: fadeOut 0.3s ease forwards;
+        opacity: 0;
+    }
+    .coverImg.fade-in {
+        animation: fadeIn 0.3s ease forwards;
+        opacity: 1;
+    }
+    .extra-bannerImg {
+        height: 210px;
+        width: calc(100% - 150px - 1em);
+        object-fit: cover;
+        border-radius: 6px;
+        box-shadow: 0 14px 28px rgba(0, 0, 0, 0.25),
+            0 10px 10px rgba(0, 0, 0, 0.22);
         user-select: none;
         cursor: pointer;
+    }
+    .coverImg.display-none + .extra-bannerImg {
+        width: 100%;
+    }
+    .extra-bannerImg.fade-out {
+        animation: fadeOut 0.3s ease forwards;
+        opacity: 0;
+    }
+    .extra-bannerImg.fade-in {
+        animation: fadeIn 0.3s ease forwards;
+        opacity: 1;
+    }
+
+    .coverImg {
+        width: min(40% - 1em, 150px);
+        user-select: none;
+        cursor: pointer;
+    }
+
+    .coverImg.nodesc {
+        width: min(100%, 150px);
+        margin: 0 auto;
     }
 
     .anime-description-wrapper {
@@ -2323,6 +2347,10 @@
         border-radius: 6px;
         padding: 1em;
         flex: 1;
+        width: max(60% - 1em, 160px);
+        min-width: max(60% - 1em, 160px);
+        min-height: 150px;
+        overflow-x: hidden;
     }
 
     .anime-description-container {
@@ -2361,10 +2389,13 @@
         line-height: 2.5rem;
         -ms-overflow-style: none;
         scrollbar-width: none;
+        font-size: 1.1rem !important;
+        width: calc(100% - 2em);
+        overflow: hidden !important;
     }
 
     :global(.anime-description *) {
-        font-size: 1.5rem !important;
+        font-size: 1.1rem !important;
     }
     :global(.anime-description a) {
         color: rgb(0 168 255) !important;
@@ -2448,17 +2479,6 @@
         max-height: unset !important;
     }
 
-    @media screen and (min-height: 700px) {
-        .info-categ {
-            align-self: start !important;
-        }
-        .info {
-            flex-wrap: wrap;
-            flex-direction: column;
-            max-height: 6em;
-        }
-    }
-
     @media screen and (max-width: 425px) {
         .info-list {
             max-height: max(
@@ -2482,14 +2502,14 @@
                                 55px + 30px + 2em + 1em + 2.9325em
                         )
                 ),
-                240px
+                249px
             ) !important;
             overflow: hidden;
             margin-bottom: 1em;
         }
         .info-contents {
-            margin: 1em;
-            width: calc(100% - 2em) !important;
+            margin: 1em 0;
+            width: 100% !important;
             display: flex;
             flex-wrap: wrap;
             gap: 0.5em;
@@ -2516,6 +2536,18 @@
         }
     }
 
+    @media screen and (max-width: 319px) {
+        .info-profile {
+            flex-wrap: wrap;
+        }
+        .coverImg {
+            width: min(100%, 150px);
+            margin: 0 auto;
+        }
+        .anime-description-wrapper {
+            min-height: unset;
+        }
+    }
     @media screen and (min-width: 750px) {
         .popup-container {
             margin-top: 0 !important;
@@ -2541,10 +2573,17 @@
                                 30px + 2em + 1em + 2.9325em
                         )
                 ),
-                120px
+                249px
             ) !important;
             overflow: hidden;
             margin-bottom: 1em;
+            
+        }
+    }
+
+    @media screen and (min-width: 640px) {
+        .popup-info {
+            padding: 0 1em;
         }
     }
 
@@ -2563,6 +2602,19 @@
         display: flex;
         gap: 8px;
         width: 100%;
+    }
+
+    .tags-info-content {
+        flex-wrap: wrap;
+        flex-direction: column;
+        max-height: 6em;
+    }
+
+    .tags-info-content > span {
+        display: flex;
+        justify-content: space-between;
+        gap: 2rem;
+        flex: 1;
     }
 
     .not-capitalize {
