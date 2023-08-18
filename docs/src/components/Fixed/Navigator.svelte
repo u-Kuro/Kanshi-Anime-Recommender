@@ -334,7 +334,9 @@
                 class="logo-icon"
                 src="./images/Kanshi-Logo.png"
                 alt="Kanshi Logo"
-                on:keydown={(e) => e.key === "Enter" && handleMenuVisibility(e)}
+                tabindex="0"
+                on:keydown|stopPropagation={(e) =>
+                    e.key === "Enter" && ($menuVisible = !$menuVisible)}
             />
         </div>
     </nav>

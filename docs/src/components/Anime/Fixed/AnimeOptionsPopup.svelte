@@ -181,7 +181,7 @@
                 class="anime-option"
                 on:click={openInYoutube}
                 on:keydown={(e) => e.key === "Enter" && openInYoutube(e)}
-                ><h2 class="option-title">Open in Youtube</h2></span
+                ><h2 class="option-title">Open in YouTube</h2></span
             >
             <span
                 class="anime-option"

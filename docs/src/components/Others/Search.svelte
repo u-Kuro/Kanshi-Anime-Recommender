@@ -1243,7 +1243,7 @@
             $filterOptions?.filterSelection?.[idxTypeSelected];
         selectedFilterElement = null;
     }
-    window.closeDropdown = closeDropdown
+    window.closeDropdown = closeDropdown;
 
     onMount(() => {
         // Init
@@ -1281,8 +1281,8 @@
 </script>
 
 <main
-    style:--translateX={windowWidth + "px"}
-    style:--translateY={windowHeight + "px"}
+    id="main-home"
+    style:--translateX={"-" + windowWidth + "px"}
     style:--filters-space={showFilterOptions ? "80px" : ""}
     style:--active-filter-space={(
         $activeTagFilters?.[
@@ -1412,7 +1412,7 @@
             ($hasWheel ? " hasWheel" : "")}
         id="filters"
         on:wheel={(e) => {
-            horizontalWheel(e, "filters")
+            horizontalWheel(e, "filters");
             if ($gridFullView ?? !$android) {
                 if (!scrollingToTop && e.deltaY < 0) {
                     scrollingToTop = true;
@@ -1856,7 +1856,7 @@
             >
                 <i
                     class={"icon fa-solid fa-arrows-" +
-                        ($gridFullView ?? (!$android) ? "up-down" : "left-right")}
+                        ($gridFullView ?? !$android ? "up-down" : "left-right")}
                 />
             </div>
             <div class="sortFilter">
@@ -1911,8 +1911,7 @@
                                 ×
                             </div>
                         </div>
-                        <div class="options"
-                        >
+                        <div class="options">
                             {#each $filterOptions?.sortFilter || [] as { sortName }, sortIdx (sortName + sortIdx)}
                                 <div
                                     class="option"
@@ -1970,6 +1969,8 @@
             20px 58.5px var(--filters-space) var(--active-filter-space)
             50px auto;
         padding-top: 1.5em;
+        transition: transform 0.3s ease-in-out;
+        will-change: transform;
     }
 
     .skeleton {
@@ -2536,6 +2537,13 @@
         -webkit-user-drag: none !important;
         -moz-user-select: none !important;
         -ms-user-select: none !important;
+        height: 0 !important;
+        width: 0 !important;
+        max-width: 0 !important;
+        max-height: 0 !important;
+        min-width: 0 !important;
+        min-height: 0 !important;
+        overflow: hidden !important;
     }
 
     @media screen and (max-width: 425px) {

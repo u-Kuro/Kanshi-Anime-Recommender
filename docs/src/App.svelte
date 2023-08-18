@@ -717,6 +717,10 @@
 				$menuVisible = false;
 				willExit = false;
 				return;
+			} else if (window.checkOpenFullScreenItem?.()) {
+				window.closeFullScreenItem?.();
+				willExit = false;
+				return;
 			} else if ($popupVisible) {
 				$popupVisible = false;
 				willExit = false;

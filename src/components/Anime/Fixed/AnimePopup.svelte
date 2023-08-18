@@ -33,6 +33,7 @@
         isElementVisible,
         addClass,
         removeClass,
+        getMostVisibleElement,
         getMostVisibleElementFromArray,
         jsonIsEmpty,
         ncsCompare,
@@ -42,7 +43,7 @@
 
     let isOnline = window.navigator.onLine;
 
-    let date;
+    let date = new Date();
     let savedYtVolume = $android ? 100 : 50;
 
     (async () => {
@@ -58,6 +59,8 @@
         popupContainer,
         popupContainerIsScrolling,
         popupAnimeObserver,
+        fullImagePopup,
+        fullDescriptionPopup,
         windowWidth = window.visualViewport.width,
         windowHeight = window.visualViewport.height,
         videoLoops = {};
@@ -111,8 +114,10 @@
         let target = e.target;
         let classList = target.classList;
         if (
-            target.closest(".popup-container") ||
-            classList.contains("popup-container")
+            classList.contains("see-more-container") ||
+            target.closest(".see-more-container") ||
+            classList.contains("popup-container") ||
+            target.closest(".popup-container")
         )
             return;
         $popupVisible = false;
@@ -168,18 +173,6 @@
         }
     }
 
-    async function askToOpenInAnilist(url) {
-        if (!url) return;
-        if (
-            await $confirmPromise({
-                title: "Open in Anilist",
-                text: "Are you sure you want open this anime in Anilist?",
-            })
-        ) {
-            window.open(url, "_blank");
-        }
-    }
-
     async function askToOpenYoutube(title) {
         let animeTitle;
         if (isJsonObject(title)) {
@@ -195,7 +188,7 @@
         if (
             await $confirmPromise({
                 title: "See Related Videos",
-                text: "Are you sure you want see more related videos in Youtube?",
+                text: "Are you sure you want see more related videos in YouTube?",
             })
         ) {
             handleMoreVideos(animeTitle);
@@ -220,6 +213,11 @@
         );
     }
 
+    function openInAnilist(animeUrl) {
+        if (typeof animeUrl !== "string" || animeUrl === "") return;
+        window.open(animeUrl,"_blank");
+    }
+
     animeIdxRemoved.subscribe(async (removedIdx) => {
         if ($popupVisible && removedIdx >= 0) {
             await tick();
@@ -233,15 +231,19 @@
         }
     });
 
-    async function handleSeeMore(anime, animeIdx) {
-        if ($finalAnimeList[animeIdx]) {
-            $finalAnimeList[animeIdx].isSeenMore =
-                !$finalAnimeList[animeIdx].isSeenMore;
+    async function handleSeeMore(e) {
+        if (popupContainer) {
+            let mostVisibePopupInfo = getMostVisibleElement(popupContainer, ".popup-info", 0)
+            let animeIdx = getChildIndex(mostVisibePopupInfo?.closest?.(".popup-content")) ?? -1;
+            let willExpand;
+            if ($finalAnimeList[animeIdx]) {
+                willExpand = !$finalAnimeList[animeIdx].isSeenMore
+                $finalAnimeList[animeIdx].isSeenMore = willExpand;
+            }
             await tick();
-            let targetEl =
-                anime.popupContent || popupContainer.children?.[animeIdx];
+            let targetEl = popupContainer.children?.[animeIdx];
             let targetPopupHeader =
-                targetEl?.getElementsByClassName?.("popup-header")[0];
+                targetEl?.getElementsByClassName?.("popup-header")?.[0];
             if (targetEl instanceof Element) {
                 scrollToElement(popupContainer, targetEl, "bottom", "instant");
                 mostVisiblePopupHeader = targetPopupHeader;
@@ -287,15 +289,19 @@
             return;
         if (val === true) {
             // Init Height
-            if (windowWidth >= 750) {
+            if (windowWidth >= 641) {
+                popupContainer.style.setProperty(
+                    "--translateY",
+                    windowHeight + "px"
+                );
+            } else {
                 popupContainer.style.setProperty(
                     "--translateX",
                     windowWidth + "px"
                 );
-            } else {
-                popupContainer.style.setProperty(
-                    "--translateY",
-                    windowHeight + "px"
+                mainHome.style.setProperty(
+                    "--translateX",
+                    "-"+ windowWidth + "px"
                 );
             }
             // Scroll To Opened Anime
@@ -311,10 +317,12 @@
                     "instant"
                 );
                 // Animate Opening
-                addClass(popupWrapper, "visible");
-                addClass(popupContainer, "show");
-                addClass(mainHome, "hide");
-                removeClass(mainHome, "show");
+                requestAnimationFrame(()=>{
+                    removeClass(mainHome, "show");
+                    addClass(popupWrapper, "visible");
+                    addClass(popupContainer, "show");
+                    addClass(mainHome, "hide");
+                })
                 // Try to Add YT player
                 currentHeaderIdx = $openedAnimePopupIdx;
                 let openedAnimes = [
@@ -365,19 +373,25 @@
                 $openedAnimePopupIdx = null;
             } else {
                 // Animate Opening
-                addClass(popupWrapper, "visible");
-                addClass(popupContainer, "show");
+                requestAnimationFrame(()=>{
+                    removeClass(mainHome, "show");
+                    addClass(popupWrapper, "visible");
+                    addClass(popupContainer, "show");
+                    addClass(mainHome, "hide");
+                })
             }
         } else if (val === false) {
-            removeClass(popupContainer, "show");
-            removeClass(mainHome, "hide");
-            addClass(popupContainer, "hide");
-            addClass(mainHome, "show");
-            setTimeout(() => {
-                // Stop All Player
-                $ytPlayers?.forEach(({ ytPlayer }) => ytPlayer?.pauseVideo?.());
-                removeClass(popupWrapper, "visible");
-            }, 300);
+            requestAnimationFrame(()=>{
+                removeClass(popupContainer, "show");
+                removeClass(mainHome, "hide");
+                addClass(mainHome, "show");
+                addClass(popupContainer, "hide");
+                setTimeout(() => {
+                    // Stop All Player
+                    $ytPlayers?.forEach(({ ytPlayer }) => ytPlayer?.pauseVideo?.());
+                    removeClass(popupWrapper, "visible");
+                }, 300);
+            })
         }
     });
 
@@ -1470,6 +1484,17 @@
         $popupIsGoingBack = false;
         goBackPercent = 0;
     }
+
+    window.checkOpenFullScreenItem = () => {
+        return fullImagePopup || fullDescriptionPopup;
+    }
+	window.closeFullScreenItem = () => {
+        if (fullImagePopup) {
+            fullImagePopup = null
+        } else {
+            fullDescriptionPopup = null;
+        }
+    }
 </script>
 
 <div
@@ -1492,7 +1517,7 @@
         on:scroll={itemScroll}
     >
         {#if $finalAnimeList?.length}
-            {#each $finalAnimeList || [] as anime, animeIdx (anime.id)}
+            {#each $finalAnimeList || [] as anime (anime.id)}
                 <div class="popup-content" bind:this={anime.popupContent}>
                     <div class="popup-main">
                         <div
@@ -1580,9 +1605,9 @@
                             >
                                 <div class="anime-title-container">
                                     <a
-                                        rel="noopener noreferrer"
-                                        target="_blank"
-                                        href={anime.animeUrl || ""}
+                                        rel={anime.animeUrl? "noopener noreferrer":""}
+                                        target={anime.animeUrl? "_blank":""}
+                                        href={anime.animeUrl || "javascript:void(0)"}
                                         class={getCautionColor(anime) +
                                             "-color anime-title copy"}
                                         copy-value={getTitle(anime?.title) ||
@@ -1636,7 +1661,7 @@
                                 </div>
                                 <div class="info-format">
                                     {#if anime?.nextAiringEpisode?.airingAt}
-                                        {#key date.getSeconds()}
+                                        {#key date?.getSeconds?.() || 1}
                                             <h4
                                                 class="copy"
                                                 copy-value={htmlToString(
@@ -1692,7 +1717,11 @@
                                                 ? " · " + anime.userScore
                                                 : "")}
                                     >
-                                        <span
+                                        <a 
+                                            rel={anime.animeUrl? "noopener noreferrer":""}
+                                            target={anime.animeUrl? "_blank":""}
+                                            href={anime.animeUrl || "javascript:void(0)"}
+                                        ><span
                                             class={getUserStatusColor(
                                                 anime.userStatus
                                             ) + "-color"}
@@ -1703,6 +1732,7 @@
                                             <i class="fa-regular fa-star" />
                                             {anime.userScore}
                                         {/if}
+                                        </a>
                                     </h4>
                                     <h4
                                         style="text-align: right;"
@@ -1737,10 +1767,9 @@
                                                             class={studioColor
                                                                 ? `${studioColor}-color`
                                                                 : ""}
-                                                            rel="noopener noreferrer"
-                                                            target="_blank"
-                                                            href={studio.studioUrl ||
-                                                                ""}
+                                                            rel={studio.studioUrl? "noopener noreferrer":""}
+                                                            target={studio.studioUrl? "_blank":""}
+                                                            href={studio.studioUrl || "javascript:void(0)"}
                                                             >{studio.studioName ||
                                                                 "N/A"}</a
                                                         >
@@ -1811,7 +1840,7 @@
                                             tabindex={anime.isSeenMore
                                                 ? "0"
                                                 : "-1"}
-                                            class={"coverImg display-none fade-out" +
+                                            class={"coverImg display-none" +
                                                 (anime?.description
                                                     ? ""
                                                     : " nodesc")}
@@ -1820,49 +1849,61 @@
                                                     e.target,
                                                     "display-none"
                                                 );
-                                                removeClass(
-                                                    e.target,
-                                                    "fade-out"
-                                                );
-                                                addClass(e.target, "fade-in");
                                             }}
-                                            on:click={() =>
-                                                askToOpenInAnilist(
-                                                    anime.animeUrl
-                                                )}
-                                            on:keydown={(e) =>
-                                                e.key === "Enter" &&
-                                                askToOpenInAnilist(
-                                                    anime.animeUrl
-                                                )}
+                                            on:error={(e) => {
+                                                addClass(
+                                                    e.target,
+                                                    "display-none"
+                                                );
+                                            }}
+                                            on:click={() => {
+                                                window.setShouldGoBack(false)
+                                                fullImagePopup = anime.coverImageUrl
+                                            }}
+                                            on:keydown={(e) => {
+                                                window.setShouldGoBack(false)
+                                                if(e.key === "Enter") fullImagePopup = anime.coverImageUrl
+                                            }}
                                         />
                                     {/if}
                                     {#if anime.bannerImageUrl}
                                         <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                                         <img
+                                            style:display={anime.isSeenMore?"":"none"}
                                             loading="lazy"
                                             src={anime.bannerImageUrl}
                                             alt="bannerImg"
-                                            class={"extra-bannerImg fade-in" +
-                                                (anime.isSeenMore
-                                                    ? ""
-                                                    : " display-none")}
+                                            class="extra-bannerImg"
                                             tabindex={anime.isSeenMore
                                                 ? "0"
                                                 : "-1"}
-                                            on:click={() =>
-                                                askToOpenInAnilist(
-                                                    anime.animeUrl
-                                                )}
-                                            on:keydown={(e) =>
-                                                e.key === "Enter" &&
-                                                askToOpenInAnilist(
-                                                    anime.animeUrl
-                                                )}
+                                            on:error={(e) => {
+                                                addClass(
+                                                    e.target,
+                                                    "display-none"
+                                                );
+                                            }}
+                                            on:click={() => {
+                                                window.setShouldGoBack(false)
+                                                fullImagePopup = anime.bannerImageUrl
+                                            }}
+                                            on:keydown={(e) => {
+                                                window.setShouldGoBack(false)
+                                                if(e.key === "Enter") fullImagePopup = anime.bannerImageUrl
+                                            }}
                                         />
                                     {/if}
                                     {#if anime?.description}
-                                        <div class="anime-description-wrapper">
+                                        <div class="anime-description-wrapper"
+                                            on:click={() => {
+                                                window.setShouldGoBack(false)
+                                                fullDescriptionPopup = editHTMLString(anime?.description)
+                                            }}
+                                            on:keydown={(e) => {
+                                                window.setShouldGoBack(false)
+                                                if(e.key === "Enter") fullDescriptionPopup = editHTMLString(anime?.description)
+                                            }}
+                                        >
                                             <h3>Description</h3>
                                             <div
                                                 class="anime-description copy"
@@ -1894,19 +1935,13 @@
                                     on:keydown={(e) =>
                                         e.key === "Enter" &&
                                         handleMoreVideos(anime.title)}
-                                    >YT Videos</button
+                                    >YouTube</button
                                 >
                                 <button
-                                    class="seemoreless"
-                                    on:click={handleSeeMore(anime, animeIdx)}
-                                    on:keydown={(e) => e.key === "Enter"}
-                                    style:overflow={$popupIsGoingBack
-                                        ? "hidden"
-                                        : ""}
-                                    >{"See " +
-                                        (anime.isSeenMore
-                                            ? "Less"
-                                            : "More")}</button
+                                    class="openanilist"
+                                    on:click={openInAnilist(anime.animeUrl)}
+                                    on:keydown={(e) => e.key === "Enter" && openInAnilist(anime.animeUrl)}
+                                    >Anilist</button
                                 >
                             </div>
                         </div>
@@ -1922,6 +1957,16 @@
             {/if}
         {/if}
     </div>
+    <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
+    <div
+        class="see-more-container"
+            tabindex="0"
+            on:click={handleSeeMore}
+            on:keydown={(e) => e.key === "Enter" && handleSeeMore(e)}
+            style:--windowWidth={windowWidth + "px"}
+        >
+        <i class="see-more-icon fa-solid fa-up-right-and-down-left-from-center" />
+    </div>
 </div>
 {#if $popupVisible && $popupIsGoingBack}
     <div
@@ -1934,6 +1979,38 @@
             class={"go-back-grid" + (goBackPercent >= 100 ? " willGoBack" : "")}
         >
             <i class="fa-solid fa-arrow-left" />
+        </div>
+    </div>
+{/if}
+{#if fullImagePopup}
+    <div
+        class="fullPopupWrapper"
+        on:click={() => (fullImagePopup = null)}
+        on:keydown={(e) => e.key === "Enter" && (fullImagePopup = null)}
+    >
+        <div class="fullPopup">
+            <img
+                class="fullPopupImage"
+                loading="lazy"
+                src={fullImagePopup}
+                alt="popup"
+                transition:fly={{ y: 20, duration: 300 }}
+            />
+        </div>
+    </div>
+{/if}
+{#if fullDescriptionPopup}
+    <div
+        class="fullPopupWrapper"
+        on:click={() => (fullDescriptionPopup = null)}
+        on:keydown={(e) => e.key === "Enter" && (fullDescriptionPopup = null)}
+    >
+        <div class="fullPopup">
+            <div class="fullPopupDescriptionWrapper">
+                <div class="fullPopupDescription" transition:fly={{ y: 20, duration: 300 }}>
+                    {@html fullDescriptionPopup}
+                </div>
+            </div>
         </div>
     </div>
 {/if}
@@ -1966,7 +2043,7 @@
         overflow-x: hidden;
         overscroll-behavior: contain;
         background-color: #151f2e;
-        transition: transform 0.3s ease;
+        transition: transform 0.3s ease-in-out;
         margin-top: 55px;
         -ms-overflow-style: none;
         scrollbar-width: none;
@@ -2293,6 +2370,10 @@
         color: rgb(245, 197, 24);
     }
 
+    .info-status a {
+        color: unset;
+    }
+
     .info-contents {
         margin: 1em 0;
         width: 100%;
@@ -2328,43 +2409,25 @@
         height: 210px;
         object-fit: cover;
         border-radius: 6px;
-        box-shadow: 0 14px 28px rgba(0, 0, 0, 0.25),
-            0 10px 10px rgba(0, 0, 0, 0.22);
-    }
-    .coverImg.fade-out {
-        animation: fadeOut 0.3s ease forwards;
-        opacity: 0;
-    }
-    .coverImg.fade-in {
-        animation: fadeIn 0.3s ease forwards;
-        opacity: 1;
     }
     .extra-bannerImg {
         height: 210px;
         width: calc(100% - 150px - 1em);
         object-fit: cover;
         border-radius: 6px;
-        box-shadow: 0 14px 28px rgba(0, 0, 0, 0.25),
-            0 10px 10px rgba(0, 0, 0, 0.22);
         user-select: none;
         cursor: pointer;
+        background-color: black;
     }
     .coverImg.display-none + .extra-bannerImg {
         width: 100%;
-    }
-    .extra-bannerImg.fade-out {
-        animation: fadeOut 0.3s ease forwards;
-        opacity: 0;
-    }
-    .extra-bannerImg.fade-in {
-        animation: fadeIn 0.3s ease forwards;
-        opacity: 1;
     }
 
     .coverImg {
         width: min(40% - 1em, 150px);
         user-select: none;
         cursor: pointer;
+        background-color: black;
     }
 
     .coverImg.nodesc {
@@ -2381,6 +2444,7 @@
         min-width: max(60% - 1em, 160px);
         min-height: 150px;
         overflow-x: hidden;
+        cursor: pointer;
     }
 
     .anime-description {
@@ -2433,7 +2497,7 @@
     }
 
     .hideshowbtn,
-    .seemoreless,
+    .openanilist,
     .morevideos {
         padding: 0.5em 1.5em 0.5em 1.5em;
         border-radius: 0.1em;
@@ -2450,7 +2514,7 @@
         scrollbar-width: none;
     }
 
-    .seemoreless::-webkit-scrollbar,
+    .openanilist::-webkit-scrollbar,
     .hideshowbtn::-webkit-scrollbar,
     .morevideos::-webkit-scrollbar {
         display: none;
@@ -2691,4 +2755,108 @@
     .cursor-default {
         cursor: default !important;
     }
+
+    .fullPopupWrapper {
+        position: fixed;
+        z-index: 996;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.4);
+        overflow-y: auto;
+        overflow-x: hidden;
+        overscroll-behavior: contain;
+        user-select: none;
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+        cursor: pointer;
+    }
+    .fullPopupWrapper::-webkit-scrollbar {
+        display: none;
+    }
+    .fullPopup {
+        width: 100%;
+        height: 100%;
+        justify-content: center;
+        align-items: center;
+        display: flex;
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+        cursor: pointer;
+    }
+
+    .fullPopup::-webkit-scrollbar {
+        display: none;
+    }
+
+    .fullPopupImage {
+        max-width: min(90%, 1000px);
+        max-height: 90%;
+        object-fit: cover;
+        border-radius: 6px;
+        box-shadow: 0 14px 28px rgba(0, 0, 0, 0.25),
+            0 10px 10px rgba(0, 0, 0, 0.22);
+        user-select: none;
+        cursor: pointer;
+    }
+    .fullPopupDescriptionWrapper {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0,0,0,0.5);
+        cursor: pointer;
+    }
+    .fullPopupDescription {
+        letter-spacing: 0.05rem;
+        line-height: 2.5rem;
+        font-size: 1.3rem;
+        overflow-y: auto;
+        overflow-x: hidden;
+        max-width: min(90%, 576px);
+        max-height: 68%;
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+        overscroll-behavior: contain;
+        user-select: none;
+        cursor: pointer;
+    }
+    .fullPopupDescription::-webkit-scrollbar {
+        display: none;
+    }
+    :global(.fullPopupDescription *) {
+        font-size: 1.3rem !important;
+    }
+    :global(.fullPopupDescription a) {
+        color: rgb(0 168 255) !important;
+        text-decoration: none !important;
+    }
+
+    .see-more-container {
+		position: fixed;
+		bottom: 3em;
+		right: calc(50% - min(640px, var(--windowWidth))/2 + 3em);
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		gap: 8px;
+		background-color: white;
+        color: black !important;
+		cursor: pointer;
+		user-select: none;
+		min-width: 44px;
+		min-height: 44px;
+		border-radius: 50%;
+        padding: 0px;
+        z-index: 995;
+        box-shadow: 0 14px 28px rgba(0, 0, 0, 0.25),
+            0 10px 10px rgba(0, 0, 0, 0.22);
+	}
+	.see-more-icon {
+		color: inherit;
+		font-size: 2rem;
+		cursor: pointer;
+	}
 </style>

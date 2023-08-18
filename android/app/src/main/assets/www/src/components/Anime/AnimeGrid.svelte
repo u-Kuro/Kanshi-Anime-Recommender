@@ -30,7 +30,6 @@
         removeClass,
     } from "../../js/others/helper.js";
     import { fly } from "svelte/transition";
-    import { children } from "svelte/internal";
 
     let windowHeight = window.visualViewport.height;
     let date = new Date();
@@ -508,7 +507,7 @@
                                             )}-color fa-solid fa-circle`}
                                         />
                                         {#if isJsonObject(anime?.nextAiringEpisode)}
-                                            {#key date.getSeconds()}
+                                            {#key date?.getSeconds?.() || 1}
                                                 {`${
                                                     anime.format || "N/A"
                                                 }${getFinishedEpisode(
@@ -896,5 +895,12 @@
         -webkit-user-drag: none !important;
         -moz-user-select: none !important;
         -ms-user-select: none !important;
+        height: 0 !important;
+        width: 0 !important;
+        max-width: 0 !important;
+        max-height: 0 !important;
+        min-width: 0 !important;
+        min-height: 0 !important;
+        overflow: hidden !important;
     }
 </style>
