@@ -445,16 +445,9 @@
             if ($gridFullView ?? !$android) {
                 horizontalWheel(e, "image-grid");
                 if (!scrollingToBottom) {
-                    let target = e.target.closest("#anime-grid") || e.target;
                     scrollingToBottom = true;
-                    let windowScroll = window.scrollY;
-                    let animeGridBottom =
-                        target.getBoundingClientRect().bottom + windowScroll;
-                    let windowBottom = windowScroll + windowHeight;
-                    if (windowBottom < animeGridBottom) {
-                        let newScrollPosition = Number.MAX_SAFE_INTEGER;
-                        document.documentElement.scrollTop = newScrollPosition;
-                    }
+                    let newScrollPosition = Number.MAX_SAFE_INTEGER;
+                    document.documentElement.scrollTop = newScrollPosition;
                     scrollingToBottom = false;
                 }
             }

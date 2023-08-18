@@ -1620,11 +1620,13 @@
                                             {"/10 · " +
                                                 (anime.popularity != null
                                                     ? formatNumber(
-                                                        anime.popularity,
-                                                        1
+                                                          anime.popularity,
+                                                          1
                                                       )
                                                     : "NA")}
-                                            {" · "}{@html getRecommendationRatingInfo(anime)}
+                                            {" · "}{@html getRecommendationRatingInfo(
+                                                anime
+                                            )}
                                         </h3>
                                     </div>
                                 </div>
@@ -1797,39 +1799,63 @@
                                 </div>
                                 <div class="info-profile">
                                     {#if anime.coverImageUrl}
-                                    <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
-                                    <img
-                                        loading="lazy"
-                                        src={anime.coverImageUrl}
-                                        alt="coverImg"
-                                        tabindex={anime.isSeenMore?"0":"-1"}
-                                        class={"coverImg display-none fade-out"+(anime?.description?"":" nodesc")}
-                                        on:load={(e) => {
-                                            removeClass(e.target, "display-none");
-                                            removeClass(e.target, "fade-out");
-                                            addClass(e.target, "fade-in");
-                                        }}
-                                        on:click={() =>
-                                            askToOpenInAnilist(anime.animeUrl)}
-                                        on:keydown={(e) =>
-                                            e.key === "Enter" &&
-                                            askToOpenInAnilist(anime.animeUrl)}
-                                    />
+                                        <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
+                                        <img
+                                            loading="lazy"
+                                            src={anime.coverImageUrl}
+                                            alt="coverImg"
+                                            tabindex={anime.isSeenMore
+                                                ? "0"
+                                                : "-1"}
+                                            class={"coverImg display-none fade-out" +
+                                                (anime?.description
+                                                    ? ""
+                                                    : " nodesc")}
+                                            on:load={(e) => {
+                                                removeClass(
+                                                    e.target,
+                                                    "display-none"
+                                                );
+                                                removeClass(
+                                                    e.target,
+                                                    "fade-out"
+                                                );
+                                                addClass(e.target, "fade-in");
+                                            }}
+                                            on:click={() =>
+                                                askToOpenInAnilist(
+                                                    anime.animeUrl
+                                                )}
+                                            on:keydown={(e) =>
+                                                e.key === "Enter" &&
+                                                askToOpenInAnilist(
+                                                    anime.animeUrl
+                                                )}
+                                        />
                                     {/if}
                                     {#if anime.bannerImageUrl}
-                                    <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
-                                    <img
-                                        loading="lazy"
-                                        src={anime.bannerImageUrl}
-                                        alt="bannerImg"
-                                        class={"extra-bannerImg fade-in"+(anime.isSeenMore?"":" display-none")}
-                                        tabindex={anime.isSeenMore?"0":"-1"}
-                                        on:click={() =>
-                                            askToOpenInAnilist(anime.animeUrl)}
-                                        on:keydown={(e) =>
-                                            e.key === "Enter" &&
-                                            askToOpenInAnilist(anime.animeUrl)}
-                                    />
+                                        <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
+                                        <img
+                                            loading="lazy"
+                                            src={anime.bannerImageUrl}
+                                            alt="bannerImg"
+                                            class={"extra-bannerImg fade-in" +
+                                                (anime.isSeenMore
+                                                    ? ""
+                                                    : " display-none")}
+                                            tabindex={anime.isSeenMore
+                                                ? "0"
+                                                : "-1"}
+                                            on:click={() =>
+                                                askToOpenInAnilist(
+                                                    anime.animeUrl
+                                                )}
+                                            on:keydown={(e) =>
+                                                e.key === "Enter" &&
+                                                askToOpenInAnilist(
+                                                    anime.animeUrl
+                                                )}
+                                        />
                                     {/if}
                                     {#if anime?.description}
                                         <div class="anime-description-wrapper">
@@ -2353,36 +2379,6 @@
         overflow-x: hidden;
     }
 
-    .anime-description-container {
-        position: absolute;
-        background: linear-gradient(
-            to bottom,
-            rgba(0, 0, 0, 0.8),
-            rgba(0, 0, 0, 0.34)
-        );
-        width: 100%;
-        height: 100%;
-        font-size: 1.5rem;
-        color: #fff;
-        transition: opacity 0.3s ease;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        opacity: var(--showDescPercent);
-        transition: opacity 0.3s ease;
-        z-index: 4;
-    }
-    .anime-description-container.fade-out {
-        transition: unset !important;
-        animation: fadeOut 0.3s ease forwards;
-        opacity: 0;
-    }
-    .anime-description-container.fade-in {
-        transition: unset !important;
-        animation: fadeIn 0.3s ease forwards;
-        opacity: 1;
-    }
-
     .anime-description {
         margin: 1em;
         letter-spacing: 0.05rem;
@@ -2456,43 +2452,7 @@
         display: none;
     }
 
-    .info-list {
-        max-height: max(
-            calc(
-                var(--windowHeight) -
-                    calc(
-                        (calc(360 * min(var(--windowWidth), 640px)) / 640) +
-                            55px + 30px + 2em + 38px + 30px + 20px + 0.032em
-                    )
-            ),
-            120px
-        );
-        overflow: hidden;
-        display: grid;
-        grid-template-columns: repeat(2, calc(50% - 2em));
-        column-gap: 2em;
-        padding: 0 0.8em !important;
-        margin: 0.5em 0 1.6em 0;
-    }
-
-    .info-list.seenmore {
-        max-height: unset !important;
-    }
-
     @media screen and (max-width: 425px) {
-        .info-list {
-            max-height: max(
-                calc(
-                    var(--windowHeight) -
-                        calc(
-                            (calc(360 * min(var(--windowWidth), 640px)) / 640) +
-                                55px + 30px + 2em + 38px + 30px + 20px + 0.033em
-                        )
-                ),
-                240px
-            ) !important;
-            grid-template-columns: 100% !important;
-        }
         .popup-info {
             max-height: max(
                 calc(
@@ -2552,18 +2512,6 @@
         .popup-container {
             margin-top: 0 !important;
         }
-        .info-list {
-            max-height: max(
-                calc(
-                    var(--windowHeight) -
-                        calc(
-                            (calc(360 * min(var(--windowWidth), 640px)) / 640) +
-                                30px + 2em + 38px + 30px + 20px + 0.033em
-                        )
-                ),
-                120px
-            ) !important;
-        }
         .popup-info {
             max-height: max(
                 calc(
@@ -2577,7 +2525,6 @@
             ) !important;
             overflow: hidden;
             margin-bottom: 1em;
-            
         }
     }
 
@@ -2615,10 +2562,6 @@
         justify-content: space-between;
         gap: 2rem;
         flex: 1;
-    }
-
-    .not-capitalize {
-        text-transform: none !important;
     }
 
     .info::-webkit-scrollbar {

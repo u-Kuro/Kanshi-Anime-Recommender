@@ -1100,7 +1100,7 @@
                         highlightedEl.scrollIntoView({
                             behavior: isFirstOrLast ? "auto" : "smooth",
                             container: parent,
-                            block: "nearest",
+                            block: "center",
                             inline: "nearest",
                         });
                     }
@@ -1114,7 +1114,7 @@
                         highlightedEl.scrollIntoView({
                             behavior: "smooth",
                             container: parent,
-                            block: "nearest",
+                            block: "center",
                             inline: "nearest",
                         });
                     }
@@ -1276,6 +1276,8 @@
             element.scrollLeft = Math.max(0, element.scrollLeft + event.deltaY);
         }
     }
+
+    let scrollingToTop;
 </script>
 
 <main
@@ -1407,7 +1409,17 @@
             (showFilterOptions ? "" : "disable-interaction") +
             ($hasWheel ? " hasWheel" : "")}
         id="filters"
-        on:wheel={(e) => horizontalWheel(e, "filters")}
+        on:wheel={(e) => {
+            horizontalWheel(e, "filters")
+            if ($gridFullView ?? !$android) {
+                if (!scrollingToTop && e.deltaY < 0) {
+                    scrollingToTop = true;
+                    let newScrollPosition = 0;
+                    document.documentElement.scrollTop = newScrollPosition;
+                    scrollingToTop = false;
+                }
+            }
+        }}
         style:--maxPaddingHeight={maxFilterSelectionHeight + 65 + "px"}
     >
         {#if $filterOptions}
@@ -2188,6 +2200,7 @@
     }
     .highlight {
         background-color: rgba(0, 0, 0, 0.25);
+        color: rgb(61, 180, 242) !important;
     }
 
     .filter-select .options {
