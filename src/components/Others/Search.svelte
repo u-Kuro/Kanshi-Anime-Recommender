@@ -1281,6 +1281,8 @@
 </script>
 
 <main
+    style:--translateX={windowWidth + "px"}
+    style:--translateY={windowHeight + "px"}
     style:--filters-space={showFilterOptions ? "80px" : ""}
     style:--active-filter-space={(
         $activeTagFilters?.[

@@ -15,16 +15,16 @@ This app is designed to provide anime recommendations based on your personal rat
 
 ## Website Preview
 ![Website Preview 1](https://i.imgur.com/HYpbo19.png)
-![Website Preview 2](https://i.imgur.com/tsIzMKb.png)
+![Website Preview 2](https://i.imgur.com/3rEk8X7.png)
 
 <h2 align="center"></h2>
 
 ## Android Preview
 <div style="display: flex;flex-wrap:nowrap;">
   <img src="https://i.imgur.com/H4rUru7.png" style="flex:1;width: 24%;">
-  <img src="https://i.imgur.com/xZSOXI3.png" style="flex:1;width: 24%;">
+  <img src="https://i.imgur.com/SkP1rZG.png" style="flex:1;width: 24%;">
   <img src="https://i.imgur.com/6GuyIFI.png" style="flex:1;width: 24%;">
-  <img src="https://i.imgur.com/mvCXdsU.png" style="flex:1;width: 24%;">
+  <img src="https://i.imgur.com/1hd3PIS.png" style="flex:1;width: 24%;">
 </div>
 
 <h2 align="center"></h2>

@@ -781,7 +781,9 @@
             trailerEl.tagName !== "IFRAME" ||
             !isOnline
         ) {
-            failingTrailers[anime.id] = true;
+            if (anime.id) {
+                failingTrailers[anime.id] = true;
+            }
             $ytPlayers = $ytPlayers.filter(
                 (_ytPlayer) => _ytPlayer.ytPlayer !== ytPlayer
             );
@@ -804,7 +806,9 @@
                 }, 300);
             }
             playMostVisibleTrailer();
-            delete failingTrailers[anime.id];
+            if (anime.id) {
+                delete failingTrailers[anime.id];
+            }
         }
     }
     function prePlayYtPlayer(ytPlayer) {
