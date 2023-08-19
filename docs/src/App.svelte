@@ -1080,18 +1080,15 @@
 			transition:fly={{ x: 50, duration: 300 }}
 		>
 			<i class="list-update-icon fa-solid fa-arrows-rotate" />
-			<h3 class="list-update-label">List Update Available</h3>
+			<h3 class="list-update-label">List Update</h3>
 		</div>
 	{/if}
 </main>
 
 <style>
-	:global(body) {
-		height: calc(100% - 55px) !important;
-	}
 	main {
-		height: calc(100% - 55px);
 		width: 100%;
+		overflow-x: hidden;
 	}
 	.home {
 		height: calc(100% - 55px);
@@ -1109,6 +1106,10 @@
 		height: 0.12em;
 		width: 100%;
 		transform: translateX(var(--progress));
+		-webkit-transform: translateX(var(--progress));
+		-ms-transform: translateX(var(--progress));
+		-moz-transform: translateX(var(--progress));
+		-o-transform: translateX(var(--progress));
 		transition: transform 0.3s linear;
 	}
 	.list-update-container {
@@ -1126,6 +1127,11 @@
 		min-width: 44px;
 		min-height: 44px;
 		padding: 8px;
+		transform: translateZ(0);
+		-webkit-transform: translateZ(0);
+		-ms-transform: translateZ(0);
+		-moz-transform: translateZ(0);
+		-o-transform: translateZ(0);
 	}
 	.list-update-icon {
 		color: inherit;

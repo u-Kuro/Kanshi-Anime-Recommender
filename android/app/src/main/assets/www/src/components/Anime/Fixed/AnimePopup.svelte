@@ -33,10 +33,10 @@
         isElementVisible,
         addClass,
         removeClass,
-        getMostVisibleElement,
         getMostVisibleElementFromArray,
         jsonIsEmpty,
         ncsCompare,
+        dragScroll
     } from "../../../js/others/helper.js";
     import { retrieveJSON, saveJSON } from "../../../js/indexedDB.js";
     import { animeLoader } from "../../../js/workerUtils.js";
@@ -57,7 +57,6 @@
         mainHome,
         popupWrapper,
         popupContainer,
-        popupContainerIsScrolling,
         popupAnimeObserver,
         fullImagePopup,
         fullDescriptionPopup,
@@ -114,8 +113,6 @@
         let target = e.target;
         let classList = target.classList;
         if (
-            classList.contains("see-more-container") ||
-            target.closest(".see-more-container") ||
             classList.contains("popup-container") ||
             target.closest(".popup-container")
         )
@@ -215,7 +212,7 @@
 
     function openInAnilist(animeUrl) {
         if (typeof animeUrl !== "string" || animeUrl === "") return;
-        window.open(animeUrl,"_blank");
+        window.open(animeUrl, "_blank");
     }
 
     animeIdxRemoved.subscribe(async (removedIdx) => {
@@ -230,27 +227,6 @@
             }
         }
     });
-
-    async function handleSeeMore(e) {
-        if (popupContainer) {
-            let mostVisibePopupInfo = getMostVisibleElement(popupContainer, ".popup-info", 0)
-            let animeIdx = getChildIndex(mostVisibePopupInfo?.closest?.(".popup-content")) ?? -1;
-            let willExpand;
-            if ($finalAnimeList[animeIdx]) {
-                willExpand = !$finalAnimeList[animeIdx].isSeenMore
-                $finalAnimeList[animeIdx].isSeenMore = willExpand;
-            }
-            await tick();
-            let targetEl = popupContainer.children?.[animeIdx];
-            let targetPopupHeader =
-                targetEl?.getElementsByClassName?.("popup-header")?.[0];
-            if (targetEl instanceof Element) {
-                scrollToElement(popupContainer, targetEl, "bottom", "instant");
-                mostVisiblePopupHeader = targetPopupHeader;
-                playMostVisibleTrailer();
-            }
-        }
-    }
 
     function getCautionColor({
         contentCaution,
@@ -301,7 +277,7 @@
                 );
                 mainHome.style.setProperty(
                     "--translateX",
-                    "-"+ windowWidth + "px"
+                    "-" + windowWidth + "px"
                 );
             }
             // Scroll To Opened Anime
@@ -317,12 +293,20 @@
                     "instant"
                 );
                 // Animate Opening
-                requestAnimationFrame(()=>{
-                    removeClass(mainHome, "show");
+                requestAnimationFrame(() => {
+                    addClass(mainHome, "willChange");
+                    addClass(popupWrapper, "willChange");
+                    addClass(popupContainer, "willChange");
+
                     addClass(popupWrapper, "visible");
                     addClass(popupContainer, "show");
                     addClass(mainHome, "hide");
-                })
+                    setTimeout(()=>{
+                        removeClass(mainHome, "willChange");
+                        removeClass(popupWrapper, "willChange");
+                        removeClass(popupContainer, "willChange");
+                    },300)
+                });
                 // Try to Add YT player
                 currentHeaderIdx = $openedAnimePopupIdx;
                 let openedAnimes = [
@@ -373,25 +357,43 @@
                 $openedAnimePopupIdx = null;
             } else {
                 // Animate Opening
-                requestAnimationFrame(()=>{
-                    removeClass(mainHome, "show");
+                requestAnimationFrame(() => {
+                    addClass(mainHome, "willChange");
+                    addClass(popupWrapper, "willChange");
+                    addClass(popupContainer, "willChange");
+
                     addClass(popupWrapper, "visible");
                     addClass(popupContainer, "show");
                     addClass(mainHome, "hide");
-                })
+                    setTimeout(()=>{
+                        removeClass(mainHome, "willChange");
+                        removeClass(popupWrapper, "willChange");
+                        removeClass(popupContainer, "willChange");
+                    },300)
+                });
             }
         } else if (val === false) {
-            requestAnimationFrame(()=>{
+            requestAnimationFrame(() => {
+                addClass(mainHome, "willChange");
+                addClass(popupWrapper, "willChange");
+                addClass(popupContainer, "willChange");
+                
                 removeClass(popupContainer, "show");
                 removeClass(mainHome, "hide");
-                addClass(mainHome, "show");
-                addClass(popupContainer, "hide");
                 setTimeout(() => {
                     // Stop All Player
-                    $ytPlayers?.forEach(({ ytPlayer }) => ytPlayer?.pauseVideo?.());
+                    $ytPlayers?.forEach(({ ytPlayer }) =>
+                        ytPlayer?.pauseVideo?.()
+                    );
                     removeClass(popupWrapper, "visible");
+
+                    removeClass(mainHome, "willChange");
+                    removeClass(popupContainer, "willChange");
+                    setTimeout(() => {
+                        removeClass(popupWrapper, "willChange");
+                    },300)
                 }, 300);
-            })
+            });
         }
     });
 
@@ -458,14 +460,6 @@
         mainHome = document.getElementById("main-home");
         popupContainer =
             popupContainer || popupWrapper.querySelector("#popup-container");
-        let popupContainerScrollTimeout;
-        popupContainer.addEventListener("scroll", () => {
-            popupContainerIsScrolling = true;
-            clearTimeout(popupContainerScrollTimeout);
-            popupContainerScrollTimeout = setTimeout(() => {
-                popupContainerIsScrolling = false;
-            }, 500);
-        });
         animeGridParentEl = document.getElementById("anime-grid");
         window.addEventListener("resize", () => {
             if (
@@ -795,7 +789,7 @@
             trailerEl.tagName !== "IFRAME" ||
             !isOnline
         ) {
-            if (anime.id) {
+            if (anime?.id) {
                 failingTrailers[anime.id] = true;
             }
             $ytPlayers = $ytPlayers.filter(
@@ -820,7 +814,7 @@
                 }, 300);
             }
             playMostVisibleTrailer();
-            if (anime.id) {
+            if (anime?.id) {
                 delete failingTrailers[anime.id];
             }
         }
@@ -1487,14 +1481,14 @@
 
     window.checkOpenFullScreenItem = () => {
         return fullImagePopup || fullDescriptionPopup;
-    }
-	window.closeFullScreenItem = () => {
+    };
+    window.closeFullScreenItem = () => {
         if (fullImagePopup) {
-            fullImagePopup = null
+            fullImagePopup = null;
         } else {
             fullDescriptionPopup = null;
         }
-    }
+    };
 </script>
 
 <div
@@ -1517,7 +1511,7 @@
         on:scroll={itemScroll}
     >
         {#if $finalAnimeList?.length}
-            {#each $finalAnimeList || [] as anime (anime.id)}
+            {#each $finalAnimeList || [] as anime, animeIdx (anime.id)}
                 <div class="popup-content" bind:this={anime.popupContent}>
                     <div class="popup-main">
                         <div
@@ -1541,12 +1535,18 @@
                                     <img
                                         loading="lazy"
                                         src={anime.bannerImageUrl}
-                                        alt="bannerImg"
+                                        alt={(getTitle(anime?.title) || "") +
+                                            " Banner"}
                                         class="bannerImg fade-out"
                                         tabindex="0"
                                         on:load={(e) => {
                                             removeClass(e.target, "fade-out");
                                             addClass(e.target, "fade-in");
+                                        }}
+                                        on:error={(e) => {
+                                            removeClass(e.target, "fade-in");
+                                            addClass(e.target, "fade-out");
+                                            addClass(e.target, "display-none");
                                         }}
                                     />
                                 {/if}
@@ -1585,12 +1585,12 @@
                                         class="list-update-icon fa-solid fa-arrows-rotate"
                                     />
                                     <h3 class="list-update-label">
-                                        {windowWidth >= 350
-                                            ? "List Update Available"
-                                            : windowWidth >= 283
-                                            ? "Update Available"
-                                            : windowWidth >= 236
-                                            ? "Available"
+                                        {windowWidth >= 230
+                                            ? "List Update"
+                                            : windowWidth >= 205
+                                            ? "Update"
+                                            : windowWidth >= 180
+                                            ? "List"
                                             : ""}
                                     </h3>
                                 </div>
@@ -1603,11 +1603,19 @@
                                 style:--windowWidth={windowWidth + "px"}
                                 style:--windowHeight={windowHeight + "px"}
                             >
-                                <div class="anime-title-container">
+                                <div
+                                    class="anime-title-container"
+                                    style:overflow={$popupIsGoingBack
+                                        ? "hidden"
+                                        : ""}
+                                >
                                     <a
-                                        rel={anime.animeUrl? "noopener noreferrer":""}
-                                        target={anime.animeUrl? "_blank":""}
-                                        href={anime.animeUrl || "javascript:void(0)"}
+                                        rel={anime.animeUrl
+                                            ? "noopener noreferrer"
+                                            : ""}
+                                        target={anime.animeUrl ? "_blank" : ""}
+                                        href={anime.animeUrl ||
+                                            "javascript:void(0)"}
                                         class={getCautionColor(anime) +
                                             "-color anime-title copy"}
                                         copy-value={getTitle(anime?.title) ||
@@ -1618,7 +1626,12 @@
                                     >
                                         {getTitle(anime?.title) || "NA"}
                                     </a>
-                                    <div class="info-rating-wrapper">
+                                    <div
+                                        class="info-rating-wrapper"
+                                        style:overflow={$popupIsGoingBack
+                                            ? "hidden"
+                                            : ""}
+                                    >
                                         <i class="fa-regular fa-star" />
                                         <h3
                                             class="copy"
@@ -1659,7 +1672,12 @@
                                         </h3>
                                     </div>
                                 </div>
-                                <div class="info-format">
+                                <div
+                                    class="info-format"
+                                    style:overflow={$popupIsGoingBack
+                                        ? "hidden"
+                                        : ""}
+                                >
                                     {#if anime?.nextAiringEpisode?.airingAt}
                                         {#key date?.getSeconds?.() || 1}
                                             <h4
@@ -1709,7 +1727,12 @@
                                         <h4>NA</h4>
                                     {/if}
                                 </div>
-                                <div class="info-status">
+                                <div
+                                    class="info-status"
+                                    style:overflow={$popupIsGoingBack
+                                        ? "hidden"
+                                        : ""}
+                                >
                                     <h4
                                         class="copy"
                                         copy-value={(anime.userStatus || "NA") +
@@ -1717,21 +1740,27 @@
                                                 ? " · " + anime.userScore
                                                 : "")}
                                     >
-                                        <a 
-                                            rel={anime.animeUrl? "noopener noreferrer":""}
-                                            target={anime.animeUrl? "_blank":""}
-                                            href={anime.animeUrl || "javascript:void(0)"}
-                                        ><span
-                                            class={getUserStatusColor(
-                                                anime.userStatus
-                                            ) + "-color"}
-                                            >{anime.userStatus || "NA"}</span
-                                        >
-                                        {#if anime.userScore != null}
-                                            {" · "}
-                                            <i class="fa-regular fa-star" />
-                                            {anime.userScore}
-                                        {/if}
+                                        <a
+                                            rel={anime.animeUrl
+                                                ? "noopener noreferrer"
+                                                : ""}
+                                            target={anime.animeUrl
+                                                ? "_blank"
+                                                : ""}
+                                            href={anime.animeUrl ||
+                                                "javascript:void(0)"}
+                                            ><span
+                                                class={getUserStatusColor(
+                                                    anime.userStatus
+                                                ) + "-color"}
+                                                >{anime.userStatus ||
+                                                    "NA"}</span
+                                            >
+                                            {#if anime.userScore != null}
+                                                {" · "}
+                                                <i class="fa-regular fa-star" />
+                                                {anime.userScore}
+                                            {/if}
                                         </a>
                                     </h4>
                                     <h4
@@ -1750,12 +1779,18 @@
                                             </div>
                                             <div
                                                 class={"studio-popup info"}
-                                                on:wheel={(e) =>
-                                                    !popupContainerIsScrolling &&
-                                                    horizontalWheel(e, "info")}
                                                 style:overflow={$popupIsGoingBack
                                                     ? "hidden"
                                                     : ""}
+                                                on:mouseenter={(e)=>{
+                                                    if(!anime?.hasStudioDragScroll) {
+                                                        let info = e?.target?.closest?.(".info") || e?.target
+                                                        if (info) {
+                                                            anime.hasStudioDragScroll = true;   
+                                                            dragScroll(info, "x")
+                                                        }
+                                                    }
+                                                }}
                                             >
                                                 {#each getStudios(Object.entries(anime.studios || {}), anime?.favoriteContents?.studios) as { studio, studioColor } (studio)}
                                                     <span
@@ -1767,9 +1802,14 @@
                                                             class={studioColor
                                                                 ? `${studioColor}-color`
                                                                 : ""}
-                                                            rel={studio.studioUrl? "noopener noreferrer":""}
-                                                            target={studio.studioUrl? "_blank":""}
-                                                            href={studio.studioUrl || "javascript:void(0)"}
+                                                            rel={studio.studioUrl
+                                                                ? "noopener noreferrer"
+                                                                : ""}
+                                                            target={studio.studioUrl
+                                                                ? "_blank"
+                                                                : ""}
+                                                            href={studio.studioUrl ||
+                                                                "javascript:void(0)"}
                                                             >{studio.studioName ||
                                                                 "N/A"}</a
                                                         >
@@ -1783,12 +1823,18 @@
                                             <div class="info-categ">Genres</div>
                                             <div
                                                 class={"genres-popup info"}
-                                                on:wheel={(e) =>
-                                                    !popupContainerIsScrolling &&
-                                                    horizontalWheel(e, "info")}
                                                 style:overflow={$popupIsGoingBack
                                                     ? "hidden"
                                                     : ""}
+                                                on:mouseenter={(e)=>{
+                                                    if(!anime?.hasGenreDragScroll) {
+                                                        let info = e?.target?.closest?.(".info") || e?.target
+                                                        if (info) {
+                                                            anime.hasGenreDragScroll = true;   
+                                                            dragScroll(info, "x")
+                                                        }
+                                                    }
+                                                }}
                                             >
                                                 {#each getGenres(anime.genres, anime?.favoriteContents?.genres, anime.contentCaution) as { genre, genreColor } (genre)}
                                                     <span
@@ -1807,12 +1853,18 @@
                                         <div class="tag-info">
                                             <div
                                                 class={"tags-info-content info"}
-                                                on:wheel={(e) =>
-                                                    !popupContainerIsScrolling &&
-                                                    horizontalWheel(e, "info")}
                                                 style:overflow={$popupIsGoingBack
                                                     ? "hidden"
                                                     : ""}
+                                                on:mouseenter={(e)=>{
+                                                    if(!anime?.hasTagDragScroll) {
+                                                        let info = e?.target?.closest?.(".info") || e?.target
+                                                        if (info) {
+                                                            anime.hasTagDragScroll = true;   
+                                                            dragScroll(info, "x")
+                                                        }
+                                                    }
+                                                }}
                                             >
                                                 {#each getTags(anime.tags, anime?.favoriteContents?.tags, anime.contentCaution) as { tag, tagColor } (tag)}
                                                     <span
@@ -1836,7 +1888,8 @@
                                         <img
                                             loading="lazy"
                                             src={anime.coverImageUrl}
-                                            alt="coverImg"
+                                            alt={(getTitle(anime?.title) ||
+                                                "") + " Cover"}
                                             tabindex={anime.isSeenMore
                                                 ? "0"
                                                 : "-1"}
@@ -1857,26 +1910,33 @@
                                                 );
                                             }}
                                             on:click={() => {
-                                                window.setShouldGoBack(false)
-                                                fullImagePopup = anime.coverImageUrl
+                                                window.setShouldGoBack(false);
+                                                fullImagePopup =
+                                                    anime.coverImageUrl;
                                             }}
                                             on:keydown={(e) => {
-                                                window.setShouldGoBack(false)
-                                                if(e.key === "Enter") fullImagePopup = anime.coverImageUrl
+                                                window.setShouldGoBack(false);
+                                                if (e.key === "Enter")
+                                                    fullImagePopup =
+                                                        anime.coverImageUrl;
                                             }}
                                         />
                                     {/if}
-                                    {#if anime.bannerImageUrl}
+                                    {#if anime.bannerImageUrl && anime.isSeenMore}
                                         <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                                         <img
-                                            style:display={anime.isSeenMore?"":"none"}
                                             loading="lazy"
                                             src={anime.bannerImageUrl}
-                                            alt="bannerImg"
-                                            class="extra-bannerImg"
-                                            tabindex={anime.isSeenMore
-                                                ? "0"
-                                                : "-1"}
+                                            alt={(getTitle(anime?.title) ||
+                                                "") + " Banner"}
+                                            tabindex="0"
+                                            class="extra-bannerImg display-none"
+                                            on:load={(e) => {
+                                                removeClass(
+                                                    e.target,
+                                                    "display-none"
+                                                );
+                                            }}
                                             on:error={(e) => {
                                                 addClass(
                                                     e.target,
@@ -1884,24 +1944,35 @@
                                                 );
                                             }}
                                             on:click={() => {
-                                                window.setShouldGoBack(false)
-                                                fullImagePopup = anime.bannerImageUrl
+                                                window.setShouldGoBack(false);
+                                                fullImagePopup =
+                                                    anime.bannerImageUrl;
                                             }}
                                             on:keydown={(e) => {
-                                                window.setShouldGoBack(false)
-                                                if(e.key === "Enter") fullImagePopup = anime.bannerImageUrl
+                                                window.setShouldGoBack(false);
+                                                if (e.key === "Enter")
+                                                    fullImagePopup =
+                                                        anime.bannerImageUrl;
                                             }}
                                         />
                                     {/if}
                                     {#if anime?.description}
-                                        <div class="anime-description-wrapper"
+                                        <div
+                                            class="anime-description-wrapper"
                                             on:click={() => {
-                                                window.setShouldGoBack(false)
-                                                fullDescriptionPopup = editHTMLString(anime?.description)
+                                                window.setShouldGoBack(false);
+                                                fullDescriptionPopup =
+                                                    editHTMLString(
+                                                        anime?.description
+                                                    );
                                             }}
                                             on:keydown={(e) => {
-                                                window.setShouldGoBack(false)
-                                                if(e.key === "Enter") fullDescriptionPopup = editHTMLString(anime?.description)
+                                                window.setShouldGoBack(false);
+                                                if (e.key === "Enter")
+                                                    fullDescriptionPopup =
+                                                        editHTMLString(
+                                                            anime?.description
+                                                        );
                                             }}
                                         >
                                             <h3>Description</h3>
@@ -1922,6 +1993,9 @@
                             <div class="footer">
                                 <button
                                     class="hideshowbtn"
+                                    style:overflow={$popupIsGoingBack
+                                        ? "hidden"
+                                        : ""}
                                     on:click={handleHideShow(anime.id)}
                                     on:keydown={(e) =>
                                         e.key === "Enter" &&
@@ -1930,18 +2004,42 @@
                                         "N/A"}</button
                                 >
                                 <button
+                                    class={anime.isSeenMore
+                                        ? "openanilist"
+                                        : "expand"}
+                                    style:overflow={$popupIsGoingBack
+                                        ? "hidden"
+                                        : ""}
+                                    on:click={() => {
+                                        if (anime.isSeenMore) {
+                                            openInAnilist(anime.animeUrl);
+                                        } else {
+                                            anime.isSeenMore = true;
+                                        }
+                                    }}
+                                    on:keydown={(e) => {
+                                        if (e.key === "Enter") {
+                                            if (anime.isSeenMore) {
+                                                openInAnilist(anime.animeUrl);
+                                            } else {
+                                                anime.isSeenMore = true;
+                                            }
+                                        }
+                                    }}
+                                    >{anime.isSeenMore
+                                        ? "Anilist"
+                                        : "Expand"}</button
+                                >
+                                <button
                                     class="morevideos"
+                                    style:overflow={$popupIsGoingBack
+                                        ? "hidden"
+                                        : ""}
                                     on:click={handleMoreVideos(anime.title)}
                                     on:keydown={(e) =>
                                         e.key === "Enter" &&
                                         handleMoreVideos(anime.title)}
                                     >YouTube</button
-                                >
-                                <button
-                                    class="openanilist"
-                                    on:click={openInAnilist(anime.animeUrl)}
-                                    on:keydown={(e) => e.key === "Enter" && openInAnilist(anime.animeUrl)}
-                                    >Anilist</button
                                 >
                             </div>
                         </div>
@@ -1956,16 +2054,6 @@
                 </div>
             {/if}
         {/if}
-    </div>
-    <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
-    <div
-        class="see-more-container"
-            tabindex="0"
-            on:click={handleSeeMore}
-            on:keydown={(e) => e.key === "Enter" && handleSeeMore(e)}
-            style:--windowWidth={windowWidth + "px"}
-        >
-        <i class="see-more-icon fa-solid fa-up-right-and-down-left-from-center" />
     </div>
 </div>
 {#if $popupVisible && $popupIsGoingBack}
@@ -1987,14 +2075,18 @@
         class="fullPopupWrapper"
         on:click={() => (fullImagePopup = null)}
         on:keydown={(e) => e.key === "Enter" && (fullImagePopup = null)}
+        on:pointerup={() => (fullImagePopup = null)}
     >
         <div class="fullPopup">
             <img
                 class="fullPopupImage"
                 loading="lazy"
                 src={fullImagePopup}
-                alt="popup"
+                alt="Full View"
                 transition:fly={{ y: 20, duration: 300 }}
+                on:error={(e) => {
+                    addClass(e.target, "display-none");
+                }}
             />
         </div>
     </div>
@@ -2004,10 +2096,14 @@
         class="fullPopupWrapper"
         on:click={() => (fullDescriptionPopup = null)}
         on:keydown={(e) => e.key === "Enter" && (fullDescriptionPopup = null)}
+        on:pointerup={() => (fullDescriptionPopup = null)}
     >
         <div class="fullPopup">
             <div class="fullPopupDescriptionWrapper">
-                <div class="fullPopupDescription" transition:fly={{ y: 20, duration: 300 }}>
+                <div
+                    class="fullPopupDescription"
+                    transition:fly={{ y: 20, duration: 300 }}
+                >
                     {@html fullDescriptionPopup}
                 </div>
             </div>
@@ -2027,42 +2123,61 @@
         display: flex;
         justify-content: center;
         overflow: hidden;
-        transform: translateY(-99999px);
+        transform: translateY(-99999px) translateZ(0);
+        -webkit-transform: translateY(-99999px) translateZ(0);
+        -ms-transform: translateY(-99999px) translateZ(0);
+        -moz-transform: translateY(-99999px) translateZ(0);
+        -o-transform: translateY(-99999px) translateZ(0);
+    }
+
+    .popup-wrapper.willChange {
         will-change: transform;
     }
 
     .popup-wrapper.visible {
-        transform: translateY(0);
+        transform: translateY(0) translateZ(0);
+        -webkit-transform: translateY(0) translateZ(0);
+        -ms-transform: translateY(0) translateZ(0);
+        -moz-transform: translateY(0) translateZ(0);
+        -o-transform: translateY(0) translateZ(0);
     }
 
     .popup-container {
-        will-change: transform;
         width: 100%;
         max-width: 640px;
         overflow-y: auto;
         overflow-x: hidden;
         overscroll-behavior: contain;
         background-color: #151f2e;
-        transition: transform 0.3s ease-in-out;
+        transition: transform 0.3s ease;
         margin-top: 55px;
         -ms-overflow-style: none;
         scrollbar-width: none;
+        transform: translateX(var(--translateX)) translateZ(0);
+        -webkit-transform: translateX(var(--translateX)) translateZ(0);
+        -ms-transform: translateX(var(--translateX)) translateZ(0);
+        -moz-transform: translateX(var(--translateX)) translateZ(0);
+        -o-transform: translateX(var(--translateX)) translateZ(0);
+    }
+
+    .popup-container.willChange {
+        will-change: transform;
     }
 
     :global(#main-home.hide) {
-        transform: translateX(var(--translateX));
-    }
-
-    :global(#main-home.show) {
-        transform: unset !important;
-    }
-
-    .popup-container.hide {
-        transform: translateX(var(--translateX));
+        transform: translateX(var(--translateX)) translateZ(0);
+        -webkit-transform: translateX(var(--translateX)) translateZ(0);
+        -ms-transform: translateX(var(--translateX)) translateZ(0);
+        -moz-transform: translateX(var(--translateX)) translateZ(0);
+        -o-transform: translateX(var(--translateX)) translateZ(0);
     }
 
     .popup-container.show {
-        transform: translateX(0px);
+        transform: translateZ(0);
+        -webkit-transform: translateZ(0);
+        -ms-transform: translateZ(0);
+        -moz-transform: translateZ(0);
+        -o-transform: translateZ(0);
     }
 
     .popup-container::-webkit-scrollbar {
@@ -2076,7 +2191,14 @@
         align-items: center;
         top: 50%;
         left: 0;
-        transform: translateY(-50%) translateX(var(--position));
+        transform: translateY(-50%) translateX(var(--position)) translateZ(0);
+        -webkit-transform: translateY(-50%) translateX(var(--position))
+            translateZ(0);
+        -ms-transform: translateY(-50%) translateX(var(--position))
+            translateZ(0);
+        -moz-transform: translateY(-50%) translateX(var(--position))
+            translateZ(0);
+        -o-transform: translateY(-50%) translateX(var(--position)) translateZ(0);
         background-color: rgb(103, 187, 254, 0.5);
         width: calc(44px * var(--scale));
         height: calc(44px * var(--scale));
@@ -2195,11 +2317,18 @@
     }
 
     .bannerImg {
-        height: 100%;
-        width: 100%;
+        width: 50%;
+        height: 50%;
+        transform: translate(50%, 50%) scale(2);
+        -webkit-transform: translate(50%, 50%) scale(2);
+        -ms-transform: translate(50%, 50%) scale(2);
+        -moz-transform: translate(50%, 50%) scale(2);
+        -o-transform: translate(50%, 50%) scale(2);
         position: absolute;
         object-fit: cover;
+        -o-object-fit: cover;
         object-position: center;
+        background-color: black;
     }
 
     .bannerImg::after {
@@ -2300,8 +2429,11 @@
         white-space: nowrap;
         align-items: center;
         display: flex;
+        flex-wrap: nowrap;
         grid-column-gap: 2em;
         justify-content: space-between;
+        -ms-overflow-style: none;
+        scrollbar-width: none;
     }
 
     .anime-title-container::-webkit-scrollbar {
@@ -2336,9 +2468,11 @@
     .info-format {
         padding-bottom: 5px;
         display: flex;
+        flex-wrap: nowrap;
         justify-content: space-between;
         gap: 1em;
         overflow-x: auto;
+        overflow-y: hidden;
         -ms-overflow-style: none;
         scrollbar-width: none;
     }
@@ -2352,9 +2486,11 @@
 
     .info-status {
         display: flex;
+        flex-wrap: nowrap;
         justify-content: space-between;
         gap: 1em;
         overflow-x: auto;
+        overflow-y: hidden;
         -ms-overflow-style: none;
         scrollbar-width: none;
     }
@@ -2408,12 +2544,14 @@
     .coverImg {
         height: 210px;
         object-fit: cover;
+        -o-object-fit: cover;
         border-radius: 6px;
     }
     .extra-bannerImg {
         height: 210px;
         width: calc(100% - 150px - 1em);
         object-fit: cover;
+        -o-object-fit: cover;
         border-radius: 6px;
         user-select: none;
         cursor: pointer;
@@ -2477,6 +2615,9 @@
         overflow-y: hidden;
         width: min-content;
         max-width: 100%;
+        white-space: nowrap;
+        -ms-overflow-style: none;
+        scrollbar-width: none;
     }
 
     .anime-title::-webkit-scrollbar {
@@ -2498,9 +2639,10 @@
 
     .hideshowbtn,
     .openanilist,
+    .expand,
     .morevideos {
         padding: 0.5em 1.5em 0.5em 1.5em;
-        border-radius: 0.1em;
+        border-radius: 6px;
         border: 0;
         background-color: #0b1622 !important;
         cursor: pointer;
@@ -2515,6 +2657,7 @@
     }
 
     .openanilist::-webkit-scrollbar,
+    .expand::-webkit-scrollbar,
     .hideshowbtn::-webkit-scrollbar,
     .morevideos::-webkit-scrollbar {
         display: none;
@@ -2546,21 +2689,36 @@
 
     @media screen and (min-width: 641px) {
         :global(#main-home.hide) {
-            transform: none !important;
-        }
-
-        :global(#main-home.show) {
-            transform: none !important;
+            transform: translateZ(0) !important;
+            -webkit-transform: translateZ(0) !important;
+            -ms-transform: translateZ(0) !important;
+            -moz-transform: translateZ(0) !important;
+            -o-transform: translateZ(0) !important;
         }
         .popup-wrapper {
             background-color: rgba(0, 0, 0, 0.7) !important;
         }
-        .popup-container.hide {
-            transform: translateY(var(--translateY));
+        .popup-container {
+            transform: translateY(var(--translateY)) translateZ(0);
+            -webkit-transform: translateY(var(--translateY)) translateZ(0);
+            -ms-transform: translateY(var(--translateY)) translateZ(0);
+            -moz-transform: translateY(var(--translateY)) translateZ(0);
+            -o-transform: translateY(var(--translateY)) translateZ(0);
         }
 
         .popup-container.show {
-            transform: translateY(0px);
+            transform: translateY(0px) translateZ(0);
+            -webkit-transform: translateY(0px) translateZ(0);
+            -ms-transform: translateY(0px) translateZ(0);
+            -moz-transform: translateY(0px) translateZ(0);
+            -o-transform: translateY(0px) translateZ(0);
+        }
+
+        .fullPopupDescription {
+            font-size: 1.5rem !important;
+        }
+        :global(.fullPopupDescription *) {
+            font-size: 1.5rem !important;
         }
     }
 
@@ -2617,6 +2775,7 @@
         display: flex;
         gap: 8px;
         width: 100%;
+        user-select: none !important;
     }
 
     .tags-info-content {
@@ -2642,6 +2801,7 @@
         padding: 8px 10px;
         border-radius: 6px;
         white-space: nowrap;
+        flex: 1;
         -ms-overflow-style: none;
         scrollbar-width: none;
     }
@@ -2739,9 +2899,11 @@
     }
 
     .autoplayToggle:checked + .slider:before {
-        -webkit-transform: translateX(22px);
-        -ms-transform: translateX(22px);
-        transform: translateX(22px);
+        -webkit-transform: translateX(22px) translateZ(0);
+        -ms-transform: translateX(22px) translateZ(0);
+        transform: translateX(22px) translateZ(0);
+        -moz-transform: translateX(22px) translateZ(0);
+        -o-transform: translateX(22px) translateZ(0);
     }
 
     .slider {
@@ -2757,20 +2919,24 @@
     }
 
     .fullPopupWrapper {
+        transform: translateZ(0);
+        -webkit-transform: translateZ(0);
+        -ms-transform: translateZ(0);
+        -moz-transform: translateZ(0);
+        -o-transform: translateZ(0);
         position: fixed;
-        z-index: 996;
+        z-index: 999;
         left: 0;
         top: 0;
         width: 100%;
         height: 100%;
         background-color: rgba(0, 0, 0, 0.4);
-        overflow-y: auto;
-        overflow-x: hidden;
         overscroll-behavior: contain;
         user-select: none;
         -ms-overflow-style: none;
         scrollbar-width: none;
         cursor: pointer;
+        touch-action: none;
     }
     .fullPopupWrapper::-webkit-scrollbar {
         display: none;
@@ -2791,9 +2957,10 @@
     }
 
     .fullPopupImage {
-        max-width: min(90%, 1000px);
+        max-width: min(100%, 1000px);
         max-height: 90%;
         object-fit: cover;
+        -o-object-fit: cover;
         border-radius: 6px;
         box-shadow: 0 14px 28px rgba(0, 0, 0, 0.25),
             0 10px 10px rgba(0, 0, 0, 0.22);
@@ -2806,7 +2973,7 @@
         align-items: center;
         width: 100%;
         height: 100%;
-        background-color: rgba(0,0,0,0.5);
+        background-color: rgba(0, 0, 0, 0.5);
         cursor: pointer;
     }
     .fullPopupDescription {
@@ -2822,41 +2989,17 @@
         overscroll-behavior: contain;
         user-select: none;
         cursor: pointer;
+        color: white;
     }
     .fullPopupDescription::-webkit-scrollbar {
         display: none;
     }
     :global(.fullPopupDescription *) {
         font-size: 1.3rem !important;
+        color: white;
     }
     :global(.fullPopupDescription a) {
         color: rgb(0 168 255) !important;
         text-decoration: none !important;
     }
-
-    .see-more-container {
-		position: fixed;
-		bottom: 3em;
-		right: calc(50% - min(640px, var(--windowWidth))/2 + 3em);
-		display: flex;
-		justify-content: center;
-		align-items: center;
-		gap: 8px;
-		background-color: white;
-        color: black !important;
-		cursor: pointer;
-		user-select: none;
-		min-width: 44px;
-		min-height: 44px;
-		border-radius: 50%;
-        padding: 0px;
-        z-index: 995;
-        box-shadow: 0 14px 28px rgba(0, 0, 0, 0.25),
-            0 10px 10px rgba(0, 0, 0, 0.22);
-	}
-	.see-more-icon {
-		color: inherit;
-		font-size: 2rem;
-		cursor: pointer;
-	}
 </style>

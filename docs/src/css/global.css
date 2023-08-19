@@ -20,8 +20,8 @@ html {
 
 html,
 body {
-    height: 100%;
     width: 100%;
+    overflow-x: hidden;
 }
 
 /* Font Sizes */
@@ -71,8 +71,11 @@ p,
 textarea {
     cursor: default;
     -webkit-hyphens: manual;
+    -moz-hyphens: manual;
+    -ms-hyphens: manual;
     hyphens: manual;
     white-space: pre-wrap;
+    -ms-word-break: break-word;
     word-break: break-word;
     overflow-wrap: break-word;
     transform-origin: left;

@@ -445,8 +445,7 @@ public class AnimeNotificationManager {
                 } else {
                     String finalMessage = message;
                     showRecentReleasesHandler.post(() -> {
-                        Object instanceActivity = MainActivity.getInstanceActivity();
-                        if (instanceActivity!=null) {
+                        if (MainActivity.getInstanceActivity()!=null) {
                             MainActivity.getInstanceActivity().showToast(Toast.makeText(finalContext, finalMessage, Toast.LENGTH_LONG));
                         }
                     });

@@ -64,9 +64,10 @@ import androidx.browser.customtabs.CustomTabsIntent;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.FileProvider;
 import androidx.core.splashscreen.SplashScreen;
+import androidx.lifecycle.DefaultLifecycleObserver;
 
-public class MainActivity extends AppCompatActivity {
-    public final int appID = 129;
+public class MainActivity extends AppCompatActivity implements DefaultLifecycleObserver {
+    public final int appID = 130;
     public boolean webViewIsLoaded = false;
     public boolean permissionIsAsked = false;
     public SharedPreferences prefs;
@@ -80,6 +81,7 @@ public class MainActivity extends AppCompatActivity {
     public boolean shouldGoBack;
     public Toast currentToast;
     public AlertDialog currentDialog;
+    public boolean isInApp = true;
     public static WeakReference<MainActivity> weakActivity;
 
     // Activity Results
@@ -406,6 +408,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onPause() {
+        isInApp = false;
         super.onPause();
         webView.post(() -> webView.loadUrl("javascript:" +
             "window?.returnedAppIsVisible?.(false);" // Should Be Runned First
@@ -414,6 +417,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onResume() {
+        isInApp = true;
         if (webViewIsLoaded) {
             overridePendingTransition(R.anim.left_to_center, R.anim.center_to_right);
         }
@@ -426,6 +430,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
+        isInApp = false;
         super.onDestroy();
         wakeLock.release();
     }
@@ -536,7 +541,8 @@ public class MainActivity extends AppCompatActivity {
                 try{
                     writer.write(chunk);
                     writer.close();
-                    boolean fileIsDeleted;
+                    boolean fileIsDeleted = false,
+                            fileIsNew = false;
                     File file = new File(directoryPath + fileName);
                     if (file.exists()) {
                         fileIsDeleted = file.delete();
@@ -545,24 +551,31 @@ public class MainActivity extends AppCompatActivity {
                     } else {
                         //noinspection ResultOfMethodCallIgnored
                         file.createNewFile();
-                        fileIsDeleted = true;
+                        fileIsNew = true;
                     }
-                    if(fileIsDeleted){
-                        boolean renamed = tempFile.renameTo(file);
-                        if(!renamed){
-                            showToast(Toast.makeText(getApplicationContext(), "Error: Data file can't be renamed, your original backup is in tmp.json.", Toast.LENGTH_LONG));
+                    if(fileIsDeleted || fileIsNew){
+                        if (tempFile==null || !tempFile.exists() || !tempFile.renameTo(file)) {
+                            showToast(Toast.makeText(getApplicationContext(), "Failed to export.", Toast.LENGTH_LONG));
+                            if (fileIsNew) {
+                                //noinspection ResultOfMethodCallIgnored
+                                file.delete();
+                            }
+                        }
+                        if (tempFile!=null) {
+                            //noinspection ResultOfMethodCallIgnored
+                            tempFile.delete();
                         }
                     } else {
-                        showToast(Toast.makeText(getApplicationContext(), "Error: Data can't be re-written, please delete it first in the selected directory.", Toast.LENGTH_LONG));
+                        showToast(Toast.makeText(getApplicationContext(), "Data can't be re-written, please delete it first in the selected directory.", Toast.LENGTH_LONG));
                     }
                 } catch (Exception e) {
                     try {
                         writer.close();
                     } catch (Exception e2) {
-                        showToast(Toast.makeText(getApplicationContext(), "Error: An exception occurred in finalizing the exported file, your back-up was saved in tmp.json but is not guaranteed to work.", Toast.LENGTH_LONG));
+                        showToast(Toast.makeText(getApplicationContext(), "An exception occurred in finalizing the exported file, your back-up was saved in tmp.json but is not guaranteed to work.", Toast.LENGTH_LONG));
                         e.printStackTrace();
                     }
-                    showToast(Toast.makeText(getApplicationContext(), "Error: An exception occurred in finalizing the exported file, your back-up was saved in tmp.json but is not guaranteed to work.", Toast.LENGTH_LONG));
+                    showToast(Toast.makeText(getApplicationContext(), "An exception occurred in finalizing the exported file, your back-up was saved in tmp.json but is not guaranteed to work.", Toast.LENGTH_LONG));
                     e.printStackTrace();
                 }
             }
@@ -832,8 +845,10 @@ public class MainActivity extends AppCompatActivity {
         if (currentToast != null) {
             currentToast.cancel();
         }
-        currentToast = toast;
-        currentToast.show();
+        if (isInApp) {
+            currentToast = toast;
+            currentToast.show();
+        }
     }
     public void hideToast() {
         if (currentToast != null) {

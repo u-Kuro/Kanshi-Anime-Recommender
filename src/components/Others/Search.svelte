@@ -39,7 +39,6 @@
     let windowWidth = window.visualViewport.width;
     let windowHeight = window.visualViewport.height;
     let maxFilterSelectionHeight = windowHeight * 0.3;
-    let unsubFilterDragScroll;
 
     let selectedFilterTypeElement;
     let selectedFilterElement;
@@ -1249,7 +1248,7 @@
         // Init
         let filterEl = document.getElementById("filters");
         filterEl.addEventListener("scroll", handleFilterScroll);
-        unsubFilterDragScroll = dragScroll(filterEl, "x");
+        dragScroll(filterEl, "x");
 
         document.addEventListener("keydown", handleDropdownKeyDown);
         window.addEventListener("resize", windowResized);
@@ -1282,7 +1281,6 @@
 
 <main
     id="main-home"
-    style:--translateX={"-" + windowWidth + "px"}
     style:--filters-space={showFilterOptions ? "80px" : ""}
     style:--active-filter-space={(
         $activeTagFilters?.[
@@ -1969,9 +1967,10 @@
             20px 58.5px var(--filters-space) var(--active-filter-space)
             50px auto;
         padding-top: 1.5em;
-        transition: transform 0.3s ease-in-out;
-        will-change: transform;
+        transition: transform 0.3s ease;
     }
+
+    
 
     .skeleton {
         border-radius: 6px !important;
@@ -2310,7 +2309,11 @@
         user-select: none;
         overflow-y: auto;
         scroll-snap-type: y mandatory;
-        will-change: max-height;
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+    .tagFilters::-webkit-scrollbar {
+        display: none;
     }
 
     .tagFilters > * {
@@ -2325,13 +2328,6 @@
     .tagFilters:after {
         content: "";
         flex: 1000 0 auto;
-    }
-    .tagFilters {
-        -ms-overflow-style: none;
-        scrollbar-width: none;
-    }
-    .tagFilters::-webkit-scrollbar {
-        display: none;
     }
 
     .activeFilters .activeTagFilter {
@@ -2472,15 +2468,27 @@
         content: "";
         display: block;
         height: 100%;
-        transform: translateX(0);
+        transform: translateX(0) translateZ(0);
+        -webkit-transform: translateX(0) translateZ(0);
+        -ms-transform: translateX(0) translateZ(0);
+        -moz-transform: translateX(0) translateZ(0);
+        -o-transform: translateX(0) translateZ(0);
         width: 200%;
     }
     @keyframes loadingShimmer {
         0% {
-            transform: translateX(-100%);
+            transform: translateX(-100%) translateZ(0);
+            -webkit-transform: translateX(-100%) translateZ(0);
+            -ms-transform: translateX(-100%) translateZ(0);
+            -moz-transform: translateX(-100%) translateZ(0);
+            -o-transform: translateX(-100%) translateZ(0);
         }
         100% {
-            transform: translateX(100%);
+            transform: translateX(100%) translateZ(0);
+            -webkit-transform: translateX(100%) translateZ(0);
+            -ms-transform: translateX(100%) translateZ(0);
+            -moz-transform: translateX(100%) translateZ(0);
+            -o-transform: translateX(100%) translateZ(0);
         }
     }
 
@@ -2512,6 +2520,11 @@
         z-index: 2;
         user-select: none;
         background-color: transparent;
+        transform: translateZ(0);
+        -webkit-transform: translateZ(0);
+        -ms-transform: translateZ(0);
+        -moz-transform: translateZ(0);
+        -o-transform: translateZ(0);
     }
 
     .filters {
@@ -2530,7 +2543,11 @@
     .disable-interaction {
         pointer-events: none !important;
         position: fixed !important;
-        transform: translateY(-99999px) !important;
+        transform: translateY(-99999px) translateZ(0) !important;
+        -webkit-transform: translateY(-99999px) translateZ(0) !important;
+        -ms-transform: translateY(-99999px) translateZ(0) !important;
+        -moz-transform: translateY(-99999px) translateZ(0) !important;
+        -o-transform: translateY(-99999px) translateZ(0) !important;
         user-select: none !important;
         touch-action: none !important;
         cursor: not-allowed !important;
@@ -2544,6 +2561,23 @@
         min-width: 0 !important;
         min-height: 0 !important;
         overflow: hidden !important;
+    }
+
+    @media screen and (max-width: 640px) {
+        :global(main.willchange) {
+            will-change: transform;
+            transform: translateZ(0);
+            -webkit-transform: translateZ(0);
+            -ms-transform: translateZ(0);
+            -moz-transform: translateZ(0);
+            -o-transform: translateZ(0);
+        }
+    }
+
+    @media screen and (pointer: fine) {
+        .filters {
+            scroll-snap-type: none !important;
+        }
     }
 
     @media screen and (max-width: 425px) {
@@ -2560,9 +2594,9 @@
             display: flex !important;
             flex-direction: column !important;
             z-index: 996 !important;
-            left: 0px !important;
+            left: -1em !important;
             top: 0px;
-            width: 100% !important;
+            width: calc(100% + 2em) !important;
             height: 100% !important;
             background-color: rgba(0, 0, 0, 0.4) !important;
             justify-content: center !important;
@@ -2573,6 +2607,11 @@
             margin: 0 !important;
             border-radius: 0 !important;
             padding: 0 !important;
+            transform: translateZ(0);
+            -webkit-transform: translateZ(0);
+            -ms-transform: translateZ(0);
+            -moz-transform: translateZ(0);
+            -o-transform: translateZ(0);
         }
         .options-wrap {
             -ms-overflow-style: none;
@@ -2595,12 +2634,20 @@
             top: 25vh;
             max-height: 60vh !important;
             position: absolute;
-            transform: translateY(0) !important;
+            transform: translateY(0) translateZ(0) !important;
+            -webkit-transform: translateY(0) translateZ(0) !important;
+            -ms-transform: translateY(0) translateZ(0) !important;
+            -moz-transform: translateY(0) translateZ(0) !important;
+            -o-transform: translateY(0) translateZ(0) !important;
             opacity: 1 !important;
             transition: transform 0.3s ease, opacity 0.3s ease !important;
         }
         .options-wrap-filter-info.hide {
-            transform: translateY(20px) !important;
+            transform: translateY(20px) translateZ(0) !important;
+            -webkit-transform: translateY(20px) translateZ(0) !important;
+            -ms-transform: translateY(20px) translateZ(0) !important;
+            -moz-transform: translateY(20px) translateZ(0) !important;
+            -o-transform: translateY(20px) translateZ(0) !important;
             opacity: 0 !important;
         }
         .options-wrap-filter-info .header {
@@ -2634,12 +2681,18 @@
             max-height: calc(60vh - 112px) !important;
             border-radius: 0px 0px 6px 6px !important;
             padding: 6px 11px !important;
-            overflow: auto !important;
+            overflow-y: auto !important;
+            overflow-x: hidden !important;
+            -ms-overflow-style: none;
+            scrollbar-width: none;
             gap: 0 !important;
             min-height: 59px !important;
             overscroll-behavior: contain !important;
         }
 
+        .options-wrap .options::-webkit-scrollbar {
+            display: none !important;
+        }
         .options .option {
             padding: 14px 12px !important;
         }

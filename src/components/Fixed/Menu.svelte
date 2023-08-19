@@ -421,6 +421,11 @@
 
 <style>
     .menu-container {
+        transform: translateZ(0);
+        -webkit-transform: translateZ(0);
+        -ms-transform: translateZ(0);
+        -moz-transform: translateZ(0);
+        -o-transform: translateZ(0);
         position: fixed;
         padding-top: 55px;
         top: 0;

@@ -28,6 +28,7 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -45,7 +46,9 @@ import androidx.browser.customtabs.CustomTabsIntent;
 public class YoutubeViewActivity extends AppCompatActivity {
     private TextView webTitle;
     private MediaWebView webView;
+    LinearLayout webViewCover;
     private boolean webViewIsLoaded = false;
+    private boolean webViewFailedToLoad = false;
     private ValueCallback<Uri[]> mUploadMessage;
     private boolean isFinished = false;
     final ActivityResultLauncher<Intent> chooseImportFile =
@@ -125,6 +128,7 @@ public class YoutubeViewActivity extends AppCompatActivity {
         });
 
         // Add WebView on Layout
+        webViewCover = findViewById(R.id.webViewCover);
         webView = findViewById(R.id.webView);
         ProgressBar progressbar = findViewById(R.id.progressbar);
         progressbar.setMax((int) Math.pow(10,6));
@@ -251,6 +255,13 @@ public class YoutubeViewActivity extends AppCompatActivity {
                 cookieManager.setAcceptThirdPartyCookies(webView,true);
                 CookieManager.getInstance().acceptCookie();
                 CookieManager.getInstance().flush();
+                if ("Web page not available".equals(view.getTitle())) {
+                    webViewFailedToLoad = true;
+                    webViewCover.setVisibility(View.VISIBLE);
+                } else {
+                    webViewFailedToLoad = false;
+                    webViewCover.setVisibility(View.GONE);
+                }
                 if (!webViewIsLoaded && !isFinished) {
                     webViewIsLoaded = true;
                     webTitle.setText(view.getTitle());
@@ -338,6 +349,9 @@ public class YoutubeViewActivity extends AppCompatActivity {
 
     @Override
     protected void onResume() {
+        if (MainActivity.getInstanceActivity()!=null) {
+            MainActivity.getInstanceActivity().isInApp = true;
+        }
         if (webViewIsLoaded) {
             overridePendingTransition(R.anim.left_to_center, R.anim.center_to_right);
         }
@@ -348,10 +362,21 @@ public class YoutubeViewActivity extends AppCompatActivity {
 
     @Override
     protected void onPause() {
+        if (MainActivity.getInstanceActivity()!=null) {
+            MainActivity.getInstanceActivity().isInApp = false;
+        }
         autoPlayVideo(webView);
         webView.onPause();
         webView.pauseTimers();
         super.onPause();
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (MainActivity.getInstanceActivity()!=null) {
+            MainActivity.getInstanceActivity().isInApp = false;
+        }
+        super.onDestroy();
     }
 
     @Override
@@ -363,7 +388,9 @@ public class YoutubeViewActivity extends AppCompatActivity {
             isFinished = true;
             webView.onPause();
             webView.pauseTimers();
-            webView.loadUrl("");
+            if (!webViewFailedToLoad) {
+                webView.loadUrl("");
+            }
             webView.onPause();
             webView.pauseTimers();
             finish();

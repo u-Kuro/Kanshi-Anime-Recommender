@@ -445,7 +445,7 @@
                 horizontalWheel(e, "image-grid");
                 if (!scrollingToBottom) {
                     scrollingToBottom = true;
-                    let newScrollPosition = Number.MAX_SAFE_INTEGER;
+                    let newScrollPosition = window.scrollMaxY || Number.MAX_SAFE_INTEGER;
                     document.documentElement.scrollTop = newScrollPosition;
                     scrollingToBottom = false;
                 }
@@ -474,7 +474,7 @@
                         <img
                             loading="lazy"
                             class={"image-grid__card-thumb fade-out"}
-                            alt="anime-cover"
+                            alt={(getTitle(anime?.title) || "") + " Cover"}
                             src={anime.coverImageUrl || ""}
                             on:load={(e) => {
                                 removeClass(e.target, "fade-out");
@@ -482,6 +482,10 @@
                                     e.target?.closest?.(".shimmer"),
                                     "loaded"
                                 );
+                            }}
+                            on:error={(e) => {
+                                addClass(e.target, "fade-out");
+                                addClass(e.target, "display-none");
                             }}
                         />
                         <span class="image-grid__card-title">
@@ -736,13 +740,18 @@
         background: rgba(30, 42, 56, 0.8);
         border-radius: 0.25em;
         display: block;
-        will-change: opacity;
         cursor: pointer;
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
         transition: opacity 0.3s ease;
         object-fit: cover;
-        width: 100%;
-        height: 100%;
+        -o-object-fit: cover;
+        width: 50%;
+        height: 50%;
+        transform: translate(50%, 50%) scale(2);
+        -webkit-transform: translate(50%, 50%) scale(2);
+        -ms-transform: translate(50%, 50%) scale(2);
+        -moz-transform: translate(50%, 50%) scale(2);
+        -o-transform: translate(50%, 50%) scale(2);
         user-select: none;
     }
 
@@ -820,7 +829,11 @@
         cursor: pointer;
         top: 50%;
         left: 8px;
-        transform: translateY(-50%);
+        transform: translateY(-50%) translateZ(0);
+        -webkit-transform: translateY(-50%) translateZ(0);
+        -ms-transform: translateY(-50%) translateZ(0);
+        -moz-transform: translateY(-50%) translateZ(0);
+        -o-transform: translateY(-50%) translateZ(0);
         border-radius: 50%;
         width: 44px;
         height: 44px;
@@ -868,15 +881,27 @@
         content: "";
         display: block;
         height: 100%;
-        transform: translateX(0);
+        transform: translateX(0) translateZ(0);
+        -webkit-transform: translateX(0) translateZ(0);
+        -ms-transform: translateX(0) translateZ(0);
+        -moz-transform: translateX(0) translateZ(0);
+        -o-transform: translateX(0) translateZ(0);
         width: 200%;
     }
     @keyframes loadingShimmer {
         0% {
-            transform: translateX(-100%);
+            transform: translateX(-100%) translateZ(0);
+            -webkit-transform: translateX(-100%) translateZ(0);
+            -ms-transform: translateX(-100%) translateZ(0);
+            -moz-transform: translateX(-100%) translateZ(0);
+            -o-transform: translateX(-100%) translateZ(0);
         }
         100% {
-            transform: translateX(100%);
+            transform: translateX(100%) translateZ(0);
+            -webkit-transform: translateX(100%) translateZ(0);
+            -ms-transform: translateX(100%) translateZ(0);
+            -moz-transform: translateX(100%) translateZ(0);
+            -o-transform: translateX(100%) translateZ(0);
         }
     }
 
@@ -888,7 +913,11 @@
     .disable-interaction {
         pointer-events: none !important;
         position: fixed !important;
-        transform: translateY(-99999px) !important;
+        transform: translateY(-99999px) translateZ(0) !important;
+        -webkit-transform: translateY(-99999px) translateZ(0) !important;
+        -ms-transform: translateY(-99999px) translateZ(0) !important;
+        -moz-transform: translateY(-99999px) translateZ(0) !important;
+        -o-transform: translateY(-99999px) translateZ(0) !important;
         user-select: none !important;
         touch-action: none !important;
         cursor: not-allowed !important;

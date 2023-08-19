@@ -361,6 +361,11 @@
         background-color: #152232;
         color: white;
         border-bottom: 1px solid rgb(35 45 65);
+        transform: translateZ(0);
+        -webkit-transform: translateZ(0);
+        -ms-transform: translateZ(0);
+        -moz-transform: translateZ(0);
+        -o-transform: translateZ(0);
     }
     .nav {
         display: grid;
@@ -412,11 +417,19 @@
         cursor: auto;
     }
     .nav.inputfocused #usernameInput {
-        transform: unset !important;
+        transform: translateZ(0) !important;
+        -webkit-transform: translateZ(0) !important;
+        -ms-transform: translateZ(0) !important;
+        -moz-transform: translateZ(0) !important;
+        -o-transform: translateZ(0) !important;
         position: unset !important;
     }
     #usernameInput {
-        transform: translateY(-99999px);
+        transform: translateY(-99999px) translateZ(0);
+        -webkit-transform: translateY(-99999px) translateZ(0);
+        -ms-transform: translateY(-99999px) translateZ(0);
+        -moz-transform: translateY(-99999px) translateZ(0);
+        -o-transform: translateY(-99999px) translateZ(0);
         position: fixed;
     }
     #usernameInput::-webkit-search-cancel-button {
