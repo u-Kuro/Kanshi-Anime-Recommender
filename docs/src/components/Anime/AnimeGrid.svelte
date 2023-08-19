@@ -445,7 +445,8 @@
                 horizontalWheel(e, "image-grid");
                 if (!scrollingToBottom) {
                     scrollingToBottom = true;
-                    let newScrollPosition = window.scrollMaxY || Number.MAX_SAFE_INTEGER;
+                    let newScrollPosition =
+                        window.scrollMaxY || Number.MAX_SAFE_INTEGER;
                     document.documentElement.scrollTop = newScrollPosition;
                     scrollingToBottom = false;
                 }
@@ -745,13 +746,13 @@
         transition: opacity 0.3s ease;
         object-fit: cover;
         -o-object-fit: cover;
-        width: 50%;
-        height: 50%;
-        transform: translate(50%, 50%) scale(2);
-        -webkit-transform: translate(50%, 50%) scale(2);
-        -ms-transform: translate(50%, 50%) scale(2);
-        -moz-transform: translate(50%, 50%) scale(2);
-        -o-transform: translate(50%, 50%) scale(2);
+        width: 100%;
+        height: 100%;
+        transform: translateZ(0);
+        -webkit-transform: translateZ(0);
+        -ms-transform: translateZ(0);
+        -moz-transform: translateZ(0);
+        -o-transform: translateZ(0);
         user-select: none;
     }
 

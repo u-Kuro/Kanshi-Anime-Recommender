@@ -2296,6 +2296,11 @@
 
     /* Need to add Globally, trailer Elements are Recreated */
     :global(.trailer) {
+        transform: translateZ(0);
+        -webkit-transform: translateZ(0);
+        -ms-transform: translateZ(0);
+        -moz-transform: translateZ(0);
+        -o-transform: translateZ(0);
         z-index: 0;
         position: absolute;
         top: 0;
@@ -2317,13 +2322,13 @@
     }
 
     .bannerImg {
-        width: 50%;
-        height: 50%;
-        transform: translate(50%, 50%) scale(2);
-        -webkit-transform: translate(50%, 50%) scale(2);
-        -ms-transform: translate(50%, 50%) scale(2);
-        -moz-transform: translate(50%, 50%) scale(2);
-        -o-transform: translate(50%, 50%) scale(2);
+        width: 100%;
+        height: 100%;
+        transform: translateZ(0);
+        -webkit-transform: translateZ(0);
+        -ms-transform: translateZ(0);
+        -moz-transform: translateZ(0);
+        -o-transform: translateZ(0);
         position: absolute;
         object-fit: cover;
         -o-object-fit: cover;
@@ -2545,6 +2550,11 @@
         height: 210px;
         object-fit: cover;
         -o-object-fit: cover;
+        transform: translateZ(0);
+        -webkit-transform: translateZ(0);
+        -ms-transform: translateZ(0);
+        -moz-transform: translateZ(0);
+        -o-transform: translateZ(0);
         border-radius: 6px;
     }
     .extra-bannerImg {
@@ -2552,6 +2562,11 @@
         width: calc(100% - 150px - 1em);
         object-fit: cover;
         -o-object-fit: cover;
+        transform: translateZ(0);
+        -webkit-transform: translateZ(0);
+        -ms-transform: translateZ(0);
+        -moz-transform: translateZ(0);
+        -o-transform: translateZ(0);
         border-radius: 6px;
         user-select: none;
         cursor: pointer;
@@ -2961,6 +2976,11 @@
         max-height: 90%;
         object-fit: cover;
         -o-object-fit: cover;
+        transform: translateZ(0);
+        -webkit-transform: translateZ(0);
+        -ms-transform: translateZ(0);
+        -moz-transform: translateZ(0);
+        -o-transform: translateZ(0);
         border-radius: 6px;
         box-shadow: 0 14px 28px rgba(0, 0, 0, 0.25),
             0 10px 10px rgba(0, 0, 0, 0.22);
