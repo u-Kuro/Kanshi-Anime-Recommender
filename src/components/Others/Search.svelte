@@ -130,6 +130,14 @@
         }
     }
 
+    async function scrollToFirstFilter() {
+        let parentEl = document.getElementById("filters");
+        await tick();
+        if (parentEl instanceof Element) {
+            parentEl.scrollLeft = 0;
+        }
+    }
+
     function windowResized() {
         windowHeight = window.visualViewport.height;
         maxFilterSelectionHeight = windowHeight * 0.3;
@@ -169,6 +177,7 @@
             $filterOptions.filterSelection[
                 newIdxFilterTypeSelected
             ].isSelected = true;
+            scrollToFirstFilter();
             scrollToFirstTagFilter();
             saveFilters();
         }
@@ -1969,8 +1978,6 @@
         padding-top: 1.5em;
         transition: transform 0.3s ease;
     }
-
-    
 
     .skeleton {
         border-radius: 6px !important;

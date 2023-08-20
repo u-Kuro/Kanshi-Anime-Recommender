@@ -940,7 +940,7 @@
                     tagsRunnned[tagName] = true;
                     tagCaution.push({
                         tag: `<span>${tagName}${
-                            tagRank ? "</span><span>" + tagRank + "%" : ""
+                            tagRank ? "</span><span> " + tagRank + "%" : ""
                         }</span>`,
                         tagColor: "red",
                     });
@@ -948,7 +948,7 @@
                     tagsRunnned[tagName] = true;
                     tagSemiCaution.push({
                         tag: `<span>${tagName}${
-                            tagRank ? "</span><span>" + tagRank + "%" : ""
+                            tagRank ? "</span><span> " + tagRank + "%" : ""
                         }</span>`,
                         tagColor: "teal",
                     });
@@ -966,7 +966,7 @@
             if (!tagsRunnned[tagName]) {
                 otherTags.push({
                     tag: `<span>${tagName}${
-                        tagRank ? "</span><span>" + tagRank + "%" : ""
+                        tagRank ? "</span><span> " + tagRank + "%" : ""
                     }</span>`,
                     tagColor: null,
                 });
@@ -980,7 +980,7 @@
             let tagRank = e?.tag?.rank;
             return {
                 tag: `<span>${tagName} (${formatNumber(e.score)})${
-                    tagRank ? "</span><span>" + tagRank + "%" : ""
+                    tagRank ? "</span><span> " + tagRank + "%" : ""
                 }</span>`,
                 tagColor: "green",
             };
@@ -1447,13 +1447,15 @@
     }
     function handlePopupContainerUp(event) {
         if ($popupIsGoingBack) {
-            endX = Array.from(event.changedTouches).find(
+            endX = Array.from(event.changedTouches)?.find(
                 (touch) => touch.identifier === touchID
-            ).clientX;
-            let xThreshold = 48;
-            let deltaX = endX - startX;
-            if ($popupIsGoingBack && deltaX >= xThreshold) {
-                $popupVisible = false;
+            )?.clientX;
+            if (typeof(endX) === 'number') {
+                let xThreshold = 48;
+                let deltaX = endX - startX;
+                if ($popupIsGoingBack && deltaX >= xThreshold) {
+                    $popupVisible = false;
+                }
             }
             touchID = null;
             $popupIsGoingBack = false;
