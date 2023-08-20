@@ -64,10 +64,9 @@ import androidx.browser.customtabs.CustomTabsIntent;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.FileProvider;
 import androidx.core.splashscreen.SplashScreen;
-import androidx.lifecycle.DefaultLifecycleObserver;
 
-public class MainActivity extends AppCompatActivity implements DefaultLifecycleObserver {
-    public final int appID = 132;
+public class MainActivity extends AppCompatActivity {
+    public final int appID = 133;
     public boolean webViewIsLoaded = false;
     public boolean permissionIsAsked = false;
     public SharedPreferences prefs;
@@ -341,6 +340,12 @@ public class MainActivity extends AppCompatActivity implements DefaultLifecycleO
                         .setDuration(300)
                         .start();
                 if (progress==100) {
+                    CookieManager cookieManager = CookieManager.getInstance();
+                    cookieManager.setAcceptCookie(true);
+                    cookieManager.setAcceptThirdPartyCookies(webView,true);
+                    CookieManager.getInstance().acceptCookie();
+                    CookieManager.getInstance().flush();
+                    webViewIsLoaded = true;
                     ObjectAnimator animator = ObjectAnimator.ofInt(progressbar, "progress", 0);
                     animator.setDuration(0);
                     animator.setStartDelay(300);
