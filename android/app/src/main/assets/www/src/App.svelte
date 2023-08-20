@@ -53,17 +53,20 @@
 	import {
 		getAnimeEntries,
 		getFilterOptions,
-		getAnimeFranchises,
 		requestAnimeEntries,
 		requestUserEntries,
 		processRecommendedAnimeList,
 		animeLoader,
 		exportUserData,
 	} from "./js/workerUtils.js";
-	import { isAndroid, addClass, removeClass } from "./js/others/helper.js";
+	import {
+		isAndroid,
+		addClass,
+		removeClass,
+		setLocalStorage,
+	} from "./js/others/helper.js";
 
 	$android = isAndroid(); // Android/Browser Identifier
-	let windowWidth = window.visualViewport.width;
 	let usernameInputEl, animeGridEl;
 
 	inject(); // Vercel Analytics
@@ -106,13 +109,28 @@
 				window.updateAppAlert?.();
 			}
 		}
+
+		let _gridFullView = (await retrieveJSON("gridFullView")) ?? !$android;
+		if (typeof _gridFullView === "boolean") {
+			setLocalStorage("gridFullView", _gridFullView);
+			$gridFullView = _gridFullView;
+		}
 		resolve();
 	}).then(() => {
 		// Get Export Folder for Android
-		(async () =>
-			($exportPathIsAvailable = await retrieveJSON(
-				"exportPathIsAvailable"
-			)))();
+		if (!$android) {
+			(async () => {
+				$exportPathIsAvailable = await retrieveJSON(
+					"exportPathIsAvailable"
+				);
+				if (typeof $exportPathIsAvailable === "boolean") {
+					setLocalStorage(
+						"exportPathIsAvailable",
+						$exportPathIsAvailable
+					);
+				}
+			})();
+		}
 		// Check/Get/Update/Process Anime Entries
 		initDataPromises.push(
 			new Promise(async (resolve, reject) => {
@@ -215,29 +233,12 @@
 				// 	getUsername();
 				// } else {
 				let _username = await retrieveJSON("username");
-				if (_username) $username = _username;
+				if (_username) {
+					setLocalStorage("username", _username);
+					$username = _username;
+				}
 				resolve();
 				// }
-			})
-		);
-
-		// Check/Get Anime Franchises
-		initDataPromises.push(
-			new Promise(async (resolve) => {
-				let animeFranchisesLen = await retrieveJSON(
-					"animeFranchisesLength"
-				);
-				if (animeFranchisesLen < 1) {
-					getAnimeFranchises()
-						.then(() => {
-							resolve();
-						})
-						.catch(() => {
-							reject();
-						});
-				} else {
-					resolve();
-				}
 			})
 		);
 
@@ -261,13 +262,10 @@
 			new Promise(async (resolve) => {
 				// Auto Play
 				let _autoPlay = await retrieveJSON("autoPlay");
-				if (typeof _autoPlay === "boolean") $autoPlay = _autoPlay;
-				let _gridFullView =
-					(await retrieveJSON("gridFullView")) ?? !$android;
-				if (typeof _gridFullView === "boolean")
-					$gridFullView = _gridFullView;
-				// Hidden Entries
-				$hiddenEntries = (await retrieveJSON("hiddenEntries")) || {};
+				if (typeof _autoPlay === "boolean") {
+					setLocalStorage("autoPlay", _autoPlay);
+					$autoPlay = _autoPlay;
+				}
 				// Get Auto Functions
 				$lastRunnedAutoUpdateDate = await retrieveJSON(
 					"lastRunnedAutoUpdateDate"
@@ -276,7 +274,9 @@
 					"lastRunnedAutoExportDate"
 				);
 				$autoUpdate = (await retrieveJSON("autoUpdate")) ?? false;
+				setLocalStorage("autoUpdate", $autoUpdate);
 				$autoExport = (await retrieveJSON("autoExport")) ?? false;
+				setLocalStorage("autoExport", $autoExport);
 				resolve();
 			})
 		);
@@ -303,16 +303,16 @@
 									false,
 									"shouldProcessRecommendation"
 								);
-								resolve();
+								resolve(false);
 							})
 							.catch((error) => {
 								throw error;
 							});
 					} else {
-						resolve();
+						resolve(true);
 					}
-				}).then(() => {
-					animeLoader()
+				}).then((loadSaved) => {
+					animeLoader({ loadSaved })
 						.then(async (data) => {
 							$animeLoaderWorker = data.animeLoaderWorker;
 							$searchedAnimeKeyword = "";
@@ -663,9 +663,9 @@
 	}
 	let windowWheel = () => {
 		$hasWheel = true;
-		window.removeEventListener("wheel", windowWheel);
+		window.removeEventListener("wheel", windowWheel, { passive: true });
 	};
-	window.addEventListener("wheel", windowWheel);
+	window.addEventListener("wheel", windowWheel, { passive: true });
 	window.checkEntries = () => {
 		if ($initData) return;
 		if (
@@ -806,11 +806,7 @@
 			window.setShouldGoBack(false);
 		runIsScrolling.update((e) => !e);
 	});
-	window.addEventListener("resize", () => {
-		windowWidth = window.visualViewport.width;
-	});
 	onMount(() => {
-		windowWidth = window.visualViewport.width;
 		usernameInputEl = document.getElementById("usernameInput");
 		animeGridEl = document.getElementById("anime-grid");
 		animeGridEl?.addEventListener("scroll", () => {

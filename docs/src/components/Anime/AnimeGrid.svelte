@@ -28,6 +28,7 @@
         isJsonObject,
         ncsCompare,
         removeClass,
+        getLocalStorage,
     } from "../../js/others/helper.js";
     import { fly } from "svelte/transition";
 
@@ -298,9 +299,10 @@
     }
 
     function getShownScore({ weightedScore, score, averageScore, userScore }) {
-        let sortName = $filterOptions?.sortFilter.filter(
-            ({ sortType }) => sortType !== "none"
-        )?.[0]?.sortName;
+        let sortName =
+            $filterOptions?.sortFilter?.filter(
+                ({ sortType }) => sortType !== "none"
+            )?.[0]?.sortName || "weighted score";
         if (sortName === "score") {
             return formatNumber(score);
         } else if (sortName === "user score") {
@@ -394,7 +396,6 @@
         }
         if (element.scrollWidth <= element.clientWidth) return;
         if (event.deltaY !== 0 && event.deltaX === 0) {
-            event.preventDefault();
             element.scrollLeft = Math.max(0, element.scrollLeft + event.deltaY);
         }
     }
@@ -418,30 +419,24 @@
         );
     }
 
-    $: gridHeight = (
-        $activeTagFilters?.[
-            $filterOptions?.filterSelection?.[
-                $filterOptions?.filterSelection?.findIndex(
-                    ({ isSelected }) => isSelected
-                )
-            ]?.filterSelectionName
-        ] || []
-    ).length
-        ? windowHeight
-        : windowHeight + 50;
-
     let scrollingToBottom;
 </script>
 
-<main class={$gridFullView ?? !$android ? "fullView" : ""}>
+<main
+    class={$gridFullView ?? getLocalStorage("gridFullView") ?? !$android
+        ? "fullView"
+        : ""}
+>
     <div
         id="anime-grid"
         class={"image-grid " +
-            ($gridFullView ?? !$android ? "fullView" : "") +
+            ($gridFullView ?? getLocalStorage("gridFullView") ?? !$android
+                ? "fullView"
+                : "") +
             ($finalAnimeList?.length === 0 && !$initData ? "empty" : "")}
         bind:this={animeGridEl}
-        on:wheel={(e) => {
-            if ($gridFullView ?? !$android) {
+        on:wheel|passive={(e) => {
+            if ($gridFullView ?? getLocalStorage("gridFullView") ?? !$android) {
                 horizontalWheel(e, "image-grid");
                 if (!scrollingToBottom) {
                     scrollingToBottom = true;
@@ -452,7 +447,7 @@
                 }
             }
         }}
-        style:--anime-grid-height={gridHeight + "px"}
+        style:--anime-grid-height={windowHeight + "px"}
     >
         {#if $finalAnimeList?.length}
             {#each $finalAnimeList || [] as anime, animeIdx (anime.id)}
@@ -473,10 +468,14 @@
                             e.key === "Enter" && handleOpenPopup(animeIdx)}
                     >
                         <img
-                            loading="lazy"
-                            class={"image-grid__card-thumb fade-out"}
+                            loading={animeIdx > numberOfLoadedGrid
+                                ? "lazy"
+                                : "eager"}
+                            class={"image-grid__card-thumb  fade-out"}
                             alt={(getTitle(anime?.title) || "") + " Cover"}
                             src={anime.coverImageUrl || ""}
+                            width="180px"
+                            height="254.531px"
                             on:load={(e) => {
                                 removeClass(e.target, "fade-out");
                                 addClass(
@@ -563,7 +562,7 @@
                     <div class="shimmer" />
                 </div>
             {/each}
-            {#each Array($gridFullView ?? !$android ? Math.floor((windowHeight ?? 1100) / 220) : 5) as _}
+            {#each Array($gridFullView ?? getLocalStorage("gridFullView") ?? !$android ? Math.floor((windowHeight ?? 1100) / 220) : 5) as _}
                 <div class="image-grid__card" />
             {/each}
         {:else if !$finalAnimeList || $initData}

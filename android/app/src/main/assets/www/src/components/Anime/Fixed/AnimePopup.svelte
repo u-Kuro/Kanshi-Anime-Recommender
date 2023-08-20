@@ -1363,18 +1363,6 @@
         });
     }
 
-    function horizontalWheel(event, parentClass) {
-        let element = event.target;
-        let classList = element.classList;
-        if (!classList.contains(parentClass)) {
-            element = element.closest("." + parentClass);
-        }
-        if (element.scrollWidth <= element.clientWidth) return;
-        if (event.deltaY !== 0 && event.deltaX === 0) {
-            event.preventDefault();
-            element.scrollLeft = Math.max(0, element.scrollLeft + event.deltaY);
-        }
-    }
     function htmlToString(s) {
         let span = document.createElement("span");
         span.innerHTML = s;
@@ -1506,9 +1494,9 @@
         style:--translateX={windowWidth + "px"}
         style:--translateY={windowHeight + "px"}
         bind:this={popupContainer}
-        on:touchstart={handlePopupContainerDown}
-        on:touchmove={handlePopupContainerMove}
-        on:touchend={handlePopupContainerUp}
+        on:touchstart|passive={handlePopupContainerDown}
+        on:touchmove|passive={handlePopupContainerMove}
+        on:touchend|passive={handlePopupContainerUp}
         on:touchcancel={handlePopupContainerCancel}
         on:scroll={itemScroll}
     >
@@ -1536,6 +1524,8 @@
                                     <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                                     <img
                                         loading="lazy"
+                                        width="640px"
+                                        height="360px"
                                         src={anime.bannerImageUrl}
                                         alt={(getTitle(anime?.title) || "") +
                                             " Banner"}
@@ -1889,6 +1879,8 @@
                                         <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                                         <img
                                             loading="lazy"
+                                            width="150px"
+                                            height="210px"
                                             src={anime.coverImageUrl}
                                             alt={(getTitle(anime?.title) ||
                                                 "") + " Cover"}
@@ -1928,6 +1920,8 @@
                                         <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                                         <img
                                             loading="lazy"
+                                            width="440px"
+                                            height="210px"
                                             src={anime.bannerImageUrl}
                                             alt={(getTitle(anime?.title) ||
                                                 "") + " Banner"}
@@ -2680,6 +2674,12 @@
         display: none;
     }
 
+    @media screen and (max-width: 180px) {
+        .extra-bannerImg {
+            display: none !important;
+        }
+    }
+
     @media screen and (max-width: 425px) {
         .popup-info {
             max-height: max(
@@ -2736,6 +2736,9 @@
         }
         :global(.fullPopupDescription *) {
             font-size: 1.5rem !important;
+        }
+        .fullPopupImage {
+            max-width: min(90%, 1000px) !important;
         }
     }
 

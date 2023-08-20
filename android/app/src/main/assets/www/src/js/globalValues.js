@@ -1,4 +1,5 @@
 import { writable } from "svelte/store";
+import { getLocalStorage } from "../js/others/helper.js"
 
 const appID = writable(null)
 const android = writable(null)
@@ -8,7 +9,7 @@ const progress = writable(0)
 const hasWheel = writable(false)
 const lastAnimeUpdate = writable(null)
 
-const username = writable(null)
+const username = writable(getLocalStorage('username') || null)
 const lastUserAnimeUpdate = writable(null)
 const hiddenEntries = writable(null)
 
@@ -20,20 +21,21 @@ const dataStatus = writable(null)
 
 const isImporting = writable(false)
 const userRequestIsRunning = writable(null)
-const autoUpdate = writable(null)
+const autoUpdate = writable(getLocalStorage('autoUpdate') || null)
 const autoUpdateInterval = writable(null)
 const lastRunnedAutoUpdateDate = writable(null)
 
-const exportPathIsAvailable = writable(null)
-const autoExport = writable(null)
+const exportPathIsAvailable = writable(getLocalStorage('exportPathIsAvailable') || null)
+const autoExport = writable(getLocalStorage('autoExport') || null)
 const autoExportInterval = writable(null)
 const lastRunnedAutoExportDate = writable(null)
 
 const ytPlayers = writable([])
-const autoPlay = writable(null)
+const autoPlay = writable(getLocalStorage('autoPlay') || null)
 
 const initData = writable(true)
-const gridFullView = writable(null)
+const gridFullView = writable(getLocalStorage('gridFullView') || null)
+
 const checkAnimeLoaderStatus = writable(false)
 const animeObserver = writable(null)
 const animeIdxRemoved = writable(null)

@@ -17,7 +17,7 @@ import {
     android
 } from "./globalValues";
 import { get } from "svelte/store";
-import { downloadLink, isJsonObject } from "../js/others/helper.js"
+import { downloadLink, isJsonObject, setLocalStorage } from "../js/others/helper.js"
 import { cacheRequest } from "./caching";
 
 let terminateDelay = 1000;
@@ -453,7 +453,7 @@ const getIDBdata = (name) => {
             })
     })
 }
-const saveIDBdata = (data, name) => {
+const saveIDBdata = (_data, name) => {
     return new Promise((resolve, reject) => {
         cacheRequest("./webapi/worker/saveIDBdata.js")
             .then(url => {
@@ -472,7 +472,10 @@ const saveIDBdata = (data, name) => {
                 worker.onerror = (error) => {
                     reject(error)
                 }
-                worker.postMessage({ data: data, name: name })
+                worker.postMessage({ data: _data, name: name })
+                if (typeof _data === "boolean") {
+                    setLocalStorage(name, _data);
+                }
             }).catch((error) => {
                 alertError()
                 reject(error)
@@ -529,61 +532,11 @@ const getAnimeEntries = (_data) => {
     })
 }
 
-let getAnimeFranchisesTerminateTimeout, gettingAnimeFranchisesInterval
-const getAnimeFranchises = (_data) => {
-    return new Promise((resolve, reject) => {
-        gettingAnimeFranchisesInterval = setInterval(() => {
-            if (!gettingAnimeEntriesInterval) {
-                dataStatus.set("Getting Anime Franchise")
-            }
-        }, 300)
-        progress.set(0)
-        cacheRequest("./webapi/worker/getAnimeFranchises.js")
-            .then(url => {
-                progress.set(25)
-                if (gettingAnimeFranchisesInterval) {
-                    clearInterval(gettingAnimeFranchisesInterval)
-                    gettingAnimeFranchisesInterval = null
-                }
-                let worker = new Worker(url)
-                if (getAnimeFranchisesTerminateTimeout) clearTimeout(getAnimeFranchisesTerminateTimeout)
-                worker.postMessage(_data)
-                worker.onmessage = ({ data }) => {
-                    if (data?.hasOwnProperty("status")) {
-                        dataStatusPrio = true
-                        dataStatus.set(data.status)
-                    } else {
-                        progress.set(100)
-                        updateRecommendationList.update(e => !e)
-                        dataStatusPrio = false
-                        getAnimeFranchisesTerminateTimeout = setTimeout(() => {
-                            worker.terminate();
-                        }, terminateDelay)
-                        resolve(data)
-                    }
-                }
-                worker.onerror = (error) => {
-                    progress.set(100)
-                    reject(error)
-                }
-            }).catch((error) => {
-                progress.set(100)
-                if (gettingAnimeFranchisesInterval) {
-                    clearInterval(gettingAnimeFranchisesInterval)
-                    gettingAnimeFranchisesInterval = null
-                }
-                dataStatus.set(null)
-                alertError()
-                reject(error)
-            })
-    })
-}
-
 let getFilterOptionsTerminateTimeout, getFilterOptionsInterval, getFilterOptionsWorker;
 const getFilterOptions = (_data) => {
     return new Promise((resolve, reject) => {
         getFilterOptionsInterval = setInterval(() => {
-            if (!gettingAnimeEntriesInterval && !gettingAnimeFranchisesInterval) {
+            if (!gettingAnimeEntriesInterval) {
                 dataStatus.set("Getting Filters")
             }
         }, 300)
@@ -636,8 +589,6 @@ function stopConflictingWorkers() {
     getFilterOptionsWorker?.terminate?.()
     clearInterval(gettingAnimeEntriesInterval)
     gettingAnimeEntriesInterval = null
-    clearInterval(gettingAnimeFranchisesInterval)
-    gettingAnimeFranchisesInterval = null
     clearInterval(getFilterOptionsInterval)
     getFilterOptionsInterval = null
     dataStatus.set(null)
@@ -664,7 +615,6 @@ export {
     getIDBdata,
     getAnimeEntries,
     getFilterOptions,
-    getAnimeFranchises,
     requestAnimeEntries,
     requestUserEntries,
     exportUserData,

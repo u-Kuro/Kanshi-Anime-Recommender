@@ -67,7 +67,7 @@ import androidx.core.splashscreen.SplashScreen;
 import androidx.lifecycle.DefaultLifecycleObserver;
 
 public class MainActivity extends AppCompatActivity implements DefaultLifecycleObserver {
-    public final int appID = 131;
+    public final int appID = 132;
     public boolean webViewIsLoaded = false;
     public boolean permissionIsAsked = false;
     public SharedPreferences prefs;

@@ -23,7 +23,7 @@
     import { fly } from "svelte/transition";
     import { saveJSON } from "../../js/indexedDB.js";
     import { importUserData } from "../../js/workerUtils.js";
-    import { jsonIsEmpty } from "../../js/others/helper.js";
+    import { jsonIsEmpty, setLocalStorage } from "../../js/others/helper.js";
 
     let importFileInput;
 
@@ -90,6 +90,7 @@
     }
     window.setExportPathAvailability = async (value = true) => {
         $exportPathIsAvailable = value;
+        setLocalStorage("exportPathIsAvailable", value);
         await saveJSON(value, "exportPathIsAvailable");
     };
 

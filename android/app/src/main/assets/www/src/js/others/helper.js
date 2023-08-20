@@ -396,8 +396,26 @@ const makeArrayUnique = (arr) => {
   return uniqueArray;
 }
 
+const LocalStorageID = "Kanshi.Anime.Recommendations.Anilist.W~uPtWCq=vG$TR:Zl^#t<vdS]I~N70"
+const getLocalStorage = (key) => {
+  let data;
+  try {
+    key = LocalStorageID + key;
+    data = localStorage.getItem(key)
+    return JSON.parse(data)
+  } catch (ex) {
+    return data ?? null;
+  }
+}
+const setLocalStorage = (key, data) => {
+  try {
+    localStorage.setItem(LocalStorageID + key, data)
+  } catch (ex) { }
+}
 
 export {
+  setLocalStorage,
+  getLocalStorage,
   makeArrayUnique,
   getMostVisibleElementFromArray,
   addClass,

@@ -11,7 +11,11 @@
         gridFullView,
         userRequestIsRunning,
     } from "../../js/globalValues.js";
-    import { addClass, removeClass } from "../../js/others/helper.js";
+    import {
+        addClass,
+        removeClass,
+        setLocalStorage,
+    } from "../../js/others/helper.js";
     import { requestUserEntries } from "../../js/workerUtils.js";
     import { onMount, onDestroy } from "svelte";
 
@@ -86,6 +90,10 @@
                                 .then(({ newusername }) => {
                                     $userRequestIsRunning = false;
                                     if (newusername) {
+                                        setLocalStorage(
+                                            "username",
+                                            newusername
+                                        );
                                         typedUsername = $username =
                                             newusername || "";
                                         importantUpdate.update((e) => !e);
@@ -122,9 +130,14 @@
                             })
                                 .then(({ newusername }) => {
                                     $userRequestIsRunning = false;
-                                    if (newusername)
+                                    if (newusername) {
+                                        setLocalStorage(
+                                            "username",
+                                            newusername
+                                        );
                                         typedUsername = $username =
                                             newusername || "";
+                                    }
                                     importantUpdate.update((e) => !e);
                                 })
                                 .catch((error) => {
@@ -332,9 +345,11 @@
         >
             <img
                 class="logo-icon"
-                src="./images/Kanshi-Logo.png"
+                src="./images/Kanshi-Logo.webp"
                 alt="Kanshi Logo"
                 tabindex="0"
+                width="30px"
+                height="30px"
                 on:keydown|stopPropagation={(e) =>
                     e.key === "Enter" && ($menuVisible = !$menuVisible)}
             />

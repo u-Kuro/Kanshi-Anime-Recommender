@@ -27,6 +27,7 @@
         changeInputValue,
         dragScroll,
         removeClass,
+        getLocalStorage
     } from "../../js/others/helper.js";
     import {
         animeLoader,
@@ -933,13 +934,12 @@
     }
     async function removeAllActiveTag(event) {
         if ($initData) return pleaseWaitAlert();
-        if (await $confirmPromise("Do you want to remove all filters?")) {
-            let idxTypeSelected = $filterOptions?.filterSelection?.findIndex(
+        let idxTypeSelected = $filterOptions?.filterSelection?.findIndex(
                 ({ isSelected }) => isSelected
             );
-            let nameTypeSelected =
-                $filterOptions?.filterSelection?.[idxTypeSelected]
-                    .filterSelectionName;
+        let nameTypeSelected = $filterOptions?.filterSelection?.[idxTypeSelected].filterSelectionName;
+        let hasActiveFilter = $activeTagFilters?.[nameTypeSelected]?.length
+        if (hasActiveFilter && await $confirmPromise("Do you want to remove all filters?")) {
             // Remove Active Number Input
             $filterOptions?.filterSelection?.[idxTypeSelected].filters[
                 "Input Number"
@@ -1280,7 +1280,6 @@
         }
         if (element.scrollWidth <= element.clientWidth) return;
         if (event.deltaY !== 0 && event.deltaX === 0) {
-            event.preventDefault();
             element.scrollLeft = Math.max(0, element.scrollLeft + event.deltaY);
         }
     }
@@ -1291,17 +1290,6 @@
 <main
     id="main-home"
     style:--filters-space={showFilterOptions ? "80px" : ""}
-    style:--active-filter-space={(
-        $activeTagFilters?.[
-            $filterOptions?.filterSelection?.[
-                $filterOptions?.filterSelection?.findIndex(
-                    ({ isSelected }) => isSelected
-                )
-            ]?.filterSelectionName
-        ] || []
-    ).length
-        ? "auto"
-        : ""}
 >
     <div class="home-status">
         {#if $filterOptions}
@@ -1418,9 +1406,9 @@
             (showFilterOptions ? "" : "disable-interaction") +
             ($hasWheel ? " hasWheel" : "")}
         id="filters"
-        on:wheel={(e) => {
+        on:wheel|passive={(e) => {
             horizontalWheel(e, "filters");
-            if ($gridFullView ?? !$android) {
+            if ($gridFullView ?? getLocalStorage('gridFullView') ?? !$android) {
                 if (!scrollingToTop && e.deltaY < 0) {
                     scrollingToTop = true;
                     let newScrollPosition = 0;
@@ -1708,37 +1696,14 @@
         {/if}
     </div>
     <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
-    <div
-        class={"activeFilters" + (showAllActiveFilters ? " seenMore" : "")}
-        style:display={(
-            $activeTagFilters?.[
-                $filterOptions?.filterSelection?.[
-                    $filterOptions?.filterSelection?.findIndex(
-                        ({ isSelected }) => isSelected
-                    )
-                ]?.filterSelectionName
-            ] || []
-        ).length
-            ? ""
-            : "none"}
-    >
+    <div class={"activeFilters" + (showAllActiveFilters ? " seenMore" : "")}>
         {#if !showAllActiveFilters}
             <div
                 tabindex="0"
                 class="empty-tagFilter"
-                style:display={$activeTagFilters ? "" : "none"}
                 title="Remove Filters"
                 on:click={removeAllActiveTag}
                 on:keydown={(e) => e.key === "Enter" && removeAllActiveTag(e)}
-                style:visibility={$activeTagFilters?.[
-                    $filterOptions?.filterSelection?.[
-                        $filterOptions?.filterSelection?.findIndex(
-                            ({ isSelected }) => isSelected
-                        )
-                    ]?.filterSelectionName
-                ]?.length
-                    ? "visible"
-                    : "hidden"}
             >
                 <i class="fa-solid fa-ban" />
             </div>
@@ -1752,20 +1717,10 @@
                 <div
                     tabindex="0"
                     class="empty-tagFilter"
-                    style:display={$activeTagFilters ? "" : "none"}
                     title="Remove Filters"
                     on:click={removeAllActiveTag}
                     on:keydown={(e) =>
                         e.key === "Enter" && removeAllActiveTag(e)}
-                    style:visibility={$activeTagFilters?.[
-                        $filterOptions?.filterSelection?.[
-                            $filterOptions?.filterSelection?.findIndex(
-                                ({ isSelected }) => isSelected
-                            )
-                        ]?.filterSelectionName
-                    ]?.length
-                        ? "visible"
-                        : "hidden"}
                 >
                     <i class="fa-solid fa-ban" />
                 </div>
@@ -1863,7 +1818,7 @@
             >
                 <i
                     class={"icon fa-solid fa-arrows-" +
-                        ($gridFullView ?? !$android ? "up-down" : "left-right")}
+                        ($gridFullView?? getLocalStorage('gridFullView') ?? !$android ? "up-down" : "left-right")}
                 />
             </div>
             <div class="sortFilter">
@@ -1949,8 +1904,19 @@
             </div>
         </div>
     {:else}
+        <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
         <div class="last-filter-option">
-            <div class="showHideActiveFilters skeleton shimmer" />
+            <div
+                tabindex="0"
+                class="changeGridView"
+                on:click={handleGridView}
+                on:keydown={(e) => e.key === "Enter" && handleGridView()}
+            >
+                <i
+                    class={"icon fa-solid fa-arrows-" +
+                        ($gridFullView?? getLocalStorage('gridFullView') ?? !$android ? "up-down" : "left-right")}
+                />
+            </div>
             <div class="sortFilter skeleton shimmer" />
         </div>
     {/if}
@@ -1969,11 +1935,10 @@
     }
 
     main {
-        --active-filter-space: ;
         --filters-space: ;
         display: grid;
         grid-template-rows:
-            20px 58.5px var(--filters-space) var(--active-filter-space)
+            20px 58.5px var(--filters-space) auto
             50px auto;
         padding-top: 1.5em;
         transition: transform 0.3s ease;
