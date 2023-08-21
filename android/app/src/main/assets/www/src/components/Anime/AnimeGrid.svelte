@@ -396,6 +396,8 @@
         }
         if (element.scrollWidth <= element.clientWidth) return;
         if (event.deltaY !== 0 && event.deltaX === 0) {
+            event.preventDefault();
+            event.stopPropagation();
             element.scrollLeft = Math.max(0, element.scrollLeft + event.deltaY);
         }
     }
@@ -435,7 +437,7 @@
                 : "") +
             ($finalAnimeList?.length === 0 && !$initData ? "empty" : "")}
         bind:this={animeGridEl}
-        on:wheel|passive={(e) => {
+        on:wheel={(e) => {
             if ($gridFullView ?? getLocalStorage("gridFullView") ?? !$android) {
                 horizontalWheel(e, "image-grid");
                 if (!scrollingToBottom) {

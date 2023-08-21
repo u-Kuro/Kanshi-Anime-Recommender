@@ -1280,6 +1280,8 @@
         }
         if (element.scrollWidth <= element.clientWidth) return;
         if (event.deltaY !== 0 && event.deltaX === 0) {
+            event.preventDefault();
+            event.stopPropagation();
             element.scrollLeft = Math.max(0, element.scrollLeft + event.deltaY);
         }
     }
@@ -1406,7 +1408,7 @@
             (showFilterOptions ? "" : "disable-interaction") +
             ($hasWheel ? " hasWheel" : "")}
         id="filters"
-        on:wheel|passive={(e) => {
+        on:wheel={(e) => {
             horizontalWheel(e, "filters");
             if ($gridFullView ?? getLocalStorage('gridFullView') ?? !$android) {
                 if (!scrollingToTop && e.deltaY < 0) {
