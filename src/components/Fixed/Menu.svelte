@@ -152,7 +152,8 @@
         let classList = element.classList;
         if (
             classList.contains("button") ||
-            classList.contains("menu-container")
+            (!matchMedia("(pointer:fine)").matches &&
+                classList.contains("menu-container"))
         )
             return;
         $menuVisible = !$menuVisible;
