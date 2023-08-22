@@ -707,7 +707,7 @@
 			} else if (
 				usernameInputEl &&
 				usernameInputEl === document?.activeElement &&
-				window.visualViewport.width <= 750
+				Math.max(window.visualViewport.width, window.innerWidth) <= 750
 			) {
 				usernameInputEl?.focus?.();
 				usernameInputEl?.blur?.();
@@ -745,8 +745,10 @@
 						inline: "start",
 					});
 				} else {
-					document.documentElement.style.overflow = "hidden";
-					document.documentElement.style.overflow = "";
+					if ($android || !matchMedia("(hover:hover)").matches) {
+						document.documentElement.style.overflow = "hidden";
+						document.documentElement.style.overflow = "";
+					}
 					window.scrollTo({ top: -9999, behavior: "smooth" });
 				}
 				return;
@@ -759,14 +761,18 @@
 						animeGridEl.style.overflow = "";
 					}, 100);
 				} else {
-					document.documentElement.style.overflow = "hidden";
+					if ($android || !matchMedia("(hover:hover)").matches) {
+						document.documentElement.style.overflow = "hidden";
+					}
 					document.documentElement.scrollTop = 0;
 					document.body.scrollTop = 0;
 					window.scrollY = 0;
-					clearTimeout(exitScrollTimeout);
-					exitScrollTimeout = setTimeout(() => {
-						document.documentElement.style.overflow = "";
-					}, 100);
+					if ($android || !matchMedia("(hover:hover)").matches) {
+						clearTimeout(exitScrollTimeout);
+						exitScrollTimeout = setTimeout(() => {
+							document.documentElement.style.overflow = "";
+						}, 100);
+					}
 				}
 				try {
 					JSBridge.willExit();
@@ -1048,7 +1054,7 @@
 	<C.Fixed.Navigator />
 	<C.Fixed.Menu />
 
-	<div class="home">
+	<div class="home" id="home">
 		<C.Others.Search>
 			<C.Anime.AnimeGrid />
 		</C.Others.Search>

@@ -350,8 +350,14 @@
                 tabindex="0"
                 width="30px"
                 height="30px"
-                on:keydown|stopPropagation={(e) =>
-                    e.key === "Enter" && ($menuVisible = !$menuVisible)}
+                on:keydown={(e) => {
+                    if (e.key === "Enter") {
+                        e.stopPropagation();
+                        $menuVisible = !$menuVisible;
+                    } else if (e.key !== "Escape") {
+                        e.stopPropagation();
+                    }
+                }}
             />
         </div>
     </nav>
@@ -368,7 +374,7 @@
         color: white !important;
     }
     .nav-container {
-        z-index: 995;
+        z-index: 993;
         position: fixed;
         top: 0;
         width: 100%;

@@ -57,6 +57,7 @@
     <div
         class="confirm"
         on:click={handleConfirmVisibility}
+        on:touchend|passive={handleConfirmVisibility}
         on:keydown={(e) => e.key === "Enter" && handleConfirmVisibility(e)}
     >
         <div
@@ -70,7 +71,7 @@
                 <div class="confirm-info-container">
                     <h2 class="confirm-title">{confirmTitle}</h2>
                     <h2 class="confirm-text">
-                        {confirmText}
+                        {@html confirmText}
                     </h2>
                 </div>
                 <div class="confirm-button-container">

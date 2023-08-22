@@ -27,28 +27,23 @@
             isRecentlyOpenedTimeout = setTimeout(() => {
                 isRecentlyOpened = false;
             }, 500);
-            let openedAnime = $finalAnimeList[$openedAnimeOptionIdx];
-            if (openedAnime) {
-                animeTitle =
-                    openedAnime?.title?.english ||
-                    openedAnime?.title?.userPreferred ||
-                    openedAnime?.title?.romaji ||
-                    openedAnime?.title?.native;
-                youtubeSearchTitle =
-                    openedAnime?.title?.romaji ||
-                    openedAnime?.title?.userPreferred ||
-                    openedAnime?.title?.english ||
-                    openedAnime?.title?.native;
-                animeID = openedAnime.id;
-                animeUrl = openedAnime.animeUrl;
-                animeIdx = $openedAnimeOptionIdx;
-            }
-            $openedAnimeOptionIdx = null;
         } else {
             if (isRecentlyOpenedTimeout) clearTimeout(isRecentlyOpenedTimeout);
             isRecentlyOpened = false;
         }
     });
+
+    function handleTouchAnimeOptionVisibility(e) {
+        if (isRecentlyOpened) return;
+        let target = e.target;
+        let classList = target.classList;
+        if (
+            target.closest(".anime-options-container") ||
+            classList.contains("anime-options-container")
+        )
+            return;
+        $animeOptionVisible = false;
+    }
 
     function handleAnimeOptionVisibility(e) {
         if (isRecentlyOpened && e.type !== "keydown") return;
@@ -67,7 +62,6 @@
         if (isRecentlyOpened && e.type !== "keydown") return;
         $openedAnimePopupIdx = animeIdx;
         $popupVisible = true;
-        $animeOptionVisible = false;
     }
 
     function openInAnilist(e) {
@@ -100,11 +94,12 @@
 
     async function handleHideShow(e) {
         if (isRecentlyOpened && e.type !== "keydown") return;
+        let title = animeTitle ? `<b>${animeTitle}</b>` : "this anime";
         let isHidden = $hiddenEntries[animeID];
         if (isHidden) {
             if (
                 await $confirmPromise(
-                    "Are you sure you want to show the anime?"
+                    `Are you sure you want to show ${title} in your recommendation list?`
                 )
             ) {
                 delete $hiddenEntries[animeID];
@@ -123,7 +118,7 @@
         } else {
             if (
                 await $confirmPromise(
-                    "Are you sure you want to hide the anime?"
+                    `Are you sure you want to hide ${title} in your recommendation list?`
                 )
             ) {
                 $hiddenEntries[animeID] = true;
@@ -140,12 +135,40 @@
             }
         }
     }
+
+    function loadAnimeOption() {
+        let openedAnime = $finalAnimeList?.[$openedAnimeOptionIdx ?? -1];
+        if (openedAnime) {
+            animeTitle =
+                openedAnime?.title?.english ||
+                openedAnime?.title?.userPreferred ||
+                openedAnime?.title?.romaji ||
+                openedAnime?.title?.native;
+            youtubeSearchTitle =
+                openedAnime?.title?.romaji ||
+                openedAnime?.title?.userPreferred ||
+                openedAnime?.title?.english ||
+                openedAnime?.title?.native;
+            animeID = openedAnime.id;
+            animeUrl = openedAnime.animeUrl;
+            animeIdx = $openedAnimeOptionIdx;
+        } else {
+            $animeOptionVisible = false;
+        }
+    }
+    finalAnimeList.subscribe(() => {
+        if ($animeOptionVisible) {
+            loadAnimeOption();
+        }
+    });
 </script>
 
-{#if $animeOptionVisible}
+{#if $animeOptionVisible && !$popupVisible && $finalAnimeList}
     <div
+        use:loadAnimeOption
         class="anime-options"
         on:click={handleAnimeOptionVisibility}
+        on:touchend|passive={handleTouchAnimeOptionVisibility}
         on:keydown={(e) => e.key === "Enter" && handleAnimeOptionVisibility(e)}
     >
         <div
@@ -210,7 +233,7 @@
         -o-transform: translateZ(0);
         position: fixed;
         display: flex;
-        z-index: 1001;
+        z-index: 994;
         left: 0;
         top: 0;
         width: 100%;
@@ -226,6 +249,13 @@
 
     .anime-options::-webkit-scrollbar {
         display: none;
+    }
+
+    @media screen and (max-width: 750px) {
+        .anime-options {
+            height: calc(100% - 55px) !important;
+            top: 55px !important;
+        }
     }
 
     .anime-options-container {

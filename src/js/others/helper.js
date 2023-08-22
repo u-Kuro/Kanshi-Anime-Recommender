@@ -312,44 +312,110 @@ const changeInputValue = (inputElement, newValue) => {
 }
 
 const dragScroll = (element, axis = 'xy') => {
-  var curYPos, curXPos, curDown, curScrollLeft, curScrollTop;
+  let curDown, curYPos, curXPos, velocityY, velocityX, currentScrollYPosition, currentScrollXPosition;
 
   let move = (e) => {
     if (curDown && e.pointerType === "mouse") {
-      if (axis.toLowerCase().includes('y'))
-        element.scrollTop = curYPos - e.pageY + curScrollTop;
-      if (axis.toLowerCase().includes('x'))
-        element.scrollLeft = curXPos - e.pageX + curScrollLeft;
+      if (axis.toLowerCase().includes('y')) {
+        let endYPos = e.clientY;
+        let deltaY = endYPos - curYPos
+        element.scrollTop = currentScrollYPosition - deltaY;
+      }
+      if (axis.toLowerCase().includes('x')) {
+        let endXPos = e.clientX;
+        let deltaX = endXPos - curXPos
+        element.scrollLeft = currentScrollXPosition - deltaX;
+      }
     }
   };
 
   let down = (e) => {
     if (e.pointerType !== "mouse") return
+    velocityY = 0;
+    cancelAnimationFrame(kineticScrollYAnimation);
+    velocityX = 0;
+    cancelAnimationFrame(kineticScrollXAnimation);
     if (axis.toLowerCase().includes('y')) {
-      curYPos = e.pageY;
-      curScrollTop = element.scrollTop;
+      curYPos = e.clientY;
+      currentScrollYPosition = element.scrollTop
     }
     if (axis.toLowerCase().includes('x')) {
-      curXPos = e.pageX;
-      curScrollLeft = element.scrollLeft;
+      curXPos = e.clientX;
+      currentScrollXPosition = element.scrollLeft
     }
     curDown = true;
   };
 
   let up = (e) => {
-    if (e.pointerType !== "mouse") return
+    if (curDown) {
+      if (axis.toLowerCase().includes('y') && e.pointerType === "mouse") {
+        let endYPos = e.clientY;
+        let deltaY = endYPos - curYPos
+        element.scrollTop = currentScrollYPosition - deltaY;
+        velocityY = deltaY
+        simulateKineticScrollY(element)
+      }
+      if (axis.toLowerCase().includes('x') && e.pointerType === "mouse") {
+        let endXPos = e.clientX;
+        let deltaX = endXPos - curXPos
+        element.scrollLeft = currentScrollXPosition - deltaX;
+        velocityX = deltaX
+        simulateKineticScrollX(element)
+      }
+    }
     curDown = false;
   };
 
+  let cancel = () => curDown = false;
+
+  let kineticScrollYAnimation;
+  let simulateKineticScrollY = (container, currentScrollTop) => {
+    let shouldScroll =
+      (currentScrollTop == null || container.scrollTop === currentScrollTop)
+      && typeof velocityY === "number"
+      && container && Math.abs(velocityY) > 0.1
+    if (shouldScroll) {
+      container.scrollTop -= velocityY * 0.1;
+      let newScrollTop = container.scrollTop;
+      kineticScrollYAnimation = requestAnimationFrame(() => simulateKineticScrollY(container, newScrollTop));
+      velocityY *= 0.9;
+    } else {
+      velocityY = 0;
+      cancelAnimationFrame(kineticScrollYAnimation);
+    }
+  }
+
+  let kineticScrollXAnimation;
+  let simulateKineticScrollX = (container, currentScrollLeft) => {
+    let shouldScroll =
+      (currentScrollLeft == null || container.scrollLeft === currentScrollLeft)
+      && typeof velocityX === "number"
+      && container && Math.abs(velocityX) > 0.1
+    if (shouldScroll) {
+      container.scrollLeft -= velocityX * 0.1;
+      let newScrollLeft = container.scrollLeft;
+      kineticScrollXAnimation = requestAnimationFrame(() => simulateKineticScrollX(container, newScrollLeft));
+      velocityX *= 0.9;
+    } else {
+      velocityX = 0;
+      cancelAnimationFrame(kineticScrollXAnimation);
+    }
+  }
+
   element.addEventListener('pointermove', move);
   element.addEventListener('pointerdown', down);
-  window.addEventListener('pointerup', up);
-  window.addEventListener('pointercancel', up);
+  element.addEventListener('pointerup', up);
+  window.addEventListener('pointerup', cancel);
+  window.addEventListener('pointercancel', cancel);
   return () => {
+    velocityX = velocityY = 0;
+    cancelAnimationFrame(kineticScrollYAnimation);
+    cancelAnimationFrame(kineticScrollXAnimation);
     element.removeEventListener('pointermove', move);
     element.removeEventListener('pointerdown', down);
-    window.removeEventListener('pointerup', up);
-    window.removeEventListener('pointercancel', up);
+    element.removeEventListener('pointerup', up);
+    window.addEventListener('pointerup', cancel);
+    window.addEventListener('pointercancel', cancel);
   };
 }
 

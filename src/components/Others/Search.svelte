@@ -37,8 +37,8 @@
 
     let Init = true;
 
-    let windowWidth = window.visualViewport.width;
-    let windowHeight = window.visualViewport.height;
+    let windowWidth = Math.max(window.visualViewport.width,window.innerWidth);
+    let windowHeight = Math.max(window.visualViewport.height,window.innerHeight);
     let maxFilterSelectionHeight = windowHeight * 0.3;
 
     let selectedFilterTypeElement;
@@ -140,9 +140,9 @@
     }
 
     function windowResized() {
-        windowHeight = window.visualViewport.height;
+        windowHeight = Math.max(window.visualViewport.height,window.innerHeight);
         maxFilterSelectionHeight = windowHeight * 0.3;
-        windowWidth = window.visualViewport.width;
+        windowWidth = Math.max(window.visualViewport.width,window.innerWidth);
     }
     async function handleFilterTypes(newFilterTypeName) {
         if ($initData) return pleaseWaitAlert();
@@ -1225,7 +1225,7 @@
             (selectedFilterElement ||
                 selectedFilterTypeElement ||
                 selectedSortElement) &&
-            window.visualViewport.width <= 425
+                Math.max(window.visualViewport.width,window.innerWidth) <= 425
         );
     };
     function closeDropdown() {
@@ -2548,7 +2548,7 @@
         }
     }
 
-    @media screen and (pointer: fine) {
+    @media screen and (hover:hover) and (pointer:fine) {
         .filters {
             scroll-snap-type: none !important;
         }

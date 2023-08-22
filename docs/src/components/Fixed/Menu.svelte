@@ -150,7 +150,18 @@
     function handleMenuVisibility(event) {
         let element = event.target;
         let classList = element.classList;
-        if (classList.contains("button")) return;
+        if (
+            classList.contains("button") ||
+            classList.contains("menu-container")
+        )
+            return;
+        $menuVisible = !$menuVisible;
+    }
+
+    function handleTouchMenuVisibility(event) {
+        let element = event.target;
+        let classList = element.classList;
+        if (!classList?.contains?.("menu-container")) return;
         $menuVisible = !$menuVisible;
     }
 
@@ -305,6 +316,7 @@
     <div
         class="menu-container"
         on:click={handleMenuVisibility}
+        on:touchend|passive={handleTouchMenuVisibility}
         on:keydown={(e) => e.key === "Enter" && handleMenuVisibility(e)}
     >
         <div class="menu">
@@ -486,7 +498,7 @@
 
     @media screen and (min-width: 750px) {
         .menu-container {
-            z-index: 994 !important;
+            z-index: 992 !important;
         }
         .menu {
             padding: 1.5em 50px !important;

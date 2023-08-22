@@ -32,7 +32,10 @@
     } from "../../js/others/helper.js";
     import { fly } from "svelte/transition";
 
-    let windowHeight = window.visualViewport.height;
+    let windowHeight = Math.max(
+        window.visualViewport.height,
+        window.innerHeight
+    );
     let date = new Date();
     let animeGridEl;
     let isRunningIntersectEvent;
@@ -72,10 +75,16 @@
     }
 
     onMount(() => {
-        windowHeight = window.visualViewport.height;
+        windowHeight = Math.max(
+            window.visualViewport.height,
+            window.innerHeight
+        );
         animeGridEl = animeGridEl || document.getElementById("anime-grid");
         window.addEventListener("resize", () => {
-            windowHeight = window.visualViewport.height;
+            windowHeight = Math.max(
+                window.visualViewport.height,
+                window.innerHeight
+            );
         });
         setInterval(() => {
             date = new Date();
@@ -169,7 +178,8 @@
                         ({ id }) => id !== data.removedID
                     );
                     if (removedIdx >= 0) {
-                        $animeIdxRemoved = removedIdx;
+                        $animeIdxRemoved = null;
+                        $animeIdxRemoved = removedIdx
                     }
                     $numberOfNextLoadedGrid = data.numberOfNextLoadedGrid;
                 }
@@ -639,6 +649,7 @@
         display: block;
         -ms-overflow-style: none;
         scrollbar-width: none;
+        cursor: text;
     }
 
     .title::-webkit-scrollbar {
@@ -786,6 +797,7 @@
         overflow-x: hidden;
         -ms-overflow-style: none;
         scrollbar-width: none;
+        cursor: pointer;
     }
     .image-grid__card-title::-webkit-scrollbar {
         display: none;
