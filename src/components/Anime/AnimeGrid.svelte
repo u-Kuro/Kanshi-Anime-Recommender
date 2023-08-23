@@ -7,7 +7,6 @@
         animeLoaderWorker,
         dataStatus,
         filterOptions,
-        activeTagFilters,
         animeObserver,
         popupVisible,
         openedAnimePopupIdx,

@@ -1737,7 +1737,6 @@
                                     on:click={updateList}
                                     on:keydown={(e) =>
                                         e.key === "Enter" && updateList(e)}
-                                    transition:fly={{ x: 50, duration: 300 }}
                                 >
                                     <i
                                         class="list-update-icon fa-solid fa-arrows-rotate"
@@ -1762,7 +1761,6 @@
                                     on:keydown={(e) =>
                                         e.key === "Enter" &&
                                         handleMoreVideos(anime.title)}
-                                    transition:fly={{ x: 50, duration: 300 }}
                                 >
                                     <i
                                         class="youtube-direct-icon fa-brands fa-youtube"
