@@ -44,7 +44,7 @@
             isRecentlyOpened = true;
             isRecentlyOpenedTimeout = setTimeout(() => {
                 isRecentlyOpened = false;
-            }, 500);
+            }, 200);
             confirmButtonEl?.focus?.();
         } else {
             if (isRecentlyOpenedTimeout) clearTimeout(isRecentlyOpenedTimeout);
@@ -66,7 +66,7 @@
         >
             <div
                 class="confirm-container"
-                transition:fly={{ y: 20, duration: 300 }}
+                transition:fly={{ y: 20, duration: 200 }}
             >
                 <div class="confirm-info-container">
                     <h2 class="confirm-title">{confirmTitle}</h2>

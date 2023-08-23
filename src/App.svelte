@@ -95,7 +95,7 @@
 		if (!$dataStatus) {
 			$dataStatus = "Please Wait...";
 		}
-	}, 300);
+	}, 200);
 
 	new Promise(async (resolve) => {
 		// Check App ID
@@ -986,7 +986,7 @@
 					$listUpdateAvailable = false;
 					updateListIconSpinningTimeout = setTimeout(() => {
 						removeClass(updateIcon, "fa-spin");
-					}, 300);
+					}, 200);
 					$animeLoaderWorker = data.animeLoaderWorker;
 					$searchedAnimeKeyword = "";
 					if (data?.isNew) {
@@ -1079,7 +1079,7 @@
 			tabindex="0"
 			on:click={updateList}
 			on:keydown={(e) => e.key === "Enter" && updateList(e)}
-			transition:fly={{ x: 50, duration: 300 }}
+			transition:fly={{ x: 50, duration: 200 }}
 		>
 			<i class="list-update-icon fa-solid fa-arrows-rotate" />
 			<h3 class="list-update-label">List Update</h3>

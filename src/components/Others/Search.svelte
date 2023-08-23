@@ -1198,10 +1198,16 @@
     function callAsyncAnimeReload() {
         return new Promise((resolve) => {
             if ($animeLoaderWorker instanceof Worker) {
-                $finalAnimeList = null;
                 $checkAnimeLoaderStatus().then(() => {
-                    $animeLoaderWorker.postMessage({
+                    $finalAnimeList = null;
+                    $animeLoaderWorker?.postMessage?.({
                         reload: true,
+                    });
+                }).catch(() => {
+                    $confirmPromise({
+                        isAlert: true,
+                        title: "Something went wrong",
+                        text: "Action failed, please try again.",
                     });
                 });
             }
@@ -1306,7 +1312,7 @@
             <div class="skeleton shimmer" />
         {/if}
         {#if $dataStatus || !$username}
-            <span out:fade={{ duration: 300 }} class="data-status">
+            <span out:fade={{ duration: 200 }} class="data-status">
                 <h2>
                     {#if $dataStatus}
                         {$dataStatus}
@@ -1731,7 +1737,7 @@
                 <div
                     class="activeTagFilter"
                     tabindex="0"
-                    transition:fly={{ x: -10, duration: 300 }}
+                    transition:fly={{ x: -10, duration: 200 }}
                     style:--activeTagFilterColor={selected === "included"
                         ? "#5f9ea0"
                         : changeType === "read"
@@ -1943,7 +1949,7 @@
             20px 58.5px var(--filters-space) auto
             50px auto;
         padding-top: 1.5em;
-        transition: transform 0.3s ease;
+        transition: transform 0.2s ease, opacity 0.2s ease;
     }
 
     .skeleton {
@@ -2539,7 +2545,7 @@
 
     @media screen and (max-width: 640px) {
         :global(main.willchange) {
-            will-change: transform;
+            will-change: transform, opacity;
             transform: translateZ(0);
             -webkit-transform: translateZ(0);
             -ms-transform: translateZ(0);
@@ -2595,7 +2601,7 @@
             display: none;
         }
         .options-wrap.hide {
-            transition: transform 0s ease 0.3s;
+            transition: transform 0s ease 0.2s;
         }
         .options-wrap-filter-info {
             display: flex !important;
@@ -2614,7 +2620,7 @@
             -moz-transform: translateY(0) translateZ(0) !important;
             -o-transform: translateY(0) translateZ(0) !important;
             opacity: 1 !important;
-            transition: transform 0.3s ease, opacity 0.3s ease !important;
+            transition: transform 0.2s ease, opacity 0.2s ease !important;
         }
         .options-wrap-filter-info.hide {
             transform: translateY(20px) translateZ(0) !important;

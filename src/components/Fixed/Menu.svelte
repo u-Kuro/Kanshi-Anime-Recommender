@@ -325,26 +325,26 @@
                 class="button"
                 on:click={updateList}
                 on:keydown={(e) => e.key === "Enter" && updateList(e)}
-                transition:fly={{ x: 50, duration: 300 }}>Update List</button
+                transition:fly={{ x: 50, duration: 200 }}>Update List</button
             >
             <button
                 class="button"
                 on:click={showAllHiddenEntries}
                 on:keydown={(e) => e.key === "Enter" && showAllHiddenEntries(e)}
-                transition:fly={{ x: 50, duration: 300 }}
+                transition:fly={{ x: 50, duration: 200 }}
                 >Show All Hidden Entries</button
             >
             <button
                 class="button"
                 on:click={importData}
                 on:keydown={(e) => e.key === "Enter" && importData(e)}
-                transition:fly={{ x: 50, duration: 300 }}>Import Data</button
+                transition:fly={{ x: 50, duration: 200 }}>Import Data</button
             >
             <button
                 class="button"
                 on:click={exportData}
                 on:keydown={(e) => e.key === "Enter" && exportData(e)}
-                transition:fly={{ x: 50, duration: 300 }}>Export Data</button
+                transition:fly={{ x: 50, duration: 200 }}>Export Data</button
             >
             {#if $android}
                 <button
@@ -352,14 +352,14 @@
                     on:click={handleExportFolder}
                     on:keydown={(e) =>
                         e.key === "Enter" && handleExportFolder(e)}
-                    transition:fly={{ x: 50, duration: 300 }}
+                    transition:fly={{ x: 50, duration: 200 }}
                 >
                     {($exportPathIsAvailable ? "Change" : "Set") +
                         " Export Folder"}
                 </button>
             {/if}
             <button
-                transition:fly={{ x: 50, duration: 300 }}
+                transition:fly={{ x: 50, duration: 200 }}
                 class={"button " + ($autoUpdate ? "selected" : "")}
                 on:click={handleUpdateEveryHour}
                 on:keydown={(e) =>
@@ -368,7 +368,7 @@
             >
             {#if $android}
                 <button
-                    transition:fly={{ x: 50, duration: 300 }}
+                    transition:fly={{ x: 50, duration: 200 }}
                     class={"button " + ($autoExport ? "selected" : "")}
                     on:click={handleExportEveryHour}
                     on:keydown={(e) =>
@@ -377,7 +377,7 @@
                 >
             {/if}
             <button
-                transition:fly={{ x: 50, duration: 300 }}
+                transition:fly={{ x: 50, duration: 200 }}
                 class="button"
                 on:click={anilistSignup}
                 on:keydown={(e) => e.key === "Enter" && anilistSignup(e)}
@@ -389,7 +389,7 @@
                     on:keydown={(e) =>
                         e.key === "Enter" && showRecentReleases(e)}
                     on:click={showRecentReleases}
-                    transition:fly={{ x: 50, duration: 300 }}
+                    transition:fly={{ x: 50, duration: 200 }}
                     >Show Recent Releases</button
                 >
                 {#if !window.location.protocol.startsWith("file:")}
@@ -398,7 +398,7 @@
                         on:keydown={(e) =>
                             e.key === "Enter" && checkForUpdates(e)}
                         on:click={checkForUpdates}
-                        transition:fly={{ x: 50, duration: 300 }}
+                        transition:fly={{ x: 50, duration: 200 }}
                         >Check for Updates</button
                     >
                 {/if}
@@ -406,28 +406,28 @@
                     class="button"
                     on:keydown={(e) => e.key === "Enter" && switchAppMode(e)}
                     on:click={switchAppMode}
-                    transition:fly={{ x: 50, duration: 300 }}
+                    transition:fly={{ x: 50, duration: 200 }}
                     >Switch App Mode</button
                 >
                 <button
                     class="button"
                     on:keydown={(e) => e.key === "Enter" && clearCache(e)}
                     on:click={clearCache}
-                    transition:fly={{ x: 50, duration: 300 }}
+                    transition:fly={{ x: 50, duration: 200 }}
                     >Clear Cache</button
                 >
                 <button
                     class="button"
                     on:keydown={(e) => e.key === "Enter" && refresh(e)}
                     on:click={refresh}
-                    transition:fly={{ x: 50, duration: 300 }}>Refresh</button
+                    transition:fly={{ x: 50, duration: 200 }}>Refresh</button
                 >
             {/if}
             <button
                 class="button"
                 on:keydown={(e) => e.key === "Enter" && reload(e)}
                 on:click={reload}
-                transition:fly={{ x: 50, duration: 300 }}>Reload</button
+                transition:fly={{ x: 50, duration: 200 }}>Reload</button
             >
         </div>
     </div>

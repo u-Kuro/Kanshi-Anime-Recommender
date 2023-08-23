@@ -26,7 +26,7 @@
             isRecentlyOpened = true;
             isRecentlyOpenedTimeout = setTimeout(() => {
                 isRecentlyOpened = false;
-            }, 500);
+            }, 100);
         } else {
             if (isRecentlyOpenedTimeout) clearTimeout(isRecentlyOpenedTimeout);
             isRecentlyOpened = false;
@@ -62,6 +62,7 @@
         if (isRecentlyOpened && e.type !== "keydown") return;
         $openedAnimePopupIdx = animeIdx;
         $popupVisible = true;
+        $animeOptionVisible = false;
     }
 
     function openInAnilist(e) {
@@ -102,17 +103,25 @@
                     `Are you sure you want to show ${title} in your recommendation list?`
                 )
             ) {
-                delete $hiddenEntries[animeID];
-                $hiddenEntries = $hiddenEntries;
-                if ($finalAnimeList.length) {
-                    if ($animeLoaderWorker instanceof Worker) {
-                        $checkAnimeLoaderStatus().then(() => {
-                            $animeLoaderWorker.postMessage({
-                                removeID: animeID,
-                            });
+                $checkAnimeLoaderStatus()
+                    .then(() => {
+                        delete $hiddenEntries[animeID];
+                        $hiddenEntries = $hiddenEntries;
+                        if ($finalAnimeList.length) {
+                            if ($animeLoaderWorker instanceof Worker) {
+                                $animeLoaderWorker?.postMessage?.({
+                                    removeID: animeID,
+                                });
+                            }
+                        }
+                    })
+                    .catch(() => {
+                        $confirmPromise({
+                            isAlert: true,
+                            title: "Something went wrong",
+                            text: "Showing anime has failed, please try again.",
                         });
-                    }
-                }
+                    });
                 $animeOptionVisible = false;
             }
         } else {
@@ -121,16 +130,24 @@
                     `Are you sure you want to hide ${title} in your recommendation list?`
                 )
             ) {
-                $hiddenEntries[animeID] = true;
-                if ($finalAnimeList.length) {
-                    if ($animeLoaderWorker instanceof Worker) {
-                        $checkAnimeLoaderStatus().then(() => {
-                            $animeLoaderWorker.postMessage({
-                                removeID: animeID,
-                            });
+                $checkAnimeLoaderStatus()
+                    .then(() => {
+                        $hiddenEntries[animeID] = true;
+                        if ($finalAnimeList.length) {
+                            if ($animeLoaderWorker instanceof Worker) {
+                                $animeLoaderWorker?.postMessage?.({
+                                    removeID: animeID,
+                                });
+                            }
+                        }
+                    })
+                    .catch(() => {
+                        $confirmPromise({
+                            isAlert: true,
+                            title: "Something went wrong",
+                            text: "Hiding anime has failed, please try again.",
                         });
-                    }
-                }
+                    });
                 $animeOptionVisible = false;
             }
         }
@@ -173,7 +190,7 @@
     >
         <div
             class="anime-options-container"
-            transition:fly={{ y: 20, duration: 300 }}
+            transition:fly={{ y: 20, duration: 100 }}
         >
             <div class="option-header">
                 <span class="anime-title"><h1>{animeTitle}</h1></span>

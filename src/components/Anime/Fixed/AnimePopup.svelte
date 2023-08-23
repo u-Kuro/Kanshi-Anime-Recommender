@@ -125,17 +125,23 @@
                     `Are you sure you want to show ${title} in your recommendation list?`
                 )
             ) {
-                delete $hiddenEntries[animeID];
-                $hiddenEntries = $hiddenEntries;
-                if ($finalAnimeList.length) {
-                    if ($animeLoaderWorker instanceof Worker) {
-                        $checkAnimeLoaderStatus().then(() => {
-                            $animeLoaderWorker.postMessage({
+                $checkAnimeLoaderStatus().then(() => {
+                    delete $hiddenEntries[animeID];
+                    $hiddenEntries = $hiddenEntries;
+                    if ($finalAnimeList.length) {
+                        if ($animeLoaderWorker instanceof Worker) {
+                            $animeLoaderWorker?.postMessage?.({
                                 removeID: animeID,
                             });
-                        });
+                        }
                     }
-                }
+                }).catch(() => {
+                    $confirmPromise({
+                        isAlert: true,
+                        title: "Something went wrong",
+                        text: "Showing anime has failed, please try again.",
+                    });
+                });
             }
         } else {
             if (
@@ -143,16 +149,22 @@
                     `Are you sure you want to hide ${title} in your recommendation list?`
                 )
             ) {
-                $hiddenEntries[animeID] = true;
-                if ($finalAnimeList.length) {
-                    if ($animeLoaderWorker instanceof Worker) {
-                        $checkAnimeLoaderStatus().then(() => {
-                            $animeLoaderWorker.postMessage({
+                $checkAnimeLoaderStatus().then(() => {
+                    $hiddenEntries[animeID] = true;
+                    if ($finalAnimeList.length) {
+                        if ($animeLoaderWorker instanceof Worker) {
+                            $animeLoaderWorker?.postMessage?.({
                                 removeID: animeID,
                             });
-                        });
+                        }
                     }
-                }
+                }).catch(() => {
+                    $confirmPromise({
+                        isAlert: true,
+                        title: "Something went wrong",
+                        text: "Hiding anime has failed, please try again.",
+                    });
+                });
             }
         }
     }
@@ -294,7 +306,7 @@
                         removeClass(mainHome, "willChange");
                         removeClass(popupWrapper, "willChange");
                         removeClass(popupContainer, "willChange");
-                    }, 300);
+                    }, 200);
                 });
                 // Try to Add YT player
                 currentHeaderIdx = $openedAnimePopupIdx;
@@ -351,7 +363,7 @@
                         removeClass(mainHome, "willChange");
                         removeClass(popupWrapper, "willChange");
                         removeClass(popupContainer, "willChange");
-                    }, 300);
+                    }, 200);
                 });
             }
         } else if (val === false) {
@@ -373,8 +385,8 @@
                     removeClass(popupContainer, "willChange");
                     setTimeout(() => {
                         removeClass(popupWrapper, "willChange");
-                    }, 300);
-                }, 300);
+                    }, 200);
+                }, 200);
             });
         }
     });
@@ -592,7 +604,7 @@
                                 setTimeout(() => {
                                     addClass(popupImg, "display-none");
                                     removeClass(popupImg, "fade-out");
-                                }, 300);
+                                }, 200);
                             }
                         }
                         $ytPlayers[i].ytPlayer?.pauseVideo?.();
@@ -615,7 +627,7 @@
                             setTimeout(() => {
                                 addClass(popupImg, "display-none");
                                 removeClass(popupImg, "fade-out");
-                            }, 300);
+                            }, 200);
                         }
                     }
                     $ytPlayers[i].ytPlayer?.pauseVideo?.();
@@ -810,7 +822,7 @@
             setTimeout(() => {
                 addClass(popupImg, "display-none");
                 removeClass(popupImg, "fade-out");
-            }, 300);
+            }, 200);
         }
     }
 
@@ -847,7 +859,7 @@
                 setTimeout(() => {
                     addClass(popupImg, "display-none");
                     removeClass(popupImg, "fade-out");
-                }, 300);
+                }, 200);
             }
             playMostVisibleTrailer();
             if (anime?.id) {
@@ -906,7 +918,7 @@
                     $listUpdateAvailable = false;
                     updateListIconSpinningTimeout = setTimeout(() => {
                         removeClass(updateIcon, "fa-spin");
-                    }, 300);
+                    }, 200);
                     $animeLoaderWorker = data.animeLoaderWorker;
                     $searchedAnimeKeyword = "";
                     if (data?.isNew) {
@@ -1426,6 +1438,7 @@
         itemIsScrollingTimeout;
 
     function popupScroll() {
+        itemScroll()
         $popupIsGoingBack = false;
         goBackPercent = 0;
     }
@@ -1434,7 +1447,7 @@
         clearTimeout(itemIsScrollingTimeout);
         itemIsScrollingTimeout = setTimeout(() => {
             itemIsScrolling = false;
-        }, 500);
+        }, 50);
     }
     function handlePopupContainerDown(event) {
         if (itemIsScrolling) return;
@@ -2358,7 +2371,7 @@
                         (fullDescriptionPopup = fullImagePopup = null)}
                     tabindex="0"
                     class="fullPopupDescription"
-                    transition:fly={{ y: 20, duration: 300 }}
+                    transition:fly={{ y: 20, duration: 200 }}
                     on:scroll={fullViewScroll}
                 >
                     {@html fullDescriptionPopup}
@@ -2388,7 +2401,7 @@
                 on:keydown={(e) =>
                     e.key === "Enter" &&
                     (fullDescriptionPopup = fullImagePopup = null)}
-                transition:fly={{ y: 20, duration: 300 }}
+                transition:fly={{ y: 20, duration: 200 }}
                 on:error={(e) => {
                     addClass(e.target, "display-none");
                 }}
@@ -2435,7 +2448,7 @@
         overflow-x: hidden;
         overscroll-behavior: contain;
         background-color: #151f2e;
-        transition: transform 0.3s ease;
+        transition: transform 0.2s ease;
         margin-top: 55px;
         -ms-overflow-style: none;
         scrollbar-width: none;
@@ -2601,7 +2614,7 @@
     }
 
     .popup-img {
-        transition: opacity 0.3s ease;
+        transition: opacity 0.2s ease;
         width: 100%;
         background-color: #000 !important;
         z-index: 2;
@@ -2636,11 +2649,11 @@
         background-color: rgba(0, 0, 0, 0.5);
     }
     .bannerImg.fade-out {
-        animation: fadeOut 0.3s ease forwards;
+        animation: fadeOut 0.2s ease forwards;
         opacity: 0;
     }
     .bannerImg.fade-in {
-        animation: fadeIn 0.3s ease forwards;
+        animation: fadeIn 0.2s ease forwards;
         opacity: 1;
     }
 
