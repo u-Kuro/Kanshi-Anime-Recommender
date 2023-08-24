@@ -125,23 +125,25 @@
                     `Are you sure you want to show ${title} in your recommendation list?`
                 )
             ) {
-                $checkAnimeLoaderStatus().then(() => {
-                    delete $hiddenEntries[animeID];
-                    $hiddenEntries = $hiddenEntries;
-                    if ($finalAnimeList.length) {
-                        if ($animeLoaderWorker instanceof Worker) {
-                            $animeLoaderWorker?.postMessage?.({
-                                removeID: animeID,
-                            });
+                $checkAnimeLoaderStatus()
+                    .then(() => {
+                        delete $hiddenEntries[animeID];
+                        $hiddenEntries = $hiddenEntries;
+                        if ($finalAnimeList.length) {
+                            if ($animeLoaderWorker instanceof Worker) {
+                                $animeLoaderWorker?.postMessage?.({
+                                    removeID: animeID,
+                                });
+                            }
                         }
-                    }
-                }).catch(() => {
-                    $confirmPromise({
-                        isAlert: true,
-                        title: "Something went wrong",
-                        text: "Showing anime has failed, please try again.",
+                    })
+                    .catch(() => {
+                        $confirmPromise({
+                            isAlert: true,
+                            title: "Something went wrong",
+                            text: "Showing anime has failed, please try again.",
+                        });
                     });
-                });
             }
         } else {
             if (
@@ -149,22 +151,24 @@
                     `Are you sure you want to hide ${title} in your recommendation list?`
                 )
             ) {
-                $checkAnimeLoaderStatus().then(() => {
-                    $hiddenEntries[animeID] = true;
-                    if ($finalAnimeList.length) {
-                        if ($animeLoaderWorker instanceof Worker) {
-                            $animeLoaderWorker?.postMessage?.({
-                                removeID: animeID,
-                            });
+                $checkAnimeLoaderStatus()
+                    .then(() => {
+                        $hiddenEntries[animeID] = true;
+                        if ($finalAnimeList.length) {
+                            if ($animeLoaderWorker instanceof Worker) {
+                                $animeLoaderWorker?.postMessage?.({
+                                    removeID: animeID,
+                                });
+                            }
                         }
-                    }
-                }).catch(() => {
-                    $confirmPromise({
-                        isAlert: true,
-                        title: "Something went wrong",
-                        text: "Hiding anime has failed, please try again.",
+                    })
+                    .catch(() => {
+                        $confirmPromise({
+                            isAlert: true,
+                            title: "Something went wrong",
+                            text: "Hiding anime has failed, please try again.",
+                        });
                     });
-                });
             }
         }
     }
@@ -1438,7 +1442,7 @@
         itemIsScrollingTimeout;
 
     function popupScroll() {
-        itemScroll()
+        itemScroll();
         $popupIsGoingBack = false;
         goBackPercent = 0;
     }
@@ -1530,16 +1534,23 @@
         );
     }
     function checkHeight(element, animeIdx) {
-        let originalHeight = element?.scrollHeight - 16;
+        if (!(element instanceof Element) && typeof animeIdx==="number") {
+            element = popupContainer?.children?.[animeIdx]?.querySelector?.(".popup-info")
+        }
+        if (!(element instanceof Element)) return false;
+        let originalHeight = element?.scrollHeight - 20;
         let newHeight =
-            element.clientHeight ||
-            element.offsetHeight ||
-            getComputedStyles?.(element)?.height;
+            element?.clientHeight ||
+            element?.offsetHeight ||
+            window?.getComputedStyles?.(element)?.height;
         if (
             originalHeight <= newHeight &&
             $finalAnimeList?.[animeIdx ?? -1]?.isSeenMore !== true
         ) {
             $finalAnimeList[animeIdx].isSeenMore = true;
+            return true;
+        } else {
+            return false;
         }
     }
 
@@ -1667,10 +1678,12 @@
             {#each $finalAnimeList || [] as anime, animeIdx (anime.id)}
                 <div class="popup-content" bind:this={anime.popupContent}>
                     <div class="popup-main">
+                        <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                         <div
                             class={"popup-header " +
                                 (anime.trailerID ? "loader" : "")}
                             bind:this={anime.popupHeader}
+                            tabindex="0"
                             on:click={() => askToOpenYoutube(anime.title)}
                             on:keydown={(e) =>
                                 e.key === "Enter" &&
@@ -1684,7 +1697,6 @@
                             {/if}
                             <div class="popup-img">
                                 {#if anime.bannerImageUrl || anime.trailerThumbnailUrl}
-                                    <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                                     <img
                                         loading="lazy"
                                         width="640px"
@@ -1696,7 +1708,6 @@
                                                 ? " Banner"
                                                 : " Thumbnail")}
                                         class="bannerImg fade-out"
-                                        tabindex="0"
                                         on:load={(e) => {
                                             removeClass(e.target, "fade-out");
                                             addClass(e.target, "fade-in");
@@ -1739,54 +1750,73 @@
                                         }
                                     }}
                                 >
-                                    Auto Play
+                                    {#if windowWidth>=290}
+                                        Auto Play
+                                    {:else if windowWidth>=260}
+                                        Auto
+                                    {/if}
                                 </h3>
                             </div>
                             {#if $listUpdateAvailable}
-                                <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
-                                <div
-                                    class="list-update-container"
-                                    tabindex="0"
-                                    on:click={updateList}
-                                    on:keydown={(e) =>
-                                        e.key === "Enter" && updateList(e)}
-                                >
-                                    <i
-                                        class="list-update-icon fa-solid fa-arrows-rotate"
-                                    />
-                                    <h3 class="list-update-label">
-                                        {windowWidth >= 230
-                                            ? "List Update"
-                                            : windowWidth >= 205
-                                            ? "Update"
-                                            : windowWidth >= 180
-                                            ? "List"
-                                            : ""}
-                                    </h3>
-                                </div>
-                            {:else if anime.isSeenMore}
-                                <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
-                                <div
-                                    class="youtube-direct-container"
-                                    tabindex="0"
-                                    on:click={() =>
-                                        handleMoreVideos(anime.title)}
-                                    on:keydown={(e) =>
-                                        e.key === "Enter" &&
-                                        handleMoreVideos(anime.title)}
-                                >
-                                    <i
-                                        class="youtube-direct-icon fa-brands fa-youtube"
-                                    />
-                                    <h3 class="youtube-direct-label">
-                                        YouTube
-                                    </h3>
-                                </div>
+                            <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
+                            <div
+                                class="list-update-container"
+                                tabindex="0"
+                                on:click={updateList}
+                                on:keydown={(e) =>
+                                    e.key === "Enter" && updateList(e)}
+                            >
+                                <i
+                                    class="list-update-icon fa-solid fa-arrows-rotate"
+                                />
+                                <h3 class="list-update-label">
+                                    {windowWidth >= 320
+                                        ? "List Update"
+                                        : windowWidth >= 205
+                                        ? "Update"
+                                        : windowWidth >= 180
+                                        ? "List"
+                                        : ""}
+                                </h3>
+                            </div>
+                            {/if}
+                            {#if anime.bannerImageUrl || anime.trailerThumbnailUrl}
+                            <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
+                            <div
+                                class="banner-image-button"
+                                tabindex="0"
+                                on:click={() => {
+                                    window.setShouldGoBack(false);
+                                    fullImagePopup =
+                                        anime.bannerImageUrl ||
+                                        anime.trailerThumbnailUrl;
+                                    fullDescriptionPopup = null;
+                                }}
+                                on:keydown={(e) => {
+                                    if (e.key === "Enter") {
+                                        window.setShouldGoBack(false);
+                                        fullImagePopup =
+                                            anime.bannerImageUrl ||
+                                            anime.trailerThumbnailUrl;
+                                        fullDescriptionPopup = null;
+                                    }
+                                }}
+                            >
+                                <i
+                                    class="banner-image-icon fa-solid fa-image"
+                                />
+                                <h3 class="banner-image-label">
+                                    {anime.bannerImageUrl
+                                        ? "Banner"
+                                        : "Thumbnail"}
+                                </h3>
+                            </div>
                             {/if}
                         </div>
                         <div class="popup-body">
                             <div
                                 use:checkHeight={animeIdx}
+                                bind:this={anime.popupInfo}
                                 class={"popup-info" +
                                     (anime.isSeenMore ? " seenmore" : "")}
                                 style:--windowWidth={windowWidth + "px"}
@@ -2175,71 +2205,6 @@
                                             </div>
                                         </div>
                                     {/if}
-                                    <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
-                                    <img
-                                        loading="lazy"
-                                        width="440px"
-                                        height="210px"
-                                        src={anime.bannerImageUrl || ""}
-                                        alt={(getTitle(anime?.title) || "") +
-                                            " Banner"}
-                                        tabindex={anime.isSeenMore ? "0" : "-1"}
-                                        class={"extra-bannerImg" +
-                                            (!anime.bannerImageUrl ||
-                                            !anime.coverImageUrl
-                                                ? " display-none"
-                                                : "")}
-                                        on:error={(e) => {
-                                            addClass(e.target, "display-none");
-                                        }}
-                                        on:click={() => {
-                                            window.setShouldGoBack(false);
-                                            fullImagePopup =
-                                                anime.bannerImageUrl;
-                                            fullDescriptionPopup = null;
-                                        }}
-                                        on:keydown={(e) => {
-                                            window.setShouldGoBack(false);
-                                            if (e.key === "Enter") {
-                                                fullImagePopup =
-                                                    anime.bannerImageUrl;
-                                                fullDescriptionPopup = null;
-                                            }
-                                        }}
-                                    />
-                                    <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
-                                    <img
-                                        loading="lazy"
-                                        width="440px"
-                                        height="210px"
-                                        src={anime.trailerThumbnailUrl || ""}
-                                        alt={(getTitle(anime?.title) || "") +
-                                            " Thumbnail"}
-                                        tabindex={anime.isSeenMore ? "0" : "-1"}
-                                        class={"extra-bannerImg" +
-                                            (!anime.trailerThumbnailUrl ||
-                                            (!anime.coverImageUrl &&
-                                                !anime.bannerImageUrl)
-                                                ? " display-none"
-                                                : "")}
-                                        on:error={(e) => {
-                                            addClass(e.target, "display-none");
-                                        }}
-                                        on:click={() => {
-                                            window.setShouldGoBack(false);
-                                            fullImagePopup =
-                                                anime.trailerThumbnailUrl;
-                                            fullDescriptionPopup = null;
-                                        }}
-                                        on:keydown={(e) => {
-                                            window.setShouldGoBack(false);
-                                            if (e.key === "Enter") {
-                                                fullImagePopup =
-                                                    anime.trailerThumbnailUrl;
-                                                fullDescriptionPopup = null;
-                                            }
-                                        }}
-                                    />
                                 </div>
                             </div>
                             <div class="footer">
@@ -2278,7 +2243,7 @@
                                     ><i class="fa-brands fa-youtube" /> YouTube</button
                                 >
                                 <button
-                                    class={anime.isSeenMore
+                                    class={checkHeight(null, animeIdx)
                                         ? "openanilist"
                                         : "expand"}
                                     style:overflow={$popupIsGoingBack
@@ -2297,7 +2262,7 @@
                                                 openInAnilist(anime.animeUrl);
                                             } else {
                                                 anime.isSeenMore = true;
-                                                event.preventDefault();
+                                                e.preventDefault();
                                             }
                                         }
                                     }}
@@ -2826,20 +2791,6 @@
         border-radius: 6px;
         background-color: #000;
     }
-    .extra-bannerImg {
-        width: 100%;
-        object-fit: cover;
-        -o-object-fit: cover;
-        transform: translateZ(0);
-        -webkit-transform: translateZ(0);
-        -ms-transform: translateZ(0);
-        -moz-transform: translateZ(0);
-        -o-transform: translateZ(0);
-        border-radius: 6px;
-        user-select: none;
-        cursor: pointer;
-        background-color: #000;
-    }
     .coverImg.display-none + .anime-description-wrapper {
         height: unset;
         max-height: 210px;
@@ -3031,6 +2982,13 @@
         }
     }
 
+    @media screen and (max-width: 225px) {
+        .autoplay-label,
+        .list-update-label,
+        .banner-image-label {
+            display: none !important;
+        }
+    }
     @media screen and (max-width: 319px) {
         .info-profile {
             flex-wrap: wrap;
@@ -3134,7 +3092,7 @@
     }
 
     .list-update-container,
-    .youtube-direct-container {
+    .banner-image-button {
         display: flex;
         align-items: center;
         gap: 6px;
@@ -3142,14 +3100,14 @@
         cursor: pointer;
     }
     .list-update-icon,
-    .youtube-direct-icon {
+    .banner-image-icon {
         font-size: 1.4rem;
         max-height: 0.9em;
         cursor: pointer;
     }
 
     .list-update-label,
-    .youtube-direct-label {
+    .banner-image-label {
         height: 14px;
         line-height: 14px;
         font-weight: 500;
@@ -3178,6 +3136,7 @@
         position: relative;
         display: inline-block;
         width: 4rem;
+        min-width: 4rem;
         height: 20px;
     }
 
