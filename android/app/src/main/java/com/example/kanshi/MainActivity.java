@@ -66,7 +66,7 @@ import androidx.core.content.FileProvider;
 import androidx.core.splashscreen.SplashScreen;
 
 public class MainActivity extends AppCompatActivity {
-    public final int appID = 141;
+    public final int appID = 142;
     public boolean webViewIsLoaded = false;
     public boolean permissionIsAsked = false;
     public SharedPreferences prefs;
@@ -414,6 +414,9 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         isInApp = false;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            webView.getSettings().setOffscreenPreRaster(false);
+        }
         super.onPause();
         webView.post(() -> webView.loadUrl("javascript:" +
             "window?.returnedAppIsVisible?.(false);" // Should Be Runned First
@@ -423,6 +426,9 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         isInApp = true;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            webView.getSettings().setOffscreenPreRaster(true);
+        }
         if (webViewIsLoaded) {
             overridePendingTransition(R.anim.left_to_center, R.anim.center_to_right);
         }

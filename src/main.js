@@ -7,5 +7,4 @@ import './css/font-awesome-pro-6.4.0.min.css';
 const app = new App({
 	target: document.body
 });
-
 export default app;

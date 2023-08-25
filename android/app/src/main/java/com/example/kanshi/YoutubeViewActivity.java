@@ -79,7 +79,6 @@ public class YoutubeViewActivity extends AppCompatActivity {
                     }
             );
 
-
     @SuppressLint({"SetJavaScriptEnabled", "RestrictedApi", "ClickableViewAccessibility"})
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -224,11 +223,11 @@ public class YoutubeViewActivity extends AppCompatActivity {
         webSettings.setCacheMode(WebSettings.LOAD_DEFAULT);
         webSettings.setAllowUniversalAccessFromFileURLs(true);
         webSettings.setMediaPlaybackRequiresUserGesture(true);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            webSettings.setForceDark(WebSettings.FORCE_DARK_ON);
-        }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             webSettings.setOffscreenPreRaster(true);
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            webSettings.setAlgorithmicDarkeningAllowed(true);
         }
         // Set WebView Configs
         webView.setVerticalScrollBarEnabled(false);
@@ -352,6 +351,9 @@ public class YoutubeViewActivity extends AppCompatActivity {
         if (MainActivity.getInstanceActivity()!=null) {
             MainActivity.getInstanceActivity().isInApp = true;
         }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            webView.getSettings().setOffscreenPreRaster(true);
+        }
         if (webViewIsLoaded) {
             overridePendingTransition(R.anim.left_to_center, R.anim.center_to_right);
         }
@@ -366,6 +368,9 @@ public class YoutubeViewActivity extends AppCompatActivity {
             MainActivity.getInstanceActivity().isInApp = false;
         }
         autoPlayVideo(webView);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            webView.getSettings().setOffscreenPreRaster(false);
+        }
         webView.onPause();
         webView.pauseTimers();
         super.onPause();

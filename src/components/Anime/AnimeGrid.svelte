@@ -23,9 +23,7 @@
     } from "../../js/globalValues.js";
     import {
         addClass,
-        formatNumber,
         isJsonObject,
-        ncsCompare,
         removeClass,
         getLocalStorage,
     } from "../../js/others/helper.js";
@@ -267,104 +265,6 @@
         if (openOptionTimeout) clearTimeout(openOptionTimeout);
     }
 
-    function getBriefInfo({
-        contentCaution,
-        sortedFavoriteContents,
-        meanScoreAll,
-        meanScoreAbove,
-        score,
-    }) {
-        let _sortedFavoriteContents = [];
-        sortedFavoriteContents?.forEach((e) => {
-            if (typeof e === "string") {
-                _sortedFavoriteContents.push(e);
-            }
-        });
-        let _contentCaution = [];
-        if (score < meanScoreAll) {
-            // Very Low Score
-            _contentCaution.push(
-                `Very Low Score (mean: ${formatNumber(meanScoreAll)})`
-            );
-        } else if (score < meanScoreAbove) {
-            // Low Score
-            _contentCaution.push(
-                `Low Score (mean: ${formatNumber(meanScoreAbove)})`
-            );
-        }
-        _contentCaution = _contentCaution
-            .concat(contentCaution?.caution || [])
-            .concat(contentCaution?.semiCaution || []);
-        let briefInfo = "";
-        if (_sortedFavoriteContents.length) {
-            briefInfo +=
-                "Favorite Contents: " + _sortedFavoriteContents.join(", ") ||
-                "";
-        }
-        if (_contentCaution.length) {
-            briefInfo += "\n\nContent Cautions: " + _contentCaution.join(", ");
-        }
-        return briefInfo;
-    }
-
-    function getShownScore({ weightedScore, score, averageScore, userScore }) {
-        let sortName =
-            $filterOptions?.sortFilter?.filter(
-                ({ sortType }) => sortType !== "none"
-            )?.[0]?.sortName || "weighted score";
-        if (sortName === "score") {
-            return formatNumber(score);
-        } else if (sortName === "user score") {
-            return userScore;
-        } else if (sortName === "average score") {
-            return averageScore;
-        } else {
-            return formatNumber(weightedScore);
-        }
-    }
-
-    function getCautionColor({
-        contentCaution,
-        meanScoreAll,
-        meanScoreAbove,
-        score,
-    }) {
-        if (contentCaution?.caution?.length) {
-            // Caution
-            return "red";
-        } else if (contentCaution?.semiCaution?.length) {
-            // Semi Caution
-            return "teal";
-        } else if (score < meanScoreAll) {
-            // Very Low Score
-            return "purple";
-        } else if (score < meanScoreAbove) {
-            // Low Score
-            return "orange";
-        } else {
-            return "green";
-        }
-    }
-
-    function getUserStatusColor(userStatus) {
-        if (ncsCompare(userStatus, "completed")) {
-            return "green";
-        } else if (
-            ncsCompare(userStatus, "current") ||
-            ncsCompare(userStatus, "repeating")
-        ) {
-            return "blue";
-        } else if (ncsCompare(userStatus, "planning")) {
-            return "orange";
-        } else if (ncsCompare(userStatus, "paused")) {
-            return "peach";
-        } else if (ncsCompare(userStatus, "dropped")) {
-            return "red";
-        } else {
-            return "lightgrey"; // Default Unwatched Icon Color
-        }
-    }
-
     function getFinishedEpisode(episodes, nextAiringEpisode) {
         let timeDifMS;
         let nextEpisode;
@@ -420,15 +320,6 @@
             inline: "start",
         });
     }
-    function getTitle(title) {
-        return (
-            title?.english ||
-            title?.userPreferred ||
-            title?.romaji ||
-            title?.native ||
-            ""
-        );
-    }
 
     let scrollingToBottom;
 </script>
@@ -465,7 +356,7 @@
                 <div
                     class="image-grid__card"
                     bind:this={anime.gridElement}
-                    title={getBriefInfo(anime)}
+                    title={anime?.briefInfo || ""}
                 >
                     <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                     <div
@@ -478,58 +369,57 @@
                         on:keydown={(e) =>
                             e.key === "Enter" && handleOpenPopup(animeIdx)}
                     >
-                        <img
-                            loading={animeIdx > numberOfLoadedGrid
-                                ? "lazy"
-                                : "eager"}
-                            class={"image-grid__card-thumb  fade-out"}
-                            alt={(getTitle(anime?.title) || "") + " Cover"}
-                            src={anime.coverImageUrl || ""}
-                            width="180px"
-                            height="254.531px"
-                            on:load={(e) => {
-                                removeClass(e.target, "fade-out");
-                                addClass(
-                                    e.target?.closest?.(".shimmer"),
-                                    "loaded"
-                                );
-                            }}
-                            on:error={(e) => {
-                                addClass(e.target, "fade-out");
-                                addClass(e.target, "display-none");
-                            }}
-                        />
+                        {#if anime?.coverImageUrl || anime?.bannerImageUrl || anime?.trailerThumbnailUrl}
+                            <img
+                                fetchpriority={animeIdx > numberOfLoadedGrid
+                                    ? ""
+                                    : "high"}
+                                loading={animeIdx > numberOfLoadedGrid
+                                    ? "lazy"
+                                    : "eager"}
+                                class={"image-grid__card-thumb  fade-out"}
+                                alt={(anime?.shownTitle || "") + " Cover"}
+                                src={anime?.coverImageUrl ||
+                                    anime?.bannerImageUrl ||
+                                    anime?.trailerThumbnailUrl ||
+                                    ""}
+                                width="180px"
+                                height="254.531px"
+                                on:load={(e) => {
+                                    removeClass(e.target, "fade-out");
+                                    addClass(
+                                        e.target?.closest?.(".shimmer"),
+                                        "loaded"
+                                    );
+                                }}
+                                on:error={(e) => {
+                                    addClass(e.target, "fade-out");
+                                    addClass(e.target, "display-none");
+                                }}
+                            />
+                        {/if}
                         <span class="image-grid__card-title">
                             <span
                                 class="title copy"
-                                copy-value={getTitle(anime?.title) || ""}
-                                >{getTitle(anime?.title) || "N/A"}</span
+                                copy-value={anime?.shownTitle || ""}
+                                >{anime?.shownTitle || "N/A"}</span
                             >
                             <span
                                 class="brief-info-wrapper copy"
-                                copy-value={getTitle(anime?.title) || ""}
+                                copy-value={anime?.shownTitle || ""}
                             >
-                                <div
-                                    class="brief-info"
-                                    date={JSON.stringify(
-                                        anime?.nextAiringEpisode
-                                    )}
-                                >
+                                <div class="brief-info">
                                     <span>
                                         <i
-                                            class={`${getUserStatusColor(
-                                                anime.userStatus
-                                            )}-color fa-solid fa-circle`}
+                                            class={`${anime?.userStatusColor}-color fa-solid fa-circle`}
                                         />
                                         {#if isJsonObject(anime?.nextAiringEpisode)}
+                                            {`${anime.format || "N/A"}`}
                                             {#key date?.getSeconds?.() || 1}
-                                                {`${
-                                                    anime.format || "N/A"
-                                                }${getFinishedEpisode(
+                                                {getFinishedEpisode(
                                                     anime.episodes,
                                                     anime.nextAiringEpisode
                                                 )}
-                                        `}
                                             {/key}
                                         {:else}
                                             {`${anime.format || "N/A"}${
@@ -543,16 +433,13 @@
                                 <div class="brief-info">
                                     <span>
                                         <i
-                                            class={`${getCautionColor(
-                                                anime
-                                            )}-color fa-solid fa-star`}
+                                            class={`${anime?.contentCautionColor}-color fa-solid fa-star`}
                                         />
                                         {#if $filterOptions}
-                                            {getShownScore(anime) || "N/A"}
+                                            {anime?.shownScore || "N/A"}
                                         {:else}
-                                            {formatNumber(
-                                                anime.weightedScore
-                                            ) || "N/A"}
+                                            {anime?.formattedWeightedScore ||
+                                                "N/A"}
                                         {/if}
                                     </span>
                                 </div>
