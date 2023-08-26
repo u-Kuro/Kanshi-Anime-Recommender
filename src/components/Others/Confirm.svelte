@@ -1,5 +1,5 @@
 <script>
-    import { fly } from "svelte/transition";
+    import { fade } from "svelte/transition";
     import { createEventDispatcher, afterUpdate } from "svelte";
     import { popupVisible } from "../../js/globalValues";
 
@@ -64,10 +64,7 @@
             class="confirm-wrapper"
             style:--height={$popupVisible ? "calc(100% + 1px)" : "100%"}
         >
-            <div
-                class="confirm-container"
-                transition:fly={{ y: 20, duration: 200 }}
-            >
+            <div class="confirm-container" out:fade={{ duration: 200 }}>
                 <div class="confirm-info-container">
                     <h2 class="confirm-title">{confirmTitle}</h2>
                     <h2 class="confirm-text">
@@ -139,6 +136,7 @@
     }
 
     .confirm-container {
+        animation: fadeIn 0.2s ease;
         display: grid;
         grid-template-rows: auto 20px;
         background-color: #151f2e;

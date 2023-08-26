@@ -19,7 +19,8 @@
         importantLoad,
         checkAnimeLoaderStatus,
         gridFullView,
-        numberOfNextLoadedGrid,
+        mostRecentAiringDateTimeout,
+        earlisetReleaseDate,
     } from "../../js/globalValues.js";
     import {
         addClass,
@@ -27,18 +28,16 @@
         removeClass,
         getLocalStorage,
     } from "../../js/others/helper.js";
-    import { fly } from "svelte/transition";
+    import { fade } from "svelte/transition";
 
     let windowHeight = Math.max(
         window.visualViewport.height,
         window.innerHeight
     );
-    let date = new Date();
     let animeGridEl;
     let isRunningIntersectEvent;
     let numberOfLoadedGrid = 13;
-    let observerDelay = 1000,
-        loadingMore = false;
+    let observerDelay = 16;
 
     function addLastAnimeObserver() {
         isRunningIntersectEvent = false;
@@ -47,7 +46,6 @@
                 if ($shownAllInList) return;
                 entries.forEach((entry) => {
                     if (entry.isIntersecting) {
-                        loadingMore = true;
                         if (isRunningIntersectEvent) return;
                         isRunningIntersectEvent = true;
                         setTimeout(() => {
@@ -83,9 +81,6 @@
                 window.innerHeight
             );
         });
-        setInterval(() => {
-            date = new Date();
-        }, 1000);
     });
 
     let animeLoaderIsAlivePromise,
@@ -128,14 +123,32 @@
                 }
                 await tick();
                 if (data?.status !== undefined) $dataStatus = data.status;
-                else if (data.finalAnimeList instanceof Array) {
+                else if (data.getEarlisetReleaseDate === true) {
+                    if (
+                        data.earliestReleaseDate &&
+                        data?.timeBeforeEarliestReleaseDate > 0 &&
+                        (data.earliestReleaseDate < $earlisetReleaseDate ||
+                            new Date($earlisetReleaseDate) < new Date() ||
+                            !$earlisetReleaseDate)
+                    ) {
+                        $earlisetReleaseDate = data.earliestReleaseDate;
+                        clearTimeout($mostRecentAiringDateTimeout);
+                        $mostRecentAiringDateTimeout = setTimeout(() => {
+                            if ($animeLoaderWorker instanceof Worker) {
+                                $checkAnimeLoaderStatus().then(() => {
+                                    $animeLoaderWorker?.postMessage?.({
+                                        getEarlisetReleaseDate: true,
+                                    });
+                                });
+                            }
+                        }, Math.min(data.timeBeforeEarliestReleaseDate, 2000000000));
+                    }
+                } else if (data.finalAnimeList instanceof Array) {
                     if (data?.reload === true) {
                         $finalAnimeList = data.finalAnimeList;
                         isAsyncLoad = true;
-                        $numberOfNextLoadedGrid = data.numberOfNextLoadedGrid;
                     } else if (data.isNew === true) {
                         $finalAnimeList = data.finalAnimeList;
-                        $numberOfNextLoadedGrid = data.numberOfNextLoadedGrid;
                     } else if (data.isNew === false) {
                         if ($finalAnimeList instanceof Array) {
                             $finalAnimeList = $finalAnimeList.concat(
@@ -152,8 +165,10 @@
                                 }
                             }
                         }
-                        $numberOfNextLoadedGrid = data.numberOfNextLoadedGrid;
                     }
+                    val?.postMessage?.({
+                        getEarlisetReleaseDate: true,
+                    });
                 } else if (
                     data.isRemoved === true &&
                     typeof data.removedID === "number"
@@ -178,13 +193,18 @@
                         $animeIdxRemoved = null;
                         $animeIdxRemoved = removedIdx;
                     }
-                    $numberOfNextLoadedGrid = data.numberOfNextLoadedGrid;
+                    val?.postMessage?.({
+                        getEarlisetReleaseDate: true,
+                    });
                 }
             };
             val.onerror = (error) => {
                 $dataStatus = "Something went wrong...";
                 console.error(error);
             };
+            val?.postMessage?.({
+                getEarlisetReleaseDate: true,
+            });
         }
     });
 
@@ -207,19 +227,12 @@
                 if (gridElement instanceof Element) {
                     $animeObserver.observe(gridElement);
                 }
-                document
-                    .querySelectorAll(".anime-loaded-padding")
-                    .forEach((item) => {
-                        $animeObserver.observe(item);
-                    });
             }
             if (isAsyncLoad) {
                 $asyncAnimeReloaded = !$asyncAnimeReloaded;
                 isAsyncLoad = false;
             }
-            loadingMore = false;
         } else {
-            $numberOfNextLoadedGrid = null;
             if ($animeObserver) {
                 $animeObserver?.disconnect?.();
                 $animeObserver = null;
@@ -228,7 +241,6 @@
                 $asyncAnimeReloaded = !$asyncAnimeReloaded;
                 isAsyncLoad = false;
             }
-            loadingMore = false;
         }
     });
 
@@ -322,23 +334,19 @@
     }
 
     let scrollingToBottom;
+    $: isFullViewed =
+        $gridFullView ?? getLocalStorage("gridFullView") ?? !$android;
 </script>
 
-<main
-    class={$gridFullView ?? getLocalStorage("gridFullView") ?? !$android
-        ? "fullView"
-        : ""}
->
+<main class={isFullViewed ? "fullView" : ""}>
     <div
         id="anime-grid"
         class={"image-grid " +
-            ($gridFullView ?? getLocalStorage("gridFullView") ?? !$android
-                ? "fullView"
-                : "") +
+            (isFullViewed ? " fullView" : "") +
             ($finalAnimeList?.length === 0 && !$initData ? "empty" : "")}
         bind:this={animeGridEl}
         on:wheel={(e) => {
-            if ($gridFullView ?? getLocalStorage("gridFullView") ?? !$android) {
+            if (isFullViewed) {
                 horizontalWheel(e, "image-grid");
                 if (!scrollingToBottom) {
                     scrollingToBottom = true;
@@ -352,7 +360,7 @@
         style:--anime-grid-height={windowHeight + "px"}
     >
         {#if $finalAnimeList?.length}
-            {#each $finalAnimeList || [] as anime, animeIdx (anime.id)}
+            {#each $finalAnimeList || [] as anime, animeIdx (anime?.id || {})}
                 <div
                     class="image-grid__card"
                     bind:this={anime.gridElement}
@@ -415,7 +423,7 @@
                                         />
                                         {#if isJsonObject(anime?.nextAiringEpisode)}
                                             {`${anime.format || "N/A"}`}
-                                            {#key date?.getSeconds?.() || 1}
+                                            {#key $earlisetReleaseDate || 1}
                                                 {getFinishedEpisode(
                                                     anime.episodes,
                                                     anime.nextAiringEpisode
@@ -448,19 +456,7 @@
                     </div>
                 </div>
             {/each}
-            {#each Array($numberOfNextLoadedGrid ?? numberOfLoadedGrid) as _}
-                <div
-                    class={"image-grid__card skeleton anime-loaded-padding " +
-                        ($finalAnimeList?.length &&
-                        !$shownAllInList &&
-                        loadingMore
-                            ? ""
-                            : "disable-interaction")}
-                >
-                    <div class="shimmer" />
-                </div>
-            {/each}
-            {#each Array($gridFullView ?? getLocalStorage("gridFullView") ?? !$android ? Math.floor((windowHeight ?? 1100) / 220) : 5) as _}
+            {#each Array(isFullViewed ? Math.floor((windowHeight ?? 1100) / 220) : 5) as _}
                 <div class="image-grid__card" />
             {/each}
         {:else if !$finalAnimeList || $initData}
@@ -483,7 +479,7 @@
             tabindex="0"
             on:click={goBackGrid}
             on:keydown={(e) => e.key === "Enter" && goBackGrid(e)}
-            transition:fly={{ x: -50, duration: 200 }}
+            out:fade={{ duration: 200 }}
         >
             <i class="fa-solid fa-arrow-left" />
         </div>
@@ -598,7 +594,7 @@
     }
 
     .image-grid__card {
-        animation: fadeIn 0.2s ease-in;
+        animation: fadeIn 0.2s ease;
         width: 100%;
         height: var(--popup-content-height);
         display: grid;
@@ -607,10 +603,8 @@
     }
     .image-grid__card.fullView:empty {
         height: 0px !important;
-        /* width: 0px !important; */
     }
     .image-grid__card:not(.fullView):empty {
-        /* height: 0px !important; */
         width: 0px !important;
     }
     :global(.image-grid__card.hidden > .shimmer),
@@ -720,6 +714,7 @@
     }
 
     .go-back-grid {
+        animation: fadeIn 0.2s ease;
         position: absolute;
         display: flex;
         justify-content: center;
@@ -809,27 +804,5 @@
         .image-grid {
             justify-content: space-evenly;
         }
-    }
-    .disable-interaction {
-        pointer-events: none !important;
-        position: fixed !important;
-        transform: translateY(-99999px) translateZ(0) !important;
-        -webkit-transform: translateY(-99999px) translateZ(0) !important;
-        -ms-transform: translateY(-99999px) translateZ(0) !important;
-        -moz-transform: translateY(-99999px) translateZ(0) !important;
-        -o-transform: translateY(-99999px) translateZ(0) !important;
-        user-select: none !important;
-        touch-action: none !important;
-        cursor: not-allowed !important;
-        -webkit-user-drag: none !important;
-        -moz-user-select: none !important;
-        -ms-user-select: none !important;
-        height: 0 !important;
-        width: 0 !important;
-        max-width: 0 !important;
-        max-height: 0 !important;
-        min-width: 0 !important;
-        min-height: 0 !important;
-        overflow: hidden !important;
     }
 </style>

@@ -2,7 +2,7 @@
 	import getWebVersion from "./version";
 	import C from "./components/index.js";
 	import { onMount, tick } from "svelte";
-	import { fade, fly } from "svelte/transition";
+	import { fade } from "svelte/transition";
 	import { inject } from "@vercel/analytics";
 	import { retrieveJSON, saveJSON } from "./js/indexedDB.js";
 	import {
@@ -45,7 +45,6 @@
 		runIsScrolling,
 		confirmPromise,
 		hasWheel,
-		numberOfNextLoadedGrid,
 		progress,
 		popupIsGoingBack,
 		// anilistAccessToken,
@@ -319,8 +318,6 @@
 							if (data?.isNew) {
 								$finalAnimeList = data.finalAnimeList;
 								$hiddenEntries = data.hiddenEntries;
-								$numberOfNextLoadedGrid =
-									data.numberOfNextLoadedGrid;
 								$dataStatus = null;
 								checkAutoFunctions(true);
 								$initData = false;
@@ -432,7 +429,6 @@
 				if (data?.isNew) {
 					$finalAnimeList = data.finalAnimeList;
 					$hiddenEntries = data.hiddenEntries;
-					$numberOfNextLoadedGrid = data.numberOfNextLoadedGrid;
 				}
 				$dataStatus = null;
 				return;
@@ -494,7 +490,6 @@
 					if (data?.isNew) {
 						$finalAnimeList = data.finalAnimeList;
 						$hiddenEntries = data.hiddenEntries;
-						$numberOfNextLoadedGrid = data.numberOfNextLoadedGrid;
 					}
 					$dataStatus = null;
 					return;
@@ -535,7 +530,7 @@
 							checkAutoFunctions();
 						}
 					}, hourINMS);
-				}, timeLeft);
+				}, Math.min(timeLeft, 2000000000));
 			}
 		} else if (val === false) {
 			if ($autoUpdateInterval) clearInterval($autoUpdateInterval);
@@ -597,7 +592,7 @@
 							checkAutoFunctions();
 						}
 					}, hourINMS);
-				}, timeLeft);
+				}, Math.min(timeLeft, 2000000000));
 			}
 		} else if (val === false) {
 			if ($autoExportInterval) clearInterval($autoExportInterval);
@@ -803,33 +798,43 @@
 	menuVisible.subscribe((val) => {
 		if (val === true) window.setShouldGoBack(false);
 	});
-	window.addEventListener("scroll", () => {
-		if (
-			document.documentElement.scrollTop >
-				Math.max(0, animeGridEl?.offsetTop - 55) &&
-			!willExit
-		)
-			window.setShouldGoBack(false);
-		runIsScrolling.update((e) => !e);
-	});
-	onMount(() => {
-		usernameInputEl = document.getElementById("usernameInput");
-		animeGridEl = document.getElementById("anime-grid");
-		animeGridEl?.addEventListener("scroll", () => {
+	window.addEventListener(
+		"scroll",
+		() => {
 			if (
-				animeGridEl.scrollLeft >
+				document.documentElement.scrollTop >
 					Math.max(0, animeGridEl?.offsetTop - 55) &&
 				!willExit
 			)
 				window.setShouldGoBack(false);
-			if (!$gridFullView) return;
 			runIsScrolling.update((e) => !e);
-		});
-		document
-			.getElementById("popup-container")
-			.addEventListener("scroll", () => {
+		},
+		{ passive: true }
+	);
+	onMount(() => {
+		usernameInputEl = document.getElementById("usernameInput");
+		animeGridEl = document.getElementById("anime-grid");
+		animeGridEl?.addEventListener(
+			"scroll",
+			() => {
+				if (
+					animeGridEl.scrollLeft >
+						Math.max(0, animeGridEl?.offsetTop - 55) &&
+					!willExit
+				)
+					window.setShouldGoBack(false);
+				if (!$gridFullView) return;
 				runIsScrolling.update((e) => !e);
-			});
+			},
+			{ passive: true }
+		);
+		document.getElementById("popup-container").addEventListener(
+			"scroll",
+			() => {
+				runIsScrolling.update((e) => !e);
+			},
+			{ passive: true }
+		);
 	});
 
 	window.setShouldGoBack = (_shouldGoBack) => {
@@ -992,7 +997,6 @@
 					if (data?.isNew) {
 						$finalAnimeList = data.finalAnimeList;
 						$hiddenEntries = data.hiddenEntries;
-						$numberOfNextLoadedGrid = data.numberOfNextLoadedGrid;
 					}
 					$dataStatus = null;
 					return;
@@ -1079,7 +1083,7 @@
 			tabindex="0"
 			on:click={updateList}
 			on:keydown={(e) => e.key === "Enter" && updateList(e)}
-			transition:fly={{ x: 50, duration: 200 }}
+			out:fade={{ duration: 200 }}
 		>
 			<i class="list-update-icon fa-solid fa-arrows-rotate" />
 			<h3 class="list-update-label">List Update</h3>
@@ -1115,6 +1119,7 @@
 		transition: transform 0.3s linear;
 	}
 	.list-update-container {
+		animation: fadeIn 0.2s ease;
 		position: fixed;
 		bottom: 3em;
 		right: 3em;

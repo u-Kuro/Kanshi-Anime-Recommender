@@ -1,11 +1,11 @@
 import { get } from "svelte/store"
-import { android, appID } from "./globalValues"
+import { appID } from "./globalValues"
 import getWebVersion from "../version"
 let loadedUrls = {}
 
 const cacheRequest = (url) => {
     return new Promise(async (resolve) => {
-        if (get(android)) {
+        if (typeof window !== "undefined" && window.location.protocol.includes('file')) {
             resolve(url)
         } else {
             let _appID = get(appID)
@@ -21,13 +21,13 @@ const cacheRequest = (url) => {
                     headers: {
                         'Cache-Control': 'max-age=31536000, immutable'
                     }
-                }).then(response => response.blob())
+                }).then(async response => await response.blob())
                     .then(blob => {
-                        let bloburl = URL.createObjectURL(blob);
-                        loadedUrls[url] = bloburl
-                        resolve(bloburl);
+                        let blobUrl = URL.createObjectURL(blob);
+                        loadedUrls[url] = blobUrl
+                        resolve(blobUrl)
                     })
-                    .catch(async () => {
+                    .catch(() => {
                         resolve(url)
                     })
             }

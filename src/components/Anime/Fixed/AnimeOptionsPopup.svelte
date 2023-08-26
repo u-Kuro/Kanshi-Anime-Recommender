@@ -1,5 +1,5 @@
 <script>
-    import { fly } from "svelte/transition";
+    import { fade } from "svelte/transition";
     import {
         android,
         animeOptionVisible,
@@ -188,10 +188,7 @@
         on:touchend|passive={handleTouchAnimeOptionVisibility}
         on:keydown={(e) => e.key === "Enter" && handleAnimeOptionVisibility(e)}
     >
-        <div
-            class="anime-options-container"
-            transition:fly={{ y: 20, duration: 100 }}
-        >
+        <div class="anime-options-container" out:fade={{ duration: 200 }}>
             <div class="option-header">
                 <span class="anime-title"><h1>{animeTitle}</h1></span>
                 <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
@@ -276,6 +273,7 @@
     }
 
     .anime-options-container {
+        animation: fadeIn 0.2s ease;
         display: flex;
         flex-direction: column;
         background-color: #151f2e;

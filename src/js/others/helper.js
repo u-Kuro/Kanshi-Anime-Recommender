@@ -478,7 +478,6 @@ const setLocalStorage = (key, data) => {
     localStorage.setItem(LocalStorageID + key, data)
   } catch (ex) { }
 }
-
 export {
   setLocalStorage,
   getLocalStorage,

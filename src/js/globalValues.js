@@ -36,6 +36,8 @@ const autoPlay = writable(getLocalStorage('autoPlay') || null)
 const initData = writable(true)
 const gridFullView = writable(getLocalStorage('gridFullView') || null)
 
+const mostRecentAiringDateTimeout = writable(null)
+const earlisetReleaseDate = writable(null)
 const checkAnimeLoaderStatus = writable(false)
 const animeObserver = writable(null)
 const animeIdxRemoved = writable(null)
@@ -93,6 +95,8 @@ export {
     autoPlay,
     initData,
     gridFullView,
+    mostRecentAiringDateTimeout,
+    earlisetReleaseDate,
     checkAnimeLoaderStatus,
     animeObserver,
     shownAllInList,

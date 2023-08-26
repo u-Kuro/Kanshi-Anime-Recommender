@@ -19,15 +19,14 @@
         updateFilters,
         isImporting,
         hiddenEntries,
-        numberOfNextLoadedGrid,
     } from "../../js/globalValues.js";
-    import { fade, fly } from "svelte/transition";
+    import { fade } from "svelte/transition";
     import {
         addClass,
         changeInputValue,
         dragScroll,
         removeClass,
-        getLocalStorage
+        getLocalStorage,
     } from "../../js/others/helper.js";
     import {
         animeLoader,
@@ -37,8 +36,11 @@
 
     let Init = true;
 
-    let windowWidth = Math.max(window.visualViewport.width,window.innerWidth);
-    let windowHeight = Math.max(window.visualViewport.height,window.innerHeight);
+    let windowWidth = Math.max(window.visualViewport.width, window.innerWidth);
+    let windowHeight = Math.max(
+        window.visualViewport.height,
+        window.innerHeight
+    );
     let maxFilterSelectionHeight = windowHeight * 0.3;
 
     let selectedFilterTypeElement;
@@ -63,6 +65,29 @@
     ];
     let isUpdatingRec = false,
         isLoadingAnime = false;
+
+    let scrollingToTop,
+        activeTagFiltersArrays,
+        selectedFilterSelectionIdx,
+        selectedFilterSelectionName,
+        selectedSortIdx,
+        selectedSort,
+        selectedSortName,
+        selectedSortType;
+    $: selectedFilterSelectionIdx = $filterOptions?.filterSelection?.findIndex(
+        ({ isSelected }) => isSelected
+    );
+    $: selectedFilterSelectionName =
+        $filterOptions?.filterSelection?.[selectedFilterSelectionIdx]
+            ?.filterSelectionName;
+    $: activeTagFiltersArrays =
+        $activeTagFilters?.[selectedFilterSelectionName] || [];
+    $: selectedSortIdx = $filterOptions?.sortFilter?.findIndex(
+        ({ sortType }) => sortType !== "none"
+    );
+    $: selectedSort = $filterOptions?.sortFilter?.[selectedSortIdx];
+    $: selectedSortName = selectedSort?.sortName;
+    $: selectedSortType = selectedSort?.sortType;
 
     async function saveFilters(changeName) {
         if ($initData) return;
@@ -96,7 +121,6 @@
                 if (data?.isNew) {
                     $finalAnimeList = data.finalAnimeList;
                     $hiddenEntries = data.hiddenEntries;
-                    $numberOfNextLoadedGrid = data.numberOfNextLoadedGrid;
                 }
                 $dataStatus = null;
                 return;
@@ -140,15 +164,16 @@
     }
 
     function windowResized() {
-        windowHeight = Math.max(window.visualViewport.height,window.innerHeight);
+        windowHeight = Math.max(
+            window.visualViewport.height,
+            window.innerHeight
+        );
         maxFilterSelectionHeight = windowHeight * 0.3;
-        windowWidth = Math.max(window.visualViewport.width,window.innerWidth);
+        windowWidth = Math.max(window.visualViewport.width, window.innerWidth);
     }
     async function handleFilterTypes(newFilterTypeName) {
         if ($initData) return pleaseWaitAlert();
-        let idxTypeSelected = $filterOptions?.filterSelection.findIndex(
-            ({ isSelected }) => isSelected
-        );
+        let idxTypeSelected = selectedFilterSelectionIdx;
         let nameTypeSelected =
             $filterOptions?.filterSelection?.[idxTypeSelected]
                 .filterSelectionName;
@@ -230,9 +255,7 @@
         let element = event.target;
         let filSelectEl = element.closest(".filter-select");
         if (filSelectEl === selectedFilterElement) return;
-        let idxTypeSelected = $filterOptions?.filterSelection?.findIndex(
-            ({ isSelected }) => isSelected
-        );
+        let idxTypeSelected = selectedFilterSelectionIdx;
         if (selectedFilterElement instanceof Element) {
             let filterSelectChildrenArray = Array.from(
                 selectedFilterElement.parentElement.children
@@ -267,9 +290,7 @@
         selectedFilterElement = filSelectEl;
     }
     function closeFilterSelect(dropDownIdx) {
-        let idxTypeSelected = $filterOptions?.filterSelection?.findIndex(
-            ({ isSelected }) => isSelected
-        );
+        let idxTypeSelected = selectedFilterSelectionIdx;
         $filterOptions.filterSelection[idxTypeSelected].filters.Dropdown[
             dropDownIdx
         ].selected = false;
@@ -301,9 +322,7 @@
             // Close Sort Filter Dropdown
             selectedSortElement = false;
             // Close Filter Selection Dropdown
-            let idxTypeSelected = $filterOptions?.filterSelection?.findIndex(
-                ({ isSelected }) => isSelected
-            );
+            let idxTypeSelected = selectedFilterSelectionIdx;
             $filterOptions?.filterSelection?.[
                 idxTypeSelected
             ].filters.Dropdown.forEach((e) => {
@@ -358,10 +377,7 @@
                     removeClass(highlightedEl, "highlight");
                     highlightedEl = null;
                 }
-                let idxTypeSelected =
-                    $filterOptions?.filterSelection?.findIndex(
-                        ({ isSelected }) => isSelected
-                    );
+                let idxTypeSelected = selectedFilterSelectionIdx;
                 $filterOptions?.filterSelection?.[
                     idxTypeSelected
                 ].filters.Dropdown.forEach((e) => {
@@ -382,9 +398,7 @@
         filterSelectionName
     ) {
         if ($initData) return pleaseWaitAlert();
-        let idxTypeSelected = $filterOptions?.filterSelection?.findIndex(
-            ({ isSelected }) => isSelected
-        );
+        let idxTypeSelected = selectedFilterSelectionIdx;
         let nameTypeSelected =
             $filterOptions?.filterSelection?.[idxTypeSelected]
                 .filterSelectionName;
@@ -503,9 +517,7 @@
             return;
         }
         // Prevent Default
-        let idxTypeSelected = $filterOptions?.filterSelection?.findIndex(
-            ({ isSelected }) => isSelected
-        );
+        let idxTypeSelected = selectedFilterSelectionIdx;
         let nameTypeSelected =
             $filterOptions?.filterSelection?.[idxTypeSelected]
                 .filterSelectionName;
@@ -560,9 +572,7 @@
         filterSelectionName
     ) {
         if ($initData) return pleaseWaitAlert();
-        let idxTypeSelected = $filterOptions?.filterSelection?.findIndex(
-            ({ isSelected }) => isSelected
-        );
+        let idxTypeSelected = selectedFilterSelectionIdx;
         let nameTypeSelected =
             $filterOptions?.filterSelection?.[idxTypeSelected]
                 .filterSelectionName;
@@ -797,9 +807,7 @@
         optionValue
     ) {
         if ($initData) return pleaseWaitAlert();
-        let idxTypeSelected = $filterOptions?.filterSelection?.findIndex(
-            ({ isSelected }) => isSelected
-        );
+        let idxTypeSelected = selectedFilterSelectionIdx;
         let nameTypeSelected =
             $filterOptions?.filterSelection?.[idxTypeSelected]
                 .filterSelectionName;
@@ -897,9 +905,7 @@
         optionType
     ) {
         if ($initData) return pleaseWaitAlert();
-        let idxTypeSelected = $filterOptions?.filterSelection?.findIndex(
-            ({ isSelected }) => isSelected
-        );
+        let idxTypeSelected = selectedFilterSelectionIdx;
         let nameTypeSelected =
             $filterOptions?.filterSelection?.[idxTypeSelected]
                 .filterSelectionName;
@@ -934,12 +940,15 @@
     }
     async function removeAllActiveTag(event) {
         if ($initData) return pleaseWaitAlert();
-        let idxTypeSelected = $filterOptions?.filterSelection?.findIndex(
-                ({ isSelected }) => isSelected
-            );
-        let nameTypeSelected = $filterOptions?.filterSelection?.[idxTypeSelected].filterSelectionName;
-        let hasActiveFilter = $activeTagFilters?.[nameTypeSelected]?.length
-        if (hasActiveFilter && await $confirmPromise("Do you want to remove all filters?")) {
+        let idxTypeSelected = selectedFilterSelectionIdx;
+        let nameTypeSelected =
+            $filterOptions?.filterSelection?.[idxTypeSelected]
+                .filterSelectionName;
+        let hasActiveFilter = $activeTagFilters?.[nameTypeSelected]?.length;
+        if (
+            hasActiveFilter &&
+            (await $confirmPromise("Do you want to remove all filters?"))
+        ) {
             // Remove Active Number Input
             $filterOptions?.filterSelection?.[idxTypeSelected].filters[
                 "Input Number"
@@ -997,12 +1006,10 @@
     }
     function changeSort(newSortName) {
         if ($initData) return pleaseWaitAlert();
-        let { sortName, sortType } = $filterOptions?.sortFilter?.filter(
-            ({ sortType }) => sortType !== "none"
-        )[0];
-        let idxSortSelected = $filterOptions?.sortFilter?.findIndex(
-            ({ sortType }) => sortType !== "none"
-        );
+        let idxSortSelected = selectedSortIdx;
+        let selectedSortFilter = $filterOptions?.sortFilter?.[idxSortSelected];
+        let sortName = selectedSortFilter?.sortName;
+        let sortType = selectedSortFilter?.sortType;
         if (sortName === newSortName) {
             let newSortType = sortType === "desc" ? "asc" : "desc";
             $filterOptions.sortFilter[idxSortSelected].sortType = newSortType;
@@ -1025,12 +1032,8 @@
     }
     function changeSortType() {
         if ($initData) return pleaseWaitAlert();
-        let { sortType } = $filterOptions?.sortFilter?.filter(
-            ({ sortType }) => sortType !== "none"
-        )[0];
-        let idxSortSelected = $filterOptions?.sortFilter?.findIndex(
-            ({ sortType }) => sortType !== "none"
-        );
+        let idxSortSelected = selectedSortIdx;
+        let sortType = $filterOptions?.sortFilter?.[idxSortSelected]?.sortType;
         if (sortType === "desc") {
             $filterOptions.sortFilter[idxSortSelected].sortType = "asc";
         } else {
@@ -1145,9 +1148,7 @@
                     getComputedStyle(element).position === "fixed")
             )
                 return;
-            let idxTypeSelected = $filterOptions?.filterSelection?.findIndex(
-                ({ isSelected }) => isSelected
-            );
+            let idxTypeSelected = selectedFilterSelectionIdx;
             selectedFilterTypeElement = null;
             selectedSortElement = null;
             if ($filterOptions?.filterSelection?.length > 0) {
@@ -1198,18 +1199,20 @@
     function callAsyncAnimeReload() {
         return new Promise((resolve) => {
             if ($animeLoaderWorker instanceof Worker) {
-                $checkAnimeLoaderStatus().then(() => {
-                    $finalAnimeList = null;
-                    $animeLoaderWorker?.postMessage?.({
-                        reload: true,
+                $checkAnimeLoaderStatus()
+                    .then(() => {
+                        $finalAnimeList = null;
+                        $animeLoaderWorker?.postMessage?.({
+                            reload: true,
+                        });
+                    })
+                    .catch(() => {
+                        $confirmPromise({
+                            isAlert: true,
+                            title: "Something went wrong",
+                            text: "Action failed, please try again.",
+                        });
                     });
-                }).catch(() => {
-                    $confirmPromise({
-                        isAlert: true,
-                        title: "Something went wrong",
-                        text: "Action failed, please try again.",
-                    });
-                });
             }
             asyncAnimeReloadPromise = { resolve };
         });
@@ -1231,7 +1234,7 @@
             (selectedFilterElement ||
                 selectedFilterTypeElement ||
                 selectedSortElement) &&
-                Math.max(window.visualViewport.width,window.innerWidth) <= 425
+            Math.max(window.visualViewport.width, window.innerWidth) <= 425
         );
     };
     function closeDropdown() {
@@ -1245,9 +1248,7 @@
         // Close Sort Filter Dropdown
         selectedSortElement = false;
         // Close Filter Selection Dropdown
-        let idxTypeSelected = $filterOptions?.filterSelection?.findIndex(
-            ({ isSelected }) => isSelected
-        );
+        let idxTypeSelected = selectedFilterSelectionIdx;
         $filterOptions?.filterSelection?.[
             idxTypeSelected
         ].filters.Dropdown.forEach((e) => {
@@ -1262,7 +1263,7 @@
     onMount(() => {
         // Init
         let filterEl = document.getElementById("filters");
-        filterEl.addEventListener("scroll", handleFilterScroll);
+        filterEl.addEventListener("scroll", handleFilterScroll,{passive: true});
         dragScroll(filterEl, "x");
 
         document.addEventListener("keydown", handleDropdownKeyDown);
@@ -1291,21 +1292,14 @@
             element.scrollLeft = Math.max(0, element.scrollLeft + event.deltaY);
         }
     }
-
-    let scrollingToTop;
 </script>
 
-<main
-    id="main-home"
-    style:--filters-space={showFilterOptions ? "80px" : ""}
->
+<main id="main-home" style:--filters-space={showFilterOptions ? "80px" : ""}>
     <div class="home-status">
         {#if $filterOptions}
             <span>
                 <h2>
-                    {$filterOptions?.filterSelection?.filter?.(
-                        ({ isSelected }) => isSelected
-                    )?.[0]?.filterSelectionName || ""}
+                    {selectedFilterSelectionName || ""}
                 </h2>
             </span>
         {:else}
@@ -1326,6 +1320,9 @@
         {/if}
     </div>
     <div class="input-search-wrap">
+        <label class="disable-interaction" for="input-search">
+            Search Title
+        </label>
         <input
             id="input-search"
             class="input-search"
@@ -1374,22 +1371,22 @@
                             </div>
                         </div>
                         <div class="options">
-                            {#each $filterOptions?.filterSelection || [] as { filterSelectionName, isSelected } (filterSelectionName)}
+                            {#each $filterOptions?.filterSelection || [] as filterSelection (filterSelection?.filterSelectionName||{})}
                                 <div
                                     class="option"
                                     on:click={handleFilterTypes(
-                                        filterSelectionName
+                                        filterSelection?.filterSelectionName
                                     )}
                                     on:keydown={(e) =>
                                         e.key === "Enter" &&
-                                        handleFilterTypes(filterSelectionName)}
+                                        handleFilterTypes(filterSelection?.filterSelectionName)}
                                 >
                                     <h3
-                                        style:color={isSelected
+                                        style:color={filterSelection?.isSelected
                                             ? "#3db4f2"
                                             : "inherit"}
                                     >
-                                        {filterSelectionName || ""}
+                                        {filterSelection?.filterSelectionName || ""}
                                     </h3>
                                 </div>
                             {/each}
@@ -1416,7 +1413,7 @@
         id="filters"
         on:wheel={(e) => {
             horizontalWheel(e, "filters");
-            if ($gridFullView ?? getLocalStorage('gridFullView') ?? !$android) {
+            if ($gridFullView ?? getLocalStorage("gridFullView") ?? !$android) {
                 if (!scrollingToTop && e.deltaY < 0) {
                     scrollingToTop = true;
                     let newScrollPosition = 0;
@@ -1428,8 +1425,8 @@
         style:--maxPaddingHeight={maxFilterSelectionHeight + 65 + "px"}
     >
         {#if $filterOptions}
-            {#each $filterOptions?.filterSelection || [] as filterSelection, filSelIdx (filterSelection.filterSelectionName)}
-                {#each filterSelection.filters.Dropdown || [] as Dropdown, dropdownIdx (filterSelection.filterSelectionName + Dropdown.filName)}
+            {#each $filterOptions?.filterSelection || [] as filterSelection, filSelIdx (filterSelection.filterSelectionName||{})}
+                {#each filterSelection.filters.Dropdown || [] as Dropdown, dropdownIdx ((filterSelection.filterSelectionName + Dropdown.filName)||{})}
                     <div
                         class={"filter-select " +
                             (filterSelection.isSelected
@@ -1452,15 +1449,21 @@
                                     e.key === "ArrowDown" ||
                                     e.key === "ArrowUp") &&
                                 filterSelect(e, dropdownIdx)}
-                            on:click={(e) => filterSelect(e, dropdownIdx)}
+                            on:click={(e) => {
+                                filterSelect(e, dropdownIdx);
+                            }}
                         >
                             <div class="value-wrap">
+                                <label class="disable-interaction" for={filterSelection.filterSelectionName + Dropdown.filName}>
+                                    {filterSelection.filterSelectionName+" "+Dropdown.filName}
+                                </label>
                                 <input
+                                    id={filterSelection.filterSelectionName + Dropdown.filName}
                                     placeholder="Any"
                                     type="search"
                                     enterkeyhint="search"
                                     autocomplete="off"
-                                    class="value-input"
+                                    class={"value-input"}
                                     bind:value={$filterOptions.filterSelection[
                                         filSelIdx
                                     ].filters.Dropdown[dropdownIdx].optKeyword}
@@ -1518,7 +1521,11 @@
                                         ×
                                     </div>
                                 </div>
+                                <label class="disable-interaction" for={"Search "+(filterSelection.filterSelectionName + Dropdown.filName)}>
+                                    {"Search "+filterSelection.filterSelectionName + " "+Dropdown.filName}
+                                </label>
                                 <input
+                                    id={"Search "+(filterSelection.filterSelectionName + Dropdown.filName)}
                                     placeholder="Any"
                                     type="search"
                                     enterkeyhint="search"
@@ -1534,8 +1541,8 @@
                                     class="options"
                                     on:wheel|stopPropagation={() => {}}
                                 >
-                                    {#if Dropdown.options?.filter?.(({ optionName }) => hasPartialMatch(optionName, Dropdown.optKeyword) || Dropdown.optKeyword === "")?.length}
-                                        {#each Dropdown.options || [] as option, optionIdx (filterSelection.filterSelectionName + Dropdown.filName + option.optionName)}
+                                    {#if Dropdown.options?.filter?.(({ optionName }) => hasPartialMatch(optionName, Dropdown?.optKeyword) || Dropdown?.optKeyword === "")?.length}
+                                        {#each Dropdown.options || [] as option, optionIdx ((filterSelection.filterSelectionName + Dropdown.filName + option.optionName)||{})}
                                             <div
                                                 class={"option " +
                                                     (hasPartialMatch(
@@ -1596,7 +1603,7 @@
                         </div>
                     </div>
                 {/each}
-                {#each filterSelection.filters.Checkbox || [] as Checkbox, checkboxIdx (filterSelection.filterSelectionName + Checkbox.filName)}
+                {#each filterSelection.filters.Checkbox || [] as Checkbox, checkboxIdx ((filterSelection.filterSelectionName + Checkbox.filName)||{})}
                     {#if filterSelection.isSelected}
                         <div class="filter-checkbox">
                             <div style:visibility="none" />
@@ -1618,8 +1625,12 @@
                                         filterSelection.filterSelectionName
                                     )}
                             >
+                                <label class="disable-interaction" for={"Checkbox: "+Checkbox.filName}>
+                                    {Checkbox.filName}
+                                </label>
                                 {#if $initData}
                                     <input
+                                        id={"Checkbox: "+Checkbox.filName}
                                         type="checkbox"
                                         class="checkbox"
                                         on:change={(e) => {
@@ -1631,6 +1642,7 @@
                                     />
                                 {:else}
                                     <input
+                                        id={"Checkbox: "+Checkbox.filName}
                                         type="checkbox"
                                         class="checkbox"
                                         on:change={(e) =>
@@ -1651,7 +1663,7 @@
                         </div>
                     {/if}
                 {/each}
-                {#each filterSelection.filters["Input Number"] || [] as inputNum, inputNumIdx (filterSelection.filterSelectionName + inputNum.filName)}
+                {#each filterSelection.filters["Input Number"] || [] as inputNum, inputNumIdx ((filterSelection.filterSelectionName + inputNum.filName)||{})}
                     {#if filterSelection.isSelected}
                         <div
                             class="filter-input-number"
@@ -1663,7 +1675,11 @@
                                 <h2>{inputNum.filName || ""}</h2>
                             </div>
                             <div class="value-input-number-wrap">
+                                <label class="disable-interaction" for={"Number Filter: "+inputNum.filName}>
+                                    {"Number Filter: "+inputNum.filName}
+                                </label>
                                 <input
+                                    id={"Number Filter: "+inputNum.filName}
                                     class="value-input-number"
                                     type="text"
                                     placeholder={inputNum.filName ===
@@ -1733,48 +1749,48 @@
                     <i class="fa-solid fa-ban" />
                 </div>
             {/if}
-            {#each $activeTagFilters?.[$filterOptions?.filterSelection?.[$filterOptions?.filterSelection?.findIndex(({ isSelected }) => isSelected)]?.filterSelectionName] || [] as { optionName, optionIdx, selected, changeType, filterType, categIdx, optionValue, optionType } (optionName + optionIdx + (optionType ?? ""))}
+            {#each activeTagFiltersArrays || [] as activeTagFiltersArray ((activeTagFiltersArray?.optionName + activeTagFiltersArray?.optionIdx + (activeTagFiltersArray?.optionType ?? ""))||{})}
                 <div
                     class="activeTagFilter"
                     tabindex="0"
-                    transition:fly={{ x: -10, duration: 200 }}
-                    style:--activeTagFilterColor={selected === "included"
+                    out:fade={{ duration: 200 }}
+                    style:--activeTagFilterColor={activeTagFiltersArray?.selected === "included"
                         ? "#5f9ea0"
-                        : changeType === "read"
+                        : activeTagFiltersArray?.changeType === "read"
                         ? "#000"
                         : "#e85d75"}
                     on:click={(e) =>
                         changeActiveSelect(
                             e,
-                            optionIdx,
-                            optionName,
-                            filterType,
-                            categIdx,
-                            changeType,
-                            optionType,
-                            optionValue
+                            activeTagFiltersArray?.optionIdx,
+                            activeTagFiltersArray?.optionName,
+                            activeTagFiltersArray?.filterType,
+                            activeTagFiltersArray?.categIdx,
+                            activeTagFiltersArray?.changeType,
+                            activeTagFiltersArray?.optionType,
+                            activeTagFiltersArray?.optionValue
                         )}
                     on:keydown={(e) =>
                         e.key === "Enter" &&
                         changeActiveSelect(
                             e,
-                            optionIdx,
-                            optionName,
-                            filterType,
-                            categIdx,
-                            changeType,
-                            optionType,
-                            optionValue
+                            activeTagFiltersArray?.optionIdx,
+                            activeTagFiltersArray?.optionName,
+                            activeTagFiltersArray?.filterType,
+                            activeTagFiltersArray?.categIdx,
+                            activeTagFiltersArray?.changeType,
+                            activeTagFiltersArray?.optionType,
+                            activeTagFiltersArray?.optionValue
                         )}
                 >
-                    {#if filterType === "input number"}
+                    {#if activeTagFiltersArray?.filterType === "input number"}
                         <h3>
-                            {optionName + ": " + optionValue || ""}
+                            {activeTagFiltersArray?.optionName + ": " + activeTagFiltersArray?.optionValue || ""}
                         </h3>
-                    {:else if optionType}
-                        <h3>{optionType + ": " + optionName || ""}</h3>
+                    {:else if activeTagFiltersArray?.optionType}
+                        <h3>{activeTagFiltersArray?.optionType + ": " + activeTagFiltersArray?.optionName || ""}</h3>
                     {:else}
-                        <h3>{optionName || ""}</h3>
+                        <h3>{activeTagFiltersArray?.optionName || ""}</h3>
                     {/if}
                     <i
                         class="fa-solid fa-xmark"
@@ -1782,21 +1798,21 @@
                         on:click|preventDefault={(e) =>
                             removeActiveTag(
                                 e,
-                                optionIdx,
-                                optionName,
-                                filterType,
-                                categIdx,
-                                optionType
+                                activeTagFiltersArray?.optionIdx,
+                                activeTagFiltersArray?.optionName,
+                                activeTagFiltersArray?.filterType,
+                                activeTagFiltersArray?.categIdx,
+                                activeTagFiltersArray?.optionType
                             )}
                         on:keydown={(e) =>
                             e.key === "Enter" &&
                             removeActiveTag(
                                 e,
-                                optionIdx,
-                                optionName,
-                                filterType,
-                                categIdx,
-                                optionType
+                                activeTagFiltersArray?.optionIdx,
+                                activeTagFiltersArray?.optionName,
+                                activeTagFiltersArray?.filterType,
+                                activeTagFiltersArray?.categIdx,
+                                activeTagFiltersArray?.optionType
                             )}
                     />
                 </div>
@@ -1826,7 +1842,11 @@
             >
                 <i
                     class={"icon fa-solid fa-arrows-" +
-                        ($gridFullView?? getLocalStorage('gridFullView') ?? !$android ? "up-down" : "left-right")}
+                        ($gridFullView ??
+                        getLocalStorage("gridFullView") ??
+                        !$android
+                            ? "up-down"
+                            : "left-right")}
                 />
             </div>
             <div class="sortFilter">
@@ -1835,13 +1855,7 @@
                     on:keydown={(e) => e.key === "Enter" && changeSortType(e)}
                     tabindex={selectedSortElement ? "" : "0"}
                     class={"fa-duotone fa-sort-" +
-                        ($filterOptions?.sortFilter?.[
-                            $filterOptions?.sortFilter?.findIndex(
-                                ({ sortType }) => sortType !== "none"
-                            )
-                        ]?.sortType === "asc"
-                            ? "up"
-                            : "down")}
+                        (selectedSortType === "asc" ? "up" : "down")}
                 />
                 <h2
                     tabindex={selectedSortElement ? "" : "0"}
@@ -1849,11 +1863,7 @@
                     on:keydown={(e) =>
                         e.key === "Enter" && handleSortFilterPopup(e)}
                 >
-                    {$filterOptions?.sortFilter?.[
-                        $filterOptions?.sortFilter.findIndex(
-                            ({ sortType }) => sortType !== "none"
-                        )
-                    ]?.sortName || ""}
+                    {selectedSortName || ""}
                 </h2>
                 <div
                     class={"options-wrap " +
@@ -1882,24 +1892,19 @@
                             </div>
                         </div>
                         <div class="options">
-                            {#each $filterOptions?.sortFilter || [] as { sortName }, sortIdx (sortName + sortIdx)}
+                            {#each $filterOptions?.sortFilter || [] as sortFilter (sortFilter?.sortName||{})}
                                 <div
                                     class="option"
-                                    on:click={changeSort(sortName)}
+                                    on:click={changeSort(sortFilter?.sortName)}
                                     on:keydown={(e) =>
                                         e.key === "Enter" &&
-                                        changeSort(sortName)}
+                                        changeSort(sortFilter?.sortName)}
                                 >
-                                    <h3>{sortName || ""}</h3>
-                                    {#if $filterOptions?.sortFilter?.[$filterOptions?.sortFilter?.findIndex(({ sortType }) => sortType !== "none")].sortName === sortName && sortName}
+                                    <h3>{sortFilter?.sortName || ""}</h3>
+                                    {#if selectedSortName === sortFilter?.sortName}
                                         <i
                                             class={"fa-duotone fa-sort-" +
-                                                ($filterOptions?.sortFilter?.[
-                                                    $filterOptions?.sortFilter?.findIndex(
-                                                        ({ sortType }) =>
-                                                            sortType !== "none"
-                                                    )
-                                                ].sortType === "asc"
+                                                (selectedSortType === "asc"
                                                     ? "up"
                                                     : "down")}
                                         />
@@ -1922,7 +1927,11 @@
             >
                 <i
                     class={"icon fa-solid fa-arrows-" +
-                        ($gridFullView?? getLocalStorage('gridFullView') ?? !$android ? "up-down" : "left-right")}
+                        ($gridFullView ??
+                        getLocalStorage("gridFullView") ??
+                        !$android
+                            ? "up-down"
+                            : "left-right")}
                 />
             </div>
             <div class="sortFilter skeleton shimmer" />
@@ -1949,7 +1958,7 @@
             20px 58.5px var(--filters-space) auto
             50px auto;
         padding-top: 1.5em;
-        transition: transform 0.2s ease, opacity 0.2s ease;
+        transition: opacity 0.2s ease;
     }
 
     .skeleton {
@@ -2311,6 +2320,7 @@
     }
 
     .activeFilters .activeTagFilter {
+        animation: fadeIn 0.2s ease;
         background-color: var(--activeTagFilterColor);
         padding: 0.75em 10px;
         display: flex;
@@ -2327,9 +2337,11 @@
         min-width: max-content;
         text-transform: capitalize;
         cursor: pointer;
+        color: white !important;
     }
     .activeTagFilter i {
         font-size: 1.5rem;
+        color: white !important;
     }
 
     .changeGridView {
@@ -2543,18 +2555,7 @@
         overflow: hidden !important;
     }
 
-    @media screen and (max-width: 640px) {
-        :global(main.willchange) {
-            will-change: transform, opacity;
-            transform: translateZ(0);
-            -webkit-transform: translateZ(0);
-            -ms-transform: translateZ(0);
-            -moz-transform: translateZ(0);
-            -o-transform: translateZ(0);
-        }
-    }
-
-    @media screen and (hover:hover) and (pointer:fine) {
+    @media screen and (hover: hover) and (pointer: fine) {
         .filters {
             scroll-snap-type: none !important;
         }
@@ -2566,6 +2567,9 @@
         }
         .filter-select .select {
             cursor: pointer !important;
+        }
+        .filter-select .value-input[disabled] {
+            pointer-events: none;
         }
         .filterType .options-wrap,
         .filter-select .options-wrap,
@@ -2614,20 +2618,10 @@
             top: 25vh;
             max-height: 60vh !important;
             position: absolute;
-            transform: translateY(0) translateZ(0) !important;
-            -webkit-transform: translateY(0) translateZ(0) !important;
-            -ms-transform: translateY(0) translateZ(0) !important;
-            -moz-transform: translateY(0) translateZ(0) !important;
-            -o-transform: translateY(0) translateZ(0) !important;
             opacity: 1 !important;
-            transition: transform 0.2s ease, opacity 0.2s ease !important;
+            transition: opacity 0.2s ease !important;
         }
         .options-wrap-filter-info.hide {
-            transform: translateY(20px) translateZ(0) !important;
-            -webkit-transform: translateY(20px) translateZ(0) !important;
-            -ms-transform: translateY(20px) translateZ(0) !important;
-            -moz-transform: translateY(20px) translateZ(0) !important;
-            -o-transform: translateY(20px) translateZ(0) !important;
             opacity: 0 !important;
         }
         .options-wrap-filter-info .header {

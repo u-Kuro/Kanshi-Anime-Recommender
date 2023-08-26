@@ -1,6 +1,6 @@
 <script>
     import { onMount, tick } from "svelte";
-    import { fly } from "svelte/transition";
+    import { fade } from "svelte/transition";
     import {
         finalAnimeList,
         animeLoaderWorker,
@@ -21,8 +21,8 @@
         listUpdateAvailable,
         searchedAnimeKeyword,
         checkAnimeLoaderStatus,
-        numberOfNextLoadedGrid,
         popupIsGoingBack,
+        earlisetReleaseDate,
     } from "../../../js/globalValues.js";
     import {
         isJsonObject,
@@ -33,21 +33,17 @@
         addClass,
         removeClass,
         getMostVisibleElement,
-        ncsCompare,
-        dragScroll,
+        dragScroll
     } from "../../../js/others/helper.js";
     import { retrieveJSON, saveJSON } from "../../../js/indexedDB.js";
     import { animeLoader } from "../../../js/workerUtils.js";
 
     let isOnline = window.navigator.onLine;
 
-    let date = new Date();
-
     let animeGridParentEl,
         mostVisiblePopupHeader,
         currentHeaderIdx,
         currentYtPlayer,
-        mainHome,
         popupWrapper,
         popupContainer,
         popupAnimeObserver,
@@ -102,16 +98,6 @@
         )
             return;
         $popupVisible = false;
-    }
-
-    function getHiddenStatus(animeID) {
-        if (!$hiddenEntries) {
-            return "N/A";
-        } else if ($hiddenEntries[animeID]) {
-            return "Show";
-        } else {
-            return "Hide";
-        }
     }
 
     async function handleHideShow(animeID, title) {
@@ -229,29 +215,6 @@
         }
     });
 
-    function getCautionColor({
-        contentCaution,
-        meanScoreAll,
-        meanScoreAbove,
-        score,
-    }) {
-        if (contentCaution?.caution?.length) {
-            // Caution
-            return "red";
-        } else if (contentCaution?.semiCaution?.length) {
-            // Semi Caution
-            return "teal";
-        } else if (score < meanScoreAll) {
-            // Very Low Score
-            return "purple";
-        } else if (score < meanScoreAbove) {
-            // Low Score
-            return "orange";
-        } else {
-            return "green";
-        }
-    }
-
     hiddenEntries.subscribe(async (val) => {
         if (isJsonObject(val)) {
             await saveJSON(val, "hiddenEntries");
@@ -265,47 +228,26 @@
         )
             return;
         if (val === true) {
-            // Init Height
-            if (windowWidth >= 641) {
-                popupContainer.style.setProperty(
-                    "--translateY",
-                    windowHeight + "px"
-                );
-            } else {
-                popupContainer.style.setProperty(
-                    "--translateX",
-                    windowWidth + "px"
-                );
-                mainHome.style.setProperty(
-                    "--translateX",
-                    "-" + windowWidth + "px"
-                );
-            }
             // Scroll To Opened Anime
             let openedAnimePopupEl =
                 popupContainer?.children[
                     $openedAnimePopupIdx ?? currentHeaderIdx ?? 0
                 ];
             if (openedAnimePopupEl instanceof Element) {
-                addClass(popupContainer, "noSmoothScroll");
                 scrollToElement(
                     popupContainer,
                     openedAnimePopupEl,
                     "top",
                     "instant"
                 );
-                removeClass(popupContainer, "noSmoothScroll");
                 // Animate Opening
                 requestAnimationFrame(() => {
-                    addClass(mainHome, "willChange");
                     addClass(popupWrapper, "willChange");
                     addClass(popupContainer, "willChange");
 
                     addClass(popupWrapper, "visible");
                     addClass(popupContainer, "show");
-                    addClass(mainHome, "hide");
                     setTimeout(() => {
-                        removeClass(mainHome, "willChange");
                         removeClass(popupWrapper, "willChange");
                         removeClass(popupContainer, "willChange");
                     }, 200);
@@ -354,15 +296,12 @@
             } else {
                 // Animate Opening
                 requestAnimationFrame(() => {
-                    addClass(mainHome, "willChange");
                     addClass(popupWrapper, "willChange");
                     addClass(popupContainer, "willChange");
 
                     addClass(popupWrapper, "visible");
                     addClass(popupContainer, "show");
-                    addClass(mainHome, "hide");
                     setTimeout(() => {
-                        removeClass(mainHome, "willChange");
                         removeClass(popupWrapper, "willChange");
                         removeClass(popupContainer, "willChange");
                     }, 200);
@@ -370,12 +309,10 @@
             }
         } else if (val === false) {
             requestAnimationFrame(() => {
-                addClass(mainHome, "willChange");
                 addClass(popupWrapper, "willChange");
                 addClass(popupContainer, "willChange");
 
                 removeClass(popupContainer, "show");
-                removeClass(mainHome, "hide");
                 setTimeout(() => {
                     // Stop All Player
                     $ytPlayers.forEach(({ ytPlayer }) => {
@@ -383,7 +320,6 @@
                     });
                     removeClass(popupWrapper, "visible");
 
-                    removeClass(mainHome, "willChange");
                     removeClass(popupContainer, "willChange");
                     setTimeout(() => {
                         removeClass(popupWrapper, "willChange");
@@ -445,11 +381,7 @@
     });
 
     onMount(() => {
-        setInterval(() => {
-            date = new Date();
-        }, 1000);
         popupWrapper = popupWrapper || document.getElementById("popup-wrapper");
-        mainHome = document.getElementById("main-home");
         popupContainer =
             popupContainer || popupWrapper.querySelector("#popup-container");
         animeGridParentEl = document.getElementById("anime-grid");
@@ -926,7 +858,6 @@
                     if (data?.isNew) {
                         $finalAnimeList = data.finalAnimeList;
                         $hiddenEntries = data.hiddenEntries;
-                        $numberOfNextLoadedGrid = data.numberOfNextLoadedGrid;
                     }
                     $dataStatus = null;
                     return;
@@ -937,30 +868,7 @@
         }
     }
 
-    function getUserStatusColor(userStatus) {
-        if (ncsCompare(userStatus, "completed")) {
-            return "green";
-        } else if (
-            ncsCompare(userStatus, "current") ||
-            ncsCompare(userStatus, "repeating")
-        ) {
-            return "blue";
-        } else if (ncsCompare(userStatus, "planning")) {
-            return "orange";
-        } else if (ncsCompare(userStatus, "paused")) {
-            return "peach";
-        } else if (ncsCompare(userStatus, "dropped")) {
-            return "red";
-        } else {
-            return ""; // Default Unwatched Icon Color
-        }
-    }
-
-    function getFormattedAnimeFormat({
-        episodes,
-        nextAiringEpisode,
-    }) {
-        // ONA · 12 · 24m · LOW SCORE
+    function getFormattedAnimeFormat({ episodes, nextAiringEpisode }) {
         let text;
         let timeDifMS;
         let nextEpisode;
@@ -1425,8 +1333,6 @@
     <div
         id="popup-container"
         class="popup-container hide"
-        style:--translateX={windowWidth + "px"}
-        style:--translateY={windowHeight + "px"}
         bind:this={popupContainer}
         on:touchstart|passive={handlePopupContainerDown}
         on:touchmove|passive={handlePopupContainerMove}
@@ -1435,7 +1341,7 @@
         on:scroll={popupScroll}
     >
         {#if $finalAnimeList?.length}
-            {#each $finalAnimeList || [] as anime (anime.id)}
+            {#each $finalAnimeList || [] as anime (anime?.id||{})}
                 <div class="popup-content" bind:this={anime.popupContent}>
                     <div class="popup-main">
                         <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
@@ -1485,7 +1391,11 @@
                         <div class="popup-controls">
                             <div class="autoPlay-container">
                                 <label class="switch">
+                                    <label class="disable-interaction" for={"auto-play-"+anime?.id}>
+                                        Auto Play
+                                    </label>
                                     <input
+                                        id={"auto-play-"+anime?.id}
                                         type="checkbox"
                                         class="autoplayToggle"
                                         bind:checked={$autoPlay}
@@ -1596,8 +1506,7 @@
                                             "javascript:void(0)"}
                                         class={anime?.contentCautionColor +
                                             "-color anime-title copy"}
-                                        copy-value={anime?.shownTitle ||
-                                            ""}
+                                        copy-value={anime?.shownTitle || ""}
                                         style:overflow={$popupIsGoingBack
                                             ? "hidden"
                                             : ""}
@@ -1611,23 +1520,28 @@
                                             class="copy"
                                             copy-value={(anime.averageScore !=
                                             null
-                                                ? anime.formattedAverageScore || "NA"
+                                                ? anime.formattedAverageScore ||
+                                                  "NA"
                                                 : "NA") +
                                                 "/10 · " +
                                                 (anime.popularity != null
-                                                    ? anime.formattedPopularity || "NA"
+                                                    ? anime.formattedPopularity ||
+                                                      "NA"
                                                     : "NA")}
                                         >
                                             <b
                                                 >{anime.averageScore != null
-                                                    ? anime.formattedAverageScore || "NA"
+                                                    ? anime.formattedAverageScore ||
+                                                      "NA"
                                                     : "NA"}</b
                                             >
                                             {"/10 · " +
                                                 (anime.popularity != null
-                                                    ? anime.formattedPopularity || "NA"
+                                                    ? anime.formattedPopularity ||
+                                                      "NA"
                                                     : "NA")}
-                                            {" · "}{@html anime?.recommendedRatingInfo||""}
+                                            {" · "}{@html anime?.recommendedRatingInfo ||
+                                                ""}
                                         </h3>
                                     </div>
                                 </div>
@@ -1641,12 +1555,13 @@
                                     {#if anime?.nextAiringEpisode?.airingAt}
                                         <h4>
                                             {anime?.format || "NA"}
-                                            {#key date?.getSeconds?.() || 1}
+                                            {#key $earlisetReleaseDate || 1}
                                                 {@html getFormattedAnimeFormat(
                                                     anime
                                                 ) || " · NA"}
                                             {/key}
-                                            {anime?.formattedDuration || " · NA"}
+                                            {anime?.formattedDuration ||
+                                                " · NA"}
                                         </h4>
                                     {:else}
                                         <h4>
@@ -1654,7 +1569,8 @@
                                             {@html getFormattedAnimeFormat(
                                                 anime
                                             ) || " · NA"}
-                                            {anime?.formattedDuration || " · NA"}
+                                            {anime?.formattedDuration ||
+                                                " · NA"}
                                         </h4>
                                     {/if}
                                     {#if anime?.season || anime?.year}
@@ -1703,7 +1619,8 @@
                                             href={anime.animeUrl ||
                                                 "javascript:void(0)"}
                                             ><span
-                                                class={anime.userStatusColor + "-color"}
+                                                class={anime.userStatusColor +
+                                                    "-color"}
                                                 >{anime.userStatus ||
                                                     "NA"}</span
                                             >
@@ -1752,24 +1669,29 @@
                                                     }
                                                 }}
                                             >
-                                                {#each anime.studios as studios (studios?.studio||{})}
+                                                {#each anime.studios as studios (studios?.studio || {})}
                                                     <a
                                                         class={"copy" +
                                                             (studios?.studioColor
                                                                 ? ` ${studios?.studioColor}-color`
                                                                 : "")}
-                                                        rel={studios?.studio?.studioUrl
+                                                        rel={studios?.studio
+                                                            ?.studioUrl
                                                             ? "noopener noreferrer"
                                                             : ""}
-                                                        target={studios?.studio?.studioUrl
+                                                        target={studios?.studio
+                                                            ?.studioUrl
                                                             ? "_blank"
                                                             : ""}
-                                                        href={studios?.studio?.studioUrl ||
+                                                        href={studios?.studio
+                                                            ?.studioUrl ||
                                                             "javascript:void(0)"}
-                                                        copy-value={studios?.studio?.studioName ||
-                                                            ""}
+                                                        copy-value={studios
+                                                            ?.studio
+                                                            ?.studioName || ""}
                                                     >
-                                                        {studios?.studio?.studioName ||
+                                                        {studios?.studio
+                                                            ?.studioName ||
                                                             "N/A"}
                                                     </a>
                                                 {/each}
@@ -1803,14 +1725,16 @@
                                                     }
                                                 }}
                                             >
-                                                {#each anime.genres as genres (genres?.genre||{})}
+                                                {#each anime.genres as genres (genres?.genre || {})}
                                                     <span
                                                         class={"copy " +
                                                             (genres?.genreColor
                                                                 ? `${genres?.genreColor}-color`
                                                                 : "")}
-                                                        copy-value={genres?.genre || ""}
-                                                        >{genres?.genre || "N/A"}
+                                                        copy-value={genres?.genre ||
+                                                            ""}
+                                                        >{genres?.genre ||
+                                                            "N/A"}
                                                     </span>
                                                 {/each}
                                             </div>
@@ -1842,11 +1766,16 @@
                                                     }
                                                 }}
                                             >
-                                                {#each anime.tags as tags (tags?.tag||{})}
+                                                {#each anime.tags as tags (tags?.tag || {})}
                                                     <span
-                                                        class={"copy "+(tags?.tagColor? `${tags?.tagColor}-color`: "")}
-                                                        copy-value={tags?.copyValue||""}
-                                                        >{@html tags?.tag || "N/A"}
+                                                        class={"copy " +
+                                                            (tags?.tagColor
+                                                                ? `${tags?.tagColor}-color`
+                                                                : "")}
+                                                        copy-value={tags?.copyValue ||
+                                                            ""}
+                                                        >{@html tags?.tag ||
+                                                            "N/A"}
                                                     </span>
                                                 {/each}
                                             </div>
@@ -1919,9 +1848,7 @@
                                             }}
                                         >
                                             <h3>Description</h3>
-                                            <div
-                                                class="anime-description"
-                                            >
+                                            <div class="anime-description">
                                                 {@html editHTMLString(
                                                     anime?.description
                                                 )}
@@ -1951,12 +1878,14 @@
                                         class="fa-solid fa-circle-minus hideshow"
                                     />
                                     {#if $hiddenEntries}
-                                        {" " +($hiddenEntries[anime?.id]? "Show": "Hide")}
+                                        {" " +
+                                            ($hiddenEntries[anime?.id]
+                                                ? "Show"
+                                                : "Hide")}
                                     {:else}
                                         N/A
                                     {/if}
-                                    </button
-                                >
+                                </button>
                                 <button
                                     class="morevideos"
                                     style:overflow={$popupIsGoingBack
@@ -1973,8 +1902,12 @@
                                     style:overflow={$popupIsGoingBack
                                         ? "hidden"
                                         : ""}
-                                    on:click={() => {openInAnilist(anime.animeUrl)}}
-                                    on:keydown={(e) => e.key === "Enter" && openInAnilist(anime.animeUrl)}
+                                    on:click={() => {
+                                        openInAnilist(anime.animeUrl);
+                                    }}
+                                    on:keydown={(e) =>
+                                        e.key === "Enter" &&
+                                        openInAnilist(anime.animeUrl)}
                                 >
                                     <img
                                         loading="lazy"
@@ -2005,7 +1938,7 @@
         class="go-back-grid-highlight"
         style:--scale={Math.max(1, (goBackPercent ?? 1) * 0.01 * 2)}
         style:--position={"-" + (100 - (goBackPercent ?? 0)) + "%"}
-        out:fly={{ x: -176, duration: 1000 }}
+        out:fade={{ duration: 200 }}
     >
         <div
             class={"go-back-grid" + (goBackPercent >= 100 ? " willGoBack" : "")}
@@ -2033,7 +1966,7 @@
                         (fullDescriptionPopup = fullImagePopup = null)}
                     tabindex="0"
                     class="fullPopupDescription"
-                    transition:fly={{ y: 20, duration: 200 }}
+                    out:fade={{ duration: 200 }}
                     on:scroll={fullViewScroll}
                 >
                     {@html fullDescriptionPopup}
@@ -2063,7 +1996,7 @@
                 on:keydown={(e) =>
                     e.key === "Enter" &&
                     (fullDescriptionPopup = fullImagePopup = null)}
-                transition:fly={{ y: 20, duration: 200 }}
+                out:fade={{ duration: 200 }}
                 on:error={(e) => {
                     addClass(e.target, "display-none");
                 }}
@@ -2110,39 +2043,20 @@
         overflow-x: hidden;
         overscroll-behavior: contain;
         background-color: #151f2e;
-        transition: transform 0.2s ease;
+        transition: opacity 0.2s ease;
         margin-top: 55px;
         -ms-overflow-style: none;
         scrollbar-width: none;
-        transform: translateX(var(--translateX)) translateZ(0);
-        -webkit-transform: translateX(var(--translateX)) translateZ(0);
-        -ms-transform: translateX(var(--translateX)) translateZ(0);
-        -moz-transform: translateX(var(--translateX)) translateZ(0);
-        -o-transform: translateX(var(--translateX)) translateZ(0);
-        scroll-behavior: smooth;
-    }
-    .popup-container.noSmoothScroll {
+        opacity: 0;
         scroll-behavior: auto;
     }
 
     .popup-container.willChange {
-        will-change: transform;
-    }
-
-    :global(#main-home.hide) {
-        transform: translateX(var(--translateX)) translateZ(0);
-        -webkit-transform: translateX(var(--translateX)) translateZ(0);
-        -ms-transform: translateX(var(--translateX)) translateZ(0);
-        -moz-transform: translateX(var(--translateX)) translateZ(0);
-        -o-transform: translateX(var(--translateX)) translateZ(0);
+        will-change: opacity;
     }
 
     .popup-container.show {
-        transform: translateZ(0);
-        -webkit-transform: translateZ(0);
-        -ms-transform: translateZ(0);
-        -moz-transform: translateZ(0);
-        -o-transform: translateZ(0);
+        opacity: 1;
     }
 
     .popup-container::-webkit-scrollbar {
@@ -2613,30 +2527,8 @@
     }
 
     @media screen and (min-width: 641px) {
-        :global(#main-home.hide) {
-            transform: translateZ(0) !important;
-            -webkit-transform: translateZ(0) !important;
-            -ms-transform: translateZ(0) !important;
-            -moz-transform: translateZ(0) !important;
-            -o-transform: translateZ(0) !important;
-        }
         .popup-wrapper {
             background-color: rgba(0, 0, 0, 0.7) !important;
-        }
-        .popup-container {
-            transform: translateY(var(--translateY)) translateZ(0);
-            -webkit-transform: translateY(var(--translateY)) translateZ(0);
-            -ms-transform: translateY(var(--translateY)) translateZ(0);
-            -moz-transform: translateY(var(--translateY)) translateZ(0);
-            -o-transform: translateY(var(--translateY)) translateZ(0);
-        }
-
-        .popup-container.show {
-            transform: translateY(0px) translateZ(0);
-            -webkit-transform: translateY(0px) translateZ(0);
-            -ms-transform: translateY(0px) translateZ(0);
-            -moz-transform: translateY(0px) translateZ(0);
-            -o-transform: translateY(0px) translateZ(0);
         }
 
         .fullPopupDescription {
@@ -2894,6 +2786,7 @@
     }
 
     .fullPopupImage {
+        animation: fadeIn 0.2s ease;
         max-width: min(100%, 1000px);
         max-height: 90%;
         object-fit: cover;
@@ -2920,6 +2813,7 @@
         cursor: pointer;
     }
     .fullPopupDescription {
+        animation: fadeIn 0.2s ease;
         letter-spacing: 0.05rem;
         line-height: 2.5rem;
         font-size: 1.3rem;
@@ -2944,5 +2838,27 @@
     :global(.fullPopupDescription a) {
         color: rgb(0 168 255) !important;
         text-decoration: none !important;
+    }
+    .disable-interaction {
+        pointer-events: none !important;
+        position: fixed !important;
+        transform: translateY(-99999px) translateZ(0) !important;
+        -webkit-transform: translateY(-99999px) translateZ(0) !important;
+        -ms-transform: translateY(-99999px) translateZ(0) !important;
+        -moz-transform: translateY(-99999px) translateZ(0) !important;
+        -o-transform: translateY(-99999px) translateZ(0) !important;
+        user-select: none !important;
+        touch-action: none !important;
+        cursor: not-allowed !important;
+        -webkit-user-drag: none !important;
+        -moz-user-select: none !important;
+        -ms-user-select: none !important;
+        height: 0 !important;
+        width: 0 !important;
+        max-width: 0 !important;
+        max-height: 0 !important;
+        min-width: 0 !important;
+        min-height: 0 !important;
+        overflow: hidden !important;
     }
 </style>

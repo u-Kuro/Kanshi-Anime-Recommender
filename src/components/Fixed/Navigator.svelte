@@ -316,6 +316,9 @@
             />
         </div>
         <div class="input-search">
+            <label class="disable-interaction" for="usernameInput">
+                Anilist Username
+            </label>
             <input
                 id="usernameInput"
                 type="search"
@@ -585,5 +588,27 @@
         .nav.inputfocused .input-search {
             padding-right: 0.812em !important;
         }
+    }
+    .disable-interaction {
+        pointer-events: none !important;
+        position: fixed !important;
+        transform: translateY(-99999px) translateZ(0) !important;
+        -webkit-transform: translateY(-99999px) translateZ(0) !important;
+        -ms-transform: translateY(-99999px) translateZ(0) !important;
+        -moz-transform: translateY(-99999px) translateZ(0) !important;
+        -o-transform: translateY(-99999px) translateZ(0) !important;
+        user-select: none !important;
+        touch-action: none !important;
+        cursor: not-allowed !important;
+        -webkit-user-drag: none !important;
+        -moz-user-select: none !important;
+        -ms-user-select: none !important;
+        height: 0 !important;
+        width: 0 !important;
+        max-width: 0 !important;
+        max-height: 0 !important;
+        min-width: 0 !important;
+        min-height: 0 !important;
+        overflow: hidden !important;
     }
 </style>

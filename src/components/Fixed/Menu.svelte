@@ -20,7 +20,7 @@
         importantLoad,
         popupVisible,
     } from "../../js/globalValues.js";
-    import { fly } from "svelte/transition";
+    import { fade } from "svelte/transition";
     import { saveJSON } from "../../js/indexedDB.js";
     import { importUserData } from "../../js/workerUtils.js";
     import { jsonIsEmpty, setLocalStorage } from "../../js/others/helper.js";
@@ -150,19 +150,7 @@
     function handleMenuVisibility(event) {
         let element = event.target;
         let classList = element.classList;
-        if (
-            classList.contains("button") ||
-            (!matchMedia("(pointer:fine)").matches &&
-                classList.contains("menu-container"))
-        )
-            return;
-        $menuVisible = !$menuVisible;
-    }
-
-    function handleTouchMenuVisibility(event) {
-        let element = event.target;
-        let classList = element.classList;
-        if (!classList?.contains?.("menu-container")) return;
+        if (classList.contains("button")) return;
         $menuVisible = !$menuVisible;
     }
 
@@ -307,6 +295,7 @@
 </script>
 
 <input
+    id="import-file"
     type="file"
     style:display="none"
     accept=".json"
@@ -316,35 +305,39 @@
 {#if $menuVisible}
     <div
         class="menu-container"
-        on:click={handleMenuVisibility}
-        on:touchend|passive={handleTouchMenuVisibility}
+        on:click={(e) => {
+            if (e.pointerType !== "touch") {
+                handleMenuVisibility(e);
+            }
+        }}
+        on:touchend|passive={handleMenuVisibility}
         on:keydown={(e) => e.key === "Enter" && handleMenuVisibility(e)}
+        out:fade={{ duration: 200 }}
     >
         <div class="menu">
             <button
                 class="button"
                 on:click={updateList}
                 on:keydown={(e) => e.key === "Enter" && updateList(e)}
-                transition:fly={{ x: 50, duration: 200 }}>Update List</button
+                >Update List</button
             >
             <button
                 class="button"
                 on:click={showAllHiddenEntries}
                 on:keydown={(e) => e.key === "Enter" && showAllHiddenEntries(e)}
-                transition:fly={{ x: 50, duration: 200 }}
                 >Show All Hidden Entries</button
             >
             <button
                 class="button"
                 on:click={importData}
                 on:keydown={(e) => e.key === "Enter" && importData(e)}
-                transition:fly={{ x: 50, duration: 200 }}>Import Data</button
+                >Import Data</button
             >
             <button
                 class="button"
                 on:click={exportData}
                 on:keydown={(e) => e.key === "Enter" && exportData(e)}
-                transition:fly={{ x: 50, duration: 200 }}>Export Data</button
+                >Export Data</button
             >
             {#if $android}
                 <button
@@ -352,14 +345,12 @@
                     on:click={handleExportFolder}
                     on:keydown={(e) =>
                         e.key === "Enter" && handleExportFolder(e)}
-                    transition:fly={{ x: 50, duration: 200 }}
                 >
                     {($exportPathIsAvailable ? "Change" : "Set") +
                         " Export Folder"}
                 </button>
             {/if}
             <button
-                transition:fly={{ x: 50, duration: 200 }}
                 class={"button " + ($autoUpdate ? "selected" : "")}
                 on:click={handleUpdateEveryHour}
                 on:keydown={(e) =>
@@ -368,7 +359,6 @@
             >
             {#if $android}
                 <button
-                    transition:fly={{ x: 50, duration: 200 }}
                     class={"button " + ($autoExport ? "selected" : "")}
                     on:click={handleExportEveryHour}
                     on:keydown={(e) =>
@@ -377,7 +367,6 @@
                 >
             {/if}
             <button
-                transition:fly={{ x: 50, duration: 200 }}
                 class="button"
                 on:click={anilistSignup}
                 on:keydown={(e) => e.key === "Enter" && anilistSignup(e)}
@@ -388,46 +377,36 @@
                     class="button"
                     on:keydown={(e) =>
                         e.key === "Enter" && showRecentReleases(e)}
-                    on:click={showRecentReleases}
-                    transition:fly={{ x: 50, duration: 200 }}
-                    >Show Recent Releases</button
+                    on:click={showRecentReleases}>Show Recent Releases</button
                 >
                 {#if !window.location.protocol.startsWith("file:")}
                     <button
                         class="button"
                         on:keydown={(e) =>
                             e.key === "Enter" && checkForUpdates(e)}
-                        on:click={checkForUpdates}
-                        transition:fly={{ x: 50, duration: 200 }}
-                        >Check for Updates</button
+                        on:click={checkForUpdates}>Check for Updates</button
                     >
                 {/if}
                 <button
                     class="button"
                     on:keydown={(e) => e.key === "Enter" && switchAppMode(e)}
-                    on:click={switchAppMode}
-                    transition:fly={{ x: 50, duration: 200 }}
-                    >Switch App Mode</button
+                    on:click={switchAppMode}>Switch App Mode</button
                 >
                 <button
                     class="button"
                     on:keydown={(e) => e.key === "Enter" && clearCache(e)}
-                    on:click={clearCache}
-                    transition:fly={{ x: 50, duration: 200 }}
-                    >Clear Cache</button
+                    on:click={clearCache}>Clear Cache</button
                 >
                 <button
                     class="button"
                     on:keydown={(e) => e.key === "Enter" && refresh(e)}
-                    on:click={refresh}
-                    transition:fly={{ x: 50, duration: 200 }}>Refresh</button
+                    on:click={refresh}>Refresh</button
                 >
             {/if}
             <button
                 class="button"
                 on:keydown={(e) => e.key === "Enter" && reload(e)}
-                on:click={reload}
-                transition:fly={{ x: 50, duration: 200 }}>Reload</button
+                on:click={reload}>Reload</button
             >
         </div>
     </div>
@@ -447,6 +426,7 @@
         height: 100%;
         background-color: rgb(0, 0, 0, 0.7);
         z-index: 998;
+        animation: fadeIn 0.2s ease;
     }
     .menu {
         padding: 1.5em 1em;
