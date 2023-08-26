@@ -2499,7 +2499,7 @@
         width: 25px;
         height: 25px;
         text-align: center;
-        position: fixed;
+        position: absolute;
         right: 10px;
         top: 10px;
         vertical-align: middle;
@@ -2512,11 +2512,6 @@
         z-index: 2;
         user-select: none;
         background-color: transparent;
-        transform: translateZ(0);
-        -webkit-transform: translateZ(0);
-        -ms-transform: translateZ(0);
-        -moz-transform: translateZ(0);
-        -o-transform: translateZ(0);
     }
 
     .filters {

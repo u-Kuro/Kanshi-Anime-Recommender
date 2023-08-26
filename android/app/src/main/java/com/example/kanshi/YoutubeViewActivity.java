@@ -2,8 +2,6 @@ package com.example.kanshi;
 
 import android.animation.ObjectAnimator;
 import android.annotation.SuppressLint;
-import android.content.ClipData;
-import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -44,8 +42,8 @@ import androidx.browser.customtabs.CustomTabColorSchemeParams;
 import androidx.browser.customtabs.CustomTabsIntent;
 
 public class YoutubeViewActivity extends AppCompatActivity {
-    private TextView webTitle;
     private MediaWebView webView;
+    private TextView siteName;
     LinearLayout webViewCover;
     private boolean webViewIsLoaded = false;
     private boolean webViewFailedToLoad = false;
@@ -82,7 +80,6 @@ public class YoutubeViewActivity extends AppCompatActivity {
     @SuppressLint({"SetJavaScriptEnabled", "RestrictedApi", "ClickableViewAccessibility"})
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        overridePendingTransition(R.anim.right_to_center, R.anim.center_to_left);
         String passedUrl = getIntent().getStringExtra("url");
         // Show status bar
         getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
@@ -93,8 +90,6 @@ public class YoutubeViewActivity extends AppCompatActivity {
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        webTitle = findViewById(R.id.site);
-
         // Set click listeners for the custom ActionBar buttons
         View btnClose = findViewById(R.id.btnClose);
         btnClose.setClickable(true);
@@ -102,17 +97,6 @@ public class YoutubeViewActivity extends AppCompatActivity {
             Intent i = new Intent(this, MainActivity.class);
             i.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
             startActivity(i);
-        });
-
-        @SuppressLint("CutPasteId") TextView siteName = findViewById(R.id.site);
-        siteName.setOnLongClickListener(v -> {
-            String siteUrl = webView.getUrl();
-            if (siteUrl!=null && siteUrl.length()>0) {
-                ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
-                ClipData clip = ClipData.newPlainText("Copied Text", siteUrl);
-                clipboard.setPrimaryClip(clip);
-            }
-            return true;
         });
 
         ImageView launchUrl = findViewById(R.id.launchURL);
@@ -129,6 +113,7 @@ public class YoutubeViewActivity extends AppCompatActivity {
         // Add WebView on Layout
         webViewCover = findViewById(R.id.webViewCover);
         webView = findViewById(R.id.webView);
+        siteName = findViewById(R.id.site);
         ProgressBar progressbar = findViewById(R.id.progressbar);
         progressbar.setMax((int) Math.pow(10,6));
         webView.setWebChromeClient(new WebChromeClient() {
@@ -255,15 +240,16 @@ public class YoutubeViewActivity extends AppCompatActivity {
                 CookieManager.getInstance().acceptCookie();
                 CookieManager.getInstance().flush();
                 if ("Web page not available".equals(view.getTitle())) {
+                    siteName.setText(view.getTitle());
                     webViewFailedToLoad = true;
                     webViewCover.setVisibility(View.VISIBLE);
                 } else {
+                    siteName.setText(R.string.youtube);
                     webViewFailedToLoad = false;
                     webViewCover.setVisibility(View.GONE);
                 }
                 if (!webViewIsLoaded && !isFinished) {
                     webViewIsLoaded = true;
-                    webTitle.setText(view.getTitle());
                 }
                 super.onPageFinished(view, url);
             }

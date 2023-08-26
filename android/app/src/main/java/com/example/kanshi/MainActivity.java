@@ -66,7 +66,7 @@ import androidx.core.content.FileProvider;
 import androidx.core.splashscreen.SplashScreen;
 
 public class MainActivity extends AppCompatActivity {
-    public final int appID = 142;
+    public final int appID = 145;
     public boolean webViewIsLoaded = false;
     public boolean permissionIsAsked = false;
     public SharedPreferences prefs;
@@ -81,6 +81,7 @@ public class MainActivity extends AppCompatActivity {
     public Toast currentToast;
     public AlertDialog currentDialog;
     public boolean isInApp = true;
+    public boolean fromYoutube;
     public static WeakReference<MainActivity> weakActivity;
 
     // Activity Results
@@ -255,12 +256,14 @@ public class MainActivity extends AppCompatActivity {
                         Toast.makeText(getApplicationContext(), "Can't open the link.", Toast.LENGTH_LONG).show();
                     }
                 } else if (url.startsWith("https://www.youtube.com") || url.startsWith("https://m.youtube.com") || url.startsWith("https://youtu.be")) {
+                    fromYoutube = true;
                     Intent intent = new Intent(MainActivity.this, YoutubeViewActivity.class);
                     intent.putExtra("url", url);
                     startActivity(intent);
                     overridePendingTransition(R.anim.right_to_center, R.anim.center_to_left);
                 } else {
                     try {
+                        fromYoutube = false;
                         CustomTabsIntent customTabsIntent = new CustomTabsIntent.Builder()
                                 .setDefaultColorSchemeParams(new CustomTabColorSchemeParams.Builder().setToolbarColor(Color.BLACK).build())
                                 .setColorSchemeParams(CustomTabsIntent.COLOR_SCHEME_DARK, new CustomTabColorSchemeParams.Builder().setToolbarColor(Color.BLACK).build())
@@ -268,8 +271,8 @@ public class MainActivity extends AppCompatActivity {
                                 .setShowTitle(true)
                                 .setCloseButtonPosition(CustomTabsIntent.CLOSE_BUTTON_POSITION_START)
                                 .setCloseButtonIcon(BitmapFactory.decodeResource(MainActivity.this.getResources(), R.drawable.xclose_white))
-                                .setStartAnimations(MainActivity.this, R.anim.right_to_center, R.anim.center_to_left)
-                                .setExitAnimations(MainActivity.this, R.anim.left_to_center, R.anim.center_to_right)
+                                .setStartAnimations(MainActivity.this, R.anim.fade_in, R.anim.none)
+                                .setExitAnimations(MainActivity.this, R.anim.none, R.anim.fade_out)
                                 .build();
                         customTabsIntent.launchUrl(MainActivity.this, Uri.parse(url));
                     } catch (Exception ignored) {
@@ -425,12 +428,14 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onResume() {
+        if (fromYoutube) {
+            overridePendingTransition(R.anim.left_to_center, R.anim.center_to_right);
+        } else {
+            overridePendingTransition(R.anim.none, R.anim.fade_out);
+        }
         isInApp = true;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             webView.getSettings().setOffscreenPreRaster(true);
-        }
-        if (webViewIsLoaded) {
-            overridePendingTransition(R.anim.left_to_center, R.anim.center_to_right);
         }
         super.onResume();
         webView.post(() -> webView.loadUrl("javascript:" +

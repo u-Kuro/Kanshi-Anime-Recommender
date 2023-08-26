@@ -67,9 +67,10 @@
                         android:longClickable="true"
                         android:singleLine="true"
                         android:textColor="@android:color/white"
-                        android:textSize="20sp"
+                        android:textSize="19sp"
                         android:paddingBottom="2sp"
                         android:textStyle="bold"
+                        android:text="@string/youtube"
                         tools:ignore="RelativeOverlap" />
 
                     <ImageView
