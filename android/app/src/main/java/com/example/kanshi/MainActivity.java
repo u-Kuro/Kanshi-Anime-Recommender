@@ -66,7 +66,7 @@ import androidx.core.content.FileProvider;
 import androidx.core.splashscreen.SplashScreen;
 
 public class MainActivity extends AppCompatActivity {
-    public final int appID = 147;
+    public final int appID = 148;
     public boolean webViewIsLoaded = false;
     public boolean permissionIsAsked = false;
     public SharedPreferences prefs;
