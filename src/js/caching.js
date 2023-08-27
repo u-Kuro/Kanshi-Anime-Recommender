@@ -1,8 +1,8 @@
 import { get } from "svelte/store"
 import { appID } from "./globalValues"
 import getWebVersion from "../version"
-let loadedRequestUrls = {}
 
+let loadedRequestUrls = {}
 const cacheRequest = (url) => {
     return new Promise(async (resolve) => {
         if (typeof window !== "undefined" && window.location.protocol.includes('file')) {
@@ -23,9 +23,14 @@ const cacheRequest = (url) => {
                     }
                 }).then(async response => await response.blob())
                     .then(blob => {
-                        let blobUrl = URL.createObjectURL(blob);
-                        loadedRequestUrls[url] = blobUrl
-                        resolve(blobUrl)
+                        try {
+                            let blobUrl = URL.createObjectURL(blob);
+                            loadedRequestUrls[url] = blobUrl
+                            resolve(blobUrl)
+                        } catch (e) {
+                            loadedRequestUrls[url] = url
+                            resolve(url)
+                        }
                     })
                     .catch(() => {
                         loadedRequestUrls[url] = url
@@ -39,17 +44,12 @@ const cacheRequest = (url) => {
 let loadedImages = {}
 const cacheImage = (url, width, height) => {
     return new Promise(async (resolve) => {
-        if (!window.location.protocol.includes("https")) {
+        if (!window.location.origin.includes('https://u-kuro.github.io')) {
             resolve(url)
         } else if (loadedImages[url]) {
-            return loadedImages[url]
+            resolve(loadedImages[url])
         } else {
-            let newUrl;
-            if (window.location.origin.includes('https://u-kuro.github.io')) {
-                newUrl = "https://cors-anywhere-kuro.vercel.app/?url=" + url;
-            } else {
-                newUrl = url;
-            }
+            let newUrl = "https://cors-anywhere-kuro.vercel.app/?url=" + url;
             fetch(newUrl).then(async response => await response.blob())
                 .then(blob => {
                     try {
@@ -69,17 +69,17 @@ const cacheImage = (url, width, height) => {
                                         loadedImages[url] = blobUrl
                                         resolve(blobUrl)
                                     } catch (e) {
-                                        loadedImages[url] = url
-                                        resolve(url)
+                                        loadedImages[url] = imgUrl
+                                        resolve(imgUrl)
                                     }
                                 }, 'image/webp', 0.8)
                             } catch (e) {
-                                loadedImages[url] = url
-                                resolve(url)
+                                loadedImages[url] = imgUrl
+                                resolve(imgUrl)
                             }
                         }
                         img.onerror = () => {
-                            loadedImages[imgUrl] = imgUrl
+                            loadedImages[url] = imgUrl
                             resolve(imgUrl)
                         }
                     } catch (e) {
