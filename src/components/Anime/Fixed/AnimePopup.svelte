@@ -37,6 +37,7 @@
     } from "../../../js/others/helper.js";
     import { retrieveJSON, saveJSON } from "../../../js/indexedDB.js";
     import { animeLoader } from "../../../js/workerUtils.js";
+    import { cacheImage } from "../../../js/caching.js";
 
     let isOnline = window.navigator.onLine;
 
@@ -347,10 +348,11 @@
                     popupAnimeObserver?.observe?.(popupHeader);
                 }
             });
-            let lastAnimeContent = $finalAnimeList[$finalAnimeList.length - 1];
+            let observedIdx = $finalAnimeList.length - 1
+            let lastAnimeContent = $finalAnimeList[observedIdx];
             let lastPopupContent =
                 lastAnimeContent.popupContent ||
-                popupContainer.children?.[$finalAnimeList.length - 1];
+                popupContainer.children?.[observedIdx];
             if ($animeObserver && lastPopupContent instanceof Element) {
                 // Popup Observed
                 $animeObserver.observe(lastPopupContent);
@@ -1326,6 +1328,12 @@
                 : removeClass(document.documentElement, "overflow-hidden");
         }
     }
+
+    async function addImage(node, imageUrl) {
+        if (imageUrl) {
+            node.src = await cacheImage(imageUrl);
+        }
+    }
 </script>
 
 <div
@@ -1369,11 +1377,10 @@
                             <div class="popup-img">
                                 {#if anime.bannerImageUrl || anime.trailerThumbnailUrl}
                                     <img
+                                        use:addImage={(anime.bannerImageUrl || anime.trailerThumbnailUrl)}
                                         loading="lazy"
                                         width="640px"
                                         height="360px"
-                                        src={anime.bannerImageUrl ||
-                                            anime.trailerThumbnailUrl}
                                         alt={(anime?.shownTitle || "") +
                                             (anime.bannerImageUrl
                                                 ? " Banner"
@@ -1790,13 +1797,10 @@
                                 <div class="info-profile">
                                     <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                                     <img
+                                        use:addImage={(anime.coverImageUrl || anime.bannerImageUrl || anime.trailerThumbnailUrl)}
                                         loading="lazy"
                                         width="150px"
                                         height="210px"
-                                        src={anime.coverImageUrl ||
-                                            anime.bannerImageUrl ||
-                                            anime.trailerThumbnailUrl ||
-                                            ""}
                                         alt={(anime?.shownTitle || "") +
                                             (anime.coverImageUrl
                                                 ? " Cover"
@@ -1815,8 +1819,7 @@
                                         }}
                                         on:click={() => {
                                             window.setShouldGoBack(false);
-                                            fullImagePopup =
-                                                anime.coverImageUrl;
+                                            fullImagePopup = anime.coverImageUrl;
                                             fullDescriptionPopup = null;
                                         }}
                                         on:keydown={(e) => {
@@ -1993,10 +1996,10 @@
         <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
         <div class="fullPopup" id="fullPopup">
             <img
+                use:addImage={fullImagePopup}
                 tabindex="0"
                 class="fullPopupImage"
                 loading="lazy"
-                src={fullImagePopup}
                 alt="Full View"
                 on:keydown={(e) =>
                     e.key === "Enter" &&

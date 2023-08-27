@@ -1,7 +1,7 @@
 import { get } from "svelte/store"
 import { appID } from "./globalValues"
 import getWebVersion from "../version"
-let loadedUrls = {}
+let loadedRequestUrls = {}
 
 const cacheRequest = (url) => {
     return new Promise(async (resolve) => {
@@ -14,8 +14,8 @@ const cacheRequest = (url) => {
                 appID.set(_appID)
             }
             url = url + "?v=" + _appID
-            if (loadedUrls[url]) {
-                resolve(loadedUrls[url])
+            if (loadedRequestUrls[url]) {
+                resolve(loadedRequestUrls[url])
             } else {
                 fetch(url, {
                     headers: {
@@ -24,10 +24,11 @@ const cacheRequest = (url) => {
                 }).then(async response => await response.blob())
                     .then(blob => {
                         let blobUrl = URL.createObjectURL(blob);
-                        loadedUrls[url] = blobUrl
+                        loadedRequestUrls[url] = blobUrl
                         resolve(blobUrl)
                     })
                     .catch(() => {
+                        loadedRequestUrls[url] = url
                         resolve(url)
                     })
             }
@@ -35,4 +36,62 @@ const cacheRequest = (url) => {
     })
 }
 
-export { cacheRequest }
+let loadedImages = {}
+const cacheImage = (url, width, height) => {
+    return new Promise(async (resolve) => {
+        if (!window.location.protocol.includes("https")) {
+            resolve(url)
+        } else if (loadedImages[url]) {
+            return loadedImages[url]
+        } else {
+            let newUrl;
+            if (window.location.origin.includes('https://u-kuro.github.io')) {
+                newUrl = "https://cors-anywhere-kuro.vercel.app/?url=" + url;
+            } else {
+                newUrl = url;
+            }
+            fetch(newUrl).then(async response => await response.blob())
+                .then(blob => {
+                    try {
+                        let imgUrl = URL.createObjectURL(blob);
+                        let img = new Image();
+                        img.src = imgUrl
+                        img.onload = () => {
+                            try {
+                                let canvas = document.createElement('canvas')
+                                canvas.width = width || img.naturalWidth
+                                canvas.height = height || img.naturalHeight
+                                let ctx = canvas.getContext('2d')
+                                ctx.drawImage(img, 0, 0)
+                                canvas.toBlob((blob) => {
+                                    try {
+                                        let blobUrl = URL.createObjectURL(blob)
+                                        loadedImages[url] = blobUrl
+                                        resolve(blobUrl)
+                                    } catch (e) {
+                                        loadedImages[url] = url
+                                        resolve(url)
+                                    }
+                                }, 'image/webp', 0.8)
+                            } catch (e) {
+                                loadedImages[url] = url
+                                resolve(url)
+                            }
+                        }
+                        img.onerror = () => {
+                            loadedImages[imgUrl] = imgUrl
+                            resolve(imgUrl)
+                        }
+                    } catch (e) {
+                        loadedImages[url] = url
+                        resolve(url)
+                    }
+                })
+                .catch(e => {
+                    loadedImages[url] = url
+                    resolve(url)
+                })
+        }
+    })
+}
+export { cacheRequest, cacheImage }

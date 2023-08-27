@@ -29,6 +29,7 @@
         getLocalStorage,
     } from "../../js/others/helper.js";
     import { fade } from "svelte/transition";
+    import { cacheImage } from "../../js/caching.js";
 
     let windowHeight = Math.max(
         window.visualViewport.height,
@@ -336,6 +337,16 @@
     let scrollingToBottom;
     $: isFullViewed =
         $gridFullView ?? getLocalStorage("gridFullView") ?? !$android;
+
+    async function addImage(node, anime) {
+        let imageUrl =
+            anime?.coverImageUrl ||
+            anime?.bannerImageUrl ||
+            anime?.trailerThumbnailUrl;
+        if (imageUrl) {
+            node.src = await cacheImage(imageUrl);
+        }
+    }
 </script>
 
 <main class={isFullViewed ? "fullView" : ""}>
@@ -379,6 +390,7 @@
                     >
                         {#if anime?.coverImageUrl || anime?.bannerImageUrl || anime?.trailerThumbnailUrl}
                             <img
+                                use:addImage={anime}
                                 fetchpriority={animeIdx > numberOfLoadedGrid
                                     ? ""
                                     : "high"}
@@ -387,10 +399,6 @@
                                     : "eager"}
                                 class={"image-grid__card-thumb  fade-out"}
                                 alt={(anime?.shownTitle || "") + " Cover"}
-                                src={anime?.coverImageUrl ||
-                                    anime?.bannerImageUrl ||
-                                    anime?.trailerThumbnailUrl ||
-                                    ""}
                                 width="180px"
                                 height="254.531px"
                                 on:load={(e) => {
@@ -454,6 +462,11 @@
                             </span>
                         </span>
                     </div>
+                </div>
+            {/each}
+            {#each Array($shownAllInList ? 0 : 1) as _}
+                <div class="image-grid__card skeleton">
+                    <div class="shimmer" />
                 </div>
             {/each}
             {#each Array(isFullViewed ? Math.floor((windowHeight ?? 1100) / 220) : 5) as _}
