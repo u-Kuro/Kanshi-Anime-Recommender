@@ -14,7 +14,8 @@ import {
     userRequestIsRunning,
     isImporting,
     progress,
-    android
+    android,
+    listUpdateAvailable
 } from "./globalValues";
 import { get } from "svelte/store";
 import { downloadLink, isJsonObject, setLocalStorage } from "../js/others/helper.js"
@@ -63,6 +64,7 @@ const animeLoader = (_data = {}) => {
                         }
                         dataStatusPrio = false
                         animeLoaderWorker.onmessage = null
+                        listUpdateAvailable.set(false)
                         progress.set(100)
                         resolve(Object.assign({}, data, { animeLoaderWorker: animeLoaderWorker }))
                     }

@@ -988,7 +988,6 @@
 			}
 			animeLoader()
 				.then(async (data) => {
-					$listUpdateAvailable = false;
 					updateListIconSpinningTimeout = setTimeout(() => {
 						removeClass(updateIcon, "fa-spin");
 					}, 200);

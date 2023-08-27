@@ -1263,7 +1263,9 @@
     onMount(() => {
         // Init
         let filterEl = document.getElementById("filters");
-        filterEl.addEventListener("scroll", handleFilterScroll,{passive: true});
+        filterEl.addEventListener("scroll", handleFilterScroll, {
+            passive: true,
+        });
         dragScroll(filterEl, "x");
 
         document.addEventListener("keydown", handleDropdownKeyDown);
@@ -1371,7 +1373,7 @@
                             </div>
                         </div>
                         <div class="options">
-                            {#each $filterOptions?.filterSelection || [] as filterSelection (filterSelection?.filterSelectionName||{})}
+                            {#each $filterOptions?.filterSelection || [] as filterSelection (filterSelection?.filterSelectionName || {})}
                                 <div
                                     class="option"
                                     on:click={handleFilterTypes(
@@ -1379,14 +1381,17 @@
                                     )}
                                     on:keydown={(e) =>
                                         e.key === "Enter" &&
-                                        handleFilterTypes(filterSelection?.filterSelectionName)}
+                                        handleFilterTypes(
+                                            filterSelection?.filterSelectionName
+                                        )}
                                 >
                                     <h3
                                         style:color={filterSelection?.isSelected
                                             ? "#3db4f2"
                                             : "inherit"}
                                     >
-                                        {filterSelection?.filterSelectionName || ""}
+                                        {filterSelection?.filterSelectionName ||
+                                            ""}
                                     </h3>
                                 </div>
                             {/each}
@@ -1425,8 +1430,8 @@
         style:--maxPaddingHeight={maxFilterSelectionHeight + 65 + "px"}
     >
         {#if $filterOptions}
-            {#each $filterOptions?.filterSelection || [] as filterSelection, filSelIdx (filterSelection.filterSelectionName||{})}
-                {#each filterSelection.filters.Dropdown || [] as Dropdown, dropdownIdx ((filterSelection.filterSelectionName + Dropdown.filName)||{})}
+            {#each $filterOptions?.filterSelection || [] as filterSelection, filSelIdx (filterSelection.filterSelectionName || {})}
+                {#each filterSelection.filters.Dropdown || [] as Dropdown, dropdownIdx (filterSelection.filterSelectionName + Dropdown.filName || {})}
                     <div
                         class={"filter-select " +
                             (filterSelection.isSelected
@@ -1454,11 +1459,18 @@
                             }}
                         >
                             <div class="value-wrap">
-                                <label class="disable-interaction" for={filterSelection.filterSelectionName + Dropdown.filName}>
-                                    {filterSelection.filterSelectionName+" "+Dropdown.filName}
+                                <label
+                                    class="disable-interaction"
+                                    for={filterSelection.filterSelectionName +
+                                        Dropdown.filName}
+                                >
+                                    {filterSelection.filterSelectionName +
+                                        " " +
+                                        Dropdown.filName}
                                 </label>
                                 <input
-                                    id={filterSelection.filterSelectionName + Dropdown.filName}
+                                    id={filterSelection.filterSelectionName +
+                                        Dropdown.filName}
                                     placeholder="Any"
                                     type="search"
                                     enterkeyhint="search"
@@ -1521,11 +1533,21 @@
                                         ×
                                     </div>
                                 </div>
-                                <label class="disable-interaction" for={"Search "+(filterSelection.filterSelectionName + Dropdown.filName)}>
-                                    {"Search "+filterSelection.filterSelectionName + " "+Dropdown.filName}
+                                <label
+                                    class="disable-interaction"
+                                    for={"Search " +
+                                        (filterSelection.filterSelectionName +
+                                            Dropdown.filName)}
+                                >
+                                    {"Search " +
+                                        filterSelection.filterSelectionName +
+                                        " " +
+                                        Dropdown.filName}
                                 </label>
                                 <input
-                                    id={"Search "+(filterSelection.filterSelectionName + Dropdown.filName)}
+                                    id={"Search " +
+                                        (filterSelection.filterSelectionName +
+                                            Dropdown.filName)}
                                     placeholder="Any"
                                     type="search"
                                     enterkeyhint="search"
@@ -1542,7 +1564,7 @@
                                     on:wheel|stopPropagation={() => {}}
                                 >
                                     {#if Dropdown.options?.filter?.(({ optionName }) => hasPartialMatch(optionName, Dropdown?.optKeyword) || Dropdown?.optKeyword === "")?.length}
-                                        {#each Dropdown.options || [] as option, optionIdx ((filterSelection.filterSelectionName + Dropdown.filName + option.optionName)||{})}
+                                        {#each Dropdown.options || [] as option, optionIdx (filterSelection.filterSelectionName + Dropdown.filName + option.optionName || {})}
                                             <div
                                                 class={"option " +
                                                     (hasPartialMatch(
@@ -1603,7 +1625,7 @@
                         </div>
                     </div>
                 {/each}
-                {#each filterSelection.filters.Checkbox || [] as Checkbox, checkboxIdx ((filterSelection.filterSelectionName + Checkbox.filName)||{})}
+                {#each filterSelection.filters.Checkbox || [] as Checkbox, checkboxIdx (filterSelection.filterSelectionName + Checkbox.filName || {})}
                     {#if filterSelection.isSelected}
                         <div class="filter-checkbox">
                             <div style:visibility="none" />
@@ -1625,12 +1647,15 @@
                                         filterSelection.filterSelectionName
                                     )}
                             >
-                                <label class="disable-interaction" for={"Checkbox: "+Checkbox.filName}>
+                                <label
+                                    class="disable-interaction"
+                                    for={"Checkbox: " + Checkbox.filName}
+                                >
                                     {Checkbox.filName}
                                 </label>
                                 {#if $initData}
                                     <input
-                                        id={"Checkbox: "+Checkbox.filName}
+                                        id={"Checkbox: " + Checkbox.filName}
                                         type="checkbox"
                                         class="checkbox"
                                         on:change={(e) => {
@@ -1642,7 +1667,7 @@
                                     />
                                 {:else}
                                     <input
-                                        id={"Checkbox: "+Checkbox.filName}
+                                        id={"Checkbox: " + Checkbox.filName}
                                         type="checkbox"
                                         class="checkbox"
                                         on:change={(e) =>
@@ -1663,7 +1688,7 @@
                         </div>
                     {/if}
                 {/each}
-                {#each filterSelection.filters["Input Number"] || [] as inputNum, inputNumIdx ((filterSelection.filterSelectionName + inputNum.filName)||{})}
+                {#each filterSelection.filters["Input Number"] || [] as inputNum, inputNumIdx (filterSelection.filterSelectionName + inputNum.filName || {})}
                     {#if filterSelection.isSelected}
                         <div
                             class="filter-input-number"
@@ -1675,11 +1700,14 @@
                                 <h2>{inputNum.filName || ""}</h2>
                             </div>
                             <div class="value-input-number-wrap">
-                                <label class="disable-interaction" for={"Number Filter: "+inputNum.filName}>
-                                    {"Number Filter: "+inputNum.filName}
+                                <label
+                                    class="disable-interaction"
+                                    for={"Number Filter: " + inputNum.filName}
+                                >
+                                    {"Number Filter: " + inputNum.filName}
                                 </label>
                                 <input
-                                    id={"Number Filter: "+inputNum.filName}
+                                    id={"Number Filter: " + inputNum.filName}
                                     class="value-input-number"
                                     type="text"
                                     placeholder={inputNum.filName ===
@@ -1749,12 +1777,13 @@
                     <i class="fa-solid fa-ban" />
                 </div>
             {/if}
-            {#each activeTagFiltersArrays || [] as activeTagFiltersArray ((activeTagFiltersArray?.optionName + activeTagFiltersArray?.optionIdx + (activeTagFiltersArray?.optionType ?? ""))||{})}
+            {#each activeTagFiltersArrays || [] as activeTagFiltersArray (activeTagFiltersArray?.optionName + activeTagFiltersArray?.optionIdx + (activeTagFiltersArray?.optionType ?? "") || {})}
                 <div
                     class="activeTagFilter"
                     tabindex="0"
                     out:fade={{ duration: 200 }}
-                    style:--activeTagFilterColor={activeTagFiltersArray?.selected === "included"
+                    style:--activeTagFilterColor={activeTagFiltersArray?.selected ===
+                    "included"
                         ? "#5f9ea0"
                         : activeTagFiltersArray?.changeType === "read"
                         ? "#000"
@@ -1785,10 +1814,16 @@
                 >
                     {#if activeTagFiltersArray?.filterType === "input number"}
                         <h3>
-                            {activeTagFiltersArray?.optionName + ": " + activeTagFiltersArray?.optionValue || ""}
+                            {activeTagFiltersArray?.optionName +
+                                ": " +
+                                activeTagFiltersArray?.optionValue || ""}
                         </h3>
                     {:else if activeTagFiltersArray?.optionType}
-                        <h3>{activeTagFiltersArray?.optionType + ": " + activeTagFiltersArray?.optionName || ""}</h3>
+                        <h3>
+                            {activeTagFiltersArray?.optionType +
+                                ": " +
+                                activeTagFiltersArray?.optionName || ""}
+                        </h3>
                     {:else}
                         <h3>{activeTagFiltersArray?.optionName || ""}</h3>
                     {/if}
@@ -1892,7 +1927,7 @@
                             </div>
                         </div>
                         <div class="options">
-                            {#each $filterOptions?.sortFilter || [] as sortFilter (sortFilter?.sortName||{})}
+                            {#each $filterOptions?.sortFilter || [] as sortFilter (sortFilter?.sortName || {})}
                                 <div
                                     class="option"
                                     on:click={changeSort(sortFilter?.sortName)}
@@ -2262,6 +2297,7 @@
     }
 
     .activeFilters {
+        padding: 0 1.2em 0 8px;
         display: grid;
         align-items: start;
         justify-content: space-between;
@@ -2373,6 +2409,7 @@
     }
 
     .last-filter-option {
+        padding-left: 8px;
         display: flex;
         justify-content: space-between;
         align-items: center;

@@ -1139,16 +1139,21 @@
         itemIsScrollingTimeout;
 
     function popupScroll() {
-        itemScroll();
-        $popupIsGoingBack = false;
-        goBackPercent = 0;
-    }
-    function itemScroll() {
         itemIsScrolling = true;
         clearTimeout(itemIsScrollingTimeout);
         itemIsScrollingTimeout = setTimeout(() => {
             itemIsScrolling = false;
         }, 50);
+        $popupIsGoingBack = false;
+        goBackPercent = 0;
+    }
+    window.thisitemscrolltime = 500
+    function itemScroll() {
+        itemIsScrolling = true;
+        clearTimeout(itemIsScrollingTimeout);
+        itemIsScrollingTimeout = setTimeout(() => {
+            itemIsScrolling = false;
+        }, window.thisitemscrolltime);
     }
     function handlePopupContainerDown(event) {
         if (itemIsScrolling) return;
@@ -2477,7 +2482,7 @@
         align-items: center;
         user-select: none !important;
         width: 100%;
-        height: 4.4em;
+        height: 4.8em;
         margin: auto;
         border-top: 1px solid #9ba0b2;
     }
