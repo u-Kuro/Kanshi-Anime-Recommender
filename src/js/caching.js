@@ -44,6 +44,7 @@ const cacheRequest = (url) => {
 let loadedImages = {}
 const cacheImage = (url, width, height) => {
     return new Promise(async (resolve) => {
+        resolve(url)
         if (!window.location.origin.includes('https://u-kuro.github.io')) {
             resolve(url)
         } else if (loadedImages[url]) {
