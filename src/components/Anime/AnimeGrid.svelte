@@ -31,6 +31,10 @@
     import { fade } from "svelte/transition";
     import { cacheImage } from "../../js/caching.js";
 
+    const emptyImage =
+        "data:image/png;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=";
+    const loadingImage =
+        "data:image/jpeg;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=";
     let windowHeight = Math.max(
         window.visualViewport.height,
         window.innerHeight
@@ -338,13 +342,15 @@
     $: isFullViewed =
         $gridFullView ?? getLocalStorage("gridFullView") ?? !$android;
 
-    async function addImage(node, anime) {
-        let imageUrl =
-            anime?.coverImageUrl ||
-            anime?.bannerImageUrl ||
-            anime?.trailerThumbnailUrl;
-        if (imageUrl) {
-            node.src = await cacheImage(imageUrl);
+    async function addImage(node, imageUrl) {
+        if (imageUrl && imageUrl !== emptyImage) {
+            node.src = loadingImage;
+            let newImageUrl = await cacheImage(imageUrl);
+            if (newImageUrl) {
+                node.src = newImageUrl;
+            }
+        } else {
+            node.src = emptyImage;
         }
     }
 </script>
@@ -390,7 +396,9 @@
                     >
                         {#if anime?.coverImageUrl || anime?.bannerImageUrl || anime?.trailerThumbnailUrl}
                             <img
-                                use:addImage={anime}
+                                use:addImage={anime?.coverImageUrl ||
+                                    anime?.bannerImageUrl ||
+                                    anime?.trailerThumbnailUrl || emptyImage}
                                 fetchpriority={animeIdx > numberOfLoadedGrid
                                     ? ""
                                     : "high"}
@@ -402,11 +410,13 @@
                                 width="180px"
                                 height="254.531px"
                                 on:load={(e) => {
-                                    removeClass(e.target, "fade-out");
-                                    addClass(
-                                        e.target?.closest?.(".shimmer"),
-                                        "loaded"
-                                    );
+                                    if (e?.target?.src !== loadingImage) {
+                                        removeClass(e.target, "fade-out");
+                                        addClass(
+                                            e.target?.closest?.(".shimmer"),
+                                            "loaded"
+                                        );
+                                    }
                                 }}
                                 on:error={(e) => {
                                     addClass(e.target, "fade-out");

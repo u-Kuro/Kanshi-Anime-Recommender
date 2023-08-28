@@ -19,7 +19,8 @@ const cacheRequest = (url) => {
             } else {
                 fetch(url, {
                     headers: {
-                        'Cache-Control': 'max-age=31536000, immutable'
+                        'Cache-Control': 'public, max-age=31536000, immutable',
+                        'cache': 'force-cache'
                     }
                 }).then(async response => await response.blob())
                     .then(blob => {
@@ -28,12 +29,10 @@ const cacheRequest = (url) => {
                             loadedRequestUrls[url] = blobUrl
                             resolve(blobUrl)
                         } catch (e) {
-                            loadedRequestUrls[url] = url
                             resolve(url)
                         }
                     })
                     .catch(() => {
-                        loadedRequestUrls[url] = url
                         resolve(url)
                     })
             }
@@ -41,17 +40,22 @@ const cacheRequest = (url) => {
     })
 }
 
+const emptyImage = "data:image/png;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=";
 let loadedImages = {}
 const cacheImage = (url, width, height) => {
     return new Promise(async (resolve) => {
-        resolve(url)
         if (!window.location.origin.includes('https://u-kuro.github.io')) {
             resolve(url)
         } else if (loadedImages[url]) {
             resolve(loadedImages[url])
-        } else {
-            let newUrl = "https://cors-anywhere-kuro.vercel.app/?url=" + url;
-            fetch(newUrl).then(async response => await response.blob())
+        } else if (url) {
+            let newUrl = "https://cors-anywhere-kuro.vercel.app/api?url=" + url;
+            fetch(newUrl, {
+                headers: {
+                    'Cache-Control': 'public, max-age=31536000, immutable',
+                    'cache': 'force-cache'
+                }
+            }).then(async response => await response.blob())
                 .then(blob => {
                     try {
                         let imgUrl = URL.createObjectURL(blob);
@@ -92,6 +96,8 @@ const cacheImage = (url, width, height) => {
                     loadedImages[url] = url
                     resolve(url)
                 })
+        } else {
+            resolve(emptyImage)
         }
     })
 }

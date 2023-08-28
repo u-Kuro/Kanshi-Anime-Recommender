@@ -39,6 +39,10 @@
     import { animeLoader } from "../../../js/workerUtils.js";
     import { cacheImage } from "../../../js/caching.js";
 
+    const emptyImage =
+        "data:image/png;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=";
+    const loadingImage =
+        "data:image/jpeg;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=";
     let isOnline = window.navigator.onLine;
 
     let animeGridParentEl,
@@ -1149,13 +1153,12 @@
         $popupIsGoingBack = false;
         goBackPercent = 0;
     }
-    window.thisitemscrolltime = 500
     function itemScroll() {
         itemIsScrolling = true;
         clearTimeout(itemIsScrollingTimeout);
         itemIsScrollingTimeout = setTimeout(() => {
             itemIsScrolling = false;
-        }, window.thisitemscrolltime);
+        }, 500);
     }
     function handlePopupContainerDown(event) {
         if (itemIsScrolling) return;
@@ -1330,8 +1333,14 @@
     }
 
     async function addImage(node, imageUrl) {
-        if (imageUrl) {
-            node.src = await cacheImage(imageUrl);
+        if (imageUrl && imageUrl!==emptyImage) {
+            node.src = loadingImage
+            let newImageUrl = await cacheImage(imageUrl);
+            if (newImageUrl) {
+                node.src = newImageUrl
+            }
+        } else {
+            node.src = emptyImage
         }
     }
 </script>
@@ -1377,7 +1386,7 @@
                             <div class="popup-img">
                                 {#if anime.bannerImageUrl || anime.trailerThumbnailUrl}
                                     <img
-                                        use:addImage={(anime.bannerImageUrl || anime.trailerThumbnailUrl)}
+                                        use:addImage={(anime.bannerImageUrl || anime.trailerThumbnailUrl || emptyImage)}
                                         loading="lazy"
                                         width="640px"
                                         height="360px"
@@ -1387,8 +1396,10 @@
                                                 : " Thumbnail")}
                                         class="bannerImg fade-out"
                                         on:load={(e) => {
-                                            removeClass(e.target, "fade-out");
-                                            addClass(e.target, "fade-in");
+                                            if (e?.target?.src !== loadingImage) {
+                                                removeClass(e.target, "fade-out");
+                                                addClass(e.target, "fade-in");
+                                            }
                                         }}
                                         on:error={(e) => {
                                             removeClass(e.target, "fade-in");
@@ -1797,7 +1808,7 @@
                                 <div class="info-profile">
                                     <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                                     <img
-                                        use:addImage={(anime.coverImageUrl || anime.bannerImageUrl || anime.trailerThumbnailUrl)}
+                                        use:addImage={(anime.coverImageUrl || anime.bannerImageUrl || anime.trailerThumbnailUrl || emptyImage)}
                                         loading="lazy"
                                         width="150px"
                                         height="210px"
@@ -1819,14 +1830,13 @@
                                         }}
                                         on:click={() => {
                                             window.setShouldGoBack(false);
-                                            fullImagePopup = anime.coverImageUrl;
+                                            fullImagePopup = anime.coverImageUrl || anime.bannerImageUrl || anime.trailerThumbnailUrl || emptyImage
                                             fullDescriptionPopup = null;
                                         }}
                                         on:keydown={(e) => {
                                             window.setShouldGoBack(false);
                                             if (e.key === "Enter") {
-                                                fullImagePopup =
-                                                    anime.coverImageUrl;
+                                                fullImagePopup = anime.coverImageUrl || anime.bannerImageUrl || anime.trailerThumbnailUrl || emptyImage
                                                 fullDescriptionPopup = null;
                                             }
                                         }}
@@ -1996,7 +2006,7 @@
         <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
         <div class="fullPopup" id="fullPopup">
             <img
-                use:addImage={fullImagePopup}
+                use:addImage={fullImagePopup || emptyImage}
                 tabindex="0"
                 class="fullPopupImage"
                 loading="lazy"
@@ -2628,7 +2638,7 @@
     }
 
     .info > a {
-        color: rgb(61, 180, 242) !important;
+        color: rgb(61, 180, 242);
     }
 
     .info a::-webkit-scrollbar,
