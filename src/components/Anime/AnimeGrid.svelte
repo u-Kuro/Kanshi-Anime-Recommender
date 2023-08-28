@@ -21,6 +21,7 @@
         gridFullView,
         mostRecentAiringDateTimeout,
         earlisetReleaseDate,
+        listUpdateAvailable,
     } from "../../js/globalValues.js";
     import {
         addClass,
@@ -39,6 +40,7 @@
         window.visualViewport.height,
         window.innerHeight
     );
+    let windowWidth = Math.max(window.visualViewport.width, window.innerWidth);
     let animeGridEl;
     let isRunningIntersectEvent;
     let numberOfLoadedGrid = 13;
@@ -79,11 +81,16 @@
             window.visualViewport.height,
             window.innerHeight
         );
+        windowWidth = Math.max(window.visualViewport.width, window.innerWidth);
         animeGridEl = animeGridEl || document.getElementById("anime-grid");
         window.addEventListener("resize", () => {
             windowHeight = Math.max(
                 window.visualViewport.height,
                 window.innerHeight
+            );
+            windowWidth = Math.max(
+                window.visualViewport.width,
+                window.innerWidth
             );
         });
     });
@@ -327,20 +334,48 @@
             element.scrollLeft = Math.max(0, element.scrollLeft + event.deltaY);
         }
     }
-    function goBackGrid() {
-        animeGridEl.style.overflow = "hidden";
-        animeGridEl.style.overflow = "";
-        animeGridEl?.children?.[0]?.scrollIntoView?.({
-            container: animeGridEl,
-            behavior: "smooth",
-            block: "nearest",
-            inline: "start",
-        });
-    }
 
+    let lastLeftScroll, currentLeftScroll;
     let scrollingToBottom;
+    let belowGrid;
+    let afterFullGrid;
     $: isFullViewed =
         $gridFullView ?? getLocalStorage("gridFullView") ?? !$android;
+    $: shouldShowGoBackInFullView =
+        isFullViewed &&
+        afterFullGrid &&
+        (currentLeftScroll < lastLeftScroll || windowWidth > 596.5);
+    $: shouldShowGoBack = !isFullViewed && !$listUpdateAvailable && belowGrid;
+    window.addEventListener(
+        "scroll",
+        () => {
+            if (document.documentElement.scrollTop > 500) {
+                belowGrid = true;
+            } else {
+                belowGrid = false;
+            }
+        },
+        { passive: true }
+    );
+
+    function goBackGrid() {
+        if (isFullViewed) {
+            animeGridEl.style.overflow = "hidden";
+            animeGridEl.style.overflow = "";
+            animeGridEl?.children?.[0]?.scrollIntoView?.({
+                container: animeGridEl,
+                behavior: "smooth",
+                block: "nearest",
+                inline: "start",
+            });
+        } else {
+            if ($android || !matchMedia("(hover:hover)").matches) {
+                document.documentElement.style.overflow = "hidden";
+                document.documentElement.style.overflow = "";
+            }
+            window.scrollTo({ top: -9999, behavior: "smooth" });
+        }
+    }
 
     async function addImage(node, imageUrl) {
         if (imageUrl && imageUrl !== emptyImage) {
@@ -372,6 +407,16 @@
                     document.documentElement.scrollTop = newScrollPosition;
                     scrollingToBottom = false;
                 }
+            }
+        }}
+        on:scroll={(e) => {
+            let element = e?.target;
+            lastLeftScroll = currentLeftScroll;
+            currentLeftScroll = element?.scrollLeft;
+            if (currentLeftScroll > 500) {
+                afterFullGrid = true;
+            } else {
+                afterFullGrid = false;
             }
         }}
         style:--anime-grid-height={windowHeight + "px"}
@@ -496,16 +541,22 @@
             <div class="empty">No Results</div>
         {/if}
     </div>
-    {#if !$android && $gridFullView && animeGridEl?.scrollLeft > 500}
+    {#if !$android && (shouldShowGoBackInFullView || shouldShowGoBack)}
         <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
         <div
-            class="go-back-grid"
+            class={"go-back-grid" +
+                (shouldShowGoBackInFullView ? " fullView" : "")}
             tabindex="0"
             on:click={goBackGrid}
             on:keydown={(e) => e.key === "Enter" && goBackGrid(e)}
             out:fade={{ duration: 200 }}
         >
-            <i class="fa-solid fa-arrow-left" />
+            <i
+                class={"fa-solid" +
+                    (shouldShowGoBackInFullView
+                        ? " fa-arrow-left"
+                        : " fa-arrow-up")}
+            />
         </div>
     {/if}
 </main>
@@ -737,25 +788,47 @@
         font-size: 10px;
     }
 
+    .go-back-grid.fullView {
+        position: absolute !important;
+        right: unset !important;
+        bottom: unset !important;
+        top: 50% !important;
+        left: 8px !important;
+        transform: translateY(-50%) translateZ(0) !important;
+        -webkit-transform: translateY(-50%) translateZ(0) !important;
+        -ms-transform: translateY(-50%) translateZ(0) !important;
+        -moz-transform: translateY(-50%) translateZ(0) !important;
+        -o-transform: translateY(-50%) translateZ(0) !important;
+    }
+
     .go-back-grid {
+        position: fixed !important;
+        top: unset !important;
+        left: unset !important;
+        bottom: 3em !important;
+        right: 3em !important;
+        transform: translateZ(0) !important;
+        -webkit-transform: translateZ(0) !important;
+        -ms-transform: translateZ(0) !important;
+        -moz-transform: translateZ(0) !important;
+        -o-transform: translateZ(0) !important;
         animation: fadeIn 0.2s ease;
-        position: absolute;
         display: flex;
         justify-content: center;
         align-items: center;
         gap: 6px;
         background-color: rgb(21, 31, 46);
         cursor: pointer;
-        top: 50%;
-        left: 8px;
-        transform: translateY(-50%) translateZ(0);
-        -webkit-transform: translateY(-50%) translateZ(0);
-        -ms-transform: translateY(-50%) translateZ(0);
-        -moz-transform: translateY(-50%) translateZ(0);
-        -o-transform: translateY(-50%) translateZ(0);
         border-radius: 50%;
         width: 44px;
         height: 44px;
+    }
+
+    @media screen and (min-width: 751px) {
+        .go-back-grid {
+            background-color: white !important;
+            color: black !important;
+        }
     }
 
     @media screen and (max-width: 425px) {
