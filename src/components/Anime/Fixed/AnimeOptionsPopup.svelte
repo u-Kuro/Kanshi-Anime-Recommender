@@ -15,6 +15,7 @@
 
     let animeTitle;
     let youtubeSearchTitle;
+    let animeCopyTitle;
     let animeID;
     let animeUrl;
     let animeIdx;
@@ -82,13 +83,14 @@
     }
 
     function copyTitle(e) {
-        if ((isRecentlyOpened && e.type !== "keydown") || !animeTitle) return;
+        if ((isRecentlyOpened && e.type !== "keydown") || !animeCopyTitle)
+            return;
         if ($android) {
             try {
-                JSBridge.copyToClipBoard(animeTitle);
+                JSBridge.copyToClipBoard(animeCopyTitle);
             } catch (ex) {}
         } else {
-            navigator?.clipboard?.writeText?.(animeTitle);
+            navigator?.clipboard?.writeText?.(animeCopyTitle);
         }
         $animeOptionVisible = false;
     }
@@ -156,16 +158,8 @@
     function loadAnimeOption() {
         let openedAnime = $finalAnimeList?.[$openedAnimeOptionIdx ?? -1];
         if (openedAnime) {
-            animeTitle =
-                openedAnime?.title?.english ||
-                openedAnime?.title?.userPreferred ||
-                openedAnime?.title?.romaji ||
-                openedAnime?.title?.native;
-            youtubeSearchTitle =
-                openedAnime?.title?.romaji ||
-                openedAnime?.title?.userPreferred ||
-                openedAnime?.title?.english ||
-                openedAnime?.title?.native;
+            animeTitle = openedAnime?.shownTitle;
+            animeCopyTitle = youtubeSearchTitle = openedAnime?.copiedTitle;
             animeID = openedAnime.id;
             animeUrl = openedAnime.animeUrl;
             animeIdx = $openedAnimeOptionIdx;
@@ -220,12 +214,14 @@
                 on:keydown={(e) => e.key === "Enter" && openInYoutube(e)}
                 ><h2 class="option-title">Open in YouTube</h2></span
             >
-            <span
-                class="anime-option"
-                on:click={copyTitle}
-                on:keydown={(e) => e.key === "Enter" && copyTitle(e)}
-                ><h2 class="option-title">Copy Title</h2></span
-            >
+            {#if animeCopyTitle}
+                <span
+                    class="anime-option"
+                    on:click={copyTitle}
+                    on:keydown={(e) => e.key === "Enter" && copyTitle(e)}
+                    ><h2 class="option-title">Copy Title</h2></span
+                >
+            {/if}
             <span
                 class="anime-option"
                 on:click={handleHideShow}

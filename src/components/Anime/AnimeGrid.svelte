@@ -398,7 +398,8 @@
                             <img
                                 use:addImage={anime?.coverImageUrl ||
                                     anime?.bannerImageUrl ||
-                                    anime?.trailerThumbnailUrl || emptyImage}
+                                    anime?.trailerThumbnailUrl ||
+                                    emptyImage}
                                 fetchpriority={animeIdx > numberOfLoadedGrid
                                     ? ""
                                     : "high"}
@@ -427,12 +428,12 @@
                         <span class="image-grid__card-title">
                             <span
                                 class="title copy"
-                                copy-value={anime?.shownTitle || ""}
+                                copy-value={anime?.copiedTitle || ""}
                                 >{anime?.shownTitle || "N/A"}</span
                             >
                             <span
                                 class="brief-info-wrapper copy"
-                                copy-value={anime?.shownTitle || ""}
+                                copy-value={anime?.copiedTitle || ""}
                             >
                                 <div class="brief-info">
                                     <span>

@@ -1529,7 +1529,7 @@
                                             "javascript:void(0)"}
                                         class={anime?.contentCautionColor +
                                             "-color anime-title copy"}
-                                        copy-value={anime?.shownTitle || ""}
+                                        copy-value={anime?.copiedTitle || ""}
                                         style:overflow={$popupIsGoingBack
                                             ? "hidden"
                                             : ""}
