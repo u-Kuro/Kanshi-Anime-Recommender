@@ -1,5 +1,6 @@
 import { get } from "svelte/store"
 import { appID } from "./globalValues"
+import { isAndroid } from "./others/helper"
 import getWebVersion from "../version"
 
 let loadedRequestUrls = {}
@@ -41,10 +42,11 @@ const cacheRequest = (url) => {
 }
 
 const emptyImage = "data:image/png;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=";
+const android = isAndroid()
 let loadedImages = {}
 const cacheImage = (url, width, height) => {
     return new Promise(async (resolve) => {
-        if (!window.location.origin.includes('https://u-kuro.github.io')) {
+        if (!window.location.origin.includes('https://u-kuro.github.io') || !android) {
             resolve(url)
         } else if (loadedImages[url]) {
             resolve(loadedImages[url])
