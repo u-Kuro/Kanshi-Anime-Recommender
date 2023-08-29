@@ -164,9 +164,15 @@
         }
         let element = event.target;
         let classList = element.classList;
-        if (!classList.contains("nav") && !classList.contains("logo-icon"))
+        if (
+            !classList.contains("nav") &&
+            !(classList.contains("logo-icon") || element.closest(".logo-icon"))
+        )
             return;
-        if (inputUsernameElFocused && !classList.contains("logo-icon")) {
+        if (
+            inputUsernameElFocused &&
+            !(classList.contains("logo-icon") || element.closest(".logo-icon"))
+        ) {
             inputUsernameEl?.blur?.();
             inputUsernameElFocused = false;
             return;
@@ -309,11 +315,16 @@
         <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
         <!-- svelte-ignore a11y-click-events-have-key-events -->
         <div class="go-back-container" on:click={handleGoBack}>
-            <i
-                class={"goback fa-solid fa-arrow-left"}
+            <!-- arrow left -->
+            <svg
+                class="goback"
                 tabindex="0"
+                viewBox="0 0 448 512"
                 on:keydown={(e) => e.key === "Enter" && handleGoBack(e)}
-            />
+                ><path
+                    d="M9 233a32 32 0 0 0 0 46l160 160a32 32 0 0 0 46-46L109 288h307a32 32 0 1 0 0-64H109l106-105a32 32 0 0 0-46-46L9 233z"
+                /></svg
+            >
         </div>
         <div class="input-search">
             <label class="disable-interaction" for="usernameInput">
@@ -346,13 +357,12 @@
             on:pointerup={cancelGoUp}
             on:pointercancel={cancelGoUp}
         >
-            <img
+            <!-- Kanshi Logo -->
+            <svg
+                viewBox="0 0 500 500"
                 class="logo-icon"
-                src="./images/Kanshi-Logo.webp"
-                alt="Kanshi Logo"
+                aria-label="Kanshi Logo"
                 tabindex="0"
-                width="30px"
-                height="30px"
                 on:keydown={(e) => {
                     if (e.key === "Enter") {
                         e.stopPropagation();
@@ -361,7 +371,11 @@
                         e.stopPropagation();
                     }
                 }}
-            />
+            >
+                <path
+                    d="m144 7-2 2-1 1c-2 0-9 7-9 9l-2 2-1 1-1 2-3 5c-1 3-3 4-4 5l-1 3-1 1v1l-1 1-15 1-12 1c-11 1-12 1-18-4l-7-6-6-6-4-2s-2-1-2-3-3-2-3-2l-2-2-2-1-1-1-2-1-2-1-8-4c-3 0-7 5-6 6l-1 1v24a350 350 0 0 0 7 36c0 2-1 3-2 3v2l-1 1-3 7-1 2-3 9a61 61 0 0 0 4 30v2l2 3 3 7 1 1v1l1 2 1 1 1 1c0 1 0 2 2 3l2 4 2 2 2 2 6 7 5 7 1 1 1 1v3l4 10 1 14a75 75 0 0 0 2 19l1 4v2l2 3v2a205 205 0 0 0 15 29l1 1v1a128 128 0 0 1 11 22v1l1 1 1 1v3l1 2 2 5a480 480 0 0 1-2 93c0 1-4 6-6 6l-11 11-1 4c-2 3 0 7 8 14 1 1 2 2 1 3l1 3v1l1 2 1 2 3 3h3l1 1 4 1 2 1c0 1 16 2 19 1l2-1h2l7-5 1-1c2 0 11-10 12-13l1-2 1-1c-1-3 0-3 8-2l5 1 2 1-1 3-1 9 2 3 1 2 1 2 3 3 2 1 2 1 4 2 14 1a232 232 0 0 0 56-9l4-1 4-1h8l3 2h1l2 1a93 93 0 0 0 30-1l6-3 4-1 1-1 1-1h2l1-1 1-1 3-1 4-2h3l1-1h2l1-1h2l2-1h2l2-1h2l2-1 3-1h6c12-2 16-2 30-2a174 174 0 0 1 45 5l2 1h3l5 3 5 2 1 1 3 3 3 3 1 1 1 4c0 3-1 4-4 7l-4 3-1 1-8 4-5 2-8 2-5 2h-1l-2 1h-2l-3 1-1 1h-2l-3 1h-4l-10 2c-2 1-11 9-11 11-1 5 0 8 2 10l4 3 2 1 16 1 18-1 5-1 2-1h2l2-1h2l2-1h2l1-1h2l1-1 2-1h2l3-1 3-2h2l1-1 1-1c1 1 13-5 13-6h1l1-1 2-1 1-1h1l2-1 2-2 2-1 1-2c2 0 9-7 9-9l2-1 1-2v-1l1-1v-1l1-1v-1l1-2v-2c1-2 1-8-1-12v-1l-1-1-1-1c0-2-11-14-13-14l-2-2-2-2-2-1-5-3c-3-1-4-3-5-4l-3-1-1-1h-1l-1-1c0-1-4-3-5-2l-1-1h-1l-1-1-1-1-4-1-3-1-1-1h-1l-1-1h-2c-1 1-1 0-1-1h-2l-1-1-1-1h-2l-2-1h-2l-4-1-6-2-6-1-4-1-3-1-12-1a252 252 0 0 0-76 1v-2l1-3 1-5 1-2v-1l1-3 1-4 2-11 1-6c4-24 4-56 1-78l-1-5-1-3-1-7-1-2-1-3-1-5v-1l-1-1v-2l-1-1v-2l-1-2-1-3-1-2-1-3-1-1v-1l-1-1v-1l-1-1-2-4-3-5-1-1-1-2-1-1-1-2-1-1-1-3-2-1-9-11a68 68 0 0 0-15-12l-4-3-1-1-1-1-2-1-2-2-3-1-5-2-1-1h-1l-1-1-1-1-4-1-3-1-2-2h-3l-1-1h-2l-1-1h-2l-1-1h-2l-1-1-3-1h-3l-1-2-2-1-1-1-2-1h-1l-2-2-2-1-2-2c-1 0-10-9-10-11l-2-2-1-1-1-3a66 66 0 0 0-16-15l-1-1-2-1-1-1-3-1v-2l-1-1v-2l-1-1-1-2v-2l-2-3v-3l-1-1-1-1-4-9-2-2c-1-2-1-4 1-12a233 233 0 0 0 1-52v-2l-2-5c-2-3-3-3-6-3h-7z"
+                />
+            </svg>
         </div>
     </nav>
 </div>
@@ -407,21 +421,13 @@
     .logo-icon {
         cursor: pointer;
         justify-self: start;
-        min-width: 3em;
-        min-height: 3em;
-        max-width: 100%;
+        width: 3em;
         height: 3em;
         display: flex;
         align-items: center;
         justify-content: center;
         border-radius: 6px;
-    }
-    .logo-icon img {
-        transform: translateZ(0);
-        -webkit-transform: translateZ(0);
-        -ms-transform: translateZ(0);
-        -moz-transform: translateZ(0);
-        -o-transform: translateZ(0);
+        fill: white;
     }
     .input-search {
         display: flex;
@@ -468,9 +474,8 @@
     }
     .goback {
         display: flex;
-        font-size: 25px;
-        min-height: 25px;
-        min-width: 25px;
+        height: 2.5em;
+        width: 2.5em;
         align-items: center;
         justify-content: start;
         color: white;

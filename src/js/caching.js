@@ -1,4 +1,4 @@
-import { isAndroid, hasValidOrigin } from "./others/helper"
+import { isAndroid } from "./others/helper"
 
 let loadedRequestUrlPromises = {}
 let loadedRequestUrls = {}
@@ -7,7 +7,7 @@ const cacheRequest = async (url) => {
         return loadedRequestUrls[url]
     } else if (loadedRequestUrlPromises[url]) {
         return loadedRequestUrlPromises[url]
-    } else if (hasValidOrigin(url)) {
+    } else if (!window?.location?.protocol?.includes?.("file")) {
         loadedRequestUrlPromises[url] = new Promise(async (resolve) => {
             fetch(url, {
                 headers: {

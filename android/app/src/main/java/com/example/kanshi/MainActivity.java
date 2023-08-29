@@ -66,7 +66,7 @@ import androidx.core.content.FileProvider;
 import androidx.core.splashscreen.SplashScreen;
 
 public class MainActivity extends AppCompatActivity {
-    public final int appID = 157;
+    public final int appID = 158;
     public boolean webViewIsLoaded = false;
     public boolean permissionIsAsked = false;
     public SharedPreferences prefs;
@@ -88,10 +88,9 @@ public class MainActivity extends AppCompatActivity {
     final ActivityResultLauncher<Intent> allowApplicationUpdate =
             registerForActivityResult(
                     new ActivityResultContracts.StartActivityForResult(),
-                    new ActivityResultCallback<>() {
-                        @Override
-                        public void onActivityResult(ActivityResult activityResult) {
-                            webView.post(() -> webView.loadUrl("javascript:window?.updateAppAlert?.();"));
+                    activityResult -> {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                            showUpdateNotice();
                         }
                     }
             );
@@ -699,10 +698,11 @@ public class MainActivity extends AppCompatActivity {
                 }
             } catch (Exception ignored) {}
         }
+        @RequiresApi(api = Build.VERSION_CODES.O)
         @JavascriptInterface
         public void checkAppID(int _appID, boolean manualCheck) {
             if (_appID > appID) {
-                webView.post(() -> webView.loadUrl("javascript:window?.updateAppAlert?.();"));
+                showUpdateNotice();
             } else if (manualCheck) {
                 showToast(Toast.makeText(getApplicationContext(), "No recent application updates.", Toast.LENGTH_LONG));
             }
@@ -725,25 +725,7 @@ public class MainActivity extends AppCompatActivity {
         }
         @RequiresApi(api = Build.VERSION_CODES.O)
         @JavascriptInterface
-        public void downloadUpdate() {
-            boolean hasPermission = getPackageManager().canRequestPackageInstalls();
-            if (hasPermission) {
-                _downloadUpdate();
-            } else {
-                showDialog(new AlertDialog.Builder(MainActivity.this)
-                .setTitle("Permission for in-app installation")
-                .setMessage("Allow permission for Kanshi. to update within the app.")
-                .setPositiveButton("OK", (dialogInterface, i) -> {
-                    Intent intent = new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.fromParts("package", getPackageName(), null));
-                    showToast(Toast.makeText(getApplicationContext(), "Allow permission for Kanshi. in here to update within the app.", Toast.LENGTH_LONG));
-                    allowApplicationUpdate.launch(intent);
-                })
-                .setNegativeButton("CANCEL", (dialogInterface, i) -> {
-                    showToast(Toast.makeText(getApplicationContext(), "You may still manually install the update.", Toast.LENGTH_LONG));
-                    webView.post(() -> webView.loadUrl("javascript:window?.updateAppAlert?.();"));
-                }));
-            }
-        }
+        public void downloadUpdate() { checkUpdate(); }
         final int DAY_IN_MILLIS = 1000 * 60 * 60 * 24;
         @JavascriptInterface
         public void addAnimeReleaseNotification(int animeId, String title, int releaseEpisode, int maxEpisode, long releaseDateMillis, String imageUrl, boolean isMyAnime) {
@@ -764,13 +746,37 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    public void showUpdateNotice() {
+        showDialog(new AlertDialog.Builder(MainActivity.this)
+            .setTitle("New updates are available")
+            .setMessage("You may want to download the new version.")
+            .setPositiveButton("DOWNLOAD", (dialogInterface, i) -> checkUpdate())
+            .setNegativeButton("LATER", null));
+    }
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    public void checkUpdate() {
+        boolean hasPermission = getPackageManager().canRequestPackageInstalls();
+        if (hasPermission) {
+            _downloadUpdate();
+        } else {
+            showDialog(new AlertDialog.Builder(MainActivity.this)
+                    .setTitle("Permission for in-app installation")
+                    .setMessage("Allow permission for Kanshi. to update within the app.")
+                    .setPositiveButton("OK", (dialogInterface, i) -> {
+                        Intent intent = new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.fromParts("package", getPackageName(), null));
+                        showToast(Toast.makeText(getApplicationContext(), "Allow permission for Kanshi. in here to update within the app.", Toast.LENGTH_LONG));
+                        allowApplicationUpdate.launch(intent);
+                    })
+                    .setNegativeButton("CANCEL", null));
+        }
+    }
     public void _downloadUpdate() {
         webView.post(() -> webView.clearCache(true));
         prefsEdit.putBoolean("permissionIsAsked", false).apply();
         String fileUrl = "https://github.com/u-Kuro/Kanshi.Anime-Recommendation/raw/main/Kanshi.apk";
         String fileName = "Kanshi.apk";
         DownloadUtils.downloadFile(MainActivity.this, fileUrl, fileName, new DownloadUtils.DownloadCallback() {
-
             @RequiresApi(api = Build.VERSION_CODES.O)
             @Override
             public void onDownloadCompleted(String apkFilePath) {
@@ -797,7 +803,7 @@ public class MainActivity extends AppCompatActivity {
                                 Toast.makeText(MainActivity.this, "File is not found", Toast.LENGTH_LONG).show();
                             }
                         })
-                        .setNegativeButton("CANCEL", null).setCancelable(false));
+                        .setNegativeButton("CANCEL", (dialogInterface, i) -> showToast(Toast.makeText(getApplicationContext(), "You may still manually install the update, apk is in your download folder.", Toast.LENGTH_LONG))).setCancelable(false));
                 }
             }
             @Override

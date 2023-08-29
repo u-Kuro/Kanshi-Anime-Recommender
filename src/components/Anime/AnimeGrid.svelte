@@ -339,7 +339,8 @@
     let scrollingToBottom;
     let belowGrid;
     let afterFullGrid;
-    let checkedOriginalSizeForGridView = windowWidth > 750 && windowHeight > 695
+    let checkedOriginalSizeForGridView =
+        windowWidth > 750 && windowHeight > 695;
     $: isFullViewed =
         $gridFullView ??
         getLocalStorage("gridFullView") ??
@@ -485,9 +486,8 @@
                             >
                                 <div class="brief-info">
                                     <span>
-                                        <i
-                                            class={`${anime?.userStatusColor}-color fa-solid fa-circle`}
-                                        />
+                                        <!-- circle -->
+                                        <svg viewBox="0 0 512 512" class={`${anime?.userStatusColor}-fill circle`}><path d="M256 512a256 256 0 1 0 0-512 256 256 0 1 0 0 512z"/></svg>
                                         {#if isJsonObject(anime?.nextAiringEpisode)}
                                             {`${anime.format || "N/A"}`}
                                             {#key $earlisetReleaseDate || 1}
@@ -507,9 +507,8 @@
                                 </div>
                                 <div class="brief-info">
                                     <span>
-                                        <i
-                                            class={`${anime?.contentCautionColor}-color fa-solid fa-star`}
-                                        />
+                                        <!-- star -->
+                                        <svg viewBox="0 0 576 512" class={`${anime?.contentCautionColor}-fill star`}><path d="M317 18a32 32 0 0 0-58 0l-64 132-144 22a32 32 0 0 0-17 54l104 103-25 146a32 32 0 0 0 47 33l128-68 129 68a32 32 0 0 0 46-33l-24-146 104-103a32 32 0 0 0-18-54l-144-22-64-132z"/></svg>
                                         {#if $filterOptions}
                                             {anime?.shownScore || "N/A"}
                                         {:else}
@@ -554,12 +553,19 @@
             on:keydown={(e) => e.key === "Enter" && goBackGrid(e)}
             out:fade={{ duration: 200 }}
         >
-            <i
-                class={"fa-solid" +
-                    (shouldShowGoBackInFullView
-                        ? " fa-arrow-left"
-                        : " fa-arrow-up")}
-            />
+            <svg viewBox={`0 0 ${
+                shouldShowGoBackInFullView ? "320" : "448"
+            } 512`}
+            >
+                <path
+                    d={// angle left
+                        shouldShowGoBackInFullView
+                    ? "M41 233a32 32 0 0 0 0 46l160 160a32 32 0 0 0 46-46L109 256l138-137a32 32 0 0 0-46-46L41 233z"
+                    // angle up
+                    : "M201 137c13-12 33-12 46 0l160 160a32 32 0 0 1-46 46L224 205 87 343a32 32 0 0 1-46-46l160-160z"
+                    }
+                />
+            </svg>
         </div>
     {/if}
 </main>
@@ -703,7 +709,6 @@
 
     .image-grid.fullView .image-grid__card > .shimmer {
         padding-bottom: unset !important;
-        /* padding-right: 150px; */
     }
 
     .image-grid__card-thumb {
@@ -783,12 +788,19 @@
         -ms-overflow-style: none;
         scrollbar-width: none;
     }
-
-    .fa-circle::before {
-        font-size: 9px;
+    .brief-info > span {
+        display: flex;
+        flex-wrap: nowrap;
+        align-items: center;
+        gap: 3px;
     }
-    .fa-star::before {
-        font-size: 10px;
+    .brief-info .circle {
+        height: 0.75em;
+        width: 0.75em;
+    }
+    .brief-info .star {
+        height: 1em;
+        width: 1em;
     }
 
     .go-back-grid.fullView {
@@ -827,21 +839,15 @@
         height: 44px;
     }
 
-    @media screen and (min-width: 751px) {
-        .go-back-grid {
-            background-color: white !important;
-            color: black !important;
-        }
-    }
-
     @media screen and (max-width: 425px) {
         .go-back-grid {
             left: 0;
         }
     }
 
-    .go-back-grid i {
-        font-size: 2em;
+    .go-back-grid svg {
+        width: 2em;
+        height: 2em;
     }
 
     .empty {

@@ -1106,7 +1106,12 @@
 			on:keydown={(e) => e.key === "Enter" && updateList(e)}
 			out:fade={{ duration: 200 }}
 		>
-			<i class="list-update-icon fa-solid fa-arrows-rotate" />
+			<svg class="list-update-icon" viewBox="0 0 512 512">
+				<!-- arrows rotate -->
+				<path
+					d="M105 203a160 160 0 0 1 264-60l17 17h-50a32 32 0 1 0 0 64h128c18 0 32-14 32-32V64a32 32 0 1 0-64 0v51l-18-17a224 224 0 0 0-369 83 32 32 0 0 0 60 22zm-66 86a32 32 0 0 0-23 31v128a32 32 0 1 0 64 0v-51l18 17a224 224 0 0 0 369-83 32 32 0 0 0-60-22 160 160 0 0 1-264 60l-17-17h50a32 32 0 1 0 0-64H48a39 39 0 0 0-9 1z"
+				/>
+			</svg>
 			<h3 class="list-update-label">List Update</h3>
 		</div>
 	{/if}
@@ -1147,13 +1152,13 @@
 		display: flex;
 		justify-content: center;
 		align-items: center;
-		gap: 8px;
+		gap: 5px;
 		background-color: rgb(21, 31, 46);
 		border-radius: 6px;
 		cursor: pointer;
 		user-select: none;
 		min-width: 44px;
-		min-height: 44px;
+		min-height: 40px;
 		padding: 8px;
 		transform: translateZ(0);
 		-webkit-transform: translateZ(0);
@@ -1162,12 +1167,11 @@
 		-o-transform: translateZ(0);
 	}
 	.list-update-icon {
-		color: inherit;
-		font-size: 2rem;
+		height: 1.5em;
+		width: 1.5em;
 		cursor: pointer;
 	}
 	.list-update-label {
-		color: inherit;
 		font-size: 1.5rem;
 		cursor: pointer;
 	}
@@ -1185,11 +1189,15 @@
 
 	@media screen and (max-width: 425px) {
 		.list-update-container {
+			min-height: 44px !important;
+		}
+		.list-update-container {
 			border-radius: 50%;
 			padding: 0px;
 		}
 		.list-update-icon {
-			font-size: 2em;
+			height: 2em !important;
+			width: 2em !important;
 		}
 		.list-update-label {
 			display: none;

@@ -311,7 +311,7 @@ const changeInputValue = (inputElement, newValue) => {
   inputElement.setSelectionRange(selectionStart, selectionStart);
 }
 
-const dragScroll = (element, axis = 'xy') => {
+const dragScroll = (element, axis = 'xy', avoidCondition = () => false) => {
   let curDown, curYPos, curXPos, velocityY, velocityX, currentScrollYPosition, currentScrollXPosition;
 
   let move = (e) => {
@@ -330,7 +330,7 @@ const dragScroll = (element, axis = 'xy') => {
   };
 
   let down = (e) => {
-    if (e.pointerType !== "mouse") return
+    if (e.pointerType !== "mouse" || avoidCondition(e)) return
     velocityY = 0;
     cancelAnimationFrame(kineticScrollYAnimation);
     velocityX = 0;

@@ -265,16 +265,11 @@
             let selectedIndex = filterSelectChildrenArray.indexOf(
                 selectedFilterElement
             );
-            if (
-                element.classList.contains("icon") &&
-                !element.classList.contains("fa-angle-down") &&
-                $filterOptions?.filterSelection?.[idxTypeSelected].filters
-                    .Dropdown[selectedIndex].selected
-            )
-                return;
-            $filterOptions.filterSelection[idxTypeSelected].filters.Dropdown[
-                selectedIndex
-            ].selected = false;
+            if ($filterOptions.filterSelection[idxTypeSelected].filters.Dropdown[selectedIndex]) {
+                $filterOptions.filterSelection[idxTypeSelected].filters.Dropdown[
+                    selectedIndex
+                ].selected = false;
+            }
         }
         if (Init) Init = false;
         if (
@@ -333,8 +328,7 @@
             selectedFilterElement = null;
         } else if (
             !classList.contains("options-wrap") &&
-            !element.closest(".options-wrap") &&
-            !classList.contains("async-element")
+            !element.closest(".options-wrap")
         ) {
             // Large Screen Width
             // Filter Type Dropdown
@@ -365,9 +359,11 @@
 
             // Filter Selection Dropdown
             let inputDropdownSelectEl = element.closest(".select");
+            let inputDropdownAngleDown = element.closest(".angle-down")
             if (
                 !classList.contains("select") &&
-                !classList.contains("fa-angle-down") &&
+                !classList.contains("angle-down") &&
+                !inputDropdownAngleDown &&
                 !inputDropdownSelectEl
             ) {
                 if (
@@ -1266,7 +1262,10 @@
         filterEl.addEventListener("scroll", handleFilterScroll, {
             passive: true,
         });
-        dragScroll(filterEl, "x");
+        dragScroll(filterEl, "x",(event)=>{
+            let element = event?.target
+            return selectedFilterElement && (element?.classList?.contains?.("options-wrap") || element?.closest?.(".options-wrap"))
+        });
 
         document.addEventListener("keydown", handleDropdownKeyDown);
         window.addEventListener("resize", windowResized);
@@ -1295,8 +1294,12 @@
         }
     }
 
-    let checkedOriginalSizeForGridView = windowWidth > 750 && windowHeight > 695
-    $: isFullViewed = $gridFullView ?? getLocalStorage("gridFullView") ?? (!$android && checkedOriginalSizeForGridView);
+    let checkedOriginalSizeForGridView =
+        windowWidth > 750 && windowHeight > 695;
+    $: isFullViewed =
+        $gridFullView ??
+        getLocalStorage("gridFullView") ??
+        (!$android && checkedOriginalSizeForGridView);
 </script>
 
 <main id="main-home" style:--filters-space={showFilterOptions ? "80px" : ""}>
@@ -1339,13 +1342,13 @@
         />
         <div class="filterType">
             <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
-            <i
-                class="input-search-wrap-icon fa-solid fa-sliders"
-                tabindex={selectedFilterTypeElement ? "" : "0"}
+            <svg class="input-search-wrap-icon" viewBox="0 0 512 512" tabindex={selectedFilterTypeElement ? "" : "0"}
                 on:click={handleShowFilterTypes}
                 on:keydown={(e) =>
-                    e.key === "Enter" && handleShowFilterTypes(e)}
-            />
+                e.key === "Enter" && handleShowFilterTypes(e)}>
+                <!-- sliders -->
+                <path d="M0 416c0 18 14 32 32 32h55a80 80 0 0 0 146 0h247a32 32 0 1 0 0-64H233a80 80 0 0 0-146 0H32c-18 0-32 14-32 32zm128 0a32 32 0 1 1 64 0 32 32 0 1 1-64 0zm192-160a32 32 0 1 1 64 0 32 32 0 1 1-64 0zm32-80c-33 0-61 20-73 48H32a32 32 0 1 0 0 64h247a80 80 0 0 0 146 0h55a32 32 0 1 0 0-64h-55a80 80 0 0 0-73-48zm-160-48a32 32 0 1 1 0-64 32 32 0 1 1 0 64zm73-64a80 80 0 0 0-146 0H32a32 32 0 1 0 0 64h87a80 80 0 0 0 146 0h215a32 32 0 1 0 0-64H265z"/>
+            </svg>
             <div
                 class={"options-wrap " +
                     (selectedFilterTypeElement
@@ -1405,13 +1408,13 @@
         </div>
         <div class="showFilterOptions-container">
             <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
-            <i
-                class={"showFilterOptions fa-solid fa-filter"}
-                tabindex="0"
+            <svg class="showFilterOptions" tabindex="0" viewBox="0 0 512 512"
                 on:click={handleShowFilterOptions}
                 on:keydown={(e) =>
                     e.key === "Enter" && handleShowFilterOptions(e)}
-            />
+            >
+                <!-- filter -->
+                <path d="M4 55c7-14 21-23 36-23h432c16 0 30 9 36 23s5 30-5 42L320 321v127c0 12-7 23-18 29s-23 4-33-3l-64-48c-8-6-13-16-13-26v-79L9 97a40 40 0 0 1-5-42z"/></svg>
         </div>
     </div>
     <div
@@ -1488,15 +1491,23 @@
                                 />
                             </div>
                             {#if Dropdown.selected && Dropdown.options.length && !Init}
-                                <i
-                                    class="icon fa-solid fa-angle-up"
-                                    on:keydown={(e) =>
-                                        e.key === "Enter" &&
-                                        closeFilterSelect(dropdownIdx)}
-                                    on:click={closeFilterSelect(dropdownIdx)}
-                                />
+                                <svg class="angle-up" viewBox="0 0 512 512" on:keydown={(e) =>
+                                    e.key === "Enter" &&
+                                    closeFilterSelect(dropdownIdx)}
+                                    on:click={closeFilterSelect(dropdownIdx)}>
+                                    <!-- angle-up -->
+                                    <path d="M201 137c13-12 33-12 46 0l160 160a32 32 0 0 1-46 46L224 205 87 343a32 32 0 0 1-46-46l160-160z"/>
+                                </svg>
                             {:else}
-                                <i class="icon fa-solid fa-angle-down" />
+                                <svg
+                                    class="angle-down"
+                                    viewBox="0 0 512 512"
+                                >
+                                    <!-- angle-down -->
+                                    <path
+                                        d="M201 343c13 12 33 12 46 0l160-160a32 32 0 0 0-46-46L224 275 87 137a32 32 0 0 0-46 46l160 160z"
+                                    />
+                                </svg>
                             {/if}
                         </div>
                         <div
@@ -1598,23 +1609,27 @@
                                                 <h3>
                                                     {option.optionName || ""}
                                                 </h3>
-                                                {#if option.selected === "included"}
-                                                    {#if filterSelection.filterSelectionName === "Content Caution"}
-                                                        <i
-                                                            style:--optionColor="#5f9ea0"
-                                                            class="fa-regular fa-circle-xmark async-element"
+                                                {#if option.selected === "included" || (option.selected === "excluded" && Dropdown.changeType !== "read")}
+                                                    <svg
+                                                        viewBox="0 0 512 512"
+                                                        style:--optionColor={option.selected ===
+                                                        "included"
+                                                            ? // green
+                                                              "#5f9ea0"
+                                                            : // red
+                                                              "#e85d75"}
+                                                    >
+                                                        <path
+                                                            d={option.selected ===
+                                                                "excluded" ||
+                                                            filterSelection.filterSelectionName ===
+                                                                "Content Caution"
+                                                                ? // circle-xmark
+                                                                    "M256 48a208 208 0 1 1 0 416 208 208 0 1 1 0-416zm0 464a256 256 0 1 0 0-512 256 256 0 1 0 0 512zm-81-337c-9 9-9 25 0 34l47 47-47 47c-9 9-9 24 0 34s25 9 34 0l47-47 47 47c9 9 24 9 34 0s9-25 0-34l-47-47 47-47c9-10 9-25 0-34s-25-9-34 0l-47 47-47-47c-10-9-25-9-34 0z"
+                                                                : // circle-check
+                                                                    "M256 48a208 208 0 1 1 0 416 208 208 0 1 1 0-416zm0 464a256 256 0 1 0 0-512 256 256 0 1 0 0 512zm113-303c9-9 9-25 0-34s-25-9-34 0L224 286l-47-47c-9-9-24-9-34 0s-9 25 0 34l64 64c10 9 25 9 34 0l128-128z"}
                                                         />
-                                                    {:else}
-                                                        <i
-                                                            style:--optionColor="#5f9ea0"
-                                                            class="fa-regular fa-circle-check async-element"
-                                                        />
-                                                    {/if}
-                                                {:else if option.selected === "excluded" && Dropdown.changeType !== "read"}
-                                                    <i
-                                                        style:--optionColor="#e85d75"
-                                                        class="fa-regular fa-circle-xmark async-element"
-                                                    />
+                                                    </svg>
                                                 {/if}
                                             </div>
                                         {/each}
@@ -1760,7 +1775,12 @@
                 on:click={removeAllActiveTag}
                 on:keydown={(e) => e.key === "Enter" && removeAllActiveTag(e)}
             >
-                <i class="fa-solid fa-ban" />
+                <!-- Ban -->
+                <svg viewBox="0 0 512 512">
+                    <path
+                        d="M367 413 100 145a192 192 0 0 0 268 268zm45-46A192 192 0 0 0 145 99l269 268zM1 256a256 256 0 1 1 512 0 256 256 0 1 1-512 0z"
+                    />
+                </svg>
             </div>
         {/if}
         <div
@@ -1777,7 +1797,14 @@
                     on:keydown={(e) =>
                         e.key === "Enter" && removeAllActiveTag(e)}
                 >
-                    <i class="fa-solid fa-ban" />
+                    <!-- Ban -->
+                    <svg
+                        viewBox="0 0 512 512"
+                    >
+                        <path
+                            d="M367 413 100 145a192 192 0 0 0 268 268zm45-46A192 192 0 0 0 145 99l269 268zM1 256a256 256 0 1 1 512 0 256 256 0 1 1-512 0z"
+                        />
+                    </svg>
                 </div>
             {/if}
             {#each activeTagFiltersArrays || [] as activeTagFiltersArray (activeTagFiltersArray?.optionName + activeTagFiltersArray?.optionIdx + (activeTagFiltersArray?.optionType ?? "") || {})}
@@ -1830,8 +1857,9 @@
                     {:else}
                         <h3>{activeTagFiltersArray?.optionName || ""}</h3>
                     {/if}
-                    <i
-                        class="fa-solid fa-xmark"
+                    <!-- xmark -->
+                    <svg
+                        viewBox="0 0 400 512"
                         tabindex="0"
                         on:click|preventDefault={(e) =>
                             removeActiveTag(
@@ -1852,7 +1880,11 @@
                                 activeTagFiltersArray?.categIdx,
                                 activeTagFiltersArray?.optionType
                             )}
-                    />
+                    >
+                        <path
+                            d="M343 151a32 32 0 0 0-46-46L192 211 87 105a32 32 0 0 0-46 46l106 105L41 361a32 32 0 0 0 46 46l105-106 105 106a32 32 0 0 0 46-46L237 256l106-105z"
+                        />
+                    </svg>
                 </div>
             {/each}
         </div>
@@ -1863,10 +1895,18 @@
             on:click={handleShowActiveFilters}
             on:keydown={(e) => e.key === "Enter" && handleShowActiveFilters()}
         >
-            <i
-                class={"icon fa-solid fa-angle-" +
-                    (showAllActiveFilters ? "up" : "down")}
-            />
+            <svg
+                class={"angle-" + (showAllActiveFilters ? "up" : "down")}
+                viewBox="0 0 450 512"
+            >
+                <path
+                    d={showAllActiveFilters
+                        ? // angle-up
+                          "M201 137c13-12 33-12 46 0l160 160a32 32 0 0 1-46 46L224 205 87 343a32 32 0 0 1-46-46l160-160z"
+                        : // angle-down
+                        "M201 343c13 12 33 12 46 0l160-160a32 32 0 0 0-46-46L224 275 87 137a32 32 0 0 0-46 46l160 160z"}
+                />
+            </svg>
         </div>
     </div>
     {#if $filterOptions}
@@ -1878,21 +1918,30 @@
                 on:click={handleGridView}
                 on:keydown={(e) => e.key === "Enter" && handleGridView()}
             >
-                <i
-                    class={"icon fa-solid fa-arrows-" +
-                        (isFullViewed
-                            ? "up-down"
-                            : "left-right")}
-                />
+                <svg viewBox={`0 0 ${isFullViewed?'312':'512'} 512`}>
+                    <path d={
+                        isFullViewed?
+                        // arrows-up-down
+                        "M183 9a32 32 0 0 0-46 0l-96 96a32 32 0 0 0 46 46l41-42v294l-41-42a32 32 0 0 0-46 46l96 96c13 12 33 12 46 0l96-96a32 32 0 0 0-46-46l-41 42V109l41 42a32 32 0 0 0 46-46L183 9z"
+                        : // arrows-left-right
+                        "m407 375 96-96c12-13 12-33 0-46l-96-96a32 32 0 0 0-46 46l42 41H109l42-41a32 32 0 0 0-46-46L9 233a32 32 0 0 0 0 46l96 96a32 32 0 0 0 46-46l-42-41h294l-42 41a32 32 0 0 0 46 46z"
+                    }/>
+                </svg>
             </div>
             <div class="sortFilter">
-                <i
+                <svg viewBox={`0 ${selectedSortType==='asc'?'-':''}140 320 512`}
                     on:click={changeSortType}
                     on:keydown={(e) => e.key === "Enter" && changeSortType(e)}
                     tabindex={selectedSortElement ? "" : "0"}
-                    class={"fa-duotone fa-sort-" +
-                        (selectedSortType === "asc" ? "up" : "down")}
-                />
+                >
+                    <path d={
+                        // sortdown
+                        selectedSortType === "asc" ?
+                        "M183 41a32 32 0 0 0-46 0L9 169c-9 10-12 23-7 35s17 20 30 20h256a32 32 0 0 0 23-55L183 41z"
+                        // sort up
+                        : "M183 471a32 32 0 0 1-46 0L9 343c-9-10-12-23-7-35s17-20 30-20h256a32 32 0 0 1 23 55L183 471z"
+                    }/>
+                </svg>
                 <h2
                     tabindex={selectedSortElement ? "" : "0"}
                     on:click={handleSortFilterPopup}
@@ -1938,12 +1987,15 @@
                                 >
                                     <h3>{sortFilter?.sortName || ""}</h3>
                                     {#if selectedSortName === sortFilter?.sortName}
-                                        <i
-                                            class={"fa-duotone fa-sort-" +
-                                                (selectedSortType === "asc"
-                                                    ? "up"
-                                                    : "down")}
-                                        />
+                                        <svg viewBox={`0 ${selectedSortType==='asc'?'-180':'100'} 320 512`}>
+                                            <path d={
+                                                // sortdown
+                                                selectedSortType === "asc" ?
+                                                "M183 41a32 32 0 0 0-46 0L9 169c-9 10-12 23-7 35s17 20 30 20h256a32 32 0 0 0 23-55L183 41z"
+                                                // sort up
+                                                : "M183 471a32 32 0 0 1-46 0L9 343c-9-10-12-23-7-35s17-20 30-20h256a32 32 0 0 1 23 55L183 471z"
+                                            }/>
+                                        </svg>
                                     {/if}
                                 </div>
                             {/each}
@@ -1961,12 +2013,6 @@
                 on:click={handleGridView}
                 on:keydown={(e) => e.key === "Enter" && handleGridView()}
             >
-                <i
-                    class={"icon fa-solid fa-arrows-" +
-                        (isFullViewed
-                            ? "up-down"
-                            : "left-right")}
-                />
             </div>
             <div class="sortFilter skeleton shimmer" />
         </div>
@@ -2022,7 +2068,8 @@
         cursor: text;
     }
     .input-search-wrap-icon {
-        font-size: 2.5em;
+        height: 2.5em;
+        width: 2.5em;
         cursor: pointer;
     }
     .filterType {
@@ -2077,7 +2124,8 @@
     }
 
     .showFilterOptions {
-        font-size: 2.5em;
+        height: 2.5em;
+        widows: 2.5em;
         cursor: pointer;
     }
 
@@ -2171,8 +2219,9 @@
         padding: 10px 5px;
         justify-content: space-between;
     }
-    .filter-select .icon {
-        font-size: 14px;
+    .filter-select .angle-down,
+    .filter-select .angle-up {
+        height: 1.4em;
         width: min-content;
         margin: auto;
         cursor: pointer;
@@ -2240,7 +2289,7 @@
         align-items: center;
         padding: 5px;
         width: 100%;
-        grid-template-columns: auto 12px;
+        grid-template-columns: auto 1.4em;
         grid-column-gap: 8px;
         cursor: pointer;
         user-select: none;
@@ -2252,9 +2301,10 @@
         text-transform: capitalize;
     }
 
-    .filter-select .option i {
-        color: var(--optionColor);
-        font-size: 1.4rem;
+    .filter-select .option svg {
+        fill: var(--optionColor);
+        height: 1.4em;
+        width: 1.4em;
     }
     .filter-checkbox {
         display: grid;
@@ -2320,8 +2370,9 @@
         height: 3em;
     }
 
-    .empty-tagFilter i {
-        font-size: 2em;
+    .empty-tagFilter svg {
+        width: 2em;
+        height: 2em;
     }
 
     .tagFilters {
@@ -2357,7 +2408,7 @@
     .activeFilters .activeTagFilter {
         animation: fadeIn 0.2s ease;
         background-color: var(--activeTagFilterColor);
-        padding: 0.75em 10px;
+        padding: 0em 10px;
         display: flex;
         flex: 1;
         justify-content: space-between;
@@ -2365,6 +2416,7 @@
         column-gap: 6px;
         border-radius: 6px;
         cursor: pointer;
+        height: 30px;
     }
     .activeTagFilter h3 {
         line-height: 1px;
@@ -2374,9 +2426,10 @@
         cursor: pointer;
         color: white !important;
     }
-    .activeTagFilter i {
-        font-size: 1.5rem;
-        color: white !important;
+    .activeTagFilter svg {
+        width: 1.5rem;
+        height: 1.5rem;
+        fill: white !important;
     }
 
     .changeGridView {
@@ -2389,8 +2442,9 @@
         width: 3em;
         height: 3em;
     }
-    .changeGridView i {
-        font-size: 1.5em;
+    .changeGridView svg {
+        height: 1.5em;
+        width: 1.5em;
     }
 
     .showHideActiveFilters {
@@ -2403,8 +2457,9 @@
         height: 3em;
     }
 
-    .showHideActiveFilters i {
-        font-size: 2.5em;
+    .showHideActiveFilters svg {
+        height: 2.5em;
+        width: 2.5em;
     }
 
     .last-filter-option {
@@ -2421,7 +2476,7 @@
         display: flex;
         justify-content: end;
         align-items: center;
-        gap: 8px;
+        gap: 4px;
         margin-left: auto;
         position: relative;
     }
@@ -2431,10 +2486,15 @@
     }
     .sortFilter h2,
     .sortFilter h3,
-    .sortFilter i {
+    .sortFilter svg {
         user-select: none;
         cursor: pointer;
         text-transform: capitalize;
+    }
+
+    .sortFilter svg {
+        height: 1.5em;
+        width: 1.5em;
     }
 
     .sortFilter .options-wrap {
@@ -2467,15 +2527,16 @@
         align-items: center;
         padding: 5px;
         width: 100%;
-        grid-template-columns: auto 12px;
+        grid-template-columns: auto 1.5em;
         grid-column-gap: 8px;
         cursor: pointer;
         user-select: none;
         border-radius: 6px;
     }
-    .sortFilter .option i {
+    .sortFilter .option svg {
         margin-left: auto;
-        font-size: 1.2rem;
+        height: 1.5em;
+        width: 1.5em;
     }
 
     .shimmer {
@@ -2702,9 +2763,15 @@
             padding: 14px 12px !important;
         }
 
-        .option h3,
-        .option i {
+        .option h3 {
             font-size: 1.6rem !important;
+        }
+        .filter-select .option {
+            grid-template-columns: auto 1.8em !important;
+        }
+        .option svg {
+            height: 1.8em !important;
+            width: 1.8em !important;
         }
     }
 </style>
