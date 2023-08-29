@@ -1295,7 +1295,8 @@
         }
     }
 
-    $: isFullViewed = $gridFullView ?? getLocalStorage("gridFullView") ?? (!$android && windowWidth>750);
+    let checkedOriginalSizeForGridView = windowWidth > 750 && windowHeight > 695
+    $: isFullViewed = $gridFullView ?? getLocalStorage("gridFullView") ?? (!$android && checkedOriginalSizeForGridView);
 </script>
 
 <main id="main-home" style:--filters-space={showFilterOptions ? "80px" : ""}>

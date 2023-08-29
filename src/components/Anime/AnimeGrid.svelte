@@ -339,10 +339,11 @@
     let scrollingToBottom;
     let belowGrid;
     let afterFullGrid;
+    let checkedOriginalSizeForGridView = windowWidth > 750 && windowHeight > 695
     $: isFullViewed =
         $gridFullView ??
         getLocalStorage("gridFullView") ??
-        (!$android && windowWidth > 750);
+        (!$android && checkedOriginalSizeForGridView);
     $: shouldShowGoBackInFullView =
         isFullViewed &&
         afterFullGrid &&

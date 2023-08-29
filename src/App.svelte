@@ -67,6 +67,10 @@
 
 	$android = isAndroid(); // Android/Browser Identifier
 	let windowWidth = Math.max(window.visualViewport.width, window.innerWidth);
+	let windowHeight = Math.max(
+		window.visualViewport.height,
+		window.innerHeight
+	);
 	let usernameInputEl, animeGridEl;
 
 	inject(); // Vercel Analytics
@@ -112,7 +116,7 @@
 
 		let _gridFullView =
 			(await retrieveJSON("gridFullView")) ??
-			(!$android && windowWidth > 750);
+			(!$android && windowWidth > 750 && windowHeight > 695);
 		if (typeof _gridFullView === "boolean") {
 			setLocalStorage("gridFullView", _gridFullView);
 			$gridFullView = _gridFullView;
@@ -839,7 +843,15 @@
 			{ passive: true }
 		);
 		windowWidth = Math.max(window.visualViewport.width, window.innerWidth);
+		windowHeight = Math.max(
+			window.visualViewport.height,
+			window.innerHeight
+		);
 		window.addEventListener("resize", () => {
+			windowHeight = Math.max(
+				window.visualViewport.height,
+				window.innerHeight
+			);
 			windowWidth = Math.max(
 				window.visualViewport.width,
 				window.innerWidth
