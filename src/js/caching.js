@@ -1,4 +1,4 @@
-import { isAndroid, hasValidOrigin, isMobile } from "./others/helper"
+import { isAndroid, hasValidOrigin } from "./others/helper"
 
 let loadedRequestUrlPromises = {}
 let loadedRequestUrls = {}
@@ -10,6 +10,9 @@ const cacheRequest = async (url) => {
     } else if (hasValidOrigin(url)) {
         loadedRequestUrlPromises[url] = new Promise(async (resolve) => {
             fetch(url, {
+                headers: {
+                    'Cache-Control': 'public, max-age=31536000, immutable',
+                },
                 cache: 'force-cache'
             }).then(async response => await response.blob())
                 .then(blob => {
@@ -36,7 +39,6 @@ const cacheRequest = async (url) => {
 
 const emptyImage = "data:image/png;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=";
 const android = isAndroid()
-const mobile = android || isMobile()
 let loadedImagePromises = {}
 let loadedImages = {}
 const cacheImage = (url, width, height) => {
@@ -44,13 +46,13 @@ const cacheImage = (url, width, height) => {
         return loadedImages[url]
     } else if (loadedImagePromises[url]) {
         return loadedImagePromises[url]
-    } else if (mobile && window?.location?.protocol?.includes?.('https') && hasValidOrigin(url)) {
+    } else if (window?.location?.origin?.includes?.('https://u-kuro.github.io') && android) {
         loadedImagePromises[url] = new Promise(async (resolve) => {
-            let newUrl = url
-            if (window?.location?.origin?.includes?.('https://u-kuro.github.io') && android) {
-                newUrl = "https://cors-anywhere-kuro.vercel.app/api?url=" + newUrl;
-            }
+            let newUrl = "https://cors-anywhere-kuro.vercel.app/api?url=" + url;
             fetch(newUrl, {
+                headers: {
+                    'Cache-Control': 'public, max-age=31536000, immutable',
+                },
                 cache: 'force-cache'
             }).then(async response => await response.blob())
                 .then(blob => {
