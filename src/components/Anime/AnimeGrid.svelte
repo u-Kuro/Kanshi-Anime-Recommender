@@ -340,7 +340,9 @@
     let belowGrid;
     let afterFullGrid;
     $: isFullViewed =
-        $gridFullView ?? getLocalStorage("gridFullView") ?? !$android;
+        $gridFullView ??
+        getLocalStorage("gridFullView") ??
+        (!$android && windowWidth > 750);
     $: shouldShowGoBackInFullView =
         isFullViewed &&
         afterFullGrid &&

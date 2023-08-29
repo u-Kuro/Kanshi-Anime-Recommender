@@ -1294,6 +1294,8 @@
             element.scrollLeft = Math.max(0, element.scrollLeft + event.deltaY);
         }
     }
+
+    $: isFullViewed = $gridFullView ?? getLocalStorage("gridFullView") ?? (!$android && windowWidth>750);
 </script>
 
 <main id="main-home" style:--filters-space={showFilterOptions ? "80px" : ""}>
@@ -1418,7 +1420,7 @@
         id="filters"
         on:wheel={(e) => {
             horizontalWheel(e, "filters");
-            if ($gridFullView ?? getLocalStorage("gridFullView") ?? !$android) {
+            if (isFullViewed) {
                 if (!scrollingToTop && e.deltaY < 0) {
                     scrollingToTop = true;
                     let newScrollPosition = 0;
@@ -1877,9 +1879,7 @@
             >
                 <i
                     class={"icon fa-solid fa-arrows-" +
-                        ($gridFullView ??
-                        getLocalStorage("gridFullView") ??
-                        !$android
+                        (isFullViewed
                             ? "up-down"
                             : "left-right")}
                 />
@@ -1962,9 +1962,7 @@
             >
                 <i
                     class={"icon fa-solid fa-arrows-" +
-                        ($gridFullView ??
-                        getLocalStorage("gridFullView") ??
-                        !$android
+                        (isFullViewed
                             ? "up-down"
                             : "left-right")}
                 />

@@ -66,6 +66,7 @@
 	} from "./js/others/helper.js";
 
 	$android = isAndroid(); // Android/Browser Identifier
+	let windowWidth = Math.max(window.visualViewport.width, window.innerWidth);
 	let usernameInputEl, animeGridEl;
 
 	inject(); // Vercel Analytics
@@ -109,7 +110,9 @@
 			}
 		}
 
-		let _gridFullView = (await retrieveJSON("gridFullView")) ?? !$android;
+		let _gridFullView =
+			(await retrieveJSON("gridFullView")) ??
+			(!$android && windowWidth > 750);
 		if (typeof _gridFullView === "boolean") {
 			setLocalStorage("gridFullView", _gridFullView);
 			$gridFullView = _gridFullView;
@@ -835,6 +838,13 @@
 			},
 			{ passive: true }
 		);
+		windowWidth = Math.max(window.visualViewport.width, window.innerWidth);
+		window.addEventListener("resize", () => {
+			windowWidth = Math.max(
+				window.visualViewport.width,
+				window.innerWidth
+			);
+		});
 	});
 
 	window.setShouldGoBack = (_shouldGoBack) => {
