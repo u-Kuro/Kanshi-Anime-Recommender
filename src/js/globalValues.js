@@ -52,6 +52,7 @@ const popupVisible = writable(false)
 const openedAnimePopupIdx = writable(null)
 const shouldGoBack = writable(true)
 const listUpdateAvailable = writable(false)
+const listIsUpdating = writable(false)
 const popupIsGoingBack = writable(false)
 const isScrolling = writable(null)
 const scrollingTimeout = writable(null)
@@ -111,6 +112,7 @@ export {
     openedAnimePopupIdx,
     shouldGoBack,
     listUpdateAvailable,
+    listIsUpdating,
     popupIsGoingBack,
     isScrolling,
     scrollingTimeout,

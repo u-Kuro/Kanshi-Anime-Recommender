@@ -289,12 +289,8 @@ public class AnimeNotificationManager {
                     }
                     byte[] dummyImage = null;
 
-                    String notificationTitleMA = "Your Anime Aired";
-                    if (myAnimeNotifications.size() > 1) {
-                        notificationTitleMA = notificationTitleMA + " +" + myAnimeNotifications.size();
-                    }
+                    boolean hasJustAiredMA = false;
                     Notification.MessagingStyle styleMA = new Notification.MessagingStyle("")
-                            .setConversationTitle(notificationTitleMA)
                             .setGroupConversation(true);
                     List<AnimeNotification> sortedMyAnimeNotifications = new ArrayList<>(myAnimeNotifications.values());
                     Collections.sort(sortedMyAnimeNotifications, Comparator.comparingLong(anime -> anime.releaseDateMillis));
@@ -325,6 +321,9 @@ public class AnimeNotificationManager {
                         Person item = itemBuilder.build();
                         boolean justAired = anime.releaseDateMillis > System.currentTimeMillis()-(1000*60);
                         String addedInfo = justAired? " just aired." : " aired.";
+                        if (justAired && !hasJustAiredMA) {
+                            hasJustAiredMA = true;
+                        }
                         if (anime.maxEpisode < 0) { // No Given Max Episodes
                             styleMA.addMessage("Episode " + anime.releaseEpisode + addedInfo, anime.releaseDateMillis, item);
                         } else if (anime.releaseEpisode >= anime.maxEpisode) {
@@ -333,6 +332,16 @@ public class AnimeNotificationManager {
                             styleMA.addMessage("Episode " + anime.releaseEpisode + " / " + anime.maxEpisode + addedInfo, anime.releaseDateMillis, item);
                         }
                     }
+                    String notificationTitleMA;
+                    if (hasJustAiredMA) {
+                        notificationTitleMA = "Your Anime Just Aired";
+                    } else {
+                        notificationTitleMA = "Your Anime Aired";
+                    }
+                    if (myAnimeNotifications.size() > 1) {
+                        notificationTitleMA = notificationTitleMA + " +" + myAnimeNotifications.size();
+                    }
+                    styleMA.setConversationTitle(notificationTitleMA);
 
                     PackageManager pm = finalContext.getPackageManager();
                     Intent intent = pm.getLaunchIntentForPackage("com.example.kanshi");
@@ -352,13 +361,8 @@ public class AnimeNotificationManager {
                             .setShowWhen(true);
 
                     // Other Anime Released
-                    String notificationTitleOA = "Other Anime Aired";
-
-                    if (animeNotifications.size() > 1) {
-                        notificationTitleOA = notificationTitleOA + " +" + animeNotifications.size();
-                    }
+                    boolean hasJustAiredOA = false;
                     Notification.MessagingStyle styleOA = new Notification.MessagingStyle("")
-                            .setConversationTitle(notificationTitleOA)
                             .setGroupConversation(true);
                     List<AnimeNotification> sortedAnimeNotifications = new ArrayList<>(animeNotifications.values());
                     Collections.sort(sortedAnimeNotifications, Comparator.comparingLong(anime -> anime.releaseDateMillis));
@@ -389,6 +393,9 @@ public class AnimeNotificationManager {
                         Person item = itemBuilder.build();
                         boolean justAired = anime.releaseDateMillis > System.currentTimeMillis()-(1000*60);
                         String addedInfo = justAired? " just aired." : " aired.";
+                        if (justAired && !hasJustAiredOA) {
+                            hasJustAiredOA = true;
+                        }
                         if (anime.maxEpisode < 0) { // No Given Max Episodes
                             styleOA.addMessage("Episode " + anime.releaseEpisode + addedInfo, anime.releaseDateMillis, item);
                         } else if (anime.releaseEpisode >= anime.maxEpisode) {
@@ -397,6 +404,16 @@ public class AnimeNotificationManager {
                             styleOA.addMessage("Episode " + anime.releaseEpisode + " / " + anime.maxEpisode + addedInfo, anime.releaseDateMillis, item);
                         }
                     }
+                    String notificationTitleOA;
+                    if (hasJustAiredOA) {
+                        notificationTitleOA = "Other Anime Just Aired";
+                    } else {
+                        notificationTitleOA = "Other Anime Aired";
+                    }
+                    if (animeNotifications.size() > 1) {
+                        notificationTitleOA = notificationTitleOA + " +" + animeNotifications.size();
+                    }
+                    styleOA.setConversationTitle(notificationTitleOA);
 
                     Notification.Builder notificationOABuilder = new Notification.Builder(finalContext, CHANNEL_ID)
                             .setContentTitle(notificationTitleOA)

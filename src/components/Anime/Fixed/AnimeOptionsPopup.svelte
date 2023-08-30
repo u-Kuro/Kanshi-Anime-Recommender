@@ -12,8 +12,9 @@
         confirmPromise,
         checkAnimeLoaderStatus,
     } from "../../../js/globalValues";
+    import { ncsCompare } from "../../../js/others/helper.js";
 
-    let animeTitle;
+    let shownTitle;
     let youtubeSearchTitle;
     let animeCopyTitle;
     let animeID;
@@ -87,17 +88,25 @@
             return;
         if ($android) {
             try {
+                JSBridge.copyToClipBoard(shownTitle);
                 JSBridge.copyToClipBoard(animeCopyTitle);
             } catch (ex) {}
         } else {
-            navigator?.clipboard?.writeText?.(animeCopyTitle);
+            if (shownTitle && !ncsCompare(animeCopyTitle, shownTitle)) {
+                navigator?.clipboard?.writeText?.(shownTitle);
+                setTimeout(() => {
+                    navigator?.clipboard?.writeText?.(animeCopyTitle);
+                }, 300);
+            } else {
+                navigator?.clipboard?.writeText?.(animeCopyTitle);
+            }
         }
         $animeOptionVisible = false;
     }
 
     async function handleHideShow(e) {
         if (isRecentlyOpened && e.type !== "keydown") return;
-        let title = animeTitle ? `<b>${animeTitle}</b>` : "this anime";
+        let title = shownTitle ? `<b>${shownTitle}</b>` : "this anime";
         let isHidden = $hiddenEntries[animeID];
         if (isHidden) {
             if (
@@ -158,7 +167,7 @@
     function loadAnimeOption() {
         let openedAnime = $finalAnimeList?.[$openedAnimeOptionIdx ?? -1];
         if (openedAnime) {
-            animeTitle = openedAnime?.shownTitle;
+            shownTitle = openedAnime?.shownTitle;
             animeCopyTitle = youtubeSearchTitle = openedAnime?.copiedTitle;
             animeID = openedAnime.id;
             animeUrl = openedAnime.animeUrl;
@@ -184,7 +193,7 @@
     >
         <div class="anime-options-container" out:fade={{ duration: 200 }}>
             <div class="option-header">
-                <span class="anime-title"><h1>{animeTitle}</h1></span>
+                <span class="anime-title"><h1>{shownTitle}</h1></span>
                 <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                 <div
                     class="closing-x"

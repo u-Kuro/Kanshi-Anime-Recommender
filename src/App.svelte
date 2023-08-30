@@ -33,6 +33,7 @@
 		isScrolling,
 		scrollingTimeout,
 		listUpdateAvailable,
+		listIsUpdating,
 		// Reactive Functions
 		runUpdate,
 		runExport,
@@ -60,8 +61,7 @@
 	} from "./js/workerUtils.js";
 	import {
 		isAndroid,
-		addClass,
-		removeClass,
+		ncsCompare,
 		setLocalStorage,
 	} from "./js/others/helper.js";
 
@@ -636,6 +636,11 @@
 		}, 500);
 	});
 
+	listUpdateAvailable.subscribe((val) => {
+		if (!val) {
+			$listIsUpdating = false;
+		}
+	});
 	// Global Function For Android/Browser
 	document.addEventListener("visibilitychange", () => {
 		if ($initData || $android || document.visibilityState !== "visible")
@@ -914,7 +919,20 @@
 					setTimeout(() => {
 						target.style.pointerEvents = "";
 					}, 500);
-					window.copyToClipBoard(text);
+					let text2 = target.getAttribute("copy-value-2");
+					if (text2 && !ncsCompare(text2, text)) {
+						if ($android) {
+							window.copyToClipBoard(text2);
+							window.copyToClipBoard(text);
+						} else {
+							window.copyToClipBoard(text2);
+							setTimeout(() => {
+								window.copyToClipBoard(text);
+							}, 300);
+						}
+					} else {
+						window.copyToClipBoard(text);
+					}
 				}
 			}, 500);
 		}
@@ -983,36 +1001,20 @@
 		_showConfirm = false;
 	}
 
-	let updateListIconSpinningTimeout;
-	async function updateList(event) {
+	async function updateList() {
 		if (
 			await $confirmPromise({
 				title: "List update is available",
 				text: "Are you sure you want to refresh the list?",
 			})
 		) {
-			let element = event.target;
-			let classList = element.classList;
-			let updateIcon;
-			if (classList.contains("list-update-container")) {
-				updateIcon = element.querySelector?.(".list-update-icon");
-			} else {
-				updateIcon = element
-					?.closest(".list-update-container")
-					?.querySelector?.(".list-update-icon");
-			}
-			if (updateListIconSpinningTimeout)
-				clearTimeout(updateListIconSpinningTimeout);
-			addClass(updateIcon, "fa-spin");
+			$listIsUpdating = true;
 			if ($animeLoaderWorker) {
 				$animeLoaderWorker.terminate();
 				$animeLoaderWorker = null;
 			}
 			animeLoader()
 				.then(async (data) => {
-					updateListIconSpinningTimeout = setTimeout(() => {
-						removeClass(updateIcon, "fa-spin");
-					}, 200);
 					$animeLoaderWorker = data.animeLoaderWorker;
 					$searchedAnimeKeyword = "";
 					if (data?.isNew) {
@@ -1106,7 +1108,10 @@
 			on:keydown={(e) => e.key === "Enter" && updateList(e)}
 			out:fade={{ duration: 200 }}
 		>
-			<svg class="list-update-icon" viewBox="0 0 512 512">
+			<svg
+				class={"list-update-icon" + ($listIsUpdating ? " spin" : "")}
+				viewBox="0 0 512 512"
+			>
 				<!-- arrows rotate -->
 				<path
 					d="M105 203a160 160 0 0 1 264-60l17 17h-50a32 32 0 1 0 0 64h128c18 0 32-14 32-32V64a32 32 0 1 0-64 0v51l-18-17a224 224 0 0 0-369 83 32 32 0 0 0 60 22zm-66 86a32 32 0 0 0-23 31v128a32 32 0 1 0 64 0v-51l18 17a224 224 0 0 0 369-83 32 32 0 0 0-60-22 160 160 0 0 1-264 60l-17-17h50a32 32 0 1 0 0-64H48a39 39 0 0 0-9 1z"

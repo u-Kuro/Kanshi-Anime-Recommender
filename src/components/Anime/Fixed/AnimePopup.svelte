@@ -23,6 +23,7 @@
         checkAnimeLoaderStatus,
         popupIsGoingBack,
         earlisetReleaseDate,
+        listIsUpdating
     } from "../../../js/globalValues.js";
     import {
         isJsonObject,
@@ -836,19 +837,7 @@
                 text: "Are you sure you want to refresh the list?",
             })
         ) {
-            let element = event.target;
-            let classList = element.classList;
-            let updateIcon;
-            if (classList.contains("list-update-container")) {
-                updateIcon = element.querySelector?.(".list-update-icon");
-            } else {
-                updateIcon = element
-                    ?.closest(".list-update-container")
-                    ?.querySelector?.(".list-update-icon");
-            }
-            if (updateListIconSpinningTimeout)
-                clearTimeout(updateListIconSpinningTimeout);
-            addClass(updateIcon, "fa-spin");
+            $listIsUpdating = true;
             if ($animeLoaderWorker) {
                 $animeLoaderWorker.terminate();
                 $animeLoaderWorker = null;
@@ -856,9 +845,6 @@
             animeLoader()
                 .then(async (data) => {
                     $listUpdateAvailable = false;
-                    updateListIconSpinningTimeout = setTimeout(() => {
-                        removeClass(updateIcon, "fa-spin");
-                    }, 200);
                     $animeLoaderWorker = data.animeLoaderWorker;
                     $searchedAnimeKeyword = "";
                     if (data?.isNew) {
@@ -1363,7 +1349,7 @@
                         >
                             <div class="popup-header-loading">
                                 <!-- k icon -->
-                                <svg viewBox="0 0 320 512" class="fa-fade">
+                                <svg viewBox="0 0 320 512">
                                     <path
                                         d="M311 86a32 32 0 1 0-46-44L110 202l-46 47V64a32 32 0 1 0-64 0v384a32 32 0 1 0 64 0V341l65-67 133 192c10 15 30 18 44 8s18-30 8-44L174 227 311 86z"
                                     />
@@ -1461,7 +1447,7 @@
                                     <!-- arrows rotate -->
                                     <svg
                                         viewBox="0 0 512 512"
-                                        class="list-update-icon"
+                                        class={"list-update-icon"+($listIsUpdating?" spin":"")}
                                     >
                                         <path
                                             d="M105 203a160 160 0 0 1 264-60l17 17h-50a32 32 0 1 0 0 64h128c18 0 32-14 32-32V64a32 32 0 1 0-64 0v51l-18-17a224 224 0 0 0-369 83 32 32 0 0 0 60 22zm-66 86a32 32 0 0 0-23 31v128a32 32 0 1 0 64 0v-51l18 17a224 224 0 0 0 369-83 32 32 0 0 0-60-22 160 160 0 0 1-264 60l-17-17h50a32 32 0 1 0 0-64H48a39 39 0 0 0-9 1z"
@@ -1541,6 +1527,7 @@
                                         class={anime?.contentCautionColor +
                                             "-color anime-title copy"}
                                         copy-value={anime?.copiedTitle || ""}
+                                        copy-value-2={anime?.shownTitle || ""}
                                         style:overflow={$popupIsGoingBack
                                             ? "hidden"
                                             : ""}
@@ -1988,7 +1975,7 @@
                 <div class="popup-content-loading">
                     <!-- k icon -->
                     <svg
-                        class="popup-content-loading-icon fa-fade"
+                        class="popup-content-loading-icon"
                         viewBox="0 0 320 512"
                         ><path
                             d="M311 86a32 32 0 1 0-46-44L110 202l-46 47V64a32 32 0 1 0-64 0v384a32 32 0 1 0 64 0V341l65-67 133 192c10 15 30 18 44 8s18-30 8-44L174 227 311 86z"
@@ -2230,6 +2217,7 @@
     }
 
     :global(.popup-header.loader svg) {
+        animation: fadeInOut 1s infinite;
         width: 2em;
         height: 2em;
         fill: #fff;
@@ -2245,6 +2233,7 @@
     }
 
     .popup-content-loading-icon {
+        animation: fadeInOut 1s infinite;
         width: 3.5em;
         height: 3.5em;
     }

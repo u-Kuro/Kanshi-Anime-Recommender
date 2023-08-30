@@ -478,16 +478,24 @@
                             <span
                                 class="title copy"
                                 copy-value={anime?.copiedTitle || ""}
+                                copy-value-2={anime?.shownTitle || ""}
                                 >{anime?.shownTitle || "N/A"}</span
                             >
                             <span
                                 class="brief-info-wrapper copy"
                                 copy-value={anime?.copiedTitle || ""}
+                                copy-value-2={anime?.shownTitle || ""}
                             >
                                 <div class="brief-info">
                                     <span>
                                         <!-- circle -->
-                                        <svg viewBox="0 0 512 512" class={`${anime?.userStatusColor}-fill circle`}><path d="M256 512a256 256 0 1 0 0-512 256 256 0 1 0 0 512z"/></svg>
+                                        <svg
+                                            viewBox="0 0 512 512"
+                                            class={`${anime?.userStatusColor}-fill circle`}
+                                            ><path
+                                                d="M256 512a256 256 0 1 0 0-512 256 256 0 1 0 0 512z"
+                                            /></svg
+                                        >
                                         {#if isJsonObject(anime?.nextAiringEpisode)}
                                             {`${anime.format || "N/A"}`}
                                             {#key $earlisetReleaseDate || 1}
@@ -508,7 +516,13 @@
                                 <div class="brief-info">
                                     <span>
                                         <!-- star -->
-                                        <svg viewBox="0 0 576 512" class={`${anime?.contentCautionColor}-fill star`}><path d="M317 18a32 32 0 0 0-58 0l-64 132-144 22a32 32 0 0 0-17 54l104 103-25 146a32 32 0 0 0 47 33l128-68 129 68a32 32 0 0 0 46-33l-24-146 104-103a32 32 0 0 0-18-54l-144-22-64-132z"/></svg>
+                                        <svg
+                                            viewBox="0 0 576 512"
+                                            class={`${anime?.contentCautionColor}-fill star`}
+                                            ><path
+                                                d="M317 18a32 32 0 0 0-58 0l-64 132-144 22a32 32 0 0 0-17 54l104 103-25 146a32 32 0 0 0 47 33l128-68 129 68a32 32 0 0 0 46-33l-24-146 104-103a32 32 0 0 0-18-54l-144-22-64-132z"
+                                            /></svg
+                                        >
                                         {#if $filterOptions}
                                             {anime?.shownScore || "N/A"}
                                         {:else}
@@ -553,17 +567,17 @@
             on:keydown={(e) => e.key === "Enter" && goBackGrid(e)}
             out:fade={{ duration: 200 }}
         >
-            <svg viewBox={`0 0 ${
-                shouldShowGoBackInFullView ? "320" : "448"
-            } 512`}
+            <svg
+                viewBox={`0 0 ${
+                    shouldShowGoBackInFullView ? "320" : "448"
+                } 512`}
             >
                 <path
                     d={// angle left
-                        shouldShowGoBackInFullView
-                    ? "M41 233a32 32 0 0 0 0 46l160 160a32 32 0 0 0 46-46L109 256l138-137a32 32 0 0 0-46-46L41 233z"
-                    // angle up
-                    : "M201 137c13-12 33-12 46 0l160 160a32 32 0 0 1-46 46L224 205 87 343a32 32 0 0 1-46-46l160-160z"
-                    }
+                    shouldShowGoBackInFullView
+                        ? "M41 233a32 32 0 0 0 0 46l160 160a32 32 0 0 0 46-46L109 256l138-137a32 32 0 0 0-46-46L41 233z"
+                        : // angle up
+                          "M201 137c13-12 33-12 46 0l160 160a32 32 0 0 1-46 46L224 205 87 343a32 32 0 0 1-46-46l160-160z"}
                 />
             </svg>
         </div>

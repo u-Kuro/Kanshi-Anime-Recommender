@@ -299,10 +299,12 @@ const formatNumber = (number, dec = 2) => {
 }
 
 const ncsCompare = (str1, str2) => {
-  if (typeof str1 !== "string" || typeof str2 !== "string") {
-    return false;
-  }
-  return str1.toLowerCase() === str2.toLowerCase();
+  try {
+    if (typeof str1 !== "string" || typeof str2 !== "string") {
+      return false;
+    }
+    return str1.trim().toLowerCase() === str2.trim().toLowerCase();
+  } catch (e) { }
 }
 
 const changeInputValue = (inputElement, newValue) => {
