@@ -106,7 +106,9 @@
 
     async function handleHideShow(e) {
         if (isRecentlyOpened && e.type !== "keydown") return;
-        let title = shownTitle ? `<b>${shownTitle}</b>` : "this anime";
+        let title = shownTitle
+            ? `<span style="color:#00cbf9;">${shownTitle}</span>`
+            : "this anime";
         let isHidden = $hiddenEntries[animeID];
         if (isHidden) {
             if (
@@ -281,9 +283,10 @@
         animation: fadeIn 0.2s ease;
         display: flex;
         flex-direction: column;
-        background-color: #151f2e;
+        background-color: #0b1622 !important;
+        color: white !important;
         width: 300px;
-        max-width: 90%;
+        max-width: 95%;
         border-radius: 6px;
         padding: 10px 15px;
     }

@@ -301,15 +301,10 @@ public class YoutubeViewActivity extends AppCompatActivity {
                     try {
                         CustomTabsIntent customTabsIntent = new CustomTabsIntent.Builder()
                                 .setDefaultColorSchemeParams(new CustomTabColorSchemeParams.Builder().setToolbarColor(Color.BLACK).build())
-                                .setColorSchemeParams(CustomTabsIntent.COLOR_SCHEME_DARK, new CustomTabColorSchemeParams.Builder().setToolbarColor(Color.BLACK).build())
-                                .setUrlBarHidingEnabled(true)
                                 .setShowTitle(true)
-                                .setCloseButtonPosition(CustomTabsIntent.CLOSE_BUTTON_POSITION_START)
-                                .setCloseButtonIcon(BitmapFactory.decodeResource(YoutubeViewActivity.this.getResources(), R.drawable.xclose_white))
-                                .setStartAnimations(YoutubeViewActivity.this, R.anim.right_to_center, R.anim.center_to_left)
-                                .setExitAnimations(YoutubeViewActivity.this, R.anim.left_to_center, R.anim.center_to_right)
                                 .build();
                         customTabsIntent.launchUrl(YoutubeViewActivity.this, Uri.parse(url));
+                        overridePendingTransition(R.anim.right_to_center, R.anim.center_to_left);
                     } catch (Exception ex) {
                         Toast.makeText(getApplicationContext(), "Can't open the link.", Toast.LENGTH_LONG).show();
                     }

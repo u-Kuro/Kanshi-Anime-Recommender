@@ -60,10 +60,7 @@
         on:touchend|passive={handleConfirmVisibility}
         on:keydown={(e) => e.key === "Enter" && handleConfirmVisibility(e)}
     >
-        <div
-            class="confirm-wrapper"
-            style:--height={$popupVisible ? "calc(100% + 1px)" : "100%"}
-        >
+        <div class="confirm-wrapper">
             <div class="confirm-container" out:fade={{ duration: 200 }}>
                 <div class="confirm-info-container">
                     <h2 class="confirm-title">{confirmTitle}</h2>
@@ -123,7 +120,7 @@
 
     .confirm-wrapper {
         width: 100%;
-        height: var(--height);
+        height: 100%;
         justify-content: center;
         align-items: center;
         display: flex;
@@ -139,33 +136,39 @@
         animation: fadeIn 0.2s ease;
         display: grid;
         grid-template-rows: auto 20px;
-        background-color: #151f2e;
+        background-color: #0b1622;
         width: 35em;
         min-height: 15em;
-        max-width: 90%;
-        max-height: 90%;
-        border-radius: 6px;
+        max-width: 95%;
+        max-height: 95%;
+        border-radius: 0px;
         gap: 1.5em;
-        padding: 1em 1em 1em 1.5em;
+        padding: 2em 1em 2em 2.5em;
         cursor: default;
     }
 
     .confirm-info-container {
         display: grid;
         grid-template-rows: auto auto;
+        align-content: flex-start;
+        padding-right: 1.5em;
         gap: 1em;
     }
 
     .confirm-title {
         align-self: center;
-        font-size: clamp(1.5697rem, 1.7rem, 1.791rem);
+        font-size: 2rem;
+        font-weight: 500;
+        color: white;
     }
 
     .confirm-text {
-        font-size: clamp(1.3757rem, 1.48785rem, 1.6rem);
+        font-size: 1.6rem;
         overflow-y: auto;
-        max-height: 75px;
+        max-height: 40vh;
         overflow-x: hidden;
+        color: white;
+        font-weight: 500;
         -ms-overflow-style: none;
         scrollbar-width: none;
     }
@@ -183,12 +186,13 @@
     }
 
     .button {
+        color: white !important;
         background-color: transparent;
         outline: none;
-        color: inherit;
         border: none;
-        font-size: 1.1rem;
-        letter-spacing: 2px;
+        font-size: 1.45rem;
+        font-weight: 500;
+        letter-spacing: 1px;
         padding: 0.75em 0.5em;
         min-width: 65px;
         cursor: pointer;
@@ -206,6 +210,7 @@
         .confirm-container {
             width: 40em;
             min-height: 16.4em;
+            border-radius: 6px !important;
         }
 
         .confirm-title {

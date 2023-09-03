@@ -7,6 +7,7 @@ import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -20,6 +21,8 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
+import android.content.res.ColorStateList;
+import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
@@ -34,6 +37,7 @@ import android.provider.DocumentsContract;
 import android.provider.Settings;
 import android.util.Log;
 import android.view.View;
+import android.view.Window;
 import android.view.WindowManager;
 import android.webkit.ConsoleMessage;
 import android.webkit.CookieManager;
@@ -66,15 +70,17 @@ import androidx.core.content.FileProvider;
 import androidx.core.splashscreen.SplashScreen;
 
 public class MainActivity extends AppCompatActivity {
-    public final int appID = 162;
+    public final int appID = 163;
     public boolean webViewIsLoaded = false;
     public boolean permissionIsAsked = false;
     public SharedPreferences prefs;
     private SharedPreferences.Editor prefsEdit;
-
+    private int currentOrientation;
+    private int overlayColor;
     private ValueCallback<Uri[]> mUploadMessage;
     private String exportPath;
     private MediaWebView webView;
+    private ProgressBar progressbar;
 
     private PowerManager.WakeLock wakeLock;
     public boolean shouldGoBack;
@@ -165,7 +171,6 @@ public class MainActivity extends AppCompatActivity {
         // Get Activity Reference
         weakActivity = new WeakReference<>(MainActivity.this);
         // Create WebView App Instance
-
         SplashScreen splashScreen = SplashScreen.installSplashScreen(this);
         splashScreen.setKeepOnScreenCondition(() -> !webViewIsLoaded);
         // Show status bar
@@ -177,10 +182,20 @@ public class MainActivity extends AppCompatActivity {
         PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
         wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "KeepAwake:");
         wakeLock.acquire(10*60*1000L);
-        // Add WebView on Layout
         webView = findViewById(R.id.webView);
-        ProgressBar progressbar = findViewById(R.id.progressbar);
+        progressbar = findViewById(R.id.progressbar);
         progressbar.setMax((int) Math.pow(10,6));
+        // Orientation
+        currentOrientation = getResources().getConfiguration().orientation;
+        if (currentOrientation == Configuration.ORIENTATION_LANDSCAPE) {
+            overlayColor = Color.BLACK;
+            progressbar.setProgressBackgroundTintList(ColorStateList.valueOf(overlayColor));
+            getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
+            getWindow().setStatusBarColor(overlayColor);
+        } else {
+            overlayColor = getResources().getColor(R.color.dark_blue);
+        }
+        // Add WebView on Layout
         webView.setBackgroundColor(Color.BLACK);
         webView.setOverScrollMode(View.OVER_SCROLL_NEVER);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -264,16 +279,11 @@ public class MainActivity extends AppCompatActivity {
                     try {
                         fromYoutube = false;
                         CustomTabsIntent customTabsIntent = new CustomTabsIntent.Builder()
-                                .setDefaultColorSchemeParams(new CustomTabColorSchemeParams.Builder().setToolbarColor(Color.BLACK).build())
-                                .setColorSchemeParams(CustomTabsIntent.COLOR_SCHEME_DARK, new CustomTabColorSchemeParams.Builder().setToolbarColor(Color.BLACK).build())
-                                .setUrlBarHidingEnabled(true)
+                                .setDefaultColorSchemeParams(new CustomTabColorSchemeParams.Builder().setToolbarColor(getResources().getColor(R.color.dark_blue)).build())
                                 .setShowTitle(true)
-                                .setCloseButtonPosition(CustomTabsIntent.CLOSE_BUTTON_POSITION_START)
-                                .setCloseButtonIcon(BitmapFactory.decodeResource(MainActivity.this.getResources(), R.drawable.xclose_white))
-                                .setStartAnimations(MainActivity.this, R.anim.fade_in, R.anim.none)
-                                .setExitAnimations(MainActivity.this, R.anim.none, R.anim.fade_out)
                                 .build();
                         customTabsIntent.launchUrl(MainActivity.this, Uri.parse(url));
+                        overridePendingTransition(R.anim.remove, R.anim.remove);
                     } catch (Exception ignored) {
                         Toast.makeText(getApplicationContext(), "Can't open the link.", Toast.LENGTH_LONG).show();
                     }
@@ -448,6 +458,21 @@ public class MainActivity extends AppCompatActivity {
         isInApp = false;
         super.onDestroy();
         wakeLock.release();
+    }
+
+    @Override
+    public void onConfigurationChanged(@NonNull Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        currentOrientation = newConfig.orientation;
+        if (currentOrientation == Configuration.ORIENTATION_LANDSCAPE) {
+            getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
+            getWindow().setStatusBarColor(Color.BLACK);
+            progressbar.setProgressBackgroundTintList(ColorStateList.valueOf(Color.BLACK));
+        } else {
+            getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+            getWindow().setStatusBarColor(overlayColor);
+            progressbar.setProgressBackgroundTintList(ColorStateList.valueOf(overlayColor));
+        }
     }
 
     // Native and Webview Connection
@@ -744,6 +769,15 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         }
+        final int cDBlue = getResources().getColor(R.color.dark_blue);
+        @JavascriptInterface
+        public void changeStatusBarColor(boolean isOverlay) {
+            overlayColor = isOverlay? Color.BLACK : cDBlue;
+            if (currentOrientation == Configuration.ORIENTATION_PORTRAIT) {
+                progressbar.setProgressBackgroundTintList(ColorStateList.valueOf(overlayColor));
+                getWindow().setStatusBarColor(overlayColor);
+            }
+        }
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
@@ -861,7 +895,12 @@ public class MainActivity extends AppCompatActivity {
         if (currentDialog != null && currentDialog.isShowing()) {
             currentDialog.dismiss();
         }
-        currentDialog = alertDialog.show();
+        currentDialog = alertDialog.create();
+        Window dialogWindow = currentDialog.getWindow();
+        if (dialogWindow!=null) {
+            dialogWindow.setBackgroundDrawableResource(R.color.dark_blue);
+        }
+        currentDialog.show();
     }
     public void showToast(Toast toast) {
         if (currentToast != null) {

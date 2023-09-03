@@ -52,7 +52,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:theme="@style/Theme.Kanshi"
+            android:theme="@style/Theme.YoutubeActivity"
             android:name=".YoutubeViewActivity"
             android:hardwareAccelerated="true"
             android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|uiMode|screenSize|smallestScreenSize"

@@ -34,6 +34,7 @@
 		scrollingTimeout,
 		listUpdateAvailable,
 		listIsUpdating,
+		isFullViewed,
 		// Reactive Functions
 		runUpdate,
 		runExport,
@@ -1065,6 +1066,26 @@
 			progressChangeStart = performance.now();
 		}
 	});
+
+	let changeStatusBarColorTimeout;
+	$: {
+		if ($android) {
+			try {
+				let isOverlay =
+					($animeOptionVisible && windowWidth >= 750) ||
+					_showConfirm ||
+					$isFullViewed;
+				clearTimeout(changeStatusBarColorTimeout);
+				if (isOverlay) {
+					JSBridge.changeStatusBarColor(true);
+				} else {
+					changeStatusBarColorTimeout = setTimeout(() => {
+						JSBridge.changeStatusBarColor(false);
+					}, 200);
+				}
+			} catch (e) {}
+		}
+	}
 </script>
 
 <main>

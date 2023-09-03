@@ -57,6 +57,7 @@ const popupIsGoingBack = writable(false)
 const isScrolling = writable(null)
 const scrollingTimeout = writable(null)
 const asyncAnimeReloaded = writable(null)
+const isFullViewed = writable(null)
 // Reactive Functions
 const runUpdate = writable(null)
 const runExport = writable(null)
@@ -117,6 +118,7 @@ export {
     isScrolling,
     scrollingTimeout,
     asyncAnimeReloaded,
+    isFullViewed,
     // Reactive Functions
     runUpdate,
     runExport,

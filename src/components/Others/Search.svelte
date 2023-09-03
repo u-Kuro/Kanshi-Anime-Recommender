@@ -2702,10 +2702,11 @@
         .options-wrap-filter-info {
             display: flex !important;
             flex-direction: column;
-            width: 90vw;
+            width: 95vw;
             padding: 14px 0 0 0;
             gap: 14px;
             background-color: #0b1622;
+            color: white !important;
             border-radius: 6px 6px 0px 0px;
             top: 25vh;
             max-height: 60vh !important;

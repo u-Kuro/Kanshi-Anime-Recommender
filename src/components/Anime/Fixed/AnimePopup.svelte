@@ -23,7 +23,8 @@
         checkAnimeLoaderStatus,
         popupIsGoingBack,
         earlisetReleaseDate,
-        listIsUpdating
+        listIsUpdating,
+        isFullViewed
     } from "../../../js/globalValues.js";
     import {
         isJsonObject,
@@ -108,7 +109,7 @@
 
     async function handleHideShow(animeID, title) {
         let isHidden = $hiddenEntries[animeID];
-        title = title ? `<b>${title}</b>` : "this anime";
+        title = title ? `<span style="color:#00cbf9;">${title}</span>` : "this anime";
         if (isHidden) {
             if (
                 await $confirmPromise(
@@ -1301,7 +1302,8 @@
                 : removeClass(document.documentElement, "overflow-hidden");
         }
     }
-
+    $: $isFullViewed = Boolean(fullDescriptionPopup || fullImagePopup);
+    
     async function addImage(node, imageUrl) {
         if (imageUrl && imageUrl !== emptyImage) {
             node.src = loadingImage;
@@ -1902,13 +1904,13 @@
                                         : ""}
                                     on:click={handleHideShow(
                                         anime.id,
-                                        anime?.title?.english
+                                        anime?.shownTitle
                                     )}
                                     on:keydown={(e) =>
                                         e.key === "Enter" &&
                                         handleHideShow(
                                             anime.id,
-                                            anime?.title?.english
+                                            anime?.shownTitle
                                         )}
                                 >
                                     <!-- circle minus -->

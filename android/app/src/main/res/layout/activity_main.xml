@@ -7,6 +7,7 @@
     android:background="@color/black"
     tools:context=".MainActivity"
     tools:ignore="Overdraw"
+    android:fitsSystemWindows="true"
     android:id="@+id/mainConstraint">
 
     <ProgressBar
@@ -14,7 +15,7 @@
         android:layout_width="match_parent"
         android:layout_height="1dp"
         app:layout_constraintTop_toTopOf="@+id/mainConstraint"
-        android:progressBackgroundTint="@color/black"
+        android:progressBackgroundTint="@color/dark_blue"
         android:progressTint="@color/white_blue"
         android:progressBackgroundTintMode="src_over"
         android:progressTintMode="src_over"

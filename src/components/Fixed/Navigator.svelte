@@ -396,9 +396,9 @@
         top: 0;
         width: 100%;
         height: 55px;
-        background-color: #152232;
+        background-color: #0b1622;
         color: white;
-        border-bottom: 1px solid rgb(35 45 65);
+        border-bottom: 1px solid #152232;
         transform: translateZ(0);
         -webkit-transform: translateZ(0);
         -ms-transform: translateZ(0);
@@ -442,7 +442,7 @@
         font-family: system-ui !important;
         outline: none;
         border: none;
-        background-color: rgb(35 45 65) !important;
+        background-color: #152232 !important;
         color: white !important;
         text-align: start;
         padding-left: 1ch;
