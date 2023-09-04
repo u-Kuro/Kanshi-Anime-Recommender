@@ -421,8 +421,8 @@
     .logo-icon {
         cursor: pointer;
         justify-self: start;
-        width: 3em;
-        height: 3em;
+        width: 2.5em;
+        height: 2.5em;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -440,9 +440,12 @@
     }
     #usernameInput {
         font-family: system-ui !important;
+        font-size: 1.33rem;
+        font-weight: 400;
         outline: none;
+        text-transform: uppercase;
         border: none;
-        background-color: #152232 !important;
+        background-color: #0b1622 !important;
         color: white !important;
         text-align: start;
         padding-left: 1ch;
@@ -474,8 +477,8 @@
     }
     .goback {
         display: flex;
-        height: 2.5em;
-        width: 2.5em;
+        height: 2em;
+        width: 2em;
         align-items: center;
         justify-content: start;
         color: white;
@@ -516,7 +519,7 @@
     .usernameText {
         white-space: nowrap;
         font-family: system-ui !important;
-        font-size: 13.33px;
+        font-size: 1.333rem;
         font-weight: 400;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -559,6 +562,7 @@
         .nav.inputfocused #usernameInput {
             max-width: none !important;
             width: 100% !important;
+            padding-left: 1.5em !important;
         }
         .nav.inputfocused {
             grid-template-columns: 3em calc(100% - 3em - 6em) 3em !important;

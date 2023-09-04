@@ -452,8 +452,8 @@
         box-shadow: 0 3px 20px 0 #2b2d42;
         font-size: clamp(1.2rem, 1.3rem, 1.4rem);
         border-radius: 2em;
-        background-color: rgb(40 69 102);
-        color: #b9cadd;
+        background-color: rgb(24 62 104);
+        color: white;
         padding: 0.8em 1.6em;
         border: none;
         cursor: pointer;
@@ -473,8 +473,8 @@
         }
     }
     .button.selected {
-        background-color: #000 !important;
-        color: #b9cadd !important;
+        background-color: #0b1622 !important;
+        color: white !important;
     }
 
     @media screen and (min-width: 750px) {

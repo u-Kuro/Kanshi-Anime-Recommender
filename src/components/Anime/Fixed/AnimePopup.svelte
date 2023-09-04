@@ -24,7 +24,7 @@
         popupIsGoingBack,
         earlisetReleaseDate,
         listIsUpdating,
-        isFullViewed
+        isFullViewed,
     } from "../../../js/globalValues.js";
     import {
         isJsonObject,
@@ -109,7 +109,9 @@
 
     async function handleHideShow(animeID, title) {
         let isHidden = $hiddenEntries[animeID];
-        title = title ? `<span style="color:#00cbf9;">${title}</span>` : "this anime";
+        title = title
+            ? `<span style="color:#00cbf9;">${title}</span>`
+            : "this anime";
         if (isHidden) {
             if (
                 await $confirmPromise(
@@ -1303,7 +1305,7 @@
         }
     }
     $: $isFullViewed = Boolean(fullDescriptionPopup || fullImagePopup);
-    
+
     async function addImage(node, imageUrl) {
         if (imageUrl && imageUrl !== emptyImage) {
             node.src = loadingImage;
@@ -1449,7 +1451,8 @@
                                     <!-- arrows rotate -->
                                     <svg
                                         viewBox="0 0 512 512"
-                                        class={"list-update-icon"+($listIsUpdating?" spin":"")}
+                                        class={"list-update-icon" +
+                                            ($listIsUpdating ? " spin" : "")}
                                     >
                                         <path
                                             d="M105 203a160 160 0 0 1 264-60l17 17h-50a32 32 0 1 0 0 64h128c18 0 32-14 32-32V64a32 32 0 1 0-64 0v51l-18-17a224 224 0 0 0-369 83 32 32 0 0 0 60 22zm-66 86a32 32 0 0 0-23 31v128a32 32 0 1 0 64 0v-51l18 17a224 224 0 0 0 369-83 32 32 0 0 0-60-22 160 160 0 0 1-264 60l-17-17h50a32 32 0 1 0 0-64H48a39 39 0 0 0-9 1z"
@@ -2096,6 +2099,10 @@
         -o-transform: translateY(0) translateZ(0);
     }
 
+    .popup-wrapper svg {
+        fill: #9ba0b2 !important;
+    }
+
     .popup-container {
         width: 100%;
         max-width: 640px;
@@ -2346,7 +2353,7 @@
     .info-rating-wrapper > svg {
         height: 1.5em;
         width: 1.5em;
-        fill: rgb(245, 197, 24);
+        fill: rgb(245, 197, 24) !important;
     }
 
     .info-rating-wrapper > h3 {
@@ -2403,7 +2410,7 @@
     .info-status svg {
         height: 1em;
         width: 1em;
-        fill: rgb(245, 197, 24);
+        fill: rgb(245, 197, 24) !important;
     }
 
     .info-status a {

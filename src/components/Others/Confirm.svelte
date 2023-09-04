@@ -100,7 +100,7 @@
         top: 0;
         width: 100%;
         height: 100%;
-        background-color: rgba(0, 0, 0, 0.4);
+        background-color: rgba(0, 0, 0, 0.5);
         overflow-y: auto;
         overflow-x: hidden;
         overscroll-behavior: contain;
@@ -138,7 +138,7 @@
         grid-template-rows: auto 20px;
         background-color: #0b1622;
         width: 35em;
-        min-height: 15em;
+        min-height: 15.5em;
         max-width: 95%;
         max-height: 95%;
         border-radius: 0px;
@@ -152,7 +152,7 @@
         grid-template-rows: auto auto;
         align-content: flex-start;
         padding-right: 1.5em;
-        gap: 1em;
+        gap: 1.2em;
     }
 
     .confirm-title {
@@ -179,7 +179,7 @@
 
     .confirm-button-container {
         justify-self: end;
-        column-gap: 0.5em;
+        column-gap: 0.2em;
         align-items: center;
         display: flex;
         justify-content: center;
@@ -190,8 +190,8 @@
         background-color: transparent;
         outline: none;
         border: none;
-        font-size: 1.45rem;
-        font-weight: 500;
+        font-size: 1.41rem;
+        font-weight: 425;
         letter-spacing: 1px;
         padding: 0.75em 0.5em;
         min-width: 65px;
