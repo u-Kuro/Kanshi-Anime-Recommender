@@ -265,10 +265,13 @@
             let selectedIndex = filterSelectChildrenArray.indexOf(
                 selectedFilterElement
             );
-            if ($filterOptions.filterSelection[idxTypeSelected].filters.Dropdown[selectedIndex]) {
-                $filterOptions.filterSelection[idxTypeSelected].filters.Dropdown[
-                    selectedIndex
-                ].selected = false;
+            if (
+                $filterOptions.filterSelection[idxTypeSelected].filters
+                    .Dropdown[selectedIndex]
+            ) {
+                $filterOptions.filterSelection[
+                    idxTypeSelected
+                ].filters.Dropdown[selectedIndex].selected = false;
             }
         }
         if (Init) Init = false;
@@ -359,7 +362,7 @@
 
             // Filter Selection Dropdown
             let inputDropdownSelectEl = element.closest(".select");
-            let inputDropdownAngleDown = element.closest(".angle-down")
+            let inputDropdownAngleDown = element.closest(".angle-down");
             if (
                 !classList.contains("select") &&
                 !classList.contains("angle-down") &&
@@ -402,73 +405,56 @@
             $filterOptions?.filterSelection?.[idxTypeSelected].filters.Dropdown[
                 dropdownIdx
             ].options[optionIdx].selected;
-        if (
-            currentValue === "none" ||
-            currentValue === true ||
-            (changeType === "read" && currentValue !== "included")
-        ) {
+        if (currentValue === "none" || currentValue === true) {
             // true is default value of selections
             $filterOptions.filterSelection[idxTypeSelected].filters.Dropdown[
                 dropdownIdx
             ].options[optionIdx].selected = "included";
+            let hasActiveFilter = false;
             $activeTagFilters[nameTypeSelected] = $activeTagFilters[
                 nameTypeSelected
-            ].filter((e) => {
-                return (
-                    e.optionName + e.optionIdx + e.optionType !==
+            ].map((e) => {
+                if (
+                    e.optionName + e.optionIdx + e.optionType ===
                     optionName + optionIdx + optionType
-                );
+                ) {
+                    hasActiveFilter = true;
+                    e.selected = "included";
+                }
+                return e;
             });
-            $activeTagFilters[nameTypeSelected].unshift({
-                optionName: optionName,
-                optionType: optionType,
-                optionIdx: optionIdx,
-                categIdx: dropdownIdx,
-                selected: "included",
-                changeType: changeType,
-                filterType: "dropdown",
-            });
-            $activeTagFilters[nameTypeSelected] =
-                $activeTagFilters[nameTypeSelected];
-        } else if (currentValue === "included") {
-            if (changeType === "read") {
-                $filterOptions.filterSelection[
-                    idxTypeSelected
-                ].filters.Dropdown[dropdownIdx].options[optionIdx].selected =
-                    "none";
-                $activeTagFilters[nameTypeSelected] = $activeTagFilters[
-                    nameTypeSelected
-                ].filter(
-                    (e) =>
-                        !(
-                            e.optionIdx === optionIdx &&
-                            e.optionName === optionName &&
-                            e.filterType === "dropdown" &&
-                            e.categIdx === dropdownIdx &&
-                            (e.optionType ? e.optionType === optionType : true)
-                        )
-                );
-            } else {
-                $filterOptions.filterSelection[
-                    idxTypeSelected
-                ].filters.Dropdown[dropdownIdx].options[optionIdx].selected =
-                    "excluded";
-                $activeTagFilters[nameTypeSelected] = $activeTagFilters[
-                    nameTypeSelected
-                ].map((e) => {
-                    if (
-                        e.optionIdx === optionIdx &&
-                        e.optionName === optionName &&
-                        e.filterType === "dropdown" &&
-                        e.categIdx === dropdownIdx &&
-                        e.selected === "included" &&
-                        e.optionType === optionType
-                    ) {
-                        e.selected = "excluded";
-                    }
-                    return e;
+            if (!hasActiveFilter) {
+                $activeTagFilters[nameTypeSelected].unshift({
+                    optionName: optionName,
+                    optionType: optionType,
+                    optionIdx: optionIdx,
+                    categIdx: dropdownIdx,
+                    selected: "included",
+                    changeType: changeType,
+                    filterType: "dropdown",
                 });
+                $activeTagFilters[nameTypeSelected] =
+                    $activeTagFilters[nameTypeSelected];
             }
+        } else if (currentValue === "included" && changeType === "write") {
+            $filterOptions.filterSelection[idxTypeSelected].filters.Dropdown[
+                dropdownIdx
+            ].options[optionIdx].selected = "excluded";
+            $activeTagFilters[nameTypeSelected] = $activeTagFilters[
+                nameTypeSelected
+            ].map((e) => {
+                if (
+                    e.optionIdx === optionIdx &&
+                    e.optionName === optionName &&
+                    e.filterType === "dropdown" &&
+                    e.categIdx === dropdownIdx &&
+                    e.selected === "included" &&
+                    e.optionType === optionType
+                ) {
+                    e.selected = "excluded";
+                }
+                return e;
+            });
         } else {
             $filterOptions.filterSelection[idxTypeSelected].filters.Dropdown[
                 dropdownIdx
@@ -517,11 +503,11 @@
         let nameTypeSelected =
             $filterOptions?.filterSelection?.[idxTypeSelected]
                 .filterSelectionName;
-        let currentCheckBoxStatus =
+        let isChecked =
             $filterOptions?.filterSelection?.[idxTypeSelected].filters.Checkbox[
                 checkboxIdx
             ].isSelected;
-        if (currentCheckBoxStatus) {
+        if (isChecked) {
             $activeTagFilters[nameTypeSelected] = $activeTagFilters[
                 nameTypeSelected
             ].filter(
@@ -534,22 +520,27 @@
                     )
             );
         } else {
+            let hasActiveFilter = false;
             $activeTagFilters[nameTypeSelected] = $activeTagFilters[
                 nameTypeSelected
-            ].filter((e) => {
-                return (
-                    e.optionName + e.optionIdx !== checkBoxName + checkboxIdx
-                );
+            ].map((e) => {
+                if (e.optionName + e.optionIdx === checkBoxName + checkboxIdx) {
+                    hasActiveFilter = true;
+                    e.selected = "included";
+                }
+                return e;
             });
-            $activeTagFilters[nameTypeSelected].unshift({
-                optionName: checkBoxName,
-                optionIdx: checkboxIdx,
-                filterType: "checkbox",
-                selected: "included",
-                changeType: "read",
-            });
-            $activeTagFilters[nameTypeSelected] =
-                $activeTagFilters[nameTypeSelected];
+            if (!hasActiveFilter) {
+                $activeTagFilters[nameTypeSelected].unshift({
+                    optionName: checkBoxName,
+                    optionIdx: checkboxIdx,
+                    filterType: "checkbox",
+                    selected: "included",
+                    changeType: "read",
+                });
+                $activeTagFilters[nameTypeSelected] =
+                    $activeTagFilters[nameTypeSelected];
+            }
         }
         $filterOptions.filterSelection[idxTypeSelected].filters.Checkbox[
             checkboxIdx
@@ -616,7 +607,9 @@
                             typeof maxValue !== "number")) ||
                         !newCMPNumber)
                 ) {
+                    let shouldReload = false
                     if (!newCMPNumber) {
+                        shouldReload = true
                         $activeTagFilters[nameTypeSelected] = $activeTagFilters[
                             nameTypeSelected
                         ].filter(
@@ -624,30 +617,28 @@
                                 !(
                                     e.optionIdx === inputNumIdx &&
                                     e.optionName === inputNumberName &&
-                                    e.optionValue === currentValue &&
                                     e.filterType === "input number"
                                 )
                         );
                     } else {
-                        let elementIdx = $activeTagFilters[
+                        let hasActiveFilter = false;
+                        $activeTagFilters[nameTypeSelected] = $activeTagFilters[
                             nameTypeSelected
-                        ].findIndex(
-                            (item) =>
-                                item.optionName === inputNumberName &&
-                                item.optionValue === currentValue &&
-                                item.optionIdx === inputNumIdx &&
-                                item.filterType === "input number"
-                        );
-                        if (elementIdx === -1) {
-                            $activeTagFilters[nameTypeSelected] =
-                                $activeTagFilters[nameTypeSelected].filter(
-                                    (e) => {
-                                        return (
-                                            e.optionName + e.optionIdx !==
-                                            inputNumberName + inputNumIdx
-                                        );
-                                    }
-                                );
+                        ].map((e) => {
+                            if (
+                                e.optionName + e.optionIdx ===
+                                inputNumberName + inputNumIdx
+                            ) {
+                                shouldReload = e.selected !== "none"
+                                hasActiveFilter = true;
+                                e.optionValue = newValue;
+                                e.CMPoperator = newCMPOperator;
+                                e.CMPNumber = newCMPNumber;
+                            }
+                            return e;
+                        });
+                        if (!hasActiveFilter) {
+                            shouldReload = true
                             $activeTagFilters[nameTypeSelected].unshift({
                                 optionName: inputNumberName,
                                 optionValue: newValue,
@@ -658,52 +649,19 @@
                                 selected: "included",
                                 changeType: "read",
                             });
-                        } else {
-                            $activeTagFilters[nameTypeSelected].splice(
-                                elementIdx,
-                                1
-                            );
-                            $activeTagFilters[nameTypeSelected] =
-                                $activeTagFilters[nameTypeSelected].filter(
-                                    (e) => {
-                                        return (
-                                            e.optionName + e.optionIdx !==
-                                            inputNumberName + inputNumIdx
-                                        );
-                                    }
-                                );
-                            $activeTagFilters[nameTypeSelected].unshift({
-                                optionName: inputNumberName,
-                                optionValue: newValue,
-                                CMPoperator: newCMPOperator,
-                                CMPNumber: newCMPNumber,
-                                optionIdx: inputNumIdx,
-                                filterType: "input number",
-                                selected: "included",
-                                changeType: "read",
-                            });
+                            $activeTagFilters = $activeTagFilters;
                         }
-                        $activeTagFilters = $activeTagFilters;
                     }
                     $filterOptions.filterSelection[idxTypeSelected].filters[
                         "Input Number"
                     ][inputNumIdx].numberValue = newValue;
-                    saveFilters(filterSelectionName);
+                    if (shouldReload) {
+                        saveFilters(filterSelectionName);
+                    }
                 } else {
                     changeInputValue(event.target, currentValue);
                 }
             } else {
-                let elementIdx = $activeTagFilters[nameTypeSelected].findIndex(
-                    (item) =>
-                        item.optionName === inputNumberName &&
-                        item.optionValue === currentValue &&
-                        item.optionIdx === inputNumIdx &&
-                        item.filterType === "input number"
-                );
-                if (elementIdx >= 0) {
-                    $activeTagFilters[nameTypeSelected][elementIdx].selected =
-                        "included";
-                }
                 changeInputValue(event.target, currentValue);
             }
         } else {
@@ -716,7 +674,9 @@
                         typeof maxValue !== "number")) ||
                     newValue === "")
             ) {
+                let shouldReload = false
                 if (newValue === "") {
+                    shouldReload = true
                     $activeTagFilters[nameTypeSelected] = $activeTagFilters[
                         nameTypeSelected
                     ].filter(
@@ -729,24 +689,22 @@
                             )
                     );
                 } else {
-                    let elementIdx = $activeTagFilters[
+                    let hasActiveFilter = false;
+                    $activeTagFilters[nameTypeSelected] = $activeTagFilters[
                         nameTypeSelected
-                    ].findIndex(
-                        (item) =>
-                            item.optionName === inputNumberName &&
-                            item.optionValue === currentValue &&
-                            item.optionIdx === inputNumIdx &&
-                            item.filterType === "input number"
-                    );
-                    if (elementIdx === -1) {
-                        $activeTagFilters[nameTypeSelected] = $activeTagFilters[
-                            nameTypeSelected
-                        ].filter((e) => {
-                            return (
-                                e.optionName + e.optionIdx !==
-                                inputNumberName + inputNumIdx
-                            );
-                        });
+                    ].map((e) => {
+                        if (
+                            e.optionName + e.optionIdx ===
+                            inputNumberName + inputNumIdx
+                        ) {
+                            shouldReload = e.selected !== "none"
+                            hasActiveFilter = true;
+                            e.optionValue = newValue;
+                        }
+                        return e;
+                    });
+                    if (!hasActiveFilter) {
+                        shouldReload = true;
                         $activeTagFilters[nameTypeSelected].unshift({
                             optionName: inputNumberName,
                             optionValue: newValue,
@@ -755,39 +713,16 @@
                             selected: "included",
                             changeType: "read",
                         });
-                    } else {
-                        $activeTagFilters[nameTypeSelected].splice(
-                            elementIdx,
-                            1
-                        );
-                        $activeTagFilters[nameTypeSelected] = $activeTagFilters[
-                            nameTypeSelected
-                        ].filter((e) => {
-                            return (
-                                e.optionName + e.optionIdx !==
-                                inputNumberName + inputNumIdx
-                            );
-                        });
-                        $activeTagFilters[nameTypeSelected].unshift({
-                            optionName: inputNumberName,
-                            optionValue: newValue,
-                            optionIdx: inputNumIdx,
-                            filterType: "input number",
-                            selected: "included",
-                            changeType: "read",
-                        });
+                        $activeTagFilters = $activeTagFilters;
                     }
-                    $activeTagFilters = $activeTagFilters;
                 }
                 $filterOptions.filterSelection[idxTypeSelected].filters[
                     "Input Number"
                 ][inputNumIdx].numberValue = newValue;
-                saveFilters(filterSelectionName);
-            } else {
-                if (elementIdx >= 0) {
-                    $activeTagFilters[nameTypeSelected][elementIdx].selected =
-                        "included";
+                if (shouldReload) {
+                    saveFilters(filterSelectionName);
                 }
+            } else {
                 changeInputValue(event.target, currentValue);
             }
         }
@@ -803,6 +738,9 @@
         optionValue
     ) {
         if ($initData) return pleaseWaitAlert();
+        let element = event?.target
+        let classList = element?.classList
+        if (classList?.contains?.("removeActiveTag") || element?.closest?.(".removeActiveTag")) return
         let idxTypeSelected = selectedFilterSelectionIdx;
         let nameTypeSelected =
             $filterOptions?.filterSelection?.[idxTypeSelected]
@@ -820,8 +758,8 @@
                     $activeTagFilters[nameTypeSelected][elementIdx].selected;
                 if (currentSelect === "included") {
                     $activeTagFilters[nameTypeSelected][elementIdx].selected =
-                        "excluded";
-                } else {
+                        "none";
+                } else if (currentSelect != null) {
                     $activeTagFilters[nameTypeSelected][elementIdx].selected =
                         "included";
                 }
@@ -837,11 +775,11 @@
                 $activeTagFilters?.[nameTypeSelected]?.[tagFilterIdx]?.selected;
             if (checkboxSelection === "included") {
                 $activeTagFilters[nameTypeSelected][tagFilterIdx].selected =
-                    "excluded";
+                    "none";
                 $filterOptions.filterSelection[
                     idxTypeSelected
                 ].filters.Checkbox[optionIdx].isSelected = false;
-            } else if (checkboxSelection === "excluded") {
+            } else if (checkboxSelection != null) {
                 $activeTagFilters[nameTypeSelected][tagFilterIdx].selected =
                     "included";
                 $filterOptions.filterSelection[
@@ -852,7 +790,7 @@
             let currentSelect =
                 $filterOptions?.filterSelection?.[idxTypeSelected].filters
                     .Dropdown[categIdx].options[optionIdx].selected;
-            if (currentSelect === "included") {
+            if (currentSelect === "included" && changeType === "write") {
                 $filterOptions.filterSelection[
                     idxTypeSelected
                 ].filters.Dropdown[categIdx].options[optionIdx].selected =
@@ -870,7 +808,7 @@
                     }
                     return e;
                 });
-            } else if (currentSelect === "excluded") {
+            } else if (currentSelect === "none") {
                 $filterOptions.filterSelection[
                     idxTypeSelected
                 ].filters.Dropdown[categIdx].options[optionIdx].selected =
@@ -881,10 +819,27 @@
                     if (
                         e.optionIdx === optionIdx &&
                         e.optionName === optionName &&
-                        e.selected === "excluded" &&
+                        e.selected === "none" &&
                         (e.optionType ? e.optionType === optionType : true)
                     ) {
                         e.selected = "included";
+                    }
+                    return e;
+                });
+            } else {
+                $filterOptions.filterSelection[
+                    idxTypeSelected
+                ].filters.Dropdown[categIdx].options[optionIdx].selected =
+                    "none";
+                $activeTagFilters[nameTypeSelected] = $activeTagFilters[
+                    nameTypeSelected
+                ].map((e) => {
+                    if (
+                        e.optionIdx === optionIdx &&
+                        e.optionName === optionName &&
+                        (e.optionType ? e.optionType === optionType : true)
+                    ) {
+                        e.selected = "none";
                     }
                     return e;
                 });
@@ -1262,9 +1217,13 @@
         filterEl.addEventListener("scroll", handleFilterScroll, {
             passive: true,
         });
-        dragScroll(filterEl, "x",(event)=>{
-            let element = event?.target
-            return selectedFilterElement && (element?.classList?.contains?.("options-wrap") || element?.closest?.(".options-wrap"))
+        dragScroll(filterEl, "x", (event) => {
+            let element = event?.target;
+            return (
+                selectedFilterElement &&
+                (element?.classList?.contains?.("options-wrap") ||
+                    element?.closest?.(".options-wrap"))
+            );
         });
 
         document.addEventListener("keydown", handleDropdownKeyDown);
@@ -1342,12 +1301,18 @@
         />
         <div class="filterType">
             <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
-            <svg class="input-search-wrap-icon" viewBox="0 0 512 512" tabindex={selectedFilterTypeElement ? "" : "0"}
+            <svg
+                class="input-search-wrap-icon"
+                viewBox="0 0 512 512"
+                tabindex={selectedFilterTypeElement ? "" : "0"}
                 on:click={handleShowFilterTypes}
                 on:keydown={(e) =>
-                e.key === "Enter" && handleShowFilterTypes(e)}>
+                    e.key === "Enter" && handleShowFilterTypes(e)}
+            >
                 <!-- sliders -->
-                <path d="M0 416c0 18 14 32 32 32h55a80 80 0 0 0 146 0h247a32 32 0 1 0 0-64H233a80 80 0 0 0-146 0H32c-18 0-32 14-32 32zm128 0a32 32 0 1 1 64 0 32 32 0 1 1-64 0zm192-160a32 32 0 1 1 64 0 32 32 0 1 1-64 0zm32-80c-33 0-61 20-73 48H32a32 32 0 1 0 0 64h247a80 80 0 0 0 146 0h55a32 32 0 1 0 0-64h-55a80 80 0 0 0-73-48zm-160-48a32 32 0 1 1 0-64 32 32 0 1 1 0 64zm73-64a80 80 0 0 0-146 0H32a32 32 0 1 0 0 64h87a80 80 0 0 0 146 0h215a32 32 0 1 0 0-64H265z"/>
+                <path
+                    d="M0 416c0 18 14 32 32 32h55a80 80 0 0 0 146 0h247a32 32 0 1 0 0-64H233a80 80 0 0 0-146 0H32c-18 0-32 14-32 32zm128 0a32 32 0 1 1 64 0 32 32 0 1 1-64 0zm192-160a32 32 0 1 1 64 0 32 32 0 1 1-64 0zm32-80c-33 0-61 20-73 48H32a32 32 0 1 0 0 64h247a80 80 0 0 0 146 0h55a32 32 0 1 0 0-64h-55a80 80 0 0 0-73-48zm-160-48a32 32 0 1 1 0-64 32 32 0 1 1 0 64zm73-64a80 80 0 0 0-146 0H32a32 32 0 1 0 0 64h87a80 80 0 0 0 146 0h215a32 32 0 1 0 0-64H265z"
+                />
             </svg>
             <div
                 class={"options-wrap " +
@@ -1408,13 +1373,19 @@
         </div>
         <div class="showFilterOptions-container">
             <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
-            <svg class="showFilterOptions" tabindex="0" viewBox="0 0 512 512"
+            <svg
+                class="showFilterOptions"
+                tabindex="0"
+                viewBox="0 0 512 512"
                 on:click={handleShowFilterOptions}
                 on:keydown={(e) =>
                     e.key === "Enter" && handleShowFilterOptions(e)}
             >
                 <!-- filter -->
-                <path d="M4 55c7-14 21-23 36-23h432c16 0 30 9 36 23s5 30-5 42L320 321v127c0 12-7 23-18 29s-23 4-33-3l-64-48c-8-6-13-16-13-26v-79L9 97a40 40 0 0 1-5-42z"/></svg>
+                <path
+                    d="M4 55c7-14 21-23 36-23h432c16 0 30 9 36 23s5 30-5 42L320 321v127c0 12-7 23-18 29s-23 4-33-3l-64-48c-8-6-13-16-13-26v-79L9 97a40 40 0 0 1-5-42z"
+                /></svg
+            >
         </div>
     </div>
     <div
@@ -1491,18 +1462,21 @@
                                 />
                             </div>
                             {#if Dropdown.selected && Dropdown.options.length && !Init}
-                                <svg class="angle-up" viewBox="0 0 512 512" on:keydown={(e) =>
-                                    e.key === "Enter" &&
-                                    closeFilterSelect(dropdownIdx)}
-                                    on:click={closeFilterSelect(dropdownIdx)}>
+                                <svg
+                                    class="angle-up"
+                                    viewBox="0 0 512 512"
+                                    on:keydown={(e) =>
+                                        e.key === "Enter" &&
+                                        closeFilterSelect(dropdownIdx)}
+                                    on:click={closeFilterSelect(dropdownIdx)}
+                                >
                                     <!-- angle-up -->
-                                    <path d="M201 137c13-12 33-12 46 0l160 160a32 32 0 0 1-46 46L224 205 87 343a32 32 0 0 1-46-46l160-160z"/>
+                                    <path
+                                        d="M201 137c13-12 33-12 46 0l160 160a32 32 0 0 1-46 46L224 205 87 343a32 32 0 0 1-46-46l160-160z"
+                                    />
                                 </svg>
                             {:else}
-                                <svg
-                                    class="angle-down"
-                                    viewBox="0 0 512 512"
-                                >
+                                <svg class="angle-down" viewBox="0 0 512 512">
                                     <!-- angle-down -->
                                     <path
                                         d="M201 343c13 12 33 12 46 0l160-160a32 32 0 0 0-46-46L224 275 87 137a32 32 0 0 0-46 46l160 160z"
@@ -1625,9 +1599,9 @@
                                                             filterSelection.filterSelectionName ===
                                                                 "Content Caution"
                                                                 ? // circle-xmark
-                                                                    "M256 48a208 208 0 1 1 0 416 208 208 0 1 1 0-416zm0 464a256 256 0 1 0 0-512 256 256 0 1 0 0 512zm-81-337c-9 9-9 25 0 34l47 47-47 47c-9 9-9 24 0 34s25 9 34 0l47-47 47 47c9 9 24 9 34 0s9-25 0-34l-47-47 47-47c9-10 9-25 0-34s-25-9-34 0l-47 47-47-47c-10-9-25-9-34 0z"
+                                                                  "M256 48a208 208 0 1 1 0 416 208 208 0 1 1 0-416zm0 464a256 256 0 1 0 0-512 256 256 0 1 0 0 512zm-81-337c-9 9-9 25 0 34l47 47-47 47c-9 9-9 24 0 34s25 9 34 0l47-47 47 47c9 9 24 9 34 0s9-25 0-34l-47-47 47-47c9-10 9-25 0-34s-25-9-34 0l-47 47-47-47c-10-9-25-9-34 0z"
                                                                 : // circle-check
-                                                                    "M256 48a208 208 0 1 1 0 416 208 208 0 1 1 0-416zm0 464a256 256 0 1 0 0-512 256 256 0 1 0 0 512zm113-303c9-9 9-25 0-34s-25-9-34 0L224 286l-47-47c-9-9-24-9-34 0s-9 25 0 34l64 64c10 9 25 9 34 0l128-128z"}
+                                                                  "M256 48a208 208 0 1 1 0 416 208 208 0 1 1 0-416zm0 464a256 256 0 1 0 0-512 256 256 0 1 0 0 512zm113-303c9-9 9-25 0-34s-25-9-34 0L224 286l-47-47c-9-9-24-9-34 0s-9 25 0 34l64 64c10 9 25 9 34 0l128-128z"}
                                                         />
                                                     </svg>
                                                 {/if}
@@ -1798,9 +1772,7 @@
                         e.key === "Enter" && removeAllActiveTag(e)}
                 >
                     <!-- Ban -->
-                    <svg
-                        viewBox="0 0 512 512"
-                    >
+                    <svg viewBox="0 0 512 512">
                         <path
                             d="M367 413 100 145a192 192 0 0 0 268 268zm45-46A192 192 0 0 0 145 99l269 268zM1 256a256 256 0 1 1 512 0 256 256 0 1 1-512 0z"
                         />
@@ -1815,9 +1787,9 @@
                     style:--activeTagFilterColor={activeTagFiltersArray?.selected ===
                     "included"
                         ? "#5f9ea0"
-                        : activeTagFiltersArray?.changeType === "read"
-                        ? "#000"
-                        : "#e85d75"}
+                        : activeTagFiltersArray?.selected === "excluded"
+                        ? "#e85d75"
+                        : "#000"}
                     on:click={(e) =>
                         changeActiveSelect(
                             e,
@@ -1859,6 +1831,7 @@
                     {/if}
                     <!-- xmark -->
                     <svg
+                        class="removeActiveTag"
                         viewBox="0 0 400 512"
                         tabindex="0"
                         on:click|preventDefault={(e) =>
@@ -1904,7 +1877,7 @@
                         ? // angle-up
                           "M201 137c13-12 33-12 46 0l160 160a32 32 0 0 1-46 46L224 205 87 343a32 32 0 0 1-46-46l160-160z"
                         : // angle-down
-                        "M201 343c13 12 33 12 46 0l160-160a32 32 0 0 0-46-46L224 275 87 137a32 32 0 0 0-46 46l160 160z"}
+                          "M201 343c13 12 33 12 46 0l160-160a32 32 0 0 0-46-46L224 275 87 137a32 32 0 0 0-46 46l160 160z"}
                 />
             </svg>
         </div>
@@ -1918,29 +1891,32 @@
                 on:click={handleGridView}
                 on:keydown={(e) => e.key === "Enter" && handleGridView()}
             >
-                <svg viewBox={`0 0 ${isFullViewed?'312':'512'} 512`}>
-                    <path d={
-                        isFullViewed?
-                        // arrows-up-down
-                        "M183 9a32 32 0 0 0-46 0l-96 96a32 32 0 0 0 46 46l41-42v294l-41-42a32 32 0 0 0-46 46l96 96c13 12 33 12 46 0l96-96a32 32 0 0 0-46-46l-41 42V109l41 42a32 32 0 0 0 46-46L183 9z"
-                        : // arrows-left-right
-                        "m407 375 96-96c12-13 12-33 0-46l-96-96a32 32 0 0 0-46 46l42 41H109l42-41a32 32 0 0 0-46-46L9 233a32 32 0 0 0 0 46l96 96a32 32 0 0 0 46-46l-42-41h294l-42 41a32 32 0 0 0 46 46z"
-                    }/>
+                <svg viewBox={`0 0 ${isFullViewed ? "312" : "512"} 512`}>
+                    <path
+                        d={isFullViewed
+                            ? // arrows-up-down
+                              "M183 9a32 32 0 0 0-46 0l-96 96a32 32 0 0 0 46 46l41-42v294l-41-42a32 32 0 0 0-46 46l96 96c13 12 33 12 46 0l96-96a32 32 0 0 0-46-46l-41 42V109l41 42a32 32 0 0 0 46-46L183 9z"
+                            : // arrows-left-right
+                              "m407 375 96-96c12-13 12-33 0-46l-96-96a32 32 0 0 0-46 46l42 41H109l42-41a32 32 0 0 0-46-46L9 233a32 32 0 0 0 0 46l96 96a32 32 0 0 0 46-46l-42-41h294l-42 41a32 32 0 0 0 46 46z"}
+                    />
                 </svg>
             </div>
             <div class="sortFilter">
-                <svg viewBox={`0 ${selectedSortType==='asc'?'-':''}140 320 512`}
+                <svg
+                    viewBox={`0 ${
+                        selectedSortType === "asc" ? "-" : ""
+                    }140 320 512`}
                     on:click={changeSortType}
                     on:keydown={(e) => e.key === "Enter" && changeSortType(e)}
                     tabindex={selectedSortElement ? "" : "0"}
                 >
-                    <path d={
-                        // sortdown
-                        selectedSortType === "asc" ?
-                        "M183 41a32 32 0 0 0-46 0L9 169c-9 10-12 23-7 35s17 20 30 20h256a32 32 0 0 0 23-55L183 41z"
-                        // sort up
-                        : "M183 471a32 32 0 0 1-46 0L9 343c-9-10-12-23-7-35s17-20 30-20h256a32 32 0 0 1 23 55L183 471z"
-                    }/>
+                    <path
+                        d={// sortdown
+                        selectedSortType === "asc"
+                            ? "M183 41a32 32 0 0 0-46 0L9 169c-9 10-12 23-7 35s17 20 30 20h256a32 32 0 0 0 23-55L183 41z"
+                            : // sort up
+                              "M183 471a32 32 0 0 1-46 0L9 343c-9-10-12-23-7-35s17-20 30-20h256a32 32 0 0 1 23 55L183 471z"}
+                    />
                 </svg>
                 <h2
                     tabindex={selectedSortElement ? "" : "0"}
@@ -1987,14 +1963,20 @@
                                 >
                                     <h3>{sortFilter?.sortName || ""}</h3>
                                     {#if selectedSortName === sortFilter?.sortName}
-                                        <svg viewBox={`0 ${selectedSortType==='asc'?'-180':'100'} 320 512`}>
-                                            <path d={
-                                                // sortdown
-                                                selectedSortType === "asc" ?
-                                                "M183 41a32 32 0 0 0-46 0L9 169c-9 10-12 23-7 35s17 20 30 20h256a32 32 0 0 0 23-55L183 41z"
-                                                // sort up
-                                                : "M183 471a32 32 0 0 1-46 0L9 343c-9-10-12-23-7-35s17-20 30-20h256a32 32 0 0 1 23 55L183 471z"
-                                            }/>
+                                        <svg
+                                            viewBox={`0 ${
+                                                selectedSortType === "asc"
+                                                    ? "-180"
+                                                    : "100"
+                                            } 320 512`}
+                                        >
+                                            <path
+                                                d={// sortdown
+                                                selectedSortType === "asc"
+                                                    ? "M183 41a32 32 0 0 0-46 0L9 169c-9 10-12 23-7 35s17 20 30 20h256a32 32 0 0 0 23-55L183 41z"
+                                                    : // sort up
+                                                      "M183 471a32 32 0 0 1-46 0L9 343c-9-10-12-23-7-35s17-20 30-20h256a32 32 0 0 1 23 55L183 471z"}
+                                            />
                                         </svg>
                                     {/if}
                                 </div>
@@ -2012,8 +1994,7 @@
                 class="changeGridView"
                 on:click={handleGridView}
                 on:keydown={(e) => e.key === "Enter" && handleGridView()}
-            >
-            </div>
+            />
             <div class="sortFilter skeleton shimmer" />
         </div>
     {/if}
