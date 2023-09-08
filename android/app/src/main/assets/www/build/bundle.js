@@ -1,2 +1,17884 @@
-var app=function(){"use strict";function e(){}const t=e=>e;function n(e){return e()}function l(){return Object.create(null)}function o(e){e.forEach(n)}function i(e){return"function"==typeof e}function r(e,t){return e!=e?t==t:e!==t||e&&"object"==typeof e||"function"==typeof e}function a(t,...n){if(null==t)return e;const l=t.subscribe(...n);return l.unsubscribe?()=>l.unsubscribe():l}function s(e){let t;return a(e,(e=>t=e))(),t}function c(e,t,n){e.$$.on_destroy.push(a(t,n))}function u(e,t,n,l){return e[1]&&l?function(e,t){for(const n in t)e[n]=t[n];return e}(n.ctx.slice(),e[1](l(t))):n.ctx}function d(e){return null==e?"":e}function p(e,t,n){return e.set(n),t}function f(t){return t&&i(t.destroy)?t.destroy:e}const m="undefined"!=typeof window;let h=m?()=>window.performance.now():()=>Date.now(),y=m?e=>requestAnimationFrame(e):e;const w=new Set;function v(e){w.forEach((t=>{t.c(e)||(w.delete(t),t.f())})),0!==w.size&&y(v)}function g(e,t){e.appendChild(t)}function b(e){if(!e)return document;const t=e.getRootNode?e.getRootNode():e.ownerDocument;return t&&t.host?t:e.ownerDocument}function k(e){const t=T("style");return function(e,t){g(e.head||e,t),t.sheet}(b(e),t),t.sheet}function x(e,t,n){e.insertBefore(t,n||null)}function S(e){e.parentNode&&e.parentNode.removeChild(e)}function A(e,t){for(let n=0;n<e.length;n+=1)e[n]&&e[n].d(t)}function T(e){return document.createElement(e)}function E(e){return document.createElementNS("http://www.w3.org/2000/svg",e)}function N(e){return document.createTextNode(e)}function $(){return N(" ")}function L(){return N("")}function M(e,t,n,l){return e.addEventListener(t,n,l),()=>e.removeEventListener(t,n,l)}function C(e){return function(t){return t.stopPropagation(),e.call(this,t)}}function I(e,t,n){null==n?e.removeAttribute(t):e.getAttribute(t)!==n&&e.setAttribute(t,n)}function P(e,t){t=""+t,e.data!==t&&(e.data=t)}function D(e,t){e.value=null==t?"":t}function B(e,t,n,l){null==n?e.style.removeProperty(t):e.style.setProperty(t,n,l?"important":"")}function z(e,t,{bubbles:n=!1,cancelable:l=!1}={}){const o=document.createEvent("CustomEvent");return o.initCustomEvent(e,n,l,t),o}class F{constructor(e=!1){this.is_svg=!1,this.is_svg=e,this.e=this.n=null}c(e){this.h(e)}m(e,t,n=null){this.e||(this.is_svg?this.e=E(t.nodeName):this.e=T(11===t.nodeType?"TEMPLATE":t.nodeName),this.t="TEMPLATE"!==t.tagName?t:t.content,this.c(e)),this.i(n)}h(e){this.e.innerHTML=e,this.n=Array.from("TEMPLATE"===this.e.nodeName?this.e.content.childNodes:this.e.childNodes)}i(e){for(let t=0;t<this.n.length;t+=1)x(this.t,this.n[t],e)}p(e){this.d(),this.h(e),this.i(this.a)}d(){this.n.forEach(S)}}const U=new Map;let V,R=0;function H(e,t,n,l,o,i,r,a=0){const s=16.666/l;let c="{\n";for(let e=0;e<=1;e+=s){const l=t+(n-t)*i(e);c+=100*e+`%{${r(l,1-l)}}\n`}const u=c+`100% {${r(n,1-n)}}\n}`,d=`__svelte_${function(e){let t=5381,n=e.length;for(;n--;)t=(t<<5)-t^e.charCodeAt(n);return t>>>0}(u)}_${a}`,p=b(e),{stylesheet:f,rules:m}=U.get(p)||function(e,t){const n={stylesheet:k(t),rules:{}};return U.set(e,n),n}(p,e);m[d]||(m[d]=!0,f.insertRule(`@keyframes ${d} ${u}`,f.cssRules.length));const h=e.style.animation||"";return e.style.animation=`${h?`${h}, `:""}${d} ${l}ms linear ${o}ms 1 both`,R+=1,d}function O(e,t){const n=(e.style.animation||"").split(", "),l=n.filter(t?e=>e.indexOf(t)<0:e=>-1===e.indexOf("__svelte")),o=n.length-l.length;o&&(e.style.animation=l.join(", "),R-=o,R||y((()=>{R||(U.forEach((e=>{const{ownerNode:t}=e.stylesheet;t&&S(t)})),U.clear())})))}function _(e){V=e}function W(){if(!V)throw new Error("Function called outside component initialization");return V}function j(e){W().$$.on_mount.push(e)}const q=[],G=[];let Y=[];const J=[],K=Promise.resolve();let X=!1;function Q(){X||(X=!0,K.then(oe))}function Z(){return Q(),K}function ee(e){Y.push(e)}const te=new Set;let ne,le=0;function oe(){if(0!==le)return;const e=V;do{try{for(;le<q.length;){const e=q[le];le++,_(e),ie(e.$$)}}catch(e){throw q.length=0,le=0,e}for(_(null),q.length=0,le=0;G.length;)G.pop()();for(let e=0;e<Y.length;e+=1){const t=Y[e];te.has(t)||(te.add(t),t())}Y.length=0}while(q.length);for(;J.length;)J.pop()();X=!1,te.clear(),_(e)}function ie(e){if(null!==e.fragment){e.update(),o(e.before_update);const t=e.dirty;e.dirty=[-1],e.fragment&&e.fragment.p(e.ctx,t),e.after_update.forEach(ee)}}function re(e,t,n){e.dispatchEvent(z(`${t?"intro":"outro"}${n}`))}const ae=new Set;let se;function ce(){se={r:0,c:[],p:se}}function ue(){se.r||o(se.c),se=se.p}function de(e,t){e&&e.i&&(ae.delete(e),e.i(t))}function pe(e,t,n,l){if(e&&e.o){if(ae.has(e))return;ae.add(e),se.c.push((()=>{ae.delete(e),l&&(n&&e.d(1),l())})),e.o(t)}else l&&l()}const fe={duration:0};function me(n,l,r){const a={direction:"out"};let s,c=l(n,r,a),u=!0;const d=se;function p(){const{delay:l=0,duration:i=300,easing:r=t,tick:a=e,css:p}=c||fe;p&&(s=H(n,1,0,i,l,r,p));const f=h()+l,m=f+i;ee((()=>re(n,!1,"start"))),function(e){let t;0===w.size&&y(v),new Promise((n=>{w.add(t={c:e,f:n})}))}((e=>{if(u){if(e>=m)return a(0,1),re(n,!1,"end"),--d.r||o(d.c),!1;if(e>=f){const t=r((e-f)/i);a(1-t,t)}}return u}))}return d.r+=1,i(c)?(ne||(ne=Promise.resolve(),ne.then((()=>{ne=null}))),ne).then((()=>{c=c(a),p()})):p(),{end(e){e&&c.tick&&c.tick(1,0),u&&(s&&O(n,s),u=!1)}}}function he(e,t){e.d(1),t.delete(e.key)}function ye(e,t){pe(e,1,1,(()=>{t.delete(e.key)}))}function we(e,t,n,l,i,r,a,s,c,u,d,p){let f=e.length,m=r.length,h=f;const y={};for(;h--;)y[e[h].key]=h;const w=[],v=new Map,g=new Map,b=[];for(h=m;h--;){const e=p(i,r,h),o=n(e);let s=a.get(o);s?l&&b.push((()=>s.p(e,t))):(s=u(o,e),s.c()),v.set(o,w[h]=s),o in y&&g.set(o,Math.abs(h-y[o]))}const k=new Set,x=new Set;function S(e){de(e,1),e.m(s,d),a.set(e.key,e),d=e.first,m--}for(;f&&m;){const t=w[m-1],n=e[f-1],l=t.key,o=n.key;t===n?(d=t.first,f--,m--):v.has(o)?!a.has(l)||k.has(l)?S(t):x.has(o)?f--:g.get(l)>g.get(o)?(x.add(l),S(t)):(k.add(o),f--):(c(n,a),f--)}for(;f--;){const t=e[f];v.has(t.key)||c(t,a)}for(;m;)S(w[m-1]);return o(b),w}function ve(e){e&&e.c()}function ge(e,t,l,r){const{fragment:a,after_update:s}=e.$$;a&&a.m(t,l),r||ee((()=>{const t=e.$$.on_mount.map(n).filter(i);e.$$.on_destroy?e.$$.on_destroy.push(...t):o(t),e.$$.on_mount=[]})),s.forEach(ee)}function be(e,t){const n=e.$$;null!==n.fragment&&(!function(e){const t=[],n=[];Y.forEach((l=>-1===e.indexOf(l)?t.push(l):n.push(l))),n.forEach((e=>e())),Y=t}(n.after_update),o(n.on_destroy),n.fragment&&n.fragment.d(t),n.on_destroy=n.fragment=null,n.ctx=[])}function ke(t,n,i,r,a,s,c,u=[-1]){const d=V;_(t);const p=t.$$={fragment:null,ctx:[],props:s,update:e,not_equal:a,bound:l(),on_mount:[],on_destroy:[],on_disconnect:[],before_update:[],after_update:[],context:new Map(n.context||(d?d.$$.context:[])),callbacks:l(),dirty:u,skip_bound:!1,root:n.target||d.$$.root};c&&c(p.root);let f=!1;if(p.ctx=i?i(t,n.props||{},((e,n,...l)=>{const o=l.length?l[0]:n;return p.ctx&&a(p.ctx[e],p.ctx[e]=o)&&(!p.skip_bound&&p.bound[e]&&p.bound[e](o),f&&function(e,t){-1===e.$$.dirty[0]&&(q.push(e),Q(),e.$$.dirty.fill(0)),e.$$.dirty[t/31|0]|=1<<t%31}(t,e)),n})):[],p.update(),f=!0,o(p.before_update),p.fragment=!!r&&r(p.ctx),n.target){if(n.hydrate){const e=function(e){return Array.from(e.childNodes)}(n.target);p.fragment&&p.fragment.l(e),e.forEach(S)}else p.fragment&&p.fragment.c();n.intro&&de(t.$$.fragment),ge(t,n.target,n.anchor,n.customElement),oe()}_(d)}class xe{$destroy(){be(this,1),this.$destroy=e}$on(t,n){if(!i(n))return e;const l=this.$$.callbacks[t]||(this.$$.callbacks[t]=[]);return l.push(n),()=>{const e=l.indexOf(n);-1!==e&&l.splice(e,1)}}$set(e){var t;this.$$set&&(t=e,0!==Object.keys(t).length)&&(this.$$.skip_bound=!0,this.$$set(e),this.$$.skip_bound=!1)}}const Se=166;const Ae=[];function Te(t,n=e){let l;const o=new Set;function i(e){if(r(t,e)&&(t=e,l)){const e=!Ae.length;for(const e of o)e[1](),Ae.push(e,t);if(e){for(let e=0;e<Ae.length;e+=2)Ae[e][0](Ae[e+1]);Ae.length=0}}}return{set:i,update:function(e){i(e(t))},subscribe:function(r,a=e){const s=[r,a];return o.add(s),1===o.size&&(l=n(i)||e),r(t),()=>{o.delete(s),0===o.size&&l&&(l(),l=null)}}}}const Ee=e=>"[object Object]"===Object.prototype.toString.call(e);function Ne(e,t){try{let n=Math.floor(e/1e3%60),l=Math.floor(e/6e4%60),o=Math.floor(e/36e5%24),i=Math.floor(e/864e5%7),r=Math.floor(e/6048e5%4),a=Math.floor(e/24192e5%12),s=Math.floor(e/290304e5%10),c=Math.floor(e/290304e6%10),u=Math.floor(e/290304e7%10),d=Math.floor(e/290304e8%10),p=[];return d<=0&&u<=0&&c<=0&&s<=0&&a<=0&&r<=0&&i<=0&&o<=0&&l<=0&&n<=0?"0s":(d>0&&p.push(`${d}mil`),c>0&&p.push(`${c}dec`),s>0&&p.push(`${s}y`),a>0&&p.push(`${a}mon`),r>0&&p.push(`${r}w`),i>0&&p.push(`${i}d`),o>0&&p.push(`${o}h`),l>0&&p.push(`${l}m`),n>0&&p.push(`${n}s`),t>0&&(p=p.slice(0,t)),p.join(" "))}catch(e){return}}function $e(e,t,n=.5){try{var l;l=t instanceof Array?t:e.querySelectorAll(t);var o=null,i=0;let a=[],s=e.scrollTop;for(let e=0;e<l.length;e++)if(l[e].offsetTop>s){a=e>0?[l[e-1],l[e]]:0===e?[l[e]]:[];break}var r=e.getBoundingClientRect();return a.forEach((e=>{var t=e.getBoundingClientRect(),l=(Math.min(t.bottom,r.bottom)-Math.max(t.top,r.top))/t.height;l>=n&&l>i&&(i=l,o=e)})),o}catch(e){return}}const Le=(e,t)=>{try{return Array.from(e.parentElement.children).indexOf(e)}catch(e){return}},Me=(e,t,n="top",l,o=0)=>{try{let i;if("string"==typeof t&&(t=document.querySelector(t)),e===window){const e=t.getBoundingClientRect(),l=window.scrollY;i="bottom"===n?e.bottom+l-window.innerHeight:"center"===n?e.top+l-window.innerHeight/2:e.top+l}else if("string"==typeof e&&(e=document.querySelector(e)),"bottom"===n)i=t.offsetTop+t.offsetHeight-e.offsetHeight;else if("center"===n){let n=t.getBoundingClientRect(),l=e.getBoundingClientRect();i=n.top+n.height/2-(l.top+l.height/2)+e.scrollTop-l.height/2}else{let n=t.getBoundingClientRect(),l=e.getBoundingClientRect();i=n.top-l.top+e.scrollTop}e===window?"smooth"===l?window.scrollTo({top:i+o,behavior:"smooth"}):window.scrollTo({top:i+o}):"smooth"===l?e.scrollBy({top:i+o,behavior:"smooth"}):e.scrollTop=i+o}catch(e){return}},Ce=(e,t)=>{try{return"string"==typeof e&&"string"==typeof t&&e.trim().toLowerCase()===t.trim().toLowerCase()}catch(e){}},Ie=(e,t)=>{let n=Math.max(e.selectionStart-1||0,0);e.value=t,e.setSelectionRange(n,n)},Pe=(e,t="xy",n=(()=>!1))=>{let l,o,i,r,a,s,c,u,d,p=n=>{if(l&&"mouse"===n.pointerType){if(t.toLowerCase().includes("y")){let t=n.clientY-o;e.scrollTop=s-t}if(t.toLowerCase().includes("x")){let t=n.clientX-i;e.scrollLeft=c-t}}},f=p=>{"mouse"!==p.pointerType||n(p)||(r=0,cancelAnimationFrame(u),a=0,cancelAnimationFrame(d),t.toLowerCase().includes("y")&&(o=p.clientY,s=e.scrollTop),t.toLowerCase().includes("x")&&(i=p.clientX,c=e.scrollLeft),l=!0)},m=n=>{if(l){if(t.toLowerCase().includes("y")&&"mouse"===n.pointerType){let t=n.clientY-o;e.scrollTop=s-t,r=t,y(e)}if(t.toLowerCase().includes("x")&&"mouse"===n.pointerType){let t=n.clientX-i;e.scrollLeft=c-t,a=t,w(e)}}l=!1},h=()=>l=!1,y=(e,t)=>{if((null==t||e.scrollTop===t)&&"number"==typeof r&&e&&Math.abs(r)>.1){e.scrollTop-=.1*r;let t=e.scrollTop;u=requestAnimationFrame((()=>y(e,t))),r*=.9}else r=0,cancelAnimationFrame(u)},w=(e,t)=>{if((null==t||e.scrollLeft===t)&&"number"==typeof a&&e&&Math.abs(a)>.1){e.scrollLeft-=.1*a;let t=e.scrollLeft;d=requestAnimationFrame((()=>w(e,t))),a*=.9}else a=0,cancelAnimationFrame(d)};return e.addEventListener("pointermove",p),e.addEventListener("pointerdown",f),e.addEventListener("pointerup",m),window.addEventListener("pointerup",h),window.addEventListener("pointercancel",h),()=>{a=r=0,cancelAnimationFrame(u),cancelAnimationFrame(d),e.removeEventListener("pointermove",p),e.removeEventListener("pointerdown",f),e.removeEventListener("pointerup",m),window.addEventListener("pointerup",h),window.addEventListener("pointercancel",h)}},De=()=>{try{return JSBridge.exportJSON,!0}catch(e){return!1}};let Be;const ze=(e,t)=>{e?.classList?.add?.(t)},Fe=(e,t)=>{e?.classList?.remove?.(t)},Ue="Kanshi.Anime.Recommendations.Anilist.W~uPtWCq=vG$TR:Zl^#t<vdS]I~N70",Ve=e=>{let t;try{return e=Ue+e,t=localStorage.getItem(e),JSON.parse(t)}catch(e){return t??null}},Re=(e,t)=>{try{localStorage.setItem(Ue+e,t)}catch(e){}},He=Te(null),Oe=Te(null),_e=Te(!0),We=Te(0),je=Te(!1),qe=Te(Ve("username")||null),Ge=Te(null),Ye=Te(null),Je=Te(null),Ke=Te(null),Xe=Te(null),Qe=Te(null),Ze=Te(!1),et=Te(null),tt=Te(Ve("autoUpdate")||null),nt=Te(null),lt=Te(null),ot=Te(Ve("exportPathIsAvailable")||null),it=Te(Ve("autoExport")||null),rt=Te(null),at=Te(null),st=Te([]),ct=Te(Ve("autoPlay")||null),ut=Te(!0),dt=Te(Ve("gridFullView")||null),pt=Te(null),ft=Te(null),mt=Te(!1),ht=Te(null),yt=Te(null),wt=Te(!1),vt=Te(""),gt=Te(null),bt=Te(!1),kt=Te(!1),xt=Te(null),St=Te(!1),At=Te(null),Tt=Te(!0),Et=Te(!1),Nt=Te(!1),$t=Te(!1),Lt=Te(null),Mt=Te(null),Ct=Te(null),It=Te(null),Pt=Te(null),Dt=Te(null),Bt=Te(null),zt=Te(null),Ft=Te(null),Ut=Te(null),Vt=Te(null),Rt=Te(null);function Ht(e,{delay:n=0,duration:l=400,easing:o=t}={}){const i=+getComputedStyle(e).opacity;return{delay:n,duration:l,easing:o,css:e=>"opacity: "+e*i}}let Ot={},_t={};const Wt=async e=>_t[e]?_t[e]:Ot[e]?Ot[e]:window?.location?.protocol?.includes?.("file")?e:(Ot[e]=new Promise((async t=>{let n=s(He);if("number"!=typeof n)Ot[e]=null,t(e);else{fetch(e+"?v="+n,{headers:{"Cache-Control":"public, max-age=31536000, immutable"},cache:"force-cache"}).then((async e=>await e.blob())).then((n=>{try{let l=URL.createObjectURL(n);_t[e]=l,Ot[e]=null,t(l)}catch(n){Ot[e]=null,t(e)}})).catch((()=>{Ot[e]=null,t(e)}))}})),Ot[e]),jt=De();let qt={},Gt={};const Yt=(e,t,n)=>Gt[e]?Gt[e]:qt[e]?qt[e]:window?.location?.origin?.includes?.("https://u-kuro.github.io")&&jt?(qt[e]=new Promise((async l=>{fetch("https://cors-anywhere-kuro.vercel.app/api?url="+e,{headers:{"Cache-Control":"public, max-age=31536000, immutable"},cache:"force-cache"}).then((async e=>await e.blob())).then((o=>{try{let i=URL.createObjectURL(o),r=new Image;r.src=i,r.onload=()=>{try{let o=document.createElement("canvas");o.width=t||r.naturalWidth,o.height=n||r.naturalHeight,o.getContext("2d").drawImage(r,0,0),o.toBlob((t=>{try{let n=URL.createObjectURL(t);Gt[e]=n,qt[e]=null,l(n)}catch(t){Gt[e]=i,qt[e]=null,l(i)}}),"image/webp",.8)}catch(t){Gt[e]=i,qt[e]=null,l(i)}},r.onerror=()=>{qt[e]=null,l(e)}}catch(t){qt[e]=null,l(e)}})).catch((t=>{qt[e]=null,l(e)}))})),qt[e]):e||"data:image/png;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=";function Jt(e,t,n){const l=e.slice();return l[52]=t[n],l}function Kt(e,t,n){const l=e.slice();return l[52]=t[n],l}function Xt(e,t,n){const l=e.slice();return l[52]=t[n],l}function Qt(e,t,n){const l=e.slice();return l[52]=t[n],l}function Zt(e,t,n){const l=e.slice();return l[57]=t[n],l[58]=t,l[59]=n,l}function en(t){let n;return{c(){n=T("div"),n.textContent="No Results",I(n,"class","empty svelte-xo6vxz")},m(e,t){x(e,n,t)},p:e,d(e){e&&S(n)}}}function tn(t){let n,l,o=Array(21),i=[];for(let e=0;e<o.length;e+=1)i[e]=ln(Kt(t,o,e));let r=Array(5),a=[];for(let e=0;e<r.length;e+=1)a[e]=on(Jt(t,r,e));return{c(){for(let e=0;e<i.length;e+=1)i[e].c();n=$();for(let e=0;e<a.length;e+=1)a[e].c();l=L()},m(e,t){for(let n=0;n<i.length;n+=1)i[n]&&i[n].m(e,t);x(e,n,t);for(let n=0;n<a.length;n+=1)a[n]&&a[n].m(e,t);x(e,l,t)},p:e,d(e){A(i,e),e&&S(n),A(a,e),e&&S(l)}}}function nn(e){let t,n,l,o=[],i=new Map,r=e[12]||[];const a=e=>e[57]?.id||{};for(let t=0;t<r.length;t+=1){let n=Zt(e,r,t),l=a(n);i.set(l,o[t]=pn(l,n))}let s=Array(e[11]?0:1),c=[];for(let t=0;t<s.length;t+=1)c[t]=fn(Qt(e,s,t));let u=Array(e[3]?Math.floor((e[5]??1100)/220):5),d=[];for(let t=0;t<u.length;t+=1)d[t]=mn(Xt(e,u,t));return{c(){for(let e=0;e<o.length;e+=1)o[e].c();t=$();for(let e=0;e<c.length;e+=1)c[e].c();n=$();for(let e=0;e<d.length;e+=1)d[e].c();l=L()},m(e,i){for(let t=0;t<o.length;t+=1)o[t]&&o[t].m(e,i);x(e,t,i);for(let t=0;t<c.length;t+=1)c[t]&&c[t].m(e,i);x(e,n,i);for(let t=0;t<d.length;t+=1)d[t]&&d[t].m(e,i);x(e,l,i)},p(e,p){if(504832&p[0]&&(r=e[12]||[],o=we(o,p,a,1,e,r,i,t.parentNode,he,pn,t,Zt)),2048&p[0]){let t;for(s=Array(e[11]?0:1),t=0;t<s.length;t+=1){const l=Qt(e,s,t);c[t]?c[t].p(l,p):(c[t]=fn(),c[t].c(),c[t].m(n.parentNode,n))}for(;t<c.length;t+=1)c[t].d(1);c.length=s.length}if(40&p[0]){let t;for(u=Array(e[3]?Math.floor((e[5]??1100)/220):5),t=0;t<u.length;t+=1){const n=Xt(e,u,t);d[t]?d[t].p(n,p):(d[t]=mn(),d[t].c(),d[t].m(l.parentNode,l))}for(;t<d.length;t+=1)d[t].d(1);d.length=u.length}},d(e){for(let t=0;t<o.length;t+=1)o[t].d(e);e&&S(t),A(c,e),e&&S(n),A(d,e),e&&S(l)}}}function ln(t){let n;return{c(){n=T("div"),n.innerHTML='<div class="shimmer svelte-xo6vxz"></div>',I(n,"class","image-grid__card skeleton svelte-xo6vxz")},m(e,t){x(e,n,t)},p:e,d(e){e&&S(n)}}}function on(t){let n;return{c(){n=T("div"),I(n,"class","image-grid__card svelte-xo6vxz")},m(e,t){x(e,n,t)},p:e,d(e){e&&S(n)}}}function rn(e){let t,n,l,r,a,s,c;return{c(){t=T("img"),I(t,"fetchpriority",n=e[59]>gn?"":"high"),I(t,"loading",l=e[59]>gn?"lazy":"eager"),I(t,"class",d("image-grid__card-thumb  fade-out")+" svelte-xo6vxz"),I(t,"alt",r=(e[57]?.shownTitle||"")+" Cover"),I(t,"width","180px"),I(t,"height","254.531px")},m(n,l){x(n,t,l),s||(c=[f(a=e[20].call(null,t,e[57]?.coverImageUrl||e[57]?.bannerImageUrl||e[57]?.trailerThumbnailUrl||wn)),M(t,"load",e[25]),M(t,"error",e[26])],s=!0)},p(o,s){e=o,4096&s[0]&&n!==(n=e[59]>gn?"":"high")&&I(t,"fetchpriority",n),4096&s[0]&&l!==(l=e[59]>gn?"lazy":"eager")&&I(t,"loading",l),4096&s[0]&&r!==(r=(e[57]?.shownTitle||"")+" Cover")&&I(t,"alt",r),a&&i(a.update)&&4096&s[0]&&a.update.call(null,e[57]?.coverImageUrl||e[57]?.bannerImageUrl||e[57]?.trailerThumbnailUrl||wn)},d(e){e&&S(t),s=!1,o(c)}}}function an(e){let t,n=`${e[57].format||"N/A"}${e[57].episodes?"("+e[57].episodes+")":""}`;return{c(){t=N(n)},m(e,n){x(e,t,n)},p(e,l){4096&l[0]&&n!==(n=`${e[57].format||"N/A"}${e[57].episodes?"("+e[57].episodes+")":""}`)&&P(t,n)},d(e){e&&S(t)}}}function sn(e){let t,n,l,o=`${e[57].format||"N/A"}`,i=e[13]||1,a=cn(e);return{c(){t=N(o),n=$(),a.c(),l=L()},m(e,o){x(e,t,o),x(e,n,o),a.m(e,o),x(e,l,o)},p(e,n){4096&n[0]&&o!==(o=`${e[57].format||"N/A"}`)&&P(t,o),8192&n[0]&&r(i,i=e[13]||1)?(a.d(1),a=cn(e),a.c(),a.m(l.parentNode,l)):a.p(e,n)},d(e){e&&S(t),e&&S(n),e&&S(l),a.d(e)}}}function cn(e){let t,n=bn(e[57].episodes,e[57].nextAiringEpisode)+"";return{c(){t=N(n)},m(e,n){x(e,t,n)},p(e,l){4096&l[0]&&n!==(n=bn(e[57].episodes,e[57].nextAiringEpisode)+"")&&P(t,n)},d(e){e&&S(t)}}}function un(e){let t,n=(e[57]?.formattedWeightedScore||"N/A")+"";return{c(){t=N(n)},m(e,n){x(e,t,n)},p(e,l){4096&l[0]&&n!==(n=(e[57]?.formattedWeightedScore||"N/A")+"")&&P(t,n)},d(e){e&&S(t)}}}function dn(e){let t,n=(e[57]?.shownScore||"N/A")+"";return{c(){t=N(n)},m(e,n){x(e,t,n)},p(e,l){4096&l[0]&&n!==(n=(e[57]?.shownScore||"N/A")+"")&&P(t,n)},d(e){e&&S(t)}}}function pn(e,t){let n,l,r,a,s,c,u,p,f,m,h,y,w,v,b,k,A,L,C,D,B,z,F,U,V,R,H,O,_,W,j=(t[57]?.shownTitle||"N/A")+"",q=t[58],G=t[59],Y=(t[57]?.coverImageUrl||t[57]?.bannerImageUrl||t[57]?.trailerThumbnailUrl)&&rn(t);function J(e,t){return 4096&t[0]&&(A=null),null==A&&(A=!!Ee(e[57]?.nextAiringEpisode)),A?sn:an}let K=J(t,[-1,-1,-1]),X=K(t);function Q(e,t){return e[15]?dn:un}let Z=Q(t),ee=Z(t);function te(...e){return t[27](t[59],...e)}function ne(...e){return t[28](t[59],...e)}const le=()=>t[29](n,q,G),oe=()=>t[29](null,q,G);return{key:e,first:null,c(){n=T("div"),l=T("div"),Y&&Y.c(),r=$(),a=T("span"),s=T("span"),c=N(j),f=$(),m=T("span"),h=T("div"),y=T("span"),w=E("svg"),v=E("path"),k=$(),X.c(),L=$(),C=T("div"),D=T("span"),B=E("svg"),z=E("path"),U=$(),ee.c(),I(s,"class","title copy svelte-xo6vxz"),I(s,"copy-value",u=t[57]?.copiedTitle||""),I(s,"copy-value-2",p=t[57]?.shownTitle||""),I(v,"d","M256 512a256 256 0 1 0 0-512 256 256 0 1 0 0 512z"),I(w,"viewBox","0 0 512 512"),I(w,"class",b=d(`${t[57]?.userStatusColor}-fill circle`)+" svelte-xo6vxz"),I(y,"class","svelte-xo6vxz"),I(h,"class","brief-info svelte-xo6vxz"),I(z,"d","M317 18a32 32 0 0 0-58 0l-64 132-144 22a32 32 0 0 0-17 54l104 103-25 146a32 32 0 0 0 47 33l128-68 129 68a32 32 0 0 0 46-33l-24-146 104-103a32 32 0 0 0-18-54l-144-22-64-132z"),I(B,"viewBox","0 0 576 512"),I(B,"class",F=d(`${t[57]?.contentCautionColor}-fill star`)+" svelte-xo6vxz"),I(D,"class","svelte-xo6vxz"),I(C,"class","brief-info svelte-xo6vxz"),I(m,"class","brief-info-wrapper copy svelte-xo6vxz"),I(m,"copy-value",V=t[57]?.copiedTitle||""),I(m,"copy-value-2",R=t[57]?.shownTitle||""),I(a,"class","image-grid__card-title svelte-xo6vxz"),I(l,"class","shimmer svelte-xo6vxz"),I(l,"tabindex",H=t[10]?"":"0"),I(n,"class","image-grid__card svelte-xo6vxz"),I(n,"title",O=t[57]?.briefInfo||""),this.first=n},m(e,o){x(e,n,o),g(n,l),Y&&Y.m(l,null),g(l,r),g(l,a),g(a,s),g(s,c),g(a,f),g(a,m),g(m,h),g(h,y),g(y,w),g(w,v),g(y,k),X.m(y,null),g(m,L),g(m,C),g(C,D),g(D,B),g(B,z),g(D,U),ee.m(D,null),le(),_||(W=[M(l,"click",(function(){i(t[16](t[59]))&&t[16](t[59]).apply(this,arguments)})),M(l,"pointerdown",te),M(l,"pointerup",t[18]),M(l,"pointercancel",t[18]),M(l,"keydown",ne)],_=!0)},p(e,o){t=e,t[57]?.coverImageUrl||t[57]?.bannerImageUrl||t[57]?.trailerThumbnailUrl?Y?Y.p(t,o):(Y=rn(t),Y.c(),Y.m(l,r)):Y&&(Y.d(1),Y=null),4096&o[0]&&j!==(j=(t[57]?.shownTitle||"N/A")+"")&&P(c,j),4096&o[0]&&u!==(u=t[57]?.copiedTitle||"")&&I(s,"copy-value",u),4096&o[0]&&p!==(p=t[57]?.shownTitle||"")&&I(s,"copy-value-2",p),4096&o[0]&&b!==(b=d(`${t[57]?.userStatusColor}-fill circle`)+" svelte-xo6vxz")&&I(w,"class",b),K===(K=J(t,o))&&X?X.p(t,o):(X.d(1),X=K(t),X&&(X.c(),X.m(y,null))),4096&o[0]&&F!==(F=d(`${t[57]?.contentCautionColor}-fill star`)+" svelte-xo6vxz")&&I(B,"class",F),Z===(Z=Q(t))&&ee?ee.p(t,o):(ee.d(1),ee=Z(t),ee&&(ee.c(),ee.m(D,null))),4096&o[0]&&V!==(V=t[57]?.copiedTitle||"")&&I(m,"copy-value",V),4096&o[0]&&R!==(R=t[57]?.shownTitle||"")&&I(m,"copy-value-2",R),1024&o[0]&&H!==(H=t[10]?"":"0")&&I(l,"tabindex",H),4096&o[0]&&O!==(O=t[57]?.briefInfo||"")&&I(n,"title",O),q===t[58]&&G===t[59]||(oe(),q=t[58],G=t[59],le())},d(e){e&&S(n),Y&&Y.d(),X.d(),ee.d(),oe(),_=!1,o(W)}}}function fn(t){let n;return{c(){n=T("div"),n.innerHTML='<div class="shimmer svelte-xo6vxz"></div>',I(n,"class","image-grid__card skeleton svelte-xo6vxz")},m(e,t){x(e,n,t)},p:e,d(e){e&&S(n)}}}function mn(t){let n;return{c(){n=T("div"),I(n,"class","image-grid__card svelte-xo6vxz")},m(e,t){x(e,n,t)},p:e,d(e){e&&S(n)}}}function hn(e){let t,n,l,i,r,a,s,c,u,p;return{c(){t=T("div"),n=E("svg"),l=E("path"),I(l,"d",i=e[9]?"M41 233a32 32 0 0 0 0 46l160 160a32 32 0 0 0 46-46L109 256l138-137a32 32 0 0 0-46-46L41 233z":"M201 137c13-12 33-12 46 0l160 160a32 32 0 0 1-46 46L224 205 87 343a32 32 0 0 1-46-46l160-160z"),I(n,"viewBox",r=`0 0 ${e[9]?"320":"448"} 512`),I(n,"class","svelte-xo6vxz"),I(t,"class",a=d("go-back-grid"+(e[9]?" fullView":""))+" svelte-xo6vxz"),I(t,"tabindex","0")},m(o,i){x(o,t,i),g(t,n),g(n,l),c=!0,u||(p=[M(t,"click",e[19]),M(t,"keydown",e[33])],u=!0)},p(e,o){(!c||512&o[0]&&i!==(i=e[9]?"M41 233a32 32 0 0 0 0 46l160 160a32 32 0 0 0 46-46L109 256l138-137a32 32 0 0 0-46-46L41 233z":"M201 137c13-12 33-12 46 0l160 160a32 32 0 0 1-46 46L224 205 87 343a32 32 0 0 1-46-46l160-160z"))&&I(l,"d",i),(!c||512&o[0]&&r!==(r=`0 0 ${e[9]?"320":"448"} 512`))&&I(n,"viewBox",r),(!c||512&o[0]&&a!==(a=d("go-back-grid"+(e[9]?" fullView":""))+" svelte-xo6vxz"))&&I(t,"class",a)},i(e){c||(s&&s.end(1),c=!0)},o(e){s=me(t,Ht,{duration:200}),c=!1},d(e){e&&S(t),e&&s&&s.end(),u=!1,o(p)}}}function yn(e){let t,n,l,i,r,a,s,c;function u(e,t){return e[12]?.length?nn:!e[12]||e[14]?tn:en}let p=u(e),f=p(e),m=!e[4]&&(e[9]||e[8])&&hn(e);return{c(){t=T("main"),n=T("div"),f.c(),i=$(),m&&m.c(),I(n,"id","anime-grid"),I(n,"class",l=d("image-grid "+(e[3]?" fullView":"")+(0!==e[12]?.length||e[14]?"":"empty"))+" svelte-xo6vxz"),B(n,"--anime-grid-height",e[5]+"px"),I(t,"class",r=d(e[3]?"fullView":"")+" svelte-xo6vxz")},m(l,o){x(l,t,o),g(t,n),f.m(n,null),e[30](n),g(t,i),m&&m.m(t,null),a=!0,s||(c=[M(n,"wheel",e[31]),M(n,"scroll",e[32])],s=!0)},p(e,o){p===(p=u(e))&&f?f.p(e,o):(f.d(1),f=p(e),f&&(f.c(),f.m(n,null))),(!a||20488&o[0]&&l!==(l=d("image-grid "+(e[3]?" fullView":"")+(0!==e[12]?.length||e[14]?"":"empty"))+" svelte-xo6vxz"))&&I(n,"class",l),32&o[0]&&B(n,"--anime-grid-height",e[5]+"px"),e[4]||!e[9]&&!e[8]?m&&(ce(),pe(m,1,1,(()=>{m=null})),ue()):m?(m.p(e,o),784&o[0]&&de(m,1)):(m=hn(e),m.c(),de(m,1),m.m(t,null)),(!a||8&o[0]&&r!==(r=d(e[3]?"fullView":"")+" svelte-xo6vxz"))&&I(t,"class",r)},i(e){a||(de(m),a=!0)},o(e){pe(m),a=!1},d(n){n&&S(t),f.d(),e[30](null),m&&m.d(),s=!1,o(c)}}}const wn="data:image/png;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=",vn="data:image/jpeg;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=";let gn=13;function bn(e,t){let n,l;if("number"==typeof t?.episode&&"number"==typeof t?.airingAt){let e=new Date(1e3*t?.airingAt);l=t?.episode,e instanceof Date&&!isNaN(e)&&(n=e.getTime()-(new Date).getTime())}if(n>0&&l>1&&e>l)return`(${l-1}/${e})`;if(n<=0&&"number"==typeof l&&e>l)return`(${l}/${e})`;if("number"==typeof e)return`(${e})`;if("number"==typeof l){if(n>0&&l>1)return`(${l-1}")`;if(n<=0)return`(${l}")`}return""}function kn(e,t,n){let l,o,i,r,a,s,u,d,f,m,h,y,w,v,g,b,k,x,S,A,T,E,N;c(e,Oe,(e=>n(4,r=e))),c(e,Et,(e=>n(23,a=e))),c(e,dt,(e=>n(24,s=e))),c(e,kt,(e=>n(39,u=e))),c(e,xt,(e=>n(40,d=e))),c(e,St,(e=>n(10,f=e))),c(e,At,(e=>n(41,m=e))),c(e,Xe,(e=>n(42,h=e))),c(e,mt,(e=>n(43,y=e))),c(e,wt,(e=>n(11,w=e))),c(e,Ct,(e=>n(44,v=e))),c(e,ht,(e=>n(45,g=e))),c(e,Ke,(e=>n(12,b=e))),c(e,Qe,(e=>n(46,k=e))),c(e,yt,(e=>n(47,x=e))),c(e,pt,(e=>n(48,S=e))),c(e,ft,(e=>n(13,A=e))),c(e,zt,(e=>n(49,T=e))),c(e,ut,(e=>n(14,E=e))),c(e,Ye,(e=>n(15,N=e)));let $,L,M=Math.max(window.visualViewport.height,window.innerHeight),C=Math.max(window.visualViewport.width,window.innerWidth);j((()=>{n(5,M=Math.max(window.visualViewport.height,window.innerHeight)),n(21,C=Math.max(window.visualViewport.width,window.innerWidth)),n(6,$=$||document.getElementById("anime-grid")),window.addEventListener("resize",(()=>{n(5,M=Math.max(window.visualViewport.height,window.innerHeight)),n(21,C=Math.max(window.visualViewport.width,window.innerWidth))}))}));let I,P,D,B,z,F,U,V,R=!1;function H(e){p(At,m=e,m),p(St,f=!0,f)}function O(e,t){let n=e.target;n.classList.contains("copy")||n.closest(".copy")||(D&&clearTimeout(D),D=setTimeout((()=>{p(xt,d=t,d),p(kt,u=!0,u)}),500))}window.checkAnimeLoaderStatus=p(mt,y=async()=>{if(h instanceof Worker&&"function"==typeof h.onmessage)return new Promise(((e,t)=>{I={resolve:e,reject:t},h?.postMessage?.({checkStatus:!0}),clearTimeout(P),P=setTimeout((()=>{t()}),1e3)})).catch((()=>{p(Xe,h=null,h),p(Ke,b=null,b),p(zt,T=!T,T),I=null})).finally((()=>{I=null}))},y),Xe.subscribe((e=>{e instanceof Worker&&(e.onmessage=async({data:t})=>{if(I?.resolve&&t?.isAlive&&(I?.resolve?.(),I=null),await Z(),void 0!==t?.status)p(Qe,k=t.status,k);else if(!0===t.getEarlisetReleaseDate)t.earliestReleaseDate&&t?.timeBeforeEarliestReleaseDate>0&&(t.earliestReleaseDate<A||new Date(A)<new Date||!A)&&(p(ft,A=t.earliestReleaseDate,A),clearTimeout(S),p(pt,S=setTimeout((()=>{h instanceof Worker&&y().then((()=>{h?.postMessage?.({getEarlisetReleaseDate:!0})}))}),Math.min(t.timeBeforeEarliestReleaseDate,2e9)),S));else if(t.finalAnimeList instanceof Array)!0===t?.reload?(p(Ke,b=t.finalAnimeList,b),R=!0):!0===t.isNew?p(Ke,b=t.finalAnimeList,b):!1===t.isNew&&b instanceof Array&&(p(Ke,b=b.concat(t.finalAnimeList),b),t.isLast&&(p(wt,w=!0,w),g instanceof IntersectionObserver&&(g.disconnect(),p(ht,g=null,g)))),e?.postMessage?.({getEarlisetReleaseDate:!0});else if(!0===t.isRemoved&&"number"==typeof t.removedID){let n=Math.max(b.length-2,0),l=b[n].gridElement||$.children?.[n];g instanceof IntersectionObserver&&l instanceof Element&&g.observe(l);let o=b.findIndex((({id:e})=>e===t.removedID));p(Ke,b=b.filter((({id:e})=>e!==t.removedID)),b),o>=0&&(p(yt,x=null,x),p(yt,x=o,x)),e?.postMessage?.({getEarlisetReleaseDate:!0})}},e.onerror=e=>{p(Qe,k="Something went wrong...",k),console.error(e)},e?.postMessage?.({getEarlisetReleaseDate:!0}))})),Ke.subscribe((async e=>{if(e instanceof Array&&e.length){w&&p(wt,w=!1,w),g&&(g.disconnect(),p(ht,g=null,g)),await Z(),L=!1,p(ht,g=new IntersectionObserver((e=>{w||e.forEach((e=>{if(e.isIntersecting){if(L)return;L=!0,setTimeout((()=>{h instanceof Worker&&y().then((()=>{h?.postMessage?.({loadMore:!0})})),L=!1}),16)}}))}),{root:null,rootMargin:"100%",threshold:[0,1]}),g);let e=b.length-1,t=b[e].gridElement||$.children?.[e];g instanceof IntersectionObserver&&t instanceof Element&&g.observe(t),R&&(p(Ct,v=!v,v),R=!1)}else g&&(g?.disconnect?.(),p(ht,g=null,g)),R&&(p(Ct,v=!v,v),R=!1)})),vt.subscribe((async e=>{"string"==typeof e&&h instanceof Worker&&(p(wt,w=!1,w),y().then((()=>{h?.postMessage?.({filterKeyword:e})})))}));let _=C>750&&M>695;function W(){l?(n(6,$.style.overflow="hidden",$),n(6,$.style.overflow="",$),$?.children?.[0]?.scrollIntoView?.({container:$,behavior:"smooth",block:"nearest",inline:"start"})):(!r&&matchMedia("(hover:hover)").matches||(document.documentElement.style.overflow="hidden",document.documentElement.style.overflow=""),window.scrollTo({top:-9999,behavior:"smooth"}))}window.addEventListener("scroll",(()=>{document.documentElement.scrollTop>500?n(22,U=!0):n(22,U=!1)}),{passive:!0});return e.$$.update=()=>{16777232&e.$$.dirty[0]&&n(3,l=s??Ve("gridFullView")??(!r&&_)),2097167&e.$$.dirty[0]&&n(9,o=l&&V&&(z<B||C>596.5)),12582920&e.$$.dirty[0]&&n(8,i=!l&&!a&&U)},[B,z,V,l,r,M,$,F,i,o,f,w,b,A,E,N,H,O,function(){D&&clearTimeout(D)},W,async function(e,t){if(t&&t!==wn){e.src=vn;let n=await Yt(t);n&&(e.src=n)}else e.src=wn},C,U,a,s,e=>{e?.target?.src!==vn&&(Fe(e.target,"fade-out"),ze(e.target?.closest?.(".shimmer"),"loaded"))},e=>{ze(e.target,"fade-out"),ze(e.target,"display-none")},(e,t)=>O(t,e),(e,t)=>"Enter"===t.key&&H(e),function(e,t,n){G[e?"unshift":"push"]((()=>{t[n].gridElement=e}))},function(e){G[e?"unshift":"push"]((()=>{$=e,n(6,$)}))},e=>{if(l&&(function(e,t){let n=e.target;n.classList.contains(t)||(n=n.closest("."+t)),n.scrollWidth<=n.clientWidth||0!==e.deltaY&&0===e.deltaX&&(e.preventDefault(),e.stopPropagation(),n.scrollLeft=Math.max(0,n.scrollLeft+e.deltaY))}(e,"image-grid"),!F)){n(7,F=!0);let e=window.scrollMaxY||Number.MAX_SAFE_INTEGER;document.documentElement.scrollTop=e,n(7,F=!1)}},e=>{let t=e?.target;n(0,B=z),n(1,z=t?.scrollLeft),n(2,V=z>500)},e=>"Enter"===e.key&&W()]}let xn,Sn,An,Tn=1e3,En=!1,Nn=!1;const $n=(e={})=>new Promise(((t,n)=>{En=!0,We.set(0),Wt("./webapi/worker/animeLoader.js").then((l=>{An&&(An.terminate(),An=null),e?.filterOptions&&e?.activeTagFilters?(xn=e?.filterOptions,Sn=e?.activeTagFilters,e.hasPassedFilters=!0):xn&&Sn&&(e.filterOptions=xn,e.activeTagFilters=Sn,e.hasPassedFilters=!0),An=new Worker(l),An.postMessage(e),An.onmessage=({data:e})=>{e?.hasOwnProperty("progress")?e?.progress>=0&&e?.progress<=100&&We.set(e.progress):e?.hasOwnProperty("status")?(En=!0,Qe.set(e.status)):e?.isNew&&(!0===e?.hasPassedFilters&&(xn=Sn=void 0),En=!1,An.onmessage=null,Et.set(!1),We.set(100),t(Object.assign({},e,{animeLoaderWorker:An})))},An.onerror=e=>{We.set(100),n(e)}})).catch((e=>{We.set(100),Xn(),n(e)}))}));let Ln,Mn;const Cn=(e={})=>new Promise(((t,n)=>{En=!0,Mn&&Mn.terminate(),We.set(0),Wt("./webapi/worker/processRecommendedAnimeList.js").then((l=>{Ln&&clearTimeout(Ln),e?.filterOptions&&e?.activeTagFilters?(xn=e?.filterOptions,Sn=e?.activeTagFilters,e.hasPassedFilters=!0):xn&&Sn&&(e.filterOptions=xn,e.activeTagFilters=Sn,e.hasPassedFilters=!0),Mn=new Worker(l),Mn.postMessage(e),Mn.onmessage=({data:e})=>{if(e?.hasOwnProperty("progress"))e?.progress>=0&&e?.progress<=100&&We.set(e.progress);else if(e?.hasOwnProperty("status"))En=!0,Qe.set(e.status);else if(e?.animeReleaseNotification){if(s(Oe))try{let t=e?.animeReleaseNotification;"number"==typeof t?.releaseEpisodes&&"number"==typeof t?.releaseDateMillis&&"number"==typeof t?.maxEpisode&&"string"==typeof t?.title&&"number"==typeof t?.id&&"boolean"==typeof t?.isMyAnime&&"string"==typeof t?.imageURL&&JSBridge.addAnimeReleaseNotification(t.id,t.title,t.releaseEpisodes,t.maxEpisode,t.releaseDateMillis,t?.imageURL,t.isMyAnime)}catch(e){}}else!0===e?.hasPassedFilters&&(xn=Sn=void 0),En=!1,Ln=setTimeout((()=>{Mn.terminate()}),Tn),We.set(100),t()},Mn.onerror=e=>{We.set(100),n(e)}})).catch((e=>{We.set(100),Xn(),n(e)}))}));let In,Pn;const Dn=e=>new Promise(((t,n)=>{Pn&&Pn.terminate(),We.set(0),Wt("./webapi/worker/requestAnimeEntries.js").then((l=>{Pn=new Worker(l),In&&clearTimeout(In),Pn.postMessage(e),Pn.onmessage=({data:e})=>{e?.hasOwnProperty("progress")?!En&&e?.progress>=0&&e?.progress<=100&&We.set(e.progress):e?.hasOwnProperty("status")?En||Qe.set(e.status):void 0!==e?.updateRecommendationList?Ft.update((e=>!e)):e?.lastRunnedAutoUpdateDate instanceof Date&&!isNaN(e?.lastRunnedAutoUpdateDate)?lt.set(e.lastRunnedAutoUpdateDate):(void 0!==e?.errorDuringInit||(In=setTimeout((()=>{Pn.terminate()}),Tn),We.set(100)),t(e))},Pn.onerror=e=>{We.set(100),n(e)}})).catch((e=>{We.set(100),Xn(),n(e)}))}));let Bn,zn;const Fn=e=>new Promise(((t,n)=>{s(ut)||(Nn||s(Ze))&&et.set(!1),zn&&zn.terminate(),We.set(0),Wt("./webapi/worker/requestUserEntries.js").then((l=>{zn=new Worker(l),Bn&&clearTimeout(Bn),zn.postMessage(e),zn.onmessage=({data:e})=>{e?.hasOwnProperty("progress")?!En&&e?.progress>=0&&e?.progress<=100&&We.set(e.progress):e?.hasOwnProperty("status")?En||(Qe.set(e.status),"User not found"===e.status&&(et.set(!1),Vt.update((e=>!e)),window.confirmPromise({isAlert:!0,text:"User is not found, you may want to try again..."}),Bn=setTimeout((()=>{zn.terminate()}),Tn),We.set(100),n(e))):e?.error?(et.set(!1),Vt.update((e=>!e)),Bn=setTimeout((()=>{zn.terminate()}),Tn),We.set(100),n(e)):void 0!==e?.updateRecommendationList?Ft.update((e=>!e)):(et.set(!1),Bn=setTimeout((()=>{zn.terminate()}),Tn),We.set(100),t(e))},zn.onerror=e=>{et.set(!1),Vt.update((e=>!e)),Bn=setTimeout((()=>{zn.terminate()}),Tn),We.set(100),n(e)}})).catch((e=>{et.set(!1),We.set(100),Vt.update((e=>!e)),Xn(),n(e)}))}));let Un;const Vn=e=>new Promise(((e,t)=>{if(!s(ut)){if(s(Ze))return;Kn(),Nn=!0}Un&&Un.terminate(),We.set(0),Wt("./webapi/worker/exportUserData.js").then((n=>{Un=new Worker(n),s(Oe)?Un.postMessage("android"):Un.postMessage("browser"),Un.onmessage=({data:t})=>{if(t?.hasOwnProperty("progress"))t?.progress>=0&&t?.progress<=100&&We.set(t.progress);else if(t?.hasOwnProperty("status"))En=!0,Qe.set(t.status);else if(s(Oe)){En=!1;let n=t.chunk,l=t.state;if(0===l)JSBridge.exportJSON("",0,"");else if(1===l)JSBridge.exportJSON(n,1,"");else if(2===l){let l=t.username??null;JSBridge.exportJSON(n,2,`Kanshi.${l?.toLowerCase()||"Backup"}.json`),We.set(100),Un.terminate(),Nn=!1,e(t)}}else{En=!1;let n=t.username??null;We.set(100),((e,t)=>{Be&&setTimeout((()=>URL.revokeObjectURL(Be)),0),Be=e;const n=document.createElement("a");n.href=e,n.download=t,n.click()})(t.url,`Kanshi.${n?.toLowerCase()||"Backup"}.json`),Nn=!1,e(t)}},Un.onerror=e=>{We.set(100),Nn=!1,window.confirmPromise?.({isAlert:!0,title:"Export Failed",text:"Data is not exported, please try again in a later time."}),t(e)}})).catch((e=>{We.set(100),Nn=!1,Xn(),t(e)}))}));let Rn,Hn;const On=e=>new Promise(((t,n)=>{Wt("./webapi/worker/getIDBdata.js").then((l=>{let o=new Worker(l);o.postMessage({name:e}),o.onmessage=({data:e})=>{e?.hasOwnProperty("status")?Qe.set(e.status):(o.terminate(),t(e))},o.onerror=e=>{n(e)}})).catch((()=>{Xn(),n(error)}))})),_n=(e,t)=>new Promise(((n,l)=>{Wt("./webapi/worker/saveIDBdata.js").then((o=>{let i=new Worker(o);i.onmessage=({data:e})=>{e?.hasOwnProperty("status")?Qe.set(e.status):(setTimeout((()=>{i.terminate(),i=null}),Tn),n())},i.onerror=e=>{l(e)},i.postMessage({data:e,name:t}),"boolean"==typeof e&&Re(t,e)})).catch((e=>{Xn(),l(e)}))}));let Wn,jn;let qn,Gn,Yn;const Jn=e=>new Promise(((t,n)=>{Gn=setInterval((()=>{jn||Qe.set("Getting Filters")}),300),Wt("./webapi/worker/getFilterOptions.js").then((l=>{Gn&&(clearInterval(Gn),Gn=null),Yn&&Yn.terminate(),Yn=new Worker(l),qn&&clearTimeout(qn),Yn.postMessage(e),Yn.onmessage=({data:e})=>{e?.hasOwnProperty("status")?(En=!0,Qe.set(e.status)):(En=!1,qn=setTimeout((()=>{Yn.terminate()}),Tn),t(e))},Yn.onerror=e=>{n(e)}})).catch((e=>{Gn&&(clearInterval(Gn),Gn=null),Qe.set(null),Xn(),n(e)}))}));function Kn(){We.set(0),Pn?.terminate?.(),zn?.terminate?.(),et.set(!1),Hn?.terminate?.(),Ze.set(!1),Un?.terminate?.(),Nn=!1,Yn?.terminate?.(),clearInterval(jn),jn=null,clearInterval(Gn),Gn=null,Qe.set(null)}function Xn(){s(Oe)?window.confirmPromise?.({isAlert:!0,title:"Something Went Wrong",text:"App may not be working properly, you may want to restart and make sure you're running the latest version."}):window.confirmPromise?.({isAlert:!0,title:"Something Went Wrong",text:"App may not be working properly, you may want to refresh the page, or if not clear the cookies but backup your data first."})}function Qn(e,t){return new Promise((async(n,l)=>{await _n(e,t).then((e=>{n(e)})).catch((e=>{l(e)}))}))}async function Zn(e){return new Promise((async(t,n)=>{await On(e).then((e=>{t(e)})).catch((e=>{n(e)}))}))}function el(e,t,n){const l=e.slice();return l[118]=t[n],l[119]=t,l[120]=n,l}function tl(e,t,n){const l=e.slice();return l[121]=t[n],l}function nl(e,t,n){const l=e.slice();return l[124]=t[n],l}function ll(e,t,n){const l=e.slice();return l[127]=t[n],l}function ol(e){let t,n,l=[],o=new Map,i=e[9]||[];const r=e=>e[118]?.id||{};for(let t=0;t<i.length;t+=1){let n=el(e,i,t),a=r(n);o.set(a,l[t]=El(a,n))}let a=e[9]?.length&&!e[15]&&Nl();return{c(){for(let e=0;e<l.length;e+=1)l[e].c();t=$(),a&&a.c(),n=L()},m(e,o){for(let t=0;t<l.length;t+=1)l[t]&&l[t].m(e,o);x(e,t,o),a&&a.m(e,o),x(e,n,o)},p(e,s){12484275&s[0]&&(i=e[9]||[],l=we(l,s,r,1,e,i,o,t.parentNode,he,El,t,el)),e[9]?.length&&!e[15]?a||(a=Nl(),a.c(),a.m(n.parentNode,n)):a&&(a.d(1),a=null)},d(e){for(let t=0;t<l.length;t+=1)l[t].d(e);e&&S(t),a&&a.d(e),e&&S(n)}}}function il(e){let t;return{c(){t=T("div"),I(t,"class","trailer display-none svelte-wl7my9")},m(e,n){x(e,t,n)},d(e){e&&S(t)}}}function rl(e){let t,n,l,r,a;return{c(){t=T("img"),I(t,"loading","lazy"),I(t,"width","640px"),I(t,"height","360px"),I(t,"alt",n=(e[118]?.shownTitle||"")+(e[118].bannerImageUrl?" Banner":" Thumbnail")),I(t,"class","bannerImg fade-out svelte-wl7my9")},m(n,o){x(n,t,o),r||(a=[f(l=e[32].call(null,t,e[118].bannerImageUrl||e[118].trailerThumbnailUrl||Il)),M(t,"load",e[34]),M(t,"error",e[35])],r=!0)},p(o,r){e=o,512&r[0]&&n!==(n=(e[118]?.shownTitle||"")+(e[118].bannerImageUrl?" Banner":" Thumbnail"))&&I(t,"alt",n),l&&i(l.update)&&512&r[0]&&l.update.call(null,e[118].bannerImageUrl||e[118].trailerThumbnailUrl||Il)},d(e){e&&S(t),r=!1,o(a)}}}function al(e){let t;return{c(){t=N("Auto")},m(e,n){x(e,t,n)},d(e){e&&S(t)}}}function sl(e){let t;return{c(){t=N("Auto Play")},m(e,n){x(e,t,n)},d(e){e&&S(t)}}}function cl(e){let t,n,l,i,r,a,s,c,u,p=e[4]>=320?"List Update":e[4]>=205?"Update":e[4]>=180?"List":"";return{c(){t=T("div"),n=E("svg"),l=E("path"),r=$(),a=T("h3"),s=N(p),I(l,"d","M105 203a160 160 0 0 1 264-60l17 17h-50a32 32 0 1 0 0 64h128c18 0 32-14 32-32V64a32 32 0 1 0-64 0v51l-18-17a224 224 0 0 0-369 83 32 32 0 0 0 60 22zm-66 86a32 32 0 0 0-23 31v128a32 32 0 1 0 64 0v-51l18 17a224 224 0 0 0 369-83 32 32 0 0 0-60-22 160 160 0 0 1-264 60l-17-17h50a32 32 0 1 0 0-64H48a39 39 0 0 0-9 1z"),I(n,"viewBox","0 0 512 512"),I(n,"class",i=d("list-update-icon"+(e[13]?" spin":""))+" svelte-wl7my9"),I(a,"class","list-update-label svelte-wl7my9"),I(t,"class","list-update-container svelte-wl7my9"),I(t,"tabindex","0")},m(o,i){x(o,t,i),g(t,n),g(n,l),g(t,r),g(t,a),g(a,s),c||(u=[M(t,"click",e[20]),M(t,"keydown",e[43])],c=!0)},p(e,t){8192&t[0]&&i!==(i=d("list-update-icon"+(e[13]?" spin":""))+" svelte-wl7my9")&&I(n,"class",i),16&t[0]&&p!==(p=e[4]>=320?"List Update":e[4]>=205?"Update":e[4]>=180?"List":"")&&P(s,p)},d(e){e&&S(t),c=!1,o(u)}}}function ul(e){let t,n,l,i,r,a,s,c,u=e[118].bannerImageUrl?"Banner":"Thumbnail";function d(){return e[44](e[118])}function p(...t){return e[45](e[118],...t)}return{c(){t=T("div"),n=E("svg"),l=E("path"),i=$(),r=T("h3"),a=N(u),I(l,"d","M0 96c0-35 29-64 64-64h384c35 0 64 29 64 64v320c0 35-29 64-64 64H64c-35 0-64-29-64-64V96zm324 107a24 24 0 0 0-40 0l-87 127-26-33a24 24 0 0 0-37 0l-65 80a24 24 0 0 0 19 39h336c9 0 17-5 21-13s4-17-1-25L324 204zm-212-11a48 48 0 1 0 0-96 48 48 0 1 0 0 96z"),I(n,"viewBox","0 0 512 512"),I(n,"class","banner-image-icon svelte-wl7my9"),I(r,"class","banner-image-label svelte-wl7my9"),I(t,"class","banner-image-button svelte-wl7my9"),I(t,"tabindex","0")},m(e,o){x(e,t,o),g(t,n),g(n,l),g(t,i),g(t,r),g(r,a),s||(c=[M(t,"click",d),M(t,"keydown",p)],s=!0)},p(t,n){e=t,512&n[0]&&u!==(u=e[118].bannerImageUrl?"Banner":"Thumbnail")&&P(a,u)},d(e){e&&S(t),s=!1,o(c)}}}function dl(e){let t,n,l,o,i,r,a=(e[118]?.format||"NA")+"",s=(e[21](e[118])||" · NA")+"",c=(e[118]?.formattedDuration||" · NA")+"";return{c(){t=T("h4"),n=N(a),l=$(),o=new F(!1),i=$(),r=N(c),o.a=i,I(t,"class","svelte-wl7my9")},m(e,a){x(e,t,a),g(t,n),g(t,l),o.m(s,t),g(t,i),g(t,r)},p(e,t){512&t[0]&&a!==(a=(e[118]?.format||"NA")+"")&&P(n,a),512&t[0]&&s!==(s=(e[21](e[118])||" · NA")+"")&&o.p(s),512&t[0]&&c!==(c=(e[118]?.formattedDuration||" · NA")+"")&&P(r,c)},d(e){e&&S(t)}}}function pl(e){let t,n,l,o,i,a=(e[118]?.format||"NA")+"",s=e[14]||1,c=(e[118]?.formattedDuration||" · NA")+"",u=fl(e);return{c(){t=T("h4"),n=N(a),l=$(),u.c(),o=$(),i=N(c),I(t,"class","svelte-wl7my9")},m(e,r){x(e,t,r),g(t,n),g(t,l),u.m(t,null),g(t,o),g(t,i)},p(e,l){512&l[0]&&a!==(a=(e[118]?.format||"NA")+"")&&P(n,a),16384&l[0]&&r(s,s=e[14]||1)?(u.d(1),u=fl(e),u.c(),u.m(t,o)):u.p(e,l),512&l[0]&&c!==(c=(e[118]?.formattedDuration||" · NA")+"")&&P(i,c)},d(e){e&&S(t),u.d(e)}}}function fl(e){let t,n,l=(e[21](e[118])||" · NA")+"";return{c(){t=new F(!1),n=L(),t.a=n},m(e,o){t.m(l,e,o),x(e,n,o)},p(e,n){512&n[0]&&l!==(l=(e[21](e[118])||" · NA")+"")&&t.p(l)},d(e){e&&S(n),e&&t.d()}}}function ml(t){let n;return{c(){n=T("h4"),n.textContent="NA",I(n,"class","svelte-wl7my9")},m(e,t){x(e,n,t)},p:e,d(e){e&&S(n)}}}function hl(e){let t,n,l,o=(`${e[118]?.season||""}${e[118]?.year?" "+e[118].year:""}`||"NA")+"";return{c(){t=T("span"),n=N(o),B(t,"text-align","right"),I(t,"class","copy svelte-wl7my9"),I(t,"copy-value",l=`${e[118]?.season||""}${e[118]?.year?" "+e[118].year:""}`||"NA")},m(e,l){x(e,t,l),g(t,n)},p(e,i){512&i[0]&&o!==(o=(`${e[118]?.season||""}${e[118]?.year?" "+e[118].year:""}`||"NA")+"")&&P(n,o),512&i[0]&&l!==(l=`${e[118]?.season||""}${e[118]?.year?" "+e[118].year:""}`||"NA")&&I(t,"copy-value",l)},d(e){e&&S(t)}}}function yl(e){let t,n,l,o,i,r,a=e[118].userScore+"";return{c(){t=N(" · "),n=$(),l=E("svg"),o=E("path"),i=$(),r=N(a),I(o,"d","M288 0c9 0 17 5 21 14l69 141 153 22c9 2 17 8 20 17s0 18-6 24L434 328l26 156c1 9-2 18-10 24s-17 6-25 1l-137-73-137 73c-8 4-18 4-25-2s-11-14-10-23l26-156L31 218a24 24 0 0 1 14-41l153-22 68-141c4-9 13-14 22-14zm0 79-53 108c-3 7-10 12-18 13L99 219l86 85c5 6 8 13 7 21l-21 120 106-57c7-3 15-3 22 1l105 56-20-120c-1-8 1-15 7-21l86-85-118-17c-8-2-15-7-18-14L288 79z"),I(l,"viewBox","0 0 576 512"),I(l,"class","svelte-wl7my9")},m(e,a){x(e,t,a),x(e,n,a),x(e,l,a),g(l,o),x(e,i,a),x(e,r,a)},p(e,t){512&t[0]&&a!==(a=e[118].userScore+"")&&P(r,a)},d(e){e&&S(t),e&&S(n),e&&S(l),e&&S(i),e&&S(r)}}}function wl(e){let t,n,l,i,r,a,s=[],c=new Map,u=e[118].studios;const p=e=>e[127]?.studio||{};for(let t=0;t<u.length;t+=1){let n=ll(e,u,t),l=p(n);c.set(l,s[t]=vl(l,n))}function f(...t){return e[46](e[118],e[119],e[120],...t)}return{c(){t=T("div"),n=T("div"),n.textContent="Studios",l=$(),i=T("div");for(let e=0;e<s.length;e+=1)s[e].c();I(n,"class","info-categ svelte-wl7my9"),I(i,"class",d("studio-popup info")+" svelte-wl7my9"),B(i,"overflow",e[7]?"hidden":""),I(t,"class","svelte-wl7my9")},m(o,c){x(o,t,c),g(t,n),g(t,l),g(t,i);for(let e=0;e<s.length;e+=1)s[e]&&s[e].m(i,null);r||(a=[M(i,"scroll",e[23]),M(i,"mouseenter",f)],r=!0)},p(t,n){e=t,512&n[0]&&(u=e[118].studios,s=we(s,n,p,1,e,u,c,i,he,vl,null,ll)),128&n[0]&&B(i,"overflow",e[7]?"hidden":"")},d(e){e&&S(t);for(let e=0;e<s.length;e+=1)s[e].d();r=!1,o(a)}}}function vl(e,t){let n,l,o,i,r,a,s,c,u=(t[127]?.studio?.studioName||"N/A")+"";return{key:e,first:null,c(){n=T("a"),l=N(u),o=$(),I(n,"class",i=d("copy"+(t[127]?.studioColor?` ${t[127]?.studioColor}-color`:""))+" svelte-wl7my9"),I(n,"rel",r=t[127]?.studio?.studioUrl?"noopener noreferrer":""),I(n,"target",a=t[127]?.studio?.studioUrl?"_blank":""),I(n,"href",s=t[127]?.studio?.studioUrl||"javascript:void(0)"),I(n,"copy-value",c=t[127]?.studio?.studioName||""),this.first=n},m(e,t){x(e,n,t),g(n,l),g(n,o)},p(e,o){t=e,512&o[0]&&u!==(u=(t[127]?.studio?.studioName||"N/A")+"")&&P(l,u),512&o[0]&&i!==(i=d("copy"+(t[127]?.studioColor?` ${t[127]?.studioColor}-color`:""))+" svelte-wl7my9")&&I(n,"class",i),512&o[0]&&r!==(r=t[127]?.studio?.studioUrl?"noopener noreferrer":"")&&I(n,"rel",r),512&o[0]&&a!==(a=t[127]?.studio?.studioUrl?"_blank":"")&&I(n,"target",a),512&o[0]&&s!==(s=t[127]?.studio?.studioUrl||"javascript:void(0)")&&I(n,"href",s),512&o[0]&&c!==(c=t[127]?.studio?.studioName||"")&&I(n,"copy-value",c)},d(e){e&&S(n)}}}function gl(e){let t,n,l,i,r,a,s=[],c=new Map,u=e[118].genres;const p=e=>e[124]?.genre||{};for(let t=0;t<u.length;t+=1){let n=nl(e,u,t),l=p(n);c.set(l,s[t]=bl(l,n))}function f(...t){return e[47](e[118],e[119],e[120],...t)}return{c(){t=T("div"),n=T("div"),n.textContent="Genres",l=$(),i=T("div");for(let e=0;e<s.length;e+=1)s[e].c();I(n,"class","info-categ svelte-wl7my9"),I(i,"class",d("genres-popup info")+" svelte-wl7my9"),B(i,"overflow",e[7]?"hidden":""),I(t,"class","svelte-wl7my9")},m(o,c){x(o,t,c),g(t,n),g(t,l),g(t,i);for(let e=0;e<s.length;e+=1)s[e]&&s[e].m(i,null);r||(a=[M(i,"scroll",e[23]),M(i,"mouseenter",f)],r=!0)},p(t,n){e=t,512&n[0]&&(u=e[118].genres,s=we(s,n,p,1,e,u,c,i,he,bl,null,nl)),128&n[0]&&B(i,"overflow",e[7]?"hidden":"")},d(e){e&&S(t);for(let e=0;e<s.length;e+=1)s[e].d();r=!1,o(a)}}}function bl(e,t){let n,l,o,i,r,a=(t[124]?.genre||"N/A")+"";return{key:e,first:null,c(){n=T("span"),l=N(a),o=$(),I(n,"class",i=d("copy "+(t[124]?.genreColor?`${t[124]?.genreColor}-color`:""))+" svelte-wl7my9"),I(n,"copy-value",r=t[124]?.genre||""),this.first=n},m(e,t){x(e,n,t),g(n,l),g(n,o)},p(e,o){t=e,512&o[0]&&a!==(a=(t[124]?.genre||"N/A")+"")&&P(l,a),512&o[0]&&i!==(i=d("copy "+(t[124]?.genreColor?`${t[124]?.genreColor}-color`:""))+" svelte-wl7my9")&&I(n,"class",i),512&o[0]&&r!==(r=t[124]?.genre||"")&&I(n,"copy-value",r)},d(e){e&&S(n)}}}function kl(e){let t,n,l,i,r=[],a=new Map,s=e[118].tags;const c=e=>e[121]?.tag||{};for(let t=0;t<s.length;t+=1){let n=tl(e,s,t),l=c(n);a.set(l,r[t]=xl(l,n))}function u(...t){return e[48](e[118],e[119],e[120],...t)}return{c(){t=T("div"),n=T("div");for(let e=0;e<r.length;e+=1)r[e].c();I(n,"class",d("tags-info-content info")+" svelte-wl7my9"),B(n,"overflow",e[7]?"hidden":""),I(t,"class","tag-info svelte-wl7my9")},m(o,a){x(o,t,a),g(t,n);for(let e=0;e<r.length;e+=1)r[e]&&r[e].m(n,null);l||(i=[M(n,"scroll",e[23]),M(n,"mouseenter",u)],l=!0)},p(t,l){e=t,512&l[0]&&(s=e[118].tags,r=we(r,l,c,1,e,s,a,n,he,xl,null,tl)),128&l[0]&&B(n,"overflow",e[7]?"hidden":"")},d(e){e&&S(t);for(let e=0;e<r.length;e+=1)r[e].d();l=!1,o(i)}}}function xl(e,t){let n,l,o,i,r,a=(t[121]?.tag||"N/A")+"";return{key:e,first:null,c(){n=T("span"),l=new F(!1),o=$(),l.a=o,I(n,"class",i=d("copy "+(t[121]?.tagColor?`${t[121]?.tagColor}-color`:""))+" svelte-wl7my9"),I(n,"copy-value",r=t[121]?.copyValue||""),this.first=n},m(e,t){x(e,n,t),l.m(a,n),g(n,o)},p(e,o){t=e,512&o[0]&&a!==(a=(t[121]?.tag||"N/A")+"")&&l.p(a),512&o[0]&&i!==(i=d("copy "+(t[121]?.tagColor?`${t[121]?.tagColor}-color`:""))+" svelte-wl7my9")&&I(n,"class",i),512&o[0]&&r!==(r=t[121]?.copyValue||"")&&I(n,"copy-value",r)},d(e){e&&S(n)}}}function Sl(e){let t,n,l,i,r,a,s=Bl(e[118]?.description)+"";function c(){return e[52](e[118])}function u(...t){return e[53](e[118],...t)}return{c(){t=T("div"),n=T("h3"),n.textContent="Description",l=$(),i=T("div"),I(n,"class","svelte-wl7my9"),I(i,"class","anime-description svelte-wl7my9"),I(t,"class","anime-description-wrapper svelte-wl7my9"),I(t,"tabindex","0")},m(e,o){x(e,t,o),g(t,n),g(t,l),g(t,i),i.innerHTML=s,r||(a=[M(t,"click",c),M(t,"keydown",u)],r=!0)},p(t,n){e=t,512&n[0]&&s!==(s=Bl(e[118]?.description)+"")&&(i.innerHTML=s)},d(e){e&&S(t),r=!1,o(a)}}}function Al(t){let n;return{c(){n=N("N/A")},m(e,t){x(e,n,t)},p:e,d(e){e&&S(n)}}}function Tl(e){let t,n=" "+(e[11][e[118]?.id]?"Show":"Hide");return{c(){t=N(n)},m(e,n){x(e,t,n)},p(e,l){2560&l[0]&&n!==(n=" "+(e[11][e[118]?.id]?"Show":"Hide"))&&P(t,n)},d(e){e&&S(t)}}}function El(e,t){let n,l,r,a,s,c,u,p,m,h,y,w,v,b,k,A,L,C,D,z,U,V,R,H,O,_,W,j,q,G,Y,J,K,X,Q,Z,ee,te,ne,le,oe,ie,re,ae,se,ce,ue,de,pe,fe,me,he,ye,we,ve,ge,be,ke,xe,Se,Ae,Te,Ee,Ne,$e,Le,Me,Ce,Ie,Pe,De,Be,ze,Fe,Ue,Ve,Re,He,Oe,_e,We,je,qe,Ge,Ye,Je,Ke,Xe,Qe,Ze,et,tt,nt=t[119],lt=t[120],ot=(t[118]?.shownTitle||"NA")+"",it=(null!=t[118].averageScore&&t[118].formattedAverageScore||"NA")+"",rt="/10 · "+(null!=t[118].popularity&&t[118].formattedPopularity||"NA"),at=(t[118]?.recommendedRatingInfo||"")+"",st=(t[118].userStatus||"NA")+"",ct=(t[118].status||"NA")+"",ut=t[118].trailerID&&il(),dt=(t[118].bannerImageUrl||t[118].trailerThumbnailUrl)&&rl(t);const pt=()=>t[36](r,nt,lt),ft=()=>t[36](null,nt,lt);function mt(){return t[37](t[118])}function ht(...e){return t[38](t[118],...e)}function yt(e,t){return e[4]>=290?sl:e[4]>=260?al:void 0}let wt=yt(t),vt=wt&&wt(t),gt=t[12]&&cl(t),bt=(t[118].bannerImageUrl||t[118].trailerThumbnailUrl)&&ul(t);function kt(e,t){return e[118]?.nextAiringEpisode?.airingAt?pl:dl}let xt=kt(t),St=xt(t);function At(e,t){return e[118]?.season||e[118]?.year?hl:ml}let Tt=At(t),Et=Tt(t),Nt=null!=t[118].userScore&&yl(t),$t=t[118].studios?.length&&wl(t),Lt=t[118].genres.length&&gl(t),Mt=t[118]?.tags?.length&&kl(t);function Ct(){return t[50](t[118])}function It(...e){return t[51](t[118],...e)}let Pt=t[118]?.description&&Sl(t);const Dt=()=>t[54](W,nt,lt),Bt=()=>t[54](null,nt,lt);function zt(e,t){return e[11]?Tl:Al}let Ft=zt(t),Ut=Ft(t);function Vt(...e){return t[55](t[118],...e)}function Rt(...e){return t[56](t[118],...e)}function Ht(){return t[57](t[118])}function Ot(...e){return t[58](t[118],...e)}const _t=()=>t[59](n,nt,lt),Wt=()=>t[59](null,nt,lt);return{key:e,first:null,c(){n=T("div"),l=T("div"),r=T("div"),a=T("div"),a.innerHTML='<svg viewBox="0 0 320 512" class="svelte-wl7my9"><path d="M311 86a32 32 0 1 0-46-44L110 202l-46 47V64a32 32 0 1 0-64 0v384a32 32 0 1 0 64 0V341l65-67 133 192c10 15 30 18 44 8s18-30 8-44L174 227 311 86z"></path></svg>',s=$(),ut&&ut.c(),c=$(),u=T("div"),dt&&dt.c(),m=$(),h=T("div"),y=T("div"),w=T("label"),v=T("label"),b=N("Auto Play"),A=$(),L=T("input"),D=$(),z=T("span"),U=$(),V=T("h3"),vt&&vt.c(),R=$(),gt&&gt.c(),H=$(),bt&&bt.c(),O=$(),_=T("div"),W=T("div"),j=T("div"),q=T("a"),G=N(ot),ee=$(),te=T("div"),ne=E("svg"),le=E("path"),oe=$(),ie=T("h3"),re=T("b"),ae=N(it),se=$(),ce=N(rt),ue=$(),de=N(" · "),pe=new F(!1),me=$(),he=T("div"),St.c(),ye=$(),Et.c(),we=$(),ve=T("div"),ge=T("h4"),be=T("a"),ke=T("span"),xe=N(st),Ae=$(),Nt&&Nt.c(),Le=$(),Me=T("h4"),Ce=N(ct),Pe=$(),De=T("div"),$t&&$t.c(),Be=$(),Lt&&Lt.c(),ze=$(),Mt&&Mt.c(),Fe=$(),Ue=T("div"),Ve=T("img"),_e=$(),Pt&&Pt.c(),We=$(),je=T("div"),qe=T("button"),Ge=E("svg"),Ye=E("path"),Je=$(),Ut.c(),Ke=$(),Xe=T("button"),Xe.innerHTML='<svg viewBox="0 0 576 512" class="svelte-wl7my9"><path d="M550 124c-7-24-25-42-49-49-42-11-213-11-213-11S117 64 75 75c-24 7-42 25-49 49-11 43-11 132-11 132s0 90 11 133c7 23 25 41 49 48 42 11 213 11 213 11s171 0 213-11c24-7 42-25 49-48 11-43 11-133 11-133s0-89-11-132zM232 338V175l143 81-143 82z"></path></svg> YouTube',Qe=$(),Ze=T("button"),Ze.innerHTML='<svg viewBox="0 0 172 172" class="svelte-wl7my9"><path fill="#3a5a7e" d="M111 111V41c0-4-2-6-6-6H91c-4 0-6 2-6 6v5l32 91h31c4 0 6-2 6-6v-14c0-4-2-6-6-6h-37z"></path><path d="M54 35 18 137h28l6-17h31l6 17h28L81 35H54zm5 62 9-29 9 29H59z"></path></svg> Anilist',I(a,"class","popup-header-loading svelte-wl7my9"),I(u,"class","popup-img svelte-wl7my9"),I(r,"class",p=d("popup-header "+(t[118].trailerID?"loader":""))+" svelte-wl7my9"),I(r,"tabindex","0"),I(v,"class","disable-interaction svelte-wl7my9"),I(v,"for",k="auto-play-"+t[118]?.id),I(L,"id",C="auto-play-"+t[118]?.id),I(L,"type","checkbox"),I(L,"class","autoplayToggle svelte-wl7my9"),I(z,"class","slider round svelte-wl7my9"),I(z,"tabindex","0"),I(w,"class","switch svelte-wl7my9"),I(V,"class","autoplay-label svelte-wl7my9"),I(y,"class","autoPlay-container svelte-wl7my9"),I(h,"class","popup-controls svelte-wl7my9"),I(q,"rel",Y=t[118].animeUrl?"noopener noreferrer":""),I(q,"target",J=t[118].animeUrl?"_blank":""),I(q,"href",K=t[118].animeUrl||"javascript:void(0)"),I(q,"class",X=d(t[118]?.contentCautionColor+"-color anime-title copy")+" svelte-wl7my9"),I(q,"copy-value",Q=t[118]?.copiedTitle||""),I(q,"copy-value-2",Z=t[118]?.shownTitle||""),B(q,"overflow",t[7]?"hidden":""),I(le,"d","M288 0c9 0 17 5 21 14l69 141 153 22c9 2 17 8 20 17s0 18-6 24L434 328l26 156c1 9-2 18-10 24s-17 6-25 1l-137-73-137 73c-8 4-18 4-25-2s-11-14-10-23l26-156L31 218a24 24 0 0 1 14-41l153-22 68-141c4-9 13-14 22-14zm0 79-53 108c-3 7-10 12-18 13L99 219l86 85c5 6 8 13 7 21l-21 120 106-57c7-3 15-3 22 1l105 56-20-120c-1-8 1-15 7-21l86-85-118-17c-8-2-15-7-18-14L288 79z"),I(ne,"viewBox","0 0 576 512"),I(ne,"class","svelte-wl7my9"),I(re,"class","svelte-wl7my9"),pe.a=null,I(ie,"class","copy svelte-wl7my9"),I(ie,"copy-value",fe=(null!=t[118].averageScore&&t[118].formattedAverageScore||"NA")+"/10 · "+(null!=t[118].popularity&&t[118].formattedPopularity||"NA")),I(te,"class","info-rating-wrapper svelte-wl7my9"),I(j,"class","anime-title-container svelte-wl7my9"),B(j,"overflow",t[7]?"hidden":""),I(he,"class","info-format svelte-wl7my9"),B(he,"overflow",t[7]?"hidden":""),I(ke,"class",Se=d(t[118].userStatusColor+"-color")+" svelte-wl7my9"),I(be,"rel",Te=t[118].animeUrl?"noopener noreferrer":""),I(be,"target",Ee=t[118].animeUrl?"_blank":""),I(be,"href",Ne=t[118].animeUrl||"javascript:void(0)"),I(be,"class","svelte-wl7my9"),I(ge,"class","copy svelte-wl7my9"),I(ge,"copy-value",$e=(t[118].userStatus||"NA")+(null!=t[118].userScore?" · "+t[118].userScore:"")),B(Me,"text-align","right"),I(Me,"class","copy year-season svelte-wl7my9"),I(Me,"copy-value",Ie=t[118].status||""),I(ve,"class","info-status svelte-wl7my9"),B(ve,"overflow",t[7]?"hidden":""),I(De,"class","info-contents svelte-wl7my9"),I(Ve,"loading","lazy"),I(Ve,"width","150px"),I(Ve,"height","210px"),I(Ve,"alt",Re=(t[118]?.shownTitle||"")+(t[118].coverImageUrl?" Cover":t[118].bannerImageUrl?" Banner":" Thumbnail")),I(Ve,"tabindex","0"),I(Ve,"class",He=d("coverImg"+(t[118].coverImageUrl||t[118].bannerImageUrl||t[118].trailerThumbnailUrl?"":" display-none"))+" svelte-wl7my9"),I(Ue,"class","info-profile svelte-wl7my9"),I(W,"class","popup-info svelte-wl7my9"),B(W,"--windowWidth",t[4]+"px"),B(W,"--windowHeight",t[5]+"px"),I(Ye,"d","M256 512a256 256 0 1 0 0-512 256 256 0 1 0 0 512zm-72-280h144a24 24 0 1 1 0 48H184a24 24 0 1 1 0-48z"),I(Ge,"class","hideshow svelte-wl7my9"),I(Ge,"viewBox","0 0 512 512"),I(qe,"class","hideshowbtn svelte-wl7my9"),B(qe,"overflow",t[7]?"hidden":""),I(Xe,"class","morevideos svelte-wl7my9"),B(Xe,"overflow",t[7]?"hidden":""),I(Ze,"class","openanilist svelte-wl7my9"),B(Ze,"overflow",t[7]?"hidden":""),I(je,"class","footer svelte-wl7my9"),I(_,"class","popup-body svelte-wl7my9"),I(l,"class","popup-main svelte-wl7my9"),I(n,"class","popup-content svelte-wl7my9"),this.first=n},m(e,o){x(e,n,o),g(n,l),g(l,r),g(r,a),g(r,s),ut&&ut.m(r,null),g(r,c),g(r,u),dt&&dt.m(u,null),pt(),g(l,m),g(l,h),g(h,y),g(y,w),g(w,v),g(v,b),g(w,A),g(w,L),L.checked=t[10],g(w,D),g(w,z),g(y,U),g(y,V),vt&&vt.m(V,null),g(h,R),gt&&gt.m(h,null),g(h,H),bt&&bt.m(h,null),g(l,O),g(l,_),g(_,W),g(W,j),g(j,q),g(q,G),g(j,ee),g(j,te),g(te,ne),g(ne,le),g(te,oe),g(te,ie),g(ie,re),g(re,ae),g(ie,se),g(ie,ce),g(ie,ue),g(ie,de),pe.m(at,ie),g(W,me),g(W,he),St.m(he,null),g(he,ye),Et.m(he,null),g(W,we),g(W,ve),g(ve,ge),g(ge,be),g(be,ke),g(ke,xe),g(be,Ae),Nt&&Nt.m(be,null),g(ve,Le),g(ve,Me),g(Me,Ce),g(W,Pe),g(W,De),$t&&$t.m(De,null),g(De,Be),Lt&&Lt.m(De,null),g(De,ze),Mt&&Mt.m(De,null),g(W,Fe),g(W,Ue),g(Ue,Ve),g(Ue,_e),Pt&&Pt.m(Ue,null),Dt(),g(_,We),g(_,je),g(je,qe),g(qe,Ge),g(Ge,Ye),g(qe,Je),Ut.m(qe,null),g(je,Ke),g(je,Xe),g(je,Qe),g(je,Ze),_t(),et||(tt=[M(r,"click",mt),M(r,"keydown",ht),M(L,"change",t[39]),M(z,"keydown",t[40]),M(V,"click",t[41]),M(V,"keydown",t[42]),M(q,"scroll",t[23]),M(j,"scroll",t[23]),M(he,"scroll",t[23]),M(ve,"scroll",t[23]),f(Oe=t[32].call(null,Ve,t[118].coverImageUrl||t[118].bannerImageUrl||t[118].trailerThumbnailUrl||Il)),M(Ve,"error",t[49]),M(Ve,"click",Ct),M(Ve,"keydown",It),M(qe,"click",(function(){i(t[17](t[118].id,t[118]?.shownTitle))&&t[17](t[118].id,t[118]?.shownTitle).apply(this,arguments)})),M(qe,"keydown",Vt),M(Xe,"click",(function(){i(t[19](t[118].title))&&t[19](t[118].title).apply(this,arguments)})),M(Xe,"keydown",Rt),M(Ze,"click",Ht),M(Ze,"keydown",Ot)],et=!0)},p(e,n){(t=e)[118].trailerID?ut||(ut=il(),ut.c(),ut.m(r,c)):ut&&(ut.d(1),ut=null),t[118].bannerImageUrl||t[118].trailerThumbnailUrl?dt?dt.p(t,n):(dt=rl(t),dt.c(),dt.m(u,null)):dt&&(dt.d(1),dt=null),512&n[0]&&p!==(p=d("popup-header "+(t[118].trailerID?"loader":""))+" svelte-wl7my9")&&I(r,"class",p),nt===t[119]&&lt===t[120]||(ft(),nt=t[119],lt=t[120],pt()),512&n[0]&&k!==(k="auto-play-"+t[118]?.id)&&I(v,"for",k),512&n[0]&&C!==(C="auto-play-"+t[118]?.id)&&I(L,"id",C),1024&n[0]&&(L.checked=t[10]),wt!==(wt=yt(t))&&(vt&&vt.d(1),vt=wt&&wt(t),vt&&(vt.c(),vt.m(V,null))),t[12]?gt?gt.p(t,n):(gt=cl(t),gt.c(),gt.m(h,H)):gt&&(gt.d(1),gt=null),t[118].bannerImageUrl||t[118].trailerThumbnailUrl?bt?bt.p(t,n):(bt=ul(t),bt.c(),bt.m(h,null)):bt&&(bt.d(1),bt=null),512&n[0]&&ot!==(ot=(t[118]?.shownTitle||"NA")+"")&&P(G,ot),512&n[0]&&Y!==(Y=t[118].animeUrl?"noopener noreferrer":"")&&I(q,"rel",Y),512&n[0]&&J!==(J=t[118].animeUrl?"_blank":"")&&I(q,"target",J),512&n[0]&&K!==(K=t[118].animeUrl||"javascript:void(0)")&&I(q,"href",K),512&n[0]&&X!==(X=d(t[118]?.contentCautionColor+"-color anime-title copy")+" svelte-wl7my9")&&I(q,"class",X),512&n[0]&&Q!==(Q=t[118]?.copiedTitle||"")&&I(q,"copy-value",Q),512&n[0]&&Z!==(Z=t[118]?.shownTitle||"")&&I(q,"copy-value-2",Z),128&n[0]&&B(q,"overflow",t[7]?"hidden":""),512&n[0]&&it!==(it=(null!=t[118].averageScore&&t[118].formattedAverageScore||"NA")+"")&&P(ae,it),512&n[0]&&rt!==(rt="/10 · "+(null!=t[118].popularity&&t[118].formattedPopularity||"NA"))&&P(ce,rt),512&n[0]&&at!==(at=(t[118]?.recommendedRatingInfo||"")+"")&&pe.p(at),512&n[0]&&fe!==(fe=(null!=t[118].averageScore&&t[118].formattedAverageScore||"NA")+"/10 · "+(null!=t[118].popularity&&t[118].formattedPopularity||"NA"))&&I(ie,"copy-value",fe),128&n[0]&&B(j,"overflow",t[7]?"hidden":""),xt===(xt=kt(t))&&St?St.p(t,n):(St.d(1),St=xt(t),St&&(St.c(),St.m(he,ye))),Tt===(Tt=At(t))&&Et?Et.p(t,n):(Et.d(1),Et=Tt(t),Et&&(Et.c(),Et.m(he,null))),128&n[0]&&B(he,"overflow",t[7]?"hidden":""),512&n[0]&&st!==(st=(t[118].userStatus||"NA")+"")&&P(xe,st),512&n[0]&&Se!==(Se=d(t[118].userStatusColor+"-color")+" svelte-wl7my9")&&I(ke,"class",Se),null!=t[118].userScore?Nt?Nt.p(t,n):(Nt=yl(t),Nt.c(),Nt.m(be,null)):Nt&&(Nt.d(1),Nt=null),512&n[0]&&Te!==(Te=t[118].animeUrl?"noopener noreferrer":"")&&I(be,"rel",Te),512&n[0]&&Ee!==(Ee=t[118].animeUrl?"_blank":"")&&I(be,"target",Ee),512&n[0]&&Ne!==(Ne=t[118].animeUrl||"javascript:void(0)")&&I(be,"href",Ne),512&n[0]&&$e!==($e=(t[118].userStatus||"NA")+(null!=t[118].userScore?" · "+t[118].userScore:""))&&I(ge,"copy-value",$e),512&n[0]&&ct!==(ct=(t[118].status||"NA")+"")&&P(Ce,ct),512&n[0]&&Ie!==(Ie=t[118].status||"")&&I(Me,"copy-value",Ie),128&n[0]&&B(ve,"overflow",t[7]?"hidden":""),t[118].studios?.length?$t?$t.p(t,n):($t=wl(t),$t.c(),$t.m(De,Be)):$t&&($t.d(1),$t=null),t[118].genres.length?Lt?Lt.p(t,n):(Lt=gl(t),Lt.c(),Lt.m(De,ze)):Lt&&(Lt.d(1),Lt=null),t[118]?.tags?.length?Mt?Mt.p(t,n):(Mt=kl(t),Mt.c(),Mt.m(De,null)):Mt&&(Mt.d(1),Mt=null),512&n[0]&&Re!==(Re=(t[118]?.shownTitle||"")+(t[118].coverImageUrl?" Cover":t[118].bannerImageUrl?" Banner":" Thumbnail"))&&I(Ve,"alt",Re),512&n[0]&&He!==(He=d("coverImg"+(t[118].coverImageUrl||t[118].bannerImageUrl||t[118].trailerThumbnailUrl?"":" display-none"))+" svelte-wl7my9")&&I(Ve,"class",He),Oe&&i(Oe.update)&&512&n[0]&&Oe.update.call(null,t[118].coverImageUrl||t[118].bannerImageUrl||t[118].trailerThumbnailUrl||Il),t[118]?.description?Pt?Pt.p(t,n):(Pt=Sl(t),Pt.c(),Pt.m(Ue,null)):Pt&&(Pt.d(1),Pt=null),nt===t[119]&&lt===t[120]||(Bt(),nt=t[119],lt=t[120],Dt()),16&n[0]&&B(W,"--windowWidth",t[4]+"px"),32&n[0]&&B(W,"--windowHeight",t[5]+"px"),Ft===(Ft=zt(t))&&Ut?Ut.p(t,n):(Ut.d(1),Ut=Ft(t),Ut&&(Ut.c(),Ut.m(qe,null))),128&n[0]&&B(qe,"overflow",t[7]?"hidden":""),128&n[0]&&B(Xe,"overflow",t[7]?"hidden":""),128&n[0]&&B(Ze,"overflow",t[7]?"hidden":""),nt===t[119]&&lt===t[120]||(Wt(),nt=t[119],lt=t[120],_t())},d(e){e&&S(n),ut&&ut.d(),dt&&dt.d(),ft(),vt&&vt.d(),gt&&gt.d(),bt&&bt.d(),St.d(),Et.d(),Nt&&Nt.d(),$t&&$t.d(),Lt&&Lt.d(),Mt&&Mt.d(),Pt&&Pt.d(),Bt(),Ut.d(),Wt(),et=!1,o(tt)}}}function Nl(e){let t;return{c(){t=T("div"),t.innerHTML='<svg class="popup-content-loading-icon svelte-wl7my9" viewBox="0 0 320 512"><path d="M311 86a32 32 0 1 0-46-44L110 202l-46 47V64a32 32 0 1 0-64 0v384a32 32 0 1 0 64 0V341l65-67 133 192c10 15 30 18 44 8s18-30 8-44L174 227 311 86z"></path></svg>',I(t,"class","popup-content-loading svelte-wl7my9")},m(e,n){x(e,t,n)},d(e){e&&S(t)}}}function $l(e){let t,n,l,o,i,r,a;return{c(){t=T("div"),n=T("div"),l=E("svg"),o=E("path"),I(o,"d","M41 233a32 32 0 0 0 0 46l160 160a32 32 0 0 0 46-46L109 256l138-137a32 32 0 0 0-46-46L41 233z"),I(l,"viewBox","0 0 320 512"),I(l,"class","svelte-wl7my9"),I(n,"class",i=d("go-back-grid"+(e[6]>=100?" willGoBack":""))+" svelte-wl7my9"),I(t,"class","go-back-grid-highlight svelte-wl7my9"),B(t,"--scale",Math.max(1,.01*(e[6]??1)*2)),B(t,"--position","-"+(100-(e[6]??0))+"%")},m(e,i){x(e,t,i),g(t,n),g(n,l),g(l,o),a=!0},p(e,l){(!a||64&l[0]&&i!==(i=d("go-back-grid"+(e[6]>=100?" willGoBack":""))+" svelte-wl7my9"))&&I(n,"class",i),64&l[0]&&B(t,"--scale",Math.max(1,.01*(e[6]??1)*2)),64&l[0]&&B(t,"--position","-"+(100-(e[6]??0))+"%")},i(e){a||(r&&r.end(1),a=!0)},o(e){r=me(t,Ht,{duration:200}),a=!1},d(e){e&&S(t),e&&r&&r.end()}}}function Ll(e){let t,n,l,i,r,a,s,c;return{c(){t=T("div"),n=T("div"),l=T("div"),i=T("div"),I(i,"tabindex","0"),I(i,"class","fullPopupDescription svelte-wl7my9"),I(l,"class","fullPopupDescriptionWrapper svelte-wl7my9"),I(n,"class","fullPopup svelte-wl7my9"),I(n,"id","fullPopup"),I(t,"class","fullPopupWrapper svelte-wl7my9")},m(o,r){x(o,t,r),g(t,n),g(n,l),g(l,i),i.innerHTML=e[1],a=!0,s||(c=[M(i,"keydown",e[63]),M(i,"scroll",e[28]),M(t,"click",e[64]),M(t,"keydown",e[65]),M(t,"touchstart",e[29],{passive:!0}),M(t,"touchend",e[30],{passive:!0}),M(t,"touchcancel",e[31],{passive:!0})],s=!0)},p(e,t){(!a||2&t[0])&&(i.innerHTML=e[1])},i(e){a||(r&&r.end(1),a=!0)},o(e){r=me(i,Ht,{duration:200}),a=!1},d(e){e&&S(t),e&&r&&r.end(),s=!1,o(c)}}}function Ml(e){let t,n,l,r,a,s,c,u;return{c(){t=T("div"),n=T("div"),l=T("img"),I(l,"tabindex","0"),I(l,"class","fullPopupImage svelte-wl7my9"),I(l,"loading","lazy"),I(l,"alt","Full View"),I(n,"class","fullPopup svelte-wl7my9"),I(n,"id","fullPopup"),I(t,"class","fullPopupWrapper svelte-wl7my9")},m(o,i){x(o,t,i),g(t,n),g(n,l),s=!0,c||(u=[f(r=e[32].call(null,l,e[0]||Il)),M(l,"keydown",e[66]),M(l,"error",e[67]),M(t,"click",e[68]),M(t,"keydown",e[69]),M(t,"touchstart",e[29],{passive:!0}),M(t,"touchend",e[30],{passive:!0}),M(t,"touchcancel",e[31],{passive:!0})],c=!0)},p(e,t){r&&i(r.update)&&1&t[0]&&r.update.call(null,e[0]||Il)},i(e){s||(a&&a.end(1),s=!0)},o(e){a=me(l,Ht,{duration:200}),s=!1},d(e){e&&S(t),e&&a&&a.end(),c=!1,o(u)}}}function Cl(e){let t,n,l,i,r,a,s,c,u,d=e[9]?.length&&ol(e),p=e[8]&&e[7]&&$l(e),f=e[1]&&Ll(e),m=e[0]&&Ml(e);return{c(){t=T("div"),n=T("div"),d&&d.c(),l=$(),p&&p.c(),i=$(),f&&f.c(),r=$(),m&&m.c(),a=L(),I(n,"id","popup-container"),I(n,"class","popup-container hide svelte-wl7my9"),I(t,"id","popup-wrapper"),I(t,"class","popup-wrapper svelte-wl7my9")},m(o,h){x(o,t,h),g(t,n),d&&d.m(n,null),e[60](n),e[62](t),x(o,l,h),p&&p.m(o,h),x(o,i,h),f&&f.m(o,h),x(o,r,h),m&&m.m(o,h),x(o,a,h),s=!0,c||(u=[M(n,"touchstart",e[24],{passive:!0}),M(n,"touchmove",e[25],{passive:!0}),M(n,"touchend",e[26],{passive:!0}),M(n,"touchcancel",e[27],{passive:!0}),M(n,"scroll",e[22]),M(t,"click",e[16]),M(t,"keydown",e[61])],c=!0)},p(e,t){e[9]?.length?d?d.p(e,t):(d=ol(e),d.c(),d.m(n,null)):d&&(d.d(1),d=null),e[8]&&e[7]?p?(p.p(e,t),384&t[0]&&de(p,1)):(p=$l(e),p.c(),de(p,1),p.m(i.parentNode,i)):p&&(ce(),pe(p,1,1,(()=>{p=null})),ue()),e[1]?f?(f.p(e,t),2&t[0]&&de(f,1)):(f=Ll(e),f.c(),de(f,1),f.m(r.parentNode,r)):f&&(ce(),pe(f,1,1,(()=>{f=null})),ue()),e[0]?m?(m.p(e,t),1&t[0]&&de(m,1)):(m=Ml(e),m.c(),de(m,1),m.m(a.parentNode,a)):m&&(ce(),pe(m,1,1,(()=>{m=null})),ue())},i(e){s||(de(p),de(f),de(m),s=!0)},o(e){pe(p),pe(f),pe(m),s=!1},d(n){n&&S(t),d&&d.d(),e[60](null),e[62](null),n&&S(l),p&&p.d(n),n&&S(i),f&&f.d(n),n&&S(r),m&&m.d(n),n&&S(a),c=!1,o(u)}}}const Il="data:image/png;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=",Pl="data:image/jpeg;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=";function Dl(e){"string"==typeof e&&""!==e&&window.open(e,"_blank")}function Bl(e){let t=document.createElement("span");t.innerHTML=e;let n=t.querySelectorAll("a");return Array.from(n).forEach((e=>{e?.setAttribute("rel","noopener noreferrer"),e?.setAttribute("target","_blank")})),t.innerHTML}function zl(e,t,n){let l,o,i,r,a,s,u,d,f,m,h,y,w,v,g,b,k,x,S,A,T,E;c(e,It,(e=>n(96,l=e))),c(e,Oe,(e=>n(33,o=e))),c(e,$t,(e=>n(7,i=e))),c(e,St,(e=>n(8,r=e))),c(e,Qe,(e=>n(97,a=e))),c(e,st,(e=>n(98,s=e))),c(e,Ft,(e=>n(99,u=e))),c(e,Ke,(e=>n(9,d=e))),c(e,ut,(e=>n(100,f=e))),c(e,ct,(e=>n(10,m=e))),c(e,_e,(e=>n(101,h=e))),c(e,Ge,(e=>n(11,y=e))),c(e,vt,(e=>n(102,w=e))),c(e,Xe,(e=>n(103,v=e))),c(e,Et,(e=>n(12,g=e))),c(e,Nt,(e=>n(13,b=e))),c(e,gt,(e=>n(104,k=e))),c(e,ht,(e=>n(105,x=e))),c(e,At,(e=>n(106,S=e))),c(e,mt,(e=>n(107,A=e))),c(e,ft,(e=>n(14,T=e))),c(e,wt,(e=>n(15,E=e)));let N,$,L,M,C,I,P,D,B,z,F,U=window.navigator.onLine,V=Math.max(window.visualViewport.width,window.innerWidth),R=Math.max(window.visualViewport.height,window.innerHeight),H={},O=!o&&matchMedia("(hover:hover)").matches?50:100;function _(e){let t=e.target;t.classList.contains("popup-container")||t.closest(".popup-container")||p(St,r=!1,r)}async function W(e,t){t=t?`<span style="color:#00cbf9;">${t}</span>`:"this anime",y[e]?await k(`Are you sure you want to show ${t} in your recommendation list?`)&&A().then((()=>{delete y[e],Ge.set(y),d.length&&v instanceof Worker&&v?.postMessage?.({removeID:e})})).catch((()=>{k({isAlert:!0,title:"Something went wrong",text:"Showing anime has failed, please try again."})})):await k(`Are you sure you want to hide ${t} in your recommendation list?`)&&A().then((()=>{p(Ge,y[e]=!0,y),d.length&&v instanceof Worker&&v?.postMessage?.({removeID:e})})).catch((()=>{k({isAlert:!0,title:"Something went wrong",text:"Hiding anime has failed, please try again."})}))}async function q(e){let t;Ee(e)?t=e?.romaji||e?.userPreferred||e?.english||e?.native:"string"==typeof e&&(t=e),"string"==typeof t&&""!==t&&await k({title:"See Related Videos",text:"Are you sure you want see more related videos in YouTube?"})&&Y(t)}async function Y(e){let t;Ee(e)?t=e?.romaji||e?.userPreferred||e?.english||e?.native:"string"==typeof e&&(t=e),"string"==typeof t&&""!==t&&window.open(`https://www.youtube.com/results?search_query=${t} Anime`,"_blank")}async function J(){if(!r)return;await Z();let e,t=$?.querySelector?.(".trailer"),n=Le($?.closest?.(".popup-content"))??-1;if(z&&clearTimeout(z),z=setTimeout((()=>{if(!r)return;let e=d?.[n]?.gridElement||N.children?.[n];r&&e instanceof Element&&!function(e,t,n=0){try{var l=t.getBoundingClientRect(),o=e.getBoundingClientRect(),i=getComputedStyle(e).overflowX,r=getComputedStyle(e).overflowY;if("auto"===i||"scroll"===i||"auto"===r||"scroll"===r){var a=e.scrollLeft,s=e.scrollTop,c=l.top>=o.top&&l.left>=o.left&&l.bottom<=o.bottom&&l.right<=o.right;if(c||(c=(Math.max(l.top,o.top)-Math.min(l.bottom,o.bottom))*(Math.max(l.left,o.left)-Math.min(l.right,o.right))/(Math.min(l.height,window.innerHeight)*Math.min(l.width,window.innerWidth))>=n),!c)return!1;l={top:l.top-o.top+s,left:l.left-o.left+a,bottom:l.bottom-o.top+s,right:l.right-o.left+a,height:l.height,width:l.width}}var u=window.innerHeight||document.documentElement.clientHeight,d=window.innerWidth||document.documentElement.clientWidth;return l.top>=0&&l.left>=0&&l.bottom<=u&&l.right<=d}catch(e){return}}(N,e,.5)&&(document.documentElement.style.overflow="hidden",document.documentElement.style.overflow="",N.style.overflow="hidden",N.style.overflow="",e.scrollIntoView({behavior:"smooth",block:"nearest"}))}),300),t instanceof Element&&(e=s?.some((({ytPlayer:e})=>e.g===t))),e){if(n>=0){L=n;let e=[[d?.[n+1],n+1],[d?.[n-1],n-1]];F&&clearTimeout(F),F=setTimeout((async()=>{r&&e.forEach((([e,t])=>{e&&X(e,t)}))}),300)}for(let e=0;e<s.length;e++)if(s[e].ytPlayer.g===t&&1!==s[e].ytPlayer?.getPlayerState?.())if(await Z(),r&&h&&(m||2===s[e].ytPlayer?.getPlayerState?.()))Q(s[e].ytPlayer),s[e].ytPlayer?.playVideo?.();else{if(!m){let t=s?.[e]?.ytPlayer,n=t?.g;if(n&&null!=t?.getPlayerState?.()&&-1!==t?.getPlayerState?.()){let e=n?.parentElement,t=e?.querySelector?.(".popup-img");ze(t,"fade-out"),Fe(e,"loader"),Fe(n,"display-none"),setTimeout((()=>{ze(t,"display-none"),Fe(t,"fade-out")}),200)}}s[e].ytPlayer?.pauseVideo?.()}else if(s[e].ytPlayer.g!==t){if(!m){let t=s?.[e]?.ytPlayer,n=t?.g;if(n&&null!=t?.getPlayerState?.()&&-1!==t?.getPlayerState?.()){let e=n?.parentElement,t=e?.querySelector?.(".popup-img");ze(t,"fade-out"),Fe(e,"loader"),Fe(n,"display-none"),setTimeout((()=>{ze(t,"display-none"),Fe(t,"fade-out")}),200)}}s[e].ytPlayer?.pauseVideo?.()}}else if(s?.forEach((({ytPlayer:e})=>e?.pauseVideo?.())),n>=0){L=n;let e=[[d?.[n],n],[d?.[n+1],n+1],[d?.[n-1],n-1]];F&&clearTimeout(F),F=setTimeout((async()=>{r&&e.forEach((([e,t])=>{e&&X(e,t)}))}),300)}}(async()=>{O=await Zn("savedYtVolume")||O})(),yt.subscribe((async e=>{if(r&&null!=e&&e>=0){await Z();let t=I?.children?.[e];t instanceof Element&&I instanceof Element&&Me(I,t,"top")}})),Ge.subscribe((async e=>{Ee(e)&&await Qn(e,"hiddenEntries")})),St.subscribe((async e=>{if(C instanceof Element&&I instanceof Element)if(!0===e){let e=I?.children[S??L??0];if(e instanceof Element){Me(I,e,"top","instant"),requestAnimationFrame((()=>{ze(C,"willChange"),ze(I,"willChange"),ze(C,"visible"),ze(I,"show"),setTimeout((()=>{Fe(C,"willChange"),Fe(I,"willChange")}),200)})),L=S;let t,n=[[d[S],S],[d[S+1],S+1],[d[S-1],S-1]],l=n[0][0]?.popupHeader?.querySelector?.(".trailer")||I?.children?.[S]?.querySelector?.(".trailer");for(let e=0;e<s.length;e++)if(s[e].ytPlayer.g===l&&(t=!0,h&&m)){await Z(),Q(s[e].ytPlayer),s[e].ytPlayer?.playVideo?.();break}n.forEach((([e,n],l)=>{t&&e&&0===l||e&&X(e,n)})),p(At,S=null,S)}else requestAnimationFrame((()=>{ze(C,"willChange"),ze(I,"willChange"),ze(C,"visible"),ze(I,"show"),setTimeout((()=>{Fe(C,"willChange"),Fe(I,"willChange")}),200)}))}else!1===e&&requestAnimationFrame((()=>{ze(C,"willChange"),ze(I,"willChange"),Fe(I,"show"),setTimeout((()=>{s.forEach((({ytPlayer:e})=>{e?.pauseVideo?.()})),Fe(C,"visible"),Fe(I,"willChange"),setTimeout((()=>{Fe(C,"willChange")}),200)}),200)}))})),Ke.subscribe((async e=>{if(e instanceof Array&&e.length){P&&(P?.disconnect?.(),P=null),await Z(),P=new IntersectionObserver((()=>{if(!r)return;let e=$e(I,".popup-header",R>360?.5:0)||$e(I,".popup-content",0)?.getElementsByClassName("popup-header")?.[0];$=e,J()}),{root:null,rootMargin:"100%",threshold:[.5,0]}),e.forEach((async(e,t)=>{let n=e.popupHeader||I.children?.[t]?.querySelector?.(".popup-header");n instanceof Element&&P?.observe?.(n)}));let t=d.length-1,n=d[t].popupContent||I.children?.[t];x&&n instanceof Element&&x.observe(n),J()}else e instanceof Array&&e.length<1&&p(St,r=!1,r)})),ct.subscribe((async e=>{if("boolean"==typeof e&&(await Qn(e,"autoPlay"),!0===e)){await Z();let e=$?.querySelector?.(".trailer");for(let t=0;t<s.length;t++)s[t].ytPlayer.g===e&&h?(Q(s[t].ytPlayer),s[t].ytPlayer?.playVideo?.()):s[t].ytPlayer?.pauseVideo?.()}})),j((()=>{n(2,C=C||document.getElementById("popup-wrapper")),n(3,I=I||C.querySelector("#popup-container")),N=document.getElementById("anime-grid"),window.addEventListener("resize",(()=>{document.fullScreen||document.mozFullScreen||document.webkitIsFullScreen||document.msFullscreenElement||(n(4,V=Math.max(window.visualViewport.width,window.innerWidth)),n(5,R=Math.max(window.visualViewport.height,window.innerHeight)))})),document.addEventListener("keydown",(async e=>{if("Escape"!==e.key||document.fullscreenElement||(e.preventDefault(),window.backPressed?.())," "===e.key&&r){e.preventDefault();let t=$?.querySelector?.(".trailer"),n=s?.some((({ytPlayer:e})=>t===e.g&&1===e?.getPlayerState?.()));if(s.forEach((({ytPlayer:e})=>{e?.pauseVideo?.()})),!n){await Z();for(let e=0;e<s.length;e++)if(s[e].ytPlayer.g===t&&h){Q(s[e].ytPlayer),s[e].ytPlayer?.playVideo?.();break}}}else e.ctrlKey&&"x"===e.key?.toLowerCase?.()?(e.preventDefault(),p(St,r=!r,r)):e.ctrlKey&&"k"===e.key?.toLowerCase?.()&&(e.preventDefault(),p(ct,m=!m,m))}))}));let K={};function X(e,t){let n=e?.popupHeader||I.children?.[t]?.querySelector(".popup-header"),l=n?.querySelector?.(".trailer")||n?.querySelector?.(".trailer"),o=e?.trailerID;if(l instanceof Element&&o&&"undefined"!=typeof YT){if(s.some((({ytPlayer:e})=>e.g===l)))return;ze(n,"loader");let e=n?.querySelector?.(".popup-img");if(s.length>=3){let t=0,o=-1/0;s.forEach(((e,n)=>{if(-1===e.headerIdx)return;let l=Math.abs(e.headerIdx-L);l>o&&(o=l,t=n)}));let i=s?.splice?.(t,1)?.[0]?.ytPlayer,r=i?.g?.closest?.(".popup-header");i?.destroy?.();let a=r?.querySelector?.(".popup-img");a instanceof Element&&Fe(a,"display-none");let c=document.createElement("div");c.className="trailer",ze(l,"display-none"),Fe(e,"display-none"),n.replaceChild(c,l),ze(l,"display-none"),l=n.querySelector(".trailer")}else ze(l,"display-none");Fe(e,"display-none"),l.setAttribute("id","yt-player"+Date.now()+Math.random());let i=new YT.Player(l,{playerVars:{cc_lang_pref:"en",cc_load_policy:1,enablejsapi:1,modestbranding:1,playsinline:1,playlist:o,rel:0},events:{onReady:e=>{!async function(e){let t=e.target,n=t?.g,l=n?.parentElement,o=l?.closest?.(".popup-content"),i=d?.[Le(o)??-1];if(-1!==t.getPlayerState()&&"IFRAME"===n.tagName&&U){if(n?.setAttribute?.("loading","lazy"),!m){let e=l?.querySelector?.(".popup-img");ze(e,"fade-out"),Fe(l,"loader"),Fe(n,"display-none"),setTimeout((()=>{ze(e,"display-none"),Fe(e,"fade-out")}),200)}J(),i?.id&&delete K[i.id]}else{i?.id&&(K[i.id]=!0),p(st,s=s.filter((e=>e.ytPlayer!==t)),s),t.destroy(),ze(n,"display-none"),Fe(l,"loader");let e=l?.querySelector?.(".popup-img");Fe(e,"display-none")}}(e)},onStateChange:e=>{!function(e){let t=e.target;if(!t||!t?.getPlayerState)return;let n=t?.g,l=n?.parentElement,o=l?.querySelector?.(".popup-img"),i=l?.closest?.(".popup-content"),a=d?.[Le(i)??-1]?.id;0===t?.getPlayerState?.()?null!=a&&(H[a]&&(clearTimeout(H[a]),H[a]=null),H[a]=setTimeout((()=>{t?.stopVideo?.(),setTimeout((()=>{$===l&&5===t?.getPlayerState?.()&&t.g&&h&&r&&m&&t?.playVideo?.()}),5e3)}),7e3)):H[a]&&(clearTimeout(H[a]),H[a]=null);1!==t?.getPlayerState?.()||!n?.classList?.contains?.("display-none")&&o?.classList?.contains?.("display-none")||(s?.forEach((({ytPlayer:e})=>e?.g!==t?.g&&e?.pauseVideo?.())),M=t,ze(o,"fade-out"),Fe(l,"loader"),Fe(n,"display-none"),setTimeout((()=>{ze(o,"display-none"),Fe(o,"fade-out")}),200))}(e)},onError:e=>{!function(e){let t=e.target,n=t?.g,l=n?.parentElement,o=l?.querySelector?.(".popup-img");p(st,s=s.filter((e=>e.ytPlayer!==t)),s),t.destroy(),ze(n,"display-none"),Fe(l,"loader"),Fe(o,"display-none")}(e)}}}),a=`https://www.youtube.com/embed/${o}`;l.setAttribute("src",a),s.push({ytPlayer:i,headerIdx:t})}else{let e=n?.querySelector?.(".popup-img");Fe(n,"loader"),Fe(e,"display-none")}}function Q(e){if(M?.isMuted&&M?.getVolume){let t=M?.isMuted?.(),n=M?.getVolume?.();"boolean"==typeof t&&(t?e?.mute?.():e?.unMute?.()),"number"==typeof n&&(O!==n&&(O=n,Qn(O,"savedYtVolume")),e?.setVolume?.(O))}}async function ee(e){await k({title:"List update is available",text:"Are you sure you want to refresh the list?"})&&(p(Nt,b=!0,b),v&&(v.terminate(),p(Xe,v=null,v)),$n().then((async e=>{p(Et,g=!1,g),p(Xe,v=e.animeLoaderWorker,v),p(vt,w="",w),e?.isNew&&(p(Ke,d=e.finalAnimeList,d),p(Ge,y=e.hiddenEntries,y)),p(Qe,a=null,a)})).catch((e=>{throw e})))}function te(e,t){const n=864e5,l=7*n,o=e=>e.toLocaleTimeString(void 0,{hour:"numeric",minute:"2-digit",hour12:!0});return t>l?`${Ne(t,1)}, ${i=e,i.toLocaleDateString(void 0,{month:"short"})} ${(e=>e.toLocaleDateString(void 0,{day:"numeric"}))(e)} ${(e=>e.toLocaleDateString(void 0,{year:"numeric"}))(e)}`:t<=l&&t>n?`${Ne(t,1)}, ${(e=>e.toLocaleDateString(void 0,{weekday:"short"}))(e)}, ${o(e).toLowerCase()}`:`${Ne(t,2)}, ${o(e).toLowerCase()}`;var i}let ne,le,oe,ie,re,ae,se,ce,ue,de,pe,fe,me,he,ye,we=!1;function ve(){new Promise((e=>{let t=document.getElementById("www-widgetapi-script");t&&t.parentElement.removeChild(t);let n=document.createElement("script");n.src="https://www.youtube.com/iframe_api?v=16",n.onerror=()=>{e()},n.onload=()=>{window?.onYouTubeIframeAPIReady?.(),e()};let l=document.getElementsByTagName("script")[0];l.parentElement.insertBefore(n,l)})).then((()=>{p(st,s=s.filter((({ytPlayer:e})=>{if("function"!=typeof e?.playVideo||-1===e.getPlayerState()||isNaN(e.getPlayerState())){e.destroy();let t=e?.g?.closest?.(".popup-header")?.querySelector?.(".popup-img");return t instanceof Element&&Fe(t,"display-none"),!1}return!0})),s),J()}))}function ge(){de=pe=fe=me=he=ye=!1}window.returnedAppIsVisible=e=>{if(!o)return;if(p(_e,h=e,h),!r||f)return;let t=$?.querySelector?.(".trailer");if(t)if(h)for(let e=0;e<s.length;e++)s[e]?.ytPlayer.g===t&&(m||2===s[e]?.ytPlayer?.getPlayerState?.()&&we)?(Q(s[e]?.ytPlayer),s[e]?.ytPlayer?.playVideo?.()):s[e]?.ytPlayer?.pauseVideo?.();else{we=!1;for(let e=0;e<s.length;e++)s[e]?.ytPlayer.g===t&&1===s[e]?.ytPlayer?.getPlayerState?.()&&(we=!0),s[e]?.ytPlayer?.pauseVideo?.()}},document.addEventListener("visibilitychange",(()=>{if(o)return;if(p(_e,h="visible"===document.visibilityState,h),!r||f)return;let e=$?.querySelector?.(".trailer");if(e)if(h)for(let t=0;t<s.length;t++)s[t]?.ytPlayer.g===e&&(m||2===s[t]?.ytPlayer?.getPlayerState?.()&&we)?(Q(s[t]?.ytPlayer),s[t]?.ytPlayer?.playVideo?.()):s[t]?.ytPlayer?.pauseVideo?.();else{we=!1;for(let t=0;t<s.length;t++)s[t]?.ytPlayer.g===e&&1===s[t]?.ytPlayer?.getPlayerState?.()&&(we=!0),s[t]?.ytPlayer?.pauseVideo?.()}})),window.addEventListener("online",(()=>{if(o)try{JSBridge.isOnline(!0)}catch(e){}p(Qe,a="Reconnected Successfully",a),f&&p(ut,f=!1,f),d?.length||p(Ft,u=!u,u),U=!0,document.querySelectorAll("script")?.forEach((e=>{e.src&&"https://www.youtube.com/iframe_api?v=16"!==e.src&&(e.src=e.src)})),document.querySelectorAll("img")?.forEach((e=>{e.naturalHeight||(e.src=e.src)})),ve()})),window.reloadYoutube=ve,window.addEventListener("offline",(()=>{if(o)try{JSBridge.isOnline(!1)}catch(e){}p(Qe,a="Currently Offline...",a),U=!1})),window.checkOpenFullScreenItem=()=>D||B,window.closeFullScreenItem=()=>{D?n(0,D=null):n(1,B=null)};return e.$$.update=()=>{3&e.$$.dirty[0]|4&e.$$.dirty[1]&&(!o&&matchMedia("(hover:hover)").matches||(B||D?ze(document.documentElement,"overflow-hidden"):Fe(document.documentElement,"overflow-hidden"))),3&e.$$.dirty[0]&&p(It,l=Boolean(B||D),l)},[D,B,C,I,V,R,se,i,r,d,m,y,g,b,T,E,_,W,q,Y,ee,function({episodes:e,nextAiringEpisode:t}){let n,l,o,i;return"number"==typeof t?.episode&&"number"==typeof t?.airingAt&&(i=new Date(1e3*t?.airingAt),o=t?.episode,i instanceof Date&&!isNaN(i)&&(l=i.getTime()-(new Date).getTime())),l>0&&"number"==typeof o&&e>o?n=` · <span style="color:rgb(61, 180, 242);">${o}/${e} in ${te(i,l)}</span>`:l>0&&"number"==typeof o?n=` · <span style="color:rgb(61, 180, 242);">Ep ${o} in ${te(i,l)}</span>`:l<=0&&"number"==typeof o&&e>o?n=` · ${o}/${e}`:e>0&&(n=` · ${e}`),n},function(){ce=!0,clearTimeout(ue),ue=setTimeout((()=>{ce=!1}),50),p($t,i=!1,i),n(6,se=0)},function(){ce=!0,clearTimeout(ue),ue=setTimeout((()=>{ce=!1}),500)},function(e){if(ce)return;oe=e.touches[0].clientX,re=e.touches[0].clientY,ne=e.touches[0].identifier;let t=e.target,n=!1;for(;t&&t!==document.body;){if(t.scrollWidth>t.clientWidth&&t.scrollLeft>0){n="popup-container"!==t.id;break}t=t.parentElement}n||(le=!0)},function(e){if(le){le=!1,ie=e.touches[0].clientX,ae=e.touches[0].clientY;const t=ie-oe,n=ae-re;Math.abs(t)>Math.abs(n)&&t>0&&p($t,i=!0,i)}else if(i){ie=e.touches[0].clientX;const t=ie-oe;n(6,se=t>0?Math.min(t/48*100,100):0)}},function(e){if(i){if(ie=Array.from(e.changedTouches)?.find((e=>e.identifier===ne))?.clientX,"number"==typeof ie){i&&ie-oe>=48&&p(St,r=!1,r)}ne=null,p($t,i=!1,i),n(6,se=0)}else ne=null,p($t,i=!1,i),n(6,se=0)},function(){ne=null,p($t,i=!1,i),n(6,se=0)},function(){me=!0},function(e){if(!I)return;let t=e.target,n=t;for(;n&&n!==document.body;){if(he=t.scrollTop<1,ye=Math.abs(t.scrollHeight-t.clientHeight-t.scrollTop)<1,he||ye)break;n=n?.parentElement}de=e?.touches?.[0]?.identifier,pe=e?.touches?.[0]?.clientY,fe=e?.touches?.[0]?.clientX},function(e){if(!me){let t=Array.from(e?.changedTouches||[])?.find((e=>e?.identifier===de))?.clientY,l=Array.from(e?.changedTouches||[])?.find((e=>e?.identifier===de))?.clientX,o=t-pe,i=l-fe;if("number"==typeof o&&!isNaN(o)&&"number"==typeof i&&!isNaN(i)){(Math.abs(i)>Math.abs(o)||o<0&&ye||o>0&&he)&&n(1,B=n(0,D=null))}}ge()},ge,async function(e,t){if(t&&t!==Il){e.src=Pl;let n=await Yt(t);n&&(e.src=n)}else e.src=Il},o,e=>{e?.target?.src!==Pl&&(Fe(e.target,"fade-out"),ze(e.target,"fade-in"))},e=>{Fe(e.target,"fade-in"),ze(e.target,"fade-out"),ze(e.target,"display-none")},function(e,t,n){G[e?"unshift":"push"]((()=>{t[n].popupHeader=e}))},e=>q(e.title),(e,t)=>"Enter"===t.key&&q(e.title),function(){m=this.checked,ct.set(m)},e=>"Enter"===e.key&&p(ct,m=!m,m),()=>{p(ct,m=!m,m)},e=>{"Enter"===e.key&&p(ct,m=!m,m)},e=>"Enter"===e.key&&ee(),e=>{window.setShouldGoBack(!1),n(0,D=e.bannerImageUrl||e.trailerThumbnailUrl),n(1,B=null)},(e,t)=>{"Enter"===t.key&&(window.setShouldGoBack(!1),n(0,D=e.bannerImageUrl||e.trailerThumbnailUrl),n(1,B=null))},(e,t,n,l)=>{if(!e?.hasStudioDragScroll){let e=l?.target?.closest?.(".info")||l?.target;e&&(p(Ke,t[n].hasStudioDragScroll=!0,d),Pe(e,"x"))}},(e,t,n,l)=>{if(!e?.hasGenreDragScroll){let e=l?.target?.closest?.(".info")||l?.target;e&&(p(Ke,t[n].hasGenreDragScroll=!0,d),Pe(e,"x"))}},(e,t,n,l)=>{if(!e?.hasTagDragScroll){let e=l?.target?.closest?.(".info")||l?.target;e&&(p(Ke,t[n].hasTagDragScroll=!0,d),Pe(e,"x"))}},e=>{ze(e.target,"display-none")},e=>{window.setShouldGoBack(!1),n(0,D=e.coverImageUrl||e.bannerImageUrl||e.trailerThumbnailUrl||Il),n(1,B=null)},(e,t)=>{window.setShouldGoBack(!1),"Enter"===t.key&&(n(0,D=e.coverImageUrl||e.bannerImageUrl||e.trailerThumbnailUrl||Il),n(1,B=null))},e=>{window.setShouldGoBack(!1),n(1,B=Bl(e?.description)),n(0,D=null)},(e,t)=>{window.setShouldGoBack(!1),"Enter"===t.key&&(n(1,B=Bl(e?.description)),n(0,D=null))},function(e,t,n){G[e?"unshift":"push"]((()=>{t[n].popupInfo=e}))},(e,t)=>"Enter"===t.key&&W(e.id,e?.shownTitle),(e,t)=>"Enter"===t.key&&Y(e.title),e=>{Dl(e.animeUrl)},(e,t)=>"Enter"===t.key&&Dl(e.animeUrl),function(e,t,n){G[e?"unshift":"push"]((()=>{t[n].popupContent=e}))},function(e){G[e?"unshift":"push"]((()=>{I=e,n(3,I)}))},e=>"Enter"===e.key&&_(e),function(e){G[e?"unshift":"push"]((()=>{C=e,n(2,C)}))},e=>"Enter"===e.key&&n(1,B=n(0,D=null)),()=>n(1,B=n(0,D=null)),e=>"Enter"===e.key&&n(1,B=n(0,D=null)),e=>"Enter"===e.key&&n(1,B=n(0,D=null)),e=>{ze(e.target,"display-none")},()=>n(1,B=n(0,D=null)),e=>"Enter"===e.key&&n(1,B=n(0,D=null))]}function Fl(e){let t,n,l,i,r,a,s,c,u,d,p,m,h,y,w,v,b,k,A,E,L,C,D,B=(e[5][e[2]]?"Show":"Hide")+" Anime",z=e[1]&&Ul(e);return{c(){t=T("div"),n=T("div"),l=T("div"),i=T("span"),r=T("h1"),a=N(e[0]),s=$(),c=T("div"),c.textContent="×",u=$(),d=T("span"),d.innerHTML='<h2 class="option-title svelte-18z5knf">Information</h2>',p=$(),m=T("span"),m.innerHTML='<h2 class="option-title svelte-18z5knf">Open in Anilist</h2>',h=$(),y=T("span"),y.innerHTML='<h2 class="option-title svelte-18z5knf">Open in YouTube</h2>',w=$(),z&&z.c(),v=$(),b=T("span"),k=T("h2"),A=N(B),I(r,"class","svelte-18z5knf"),I(i,"class","anime-title svelte-18z5knf"),I(c,"class","closing-x svelte-18z5knf"),I(c,"tabindex","0"),I(l,"class","option-header svelte-18z5knf"),I(d,"class","anime-option svelte-18z5knf"),I(m,"class","anime-option svelte-18z5knf"),I(y,"class","anime-option svelte-18z5knf"),I(k,"class","option-title svelte-18z5knf"),I(b,"class","anime-option svelte-18z5knf"),I(n,"class","anime-options-container svelte-18z5knf"),I(t,"class","anime-options svelte-18z5knf")},m(o,S){x(o,t,S),g(t,n),g(n,l),g(l,i),g(i,r),g(r,a),g(l,s),g(l,c),g(n,u),g(n,d),g(n,p),g(n,m),g(n,h),g(n,y),g(n,w),z&&z.m(n,null),g(n,v),g(n,b),g(b,k),g(k,A),L=!0,C||(D=[M(c,"click",e[8]),M(c,"keydown",e[15]),M(d,"click",e[9]),M(d,"keydown",e[16]),M(m,"click",e[10]),M(m,"keydown",e[17]),M(y,"click",e[11]),M(y,"keydown",e[18]),M(b,"click",e[13]),M(b,"keydown",e[20]),f(e[14].call(null,t)),M(t,"click",e[8]),M(t,"touchend",e[7],{passive:!0}),M(t,"keydown",e[21])],C=!0)},p(e,t){(!L||1&t[0])&&P(a,e[0]),e[1]?z?z.p(e,t):(z=Ul(e),z.c(),z.m(n,v)):z&&(z.d(1),z=null),(!L||36&t[0])&&B!==(B=(e[5][e[2]]?"Show":"Hide")+" Anime")&&P(A,B)},i(e){L||(E&&E.end(1),L=!0)},o(e){E=me(n,Ht,{duration:200}),L=!1},d(e){e&&S(t),z&&z.d(),e&&E&&E.end(),C=!1,o(D)}}}function Ul(t){let n,l,i;return{c(){n=T("span"),n.innerHTML='<h2 class="option-title svelte-18z5knf">Copy Title</h2>',I(n,"class","anime-option svelte-18z5knf")},m(e,o){x(e,n,o),l||(i=[M(n,"click",t[12]),M(n,"keydown",t[19])],l=!0)},p:e,d(e){e&&S(n),l=!1,o(i)}}}function Vl(e){let t,n,l=e[3]&&!e[6]&&e[4]&&Fl(e);return{c(){l&&l.c(),t=L()},m(e,o){l&&l.m(e,o),x(e,t,o),n=!0},p(e,n){e[3]&&!e[6]&&e[4]?l?(l.p(e,n),88&n[0]&&de(l,1)):(l=Fl(e),l.c(),de(l,1),l.m(t.parentNode,t)):l&&(ce(),pe(l,1,1,(()=>{l=null})),ue())},i(e){n||(de(l),n=!0)},o(e){pe(l),n=!1},d(e){l&&l.d(e),e&&S(t)}}}function Rl(e,t,n){let l,o,i,r,a,s,u,d,f,m,h,y,w,v,g,b;c(e,kt,(e=>n(3,l=e))),c(e,xt,(e=>n(27,o=e))),c(e,Ke,(e=>n(4,i=e))),c(e,gt,(e=>n(28,r=e))),c(e,Xe,(e=>n(29,a=e))),c(e,Ge,(e=>n(5,s=e))),c(e,mt,(e=>n(30,u=e))),c(e,Oe,(e=>n(31,d=e))),c(e,St,(e=>n(6,f=e))),c(e,At,(e=>n(32,m=e)));let k,x=!0;function S(e){if(x&&"keydown"!==e.type)return;let t=e.target,n=t.classList;(n.contains("closing-x")||!t.closest(".anime-options-container")&&!n.contains("anime-options-container"))&&p(kt,l=!1,l)}function A(e){x&&"keydown"!==e.type||(p(At,m=b,m),p(St,f=!0,f),p(kt,l=!1,l))}function T(e){x&&"keydown"!==e.type||"string"==typeof g&&""!==g&&window.open(g,"_blank")}async function E(e){x&&"keydown"!==e.type||"string"==typeof y&&""!==y&&window.open(`https://www.youtube.com/results?search_query=${y} Anime`,"_blank")}function N(e){if((!x||"keydown"===e.type)&&w){if(d)try{JSBridge.copyToClipBoard(h),JSBridge.copyToClipBoard(w)}catch(e){}else h&&!Ce(w,h)?(navigator?.clipboard?.writeText?.(h),setTimeout((()=>{navigator?.clipboard?.writeText?.(w)}),300)):navigator?.clipboard?.writeText?.(w);p(kt,l=!1,l)}}async function $(e){if(x&&"keydown"!==e.type)return;let t=h?`<span style="color:#00cbf9;">${h}</span>`:"this anime";s[v]?await r(`Are you sure you want to show ${t} in your recommendation list?`)&&(u().then((()=>{delete s[v],Ge.set(s),i.length&&a instanceof Worker&&a?.postMessage?.({removeID:v})})).catch((()=>{r({isAlert:!0,title:"Something went wrong",text:"Showing anime has failed, please try again."})})),p(kt,l=!1,l)):await r(`Are you sure you want to hide ${t} in your recommendation list?`)&&(u().then((()=>{p(Ge,s[v]=!0,s),i.length&&a instanceof Worker&&a?.postMessage?.({removeID:v})})).catch((()=>{r({isAlert:!0,title:"Something went wrong",text:"Hiding anime has failed, please try again."})})),p(kt,l=!1,l))}function L(){let e=i?.[o??-1];e?(n(0,h=e?.shownTitle),n(1,w=y=e?.copiedTitle),n(2,v=e.id),g=e.animeUrl,b=o):p(kt,l=!1,l)}kt.subscribe((e=>{!0===e?(x=!0,k=setTimeout((()=>{x=!1}),100)):(k&&clearTimeout(k),x=!1)})),Ke.subscribe((()=>{l&&L()}));return[h,w,v,l,i,s,f,function(e){if(x)return;let t=e.target,n=t.classList;t.closest(".anime-options-container")||n.contains("anime-options-container")||p(kt,l=!1,l)},S,A,T,E,N,$,L,e=>"Enter"===e.key&&S(e),e=>"Enter"===e.key&&A(e),e=>"Enter"===e.key&&T(e),e=>"Enter"===e.key&&E(e),e=>"Enter"===e.key&&N(e),e=>"Enter"===e.key&&$(e),e=>"Enter"===e.key&&S(e)]}function Hl(t){let n,l,i,r,a,s,c,u,p,f,m,h,y,w,v,b,k,A,L,C,B=(t[0]||"Your Anilist Username")+"";return{c(){n=T("div"),l=T("nav"),i=T("div"),r=E("svg"),a=E("path"),s=$(),c=T("div"),u=T("label"),u.textContent="Anilist Username",p=$(),f=T("input"),m=$(),h=T("div"),y=N(B),w=$(),v=T("div"),b=E("svg"),k=E("path"),I(a,"d","M9 233a32 32 0 0 0 0 46l160 160a32 32 0 0 0 46-46L109 288h307a32 32 0 1 0 0-64H109l106-105a32 32 0 0 0-46-46L9 233z"),I(a,"class","svelte-njo0m1"),I(r,"class","goback svelte-njo0m1"),I(r,"tabindex","0"),I(r,"viewBox","0 0 448 512"),I(i,"class","go-back-container svelte-njo0m1"),I(u,"class","disable-interaction svelte-njo0m1"),I(u,"for","usernameInput"),I(f,"id","usernameInput"),I(f,"type","search"),I(f,"enterkeyhint","search"),I(f,"autocomplete","off"),I(f,"placeholder","Your Anilist Username"),I(f,"class","svelte-njo0m1"),I(h,"class",d("usernameText")+" svelte-njo0m1"),I(c,"class","input-search svelte-njo0m1"),I(k,"d","m144 7-2 2-1 1c-2 0-9 7-9 9l-2 2-1 1-1 2-3 5c-1 3-3 4-4 5l-1 3-1 1v1l-1 1-15 1-12 1c-11 1-12 1-18-4l-7-6-6-6-4-2s-2-1-2-3-3-2-3-2l-2-2-2-1-1-1-2-1-2-1-8-4c-3 0-7 5-6 6l-1 1v24a350 350 0 0 0 7 36c0 2-1 3-2 3v2l-1 1-3 7-1 2-3 9a61 61 0 0 0 4 30v2l2 3 3 7 1 1v1l1 2 1 1 1 1c0 1 0 2 2 3l2 4 2 2 2 2 6 7 5 7 1 1 1 1v3l4 10 1 14a75 75 0 0 0 2 19l1 4v2l2 3v2a205 205 0 0 0 15 29l1 1v1a128 128 0 0 1 11 22v1l1 1 1 1v3l1 2 2 5a480 480 0 0 1-2 93c0 1-4 6-6 6l-11 11-1 4c-2 3 0 7 8 14 1 1 2 2 1 3l1 3v1l1 2 1 2 3 3h3l1 1 4 1 2 1c0 1 16 2 19 1l2-1h2l7-5 1-1c2 0 11-10 12-13l1-2 1-1c-1-3 0-3 8-2l5 1 2 1-1 3-1 9 2 3 1 2 1 2 3 3 2 1 2 1 4 2 14 1a232 232 0 0 0 56-9l4-1 4-1h8l3 2h1l2 1a93 93 0 0 0 30-1l6-3 4-1 1-1 1-1h2l1-1 1-1 3-1 4-2h3l1-1h2l1-1h2l2-1h2l2-1h2l2-1 3-1h6c12-2 16-2 30-2a174 174 0 0 1 45 5l2 1h3l5 3 5 2 1 1 3 3 3 3 1 1 1 4c0 3-1 4-4 7l-4 3-1 1-8 4-5 2-8 2-5 2h-1l-2 1h-2l-3 1-1 1h-2l-3 1h-4l-10 2c-2 1-11 9-11 11-1 5 0 8 2 10l4 3 2 1 16 1 18-1 5-1 2-1h2l2-1h2l2-1h2l1-1h2l1-1 2-1h2l3-1 3-2h2l1-1 1-1c1 1 13-5 13-6h1l1-1 2-1 1-1h1l2-1 2-2 2-1 1-2c2 0 9-7 9-9l2-1 1-2v-1l1-1v-1l1-1v-1l1-2v-2c1-2 1-8-1-12v-1l-1-1-1-1c0-2-11-14-13-14l-2-2-2-2-2-1-5-3c-3-1-4-3-5-4l-3-1-1-1h-1l-1-1c0-1-4-3-5-2l-1-1h-1l-1-1-1-1-4-1-3-1-1-1h-1l-1-1h-2c-1 1-1 0-1-1h-2l-1-1-1-1h-2l-2-1h-2l-4-1-6-2-6-1-4-1-3-1-12-1a252 252 0 0 0-76 1v-2l1-3 1-5 1-2v-1l1-3 1-4 2-11 1-6c4-24 4-56 1-78l-1-5-1-3-1-7-1-2-1-3-1-5v-1l-1-1v-2l-1-1v-2l-1-2-1-3-1-2-1-3-1-1v-1l-1-1v-1l-1-1-2-4-3-5-1-1-1-2-1-1-1-2-1-1-1-3-2-1-9-11a68 68 0 0 0-15-12l-4-3-1-1-1-1-2-1-2-2-3-1-5-2-1-1h-1l-1-1-1-1-4-1-3-1-2-2h-3l-1-1h-2l-1-1h-2l-1-1h-2l-1-1-3-1h-3l-1-2-2-1-1-1-2-1h-1l-2-2-2-1-2-2c-1 0-10-9-10-11l-2-2-1-1-1-3a66 66 0 0 0-16-15l-1-1-2-1-1-1-3-1v-2l-1-1v-2l-1-1-1-2v-2l-2-3v-3l-1-1-1-1-4-9-2-2c-1-2-1-4 1-12a233 233 0 0 0 1-52v-2l-2-5c-2-3-3-3-6-3h-7z"),I(k,"class","svelte-njo0m1"),I(b,"viewBox","0 0 500 500"),I(b,"class","logo-icon svelte-njo0m1"),I(b,"aria-label","Kanshi Logo"),I(b,"tabindex","0"),I(v,"class","logo-icon-container svelte-njo0m1"),I(l,"id","nav"),I(l,"class",A=d("nav "+(t[3]||t[4]?"popupvisible":t[1]===document?.activeElement?"inputfocused":""))+" svelte-njo0m1"),I(n,"class","nav-container svelte-njo0m1")},m(e,o){x(e,n,o),g(n,l),g(l,i),g(i,r),g(r,a),g(l,s),g(l,c),g(c,u),g(c,p),g(c,f),D(f,t[0]),t[15](f),g(c,m),g(c,h),g(h,y),g(l,w),g(l,v),g(v,b),g(b,k),t[18](l),L||(C=[M(r,"keydown",t[12]),M(i,"click",t[8]),M(f,"keydown",t[13]),M(f,"focusin",t[11]),M(f,"focusout",t[11]),M(f,"input",t[14]),M(h,"click",t[7]),M(h,"keydown",t[16]),M(b,"keydown",t[17]),M(v,"pointerdown",t[9]),M(v,"pointerup",t[10]),M(v,"pointercancel",t[10]),M(n,"keydown",t[19]),M(n,"click",t[6])],L=!0)},p(e,t){1&t[0]&&f.value!==e[0]&&D(f,e[0]),1&t[0]&&B!==(B=(e[0]||"Your Anilist Username")+"")&&P(y,B),26&t[0]&&A!==(A=d("nav "+(e[3]||e[4]?"popupvisible":e[1]===document?.activeElement?"inputfocused":""))+" svelte-njo0m1")&&I(l,"class",A)},i:e,o:e,d(e){e&&S(n),t[15](null),t[18](null),L=!1,o(C)}}}function Ol(e,t,n){let l,o,i,r,a,s,u,d,f;c(e,gt,(e=>n(25,l=e))),c(e,dt,(e=>n(26,o=e))),c(e,St,(e=>n(3,i=e))),c(e,bt,(e=>n(4,r=e))),c(e,Qe,(e=>n(27,a=e))),c(e,qe,(e=>n(28,s=e))),c(e,et,(e=>n(29,u=e))),c(e,Ke,(e=>n(30,d=e))),c(e,ut,(e=>n(31,f=e)));let m,h,y,w,v,g,b=[],k="",x=!1;async function S(e){if(f)return await async function(){return await l({isAlert:!0,title:"Initializing resources",text:"Please wait a moment..."})}(),void T();let t=e.target,o=t.classList;if("Enter"===e.key||"click"===e.type&&(o.contains("searchBtn")||t?.closest?.(".searchBtn"))){if(!k)return;if(k!==s){if(!navigator.onLine)return l({isAlert:!0,title:"Currently Offline",text:"It seems that you're currently offline and unable to update."});(async()=>{s?await l(`Currently connected to ${s}, do you want to change account?`)?(p(bt,r=!1,r),i||(document.documentElement.style.overflow="hidden",document.documentElement.style.overflow="",window?.scrollTo?.({top:-9999,behavior:"smooth"}),p(Ke,d=null,d)),p(Qe,a="Getting User Entries",a),p(et,u=!0,u),Fn({username:k}).then((({newusername:e})=>{p(et,u=!1,u),e&&(Re("username",e),n(0,k=p(qe,s=e||"",s)),Bt.update((e=>!e)))})).catch((e=>{p(Qe,a="Something went wrong...",a),console.error(e)}))):T():await l(`Are you sure you want to connect to ${k}?`)?(p(bt,r=!1,r),i||(document.documentElement.style.overflow="hidden",document.documentElement.style.overflow="",window?.scrollTo?.({top:-9999,behavior:"smooth"}),p(Ke,d=null,d)),p(Qe,a="Getting User Entries",a),p(et,u=!0,u),await Fn({username:k}).then((({newusername:e})=>{p(et,u=!1,u),e&&(Re("username",e),n(0,k=p(qe,s=e||"",s))),Bt.update((e=>!e))})).catch((e=>{p(Qe,a="Something went wrong...",a),console.error(e)}))):T()})()}else w?.blur?.(),x=!1}}function A(e){if(g)return void(g=!1);let t=e.target,n=t.classList;return n.contains("nav")||n.contains("logo-icon")||t.closest(".logo-icon")?!x||n.contains("logo-icon")||t.closest(".logo-icon")?void p(bt,r=!r,r):(w?.blur?.(),void(x=!1)):void 0}async function T(){w?.focus?.()}function E(){w===document.activeElement||x?(w?.blur?.(),x=!1):r?p(bt,r=!r,r):i&&p(St,i=!1,i)}var N;j((()=>{n(2,y=y||document?.getElementById("nav")),n(1,w=w||document?.getElementById("usernameInput")),m=m||document?.getElementById("anime-grid"),h=h||document?.getElementById("popup-container"),b.push(qe.subscribe((e=>{n(0,k=e||"")})))})),N=()=>{b.forEach((e=>e()))},W().$$.on_destroy.push(N);return e.$$.update=()=>{3&e.$$.dirty[0]&&k&&w?.setCustomValidity?.("")},[k,w,y,i,r,S,A,T,E,function(){v&&clearTimeout(v),v=setTimeout((()=>{g=!0,i?(h.style.overflow="hidden",h.style.overflow="",h?.children?.[0]?.scrollIntoView?.({container:h,behavior:"smooth",block:"start",inline:"nearest"})):o?(m.style.overflow="hidden",m.style.overflow="",m?.children?.[0]?.scrollIntoView?.({container:m,behavior:"smooth",block:"nearest",inline:"start"})):(document.documentElement.style.overflow="hidden",document.documentElement.style.overflow="",window.scrollTo({top:-9999,behavior:"smooth"}))}),500)},function(){v&&clearTimeout(v),g&&(v=setTimeout((()=>{g=!1}),50))},function(e){"focusin"===e.type?(x=!0,ze(y,"inputfocused")):setTimeout((()=>{Fe(y,"inputfocused"),x=!1}),100)},e=>"Enter"===e.key&&E(),e=>"Enter"===e.key&&S(e),function(){k=this.value,n(0,k)},function(e){G[e?"unshift":"push"]((()=>{w=e,n(1,w)}))},e=>"Enter"===e.key&&T(),e=>{"Enter"===e.key?(e.stopPropagation(),p(bt,r=!r,r)):"Escape"!==e.key&&e.stopPropagation()},function(e){G[e?"unshift":"push"]((()=>{y=e,n(2,y)}))},e=>"Enter"===e.key&&A(e)]}function _l(e){let t,n,l,i,r,a,s,c,u,p,f,m,h,y,w,v,b,k,A,E,L,C,P,D,B=e[1]&&Wl(e),z=e[1]&&jl(e),F=e[1]&&ql(e);return{c(){t=T("div"),n=T("div"),l=T("button"),l.textContent="Update List",i=$(),r=T("button"),r.textContent="Show All Hidden Entries",a=$(),s=T("button"),s.textContent="Import Data",c=$(),u=T("button"),u.textContent="Export Data",p=$(),B&&B.c(),f=$(),m=T("button"),h=N("Auto Update"),w=$(),z&&z.c(),v=$(),b=T("button"),b.textContent="Create an Anilist Account",k=$(),F&&F.c(),A=$(),E=T("button"),E.textContent="Reload",I(l,"class","button svelte-1y97dfa"),I(r,"class","button svelte-1y97dfa"),I(s,"class","button svelte-1y97dfa"),I(u,"class","button svelte-1y97dfa"),I(m,"class",y=d("button "+(e[5]?"selected":""))+" svelte-1y97dfa"),I(b,"class","button svelte-1y97dfa"),I(E,"class","button svelte-1y97dfa"),I(n,"class","menu svelte-1y97dfa"),I(t,"class","menu-container svelte-1y97dfa")},m(o,d){x(o,t,d),g(t,n),g(n,l),g(n,i),g(n,r),g(n,a),g(n,s),g(n,c),g(n,u),g(n,p),B&&B.m(n,null),g(n,f),g(n,m),g(m,h),g(n,w),z&&z.m(n,null),g(n,v),g(n,b),g(n,k),F&&F.m(n,null),g(n,A),g(n,E),C=!0,P||(D=[M(l,"click",e[9]),M(l,"keydown",e[22]),M(r,"click",e[13]),M(r,"keydown",e[23]),M(s,"click",e[6]),M(s,"keydown",e[24]),M(u,"click",e[8]),M(u,"keydown",e[25]),M(m,"click",e[10]),M(m,"keydown",e[27]),M(b,"click",e[14]),M(b,"keydown",e[29]),M(E,"keydown",e[35]),M(E,"click",e[18]),M(t,"click",e[36]),M(t,"touchend",e[12],{passive:!0}),M(t,"keydown",e[37])],P=!0)},p(e,t){e[1]?B?B.p(e,t):(B=Wl(e),B.c(),B.m(n,f)):B&&(B.d(1),B=null),(!C||32&t[0]&&y!==(y=d("button "+(e[5]?"selected":""))+" svelte-1y97dfa"))&&I(m,"class",y),e[1]?z?z.p(e,t):(z=jl(e),z.c(),z.m(n,v)):z&&(z.d(1),z=null),e[1]?F?F.p(e,t):(F=ql(e),F.c(),F.m(n,A)):F&&(F.d(1),F=null)},i(e){C||(L&&L.end(1),C=!0)},o(e){L=me(t,Ht,{duration:200}),C=!1},d(e){e&&S(t),B&&B.d(),z&&z.d(),F&&F.d(),e&&L&&L.end(),P=!1,o(D)}}}function Wl(e){let t,n,l,i,r=(e[4]?"Change":"Set")+" Export Folder";return{c(){t=T("button"),n=N(r),I(t,"class","button svelte-1y97dfa")},m(o,r){x(o,t,r),g(t,n),l||(i=[M(t,"click",Yl),M(t,"keydown",e[26])],l=!0)},p(e,t){16&t[0]&&r!==(r=(e[4]?"Change":"Set")+" Export Folder")&&P(n,r)},d(e){e&&S(t),l=!1,o(i)}}}function jl(e){let t,n,l,i,r;return{c(){t=T("button"),n=N("Auto Export"),I(t,"class",l=d("button "+(e[3]?"selected":""))+" svelte-1y97dfa")},m(l,o){x(l,t,o),g(t,n),i||(r=[M(t,"click",e[11]),M(t,"keydown",e[28])],i=!0)},p(e,n){8&n[0]&&l!==(l=d("button "+(e[3]?"selected":""))+" svelte-1y97dfa")&&I(t,"class",l)},d(e){e&&S(t),i=!1,o(r)}}}function ql(t){let n,l,i,r,a,s,c,u,d,p,f=!window.location.protocol.startsWith("file:"),m=f&&function(t){let n,l,i;return{c(){n=T("button"),n.textContent="Check for Updates",I(n,"class","button svelte-1y97dfa")},m(e,o){x(e,n,o),l||(i=[M(n,"keydown",t[31]),M(n,"click",t[17])],l=!0)},p:e,d(e){e&&S(n),l=!1,o(i)}}}(t);return{c(){n=T("button"),n.textContent="Show Recent Releases",l=$(),m&&m.c(),i=$(),r=T("button"),r.textContent="Switch App Mode",a=$(),s=T("button"),s.textContent="Clear Cache",c=$(),u=T("button"),u.textContent="Refresh",I(n,"class","button svelte-1y97dfa"),I(r,"class","button svelte-1y97dfa"),I(s,"class","button svelte-1y97dfa"),I(u,"class","button svelte-1y97dfa")},m(e,o){x(e,n,o),x(e,l,o),m&&m.m(e,o),x(e,i,o),x(e,r,o),x(e,a,o),x(e,s,o),x(e,c,o),x(e,u,o),d||(p=[M(n,"keydown",t[30]),M(n,"click",t[15]),M(r,"keydown",t[32]),M(r,"click",t[16]),M(s,"keydown",t[33]),M(s,"click",t[20]),M(u,"keydown",t[34]),M(u,"click",t[19])],d=!0)},p(e,t){f&&m.p(e,t)},d(e){e&&S(n),e&&S(l),m&&m.d(e),e&&S(i),e&&S(r),e&&S(a),e&&S(s),e&&S(c),e&&S(u),d=!1,o(p)}}}function Gl(e){let t,n,l,o,i,r,a=e[2]&&_l(e);return{c(){t=T("input"),n=$(),a&&a.c(),l=L(),I(t,"id","import-file"),I(t,"type","file"),I(t,"accept",".json"),B(t,"display","none")},m(s,c){x(s,t,c),e[21](t),x(s,n,c),a&&a.m(s,c),x(s,l,c),o=!0,i||(r=M(t,"change",e[7]),i=!0)},p(e,t){e[2]?a?(a.p(e,t),4&t[0]&&de(a,1)):(a=_l(e),a.c(),de(a,1),a.m(l.parentNode,l)):a&&(ce(),pe(a,1,1,(()=>{a=null})),ue())},i(e){o||(de(a),o=!0)},o(e){pe(a),o=!1},d(o){o&&S(t),e[21](null),o&&S(n),a&&a.d(o),o&&S(l),i=!1,r()}}}function Yl(){try{JSBridge.chooseExportFolder()}catch(e){}}function Jl(e,t,n){let l,o,i,r,a,u,d,f,m,h,y,w,v,g,b,k;async function x(){return w?z():k instanceof Element?void(await l({text:"Are you sure you want to import your Data?"})&&k.click()):p(Qe,d="Something went wrong...",d)}async function S(){return w?z():!g&&o?Yl():void(await l("Are you sure you want to export your data?")&&(p(bt,u=!1,u),Dt.update((e=>!e))))}async function A(){return w?z():navigator.onLine?void(await l("Are you sure you want to update your list?")&&(p(bt,u=!1,u),Pt.update((e=>!e)))):l({isAlert:!0,title:"Currently offline",text:"It seems that you're currently offline and unable to update."})}async function T(){await l(`Are you sure you want to ${b?"disable":"enable"} auto-update?`)&&p(tt,b=!b,b)}async function E(){if(!g&&o)return Yl();await l(`Are you sure you want to ${v?"disable":"enable"} auto-export?`)&&p(it,v=!v,v)}function N(e){e.target.classList.contains("button")||p(bt,u=!u,u)}async function $(){if(w)return z();if((e=>{for(const t in e)return!1;return!0})(y))l({isAlert:!0,text:"There is currently no hidden entries."});else if(await l("Are you sure you want to show all hidden anime entries?")){h&&(h.terminate(),p(Xe,h=null,h)),m||p(Ke,f=null,f),p(Qe,d="Updating List",d),p(bt,u=!1,u);let e=a?.filterSelection?.findIndex?.((({filterSelectionName:e})=>"Anime Filter"===e)),t=a?.filterSelection?.[e??-1]?.filters?.Checkbox?.findIndex?.((({filName:e})=>"hidden anime"===e));e>=0&&t>=0&&p(Ye,a.filterSelection[e??-1].filters.Checkbox[t??-1].isSelected=!1,a),r?.["Anime Filter"]&&p(Je,r["Anime Filter"]=r["Anime Filter"].filter((({optionName:e,filterType:t})=>"hidden"!==e&&"checkbox"!==t)),r),await Qn(a,"filterOptions"),await Qn(r,"activeTagFilters"),await Qn({},"hiddenEntries"),zt.update((e=>!e))}}async function L(){await l("Are you sure want to sign-up an anilist account?")&&window.open("https://anilist.co/signup","_blank")}function M(){if(o)try{JSBridge.showRecentReleases()}catch(e){}}function C(){if(o)try{JSBridge.switchApp()}catch(e){}}function I(){if(!navigator.onLine)return l({isAlert:!0,title:"Currently offline",text:"It seems that you're currently offline and unable to check for updates."});if(o)try{JSBridge.checkAppID(i,!0)}catch(e){}}async function P(){await l("Are you sure want to reload the resources?")&&(document.querySelectorAll("script")?.forEach((e=>{e.src&&"https://www.youtube.com/iframe_api?v=16"!==e.src&&(e.src=e.src)})),document.querySelectorAll("img")?.forEach((e=>{e.naturalHeight||(e.src=e.src)})),window.reloadYoutube?.())}async function D(){if(o&&await l("Are you sure want to refresh the app?"))try{JSBridge.refreshWeb()}catch(e){}}async function B(){if(o&&await l("Are you sure want to clear the cache?"))try{JSBridge.clearCache()}catch(e){}}function z(){l({isAlert:!0,title:"Initializing resources",text:"Please wait a moment..."})}c(e,gt,(e=>n(38,l=e))),c(e,Oe,(e=>n(1,o=e))),c(e,He,(e=>n(39,i=e))),c(e,Je,(e=>n(40,r=e))),c(e,Ye,(e=>n(41,a=e))),c(e,bt,(e=>n(2,u=e))),c(e,Qe,(e=>n(42,d=e))),c(e,Ke,(e=>n(43,f=e))),c(e,St,(e=>n(44,m=e))),c(e,Xe,(e=>n(45,h=e))),c(e,Ge,(e=>n(46,y=e))),c(e,ut,(e=>n(47,w=e))),c(e,it,(e=>n(3,v=e))),c(e,ot,(e=>n(4,g=e))),c(e,tt,(e=>n(5,b=e))),window.setExportPathAvailability=async(e=!0)=>{p(ot,g=e,g),Re("exportPathIsAvailable",e),await Qn(e,"exportPathIsAvailable")};return[k,o,u,v,g,b,x,async function(){if(!(k instanceof Element))return p(Qe,d="Something went wrong...",d);let e=k.files?.[0];if(e){let o=e.name;await l(`File ${o?"named ["+o+"] ":""}has been detected, do you want to continue the import?`)?(await Qn(!0,"shouldProcessRecommendation"),p(bt,u=!1,u),m||(document.documentElement.style.overflow="hidden",document.documentElement.style.overflow="",window?.scrollTo?.({top:-9999,behavior:"smooth"}),p(Ke,f=null,f)),(t={importedFile:e},new Promise(((e,n)=>{if(!s(ut)){if(Nn)return;Kn(),Ze.set(!0)}Hn&&Hn.terminate(),We.set(0),Wt("./webapi/worker/importUserData.js").then((l=>{Hn=new Worker(l),Rn&&clearTimeout(Rn),Hn.postMessage(t),Hn.onmessage=({data:t})=>{t?.hasOwnProperty("progress")?t?.progress>=0&&t?.progress<=100&&We.set(t.progress):void 0!==t?.error?(Ze.set(!1),Vt.update((e=>!e)),window.confirmPromise?.({isAlert:!0,title:"Import Failed",text:"File has not been imported, please ensure that file is in a supported format (e.g., .json)"}),We.set(100),n(t?.error||"Something went wrong...")):t?.hasOwnProperty("status")?(En=!0,Qe.set(t.status)):"string"==typeof t?.importedUsername?qe.set(t.importedUsername):Ee(t?.importedHiddenEntries)?Ge.set(t?.importedHiddenEntries):t?.importedlastRunnedAutoUpdateDate instanceof Date&&!isNaN(t?.importedlastRunnedAutoUpdateDate)?lt.set(t.importedlastRunnedAutoUpdateDate):t?.importedlastRunnedAutoExportDate instanceof Date&&!isNaN(t?.importedlastRunnedAutoExportDate)?at.set(t.importedlastRunnedAutoExportDate):void 0!==t?.updateFilters?(Ze.set(!1),Jn().then((e=>{Je.set(e.activeTagFilters),Ye.set(e.filterOptions)}))):void 0!==t?.updateRecommendationList?(Ze.set(!1),Bt.update((e=>!e))):(Ze.set(!1),Pt.update((e=>!e)),En=!1,Rn=setTimeout((()=>{Hn.terminate()}),Tn),We.set(100),e(t))},Hn.onerror=e=>{Ze.set(!1),window.confirmPromise?.({isAlert:!0,title:"Import Failed",text:"File has not been imported, please ensure that file is in a supported format (e.g., .json)"}),Vt.update((e=>!e)),We.set(100),n(e||"Something went wrong...")}})).catch((e=>{We.set(100),Ze.set(!1),Vt.update((e=>!e)),Xn(),n(e)}))}))).then((()=>{k instanceof Element&&n(0,k.value=null,k)})).catch((e=>{p(Qe,d=e||"Something went wrong...",d),n(0,k.value=null,k),Bt.update((e=>!e))}))):k instanceof Element&&n(0,k.value=null,k)}else k instanceof Element&&n(0,k.value=null,k);var t},S,A,T,E,N,$,L,M,C,I,P,D,B,function(e){G[e?"unshift":"push"]((()=>{k=e,n(0,k)}))},e=>"Enter"===e.key&&A(),e=>"Enter"===e.key&&$(),e=>"Enter"===e.key&&x(),e=>"Enter"===e.key&&S(),e=>"Enter"===e.key&&Yl(),e=>"Enter"===e.key&&T(),e=>"Enter"===e.key&&E(),e=>"Enter"===e.key&&L(),e=>"Enter"===e.key&&M(),e=>"Enter"===e.key&&I(),e=>"Enter"===e.key&&C(),e=>"Enter"===e.key&&B(),e=>"Enter"===e.key&&D(),e=>"Enter"===e.key&&P(),e=>{"touch"!==e.pointerType&&N(e)},e=>"Enter"===e.key&&N(e)]}function Kl(e,t,n){const l=e.slice();return l[106]=t[n],l}function Xl(e,t,n){const l=e.slice();return l[109]=t[n],l}function Ql(e,t,n){const l=e.slice();return l[127]=t[n],l}function Zl(e,t,n){const l=e.slice();return l[112]=t[n],l[113]=t,l[114]=n,l}function eo(e,t,n){const l=e.slice();return l[115]=t[n],l[117]=n,l}function to(e,t,n){const l=e.slice();return l[118]=t[n],l[119]=t,l[120]=n,l}function no(e,t,n){const l=e.slice();return l[121]=t[n],l[122]=t,l[123]=n,l}function lo(e,t,n){const l=e.slice();return l[124]=t[n],l[126]=n,l}function oo(e,t,n){const l=e.slice();return l[112]=t[n],l}function io(t){let n;return{c(){n=T("div"),I(n,"class","skeleton shimmer svelte-1d2ae4n")},m(e,t){x(e,n,t)},p:e,d(e){e&&S(n)}}}function ro(e){let t,n,l,o=(e[0]||"")+"";return{c(){t=T("span"),n=T("h2"),l=N(o),I(n,"class","svelte-1d2ae4n"),I(t,"class","svelte-1d2ae4n")},m(e,o){x(e,t,o),g(t,n),g(n,l)},p(e,t){1&t[0]&&o!==(o=(e[0]||"")+"")&&P(l,o)},d(e){e&&S(t)}}}function ao(e){let t,n,l,o;function i(e,t){return e[15]?uo:e[17]||e[14]?so:co}let r=i(e),a=r(e);return{c(){t=T("span"),n=T("h2"),a.c(),I(n,"class","svelte-1d2ae4n"),I(t,"class","data-status svelte-1d2ae4n")},m(e,l){x(e,t,l),g(t,n),a.m(n,null),o=!0},p(e,t){r===(r=i(e))&&a?a.p(e,t):(a.d(1),a=r(e),a&&(a.c(),a.m(n,null)))},i(e){o||(l&&l.end(1),o=!0)},o(e){l=me(t,Ht,{duration:200}),o=!1},d(e){e&&S(t),a.d(),e&&l&&l.end()}}}function so(t){let n;return{c(){n=N("")},m(e,t){x(e,n,t)},p:e,d(e){e&&S(n)}}}function co(t){let n;return{c(){n=N("No Anilist Username Found")},m(e,t){x(e,n,t)},p:e,d(e){e&&S(n)}}}function uo(e){let t;return{c(){t=N(e[15])},m(e,n){x(e,t,n)},p(e,n){32768&n[0]&&P(t,e[15])},d(e){e&&S(t)}}}function po(e){let t,n,l,i,r,a,s,c,u,p,f,m,h=[],y=new Map,w=e[1]?.filterSelection||[];const v=e=>e[112]?.filterSelectionName||{};for(let t=0;t<w.length;t+=1){let n=oo(e,w,t),l=v(n);y.set(l,h[t]=fo(l,n))}return{c(){t=T("div"),n=T("div"),l=T("h2"),l.textContent="Filters",i=$(),r=T("div"),a=N("×"),c=$(),u=T("div");for(let e=0;e<h.length;e+=1)h[e].c();I(l,"class","svelte-1d2ae4n"),I(r,"class","closing-x svelte-1d2ae4n"),I(r,"tabindex",s=e[5]&&e[3]<=425?"0":""),I(n,"class","header svelte-1d2ae4n"),I(u,"class","options svelte-1d2ae4n"),I(t,"class",p=d("options-wrap-filter-info "+(e[5]?"":"hide"))+" svelte-1d2ae4n")},m(o,s){x(o,t,s),g(t,n),g(n,l),g(n,i),g(n,r),g(r,a),g(t,c),g(t,u);for(let e=0;e<h.length;e+=1)h[e]&&h[e].m(u,null);f||(m=[M(r,"keydown",e[48]),M(r,"click",e[21])],f=!0)},p(e,n){40&n[0]&&s!==(s=e[5]&&e[3]<=425?"0":"")&&I(r,"tabindex",s),1048578&n[0]&&(w=e[1]?.filterSelection||[],h=we(h,n,v,1,e,w,y,u,he,fo,null,oo)),32&n[0]&&p!==(p=d("options-wrap-filter-info "+(e[5]?"":"hide"))+" svelte-1d2ae4n")&&I(t,"class",p)},d(e){e&&S(t);for(let e=0;e<h.length;e+=1)h[e].d();f=!1,o(m)}}}function fo(e,t){let n,l,r,a,s,c,u=(t[112]?.filterSelectionName||"")+"";function d(...e){return t[49](t[112],...e)}return{key:e,first:null,c(){n=T("div"),l=T("h3"),r=N(u),a=$(),I(l,"class","svelte-1d2ae4n"),B(l,"color",t[112]?.isSelected?"#3db4f2":"inherit"),I(n,"class","option svelte-1d2ae4n"),this.first=n},m(e,o){x(e,n,o),g(n,l),g(l,r),g(n,a),s||(c=[M(n,"click",(function(){i(t[20](t[112]?.filterSelectionName))&&t[20](t[112]?.filterSelectionName).apply(this,arguments)})),M(n,"keydown",d)],s=!0)},p(e,n){t=e,2&n[0]&&u!==(u=(t[112]?.filterSelectionName||"")+"")&&P(r,u),2&n[0]&&B(l,"color",t[112]?.isSelected?"#3db4f2":"inherit")},d(e){e&&S(n),s=!1,o(c)}}}function mo(t){let n,l=Array(10),o=[];for(let e=0;e<l.length;e+=1)o[e]=yo(Ql(t,l,e));return{c(){for(let e=0;e<o.length;e+=1)o[e].c();n=L()},m(e,t){for(let n=0;n<o.length;n+=1)o[n]&&o[n].m(e,t);x(e,n,t)},p:e,d(e){A(o,e),e&&S(n)}}}function ho(e){let t,n=[],l=new Map,o=e[1]?.filterSelection||[];const i=e=>e[112].filterSelectionName||{};for(let t=0;t<o.length;t+=1){let r=Zl(e,o,t),a=i(r);l.set(a,n[t]=Mo(a,r))}return{c(){for(let e=0;e<n.length;e+=1)n[e].c();t=L()},m(e,l){for(let t=0;t<n.length;t+=1)n[t]&&n[t].m(e,l);x(e,t,l)},p(e,r){130564382&r[0]|32&r[1]&&(o=e[1]?.filterSelection||[],n=we(n,r,i,1,e,o,l,t.parentNode,he,Mo,t,Zl))},d(e){for(let t=0;t<n.length;t+=1)n[t].d(e);e&&S(t)}}}function yo(t){let n;return{c(){n=T("div"),n.innerHTML='<div class="filter-name skeleton shimmer svelte-1d2ae4n"></div> \n                    <div class="select skeleton shimmer svelte-1d2ae4n"></div> \n                ',I(n,"class","filter-select svelte-1d2ae4n")},m(e,t){x(e,n,t)},p:e,d(e){e&&S(n)}}}function wo(t){let n,l;return{c(){n=E("svg"),l=E("path"),I(l,"d","M201 343c13 12 33 12 46 0l160-160a32 32 0 0 0-46-46L224 275 87 137a32 32 0 0 0-46 46l160 160z"),I(l,"class","svelte-1d2ae4n"),I(n,"class","angle-down svelte-1d2ae4n"),I(n,"viewBox","0 0 512 512")},m(e,t){x(e,n,t),g(n,l)},p:e,d(e){e&&S(n)}}}function vo(e){let t,n,l,r;function a(...t){return e[52](e[123],...t)}return{c(){t=E("svg"),n=E("path"),I(n,"d","M201 137c13-12 33-12 46 0l160 160a32 32 0 0 1-46 46L224 205 87 343a32 32 0 0 1-46-46l160-160z"),I(n,"class","svelte-1d2ae4n"),I(t,"class","angle-up svelte-1d2ae4n"),I(t,"viewBox","0 0 512 512")},m(o,s){x(o,t,s),g(t,n),l||(r=[M(t,"keydown",a),M(t,"click",(function(){i(e[23](e[123]))&&e[23](e[123]).apply(this,arguments)}))],l=!0)},p(t,n){e=t},d(e){e&&S(t),l=!1,o(r)}}}function go(t){let n;return{c(){n=T("div"),n.innerHTML='<h3 class="svelte-1d2ae4n">No Results</h3>',I(n,"class","option svelte-1d2ae4n")},m(e,t){x(e,n,t)},p:e,d(e){e&&S(n)}}}function bo(e){let t,n=[],l=new Map,o=e[121].options||[];const i=e=>e[112].filterSelectionName+e[121].filName+e[124].optionName||{};for(let t=0;t<o.length;t+=1){let r=lo(e,o,t),a=i(r);l.set(a,n[t]=xo(a,r))}return{c(){for(let e=0;e<n.length;e+=1)n[e].c();t=L()},m(e,l){for(let t=0;t<n.length;t+=1)n[t]&&n[t].m(e,l);x(e,t,l)},p(e,r){16777218&r[0]&&(o=e[121].options||[],n=we(n,r,i,1,e,o,l,t.parentNode,he,xo,t,lo))},d(e){for(let t=0;t<n.length;t+=1)n[t].d(e);e&&S(t)}}}function ko(e){let t,n,l;return{c(){t=E("svg"),n=E("path"),I(n,"d",l="excluded"===e[124].selected||"Content Caution"===e[112].filterSelectionName?"M256 48a208 208 0 1 1 0 416 208 208 0 1 1 0-416zm0 464a256 256 0 1 0 0-512 256 256 0 1 0 0 512zm-81-337c-9 9-9 25 0 34l47 47-47 47c-9 9-9 24 0 34s25 9 34 0l47-47 47 47c9 9 24 9 34 0s9-25 0-34l-47-47 47-47c9-10 9-25 0-34s-25-9-34 0l-47 47-47-47c-10-9-25-9-34 0z":"M256 48a208 208 0 1 1 0 416 208 208 0 1 1 0-416zm0 464a256 256 0 1 0 0-512 256 256 0 1 0 0 512zm113-303c9-9 9-25 0-34s-25-9-34 0L224 286l-47-47c-9-9-24-9-34 0s-9 25 0 34l64 64c10 9 25 9 34 0l128-128z"),I(n,"class","svelte-1d2ae4n"),I(t,"viewBox","0 0 512 512"),I(t,"class","svelte-1d2ae4n"),B(t,"--optionColor","included"===e[124].selected?"#5f9ea0":"#e85d75")},m(e,l){x(e,t,l),g(t,n)},p(e,o){2&o[0]&&l!==(l="excluded"===e[124].selected||"Content Caution"===e[112].filterSelectionName?"M256 48a208 208 0 1 1 0 416 208 208 0 1 1 0-416zm0 464a256 256 0 1 0 0-512 256 256 0 1 0 0 512zm-81-337c-9 9-9 25 0 34l47 47-47 47c-9 9-9 24 0 34s25 9 34 0l47-47 47 47c9 9 24 9 34 0s9-25 0-34l-47-47 47-47c9-10 9-25 0-34s-25-9-34 0l-47 47-47-47c-10-9-25-9-34 0z":"M256 48a208 208 0 1 1 0 416 208 208 0 1 1 0-416zm0 464a256 256 0 1 0 0-512 256 256 0 1 0 0 512zm113-303c9-9 9-25 0-34s-25-9-34 0L224 286l-47-47c-9-9-24-9-34 0s-9 25 0 34l64 64c10 9 25 9 34 0l128-128z")&&I(n,"d",l),2&o[0]&&B(t,"--optionColor","included"===e[124].selected?"#5f9ea0":"#e85d75")},d(e){e&&S(t)}}}function xo(e,t){let n,l,r,a,s,c,u,p=(t[124].optionName||"")+"",f=("included"===t[124].selected||"excluded"===t[124].selected&&"read"!==t[121].changeType)&&ko(t);function m(...e){return t[57](t[124],t[121],t[126],t[123],t[112],...e)}return{key:e,first:null,c(){n=T("div"),l=T("h3"),r=N(p),a=$(),f&&f.c(),I(l,"class","svelte-1d2ae4n"),I(n,"class",s=d("option "+(Oo(t[124].optionName,t[121].optKeyword)?"":"disable-interaction"))+" svelte-1d2ae4n"),this.first=n},m(e,o){x(e,n,o),g(n,l),g(l,r),g(n,a),f&&f.m(n,null),c||(u=[M(n,"click",(function(){i(t[24](t[124].optionName,t[121].filName,t[126],t[123],t[121].changeType,t[112].filterSelectionName))&&t[24](t[124].optionName,t[121].filName,t[126],t[123],t[121].changeType,t[112].filterSelectionName).apply(this,arguments)})),M(n,"keydown",m)],c=!0)},p(e,l){t=e,2&l[0]&&p!==(p=(t[124].optionName||"")+"")&&P(r,p),"included"===t[124].selected||"excluded"===t[124].selected&&"read"!==t[121].changeType?f?f.p(t,l):(f=ko(t),f.c(),f.m(n,null)):f&&(f.d(1),f=null),2&l[0]&&s!==(s=d("option "+(Oo(t[124].optionName,t[121].optKeyword)?"":"disable-interaction"))+" svelte-1d2ae4n")&&I(n,"class",s)},d(e){e&&S(n),f&&f.d(),c=!1,o(u)}}}function So(e,t){let n,l,r,a,s,c,u,p,f,m,h,y,w,v,b,k,A,E,L,z,F,U,V,R,H,O,_,W,j,q,G,Y,J,K,X,Q,Z,ee,te,ne,le,oe,ie=(t[121].filName||"")+"",re=t[112].filterSelectionName+" "+t[121].filName,ae=t[121].filName+"",se="Search "+t[112].filterSelectionName+" "+t[121].filName,ce=`${t[4]}px`;function ue(...e){return t[45](t[121],...e)}function de(){t[51].call(y,t[114],t[123])}function pe(e,t){return e[121].selected&&e[121].options.length&&!e[2]?vo:wo}let fe=pe(t),me=fe(t);function he(...e){return t[53](t[123],...e)}function ye(...e){return t[54](t[123],...e)}function we(...e){return t[55](t[123],...e)}function ve(){t[56].call(Y,t[114],t[123])}function ge(e,t){return 2&t[0]&&(Z=null),null==Z&&(Z=!!e[121].options?.filter?.(ue)?.length),Z?bo:go}let be=ge(t,[-1,-1,-1,-1,-1]),ke=be(t);return{key:e,first:null,c(){n=T("div"),l=T("div"),r=T("h2"),a=N(ie),s=$(),c=T("div"),u=T("div"),p=T("label"),f=N(re),h=$(),y=T("input"),b=$(),me.c(),A=$(),E=T("div"),L=T("div"),z=T("div"),F=T("h2"),U=N(ae),V=$(),R=T("div"),H=N("×"),_=$(),W=T("label"),j=N(se),G=$(),Y=T("input"),X=$(),Q=T("div"),ke.c(),I(r,"class","svelte-1d2ae4n"),I(l,"class","filter-name svelte-1d2ae4n"),I(p,"class","disable-interaction svelte-1d2ae4n"),I(p,"for",m=t[112].filterSelectionName+t[121].filName),I(y,"id",w=t[112].filterSelectionName+t[121].filName),I(y,"placeholder","Any"),I(y,"type","search"),I(y,"enterkeyhint","search"),I(y,"autocomplete","off"),I(y,"class",d("value-input")+" svelte-1d2ae4n"),y.disabled=v=!t[8]||t[3]<=425||!t[112].isSelected,I(u,"class","value-wrap svelte-1d2ae4n"),I(c,"class","select svelte-1d2ae4n"),I(c,"tabindex",k=t[8]&&t[3]<=425&&t[112].isSelected?"0":""),I(F,"class","svelte-1d2ae4n"),I(R,"class","closing-x svelte-1d2ae4n"),I(R,"tabindex",O=t[8]&&t[121].selected?"0":""),I(z,"class","header svelte-1d2ae4n"),I(W,"class","disable-interaction svelte-1d2ae4n"),I(W,"for",q="Search "+(t[112].filterSelectionName+t[121].filName)),I(Y,"id",J="Search "+(t[112].filterSelectionName+t[121].filName)),I(Y,"placeholder","Any"),I(Y,"type","search"),I(Y,"enterkeyhint","search"),I(Y,"autocomplete","off"),Y.disabled=K=!t[8]||!t[112].isSelected||!t[121].selected,I(Y,"class","svelte-1d2ae4n"),I(Q,"class","options svelte-1d2ae4n"),I(L,"class",ee=d("options-wrap-filter-info "+(t[121].options.length&&!0===t[121].selected&&!t[2]?"":"hide"))+" svelte-1d2ae4n"),I(E,"class",te=d("options-wrap "+(t[121].options.length&&!0===t[121].selected&&!t[2]?"":"disable-interaction hide"))+" svelte-1d2ae4n"),B(E,"--maxFilterSelectionHeight",ce),I(n,"class",ne=d("filter-select "+(t[112].isSelected?"":"disable-interaction"))+" svelte-1d2ae4n"),this.first=n},m(e,o){x(e,n,o),g(n,l),g(l,r),g(r,a),g(n,s),g(n,c),g(c,u),g(u,p),g(p,f),g(u,h),g(u,y),D(y,t[1].filterSelection[t[114]].filters.Dropdown[t[123]].optKeyword),g(c,b),me.m(c,null),g(n,A),g(n,E),g(E,L),g(L,z),g(z,F),g(F,U),g(z,V),g(z,R),g(R,H),g(L,_),g(L,W),g(W,j),g(L,G),g(L,Y),D(Y,t[1].filterSelection[t[114]].filters.Dropdown[t[123]].optKeyword),g(L,X),g(L,Q),ke.m(Q,null),le||(oe=[M(y,"input",de),M(c,"keydown",he),M(c,"click",ye),M(R,"keydown",we),M(R,"click",(function(){i(t[23](t[123]))&&t[23](t[123]).apply(this,arguments)})),M(Y,"input",ve),M(Q,"wheel",C(_o),{passive:!0}),M(E,"wheel",C(Wo),{passive:!0})],le=!0)},p(e,l){t=e,2&l[0]&&ie!==(ie=(t[121].filName||"")+"")&&P(a,ie),2&l[0]&&re!==(re=t[112].filterSelectionName+" "+t[121].filName)&&P(f,re),2&l[0]&&m!==(m=t[112].filterSelectionName+t[121].filName)&&I(p,"for",m),2&l[0]&&w!==(w=t[112].filterSelectionName+t[121].filName)&&I(y,"id",w),266&l[0]&&v!==(v=!t[8]||t[3]<=425||!t[112].isSelected)&&(y.disabled=v),2&l[0]&&y.value!==t[1].filterSelection[t[114]].filters.Dropdown[t[123]].optKeyword&&D(y,t[1].filterSelection[t[114]].filters.Dropdown[t[123]].optKeyword),fe===(fe=pe(t))&&me?me.p(t,l):(me.d(1),me=fe(t),me&&(me.c(),me.m(c,null))),266&l[0]&&k!==(k=t[8]&&t[3]<=425&&t[112].isSelected?"0":"")&&I(c,"tabindex",k),2&l[0]&&ae!==(ae=t[121].filName+"")&&P(U,ae),258&l[0]&&O!==(O=t[8]&&t[121].selected?"0":"")&&I(R,"tabindex",O),2&l[0]&&se!==(se="Search "+t[112].filterSelectionName+" "+t[121].filName)&&P(j,se),2&l[0]&&q!==(q="Search "+(t[112].filterSelectionName+t[121].filName))&&I(W,"for",q),2&l[0]&&J!==(J="Search "+(t[112].filterSelectionName+t[121].filName))&&I(Y,"id",J),258&l[0]&&K!==(K=!t[8]||!t[112].isSelected||!t[121].selected)&&(Y.disabled=K),2&l[0]&&Y.value!==t[1].filterSelection[t[114]].filters.Dropdown[t[123]].optKeyword&&D(Y,t[1].filterSelection[t[114]].filters.Dropdown[t[123]].optKeyword),be===(be=ge(t,l))&&ke?ke.p(t,l):(ke.d(1),ke=be(t),ke&&(ke.c(),ke.m(Q,null))),6&l[0]&&ee!==(ee=d("options-wrap-filter-info "+(t[121].options.length&&!0===t[121].selected&&!t[2]?"":"hide"))+" svelte-1d2ae4n")&&I(L,"class",ee),6&l[0]&&te!==(te=d("options-wrap "+(t[121].options.length&&!0===t[121].selected&&!t[2]?"":"disable-interaction hide"))+" svelte-1d2ae4n")&&I(E,"class",te),16&l[0]&&ce!==(ce=`${t[4]}px`)&&B(E,"--maxFilterSelectionHeight",ce),2&l[0]&&ne!==(ne=d("filter-select "+(t[112].isSelected?"":"disable-interaction"))+" svelte-1d2ae4n")&&I(n,"class",ne)},d(e){e&&S(n),me.d(),ke.d(),le=!1,o(oe)}}}function Ao(e){let t,n,l,i,r,a,s,c,u,d,p,f,m,h=e[118].filName+"",y=(e[118].filName||"")+"";function w(e,t){return e[14]?Eo:To}let v=w(e),b=v(e);function k(...t){return e[61](e[118],e[120],e[112],...t)}function A(...t){return e[62](e[118],e[120],e[112],...t)}return{c(){t=T("div"),n=T("div"),l=$(),i=T("div"),r=T("label"),a=N(h),c=$(),b.c(),u=$(),d=T("div"),p=N(y),I(n,"class","svelte-1d2ae4n"),B(n,"visibility","none"),I(r,"class","disable-interaction svelte-1d2ae4n"),I(r,"for",s="Checkbox: "+e[118].filName),I(d,"class","checkbox-label svelte-1d2ae4n"),I(i,"class","checkbox-wrap svelte-1d2ae4n"),I(t,"class","filter-checkbox svelte-1d2ae4n")},m(e,o){x(e,t,o),g(t,n),g(t,l),g(t,i),g(i,r),g(r,a),g(i,c),b.m(i,null),g(i,u),g(i,d),g(d,p),f||(m=[M(i,"click",k),M(i,"keydown",A)],f=!0)},p(t,n){e=t,2&n[0]&&h!==(h=e[118].filName+"")&&P(a,h),2&n[0]&&s!==(s="Checkbox: "+e[118].filName)&&I(r,"for",s),v===(v=w(e))&&b?b.p(e,n):(b.d(1),b=v(e),b&&(b.c(),b.m(i,u))),2&n[0]&&y!==(y=(e[118].filName||"")+"")&&P(p,y)},d(e){e&&S(t),b.d(),f=!1,o(m)}}}function To(e){let t,n,l,i,r;function a(...t){return e[59](e[118],e[120],e[112],...t)}function s(){e[60].call(t,e[119],e[120])}return{c(){t=T("input"),I(t,"id",n="Checkbox: "+e[118].filName),I(t,"type","checkbox"),I(t,"class","checkbox svelte-1d2ae4n"),t.disabled=l=!e[8]},m(n,l){x(n,t,l),t.checked=e[118].isSelected,i||(r=[M(t,"change",a),M(t,"change",s)],i=!0)},p(o,i){e=o,2&i[0]&&n!==(n="Checkbox: "+e[118].filName)&&I(t,"id",n),256&i[0]&&l!==(l=!e[8])&&(t.disabled=l),2&i[0]&&(t.checked=e[118].isSelected)},d(e){e&&S(t),i=!1,o(r)}}}function Eo(e){let t,n,l,o,i,r;return{c(){t=T("input"),I(t,"id",n="Checkbox: "+e[118].filName),I(t,"type","checkbox"),I(t,"class","checkbox svelte-1d2ae4n"),t.checked=l=e[118].isSelected,t.disabled=o=!e[8]},m(n,l){x(n,t,l),i||(r=M(t,"change",e[58]),i=!0)},p(e,i){2&i[0]&&n!==(n="Checkbox: "+e[118].filName)&&I(t,"id",n),2&i[0]&&l!==(l=e[118].isSelected)&&(t.checked=l),256&i[0]&&o!==(o=!e[8])&&(t.disabled=o)},d(e){e&&S(t),i=!1,r()}}}function No(e,t){let n,l,o=t[112].isSelected&&Ao(t);return{key:e,first:null,c(){n=L(),o&&o.c(),l=L(),this.first=n},m(e,t){x(e,n,t),o&&o.m(e,t),x(e,l,t)},p(e,n){(t=e)[112].isSelected?o?o.p(t,n):(o=Ao(t),o.c(),o.m(l.parentNode,l)):o&&(o.d(1),o=null)},d(e){e&&S(n),o&&o.d(e),e&&S(l)}}}function $o(e){let t,n,l,o,i,r,a,s,c,u,d,p,f,m,h,y,w,v,b=(e[115].filName||"")+"",k="Number Filter: "+e[115].filName;function A(...t){return e[63](e[117],e[115],e[112],...t)}return{c(){t=T("div"),n=T("div"),l=T("h2"),o=N(b),i=$(),r=T("div"),a=T("label"),s=N(k),u=$(),d=T("input"),y=$(),I(l,"class","svelte-1d2ae4n"),I(n,"class","filter-input-number-name svelte-1d2ae4n"),I(a,"class","disable-interaction svelte-1d2ae4n"),I(a,"for",c="Number Filter: "+e[115].filName),I(d,"id",p="Number Filter: "+e[115].filName),I(d,"class","value-input-number svelte-1d2ae4n"),I(d,"type","text"),I(d,"placeholder",f="scoring system"===e[115].filName?"Default: User Scoring":e[19].includes(e[115].filName)?">123 or 123":null!==e[115].defaultValue?"Default: "+e[115].defaultValue:"123"),d.value=m=e[115].numberValue||"",d.disabled=h=!e[8],I(r,"class","value-input-number-wrap svelte-1d2ae4n"),I(t,"class","filter-input-number svelte-1d2ae4n"),B(t,"display",e[112].isSelected?"":"none")},m(e,c){x(e,t,c),g(t,n),g(n,l),g(l,o),g(t,i),g(t,r),g(r,a),g(a,s),g(r,u),g(r,d),g(t,y),w||(v=M(d,"input",A),w=!0)},p(n,l){e=n,2&l[0]&&b!==(b=(e[115].filName||"")+"")&&P(o,b),2&l[0]&&k!==(k="Number Filter: "+e[115].filName)&&P(s,k),2&l[0]&&c!==(c="Number Filter: "+e[115].filName)&&I(a,"for",c),2&l[0]&&p!==(p="Number Filter: "+e[115].filName)&&I(d,"id",p),2&l[0]&&f!==(f="scoring system"===e[115].filName?"Default: User Scoring":e[19].includes(e[115].filName)?">123 or 123":null!==e[115].defaultValue?"Default: "+e[115].defaultValue:"123")&&I(d,"placeholder",f),2&l[0]&&m!==(m=e[115].numberValue||"")&&d.value!==m&&(d.value=m),256&l[0]&&h!==(h=!e[8])&&(d.disabled=h),2&l[0]&&B(t,"display",e[112].isSelected?"":"none")},d(e){e&&S(t),w=!1,v()}}}function Lo(e,t){let n,l,o=t[112].isSelected&&$o(t);return{key:e,first:null,c(){n=L(),o&&o.c(),l=L(),this.first=n},m(e,t){x(e,n,t),o&&o.m(e,t),x(e,l,t)},p(e,n){(t=e)[112].isSelected?o?o.p(t,n):(o=$o(t),o.c(),o.m(l.parentNode,l)):o&&(o.d(1),o=null)},d(e){e&&S(n),o&&o.d(e),e&&S(l)}}}function Mo(e,t){let n,l,o,i,r=[],a=new Map,s=[],c=new Map,u=[],d=new Map,p=t[112].filters.Dropdown||[];const f=e=>e[112].filterSelectionName+e[121].filName||{};for(let e=0;e<p.length;e+=1){let n=no(t,p,e),l=f(n);a.set(l,r[e]=So(l,n))}let m=t[112].filters.Checkbox||[];const h=e=>e[112].filterSelectionName+e[118].filName||{};for(let e=0;e<m.length;e+=1){let n=to(t,m,e),l=h(n);c.set(l,s[e]=No(l,n))}let y=t[112].filters["Input Number"]||[];const w=e=>e[112].filterSelectionName+e[115].filName||{};for(let e=0;e<y.length;e+=1){let n=eo(t,y,e),l=w(n);d.set(l,u[e]=Lo(l,n))}return{key:e,first:null,c(){n=L();for(let e=0;e<r.length;e+=1)r[e].c();l=$();for(let e=0;e<s.length;e+=1)s[e].c();o=$();for(let e=0;e<u.length;e+=1)u[e].c();i=L(),this.first=n},m(e,t){x(e,n,t);for(let n=0;n<r.length;n+=1)r[n]&&r[n].m(e,t);x(e,l,t);for(let n=0;n<s.length;n+=1)s[n]&&s[n].m(e,t);x(e,o,t);for(let n=0;n<u.length;n+=1)u[n]&&u[n].m(e,t);x(e,i,t)},p(e,n){t=e,29360414&n[0]&&(p=t[112].filters.Dropdown||[],r=we(r,n,f,1,t,p,a,l.parentNode,he,So,l,no)),33571074&n[0]|32&n[1]&&(m=t[112].filters.Checkbox||[],s=we(s,n,h,1,t,m,c,o.parentNode,he,No,o,to)),67633410&n[0]&&(y=t[112].filters["Input Number"]||[],u=we(u,n,w,1,t,y,d,i.parentNode,he,Lo,i,eo))},d(e){e&&S(n);for(let t=0;t<r.length;t+=1)r[t].d(e);e&&S(l);for(let t=0;t<s.length;t+=1)s[t].d(e);e&&S(o);for(let t=0;t<u.length;t+=1)u[t].d(e);e&&S(i)}}}function Co(t){let n,l,i;return{c(){n=T("div"),n.innerHTML='<svg viewBox="0 0 512 512" class="svelte-1d2ae4n"><path d="M367 413 100 145a192 192 0 0 0 268 268zm45-46A192 192 0 0 0 145 99l269 268zM1 256a256 256 0 1 1 512 0 256 256 0 1 1-512 0z" class="svelte-1d2ae4n"></path></svg>',I(n,"tabindex","0"),I(n,"class","empty-tagFilter svelte-1d2ae4n"),I(n,"title","Remove Filters")},m(e,o){x(e,n,o),l||(i=[M(n,"click",t[29]),M(n,"keydown",t[65])],l=!0)},p:e,d(e){e&&S(n),l=!1,o(i)}}}function Io(t){let n,l,i;return{c(){n=T("div"),n.innerHTML='<svg viewBox="0 0 512 512" class="svelte-1d2ae4n"><path d="M367 413 100 145a192 192 0 0 0 268 268zm45-46A192 192 0 0 0 145 99l269 268zM1 256a256 256 0 1 1 512 0 256 256 0 1 1-512 0z" class="svelte-1d2ae4n"></path></svg>',I(n,"tabindex","0"),I(n,"class","empty-tagFilter svelte-1d2ae4n"),I(n,"title","Remove Filters")},m(e,o){x(e,n,o),l||(i=[M(n,"click",t[29]),M(n,"keydown",t[66])],l=!0)},p:e,d(e){e&&S(n),l=!1,o(i)}}}function Po(e){let t,n,l=(e[109]?.optionName||"")+"";return{c(){t=T("h3"),n=N(l),I(t,"class","svelte-1d2ae4n")},m(e,l){x(e,t,l),g(t,n)},p(e,t){1024&t[0]&&l!==(l=(e[109]?.optionName||"")+"")&&P(n,l)},d(e){e&&S(t)}}}function Do(e){let t,n,l=(e[109]?.optionType+": "+e[109]?.optionName||"")+"";return{c(){t=T("h3"),n=N(l),I(t,"class","svelte-1d2ae4n")},m(e,l){x(e,t,l),g(t,n)},p(e,t){1024&t[0]&&l!==(l=(e[109]?.optionType+": "+e[109]?.optionName||"")+"")&&P(n,l)},d(e){e&&S(t)}}}function Bo(e){let t,n,l=(e[109]?.optionName+": "+e[109]?.optionValue||"")+"";return{c(){t=T("h3"),n=N(l),I(t,"class","svelte-1d2ae4n")},m(e,l){x(e,t,l),g(t,n)},p(e,t){1024&t[0]&&l!==(l=(e[109]?.optionName+": "+e[109]?.optionValue||"")+"")&&P(n,l)},d(e){e&&S(t)}}}function zo(e,t){let n,l,i,r,a,s,c,u,d;function p(e,t){return"input number"===e[109]?.filterType?Bo:e[109]?.optionType?Do:Po}let f=p(t),m=f(t);function h(...e){return t[67](t[109],...e)}function y(...e){return t[68](t[109],...e)}function w(...e){return t[69](t[109],...e)}function v(...e){return t[70](t[109],...e)}return{key:e,first:null,c(){n=T("div"),m.c(),l=$(),i=E("svg"),r=E("path"),a=$(),I(r,"d","M343 151a32 32 0 0 0-46-46L192 211 87 105a32 32 0 0 0-46 46l106 105L41 361a32 32 0 0 0 46 46l105-106 105 106a32 32 0 0 0 46-46L237 256l106-105z"),I(r,"class","svelte-1d2ae4n"),I(i,"class","removeActiveTag svelte-1d2ae4n"),I(i,"viewBox","0 0 400 512"),I(i,"tabindex","0"),I(n,"class","activeTagFilter svelte-1d2ae4n"),I(n,"tabindex","0"),B(n,"--activeTagFilterColor","included"===t[109]?.selected?"#5f9ea0":"excluded"===t[109]?.selected?"#e85d75":"#000"),this.first=n},m(e,t){var o;x(e,n,t),m.m(n,null),g(n,l),g(n,i),g(i,r),g(n,a),c=!0,u||(d=[M(i,"click",(o=h,function(e){return e.preventDefault(),o.call(this,e)})),M(i,"keydown",y),M(n,"click",w),M(n,"keydown",v)],u=!0)},p(e,o){f===(f=p(t=e))&&m?m.p(t,o):(m.d(1),m=f(t),m&&(m.c(),m.m(n,l))),1024&o[0]&&B(n,"--activeTagFilterColor","included"===t[109]?.selected?"#5f9ea0":"excluded"===t[109]?.selected?"#e85d75":"#000")},i(e){c||(s&&s.end(1),c=!0)},o(e){s=me(n,Ht,{duration:200}),c=!1},d(e){e&&S(n),m.d(),e&&s&&s.end(),u=!1,o(d)}}}function Fo(t){let n,l,i,r,a,s;return{c(){n=T("div"),l=T("div"),i=$(),r=T("div"),I(l,"tabindex","0"),I(l,"class","changeGridView svelte-1d2ae4n"),I(r,"class","sortFilter skeleton shimmer svelte-1d2ae4n"),I(n,"class","last-filter-option svelte-1d2ae4n")},m(e,o){x(e,n,o),g(n,l),g(n,i),g(n,r),a||(s=[M(l,"click",t[33]),M(l,"keydown",t[77])],a=!0)},p:e,d(e){e&&S(n),a=!1,o(s)}}}function Uo(e){let t,n,l,i,r,a,s,c,u,p,f,m,h,y,w,v,b,k,A,L,C,D,z,F,U,V,R,H,O,_,W,j,q=(e[11]||"")+"",G=[],Y=new Map,J=`${e[4]}px`,K=e[1]?.sortFilter||[];const X=e=>e[106]?.sortName||{};for(let t=0;t<K.length;t+=1){let n=Kl(e,K,t),l=X(n);Y.set(l,G[t]=Ro(l,n))}return{c(){t=T("div"),n=T("div"),l=E("svg"),i=E("path"),s=$(),c=T("div"),u=E("svg"),p=E("path"),y=$(),w=T("h2"),v=N(q),k=$(),A=T("div"),L=T("div"),C=T("div"),D=T("h2"),D.textContent="Sort By",z=$(),F=T("div"),U=N("×"),R=$(),H=T("div");for(let e=0;e<G.length;e+=1)G[e].c();I(i,"d",r=e[13]?"M183 9a32 32 0 0 0-46 0l-96 96a32 32 0 0 0 46 46l41-42v294l-41-42a32 32 0 0 0-46 46l96 96c13 12 33 12 46 0l96-96a32 32 0 0 0-46-46l-41 42V109l41 42a32 32 0 0 0 46-46L183 9z":"m407 375 96-96c12-13 12-33 0-46l-96-96a32 32 0 0 0-46 46l42 41H109l42-41a32 32 0 0 0-46-46L9 233a32 32 0 0 0 0 46l96 96a32 32 0 0 0 46-46l-42-41h294l-42 41a32 32 0 0 0 46 46z"),I(i,"class","svelte-1d2ae4n"),I(l,"viewBox",a=`0 0 ${e[13]?"312":"512"} 512`),I(l,"class","svelte-1d2ae4n"),I(n,"tabindex","0"),I(n,"class","changeGridView svelte-1d2ae4n"),I(p,"d",f="asc"===e[12]?"M183 41a32 32 0 0 0-46 0L9 169c-9 10-12 23-7 35s17 20 30 20h256a32 32 0 0 0 23-55L183 41z":"M183 471a32 32 0 0 1-46 0L9 343c-9-10-12-23-7-35s17-20 30-20h256a32 32 0 0 1 23 55L183 471z"),I(p,"class","svelte-1d2ae4n"),I(u,"viewBox",m=`0 ${"asc"===e[12]?"-":""}140 320 512`),I(u,"tabindex",h=e[6]?"":"0"),I(u,"class","svelte-1d2ae4n"),I(w,"tabindex",b=e[6]?"":"0"),I(w,"class","svelte-1d2ae4n"),I(D,"class","svelte-1d2ae4n"),I(F,"class","closing-x svelte-1d2ae4n"),I(F,"tabindex",V=e[6]&&e[3]<=425?"0":""),I(C,"class","header svelte-1d2ae4n"),I(H,"class","options svelte-1d2ae4n"),I(L,"class",O=d("options-wrap-filter-info "+(e[6]?"":"hide"))+" svelte-1d2ae4n"),I(A,"class",_=d("options-wrap "+(e[6]?"":"disable-interaction hide"))+" svelte-1d2ae4n"),B(A,"--maxFilterSelectionHeight",J),I(c,"class","sortFilter svelte-1d2ae4n"),I(t,"class","last-filter-option svelte-1d2ae4n")},m(o,r){x(o,t,r),g(t,n),g(n,l),g(l,i),g(t,s),g(t,c),g(c,u),g(u,p),g(c,y),g(c,w),g(w,v),g(c,k),g(c,A),g(A,L),g(L,C),g(C,D),g(C,z),g(C,F),g(F,U),g(L,R),g(L,H);for(let e=0;e<G.length;e+=1)G[e]&&G[e].m(H,null);W||(j=[M(n,"click",e[33]),M(n,"keydown",e[72]),M(u,"click",e[32]),M(u,"keydown",e[73]),M(w,"click",e[30]),M(w,"keydown",e[74]),M(F,"keydown",e[75]),M(F,"click",e[30])],W=!0)},p(e,t){8192&t[0]&&r!==(r=e[13]?"M183 9a32 32 0 0 0-46 0l-96 96a32 32 0 0 0 46 46l41-42v294l-41-42a32 32 0 0 0-46 46l96 96c13 12 33 12 46 0l96-96a32 32 0 0 0-46-46l-41 42V109l41 42a32 32 0 0 0 46-46L183 9z":"m407 375 96-96c12-13 12-33 0-46l-96-96a32 32 0 0 0-46 46l42 41H109l42-41a32 32 0 0 0-46-46L9 233a32 32 0 0 0 0 46l96 96a32 32 0 0 0 46-46l-42-41h294l-42 41a32 32 0 0 0 46 46z")&&I(i,"d",r),8192&t[0]&&a!==(a=`0 0 ${e[13]?"312":"512"} 512`)&&I(l,"viewBox",a),4096&t[0]&&f!==(f="asc"===e[12]?"M183 41a32 32 0 0 0-46 0L9 169c-9 10-12 23-7 35s17 20 30 20h256a32 32 0 0 0 23-55L183 41z":"M183 471a32 32 0 0 1-46 0L9 343c-9-10-12-23-7-35s17-20 30-20h256a32 32 0 0 1 23 55L183 471z")&&I(p,"d",f),4096&t[0]&&m!==(m=`0 ${"asc"===e[12]?"-":""}140 320 512`)&&I(u,"viewBox",m),64&t[0]&&h!==(h=e[6]?"":"0")&&I(u,"tabindex",h),2048&t[0]&&q!==(q=(e[11]||"")+"")&&P(v,q),64&t[0]&&b!==(b=e[6]?"":"0")&&I(w,"tabindex",b),72&t[0]&&V!==(V=e[6]&&e[3]<=425?"0":"")&&I(F,"tabindex",V),6146&t[0]|1&t[1]&&(K=e[1]?.sortFilter||[],G=we(G,t,X,1,e,K,Y,H,he,Ro,null,Kl)),64&t[0]&&O!==(O=d("options-wrap-filter-info "+(e[6]?"":"hide"))+" svelte-1d2ae4n")&&I(L,"class",O),64&t[0]&&_!==(_=d("options-wrap "+(e[6]?"":"disable-interaction hide"))+" svelte-1d2ae4n")&&I(A,"class",_),16&t[0]&&J!==(J=`${e[4]}px`)&&B(A,"--maxFilterSelectionHeight",J)},d(e){e&&S(t);for(let e=0;e<G.length;e+=1)G[e].d();W=!1,o(j)}}}function Vo(e){let t,n,l,o;return{c(){t=E("svg"),n=E("path"),I(n,"d",l="asc"===e[12]?"M183 41a32 32 0 0 0-46 0L9 169c-9 10-12 23-7 35s17 20 30 20h256a32 32 0 0 0 23-55L183 41z":"M183 471a32 32 0 0 1-46 0L9 343c-9-10-12-23-7-35s17-20 30-20h256a32 32 0 0 1 23 55L183 471z"),I(n,"class","svelte-1d2ae4n"),I(t,"viewBox",o=`0 ${"asc"===e[12]?"-180":"100"} 320 512`),I(t,"class","svelte-1d2ae4n")},m(e,l){x(e,t,l),g(t,n)},p(e,i){4096&i[0]&&l!==(l="asc"===e[12]?"M183 41a32 32 0 0 0-46 0L9 169c-9 10-12 23-7 35s17 20 30 20h256a32 32 0 0 0 23-55L183 41z":"M183 471a32 32 0 0 1-46 0L9 343c-9-10-12-23-7-35s17-20 30-20h256a32 32 0 0 1 23 55L183 471z")&&I(n,"d",l),4096&i[0]&&o!==(o=`0 ${"asc"===e[12]?"-180":"100"} 320 512`)&&I(t,"viewBox",o)},d(e){e&&S(t)}}}function Ro(e,t){let n,l,r,a,s,c,u,d=(t[106]?.sortName||"")+"",p=t[11]===t[106]?.sortName&&Vo(t);function f(...e){return t[76](t[106],...e)}return{key:e,first:null,c(){n=T("div"),l=T("h3"),r=N(d),a=$(),p&&p.c(),s=$(),I(l,"class","svelte-1d2ae4n"),I(n,"class","option svelte-1d2ae4n"),this.first=n},m(e,o){x(e,n,o),g(n,l),g(l,r),g(n,a),p&&p.m(n,null),g(n,s),c||(u=[M(n,"click",(function(){i(t[31](t[106]?.sortName))&&t[31](t[106]?.sortName).apply(this,arguments)})),M(n,"keydown",f)],c=!0)},p(e,l){t=e,2&l[0]&&d!==(d=(t[106]?.sortName||"")+"")&&P(r,d),t[11]===t[106]?.sortName?p?p.p(t,l):(p=Vo(t),p.c(),p.m(n,s)):p&&(p.d(1),p=null)},d(e){e&&S(n),p&&p.d(),c=!1,o(u)}}}function Ho(e){let t,n,l,i,r,a,s,c,p,f,m,h,y,w,v,b,k,A,N,L,C,P,z,F,U,V,R,H,O,_,W,j,q,G,Y,J,K,X,Q,Z,ee=`${e[4]}px`,te=[],ne=new Map;function le(e,t){return e[1]?ro:io}let oe=le(e),ie=oe(e),re=(e[15]||!e[17])&&ao(e),ae=e[1]&&po(e);function se(e,t){return e[1]?ho:mo}let fe=se(e),me=fe(e),he=!e[7]&&Co(e),ve=e[7]&&Io(e),ge=e[10]||[];const be=e=>e[109]?.optionName+e[109]?.optionIdx+(e[109]?.optionType??"")||{};for(let t=0;t<ge.length;t+=1){let n=Xl(e,ge,t),l=be(n);ne.set(l,te[t]=zo(l,n))}function ke(e,t){return e[1]?Uo:Fo}let xe=ke(e),Se=xe(e);const Ae=e[44].default,Te=function(e,t,n,l){if(e){const o=u(e,t,n,l);return e[0](o)}}(Ae,e,e[43],null);return{c(){t=T("main"),n=T("div"),ie.c(),l=$(),re&&re.c(),i=$(),r=T("div"),a=T("label"),a.textContent="Search Title",s=$(),c=T("input"),p=$(),f=T("div"),m=E("svg"),h=E("path"),w=$(),v=T("div"),ae&&ae.c(),k=$(),A=T("div"),N=E("svg"),L=E("path"),C=$(),P=T("div"),me.c(),F=$(),U=T("div"),he&&he.c(),V=$(),R=T("div"),ve&&ve.c(),H=$();for(let e=0;e<te.length;e+=1)te[e].c();O=$(),_=T("div"),W=E("svg"),j=E("path"),J=$(),Se.c(),K=$(),Te&&Te.c(),I(n,"class","home-status svelte-1d2ae4n"),I(a,"class","disable-interaction svelte-1d2ae4n"),I(a,"for","input-search"),I(c,"id","input-search"),I(c,"class","input-search svelte-1d2ae4n"),I(c,"type","search"),I(c,"enterkeyhint","search"),I(c,"autocomplete","off"),I(c,"placeholder","Search"),I(h,"d","M0 416c0 18 14 32 32 32h55a80 80 0 0 0 146 0h247a32 32 0 1 0 0-64H233a80 80 0 0 0-146 0H32c-18 0-32 14-32 32zm128 0a32 32 0 1 1 64 0 32 32 0 1 1-64 0zm192-160a32 32 0 1 1 64 0 32 32 0 1 1-64 0zm32-80c-33 0-61 20-73 48H32a32 32 0 1 0 0 64h247a80 80 0 0 0 146 0h55a32 32 0 1 0 0-64h-55a80 80 0 0 0-73-48zm-160-48a32 32 0 1 1 0-64 32 32 0 1 1 0 64zm73-64a80 80 0 0 0-146 0H32a32 32 0 1 0 0 64h87a80 80 0 0 0 146 0h215a32 32 0 1 0 0-64H265z"),I(h,"class","svelte-1d2ae4n"),I(m,"class","input-search-wrap-icon svelte-1d2ae4n"),I(m,"viewBox","0 0 512 512"),I(m,"tabindex",y=e[5]?"":"0"),I(v,"class",b=d("options-wrap "+(e[5]?"":"disable-interaction hide"))+" svelte-1d2ae4n"),B(v,"--maxFilterSelectionHeight",ee),I(f,"class","filterType svelte-1d2ae4n"),I(L,"d","M4 55c7-14 21-23 36-23h432c16 0 30 9 36 23s5 30-5 42L320 321v127c0 12-7 23-18 29s-23 4-33-3l-64-48c-8-6-13-16-13-26v-79L9 97a40 40 0 0 1-5-42z"),I(L,"class","svelte-1d2ae4n"),I(N,"class","showFilterOptions svelte-1d2ae4n"),I(N,"tabindex","0"),I(N,"viewBox","0 0 512 512"),I(A,"class","showFilterOptions-container svelte-1d2ae4n"),I(r,"class","input-search-wrap svelte-1d2ae4n"),I(P,"class",z=d("filters "+(e[8]?"":"disable-interaction")+(e[18]?" hasWheel":""))+" svelte-1d2ae4n"),I(P,"id","filters"),B(P,"--maxPaddingHeight",e[4]+65+"px"),I(R,"id","tagFilters"),I(R,"class","tagFilters svelte-1d2ae4n"),B(R,"max-height",e[7]?"200px":"30px"),I(j,"d",q=e[7]?"M201 137c13-12 33-12 46 0l160 160a32 32 0 0 1-46 46L224 205 87 343a32 32 0 0 1-46-46l160-160z":"M201 343c13 12 33 12 46 0l160-160a32 32 0 0 0-46-46L224 275 87 137a32 32 0 0 0-46 46l160 160z"),I(j,"class","svelte-1d2ae4n"),I(W,"class",G=d("angle-"+(e[7]?"up":"down"))+" svelte-1d2ae4n"),I(W,"viewBox","0 0 450 512"),I(_,"tabindex","0"),I(_,"class","showHideActiveFilters svelte-1d2ae4n"),I(U,"class",Y=d("activeFilters"+(e[7]?" seenMore":""))+" svelte-1d2ae4n"),I(t,"id","main-home"),I(t,"class","svelte-1d2ae4n"),B(t,"--filters-space",e[8]?"80px":"")},m(o,u){x(o,t,u),g(t,n),ie.m(n,null),g(n,l),re&&re.m(n,null),g(t,i),g(t,r),g(r,a),g(r,s),g(r,c),D(c,e[16]),g(r,p),g(r,f),g(f,m),g(m,h),g(f,w),g(f,v),ae&&ae.m(v,null),g(r,k),g(r,A),g(A,N),g(N,L),g(t,C),g(t,P),me.m(P,null),g(t,F),g(t,U),he&&he.m(U,null),g(U,V),g(U,R),ve&&ve.m(R,null),g(R,H);for(let e=0;e<te.length;e+=1)te[e]&&te[e].m(R,null);g(U,O),g(U,_),g(_,W),g(W,j),g(t,J),Se.m(t,null),g(t,K),Te&&Te.m(t,null),X=!0,Q||(Z=[M(c,"input",e[46]),M(m,"click",e[21]),M(m,"keydown",e[47]),M(N,"click",e[34]),M(N,"keydown",e[50]),M(P,"wheel",e[64]),M(_,"click",e[35]),M(_,"keydown",e[71])],Q=!0)},p(e,o){oe===(oe=le(e))&&ie?ie.p(e,o):(ie.d(1),ie=oe(e),ie&&(ie.c(),ie.m(n,l))),e[15]||!e[17]?re?(re.p(e,o),163840&o[0]&&de(re,1)):(re=ao(e),re.c(),de(re,1),re.m(n,null)):re&&(ce(),pe(re,1,1,(()=>{re=null})),ue()),65536&o[0]&&c.value!==e[16]&&D(c,e[16]),(!X||32&o[0]&&y!==(y=e[5]?"":"0"))&&I(m,"tabindex",y),e[1]?ae?ae.p(e,o):(ae=po(e),ae.c(),ae.m(v,null)):ae&&(ae.d(1),ae=null),(!X||32&o[0]&&b!==(b=d("options-wrap "+(e[5]?"":"disable-interaction hide"))+" svelte-1d2ae4n"))&&I(v,"class",b),16&o[0]&&ee!==(ee=`${e[4]}px`)&&B(v,"--maxFilterSelectionHeight",ee),fe===(fe=se(e))&&me?me.p(e,o):(me.d(1),me=fe(e),me&&(me.c(),me.m(P,null))),(!X||262400&o[0]&&z!==(z=d("filters "+(e[8]?"":"disable-interaction")+(e[18]?" hasWheel":""))+" svelte-1d2ae4n"))&&I(P,"class",z),16&o[0]&&B(P,"--maxPaddingHeight",e[4]+65+"px"),e[7]?he&&(he.d(1),he=null):he?he.p(e,o):(he=Co(e),he.c(),he.m(U,V)),e[7]?ve?ve.p(e,o):(ve=Io(e),ve.c(),ve.m(R,H)):ve&&(ve.d(1),ve=null),402654208&o[0]&&(ge=e[10]||[],ce(),te=we(te,o,be,1,e,ge,ne,R,ye,zo,null,Xl),ue()),128&o[0]&&B(R,"max-height",e[7]?"200px":"30px"),(!X||128&o[0]&&q!==(q=e[7]?"M201 137c13-12 33-12 46 0l160 160a32 32 0 0 1-46 46L224 205 87 343a32 32 0 0 1-46-46l160-160z":"M201 343c13 12 33 12 46 0l160-160a32 32 0 0 0-46-46L224 275 87 137a32 32 0 0 0-46 46l160 160z"))&&I(j,"d",q),(!X||128&o[0]&&G!==(G=d("angle-"+(e[7]?"up":"down"))+" svelte-1d2ae4n"))&&I(W,"class",G),(!X||128&o[0]&&Y!==(Y=d("activeFilters"+(e[7]?" seenMore":""))+" svelte-1d2ae4n"))&&I(U,"class",Y),xe===(xe=ke(e))&&Se?Se.p(e,o):(Se.d(1),Se=xe(e),Se&&(Se.c(),Se.m(t,K))),Te&&Te.p&&(!X||4096&o[1])&&function(e,t,n,l,o,i){if(o){const r=u(t,n,l,i);e.p(r,o)}}(Te,Ae,e,e[43],X?function(e,t,n,l){if(e[2]&&l){const o=e[2](l(n));if(void 0===t.dirty)return o;if("object"==typeof o){const e=[],n=Math.max(t.dirty.length,o.length);for(let l=0;l<n;l+=1)e[l]=t.dirty[l]|o[l];return e}return t.dirty|o}return t.dirty}(Ae,e[43],o,null):function(e){if(e.ctx.length>32){const t=[],n=e.ctx.length/32;for(let e=0;e<n;e++)t[e]=-1;return t}return-1}(e[43]),null),256&o[0]&&B(t,"--filters-space",e[8]?"80px":"")},i(e){if(!X){de(re);for(let e=0;e<ge.length;e+=1)de(te[e]);de(Te,e),X=!0}},o(e){pe(re);for(let e=0;e<te.length;e+=1)pe(te[e]);pe(Te,e),X=!1},d(e){e&&S(t),ie.d(),re&&re.d(),ae&&ae.d(),me.d(),he&&he.d(),ve&&ve.d();for(let e=0;e<te.length;e+=1)te[e].d();Se.d(),Te&&Te.d(e),Q=!1,o(Z)}}}function Oo(e,t){if("string"==typeof e&&"string"==typeof t)return e.toLowerCase().includes(t.trim().toLowerCase())}const _o=()=>{},Wo=()=>{};function jo(e,t,n){let l,o,i,r,a,s,u,d,f,m,h,y,w,v,g,b;c(e,Oe,(e=>n(40,o=e))),c(e,dt,(e=>n(41,i=e))),c(e,gt,(e=>n(86,r=e))),c(e,Ye,(e=>n(1,a=e))),c(e,Xe,(e=>n(87,s=e))),c(e,Ke,(e=>n(88,u=e))),c(e,mt,(e=>n(89,d=e))),c(e,ut,(e=>n(14,f=e))),c(e,Je,(e=>n(42,m=e))),c(e,Qe,(e=>n(15,h=e))),c(e,Ge,(e=>n(90,y=e))),c(e,vt,(e=>n(16,w=e))),c(e,Ze,(e=>n(91,v=e))),c(e,qe,(e=>n(17,g=e))),c(e,je,(e=>n(18,b=e)));let k,x,S,A,T,E,N,$,L,M,C,I,P,D,B,{$$slots:z={},$$scope:F}=t,U=!0,V=Math.max(window.visualViewport.width,window.innerWidth),R=Math.max(window.visualViewport.height,window.innerHeight),H=.3*R,O=!1,_=!1,W=["Algorithm Filter"],q=["sort","Anime Filter","Content Caution"],G=["weighted score","score","average score","user score","popularity"],Y=!1,J=!1;async function K(e){f||(W.includes(e)?(Y=!0,p(Qe,h="Updating List",h),async function(){await Qn(!0,"shouldProcessRecommendation"),Cn({filterOptions:a,activeTagFilters:m}).then((async()=>{await Qn(!1,"shouldProcessRecommendation"),Ut.update((e=>!e)),X()})).catch((e=>{throw X(),e}))}()):q.includes(e)?(J=!0,p(Qe,h="Updating List",h),X()):J||Y||v||(await Qn(a,"filterOptions"),await Qn(m,"activeTagFilters")))}function X(){s&&(s.terminate(),p(Xe,s=null,s)),$n({filterOptions:a,activeTagFilters:m}).then((async e=>{Y=J=!1,p(Xe,s=e.animeLoaderWorker,s),p(vt,w="",w),e?.isNew&&(p(Ke,u=e.finalAnimeList,u),p(Ge,y=e.hiddenEntries,y)),p(Qe,h=null,h)})).catch((e=>{throw e}))}async function Q(){let e=document.getElementById("tagFilters");await Z(),e instanceof Element&&(e.scrollTop=0)}function ee(){R=Math.max(window.visualViewport.height,window.innerHeight),n(4,H=.3*R),n(3,V=Math.max(window.visualViewport.width,window.innerWidth))}async function te(e){if(f)return ke();let t=L,l=a?.filterSelection?.[t].filterSelectionName;if(l!==e){n(6,S=!1),u?.length>36&&!i&&await be(),a?.filterSelection?.[t].filters.Dropdown.forEach((e=>{e.selected=!1})),p(Ye,a.filterSelection[t]=a?.filterSelection?.[t],a),x=null,p(Ye,a.filterSelection[t].isSelected=!1,a);let l=a?.filterSelection?.findIndex((({filterSelectionName:t})=>t===e));p(Ye,a.filterSelection[l].isSelected=!0,a),async function(){let e=document.getElementById("filters");await Z(),e instanceof Element&&(e.scrollLeft=0)}(),Q(),K()}A instanceof Element&&A.closest(".filterType")&&(Fe(A,"highlight"),A=null),n(5,k=!1)}function ne(e){if(f&&(a?.filterSelection?.length??0)<1)return ke();let t=e.target,l=t.classList,o=t.closest(".filterType"),i=t.closest(".options-wrap");!l.contains("filterType")&&!o||k?i&&!l.contains("closing-x")||l.contains("options-wrap")||(A instanceof Element&&A.closest(".filterType")&&(Fe(A,"highlight"),A=null),n(5,k=!1)):n(5,k=!0)}function le(){T&&clearTimeout(T),E=!0,T=setTimeout((()=>{E=!1}),300)}function oe(e,t){if(E&&"mouse"===e.pointerType)return;let l=e.target.closest(".filter-select");if(l===x)return;let o=L;if(x instanceof Element){let e=Array.from(x.parentElement.children).filter((e=>!e.classList.contains("disable-interaction"))).indexOf(x);a.filterSelection[o].filters.Dropdown[e]&&p(Ye,a.filterSelection[o].filters.Dropdown[e].selected=!1,a)}U&&n(2,U=!1),A instanceof Element&&A.closest(".filter-select")&&(Fe(A,"highlight"),A=null),p(Ye,a.filterSelection[o].filters.Dropdown[t].selected=!0,a),x=l}function ie(e){let t=L;p(Ye,a.filterSelection[t].filters.Dropdown[e].selected=!1,a),A instanceof Element&&A.closest(".filter-select")&&(Fe(A,"highlight"),A=null),x=null}async function re(e){if(a?.filterSelection?.length<1||!a)return;let t=e.target,l=t.classList;if(l.contains("options-wrap")&&"fixed"===getComputedStyle(t).position){A instanceof Element&&(Fe(A,"highlight"),A=null),n(5,k=!1),n(6,S=!1);let e=L;a?.filterSelection?.[e].filters.Dropdown.forEach((e=>{e.selected=!1})),p(Ye,a.filterSelection[e]=a?.filterSelection?.[e],a),x=null}else if(!l.contains("options-wrap")&&!t.closest(".options-wrap")){let e=t.closest(".filterType");l.contains("filterType")||e||(A instanceof Element&&A.closest(".filterType")&&(Fe(A,"highlight"),A=null),n(5,k=!1));let o=t.closest(".sortFilter");l.contains("sortFilter")||o||(A instanceof Element&&A.closest(".sortFilter")&&(Fe(A,"highlight"),A=null),n(6,S=!1));let i=t.closest(".select"),r=t.closest(".angle-down");if(!(l.contains("select")||l.contains("angle-down")||r||i)){A instanceof Element&&A.closest(".filter-select")&&(Fe(A,"highlight"),A=null);let e=L;a?.filterSelection?.[e].filters.Dropdown.forEach((e=>{e.selected=!1})),p(Ye,a.filterSelection[e]=a?.filterSelection?.[e],a),x=null}}}function ae(e,t,n,l,o,i){if(f)return ke();let r=L,s=a?.filterSelection?.[r].filterSelectionName,c=a?.filterSelection?.[r].filters.Dropdown[l].options[n].selected;if("none"===c||!0===c){p(Ye,a.filterSelection[r].filters.Dropdown[l].options[n].selected="included",a);let i=!1;p(Je,m[s]=m[s].map((l=>(l.optionName+l.optionIdx+l.optionType===e+n+t&&(i=!0,l.selected="included"),l))),m),i||(m[s].unshift({optionName:e,optionType:t,optionIdx:n,categIdx:l,selected:"included",changeType:o,filterType:"dropdown"}),Je.set(m))}else"included"===c&&"write"===o?(p(Ye,a.filterSelection[r].filters.Dropdown[l].options[n].selected="excluded",a),p(Je,m[s]=m[s].map((o=>(o.optionIdx===n&&o.optionName===e&&"dropdown"===o.filterType&&o.categIdx===l&&"included"===o.selected&&o.optionType===t&&(o.selected="excluded"),o))),m)):(p(Ye,a.filterSelection[r].filters.Dropdown[l].options[n].selected="none",a),p(Je,m[s]=m[s].filter((o=>!(o.optionIdx===n&&o.optionName===e&&"dropdown"===o.filterType&&o.categIdx===l&&o.optionType===t))),m));K(i)}function se(e,t,n,l){let o=e.target.classList,i=e.which||e.keyCode||0;if(o.contains("checkbox")&&"click"===e.type||o.contains("checkbox")&&13!==i&&"keydown"===e.type||E&&"mouse"===e.pointerType)return;if(f)return void(o.contains("checkbox")||ke());let r=L,s=a?.filterSelection?.[r].filterSelectionName,c=a?.filterSelection?.[r].filters.Checkbox[n].isSelected;if(c)p(Je,m[s]=m[s].filter((e=>!(e.optionIdx===n&&e.optionName===t&&"checkbox"===e.filterType&&"included"===e.selected))),m);else{let e=!1;p(Je,m[s]=m[s].map((l=>(l.optionName+l.optionIdx===t+n&&(e=!0,l.selected="included"),l))),m),e||(m[s].unshift({optionName:t,optionIdx:n,filterType:"checkbox",selected:"included",changeType:"read"}),Je.set(m))}p(Ye,a.filterSelection[r].filters.Checkbox[n].isSelected=!a?.filterSelection?.[r].filters.Checkbox[n].isSelected,a),K(l)}function ce(e,t,n,l,o,i,r){if(f)return ke();let s=L,c=a?.filterSelection?.[s].filterSelectionName,u=a?.filterSelection?.[s].filters["Input Number"][n].numberValue;if(G.includes(l)&&/^(>=|<=|<|>).*($)/.test(t)){let d=t.split(/(<=|>=|<|>)/).filter((e=>e));if(t!==u&&d.length<=2){let f,h,y=t.split(/(<=|>=|<|>)/).filter((e=>e));if(d[0].includes(">")||d[0].includes("<")?(f=d[0],h=d[1]):(f=d[1],h=d[0]),y[0].includes(">")||y[0].includes("<")?(y[0],y[1]):(y[1],y[0]),t!==u&&(!isNaN(h)&&(parseFloat(h)>=i||"number"!=typeof i)&&(parseFloat(h)<=o||"number"!=typeof o)||!h)){let e=!1;if(h){let o=!1;p(Je,m[c]=m[c].map((i=>(i.optionName+i.optionIdx===l+n&&(e="none"!==i.selected,o=!0,i.optionValue=t,i.CMPoperator=f,i.CMPNumber=h),i))),m),o||(e=!0,m[c].unshift({optionName:l,optionValue:t,CMPoperator:f,CMPNumber:h,optionIdx:n,filterType:"input number",selected:"included",changeType:"read"}),Je.set(m))}else e=!0,p(Je,m[c]=m[c].filter((e=>!(e.optionIdx===n&&e.optionName===l&&"input number"===e.filterType))),m);p(Ye,a.filterSelection[s].filters["Input Number"][n].numberValue=t,a),e&&K(r)}else Ie(e.target,u)}else Ie(e.target,u)}else if(t!==u&&(!isNaN(t)&&(parseFloat(t)>=i||"number"!=typeof i)&&(parseFloat(t)<=o||"number"!=typeof o)||""===t)){let e=!1;if(""===t)e=!0,p(Je,m[c]=m[c].filter((e=>!(e.optionIdx===n&&e.optionName===l&&e.optionValue===u&&"input number"===e.filterType))),m);else{let o=!1;p(Je,m[c]=m[c].map((i=>(i.optionName+i.optionIdx===l+n&&(e="none"!==i.selected,o=!0,i.optionValue=t),i))),m),o||(e=!0,m[c].unshift({optionName:l,optionValue:t,optionIdx:n,filterType:"input number",selected:"included",changeType:"read"}),Je.set(m))}p(Ye,a.filterSelection[s].filters["Input Number"][n].numberValue=t,a),e&&K(r)}else Ie(e.target,u)}function ue(e,t,n,l,o,i,r,s){if(f)return ke();let c=e?.target,u=c?.classList;if(u?.contains?.("removeActiveTag")||c?.closest?.(".removeActiveTag"))return;let d=L,h=a?.filterSelection?.[d].filterSelectionName;if("input number"===l){let e=m[h].findIndex((e=>e.optionName===n&&e.optionValue===s&&e.optionIdx===t&&"input number"===e.filterType));if(e>=0){let t=m[h][e].selected;"included"===t?p(Je,m[h][e].selected="none",m):null!=t&&p(Je,m[h][e].selected="included",m)}}else if("checkbox"===l){let e=m[h].findIndex((e=>e.optionIdx===t&&e.optionName===n&&e.filterType===l)),o=m?.[h]?.[e]?.selected;"included"===o?(p(Je,m[h][e].selected="none",m),p(Ye,a.filterSelection[d].filters.Checkbox[t].isSelected=!1,a)):null!=o&&(p(Je,m[h][e].selected="included",m),p(Ye,a.filterSelection[d].filters.Checkbox[t].isSelected=!0,a))}else if("dropdown"===l){let e=a?.filterSelection?.[d].filters.Dropdown[o].options[t].selected;"included"===e&&"write"===i?(p(Ye,a.filterSelection[d].filters.Dropdown[o].options[t].selected="excluded",a),p(Je,m[h]=m[h].map((e=>(e.optionIdx!==t||e.optionName!==n||"included"!==e.selected||e.optionType&&e.optionType!==r||(e.selected="excluded"),e))),m)):"none"===e?(p(Ye,a.filterSelection[d].filters.Dropdown[o].options[t].selected="included",a),p(Je,m[h]=m[h].map((e=>(e.optionIdx!==t||e.optionName!==n||"none"!==e.selected||e.optionType&&e.optionType!==r||(e.selected="included"),e))),m)):(p(Ye,a.filterSelection[d].filters.Dropdown[o].options[t].selected="none",a),p(Je,m[h]=m[h].map((e=>(e.optionIdx!==t||e.optionName!==n||e.optionType&&e.optionType!==r||(e.selected="none"),e))),m))}K(h)}function de(e,t,n,l,o,i){if(f)return ke();let r=L,s=a?.filterSelection?.[r].filterSelectionName;p(Ye,"checkbox"===l?a.filterSelection[r].filters.Checkbox[t].isSelected=!1:"input number"===l?a.filterSelection[r].filters["Input Number"][t].numberValue="":a.filterSelection[r].filters.Dropdown[o].options[t].selected="none",a),p(Je,m[s]=m[s].filter((e=>!(e.optionName===n&&e.optionIdx===t&&e.filterType===l&&(!e.optionType||e.optionType===i)))),m),K(s)}async function pe(e){if(f)return ke();let t=L,n=a?.filterSelection?.[t].filterSelectionName,l=m?.[n]?.length;l&&await r("Do you want to remove all filters?")&&(a?.filterSelection?.[t].filters["Input Number"].forEach((e=>{e.numberValue=""})),a?.filterSelection?.[t].filters.Checkbox.forEach((e=>{e.isSelected=!1})),a?.filterSelection?.[t].filters.Dropdown.forEach((({options:e},n)=>{e.forEach((({selected:e},l)=>{p(Ye,a.filterSelection[t].filters.Dropdown[n].options[l].selected="none",a)}))})),p(Ye,a.filterSelection[t]=a?.filterSelection?.[t],a),p(Je,m[n]=[],m),K(n))}function fe(e){let t=e.target,l=t.classList,o=t.closest(".sortFilter"),i=t.closest(".options-wrap");!l.contains("sortFilter")&&!o||S?i&&!l.contains("closing-x")||l.contains("options-wrap")||(A instanceof Element&&A.closest(".sortFilter")&&(Fe(A,"highlight"),A=null),n(6,S=!1)):n(6,S=!0)}function me(e){if(f)return ke();let t=C,l=a?.sortFilter?.[t],o=l?.sortName,i=l?.sortType;if(o===e){let e="desc"===i?"asc":"desc";p(Ye,a.sortFilter[t].sortType=e,a)}else if(o!==e){p(Ye,a.sortFilter[t].sortType="none",a);let n=a?.sortFilter?.findIndex((({sortName:t})=>t===e));p(Ye,a.sortFilter[n].sortType="desc",a)}K("sort"),A instanceof Element&&A.closest(".sortFilter")&&(Fe(A,"highlight"),A=null),n(6,S=!1)}function he(){if(f)return ke();let e=C,t=a?.sortFilter?.[e]?.sortType;p(Ye,a.sortFilter[e].sortType="desc"===t?"asc":"desc",a),K("sort")}function ye(e){let t=e.which||e.keyCode||0;if(38==t||40==t){var l=Array.from(document.getElementsByClassName("options-wrap")||[]).find((e=>!e.classList.contains("disable-interaction")));if(l?.closest?.(".filterType")||l?.closest?.(".sortFilter")||l?.closest?.(".filter-select"))if(e.preventDefault(),A instanceof Element&&A?.closest?.(".options")?.children?.length){let e,n,l,o,i=A.closest(".options"),r=Array.from(i.querySelectorAll(".option")),a=r.indexOf(A);for(let i=0;i<r.length;i++)if(!r[i].classList.contains("disable-interaction"))if(38===t){if(o=r[i],i<a)n=r[i];else if(n){e=n;break}}else if(l||(l=r[i]),i>a){e=r[i];break}let s=!1;e instanceof Element||(l instanceof Element?(e=l,s=!0):o instanceof Element&&(e=o,s=!0)),e instanceof Element&&(Fe(A,"highlight"),A=e,ze(A,"highlight"),A.scrollIntoView({behavior:s?"auto":"smooth",container:i,block:"center",inline:"nearest"}))}else{let e=l.querySelectorAll(".option:not(.disable-interaction)");A=e[0],A instanceof Element&&(ze(A,"highlight"),A.scrollIntoView({behavior:"smooth",container:parent,block:"center",inline:"nearest"}))}}else if(13===t){if(A instanceof Element){let e=new KeyboardEvent("keydown",{key:"Enter"});A.dispatchEvent(e)}}else{l=Array.from(document.getElementsByClassName("options-wrap")||[]).find((e=>!e.classList.contains("disable-interaction")));if(l?.closest?.(".filter-select")&&9!==t||l instanceof Element&&"fixed"===getComputedStyle(l).position)return;let e=L;n(5,k=null),n(6,S=null),a?.filterSelection?.length>0&&(a?.filterSelection?.[e].filters.Dropdown.forEach((e=>{e.selected=!1})),p(Ye,a.filterSelection[e]=a?.filterSelection?.[e],a)),x=null,A instanceof Element&&(Fe(A,"highlight"),A=null)}}async function we(){p(dt,i=!i,i),_n(i,"gridFullView")}async function ve(e=null){u?.length>36&&!i&&await be(),n(8,_="boolean"==typeof e?e:!_)}async function ge(e=null){u?.length>36&&!i&&await be(),n(7,O="boolean"==typeof e?e:!O),Q()}function be(){return new Promise((e=>{s instanceof Worker&&d().then((()=>{p(Ke,u=null,u),s?.postMessage?.({reload:!0})})).catch((()=>{r({isAlert:!0,title:"Something went wrong",text:"Action failed, please try again."})})),B={resolve:e}}))}function ke(){r({isAlert:!0,title:"Initializing resources",text:"Please wait a moment..."})}Ct.subscribe((e=>{"boolean"==typeof e&&B?.resolve?.()})),window.checkOpenDropdown=()=>(x||k||S)&&Math.max(window.visualViewport.width,window.innerWidth)<=425,window.closeDropdown=function(){A instanceof Element&&(Fe(A,"highlight"),A=null),n(5,k=!1),n(6,S=!1);let e=L;a?.filterSelection?.[e].filters.Dropdown.forEach((e=>{e.selected=!1})),p(Ye,a.filterSelection[e]=a?.filterSelection?.[e],a),x=null},j((()=>{let e=document.getElementById("filters");e.addEventListener("scroll",le,{passive:!0}),Pe(e,"x",(e=>{let t=e?.target;return x&&(t?.classList?.contains?.("options-wrap")||t?.closest?.(".options-wrap"))})),document.addEventListener("keydown",ye),window.addEventListener("resize",ee),window.addEventListener("click",re)}));let xe=V>750&&R>695;return e.$$set=e=>{"$$scope"in e&&n(43,F=e.$$scope)},e.$$.update=()=>{2&e.$$.dirty[0]&&n(37,L=a?.filterSelection?.findIndex((({isSelected:e})=>e))),2&e.$$.dirty[0]|64&e.$$.dirty[1]&&n(0,M=a?.filterSelection?.[L]?.filterSelectionName),1&e.$$.dirty[0]|2048&e.$$.dirty[1]&&n(10,$=m?.[M]||[]),2&e.$$.dirty[0]&&n(38,C=a?.sortFilter?.findIndex((({sortType:e})=>"none"!==e))),2&e.$$.dirty[0]|128&e.$$.dirty[1]&&n(39,I=a?.sortFilter?.[C]),256&e.$$.dirty[1]&&n(11,P=I?.sortName),256&e.$$.dirty[1]&&n(12,D=I?.sortType),1536&e.$$.dirty[1]&&n(13,l=i??Ve("gridFullView")??(!o&&xe))},[M,a,U,V,H,k,S,O,_,N,$,P,D,l,f,h,w,g,b,G,te,ne,oe,ie,ae,se,ce,ue,de,pe,fe,me,he,we,ve,ge,ke,L,C,I,o,i,m,F,z,(e,{optionName:t})=>Oo(t,e?.optKeyword)||""===e?.optKeyword,function(){w=this.value,vt.set(w)},e=>"Enter"===e.key&&ne(e),e=>"Enter"===e.key&&ne(e),(e,t)=>"Enter"===t.key&&te(e?.filterSelectionName),e=>"Enter"===e.key&&ve(e),function(e,t){a.filterSelection[e].filters.Dropdown[t].optKeyword=this.value,Ye.set(a)},(e,t)=>"Enter"===t.key&&ie(e),(e,t)=>("Enter"===t.key||"ArrowDown"===t.key||"ArrowUp"===t.key)&&oe(t,e),(e,t)=>{oe(t,e)},(e,t)=>"Enter"===t.key&&ie(e),function(e,t){a.filterSelection[e].filters.Dropdown[t].optKeyword=this.value,Ye.set(a)},(e,t,n,l,o,i)=>"Enter"===i.key&&ae(e.optionName,t.filName,n,l,t.changeType,o.filterSelectionName),e=>{e.target.checked=!1,ke()},(e,t,n,l)=>se(l,e.filName,t,n.filterSelectionName),function(e,t){e[t].isSelected=this.checked},(e,t,n,l)=>se(l,e.filName,t,n.filterSelectionName),(e,t,n,l)=>"Enter"===l.key&&se(l,e.filName,t,n.filterSelectionName),(e,t,n,l)=>ce(l,l.target.value,e,t.filName,t.maxValue,t.minValue,n.filterSelectionName),e=>{if(function(e,t){let n=e.target;n.classList.contains(t)||(n=n.closest("."+t)),n.scrollWidth<=n.clientWidth||0!==e.deltaY&&0===e.deltaX&&(e.preventDefault(),e.stopPropagation(),n.scrollLeft=Math.max(0,n.scrollLeft+e.deltaY))}(e,"filters"),l&&!N&&e.deltaY<0){n(9,N=!0);let e=0;document.documentElement.scrollTop=e,n(9,N=!1)}},e=>"Enter"===e.key&&pe(),e=>"Enter"===e.key&&pe(),(e,t)=>de(0,e?.optionIdx,e?.optionName,e?.filterType,e?.categIdx,e?.optionType),(e,t)=>"Enter"===t.key&&de(0,e?.optionIdx,e?.optionName,e?.filterType,e?.categIdx,e?.optionType),(e,t)=>ue(t,e?.optionIdx,e?.optionName,e?.filterType,e?.categIdx,e?.changeType,e?.optionType,e?.optionValue),(e,t)=>"Enter"===t.key&&ue(t,e?.optionIdx,e?.optionName,e?.filterType,e?.categIdx,e?.changeType,e?.optionType,e?.optionValue),e=>"Enter"===e.key&&ge(),e=>"Enter"===e.key&&we(),e=>"Enter"===e.key&&he(),e=>"Enter"===e.key&&fe(e),e=>"Enter"===e.key&&fe(e),(e,t)=>"Enter"===t.key&&me(e?.sortName),e=>"Enter"===e.key&&we()]}function qo(e){let t,n,l,i,r,a,s,c,u,d,p,f,m,h,y,w,v,b=!e[1]&&Go(e);return{c(){t=T("div"),n=T("div"),l=T("div"),i=T("div"),r=T("h2"),a=N(e[2]),s=$(),c=T("h2"),u=$(),d=T("div"),b&&b.c(),p=$(),f=T("button"),m=N(e[4]),I(r,"class","confirm-title svelte-iuqa3i"),I(c,"class","confirm-text svelte-iuqa3i"),I(i,"class","confirm-info-container svelte-iuqa3i"),I(f,"class","button svelte-iuqa3i"),I(d,"class","confirm-button-container svelte-iuqa3i"),I(l,"class","confirm-container svelte-iuqa3i"),I(n,"class","confirm-wrapper svelte-iuqa3i"),I(t,"class","confirm svelte-iuqa3i")},m(o,h){x(o,t,h),g(t,n),g(n,l),g(l,i),g(i,r),g(r,a),g(i,s),g(i,c),c.innerHTML=e[3],g(l,u),g(l,d),b&&b.m(d,null),g(d,p),g(d,f),g(f,m),e[11](f),y=!0,w||(v=[M(f,"click",e[7]),M(f,"keydown",e[12]),M(t,"click",e[9]),M(t,"touchend",e[9],{passive:!0}),M(t,"keydown",e[13])],w=!0)},p(e,t){(!y||4&t)&&P(a,e[2]),(!y||8&t)&&(c.innerHTML=e[3]),e[1]?b&&(b.d(1),b=null):b?b.p(e,t):(b=Go(e),b.c(),b.m(d,p)),(!y||16&t)&&P(m,e[4])},i(e){y||(h&&h.end(1),y=!0)},o(e){h=me(l,Ht,{duration:200}),y=!1},d(n){n&&S(t),b&&b.d(),e[11](null),n&&h&&h.end(),w=!1,o(v)}}}function Go(e){let t,n,l,i;return{c(){t=T("button"),n=N(e[5]),I(t,"class","button svelte-iuqa3i")},m(o,r){x(o,t,r),g(t,n),l||(i=[M(t,"click",e[8]),M(t,"keydown",e[10])],l=!0)},p(e,t){32&t&&P(n,e[5])},d(e){e&&S(t),l=!1,o(i)}}}function Yo(e){let t,n,l=e[0]&&qo(e);return{c(){l&&l.c(),t=L()},m(e,o){l&&l.m(e,o),x(e,t,o),n=!0},p(e,[n]){e[0]?l?(l.p(e,n),1&n&&de(l,1)):(l=qo(e),l.c(),de(l,1),l.m(t.parentNode,t)):l&&(ce(),pe(l,1,1,(()=>{l=null})),ue())},i(e){n||(de(l),n=!0)},o(e){pe(l),n=!1},d(e){l&&l.d(e),e&&S(t)}}}function Jo(e,t,n){const l=function(){const e=W();return(t,n,{cancelable:l=!1}={})=>{const o=e.$$.callbacks[t];if(o){const i=z(t,n,{cancelable:l});return o.slice().forEach((t=>{t.call(e,i)})),!i.defaultPrevented}return!0}}();let o,i,{showConfirm:r=!1}=t,{isAlert:a=!1}=t,{confirmTitle:s="Confirmation"}=t,{confirmText:c="Do you want to continue?"}=t,{confirmLabel:u="OK"}=t,{cancelLabel:d="CANCEL"}=t,p=!1;function f(e){p&&"keydown"!==e.type||(n(0,r=!1),l("confirmed"))}function m(e){p&&"keydown"!==e.type||(n(0,r=!1),l("cancelled"))}function h(e){if(p&&"keydown"!==e.type)return;let t=e.target,n=t.classList;t.closest(".confirm-container")||n.contains("confirm-container")||m(e)}var y;y=()=>{r?(p=!0,i=setTimeout((()=>{p=!1}),200),o?.focus?.()):(i&&clearTimeout(i),p=!1)},W().$$.after_update.push(y);return e.$$set=e=>{"showConfirm"in e&&n(0,r=e.showConfirm),"isAlert"in e&&n(1,a=e.isAlert),"confirmTitle"in e&&n(2,s=e.confirmTitle),"confirmText"in e&&n(3,c=e.confirmText),"confirmLabel"in e&&n(4,u=e.confirmLabel),"cancelLabel"in e&&n(5,d=e.cancelLabel)},[r,a,s,c,u,d,o,f,m,h,e=>"Enter"===e.key&&m(e),function(e){G[e?"unshift":"push"]((()=>{o=e,n(6,o)}))},e=>"Enter"===e.key&&f(e),e=>"Enter"===e.key&&h(e)]}var Ko={Fixed:{Navigator:class extends xe{constructor(e){super(),ke(this,e,Ol,Hl,r,{},null,[-1,-1])}},Menu:class extends xe{constructor(e){super(),ke(this,e,Jl,Gl,r,{},null,[-1,-1])}}},Anime:{AnimeGrid:class extends xe{constructor(e){super(),ke(this,e,kn,yn,r,{},null,[-1,-1,-1])}},Fixed:{AnimePopup:class extends xe{constructor(e){super(),ke(this,e,zl,Cl,r,{},null,[-1,-1,-1,-1,-1])}},AnimeOptionsPopup:class extends xe{constructor(e){super(),ke(this,e,Rl,Vl,r,{},null,[-1,-1])}}}},Others:{Search:class extends xe{constructor(e){super(),ke(this,e,jo,Ho,r,{},null,[-1,-1,-1,-1,-1])}},Confirm:class extends xe{constructor(e){super(),ke(this,e,Jo,Yo,r,{showConfirm:0,isAlert:1,confirmTitle:2,confirmText:3,confirmLabel:4,cancelLabel:5})}}}},Xo="@vercel/analytics",Qo="1.0.1",Zo=()=>{window.va||(window.va=function(...e){(window.vaq=window.vaq||[]).push(e)})};function ei(e="auto"){window.vam="auto"!==e?e:function(){try{const e=process.env.NODE_ENV;if("development"===e||"test"===e)return"development"}catch(e){}return"production"}()}function ti(){return"development"===(window.vam||"production")}function ni(e={debug:!0}){var t;if("undefined"==typeof window)return;ei(e.mode),Zo(),e.beforeSend&&(null==(t=window.va)||t.call(window,"beforeSend",e.beforeSend));const n=ti()?"https://va.vercel-scripts.com/v1/script.debug.js":"/_vercel/insights/script.js";if(document.head.querySelector(`script[src*="${n}"]`))return;const l=document.createElement("script");l.src=n,l.defer=!0,l.setAttribute("data-sdkn",Xo),l.setAttribute("data-sdkv",Qo),ti()&&!1===e.debug&&l.setAttribute("data-debug","false"),document.head.appendChild(l)}function li(e){let t,n,l,o,i;return{c(){t=T("div"),I(t,"class","progress svelte-8lnr17"),B(t,"--progress","-"+(100-e[6])+"%")},m(e,n){x(e,t,n),l=!0,o||(i=M(t,"outrostart",ai),o=!0)},p(e,n){64&n[0]&&B(t,"--progress","-"+(100-e[6])+"%")},i(e){l||(n&&n.end(1),l=!0)},o(e){n=me(t,Ht,{duration:0,delay:400}),l=!1},d(e){e&&S(t),e&&n&&n.end(),o=!1,i()}}}function oi(e){let t,n;return t=new Ko.Anime.AnimeGrid({}),{c(){ve(t.$$.fragment)},m(e,l){ge(t,e,l),n=!0},i(e){n||(de(t.$$.fragment,e),n=!0)},o(e){pe(t.$$.fragment,e),n=!1},d(e){be(t,e)}}}function ii(e){let t,n,l,i,r,a,s,c,u,p;return{c(){t=T("div"),n=E("svg"),l=E("path"),r=$(),a=T("h3"),a.textContent="List Update",I(l,"d","M105 203a160 160 0 0 1 264-60l17 17h-50a32 32 0 1 0 0 64h128c18 0 32-14 32-32V64a32 32 0 1 0-64 0v51l-18-17a224 224 0 0 0-369 83 32 32 0 0 0 60 22zm-66 86a32 32 0 0 0-23 31v128a32 32 0 1 0 64 0v-51l18 17a224 224 0 0 0 369-83 32 32 0 0 0-60-22 160 160 0 0 1-264 60l-17-17h50a32 32 0 1 0 0-64H48a39 39 0 0 0-9 1z"),I(n,"class",i=d("list-update-icon"+(e[7]?" spin":""))+" svelte-8lnr17"),I(n,"viewBox","0 0 512 512"),I(a,"class","list-update-label svelte-8lnr17"),I(t,"class","list-update-container svelte-8lnr17"),I(t,"tabindex","0")},m(o,i){x(o,t,i),g(t,n),g(n,l),g(t,r),g(t,a),c=!0,u||(p=[M(t,"click",e[11]),M(t,"keydown",e[17])],u=!0)},p(e,t){(!c||128&t[0]&&i!==(i=d("list-update-icon"+(e[7]?" spin":""))+" svelte-8lnr17"))&&I(n,"class",i)},i(e){c||(s&&s.end(1),c=!0)},o(e){s=me(t,Ht,{duration:200}),c=!1},d(e){e&&S(t),e&&s&&s.end(),u=!1,o(p)}}}function ri(e){let t,n,l,o,i,r,a,s,c,u,d,p,f,m,h,y,w=e[6]>0&&e[6]<100&&li(e);l=new Ko.Fixed.Navigator({}),i=new Ko.Fixed.Menu({}),s=new Ko.Others.Search({props:{$$slots:{default:[oi]},$$scope:{ctx:e}}}),u=new Ko.Anime.Fixed.AnimePopup({}),p=new Ko.Anime.Fixed.AnimeOptionsPopup({}),m=new Ko.Others.Confirm({props:{showConfirm:e[0],isAlert:e[1],confirmTitle:e[2],confirmText:e[3],confirmLabel:e[4],cancelLabel:e[5]}}),m.$on("confirmed",e[9]),m.$on("cancelled",e[10]);let v=e[8]&&ii(e);return{c(){t=T("main"),w&&w.c(),n=$(),ve(l.$$.fragment),o=$(),ve(i.$$.fragment),r=$(),a=T("div"),ve(s.$$.fragment),c=$(),ve(u.$$.fragment),d=$(),ve(p.$$.fragment),f=$(),ve(m.$$.fragment),h=$(),v&&v.c(),I(a,"class","home svelte-8lnr17"),I(a,"id","home"),I(t,"class","svelte-8lnr17")},m(e,b){x(e,t,b),w&&w.m(t,null),g(t,n),ge(l,t,null),g(t,o),ge(i,t,null),g(t,r),g(t,a),ge(s,a,null),g(a,c),ge(u,a,null),g(t,d),ge(p,t,null),g(t,f),ge(m,t,null),g(t,h),v&&v.m(t,null),y=!0},p(e,l){e[6]>0&&e[6]<100?w?(w.p(e,l),64&l[0]&&de(w,1)):(w=li(e),w.c(),de(w,1),w.m(t,n)):w&&(ce(),pe(w,1,1,(()=>{w=null})),ue());const o={};16&l[2]&&(o.$$scope={dirty:l,ctx:e}),s.$set(o);const i={};1&l[0]&&(i.showConfirm=e[0]),2&l[0]&&(i.isAlert=e[1]),4&l[0]&&(i.confirmTitle=e[2]),8&l[0]&&(i.confirmText=e[3]),16&l[0]&&(i.confirmLabel=e[4]),32&l[0]&&(i.cancelLabel=e[5]),m.$set(i),e[8]?v?(v.p(e,l),256&l[0]&&de(v,1)):(v=ii(e),v.c(),de(v,1),v.m(t,null)):v&&(ce(),pe(v,1,1,(()=>{v=null})),ue())},i(e){y||(de(w),de(l.$$.fragment,e),de(i.$$.fragment,e),de(s.$$.fragment,e),de(u.$$.fragment,e),de(p.$$.fragment,e),de(m.$$.fragment,e),de(v),y=!0)},o(e){pe(w),pe(l.$$.fragment,e),pe(i.$$.fragment,e),pe(s.$$.fragment,e),pe(u.$$.fragment,e),pe(p.$$.fragment,e),pe(m.$$.fragment,e),pe(v),y=!1},d(e){e&&S(t),w&&w.d(),be(l),be(i),be(s),be(u),be(p),be(m),v&&v.d()}}}const ai=e=>{e.target.style.setProperty("--progress","0%")};function si(e,t,n){let l,o,i,r,a,s,u,d,f,m,h,y,w,v,g,b,k,x,S,A,T,E,N,$,L,M,C,I,P,D,B,z;c(e,It,(e=>n(14,l=e))),c(e,kt,(e=>n(15,o=e))),c(e,Oe,(e=>n(16,i=e))),c(e,gt,(e=>n(30,r=e))),c(e,Qe,(e=>n(31,a=e))),c(e,Ge,(e=>n(32,s=e))),c(e,Ke,(e=>n(33,u=e))),c(e,vt,(e=>n(34,d=e))),c(e,Xe,(e=>n(35,f=e))),c(e,Nt,(e=>n(7,m=e))),c(e,Lt,(e=>n(36,h=e))),c(e,Tt,(e=>n(37,y=e))),c(e,dt,(e=>n(38,w=e))),c(e,St,(e=>n(39,v=e))),c(e,bt,(e=>n(40,g=e))),c(e,et,(e=>n(41,b=e))),c(e,nt,(e=>n(42,k=e))),c(e,rt,(e=>n(43,x=e))),c(e,ut,(e=>n(44,S=e))),c(e,je,(e=>n(45,A=e))),c(e,tt,(e=>n(46,T=e))),c(e,it,(e=>n(47,E=e))),c(e,Mt,(e=>n(48,N=e))),c(e,at,(e=>n(49,$=e))),c(e,lt,(e=>n(50,L=e))),c(e,Et,(e=>n(8,M=e))),c(e,ct,(e=>n(51,C=e))),c(e,Ye,(e=>n(52,I=e))),c(e,Je,(e=>n(53,P=e))),c(e,qe,(e=>n(54,D=e))),c(e,ot,(e=>n(55,B=e))),c(e,He,(e=>n(56,z=e))),p(Oe,i=De(),i);let F,U,V=Math.max(window.visualViewport.width,window.innerWidth),R=Math.max(window.visualViewport.height,window.innerHeight);ni(),window.onload=()=>{function e(){dataLayer.push(arguments)}window.dataLayer=window.dataLayer||[],e("js",new Date),"https://kanshi.vercel.app"===window.location.origin?e("config","G-F5E8XNQS20"):e("config","G-PPMY92TJCE")};const H=new Function;window.onYouTubeIframeAPIReady=H;let O=[];p(Qe,a="Getting Existing Data",a);let _=setInterval((()=>{a||p(Qe,a="Please Wait...",a)}),200);function W(e=!1){e||Y()&&T?(p(et,b=!0,b),Fn().then((()=>{p(et,b=!1,b),Dn().finally((()=>{q()}))})).catch((e=>{q(),p(et,b=!1,b),p(Qe,a="Something went wrong...",a),console.error(e)}))):q()}function q(){E&&J()&&Vn()}new Promise((async e=>{if(p(He,z=await async function(){try{let e=window.location.pathname;e=e.endsWith("/")?e:e+"/",e=e.includes("/index.html")?e.replace("/index.html",""):e;let t=await fetch(`${e}version.json`,{cache:"no-store"});return(await t.json()).version||Se}catch(e){return Se}}(),z),i&&navigator.onLine)try{z&&JSBridge.checkAppID(z,!1)}catch(e){window.updateAppAlert?.()}let t=await Zn("gridFullView")??(!i&&V>750&&R>695);"boolean"==typeof t&&(Re("gridFullView",t),p(dt,w=t,w)),e()})).then((()=>{i||(async()=>{p(ot,B=await Zn("exportPathIsAvailable"),B),"boolean"==typeof B&&Re("exportPathIsAvailable",B)})(),O.push(new Promise((async(e,t)=>{let n=await Zn("lastAnimeUpdate"),l=!(n instanceof Date&&!isNaN(n));if(!l){await Zn("animeEntriesIsEmpty")&&(l=!0)}var o;l?(p(Ke,u=null,u),new Promise(((e,t)=>{jn=setInterval((()=>{Qe.set("Getting Anime Entries")}),300),We.set(0),Wt("./webapi/worker/getAnimeEntries.js").then((n=>{We.set(25),jn&&(clearInterval(jn),jn=null);let l=new Worker(n);Wn&&clearTimeout(Wn),l.postMessage(o),l.onmessage=({data:t})=>{t?.hasOwnProperty("status")?(En=!0,Qe.set(t.status)):(We.set(100),En=!1,Ft.update((e=>!e)),Wn=setTimeout((()=>{l.terminate()}),Tn),e(t))},l.onerror=e=>{We.set(100),t(e)}})).catch((e=>{We.set(100),jn&&(clearInterval(jn),jn=null),Qe.set(null),Xn(),t(e)}))})).then((()=>{e()})).catch((async()=>{t()}))):e()}))),O.push(new Promise((async e=>{let t=await Zn("username");t&&(Re("username",t),p(qe,D=t,D)),e()}))),O.push(new Promise((async e=>{Jn().then((t=>{p(Je,P=t.activeTagFilters,P),p(Ye,I=t.filterOptions,I),e()})).catch((()=>{reject()}))}))),O.push(new Promise((async e=>{let t=await Zn("autoPlay");"boolean"==typeof t&&(Re("autoPlay",t),p(ct,C=t,C)),p(lt,L=await Zn("lastRunnedAutoUpdateDate"),L),p(at,$=await Zn("lastRunnedAutoExportDate"),$),p(tt,T=await Zn("autoUpdate")??!1,T),Re("autoUpdate",T),p(it,E=await Zn("autoExport")??!1,E),Re("autoExport",E),e()}))),Promise.all(O).then((async()=>{let e=await Zn("shouldProcessRecommendation");if(!e){await Zn("recommendedAnimeListLength")<1&&(e=!0)}new Promise((async t=>{e?Cn().then((async()=>{await Qn(!1,"shouldProcessRecommendation"),t(!1)})).catch((e=>{throw e})):t(!0)})).then((e=>{$n({loadSaved:e}).then((async e=>{p(Xe,f=e.animeLoaderWorker,f),p(vt,d="",d),e?.isNew&&(p(Ke,u=e.finalAnimeList,u),p(Ge,s=e.hiddenEntries,s),p(Qe,a=null,a),W(!0),p(ut,S=!1,S))})).catch((e=>{throw e}))}))})).catch((async e=>{W(!0),p(ut,S=!1,S),p(Qe,a="Something went wrong...",a),r?.(i?{isAlert:!0,title:"Something Went Wrong",text:"App may not be working properly, you may want to restart and make sure you're running the latest version."}:{isAlert:!0,title:"Something Went Wrong",text:"App may not be working properly, you may want to refresh the page, or if not clear the cookies but backup your data first."}),console.error(e)}))})),ut.subscribe((async e=>{!1===e&&clearInterval(_)})),Ke.subscribe((async e=>{S&&e?.length>0&&!1!==S&&p(ut,S=!1,S)})),zt.subscribe((async e=>{"boolean"!=typeof e||S||(p(Et,M=!1,M),f&&(f.terminate(),p(Xe,f=null,f)),$n().then((async e=>{p(Xe,f=e.animeLoaderWorker,f),p(vt,d="",d),e?.isNew&&(p(Ke,u=e.finalAnimeList,u),p(Ge,s=e.hiddenEntries,s)),p(Qe,a=null,a)})).catch((e=>{throw e})))})),Bt.subscribe((async e=>{"boolean"!=typeof e||S||(await Qn(!0,"shouldProcessRecommendation"),p(Et,M=!1,M),Cn().then((async()=>{await Qn(!1,"shouldProcessRecommendation"),Ut.update((e=>!e)),zt.update((e=>!e))})).catch((e=>{throw zt.update((e=>!e)),e})))})),Ft.subscribe((async e=>{"boolean"!=typeof e||S||(await Qn(!0,"shouldProcessRecommendation"),Cn().then((async()=>{await Qn(!1,"shouldProcessRecommendation"),Ut.update((e=>!e)),Vt.update((e=>!e))})).catch((e=>{throw Vt.update((e=>!e)),e})))})),Vt.subscribe((async e=>{"boolean"!=typeof e||S||((v||(w?U.scrollLeft>500:document.documentElement.scrollTop>Math.max(0,U?.offsetTop-55)))&&u?.length?p(Et,M=!0,M):(f&&(f.terminate(),p(Xe,f=null,f)),$n().then((async e=>{p(Xe,f=e.animeLoaderWorker,f),p(vt,d="",d),e?.isNew&&(p(Ke,u=e.finalAnimeList,u),p(Ge,s=e.hiddenEntries,s)),p(Qe,a=null,a)})).catch((e=>{throw e}))))})),Ut.subscribe((async e=>{"boolean"!=typeof e||S||Jn()}));let G=36e5;function Y(){let e=!1;return L?L instanceof Date&&!isNaN(L)&&(new Date).getTime()-L.getTime()>G&&(e=!0):e=!0,e}function J(){let e=!1;return $?$ instanceof Date&&!isNaN($)&&(new Date).getTime()-$.getTime()>G&&(e=!0):e=!0,e}tt.subscribe((async e=>{if(!0===e)if(Qn(!0,"autoUpdate"),Y())W(),k&&clearInterval(k),p(nt,k=setInterval((()=>{T&&W()}),G),k);else{let e=G-((new Date).getTime()-L?.getTime())||0;setTimeout((()=>{!1!==T&&(W(),k&&clearInterval(k),p(nt,k=setInterval((()=>{T&&W()}),G),k))}),Math.min(e,2e9))}else!1===e&&(k&&clearInterval(k),Qn(!1,"autoUpdate"))})),Pt.subscribe((e=>{"boolean"==typeof e&&!S&&navigator.onLine&&(p(et,b=!0,b),Fn().then((()=>{p(et,b=!1,b),Dn()})).catch((e=>{p(et,b=!1,b),p(Qe,a="Something went wrong...",a),console.error(e)})))})),it.subscribe((async e=>{if(!0===e)if(Qn(!0,"autoExport"),J())W(),x&&clearInterval(x),p(rt,x=setInterval((()=>{E&&W()}),G),x);else{let e=G-((new Date).getTime()-$?.getTime())||0;setTimeout((()=>{!1!==E&&(W(),x&&clearInterval(x),p(rt,x=setInterval((()=>{E&&W()}),G),x))}),Math.min(e,2e9))}else!1===e&&(x&&clearInterval(x),Qn(!1,"autoExport"))})),Dt.subscribe((e=>{"boolean"!=typeof e||S||Vn()})),Rt.subscribe((e=>{"boolean"==typeof e&&(h||p(Lt,h=!0,h),N&&clearTimeout(N),p(Mt,N=setTimeout((()=>{p(Lt,h=!1,h)}),500),N))})),Et.subscribe((e=>{e||p(Nt,m=!1,m)})),document.addEventListener("visibilitychange",(()=>{S||i||"visible"!==document.visibilityState||(b&&(Y()||J())?(W(),E&&!x&&it.update((e=>e)),T&&!k&&tt.update((e=>e))):b||(p(et,b=!0,b),Fn({visibilityChange:!0}).then((()=>p(et,b=!1,b)))))}));let K=!1;"scrollRestoration"in window.history&&(window.history.scrollRestoration="manual");let X=()=>{p(je,A=!0,A),window.removeEventListener("wheel",X,{passive:!0})};window.addEventListener("wheel",X,{passive:!0}),window.checkEntries=()=>{S||(b&&(Y()||J())?(W(),x||it.update((e=>e)),k||tt.update((e=>e))):b||(p(et,b=!0,b),Fn({visibilityChange:!0}).then((()=>p(et,b=!1,b)))))},window.addEventListener("popstate",(()=>{window.backPressed()}));let Q,ee,te,ne,le=!1;window.backPressed=()=>{if(y&&!i)window.history.go(-1);else{if(i||window.history.pushState("visited",""),K)return de(),n(0,K=!1),void(le=!1);if(F&&F===document?.activeElement&&Math.max(window.visualViewport.width,window.innerWidth)<=750)return F?.focus?.(),F?.blur?.(),void(le=!1);if(g)return p(bt,g=!1,g),void(le=!1);if(window.checkOpenFullScreenItem?.())return window.closeFullScreenItem?.(),void(le=!1);if(v)return p(St,v=!1,v),void(le=!1);if(o)return p(kt,o=!1,o),void(le=!1);if(window.checkOpenDropdown?.())return window.closeDropdown?.(),void(le=!1);if(!le)return le=!0,void(w?(U.style.overflow="hidden",U.style.overflow="",U?.children?.[0]?.scrollIntoView?.({container:U,behavior:"smooth",block:"nearest",inline:"start"})):(!i&&matchMedia("(hover:hover)").matches||(document.documentElement.style.overflow="hidden",document.documentElement.style.overflow=""),window.scrollTo({top:-9999,behavior:"smooth"})));w?(U.style.overflow="hidden",U.scrollLeft=0,clearTimeout(Q),Q=setTimeout((()=>{U.style.overflow=""}),100)):(!i&&matchMedia("(hover:hover)").matches||(document.documentElement.style.overflow="hidden"),document.documentElement.scrollTop=0,document.body.scrollTop=0,window.scrollY=0,!i&&matchMedia("(hover:hover)").matches||(clearTimeout(Q),Q=setTimeout((()=>{document.documentElement.style.overflow=""}),100)));try{JSBridge.willExit()}catch(e){}window.setShouldGoBack(!0),le=!1}},dt.subscribe((async e=>{await Z(),e?U?.scrollLeft>500&&window.setShouldGoBack(!1):document.documentElement.scrollTop>Math.max(0,U?.offsetTop-55)&&window.setShouldGoBack(!1)})),St.subscribe((e=>{!0===e&&window.setShouldGoBack(!1)})),bt.subscribe((e=>{!0===e&&window.setShouldGoBack(!1)})),window.addEventListener("scroll",(()=>{document.documentElement.scrollTop>Math.max(0,U?.offsetTop-55)&&!le&&window.setShouldGoBack(!1),Rt.update((e=>!e))}),{passive:!0}),j((()=>{F=document.getElementById("usernameInput"),U=document.getElementById("anime-grid"),U?.addEventListener("scroll",(()=>{U.scrollLeft>Math.max(0,U?.offsetTop-55)&&!le&&window.setShouldGoBack(!1),w&&Rt.update((e=>!e))}),{passive:!0}),document.getElementById("popup-container").addEventListener("scroll",(()=>{Rt.update((e=>!e))}),{passive:!0}),n(12,V=Math.max(window.visualViewport.width,window.innerWidth)),R=Math.max(window.visualViewport.height,window.innerHeight),window.addEventListener("resize",(()=>{R=Math.max(window.visualViewport.height,window.innerHeight),n(12,V=Math.max(window.visualViewport.width,window.innerWidth))}))})),window.setShouldGoBack=e=>{if(e||(le=!1),i)try{JSBridge.setShouldGoBack(e)}catch(e){}else"visited"!==window.history.state&&window.history.pushState("visited",""),p(Tt,y=e,y)},window.copyToClipBoard=e=>{if(i)try{JSBridge.copyToClipBoard(e)}catch(e){}else navigator?.clipboard?.writeText?.(e)},$t.subscribe((()=>{clearTimeout(te),ee=!0,te=setTimeout((()=>{ee=!1}),500)}));let oe,ie,re,ae,se,ce,ue=!1;function de(){ce?.resolve?.(!1),ce=n(1,oe=n(2,ie=n(3,re=n(4,ae=n(5,se=void 0))))),n(0,K=!1)}async function pe(){await r({title:"List update is available",text:"Are you sure you want to refresh the list?"})&&(p(Nt,m=!0,m),f&&(f.terminate(),p(Xe,f=null,f)),$n().then((async e=>{p(Xe,f=e.animeLoaderWorker,f),p(vt,d="",d),e?.isNew&&(p(Ke,u=e.finalAnimeList,u),p(Ge,s=e.hiddenEntries,s)),p(Qe,a=null,a)})).catch((e=>{throw e})))}document.addEventListener("pointerdown",(e=>{if("mouse"===e.pointerType)return;let t=e.target;t.classList.contains("copy")||(t=t.closest(".copy")),t&&(ue=!0,ne&&clearTimeout(ne),ne=setTimeout((()=>{let e=t.getAttribute("copy-value");if(e&&!h&&ue&&!ee){t.style.pointerEvents="none",setTimeout((()=>{t.style.pointerEvents=""}),500);let n=t.getAttribute("copy-value-2");n&&!Ce(n,e)?i?(window.copyToClipBoard(n),window.copyToClipBoard(e)):(window.copyToClipBoard(n),setTimeout((()=>{window.copyToClipBoard(e)}),300)):window.copyToClipBoard(e)}}),500))})),document.addEventListener("pointerup",(e=>{if("mouse"===e.pointerType)return;let t=e.target;t.classList.contains("copy")||(t=t.closest(".copy")),t&&(ue=!1,ne&&clearTimeout(ne))})),document.addEventListener("pointercancel",(e=>{if("mouse"===e.pointerType)return;let t=e.target;t.classList.contains("copy")||(t=t.closest(".copy")),t&&(ue=!1,ne&&clearTimeout(ne))})),p(gt,r=window.confirmPromise=async e=>new Promise((t=>{n(1,oe=e?.isAlert||!1),n(2,ie=e?.title||(oe?"Heads Up":"Confirmation")),n(3,re=("string"==typeof e?e:e?.text)||"Are you sure you want to continue"),n(4,ae=e?.confirmLabel||"OK"),n(5,se=e?.cancelLabel||"CANCEL"),n(0,K=!0),ce={resolve:t}})),r),window.updateAppAlert=async()=>{if(await(r?.({title:"New updates are available",text:"You may want to download the new version.",confirmLabel:"DOWNLOAD"})))try{JSBridge.downloadUpdate()}catch(e){window.open("https://github.com/u-Kuro/Kanshi.Anime-Recommendation/raw/main/Kanshi.apk","_blank")}};let fe,me,he=0,ye=performance.now();We.subscribe((e=>{(e>=100||e<=0||performance.now()-ye>300)&&(cancelAnimationFrame(fe),fe=requestAnimationFrame((()=>{n(6,he=e)})),ye=performance.now())}));return e.$$.update=()=>{if(126977&e.$$.dirty[0]&&i)try{let e=o&&V>=750||K||l;clearTimeout(me),e?JSBridge.changeStatusBarColor(!0):n(13,me=setTimeout((()=>{JSBridge.changeStatusBarColor(!1)}),200))}catch(e){}},[K,oe,ie,re,ae,se,he,m,M,function(){ce?.resolve?.(!0),ce=n(1,oe=n(2,ie=n(3,re=n(4,ae=n(5,se=void 0))))),n(0,K=!1)},de,pe,V,me,l,o,i,e=>"Enter"===e.key&&pe()]}return new class extends xe{constructor(e){super(),ke(this,e,si,ri,r,{},null,[-1,-1,-1])}}({target:document.body})}();
+
+(function(l, r) { if (!l || l.getElementById('livereloadscript')) return; r = l.createElement('script'); r.async = 1; r.src = '//' + (self.location.host || 'localhost').split(':')[0] + ':35729/livereload.js?snipver=1'; r.id = 'livereloadscript'; l.getElementsByTagName('head')[0].appendChild(r) })(self.document);
+var app = (function () {
+    'use strict';
+
+    function noop() { }
+    const identity = x => x;
+    function assign(tar, src) {
+        // @ts-ignore
+        for (const k in src)
+            tar[k] = src[k];
+        return tar;
+    }
+    function add_location(element, file, line, column, char) {
+        element.__svelte_meta = {
+            loc: { file, line, column, char }
+        };
+    }
+    function run(fn) {
+        return fn();
+    }
+    function blank_object() {
+        return Object.create(null);
+    }
+    function run_all(fns) {
+        fns.forEach(run);
+    }
+    function is_function(thing) {
+        return typeof thing === 'function';
+    }
+    function safe_not_equal(a, b) {
+        return a != a ? b == b : a !== b || ((a && typeof a === 'object') || typeof a === 'function');
+    }
+    function is_empty(obj) {
+        return Object.keys(obj).length === 0;
+    }
+    function validate_store(store, name) {
+        if (store != null && typeof store.subscribe !== 'function') {
+            throw new Error(`'${name}' is not a store with a 'subscribe' method`);
+        }
+    }
+    function subscribe(store, ...callbacks) {
+        if (store == null) {
+            return noop;
+        }
+        const unsub = store.subscribe(...callbacks);
+        return unsub.unsubscribe ? () => unsub.unsubscribe() : unsub;
+    }
+    function get_store_value(store) {
+        let value;
+        subscribe(store, _ => value = _)();
+        return value;
+    }
+    function component_subscribe(component, store, callback) {
+        component.$$.on_destroy.push(subscribe(store, callback));
+    }
+    function create_slot(definition, ctx, $$scope, fn) {
+        if (definition) {
+            const slot_ctx = get_slot_context(definition, ctx, $$scope, fn);
+            return definition[0](slot_ctx);
+        }
+    }
+    function get_slot_context(definition, ctx, $$scope, fn) {
+        return definition[1] && fn
+            ? assign($$scope.ctx.slice(), definition[1](fn(ctx)))
+            : $$scope.ctx;
+    }
+    function get_slot_changes(definition, $$scope, dirty, fn) {
+        if (definition[2] && fn) {
+            const lets = definition[2](fn(dirty));
+            if ($$scope.dirty === undefined) {
+                return lets;
+            }
+            if (typeof lets === 'object') {
+                const merged = [];
+                const len = Math.max($$scope.dirty.length, lets.length);
+                for (let i = 0; i < len; i += 1) {
+                    merged[i] = $$scope.dirty[i] | lets[i];
+                }
+                return merged;
+            }
+            return $$scope.dirty | lets;
+        }
+        return $$scope.dirty;
+    }
+    function update_slot_base(slot, slot_definition, ctx, $$scope, slot_changes, get_slot_context_fn) {
+        if (slot_changes) {
+            const slot_context = get_slot_context(slot_definition, ctx, $$scope, get_slot_context_fn);
+            slot.p(slot_context, slot_changes);
+        }
+    }
+    function get_all_dirty_from_scope($$scope) {
+        if ($$scope.ctx.length > 32) {
+            const dirty = [];
+            const length = $$scope.ctx.length / 32;
+            for (let i = 0; i < length; i++) {
+                dirty[i] = -1;
+            }
+            return dirty;
+        }
+        return -1;
+    }
+    function null_to_empty(value) {
+        return value == null ? '' : value;
+    }
+    function set_store_value(store, ret, value) {
+        store.set(value);
+        return ret;
+    }
+    function action_destroyer(action_result) {
+        return action_result && is_function(action_result.destroy) ? action_result.destroy : noop;
+    }
+
+    const is_client = typeof window !== 'undefined';
+    let now = is_client
+        ? () => window.performance.now()
+        : () => Date.now();
+    let raf = is_client ? cb => requestAnimationFrame(cb) : noop;
+
+    const tasks = new Set();
+    function run_tasks(now) {
+        tasks.forEach(task => {
+            if (!task.c(now)) {
+                tasks.delete(task);
+                task.f();
+            }
+        });
+        if (tasks.size !== 0)
+            raf(run_tasks);
+    }
+    /**
+     * Creates a new task that runs on each raf frame
+     * until it returns a falsy value or is aborted
+     */
+    function loop(callback) {
+        let task;
+        if (tasks.size === 0)
+            raf(run_tasks);
+        return {
+            promise: new Promise(fulfill => {
+                tasks.add(task = { c: callback, f: fulfill });
+            }),
+            abort() {
+                tasks.delete(task);
+            }
+        };
+    }
+
+    const globals = (typeof window !== 'undefined'
+        ? window
+        : typeof globalThis !== 'undefined'
+            ? globalThis
+            : global);
+    function append(target, node) {
+        target.appendChild(node);
+    }
+    function get_root_for_style(node) {
+        if (!node)
+            return document;
+        const root = node.getRootNode ? node.getRootNode() : node.ownerDocument;
+        if (root && root.host) {
+            return root;
+        }
+        return node.ownerDocument;
+    }
+    function append_empty_stylesheet(node) {
+        const style_element = element('style');
+        append_stylesheet(get_root_for_style(node), style_element);
+        return style_element.sheet;
+    }
+    function append_stylesheet(node, style) {
+        append(node.head || node, style);
+        return style.sheet;
+    }
+    function insert(target, node, anchor) {
+        target.insertBefore(node, anchor || null);
+    }
+    function detach(node) {
+        if (node.parentNode) {
+            node.parentNode.removeChild(node);
+        }
+    }
+    function destroy_each(iterations, detaching) {
+        for (let i = 0; i < iterations.length; i += 1) {
+            if (iterations[i])
+                iterations[i].d(detaching);
+        }
+    }
+    function element(name) {
+        return document.createElement(name);
+    }
+    function svg_element(name) {
+        return document.createElementNS('http://www.w3.org/2000/svg', name);
+    }
+    function text(data) {
+        return document.createTextNode(data);
+    }
+    function space() {
+        return text(' ');
+    }
+    function empty() {
+        return text('');
+    }
+    function listen(node, event, handler, options) {
+        node.addEventListener(event, handler, options);
+        return () => node.removeEventListener(event, handler, options);
+    }
+    function prevent_default(fn) {
+        return function (event) {
+            event.preventDefault();
+            // @ts-ignore
+            return fn.call(this, event);
+        };
+    }
+    function stop_propagation(fn) {
+        return function (event) {
+            event.stopPropagation();
+            // @ts-ignore
+            return fn.call(this, event);
+        };
+    }
+    function attr(node, attribute, value) {
+        if (value == null)
+            node.removeAttribute(attribute);
+        else if (node.getAttribute(attribute) !== value)
+            node.setAttribute(attribute, value);
+    }
+    function children(element) {
+        return Array.from(element.childNodes);
+    }
+    function set_input_value(input, value) {
+        input.value = value == null ? '' : value;
+    }
+    function set_style(node, key, value, important) {
+        if (value == null) {
+            node.style.removeProperty(key);
+        }
+        else {
+            node.style.setProperty(key, value, important ? 'important' : '');
+        }
+    }
+    function custom_event(type, detail, { bubbles = false, cancelable = false } = {}) {
+        const e = document.createEvent('CustomEvent');
+        e.initCustomEvent(type, bubbles, cancelable, detail);
+        return e;
+    }
+    class HtmlTag {
+        constructor(is_svg = false) {
+            this.is_svg = false;
+            this.is_svg = is_svg;
+            this.e = this.n = null;
+        }
+        c(html) {
+            this.h(html);
+        }
+        m(html, target, anchor = null) {
+            if (!this.e) {
+                if (this.is_svg)
+                    this.e = svg_element(target.nodeName);
+                /** #7364  target for <template> may be provided as #document-fragment(11) */
+                else
+                    this.e = element((target.nodeType === 11 ? 'TEMPLATE' : target.nodeName));
+                this.t = target.tagName !== 'TEMPLATE' ? target : target.content;
+                this.c(html);
+            }
+            this.i(anchor);
+        }
+        h(html) {
+            this.e.innerHTML = html;
+            this.n = Array.from(this.e.nodeName === 'TEMPLATE' ? this.e.content.childNodes : this.e.childNodes);
+        }
+        i(anchor) {
+            for (let i = 0; i < this.n.length; i += 1) {
+                insert(this.t, this.n[i], anchor);
+            }
+        }
+        p(html) {
+            this.d();
+            this.h(html);
+            this.i(this.a);
+        }
+        d() {
+            this.n.forEach(detach);
+        }
+    }
+
+    // we need to store the information for multiple documents because a Svelte application could also contain iframes
+    // https://github.com/sveltejs/svelte/issues/3624
+    const managed_styles = new Map();
+    let active = 0;
+    // https://github.com/darkskyapp/string-hash/blob/master/index.js
+    function hash(str) {
+        let hash = 5381;
+        let i = str.length;
+        while (i--)
+            hash = ((hash << 5) - hash) ^ str.charCodeAt(i);
+        return hash >>> 0;
+    }
+    function create_style_information(doc, node) {
+        const info = { stylesheet: append_empty_stylesheet(node), rules: {} };
+        managed_styles.set(doc, info);
+        return info;
+    }
+    function create_rule(node, a, b, duration, delay, ease, fn, uid = 0) {
+        const step = 16.666 / duration;
+        let keyframes = '{\n';
+        for (let p = 0; p <= 1; p += step) {
+            const t = a + (b - a) * ease(p);
+            keyframes += p * 100 + `%{${fn(t, 1 - t)}}\n`;
+        }
+        const rule = keyframes + `100% {${fn(b, 1 - b)}}\n}`;
+        const name = `__svelte_${hash(rule)}_${uid}`;
+        const doc = get_root_for_style(node);
+        const { stylesheet, rules } = managed_styles.get(doc) || create_style_information(doc, node);
+        if (!rules[name]) {
+            rules[name] = true;
+            stylesheet.insertRule(`@keyframes ${name} ${rule}`, stylesheet.cssRules.length);
+        }
+        const animation = node.style.animation || '';
+        node.style.animation = `${animation ? `${animation}, ` : ''}${name} ${duration}ms linear ${delay}ms 1 both`;
+        active += 1;
+        return name;
+    }
+    function delete_rule(node, name) {
+        const previous = (node.style.animation || '').split(', ');
+        const next = previous.filter(name
+            ? anim => anim.indexOf(name) < 0 // remove specific animation
+            : anim => anim.indexOf('__svelte') === -1 // remove all Svelte animations
+        );
+        const deleted = previous.length - next.length;
+        if (deleted) {
+            node.style.animation = next.join(', ');
+            active -= deleted;
+            if (!active)
+                clear_rules();
+        }
+    }
+    function clear_rules() {
+        raf(() => {
+            if (active)
+                return;
+            managed_styles.forEach(info => {
+                const { ownerNode } = info.stylesheet;
+                // there is no ownerNode if it runs on jsdom.
+                if (ownerNode)
+                    detach(ownerNode);
+            });
+            managed_styles.clear();
+        });
+    }
+
+    let current_component;
+    function set_current_component(component) {
+        current_component = component;
+    }
+    function get_current_component() {
+        if (!current_component)
+            throw new Error('Function called outside component initialization');
+        return current_component;
+    }
+    /**
+     * The `onMount` function schedules a callback to run as soon as the component has been mounted to the DOM.
+     * It must be called during the component's initialisation (but doesn't need to live *inside* the component;
+     * it can be called from an external module).
+     *
+     * `onMount` does not run inside a [server-side component](/docs#run-time-server-side-component-api).
+     *
+     * https://svelte.dev/docs#run-time-svelte-onmount
+     */
+    function onMount(fn) {
+        get_current_component().$$.on_mount.push(fn);
+    }
+    /**
+     * Schedules a callback to run immediately after the component has been updated.
+     *
+     * The first time the callback runs will be after the initial `onMount`
+     */
+    function afterUpdate(fn) {
+        get_current_component().$$.after_update.push(fn);
+    }
+    /**
+     * Schedules a callback to run immediately before the component is unmounted.
+     *
+     * Out of `onMount`, `beforeUpdate`, `afterUpdate` and `onDestroy`, this is the
+     * only one that runs inside a server-side component.
+     *
+     * https://svelte.dev/docs#run-time-svelte-ondestroy
+     */
+    function onDestroy(fn) {
+        get_current_component().$$.on_destroy.push(fn);
+    }
+    /**
+     * Creates an event dispatcher that can be used to dispatch [component events](/docs#template-syntax-component-directives-on-eventname).
+     * Event dispatchers are functions that can take two arguments: `name` and `detail`.
+     *
+     * Component events created with `createEventDispatcher` create a
+     * [CustomEvent](https://developer.mozilla.org/en-US/docs/Web/API/CustomEvent).
+     * These events do not [bubble](https://developer.mozilla.org/en-US/docs/Learn/JavaScript/Building_blocks/Events#Event_bubbling_and_capture).
+     * The `detail` argument corresponds to the [CustomEvent.detail](https://developer.mozilla.org/en-US/docs/Web/API/CustomEvent/detail)
+     * property and can contain any type of data.
+     *
+     * https://svelte.dev/docs#run-time-svelte-createeventdispatcher
+     */
+    function createEventDispatcher() {
+        const component = get_current_component();
+        return (type, detail, { cancelable = false } = {}) => {
+            const callbacks = component.$$.callbacks[type];
+            if (callbacks) {
+                // TODO are there situations where events could be dispatched
+                // in a server (non-DOM) environment?
+                const event = custom_event(type, detail, { cancelable });
+                callbacks.slice().forEach(fn => {
+                    fn.call(component, event);
+                });
+                return !event.defaultPrevented;
+            }
+            return true;
+        };
+    }
+
+    const dirty_components = [];
+    const binding_callbacks = [];
+    let render_callbacks = [];
+    const flush_callbacks = [];
+    const resolved_promise = /* @__PURE__ */ Promise.resolve();
+    let update_scheduled = false;
+    function schedule_update() {
+        if (!update_scheduled) {
+            update_scheduled = true;
+            resolved_promise.then(flush);
+        }
+    }
+    function tick() {
+        schedule_update();
+        return resolved_promise;
+    }
+    function add_render_callback(fn) {
+        render_callbacks.push(fn);
+    }
+    // flush() calls callbacks in this order:
+    // 1. All beforeUpdate callbacks, in order: parents before children
+    // 2. All bind:this callbacks, in reverse order: children before parents.
+    // 3. All afterUpdate callbacks, in order: parents before children. EXCEPT
+    //    for afterUpdates called during the initial onMount, which are called in
+    //    reverse order: children before parents.
+    // Since callbacks might update component values, which could trigger another
+    // call to flush(), the following steps guard against this:
+    // 1. During beforeUpdate, any updated components will be added to the
+    //    dirty_components array and will cause a reentrant call to flush(). Because
+    //    the flush index is kept outside the function, the reentrant call will pick
+    //    up where the earlier call left off and go through all dirty components. The
+    //    current_component value is saved and restored so that the reentrant call will
+    //    not interfere with the "parent" flush() call.
+    // 2. bind:this callbacks cannot trigger new flush() calls.
+    // 3. During afterUpdate, any updated components will NOT have their afterUpdate
+    //    callback called a second time; the seen_callbacks set, outside the flush()
+    //    function, guarantees this behavior.
+    const seen_callbacks = new Set();
+    let flushidx = 0; // Do *not* move this inside the flush() function
+    function flush() {
+        // Do not reenter flush while dirty components are updated, as this can
+        // result in an infinite loop. Instead, let the inner flush handle it.
+        // Reentrancy is ok afterwards for bindings etc.
+        if (flushidx !== 0) {
+            return;
+        }
+        const saved_component = current_component;
+        do {
+            // first, call beforeUpdate functions
+            // and update components
+            try {
+                while (flushidx < dirty_components.length) {
+                    const component = dirty_components[flushidx];
+                    flushidx++;
+                    set_current_component(component);
+                    update(component.$$);
+                }
+            }
+            catch (e) {
+                // reset dirty state to not end up in a deadlocked state and then rethrow
+                dirty_components.length = 0;
+                flushidx = 0;
+                throw e;
+            }
+            set_current_component(null);
+            dirty_components.length = 0;
+            flushidx = 0;
+            while (binding_callbacks.length)
+                binding_callbacks.pop()();
+            // then, once components are updated, call
+            // afterUpdate functions. This may cause
+            // subsequent updates...
+            for (let i = 0; i < render_callbacks.length; i += 1) {
+                const callback = render_callbacks[i];
+                if (!seen_callbacks.has(callback)) {
+                    // ...so guard against infinite loops
+                    seen_callbacks.add(callback);
+                    callback();
+                }
+            }
+            render_callbacks.length = 0;
+        } while (dirty_components.length);
+        while (flush_callbacks.length) {
+            flush_callbacks.pop()();
+        }
+        update_scheduled = false;
+        seen_callbacks.clear();
+        set_current_component(saved_component);
+    }
+    function update($$) {
+        if ($$.fragment !== null) {
+            $$.update();
+            run_all($$.before_update);
+            const dirty = $$.dirty;
+            $$.dirty = [-1];
+            $$.fragment && $$.fragment.p($$.ctx, dirty);
+            $$.after_update.forEach(add_render_callback);
+        }
+    }
+    /**
+     * Useful for example to execute remaining `afterUpdate` callbacks before executing `destroy`.
+     */
+    function flush_render_callbacks(fns) {
+        const filtered = [];
+        const targets = [];
+        render_callbacks.forEach((c) => fns.indexOf(c) === -1 ? filtered.push(c) : targets.push(c));
+        targets.forEach((c) => c());
+        render_callbacks = filtered;
+    }
+
+    let promise;
+    function wait() {
+        if (!promise) {
+            promise = Promise.resolve();
+            promise.then(() => {
+                promise = null;
+            });
+        }
+        return promise;
+    }
+    function dispatch(node, direction, kind) {
+        node.dispatchEvent(custom_event(`${direction ? 'intro' : 'outro'}${kind}`));
+    }
+    const outroing = new Set();
+    let outros;
+    function group_outros() {
+        outros = {
+            r: 0,
+            c: [],
+            p: outros // parent group
+        };
+    }
+    function check_outros() {
+        if (!outros.r) {
+            run_all(outros.c);
+        }
+        outros = outros.p;
+    }
+    function transition_in(block, local) {
+        if (block && block.i) {
+            outroing.delete(block);
+            block.i(local);
+        }
+    }
+    function transition_out(block, local, detach, callback) {
+        if (block && block.o) {
+            if (outroing.has(block))
+                return;
+            outroing.add(block);
+            outros.c.push(() => {
+                outroing.delete(block);
+                if (callback) {
+                    if (detach)
+                        block.d(1);
+                    callback();
+                }
+            });
+            block.o(local);
+        }
+        else if (callback) {
+            callback();
+        }
+    }
+    const null_transition = { duration: 0 };
+    function create_out_transition(node, fn, params) {
+        const options = { direction: 'out' };
+        let config = fn(node, params, options);
+        let running = true;
+        let animation_name;
+        const group = outros;
+        group.r += 1;
+        function go() {
+            const { delay = 0, duration = 300, easing = identity, tick = noop, css } = config || null_transition;
+            if (css)
+                animation_name = create_rule(node, 1, 0, duration, delay, easing, css);
+            const start_time = now() + delay;
+            const end_time = start_time + duration;
+            add_render_callback(() => dispatch(node, false, 'start'));
+            loop(now => {
+                if (running) {
+                    if (now >= end_time) {
+                        tick(0, 1);
+                        dispatch(node, false, 'end');
+                        if (!--group.r) {
+                            // this will result in `end()` being called,
+                            // so we don't need to clean up here
+                            run_all(group.c);
+                        }
+                        return false;
+                    }
+                    if (now >= start_time) {
+                        const t = easing((now - start_time) / duration);
+                        tick(1 - t, t);
+                    }
+                }
+                return running;
+            });
+        }
+        if (is_function(config)) {
+            wait().then(() => {
+                // @ts-ignore
+                config = config(options);
+                go();
+            });
+        }
+        else {
+            go();
+        }
+        return {
+            end(reset) {
+                if (reset && config.tick) {
+                    config.tick(1, 0);
+                }
+                if (running) {
+                    if (animation_name)
+                        delete_rule(node, animation_name);
+                    running = false;
+                }
+            }
+        };
+    }
+
+    function destroy_block(block, lookup) {
+        block.d(1);
+        lookup.delete(block.key);
+    }
+    function outro_and_destroy_block(block, lookup) {
+        transition_out(block, 1, 1, () => {
+            lookup.delete(block.key);
+        });
+    }
+    function update_keyed_each(old_blocks, dirty, get_key, dynamic, ctx, list, lookup, node, destroy, create_each_block, next, get_context) {
+        let o = old_blocks.length;
+        let n = list.length;
+        let i = o;
+        const old_indexes = {};
+        while (i--)
+            old_indexes[old_blocks[i].key] = i;
+        const new_blocks = [];
+        const new_lookup = new Map();
+        const deltas = new Map();
+        const updates = [];
+        i = n;
+        while (i--) {
+            const child_ctx = get_context(ctx, list, i);
+            const key = get_key(child_ctx);
+            let block = lookup.get(key);
+            if (!block) {
+                block = create_each_block(key, child_ctx);
+                block.c();
+            }
+            else if (dynamic) {
+                // defer updates until all the DOM shuffling is done
+                updates.push(() => block.p(child_ctx, dirty));
+            }
+            new_lookup.set(key, new_blocks[i] = block);
+            if (key in old_indexes)
+                deltas.set(key, Math.abs(i - old_indexes[key]));
+        }
+        const will_move = new Set();
+        const did_move = new Set();
+        function insert(block) {
+            transition_in(block, 1);
+            block.m(node, next);
+            lookup.set(block.key, block);
+            next = block.first;
+            n--;
+        }
+        while (o && n) {
+            const new_block = new_blocks[n - 1];
+            const old_block = old_blocks[o - 1];
+            const new_key = new_block.key;
+            const old_key = old_block.key;
+            if (new_block === old_block) {
+                // do nothing
+                next = new_block.first;
+                o--;
+                n--;
+            }
+            else if (!new_lookup.has(old_key)) {
+                // remove old block
+                destroy(old_block, lookup);
+                o--;
+            }
+            else if (!lookup.has(new_key) || will_move.has(new_key)) {
+                insert(new_block);
+            }
+            else if (did_move.has(old_key)) {
+                o--;
+            }
+            else if (deltas.get(new_key) > deltas.get(old_key)) {
+                did_move.add(new_key);
+                insert(new_block);
+            }
+            else {
+                will_move.add(old_key);
+                o--;
+            }
+        }
+        while (o--) {
+            const old_block = old_blocks[o];
+            if (!new_lookup.has(old_block.key))
+                destroy(old_block, lookup);
+        }
+        while (n)
+            insert(new_blocks[n - 1]);
+        run_all(updates);
+        return new_blocks;
+    }
+    function validate_each_keys(ctx, list, get_context, get_key) {
+        const keys = new Set();
+        for (let i = 0; i < list.length; i++) {
+            const key = get_key(get_context(ctx, list, i));
+            if (keys.has(key)) {
+                console.error(keys);
+                throw new Error(`Cannot have duplicate keys in a keyed each ${JSON.stringify(key)} is a duplicate`);
+            }
+            keys.add(key);
+        }
+    }
+    function create_component(block) {
+        block && block.c();
+    }
+    function mount_component(component, target, anchor, customElement) {
+        const { fragment, after_update } = component.$$;
+        fragment && fragment.m(target, anchor);
+        if (!customElement) {
+            // onMount happens before the initial afterUpdate
+            add_render_callback(() => {
+                const new_on_destroy = component.$$.on_mount.map(run).filter(is_function);
+                // if the component was destroyed immediately
+                // it will update the `$$.on_destroy` reference to `null`.
+                // the destructured on_destroy may still reference to the old array
+                if (component.$$.on_destroy) {
+                    component.$$.on_destroy.push(...new_on_destroy);
+                }
+                else {
+                    // Edge case - component was destroyed immediately,
+                    // most likely as a result of a binding initialising
+                    run_all(new_on_destroy);
+                }
+                component.$$.on_mount = [];
+            });
+        }
+        after_update.forEach(add_render_callback);
+    }
+    function destroy_component(component, detaching) {
+        const $$ = component.$$;
+        if ($$.fragment !== null) {
+            flush_render_callbacks($$.after_update);
+            run_all($$.on_destroy);
+            $$.fragment && $$.fragment.d(detaching);
+            // TODO null out other refs, including component.$$ (but need to
+            // preserve final state?)
+            $$.on_destroy = $$.fragment = null;
+            $$.ctx = [];
+        }
+    }
+    function make_dirty(component, i) {
+        if (component.$$.dirty[0] === -1) {
+            dirty_components.push(component);
+            schedule_update();
+            component.$$.dirty.fill(0);
+        }
+        component.$$.dirty[(i / 31) | 0] |= (1 << (i % 31));
+    }
+    function init(component, options, instance, create_fragment, not_equal, props, append_styles, dirty = [-1]) {
+        const parent_component = current_component;
+        set_current_component(component);
+        const $$ = component.$$ = {
+            fragment: null,
+            ctx: [],
+            // state
+            props,
+            update: noop,
+            not_equal,
+            bound: blank_object(),
+            // lifecycle
+            on_mount: [],
+            on_destroy: [],
+            on_disconnect: [],
+            before_update: [],
+            after_update: [],
+            context: new Map(options.context || (parent_component ? parent_component.$$.context : [])),
+            // everything else
+            callbacks: blank_object(),
+            dirty,
+            skip_bound: false,
+            root: options.target || parent_component.$$.root
+        };
+        append_styles && append_styles($$.root);
+        let ready = false;
+        $$.ctx = instance
+            ? instance(component, options.props || {}, (i, ret, ...rest) => {
+                const value = rest.length ? rest[0] : ret;
+                if ($$.ctx && not_equal($$.ctx[i], $$.ctx[i] = value)) {
+                    if (!$$.skip_bound && $$.bound[i])
+                        $$.bound[i](value);
+                    if (ready)
+                        make_dirty(component, i);
+                }
+                return ret;
+            })
+            : [];
+        $$.update();
+        ready = true;
+        run_all($$.before_update);
+        // `false` as a special case of no DOM component
+        $$.fragment = create_fragment ? create_fragment($$.ctx) : false;
+        if (options.target) {
+            if (options.hydrate) {
+                const nodes = children(options.target);
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                $$.fragment && $$.fragment.l(nodes);
+                nodes.forEach(detach);
+            }
+            else {
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                $$.fragment && $$.fragment.c();
+            }
+            if (options.intro)
+                transition_in(component.$$.fragment);
+            mount_component(component, options.target, options.anchor, options.customElement);
+            flush();
+        }
+        set_current_component(parent_component);
+    }
+    /**
+     * Base class for Svelte components. Used when dev=false.
+     */
+    class SvelteComponent {
+        $destroy() {
+            destroy_component(this, 1);
+            this.$destroy = noop;
+        }
+        $on(type, callback) {
+            if (!is_function(callback)) {
+                return noop;
+            }
+            const callbacks = (this.$$.callbacks[type] || (this.$$.callbacks[type] = []));
+            callbacks.push(callback);
+            return () => {
+                const index = callbacks.indexOf(callback);
+                if (index !== -1)
+                    callbacks.splice(index, 1);
+            };
+        }
+        $set($$props) {
+            if (this.$$set && !is_empty($$props)) {
+                this.$$.skip_bound = true;
+                this.$$set($$props);
+                this.$$.skip_bound = false;
+            }
+        }
+    }
+
+    function dispatch_dev(type, detail) {
+        document.dispatchEvent(custom_event(type, Object.assign({ version: '3.59.1' }, detail), { bubbles: true }));
+    }
+    function append_dev(target, node) {
+        dispatch_dev('SvelteDOMInsert', { target, node });
+        append(target, node);
+    }
+    function insert_dev(target, node, anchor) {
+        dispatch_dev('SvelteDOMInsert', { target, node, anchor });
+        insert(target, node, anchor);
+    }
+    function detach_dev(node) {
+        dispatch_dev('SvelteDOMRemove', { node });
+        detach(node);
+    }
+    function listen_dev(node, event, handler, options, has_prevent_default, has_stop_propagation, has_stop_immediate_propagation) {
+        const modifiers = options === true ? ['capture'] : options ? Array.from(Object.keys(options)) : [];
+        if (has_prevent_default)
+            modifiers.push('preventDefault');
+        if (has_stop_propagation)
+            modifiers.push('stopPropagation');
+        if (has_stop_immediate_propagation)
+            modifiers.push('stopImmediatePropagation');
+        dispatch_dev('SvelteDOMAddEventListener', { node, event, handler, modifiers });
+        const dispose = listen(node, event, handler, options);
+        return () => {
+            dispatch_dev('SvelteDOMRemoveEventListener', { node, event, handler, modifiers });
+            dispose();
+        };
+    }
+    function attr_dev(node, attribute, value) {
+        attr(node, attribute, value);
+        if (value == null)
+            dispatch_dev('SvelteDOMRemoveAttribute', { node, attribute });
+        else
+            dispatch_dev('SvelteDOMSetAttribute', { node, attribute, value });
+    }
+    function prop_dev(node, property, value) {
+        node[property] = value;
+        dispatch_dev('SvelteDOMSetProperty', { node, property, value });
+    }
+    function set_data_dev(text, data) {
+        data = '' + data;
+        if (text.data === data)
+            return;
+        dispatch_dev('SvelteDOMSetData', { node: text, data });
+        text.data = data;
+    }
+    function validate_each_argument(arg) {
+        if (typeof arg !== 'string' && !(arg && typeof arg === 'object' && 'length' in arg)) {
+            let msg = '{#each} only iterates over array-like objects.';
+            if (typeof Symbol === 'function' && arg && Symbol.iterator in arg) {
+                msg += ' You can use a spread to convert this iterable into an array.';
+            }
+            throw new Error(msg);
+        }
+    }
+    function validate_slots(name, slot, keys) {
+        for (const slot_key of Object.keys(slot)) {
+            if (!~keys.indexOf(slot_key)) {
+                console.warn(`<${name}> received an unexpected slot "${slot_key}".`);
+            }
+        }
+    }
+    /**
+     * Base class for Svelte components with some minor dev-enhancements. Used when dev=true.
+     */
+    class SvelteComponentDev extends SvelteComponent {
+        constructor(options) {
+            if (!options || (!options.target && !options.$$inline)) {
+                throw new Error("'target' is a required option");
+            }
+            super();
+        }
+        $destroy() {
+            super.$destroy();
+            this.$destroy = () => {
+                console.warn('Component was already destroyed'); // eslint-disable-line no-console
+            };
+        }
+        $capture_state() { }
+        $inject_state() { }
+    }
+
+    const version$1 = 167;
+    async function getWebVersion() {
+        try {
+            let path = window.location.pathname;
+            path = path.endsWith('/') ? path : path + '/';
+            path = path.includes('/index.html') ? path.replace('/index.html', '') : path;
+            let response = await fetch(`${path}version.json`, {
+                cache: "no-store"
+            });
+            let result = await response.json();
+            return result.version || version$1
+        } catch (error) { return version$1 }
+    }
+
+    const subscriber_queue = [];
+    /**
+     * Create a `Writable` store that allows both updating and reading by subscription.
+     * @param {*=}value initial value
+     * @param {StartStopNotifier=} start
+     */
+    function writable(value, start = noop) {
+        let stop;
+        const subscribers = new Set();
+        function set(new_value) {
+            if (safe_not_equal(value, new_value)) {
+                value = new_value;
+                if (stop) { // store is ready
+                    const run_queue = !subscriber_queue.length;
+                    for (const subscriber of subscribers) {
+                        subscriber[1]();
+                        subscriber_queue.push(subscriber, value);
+                    }
+                    if (run_queue) {
+                        for (let i = 0; i < subscriber_queue.length; i += 2) {
+                            subscriber_queue[i][0](subscriber_queue[i + 1]);
+                        }
+                        subscriber_queue.length = 0;
+                    }
+                }
+            }
+        }
+        function update(fn) {
+            set(fn(value));
+        }
+        function subscribe(run, invalidate = noop) {
+            const subscriber = [run, invalidate];
+            subscribers.add(subscriber);
+            if (subscribers.size === 1) {
+                stop = start(set) || noop;
+            }
+            run(value);
+            return () => {
+                subscribers.delete(subscriber);
+                if (subscribers.size === 0 && stop) {
+                    stop();
+                    stop = null;
+                }
+            };
+        }
+        return { set, update, subscribe };
+    }
+
+    const isJsonObject = (obj) => {
+      return Object.prototype.toString.call(obj) === "[object Object]"
+    };
+
+    const jsonIsEmpty = (obj) => {
+      for (const key in obj) {
+        return false;
+      }
+      return true;
+    };
+
+    function msToTime(duration, limit) {
+      try {
+        let seconds = Math.floor((duration / 1000) % 60),
+          minutes = Math.floor((duration / (1000 * 60)) % 60),
+          hours = Math.floor((duration / (1000 * 60 * 60)) % 24),
+          days = Math.floor((duration / (1000 * 60 * 60 * 24)) % 7),
+          weeks = Math.floor((duration / (1000 * 60 * 60 * 24 * 7)) % 4),
+          months = Math.floor((duration / (1000 * 60 * 60 * 24 * 7 * 4)) % 12),
+          years = Math.floor((duration / (1000 * 60 * 60 * 24 * 7 * 4 * 12)) % 10),
+          decades = Math.floor((duration / (1000 * 60 * 60 * 24 * 7 * 4 * 12 * 10)) % 10),
+          century = Math.floor((duration / (1000 * 60 * 60 * 24 * 7 * 4 * 12 * 10 * 10)) % 10),
+          millenium = Math.floor((duration / (1000 * 60 * 60 * 24 * 7 * 4 * 12 * 10 * 10 * 10)) % 10);
+        let time = [];
+        if (millenium <= 0 && century <= 0 && decades <= 0 && years <= 0 && months <= 0 && weeks <= 0 && days <= 0 && hours <= 0 && minutes <= 0 && seconds <= 0) return "0s"
+        if (millenium > 0) time.push(`${millenium}mil`);
+        if (decades > 0) time.push(`${decades}dec`);
+        if (years > 0) time.push(`${years}y`);
+        if (months > 0) time.push(`${months}mon`);
+        if (weeks > 0) time.push(`${weeks}w`);
+        if (days > 0) time.push(`${days}d`);
+        if (hours > 0) time.push(`${hours}h`);
+        if (minutes > 0) time.push(`${minutes}m`);
+        if (seconds > 0) time.push(`${seconds}s`);
+        if (limit > 0) {
+          time = time.slice(0, limit);
+        }
+        return time.join(" ")
+      } catch (e) {
+        return
+      }
+    }
+
+    function getMostVisibleElement(parent, childSelector, intersectionRatioThreshold = 0.5) {
+      try {
+        var childElements;
+        if (childSelector instanceof Array) {
+          childElements = childSelector;
+        } else {
+          childElements = parent.querySelectorAll(childSelector);
+        }
+        var mostVisibleElement = null;
+        var highestVisibleRatio = 0;
+        let twoElements = [];
+        let parentScroll = parent.scrollTop;
+        for (let i = 0; i < childElements.length; i++) {
+          if (childElements[i].offsetTop > parentScroll) {
+            if (i > 0) {
+              twoElements = [childElements[i - 1], childElements[i]];
+            } else if (i === 0) {
+              twoElements = [childElements[i]];
+            } else {
+              twoElements = [];
+            }
+            break;
+          }
+        }
+        var parentRect = parent.getBoundingClientRect();
+        twoElements.forEach((childElement) => {
+          var childRect = childElement.getBoundingClientRect();
+          var intersectionHeight = Math.min(childRect.bottom, parentRect.bottom) - Math.max(childRect.top, parentRect.top);
+          var intersectionRatio = intersectionHeight / childRect.height;
+          if (intersectionRatio >= intersectionRatioThreshold && intersectionRatio > highestVisibleRatio) {
+            highestVisibleRatio = intersectionRatio;
+            mostVisibleElement = childElement;
+          }
+        });
+        return mostVisibleElement;
+      } catch (ex) {
+        // console.error(ex)
+        return
+      }
+    }
+
+    function isElementVisible(parent, element, intersectionRatioThreshold = 0) {
+      try {
+        var boundingRect = element.getBoundingClientRect();
+        var parentRect = parent.getBoundingClientRect();
+        var overflowX = getComputedStyle(parent).overflowX;
+        var overflowY = getComputedStyle(parent).overflowY;
+        var isParentScrollable = overflowX === 'auto' || overflowX === 'scroll' || overflowY === 'auto' || overflowY === 'scroll';
+        if (isParentScrollable) {
+          var scrollLeft = parent.scrollLeft;
+          var scrollTop = parent.scrollTop;
+          var isVisible = (
+            boundingRect.top >= parentRect.top &&
+            boundingRect.left >= parentRect.left &&
+            boundingRect.bottom <= parentRect.bottom &&
+            boundingRect.right <= parentRect.right
+          );
+          if (!isVisible) {
+            var intersectionTop = Math.max(boundingRect.top, parentRect.top) - Math.min(boundingRect.bottom, parentRect.bottom);
+            var intersectionLeft = Math.max(boundingRect.left, parentRect.left) - Math.min(boundingRect.right, parentRect.right);
+            var intersectionArea = intersectionTop * intersectionLeft;
+            var elementArea = Math.min(boundingRect.height, window.innerHeight) * Math.min(boundingRect.width, window.innerWidth);
+            var intersectionRatio = intersectionArea / elementArea;
+            isVisible = intersectionRatio >= intersectionRatioThreshold;
+          }
+          if (!isVisible) {
+            return false;
+          }
+          boundingRect = {
+            top: boundingRect.top - parentRect.top + scrollTop,
+            left: boundingRect.left - parentRect.left + scrollLeft,
+            bottom: boundingRect.bottom - parentRect.top + scrollTop,
+            right: boundingRect.right - parentRect.left + scrollLeft,
+            height: boundingRect.height,
+            width: boundingRect.width
+          };
+        }
+        var windowHeight = window.innerHeight || document.documentElement.clientHeight;
+        var windowWidth = window.innerWidth || document.documentElement.clientWidth;
+        var isVisibleInWindow = (
+          boundingRect.top >= 0 &&
+          boundingRect.left >= 0 &&
+          boundingRect.bottom <= windowHeight &&
+          boundingRect.right <= windowWidth
+        );
+        return isVisibleInWindow;
+      } catch (ex) {
+        // console.error(ex)
+        return
+      }
+    }
+
+    const getChildIndex = (childElement, condition) => {
+      try {
+        return Array.from(childElement.parentElement.children).indexOf(childElement);
+      } catch (ex) {
+        // console.error(ex)
+        return
+      }
+    };
+
+    const scrollToElement = (parent, target, position = 'top', behavior, offset = 0) => {
+      try {
+        let scrollAmount;
+        if (typeof target === "string") target = document.querySelector(target);
+        if (parent === window) {
+          const targetRect = target.getBoundingClientRect();
+          const scrollY = window.scrollY;
+          if (position === 'bottom') {
+            scrollAmount = targetRect.bottom + scrollY - window.innerHeight;
+          } else if (position === 'center') {
+            scrollAmount = targetRect.top + scrollY - (window.innerHeight / 2);
+          } else {
+            scrollAmount = targetRect.top + scrollY;
+          }
+        } else {
+          if (typeof parent === "string") parent = document.querySelector(parent);
+          if (position === 'bottom') {
+            scrollAmount = target.offsetTop + target.offsetHeight - parent.offsetHeight;
+          } else if (position === 'center') {
+            let targetRect = target.getBoundingClientRect();
+            let parentRect = parent.getBoundingClientRect();
+            let targetCenter = targetRect.top + targetRect.height / 2;
+            let parentCenter = parentRect.top + parentRect.height / 2;
+            scrollAmount = targetCenter - parentCenter + parent.scrollTop - parentRect.height / 2;
+          } else {
+            let targetRect = target.getBoundingClientRect();
+            let parentRect = parent.getBoundingClientRect();
+            scrollAmount = targetRect.top - parentRect.top + parent.scrollTop;
+          }
+        }
+        if (parent === window) {
+          if (behavior === 'smooth') {
+            window.scrollTo({
+              top: scrollAmount + offset,
+              behavior: 'smooth'
+            });
+          } else {
+            window.scrollTo({ top: scrollAmount + offset });
+          }
+        } else {
+          if (behavior === 'smooth') {
+            parent.scrollBy({
+              top: scrollAmount + offset,
+              behavior: "smooth"
+            });
+          } else {
+            parent.scrollTop = scrollAmount + offset;
+          }
+        }
+      } catch (ex) {
+        // console.error(ex)
+        return
+      }
+    };
+
+    const ncsCompare = (str1, str2) => {
+      try {
+        if (typeof str1 !== "string" || typeof str2 !== "string") {
+          return false;
+        }
+        return str1.trim().toLowerCase() === str2.trim().toLowerCase();
+      } catch (e) { }
+    };
+
+    const changeInputValue = (inputElement, newValue) => {
+      let selectionStart = Math.max(inputElement.selectionStart - 1 || 0, 0);
+      inputElement.value = newValue;
+      inputElement.setSelectionRange(selectionStart, selectionStart);
+    };
+
+    const dragScroll = (element, axis = 'xy', avoidCondition = () => false) => {
+      let curDown, curYPos, curXPos, velocityY, velocityX, currentScrollYPosition, currentScrollXPosition;
+
+      let move = (e) => {
+        if (curDown && e.pointerType === "mouse") {
+          if (axis.toLowerCase().includes('y')) {
+            let endYPos = e.clientY;
+            let deltaY = endYPos - curYPos;
+            element.scrollTop = currentScrollYPosition - deltaY;
+          }
+          if (axis.toLowerCase().includes('x')) {
+            let endXPos = e.clientX;
+            let deltaX = endXPos - curXPos;
+            element.scrollLeft = currentScrollXPosition - deltaX;
+          }
+        }
+      };
+
+      let down = (e) => {
+        if (e.pointerType !== "mouse" || avoidCondition(e)) return
+        velocityY = 0;
+        cancelAnimationFrame(kineticScrollYAnimation);
+        velocityX = 0;
+        cancelAnimationFrame(kineticScrollXAnimation);
+        if (axis.toLowerCase().includes('y')) {
+          curYPos = e.clientY;
+          currentScrollYPosition = element.scrollTop;
+        }
+        if (axis.toLowerCase().includes('x')) {
+          curXPos = e.clientX;
+          currentScrollXPosition = element.scrollLeft;
+        }
+        curDown = true;
+      };
+
+      let up = (e) => {
+        if (curDown) {
+          if (axis.toLowerCase().includes('y') && e.pointerType === "mouse") {
+            let endYPos = e.clientY;
+            let deltaY = endYPos - curYPos;
+            element.scrollTop = currentScrollYPosition - deltaY;
+            velocityY = deltaY;
+            simulateKineticScrollY(element);
+          }
+          if (axis.toLowerCase().includes('x') && e.pointerType === "mouse") {
+            let endXPos = e.clientX;
+            let deltaX = endXPos - curXPos;
+            element.scrollLeft = currentScrollXPosition - deltaX;
+            velocityX = deltaX;
+            simulateKineticScrollX(element);
+          }
+        }
+        curDown = false;
+      };
+
+      let cancel = () => curDown = false;
+
+      let kineticScrollYAnimation;
+      let simulateKineticScrollY = (container, currentScrollTop) => {
+        let shouldScroll =
+          (currentScrollTop == null || container.scrollTop === currentScrollTop)
+          && typeof velocityY === "number"
+          && container && Math.abs(velocityY) > 0.1;
+        if (shouldScroll) {
+          container.scrollTop -= velocityY * 0.1;
+          let newScrollTop = container.scrollTop;
+          kineticScrollYAnimation = requestAnimationFrame(() => simulateKineticScrollY(container, newScrollTop));
+          velocityY *= 0.9;
+        } else {
+          velocityY = 0;
+          cancelAnimationFrame(kineticScrollYAnimation);
+        }
+      };
+
+      let kineticScrollXAnimation;
+      let simulateKineticScrollX = (container, currentScrollLeft) => {
+        let shouldScroll =
+          (currentScrollLeft == null || container.scrollLeft === currentScrollLeft)
+          && typeof velocityX === "number"
+          && container && Math.abs(velocityX) > 0.1;
+        if (shouldScroll) {
+          container.scrollLeft -= velocityX * 0.1;
+          let newScrollLeft = container.scrollLeft;
+          kineticScrollXAnimation = requestAnimationFrame(() => simulateKineticScrollX(container, newScrollLeft));
+          velocityX *= 0.9;
+        } else {
+          velocityX = 0;
+          cancelAnimationFrame(kineticScrollXAnimation);
+        }
+      };
+
+      element.addEventListener('pointermove', move);
+      element.addEventListener('pointerdown', down);
+      element.addEventListener('pointerup', up);
+      window.addEventListener('pointerup', cancel);
+      window.addEventListener('pointercancel', cancel);
+      return () => {
+        velocityX = velocityY = 0;
+        cancelAnimationFrame(kineticScrollYAnimation);
+        cancelAnimationFrame(kineticScrollXAnimation);
+        element.removeEventListener('pointermove', move);
+        element.removeEventListener('pointerdown', down);
+        element.removeEventListener('pointerup', up);
+        window.addEventListener('pointerup', cancel);
+        window.addEventListener('pointercancel', cancel);
+      };
+    };
+
+    const isAndroid = () => {
+      try {
+        JSBridge.exportJSON; // Android Interface
+        return true
+      } catch (e) {
+        return false
+      }
+    };
+
+    let $_pastExportUrl;
+    const downloadLink = (url, fileName) => {
+      if ($_pastExportUrl) {
+        setTimeout(() => URL.revokeObjectURL($_pastExportUrl), 0);
+      }
+      $_pastExportUrl = url;
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      a.click();
+      return
+    };
+
+    const addClass = (element, className) => {
+      element?.classList?.add?.(className);
+    };
+
+    const removeClass = (element, className) => {
+      element?.classList?.remove?.(className);
+    };
+
+    const LocalStorageID = "Kanshi.Anime.Recommendations.Anilist.W~uPtWCq=vG$TR:Zl^#t<vdS]I~N70";
+    const getLocalStorage = (key) => {
+      let data;
+      try {
+        key = LocalStorageID + key;
+        data = localStorage.getItem(key);
+        return JSON.parse(data)
+      } catch (ex) {
+        return data ?? null;
+      }
+    };
+    const setLocalStorage = (key, data) => {
+      try {
+        localStorage.setItem(LocalStorageID + key, data);
+      } catch (ex) { }
+    };
+
+    const appID = writable(null);
+    const android$1 = writable(null);
+    const inApp = writable(true);
+    const progress = writable(0);
+    // const anilistAccessToken = writable(null)
+    const hasWheel = writable(false);
+
+    const username = writable(getLocalStorage('username') || null);
+    const hiddenEntries = writable(null);
+
+    const filterOptions = writable(null);
+    const activeTagFilters = writable(null);
+    const finalAnimeList = writable(null);
+    const animeLoaderWorker$1 = writable(null);
+    const dataStatus = writable(null);
+
+    const isImporting = writable(false);
+    const userRequestIsRunning = writable(null);
+    const autoUpdate = writable(getLocalStorage('autoUpdate') || null);
+    const autoUpdateInterval = writable(null);
+    const lastRunnedAutoUpdateDate = writable(null);
+
+    const exportPathIsAvailable = writable(getLocalStorage('exportPathIsAvailable') || null);
+    const autoExport = writable(getLocalStorage('autoExport') || null);
+    const autoExportInterval = writable(null);
+    const lastRunnedAutoExportDate = writable(null);
+
+    const ytPlayers = writable([]);
+    const autoPlay = writable(getLocalStorage('autoPlay') || null);
+
+    const initData = writable(true);
+    const gridFullView = writable(getLocalStorage('gridFullView') || null);
+
+    const mostRecentAiringDateTimeout = writable(null);
+    const earlisetReleaseDate = writable(null);
+    const checkAnimeLoaderStatus = writable(false);
+    const animeObserver = writable(null);
+    const animeIdxRemoved = writable(null);
+    const shownAllInList = writable(false);
+    const searchedAnimeKeyword = writable("");
+    const confirmPromise = writable(null);
+    const menuVisible = writable(false);
+    const animeOptionVisible = writable(false);
+    const openedAnimeOptionIdx = writable(null);
+    const popupVisible = writable(false);
+    const openedAnimePopupIdx = writable(null);
+    const shouldGoBack = writable(true);
+    const listUpdateAvailable = writable(false);
+    const listIsUpdating = writable(false);
+    const popupIsGoingBack = writable(false);
+    const isScrolling = writable(null);
+    const scrollingTimeout = writable(null);
+    const asyncAnimeReloaded = writable(null);
+    const isFullViewed = writable(null);
+    // Reactive Functions
+    const runUpdate = writable(null);
+    const runExport = writable(null);
+    const importantUpdate = writable(null);
+    const importantLoad = writable(null);
+    const updateRecommendationList = writable(null);
+    const updateFilters = writable(null);
+    const loadAnime = writable(null);
+    const runIsScrolling = writable(null);
+
+    function fade(node, { delay = 0, duration = 400, easing = identity } = {}) {
+        const o = +getComputedStyle(node).opacity;
+        return {
+            delay,
+            duration,
+            easing,
+            css: t => `opacity: ${t * o}`
+        };
+    }
+
+    let loadedRequestUrlPromises = {};
+    let loadedRequestUrls = {};
+    const cacheRequest = async (url) => {
+        if (loadedRequestUrls[url]) {
+            return loadedRequestUrls[url]
+        } else if (loadedRequestUrlPromises[url]) {
+            return loadedRequestUrlPromises[url]
+        } else if (!window?.location?.protocol?.includes?.("file")) {
+            loadedRequestUrlPromises[url] = new Promise(async (resolve) => {
+                let app_id = get_store_value(appID);
+                if (typeof app_id !== "number") {
+                    loadedRequestUrlPromises[url] = null;
+                    resolve(url);
+                } else {
+                    let newUrl = url + "?v=" + app_id;
+                    fetch(newUrl, {
+                        headers: {
+                            'Cache-Control': 'public, max-age=31536000, immutable',
+                        },
+                        cache: 'force-cache'
+                    }).then(async response => await response.blob())
+                        .then(blob => {
+                            try {
+                                let blobUrl = URL.createObjectURL(blob);
+                                loadedRequestUrls[url] = blobUrl;
+                                loadedRequestUrlPromises[url] = null;
+                                resolve(blobUrl);
+                            } catch (e) {
+                                loadedRequestUrlPromises[url] = null;
+                                resolve(url);
+                            }
+                        })
+                        .catch(() => {
+                            loadedRequestUrlPromises[url] = null;
+                            resolve(url);
+                        });
+                }
+            });
+            return loadedRequestUrlPromises[url]
+        } else {
+            return url
+        }
+    };
+
+    const emptyImage$2 = "data:image/png;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=";
+    const android = isAndroid();
+    let loadedImagePromises = {};
+    let loadedImages = {};
+    const cacheImage = (url, width, height) => {
+        if (loadedImages[url]) {
+            return loadedImages[url]
+        } else if (loadedImagePromises[url]) {
+            return loadedImagePromises[url]
+        } else if (window?.location?.origin?.includes?.('https://u-kuro.github.io') && android) {
+            loadedImagePromises[url] = new Promise(async (resolve) => {
+                let newUrl = "https://cors-anywhere-kuro.vercel.app/api?url=" + url;
+                fetch(newUrl, {
+                    headers: {
+                        'Cache-Control': 'public, max-age=31536000, immutable',
+                    },
+                    cache: 'force-cache'
+                }).then(async response => await response.blob())
+                    .then(blob => {
+                        try {
+                            let imgUrl = URL.createObjectURL(blob);
+                            let img = new Image();
+                            img.src = imgUrl;
+                            img.onload = () => {
+                                try {
+                                    let canvas = document.createElement('canvas');
+                                    canvas.width = width || img.naturalWidth;
+                                    canvas.height = height || img.naturalHeight;
+                                    let ctx = canvas.getContext('2d');
+                                    ctx.drawImage(img, 0, 0);
+                                    canvas.toBlob((blob) => {
+                                        try {
+                                            let blobUrl = URL.createObjectURL(blob);
+                                            loadedImages[url] = blobUrl;
+                                            loadedImagePromises[url] = null;
+                                            resolve(blobUrl);
+                                        } catch (e) {
+                                            loadedImages[url] = imgUrl;
+                                            loadedImagePromises[url] = null;
+                                            resolve(imgUrl);
+                                        }
+                                    }, 'image/webp', 0.8);
+                                } catch (e) {
+                                    loadedImages[url] = imgUrl;
+                                    loadedImagePromises[url] = null;
+                                    resolve(imgUrl);
+                                }
+                            };
+                            img.onerror = () => {
+                                loadedImagePromises[url] = null;
+                                resolve(url);
+                            };
+                        } catch (e) {
+                            loadedImagePromises[url] = null;
+                            resolve(url);
+                        }
+                    })
+                    .catch(e => {
+                        loadedImagePromises[url] = null;
+                        resolve(url);
+                    });
+            });
+            return loadedImagePromises[url]
+        } else if (url) {
+            return url
+        } else {
+            return emptyImage$2
+        }
+    };
+
+    /* src\components\Anime\AnimeGrid.svelte generated by Svelte v3.59.1 */
+
+    const { console: console_1$2 } = globals;
+    const file$7 = "src\\components\\Anime\\AnimeGrid.svelte";
+
+    function get_each_context_3$2(ctx, list, i) {
+    	const child_ctx = ctx.slice();
+    	child_ctx[54] = list[i];
+    	return child_ctx;
+    }
+
+    function get_each_context_4$1(ctx, list, i) {
+    	const child_ctx = ctx.slice();
+    	child_ctx[54] = list[i];
+    	return child_ctx;
+    }
+
+    function get_each_context$2(ctx, list, i) {
+    	const child_ctx = ctx.slice();
+    	child_ctx[54] = list[i];
+    	return child_ctx;
+    }
+
+    function get_each_context_1$2(ctx, list, i) {
+    	const child_ctx = ctx.slice();
+    	child_ctx[54] = list[i];
+    	return child_ctx;
+    }
+
+    function get_each_context_2$2(ctx, list, i) {
+    	const child_ctx = ctx.slice();
+    	child_ctx[59] = list[i];
+    	child_ctx[60] = list;
+    	child_ctx[61] = i;
+    	return child_ctx;
+    }
+
+    // (556:8) {:else}
+    function create_else_block_2$2(ctx) {
+    	let div;
+
+    	const block = {
+    		c: function create() {
+    			div = element("div");
+    			div.textContent = "No Results";
+    			attr_dev(div, "class", "empty svelte-xo6vxz");
+    			add_location(div, file$7, 556, 12, 23376);
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, div, anchor);
+    		},
+    		p: noop,
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(div);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_else_block_2$2.name,
+    		type: "else",
+    		source: "(556:8) {:else}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (547:48) 
+    function create_if_block_5$2(ctx) {
+    	let t;
+    	let each1_anchor;
+    	let each_value_4 = Array(21);
+    	validate_each_argument(each_value_4);
+    	let each_blocks_1 = [];
+
+    	for (let i = 0; i < each_value_4.length; i += 1) {
+    		each_blocks_1[i] = create_each_block_4$1(get_each_context_4$1(ctx, each_value_4, i));
+    	}
+
+    	let each_value_3 = Array(5);
+    	validate_each_argument(each_value_3);
+    	let each_blocks = [];
+
+    	for (let i = 0; i < each_value_3.length; i += 1) {
+    		each_blocks[i] = create_each_block_3$2(get_each_context_3$2(ctx, each_value_3, i));
+    	}
+
+    	const block = {
+    		c: function create() {
+    			for (let i = 0; i < each_blocks_1.length; i += 1) {
+    				each_blocks_1[i].c();
+    			}
+
+    			t = space();
+
+    			for (let i = 0; i < each_blocks.length; i += 1) {
+    				each_blocks[i].c();
+    			}
+
+    			each1_anchor = empty();
+    		},
+    		m: function mount(target, anchor) {
+    			for (let i = 0; i < each_blocks_1.length; i += 1) {
+    				if (each_blocks_1[i]) {
+    					each_blocks_1[i].m(target, anchor);
+    				}
+    			}
+
+    			insert_dev(target, t, anchor);
+
+    			for (let i = 0; i < each_blocks.length; i += 1) {
+    				if (each_blocks[i]) {
+    					each_blocks[i].m(target, anchor);
+    				}
+    			}
+
+    			insert_dev(target, each1_anchor, anchor);
+    		},
+    		p: noop,
+    		d: function destroy(detaching) {
+    			destroy_each(each_blocks_1, detaching);
+    			if (detaching) detach_dev(t);
+    			destroy_each(each_blocks, detaching);
+    			if (detaching) detach_dev(each1_anchor);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_if_block_5$2.name,
+    		type: "if",
+    		source: "(547:48) ",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (428:8) {#if $finalAnimeList?.length}
+    function create_if_block_1$6(ctx) {
+    	let each_blocks_2 = [];
+    	let each0_lookup = new Map();
+    	let t0;
+    	let t1;
+    	let each2_anchor;
+    	let each_value_2 = /*$finalAnimeList*/ ctx[12] || [];
+    	validate_each_argument(each_value_2);
+    	const get_key = ctx => /*anime*/ ctx[59]?.id || {};
+    	validate_each_keys(ctx, each_value_2, get_each_context_2$2, get_key);
+
+    	for (let i = 0; i < each_value_2.length; i += 1) {
+    		let child_ctx = get_each_context_2$2(ctx, each_value_2, i);
+    		let key = get_key(child_ctx);
+    		each0_lookup.set(key, each_blocks_2[i] = create_each_block_2$2(key, child_ctx));
+    	}
+
+    	let each_value_1 = Array(/*$shownAllInList*/ ctx[11] ? 0 : 1);
+    	validate_each_argument(each_value_1);
+    	let each_blocks_1 = [];
+
+    	for (let i = 0; i < each_value_1.length; i += 1) {
+    		each_blocks_1[i] = create_each_block_1$2(get_each_context_1$2(ctx, each_value_1, i));
+    	}
+
+    	let each_value = Array(/*isFullViewed*/ ctx[3]
+    	? Math.floor((/*windowHeight*/ ctx[5] ?? 1100) / 220)
+    	: 5);
+
+    	validate_each_argument(each_value);
+    	let each_blocks = [];
+
+    	for (let i = 0; i < each_value.length; i += 1) {
+    		each_blocks[i] = create_each_block$2(get_each_context$2(ctx, each_value, i));
+    	}
+
+    	const block = {
+    		c: function create() {
+    			for (let i = 0; i < each_blocks_2.length; i += 1) {
+    				each_blocks_2[i].c();
+    			}
+
+    			t0 = space();
+
+    			for (let i = 0; i < each_blocks_1.length; i += 1) {
+    				each_blocks_1[i].c();
+    			}
+
+    			t1 = space();
+
+    			for (let i = 0; i < each_blocks.length; i += 1) {
+    				each_blocks[i].c();
+    			}
+
+    			each2_anchor = empty();
+    		},
+    		m: function mount(target, anchor) {
+    			for (let i = 0; i < each_blocks_2.length; i += 1) {
+    				if (each_blocks_2[i]) {
+    					each_blocks_2[i].m(target, anchor);
+    				}
+    			}
+
+    			insert_dev(target, t0, anchor);
+
+    			for (let i = 0; i < each_blocks_1.length; i += 1) {
+    				if (each_blocks_1[i]) {
+    					each_blocks_1[i].m(target, anchor);
+    				}
+    			}
+
+    			insert_dev(target, t1, anchor);
+
+    			for (let i = 0; i < each_blocks.length; i += 1) {
+    				if (each_blocks[i]) {
+    					each_blocks[i].m(target, anchor);
+    				}
+    			}
+
+    			insert_dev(target, each2_anchor, anchor);
+    		},
+    		p: function update(ctx, dirty) {
+    			if (dirty[0] & /*$finalAnimeList, $popupVisible, handleOpenPopup, handleOpenOption, cancelOpenOption, $filterOptions, $earlisetReleaseDate, numberOfLoadedGrid*/ 1029120) {
+    				each_value_2 = /*$finalAnimeList*/ ctx[12] || [];
+    				validate_each_argument(each_value_2);
+    				validate_each_keys(ctx, each_value_2, get_each_context_2$2, get_key);
+    				each_blocks_2 = update_keyed_each(each_blocks_2, dirty, get_key, 1, ctx, each_value_2, each0_lookup, t0.parentNode, destroy_block, create_each_block_2$2, t0, get_each_context_2$2);
+    			}
+
+    			if (dirty[0] & /*$shownAllInList*/ 2048) {
+    				each_value_1 = Array(/*$shownAllInList*/ ctx[11] ? 0 : 1);
+    				validate_each_argument(each_value_1);
+    				let i;
+
+    				for (i = 0; i < each_value_1.length; i += 1) {
+    					const child_ctx = get_each_context_1$2(ctx, each_value_1, i);
+
+    					if (each_blocks_1[i]) {
+    						each_blocks_1[i].p(child_ctx, dirty);
+    					} else {
+    						each_blocks_1[i] = create_each_block_1$2(child_ctx);
+    						each_blocks_1[i].c();
+    						each_blocks_1[i].m(t1.parentNode, t1);
+    					}
+    				}
+
+    				for (; i < each_blocks_1.length; i += 1) {
+    					each_blocks_1[i].d(1);
+    				}
+
+    				each_blocks_1.length = each_value_1.length;
+    			}
+
+    			if (dirty[0] & /*isFullViewed, windowHeight*/ 40) {
+    				each_value = Array(/*isFullViewed*/ ctx[3]
+    				? Math.floor((/*windowHeight*/ ctx[5] ?? 1100) / 220)
+    				: 5);
+
+    				validate_each_argument(each_value);
+    				let i;
+
+    				for (i = 0; i < each_value.length; i += 1) {
+    					const child_ctx = get_each_context$2(ctx, each_value, i);
+
+    					if (each_blocks[i]) {
+    						each_blocks[i].p(child_ctx, dirty);
+    					} else {
+    						each_blocks[i] = create_each_block$2(child_ctx);
+    						each_blocks[i].c();
+    						each_blocks[i].m(each2_anchor.parentNode, each2_anchor);
+    					}
+    				}
+
+    				for (; i < each_blocks.length; i += 1) {
+    					each_blocks[i].d(1);
+    				}
+
+    				each_blocks.length = each_value.length;
+    			}
+    		},
+    		d: function destroy(detaching) {
+    			for (let i = 0; i < each_blocks_2.length; i += 1) {
+    				each_blocks_2[i].d(detaching);
+    			}
+
+    			if (detaching) detach_dev(t0);
+    			destroy_each(each_blocks_1, detaching);
+    			if (detaching) detach_dev(t1);
+    			destroy_each(each_blocks, detaching);
+    			if (detaching) detach_dev(each2_anchor);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_if_block_1$6.name,
+    		type: "if",
+    		source: "(428:8) {#if $finalAnimeList?.length}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (548:12) {#each Array(21) as _}
+    function create_each_block_4$1(ctx) {
+    	let div1;
+    	let div0;
+
+    	const block = {
+    		c: function create() {
+    			div1 = element("div");
+    			div0 = element("div");
+    			attr_dev(div0, "class", "shimmer svelte-xo6vxz");
+    			add_location(div0, file$7, 549, 20, 23171);
+    			attr_dev(div1, "class", "image-grid__card skeleton svelte-xo6vxz");
+    			add_location(div1, file$7, 548, 16, 23110);
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, div1, anchor);
+    			append_dev(div1, div0);
+    		},
+    		p: noop,
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(div1);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_each_block_4$1.name,
+    		type: "each",
+    		source: "(548:12) {#each Array(21) as _}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (553:12) {#each Array(5) as _}
+    function create_each_block_3$2(ctx) {
+    	let div;
+
+    	const block = {
+    		c: function create() {
+    			div = element("div");
+    			attr_dev(div, "class", "image-grid__card svelte-xo6vxz");
+    			add_location(div, file$7, 553, 16, 23292);
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, div, anchor);
+    		},
+    		p: noop,
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(div);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_each_block_3$2.name,
+    		type: "each",
+    		source: "(553:12) {#each Array(5) as _}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (446:24) {#if anime?.coverImageUrl || anime?.bannerImageUrl || anime?.trailerThumbnailUrl}
+    function create_if_block_4$3(ctx) {
+    	let img;
+    	let img_fetchpriority_value;
+    	let img_loading_value;
+    	let img_alt_value;
+    	let addImage_action;
+    	let mounted;
+    	let dispose;
+
+    	const block = {
+    		c: function create() {
+    			img = element("img");
+
+    			attr_dev(img, "fetchpriority", img_fetchpriority_value = /*animeIdx*/ ctx[61] > /*numberOfLoadedGrid*/ ctx[16]
+    			? ""
+    			: "high");
+
+    			attr_dev(img, "loading", img_loading_value = /*animeIdx*/ ctx[61] > /*numberOfLoadedGrid*/ ctx[16]
+    			? "lazy"
+    			: "eager");
+
+    			attr_dev(img, "class", "" + (null_to_empty("image-grid__card-thumb  fade-out") + " svelte-xo6vxz"));
+    			attr_dev(img, "alt", img_alt_value = (/*anime*/ ctx[59]?.shownTitle || "") + " Cover");
+    			attr_dev(img, "width", "180px");
+    			attr_dev(img, "height", "254.531px");
+    			add_location(img, file$7, 446, 28, 17320);
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, img, anchor);
+
+    			if (!mounted) {
+    				dispose = [
+    					action_destroyer(addImage_action = /*addImage*/ ctx[21].call(null, img, /*anime*/ ctx[59]?.coverImageUrl || /*anime*/ ctx[59]?.bannerImageUrl || /*anime*/ ctx[59]?.trailerThumbnailUrl || emptyImage$1)),
+    					listen_dev(img, "load", /*load_handler*/ ctx[26], false, false, false, false),
+    					listen_dev(img, "error", /*error_handler*/ ctx[27], false, false, false, false)
+    				];
+
+    				mounted = true;
+    			}
+    		},
+    		p: function update(new_ctx, dirty) {
+    			ctx = new_ctx;
+
+    			if (dirty[0] & /*$finalAnimeList*/ 4096 && img_fetchpriority_value !== (img_fetchpriority_value = /*animeIdx*/ ctx[61] > /*numberOfLoadedGrid*/ ctx[16]
+    			? ""
+    			: "high")) {
+    				attr_dev(img, "fetchpriority", img_fetchpriority_value);
+    			}
+
+    			if (dirty[0] & /*$finalAnimeList*/ 4096 && img_loading_value !== (img_loading_value = /*animeIdx*/ ctx[61] > /*numberOfLoadedGrid*/ ctx[16]
+    			? "lazy"
+    			: "eager")) {
+    				attr_dev(img, "loading", img_loading_value);
+    			}
+
+    			if (dirty[0] & /*$finalAnimeList*/ 4096 && img_alt_value !== (img_alt_value = (/*anime*/ ctx[59]?.shownTitle || "") + " Cover")) {
+    				attr_dev(img, "alt", img_alt_value);
+    			}
+
+    			if (addImage_action && is_function(addImage_action.update) && dirty[0] & /*$finalAnimeList*/ 4096) addImage_action.update.call(null, /*anime*/ ctx[59]?.coverImageUrl || /*anime*/ ctx[59]?.bannerImageUrl || /*anime*/ ctx[59]?.trailerThumbnailUrl || emptyImage$1);
+    		},
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(img);
+    			mounted = false;
+    			run_all(dispose);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_if_block_4$3.name,
+    		type: "if",
+    		source: "(446:24) {#if anime?.coverImageUrl || anime?.bannerImageUrl || anime?.trailerThumbnailUrl}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (507:40) {:else}
+    function create_else_block_1$2(ctx) {
+    	let t_value = `${/*anime*/ ctx[59].format || "N/A"}${/*anime*/ ctx[59].episodes
+	? "(" + /*anime*/ ctx[59].episodes + ")"
+	: ""}` + "";
+
+    	let t;
+
+    	const block = {
+    		c: function create() {
+    			t = text(t_value);
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, t, anchor);
+    		},
+    		p: function update(ctx, dirty) {
+    			if (dirty[0] & /*$finalAnimeList*/ 4096 && t_value !== (t_value = `${/*anime*/ ctx[59].format || "N/A"}${/*anime*/ ctx[59].episodes
+			? "(" + /*anime*/ ctx[59].episodes + ")"
+			: ""}` + "")) set_data_dev(t, t_value);
+    		},
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(t);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_else_block_1$2.name,
+    		type: "else",
+    		source: "(507:40) {:else}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (499:40) {#if isJsonObject(anime?.nextAiringEpisode)}
+    function create_if_block_3$3(ctx) {
+    	let t0_value = `${/*anime*/ ctx[59].format || "N/A"}` + "";
+    	let t0;
+    	let t1;
+    	let previous_key = /*$earlisetReleaseDate*/ ctx[13] || 1;
+    	let key_block_anchor;
+    	let key_block = create_key_block$1(ctx);
+
+    	const block = {
+    		c: function create() {
+    			t0 = text(t0_value);
+    			t1 = space();
+    			key_block.c();
+    			key_block_anchor = empty();
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, t0, anchor);
+    			insert_dev(target, t1, anchor);
+    			key_block.m(target, anchor);
+    			insert_dev(target, key_block_anchor, anchor);
+    		},
+    		p: function update(ctx, dirty) {
+    			if (dirty[0] & /*$finalAnimeList*/ 4096 && t0_value !== (t0_value = `${/*anime*/ ctx[59].format || "N/A"}` + "")) set_data_dev(t0, t0_value);
+
+    			if (dirty[0] & /*$earlisetReleaseDate*/ 8192 && safe_not_equal(previous_key, previous_key = /*$earlisetReleaseDate*/ ctx[13] || 1)) {
+    				key_block.d(1);
+    				key_block = create_key_block$1(ctx);
+    				key_block.c();
+    				key_block.m(key_block_anchor.parentNode, key_block_anchor);
+    			} else {
+    				key_block.p(ctx, dirty);
+    			}
+    		},
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(t0);
+    			if (detaching) detach_dev(t1);
+    			if (detaching) detach_dev(key_block_anchor);
+    			key_block.d(detaching);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_if_block_3$3.name,
+    		type: "if",
+    		source: "(499:40) {#if isJsonObject(anime?.nextAiringEpisode)}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (501:44) {#key $earlisetReleaseDate || 1}
+    function create_key_block$1(ctx) {
+    	let t_value = getFinishedEpisode(/*anime*/ ctx[59].episodes, /*anime*/ ctx[59].nextAiringEpisode) + "";
+    	let t;
+
+    	const block = {
+    		c: function create() {
+    			t = text(t_value);
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, t, anchor);
+    		},
+    		p: function update(ctx, dirty) {
+    			if (dirty[0] & /*$finalAnimeList*/ 4096 && t_value !== (t_value = getFinishedEpisode(/*anime*/ ctx[59].episodes, /*anime*/ ctx[59].nextAiringEpisode) + "")) set_data_dev(t, t_value);
+    		},
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(t);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_key_block$1.name,
+    		type: "key",
+    		source: "(501:44) {#key $earlisetReleaseDate || 1}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (528:40) {:else}
+    function create_else_block$2(ctx) {
+    	let t_value = (/*anime*/ ctx[59]?.formattedWeightedScore || "N/A") + "";
+    	let t;
+
+    	const block = {
+    		c: function create() {
+    			t = text(t_value);
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, t, anchor);
+    		},
+    		p: function update(ctx, dirty) {
+    			if (dirty[0] & /*$finalAnimeList*/ 4096 && t_value !== (t_value = (/*anime*/ ctx[59]?.formattedWeightedScore || "N/A") + "")) set_data_dev(t, t_value);
+    		},
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(t);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_else_block$2.name,
+    		type: "else",
+    		source: "(528:40) {:else}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (526:40) {#if $filterOptions}
+    function create_if_block_2$3(ctx) {
+    	let t_value = (/*anime*/ ctx[59]?.shownScore || "N/A") + "";
+    	let t;
+
+    	const block = {
+    		c: function create() {
+    			t = text(t_value);
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, t, anchor);
+    		},
+    		p: function update(ctx, dirty) {
+    			if (dirty[0] & /*$finalAnimeList*/ 4096 && t_value !== (t_value = (/*anime*/ ctx[59]?.shownScore || "N/A") + "")) set_data_dev(t, t_value);
+    		},
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(t);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_if_block_2$3.name,
+    		type: "if",
+    		source: "(526:40) {#if $filterOptions}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (429:12) {#each $finalAnimeList || [] as anime, animeIdx (anime?.id || {}
+    function create_each_block_2$2(key_1, ctx) {
+    	let div3;
+    	let div2;
+    	let t0;
+    	let span4;
+    	let span0;
+    	let t1_value = (/*anime*/ ctx[59]?.shownTitle || "N/A") + "";
+    	let t1;
+    	let span0_copy_value_value;
+    	let span0_copy_value___value;
+    	let t2;
+    	let span3;
+    	let div0;
+    	let span1;
+    	let svg0;
+    	let path0;
+    	let svg0_class_value;
+    	let t3;
+    	let show_if;
+    	let t4;
+    	let div1;
+    	let span2;
+    	let svg1;
+    	let path1;
+    	let svg1_class_value;
+    	let t5;
+    	let span3_copy_value_value;
+    	let span3_copy_value___value;
+    	let div2_tabindex_value;
+    	let div3_title_value;
+    	let each_value_2 = /*each_value_2*/ ctx[60];
+    	let animeIdx = /*animeIdx*/ ctx[61];
+    	let mounted;
+    	let dispose;
+    	let if_block0 = (/*anime*/ ctx[59]?.coverImageUrl || /*anime*/ ctx[59]?.bannerImageUrl || /*anime*/ ctx[59]?.trailerThumbnailUrl) && create_if_block_4$3(ctx);
+
+    	function select_block_type_1(ctx, dirty) {
+    		if (dirty[0] & /*$finalAnimeList*/ 4096) show_if = null;
+    		if (show_if == null) show_if = !!isJsonObject(/*anime*/ ctx[59]?.nextAiringEpisode);
+    		if (show_if) return create_if_block_3$3;
+    		return create_else_block_1$2;
+    	}
+
+    	let current_block_type = select_block_type_1(ctx, [-1, -1, -1]);
+    	let if_block1 = current_block_type(ctx);
+
+    	function select_block_type_2(ctx, dirty) {
+    		if (/*$filterOptions*/ ctx[15]) return create_if_block_2$3;
+    		return create_else_block$2;
+    	}
+
+    	let current_block_type_1 = select_block_type_2(ctx);
+    	let if_block2 = current_block_type_1(ctx);
+
+    	function pointerdown_handler(...args) {
+    		return /*pointerdown_handler*/ ctx[28](/*animeIdx*/ ctx[61], ...args);
+    	}
+
+    	function keydown_handler(...args) {
+    		return /*keydown_handler*/ ctx[29](/*animeIdx*/ ctx[61], ...args);
+    	}
+
+    	const assign_div3 = () => /*div3_binding*/ ctx[30](div3, each_value_2, animeIdx);
+    	const unassign_div3 = () => /*div3_binding*/ ctx[30](null, each_value_2, animeIdx);
+
+    	const block = {
+    		key: key_1,
+    		first: null,
+    		c: function create() {
+    			div3 = element("div");
+    			div2 = element("div");
+    			if (if_block0) if_block0.c();
+    			t0 = space();
+    			span4 = element("span");
+    			span0 = element("span");
+    			t1 = text(t1_value);
+    			t2 = space();
+    			span3 = element("span");
+    			div0 = element("div");
+    			span1 = element("span");
+    			svg0 = svg_element("svg");
+    			path0 = svg_element("path");
+    			t3 = space();
+    			if_block1.c();
+    			t4 = space();
+    			div1 = element("div");
+    			span2 = element("span");
+    			svg1 = svg_element("svg");
+    			path1 = svg_element("path");
+    			t5 = space();
+    			if_block2.c();
+    			attr_dev(span0, "class", "title copy svelte-xo6vxz");
+    			attr_dev(span0, "copy-value", span0_copy_value_value = /*anime*/ ctx[59]?.copiedTitle || "");
+    			attr_dev(span0, "copy-value-2", span0_copy_value___value = /*anime*/ ctx[59]?.shownTitle || "");
+    			add_location(span0, file$7, 477, 28, 19048);
+    			attr_dev(path0, "d", "M256 512a256 256 0 1 0 0-512 256 256 0 1 0 0 512z");
+    			add_location(path0, file$7, 494, 45, 20034);
+    			attr_dev(svg0, "viewBox", "0 0 512 512");
+    			attr_dev(svg0, "class", svg0_class_value = "" + (null_to_empty(`${/*anime*/ ctx[59]?.userStatusColor}-fill circle`) + " svelte-xo6vxz"));
+    			add_location(svg0, file$7, 491, 40, 19823);
+    			attr_dev(span1, "class", "svelte-xo6vxz");
+    			add_location(span1, file$7, 489, 36, 19718);
+    			attr_dev(div0, "class", "brief-info svelte-xo6vxz");
+    			add_location(div0, file$7, 488, 32, 19656);
+    			attr_dev(path1, "d", "M317 18a32 32 0 0 0-58 0l-64 132-144 22a32 32 0 0 0-17 54l104 103-25 146a32 32 0 0 0 47 33l128-68 129 68a32 32 0 0 0 46-33l-24-146 104-103a32 32 0 0 0-18-54l-144-22-64-132z");
+    			add_location(path1, file$7, 521, 45, 21716);
+    			attr_dev(svg1, "viewBox", "0 0 576 512");
+    			attr_dev(svg1, "class", svg1_class_value = "" + (null_to_empty(`${/*anime*/ ctx[59]?.contentCautionColor}-fill star`) + " svelte-xo6vxz"));
+    			add_location(svg1, file$7, 518, 40, 21503);
+    			attr_dev(span2, "class", "svelte-xo6vxz");
+    			add_location(span2, file$7, 516, 36, 21400);
+    			attr_dev(div1, "class", "brief-info svelte-xo6vxz");
+    			add_location(div1, file$7, 515, 32, 21338);
+    			attr_dev(span3, "class", "brief-info-wrapper copy svelte-xo6vxz");
+    			attr_dev(span3, "copy-value", span3_copy_value_value = /*anime*/ ctx[59]?.copiedTitle || "");
+    			attr_dev(span3, "copy-value-2", span3_copy_value___value = /*anime*/ ctx[59]?.shownTitle || "");
+    			add_location(span3, file$7, 483, 28, 19378);
+    			attr_dev(span4, "class", "image-grid__card-title svelte-xo6vxz");
+    			add_location(span4, file$7, 476, 24, 18981);
+    			attr_dev(div2, "class", "shimmer svelte-xo6vxz");
+    			attr_dev(div2, "tabindex", div2_tabindex_value = /*$popupVisible*/ ctx[10] ? "" : "0");
+    			add_location(div2, file$7, 435, 20, 16674);
+    			attr_dev(div3, "class", "image-grid__card svelte-xo6vxz");
+    			attr_dev(div3, "title", div3_title_value = /*anime*/ ctx[59]?.briefInfo || "");
+    			add_location(div3, file$7, 429, 16, 16404);
+    			this.first = div3;
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, div3, anchor);
+    			append_dev(div3, div2);
+    			if (if_block0) if_block0.m(div2, null);
+    			append_dev(div2, t0);
+    			append_dev(div2, span4);
+    			append_dev(span4, span0);
+    			append_dev(span0, t1);
+    			append_dev(span4, t2);
+    			append_dev(span4, span3);
+    			append_dev(span3, div0);
+    			append_dev(div0, span1);
+    			append_dev(span1, svg0);
+    			append_dev(svg0, path0);
+    			append_dev(span1, t3);
+    			if_block1.m(span1, null);
+    			append_dev(span3, t4);
+    			append_dev(span3, div1);
+    			append_dev(div1, span2);
+    			append_dev(span2, svg1);
+    			append_dev(svg1, path1);
+    			append_dev(span2, t5);
+    			if_block2.m(span2, null);
+    			assign_div3();
+
+    			if (!mounted) {
+    				dispose = [
+    					listen_dev(
+    						div2,
+    						"click",
+    						function () {
+    							if (is_function(/*handleOpenPopup*/ ctx[17](/*animeIdx*/ ctx[61]))) /*handleOpenPopup*/ ctx[17](/*animeIdx*/ ctx[61]).apply(this, arguments);
+    						},
+    						false,
+    						false,
+    						false,
+    						false
+    					),
+    					listen_dev(div2, "pointerdown", pointerdown_handler, false, false, false, false),
+    					listen_dev(div2, "pointerup", /*cancelOpenOption*/ ctx[19], false, false, false, false),
+    					listen_dev(div2, "pointercancel", /*cancelOpenOption*/ ctx[19], false, false, false, false),
+    					listen_dev(div2, "keydown", keydown_handler, false, false, false, false)
+    				];
+
+    				mounted = true;
+    			}
+    		},
+    		p: function update(new_ctx, dirty) {
+    			ctx = new_ctx;
+
+    			if (/*anime*/ ctx[59]?.coverImageUrl || /*anime*/ ctx[59]?.bannerImageUrl || /*anime*/ ctx[59]?.trailerThumbnailUrl) {
+    				if (if_block0) {
+    					if_block0.p(ctx, dirty);
+    				} else {
+    					if_block0 = create_if_block_4$3(ctx);
+    					if_block0.c();
+    					if_block0.m(div2, t0);
+    				}
+    			} else if (if_block0) {
+    				if_block0.d(1);
+    				if_block0 = null;
+    			}
+
+    			if (dirty[0] & /*$finalAnimeList*/ 4096 && t1_value !== (t1_value = (/*anime*/ ctx[59]?.shownTitle || "N/A") + "")) set_data_dev(t1, t1_value);
+
+    			if (dirty[0] & /*$finalAnimeList*/ 4096 && span0_copy_value_value !== (span0_copy_value_value = /*anime*/ ctx[59]?.copiedTitle || "")) {
+    				attr_dev(span0, "copy-value", span0_copy_value_value);
+    			}
+
+    			if (dirty[0] & /*$finalAnimeList*/ 4096 && span0_copy_value___value !== (span0_copy_value___value = /*anime*/ ctx[59]?.shownTitle || "")) {
+    				attr_dev(span0, "copy-value-2", span0_copy_value___value);
+    			}
+
+    			if (dirty[0] & /*$finalAnimeList*/ 4096 && svg0_class_value !== (svg0_class_value = "" + (null_to_empty(`${/*anime*/ ctx[59]?.userStatusColor}-fill circle`) + " svelte-xo6vxz"))) {
+    				attr_dev(svg0, "class", svg0_class_value);
+    			}
+
+    			if (current_block_type === (current_block_type = select_block_type_1(ctx, dirty)) && if_block1) {
+    				if_block1.p(ctx, dirty);
+    			} else {
+    				if_block1.d(1);
+    				if_block1 = current_block_type(ctx);
+
+    				if (if_block1) {
+    					if_block1.c();
+    					if_block1.m(span1, null);
+    				}
+    			}
+
+    			if (dirty[0] & /*$finalAnimeList*/ 4096 && svg1_class_value !== (svg1_class_value = "" + (null_to_empty(`${/*anime*/ ctx[59]?.contentCautionColor}-fill star`) + " svelte-xo6vxz"))) {
+    				attr_dev(svg1, "class", svg1_class_value);
+    			}
+
+    			if (current_block_type_1 === (current_block_type_1 = select_block_type_2(ctx)) && if_block2) {
+    				if_block2.p(ctx, dirty);
+    			} else {
+    				if_block2.d(1);
+    				if_block2 = current_block_type_1(ctx);
+
+    				if (if_block2) {
+    					if_block2.c();
+    					if_block2.m(span2, null);
+    				}
+    			}
+
+    			if (dirty[0] & /*$finalAnimeList*/ 4096 && span3_copy_value_value !== (span3_copy_value_value = /*anime*/ ctx[59]?.copiedTitle || "")) {
+    				attr_dev(span3, "copy-value", span3_copy_value_value);
+    			}
+
+    			if (dirty[0] & /*$finalAnimeList*/ 4096 && span3_copy_value___value !== (span3_copy_value___value = /*anime*/ ctx[59]?.shownTitle || "")) {
+    				attr_dev(span3, "copy-value-2", span3_copy_value___value);
+    			}
+
+    			if (dirty[0] & /*$popupVisible*/ 1024 && div2_tabindex_value !== (div2_tabindex_value = /*$popupVisible*/ ctx[10] ? "" : "0")) {
+    				attr_dev(div2, "tabindex", div2_tabindex_value);
+    			}
+
+    			if (dirty[0] & /*$finalAnimeList*/ 4096 && div3_title_value !== (div3_title_value = /*anime*/ ctx[59]?.briefInfo || "")) {
+    				attr_dev(div3, "title", div3_title_value);
+    			}
+
+    			if (each_value_2 !== /*each_value_2*/ ctx[60] || animeIdx !== /*animeIdx*/ ctx[61]) {
+    				unassign_div3();
+    				each_value_2 = /*each_value_2*/ ctx[60];
+    				animeIdx = /*animeIdx*/ ctx[61];
+    				assign_div3();
+    			}
+    		},
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(div3);
+    			if (if_block0) if_block0.d();
+    			if_block1.d();
+    			if_block2.d();
+    			unassign_div3();
+    			mounted = false;
+    			run_all(dispose);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_each_block_2$2.name,
+    		type: "each",
+    		source: "(429:12) {#each $finalAnimeList || [] as anime, animeIdx (anime?.id || {}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (539:12) {#each Array($shownAllInList ? 0 : 1) as _}
+    function create_each_block_1$2(ctx) {
+    	let div1;
+    	let div0;
+
+    	const block = {
+    		c: function create() {
+    			div1 = element("div");
+    			div0 = element("div");
+    			attr_dev(div0, "class", "shimmer svelte-xo6vxz");
+    			add_location(div0, file$7, 540, 20, 22774);
+    			attr_dev(div1, "class", "image-grid__card skeleton svelte-xo6vxz");
+    			add_location(div1, file$7, 539, 16, 22713);
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, div1, anchor);
+    			append_dev(div1, div0);
+    		},
+    		p: noop,
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(div1);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_each_block_1$2.name,
+    		type: "each",
+    		source: "(539:12) {#each Array($shownAllInList ? 0 : 1) as _}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (544:12) {#each Array(isFullViewed ? Math.floor((windowHeight ?? 1100) / 220) : 5) as _}
+    function create_each_block$2(ctx) {
+    	let div;
+
+    	const block = {
+    		c: function create() {
+    			div = element("div");
+    			attr_dev(div, "class", "image-grid__card svelte-xo6vxz");
+    			add_location(div, file$7, 544, 16, 22953);
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, div, anchor);
+    		},
+    		p: noop,
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(div);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_each_block$2.name,
+    		type: "each",
+    		source: "(544:12) {#each Array(isFullViewed ? Math.floor((windowHeight ?? 1100) / 220) : 5) as _}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (560:4) {#if !$android && (shouldShowGoBackInFullView || shouldShowGoBack)}
+    function create_if_block$6(ctx) {
+    	let div;
+    	let svg;
+    	let path;
+    	let path_d_value;
+    	let svg_viewBox_value;
+    	let div_class_value;
+    	let div_outro;
+    	let current;
+    	let mounted;
+    	let dispose;
+
+    	const block = {
+    		c: function create() {
+    			div = element("div");
+    			svg = svg_element("svg");
+    			path = svg_element("path");
+
+    			attr_dev(path, "d", path_d_value = // angle left
+    			/*shouldShowGoBackInFullView*/ ctx[9]
+    			? "M41 233a32 32 0 0 0 0 46l160 160a32 32 0 0 0 46-46L109 256l138-137a32 32 0 0 0-46-46L41 233z"
+    			: // angle up
+    				"M201 137c13-12 33-12 46 0l160 160a32 32 0 0 1-46 46L224 205 87 343a32 32 0 0 1-46-46l160-160z");
+
+    			add_location(path, file$7, 574, 16, 24048);
+    			attr_dev(svg, "viewBox", svg_viewBox_value = `0 0 ${/*shouldShowGoBackInFullView*/ ctx[9] ? "320" : "448"} 512`);
+    			attr_dev(svg, "class", "svelte-xo6vxz");
+    			add_location(svg, file$7, 569, 12, 23888);
+    			attr_dev(div, "class", div_class_value = "" + (null_to_empty("go-back-grid" + (/*shouldShowGoBackInFullView*/ ctx[9] ? " fullView" : "")) + " svelte-xo6vxz"));
+    			attr_dev(div, "tabindex", "0");
+    			add_location(div, file$7, 561, 8, 23585);
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, div, anchor);
+    			append_dev(div, svg);
+    			append_dev(svg, path);
+    			current = true;
+
+    			if (!mounted) {
+    				dispose = [
+    					listen_dev(div, "click", /*goBackGrid*/ ctx[20], false, false, false, false),
+    					listen_dev(div, "keydown", /*keydown_handler_1*/ ctx[34], false, false, false, false)
+    				];
+
+    				mounted = true;
+    			}
+    		},
+    		p: function update(ctx, dirty) {
+    			if (!current || dirty[0] & /*shouldShowGoBackInFullView*/ 512 && path_d_value !== (path_d_value = // angle left
+    			/*shouldShowGoBackInFullView*/ ctx[9]
+    			? "M41 233a32 32 0 0 0 0 46l160 160a32 32 0 0 0 46-46L109 256l138-137a32 32 0 0 0-46-46L41 233z"
+    			: // angle up
+    				"M201 137c13-12 33-12 46 0l160 160a32 32 0 0 1-46 46L224 205 87 343a32 32 0 0 1-46-46l160-160z")) {
+    				attr_dev(path, "d", path_d_value);
+    			}
+
+    			if (!current || dirty[0] & /*shouldShowGoBackInFullView*/ 512 && svg_viewBox_value !== (svg_viewBox_value = `0 0 ${/*shouldShowGoBackInFullView*/ ctx[9] ? "320" : "448"} 512`)) {
+    				attr_dev(svg, "viewBox", svg_viewBox_value);
+    			}
+
+    			if (!current || dirty[0] & /*shouldShowGoBackInFullView*/ 512 && div_class_value !== (div_class_value = "" + (null_to_empty("go-back-grid" + (/*shouldShowGoBackInFullView*/ ctx[9] ? " fullView" : "")) + " svelte-xo6vxz"))) {
+    				attr_dev(div, "class", div_class_value);
+    			}
+    		},
+    		i: function intro(local) {
+    			if (current) return;
+    			if (div_outro) div_outro.end(1);
+    			current = true;
+    		},
+    		o: function outro(local) {
+    			div_outro = create_out_transition(div, fade, { duration: 200 });
+    			current = false;
+    		},
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(div);
+    			if (detaching && div_outro) div_outro.end();
+    			mounted = false;
+    			run_all(dispose);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_if_block$6.name,
+    		type: "if",
+    		source: "(560:4) {#if !$android && (shouldShowGoBackInFullView || shouldShowGoBack)}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    function create_fragment$7(ctx) {
+    	let main;
+    	let div;
+    	let div_class_value;
+    	let t;
+    	let main_class_value;
+    	let current;
+    	let mounted;
+    	let dispose;
+
+    	function select_block_type(ctx, dirty) {
+    		if (/*$finalAnimeList*/ ctx[12]?.length) return create_if_block_1$6;
+    		if (!/*$finalAnimeList*/ ctx[12] || /*$initData*/ ctx[14]) return create_if_block_5$2;
+    		return create_else_block_2$2;
+    	}
+
+    	let current_block_type = select_block_type(ctx);
+    	let if_block0 = current_block_type(ctx);
+    	let if_block1 = !/*$android*/ ctx[4] && (/*shouldShowGoBackInFullView*/ ctx[9] || /*shouldShowGoBack*/ ctx[8]) && create_if_block$6(ctx);
+
+    	const block = {
+    		c: function create() {
+    			main = element("main");
+    			div = element("div");
+    			if_block0.c();
+    			t = space();
+    			if (if_block1) if_block1.c();
+    			attr_dev(div, "id", "anime-grid");
+
+    			attr_dev(div, "class", div_class_value = "" + (null_to_empty("image-grid " + (/*isFullViewed*/ ctx[3] ? " fullView" : "") + (/*$finalAnimeList*/ ctx[12]?.length === 0 && !/*$initData*/ ctx[14]
+    			? "empty"
+    			: "")) + " svelte-xo6vxz"));
+
+    			set_style(div, "--anime-grid-height", /*windowHeight*/ ctx[5] + "px");
+    			add_location(div, file$7, 397, 4, 15154);
+    			attr_dev(main, "class", main_class_value = "" + (null_to_empty(/*isFullViewed*/ ctx[3] ? "fullView" : "") + " svelte-xo6vxz"));
+    			add_location(main, file$7, 396, 0, 15103);
+    		},
+    		l: function claim(nodes) {
+    			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, main, anchor);
+    			append_dev(main, div);
+    			if_block0.m(div, null);
+    			/*div_binding*/ ctx[31](div);
+    			append_dev(main, t);
+    			if (if_block1) if_block1.m(main, null);
+    			current = true;
+
+    			if (!mounted) {
+    				dispose = [
+    					listen_dev(div, "wheel", /*wheel_handler*/ ctx[32], false, false, false, false),
+    					listen_dev(div, "scroll", /*scroll_handler*/ ctx[33], false, false, false, false)
+    				];
+
+    				mounted = true;
+    			}
+    		},
+    		p: function update(ctx, dirty) {
+    			if (current_block_type === (current_block_type = select_block_type(ctx)) && if_block0) {
+    				if_block0.p(ctx, dirty);
+    			} else {
+    				if_block0.d(1);
+    				if_block0 = current_block_type(ctx);
+
+    				if (if_block0) {
+    					if_block0.c();
+    					if_block0.m(div, null);
+    				}
+    			}
+
+    			if (!current || dirty[0] & /*isFullViewed, $finalAnimeList, $initData*/ 20488 && div_class_value !== (div_class_value = "" + (null_to_empty("image-grid " + (/*isFullViewed*/ ctx[3] ? " fullView" : "") + (/*$finalAnimeList*/ ctx[12]?.length === 0 && !/*$initData*/ ctx[14]
+    			? "empty"
+    			: "")) + " svelte-xo6vxz"))) {
+    				attr_dev(div, "class", div_class_value);
+    			}
+
+    			if (dirty[0] & /*windowHeight*/ 32) {
+    				set_style(div, "--anime-grid-height", /*windowHeight*/ ctx[5] + "px");
+    			}
+
+    			if (!/*$android*/ ctx[4] && (/*shouldShowGoBackInFullView*/ ctx[9] || /*shouldShowGoBack*/ ctx[8])) {
+    				if (if_block1) {
+    					if_block1.p(ctx, dirty);
+
+    					if (dirty[0] & /*$android, shouldShowGoBackInFullView, shouldShowGoBack*/ 784) {
+    						transition_in(if_block1, 1);
+    					}
+    				} else {
+    					if_block1 = create_if_block$6(ctx);
+    					if_block1.c();
+    					transition_in(if_block1, 1);
+    					if_block1.m(main, null);
+    				}
+    			} else if (if_block1) {
+    				group_outros();
+
+    				transition_out(if_block1, 1, 1, () => {
+    					if_block1 = null;
+    				});
+
+    				check_outros();
+    			}
+
+    			if (!current || dirty[0] & /*isFullViewed*/ 8 && main_class_value !== (main_class_value = "" + (null_to_empty(/*isFullViewed*/ ctx[3] ? "fullView" : "") + " svelte-xo6vxz"))) {
+    				attr_dev(main, "class", main_class_value);
+    			}
+    		},
+    		i: function intro(local) {
+    			if (current) return;
+    			transition_in(if_block1);
+    			current = true;
+    		},
+    		o: function outro(local) {
+    			transition_out(if_block1);
+    			current = false;
+    		},
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(main);
+    			if_block0.d();
+    			/*div_binding*/ ctx[31](null);
+    			if (if_block1) if_block1.d();
+    			mounted = false;
+    			run_all(dispose);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_fragment$7.name,
+    		type: "component",
+    		source: "",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    const emptyImage$1 = "data:image/png;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=";
+    const loadingImage$1 = "data:image/jpeg;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=";
+
+    function getFinishedEpisode(episodes, nextAiringEpisode) {
+    	let timeDifMS;
+    	let nextEpisode;
+
+    	if (typeof nextAiringEpisode?.episode === "number" && typeof nextAiringEpisode?.airingAt === "number") {
+    		let nextAiringDate = new Date(nextAiringEpisode?.airingAt * 1000);
+    		nextEpisode = nextAiringEpisode?.episode;
+
+    		if (nextAiringDate instanceof Date && !isNaN(nextAiringDate)) {
+    			timeDifMS = nextAiringDate.getTime() - new Date().getTime();
+    		}
+    	}
+
+    	if (timeDifMS > 0 && nextEpisode > 1 && episodes > nextEpisode) {
+    		return `(${nextEpisode - 1}/${episodes})`;
+    	} else if (timeDifMS <= 0 && typeof nextEpisode === "number" && episodes > nextEpisode) {
+    		return `(${nextEpisode}/${episodes})`;
+    	} else if (typeof episodes === "number") {
+    		return `(${episodes})`;
+    	} else if (typeof nextEpisode === "number") {
+    		if (timeDifMS > 0 && nextEpisode > 1) {
+    			return `(${nextEpisode - 1}")`;
+    		} else if (timeDifMS <= 0) {
+    			return `(${nextEpisode}")`;
+    		}
+    	}
+
+    	return "";
+    }
+
+    function horizontalWheel$1(event, parentClass) {
+    	let element = event.target;
+    	let classList = element.classList;
+
+    	if (!classList.contains(parentClass)) {
+    		element = element.closest("." + parentClass);
+    	}
+
+    	if (element.scrollWidth <= element.clientWidth) return;
+
+    	if (event.deltaY !== 0 && event.deltaX === 0) {
+    		event.preventDefault();
+    		event.stopPropagation();
+    		element.scrollLeft = Math.max(0, element.scrollLeft + event.deltaY);
+    	}
+    }
+
+    function instance$7($$self, $$props, $$invalidate) {
+    	let isFullViewed;
+    	let shouldShowGoBackInFullView;
+    	let shouldShowGoBack;
+    	let $android;
+    	let $listUpdateAvailable;
+    	let $gridFullView;
+    	let $animeOptionVisible;
+    	let $openedAnimeOptionIdx;
+    	let $popupVisible;
+    	let $openedAnimePopupIdx;
+    	let $animeLoaderWorker;
+    	let $checkAnimeLoaderStatus;
+    	let $shownAllInList;
+    	let $asyncAnimeReloaded;
+    	let $animeObserver;
+    	let $finalAnimeList;
+    	let $dataStatus;
+    	let $animeIdxRemoved;
+    	let $mostRecentAiringDateTimeout;
+    	let $earlisetReleaseDate;
+    	let $importantLoad;
+    	let $initData;
+    	let $filterOptions;
+    	validate_store(android$1, 'android');
+    	component_subscribe($$self, android$1, $$value => $$invalidate(4, $android = $$value));
+    	validate_store(listUpdateAvailable, 'listUpdateAvailable');
+    	component_subscribe($$self, listUpdateAvailable, $$value => $$invalidate(24, $listUpdateAvailable = $$value));
+    	validate_store(gridFullView, 'gridFullView');
+    	component_subscribe($$self, gridFullView, $$value => $$invalidate(25, $gridFullView = $$value));
+    	validate_store(animeOptionVisible, 'animeOptionVisible');
+    	component_subscribe($$self, animeOptionVisible, $$value => $$invalidate(40, $animeOptionVisible = $$value));
+    	validate_store(openedAnimeOptionIdx, 'openedAnimeOptionIdx');
+    	component_subscribe($$self, openedAnimeOptionIdx, $$value => $$invalidate(41, $openedAnimeOptionIdx = $$value));
+    	validate_store(popupVisible, 'popupVisible');
+    	component_subscribe($$self, popupVisible, $$value => $$invalidate(10, $popupVisible = $$value));
+    	validate_store(openedAnimePopupIdx, 'openedAnimePopupIdx');
+    	component_subscribe($$self, openedAnimePopupIdx, $$value => $$invalidate(42, $openedAnimePopupIdx = $$value));
+    	validate_store(animeLoaderWorker$1, 'animeLoaderWorker');
+    	component_subscribe($$self, animeLoaderWorker$1, $$value => $$invalidate(43, $animeLoaderWorker = $$value));
+    	validate_store(checkAnimeLoaderStatus, 'checkAnimeLoaderStatus');
+    	component_subscribe($$self, checkAnimeLoaderStatus, $$value => $$invalidate(44, $checkAnimeLoaderStatus = $$value));
+    	validate_store(shownAllInList, 'shownAllInList');
+    	component_subscribe($$self, shownAllInList, $$value => $$invalidate(11, $shownAllInList = $$value));
+    	validate_store(asyncAnimeReloaded, 'asyncAnimeReloaded');
+    	component_subscribe($$self, asyncAnimeReloaded, $$value => $$invalidate(45, $asyncAnimeReloaded = $$value));
+    	validate_store(animeObserver, 'animeObserver');
+    	component_subscribe($$self, animeObserver, $$value => $$invalidate(46, $animeObserver = $$value));
+    	validate_store(finalAnimeList, 'finalAnimeList');
+    	component_subscribe($$self, finalAnimeList, $$value => $$invalidate(12, $finalAnimeList = $$value));
+    	validate_store(dataStatus, 'dataStatus');
+    	component_subscribe($$self, dataStatus, $$value => $$invalidate(47, $dataStatus = $$value));
+    	validate_store(animeIdxRemoved, 'animeIdxRemoved');
+    	component_subscribe($$self, animeIdxRemoved, $$value => $$invalidate(48, $animeIdxRemoved = $$value));
+    	validate_store(mostRecentAiringDateTimeout, 'mostRecentAiringDateTimeout');
+    	component_subscribe($$self, mostRecentAiringDateTimeout, $$value => $$invalidate(49, $mostRecentAiringDateTimeout = $$value));
+    	validate_store(earlisetReleaseDate, 'earlisetReleaseDate');
+    	component_subscribe($$self, earlisetReleaseDate, $$value => $$invalidate(13, $earlisetReleaseDate = $$value));
+    	validate_store(importantLoad, 'importantLoad');
+    	component_subscribe($$self, importantLoad, $$value => $$invalidate(50, $importantLoad = $$value));
+    	validate_store(initData, 'initData');
+    	component_subscribe($$self, initData, $$value => $$invalidate(14, $initData = $$value));
+    	validate_store(filterOptions, 'filterOptions');
+    	component_subscribe($$self, filterOptions, $$value => $$invalidate(15, $filterOptions = $$value));
+    	let { $$slots: slots = {}, $$scope } = $$props;
+    	validate_slots('AnimeGrid', slots, []);
+    	let windowHeight = Math.max(window.visualViewport.height, window.innerHeight);
+    	let windowWidth = Math.max(window.visualViewport.width, window.innerWidth);
+    	let animeGridEl;
+    	let isRunningIntersectEvent;
+    	let numberOfLoadedGrid = 13;
+    	let observerDelay = 16;
+
+    	function addLastAnimeObserver() {
+    		isRunningIntersectEvent = false;
+
+    		set_store_value(
+    			animeObserver,
+    			$animeObserver = new IntersectionObserver(entries => {
+    					if ($shownAllInList) return;
+
+    					entries.forEach(entry => {
+    						if (entry.isIntersecting) {
+    							if (isRunningIntersectEvent) return;
+    							isRunningIntersectEvent = true;
+
+    							setTimeout(
+    								() => {
+    									if ($animeLoaderWorker instanceof Worker) {
+    										$checkAnimeLoaderStatus().then(() => {
+    											$animeLoaderWorker?.postMessage?.({ loadMore: true });
+    										});
+    									}
+
+    									isRunningIntersectEvent = false;
+    								},
+    								observerDelay
+    							);
+    						}
+    					});
+    				},
+    			{
+    					root: null,
+    					rootMargin: "100%",
+    					threshold: [0, 1]
+    				}),
+    			$animeObserver
+    		);
+    	}
+
+    	onMount(() => {
+    		$$invalidate(5, windowHeight = Math.max(window.visualViewport.height, window.innerHeight));
+    		$$invalidate(22, windowWidth = Math.max(window.visualViewport.width, window.innerWidth));
+    		$$invalidate(6, animeGridEl = animeGridEl || document.getElementById("anime-grid"));
+
+    		window.addEventListener("resize", () => {
+    			$$invalidate(5, windowHeight = Math.max(window.visualViewport.height, window.innerHeight));
+    			$$invalidate(22, windowWidth = Math.max(window.visualViewport.width, window.innerWidth));
+    		});
+    	});
+
+    	let animeLoaderIsAlivePromise, checkAnimeLoaderStatusTimeout, isAsyncLoad = false;
+
+    	window.checkAnimeLoaderStatus = set_store_value(
+    		checkAnimeLoaderStatus,
+    		$checkAnimeLoaderStatus = async () => {
+    			if ($animeLoaderWorker instanceof Worker && typeof $animeLoaderWorker.onmessage === "function") {
+    				return new Promise((resolve, reject) => {
+    						animeLoaderIsAlivePromise = { resolve, reject };
+    						$animeLoaderWorker?.postMessage?.({ checkStatus: true });
+    						clearTimeout(checkAnimeLoaderStatusTimeout);
+
+    						checkAnimeLoaderStatusTimeout = setTimeout(
+    							() => {
+    								reject();
+    							},
+    							1000
+    						);
+    					}).catch(() => {
+    					set_store_value(animeLoaderWorker$1, $animeLoaderWorker = null, $animeLoaderWorker);
+    					set_store_value(finalAnimeList, $finalAnimeList = null, $finalAnimeList);
+    					set_store_value(importantLoad, $importantLoad = !$importantLoad, $importantLoad);
+    					animeLoaderIsAlivePromise = null;
+    				}).finally(() => {
+    					animeLoaderIsAlivePromise = null;
+    				});
+    			}
+    		},
+    		$checkAnimeLoaderStatus
+    	);
+
+    	animeLoaderWorker$1.subscribe(val => {
+    		if (val instanceof Worker) {
+    			val.onmessage = async ({ data }) => {
+    				if (animeLoaderIsAlivePromise?.resolve) {
+    					if (data?.isAlive) {
+    						animeLoaderIsAlivePromise?.resolve?.();
+    						animeLoaderIsAlivePromise = null;
+    					}
+    				}
+
+    				await tick();
+
+    				if (data?.status !== undefined) set_store_value(dataStatus, $dataStatus = data.status, $dataStatus); else if (data.getEarlisetReleaseDate === true) {
+    					if (data.earliestReleaseDate && data?.timeBeforeEarliestReleaseDate > 0 && (data.earliestReleaseDate < $earlisetReleaseDate || new Date($earlisetReleaseDate) < new Date() || !$earlisetReleaseDate)) {
+    						set_store_value(earlisetReleaseDate, $earlisetReleaseDate = data.earliestReleaseDate, $earlisetReleaseDate);
+    						clearTimeout($mostRecentAiringDateTimeout);
+
+    						set_store_value(
+    							mostRecentAiringDateTimeout,
+    							$mostRecentAiringDateTimeout = setTimeout(
+    								() => {
+    									if ($animeLoaderWorker instanceof Worker) {
+    										$checkAnimeLoaderStatus().then(() => {
+    											$animeLoaderWorker?.postMessage?.({ getEarlisetReleaseDate: true });
+    										});
+    									}
+    								},
+    								Math.min(data.timeBeforeEarliestReleaseDate, 2000000000)
+    							),
+    							$mostRecentAiringDateTimeout
+    						);
+    					}
+    				} else if (data.finalAnimeList instanceof Array) {
+    					if (data?.reload === true) {
+    						set_store_value(finalAnimeList, $finalAnimeList = data.finalAnimeList, $finalAnimeList);
+    						isAsyncLoad = true;
+    					} else if (data.isNew === true) {
+    						set_store_value(finalAnimeList, $finalAnimeList = data.finalAnimeList, $finalAnimeList);
+    					} else if (data.isNew === false) {
+    						if ($finalAnimeList instanceof Array) {
+    							set_store_value(finalAnimeList, $finalAnimeList = $finalAnimeList.concat(data.finalAnimeList), $finalAnimeList);
+
+    							if (data.isLast) {
+    								set_store_value(shownAllInList, $shownAllInList = true, $shownAllInList);
+
+    								if ($animeObserver instanceof IntersectionObserver) {
+    									$animeObserver.disconnect();
+    									set_store_value(animeObserver, $animeObserver = null, $animeObserver);
+    								}
+    							}
+    						}
+    					}
+
+    					val?.postMessage?.({ getEarlisetReleaseDate: true });
+    				} else if (data.isRemoved === true && typeof data.removedID === "number") {
+    					let maxGridElIdx = Math.max($finalAnimeList.length - 2, 0);
+    					let gridElement = $finalAnimeList[maxGridElIdx].gridElement || animeGridEl.children?.[maxGridElIdx];
+
+    					if ($animeObserver instanceof IntersectionObserver && gridElement instanceof Element) {
+    						$animeObserver.observe(gridElement);
+    					}
+
+    					let removedIdx = $finalAnimeList.findIndex(({ id }) => id === data.removedID);
+    					set_store_value(finalAnimeList, $finalAnimeList = $finalAnimeList.filter(({ id }) => id !== data.removedID), $finalAnimeList);
+
+    					if (removedIdx >= 0) {
+    						set_store_value(animeIdxRemoved, $animeIdxRemoved = null, $animeIdxRemoved);
+    						set_store_value(animeIdxRemoved, $animeIdxRemoved = removedIdx, $animeIdxRemoved);
+    					}
+
+    					val?.postMessage?.({ getEarlisetReleaseDate: true });
+    				}
+    			};
+
+    			val.onerror = error => {
+    				set_store_value(dataStatus, $dataStatus = "Something went wrong...", $dataStatus);
+    				console.error(error);
+    			};
+
+    			val?.postMessage?.({ getEarlisetReleaseDate: true });
+    		}
+    	});
+
+    	finalAnimeList.subscribe(async val => {
+    		if (val instanceof Array && val.length) {
+    			if ($shownAllInList) {
+    				set_store_value(shownAllInList, $shownAllInList = false, $shownAllInList);
+    			}
+
+    			if ($animeObserver) {
+    				$animeObserver.disconnect();
+    				set_store_value(animeObserver, $animeObserver = null, $animeObserver);
+    			}
+
+    			await tick();
+    			addLastAnimeObserver();
+    			let gridElementIdx = $finalAnimeList.length - 1;
+    			let gridElement = $finalAnimeList[gridElementIdx].gridElement || animeGridEl.children?.[gridElementIdx];
+
+    			if ($animeObserver instanceof IntersectionObserver) {
+    				if (gridElement instanceof Element) {
+    					$animeObserver.observe(gridElement);
+    				}
+    			}
+
+    			if (isAsyncLoad) {
+    				set_store_value(asyncAnimeReloaded, $asyncAnimeReloaded = !$asyncAnimeReloaded, $asyncAnimeReloaded);
+    				isAsyncLoad = false;
+    			}
+    		} else {
+    			if ($animeObserver) {
+    				$animeObserver?.disconnect?.();
+    				set_store_value(animeObserver, $animeObserver = null, $animeObserver);
+    			}
+
+    			if (isAsyncLoad) {
+    				set_store_value(asyncAnimeReloaded, $asyncAnimeReloaded = !$asyncAnimeReloaded, $asyncAnimeReloaded);
+    				isAsyncLoad = false;
+    			}
+    		}
+    	});
+
+    	searchedAnimeKeyword.subscribe(async val => {
+    		if (typeof val === "string") {
+    			if ($animeLoaderWorker instanceof Worker) {
+    				set_store_value(shownAllInList, $shownAllInList = false, $shownAllInList);
+
+    				$checkAnimeLoaderStatus().then(() => {
+    					$animeLoaderWorker?.postMessage?.({ filterKeyword: val });
+    				});
+    			}
+    		}
+    	});
+
+    	function handleOpenPopup(animeIdx) {
+    		set_store_value(openedAnimePopupIdx, $openedAnimePopupIdx = animeIdx, $openedAnimePopupIdx);
+    		set_store_value(popupVisible, $popupVisible = true, $popupVisible);
+    	}
+
+    	let openOptionTimeout;
+
+    	function handleOpenOption(event, animeIdx) {
+    		let element = event.target;
+    		let classList = element.classList;
+    		if (classList.contains("copy") || element.closest(".copy")) return;
+    		if (openOptionTimeout) clearTimeout(openOptionTimeout);
+
+    		openOptionTimeout = setTimeout(
+    			() => {
+    				set_store_value(openedAnimeOptionIdx, $openedAnimeOptionIdx = animeIdx, $openedAnimeOptionIdx);
+    				set_store_value(animeOptionVisible, $animeOptionVisible = true, $animeOptionVisible);
+    			},
+    			500
+    		);
+    	}
+
+    	function cancelOpenOption() {
+    		if (openOptionTimeout) clearTimeout(openOptionTimeout);
+    	}
+
+    	let lastLeftScroll, currentLeftScroll;
+    	let scrollingToBottom;
+    	let belowGrid;
+    	let afterFullGrid;
+    	let checkedOriginalSizeForGridView = windowWidth > 750 && windowHeight > 695;
+
+    	window.addEventListener(
+    		"scroll",
+    		() => {
+    			if (document.documentElement.scrollTop > 500) {
+    				$$invalidate(23, belowGrid = true);
+    			} else {
+    				$$invalidate(23, belowGrid = false);
+    			}
+    		},
+    		{ passive: true }
+    	);
+
+    	function goBackGrid() {
+    		if (isFullViewed) {
+    			$$invalidate(6, animeGridEl.style.overflow = "hidden", animeGridEl);
+    			$$invalidate(6, animeGridEl.style.overflow = "", animeGridEl);
+
+    			animeGridEl?.children?.[0]?.scrollIntoView?.({
+    				container: animeGridEl,
+    				behavior: "smooth",
+    				block: "nearest",
+    				inline: "start"
+    			});
+    		} else {
+    			if ($android || !matchMedia("(hover:hover)").matches) {
+    				document.documentElement.style.overflow = "hidden";
+    				document.documentElement.style.overflow = "";
+    			}
+
+    			window.scrollTo({ top: -9999, behavior: "smooth" });
+    		}
+    	}
+
+    	async function addImage(node, imageUrl) {
+    		if (imageUrl && imageUrl !== emptyImage$1) {
+    			node.src = loadingImage$1;
+    			let newImageUrl = await cacheImage(imageUrl);
+
+    			if (newImageUrl) {
+    				node.src = newImageUrl;
+    			}
+    		} else {
+    			node.src = emptyImage$1;
+    		}
+    	}
+
+    	const writable_props = [];
+
+    	Object.keys($$props).forEach(key => {
+    		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== '$$' && key !== 'slot') console_1$2.warn(`<AnimeGrid> was created with unknown prop '${key}'`);
+    	});
+
+    	const load_handler = e => {
+    		if (e?.target?.src !== loadingImage$1) {
+    			removeClass(e.target, "fade-out");
+    			addClass(e.target?.closest?.(".shimmer"), "loaded");
+    		}
+    	};
+
+    	const error_handler = e => {
+    		addClass(e.target, "fade-out");
+    		addClass(e.target, "display-none");
+    	};
+
+    	const pointerdown_handler = (animeIdx, e) => handleOpenOption(e, animeIdx);
+    	const keydown_handler = (animeIdx, e) => e.key === "Enter" && handleOpenPopup(animeIdx);
+
+    	function div3_binding($$value, each_value_2, animeIdx) {
+    		binding_callbacks[$$value ? 'unshift' : 'push'](() => {
+    			each_value_2[animeIdx].gridElement = $$value;
+    		});
+    	}
+
+    	function div_binding($$value) {
+    		binding_callbacks[$$value ? 'unshift' : 'push'](() => {
+    			animeGridEl = $$value;
+    			$$invalidate(6, animeGridEl);
+    		});
+    	}
+
+    	const wheel_handler = e => {
+    		if (isFullViewed) {
+    			horizontalWheel$1(e, "image-grid");
+
+    			if (!scrollingToBottom) {
+    				$$invalidate(7, scrollingToBottom = true);
+    				let newScrollPosition = window.scrollMaxY || Number.MAX_SAFE_INTEGER;
+    				document.documentElement.scrollTop = newScrollPosition;
+    				$$invalidate(7, scrollingToBottom = false);
+    			}
+    		}
+    	};
+
+    	const scroll_handler = e => {
+    		let element = e?.target;
+    		$$invalidate(0, lastLeftScroll = currentLeftScroll);
+    		$$invalidate(1, currentLeftScroll = element?.scrollLeft);
+
+    		if (currentLeftScroll > 500) {
+    			$$invalidate(2, afterFullGrid = true);
+    		} else {
+    			$$invalidate(2, afterFullGrid = false);
+    		}
+    	};
+
+    	const keydown_handler_1 = e => e.key === "Enter" && goBackGrid();
+
+    	$$self.$capture_state = () => ({
+    		onMount,
+    		tick,
+    		android: android$1,
+    		finalAnimeList,
+    		searchedAnimeKeyword,
+    		animeLoaderWorker: animeLoaderWorker$1,
+    		dataStatus,
+    		filterOptions,
+    		animeObserver,
+    		popupVisible,
+    		openedAnimePopupIdx,
+    		animeOptionVisible,
+    		openedAnimeOptionIdx,
+    		initData,
+    		asyncAnimeReloaded,
+    		animeIdxRemoved,
+    		shownAllInList,
+    		importantLoad,
+    		checkAnimeLoaderStatus,
+    		gridFullView,
+    		mostRecentAiringDateTimeout,
+    		earlisetReleaseDate,
+    		listUpdateAvailable,
+    		addClass,
+    		isJsonObject,
+    		removeClass,
+    		getLocalStorage,
+    		fade,
+    		cacheImage,
+    		emptyImage: emptyImage$1,
+    		loadingImage: loadingImage$1,
+    		windowHeight,
+    		windowWidth,
+    		animeGridEl,
+    		isRunningIntersectEvent,
+    		numberOfLoadedGrid,
+    		observerDelay,
+    		addLastAnimeObserver,
+    		animeLoaderIsAlivePromise,
+    		checkAnimeLoaderStatusTimeout,
+    		isAsyncLoad,
+    		handleOpenPopup,
+    		openOptionTimeout,
+    		handleOpenOption,
+    		cancelOpenOption,
+    		getFinishedEpisode,
+    		horizontalWheel: horizontalWheel$1,
+    		lastLeftScroll,
+    		currentLeftScroll,
+    		scrollingToBottom,
+    		belowGrid,
+    		afterFullGrid,
+    		checkedOriginalSizeForGridView,
+    		goBackGrid,
+    		addImage,
+    		isFullViewed,
+    		shouldShowGoBack,
+    		shouldShowGoBackInFullView,
+    		$android,
+    		$listUpdateAvailable,
+    		$gridFullView,
+    		$animeOptionVisible,
+    		$openedAnimeOptionIdx,
+    		$popupVisible,
+    		$openedAnimePopupIdx,
+    		$animeLoaderWorker,
+    		$checkAnimeLoaderStatus,
+    		$shownAllInList,
+    		$asyncAnimeReloaded,
+    		$animeObserver,
+    		$finalAnimeList,
+    		$dataStatus,
+    		$animeIdxRemoved,
+    		$mostRecentAiringDateTimeout,
+    		$earlisetReleaseDate,
+    		$importantLoad,
+    		$initData,
+    		$filterOptions
+    	});
+
+    	$$self.$inject_state = $$props => {
+    		if ('windowHeight' in $$props) $$invalidate(5, windowHeight = $$props.windowHeight);
+    		if ('windowWidth' in $$props) $$invalidate(22, windowWidth = $$props.windowWidth);
+    		if ('animeGridEl' in $$props) $$invalidate(6, animeGridEl = $$props.animeGridEl);
+    		if ('isRunningIntersectEvent' in $$props) isRunningIntersectEvent = $$props.isRunningIntersectEvent;
+    		if ('numberOfLoadedGrid' in $$props) $$invalidate(16, numberOfLoadedGrid = $$props.numberOfLoadedGrid);
+    		if ('observerDelay' in $$props) observerDelay = $$props.observerDelay;
+    		if ('animeLoaderIsAlivePromise' in $$props) animeLoaderIsAlivePromise = $$props.animeLoaderIsAlivePromise;
+    		if ('checkAnimeLoaderStatusTimeout' in $$props) checkAnimeLoaderStatusTimeout = $$props.checkAnimeLoaderStatusTimeout;
+    		if ('isAsyncLoad' in $$props) isAsyncLoad = $$props.isAsyncLoad;
+    		if ('openOptionTimeout' in $$props) openOptionTimeout = $$props.openOptionTimeout;
+    		if ('lastLeftScroll' in $$props) $$invalidate(0, lastLeftScroll = $$props.lastLeftScroll);
+    		if ('currentLeftScroll' in $$props) $$invalidate(1, currentLeftScroll = $$props.currentLeftScroll);
+    		if ('scrollingToBottom' in $$props) $$invalidate(7, scrollingToBottom = $$props.scrollingToBottom);
+    		if ('belowGrid' in $$props) $$invalidate(23, belowGrid = $$props.belowGrid);
+    		if ('afterFullGrid' in $$props) $$invalidate(2, afterFullGrid = $$props.afterFullGrid);
+    		if ('checkedOriginalSizeForGridView' in $$props) $$invalidate(53, checkedOriginalSizeForGridView = $$props.checkedOriginalSizeForGridView);
+    		if ('isFullViewed' in $$props) $$invalidate(3, isFullViewed = $$props.isFullViewed);
+    		if ('shouldShowGoBack' in $$props) $$invalidate(8, shouldShowGoBack = $$props.shouldShowGoBack);
+    		if ('shouldShowGoBackInFullView' in $$props) $$invalidate(9, shouldShowGoBackInFullView = $$props.shouldShowGoBackInFullView);
+    	};
+
+    	if ($$props && "$$inject" in $$props) {
+    		$$self.$inject_state($$props.$$inject);
+    	}
+
+    	$$self.$$.update = () => {
+    		if ($$self.$$.dirty[0] & /*$gridFullView, $android*/ 33554448) {
+    			$$invalidate(3, isFullViewed = $gridFullView ?? getLocalStorage("gridFullView") ?? (!$android && checkedOriginalSizeForGridView));
+    		}
+
+    		if ($$self.$$.dirty[0] & /*isFullViewed, afterFullGrid, currentLeftScroll, lastLeftScroll, windowWidth*/ 4194319) {
+    			$$invalidate(9, shouldShowGoBackInFullView = isFullViewed && afterFullGrid && (currentLeftScroll < lastLeftScroll || windowWidth > 596.5));
+    		}
+
+    		if ($$self.$$.dirty[0] & /*isFullViewed, $listUpdateAvailable, belowGrid*/ 25165832) {
+    			$$invalidate(8, shouldShowGoBack = !isFullViewed && !$listUpdateAvailable && belowGrid);
+    		}
+    	};
+
+    	return [
+    		lastLeftScroll,
+    		currentLeftScroll,
+    		afterFullGrid,
+    		isFullViewed,
+    		$android,
+    		windowHeight,
+    		animeGridEl,
+    		scrollingToBottom,
+    		shouldShowGoBack,
+    		shouldShowGoBackInFullView,
+    		$popupVisible,
+    		$shownAllInList,
+    		$finalAnimeList,
+    		$earlisetReleaseDate,
+    		$initData,
+    		$filterOptions,
+    		numberOfLoadedGrid,
+    		handleOpenPopup,
+    		handleOpenOption,
+    		cancelOpenOption,
+    		goBackGrid,
+    		addImage,
+    		windowWidth,
+    		belowGrid,
+    		$listUpdateAvailable,
+    		$gridFullView,
+    		load_handler,
+    		error_handler,
+    		pointerdown_handler,
+    		keydown_handler,
+    		div3_binding,
+    		div_binding,
+    		wheel_handler,
+    		scroll_handler,
+    		keydown_handler_1
+    	];
+    }
+
+    class AnimeGrid extends SvelteComponentDev {
+    	constructor(options) {
+    		super(options);
+    		init(this, options, instance$7, create_fragment$7, safe_not_equal, {}, null, [-1, -1, -1]);
+
+    		dispatch_dev("SvelteRegisterComponent", {
+    			component: this,
+    			tagName: "AnimeGrid",
+    			options,
+    			id: create_fragment$7.name
+    		});
+    	}
+    }
+
+    let terminateDelay = 1000;
+    let dataStatusPrio = false;
+    let isExporting = false;
+
+    let passedFilterOptions, passedActiveTagFilters;
+
+    // Reactinve Functions
+    let animeLoaderWorker;
+    const animeLoader = (_data = {}) => {
+        return new Promise((resolve, reject) => {
+            dataStatusPrio = true;
+            progress.set(0);
+            cacheRequest("./webapi/worker/animeLoader.js")
+                .then(url => {
+                    if (animeLoaderWorker) {
+                        animeLoaderWorker.terminate();
+                        animeLoaderWorker = null;
+                    }
+                    if (_data?.filterOptions && _data?.activeTagFilters) {
+                        passedFilterOptions = _data?.filterOptions;
+                        passedActiveTagFilters = _data?.activeTagFilters;
+                        _data.hasPassedFilters = true;
+                    } else if (passedFilterOptions && passedActiveTagFilters) {
+                        _data.filterOptions = passedFilterOptions;
+                        _data.activeTagFilters = passedActiveTagFilters;
+                        _data.hasPassedFilters = true;
+                    }
+                    animeLoaderWorker = new Worker(url);
+                    animeLoaderWorker.postMessage(_data);
+                    animeLoaderWorker.onmessage = ({ data }) => {
+                        if (data?.hasOwnProperty("progress")) {
+                            if (data?.progress >= 0 && data?.progress <= 100) {
+                                progress.set(data.progress);
+                            }
+                        } else if (data?.hasOwnProperty("status")) {
+                            dataStatusPrio = true;
+                            dataStatus.set(data.status);
+                        } else if (data?.isNew) {
+                            if (data?.hasPassedFilters === true) {
+                                passedFilterOptions = passedActiveTagFilters = undefined;
+                            }
+                            dataStatusPrio = false;
+                            animeLoaderWorker.onmessage = null;
+                            listUpdateAvailable.set(false);
+                            progress.set(100);
+                            resolve(Object.assign({}, data, { animeLoaderWorker: animeLoaderWorker }));
+                        }
+                    };
+                    animeLoaderWorker.onerror = (error) => {
+                        progress.set(100);
+                        reject(error);
+                    };
+                })
+                .catch((error) => {
+                    progress.set(100);
+                    alertError();
+                    reject(error);
+                });
+        })
+    };
+    let processRecommendedAnimeListTerminateTimeout;
+    let processRecommendedAnimeListWorker;
+    const processRecommendedAnimeList = (_data = {}) => {
+        return new Promise((resolve, reject) => {
+            dataStatusPrio = true;
+            if (processRecommendedAnimeListWorker) processRecommendedAnimeListWorker.terminate();
+            progress.set(0);
+            cacheRequest("./webapi/worker/processRecommendedAnimeList.js")
+                .then(url => {
+                    if (processRecommendedAnimeListTerminateTimeout) clearTimeout(processRecommendedAnimeListTerminateTimeout);
+                    if (_data?.filterOptions && _data?.activeTagFilters) {
+                        passedFilterOptions = _data?.filterOptions;
+                        passedActiveTagFilters = _data?.activeTagFilters;
+                        _data.hasPassedFilters = true;
+                    } else if (passedFilterOptions && passedActiveTagFilters) {
+                        _data.filterOptions = passedFilterOptions;
+                        _data.activeTagFilters = passedActiveTagFilters;
+                        _data.hasPassedFilters = true;
+                    }
+                    processRecommendedAnimeListWorker = new Worker(url);
+                    processRecommendedAnimeListWorker.postMessage(_data);
+                    processRecommendedAnimeListWorker.onmessage = ({ data }) => {
+                        if (data?.hasOwnProperty("progress")) {
+                            if (data?.progress >= 0 && data?.progress <= 100) {
+                                progress.set(data.progress);
+                            }
+                        } else if (data?.hasOwnProperty("status")) {
+                            dataStatusPrio = true;
+                            dataStatus.set(data.status);
+                        } else if (data?.animeReleaseNotification) {
+                            if (get_store_value(android$1)) {
+                                try {
+                                    let aniReleaseNotif = data?.animeReleaseNotification;
+                                    if (
+                                        typeof aniReleaseNotif?.releaseEpisodes === "number"
+                                        && typeof aniReleaseNotif?.releaseDateMillis === "number"
+                                        && typeof aniReleaseNotif?.maxEpisode === "number"
+                                        && typeof aniReleaseNotif?.title === "string"
+                                        && typeof aniReleaseNotif?.id === "number"
+                                        && typeof aniReleaseNotif?.isMyAnime === "boolean"
+                                        && typeof aniReleaseNotif?.imageURL === "string"
+                                    ) {
+                                        JSBridge.addAnimeReleaseNotification(
+                                            aniReleaseNotif.id,
+                                            aniReleaseNotif.title,
+                                            aniReleaseNotif.releaseEpisodes,
+                                            aniReleaseNotif.maxEpisode,
+                                            aniReleaseNotif.releaseDateMillis,
+                                            aniReleaseNotif?.imageURL,
+                                            aniReleaseNotif.isMyAnime
+                                        );
+                                    }
+                                } catch (e) { }
+                            }
+                        } else {
+                            if (data?.hasPassedFilters === true) {
+                                passedFilterOptions = passedActiveTagFilters = undefined;
+                            }
+                            dataStatusPrio = false;
+                            processRecommendedAnimeListTerminateTimeout = setTimeout(() => {
+                                processRecommendedAnimeListWorker.terminate();
+                            }, terminateDelay);
+                            progress.set(100);
+                            resolve();
+                        }
+                    };
+                    processRecommendedAnimeListWorker.onerror = (error) => {
+                        progress.set(100);
+                        reject(error);
+                    };
+                }).catch((error) => {
+                    progress.set(100);
+                    alertError();
+                    reject(error);
+                });
+        });
+    };
+    let requestAnimeEntriesTerminateTimeout, requestAnimeEntriesWorker;
+    const requestAnimeEntries = (_data) => {
+        return new Promise((resolve, reject) => {
+            if (requestAnimeEntriesWorker) requestAnimeEntriesWorker.terminate();
+            progress.set(0);
+            cacheRequest("./webapi/worker/requestAnimeEntries.js")
+                .then(url => {
+                    requestAnimeEntriesWorker = new Worker(url);
+                    if (requestAnimeEntriesTerminateTimeout) clearTimeout(requestAnimeEntriesTerminateTimeout);
+                    requestAnimeEntriesWorker.postMessage(_data);
+                    requestAnimeEntriesWorker.onmessage = ({ data }) => {
+                        if (data?.hasOwnProperty("progress")) {
+                            if (!dataStatusPrio && data?.progress >= 0 && data?.progress <= 100) {
+                                progress.set(data.progress);
+                            }
+                        } else if (data?.hasOwnProperty("status")) {
+                            if (!dataStatusPrio) {
+                                dataStatus.set(data.status);
+                            }
+                        } else if (data?.updateRecommendationList !== undefined) {
+                            updateRecommendationList.update(e => !e);
+                        } else if (data?.lastRunnedAutoUpdateDate instanceof Date && !isNaN(data?.lastRunnedAutoUpdateDate)) {
+                            lastRunnedAutoUpdateDate.set(data.lastRunnedAutoUpdateDate);
+                        } else if (data?.errorDuringInit !== undefined) {
+                            resolve(data);
+                        } else {
+                            requestAnimeEntriesTerminateTimeout = setTimeout(() => {
+                                requestAnimeEntriesWorker.terminate();
+                            }, terminateDelay);
+                            progress.set(100);
+                            resolve(data);
+                        }
+                    };
+                    requestAnimeEntriesWorker.onerror = (error) => {
+                        progress.set(100);
+                        reject(error);
+                    };
+                }).catch((error) => {
+                    progress.set(100);
+                    alertError();
+                    reject(error);
+                });
+        })
+    };
+    let requestUserEntriesTerminateTimeout, requestUserEntriesWorker;
+    const requestUserEntries = (_data) => {
+        return new Promise((resolve, reject) => {
+            if (!get_store_value(initData)) {
+                if (isExporting || get_store_value(isImporting)) {
+                    userRequestIsRunning.set(false);
+                }
+            }
+            if (requestUserEntriesWorker) requestUserEntriesWorker.terminate();
+            progress.set(0);
+            cacheRequest("./webapi/worker/requestUserEntries.js")
+                .then(url => {
+                    requestUserEntriesWorker = new Worker(url);
+                    if (requestUserEntriesTerminateTimeout) clearTimeout(requestUserEntriesTerminateTimeout);
+                    requestUserEntriesWorker.postMessage(_data);
+                    requestUserEntriesWorker.onmessage = ({ data }) => {
+                        if (data?.hasOwnProperty("progress")) {
+                            if (!dataStatusPrio && data?.progress >= 0 && data?.progress <= 100) {
+                                progress.set(data.progress);
+                            }
+                        } else if (data?.hasOwnProperty("status")) {
+                            if (!dataStatusPrio) {
+                                dataStatus.set(data.status);
+                                if (data.status === "User not found") {
+                                    userRequestIsRunning.set(false);
+                                    loadAnime.update((e) => !e);
+                                    window.confirmPromise({
+                                        isAlert: true,
+                                        text: "User is not found, you may want to try again..."
+                                    });
+                                    requestUserEntriesTerminateTimeout = setTimeout(() => {
+                                        requestUserEntriesWorker.terminate();
+                                    }, terminateDelay);
+                                    progress.set(100);
+                                    reject(data);
+                                }
+                            }
+                        } else if (data?.error) {
+                            userRequestIsRunning.set(false);
+                            loadAnime.update((e) => !e);
+                            requestUserEntriesTerminateTimeout = setTimeout(() => {
+                                requestUserEntriesWorker.terminate();
+                            }, terminateDelay);
+                            progress.set(100);
+                            reject(data);
+                        } else if (data?.updateRecommendationList !== undefined) {
+                            updateRecommendationList.update(e => !e);
+                        } else {
+                            userRequestIsRunning.set(false);
+                            requestUserEntriesTerminateTimeout = setTimeout(() => {
+                                requestUserEntriesWorker.terminate();
+                            }, terminateDelay);
+                            progress.set(100);
+                            resolve(data);
+                        }
+                    };
+                    requestUserEntriesWorker.onerror = (error) => {
+                        userRequestIsRunning.set(false);
+                        loadAnime.update((e) => !e);
+                        requestUserEntriesTerminateTimeout = setTimeout(() => {
+                            requestUserEntriesWorker.terminate();
+                        }, terminateDelay);
+                        progress.set(100);
+                        reject(error);
+                    };
+                }).catch((error) => {
+                    userRequestIsRunning.set(false);
+                    progress.set(100);
+                    loadAnime.update((e) => !e);
+                    alertError();
+                    reject(error);
+                });
+        })
+    };
+
+    let exportUserDataWorker;
+    const exportUserData = (_data) => {
+        return new Promise((resolve, reject) => {
+            if (!get_store_value(initData)) {
+                if (get_store_value(isImporting)) return
+                stopConflictingWorkers();
+                isExporting = true;
+            }
+            if (exportUserDataWorker) exportUserDataWorker.terminate();
+            progress.set(0);
+            cacheRequest("./webapi/worker/exportUserData.js")
+                .then(url => {
+                    exportUserDataWorker = new Worker(url);
+                    if (get_store_value(android$1)) {
+                        exportUserDataWorker.postMessage('android');
+                    } else {
+                        exportUserDataWorker.postMessage('browser');
+                    }
+                    exportUserDataWorker.onmessage = ({ data }) => {
+                        if (data?.hasOwnProperty("progress")) {
+                            if (data?.progress >= 0 && data?.progress <= 100) {
+                                progress.set(data.progress);
+                            }
+                        } else if (data?.hasOwnProperty("status")) {
+                            dataStatusPrio = true;
+                            dataStatus.set(data.status);
+                        } else if (get_store_value(android$1)) {
+                            dataStatusPrio = false;
+                            let chunk = data.chunk;
+                            let state = data.state;
+                            // 0 - start | 1 - ongoing | 2 - done
+                            if (state === 0) {
+                                JSBridge.exportJSON('', 0, '');
+                            } else if (state === 1) {
+                                JSBridge.exportJSON(chunk, 1, '');
+                            } else if (state === 2) {
+                                let username = data.username ?? null;
+                                JSBridge.exportJSON(chunk, 2, `Kanshi.${username?.toLowerCase() || "Backup"}.json`);
+                                progress.set(100);
+                                exportUserDataWorker.terminate();
+                                isExporting = false;
+                                resolve(data);
+                            }
+                        } else {
+                            dataStatusPrio = false;
+                            let username = data.username ?? null;
+                            progress.set(100);
+                            downloadLink(data.url, `Kanshi.${username?.toLowerCase() || "Backup"}.json`);
+                            isExporting = false;
+                            resolve(data);
+                            // dont terminate, can't oversee blob link lifetime
+                        }
+                    };
+                    exportUserDataWorker.onerror = (error) => {
+                        progress.set(100);
+                        isExporting = false;
+                        window.confirmPromise?.({
+                            isAlert: true,
+                            title: "Export Failed",
+                            text: "Data is not exported, please try again in a later time.",
+                        });
+                        reject(error);
+                    };
+                }).catch((error) => {
+                    progress.set(100);
+                    isExporting = false;
+                    alertError();
+                    reject(error);
+                });
+        })
+    };
+    let importUserDataTerminateTimeout, importUserDataWorker;
+    const importUserData = (_data) => {
+        return new Promise((resolve, reject) => {
+            if (!get_store_value(initData)) {
+                if (isExporting) return
+                stopConflictingWorkers();
+                isImporting.set(true);
+            }
+            if (importUserDataWorker) importUserDataWorker.terminate();
+            progress.set(0);
+            cacheRequest("./webapi/worker/importUserData.js")
+                .then(url => {
+                    importUserDataWorker = new Worker(url);
+                    if (importUserDataTerminateTimeout) clearTimeout(importUserDataTerminateTimeout);
+                    importUserDataWorker.postMessage(_data);
+                    importUserDataWorker.onmessage = ({ data }) => {
+                        if (data?.hasOwnProperty("progress")) {
+                            if (data?.progress >= 0 && data?.progress <= 100) {
+                                progress.set(data.progress);
+                            }
+                        } else if (data?.error !== undefined) {
+                            isImporting.set(false);
+                            loadAnime.update((e) => !e);
+                            window.confirmPromise?.({
+                                isAlert: true,
+                                title: "Import Failed",
+                                text: "File has not been imported, please ensure that file is in a supported format (e.g., .json)",
+                            });
+                            progress.set(100);
+                            reject(data?.error || "Something went wrong...");
+                        } else if (data?.hasOwnProperty("status")) {
+                            dataStatusPrio = true;
+                            dataStatus.set(data.status);
+                        } else if (typeof data?.importedUsername === "string") {
+                            username.set(data.importedUsername);
+                        } else if (isJsonObject(data?.importedHiddenEntries)) {
+                            hiddenEntries.set(data?.importedHiddenEntries);
+                        } else if (data?.importedlastRunnedAutoUpdateDate instanceof Date && !isNaN(data?.importedlastRunnedAutoUpdateDate)) {
+                            lastRunnedAutoUpdateDate.set(data.importedlastRunnedAutoUpdateDate);
+                        } else if (data?.importedlastRunnedAutoExportDate instanceof Date && !isNaN(data?.importedlastRunnedAutoExportDate)) {
+                            lastRunnedAutoExportDate.set(data.importedlastRunnedAutoExportDate);
+                        } else if (data?.updateFilters !== undefined) {
+                            isImporting.set(false);
+                            getFilterOptions()
+                                .then((data) => {
+                                    activeTagFilters.set(data.activeTagFilters);
+                                    filterOptions.set(data.filterOptions);
+                                });
+                        } else if (data?.updateRecommendationList !== undefined) {
+                            isImporting.set(false);
+                            importantUpdate.update(e => !e);
+                        } else {
+                            isImporting.set(false);
+                            runUpdate.update(e => !e);
+                            dataStatusPrio = false;
+                            importUserDataTerminateTimeout = setTimeout(() => {
+                                importUserDataWorker.terminate();
+                            }, terminateDelay);
+                            progress.set(100);
+                            resolve(data);
+                        }
+                    };
+                    importUserDataWorker.onerror = (error) => {
+                        isImporting.set(false);
+                        window.confirmPromise?.({
+                            isAlert: true,
+                            title: "Import Failed",
+                            text: "File has not been imported, please ensure that file is in a supported format (e.g., .json)",
+                        });
+                        loadAnime.update((e) => !e);
+                        progress.set(100);
+                        reject(error || "Something went wrong...");
+                    };
+                }).catch((error) => {
+                    progress.set(100);
+                    isImporting.set(false);
+                    loadAnime.update((e) => !e);
+                    alertError();
+                    reject(error);
+                });
+        })
+    };
+
+    // IndexedDB
+    const getIDBdata = (name) => {
+        return new Promise((resolve, reject) => {
+            cacheRequest("./webapi/worker/getIDBdata.js")
+                .then(url => {
+                    let worker = new Worker(url);
+                    worker.postMessage({ name: name });
+                    worker.onmessage = ({ data }) => {
+                        if (data?.hasOwnProperty("status")) {
+                            dataStatus.set(data.status);
+                        } else {
+                            worker.terminate();
+                            resolve(data);
+                        }
+                    };
+                    worker.onerror = (error) => {
+                        reject(error);
+                    };
+                }).catch(() => {
+                    alertError();
+                    reject(error);
+                });
+        })
+    };
+    const saveIDBdata = (_data, name) => {
+        return new Promise((resolve, reject) => {
+            cacheRequest("./webapi/worker/saveIDBdata.js")
+                .then(url => {
+                    let worker = new Worker(url);
+                    worker.onmessage = ({ data }) => {
+                        if (data?.hasOwnProperty("status")) {
+                            dataStatus.set(data.status);
+                        } else {
+                            setTimeout(() => {
+                                worker.terminate();
+                                worker = null;
+                            }, terminateDelay);
+                            resolve();
+                        }
+                    };
+                    worker.onerror = (error) => {
+                        reject(error);
+                    };
+                    worker.postMessage({ data: _data, name: name });
+                    if (typeof _data === "boolean") {
+                        setLocalStorage(name, _data);
+                    }
+                }).catch((error) => {
+                    alertError();
+                    reject(error);
+                });
+        })
+    };
+
+    // One Time Use
+    let getAnimeEntriesTerminateTimeout, gettingAnimeEntriesInterval;
+    const getAnimeEntries = (_data) => {
+        return new Promise((resolve, reject) => {
+            gettingAnimeEntriesInterval = setInterval(() => {
+                dataStatus.set("Getting Anime Entries");
+            }, 300);
+            progress.set(0);
+            cacheRequest("./webapi/worker/getAnimeEntries.js")
+                .then(url => {
+                    progress.set(25);
+                    if (gettingAnimeEntriesInterval) {
+                        clearInterval(gettingAnimeEntriesInterval);
+                        gettingAnimeEntriesInterval = null;
+                    }
+                    let worker = new Worker(url);
+                    if (getAnimeEntriesTerminateTimeout) clearTimeout(getAnimeEntriesTerminateTimeout);
+                    worker.postMessage(_data);
+                    worker.onmessage = ({ data }) => {
+                        if (data?.hasOwnProperty("status")) {
+                            dataStatusPrio = true;
+                            dataStatus.set(data.status);
+                        } else {
+                            progress.set(100);
+                            dataStatusPrio = false;
+                            updateRecommendationList.update(e => !e);
+                            getAnimeEntriesTerminateTimeout = setTimeout(() => {
+                                worker.terminate();
+                            }, terminateDelay);
+                            resolve(data);
+                        }
+                    };
+                    worker.onerror = (error) => {
+                        progress.set(100);
+                        reject(error);
+                    };
+                }).catch((error) => {
+                    progress.set(100);
+                    if (gettingAnimeEntriesInterval) {
+                        clearInterval(gettingAnimeEntriesInterval);
+                        gettingAnimeEntriesInterval = null;
+                    }
+                    dataStatus.set(null);
+                    alertError();
+                    reject(error);
+                });
+        })
+    };
+
+    let getFilterOptionsTerminateTimeout, getFilterOptionsInterval, getFilterOptionsWorker;
+    const getFilterOptions = (_data) => {
+        return new Promise((resolve, reject) => {
+            getFilterOptionsInterval = setInterval(() => {
+                if (!gettingAnimeEntriesInterval) {
+                    dataStatus.set("Getting Filters");
+                }
+            }, 300);
+            cacheRequest("./webapi/worker/getFilterOptions.js")
+                .then(url => {
+                    if (getFilterOptionsInterval) {
+                        clearInterval(getFilterOptionsInterval);
+                        getFilterOptionsInterval = null;
+                    }
+                    if (getFilterOptionsWorker) getFilterOptionsWorker.terminate();
+                    getFilterOptionsWorker = new Worker(url);
+                    if (getFilterOptionsTerminateTimeout) clearTimeout(getFilterOptionsTerminateTimeout);
+                    getFilterOptionsWorker.postMessage(_data);
+                    getFilterOptionsWorker.onmessage = ({ data }) => {
+                        if (data?.hasOwnProperty("status")) {
+                            dataStatusPrio = true;
+                            dataStatus.set(data.status);
+                        } else {
+                            dataStatusPrio = false;
+                            getFilterOptionsTerminateTimeout = setTimeout(() => {
+                                getFilterOptionsWorker.terminate();
+                            }, terminateDelay);
+                            resolve(data);
+                        }
+                    };
+                    getFilterOptionsWorker.onerror = (error) => {
+                        reject(error);
+                    };
+                }).catch((error) => {
+                    if (getFilterOptionsInterval) {
+                        clearInterval(getFilterOptionsInterval);
+                        getFilterOptionsInterval = null;
+                    }
+                    dataStatus.set(null);
+                    alertError();
+                    reject(error);
+                });
+        })
+    };
+
+    function stopConflictingWorkers() {
+        progress.set(0);
+        requestAnimeEntriesWorker?.terminate?.();
+        requestUserEntriesWorker?.terminate?.();
+        userRequestIsRunning.set(false);
+        importUserDataWorker?.terminate?.();
+        isImporting.set(false);
+        exportUserDataWorker?.terminate?.();
+        isExporting = false;
+        getFilterOptionsWorker?.terminate?.();
+        clearInterval(gettingAnimeEntriesInterval);
+        gettingAnimeEntriesInterval = null;
+        clearInterval(getFilterOptionsInterval);
+        getFilterOptionsInterval = null;
+        dataStatus.set(null);
+    }
+
+    function alertError() {
+        if (get_store_value(android$1)) {
+            window.confirmPromise?.({
+                isAlert: true,
+                title: "Something Went Wrong",
+                text: "App may not be working properly, you may want to restart and make sure you're running the latest version.",
+            });
+        } else {
+            window.confirmPromise?.({
+                isAlert: true,
+                title: "Something Went Wrong",
+                text: "App may not be working properly, you may want to refresh the page, or if not clear the cookies but backup your data first.",
+            });
+        }
+    }
+
+    function saveJSON(data, name) {
+        return new Promise(async (resolve, reject) => {
+            await saveIDBdata(data, name)
+                .then((message) => {
+                    resolve(message);
+                })
+                .catch((error) => {
+                    reject(error);
+                });
+        })
+    }
+    async function retrieveJSON(name) {
+        return new Promise(async (resolve, reject) => {
+            await getIDBdata(name)
+                .then((data) => {
+                    resolve(data);
+                })
+                .catch((error) => {
+                    reject(error);
+                });
+        })
+    }
+
+    /* src\components\Anime\Fixed\AnimePopup.svelte generated by Svelte v3.59.1 */
+    const file$6 = "src\\components\\Anime\\Fixed\\AnimePopup.svelte";
+
+    function get_each_context$1(ctx, list, i) {
+    	const child_ctx = ctx.slice();
+    	child_ctx[118] = list[i];
+    	child_ctx[119] = list;
+    	child_ctx[120] = i;
+    	return child_ctx;
+    }
+
+    function get_each_context_1$1(ctx, list, i) {
+    	const child_ctx = ctx.slice();
+    	child_ctx[121] = list[i];
+    	return child_ctx;
+    }
+
+    function get_each_context_2$1(ctx, list, i) {
+    	const child_ctx = ctx.slice();
+    	child_ctx[124] = list[i];
+    	return child_ctx;
+    }
+
+    function get_each_context_3$1(ctx, list, i) {
+    	const child_ctx = ctx.slice();
+    	child_ctx[127] = list[i];
+    	return child_ctx;
+    }
+
+    // (1339:8) {#if $finalAnimeList?.length}
+    function create_if_block_3$2(ctx) {
+    	let each_blocks = [];
+    	let each_1_lookup = new Map();
+    	let t;
+    	let if_block_anchor;
+    	let each_value = /*$finalAnimeList*/ ctx[9] || [];
+    	validate_each_argument(each_value);
+    	const get_key = ctx => /*anime*/ ctx[118]?.id || {};
+    	validate_each_keys(ctx, each_value, get_each_context$1, get_key);
+
+    	for (let i = 0; i < each_value.length; i += 1) {
+    		let child_ctx = get_each_context$1(ctx, each_value, i);
+    		let key = get_key(child_ctx);
+    		each_1_lookup.set(key, each_blocks[i] = create_each_block$1(key, child_ctx));
+    	}
+
+    	let if_block = /*$finalAnimeList*/ ctx[9]?.length && !/*$shownAllInList*/ ctx[15] && create_if_block_4$2(ctx);
+
+    	const block = {
+    		c: function create() {
+    			for (let i = 0; i < each_blocks.length; i += 1) {
+    				each_blocks[i].c();
+    			}
+
+    			t = space();
+    			if (if_block) if_block.c();
+    			if_block_anchor = empty();
+    		},
+    		m: function mount(target, anchor) {
+    			for (let i = 0; i < each_blocks.length; i += 1) {
+    				if (each_blocks[i]) {
+    					each_blocks[i].m(target, anchor);
+    				}
+    			}
+
+    			insert_dev(target, t, anchor);
+    			if (if_block) if_block.m(target, anchor);
+    			insert_dev(target, if_block_anchor, anchor);
+    		},
+    		p: function update(ctx, dirty) {
+    			if (dirty[0] & /*$finalAnimeList, $popupIsGoingBack, handleMoreVideos, handleHideShow, $hiddenEntries, windowWidth, windowHeight, fullDescriptionPopup, fullImagePopup, itemScroll, $earlisetReleaseDate, getFormattedAnimeFormat, updateList, $listIsUpdating, $listUpdateAvailable, $autoPlay, askToOpenYoutube*/ 12484275) {
+    				each_value = /*$finalAnimeList*/ ctx[9] || [];
+    				validate_each_argument(each_value);
+    				validate_each_keys(ctx, each_value, get_each_context$1, get_key);
+    				each_blocks = update_keyed_each(each_blocks, dirty, get_key, 1, ctx, each_value, each_1_lookup, t.parentNode, destroy_block, create_each_block$1, t, get_each_context$1);
+    			}
+
+    			if (/*$finalAnimeList*/ ctx[9]?.length && !/*$shownAllInList*/ ctx[15]) {
+    				if (if_block) ; else {
+    					if_block = create_if_block_4$2(ctx);
+    					if_block.c();
+    					if_block.m(if_block_anchor.parentNode, if_block_anchor);
+    				}
+    			} else if (if_block) {
+    				if_block.d(1);
+    				if_block = null;
+    			}
+    		},
+    		d: function destroy(detaching) {
+    			for (let i = 0; i < each_blocks.length; i += 1) {
+    				each_blocks[i].d(detaching);
+    			}
+
+    			if (detaching) detach_dev(t);
+    			if (if_block) if_block.d(detaching);
+    			if (detaching) detach_dev(if_block_anchor);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_if_block_3$2.name,
+    		type: "if",
+    		source: "(1339:8) {#if $finalAnimeList?.length}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (1362:28) {#if anime.trailerID}
+    function create_if_block_18(ctx) {
+    	let div;
+
+    	const block = {
+    		c: function create() {
+    			div = element("div");
+    			attr_dev(div, "class", "trailer display-none svelte-wl7my9");
+    			add_location(div, file$6, 1362, 32, 52839);
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, div, anchor);
+    		},
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(div);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_if_block_18.name,
+    		type: "if",
+    		source: "(1362:28) {#if anime.trailerID}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (1366:32) {#if anime.bannerImageUrl || anime.trailerThumbnailUrl}
+    function create_if_block_17$1(ctx) {
+    	let img;
+    	let img_alt_value;
+    	let addImage_action;
+    	let mounted;
+    	let dispose;
+
+    	const block = {
+    		c: function create() {
+    			img = element("img");
+    			attr_dev(img, "loading", "lazy");
+    			attr_dev(img, "width", "640px");
+    			attr_dev(img, "height", "360px");
+
+    			attr_dev(img, "alt", img_alt_value = (/*anime*/ ctx[118]?.shownTitle || "") + (/*anime*/ ctx[118].bannerImageUrl
+    			? " Banner"
+    			: " Thumbnail"));
+
+    			attr_dev(img, "class", "bannerImg fade-out svelte-wl7my9");
+    			add_location(img, file$6, 1366, 36, 53090);
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, img, anchor);
+
+    			if (!mounted) {
+    				dispose = [
+    					action_destroyer(addImage_action = /*addImage*/ ctx[32].call(null, img, /*anime*/ ctx[118].bannerImageUrl || /*anime*/ ctx[118].trailerThumbnailUrl || emptyImage)),
+    					listen_dev(img, "load", /*load_handler*/ ctx[34], false, false, false, false),
+    					listen_dev(img, "error", /*error_handler*/ ctx[35], false, false, false, false)
+    				];
+
+    				mounted = true;
+    			}
+    		},
+    		p: function update(new_ctx, dirty) {
+    			ctx = new_ctx;
+
+    			if (dirty[0] & /*$finalAnimeList*/ 512 && img_alt_value !== (img_alt_value = (/*anime*/ ctx[118]?.shownTitle || "") + (/*anime*/ ctx[118].bannerImageUrl
+    			? " Banner"
+    			: " Thumbnail"))) {
+    				attr_dev(img, "alt", img_alt_value);
+    			}
+
+    			if (addImage_action && is_function(addImage_action.update) && dirty[0] & /*$finalAnimeList*/ 512) addImage_action.update.call(null, /*anime*/ ctx[118].bannerImageUrl || /*anime*/ ctx[118].trailerThumbnailUrl || emptyImage);
+    		},
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(img);
+    			mounted = false;
+    			run_all(dispose);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_if_block_17$1.name,
+    		type: "if",
+    		source: "(1366:32) {#if anime.bannerImageUrl || anime.trailerThumbnailUrl}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (1437:65) 
+    function create_if_block_16$1(ctx) {
+    	let t;
+
+    	const block = {
+    		c: function create() {
+    			t = text("Auto");
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, t, anchor);
+    		},
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(t);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_if_block_16$1.name,
+    		type: "if",
+    		source: "(1437:65) ",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (1435:36) {#if windowWidth >= 290}
+    function create_if_block_15$1(ctx) {
+    	let t;
+
+    	const block = {
+    		c: function create() {
+    			t = text("Auto Play");
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, t, anchor);
+    		},
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(t);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_if_block_15$1.name,
+    		type: "if",
+    		source: "(1435:36) {#if windowWidth >= 290}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (1442:28) {#if $listUpdateAvailable}
+    function create_if_block_14$1(ctx) {
+    	let div;
+    	let svg;
+    	let path;
+    	let svg_class_value;
+    	let t0;
+    	let h3;
+
+    	let t1_value = (/*windowWidth*/ ctx[4] >= 320
+    	? "List Update"
+    	: /*windowWidth*/ ctx[4] >= 205
+    		? "Update"
+    		: /*windowWidth*/ ctx[4] >= 180 ? "List" : "") + "";
+
+    	let t1;
+    	let mounted;
+    	let dispose;
+
+    	const block = {
+    		c: function create() {
+    			div = element("div");
+    			svg = svg_element("svg");
+    			path = svg_element("path");
+    			t0 = space();
+    			h3 = element("h3");
+    			t1 = text(t1_value);
+    			attr_dev(path, "d", "M105 203a160 160 0 0 1 264-60l17 17h-50a32 32 0 1 0 0 64h128c18 0 32-14 32-32V64a32 32 0 1 0-64 0v51l-18-17a224 224 0 0 0-369 83 32 32 0 0 0 60 22zm-66 86a32 32 0 0 0-23 31v128a32 32 0 1 0 64 0v-51l18 17a224 224 0 0 0 369-83 32 32 0 0 0-60-22 160 160 0 0 1-264 60l-17-17h50a32 32 0 1 0 0-64H48a39 39 0 0 0-9 1z");
+    			add_location(path, file$6, 1456, 40, 58233);
+    			attr_dev(svg, "viewBox", "0 0 512 512");
+    			attr_dev(svg, "class", svg_class_value = "" + (null_to_empty("list-update-icon" + (/*$listIsUpdating*/ ctx[13] ? " spin" : "")) + " svelte-wl7my9"));
+    			add_location(svg, file$6, 1451, 36, 57937);
+    			attr_dev(h3, "class", "list-update-label svelte-wl7my9");
+    			add_location(h3, file$6, 1460, 36, 58724);
+    			attr_dev(div, "class", "list-update-container svelte-wl7my9");
+    			attr_dev(div, "tabindex", "0");
+    			add_location(div, file$6, 1443, 32, 57491);
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, div, anchor);
+    			append_dev(div, svg);
+    			append_dev(svg, path);
+    			append_dev(div, t0);
+    			append_dev(div, h3);
+    			append_dev(h3, t1);
+
+    			if (!mounted) {
+    				dispose = [
+    					listen_dev(div, "click", /*updateList*/ ctx[20], false, false, false, false),
+    					listen_dev(div, "keydown", /*keydown_handler_3*/ ctx[43], false, false, false, false)
+    				];
+
+    				mounted = true;
+    			}
+    		},
+    		p: function update(ctx, dirty) {
+    			if (dirty[0] & /*$listIsUpdating*/ 8192 && svg_class_value !== (svg_class_value = "" + (null_to_empty("list-update-icon" + (/*$listIsUpdating*/ ctx[13] ? " spin" : "")) + " svelte-wl7my9"))) {
+    				attr_dev(svg, "class", svg_class_value);
+    			}
+
+    			if (dirty[0] & /*windowWidth*/ 16 && t1_value !== (t1_value = (/*windowWidth*/ ctx[4] >= 320
+    			? "List Update"
+    			: /*windowWidth*/ ctx[4] >= 205
+    				? "Update"
+    				: /*windowWidth*/ ctx[4] >= 180 ? "List" : "") + "")) set_data_dev(t1, t1_value);
+    		},
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(div);
+    			mounted = false;
+    			run_all(dispose);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_if_block_14$1.name,
+    		type: "if",
+    		source: "(1442:28) {#if $listUpdateAvailable}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (1472:28) {#if anime.bannerImageUrl || anime.trailerThumbnailUrl}
+    function create_if_block_13$1(ctx) {
+    	let div;
+    	let svg;
+    	let path;
+    	let t0;
+    	let h3;
+
+    	let t1_value = (/*anime*/ ctx[118].bannerImageUrl
+    	? "Banner"
+    	: "Thumbnail") + "";
+
+    	let t1;
+    	let mounted;
+    	let dispose;
+
+    	function click_handler_2() {
+    		return /*click_handler_2*/ ctx[44](/*anime*/ ctx[118]);
+    	}
+
+    	function keydown_handler_4(...args) {
+    		return /*keydown_handler_4*/ ctx[45](/*anime*/ ctx[118], ...args);
+    	}
+
+    	const block = {
+    		c: function create() {
+    			div = element("div");
+    			svg = svg_element("svg");
+    			path = svg_element("path");
+    			t0 = space();
+    			h3 = element("h3");
+    			t1 = text(t1_value);
+    			attr_dev(path, "d", "M0 96c0-35 29-64 64-64h384c35 0 64 29 64 64v320c0 35-29 64-64 64H64c-35 0-64-29-64-64V96zm324 107a24 24 0 0 0-40 0l-87 127-26-33a24 24 0 0 0-37 0l-65 80a24 24 0 0 0 19 39h336c9 0 17-5 21-13s4-17-1-25L324 204zm-212-11a48 48 0 1 0 0-96 48 48 0 1 0 0 96z");
+    			add_location(path, file$6, 1498, 40, 60962);
+    			attr_dev(svg, "viewBox", "0 0 512 512");
+    			attr_dev(svg, "class", "banner-image-icon svelte-wl7my9");
+    			add_location(svg, file$6, 1494, 36, 60747);
+    			attr_dev(h3, "class", "banner-image-label svelte-wl7my9");
+    			add_location(h3, file$6, 1502, 36, 61394);
+    			attr_dev(div, "class", "banner-image-button svelte-wl7my9");
+    			attr_dev(div, "tabindex", "0");
+    			add_location(div, file$6, 1473, 32, 59494);
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, div, anchor);
+    			append_dev(div, svg);
+    			append_dev(svg, path);
+    			append_dev(div, t0);
+    			append_dev(div, h3);
+    			append_dev(h3, t1);
+
+    			if (!mounted) {
+    				dispose = [
+    					listen_dev(div, "click", click_handler_2, false, false, false, false),
+    					listen_dev(div, "keydown", keydown_handler_4, false, false, false, false)
+    				];
+
+    				mounted = true;
+    			}
+    		},
+    		p: function update(new_ctx, dirty) {
+    			ctx = new_ctx;
+
+    			if (dirty[0] & /*$finalAnimeList*/ 512 && t1_value !== (t1_value = (/*anime*/ ctx[118].bannerImageUrl
+    			? "Banner"
+    			: "Thumbnail") + "")) set_data_dev(t1, t1_value);
+    		},
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(div);
+    			mounted = false;
+    			run_all(dispose);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_if_block_13$1.name,
+    		type: "if",
+    		source: "(1472:28) {#if anime.bannerImageUrl || anime.trailerThumbnailUrl}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (1597:36) {:else}
+    function create_else_block_2$1(ctx) {
+    	let h4;
+    	let t0_value = (/*anime*/ ctx[118]?.format || "NA") + "";
+    	let t0;
+    	let t1;
+    	let html_tag;
+    	let raw_value = (/*getFormattedAnimeFormat*/ ctx[21](/*anime*/ ctx[118]) || " · NA") + "";
+    	let t2;
+    	let t3_value = (/*anime*/ ctx[118]?.formattedDuration || " · NA") + "";
+    	let t3;
+
+    	const block = {
+    		c: function create() {
+    			h4 = element("h4");
+    			t0 = text(t0_value);
+    			t1 = space();
+    			html_tag = new HtmlTag(false);
+    			t2 = space();
+    			t3 = text(t3_value);
+    			html_tag.a = t2;
+    			attr_dev(h4, "class", "svelte-wl7my9");
+    			add_location(h4, file$6, 1597, 40, 67364);
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, h4, anchor);
+    			append_dev(h4, t0);
+    			append_dev(h4, t1);
+    			html_tag.m(raw_value, h4);
+    			append_dev(h4, t2);
+    			append_dev(h4, t3);
+    		},
+    		p: function update(ctx, dirty) {
+    			if (dirty[0] & /*$finalAnimeList*/ 512 && t0_value !== (t0_value = (/*anime*/ ctx[118]?.format || "NA") + "")) set_data_dev(t0, t0_value);
+    			if (dirty[0] & /*$finalAnimeList*/ 512 && raw_value !== (raw_value = (/*getFormattedAnimeFormat*/ ctx[21](/*anime*/ ctx[118]) || " · NA") + "")) html_tag.p(raw_value);
+    			if (dirty[0] & /*$finalAnimeList*/ 512 && t3_value !== (t3_value = (/*anime*/ ctx[118]?.formattedDuration || " · NA") + "")) set_data_dev(t3, t3_value);
+    		},
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(h4);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_else_block_2$1.name,
+    		type: "else",
+    		source: "(1597:36) {:else}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (1586:36) {#if anime?.nextAiringEpisode?.airingAt}
+    function create_if_block_12$1(ctx) {
+    	let h4;
+    	let t0_value = (/*anime*/ ctx[118]?.format || "NA") + "";
+    	let t0;
+    	let t1;
+    	let previous_key = /*$earlisetReleaseDate*/ ctx[14] || 1;
+    	let t2;
+    	let t3_value = (/*anime*/ ctx[118]?.formattedDuration || " · NA") + "";
+    	let t3;
+    	let key_block = create_key_block(ctx);
+
+    	const block = {
+    		c: function create() {
+    			h4 = element("h4");
+    			t0 = text(t0_value);
+    			t1 = space();
+    			key_block.c();
+    			t2 = space();
+    			t3 = text(t3_value);
+    			attr_dev(h4, "class", "svelte-wl7my9");
+    			add_location(h4, file$6, 1586, 40, 66692);
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, h4, anchor);
+    			append_dev(h4, t0);
+    			append_dev(h4, t1);
+    			key_block.m(h4, null);
+    			append_dev(h4, t2);
+    			append_dev(h4, t3);
+    		},
+    		p: function update(ctx, dirty) {
+    			if (dirty[0] & /*$finalAnimeList*/ 512 && t0_value !== (t0_value = (/*anime*/ ctx[118]?.format || "NA") + "")) set_data_dev(t0, t0_value);
+
+    			if (dirty[0] & /*$earlisetReleaseDate*/ 16384 && safe_not_equal(previous_key, previous_key = /*$earlisetReleaseDate*/ ctx[14] || 1)) {
+    				key_block.d(1);
+    				key_block = create_key_block(ctx);
+    				key_block.c();
+    				key_block.m(h4, t2);
+    			} else {
+    				key_block.p(ctx, dirty);
+    			}
+
+    			if (dirty[0] & /*$finalAnimeList*/ 512 && t3_value !== (t3_value = (/*anime*/ ctx[118]?.formattedDuration || " · NA") + "")) set_data_dev(t3, t3_value);
+    		},
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(h4);
+    			key_block.d(detaching);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_if_block_12$1.name,
+    		type: "if",
+    		source: "(1586:36) {#if anime?.nextAiringEpisode?.airingAt}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (1589:44) {#key $earlisetReleaseDate || 1}
+    function create_key_block(ctx) {
+    	let html_tag;
+    	let raw_value = (/*getFormattedAnimeFormat*/ ctx[21](/*anime*/ ctx[118]) || " · NA") + "";
+    	let html_anchor;
+
+    	const block = {
+    		c: function create() {
+    			html_tag = new HtmlTag(false);
+    			html_anchor = empty();
+    			html_tag.a = html_anchor;
+    		},
+    		m: function mount(target, anchor) {
+    			html_tag.m(raw_value, target, anchor);
+    			insert_dev(target, html_anchor, anchor);
+    		},
+    		p: function update(ctx, dirty) {
+    			if (dirty[0] & /*$finalAnimeList*/ 512 && raw_value !== (raw_value = (/*getFormattedAnimeFormat*/ ctx[21](/*anime*/ ctx[118]) || " · NA") + "")) html_tag.p(raw_value);
+    		},
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(html_anchor);
+    			if (detaching) html_tag.d();
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_key_block.name,
+    		type: "key",
+    		source: "(1589:44) {#key $earlisetReleaseDate || 1}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (1625:36) {:else}
+    function create_else_block_1$1(ctx) {
+    	let h4;
+
+    	const block = {
+    		c: function create() {
+    			h4 = element("h4");
+    			h4.textContent = "NA";
+    			attr_dev(h4, "class", "svelte-wl7my9");
+    			add_location(h4, file$6, 1625, 40, 69025);
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, h4, anchor);
+    		},
+    		p: noop,
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(h4);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_else_block_1$1.name,
+    		type: "else",
+    		source: "(1625:36) {:else}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (1607:36) {#if anime?.season || anime?.year}
+    function create_if_block_11$1(ctx) {
+    	let span;
+
+    	let t_value = (`${/*anime*/ ctx[118]?.season || ""}${(/*anime*/ ctx[118]?.year)
+	? " " + /*anime*/ ctx[118].year
+	: ""}` || "NA") + "";
+
+    	let t;
+    	let span_copy_value_value;
+
+    	const block = {
+    		c: function create() {
+    			span = element("span");
+    			t = text(t_value);
+    			set_style(span, "text-align", "right");
+    			attr_dev(span, "class", "copy svelte-wl7my9");
+
+    			attr_dev(span, "copy-value", span_copy_value_value = `${/*anime*/ ctx[118]?.season || ""}${(/*anime*/ ctx[118]?.year)
+			? " " + /*anime*/ ctx[118].year
+			: ""}` || "NA");
+
+    			add_location(span, file$6, 1607, 40, 67964);
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, span, anchor);
+    			append_dev(span, t);
+    		},
+    		p: function update(ctx, dirty) {
+    			if (dirty[0] & /*$finalAnimeList*/ 512 && t_value !== (t_value = (`${/*anime*/ ctx[118]?.season || ""}${(/*anime*/ ctx[118]?.year)
+			? " " + /*anime*/ ctx[118].year
+			: ""}` || "NA") + "")) set_data_dev(t, t_value);
+
+    			if (dirty[0] & /*$finalAnimeList*/ 512 && span_copy_value_value !== (span_copy_value_value = `${/*anime*/ ctx[118]?.season || ""}${(/*anime*/ ctx[118]?.year)
+			? " " + /*anime*/ ctx[118].year
+			: ""}` || "NA")) {
+    				attr_dev(span, "copy-value", span_copy_value_value);
+    			}
+    		},
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(span);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_if_block_11$1.name,
+    		type: "if",
+    		source: "(1607:36) {#if anime?.season || anime?.year}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (1658:44) {#if anime.userScore != null}
+    function create_if_block_10$1(ctx) {
+    	let t0_value = " · " + "";
+    	let t0;
+    	let t1;
+    	let svg;
+    	let path;
+    	let t2;
+    	let t3_value = /*anime*/ ctx[118].userScore + "";
+    	let t3;
+
+    	const block = {
+    		c: function create() {
+    			t0 = text(t0_value);
+    			t1 = space();
+    			svg = svg_element("svg");
+    			path = svg_element("path");
+    			t2 = space();
+    			t3 = text(t3_value);
+    			attr_dev(path, "d", "M288 0c9 0 17 5 21 14l69 141 153 22c9 2 17 8 20 17s0 18-6 24L434 328l26 156c1 9-2 18-10 24s-17 6-25 1l-137-73-137 73c-8 4-18 4-25-2s-11-14-10-23l26-156L31 218a24 24 0 0 1 14-41l153-22 68-141c4-9 13-14 22-14zm0 79-53 108c-3 7-10 12-18 13L99 219l86 85c5 6 8 13 7 21l-21 120 106-57c7-3 15-3 22 1l105 56-20-120c-1-8 1-15 7-21l86-85-118-17c-8-2-15-7-18-14L288 79z");
+    			add_location(path, file$6, 1661, 53, 71168);
+    			attr_dev(svg, "viewBox", "0 0 576 512");
+    			attr_dev(svg, "class", "svelte-wl7my9");
+    			add_location(svg, file$6, 1660, 48, 71087);
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, t0, anchor);
+    			insert_dev(target, t1, anchor);
+    			insert_dev(target, svg, anchor);
+    			append_dev(svg, path);
+    			insert_dev(target, t2, anchor);
+    			insert_dev(target, t3, anchor);
+    		},
+    		p: function update(ctx, dirty) {
+    			if (dirty[0] & /*$finalAnimeList*/ 512 && t3_value !== (t3_value = /*anime*/ ctx[118].userScore + "")) set_data_dev(t3, t3_value);
+    		},
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(t0);
+    			if (detaching) detach_dev(t1);
+    			if (detaching) detach_dev(svg);
+    			if (detaching) detach_dev(t2);
+    			if (detaching) detach_dev(t3);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_if_block_10$1.name,
+    		type: "if",
+    		source: "(1658:44) {#if anime.userScore != null}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (1679:36) {#if anime.studios?.length}
+    function create_if_block_9$1(ctx) {
+    	let div2;
+    	let div0;
+    	let t1;
+    	let div1;
+    	let each_blocks = [];
+    	let each_1_lookup = new Map();
+    	let mounted;
+    	let dispose;
+    	let each_value_3 = /*anime*/ ctx[118].studios;
+    	validate_each_argument(each_value_3);
+    	const get_key = ctx => /*studios*/ ctx[127]?.studio || {};
+    	validate_each_keys(ctx, each_value_3, get_each_context_3$1, get_key);
+
+    	for (let i = 0; i < each_value_3.length; i += 1) {
+    		let child_ctx = get_each_context_3$1(ctx, each_value_3, i);
+    		let key = get_key(child_ctx);
+    		each_1_lookup.set(key, each_blocks[i] = create_each_block_3$1(key, child_ctx));
+    	}
+
+    	function mouseenter_handler(...args) {
+    		return /*mouseenter_handler*/ ctx[46](/*anime*/ ctx[118], /*each_value*/ ctx[119], /*anime_index*/ ctx[120], ...args);
+    	}
+
+    	const block = {
+    		c: function create() {
+    			div2 = element("div");
+    			div0 = element("div");
+    			div0.textContent = "Studios";
+    			t1 = space();
+    			div1 = element("div");
+
+    			for (let i = 0; i < each_blocks.length; i += 1) {
+    				each_blocks[i].c();
+    			}
+
+    			attr_dev(div0, "class", "info-categ svelte-wl7my9");
+    			add_location(div0, file$6, 1680, 44, 72565);
+    			attr_dev(div1, "class", "" + (null_to_empty("studio-popup info") + " svelte-wl7my9"));
+    			set_style(div1, "overflow", /*$popupIsGoingBack*/ ctx[7] ? "hidden" : "");
+    			add_location(div1, file$6, 1683, 44, 72744);
+    			attr_dev(div2, "class", "svelte-wl7my9");
+    			add_location(div2, file$6, 1679, 40, 72514);
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, div2, anchor);
+    			append_dev(div2, div0);
+    			append_dev(div2, t1);
+    			append_dev(div2, div1);
+
+    			for (let i = 0; i < each_blocks.length; i += 1) {
+    				if (each_blocks[i]) {
+    					each_blocks[i].m(div1, null);
+    				}
+    			}
+
+    			if (!mounted) {
+    				dispose = [
+    					listen_dev(div1, "scroll", /*itemScroll*/ ctx[23], false, false, false, false),
+    					listen_dev(div1, "mouseenter", mouseenter_handler, false, false, false, false)
+    				];
+
+    				mounted = true;
+    			}
+    		},
+    		p: function update(new_ctx, dirty) {
+    			ctx = new_ctx;
+
+    			if (dirty[0] & /*$finalAnimeList*/ 512) {
+    				each_value_3 = /*anime*/ ctx[118].studios;
+    				validate_each_argument(each_value_3);
+    				validate_each_keys(ctx, each_value_3, get_each_context_3$1, get_key);
+    				each_blocks = update_keyed_each(each_blocks, dirty, get_key, 1, ctx, each_value_3, each_1_lookup, div1, destroy_block, create_each_block_3$1, null, get_each_context_3$1);
+    			}
+
+    			if (dirty[0] & /*$popupIsGoingBack*/ 128) {
+    				set_style(div1, "overflow", /*$popupIsGoingBack*/ ctx[7] ? "hidden" : "");
+    			}
+    		},
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(div2);
+
+    			for (let i = 0; i < each_blocks.length; i += 1) {
+    				each_blocks[i].d();
+    			}
+
+    			mounted = false;
+    			run_all(dispose);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_if_block_9$1.name,
+    		type: "if",
+    		source: "(1679:36) {#if anime.studios?.length}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (1708:48) {#each anime.studios as studios (studios?.studio || {}
+    function create_each_block_3$1(key_1, ctx) {
+    	let a;
+    	let t0_value = (/*studios*/ ctx[127]?.studio?.studioName || "N/A") + "";
+    	let t0;
+    	let t1;
+    	let a_class_value;
+    	let a_rel_value;
+    	let a_target_value;
+    	let a_href_value;
+    	let a_copy_value_value;
+
+    	const block = {
+    		key: key_1,
+    		first: null,
+    		c: function create() {
+    			a = element("a");
+    			t0 = text(t0_value);
+    			t1 = space();
+
+    			attr_dev(a, "class", a_class_value = "" + (null_to_empty("copy" + ((/*studios*/ ctx[127]?.studioColor)
+    			? ` ${/*studios*/ ctx[127]?.studioColor}-color`
+    			: "")) + " svelte-wl7my9"));
+
+    			attr_dev(a, "rel", a_rel_value = (/*studios*/ ctx[127]?.studio?.studioUrl)
+    			? "noopener noreferrer"
+    			: "");
+
+    			attr_dev(a, "target", a_target_value = (/*studios*/ ctx[127]?.studio?.studioUrl)
+    			? "_blank"
+    			: "");
+
+    			attr_dev(a, "href", a_href_value = /*studios*/ ctx[127]?.studio?.studioUrl || "javascript:void(0)");
+    			attr_dev(a, "copy-value", a_copy_value_value = /*studios*/ ctx[127]?.studio?.studioName || "");
+    			add_location(a, file$6, 1708, 52, 74491);
+    			this.first = a;
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, a, anchor);
+    			append_dev(a, t0);
+    			append_dev(a, t1);
+    		},
+    		p: function update(new_ctx, dirty) {
+    			ctx = new_ctx;
+    			if (dirty[0] & /*$finalAnimeList*/ 512 && t0_value !== (t0_value = (/*studios*/ ctx[127]?.studio?.studioName || "N/A") + "")) set_data_dev(t0, t0_value);
+
+    			if (dirty[0] & /*$finalAnimeList*/ 512 && a_class_value !== (a_class_value = "" + (null_to_empty("copy" + ((/*studios*/ ctx[127]?.studioColor)
+    			? ` ${/*studios*/ ctx[127]?.studioColor}-color`
+    			: "")) + " svelte-wl7my9"))) {
+    				attr_dev(a, "class", a_class_value);
+    			}
+
+    			if (dirty[0] & /*$finalAnimeList*/ 512 && a_rel_value !== (a_rel_value = (/*studios*/ ctx[127]?.studio?.studioUrl)
+    			? "noopener noreferrer"
+    			: "")) {
+    				attr_dev(a, "rel", a_rel_value);
+    			}
+
+    			if (dirty[0] & /*$finalAnimeList*/ 512 && a_target_value !== (a_target_value = (/*studios*/ ctx[127]?.studio?.studioUrl)
+    			? "_blank"
+    			: "")) {
+    				attr_dev(a, "target", a_target_value);
+    			}
+
+    			if (dirty[0] & /*$finalAnimeList*/ 512 && a_href_value !== (a_href_value = /*studios*/ ctx[127]?.studio?.studioUrl || "javascript:void(0)")) {
+    				attr_dev(a, "href", a_href_value);
+    			}
+
+    			if (dirty[0] & /*$finalAnimeList*/ 512 && a_copy_value_value !== (a_copy_value_value = /*studios*/ ctx[127]?.studio?.studioName || "")) {
+    				attr_dev(a, "copy-value", a_copy_value_value);
+    			}
+    		},
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(a);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_each_block_3$1.name,
+    		type: "each",
+    		source: "(1708:48) {#each anime.studios as studios (studios?.studio || {}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (1737:36) {#if anime.genres.length}
+    function create_if_block_8$1(ctx) {
+    	let div2;
+    	let div0;
+    	let t1;
+    	let div1;
+    	let each_blocks = [];
+    	let each_1_lookup = new Map();
+    	let mounted;
+    	let dispose;
+    	let each_value_2 = /*anime*/ ctx[118].genres;
+    	validate_each_argument(each_value_2);
+    	const get_key = ctx => /*genres*/ ctx[124]?.genre || {};
+    	validate_each_keys(ctx, each_value_2, get_each_context_2$1, get_key);
+
+    	for (let i = 0; i < each_value_2.length; i += 1) {
+    		let child_ctx = get_each_context_2$1(ctx, each_value_2, i);
+    		let key = get_key(child_ctx);
+    		each_1_lookup.set(key, each_blocks[i] = create_each_block_2$1(key, child_ctx));
+    	}
+
+    	function mouseenter_handler_1(...args) {
+    		return /*mouseenter_handler_1*/ ctx[47](/*anime*/ ctx[118], /*each_value*/ ctx[119], /*anime_index*/ ctx[120], ...args);
+    	}
+
+    	const block = {
+    		c: function create() {
+    			div2 = element("div");
+    			div0 = element("div");
+    			div0.textContent = "Genres";
+    			t1 = space();
+    			div1 = element("div");
+
+    			for (let i = 0; i < each_blocks.length; i += 1) {
+    				each_blocks[i].c();
+    			}
+
+    			attr_dev(div0, "class", "info-categ svelte-wl7my9");
+    			add_location(div0, file$6, 1738, 44, 76571);
+    			attr_dev(div1, "class", "" + (null_to_empty("genres-popup info") + " svelte-wl7my9"));
+    			set_style(div1, "overflow", /*$popupIsGoingBack*/ ctx[7] ? "hidden" : "");
+    			add_location(div1, file$6, 1739, 44, 76653);
+    			attr_dev(div2, "class", "svelte-wl7my9");
+    			add_location(div2, file$6, 1737, 40, 76520);
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, div2, anchor);
+    			append_dev(div2, div0);
+    			append_dev(div2, t1);
+    			append_dev(div2, div1);
+
+    			for (let i = 0; i < each_blocks.length; i += 1) {
+    				if (each_blocks[i]) {
+    					each_blocks[i].m(div1, null);
+    				}
+    			}
+
+    			if (!mounted) {
+    				dispose = [
+    					listen_dev(div1, "scroll", /*itemScroll*/ ctx[23], false, false, false, false),
+    					listen_dev(div1, "mouseenter", mouseenter_handler_1, false, false, false, false)
+    				];
+
+    				mounted = true;
+    			}
+    		},
+    		p: function update(new_ctx, dirty) {
+    			ctx = new_ctx;
+
+    			if (dirty[0] & /*$finalAnimeList*/ 512) {
+    				each_value_2 = /*anime*/ ctx[118].genres;
+    				validate_each_argument(each_value_2);
+    				validate_each_keys(ctx, each_value_2, get_each_context_2$1, get_key);
+    				each_blocks = update_keyed_each(each_blocks, dirty, get_key, 1, ctx, each_value_2, each_1_lookup, div1, destroy_block, create_each_block_2$1, null, get_each_context_2$1);
+    			}
+
+    			if (dirty[0] & /*$popupIsGoingBack*/ 128) {
+    				set_style(div1, "overflow", /*$popupIsGoingBack*/ ctx[7] ? "hidden" : "");
+    			}
+    		},
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(div2);
+
+    			for (let i = 0; i < each_blocks.length; i += 1) {
+    				each_blocks[i].d();
+    			}
+
+    			mounted = false;
+    			run_all(dispose);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_if_block_8$1.name,
+    		type: "if",
+    		source: "(1737:36) {#if anime.genres.length}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (1764:48) {#each anime.genres as genres (genres?.genre || {}
+    function create_each_block_2$1(key_1, ctx) {
+    	let span;
+    	let t0_value = (/*genres*/ ctx[124]?.genre || "N/A") + "";
+    	let t0;
+    	let t1;
+    	let span_class_value;
+    	let span_copy_value_value;
+
+    	const block = {
+    		key: key_1,
+    		first: null,
+    		c: function create() {
+    			span = element("span");
+    			t0 = text(t0_value);
+    			t1 = space();
+
+    			attr_dev(span, "class", span_class_value = "" + (null_to_empty("copy " + ((/*genres*/ ctx[124]?.genreColor)
+    			? `${/*genres*/ ctx[124]?.genreColor}-color`
+    			: "")) + " svelte-wl7my9"));
+
+    			attr_dev(span, "copy-value", span_copy_value_value = /*genres*/ ctx[124]?.genre || "");
+    			add_location(span, file$6, 1764, 52, 78394);
+    			this.first = span;
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, span, anchor);
+    			append_dev(span, t0);
+    			append_dev(span, t1);
+    		},
+    		p: function update(new_ctx, dirty) {
+    			ctx = new_ctx;
+    			if (dirty[0] & /*$finalAnimeList*/ 512 && t0_value !== (t0_value = (/*genres*/ ctx[124]?.genre || "N/A") + "")) set_data_dev(t0, t0_value);
+
+    			if (dirty[0] & /*$finalAnimeList*/ 512 && span_class_value !== (span_class_value = "" + (null_to_empty("copy " + ((/*genres*/ ctx[124]?.genreColor)
+    			? `${/*genres*/ ctx[124]?.genreColor}-color`
+    			: "")) + " svelte-wl7my9"))) {
+    				attr_dev(span, "class", span_class_value);
+    			}
+
+    			if (dirty[0] & /*$finalAnimeList*/ 512 && span_copy_value_value !== (span_copy_value_value = /*genres*/ ctx[124]?.genre || "")) {
+    				attr_dev(span, "copy-value", span_copy_value_value);
+    			}
+    		},
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(span);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_each_block_2$1.name,
+    		type: "each",
+    		source: "(1764:48) {#each anime.genres as genres (genres?.genre || {}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (1779:36) {#if anime?.tags?.length}
+    function create_if_block_7$1(ctx) {
+    	let div1;
+    	let div0;
+    	let each_blocks = [];
+    	let each_1_lookup = new Map();
+    	let mounted;
+    	let dispose;
+    	let each_value_1 = /*anime*/ ctx[118].tags;
+    	validate_each_argument(each_value_1);
+    	const get_key = ctx => /*tags*/ ctx[121]?.tag || {};
+    	validate_each_keys(ctx, each_value_1, get_each_context_1$1, get_key);
+
+    	for (let i = 0; i < each_value_1.length; i += 1) {
+    		let child_ctx = get_each_context_1$1(ctx, each_value_1, i);
+    		let key = get_key(child_ctx);
+    		each_1_lookup.set(key, each_blocks[i] = create_each_block_1$1(key, child_ctx));
+    	}
+
+    	function mouseenter_handler_2(...args) {
+    		return /*mouseenter_handler_2*/ ctx[48](/*anime*/ ctx[118], /*each_value*/ ctx[119], /*anime_index*/ ctx[120], ...args);
+    	}
+
+    	const block = {
+    		c: function create() {
+    			div1 = element("div");
+    			div0 = element("div");
+
+    			for (let i = 0; i < each_blocks.length; i += 1) {
+    				each_blocks[i].c();
+    			}
+
+    			attr_dev(div0, "class", "" + (null_to_empty("tags-info-content info") + " svelte-wl7my9"));
+    			set_style(div0, "overflow", /*$popupIsGoingBack*/ ctx[7] ? "hidden" : "");
+    			add_location(div0, file$6, 1780, 44, 79452);
+    			attr_dev(div1, "class", "tag-info svelte-wl7my9");
+    			add_location(div1, file$6, 1779, 40, 79384);
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, div1, anchor);
+    			append_dev(div1, div0);
+
+    			for (let i = 0; i < each_blocks.length; i += 1) {
+    				if (each_blocks[i]) {
+    					each_blocks[i].m(div0, null);
+    				}
+    			}
+
+    			if (!mounted) {
+    				dispose = [
+    					listen_dev(div0, "scroll", /*itemScroll*/ ctx[23], false, false, false, false),
+    					listen_dev(div0, "mouseenter", mouseenter_handler_2, false, false, false, false)
+    				];
+
+    				mounted = true;
+    			}
+    		},
+    		p: function update(new_ctx, dirty) {
+    			ctx = new_ctx;
+
+    			if (dirty[0] & /*$finalAnimeList*/ 512) {
+    				each_value_1 = /*anime*/ ctx[118].tags;
+    				validate_each_argument(each_value_1);
+    				validate_each_keys(ctx, each_value_1, get_each_context_1$1, get_key);
+    				each_blocks = update_keyed_each(each_blocks, dirty, get_key, 1, ctx, each_value_1, each_1_lookup, div0, destroy_block, create_each_block_1$1, null, get_each_context_1$1);
+    			}
+
+    			if (dirty[0] & /*$popupIsGoingBack*/ 128) {
+    				set_style(div0, "overflow", /*$popupIsGoingBack*/ ctx[7] ? "hidden" : "");
+    			}
+    		},
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(div1);
+
+    			for (let i = 0; i < each_blocks.length; i += 1) {
+    				each_blocks[i].d();
+    			}
+
+    			mounted = false;
+    			run_all(dispose);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_if_block_7$1.name,
+    		type: "if",
+    		source: "(1779:36) {#if anime?.tags?.length}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (1805:48) {#each anime.tags as tags (tags?.tag || {}
+    function create_each_block_1$1(key_1, ctx) {
+    	let span;
+    	let html_tag;
+    	let raw_value = (/*tags*/ ctx[121]?.tag || "N/A") + "";
+    	let t;
+    	let span_class_value;
+    	let span_copy_value_value;
+
+    	const block = {
+    		key: key_1,
+    		first: null,
+    		c: function create() {
+    			span = element("span");
+    			html_tag = new HtmlTag(false);
+    			t = space();
+    			html_tag.a = t;
+
+    			attr_dev(span, "class", span_class_value = "" + (null_to_empty("copy " + ((/*tags*/ ctx[121]?.tagColor)
+    			? `${/*tags*/ ctx[121]?.tagColor}-color`
+    			: "")) + " svelte-wl7my9"));
+
+    			attr_dev(span, "copy-value", span_copy_value_value = /*tags*/ ctx[121]?.copyValue || "");
+    			add_location(span, file$6, 1805, 52, 81186);
+    			this.first = span;
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, span, anchor);
+    			html_tag.m(raw_value, span);
+    			append_dev(span, t);
+    		},
+    		p: function update(new_ctx, dirty) {
+    			ctx = new_ctx;
+    			if (dirty[0] & /*$finalAnimeList*/ 512 && raw_value !== (raw_value = (/*tags*/ ctx[121]?.tag || "N/A") + "")) html_tag.p(raw_value);
+
+    			if (dirty[0] & /*$finalAnimeList*/ 512 && span_class_value !== (span_class_value = "" + (null_to_empty("copy " + ((/*tags*/ ctx[121]?.tagColor)
+    			? `${/*tags*/ ctx[121]?.tagColor}-color`
+    			: "")) + " svelte-wl7my9"))) {
+    				attr_dev(span, "class", span_class_value);
+    			}
+
+    			if (dirty[0] & /*$finalAnimeList*/ 512 && span_copy_value_value !== (span_copy_value_value = /*tags*/ ctx[121]?.copyValue || "")) {
+    				attr_dev(span, "copy-value", span_copy_value_value);
+    			}
+    		},
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(span);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_each_block_1$1.name,
+    		type: "each",
+    		source: "(1805:48) {#each anime.tags as tags (tags?.tag || {}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (1868:36) {#if anime?.description}
+    function create_if_block_6$1(ctx) {
+    	let div1;
+    	let h3;
+    	let t1;
+    	let div0;
+    	let raw_value = editHTMLString(/*anime*/ ctx[118]?.description) + "";
+    	let mounted;
+    	let dispose;
+
+    	function click_handler_4() {
+    		return /*click_handler_4*/ ctx[52](/*anime*/ ctx[118]);
+    	}
+
+    	function keydown_handler_6(...args) {
+    		return /*keydown_handler_6*/ ctx[53](/*anime*/ ctx[118], ...args);
+    	}
+
+    	const block = {
+    		c: function create() {
+    			div1 = element("div");
+    			h3 = element("h3");
+    			h3.textContent = "Description";
+    			t1 = space();
+    			div0 = element("div");
+    			attr_dev(h3, "class", "svelte-wl7my9");
+    			add_location(h3, file$6, 1891, 44, 86812);
+    			attr_dev(div0, "class", "anime-description svelte-wl7my9");
+    			add_location(div0, file$6, 1892, 44, 86878);
+    			attr_dev(div1, "class", "anime-description-wrapper svelte-wl7my9");
+    			attr_dev(div1, "tabindex", "0");
+    			add_location(div1, file$6, 1869, 40, 85362);
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, div1, anchor);
+    			append_dev(div1, h3);
+    			append_dev(div1, t1);
+    			append_dev(div1, div0);
+    			div0.innerHTML = raw_value;
+
+    			if (!mounted) {
+    				dispose = [
+    					listen_dev(div1, "click", click_handler_4, false, false, false, false),
+    					listen_dev(div1, "keydown", keydown_handler_6, false, false, false, false)
+    				];
+
+    				mounted = true;
+    			}
+    		},
+    		p: function update(new_ctx, dirty) {
+    			ctx = new_ctx;
+    			if (dirty[0] & /*$finalAnimeList*/ 512 && raw_value !== (raw_value = editHTMLString(/*anime*/ ctx[118]?.description) + "")) div0.innerHTML = raw_value;		},
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(div1);
+    			mounted = false;
+    			run_all(dispose);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_if_block_6$1.name,
+    		type: "if",
+    		source: "(1868:36) {#if anime?.description}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (1930:36) {:else}
+    function create_else_block$1(ctx) {
+    	let t;
+
+    	const block = {
+    		c: function create() {
+    			t = text("N/A");
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, t, anchor);
+    		},
+    		p: noop,
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(t);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_else_block$1.name,
+    		type: "else",
+    		source: "(1930:36) {:else}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (1925:36) {#if $hiddenEntries}
+    function create_if_block_5$1(ctx) {
+    	let t_value = " " + (/*$hiddenEntries*/ ctx[11][/*anime*/ ctx[118]?.id]
+    	? "Show"
+    	: "Hide") + "";
+
+    	let t;
+
+    	const block = {
+    		c: function create() {
+    			t = text(t_value);
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, t, anchor);
+    		},
+    		p: function update(ctx, dirty) {
+    			if (dirty[0] & /*$hiddenEntries, $finalAnimeList*/ 2560 && t_value !== (t_value = " " + (/*$hiddenEntries*/ ctx[11][/*anime*/ ctx[118]?.id]
+    			? "Show"
+    			: "Hide") + "")) set_data_dev(t, t_value);
+    		},
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(t);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_if_block_5$1.name,
+    		type: "if",
+    		source: "(1925:36) {#if $hiddenEntries}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (1340:12) {#each $finalAnimeList || [] as anime (anime?.id || {}
+    function create_each_block$1(key_1, ctx) {
+    	let div15;
+    	let div14;
+    	let div2;
+    	let div0;
+    	let svg0;
+    	let path0;
+    	let t0;
+    	let t1;
+    	let div1;
+    	let div2_class_value;
+    	let each_value = /*each_value*/ ctx[119];
+    	let anime_index = /*anime_index*/ ctx[120];
+    	let t2;
+    	let div4;
+    	let div3;
+    	let label1;
+    	let label0;
+    	let t3;
+    	let label0_for_value;
+    	let t4;
+    	let input;
+    	let input_id_value;
+    	let t5;
+    	let span0;
+    	let t6;
+    	let h30;
+    	let t7;
+    	let t8;
+    	let t9;
+    	let div13;
+    	let div11;
+    	let div6;
+    	let a0;
+    	let t10_value = (/*anime*/ ctx[118]?.shownTitle || "NA") + "";
+    	let t10;
+    	let a0_rel_value;
+    	let a0_target_value;
+    	let a0_href_value;
+    	let a0_class_value;
+    	let a0_copy_value_value;
+    	let a0_copy_value___value;
+    	let t11;
+    	let div5;
+    	let svg1;
+    	let path1;
+    	let t12;
+    	let h31;
+    	let b;
+
+    	let t13_value = (/*anime*/ ctx[118].averageScore != null
+    	? /*anime*/ ctx[118].formattedAverageScore || "NA"
+    	: "NA") + "";
+
+    	let t13;
+    	let t14;
+
+    	let t15_value = "/10 · " + (/*anime*/ ctx[118].popularity != null
+    	? /*anime*/ ctx[118].formattedPopularity || "NA"
+    	: "NA") + "";
+
+    	let t15;
+    	let t16;
+    	let t17_value = " · " + "";
+    	let t17;
+    	let html_tag;
+    	let raw_value = (/*anime*/ ctx[118]?.recommendedRatingInfo || "") + "";
+    	let h31_copy_value_value;
+    	let t18;
+    	let div7;
+    	let t19;
+    	let t20;
+    	let div8;
+    	let h40;
+    	let a1;
+    	let span1;
+    	let t21_value = (/*anime*/ ctx[118].userStatus || "NA") + "";
+    	let t21;
+    	let span1_class_value;
+    	let t22;
+    	let a1_rel_value;
+    	let a1_target_value;
+    	let a1_href_value;
+    	let h40_copy_value_value;
+    	let t23;
+    	let h41;
+    	let t24_value = (/*anime*/ ctx[118].status || "NA") + "";
+    	let t24;
+    	let h41_copy_value_value;
+    	let t25;
+    	let div9;
+    	let t26;
+    	let t27;
+    	let t28;
+    	let div10;
+    	let img;
+    	let img_alt_value;
+    	let img_class_value;
+    	let addImage_action;
+    	let t29;
+    	let t30;
+    	let div12;
+    	let button0;
+    	let svg2;
+    	let path2;
+    	let t31;
+    	let t32;
+    	let button1;
+    	let svg3;
+    	let path3;
+    	let t33;
+    	let t34;
+    	let button2;
+    	let svg4;
+    	let path4;
+    	let path5;
+    	let t35;
+    	let mounted;
+    	let dispose;
+    	let if_block0 = /*anime*/ ctx[118].trailerID && create_if_block_18(ctx);
+    	let if_block1 = (/*anime*/ ctx[118].bannerImageUrl || /*anime*/ ctx[118].trailerThumbnailUrl) && create_if_block_17$1(ctx);
+    	const assign_div2 = () => /*div2_binding*/ ctx[36](div2, each_value, anime_index);
+    	const unassign_div2 = () => /*div2_binding*/ ctx[36](null, each_value, anime_index);
+
+    	function click_handler() {
+    		return /*click_handler*/ ctx[37](/*anime*/ ctx[118]);
+    	}
+
+    	function keydown_handler(...args) {
+    		return /*keydown_handler*/ ctx[38](/*anime*/ ctx[118], ...args);
+    	}
+
+    	function select_block_type(ctx, dirty) {
+    		if (/*windowWidth*/ ctx[4] >= 290) return create_if_block_15$1;
+    		if (/*windowWidth*/ ctx[4] >= 260) return create_if_block_16$1;
+    	}
+
+    	let current_block_type = select_block_type(ctx);
+    	let if_block2 = current_block_type && current_block_type(ctx);
+    	let if_block3 = /*$listUpdateAvailable*/ ctx[12] && create_if_block_14$1(ctx);
+    	let if_block4 = (/*anime*/ ctx[118].bannerImageUrl || /*anime*/ ctx[118].trailerThumbnailUrl) && create_if_block_13$1(ctx);
+
+    	function select_block_type_1(ctx, dirty) {
+    		if (/*anime*/ ctx[118]?.nextAiringEpisode?.airingAt) return create_if_block_12$1;
+    		return create_else_block_2$1;
+    	}
+
+    	let current_block_type_1 = select_block_type_1(ctx);
+    	let if_block5 = current_block_type_1(ctx);
+
+    	function select_block_type_2(ctx, dirty) {
+    		if (/*anime*/ ctx[118]?.season || /*anime*/ ctx[118]?.year) return create_if_block_11$1;
+    		return create_else_block_1$1;
+    	}
+
+    	let current_block_type_2 = select_block_type_2(ctx);
+    	let if_block6 = current_block_type_2(ctx);
+    	let if_block7 = /*anime*/ ctx[118].userScore != null && create_if_block_10$1(ctx);
+    	let if_block8 = /*anime*/ ctx[118].studios?.length && create_if_block_9$1(ctx);
+    	let if_block9 = /*anime*/ ctx[118].genres.length && create_if_block_8$1(ctx);
+    	let if_block10 = /*anime*/ ctx[118]?.tags?.length && create_if_block_7$1(ctx);
+
+    	function click_handler_3() {
+    		return /*click_handler_3*/ ctx[50](/*anime*/ ctx[118]);
+    	}
+
+    	function keydown_handler_5(...args) {
+    		return /*keydown_handler_5*/ ctx[51](/*anime*/ ctx[118], ...args);
+    	}
+
+    	let if_block11 = /*anime*/ ctx[118]?.description && create_if_block_6$1(ctx);
+    	const assign_div11 = () => /*div11_binding*/ ctx[54](div11, each_value, anime_index);
+    	const unassign_div11 = () => /*div11_binding*/ ctx[54](null, each_value, anime_index);
+
+    	function select_block_type_3(ctx, dirty) {
+    		if (/*$hiddenEntries*/ ctx[11]) return create_if_block_5$1;
+    		return create_else_block$1;
+    	}
+
+    	let current_block_type_3 = select_block_type_3(ctx);
+    	let if_block12 = current_block_type_3(ctx);
+
+    	function keydown_handler_7(...args) {
+    		return /*keydown_handler_7*/ ctx[55](/*anime*/ ctx[118], ...args);
+    	}
+
+    	function keydown_handler_8(...args) {
+    		return /*keydown_handler_8*/ ctx[56](/*anime*/ ctx[118], ...args);
+    	}
+
+    	function click_handler_5() {
+    		return /*click_handler_5*/ ctx[57](/*anime*/ ctx[118]);
+    	}
+
+    	function keydown_handler_9(...args) {
+    		return /*keydown_handler_9*/ ctx[58](/*anime*/ ctx[118], ...args);
+    	}
+
+    	const assign_div15 = () => /*div15_binding*/ ctx[59](div15, each_value, anime_index);
+    	const unassign_div15 = () => /*div15_binding*/ ctx[59](null, each_value, anime_index);
+
+    	const block = {
+    		key: key_1,
+    		first: null,
+    		c: function create() {
+    			div15 = element("div");
+    			div14 = element("div");
+    			div2 = element("div");
+    			div0 = element("div");
+    			svg0 = svg_element("svg");
+    			path0 = svg_element("path");
+    			t0 = space();
+    			if (if_block0) if_block0.c();
+    			t1 = space();
+    			div1 = element("div");
+    			if (if_block1) if_block1.c();
+    			t2 = space();
+    			div4 = element("div");
+    			div3 = element("div");
+    			label1 = element("label");
+    			label0 = element("label");
+    			t3 = text("Auto Play");
+    			t4 = space();
+    			input = element("input");
+    			t5 = space();
+    			span0 = element("span");
+    			t6 = space();
+    			h30 = element("h3");
+    			if (if_block2) if_block2.c();
+    			t7 = space();
+    			if (if_block3) if_block3.c();
+    			t8 = space();
+    			if (if_block4) if_block4.c();
+    			t9 = space();
+    			div13 = element("div");
+    			div11 = element("div");
+    			div6 = element("div");
+    			a0 = element("a");
+    			t10 = text(t10_value);
+    			t11 = space();
+    			div5 = element("div");
+    			svg1 = svg_element("svg");
+    			path1 = svg_element("path");
+    			t12 = space();
+    			h31 = element("h3");
+    			b = element("b");
+    			t13 = text(t13_value);
+    			t14 = space();
+    			t15 = text(t15_value);
+    			t16 = space();
+    			t17 = text(t17_value);
+    			html_tag = new HtmlTag(false);
+    			t18 = space();
+    			div7 = element("div");
+    			if_block5.c();
+    			t19 = space();
+    			if_block6.c();
+    			t20 = space();
+    			div8 = element("div");
+    			h40 = element("h4");
+    			a1 = element("a");
+    			span1 = element("span");
+    			t21 = text(t21_value);
+    			t22 = space();
+    			if (if_block7) if_block7.c();
+    			t23 = space();
+    			h41 = element("h4");
+    			t24 = text(t24_value);
+    			t25 = space();
+    			div9 = element("div");
+    			if (if_block8) if_block8.c();
+    			t26 = space();
+    			if (if_block9) if_block9.c();
+    			t27 = space();
+    			if (if_block10) if_block10.c();
+    			t28 = space();
+    			div10 = element("div");
+    			img = element("img");
+    			t29 = space();
+    			if (if_block11) if_block11.c();
+    			t30 = space();
+    			div12 = element("div");
+    			button0 = element("button");
+    			svg2 = svg_element("svg");
+    			path2 = svg_element("path");
+    			t31 = space();
+    			if_block12.c();
+    			t32 = space();
+    			button1 = element("button");
+    			svg3 = svg_element("svg");
+    			path3 = svg_element("path");
+    			t33 = text(" YouTube");
+    			t34 = space();
+    			button2 = element("button");
+    			svg4 = svg_element("svg");
+    			path4 = svg_element("path");
+    			path5 = svg_element("path");
+    			t35 = text(" Anilist");
+    			attr_dev(path0, "d", "M311 86a32 32 0 1 0-46-44L110 202l-46 47V64a32 32 0 1 0-64 0v384a32 32 0 1 0 64 0V341l65-67 133 192c10 15 30 18 44 8s18-30 8-44L174 227 311 86z");
+    			add_location(path0, file$6, 1356, 36, 52444);
+    			attr_dev(svg0, "viewBox", "0 0 320 512");
+    			attr_dev(svg0, "class", "svelte-wl7my9");
+    			add_location(svg0, file$6, 1355, 32, 52379);
+    			attr_dev(div0, "class", "popup-header-loading svelte-wl7my9");
+    			add_location(div0, file$6, 1353, 28, 52262);
+    			attr_dev(div1, "class", "popup-img svelte-wl7my9");
+    			add_location(div1, file$6, 1364, 28, 52940);
+    			attr_dev(div2, "class", div2_class_value = "" + (null_to_empty("popup-header " + (/*anime*/ ctx[118].trailerID ? "loader" : "")) + " svelte-wl7my9"));
+    			attr_dev(div2, "tabindex", "0");
+    			add_location(div2, file$6, 1343, 24, 51736);
+    			attr_dev(label0, "class", "disable-interaction svelte-wl7my9");
+    			attr_dev(label0, "for", label0_for_value = "auto-play-" + /*anime*/ ctx[118]?.id);
+    			add_location(label0, file$6, 1402, 36, 55236);
+    			attr_dev(input, "id", input_id_value = "auto-play-" + /*anime*/ ctx[118]?.id);
+    			attr_dev(input, "type", "checkbox");
+    			attr_dev(input, "class", "autoplayToggle svelte-wl7my9");
+    			add_location(input, file$6, 1408, 36, 55557);
+    			attr_dev(span0, "class", "slider round svelte-wl7my9");
+    			attr_dev(span0, "tabindex", "0");
+    			add_location(span0, file$6, 1415, 36, 55991);
+    			attr_dev(label1, "class", "switch svelte-wl7my9");
+    			add_location(label1, file$6, 1401, 32, 55176);
+    			attr_dev(h30, "class", "autoplay-label svelte-wl7my9");
+    			add_location(h30, file$6, 1423, 32, 56435);
+    			attr_dev(div3, "class", "autoPlay-container svelte-wl7my9");
+    			add_location(div3, file$6, 1400, 28, 55110);
+    			attr_dev(div4, "class", "popup-controls svelte-wl7my9");
+    			add_location(div4, file$6, 1399, 24, 55052);
+    			attr_dev(a0, "rel", a0_rel_value = /*anime*/ ctx[118].animeUrl ? "noopener noreferrer" : "");
+    			attr_dev(a0, "target", a0_target_value = /*anime*/ ctx[118].animeUrl ? "_blank" : "");
+    			attr_dev(a0, "href", a0_href_value = /*anime*/ ctx[118].animeUrl || "javascript:void(0)");
+    			attr_dev(a0, "class", a0_class_value = "" + (null_to_empty(/*anime*/ ctx[118]?.contentCautionColor + "-color anime-title copy") + " svelte-wl7my9"));
+    			attr_dev(a0, "copy-value", a0_copy_value_value = /*anime*/ ctx[118]?.copiedTitle || "");
+    			attr_dev(a0, "copy-value-2", a0_copy_value___value = /*anime*/ ctx[118]?.shownTitle || "");
+    			set_style(a0, "overflow", /*$popupIsGoingBack*/ ctx[7] ? "hidden" : "");
+    			add_location(a0, file$6, 1524, 36, 62540);
+    			attr_dev(path1, "d", "M288 0c9 0 17 5 21 14l69 141 153 22c9 2 17 8 20 17s0 18-6 24L434 328l26 156c1 9-2 18-10 24s-17 6-25 1l-137-73-137 73c-8 4-18 4-25-2s-11-14-10-23l26-156L31 218a24 24 0 0 1 14-41l153-22 68-141c4-9 13-14 22-14zm0 79-53 108c-3 7-10 12-18 13L99 219l86 85c5 6 8 13 7 21l-21 120 106-57c7-3 15-3 22 1l105 56-20-120c-1-8 1-15 7-21l86-85-118-17c-8-2-15-7-18-14L288 79z");
+    			add_location(path1, file$6, 1545, 45, 63889);
+    			attr_dev(svg1, "viewBox", "0 0 576 512");
+    			attr_dev(svg1, "class", "svelte-wl7my9");
+    			add_location(svg1, file$6, 1544, 40, 63816);
+    			attr_dev(b, "class", "svelte-wl7my9");
+    			add_location(b, file$6, 1562, 44, 65262);
+    			html_tag.a = null;
+    			attr_dev(h31, "class", "copy svelte-wl7my9");
+
+    			attr_dev(h31, "copy-value", h31_copy_value_value = (/*anime*/ ctx[118].averageScore != null
+    			? /*anime*/ ctx[118].formattedAverageScore || "NA"
+    			: "NA") + "/10 · " + (/*anime*/ ctx[118].popularity != null
+    			? /*anime*/ ctx[118].formattedPopularity || "NA"
+    			: "NA"));
+
+    			add_location(h31, file$6, 1549, 40, 64444);
+    			attr_dev(div5, "class", "info-rating-wrapper svelte-wl7my9");
+    			add_location(div5, file$6, 1542, 36, 63678);
+    			attr_dev(div6, "class", "anime-title-container svelte-wl7my9");
+    			set_style(div6, "overflow", /*$popupIsGoingBack*/ ctx[7] ? "hidden" : "");
+    			add_location(div6, file$6, 1517, 32, 62166);
+    			attr_dev(div7, "class", "info-format svelte-wl7my9");
+    			set_style(div7, "overflow", /*$popupIsGoingBack*/ ctx[7] ? "hidden" : "");
+    			add_location(div7, file$6, 1578, 32, 66246);
+    			attr_dev(span1, "class", span1_class_value = "" + (null_to_empty(/*anime*/ ctx[118].userStatusColor + "-color") + " svelte-wl7my9"));
+    			add_location(span1, file$6, 1651, 45, 70503);
+    			attr_dev(a1, "rel", a1_rel_value = /*anime*/ ctx[118].animeUrl ? "noopener noreferrer" : "");
+    			attr_dev(a1, "target", a1_target_value = /*anime*/ ctx[118].animeUrl ? "_blank" : "");
+    			attr_dev(a1, "href", a1_href_value = /*anime*/ ctx[118].animeUrl || "javascript:void(0)");
+    			attr_dev(a1, "class", "svelte-wl7my9");
+    			add_location(a1, file$6, 1642, 40, 69938);
+    			attr_dev(h40, "class", "copy svelte-wl7my9");
+
+    			attr_dev(h40, "copy-value", h40_copy_value_value = (/*anime*/ ctx[118].userStatus || "NA") + (/*anime*/ ctx[118].userScore != null
+    			? " · " + /*anime*/ ctx[118].userScore
+    			: ""));
+
+    			add_location(h40, file$6, 1635, 36, 69517);
+    			set_style(h41, "text-align", "right");
+    			attr_dev(h41, "class", "copy year-season svelte-wl7my9");
+    			attr_dev(h41, "copy-value", h41_copy_value_value = /*anime*/ ctx[118].status || "");
+    			add_location(h41, file$6, 1669, 36, 71950);
+    			attr_dev(div8, "class", "info-status svelte-wl7my9");
+    			set_style(div8, "overflow", /*$popupIsGoingBack*/ ctx[7] ? "hidden" : "");
+    			add_location(div8, file$6, 1628, 32, 69153);
+    			attr_dev(div9, "class", "info-contents svelte-wl7my9");
+    			add_location(div9, file$6, 1677, 32, 72380);
+    			attr_dev(img, "loading", "lazy");
+    			attr_dev(img, "width", "150px");
+    			attr_dev(img, "height", "210px");
+
+    			attr_dev(img, "alt", img_alt_value = (/*anime*/ ctx[118]?.shownTitle || "") + (/*anime*/ ctx[118].coverImageUrl
+    			? " Cover"
+    			: /*anime*/ ctx[118].bannerImageUrl
+    				? " Banner"
+    				: " Thumbnail"));
+
+    			attr_dev(img, "tabindex", "0");
+
+    			attr_dev(img, "class", img_class_value = "" + (null_to_empty("coverImg" + (!/*anime*/ ctx[118].coverImageUrl && !/*anime*/ ctx[118].bannerImageUrl && !/*anime*/ ctx[118].trailerThumbnailUrl
+    			? " display-none"
+    			: "")) + " svelte-wl7my9"));
+
+    			add_location(img, file$6, 1822, 36, 82297);
+    			attr_dev(div10, "class", "info-profile svelte-wl7my9");
+    			add_location(div10, file$6, 1820, 32, 82141);
+    			attr_dev(div11, "class", "popup-info svelte-wl7my9");
+    			set_style(div11, "--windowWidth", /*windowWidth*/ ctx[4] + "px");
+    			set_style(div11, "--windowHeight", /*windowHeight*/ ctx[5] + "px");
+    			add_location(div11, file$6, 1511, 28, 61834);
+    			attr_dev(path2, "d", "M256 512a256 256 0 1 0 0-512 256 256 0 1 0 0 512zm-72-280h144a24 24 0 1 1 0 48H184a24 24 0 1 1 0-48z");
+    			add_location(path2, file$6, 1920, 41, 88410);
+    			attr_dev(svg2, "class", "hideshow svelte-wl7my9");
+    			attr_dev(svg2, "viewBox", "0 0 512 512");
+    			add_location(svg2, file$6, 1919, 36, 88324);
+    			attr_dev(button0, "class", "hideshowbtn svelte-wl7my9");
+    			set_style(button0, "overflow", /*$popupIsGoingBack*/ ctx[7] ? "hidden" : "");
+    			add_location(button0, file$6, 1902, 32, 87408);
+    			attr_dev(path3, "d", "M550 124c-7-24-25-42-49-49-42-11-213-11-213-11S117 64 75 75c-24 7-42 25-49 49-11 43-11 132-11 132s0 90 11 133c7 23 25 41 49 48 42 11 213 11 213 11s171 0 213-11c24-7 42-25 49-48 11-43 11-133 11-133s0-89-11-132zM232 338V175l143 81-143 82z");
+    			add_location(path3, file$6, 1945, 40, 89861);
+    			attr_dev(svg3, "viewBox", "0 0 576 512");
+    			attr_dev(svg3, "class", "svelte-wl7my9");
+    			add_location(svg3, file$6, 1944, 36, 89792);
+    			attr_dev(button1, "class", "morevideos svelte-wl7my9");
+    			set_style(button1, "overflow", /*$popupIsGoingBack*/ ctx[7] ? "hidden" : "");
+    			add_location(button1, file$6, 1933, 32, 89159);
+    			attr_dev(path4, "fill", "#3a5a7e");
+    			attr_dev(path4, "d", "M111 111V41c0-4-2-6-6-6H91c-4 0-6 2-6 6v5l32 91h31c4 0 6-2 6-6v-14c0-4-2-6-6-6h-37z");
+    			add_location(path4, file$6, 1964, 40, 91117);
+    			attr_dev(path5, "d", "M54 35 18 137h28l6-17h31l6 17h28L81 35H54zm5 62 9-29 9 29H59z");
+    			add_location(path5, file$6, 1968, 40, 91401);
+    			attr_dev(svg4, "viewBox", "0 0 172 172");
+    			attr_dev(svg4, "class", "svelte-wl7my9");
+    			add_location(svg4, file$6, 1963, 36, 91048);
+    			attr_dev(button2, "class", "openanilist svelte-wl7my9");
+    			set_style(button2, "overflow", /*$popupIsGoingBack*/ ctx[7] ? "hidden" : "");
+    			add_location(button2, file$6, 1950, 32, 90325);
+    			attr_dev(div12, "class", "footer svelte-wl7my9");
+    			add_location(div12, file$6, 1901, 28, 87354);
+    			attr_dev(div13, "class", "popup-body svelte-wl7my9");
+    			add_location(div13, file$6, 1510, 24, 61780);
+    			attr_dev(div14, "class", "popup-main svelte-wl7my9");
+    			add_location(div14, file$6, 1341, 20, 51606);
+    			attr_dev(div15, "class", "popup-content svelte-wl7my9");
+    			add_location(div15, file$6, 1340, 16, 51526);
+    			this.first = div15;
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, div15, anchor);
+    			append_dev(div15, div14);
+    			append_dev(div14, div2);
+    			append_dev(div2, div0);
+    			append_dev(div0, svg0);
+    			append_dev(svg0, path0);
+    			append_dev(div2, t0);
+    			if (if_block0) if_block0.m(div2, null);
+    			append_dev(div2, t1);
+    			append_dev(div2, div1);
+    			if (if_block1) if_block1.m(div1, null);
+    			assign_div2();
+    			append_dev(div14, t2);
+    			append_dev(div14, div4);
+    			append_dev(div4, div3);
+    			append_dev(div3, label1);
+    			append_dev(label1, label0);
+    			append_dev(label0, t3);
+    			append_dev(label1, t4);
+    			append_dev(label1, input);
+    			input.checked = /*$autoPlay*/ ctx[10];
+    			append_dev(label1, t5);
+    			append_dev(label1, span0);
+    			append_dev(div3, t6);
+    			append_dev(div3, h30);
+    			if (if_block2) if_block2.m(h30, null);
+    			append_dev(div4, t7);
+    			if (if_block3) if_block3.m(div4, null);
+    			append_dev(div4, t8);
+    			if (if_block4) if_block4.m(div4, null);
+    			append_dev(div14, t9);
+    			append_dev(div14, div13);
+    			append_dev(div13, div11);
+    			append_dev(div11, div6);
+    			append_dev(div6, a0);
+    			append_dev(a0, t10);
+    			append_dev(div6, t11);
+    			append_dev(div6, div5);
+    			append_dev(div5, svg1);
+    			append_dev(svg1, path1);
+    			append_dev(div5, t12);
+    			append_dev(div5, h31);
+    			append_dev(h31, b);
+    			append_dev(b, t13);
+    			append_dev(h31, t14);
+    			append_dev(h31, t15);
+    			append_dev(h31, t16);
+    			append_dev(h31, t17);
+    			html_tag.m(raw_value, h31);
+    			append_dev(div11, t18);
+    			append_dev(div11, div7);
+    			if_block5.m(div7, null);
+    			append_dev(div7, t19);
+    			if_block6.m(div7, null);
+    			append_dev(div11, t20);
+    			append_dev(div11, div8);
+    			append_dev(div8, h40);
+    			append_dev(h40, a1);
+    			append_dev(a1, span1);
+    			append_dev(span1, t21);
+    			append_dev(a1, t22);
+    			if (if_block7) if_block7.m(a1, null);
+    			append_dev(div8, t23);
+    			append_dev(div8, h41);
+    			append_dev(h41, t24);
+    			append_dev(div11, t25);
+    			append_dev(div11, div9);
+    			if (if_block8) if_block8.m(div9, null);
+    			append_dev(div9, t26);
+    			if (if_block9) if_block9.m(div9, null);
+    			append_dev(div9, t27);
+    			if (if_block10) if_block10.m(div9, null);
+    			append_dev(div11, t28);
+    			append_dev(div11, div10);
+    			append_dev(div10, img);
+    			append_dev(div10, t29);
+    			if (if_block11) if_block11.m(div10, null);
+    			assign_div11();
+    			append_dev(div13, t30);
+    			append_dev(div13, div12);
+    			append_dev(div12, button0);
+    			append_dev(button0, svg2);
+    			append_dev(svg2, path2);
+    			append_dev(button0, t31);
+    			if_block12.m(button0, null);
+    			append_dev(div12, t32);
+    			append_dev(div12, button1);
+    			append_dev(button1, svg3);
+    			append_dev(svg3, path3);
+    			append_dev(button1, t33);
+    			append_dev(div12, t34);
+    			append_dev(div12, button2);
+    			append_dev(button2, svg4);
+    			append_dev(svg4, path4);
+    			append_dev(svg4, path5);
+    			append_dev(button2, t35);
+    			assign_div15();
+
+    			if (!mounted) {
+    				dispose = [
+    					listen_dev(div2, "click", click_handler, false, false, false, false),
+    					listen_dev(div2, "keydown", keydown_handler, false, false, false, false),
+    					listen_dev(input, "change", /*input_change_handler*/ ctx[39]),
+    					listen_dev(span0, "keydown", /*keydown_handler_1*/ ctx[40], false, false, false, false),
+    					listen_dev(h30, "click", /*click_handler_1*/ ctx[41], false, false, false, false),
+    					listen_dev(h30, "keydown", /*keydown_handler_2*/ ctx[42], false, false, false, false),
+    					listen_dev(a0, "scroll", /*itemScroll*/ ctx[23], false, false, false, false),
+    					listen_dev(div6, "scroll", /*itemScroll*/ ctx[23], false, false, false, false),
+    					listen_dev(div7, "scroll", /*itemScroll*/ ctx[23], false, false, false, false),
+    					listen_dev(div8, "scroll", /*itemScroll*/ ctx[23], false, false, false, false),
+    					action_destroyer(addImage_action = /*addImage*/ ctx[32].call(null, img, /*anime*/ ctx[118].coverImageUrl || /*anime*/ ctx[118].bannerImageUrl || /*anime*/ ctx[118].trailerThumbnailUrl || emptyImage)),
+    					listen_dev(img, "error", /*error_handler_1*/ ctx[49], false, false, false, false),
+    					listen_dev(img, "click", click_handler_3, false, false, false, false),
+    					listen_dev(img, "keydown", keydown_handler_5, false, false, false, false),
+    					listen_dev(
+    						button0,
+    						"click",
+    						function () {
+    							if (is_function(/*handleHideShow*/ ctx[17](/*anime*/ ctx[118].id, /*anime*/ ctx[118]?.shownTitle))) /*handleHideShow*/ ctx[17](/*anime*/ ctx[118].id, /*anime*/ ctx[118]?.shownTitle).apply(this, arguments);
+    						},
+    						false,
+    						false,
+    						false,
+    						false
+    					),
+    					listen_dev(button0, "keydown", keydown_handler_7, false, false, false, false),
+    					listen_dev(
+    						button1,
+    						"click",
+    						function () {
+    							if (is_function(/*handleMoreVideos*/ ctx[19](/*anime*/ ctx[118].title))) /*handleMoreVideos*/ ctx[19](/*anime*/ ctx[118].title).apply(this, arguments);
+    						},
+    						false,
+    						false,
+    						false,
+    						false
+    					),
+    					listen_dev(button1, "keydown", keydown_handler_8, false, false, false, false),
+    					listen_dev(button2, "click", click_handler_5, false, false, false, false),
+    					listen_dev(button2, "keydown", keydown_handler_9, false, false, false, false)
+    				];
+
+    				mounted = true;
+    			}
+    		},
+    		p: function update(new_ctx, dirty) {
+    			ctx = new_ctx;
+
+    			if (/*anime*/ ctx[118].trailerID) {
+    				if (if_block0) ; else {
+    					if_block0 = create_if_block_18(ctx);
+    					if_block0.c();
+    					if_block0.m(div2, t1);
+    				}
+    			} else if (if_block0) {
+    				if_block0.d(1);
+    				if_block0 = null;
+    			}
+
+    			if (/*anime*/ ctx[118].bannerImageUrl || /*anime*/ ctx[118].trailerThumbnailUrl) {
+    				if (if_block1) {
+    					if_block1.p(ctx, dirty);
+    				} else {
+    					if_block1 = create_if_block_17$1(ctx);
+    					if_block1.c();
+    					if_block1.m(div1, null);
+    				}
+    			} else if (if_block1) {
+    				if_block1.d(1);
+    				if_block1 = null;
+    			}
+
+    			if (dirty[0] & /*$finalAnimeList*/ 512 && div2_class_value !== (div2_class_value = "" + (null_to_empty("popup-header " + (/*anime*/ ctx[118].trailerID ? "loader" : "")) + " svelte-wl7my9"))) {
+    				attr_dev(div2, "class", div2_class_value);
+    			}
+
+    			if (each_value !== /*each_value*/ ctx[119] || anime_index !== /*anime_index*/ ctx[120]) {
+    				unassign_div2();
+    				each_value = /*each_value*/ ctx[119];
+    				anime_index = /*anime_index*/ ctx[120];
+    				assign_div2();
+    			}
+
+    			if (dirty[0] & /*$finalAnimeList*/ 512 && label0_for_value !== (label0_for_value = "auto-play-" + /*anime*/ ctx[118]?.id)) {
+    				attr_dev(label0, "for", label0_for_value);
+    			}
+
+    			if (dirty[0] & /*$finalAnimeList*/ 512 && input_id_value !== (input_id_value = "auto-play-" + /*anime*/ ctx[118]?.id)) {
+    				attr_dev(input, "id", input_id_value);
+    			}
+
+    			if (dirty[0] & /*$autoPlay*/ 1024) {
+    				input.checked = /*$autoPlay*/ ctx[10];
+    			}
+
+    			if (current_block_type !== (current_block_type = select_block_type(ctx))) {
+    				if (if_block2) if_block2.d(1);
+    				if_block2 = current_block_type && current_block_type(ctx);
+
+    				if (if_block2) {
+    					if_block2.c();
+    					if_block2.m(h30, null);
+    				}
+    			}
+
+    			if (/*$listUpdateAvailable*/ ctx[12]) {
+    				if (if_block3) {
+    					if_block3.p(ctx, dirty);
+    				} else {
+    					if_block3 = create_if_block_14$1(ctx);
+    					if_block3.c();
+    					if_block3.m(div4, t8);
+    				}
+    			} else if (if_block3) {
+    				if_block3.d(1);
+    				if_block3 = null;
+    			}
+
+    			if (/*anime*/ ctx[118].bannerImageUrl || /*anime*/ ctx[118].trailerThumbnailUrl) {
+    				if (if_block4) {
+    					if_block4.p(ctx, dirty);
+    				} else {
+    					if_block4 = create_if_block_13$1(ctx);
+    					if_block4.c();
+    					if_block4.m(div4, null);
+    				}
+    			} else if (if_block4) {
+    				if_block4.d(1);
+    				if_block4 = null;
+    			}
+
+    			if (dirty[0] & /*$finalAnimeList*/ 512 && t10_value !== (t10_value = (/*anime*/ ctx[118]?.shownTitle || "NA") + "")) set_data_dev(t10, t10_value);
+
+    			if (dirty[0] & /*$finalAnimeList*/ 512 && a0_rel_value !== (a0_rel_value = /*anime*/ ctx[118].animeUrl ? "noopener noreferrer" : "")) {
+    				attr_dev(a0, "rel", a0_rel_value);
+    			}
+
+    			if (dirty[0] & /*$finalAnimeList*/ 512 && a0_target_value !== (a0_target_value = /*anime*/ ctx[118].animeUrl ? "_blank" : "")) {
+    				attr_dev(a0, "target", a0_target_value);
+    			}
+
+    			if (dirty[0] & /*$finalAnimeList*/ 512 && a0_href_value !== (a0_href_value = /*anime*/ ctx[118].animeUrl || "javascript:void(0)")) {
+    				attr_dev(a0, "href", a0_href_value);
+    			}
+
+    			if (dirty[0] & /*$finalAnimeList*/ 512 && a0_class_value !== (a0_class_value = "" + (null_to_empty(/*anime*/ ctx[118]?.contentCautionColor + "-color anime-title copy") + " svelte-wl7my9"))) {
+    				attr_dev(a0, "class", a0_class_value);
+    			}
+
+    			if (dirty[0] & /*$finalAnimeList*/ 512 && a0_copy_value_value !== (a0_copy_value_value = /*anime*/ ctx[118]?.copiedTitle || "")) {
+    				attr_dev(a0, "copy-value", a0_copy_value_value);
+    			}
+
+    			if (dirty[0] & /*$finalAnimeList*/ 512 && a0_copy_value___value !== (a0_copy_value___value = /*anime*/ ctx[118]?.shownTitle || "")) {
+    				attr_dev(a0, "copy-value-2", a0_copy_value___value);
+    			}
+
+    			if (dirty[0] & /*$popupIsGoingBack*/ 128) {
+    				set_style(a0, "overflow", /*$popupIsGoingBack*/ ctx[7] ? "hidden" : "");
+    			}
+
+    			if (dirty[0] & /*$finalAnimeList*/ 512 && t13_value !== (t13_value = (/*anime*/ ctx[118].averageScore != null
+    			? /*anime*/ ctx[118].formattedAverageScore || "NA"
+    			: "NA") + "")) set_data_dev(t13, t13_value);
+
+    			if (dirty[0] & /*$finalAnimeList*/ 512 && t15_value !== (t15_value = "/10 · " + (/*anime*/ ctx[118].popularity != null
+    			? /*anime*/ ctx[118].formattedPopularity || "NA"
+    			: "NA") + "")) set_data_dev(t15, t15_value);
+
+    			if (dirty[0] & /*$finalAnimeList*/ 512 && raw_value !== (raw_value = (/*anime*/ ctx[118]?.recommendedRatingInfo || "") + "")) html_tag.p(raw_value);
+
+    			if (dirty[0] & /*$finalAnimeList*/ 512 && h31_copy_value_value !== (h31_copy_value_value = (/*anime*/ ctx[118].averageScore != null
+    			? /*anime*/ ctx[118].formattedAverageScore || "NA"
+    			: "NA") + "/10 · " + (/*anime*/ ctx[118].popularity != null
+    			? /*anime*/ ctx[118].formattedPopularity || "NA"
+    			: "NA"))) {
+    				attr_dev(h31, "copy-value", h31_copy_value_value);
+    			}
+
+    			if (dirty[0] & /*$popupIsGoingBack*/ 128) {
+    				set_style(div6, "overflow", /*$popupIsGoingBack*/ ctx[7] ? "hidden" : "");
+    			}
+
+    			if (current_block_type_1 === (current_block_type_1 = select_block_type_1(ctx)) && if_block5) {
+    				if_block5.p(ctx, dirty);
+    			} else {
+    				if_block5.d(1);
+    				if_block5 = current_block_type_1(ctx);
+
+    				if (if_block5) {
+    					if_block5.c();
+    					if_block5.m(div7, t19);
+    				}
+    			}
+
+    			if (current_block_type_2 === (current_block_type_2 = select_block_type_2(ctx)) && if_block6) {
+    				if_block6.p(ctx, dirty);
+    			} else {
+    				if_block6.d(1);
+    				if_block6 = current_block_type_2(ctx);
+
+    				if (if_block6) {
+    					if_block6.c();
+    					if_block6.m(div7, null);
+    				}
+    			}
+
+    			if (dirty[0] & /*$popupIsGoingBack*/ 128) {
+    				set_style(div7, "overflow", /*$popupIsGoingBack*/ ctx[7] ? "hidden" : "");
+    			}
+
+    			if (dirty[0] & /*$finalAnimeList*/ 512 && t21_value !== (t21_value = (/*anime*/ ctx[118].userStatus || "NA") + "")) set_data_dev(t21, t21_value);
+
+    			if (dirty[0] & /*$finalAnimeList*/ 512 && span1_class_value !== (span1_class_value = "" + (null_to_empty(/*anime*/ ctx[118].userStatusColor + "-color") + " svelte-wl7my9"))) {
+    				attr_dev(span1, "class", span1_class_value);
+    			}
+
+    			if (/*anime*/ ctx[118].userScore != null) {
+    				if (if_block7) {
+    					if_block7.p(ctx, dirty);
+    				} else {
+    					if_block7 = create_if_block_10$1(ctx);
+    					if_block7.c();
+    					if_block7.m(a1, null);
+    				}
+    			} else if (if_block7) {
+    				if_block7.d(1);
+    				if_block7 = null;
+    			}
+
+    			if (dirty[0] & /*$finalAnimeList*/ 512 && a1_rel_value !== (a1_rel_value = /*anime*/ ctx[118].animeUrl ? "noopener noreferrer" : "")) {
+    				attr_dev(a1, "rel", a1_rel_value);
+    			}
+
+    			if (dirty[0] & /*$finalAnimeList*/ 512 && a1_target_value !== (a1_target_value = /*anime*/ ctx[118].animeUrl ? "_blank" : "")) {
+    				attr_dev(a1, "target", a1_target_value);
+    			}
+
+    			if (dirty[0] & /*$finalAnimeList*/ 512 && a1_href_value !== (a1_href_value = /*anime*/ ctx[118].animeUrl || "javascript:void(0)")) {
+    				attr_dev(a1, "href", a1_href_value);
+    			}
+
+    			if (dirty[0] & /*$finalAnimeList*/ 512 && h40_copy_value_value !== (h40_copy_value_value = (/*anime*/ ctx[118].userStatus || "NA") + (/*anime*/ ctx[118].userScore != null
+    			? " · " + /*anime*/ ctx[118].userScore
+    			: ""))) {
+    				attr_dev(h40, "copy-value", h40_copy_value_value);
+    			}
+
+    			if (dirty[0] & /*$finalAnimeList*/ 512 && t24_value !== (t24_value = (/*anime*/ ctx[118].status || "NA") + "")) set_data_dev(t24, t24_value);
+
+    			if (dirty[0] & /*$finalAnimeList*/ 512 && h41_copy_value_value !== (h41_copy_value_value = /*anime*/ ctx[118].status || "")) {
+    				attr_dev(h41, "copy-value", h41_copy_value_value);
+    			}
+
+    			if (dirty[0] & /*$popupIsGoingBack*/ 128) {
+    				set_style(div8, "overflow", /*$popupIsGoingBack*/ ctx[7] ? "hidden" : "");
+    			}
+
+    			if (/*anime*/ ctx[118].studios?.length) {
+    				if (if_block8) {
+    					if_block8.p(ctx, dirty);
+    				} else {
+    					if_block8 = create_if_block_9$1(ctx);
+    					if_block8.c();
+    					if_block8.m(div9, t26);
+    				}
+    			} else if (if_block8) {
+    				if_block8.d(1);
+    				if_block8 = null;
+    			}
+
+    			if (/*anime*/ ctx[118].genres.length) {
+    				if (if_block9) {
+    					if_block9.p(ctx, dirty);
+    				} else {
+    					if_block9 = create_if_block_8$1(ctx);
+    					if_block9.c();
+    					if_block9.m(div9, t27);
+    				}
+    			} else if (if_block9) {
+    				if_block9.d(1);
+    				if_block9 = null;
+    			}
+
+    			if (/*anime*/ ctx[118]?.tags?.length) {
+    				if (if_block10) {
+    					if_block10.p(ctx, dirty);
+    				} else {
+    					if_block10 = create_if_block_7$1(ctx);
+    					if_block10.c();
+    					if_block10.m(div9, null);
+    				}
+    			} else if (if_block10) {
+    				if_block10.d(1);
+    				if_block10 = null;
+    			}
+
+    			if (dirty[0] & /*$finalAnimeList*/ 512 && img_alt_value !== (img_alt_value = (/*anime*/ ctx[118]?.shownTitle || "") + (/*anime*/ ctx[118].coverImageUrl
+    			? " Cover"
+    			: /*anime*/ ctx[118].bannerImageUrl
+    				? " Banner"
+    				: " Thumbnail"))) {
+    				attr_dev(img, "alt", img_alt_value);
+    			}
+
+    			if (dirty[0] & /*$finalAnimeList*/ 512 && img_class_value !== (img_class_value = "" + (null_to_empty("coverImg" + (!/*anime*/ ctx[118].coverImageUrl && !/*anime*/ ctx[118].bannerImageUrl && !/*anime*/ ctx[118].trailerThumbnailUrl
+    			? " display-none"
+    			: "")) + " svelte-wl7my9"))) {
+    				attr_dev(img, "class", img_class_value);
+    			}
+
+    			if (addImage_action && is_function(addImage_action.update) && dirty[0] & /*$finalAnimeList*/ 512) addImage_action.update.call(null, /*anime*/ ctx[118].coverImageUrl || /*anime*/ ctx[118].bannerImageUrl || /*anime*/ ctx[118].trailerThumbnailUrl || emptyImage);
+
+    			if (/*anime*/ ctx[118]?.description) {
+    				if (if_block11) {
+    					if_block11.p(ctx, dirty);
+    				} else {
+    					if_block11 = create_if_block_6$1(ctx);
+    					if_block11.c();
+    					if_block11.m(div10, null);
+    				}
+    			} else if (if_block11) {
+    				if_block11.d(1);
+    				if_block11 = null;
+    			}
+
+    			if (each_value !== /*each_value*/ ctx[119] || anime_index !== /*anime_index*/ ctx[120]) {
+    				unassign_div11();
+    				each_value = /*each_value*/ ctx[119];
+    				anime_index = /*anime_index*/ ctx[120];
+    				assign_div11();
+    			}
+
+    			if (dirty[0] & /*windowWidth*/ 16) {
+    				set_style(div11, "--windowWidth", /*windowWidth*/ ctx[4] + "px");
+    			}
+
+    			if (dirty[0] & /*windowHeight*/ 32) {
+    				set_style(div11, "--windowHeight", /*windowHeight*/ ctx[5] + "px");
+    			}
+
+    			if (current_block_type_3 === (current_block_type_3 = select_block_type_3(ctx)) && if_block12) {
+    				if_block12.p(ctx, dirty);
+    			} else {
+    				if_block12.d(1);
+    				if_block12 = current_block_type_3(ctx);
+
+    				if (if_block12) {
+    					if_block12.c();
+    					if_block12.m(button0, null);
+    				}
+    			}
+
+    			if (dirty[0] & /*$popupIsGoingBack*/ 128) {
+    				set_style(button0, "overflow", /*$popupIsGoingBack*/ ctx[7] ? "hidden" : "");
+    			}
+
+    			if (dirty[0] & /*$popupIsGoingBack*/ 128) {
+    				set_style(button1, "overflow", /*$popupIsGoingBack*/ ctx[7] ? "hidden" : "");
+    			}
+
+    			if (dirty[0] & /*$popupIsGoingBack*/ 128) {
+    				set_style(button2, "overflow", /*$popupIsGoingBack*/ ctx[7] ? "hidden" : "");
+    			}
+
+    			if (each_value !== /*each_value*/ ctx[119] || anime_index !== /*anime_index*/ ctx[120]) {
+    				unassign_div15();
+    				each_value = /*each_value*/ ctx[119];
+    				anime_index = /*anime_index*/ ctx[120];
+    				assign_div15();
+    			}
+    		},
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(div15);
+    			if (if_block0) if_block0.d();
+    			if (if_block1) if_block1.d();
+    			unassign_div2();
+
+    			if (if_block2) {
+    				if_block2.d();
+    			}
+
+    			if (if_block3) if_block3.d();
+    			if (if_block4) if_block4.d();
+    			if_block5.d();
+    			if_block6.d();
+    			if (if_block7) if_block7.d();
+    			if (if_block8) if_block8.d();
+    			if (if_block9) if_block9.d();
+    			if (if_block10) if_block10.d();
+    			if (if_block11) if_block11.d();
+    			unassign_div11();
+    			if_block12.d();
+    			unassign_div15();
+    			mounted = false;
+    			run_all(dispose);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_each_block$1.name,
+    		type: "each",
+    		source: "(1340:12) {#each $finalAnimeList || [] as anime (anime?.id || {}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (1979:12) {#if $finalAnimeList?.length && !$shownAllInList}
+    function create_if_block_4$2(ctx) {
+    	let div;
+    	let svg;
+    	let path;
+
+    	const block = {
+    		c: function create() {
+    			div = element("div");
+    			svg = svg_element("svg");
+    			path = svg_element("path");
+    			attr_dev(path, "d", "M311 86a32 32 0 1 0-46-44L110 202l-46 47V64a32 32 0 1 0-64 0v384a32 32 0 1 0 64 0V341l65-67 133 192c10 15 30 18 44 8s18-30 8-44L174 227 311 86z");
+    			add_location(path, file$6, 1984, 25, 92110);
+    			attr_dev(svg, "class", "popup-content-loading-icon svelte-wl7my9");
+    			attr_dev(svg, "viewBox", "0 0 320 512");
+    			add_location(svg, file$6, 1981, 20, 91972);
+    			attr_dev(div, "class", "popup-content-loading svelte-wl7my9");
+    			add_location(div, file$6, 1979, 16, 91878);
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, div, anchor);
+    			append_dev(div, svg);
+    			append_dev(svg, path);
+    		},
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(div);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_if_block_4$2.name,
+    		type: "if",
+    		source: "(1979:12) {#if $finalAnimeList?.length && !$shownAllInList}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (1994:0) {#if $popupVisible && $popupIsGoingBack}
+    function create_if_block_2$2(ctx) {
+    	let div1;
+    	let div0;
+    	let svg;
+    	let path;
+    	let div0_class_value;
+    	let div1_outro;
+    	let current;
+
+    	const block = {
+    		c: function create() {
+    			div1 = element("div");
+    			div0 = element("div");
+    			svg = svg_element("svg");
+    			path = svg_element("path");
+    			attr_dev(path, "d", "M41 233a32 32 0 0 0 0 46l160 160a32 32 0 0 0 46-46L109 256l138-137a32 32 0 0 0-46-46L41 233z");
+    			add_location(path, file$6, 2005, 17, 92901);
+    			attr_dev(svg, "viewBox", "0 0 320 512");
+    			attr_dev(svg, "class", "svelte-wl7my9");
+    			add_location(svg, file$6, 2004, 12, 92856);
+    			attr_dev(div0, "class", div0_class_value = "" + (null_to_empty("go-back-grid" + (/*goBackPercent*/ ctx[6] >= 100 ? " willGoBack" : "")) + " svelte-wl7my9"));
+    			add_location(div0, file$6, 2000, 8, 92712);
+    			attr_dev(div1, "class", "go-back-grid-highlight svelte-wl7my9");
+    			set_style(div1, "--scale", Math.max(1, (/*goBackPercent*/ ctx[6] ?? 1) * 0.01 * 2));
+    			set_style(div1, "--position", "-" + (100 - (/*goBackPercent*/ ctx[6] ?? 0)) + "%");
+    			add_location(div1, file$6, 1994, 4, 92474);
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, div1, anchor);
+    			append_dev(div1, div0);
+    			append_dev(div0, svg);
+    			append_dev(svg, path);
+    			current = true;
+    		},
+    		p: function update(ctx, dirty) {
+    			if (!current || dirty[0] & /*goBackPercent*/ 64 && div0_class_value !== (div0_class_value = "" + (null_to_empty("go-back-grid" + (/*goBackPercent*/ ctx[6] >= 100 ? " willGoBack" : "")) + " svelte-wl7my9"))) {
+    				attr_dev(div0, "class", div0_class_value);
+    			}
+
+    			if (dirty[0] & /*goBackPercent*/ 64) {
+    				set_style(div1, "--scale", Math.max(1, (/*goBackPercent*/ ctx[6] ?? 1) * 0.01 * 2));
+    			}
+
+    			if (dirty[0] & /*goBackPercent*/ 64) {
+    				set_style(div1, "--position", "-" + (100 - (/*goBackPercent*/ ctx[6] ?? 0)) + "%");
+    			}
+    		},
+    		i: function intro(local) {
+    			if (current) return;
+    			if (div1_outro) div1_outro.end(1);
+    			current = true;
+    		},
+    		o: function outro(local) {
+    			div1_outro = create_out_transition(div1, fade, { duration: 200 });
+    			current = false;
+    		},
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(div1);
+    			if (detaching && div1_outro) div1_outro.end();
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_if_block_2$2.name,
+    		type: "if",
+    		source: "(1994:0) {#if $popupVisible && $popupIsGoingBack}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (2013:0) {#if fullDescriptionPopup}
+    function create_if_block_1$5(ctx) {
+    	let div3;
+    	let div2;
+    	let div1;
+    	let div0;
+    	let div0_outro;
+    	let current;
+    	let mounted;
+    	let dispose;
+
+    	const block = {
+    		c: function create() {
+    			div3 = element("div");
+    			div2 = element("div");
+    			div1 = element("div");
+    			div0 = element("div");
+    			attr_dev(div0, "tabindex", "0");
+    			attr_dev(div0, "class", "fullPopupDescription svelte-wl7my9");
+    			add_location(div0, file$6, 2025, 16, 93692);
+    			attr_dev(div1, "class", "fullPopupDescriptionWrapper svelte-wl7my9");
+    			add_location(div1, file$6, 2024, 12, 93633);
+    			attr_dev(div2, "class", "fullPopup svelte-wl7my9");
+    			attr_dev(div2, "id", "fullPopup");
+    			add_location(div2, file$6, 2023, 8, 93581);
+    			attr_dev(div3, "class", "fullPopupWrapper svelte-wl7my9");
+    			add_location(div3, file$6, 2013, 4, 93133);
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, div3, anchor);
+    			append_dev(div3, div2);
+    			append_dev(div2, div1);
+    			append_dev(div1, div0);
+    			div0.innerHTML = /*fullDescriptionPopup*/ ctx[1];
+    			current = true;
+
+    			if (!mounted) {
+    				dispose = [
+    					listen_dev(div0, "keydown", /*keydown_handler_11*/ ctx[63], false, false, false, false),
+    					listen_dev(div0, "scroll", /*fullViewScroll*/ ctx[28], false, false, false, false),
+    					listen_dev(div3, "click", /*click_handler_6*/ ctx[64], false, false, false, false),
+    					listen_dev(div3, "keydown", /*keydown_handler_12*/ ctx[65], false, false, false, false),
+    					listen_dev(div3, "touchstart", /*fullViewTouchStart*/ ctx[29], { passive: true }, false, false, false),
+    					listen_dev(div3, "touchend", /*fullViewTouchEnd*/ ctx[30], { passive: true }, false, false, false),
+    					listen_dev(div3, "touchcancel", /*fullViewTouchCancel*/ ctx[31], { passive: true }, false, false, false)
+    				];
+
+    				mounted = true;
+    			}
+    		},
+    		p: function update(ctx, dirty) {
+    			if (!current || dirty[0] & /*fullDescriptionPopup*/ 2) div0.innerHTML = /*fullDescriptionPopup*/ ctx[1];		},
+    		i: function intro(local) {
+    			if (current) return;
+    			if (div0_outro) div0_outro.end(1);
+    			current = true;
+    		},
+    		o: function outro(local) {
+    			div0_outro = create_out_transition(div0, fade, { duration: 200 });
+    			current = false;
+    		},
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(div3);
+    			if (detaching && div0_outro) div0_outro.end();
+    			mounted = false;
+    			run_all(dispose);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_if_block_1$5.name,
+    		type: "if",
+    		source: "(2013:0) {#if fullDescriptionPopup}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (2041:0) {#if fullImagePopup}
+    function create_if_block$5(ctx) {
+    	let div1;
+    	let div0;
+    	let img;
+    	let addImage_action;
+    	let img_outro;
+    	let current;
+    	let mounted;
+    	let dispose;
+
+    	const block = {
+    		c: function create() {
+    			div1 = element("div");
+    			div0 = element("div");
+    			img = element("img");
+    			attr_dev(img, "tabindex", "0");
+    			attr_dev(img, "class", "fullPopupImage svelte-wl7my9");
+    			attr_dev(img, "loading", "lazy");
+    			attr_dev(img, "alt", "Full View");
+    			add_location(img, file$6, 2052, 12, 94713);
+    			attr_dev(div0, "class", "fullPopup svelte-wl7my9");
+    			attr_dev(div0, "id", "fullPopup");
+    			add_location(div0, file$6, 2051, 8, 94661);
+    			attr_dev(div1, "class", "fullPopupWrapper svelte-wl7my9");
+    			add_location(div1, file$6, 2041, 4, 94213);
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, div1, anchor);
+    			append_dev(div1, div0);
+    			append_dev(div0, img);
+    			current = true;
+
+    			if (!mounted) {
+    				dispose = [
+    					action_destroyer(addImage_action = /*addImage*/ ctx[32].call(null, img, /*fullImagePopup*/ ctx[0] || emptyImage)),
+    					listen_dev(img, "keydown", /*keydown_handler_13*/ ctx[66], false, false, false, false),
+    					listen_dev(img, "error", /*error_handler_2*/ ctx[67], false, false, false, false),
+    					listen_dev(div1, "click", /*click_handler_7*/ ctx[68], false, false, false, false),
+    					listen_dev(div1, "keydown", /*keydown_handler_14*/ ctx[69], false, false, false, false),
+    					listen_dev(div1, "touchstart", /*fullViewTouchStart*/ ctx[29], { passive: true }, false, false, false),
+    					listen_dev(div1, "touchend", /*fullViewTouchEnd*/ ctx[30], { passive: true }, false, false, false),
+    					listen_dev(div1, "touchcancel", /*fullViewTouchCancel*/ ctx[31], { passive: true }, false, false, false)
+    				];
+
+    				mounted = true;
+    			}
+    		},
+    		p: function update(ctx, dirty) {
+    			if (addImage_action && is_function(addImage_action.update) && dirty[0] & /*fullImagePopup*/ 1) addImage_action.update.call(null, /*fullImagePopup*/ ctx[0] || emptyImage);
+    		},
+    		i: function intro(local) {
+    			if (current) return;
+    			if (img_outro) img_outro.end(1);
+    			current = true;
+    		},
+    		o: function outro(local) {
+    			img_outro = create_out_transition(img, fade, { duration: 200 });
+    			current = false;
+    		},
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(div1);
+    			if (detaching && img_outro) img_outro.end();
+    			mounted = false;
+    			run_all(dispose);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_if_block$5.name,
+    		type: "if",
+    		source: "(2041:0) {#if fullImagePopup}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    function create_fragment$6(ctx) {
+    	let div1;
+    	let div0;
+    	let t0;
+    	let t1;
+    	let t2;
+    	let if_block3_anchor;
+    	let current;
+    	let mounted;
+    	let dispose;
+    	let if_block0 = /*$finalAnimeList*/ ctx[9]?.length && create_if_block_3$2(ctx);
+    	let if_block1 = /*$popupVisible*/ ctx[8] && /*$popupIsGoingBack*/ ctx[7] && create_if_block_2$2(ctx);
+    	let if_block2 = /*fullDescriptionPopup*/ ctx[1] && create_if_block_1$5(ctx);
+    	let if_block3 = /*fullImagePopup*/ ctx[0] && create_if_block$5(ctx);
+
+    	const block = {
+    		c: function create() {
+    			div1 = element("div");
+    			div0 = element("div");
+    			if (if_block0) if_block0.c();
+    			t0 = space();
+    			if (if_block1) if_block1.c();
+    			t1 = space();
+    			if (if_block2) if_block2.c();
+    			t2 = space();
+    			if (if_block3) if_block3.c();
+    			if_block3_anchor = empty();
+    			attr_dev(div0, "id", "popup-container");
+    			attr_dev(div0, "class", "popup-container hide svelte-wl7my9");
+    			add_location(div0, file$6, 1328, 4, 51029);
+    			attr_dev(div1, "id", "popup-wrapper");
+    			attr_dev(div1, "class", "popup-wrapper svelte-wl7my9");
+    			add_location(div1, file$6, 1321, 0, 50826);
+    		},
+    		l: function claim(nodes) {
+    			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, div1, anchor);
+    			append_dev(div1, div0);
+    			if (if_block0) if_block0.m(div0, null);
+    			/*div0_binding*/ ctx[60](div0);
+    			/*div1_binding*/ ctx[62](div1);
+    			insert_dev(target, t0, anchor);
+    			if (if_block1) if_block1.m(target, anchor);
+    			insert_dev(target, t1, anchor);
+    			if (if_block2) if_block2.m(target, anchor);
+    			insert_dev(target, t2, anchor);
+    			if (if_block3) if_block3.m(target, anchor);
+    			insert_dev(target, if_block3_anchor, anchor);
+    			current = true;
+
+    			if (!mounted) {
+    				dispose = [
+    					listen_dev(div0, "touchstart", /*handlePopupContainerDown*/ ctx[24], { passive: true }, false, false, false),
+    					listen_dev(div0, "touchmove", /*handlePopupContainerMove*/ ctx[25], { passive: true }, false, false, false),
+    					listen_dev(div0, "touchend", /*handlePopupContainerUp*/ ctx[26], { passive: true }, false, false, false),
+    					listen_dev(div0, "touchcancel", /*handlePopupContainerCancel*/ ctx[27], { passive: true }, false, false, false),
+    					listen_dev(div0, "scroll", /*popupScroll*/ ctx[22], false, false, false, false),
+    					listen_dev(div1, "click", /*handlePopupVisibility*/ ctx[16], false, false, false, false),
+    					listen_dev(div1, "keydown", /*keydown_handler_10*/ ctx[61], false, false, false, false)
+    				];
+
+    				mounted = true;
+    			}
+    		},
+    		p: function update(ctx, dirty) {
+    			if (/*$finalAnimeList*/ ctx[9]?.length) {
+    				if (if_block0) {
+    					if_block0.p(ctx, dirty);
+    				} else {
+    					if_block0 = create_if_block_3$2(ctx);
+    					if_block0.c();
+    					if_block0.m(div0, null);
+    				}
+    			} else if (if_block0) {
+    				if_block0.d(1);
+    				if_block0 = null;
+    			}
+
+    			if (/*$popupVisible*/ ctx[8] && /*$popupIsGoingBack*/ ctx[7]) {
+    				if (if_block1) {
+    					if_block1.p(ctx, dirty);
+
+    					if (dirty[0] & /*$popupVisible, $popupIsGoingBack*/ 384) {
+    						transition_in(if_block1, 1);
+    					}
+    				} else {
+    					if_block1 = create_if_block_2$2(ctx);
+    					if_block1.c();
+    					transition_in(if_block1, 1);
+    					if_block1.m(t1.parentNode, t1);
+    				}
+    			} else if (if_block1) {
+    				group_outros();
+
+    				transition_out(if_block1, 1, 1, () => {
+    					if_block1 = null;
+    				});
+
+    				check_outros();
+    			}
+
+    			if (/*fullDescriptionPopup*/ ctx[1]) {
+    				if (if_block2) {
+    					if_block2.p(ctx, dirty);
+
+    					if (dirty[0] & /*fullDescriptionPopup*/ 2) {
+    						transition_in(if_block2, 1);
+    					}
+    				} else {
+    					if_block2 = create_if_block_1$5(ctx);
+    					if_block2.c();
+    					transition_in(if_block2, 1);
+    					if_block2.m(t2.parentNode, t2);
+    				}
+    			} else if (if_block2) {
+    				group_outros();
+
+    				transition_out(if_block2, 1, 1, () => {
+    					if_block2 = null;
+    				});
+
+    				check_outros();
+    			}
+
+    			if (/*fullImagePopup*/ ctx[0]) {
+    				if (if_block3) {
+    					if_block3.p(ctx, dirty);
+
+    					if (dirty[0] & /*fullImagePopup*/ 1) {
+    						transition_in(if_block3, 1);
+    					}
+    				} else {
+    					if_block3 = create_if_block$5(ctx);
+    					if_block3.c();
+    					transition_in(if_block3, 1);
+    					if_block3.m(if_block3_anchor.parentNode, if_block3_anchor);
+    				}
+    			} else if (if_block3) {
+    				group_outros();
+
+    				transition_out(if_block3, 1, 1, () => {
+    					if_block3 = null;
+    				});
+
+    				check_outros();
+    			}
+    		},
+    		i: function intro(local) {
+    			if (current) return;
+    			transition_in(if_block1);
+    			transition_in(if_block2);
+    			transition_in(if_block3);
+    			current = true;
+    		},
+    		o: function outro(local) {
+    			transition_out(if_block1);
+    			transition_out(if_block2);
+    			transition_out(if_block3);
+    			current = false;
+    		},
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(div1);
+    			if (if_block0) if_block0.d();
+    			/*div0_binding*/ ctx[60](null);
+    			/*div1_binding*/ ctx[62](null);
+    			if (detaching) detach_dev(t0);
+    			if (if_block1) if_block1.d(detaching);
+    			if (detaching) detach_dev(t1);
+    			if (if_block2) if_block2.d(detaching);
+    			if (detaching) detach_dev(t2);
+    			if (if_block3) if_block3.d(detaching);
+    			if (detaching) detach_dev(if_block3_anchor);
+    			mounted = false;
+    			run_all(dispose);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_fragment$6.name,
+    		type: "component",
+    		source: "",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    const emptyImage = "data:image/png;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=";
+    const loadingImage = "data:image/jpeg;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=";
+
+    function openInAnilist(animeUrl) {
+    	if (typeof animeUrl !== "string" || animeUrl === "") return;
+    	window.open(animeUrl, "_blank");
+    }
+
+    function loadYouTubeAPI() {
+    	return new Promise(resolve => {
+    			let existingScript = document.getElementById("www-widgetapi-script");
+
+    			if (existingScript) {
+    				existingScript.parentElement.removeChild(existingScript);
+    			}
+
+    			let tag = document.createElement("script");
+    			tag.src = "https://www.youtube.com/iframe_api?v=16";
+
+    			tag.onerror = () => {
+    				resolve();
+    			};
+
+    			tag.onload = () => {
+    				window?.onYouTubeIframeAPIReady?.();
+    				resolve();
+    			};
+
+    			let firstScriptTag = document.getElementsByTagName("script")[0];
+    			firstScriptTag.parentElement.insertBefore(tag, firstScriptTag);
+    		});
+    }
+
+    function editHTMLString(s) {
+    	let span = document.createElement("span");
+    	span.innerHTML = s;
+    	let links = span.querySelectorAll("a");
+
+    	Array.from(links).forEach(linkEl => {
+    		linkEl?.setAttribute("rel", "noopener noreferrer");
+    		linkEl?.setAttribute("target", "_blank");
+    	});
+
+    	return span.innerHTML;
+    }
+
+    function instance$6($$self, $$props, $$invalidate) {
+    	let $isFullViewed;
+    	let $android;
+    	let $popupIsGoingBack;
+    	let $popupVisible;
+    	let $dataStatus;
+    	let $ytPlayers;
+    	let $updateRecommendationList;
+    	let $finalAnimeList;
+    	let $initData;
+    	let $autoPlay;
+    	let $inApp;
+    	let $hiddenEntries;
+    	let $searchedAnimeKeyword;
+    	let $animeLoaderWorker;
+    	let $listUpdateAvailable;
+    	let $listIsUpdating;
+    	let $confirmPromise;
+    	let $animeObserver;
+    	let $openedAnimePopupIdx;
+    	let $checkAnimeLoaderStatus;
+    	let $earlisetReleaseDate;
+    	let $shownAllInList;
+    	validate_store(isFullViewed, 'isFullViewed');
+    	component_subscribe($$self, isFullViewed, $$value => $$invalidate(96, $isFullViewed = $$value));
+    	validate_store(android$1, 'android');
+    	component_subscribe($$self, android$1, $$value => $$invalidate(33, $android = $$value));
+    	validate_store(popupIsGoingBack, 'popupIsGoingBack');
+    	component_subscribe($$self, popupIsGoingBack, $$value => $$invalidate(7, $popupIsGoingBack = $$value));
+    	validate_store(popupVisible, 'popupVisible');
+    	component_subscribe($$self, popupVisible, $$value => $$invalidate(8, $popupVisible = $$value));
+    	validate_store(dataStatus, 'dataStatus');
+    	component_subscribe($$self, dataStatus, $$value => $$invalidate(97, $dataStatus = $$value));
+    	validate_store(ytPlayers, 'ytPlayers');
+    	component_subscribe($$self, ytPlayers, $$value => $$invalidate(98, $ytPlayers = $$value));
+    	validate_store(updateRecommendationList, 'updateRecommendationList');
+    	component_subscribe($$self, updateRecommendationList, $$value => $$invalidate(99, $updateRecommendationList = $$value));
+    	validate_store(finalAnimeList, 'finalAnimeList');
+    	component_subscribe($$self, finalAnimeList, $$value => $$invalidate(9, $finalAnimeList = $$value));
+    	validate_store(initData, 'initData');
+    	component_subscribe($$self, initData, $$value => $$invalidate(100, $initData = $$value));
+    	validate_store(autoPlay, 'autoPlay');
+    	component_subscribe($$self, autoPlay, $$value => $$invalidate(10, $autoPlay = $$value));
+    	validate_store(inApp, 'inApp');
+    	component_subscribe($$self, inApp, $$value => $$invalidate(101, $inApp = $$value));
+    	validate_store(hiddenEntries, 'hiddenEntries');
+    	component_subscribe($$self, hiddenEntries, $$value => $$invalidate(11, $hiddenEntries = $$value));
+    	validate_store(searchedAnimeKeyword, 'searchedAnimeKeyword');
+    	component_subscribe($$self, searchedAnimeKeyword, $$value => $$invalidate(102, $searchedAnimeKeyword = $$value));
+    	validate_store(animeLoaderWorker$1, 'animeLoaderWorker');
+    	component_subscribe($$self, animeLoaderWorker$1, $$value => $$invalidate(103, $animeLoaderWorker = $$value));
+    	validate_store(listUpdateAvailable, 'listUpdateAvailable');
+    	component_subscribe($$self, listUpdateAvailable, $$value => $$invalidate(12, $listUpdateAvailable = $$value));
+    	validate_store(listIsUpdating, 'listIsUpdating');
+    	component_subscribe($$self, listIsUpdating, $$value => $$invalidate(13, $listIsUpdating = $$value));
+    	validate_store(confirmPromise, 'confirmPromise');
+    	component_subscribe($$self, confirmPromise, $$value => $$invalidate(104, $confirmPromise = $$value));
+    	validate_store(animeObserver, 'animeObserver');
+    	component_subscribe($$self, animeObserver, $$value => $$invalidate(105, $animeObserver = $$value));
+    	validate_store(openedAnimePopupIdx, 'openedAnimePopupIdx');
+    	component_subscribe($$self, openedAnimePopupIdx, $$value => $$invalidate(106, $openedAnimePopupIdx = $$value));
+    	validate_store(checkAnimeLoaderStatus, 'checkAnimeLoaderStatus');
+    	component_subscribe($$self, checkAnimeLoaderStatus, $$value => $$invalidate(107, $checkAnimeLoaderStatus = $$value));
+    	validate_store(earlisetReleaseDate, 'earlisetReleaseDate');
+    	component_subscribe($$self, earlisetReleaseDate, $$value => $$invalidate(14, $earlisetReleaseDate = $$value));
+    	validate_store(shownAllInList, 'shownAllInList');
+    	component_subscribe($$self, shownAllInList, $$value => $$invalidate(15, $shownAllInList = $$value));
+    	let { $$slots: slots = {}, $$scope } = $$props;
+    	validate_slots('AnimePopup', slots, []);
+    	let isOnline = window.navigator.onLine;
+
+    	let animeGridParentEl,
+    		mostVisiblePopupHeader,
+    		currentHeaderIdx,
+    		currentYtPlayer,
+    		popupWrapper,
+    		popupContainer,
+    		popupAnimeObserver,
+    		fullImagePopup,
+    		fullDescriptionPopup,
+    		windowWidth = Math.max(window.visualViewport.width, window.innerWidth),
+    		windowHeight = Math.max(window.visualViewport.height, window.innerHeight),
+    		videoLoops = {};
+
+    	let savedYtVolume = !$android && matchMedia("(hover:hover)").matches
+    	? 50
+    	: 100;
+
+    	(async () => {
+    		savedYtVolume = await retrieveJSON("savedYtVolume") || savedYtVolume;
+    	})();
+
+    	function addPopupObserver() {
+    		popupAnimeObserver = new IntersectionObserver(() => {
+    				if (!$popupVisible) return;
+    				let visiblePopupHeader = getMostVisibleElement(popupContainer, ".popup-header", windowHeight > 360 ? 0.5 : 0) || getMostVisibleElement(popupContainer, ".popup-content", 0)?.getElementsByClassName("popup-header")?.[0];
+    				mostVisiblePopupHeader = visiblePopupHeader;
+    				playMostVisibleTrailer();
+    			},
+    		{
+    				root: null,
+    				rootMargin: "100%",
+    				threshold: [0.5, 0]
+    			});
+    	}
+
+    	function handlePopupVisibility(e) {
+    		let target = e.target;
+    		let classList = target.classList;
+    		if (classList.contains("popup-container") || target.closest(".popup-container")) return;
+    		set_store_value(popupVisible, $popupVisible = false, $popupVisible);
+    	}
+
+    	async function handleHideShow(animeID, title) {
+    		let isHidden = $hiddenEntries[animeID];
+
+    		title = title
+    		? `<span style="color:#00cbf9;">${title}</span>`
+    		: "this anime";
+
+    		if (isHidden) {
+    			if (await $confirmPromise(`Are you sure you want to show ${title} in your recommendation list?`)) {
+    				$checkAnimeLoaderStatus().then(() => {
+    					delete $hiddenEntries[animeID];
+    					hiddenEntries.set($hiddenEntries);
+
+    					if ($finalAnimeList.length) {
+    						if ($animeLoaderWorker instanceof Worker) {
+    							$animeLoaderWorker?.postMessage?.({ removeID: animeID });
+    						}
+    					}
+    				}).catch(() => {
+    					$confirmPromise({
+    						isAlert: true,
+    						title: "Something went wrong",
+    						text: "Showing anime has failed, please try again."
+    					});
+    				});
+    			}
+    		} else {
+    			if (await $confirmPromise(`Are you sure you want to hide ${title} in your recommendation list?`)) {
+    				$checkAnimeLoaderStatus().then(() => {
+    					set_store_value(hiddenEntries, $hiddenEntries[animeID] = true, $hiddenEntries);
+
+    					if ($finalAnimeList.length) {
+    						if ($animeLoaderWorker instanceof Worker) {
+    							$animeLoaderWorker?.postMessage?.({ removeID: animeID });
+    						}
+    					}
+    				}).catch(() => {
+    					$confirmPromise({
+    						isAlert: true,
+    						title: "Something went wrong",
+    						text: "Hiding anime has failed, please try again."
+    					});
+    				});
+    			}
+    		}
+    	}
+
+    	async function askToOpenYoutube(title) {
+    		let animeTitle;
+
+    		if (isJsonObject(title)) {
+    			animeTitle = title?.romaji || title?.userPreferred || title?.english || title?.native;
+    		} else if (typeof title === "string") {
+    			animeTitle = title;
+    		}
+
+    		if (typeof animeTitle !== "string" || animeTitle === "") return;
+
+    		if (await $confirmPromise({
+    			title: "See Related Videos",
+    			text: "Are you sure you want see more related videos in YouTube?"
+    		})) {
+    			handleMoreVideos(animeTitle);
+    		}
+    	}
+
+    	async function handleMoreVideos(title) {
+    		let animeTitle;
+
+    		if (isJsonObject(title)) {
+    			animeTitle = title?.romaji || title?.userPreferred || title?.english || title?.native;
+    		} else if (typeof title === "string") {
+    			animeTitle = title;
+    		}
+
+    		if (typeof animeTitle !== "string" || animeTitle === "") return;
+    		window.open(`https://www.youtube.com/results?search_query=${animeTitle} Anime`, "_blank");
+    	}
+
+    	animeIdxRemoved.subscribe(async removedIdx => {
+    		if ($popupVisible && removedIdx != null && removedIdx >= 0) {
+    			await tick();
+    			let newPopupContent = popupContainer?.children?.[removedIdx];
+
+    			if (newPopupContent instanceof Element && popupContainer instanceof Element) {
+    				scrollToElement(popupContainer, newPopupContent, "top");
+    			}
+    		}
+    	});
+
+    	hiddenEntries.subscribe(async val => {
+    		if (isJsonObject(val)) {
+    			await saveJSON(val, "hiddenEntries");
+    		}
+    	});
+
+    	popupVisible.subscribe(async val => {
+    		if (!(popupWrapper instanceof Element) || !(popupContainer instanceof Element)) return;
+
+    		if (val === true) {
+    			// Scroll To Opened Anime
+    			let openedAnimePopupEl = popupContainer?.children[$openedAnimePopupIdx ?? currentHeaderIdx ?? 0];
+
+    			if (openedAnimePopupEl instanceof Element) {
+    				scrollToElement(popupContainer, openedAnimePopupEl, "top", "instant");
+
+    				// Animate Opening
+    				requestAnimationFrame(() => {
+    					addClass(popupWrapper, "willChange");
+    					addClass(popupContainer, "willChange");
+    					addClass(popupWrapper, "visible");
+    					addClass(popupContainer, "show");
+
+    					setTimeout(
+    						() => {
+    							removeClass(popupWrapper, "willChange");
+    							removeClass(popupContainer, "willChange");
+    						},
+    						200
+    					);
+    				});
+
+    				// Try to Add YT player
+    				currentHeaderIdx = $openedAnimePopupIdx;
+
+    				let openedAnimes = [
+    					[$finalAnimeList[$openedAnimePopupIdx], $openedAnimePopupIdx],
+    					[$finalAnimeList[$openedAnimePopupIdx + 1], $openedAnimePopupIdx + 1],
+    					[$finalAnimeList[$openedAnimePopupIdx - 1], $openedAnimePopupIdx - 1]
+    				];
+
+    				let trailerEl = openedAnimes[0][0]?.popupHeader?.querySelector?.(".trailer") || popupContainer?.children?.[$openedAnimePopupIdx]?.querySelector?.(".trailer");
+    				let haveTrailer;
+
+    				for (let i = 0; i < $ytPlayers.length; i++) {
+    					if ($ytPlayers[i].ytPlayer.g === trailerEl) {
+    						haveTrailer = true;
+
+    						if ($inApp && $autoPlay) {
+    							await tick();
+    							prePlayYtPlayer($ytPlayers[i].ytPlayer);
+    							$ytPlayers[i].ytPlayer?.playVideo?.();
+    							break;
+    						}
+    					}
+    				}
+
+    				openedAnimes.forEach(([openedAnime, openedAnimeIdx], idx) => {
+    					if (haveTrailer && openedAnime && idx === 0) return; else if (openedAnime) createPopupYTPlayer(openedAnime, openedAnimeIdx);
+    				});
+
+    				set_store_value(openedAnimePopupIdx, $openedAnimePopupIdx = null, $openedAnimePopupIdx);
+    			} else {
+    				// Animate Opening
+    				requestAnimationFrame(() => {
+    					addClass(popupWrapper, "willChange");
+    					addClass(popupContainer, "willChange");
+    					addClass(popupWrapper, "visible");
+    					addClass(popupContainer, "show");
+
+    					setTimeout(
+    						() => {
+    							removeClass(popupWrapper, "willChange");
+    							removeClass(popupContainer, "willChange");
+    						},
+    						200
+    					);
+    				});
+    			}
+    		} else if (val === false) {
+    			requestAnimationFrame(() => {
+    				addClass(popupWrapper, "willChange");
+    				addClass(popupContainer, "willChange");
+    				removeClass(popupContainer, "show");
+
+    				setTimeout(
+    					() => {
+    						// Stop All Player
+    						$ytPlayers.forEach(({ ytPlayer }) => {
+    							ytPlayer?.pauseVideo?.();
+    						});
+
+    						removeClass(popupWrapper, "visible");
+    						removeClass(popupContainer, "willChange");
+
+    						setTimeout(
+    							() => {
+    								removeClass(popupWrapper, "willChange");
+    							},
+    							200
+    						);
+    					},
+    					200
+    				);
+    			});
+    		}
+    	});
+
+    	finalAnimeList.subscribe(async val => {
+    		if (val instanceof Array && val.length) {
+    			if (popupAnimeObserver) {
+    				popupAnimeObserver?.disconnect?.();
+    				popupAnimeObserver = null;
+    			}
+
+    			await tick();
+    			addPopupObserver();
+
+    			val.forEach(async (anime, animeIdx) => {
+    				let popupHeader = anime.popupHeader || popupContainer.children?.[animeIdx]?.querySelector?.(".popup-header");
+
+    				if (popupHeader instanceof Element) {
+    					popupAnimeObserver?.observe?.(popupHeader);
+    				}
+    			});
+
+    			let observedIdx = $finalAnimeList.length - 1;
+    			let lastAnimeContent = $finalAnimeList[observedIdx];
+    			let lastPopupContent = lastAnimeContent.popupContent || popupContainer.children?.[observedIdx];
+
+    			if ($animeObserver && lastPopupContent instanceof Element) {
+    				// Popup Observed
+    				$animeObserver.observe(lastPopupContent);
+    			}
+
+    			playMostVisibleTrailer();
+    		} else if (val instanceof Array && val.length < 1) {
+    			set_store_value(popupVisible, $popupVisible = false, $popupVisible);
+    		}
+    	});
+
+    	autoPlay.subscribe(async val => {
+    		if (typeof val === "boolean") {
+    			await saveJSON(val, "autoPlay");
+
+    			if (val === true) {
+    				await tick();
+    				let visibleTrailer = mostVisiblePopupHeader?.querySelector?.(".trailer");
+
+    				for (let i = 0; i < $ytPlayers.length; i++) {
+    					if ($ytPlayers[i].ytPlayer.g === visibleTrailer && $inApp) {
+    						prePlayYtPlayer($ytPlayers[i].ytPlayer);
+    						$ytPlayers[i].ytPlayer?.playVideo?.();
+    					} else {
+    						$ytPlayers[i].ytPlayer?.pauseVideo?.();
+    					}
+    				}
+    			}
+    		}
+    	});
+
+    	onMount(() => {
+    		$$invalidate(2, popupWrapper = popupWrapper || document.getElementById("popup-wrapper"));
+    		$$invalidate(3, popupContainer = popupContainer || popupWrapper.querySelector("#popup-container"));
+    		animeGridParentEl = document.getElementById("anime-grid");
+
+    		window.addEventListener("resize", () => {
+    			if (document.fullScreen || document.mozFullScreen || document.webkitIsFullScreen || document.msFullscreenElement) return;
+    			$$invalidate(4, windowWidth = Math.max(window.visualViewport.width, window.innerWidth));
+    			$$invalidate(5, windowHeight = Math.max(window.visualViewport.height, window.innerHeight));
+    		});
+
+    		document.addEventListener("keydown", async e => {
+    			if (e.key === "Escape" && !document.fullscreenElement) {
+    				e.preventDefault();
+    				window.backPressed?.();
+    			}
+
+    			if (e.key === " " && $popupVisible) {
+    				e.preventDefault();
+    				let visibleTrailer = mostVisiblePopupHeader?.querySelector?.(".trailer");
+    				let isPlaying = $ytPlayers?.some(({ ytPlayer }) => visibleTrailer === ytPlayer.g && ytPlayer?.getPlayerState?.() === 1);
+
+    				$ytPlayers.forEach(({ ytPlayer }) => {
+    					ytPlayer?.pauseVideo?.();
+    				});
+
+    				if (!isPlaying) {
+    					await tick();
+
+    					for (let i = 0; i < $ytPlayers.length; i++) {
+    						if ($ytPlayers[i].ytPlayer.g === visibleTrailer && $inApp) {
+    							prePlayYtPlayer($ytPlayers[i].ytPlayer);
+    							$ytPlayers[i].ytPlayer?.playVideo?.();
+    							break;
+    						}
+    					}
+    				}
+    			} else if (e.ctrlKey && e.key?.toLowerCase?.() === "x") {
+    				e.preventDefault();
+    				set_store_value(popupVisible, $popupVisible = !$popupVisible, $popupVisible);
+    			} else if (e.ctrlKey && e.key?.toLowerCase?.() === "k") {
+    				e.preventDefault();
+    				set_store_value(autoPlay, $autoPlay = !$autoPlay, $autoPlay);
+    			}
+    		});
+    	});
+
+    	let scrollToGridTimeout, createPopupPlayersTimeout;
+
+    	async function playMostVisibleTrailer() {
+    		if (!$popupVisible) return;
+    		await tick();
+    		let visibleTrailer = mostVisiblePopupHeader?.querySelector?.(".trailer");
+
+    		// Scroll in Grid
+    		let visibleTrailerIdx = getChildIndex(mostVisiblePopupHeader?.closest?.(".popup-content")) ?? -1;
+
+    		if (scrollToGridTimeout) clearTimeout(scrollToGridTimeout);
+
+    		scrollToGridTimeout = setTimeout(
+    			() => {
+    				if (!$popupVisible) return;
+    				let animeGrid = $finalAnimeList?.[visibleTrailerIdx]?.gridElement || animeGridParentEl.children?.[visibleTrailerIdx];
+
+    				if ($popupVisible && animeGrid instanceof Element && !isElementVisible(animeGridParentEl, animeGrid, 0.5)) {
+    					document.documentElement.style.overflow = "hidden";
+    					document.documentElement.style.overflow = "";
+    					animeGridParentEl.style.overflow = "hidden";
+    					animeGridParentEl.style.overflow = "";
+    					animeGrid.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    				}
+    			},
+    			300
+    		);
+
+    		let haveTrailer;
+
+    		if (visibleTrailer instanceof Element) {
+    			haveTrailer = $ytPlayers?.some(({ ytPlayer }) => ytPlayer.g === visibleTrailer);
+    		}
+
+    		if (haveTrailer) {
+    			// Recheck Trailer
+    			if (visibleTrailerIdx >= 0) {
+    				currentHeaderIdx = visibleTrailerIdx;
+
+    				let nearAnimes = [
+    					[$finalAnimeList?.[visibleTrailerIdx + 1], visibleTrailerIdx + 1],
+    					[$finalAnimeList?.[visibleTrailerIdx - 1], visibleTrailerIdx - 1]
+    				];
+
+    				if (createPopupPlayersTimeout) clearTimeout(createPopupPlayersTimeout);
+
+    				createPopupPlayersTimeout = setTimeout(
+    					async () => {
+    						if (!$popupVisible) return;
+
+    						nearAnimes.forEach(([nearAnime, nearAnimeIdx]) => {
+    							if (nearAnime) createPopupYTPlayer(nearAnime, nearAnimeIdx);
+    						});
+    					},
+    					300
+    				);
+    			}
+
+    			// Replay Most Visible Trailer
+    			for (let i = 0; i < $ytPlayers.length; i++) {
+    				if ($ytPlayers[i].ytPlayer.g === visibleTrailer && $ytPlayers[i].ytPlayer?.getPlayerState?.() !== 1) {
+    					await tick();
+
+    					if ($popupVisible && $inApp && ($autoPlay || $ytPlayers[i].ytPlayer?.getPlayerState?.() === 2)) {
+    						prePlayYtPlayer($ytPlayers[i].ytPlayer);
+    						$ytPlayers[i].ytPlayer?.playVideo?.();
+    					} else {
+    						if (!$autoPlay) {
+    							let ytPlayer = $ytPlayers?.[i]?.ytPlayer;
+    							let trailerEl = ytPlayer?.g;
+
+    							if (trailerEl && ytPlayer?.getPlayerState?.() != null && ytPlayer?.getPlayerState?.() !== -1) {
+    								let popupHeader = trailerEl?.parentElement;
+    								let popupImg = popupHeader?.querySelector?.(".popup-img");
+    								addClass(popupImg, "fade-out");
+    								removeClass(popupHeader, "loader");
+    								removeClass(trailerEl, "display-none");
+
+    								setTimeout(
+    									() => {
+    										addClass(popupImg, "display-none");
+    										removeClass(popupImg, "fade-out");
+    									},
+    									200
+    								);
+    							}
+    						}
+
+    						$ytPlayers[i].ytPlayer?.pauseVideo?.();
+    					}
+    				} else if ($ytPlayers[i].ytPlayer.g !== visibleTrailer) {
+    					if (!$autoPlay) {
+    						let ytPlayer = $ytPlayers?.[i]?.ytPlayer;
+    						let trailerEl = ytPlayer?.g;
+
+    						if (trailerEl && ytPlayer?.getPlayerState?.() != null && ytPlayer?.getPlayerState?.() !== -1) {
+    							let popupHeader = trailerEl?.parentElement;
+    							let popupImg = popupHeader?.querySelector?.(".popup-img");
+    							addClass(popupImg, "fade-out");
+    							removeClass(popupHeader, "loader");
+    							removeClass(trailerEl, "display-none");
+
+    							setTimeout(
+    								() => {
+    									addClass(popupImg, "display-none");
+    									removeClass(popupImg, "fade-out");
+    								},
+    								200
+    							);
+    						}
+    					}
+
+    					$ytPlayers[i].ytPlayer?.pauseVideo?.();
+    				}
+    			}
+    		} else {
+    			// Pause All Players
+    			$ytPlayers?.forEach(({ ytPlayer }) => ytPlayer?.pauseVideo?.());
+
+    			// Recheck Trailer
+    			if (visibleTrailerIdx >= 0) {
+    				currentHeaderIdx = visibleTrailerIdx;
+
+    				let nearAnimes = [
+    					[$finalAnimeList?.[visibleTrailerIdx], visibleTrailerIdx],
+    					[$finalAnimeList?.[visibleTrailerIdx + 1], visibleTrailerIdx + 1],
+    					[$finalAnimeList?.[visibleTrailerIdx - 1], visibleTrailerIdx - 1]
+    				];
+
+    				if (createPopupPlayersTimeout) clearTimeout(createPopupPlayersTimeout);
+
+    				createPopupPlayersTimeout = setTimeout(
+    					async () => {
+    						if (!$popupVisible) return;
+
+    						nearAnimes.forEach(([nearAnime, nearAnimeIdx]) => {
+    							if (nearAnime) createPopupYTPlayer(nearAnime, nearAnimeIdx);
+    						});
+    					},
+    					300
+    				);
+    			}
+    		}
+    	}
+
+    	let failingTrailers = {};
+
+    	function createPopupYTPlayer(openedAnime, headerIdx) {
+    		let popupHeader = openedAnime?.popupHeader || popupContainer.children?.[headerIdx]?.querySelector(".popup-header");
+    		let ytPlayerEl = popupHeader?.querySelector?.(".trailer") || popupHeader?.querySelector?.(".trailer");
+    		let youtubeID = openedAnime?.trailerID;
+
+    		if (ytPlayerEl instanceof Element && youtubeID && typeof YT !== "undefined") {
+    			if ($ytPlayers.some(({ ytPlayer }) => ytPlayer.g === ytPlayerEl)) return;
+    			addClass(popupHeader, "loader");
+    			let popupImg = popupHeader?.querySelector?.(".popup-img");
+
+    			if ($ytPlayers.length >= 3) {
+    				let destroyedPlayerIdx = 0;
+    				let furthestDistance = -Infinity;
+
+    				$ytPlayers.forEach((_ytPlayer, index) => {
+    					if (_ytPlayer.headerIdx === -1) return;
+    					let distance = Math.abs(_ytPlayer.headerIdx - currentHeaderIdx);
+
+    					if (distance > furthestDistance) {
+    						furthestDistance = distance;
+    						destroyedPlayerIdx = index;
+    					}
+    				});
+
+    				let destroyedPlayer = $ytPlayers?.splice?.(destroyedPlayerIdx, 1)?.[0]?.ytPlayer;
+    				let destroyedPopupHeader = destroyedPlayer?.g?.closest?.(".popup-header");
+    				destroyedPlayer?.destroy?.();
+    				let destroyedPopupImg = destroyedPopupHeader?.querySelector?.(".popup-img");
+
+    				if (destroyedPopupImg instanceof Element) {
+    					removeClass(destroyedPopupImg, "display-none");
+    				}
+
+    				let newYtPlayerEl = document.createElement("div");
+    				newYtPlayerEl.className = "trailer";
+    				addClass(ytPlayerEl, "display-none");
+    				removeClass(popupImg, "display-none");
+    				popupHeader.replaceChild(newYtPlayerEl, ytPlayerEl);
+    				addClass(ytPlayerEl, "display-none");
+    				ytPlayerEl = popupHeader.querySelector(".trailer"); // Get new YT player
+    			} else {
+    				addClass(ytPlayerEl, "display-none");
+    			}
+
+    			removeClass(popupImg, "display-none");
+
+    			// Add a Unique ID
+    			ytPlayerEl.setAttribute("id", "yt-player" + Date.now() + Math.random());
+
+    			let ytPlayer = new YT.Player(ytPlayerEl,
+    			{
+    					playerVars: {
+    						cc_lang_pref: "en", // Set preferred caption language to English
+    						cc_load_policy: 1, // Set on by default
+    						enablejsapi: 1, // Enable the JavaScript API
+    						modestbranding: 1, // Enable modest branding (hide the YouTube logo)
+    						playsinline: 1, // Enable inline video playback
+    						playlist: youtubeID,
+    						rel: 0
+    					},
+    					events: {
+    						onReady: event => {
+    							onPlayerReady(event);
+    						},
+    						onStateChange: event => {
+    							onPlayerStateChange(event);
+    						},
+    						onError: event => {
+    							onPlayerError(event);
+    						}
+    					}
+    				});
+
+    			// Add Trailer to Iframe
+    			let trailerUrl = `https://www.youtube.com/embed/${youtubeID}`;
+
+    			ytPlayerEl.setAttribute("src", trailerUrl);
+    			$ytPlayers.push({ ytPlayer, headerIdx });
+    		} else {
+    			let popupImg = popupHeader?.querySelector?.(".popup-img");
+    			removeClass(popupHeader, "loader");
+    			removeClass(popupImg, "display-none");
+    		}
+    	}
+
+    	function onPlayerError(event) {
+    		let ytPlayer = event.target;
+    		let trailerEl = ytPlayer?.g;
+    		let popupHeader = trailerEl?.parentElement;
+    		let popupImg = popupHeader?.querySelector?.(".popup-img");
+    		set_store_value(ytPlayers, $ytPlayers = $ytPlayers.filter(_ytPlayer => _ytPlayer.ytPlayer !== ytPlayer), $ytPlayers);
+    		ytPlayer.destroy();
+    		addClass(trailerEl, "display-none");
+    		removeClass(popupHeader, "loader");
+    		removeClass(popupImg, "display-none");
+    	}
+
+    	function onPlayerStateChange(event) {
+    		let _ytPlayer = event.target;
+    		if (!_ytPlayer || !_ytPlayer?.getPlayerState) return;
+    		let trailerEl = _ytPlayer?.g;
+    		let popupHeader = trailerEl?.parentElement;
+    		let popupImg = popupHeader?.querySelector?.(".popup-img");
+    		let popupContent = popupHeader?.closest?.(".popup-content");
+    		let loopedAnimeID = $finalAnimeList?.[getChildIndex(popupContent) ?? -1]?.id;
+
+    		if (_ytPlayer?.getPlayerState?.() === 0) {
+    			if (loopedAnimeID != null) {
+    				if (videoLoops[loopedAnimeID]) {
+    					clearTimeout(videoLoops[loopedAnimeID]);
+    					videoLoops[loopedAnimeID] = null;
+    				}
+
+    				videoLoops[loopedAnimeID] = setTimeout(
+    					() => {
+    						_ytPlayer?.stopVideo?.();
+
+    						setTimeout(
+    							() => {
+    								if (mostVisiblePopupHeader === popupHeader && _ytPlayer?.getPlayerState?.() === 5 && _ytPlayer.g && $inApp && $popupVisible && $autoPlay) {
+    									_ytPlayer?.playVideo?.();
+    								}
+    							},
+    							5000
+    						);
+    					},
+    					7 * 1000
+    				); // Play Again after 8 seconds
+    			}
+    		} else if (videoLoops[loopedAnimeID]) {
+    			clearTimeout(videoLoops[loopedAnimeID]);
+    			videoLoops[loopedAnimeID] = null;
+    		}
+
+    		if (_ytPlayer?.getPlayerState?.() === 1 && (trailerEl?.classList?.contains?.("display-none") || !popupImg?.classList?.contains?.("display-none"))) {
+    			$ytPlayers?.forEach(({ ytPlayer }) => ytPlayer?.g !== _ytPlayer?.g && ytPlayer?.pauseVideo?.());
+    			currentYtPlayer = _ytPlayer;
+    			addClass(popupImg, "fade-out");
+    			removeClass(popupHeader, "loader");
+    			removeClass(trailerEl, "display-none");
+
+    			setTimeout(
+    				() => {
+    					addClass(popupImg, "display-none");
+    					removeClass(popupImg, "fade-out");
+    				},
+    				200
+    			);
+    		}
+    	}
+
+    	async function onPlayerReady(event) {
+    		let ytPlayer = event.target;
+    		let trailerEl = ytPlayer?.g;
+    		let popupHeader = trailerEl?.parentElement;
+    		let popupContent = popupHeader?.closest?.(".popup-content");
+    		let anime = $finalAnimeList?.[getChildIndex(popupContent) ?? -1];
+
+    		if (ytPlayer.getPlayerState() === -1 || trailerEl.tagName !== "IFRAME" || !isOnline) {
+    			if (anime?.id) {
+    				failingTrailers[anime.id] = true;
+    			}
+
+    			set_store_value(ytPlayers, $ytPlayers = $ytPlayers.filter(_ytPlayer => _ytPlayer.ytPlayer !== ytPlayer), $ytPlayers);
+    			ytPlayer.destroy();
+    			addClass(trailerEl, "display-none");
+    			removeClass(popupHeader, "loader");
+    			let popupImg = popupHeader?.querySelector?.(".popup-img");
+    			removeClass(popupImg, "display-none");
+    		} else {
+    			// Play Most Visible when 1 Succeed
+    			trailerEl?.setAttribute?.("loading", "lazy");
+
+    			if (!$autoPlay) {
+    				let popupImg = popupHeader?.querySelector?.(".popup-img");
+    				addClass(popupImg, "fade-out");
+    				removeClass(popupHeader, "loader");
+    				removeClass(trailerEl, "display-none");
+
+    				setTimeout(
+    					() => {
+    						addClass(popupImg, "display-none");
+    						removeClass(popupImg, "fade-out");
+    					},
+    					200
+    				);
+    			}
+
+    			playMostVisibleTrailer();
+
+    			if (anime?.id) {
+    				delete failingTrailers[anime.id];
+    			}
+    		}
+    	}
+
+    	function prePlayYtPlayer(ytPlayer) {
+    		if (currentYtPlayer?.isMuted && currentYtPlayer?.getVolume) {
+    			let isMuted = currentYtPlayer?.isMuted?.();
+    			let ytVolume = currentYtPlayer?.getVolume?.();
+
+    			if (typeof isMuted == "boolean") {
+    				if (isMuted) {
+    					ytPlayer?.mute?.();
+    				} else {
+    					ytPlayer?.unMute?.();
+    				}
+    			}
+
+    			if (typeof ytVolume === "number") {
+    				if (savedYtVolume !== ytVolume) {
+    					savedYtVolume = ytVolume;
+    					saveJSON(savedYtVolume, "savedYtVolume");
+    				}
+
+    				ytPlayer?.setVolume?.(savedYtVolume);
+    			}
+    		}
+    	}
+
+    	let updateListIconSpinningTimeout;
+
+    	async function updateList(event) {
+    		if (await $confirmPromise({
+    			title: "List update is available",
+    			text: "Are you sure you want to refresh the list?"
+    		})) {
+    			set_store_value(listIsUpdating, $listIsUpdating = true, $listIsUpdating);
+
+    			if ($animeLoaderWorker) {
+    				$animeLoaderWorker.terminate();
+    				set_store_value(animeLoaderWorker$1, $animeLoaderWorker = null, $animeLoaderWorker);
+    			}
+
+    			animeLoader().then(async data => {
+    				set_store_value(listUpdateAvailable, $listUpdateAvailable = false, $listUpdateAvailable);
+    				set_store_value(animeLoaderWorker$1, $animeLoaderWorker = data.animeLoaderWorker, $animeLoaderWorker);
+    				set_store_value(searchedAnimeKeyword, $searchedAnimeKeyword = "", $searchedAnimeKeyword);
+
+    				if (data?.isNew) {
+    					set_store_value(finalAnimeList, $finalAnimeList = data.finalAnimeList, $finalAnimeList);
+    					set_store_value(hiddenEntries, $hiddenEntries = data.hiddenEntries, $hiddenEntries);
+    				}
+
+    				set_store_value(dataStatus, $dataStatus = null, $dataStatus);
+    				return;
+    			}).catch(error => {
+    				throw error;
+    			});
+    		}
+    	}
+
+    	function getFormattedAnimeFormat({ episodes, nextAiringEpisode }) {
+    		let text;
+    		let timeDifMS;
+    		let nextEpisode;
+    		let nextAiringDate;
+
+    		if (typeof nextAiringEpisode?.episode === "number" && typeof nextAiringEpisode?.airingAt === "number") {
+    			nextAiringDate = new Date(nextAiringEpisode?.airingAt * 1000);
+    			nextEpisode = nextAiringEpisode?.episode;
+
+    			if (nextAiringDate instanceof Date && !isNaN(nextAiringDate)) {
+    				timeDifMS = nextAiringDate.getTime() - new Date().getTime();
+    			}
+    		}
+
+    		if (timeDifMS > 0 && typeof nextEpisode === "number" && episodes > nextEpisode) {
+    			text = ` · <span style="color:rgb(61, 180, 242);">${nextEpisode}/${episodes} in ${formatDateDifference(nextAiringDate, timeDifMS)}</span>`;
+    		} else if (timeDifMS > 0 && typeof nextEpisode === "number") {
+    			text = ` · <span style="color:rgb(61, 180, 242);">Ep ${nextEpisode} in ${formatDateDifference(nextAiringDate, timeDifMS)}</span>`;
+    		} else if (timeDifMS <= 0 && typeof nextEpisode === "number" && episodes > nextEpisode) {
+    			text = ` · ${nextEpisode}/${episodes}`;
+    		} else if (episodes > 0) {
+    			text = ` · ${episodes}`;
+    		}
+
+    		return text;
+    	}
+
+    	function formatDateDifference(endDate, timeDifference) {
+    		const oneMinute = 60 * 1000;
+    		const oneHour = 60 * oneMinute;
+    		const oneDay = 24 * oneHour;
+    		const oneWeek = 7 * oneDay;
+    		const formatYear = date => date.toLocaleDateString(undefined, { year: "numeric" });
+    		const formatMonth = date => date.toLocaleDateString(undefined, { month: "short" });
+    		const formatDay = date => date.toLocaleDateString(undefined, { day: "numeric" });
+
+    		const formatTime = date => date.toLocaleTimeString(undefined, {
+    			hour: "numeric",
+    			minute: "2-digit",
+    			hour12: true
+    		});
+
+    		const formatWeekday = date => date.toLocaleDateString(undefined, { weekday: "short" });
+
+    		if (timeDifference > oneWeek) {
+    			return `${msToTime(timeDifference, 1)}, ${formatMonth(endDate)} ${formatDay(endDate)} ${formatYear(endDate)}`;
+    		} else if (timeDifference <= oneWeek && timeDifference > oneDay) {
+    			return `${msToTime(timeDifference, 1)}, ${formatWeekday(endDate)}, ${formatTime(endDate).toLowerCase()}`;
+    		} else {
+    			return `${msToTime(timeDifference, 2)}, ${formatTime(endDate).toLowerCase()}`;
+    		}
+    	}
+
+    	// Global Function For Android
+    	let isCurrentlyPlaying = false;
+
+    	window.returnedAppIsVisible = inAndroidApp => {
+    		// Only For Android, and workaround for Alert visibility
+    		if (!$android) return;
+
+    		set_store_value(inApp, $inApp = inAndroidApp, $inApp);
+    		if (!$popupVisible || $initData) return;
+    		let visibleTrailer = mostVisiblePopupHeader?.querySelector?.(".trailer");
+    		if (!visibleTrailer) return;
+
+    		if ($inApp) {
+    			for (let i = 0; i < $ytPlayers.length; i++) {
+    				if ($ytPlayers[i]?.ytPlayer.g === visibleTrailer && ($autoPlay || $ytPlayers[i]?.ytPlayer?.getPlayerState?.() === 2 && isCurrentlyPlaying)) {
+    					prePlayYtPlayer($ytPlayers[i]?.ytPlayer);
+    					$ytPlayers[i]?.ytPlayer?.playVideo?.();
+    				} else {
+    					$ytPlayers[i]?.ytPlayer?.pauseVideo?.();
+    				}
+    			}
+    		} else {
+    			isCurrentlyPlaying = false;
+
+    			for (let i = 0; i < $ytPlayers.length; i++) {
+    				if ($ytPlayers[i]?.ytPlayer.g === visibleTrailer && $ytPlayers[i]?.ytPlayer?.getPlayerState?.() === 1) {
+    					isCurrentlyPlaying = true;
+    				}
+
+    				$ytPlayers[i]?.ytPlayer?.pauseVideo?.();
+    			}
+    		}
+    	};
+
+    	document.addEventListener("visibilitychange", () => {
+    		// Only for Browsers
+    		if ($android) return;
+
+    		set_store_value(inApp, $inApp = document.visibilityState === "visible", $inApp);
+    		if (!$popupVisible || $initData) return;
+    		let visibleTrailer = mostVisiblePopupHeader?.querySelector?.(".trailer");
+    		if (!visibleTrailer) return;
+
+    		if ($inApp) {
+    			for (let i = 0; i < $ytPlayers.length; i++) {
+    				if ($ytPlayers[i]?.ytPlayer.g === visibleTrailer && ($autoPlay || $ytPlayers[i]?.ytPlayer?.getPlayerState?.() === 2 && isCurrentlyPlaying)) {
+    					prePlayYtPlayer($ytPlayers[i]?.ytPlayer);
+    					$ytPlayers[i]?.ytPlayer?.playVideo?.();
+    				} else {
+    					$ytPlayers[i]?.ytPlayer?.pauseVideo?.();
+    				}
+    			}
+    		} else {
+    			isCurrentlyPlaying = false;
+
+    			for (let i = 0; i < $ytPlayers.length; i++) {
+    				if ($ytPlayers[i]?.ytPlayer.g === visibleTrailer && $ytPlayers[i]?.ytPlayer?.getPlayerState?.() === 1) {
+    					isCurrentlyPlaying = true;
+    				}
+
+    				$ytPlayers[i]?.ytPlayer?.pauseVideo?.();
+    			}
+    		}
+    	});
+
+    	window.addEventListener("online", () => {
+    		if ($android) {
+    			try {
+    				JSBridge.isOnline(true);
+    			} catch(e) {
+    				
+    			}
+    		}
+
+    		set_store_value(dataStatus, $dataStatus = "Reconnected Successfully", $dataStatus);
+
+    		if ($initData) {
+    			set_store_value(initData, $initData = false, $initData);
+    		}
+
+    		if (!$finalAnimeList?.length) {
+    			set_store_value(updateRecommendationList, $updateRecommendationList = !$updateRecommendationList, $updateRecommendationList);
+    		}
+
+    		isOnline = true;
+
+    		document.querySelectorAll("script")?.forEach(script => {
+    			if (script.src && script.src !== "https://www.youtube.com/iframe_api?v=16") {
+    				script.src = script.src;
+    			}
+    		});
+
+    		document.querySelectorAll("img")?.forEach(image => {
+    			if (!image.naturalHeight) {
+    				image.src = image.src;
+    			}
+    		});
+
+    		reloadYoutube();
+    	});
+
+    	function reloadYoutube() {
+    		loadYouTubeAPI().then(() => {
+    			set_store_value(
+    				ytPlayers,
+    				$ytPlayers = $ytPlayers.filter(({ ytPlayer }) => {
+    					if (typeof ytPlayer?.playVideo === "function" && ytPlayer.getPlayerState() !== -1 && !isNaN(ytPlayer.getPlayerState())) {
+    						return true;
+    					} else {
+    						ytPlayer.destroy();
+    						let popupImg = ytPlayer?.g?.closest?.(".popup-header")?.querySelector?.(".popup-img");
+
+    						if (popupImg instanceof Element) {
+    							removeClass(popupImg, "display-none");
+    						}
+
+    						return false;
+    					}
+    				}),
+    				$ytPlayers
+    			);
+
+    			playMostVisibleTrailer();
+    		});
+    	}
+
+    	window.reloadYoutube = reloadYoutube;
+
+    	window.addEventListener("offline", () => {
+    		if ($android) {
+    			try {
+    				JSBridge.isOnline(false);
+    			} catch(e) {
+    				
+    			}
+    		}
+
+    		set_store_value(dataStatus, $dataStatus = "Currently Offline...", $dataStatus);
+    		isOnline = false;
+    	});
+
+    	let touchID,
+    		checkPointer,
+    		startX,
+    		endX,
+    		startY,
+    		endY,
+    		goBackPercent,
+    		itemIsScrolling,
+    		itemIsScrollingTimeout;
+
+    	function popupScroll() {
+    		itemIsScrolling = true;
+    		clearTimeout(itemIsScrollingTimeout);
+
+    		itemIsScrollingTimeout = setTimeout(
+    			() => {
+    				itemIsScrolling = false;
+    			},
+    			50
+    		);
+
+    		set_store_value(popupIsGoingBack, $popupIsGoingBack = false, $popupIsGoingBack);
+    		$$invalidate(6, goBackPercent = 0);
+    	}
+
+    	function itemScroll() {
+    		itemIsScrolling = true;
+    		clearTimeout(itemIsScrollingTimeout);
+
+    		itemIsScrollingTimeout = setTimeout(
+    			() => {
+    				itemIsScrolling = false;
+    			},
+    			500
+    		);
+    	}
+
+    	function handlePopupContainerDown(event) {
+    		if (itemIsScrolling) return;
+    		startX = event.touches[0].clientX;
+    		startY = event.touches[0].clientY;
+    		touchID = event.touches[0].identifier;
+    		let element = event.target;
+    		let closestScrollableLeftElement = element;
+    		let hasScrollableLeftElement = false;
+
+    		while (closestScrollableLeftElement && closestScrollableLeftElement !== document.body) {
+    			const isScrollableLeft = closestScrollableLeftElement.scrollWidth > closestScrollableLeftElement.clientWidth && closestScrollableLeftElement.scrollLeft > 0;
+
+    			if (isScrollableLeft) {
+    				if (closestScrollableLeftElement.id === "popup-container") {
+    					hasScrollableLeftElement = false;
+    				} else {
+    					hasScrollableLeftElement = true;
+    				}
+
+    				break;
+    			}
+
+    			closestScrollableLeftElement = closestScrollableLeftElement.parentElement;
+    		}
+
+    		if (hasScrollableLeftElement) return;
+    		checkPointer = true;
+    	}
+
+    	function handlePopupContainerMove(event) {
+    		if (checkPointer) {
+    			checkPointer = false;
+    			endX = event.touches[0].clientX;
+    			endY = event.touches[0].clientY;
+    			const deltaX = endX - startX;
+    			const deltaY = endY - startY;
+
+    			if (Math.abs(deltaX) > Math.abs(deltaY) && deltaX > 0) {
+    				set_store_value(popupIsGoingBack, $popupIsGoingBack = true, $popupIsGoingBack);
+    			}
+    		} else if ($popupIsGoingBack) {
+    			endX = event.touches[0].clientX;
+    			const deltaX = endX - startX;
+
+    			if (deltaX > 0) {
+    				$$invalidate(6, goBackPercent = Math.min(deltaX / 48 * 100, 100));
+    			} else {
+    				$$invalidate(6, goBackPercent = 0);
+    			}
+    		}
+    	}
+
+    	function handlePopupContainerUp(event) {
+    		if ($popupIsGoingBack) {
+    			endX = Array.from(event.changedTouches)?.find(touch => touch.identifier === touchID)?.clientX;
+
+    			if (typeof endX === "number") {
+    				let xThreshold = 48;
+    				let deltaX = endX - startX;
+
+    				if ($popupIsGoingBack && deltaX >= xThreshold) {
+    					set_store_value(popupVisible, $popupVisible = false, $popupVisible);
+    				}
+    			}
+
+    			touchID = null;
+    			set_store_value(popupIsGoingBack, $popupIsGoingBack = false, $popupIsGoingBack);
+    			$$invalidate(6, goBackPercent = 0);
+    		} else {
+    			touchID = null;
+    			set_store_value(popupIsGoingBack, $popupIsGoingBack = false, $popupIsGoingBack);
+    			$$invalidate(6, goBackPercent = 0);
+    		}
+    	}
+
+    	function handlePopupContainerCancel() {
+    		touchID = null;
+    		set_store_value(popupIsGoingBack, $popupIsGoingBack = false, $popupIsGoingBack);
+    		$$invalidate(6, goBackPercent = 0);
+    	}
+
+    	let fvTouchId,
+    		fvStartY,
+    		fvStartX,
+    		fvIsScrolled,
+    		fvIsScrolledTopMax,
+    		fvIsScrolledBottomMax;
+
+    	function fullViewScroll() {
+    		fvIsScrolled = true;
+    	}
+
+    	function fullViewTouchStart(e) {
+    		if (!popupContainer) return;
+    		let element = e.target;
+    		let closestScrollableYElement = element;
+
+    		while (closestScrollableYElement && closestScrollableYElement !== document.body) {
+    			fvIsScrolledTopMax = element.scrollTop < 1;
+    			fvIsScrolledBottomMax = Math.abs(element.scrollHeight - element.clientHeight - element.scrollTop) < 1;
+    			let isScrolledYMax = fvIsScrolledTopMax || fvIsScrolledBottomMax;
+
+    			if (isScrolledYMax) {
+    				break;
+    			}
+
+    			closestScrollableYElement = closestScrollableYElement?.parentElement;
+    		}
+
+    		fvTouchId = e?.touches?.[0]?.identifier;
+    		fvStartY = e?.touches?.[0]?.clientY;
+    		fvStartX = e?.touches?.[0]?.clientX;
+    	}
+
+    	function fullViewTouchEnd(e) {
+    		if (!fvIsScrolled) {
+    			let endY = Array.from(e?.changedTouches || [])?.find(touch => touch?.identifier === fvTouchId)?.clientY;
+    			let endX = Array.from(e?.changedTouches || [])?.find(touch => touch?.identifier === fvTouchId)?.clientX;
+    			let deltaY = endY - fvStartY;
+    			let deltaX = endX - fvStartX;
+
+    			if (typeof deltaY === "number" && !isNaN(deltaY) && typeof deltaX === "number" && !isNaN(deltaX)) {
+    				let canGoBack = Math.abs(deltaX) > Math.abs(deltaY) || deltaY < 0 && fvIsScrolledBottomMax || deltaY > 0 && fvIsScrolledTopMax;
+
+    				if (canGoBack) {
+    					$$invalidate(1, fullDescriptionPopup = $$invalidate(0, fullImagePopup = null));
+    				}
+    			}
+    		}
+
+    		fullViewTouchCancel();
+    	}
+
+    	function fullViewTouchCancel() {
+    		fvTouchId = fvStartY = fvStartX = fvIsScrolled = fvIsScrolledTopMax = fvIsScrolledBottomMax = false;
+    	}
+
+    	window.checkOpenFullScreenItem = () => {
+    		return fullImagePopup || fullDescriptionPopup;
+    	};
+
+    	window.closeFullScreenItem = () => {
+    		if (fullImagePopup) {
+    			$$invalidate(0, fullImagePopup = null);
+    		} else {
+    			$$invalidate(1, fullDescriptionPopup = null);
+    		}
+    	};
+
+    	async function addImage(node, imageUrl) {
+    		if (imageUrl && imageUrl !== emptyImage) {
+    			node.src = loadingImage;
+    			let newImageUrl = await cacheImage(imageUrl);
+
+    			if (newImageUrl) {
+    				node.src = newImageUrl;
+    			}
+    		} else {
+    			node.src = emptyImage;
+    		}
+    	}
+
+    	const writable_props = [];
+
+    	Object.keys($$props).forEach(key => {
+    		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== '$$' && key !== 'slot') console.warn(`<AnimePopup> was created with unknown prop '${key}'`);
+    	});
+
+    	const load_handler = e => {
+    		if (e?.target?.src !== loadingImage) {
+    			removeClass(e.target, "fade-out");
+    			addClass(e.target, "fade-in");
+    		}
+    	};
+
+    	const error_handler = e => {
+    		removeClass(e.target, "fade-in");
+    		addClass(e.target, "fade-out");
+    		addClass(e.target, "display-none");
+    	};
+
+    	function div2_binding($$value, each_value, anime_index) {
+    		binding_callbacks[$$value ? 'unshift' : 'push'](() => {
+    			each_value[anime_index].popupHeader = $$value;
+    		});
+    	}
+
+    	const click_handler = anime => askToOpenYoutube(anime.title);
+    	const keydown_handler = (anime, e) => e.key === "Enter" && askToOpenYoutube(anime.title);
+
+    	function input_change_handler() {
+    		$autoPlay = this.checked;
+    		autoPlay.set($autoPlay);
+    	}
+
+    	const keydown_handler_1 = e => e.key === "Enter" && (() => set_store_value(autoPlay, $autoPlay = !$autoPlay, $autoPlay))();
+
+    	const click_handler_1 = () => {
+    		set_store_value(autoPlay, $autoPlay = !$autoPlay, $autoPlay);
+    	};
+
+    	const keydown_handler_2 = e => {
+    		if (e.key === "Enter") {
+    			set_store_value(autoPlay, $autoPlay = !$autoPlay, $autoPlay);
+    		}
+    	};
+
+    	const keydown_handler_3 = e => e.key === "Enter" && updateList();
+
+    	const click_handler_2 = anime => {
+    		window.setShouldGoBack(false);
+    		$$invalidate(0, fullImagePopup = anime.bannerImageUrl || anime.trailerThumbnailUrl);
+    		$$invalidate(1, fullDescriptionPopup = null);
+    	};
+
+    	const keydown_handler_4 = (anime, e) => {
+    		if (e.key === "Enter") {
+    			window.setShouldGoBack(false);
+    			$$invalidate(0, fullImagePopup = anime.bannerImageUrl || anime.trailerThumbnailUrl);
+    			$$invalidate(1, fullDescriptionPopup = null);
+    		}
+    	};
+
+    	const mouseenter_handler = (anime, each_value, anime_index, e) => {
+    		if (!anime?.hasStudioDragScroll) {
+    			let info = e?.target?.closest?.(".info") || e?.target;
+
+    			if (info) {
+    				set_store_value(finalAnimeList, each_value[anime_index].hasStudioDragScroll = true, $finalAnimeList);
+    				dragScroll(info, "x");
+    			}
+    		}
+    	};
+
+    	const mouseenter_handler_1 = (anime, each_value, anime_index, e) => {
+    		if (!anime?.hasGenreDragScroll) {
+    			let info = e?.target?.closest?.(".info") || e?.target;
+
+    			if (info) {
+    				set_store_value(finalAnimeList, each_value[anime_index].hasGenreDragScroll = true, $finalAnimeList);
+    				dragScroll(info, "x");
+    			}
+    		}
+    	};
+
+    	const mouseenter_handler_2 = (anime, each_value, anime_index, e) => {
+    		if (!anime?.hasTagDragScroll) {
+    			let info = e?.target?.closest?.(".info") || e?.target;
+
+    			if (info) {
+    				set_store_value(finalAnimeList, each_value[anime_index].hasTagDragScroll = true, $finalAnimeList);
+    				dragScroll(info, "x");
+    			}
+    		}
+    	};
+
+    	const error_handler_1 = e => {
+    		addClass(e.target, "display-none");
+    	};
+
+    	const click_handler_3 = anime => {
+    		window.setShouldGoBack(false);
+    		$$invalidate(0, fullImagePopup = anime.coverImageUrl || anime.bannerImageUrl || anime.trailerThumbnailUrl || emptyImage);
+    		$$invalidate(1, fullDescriptionPopup = null);
+    	};
+
+    	const keydown_handler_5 = (anime, e) => {
+    		window.setShouldGoBack(false);
+
+    		if (e.key === "Enter") {
+    			$$invalidate(0, fullImagePopup = anime.coverImageUrl || anime.bannerImageUrl || anime.trailerThumbnailUrl || emptyImage);
+    			$$invalidate(1, fullDescriptionPopup = null);
+    		}
+    	};
+
+    	const click_handler_4 = anime => {
+    		window.setShouldGoBack(false);
+    		$$invalidate(1, fullDescriptionPopup = editHTMLString(anime?.description));
+    		$$invalidate(0, fullImagePopup = null);
+    	};
+
+    	const keydown_handler_6 = (anime, e) => {
+    		window.setShouldGoBack(false);
+
+    		if (e.key === "Enter") {
+    			$$invalidate(1, fullDescriptionPopup = editHTMLString(anime?.description));
+    			$$invalidate(0, fullImagePopup = null);
+    		}
+    	};
+
+    	function div11_binding($$value, each_value, anime_index) {
+    		binding_callbacks[$$value ? 'unshift' : 'push'](() => {
+    			each_value[anime_index].popupInfo = $$value;
+    		});
+    	}
+
+    	const keydown_handler_7 = (anime, e) => e.key === "Enter" && handleHideShow(anime.id, anime?.shownTitle);
+    	const keydown_handler_8 = (anime, e) => e.key === "Enter" && handleMoreVideos(anime.title);
+
+    	const click_handler_5 = anime => {
+    		openInAnilist(anime.animeUrl);
+    	};
+
+    	const keydown_handler_9 = (anime, e) => e.key === "Enter" && openInAnilist(anime.animeUrl);
+
+    	function div15_binding($$value, each_value, anime_index) {
+    		binding_callbacks[$$value ? 'unshift' : 'push'](() => {
+    			each_value[anime_index].popupContent = $$value;
+    		});
+    	}
+
+    	function div0_binding($$value) {
+    		binding_callbacks[$$value ? 'unshift' : 'push'](() => {
+    			popupContainer = $$value;
+    			$$invalidate(3, popupContainer);
+    		});
+    	}
+
+    	const keydown_handler_10 = e => e.key === "Enter" && handlePopupVisibility(e);
+
+    	function div1_binding($$value) {
+    		binding_callbacks[$$value ? 'unshift' : 'push'](() => {
+    			popupWrapper = $$value;
+    			$$invalidate(2, popupWrapper);
+    		});
+    	}
+
+    	const keydown_handler_11 = e => e.key === "Enter" && $$invalidate(1, fullDescriptionPopup = $$invalidate(0, fullImagePopup = null));
+    	const click_handler_6 = () => $$invalidate(1, fullDescriptionPopup = $$invalidate(0, fullImagePopup = null));
+    	const keydown_handler_12 = e => e.key === "Enter" && $$invalidate(1, fullDescriptionPopup = $$invalidate(0, fullImagePopup = null));
+    	const keydown_handler_13 = e => e.key === "Enter" && $$invalidate(1, fullDescriptionPopup = $$invalidate(0, fullImagePopup = null));
+
+    	const error_handler_2 = e => {
+    		addClass(e.target, "display-none");
+    	};
+
+    	const click_handler_7 = () => $$invalidate(1, fullDescriptionPopup = $$invalidate(0, fullImagePopup = null));
+    	const keydown_handler_14 = e => e.key === "Enter" && $$invalidate(1, fullDescriptionPopup = $$invalidate(0, fullImagePopup = null));
+
+    	$$self.$capture_state = () => ({
+    		onMount,
+    		tick,
+    		fade,
+    		finalAnimeList,
+    		animeLoaderWorker: animeLoaderWorker$1,
+    		hiddenEntries,
+    		ytPlayers,
+    		autoPlay,
+    		animeObserver,
+    		popupVisible,
+    		openedAnimePopupIdx,
+    		android: android$1,
+    		inApp,
+    		confirmPromise,
+    		animeIdxRemoved,
+    		shownAllInList,
+    		dataStatus,
+    		initData,
+    		updateRecommendationList,
+    		listUpdateAvailable,
+    		searchedAnimeKeyword,
+    		checkAnimeLoaderStatus,
+    		popupIsGoingBack,
+    		earlisetReleaseDate,
+    		listIsUpdating,
+    		isFullViewed,
+    		isJsonObject,
+    		scrollToElement,
+    		getChildIndex,
+    		msToTime,
+    		isElementVisible,
+    		addClass,
+    		removeClass,
+    		getMostVisibleElement,
+    		dragScroll,
+    		retrieveJSON,
+    		saveJSON,
+    		animeLoader,
+    		cacheImage,
+    		emptyImage,
+    		loadingImage,
+    		isOnline,
+    		animeGridParentEl,
+    		mostVisiblePopupHeader,
+    		currentHeaderIdx,
+    		currentYtPlayer,
+    		popupWrapper,
+    		popupContainer,
+    		popupAnimeObserver,
+    		fullImagePopup,
+    		fullDescriptionPopup,
+    		windowWidth,
+    		windowHeight,
+    		videoLoops,
+    		savedYtVolume,
+    		addPopupObserver,
+    		handlePopupVisibility,
+    		handleHideShow,
+    		askToOpenYoutube,
+    		handleMoreVideos,
+    		openInAnilist,
+    		scrollToGridTimeout,
+    		createPopupPlayersTimeout,
+    		playMostVisibleTrailer,
+    		failingTrailers,
+    		createPopupYTPlayer,
+    		onPlayerError,
+    		onPlayerStateChange,
+    		onPlayerReady,
+    		prePlayYtPlayer,
+    		updateListIconSpinningTimeout,
+    		updateList,
+    		getFormattedAnimeFormat,
+    		formatDateDifference,
+    		isCurrentlyPlaying,
+    		reloadYoutube,
+    		loadYouTubeAPI,
+    		editHTMLString,
+    		touchID,
+    		checkPointer,
+    		startX,
+    		endX,
+    		startY,
+    		endY,
+    		goBackPercent,
+    		itemIsScrolling,
+    		itemIsScrollingTimeout,
+    		popupScroll,
+    		itemScroll,
+    		handlePopupContainerDown,
+    		handlePopupContainerMove,
+    		handlePopupContainerUp,
+    		handlePopupContainerCancel,
+    		fvTouchId,
+    		fvStartY,
+    		fvStartX,
+    		fvIsScrolled,
+    		fvIsScrolledTopMax,
+    		fvIsScrolledBottomMax,
+    		fullViewScroll,
+    		fullViewTouchStart,
+    		fullViewTouchEnd,
+    		fullViewTouchCancel,
+    		addImage,
+    		$isFullViewed,
+    		$android,
+    		$popupIsGoingBack,
+    		$popupVisible,
+    		$dataStatus,
+    		$ytPlayers,
+    		$updateRecommendationList,
+    		$finalAnimeList,
+    		$initData,
+    		$autoPlay,
+    		$inApp,
+    		$hiddenEntries,
+    		$searchedAnimeKeyword,
+    		$animeLoaderWorker,
+    		$listUpdateAvailable,
+    		$listIsUpdating,
+    		$confirmPromise,
+    		$animeObserver,
+    		$openedAnimePopupIdx,
+    		$checkAnimeLoaderStatus,
+    		$earlisetReleaseDate,
+    		$shownAllInList
+    	});
+
+    	$$self.$inject_state = $$props => {
+    		if ('isOnline' in $$props) isOnline = $$props.isOnline;
+    		if ('animeGridParentEl' in $$props) animeGridParentEl = $$props.animeGridParentEl;
+    		if ('mostVisiblePopupHeader' in $$props) mostVisiblePopupHeader = $$props.mostVisiblePopupHeader;
+    		if ('currentHeaderIdx' in $$props) currentHeaderIdx = $$props.currentHeaderIdx;
+    		if ('currentYtPlayer' in $$props) currentYtPlayer = $$props.currentYtPlayer;
+    		if ('popupWrapper' in $$props) $$invalidate(2, popupWrapper = $$props.popupWrapper);
+    		if ('popupContainer' in $$props) $$invalidate(3, popupContainer = $$props.popupContainer);
+    		if ('popupAnimeObserver' in $$props) popupAnimeObserver = $$props.popupAnimeObserver;
+    		if ('fullImagePopup' in $$props) $$invalidate(0, fullImagePopup = $$props.fullImagePopup);
+    		if ('fullDescriptionPopup' in $$props) $$invalidate(1, fullDescriptionPopup = $$props.fullDescriptionPopup);
+    		if ('windowWidth' in $$props) $$invalidate(4, windowWidth = $$props.windowWidth);
+    		if ('windowHeight' in $$props) $$invalidate(5, windowHeight = $$props.windowHeight);
+    		if ('videoLoops' in $$props) videoLoops = $$props.videoLoops;
+    		if ('savedYtVolume' in $$props) savedYtVolume = $$props.savedYtVolume;
+    		if ('scrollToGridTimeout' in $$props) scrollToGridTimeout = $$props.scrollToGridTimeout;
+    		if ('createPopupPlayersTimeout' in $$props) createPopupPlayersTimeout = $$props.createPopupPlayersTimeout;
+    		if ('failingTrailers' in $$props) failingTrailers = $$props.failingTrailers;
+    		if ('updateListIconSpinningTimeout' in $$props) updateListIconSpinningTimeout = $$props.updateListIconSpinningTimeout;
+    		if ('isCurrentlyPlaying' in $$props) isCurrentlyPlaying = $$props.isCurrentlyPlaying;
+    		if ('touchID' in $$props) touchID = $$props.touchID;
+    		if ('checkPointer' in $$props) checkPointer = $$props.checkPointer;
+    		if ('startX' in $$props) startX = $$props.startX;
+    		if ('endX' in $$props) endX = $$props.endX;
+    		if ('startY' in $$props) startY = $$props.startY;
+    		if ('endY' in $$props) endY = $$props.endY;
+    		if ('goBackPercent' in $$props) $$invalidate(6, goBackPercent = $$props.goBackPercent);
+    		if ('itemIsScrolling' in $$props) itemIsScrolling = $$props.itemIsScrolling;
+    		if ('itemIsScrollingTimeout' in $$props) itemIsScrollingTimeout = $$props.itemIsScrollingTimeout;
+    		if ('fvTouchId' in $$props) fvTouchId = $$props.fvTouchId;
+    		if ('fvStartY' in $$props) fvStartY = $$props.fvStartY;
+    		if ('fvStartX' in $$props) fvStartX = $$props.fvStartX;
+    		if ('fvIsScrolled' in $$props) fvIsScrolled = $$props.fvIsScrolled;
+    		if ('fvIsScrolledTopMax' in $$props) fvIsScrolledTopMax = $$props.fvIsScrolledTopMax;
+    		if ('fvIsScrolledBottomMax' in $$props) fvIsScrolledBottomMax = $$props.fvIsScrolledBottomMax;
+    	};
+
+    	if ($$props && "$$inject" in $$props) {
+    		$$self.$inject_state($$props.$$inject);
+    	}
+
+    	$$self.$$.update = () => {
+    		if ($$self.$$.dirty[0] & /*fullDescriptionPopup, fullImagePopup*/ 3 | $$self.$$.dirty[1] & /*$android*/ 4) {
+    			{
+    				if ($android || !matchMedia("(hover:hover)").matches) {
+    					fullDescriptionPopup || fullImagePopup
+    					? addClass(document.documentElement, "overflow-hidden")
+    					: removeClass(document.documentElement, "overflow-hidden");
+    				}
+    			}
+    		}
+
+    		if ($$self.$$.dirty[0] & /*fullDescriptionPopup, fullImagePopup*/ 3) {
+    			set_store_value(isFullViewed, $isFullViewed = Boolean(fullDescriptionPopup || fullImagePopup), $isFullViewed);
+    		}
+    	};
+
+    	return [
+    		fullImagePopup,
+    		fullDescriptionPopup,
+    		popupWrapper,
+    		popupContainer,
+    		windowWidth,
+    		windowHeight,
+    		goBackPercent,
+    		$popupIsGoingBack,
+    		$popupVisible,
+    		$finalAnimeList,
+    		$autoPlay,
+    		$hiddenEntries,
+    		$listUpdateAvailable,
+    		$listIsUpdating,
+    		$earlisetReleaseDate,
+    		$shownAllInList,
+    		handlePopupVisibility,
+    		handleHideShow,
+    		askToOpenYoutube,
+    		handleMoreVideos,
+    		updateList,
+    		getFormattedAnimeFormat,
+    		popupScroll,
+    		itemScroll,
+    		handlePopupContainerDown,
+    		handlePopupContainerMove,
+    		handlePopupContainerUp,
+    		handlePopupContainerCancel,
+    		fullViewScroll,
+    		fullViewTouchStart,
+    		fullViewTouchEnd,
+    		fullViewTouchCancel,
+    		addImage,
+    		$android,
+    		load_handler,
+    		error_handler,
+    		div2_binding,
+    		click_handler,
+    		keydown_handler,
+    		input_change_handler,
+    		keydown_handler_1,
+    		click_handler_1,
+    		keydown_handler_2,
+    		keydown_handler_3,
+    		click_handler_2,
+    		keydown_handler_4,
+    		mouseenter_handler,
+    		mouseenter_handler_1,
+    		mouseenter_handler_2,
+    		error_handler_1,
+    		click_handler_3,
+    		keydown_handler_5,
+    		click_handler_4,
+    		keydown_handler_6,
+    		div11_binding,
+    		keydown_handler_7,
+    		keydown_handler_8,
+    		click_handler_5,
+    		keydown_handler_9,
+    		div15_binding,
+    		div0_binding,
+    		keydown_handler_10,
+    		div1_binding,
+    		keydown_handler_11,
+    		click_handler_6,
+    		keydown_handler_12,
+    		keydown_handler_13,
+    		error_handler_2,
+    		click_handler_7,
+    		keydown_handler_14
+    	];
+    }
+
+    class AnimePopup extends SvelteComponentDev {
+    	constructor(options) {
+    		super(options);
+    		init(this, options, instance$6, create_fragment$6, safe_not_equal, {}, null, [-1, -1, -1, -1, -1]);
+
+    		dispatch_dev("SvelteRegisterComponent", {
+    			component: this,
+    			tagName: "AnimePopup",
+    			options,
+    			id: create_fragment$6.name
+    		});
+    	}
+    }
+
+    /* src\components\Anime\Fixed\AnimeOptionsPopup.svelte generated by Svelte v3.59.1 */
+    const file$5 = "src\\components\\Anime\\Fixed\\AnimeOptionsPopup.svelte";
+
+    // (188:0) {#if $animeOptionVisible && !$popupVisible && $finalAnimeList}
+    function create_if_block$4(ctx) {
+    	let div3;
+    	let div2;
+    	let div1;
+    	let span0;
+    	let h1;
+    	let t0;
+    	let t1;
+    	let div0;
+    	let t3;
+    	let span1;
+    	let h20;
+    	let t5;
+    	let span2;
+    	let h21;
+    	let t7;
+    	let span3;
+    	let h22;
+    	let t9;
+    	let t10;
+    	let span4;
+    	let h23;
+
+    	let t11_value = (/*$hiddenEntries*/ ctx[5][/*animeID*/ ctx[2]]
+    	? "Show"
+    	: "Hide") + " Anime" + "";
+
+    	let t11;
+    	let div2_outro;
+    	let current;
+    	let mounted;
+    	let dispose;
+    	let if_block = /*animeCopyTitle*/ ctx[1] && create_if_block_1$4(ctx);
+
+    	const block = {
+    		c: function create() {
+    			div3 = element("div");
+    			div2 = element("div");
+    			div1 = element("div");
+    			span0 = element("span");
+    			h1 = element("h1");
+    			t0 = text(/*shownTitle*/ ctx[0]);
+    			t1 = space();
+    			div0 = element("div");
+    			div0.textContent = "×";
+    			t3 = space();
+    			span1 = element("span");
+    			h20 = element("h2");
+    			h20.textContent = "Information";
+    			t5 = space();
+    			span2 = element("span");
+    			h21 = element("h2");
+    			h21.textContent = "Open in Anilist";
+    			t7 = space();
+    			span3 = element("span");
+    			h22 = element("h2");
+    			h22.textContent = "Open in YouTube";
+    			t9 = space();
+    			if (if_block) if_block.c();
+    			t10 = space();
+    			span4 = element("span");
+    			h23 = element("h2");
+    			t11 = text(t11_value);
+    			attr_dev(h1, "class", "svelte-18z5knf");
+    			add_location(h1, file$5, 197, 42, 7077);
+    			attr_dev(span0, "class", "anime-title svelte-18z5knf");
+    			add_location(span0, file$5, 197, 16, 7051);
+    			attr_dev(div0, "class", "closing-x svelte-18z5knf");
+    			attr_dev(div0, "tabindex", "0");
+    			add_location(div0, file$5, 199, 16, 7195);
+    			attr_dev(div1, "class", "option-header svelte-18z5knf");
+    			add_location(div1, file$5, 196, 12, 7006);
+    			attr_dev(h20, "class", "option-title svelte-18z5knf");
+    			add_location(h20, file$5, 213, 17, 7736);
+    			attr_dev(span1, "class", "anime-option svelte-18z5knf");
+    			add_location(span1, file$5, 209, 12, 7555);
+    			attr_dev(h21, "class", "option-title svelte-18z5knf");
+    			add_location(h21, file$5, 219, 17, 7991);
+    			attr_dev(span2, "class", "anime-option svelte-18z5knf");
+    			add_location(span2, file$5, 215, 12, 7812);
+    			attr_dev(h22, "class", "option-title svelte-18z5knf");
+    			add_location(h22, file$5, 225, 17, 8250);
+    			attr_dev(span3, "class", "anime-option svelte-18z5knf");
+    			add_location(span3, file$5, 221, 12, 8071);
+    			attr_dev(h23, "class", "option-title svelte-18z5knf");
+    			add_location(h23, file$5, 239, 17, 8834);
+    			attr_dev(span4, "class", "anime-option svelte-18z5knf");
+    			add_location(span4, file$5, 235, 12, 8653);
+    			attr_dev(div2, "class", "anime-options-container svelte-18z5knf");
+    			add_location(div2, file$5, 195, 8, 6926);
+    			attr_dev(div3, "class", "anime-options svelte-18z5knf");
+    			add_location(div3, file$5, 188, 4, 6652);
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, div3, anchor);
+    			append_dev(div3, div2);
+    			append_dev(div2, div1);
+    			append_dev(div1, span0);
+    			append_dev(span0, h1);
+    			append_dev(h1, t0);
+    			append_dev(div1, t1);
+    			append_dev(div1, div0);
+    			append_dev(div2, t3);
+    			append_dev(div2, span1);
+    			append_dev(span1, h20);
+    			append_dev(div2, t5);
+    			append_dev(div2, span2);
+    			append_dev(span2, h21);
+    			append_dev(div2, t7);
+    			append_dev(div2, span3);
+    			append_dev(span3, h22);
+    			append_dev(div2, t9);
+    			if (if_block) if_block.m(div2, null);
+    			append_dev(div2, t10);
+    			append_dev(div2, span4);
+    			append_dev(span4, h23);
+    			append_dev(h23, t11);
+    			current = true;
+
+    			if (!mounted) {
+    				dispose = [
+    					listen_dev(div0, "click", /*handleAnimeOptionVisibility*/ ctx[8], false, false, false, false),
+    					listen_dev(div0, "keydown", /*keydown_handler*/ ctx[15], false, false, false, false),
+    					listen_dev(span1, "click", /*openAnimePopup*/ ctx[9], false, false, false, false),
+    					listen_dev(span1, "keydown", /*keydown_handler_1*/ ctx[16], false, false, false, false),
+    					listen_dev(span2, "click", /*openInAnilist*/ ctx[10], false, false, false, false),
+    					listen_dev(span2, "keydown", /*keydown_handler_2*/ ctx[17], false, false, false, false),
+    					listen_dev(span3, "click", /*openInYoutube*/ ctx[11], false, false, false, false),
+    					listen_dev(span3, "keydown", /*keydown_handler_3*/ ctx[18], false, false, false, false),
+    					listen_dev(span4, "click", /*handleHideShow*/ ctx[13], false, false, false, false),
+    					listen_dev(span4, "keydown", /*keydown_handler_5*/ ctx[20], false, false, false, false),
+    					action_destroyer(/*loadAnimeOption*/ ctx[14].call(null, div3)),
+    					listen_dev(div3, "click", /*handleAnimeOptionVisibility*/ ctx[8], false, false, false, false),
+    					listen_dev(div3, "touchend", /*handleTouchAnimeOptionVisibility*/ ctx[7], { passive: true }, false, false, false),
+    					listen_dev(div3, "keydown", /*keydown_handler_6*/ ctx[21], false, false, false, false)
+    				];
+
+    				mounted = true;
+    			}
+    		},
+    		p: function update(ctx, dirty) {
+    			if (!current || dirty[0] & /*shownTitle*/ 1) set_data_dev(t0, /*shownTitle*/ ctx[0]);
+
+    			if (/*animeCopyTitle*/ ctx[1]) {
+    				if (if_block) {
+    					if_block.p(ctx, dirty);
+    				} else {
+    					if_block = create_if_block_1$4(ctx);
+    					if_block.c();
+    					if_block.m(div2, t10);
+    				}
+    			} else if (if_block) {
+    				if_block.d(1);
+    				if_block = null;
+    			}
+
+    			if ((!current || dirty[0] & /*$hiddenEntries, animeID*/ 36) && t11_value !== (t11_value = (/*$hiddenEntries*/ ctx[5][/*animeID*/ ctx[2]]
+    			? "Show"
+    			: "Hide") + " Anime" + "")) set_data_dev(t11, t11_value);
+    		},
+    		i: function intro(local) {
+    			if (current) return;
+    			if (div2_outro) div2_outro.end(1);
+    			current = true;
+    		},
+    		o: function outro(local) {
+    			div2_outro = create_out_transition(div2, fade, { duration: 200 });
+    			current = false;
+    		},
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(div3);
+    			if (if_block) if_block.d();
+    			if (detaching && div2_outro) div2_outro.end();
+    			mounted = false;
+    			run_all(dispose);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_if_block$4.name,
+    		type: "if",
+    		source: "(188:0) {#if $animeOptionVisible && !$popupVisible && $finalAnimeList}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (228:12) {#if animeCopyTitle}
+    function create_if_block_1$4(ctx) {
+    	let span;
+    	let h2;
+    	let mounted;
+    	let dispose;
+
+    	const block = {
+    		c: function create() {
+    			span = element("span");
+    			h2 = element("h2");
+    			h2.textContent = "Copy Title";
+    			attr_dev(h2, "class", "option-title svelte-18z5knf");
+    			add_location(h2, file$5, 232, 21, 8555);
+    			attr_dev(span, "class", "anime-option svelte-18z5knf");
+    			add_location(span, file$5, 228, 16, 8368);
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, span, anchor);
+    			append_dev(span, h2);
+
+    			if (!mounted) {
+    				dispose = [
+    					listen_dev(span, "click", /*copyTitle*/ ctx[12], false, false, false, false),
+    					listen_dev(span, "keydown", /*keydown_handler_4*/ ctx[19], false, false, false, false)
+    				];
+
+    				mounted = true;
+    			}
+    		},
+    		p: noop,
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(span);
+    			mounted = false;
+    			run_all(dispose);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_if_block_1$4.name,
+    		type: "if",
+    		source: "(228:12) {#if animeCopyTitle}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    function create_fragment$5(ctx) {
+    	let if_block_anchor;
+    	let current;
+    	let if_block = /*$animeOptionVisible*/ ctx[3] && !/*$popupVisible*/ ctx[6] && /*$finalAnimeList*/ ctx[4] && create_if_block$4(ctx);
+
+    	const block = {
+    		c: function create() {
+    			if (if_block) if_block.c();
+    			if_block_anchor = empty();
+    		},
+    		l: function claim(nodes) {
+    			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
+    		},
+    		m: function mount(target, anchor) {
+    			if (if_block) if_block.m(target, anchor);
+    			insert_dev(target, if_block_anchor, anchor);
+    			current = true;
+    		},
+    		p: function update(ctx, dirty) {
+    			if (/*$animeOptionVisible*/ ctx[3] && !/*$popupVisible*/ ctx[6] && /*$finalAnimeList*/ ctx[4]) {
+    				if (if_block) {
+    					if_block.p(ctx, dirty);
+
+    					if (dirty[0] & /*$animeOptionVisible, $popupVisible, $finalAnimeList*/ 88) {
+    						transition_in(if_block, 1);
+    					}
+    				} else {
+    					if_block = create_if_block$4(ctx);
+    					if_block.c();
+    					transition_in(if_block, 1);
+    					if_block.m(if_block_anchor.parentNode, if_block_anchor);
+    				}
+    			} else if (if_block) {
+    				group_outros();
+
+    				transition_out(if_block, 1, 1, () => {
+    					if_block = null;
+    				});
+
+    				check_outros();
+    			}
+    		},
+    		i: function intro(local) {
+    			if (current) return;
+    			transition_in(if_block);
+    			current = true;
+    		},
+    		o: function outro(local) {
+    			transition_out(if_block);
+    			current = false;
+    		},
+    		d: function destroy(detaching) {
+    			if (if_block) if_block.d(detaching);
+    			if (detaching) detach_dev(if_block_anchor);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_fragment$5.name,
+    		type: "component",
+    		source: "",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    function instance$5($$self, $$props, $$invalidate) {
+    	let $animeOptionVisible;
+    	let $openedAnimeOptionIdx;
+    	let $finalAnimeList;
+    	let $confirmPromise;
+    	let $animeLoaderWorker;
+    	let $hiddenEntries;
+    	let $checkAnimeLoaderStatus;
+    	let $android;
+    	let $popupVisible;
+    	let $openedAnimePopupIdx;
+    	validate_store(animeOptionVisible, 'animeOptionVisible');
+    	component_subscribe($$self, animeOptionVisible, $$value => $$invalidate(3, $animeOptionVisible = $$value));
+    	validate_store(openedAnimeOptionIdx, 'openedAnimeOptionIdx');
+    	component_subscribe($$self, openedAnimeOptionIdx, $$value => $$invalidate(27, $openedAnimeOptionIdx = $$value));
+    	validate_store(finalAnimeList, 'finalAnimeList');
+    	component_subscribe($$self, finalAnimeList, $$value => $$invalidate(4, $finalAnimeList = $$value));
+    	validate_store(confirmPromise, 'confirmPromise');
+    	component_subscribe($$self, confirmPromise, $$value => $$invalidate(28, $confirmPromise = $$value));
+    	validate_store(animeLoaderWorker$1, 'animeLoaderWorker');
+    	component_subscribe($$self, animeLoaderWorker$1, $$value => $$invalidate(29, $animeLoaderWorker = $$value));
+    	validate_store(hiddenEntries, 'hiddenEntries');
+    	component_subscribe($$self, hiddenEntries, $$value => $$invalidate(5, $hiddenEntries = $$value));
+    	validate_store(checkAnimeLoaderStatus, 'checkAnimeLoaderStatus');
+    	component_subscribe($$self, checkAnimeLoaderStatus, $$value => $$invalidate(30, $checkAnimeLoaderStatus = $$value));
+    	validate_store(android$1, 'android');
+    	component_subscribe($$self, android$1, $$value => $$invalidate(31, $android = $$value));
+    	validate_store(popupVisible, 'popupVisible');
+    	component_subscribe($$self, popupVisible, $$value => $$invalidate(6, $popupVisible = $$value));
+    	validate_store(openedAnimePopupIdx, 'openedAnimePopupIdx');
+    	component_subscribe($$self, openedAnimePopupIdx, $$value => $$invalidate(32, $openedAnimePopupIdx = $$value));
+    	let { $$slots: slots = {}, $$scope } = $$props;
+    	validate_slots('AnimeOptionsPopup', slots, []);
+    	let shownTitle;
+    	let youtubeSearchTitle;
+    	let animeCopyTitle;
+    	let animeID;
+    	let animeUrl;
+    	let animeIdx;
+    	let isRecentlyOpened = true, isRecentlyOpenedTimeout;
+
+    	animeOptionVisible.subscribe(val => {
+    		if (val === true) {
+    			isRecentlyOpened = true;
+
+    			isRecentlyOpenedTimeout = setTimeout(
+    				() => {
+    					isRecentlyOpened = false;
+    				},
+    				100
+    			);
+    		} else {
+    			if (isRecentlyOpenedTimeout) clearTimeout(isRecentlyOpenedTimeout);
+    			isRecentlyOpened = false;
+    		}
+    	});
+
+    	function handleTouchAnimeOptionVisibility(e) {
+    		if (isRecentlyOpened) return;
+    		let target = e.target;
+    		let classList = target.classList;
+    		if (target.closest(".anime-options-container") || classList.contains("anime-options-container")) return;
+    		set_store_value(animeOptionVisible, $animeOptionVisible = false, $animeOptionVisible);
+    	}
+
+    	function handleAnimeOptionVisibility(e) {
+    		if (isRecentlyOpened && e.type !== "keydown") return;
+    		let target = e.target;
+    		let classList = target.classList;
+    		if (!classList.contains("closing-x") && (target.closest(".anime-options-container") || classList.contains("anime-options-container"))) return;
+    		set_store_value(animeOptionVisible, $animeOptionVisible = false, $animeOptionVisible);
+    	}
+
+    	function openAnimePopup(e) {
+    		if (isRecentlyOpened && e.type !== "keydown") return;
+    		set_store_value(openedAnimePopupIdx, $openedAnimePopupIdx = animeIdx, $openedAnimePopupIdx);
+    		set_store_value(popupVisible, $popupVisible = true, $popupVisible);
+    		set_store_value(animeOptionVisible, $animeOptionVisible = false, $animeOptionVisible);
+    	}
+
+    	function openInAnilist(e) {
+    		if (isRecentlyOpened && e.type !== "keydown") return;
+    		if (typeof animeUrl !== "string" || animeUrl === "") return;
+    		window.open(animeUrl, "_blank");
+    	}
+
+    	async function openInYoutube(e) {
+    		if (isRecentlyOpened && e.type !== "keydown") return;
+    		if (typeof youtubeSearchTitle !== "string" || youtubeSearchTitle === "") return;
+    		window.open(`https://www.youtube.com/results?search_query=${youtubeSearchTitle} Anime`, "_blank");
+    	}
+
+    	function copyTitle(e) {
+    		if (isRecentlyOpened && e.type !== "keydown" || !animeCopyTitle) return;
+
+    		if ($android) {
+    			try {
+    				JSBridge.copyToClipBoard(shownTitle);
+    				JSBridge.copyToClipBoard(animeCopyTitle);
+    			} catch(ex) {
+    				
+    			}
+    		} else {
+    			if (shownTitle && !ncsCompare(animeCopyTitle, shownTitle)) {
+    				navigator?.clipboard?.writeText?.(shownTitle);
+
+    				setTimeout(
+    					() => {
+    						navigator?.clipboard?.writeText?.(animeCopyTitle);
+    					},
+    					300
+    				);
+    			} else {
+    				navigator?.clipboard?.writeText?.(animeCopyTitle);
+    			}
+    		}
+
+    		set_store_value(animeOptionVisible, $animeOptionVisible = false, $animeOptionVisible);
+    	}
+
+    	async function handleHideShow(e) {
+    		if (isRecentlyOpened && e.type !== "keydown") return;
+
+    		let title = shownTitle
+    		? `<span style="color:#00cbf9;">${shownTitle}</span>`
+    		: "this anime";
+
+    		let isHidden = $hiddenEntries[animeID];
+
+    		if (isHidden) {
+    			if (await $confirmPromise(`Are you sure you want to show ${title} in your recommendation list?`)) {
+    				$checkAnimeLoaderStatus().then(() => {
+    					delete $hiddenEntries[animeID];
+    					hiddenEntries.set($hiddenEntries);
+
+    					if ($finalAnimeList.length) {
+    						if ($animeLoaderWorker instanceof Worker) {
+    							$animeLoaderWorker?.postMessage?.({ removeID: animeID });
+    						}
+    					}
+    				}).catch(() => {
+    					$confirmPromise({
+    						isAlert: true,
+    						title: "Something went wrong",
+    						text: "Showing anime has failed, please try again."
+    					});
+    				});
+
+    				set_store_value(animeOptionVisible, $animeOptionVisible = false, $animeOptionVisible);
+    			}
+    		} else {
+    			if (await $confirmPromise(`Are you sure you want to hide ${title} in your recommendation list?`)) {
+    				$checkAnimeLoaderStatus().then(() => {
+    					set_store_value(hiddenEntries, $hiddenEntries[animeID] = true, $hiddenEntries);
+
+    					if ($finalAnimeList.length) {
+    						if ($animeLoaderWorker instanceof Worker) {
+    							$animeLoaderWorker?.postMessage?.({ removeID: animeID });
+    						}
+    					}
+    				}).catch(() => {
+    					$confirmPromise({
+    						isAlert: true,
+    						title: "Something went wrong",
+    						text: "Hiding anime has failed, please try again."
+    					});
+    				});
+
+    				set_store_value(animeOptionVisible, $animeOptionVisible = false, $animeOptionVisible);
+    			}
+    		}
+    	}
+
+    	function loadAnimeOption() {
+    		let openedAnime = $finalAnimeList?.[$openedAnimeOptionIdx ?? -1];
+
+    		if (openedAnime) {
+    			$$invalidate(0, shownTitle = openedAnime?.shownTitle);
+    			$$invalidate(1, animeCopyTitle = youtubeSearchTitle = openedAnime?.copiedTitle);
+    			$$invalidate(2, animeID = openedAnime.id);
+    			animeUrl = openedAnime.animeUrl;
+    			animeIdx = $openedAnimeOptionIdx;
+    		} else {
+    			set_store_value(animeOptionVisible, $animeOptionVisible = false, $animeOptionVisible);
+    		}
+    	}
+
+    	finalAnimeList.subscribe(() => {
+    		if ($animeOptionVisible) {
+    			loadAnimeOption();
+    		}
+    	});
+
+    	const writable_props = [];
+
+    	Object.keys($$props).forEach(key => {
+    		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== '$$' && key !== 'slot') console.warn(`<AnimeOptionsPopup> was created with unknown prop '${key}'`);
+    	});
+
+    	const keydown_handler = e => e.key === "Enter" && handleAnimeOptionVisibility(e);
+    	const keydown_handler_1 = e => e.key === "Enter" && openAnimePopup(e);
+    	const keydown_handler_2 = e => e.key === "Enter" && openInAnilist(e);
+    	const keydown_handler_3 = e => e.key === "Enter" && openInYoutube(e);
+    	const keydown_handler_4 = e => e.key === "Enter" && copyTitle(e);
+    	const keydown_handler_5 = e => e.key === "Enter" && handleHideShow(e);
+    	const keydown_handler_6 = e => e.key === "Enter" && handleAnimeOptionVisibility(e);
+
+    	$$self.$capture_state = () => ({
+    		fade,
+    		android: android$1,
+    		animeOptionVisible,
+    		openedAnimeOptionIdx,
+    		finalAnimeList,
+    		popupVisible,
+    		openedAnimePopupIdx,
+    		hiddenEntries,
+    		animeLoaderWorker: animeLoaderWorker$1,
+    		confirmPromise,
+    		checkAnimeLoaderStatus,
+    		ncsCompare,
+    		shownTitle,
+    		youtubeSearchTitle,
+    		animeCopyTitle,
+    		animeID,
+    		animeUrl,
+    		animeIdx,
+    		isRecentlyOpened,
+    		isRecentlyOpenedTimeout,
+    		handleTouchAnimeOptionVisibility,
+    		handleAnimeOptionVisibility,
+    		openAnimePopup,
+    		openInAnilist,
+    		openInYoutube,
+    		copyTitle,
+    		handleHideShow,
+    		loadAnimeOption,
+    		$animeOptionVisible,
+    		$openedAnimeOptionIdx,
+    		$finalAnimeList,
+    		$confirmPromise,
+    		$animeLoaderWorker,
+    		$hiddenEntries,
+    		$checkAnimeLoaderStatus,
+    		$android,
+    		$popupVisible,
+    		$openedAnimePopupIdx
+    	});
+
+    	$$self.$inject_state = $$props => {
+    		if ('shownTitle' in $$props) $$invalidate(0, shownTitle = $$props.shownTitle);
+    		if ('youtubeSearchTitle' in $$props) youtubeSearchTitle = $$props.youtubeSearchTitle;
+    		if ('animeCopyTitle' in $$props) $$invalidate(1, animeCopyTitle = $$props.animeCopyTitle);
+    		if ('animeID' in $$props) $$invalidate(2, animeID = $$props.animeID);
+    		if ('animeUrl' in $$props) animeUrl = $$props.animeUrl;
+    		if ('animeIdx' in $$props) animeIdx = $$props.animeIdx;
+    		if ('isRecentlyOpened' in $$props) isRecentlyOpened = $$props.isRecentlyOpened;
+    		if ('isRecentlyOpenedTimeout' in $$props) isRecentlyOpenedTimeout = $$props.isRecentlyOpenedTimeout;
+    	};
+
+    	if ($$props && "$$inject" in $$props) {
+    		$$self.$inject_state($$props.$$inject);
+    	}
+
+    	return [
+    		shownTitle,
+    		animeCopyTitle,
+    		animeID,
+    		$animeOptionVisible,
+    		$finalAnimeList,
+    		$hiddenEntries,
+    		$popupVisible,
+    		handleTouchAnimeOptionVisibility,
+    		handleAnimeOptionVisibility,
+    		openAnimePopup,
+    		openInAnilist,
+    		openInYoutube,
+    		copyTitle,
+    		handleHideShow,
+    		loadAnimeOption,
+    		keydown_handler,
+    		keydown_handler_1,
+    		keydown_handler_2,
+    		keydown_handler_3,
+    		keydown_handler_4,
+    		keydown_handler_5,
+    		keydown_handler_6
+    	];
+    }
+
+    class AnimeOptionsPopup extends SvelteComponentDev {
+    	constructor(options) {
+    		super(options);
+    		init(this, options, instance$5, create_fragment$5, safe_not_equal, {}, null, [-1, -1]);
+
+    		dispatch_dev("SvelteRegisterComponent", {
+    			component: this,
+    			tagName: "AnimeOptionsPopup",
+    			options,
+    			id: create_fragment$5.name
+    		});
+    	}
+    }
+
+    /* src\components\Fixed\Navigator.svelte generated by Svelte v3.59.1 */
+
+    const { console: console_1$1 } = globals;
+    const file$4 = "src\\components\\Fixed\\Navigator.svelte";
+
+    function create_fragment$4(ctx) {
+    	let div4;
+    	let nav;
+    	let div0;
+    	let svg0;
+    	let path0;
+    	let t0;
+    	let div2;
+    	let label;
+    	let t2;
+    	let input;
+    	let t3;
+    	let div1;
+    	let t4_value = (/*typedUsername*/ ctx[0] || "Your Anilist Username") + "";
+    	let t4;
+    	let t5;
+    	let div3;
+    	let svg1;
+    	let path1;
+    	let nav_class_value;
+    	let mounted;
+    	let dispose;
+
+    	const block = {
+    		c: function create() {
+    			div4 = element("div");
+    			nav = element("nav");
+    			div0 = element("div");
+    			svg0 = svg_element("svg");
+    			path0 = svg_element("path");
+    			t0 = space();
+    			div2 = element("div");
+    			label = element("label");
+    			label.textContent = "Anilist Username";
+    			t2 = space();
+    			input = element("input");
+    			t3 = space();
+    			div1 = element("div");
+    			t4 = text(t4_value);
+    			t5 = space();
+    			div3 = element("div");
+    			svg1 = svg_element("svg");
+    			path1 = svg_element("path");
+    			attr_dev(path0, "d", "M9 233a32 32 0 0 0 0 46l160 160a32 32 0 0 0 46-46L109 288h307a32 32 0 1 0 0-64H109l106-105a32 32 0 0 0-46-46L9 233z");
+    			attr_dev(path0, "class", "svelte-njo0m1");
+    			add_location(path0, file$4, 323, 17, 12315);
+    			attr_dev(svg0, "class", "goback svelte-njo0m1");
+    			attr_dev(svg0, "tabindex", "0");
+    			attr_dev(svg0, "viewBox", "0 0 448 512");
+    			add_location(svg0, file$4, 318, 12, 12117);
+    			attr_dev(div0, "class", "go-back-container svelte-njo0m1");
+    			add_location(div0, file$4, 316, 8, 12015);
+    			attr_dev(label, "class", "disable-interaction svelte-njo0m1");
+    			attr_dev(label, "for", "usernameInput");
+    			add_location(label, file$4, 329, 12, 12567);
+    			attr_dev(input, "id", "usernameInput");
+    			attr_dev(input, "type", "search");
+    			attr_dev(input, "enterkeyhint", "search");
+    			attr_dev(input, "autocomplete", "off");
+    			attr_dev(input, "placeholder", "Your Anilist Username");
+    			attr_dev(input, "class", "svelte-njo0m1");
+    			add_location(input, file$4, 332, 12, 12692);
+    			attr_dev(div1, "class", "" + (null_to_empty("usernameText") + " svelte-njo0m1"));
+    			add_location(div1, file$4, 344, 12, 13191);
+    			attr_dev(div2, "class", "input-search svelte-njo0m1");
+    			add_location(div2, file$4, 328, 8, 12527);
+    			attr_dev(path1, "d", "m144 7-2 2-1 1c-2 0-9 7-9 9l-2 2-1 1-1 2-3 5c-1 3-3 4-4 5l-1 3-1 1v1l-1 1-15 1-12 1c-11 1-12 1-18-4l-7-6-6-6-4-2s-2-1-2-3-3-2-3-2l-2-2-2-1-1-1-2-1-2-1-8-4c-3 0-7 5-6 6l-1 1v24a350 350 0 0 0 7 36c0 2-1 3-2 3v2l-1 1-3 7-1 2-3 9a61 61 0 0 0 4 30v2l2 3 3 7 1 1v1l1 2 1 1 1 1c0 1 0 2 2 3l2 4 2 2 2 2 6 7 5 7 1 1 1 1v3l4 10 1 14a75 75 0 0 0 2 19l1 4v2l2 3v2a205 205 0 0 0 15 29l1 1v1a128 128 0 0 1 11 22v1l1 1 1 1v3l1 2 2 5a480 480 0 0 1-2 93c0 1-4 6-6 6l-11 11-1 4c-2 3 0 7 8 14 1 1 2 2 1 3l1 3v1l1 2 1 2 3 3h3l1 1 4 1 2 1c0 1 16 2 19 1l2-1h2l7-5 1-1c2 0 11-10 12-13l1-2 1-1c-1-3 0-3 8-2l5 1 2 1-1 3-1 9 2 3 1 2 1 2 3 3 2 1 2 1 4 2 14 1a232 232 0 0 0 56-9l4-1 4-1h8l3 2h1l2 1a93 93 0 0 0 30-1l6-3 4-1 1-1 1-1h2l1-1 1-1 3-1 4-2h3l1-1h2l1-1h2l2-1h2l2-1h2l2-1 3-1h6c12-2 16-2 30-2a174 174 0 0 1 45 5l2 1h3l5 3 5 2 1 1 3 3 3 3 1 1 1 4c0 3-1 4-4 7l-4 3-1 1-8 4-5 2-8 2-5 2h-1l-2 1h-2l-3 1-1 1h-2l-3 1h-4l-10 2c-2 1-11 9-11 11-1 5 0 8 2 10l4 3 2 1 16 1 18-1 5-1 2-1h2l2-1h2l2-1h2l1-1h2l1-1 2-1h2l3-1 3-2h2l1-1 1-1c1 1 13-5 13-6h1l1-1 2-1 1-1h1l2-1 2-2 2-1 1-2c2 0 9-7 9-9l2-1 1-2v-1l1-1v-1l1-1v-1l1-2v-2c1-2 1-8-1-12v-1l-1-1-1-1c0-2-11-14-13-14l-2-2-2-2-2-1-5-3c-3-1-4-3-5-4l-3-1-1-1h-1l-1-1c0-1-4-3-5-2l-1-1h-1l-1-1-1-1-4-1-3-1-1-1h-1l-1-1h-2c-1 1-1 0-1-1h-2l-1-1-1-1h-2l-2-1h-2l-4-1-6-2-6-1-4-1-3-1-12-1a252 252 0 0 0-76 1v-2l1-3 1-5 1-2v-1l1-3 1-4 2-11 1-6c4-24 4-56 1-78l-1-5-1-3-1-7-1-2-1-3-1-5v-1l-1-1v-2l-1-1v-2l-1-2-1-3-1-2-1-3-1-1v-1l-1-1v-1l-1-1-2-4-3-5-1-1-1-2-1-1-1-2-1-1-1-3-2-1-9-11a68 68 0 0 0-15-12l-4-3-1-1-1-1-2-1-2-2-3-1-5-2-1-1h-1l-1-1-1-1-4-1-3-1-2-2h-3l-1-1h-2l-1-1h-2l-1-1h-2l-1-1-3-1h-3l-1-2-2-1-1-1-2-1h-1l-2-2-2-1-2-2c-1 0-10-9-10-11l-2-2-1-1-1-3a66 66 0 0 0-16-15l-1-1-2-1-1-1-3-1v-2l-1-1v-2l-1-1-1-2v-2l-2-3v-3l-1-1-1-1-4-9-2-2c-1-2-1-4 1-12a233 233 0 0 0 1-52v-2l-2-5c-2-3-3-3-6-3h-7z");
+    			attr_dev(path1, "class", "svelte-njo0m1");
+    			add_location(path1, file$4, 374, 16, 14289);
+    			attr_dev(svg1, "viewBox", "0 0 500 500");
+    			attr_dev(svg1, "class", "logo-icon svelte-njo0m1");
+    			attr_dev(svg1, "aria-label", "Kanshi Logo");
+    			attr_dev(svg1, "tabindex", "0");
+    			add_location(svg1, file$4, 360, 12, 13778);
+    			attr_dev(div3, "class", "logo-icon-container svelte-njo0m1");
+    			add_location(div3, file$4, 353, 8, 13551);
+    			attr_dev(nav, "id", "nav");
+
+    			attr_dev(nav, "class", nav_class_value = "" + (null_to_empty("nav " + (/*$popupVisible*/ ctx[3] || /*$menuVisible*/ ctx[4]
+    			? "popupvisible"
+    			: /*inputUsernameEl*/ ctx[1] === document?.activeElement
+    				? "inputfocused"
+    				: "")) + " svelte-njo0m1"));
+
+    			add_location(nav, file$4, 304, 4, 11595);
+    			attr_dev(div4, "class", "nav-container svelte-njo0m1");
+    			add_location(div4, file$4, 299, 0, 11448);
+    		},
+    		l: function claim(nodes) {
+    			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, div4, anchor);
+    			append_dev(div4, nav);
+    			append_dev(nav, div0);
+    			append_dev(div0, svg0);
+    			append_dev(svg0, path0);
+    			append_dev(nav, t0);
+    			append_dev(nav, div2);
+    			append_dev(div2, label);
+    			append_dev(div2, t2);
+    			append_dev(div2, input);
+    			set_input_value(input, /*typedUsername*/ ctx[0]);
+    			/*input_binding*/ ctx[15](input);
+    			append_dev(div2, t3);
+    			append_dev(div2, div1);
+    			append_dev(div1, t4);
+    			append_dev(nav, t5);
+    			append_dev(nav, div3);
+    			append_dev(div3, svg1);
+    			append_dev(svg1, path1);
+    			/*nav_binding*/ ctx[18](nav);
+
+    			if (!mounted) {
+    				dispose = [
+    					listen_dev(svg0, "keydown", /*keydown_handler*/ ctx[12], false, false, false, false),
+    					listen_dev(div0, "click", /*handleGoBack*/ ctx[8], false, false, false, false),
+    					listen_dev(input, "keydown", /*keydown_handler_1*/ ctx[13], false, false, false, false),
+    					listen_dev(input, "focusin", /*onfocusUsernameInput*/ ctx[11], false, false, false, false),
+    					listen_dev(input, "focusout", /*onfocusUsernameInput*/ ctx[11], false, false, false, false),
+    					listen_dev(input, "input", /*input_input_handler*/ ctx[14]),
+    					listen_dev(div1, "click", /*focusInputUsernameEl*/ ctx[7], false, false, false, false),
+    					listen_dev(div1, "keydown", /*keydown_handler_2*/ ctx[16], false, false, false, false),
+    					listen_dev(svg1, "keydown", /*keydown_handler_3*/ ctx[17], false, false, false, false),
+    					listen_dev(div3, "pointerdown", /*handleGoUp*/ ctx[9], false, false, false, false),
+    					listen_dev(div3, "pointerup", /*cancelGoUp*/ ctx[10], false, false, false, false),
+    					listen_dev(div3, "pointercancel", /*cancelGoUp*/ ctx[10], false, false, false, false),
+    					listen_dev(div4, "keydown", /*keydown_handler_4*/ ctx[19], false, false, false, false),
+    					listen_dev(div4, "click", /*handleMenuVisibility*/ ctx[6], false, false, false, false)
+    				];
+
+    				mounted = true;
+    			}
+    		},
+    		p: function update(ctx, dirty) {
+    			if (dirty[0] & /*typedUsername*/ 1 && input.value !== /*typedUsername*/ ctx[0]) {
+    				set_input_value(input, /*typedUsername*/ ctx[0]);
+    			}
+
+    			if (dirty[0] & /*typedUsername*/ 1 && t4_value !== (t4_value = (/*typedUsername*/ ctx[0] || "Your Anilist Username") + "")) set_data_dev(t4, t4_value);
+
+    			if (dirty[0] & /*$popupVisible, $menuVisible, inputUsernameEl*/ 26 && nav_class_value !== (nav_class_value = "" + (null_to_empty("nav " + (/*$popupVisible*/ ctx[3] || /*$menuVisible*/ ctx[4]
+    			? "popupvisible"
+    			: /*inputUsernameEl*/ ctx[1] === document?.activeElement
+    				? "inputfocused"
+    				: "")) + " svelte-njo0m1"))) {
+    				attr_dev(nav, "class", nav_class_value);
+    			}
+    		},
+    		i: noop,
+    		o: noop,
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(div4);
+    			/*input_binding*/ ctx[15](null);
+    			/*nav_binding*/ ctx[18](null);
+    			mounted = false;
+    			run_all(dispose);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_fragment$4.name,
+    		type: "component",
+    		source: "",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    function instance$4($$self, $$props, $$invalidate) {
+    	let $confirmPromise;
+    	let $gridFullView;
+    	let $popupVisible;
+    	let $menuVisible;
+    	let $dataStatus;
+    	let $username;
+    	let $userRequestIsRunning;
+    	let $finalAnimeList;
+    	let $initData;
+    	validate_store(confirmPromise, 'confirmPromise');
+    	component_subscribe($$self, confirmPromise, $$value => $$invalidate(25, $confirmPromise = $$value));
+    	validate_store(gridFullView, 'gridFullView');
+    	component_subscribe($$self, gridFullView, $$value => $$invalidate(26, $gridFullView = $$value));
+    	validate_store(popupVisible, 'popupVisible');
+    	component_subscribe($$self, popupVisible, $$value => $$invalidate(3, $popupVisible = $$value));
+    	validate_store(menuVisible, 'menuVisible');
+    	component_subscribe($$self, menuVisible, $$value => $$invalidate(4, $menuVisible = $$value));
+    	validate_store(dataStatus, 'dataStatus');
+    	component_subscribe($$self, dataStatus, $$value => $$invalidate(27, $dataStatus = $$value));
+    	validate_store(username, 'username');
+    	component_subscribe($$self, username, $$value => $$invalidate(28, $username = $$value));
+    	validate_store(userRequestIsRunning, 'userRequestIsRunning');
+    	component_subscribe($$self, userRequestIsRunning, $$value => $$invalidate(29, $userRequestIsRunning = $$value));
+    	validate_store(finalAnimeList, 'finalAnimeList');
+    	component_subscribe($$self, finalAnimeList, $$value => $$invalidate(30, $finalAnimeList = $$value));
+    	validate_store(initData, 'initData');
+    	component_subscribe($$self, initData, $$value => $$invalidate(31, $initData = $$value));
+    	let { $$slots: slots = {}, $$scope } = $$props;
+    	validate_slots('Navigator', slots, []);
+    	let writableSubscriptions = [];
+    	let typedUsername = "";
+
+    	let animeGridEl,
+    		popupContainer,
+    		navEl,
+    		inputUsernameEl,
+    		inputUsernameElFocused = false;
+
+    	onMount(() => {
+    		$$invalidate(2, navEl = navEl || document?.getElementById("nav"));
+    		$$invalidate(1, inputUsernameEl = inputUsernameEl || document?.getElementById("usernameInput"));
+    		animeGridEl = animeGridEl || document?.getElementById("anime-grid");
+    		popupContainer = popupContainer || document?.getElementById("popup-container");
+
+    		writableSubscriptions.push(username.subscribe(val => {
+    			$$invalidate(0, typedUsername = val || "");
+    		}));
+    	});
+
+    	async function updateUsername(event) {
+    		if ($initData) {
+    			await pleaseWaitAlert();
+    			focusInputUsernameEl();
+    			return;
+    		}
+
+    		let element = event.target;
+    		let classList = element.classList;
+
+    		if (event.key === "Enter" || event.type === "click" && (classList.contains("searchBtn") || element?.closest?.(".searchBtn"))) {
+    			if (!typedUsername) return;
+
+    			if (typedUsername !== $username) {
+    				if (!navigator.onLine) {
+    					return $confirmPromise({
+    						isAlert: true,
+    						title: "Currently Offline",
+    						text: "It seems that you're currently offline and unable to update."
+    					});
+    				}
+
+    				(async () => {
+    					if ($username) {
+    						if (await $confirmPromise(`Currently connected to ${$username}, do you want to change account?`)) {
+    							set_store_value(menuVisible, $menuVisible = false, $menuVisible);
+
+    							if (!$popupVisible) {
+    								document.documentElement.style.overflow = "hidden";
+    								document.documentElement.style.overflow = "";
+    								window?.scrollTo?.({ top: -9999, behavior: "smooth" });
+    								set_store_value(finalAnimeList, $finalAnimeList = null, $finalAnimeList);
+    							}
+
+    							set_store_value(dataStatus, $dataStatus = "Getting User Entries", $dataStatus);
+    							set_store_value(userRequestIsRunning, $userRequestIsRunning = true, $userRequestIsRunning);
+
+    							requestUserEntries({ username: typedUsername }).then(({ newusername }) => {
+    								set_store_value(userRequestIsRunning, $userRequestIsRunning = false, $userRequestIsRunning);
+
+    								if (newusername) {
+    									setLocalStorage("username", newusername);
+    									$$invalidate(0, typedUsername = set_store_value(username, $username = newusername || "", $username));
+    									importantUpdate.update(e => !e);
+    								}
+    							}).catch(error => {
+    								set_store_value(dataStatus, $dataStatus = "Something went wrong...", $dataStatus);
+    								console.error(error);
+    							});
+    						} else {
+    							focusInputUsernameEl();
+    						}
+    					} else {
+    						if (await $confirmPromise(`Are you sure you want to connect to ${typedUsername}?`)) {
+    							set_store_value(menuVisible, $menuVisible = false, $menuVisible);
+
+    							if (!$popupVisible) {
+    								document.documentElement.style.overflow = "hidden";
+    								document.documentElement.style.overflow = "";
+    								window?.scrollTo?.({ top: -9999, behavior: "smooth" });
+    								set_store_value(finalAnimeList, $finalAnimeList = null, $finalAnimeList);
+    							}
+
+    							set_store_value(dataStatus, $dataStatus = "Getting User Entries", $dataStatus);
+    							set_store_value(userRequestIsRunning, $userRequestIsRunning = true, $userRequestIsRunning);
+
+    							await requestUserEntries({ username: typedUsername }).then(({ newusername }) => {
+    								set_store_value(userRequestIsRunning, $userRequestIsRunning = false, $userRequestIsRunning);
+
+    								if (newusername) {
+    									setLocalStorage("username", newusername);
+    									$$invalidate(0, typedUsername = set_store_value(username, $username = newusername || "", $username));
+    								}
+
+    								importantUpdate.update(e => !e);
+    							}).catch(error => {
+    								set_store_value(dataStatus, $dataStatus = "Something went wrong...", $dataStatus);
+    								console.error(error);
+    							});
+    						} else {
+    							focusInputUsernameEl();
+    						}
+    					}
+    				})();
+    			} else {
+    				inputUsernameEl?.blur?.();
+    				inputUsernameElFocused = false;
+    			}
+    		}
+    	}
+
+    	let goUpTimeout, goUpIsLongPressed;
+
+    	function handleMenuVisibility(event) {
+    		if (goUpIsLongPressed) {
+    			goUpIsLongPressed = false;
+    			return;
+    		}
+
+    		let element = event.target;
+    		let classList = element.classList;
+    		if (!classList.contains("nav") && !(classList.contains("logo-icon") || element.closest(".logo-icon"))) return;
+
+    		if (inputUsernameElFocused && !(classList.contains("logo-icon") || element.closest(".logo-icon"))) {
+    			inputUsernameEl?.blur?.();
+    			inputUsernameElFocused = false;
+    			return;
+    		}
+
+    		set_store_value(menuVisible, $menuVisible = !$menuVisible, $menuVisible);
+    	}
+
+    	async function focusInputUsernameEl() {
+    		// if (
+    		//     await $confirmPromise(
+    		//         `Do you want to connect to your account in Anilist?`
+    		//     )
+    		// ) {
+    		//     let webURL = window.location.href;
+    		//     let clientID;
+    		//     if (
+    		//         webURL.startsWith(
+    		//             "https://u-kuro.github.io/Kanshi.Anime-Recommendation"
+    		//         )
+    		//     ) {
+    		//         clientID = "13583";
+    		//     } else if (webURL.startsWith("file:///")) {
+    		//         clientID = "13584";
+    		//     } else if (webURL.startsWith("http://localhost:")) {
+    		//         clientID = "12476";
+    		//     } else if (webURL.startsWith("https://kanshi.vercel.app")) {
+    		//         clientID = "13582";
+    		//     }
+    		//     if (clientID) {
+    		//         window.location.href = `https://anilist.co/api/v2/oauth/authorize?client_id=${clientID}&response_type=token`;
+    		//     } else {
+    		//         inputUsernameEl?.focus?.();
+    		//     }
+    		// } else {
+    		inputUsernameEl?.focus?.();
+    	} // }
+
+    	function handleGoBack() {
+    		if (inputUsernameEl === document.activeElement || inputUsernameElFocused) {
+    			inputUsernameEl?.blur?.();
+    			inputUsernameElFocused = false;
+    		} else if ($menuVisible) {
+    			set_store_value(menuVisible, $menuVisible = !$menuVisible, $menuVisible);
+    		} else if ($popupVisible) {
+    			set_store_value(popupVisible, $popupVisible = false, $popupVisible);
+    		}
+    	}
+
+    	function handleGoUp() {
+    		if (goUpTimeout) clearTimeout(goUpTimeout);
+
+    		goUpTimeout = setTimeout(
+    			() => {
+    				goUpIsLongPressed = true;
+
+    				if ($popupVisible) {
+    					popupContainer.style.overflow = "hidden";
+    					popupContainer.style.overflow = "";
+
+    					popupContainer?.children?.[0]?.scrollIntoView?.({
+    						container: popupContainer,
+    						behavior: "smooth",
+    						block: "start",
+    						inline: "nearest"
+    					});
+    				} else {
+    					if ($gridFullView) {
+    						animeGridEl.style.overflow = "hidden";
+    						animeGridEl.style.overflow = "";
+
+    						animeGridEl?.children?.[0]?.scrollIntoView?.({
+    							container: animeGridEl,
+    							behavior: "smooth",
+    							block: "nearest",
+    							inline: "start"
+    						});
+    					} else {
+    						document.documentElement.style.overflow = "hidden";
+    						document.documentElement.style.overflow = "";
+    						window.scrollTo({ top: -9999, behavior: "smooth" });
+    					}
+    				}
+    			},
+    			500
+    		);
+    	}
+
+    	function cancelGoUp() {
+    		if (goUpTimeout) clearTimeout(goUpTimeout);
+
+    		if (goUpIsLongPressed) {
+    			goUpTimeout = setTimeout(
+    				() => {
+    					goUpIsLongPressed = false;
+    				},
+    				50
+    			);
+    		}
+    	}
+
+    	onDestroy(() => {
+    		writableSubscriptions.forEach(unsub => unsub());
+    	});
+
+    	async function pleaseWaitAlert() {
+    		return await $confirmPromise({
+    			isAlert: true,
+    			title: "Initializing resources",
+    			text: "Please wait a moment..."
+    		});
+    	}
+
+    	function onfocusUsernameInput(event) {
+    		if (event.type === "focusin") {
+    			inputUsernameElFocused = true;
+    			addClass(navEl, "inputfocused");
+    		} else {
+    			setTimeout(
+    				() => {
+    					removeClass(navEl, "inputfocused");
+    					inputUsernameElFocused = false;
+    				},
+    				100
+    			);
+    		}
+    	}
+
+    	const writable_props = [];
+
+    	Object.keys($$props).forEach(key => {
+    		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== '$$' && key !== 'slot') console_1$1.warn(`<Navigator> was created with unknown prop '${key}'`);
+    	});
+
+    	const keydown_handler = e => e.key === "Enter" && handleGoBack();
+    	const keydown_handler_1 = e => e.key === "Enter" && updateUsername(e);
+
+    	function input_input_handler() {
+    		typedUsername = this.value;
+    		$$invalidate(0, typedUsername);
+    	}
+
+    	function input_binding($$value) {
+    		binding_callbacks[$$value ? 'unshift' : 'push'](() => {
+    			inputUsernameEl = $$value;
+    			$$invalidate(1, inputUsernameEl);
+    		});
+    	}
+
+    	const keydown_handler_2 = e => e.key === "Enter" && focusInputUsernameEl();
+
+    	const keydown_handler_3 = e => {
+    		if (e.key === "Enter") {
+    			e.stopPropagation();
+    			set_store_value(menuVisible, $menuVisible = !$menuVisible, $menuVisible);
+    		} else if (e.key !== "Escape") {
+    			e.stopPropagation();
+    		}
+    	};
+
+    	function nav_binding($$value) {
+    		binding_callbacks[$$value ? 'unshift' : 'push'](() => {
+    			navEl = $$value;
+    			$$invalidate(2, navEl);
+    		});
+    	}
+
+    	const keydown_handler_4 = e => e.key === "Enter" && handleMenuVisibility(e);
+
+    	$$self.$capture_state = () => ({
+    		username,
+    		dataStatus,
+    		menuVisible,
+    		initData,
+    		importantUpdate,
+    		confirmPromise,
+    		popupVisible,
+    		finalAnimeList,
+    		gridFullView,
+    		userRequestIsRunning,
+    		addClass,
+    		removeClass,
+    		setLocalStorage,
+    		requestUserEntries,
+    		onMount,
+    		onDestroy,
+    		writableSubscriptions,
+    		typedUsername,
+    		animeGridEl,
+    		popupContainer,
+    		navEl,
+    		inputUsernameEl,
+    		inputUsernameElFocused,
+    		updateUsername,
+    		goUpTimeout,
+    		goUpIsLongPressed,
+    		handleMenuVisibility,
+    		focusInputUsernameEl,
+    		handleGoBack,
+    		handleGoUp,
+    		cancelGoUp,
+    		pleaseWaitAlert,
+    		onfocusUsernameInput,
+    		$confirmPromise,
+    		$gridFullView,
+    		$popupVisible,
+    		$menuVisible,
+    		$dataStatus,
+    		$username,
+    		$userRequestIsRunning,
+    		$finalAnimeList,
+    		$initData
+    	});
+
+    	$$self.$inject_state = $$props => {
+    		if ('writableSubscriptions' in $$props) writableSubscriptions = $$props.writableSubscriptions;
+    		if ('typedUsername' in $$props) $$invalidate(0, typedUsername = $$props.typedUsername);
+    		if ('animeGridEl' in $$props) animeGridEl = $$props.animeGridEl;
+    		if ('popupContainer' in $$props) popupContainer = $$props.popupContainer;
+    		if ('navEl' in $$props) $$invalidate(2, navEl = $$props.navEl);
+    		if ('inputUsernameEl' in $$props) $$invalidate(1, inputUsernameEl = $$props.inputUsernameEl);
+    		if ('inputUsernameElFocused' in $$props) inputUsernameElFocused = $$props.inputUsernameElFocused;
+    		if ('goUpTimeout' in $$props) goUpTimeout = $$props.goUpTimeout;
+    		if ('goUpIsLongPressed' in $$props) goUpIsLongPressed = $$props.goUpIsLongPressed;
+    	};
+
+    	if ($$props && "$$inject" in $$props) {
+    		$$self.$inject_state($$props.$$inject);
+    	}
+
+    	$$self.$$.update = () => {
+    		if ($$self.$$.dirty[0] & /*typedUsername, inputUsernameEl*/ 3) {
+    			((() => {
+    				if (typedUsername) {
+    					inputUsernameEl?.setCustomValidity?.("");
+    				}
+    			})());
+    		}
+    	};
+
+    	return [
+    		typedUsername,
+    		inputUsernameEl,
+    		navEl,
+    		$popupVisible,
+    		$menuVisible,
+    		updateUsername,
+    		handleMenuVisibility,
+    		focusInputUsernameEl,
+    		handleGoBack,
+    		handleGoUp,
+    		cancelGoUp,
+    		onfocusUsernameInput,
+    		keydown_handler,
+    		keydown_handler_1,
+    		input_input_handler,
+    		input_binding,
+    		keydown_handler_2,
+    		keydown_handler_3,
+    		nav_binding,
+    		keydown_handler_4
+    	];
+    }
+
+    class Navigator extends SvelteComponentDev {
+    	constructor(options) {
+    		super(options);
+    		init(this, options, instance$4, create_fragment$4, safe_not_equal, {}, null, [-1, -1]);
+
+    		dispatch_dev("SvelteRegisterComponent", {
+    			component: this,
+    			tagName: "Navigator",
+    			options,
+    			id: create_fragment$4.name
+    		});
+    	}
+    }
+
+    /* src\components\Fixed\Menu.svelte generated by Svelte v3.59.1 */
+    const file$3 = "src\\components\\Fixed\\Menu.svelte";
+
+    // (305:0) {#if $menuVisible}
+    function create_if_block$3(ctx) {
+    	let div1;
+    	let div0;
+    	let button0;
+    	let t1;
+    	let button1;
+    	let t3;
+    	let button2;
+    	let t5;
+    	let button3;
+    	let t7;
+    	let t8;
+    	let button4;
+    	let t9;
+    	let button4_class_value;
+    	let t10;
+    	let t11;
+    	let button5;
+    	let t13;
+    	let t14;
+    	let button6;
+    	let div1_outro;
+    	let current;
+    	let mounted;
+    	let dispose;
+    	let if_block0 = /*$android*/ ctx[1] && create_if_block_4$1(ctx);
+    	let if_block1 = /*$android*/ ctx[1] && create_if_block_3$1(ctx);
+    	let if_block2 = /*$android*/ ctx[1] && create_if_block_1$3(ctx);
+
+    	const block = {
+    		c: function create() {
+    			div1 = element("div");
+    			div0 = element("div");
+    			button0 = element("button");
+    			button0.textContent = "Update List";
+    			t1 = space();
+    			button1 = element("button");
+    			button1.textContent = "Show All Hidden Entries";
+    			t3 = space();
+    			button2 = element("button");
+    			button2.textContent = "Import Data";
+    			t5 = space();
+    			button3 = element("button");
+    			button3.textContent = "Export Data";
+    			t7 = space();
+    			if (if_block0) if_block0.c();
+    			t8 = space();
+    			button4 = element("button");
+    			t9 = text("Auto Update");
+    			t10 = space();
+    			if (if_block1) if_block1.c();
+    			t11 = space();
+    			button5 = element("button");
+    			button5.textContent = "Create an Anilist Account";
+    			t13 = space();
+    			if (if_block2) if_block2.c();
+    			t14 = space();
+    			button6 = element("button");
+    			button6.textContent = "Reload";
+    			attr_dev(button0, "class", "button svelte-1y97dfa");
+    			add_location(button0, file$3, 317, 12, 10459);
+    			attr_dev(button1, "class", "button svelte-1y97dfa");
+    			add_location(button1, file$3, 323, 12, 10676);
+    			attr_dev(button2, "class", "button svelte-1y97dfa");
+    			add_location(button2, file$3, 329, 12, 10925);
+    			attr_dev(button3, "class", "button svelte-1y97dfa");
+    			add_location(button3, file$3, 335, 12, 11142);
+    			attr_dev(button4, "class", button4_class_value = "" + (null_to_empty("button " + (/*$autoUpdate*/ ctx[5] ? "selected" : "")) + " svelte-1y97dfa"));
+    			add_location(button4, file$3, 352, 12, 11784);
+    			attr_dev(button5, "class", "button svelte-1y97dfa");
+    			add_location(button5, file$3, 368, 12, 12453);
+    			attr_dev(button6, "class", "button svelte-1y97dfa");
+    			add_location(button6, file$3, 405, 12, 14039);
+    			attr_dev(div0, "class", "menu svelte-1y97dfa");
+    			add_location(div0, file$3, 316, 8, 10427);
+    			attr_dev(div1, "class", "menu-container svelte-1y97dfa");
+    			add_location(div1, file$3, 305, 4, 10067);
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, div1, anchor);
+    			append_dev(div1, div0);
+    			append_dev(div0, button0);
+    			append_dev(div0, t1);
+    			append_dev(div0, button1);
+    			append_dev(div0, t3);
+    			append_dev(div0, button2);
+    			append_dev(div0, t5);
+    			append_dev(div0, button3);
+    			append_dev(div0, t7);
+    			if (if_block0) if_block0.m(div0, null);
+    			append_dev(div0, t8);
+    			append_dev(div0, button4);
+    			append_dev(button4, t9);
+    			append_dev(div0, t10);
+    			if (if_block1) if_block1.m(div0, null);
+    			append_dev(div0, t11);
+    			append_dev(div0, button5);
+    			append_dev(div0, t13);
+    			if (if_block2) if_block2.m(div0, null);
+    			append_dev(div0, t14);
+    			append_dev(div0, button6);
+    			current = true;
+
+    			if (!mounted) {
+    				dispose = [
+    					listen_dev(button0, "click", /*updateList*/ ctx[9], false, false, false, false),
+    					listen_dev(button0, "keydown", /*keydown_handler*/ ctx[22], false, false, false, false),
+    					listen_dev(button1, "click", /*showAllHiddenEntries*/ ctx[13], false, false, false, false),
+    					listen_dev(button1, "keydown", /*keydown_handler_1*/ ctx[23], false, false, false, false),
+    					listen_dev(button2, "click", /*importData*/ ctx[6], false, false, false, false),
+    					listen_dev(button2, "keydown", /*keydown_handler_2*/ ctx[24], false, false, false, false),
+    					listen_dev(button3, "click", /*exportData*/ ctx[8], false, false, false, false),
+    					listen_dev(button3, "keydown", /*keydown_handler_3*/ ctx[25], false, false, false, false),
+    					listen_dev(button4, "click", /*handleUpdateEveryHour*/ ctx[10], false, false, false, false),
+    					listen_dev(button4, "keydown", /*keydown_handler_5*/ ctx[27], false, false, false, false),
+    					listen_dev(button5, "click", /*anilistSignup*/ ctx[14], false, false, false, false),
+    					listen_dev(button5, "keydown", /*keydown_handler_7*/ ctx[29], false, false, false, false),
+    					listen_dev(button6, "keydown", /*keydown_handler_13*/ ctx[35], false, false, false, false),
+    					listen_dev(button6, "click", /*reload*/ ctx[18], false, false, false, false),
+    					listen_dev(div1, "click", /*click_handler*/ ctx[36], false, false, false, false),
+    					listen_dev(div1, "touchend", /*handleMenuVisibility*/ ctx[12], { passive: true }, false, false, false),
+    					listen_dev(div1, "keydown", /*keydown_handler_14*/ ctx[37], false, false, false, false)
+    				];
+
+    				mounted = true;
+    			}
+    		},
+    		p: function update(ctx, dirty) {
+    			if (/*$android*/ ctx[1]) {
+    				if (if_block0) {
+    					if_block0.p(ctx, dirty);
+    				} else {
+    					if_block0 = create_if_block_4$1(ctx);
+    					if_block0.c();
+    					if_block0.m(div0, t8);
+    				}
+    			} else if (if_block0) {
+    				if_block0.d(1);
+    				if_block0 = null;
+    			}
+
+    			if (!current || dirty[0] & /*$autoUpdate*/ 32 && button4_class_value !== (button4_class_value = "" + (null_to_empty("button " + (/*$autoUpdate*/ ctx[5] ? "selected" : "")) + " svelte-1y97dfa"))) {
+    				attr_dev(button4, "class", button4_class_value);
+    			}
+
+    			if (/*$android*/ ctx[1]) {
+    				if (if_block1) {
+    					if_block1.p(ctx, dirty);
+    				} else {
+    					if_block1 = create_if_block_3$1(ctx);
+    					if_block1.c();
+    					if_block1.m(div0, t11);
+    				}
+    			} else if (if_block1) {
+    				if_block1.d(1);
+    				if_block1 = null;
+    			}
+
+    			if (/*$android*/ ctx[1]) {
+    				if (if_block2) {
+    					if_block2.p(ctx, dirty);
+    				} else {
+    					if_block2 = create_if_block_1$3(ctx);
+    					if_block2.c();
+    					if_block2.m(div0, t14);
+    				}
+    			} else if (if_block2) {
+    				if_block2.d(1);
+    				if_block2 = null;
+    			}
+    		},
+    		i: function intro(local) {
+    			if (current) return;
+    			if (div1_outro) div1_outro.end(1);
+    			current = true;
+    		},
+    		o: function outro(local) {
+    			div1_outro = create_out_transition(div1, fade, { duration: 200 });
+    			current = false;
+    		},
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(div1);
+    			if (if_block0) if_block0.d();
+    			if (if_block1) if_block1.d();
+    			if (if_block2) if_block2.d();
+    			if (detaching && div1_outro) div1_outro.end();
+    			mounted = false;
+    			run_all(dispose);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_if_block$3.name,
+    		type: "if",
+    		source: "(305:0) {#if $menuVisible}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (342:12) {#if $android}
+    function create_if_block_4$1(ctx) {
+    	let button;
+    	let t_value = (/*$exportPathIsAvailable*/ ctx[4] ? "Change" : "Set") + " Export Folder" + "";
+    	let t;
+    	let mounted;
+    	let dispose;
+
+    	const block = {
+    		c: function create() {
+    			button = element("button");
+    			t = text(t_value);
+    			attr_dev(button, "class", "button svelte-1y97dfa");
+    			add_location(button, file$3, 342, 16, 11391);
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, button, anchor);
+    			append_dev(button, t);
+
+    			if (!mounted) {
+    				dispose = [
+    					listen_dev(button, "click", handleExportFolder, false, false, false, false),
+    					listen_dev(button, "keydown", /*keydown_handler_4*/ ctx[26], false, false, false, false)
+    				];
+
+    				mounted = true;
+    			}
+    		},
+    		p: function update(ctx, dirty) {
+    			if (dirty[0] & /*$exportPathIsAvailable*/ 16 && t_value !== (t_value = (/*$exportPathIsAvailable*/ ctx[4] ? "Change" : "Set") + " Export Folder" + "")) set_data_dev(t, t_value);
+    		},
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(button);
+    			mounted = false;
+    			run_all(dispose);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_if_block_4$1.name,
+    		type: "if",
+    		source: "(342:12) {#if $android}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (360:12) {#if $android}
+    function create_if_block_3$1(ctx) {
+    	let button;
+    	let t;
+    	let button_class_value;
+    	let mounted;
+    	let dispose;
+
+    	const block = {
+    		c: function create() {
+    			button = element("button");
+    			t = text("Auto Export");
+    			attr_dev(button, "class", button_class_value = "" + (null_to_empty("button " + (/*$autoExport*/ ctx[3] ? "selected" : "")) + " svelte-1y97dfa"));
+    			add_location(button, file$3, 360, 16, 12113);
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, button, anchor);
+    			append_dev(button, t);
+
+    			if (!mounted) {
+    				dispose = [
+    					listen_dev(button, "click", /*handleExportEveryHour*/ ctx[11], false, false, false, false),
+    					listen_dev(button, "keydown", /*keydown_handler_6*/ ctx[28], false, false, false, false)
+    				];
+
+    				mounted = true;
+    			}
+    		},
+    		p: function update(ctx, dirty) {
+    			if (dirty[0] & /*$autoExport*/ 8 && button_class_value !== (button_class_value = "" + (null_to_empty("button " + (/*$autoExport*/ ctx[3] ? "selected" : "")) + " svelte-1y97dfa"))) {
+    				attr_dev(button, "class", button_class_value);
+    			}
+    		},
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(button);
+    			mounted = false;
+    			run_all(dispose);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_if_block_3$1.name,
+    		type: "if",
+    		source: "(360:12) {#if $android}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (375:12) {#if $android}
+    function create_if_block_1$3(ctx) {
+    	let button0;
+    	let t1;
+    	let show_if = !window.location.protocol.startsWith("file:");
+    	let t2;
+    	let button1;
+    	let t4;
+    	let button2;
+    	let t6;
+    	let button3;
+    	let mounted;
+    	let dispose;
+    	let if_block = show_if && create_if_block_2$1(ctx);
+
+    	const block = {
+    		c: function create() {
+    			button0 = element("button");
+    			button0.textContent = "Show Recent Releases";
+    			t1 = space();
+    			if (if_block) if_block.c();
+    			t2 = space();
+    			button1 = element("button");
+    			button1.textContent = "Switch App Mode";
+    			t4 = space();
+    			button2 = element("button");
+    			button2.textContent = "Clear Cache";
+    			t6 = space();
+    			button3 = element("button");
+    			button3.textContent = "Refresh";
+    			attr_dev(button0, "class", "button svelte-1y97dfa");
+    			add_location(button0, file$3, 375, 16, 12722);
+    			attr_dev(button1, "class", "button svelte-1y97dfa");
+    			add_location(button1, file$3, 389, 16, 13367);
+    			attr_dev(button2, "class", "button svelte-1y97dfa");
+    			add_location(button2, file$3, 394, 16, 13596);
+    			attr_dev(button3, "class", "button svelte-1y97dfa");
+    			add_location(button3, file$3, 399, 16, 13815);
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, button0, anchor);
+    			insert_dev(target, t1, anchor);
+    			if (if_block) if_block.m(target, anchor);
+    			insert_dev(target, t2, anchor);
+    			insert_dev(target, button1, anchor);
+    			insert_dev(target, t4, anchor);
+    			insert_dev(target, button2, anchor);
+    			insert_dev(target, t6, anchor);
+    			insert_dev(target, button3, anchor);
+
+    			if (!mounted) {
+    				dispose = [
+    					listen_dev(button0, "keydown", /*keydown_handler_8*/ ctx[30], false, false, false, false),
+    					listen_dev(button0, "click", /*showRecentReleases*/ ctx[15], false, false, false, false),
+    					listen_dev(button1, "keydown", /*keydown_handler_10*/ ctx[32], false, false, false, false),
+    					listen_dev(button1, "click", /*switchAppMode*/ ctx[16], false, false, false, false),
+    					listen_dev(button2, "keydown", /*keydown_handler_11*/ ctx[33], false, false, false, false),
+    					listen_dev(button2, "click", /*clearCache*/ ctx[20], false, false, false, false),
+    					listen_dev(button3, "keydown", /*keydown_handler_12*/ ctx[34], false, false, false, false),
+    					listen_dev(button3, "click", /*refresh*/ ctx[19], false, false, false, false)
+    				];
+
+    				mounted = true;
+    			}
+    		},
+    		p: function update(ctx, dirty) {
+    			if (show_if) if_block.p(ctx, dirty);
+    		},
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(button0);
+    			if (detaching) detach_dev(t1);
+    			if (if_block) if_block.d(detaching);
+    			if (detaching) detach_dev(t2);
+    			if (detaching) detach_dev(button1);
+    			if (detaching) detach_dev(t4);
+    			if (detaching) detach_dev(button2);
+    			if (detaching) detach_dev(t6);
+    			if (detaching) detach_dev(button3);
+    			mounted = false;
+    			run_all(dispose);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_if_block_1$3.name,
+    		type: "if",
+    		source: "(375:12) {#if $android}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (382:16) {#if !window.location.protocol.startsWith("file:")}
+    function create_if_block_2$1(ctx) {
+    	let button;
+    	let mounted;
+    	let dispose;
+
+    	const block = {
+    		c: function create() {
+    			button = element("button");
+    			button.textContent = "Check for Updates";
+    			attr_dev(button, "class", "button svelte-1y97dfa");
+    			add_location(button, file$3, 382, 20, 13064);
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, button, anchor);
+
+    			if (!mounted) {
+    				dispose = [
+    					listen_dev(button, "keydown", /*keydown_handler_9*/ ctx[31], false, false, false, false),
+    					listen_dev(button, "click", /*checkForUpdates*/ ctx[17], false, false, false, false)
+    				];
+
+    				mounted = true;
+    			}
+    		},
+    		p: noop,
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(button);
+    			mounted = false;
+    			run_all(dispose);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_if_block_2$1.name,
+    		type: "if",
+    		source: "(382:16) {#if !window.location.protocol.startsWith(\\\"file:\\\")}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    function create_fragment$3(ctx) {
+    	let input;
+    	let t;
+    	let if_block_anchor;
+    	let current;
+    	let mounted;
+    	let dispose;
+    	let if_block = /*$menuVisible*/ ctx[2] && create_if_block$3(ctx);
+
+    	const block = {
+    		c: function create() {
+    			input = element("input");
+    			t = space();
+    			if (if_block) if_block.c();
+    			if_block_anchor = empty();
+    			attr_dev(input, "id", "import-file");
+    			attr_dev(input, "type", "file");
+    			attr_dev(input, "accept", ".json");
+    			set_style(input, "display", `none`);
+    			add_location(input, file$3, 296, 0, 9881);
+    		},
+    		l: function claim(nodes) {
+    			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, input, anchor);
+    			/*input_binding*/ ctx[21](input);
+    			insert_dev(target, t, anchor);
+    			if (if_block) if_block.m(target, anchor);
+    			insert_dev(target, if_block_anchor, anchor);
+    			current = true;
+
+    			if (!mounted) {
+    				dispose = listen_dev(input, "change", /*importJSONFile*/ ctx[7], false, false, false, false);
+    				mounted = true;
+    			}
+    		},
+    		p: function update(ctx, dirty) {
+    			if (/*$menuVisible*/ ctx[2]) {
+    				if (if_block) {
+    					if_block.p(ctx, dirty);
+
+    					if (dirty[0] & /*$menuVisible*/ 4) {
+    						transition_in(if_block, 1);
+    					}
+    				} else {
+    					if_block = create_if_block$3(ctx);
+    					if_block.c();
+    					transition_in(if_block, 1);
+    					if_block.m(if_block_anchor.parentNode, if_block_anchor);
+    				}
+    			} else if (if_block) {
+    				group_outros();
+
+    				transition_out(if_block, 1, 1, () => {
+    					if_block = null;
+    				});
+
+    				check_outros();
+    			}
+    		},
+    		i: function intro(local) {
+    			if (current) return;
+    			transition_in(if_block);
+    			current = true;
+    		},
+    		o: function outro(local) {
+    			transition_out(if_block);
+    			current = false;
+    		},
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(input);
+    			/*input_binding*/ ctx[21](null);
+    			if (detaching) detach_dev(t);
+    			if (if_block) if_block.d(detaching);
+    			if (detaching) detach_dev(if_block_anchor);
+    			mounted = false;
+    			dispose();
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_fragment$3.name,
+    		type: "component",
+    		source: "",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    function handleExportFolder() {
+    	try {
+    		JSBridge.chooseExportFolder();
+    	} catch(e) {
+    		
+    	}
+    }
+
+    function instance$3($$self, $$props, $$invalidate) {
+    	let $confirmPromise;
+    	let $android;
+    	let $appID;
+    	let $activeTagFilters;
+    	let $filterOptions;
+    	let $menuVisible;
+    	let $dataStatus;
+    	let $finalAnimeList;
+    	let $popupVisible;
+    	let $animeLoaderWorker;
+    	let $hiddenEntries;
+    	let $initData;
+    	let $autoExport;
+    	let $exportPathIsAvailable;
+    	let $autoUpdate;
+    	validate_store(confirmPromise, 'confirmPromise');
+    	component_subscribe($$self, confirmPromise, $$value => $$invalidate(38, $confirmPromise = $$value));
+    	validate_store(android$1, 'android');
+    	component_subscribe($$self, android$1, $$value => $$invalidate(1, $android = $$value));
+    	validate_store(appID, 'appID');
+    	component_subscribe($$self, appID, $$value => $$invalidate(39, $appID = $$value));
+    	validate_store(activeTagFilters, 'activeTagFilters');
+    	component_subscribe($$self, activeTagFilters, $$value => $$invalidate(40, $activeTagFilters = $$value));
+    	validate_store(filterOptions, 'filterOptions');
+    	component_subscribe($$self, filterOptions, $$value => $$invalidate(41, $filterOptions = $$value));
+    	validate_store(menuVisible, 'menuVisible');
+    	component_subscribe($$self, menuVisible, $$value => $$invalidate(2, $menuVisible = $$value));
+    	validate_store(dataStatus, 'dataStatus');
+    	component_subscribe($$self, dataStatus, $$value => $$invalidate(42, $dataStatus = $$value));
+    	validate_store(finalAnimeList, 'finalAnimeList');
+    	component_subscribe($$self, finalAnimeList, $$value => $$invalidate(43, $finalAnimeList = $$value));
+    	validate_store(popupVisible, 'popupVisible');
+    	component_subscribe($$self, popupVisible, $$value => $$invalidate(44, $popupVisible = $$value));
+    	validate_store(animeLoaderWorker$1, 'animeLoaderWorker');
+    	component_subscribe($$self, animeLoaderWorker$1, $$value => $$invalidate(45, $animeLoaderWorker = $$value));
+    	validate_store(hiddenEntries, 'hiddenEntries');
+    	component_subscribe($$self, hiddenEntries, $$value => $$invalidate(46, $hiddenEntries = $$value));
+    	validate_store(initData, 'initData');
+    	component_subscribe($$self, initData, $$value => $$invalidate(47, $initData = $$value));
+    	validate_store(autoExport, 'autoExport');
+    	component_subscribe($$self, autoExport, $$value => $$invalidate(3, $autoExport = $$value));
+    	validate_store(exportPathIsAvailable, 'exportPathIsAvailable');
+    	component_subscribe($$self, exportPathIsAvailable, $$value => $$invalidate(4, $exportPathIsAvailable = $$value));
+    	validate_store(autoUpdate, 'autoUpdate');
+    	component_subscribe($$self, autoUpdate, $$value => $$invalidate(5, $autoUpdate = $$value));
+    	let { $$slots: slots = {}, $$scope } = $$props;
+    	validate_slots('Menu', slots, []);
+    	let importFileInput;
+
+    	async function importData() {
+    		if ($initData) return pleaseWaitAlert();
+    		if (!(importFileInput instanceof Element)) return set_store_value(dataStatus, $dataStatus = "Something went wrong...", $dataStatus);
+
+    		if (await $confirmPromise({
+    			text: "Are you sure you want to import your Data?"
+    		})) {
+    			importFileInput.click();
+    		}
+    	}
+
+    	async function importJSONFile() {
+    		if (!(importFileInput instanceof Element)) return set_store_value(dataStatus, $dataStatus = "Something went wrong...", $dataStatus);
+    		let importedFile = importFileInput.files?.[0];
+
+    		if (importedFile) {
+    			let filename = importedFile.name;
+
+    			if (await $confirmPromise(`File ${filename ? "named [" + filename + "] " : ""}has been detected, do you want to continue the import?`)) {
+    				await saveJSON(true, "shouldProcessRecommendation");
+    				set_store_value(menuVisible, $menuVisible = false, $menuVisible);
+
+    				if (!$popupVisible) {
+    					document.documentElement.style.overflow = "hidden";
+    					document.documentElement.style.overflow = "";
+    					window?.scrollTo?.({ top: -9999, behavior: "smooth" });
+    					set_store_value(finalAnimeList, $finalAnimeList = null, $finalAnimeList);
+    				}
+
+    				importUserData({ importedFile }).then(() => {
+    					if (importFileInput instanceof Element) $$invalidate(0, importFileInput.value = null, importFileInput);
+    				}).catch(error => {
+    					set_store_value(dataStatus, $dataStatus = error || "Something went wrong...", $dataStatus);
+    					$$invalidate(0, importFileInput.value = null, importFileInput);
+    					importantUpdate.update(e => !e);
+    				});
+    			} else {
+    				if (importFileInput instanceof Element) $$invalidate(0, importFileInput.value = null, importFileInput);
+    			}
+    		} else {
+    			if (importFileInput instanceof Element) $$invalidate(0, importFileInput.value = null, importFileInput);
+    		}
+    	}
+
+    	window.setExportPathAvailability = async (value = true) => {
+    		set_store_value(exportPathIsAvailable, $exportPathIsAvailable = value, $exportPathIsAvailable);
+    		setLocalStorage("exportPathIsAvailable", value);
+    		await saveJSON(value, "exportPathIsAvailable");
+    	};
+
+    	async function exportData() {
+    		if ($initData) return pleaseWaitAlert();
+    		if (!$exportPathIsAvailable && $android) return handleExportFolder();
+
+    		if (await $confirmPromise("Are you sure you want to export your data?")) {
+    			set_store_value(menuVisible, $menuVisible = false, $menuVisible);
+    			runExport.update(e => !e);
+    		}
+    	}
+
+    	async function updateList() {
+    		if ($initData) return pleaseWaitAlert(); else if (!navigator.onLine) {
+    			return $confirmPromise({
+    				isAlert: true,
+    				title: "Currently offline",
+    				text: "It seems that you're currently offline and unable to update."
+    			});
+    		}
+
+    		if (await $confirmPromise("Are you sure you want to update your list?")) {
+    			set_store_value(menuVisible, $menuVisible = false, $menuVisible);
+    			runUpdate.update(e => !e);
+    		}
+    	}
+
+    	async function handleUpdateEveryHour() {
+    		if (await $confirmPromise(`Are you sure you want to ${$autoUpdate ? "disable" : "enable"} auto-update?`)) {
+    			set_store_value(autoUpdate, $autoUpdate = !$autoUpdate, $autoUpdate);
+    		}
+    	}
+
+    	async function handleExportEveryHour() {
+    		if (!$exportPathIsAvailable && $android) return handleExportFolder();
+
+    		if (await $confirmPromise(`Are you sure you want to ${$autoExport ? "disable" : "enable"} auto-export?`)) {
+    			set_store_value(autoExport, $autoExport = !$autoExport, $autoExport);
+    		}
+    	}
+
+    	function handleMenuVisibility(event) {
+    		let element = event.target;
+    		let classList = element.classList;
+    		if (classList.contains("button")) return;
+    		set_store_value(menuVisible, $menuVisible = !$menuVisible, $menuVisible);
+    	}
+
+    	async function showAllHiddenEntries() {
+    		if ($initData) return pleaseWaitAlert();
+
+    		if (jsonIsEmpty($hiddenEntries)) {
+    			// Alert No Hidden Entries
+    			$confirmPromise({
+    				isAlert: true,
+    				text: "There is currently no hidden entries."
+    			});
+
+    			return;
+    		} else if (await $confirmPromise("Are you sure you want to show all hidden anime entries?")) {
+    			if ($animeLoaderWorker) {
+    				$animeLoaderWorker.terminate();
+    				set_store_value(animeLoaderWorker$1, $animeLoaderWorker = null, $animeLoaderWorker);
+    			}
+
+    			if (!$popupVisible) {
+    				set_store_value(finalAnimeList, $finalAnimeList = null, $finalAnimeList);
+    			}
+
+    			set_store_value(dataStatus, $dataStatus = "Updating List", $dataStatus);
+    			set_store_value(menuVisible, $menuVisible = false, $menuVisible);
+    			let filterSelectionIdx = $filterOptions?.filterSelection?.findIndex?.(({ filterSelectionName }) => filterSelectionName === "Anime Filter");
+    			let checkBoxFilterIdx = $filterOptions?.filterSelection?.[filterSelectionIdx ?? -1]?.filters?.Checkbox?.findIndex?.(({ filName }) => filName === "hidden anime");
+
+    			if (filterSelectionIdx >= 0 && checkBoxFilterIdx >= 0) {
+    				set_store_value(filterOptions, $filterOptions.filterSelection[filterSelectionIdx ?? -1].filters.Checkbox[checkBoxFilterIdx ?? -1].isSelected = false, $filterOptions);
+    			}
+
+    			if ($activeTagFilters?.["Anime Filter"]) {
+    				set_store_value(activeTagFilters, $activeTagFilters["Anime Filter"] = $activeTagFilters["Anime Filter"].filter(({ optionName, filterType }) => optionName !== "hidden" && filterType !== "checkbox"), $activeTagFilters);
+    			}
+
+    			await saveJSON($filterOptions, "filterOptions");
+    			await saveJSON($activeTagFilters, "activeTagFilters");
+    			await saveJSON({}, "hiddenEntries");
+    			importantLoad.update(e => !e);
+    		}
+    	}
+
+    	async function anilistSignup() {
+    		if (await $confirmPromise("Are you sure want to sign-up an anilist account?")) {
+    			window.open("https://anilist.co/signup", "_blank");
+    		}
+    	}
+
+    	function showRecentReleases() {
+    		if (!$android) return;
+
+    		try {
+    			JSBridge.showRecentReleases();
+    		} catch(e) {
+    			
+    		}
+    	}
+
+    	function switchAppMode() {
+    		if (!$android) return;
+
+    		try {
+    			JSBridge.switchApp();
+    		} catch(e) {
+    			
+    		}
+    	}
+
+    	function checkForUpdates() {
+    		if (!navigator.onLine) {
+    			return $confirmPromise({
+    				isAlert: true,
+    				title: "Currently offline",
+    				text: "It seems that you're currently offline and unable to check for updates."
+    			});
+    		} else {
+    			if (!$android) return;
+
+    			try {
+    				JSBridge.checkAppID($appID, true);
+    			} catch(e) {
+    				
+    			}
+    		}
+    	}
+
+    	async function reload() {
+    		if (await $confirmPromise("Are you sure want to reload the resources?")) {
+    			document.querySelectorAll("script")?.forEach(script => {
+    				if (script.src && script.src !== "https://www.youtube.com/iframe_api?v=16") {
+    					script.src = script.src;
+    				}
+    			});
+
+    			document.querySelectorAll("img")?.forEach(image => {
+    				if (!image.naturalHeight) {
+    					image.src = image.src;
+    				}
+    			});
+
+    			window.reloadYoutube?.();
+    		}
+    	}
+
+    	async function refresh() {
+    		if (!$android) return;
+
+    		if (await $confirmPromise("Are you sure want to refresh the app?")) {
+    			try {
+    				JSBridge.refreshWeb();
+    			} catch(e) {
+    				
+    			}
+    		}
+    	}
+
+    	async function clearCache() {
+    		if (!$android) return;
+
+    		if (await $confirmPromise("Are you sure want to clear the cache?")) {
+    			try {
+    				JSBridge.clearCache();
+    			} catch(e) {
+    				
+    			}
+    		}
+    	}
+
+    	function pleaseWaitAlert() {
+    		$confirmPromise({
+    			isAlert: true,
+    			title: "Initializing resources",
+    			text: "Please wait a moment..."
+    		});
+    	}
+
+    	const writable_props = [];
+
+    	Object.keys($$props).forEach(key => {
+    		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== '$$' && key !== 'slot') console.warn(`<Menu> was created with unknown prop '${key}'`);
+    	});
+
+    	function input_binding($$value) {
+    		binding_callbacks[$$value ? 'unshift' : 'push'](() => {
+    			importFileInput = $$value;
+    			$$invalidate(0, importFileInput);
+    		});
+    	}
+
+    	const keydown_handler = e => e.key === "Enter" && updateList();
+    	const keydown_handler_1 = e => e.key === "Enter" && showAllHiddenEntries();
+    	const keydown_handler_2 = e => e.key === "Enter" && importData();
+    	const keydown_handler_3 = e => e.key === "Enter" && exportData();
+    	const keydown_handler_4 = e => e.key === "Enter" && handleExportFolder();
+    	const keydown_handler_5 = e => e.key === "Enter" && handleUpdateEveryHour();
+    	const keydown_handler_6 = e => e.key === "Enter" && handleExportEveryHour();
+    	const keydown_handler_7 = e => e.key === "Enter" && anilistSignup();
+    	const keydown_handler_8 = e => e.key === "Enter" && showRecentReleases();
+    	const keydown_handler_9 = e => e.key === "Enter" && checkForUpdates();
+    	const keydown_handler_10 = e => e.key === "Enter" && switchAppMode();
+    	const keydown_handler_11 = e => e.key === "Enter" && clearCache();
+    	const keydown_handler_12 = e => e.key === "Enter" && refresh();
+    	const keydown_handler_13 = e => e.key === "Enter" && reload();
+
+    	const click_handler = e => {
+    		if (e.pointerType !== "touch") {
+    			handleMenuVisibility(e);
+    		}
+    	};
+
+    	const keydown_handler_14 = e => e.key === "Enter" && handleMenuVisibility(e);
+
+    	$$self.$capture_state = () => ({
+    		appID,
+    		android: android$1,
+    		menuVisible,
+    		hiddenEntries,
+    		animeLoaderWorker: animeLoaderWorker$1,
+    		finalAnimeList,
+    		dataStatus,
+    		autoUpdate,
+    		autoExport,
+    		exportPathIsAvailable,
+    		filterOptions,
+    		activeTagFilters,
+    		runUpdate,
+    		runExport,
+    		confirmPromise,
+    		initData,
+    		importantUpdate,
+    		importantLoad,
+    		popupVisible,
+    		fade,
+    		saveJSON,
+    		importUserData,
+    		jsonIsEmpty,
+    		setLocalStorage,
+    		importFileInput,
+    		importData,
+    		importJSONFile,
+    		handleExportFolder,
+    		exportData,
+    		updateList,
+    		handleUpdateEveryHour,
+    		handleExportEveryHour,
+    		handleMenuVisibility,
+    		showAllHiddenEntries,
+    		anilistSignup,
+    		showRecentReleases,
+    		switchAppMode,
+    		checkForUpdates,
+    		reload,
+    		refresh,
+    		clearCache,
+    		pleaseWaitAlert,
+    		$confirmPromise,
+    		$android,
+    		$appID,
+    		$activeTagFilters,
+    		$filterOptions,
+    		$menuVisible,
+    		$dataStatus,
+    		$finalAnimeList,
+    		$popupVisible,
+    		$animeLoaderWorker,
+    		$hiddenEntries,
+    		$initData,
+    		$autoExport,
+    		$exportPathIsAvailable,
+    		$autoUpdate
+    	});
+
+    	$$self.$inject_state = $$props => {
+    		if ('importFileInput' in $$props) $$invalidate(0, importFileInput = $$props.importFileInput);
+    	};
+
+    	if ($$props && "$$inject" in $$props) {
+    		$$self.$inject_state($$props.$$inject);
+    	}
+
+    	return [
+    		importFileInput,
+    		$android,
+    		$menuVisible,
+    		$autoExport,
+    		$exportPathIsAvailable,
+    		$autoUpdate,
+    		importData,
+    		importJSONFile,
+    		exportData,
+    		updateList,
+    		handleUpdateEveryHour,
+    		handleExportEveryHour,
+    		handleMenuVisibility,
+    		showAllHiddenEntries,
+    		anilistSignup,
+    		showRecentReleases,
+    		switchAppMode,
+    		checkForUpdates,
+    		reload,
+    		refresh,
+    		clearCache,
+    		input_binding,
+    		keydown_handler,
+    		keydown_handler_1,
+    		keydown_handler_2,
+    		keydown_handler_3,
+    		keydown_handler_4,
+    		keydown_handler_5,
+    		keydown_handler_6,
+    		keydown_handler_7,
+    		keydown_handler_8,
+    		keydown_handler_9,
+    		keydown_handler_10,
+    		keydown_handler_11,
+    		keydown_handler_12,
+    		keydown_handler_13,
+    		click_handler,
+    		keydown_handler_14
+    	];
+    }
+
+    class Menu extends SvelteComponentDev {
+    	constructor(options) {
+    		super(options);
+    		init(this, options, instance$3, create_fragment$3, safe_not_equal, {}, null, [-1, -1]);
+
+    		dispatch_dev("SvelteRegisterComponent", {
+    			component: this,
+    			tagName: "Menu",
+    			options,
+    			id: create_fragment$3.name
+    		});
+    	}
+    }
+
+    /* src\components\Others\Search.svelte generated by Svelte v3.59.1 */
+
+    const file$2 = "src\\components\\Others\\Search.svelte";
+
+    function get_each_context(ctx, list, i) {
+    	const child_ctx = ctx.slice();
+    	child_ctx[106] = list[i];
+    	return child_ctx;
+    }
+
+    function get_each_context_1(ctx, list, i) {
+    	const child_ctx = ctx.slice();
+    	child_ctx[109] = list[i];
+    	return child_ctx;
+    }
+
+    function get_each_context_7(ctx, list, i) {
+    	const child_ctx = ctx.slice();
+    	child_ctx[127] = list[i];
+    	return child_ctx;
+    }
+
+    function get_each_context_2(ctx, list, i) {
+    	const child_ctx = ctx.slice();
+    	child_ctx[112] = list[i];
+    	child_ctx[113] = list;
+    	child_ctx[114] = i;
+    	return child_ctx;
+    }
+
+    function get_each_context_3(ctx, list, i) {
+    	const child_ctx = ctx.slice();
+    	child_ctx[115] = list[i];
+    	child_ctx[117] = i;
+    	return child_ctx;
+    }
+
+    function get_each_context_4(ctx, list, i) {
+    	const child_ctx = ctx.slice();
+    	child_ctx[118] = list[i];
+    	child_ctx[119] = list;
+    	child_ctx[120] = i;
+    	return child_ctx;
+    }
+
+    function get_each_context_5(ctx, list, i) {
+    	const child_ctx = ctx.slice();
+    	child_ctx[121] = list[i];
+    	child_ctx[122] = list;
+    	child_ctx[123] = i;
+    	return child_ctx;
+    }
+
+    function get_each_context_6(ctx, list, i) {
+    	const child_ctx = ctx.slice();
+    	child_ctx[124] = list[i];
+    	child_ctx[126] = i;
+    	return child_ctx;
+    }
+
+    function get_each_context_8(ctx, list, i) {
+    	const child_ctx = ctx.slice();
+    	child_ctx[112] = list[i];
+    	return child_ctx;
+    }
+
+    // (1272:8) {:else}
+    function create_else_block_7(ctx) {
+    	let div;
+
+    	const block = {
+    		c: function create() {
+    			div = element("div");
+    			attr_dev(div, "class", "skeleton shimmer svelte-1d2ae4n");
+    			add_location(div, file$2, 1272, 12, 50964);
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, div, anchor);
+    		},
+    		p: noop,
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(div);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_else_block_7.name,
+    		type: "else",
+    		source: "(1272:8) {:else}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (1266:8) {#if $filterOptions}
+    function create_if_block_17(ctx) {
+    	let span;
+    	let h2;
+    	let t_value = (/*selectedFilterSelectionName*/ ctx[0] || "") + "";
+    	let t;
+
+    	const block = {
+    		c: function create() {
+    			span = element("span");
+    			h2 = element("h2");
+    			t = text(t_value);
+    			attr_dev(h2, "class", "svelte-1d2ae4n");
+    			add_location(h2, file$2, 1267, 16, 50828);
+    			attr_dev(span, "class", "svelte-1d2ae4n");
+    			add_location(span, file$2, 1266, 12, 50804);
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, span, anchor);
+    			append_dev(span, h2);
+    			append_dev(h2, t);
+    		},
+    		p: function update(ctx, dirty) {
+    			if (dirty[0] & /*selectedFilterSelectionName*/ 1 && t_value !== (t_value = (/*selectedFilterSelectionName*/ ctx[0] || "") + "")) set_data_dev(t, t_value);
+    		},
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(span);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_if_block_17.name,
+    		type: "if",
+    		source: "(1266:8) {#if $filterOptions}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (1275:8) {#if $dataStatus || !$username}
+    function create_if_block_14(ctx) {
+    	let span;
+    	let h2;
+    	let span_outro;
+    	let current;
+
+    	function select_block_type_1(ctx, dirty) {
+    		if (/*$dataStatus*/ ctx[15]) return create_if_block_15;
+    		if (!/*$username*/ ctx[17] && !/*$initData*/ ctx[14]) return create_if_block_16;
+    		return create_else_block_6;
+    	}
+
+    	let current_block_type = select_block_type_1(ctx);
+    	let if_block = current_block_type(ctx);
+
+    	const block = {
+    		c: function create() {
+    			span = element("span");
+    			h2 = element("h2");
+    			if_block.c();
+    			attr_dev(h2, "class", "svelte-1d2ae4n");
+    			add_location(h2, file$2, 1276, 16, 51139);
+    			attr_dev(span, "class", "data-status svelte-1d2ae4n");
+    			add_location(span, file$2, 1275, 12, 51066);
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, span, anchor);
+    			append_dev(span, h2);
+    			if_block.m(h2, null);
+    			current = true;
+    		},
+    		p: function update(ctx, dirty) {
+    			if (current_block_type === (current_block_type = select_block_type_1(ctx)) && if_block) {
+    				if_block.p(ctx, dirty);
+    			} else {
+    				if_block.d(1);
+    				if_block = current_block_type(ctx);
+
+    				if (if_block) {
+    					if_block.c();
+    					if_block.m(h2, null);
+    				}
+    			}
+    		},
+    		i: function intro(local) {
+    			if (current) return;
+    			if (span_outro) span_outro.end(1);
+    			current = true;
+    		},
+    		o: function outro(local) {
+    			span_outro = create_out_transition(span, fade, { duration: 200 });
+    			current = false;
+    		},
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(span);
+    			if_block.d();
+    			if (detaching && span_outro) span_outro.end();
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_if_block_14.name,
+    		type: "if",
+    		source: "(1275:8) {#if $dataStatus || !$username}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (1282:20) {:else}
+    function create_else_block_6(ctx) {
+    	let t_value = "" + "";
+    	let t;
+
+    	const block = {
+    		c: function create() {
+    			t = text(t_value);
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, t, anchor);
+    		},
+    		p: noop,
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(t);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_else_block_6.name,
+    		type: "else",
+    		source: "(1282:20) {:else}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (1280:55) 
+    function create_if_block_16(ctx) {
+    	let t_value = "No Anilist Username Found" + "";
+    	let t;
+
+    	const block = {
+    		c: function create() {
+    			t = text(t_value);
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, t, anchor);
+    		},
+    		p: noop,
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(t);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_if_block_16.name,
+    		type: "if",
+    		source: "(1280:55) ",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (1278:20) {#if $dataStatus}
+    function create_if_block_15(ctx) {
+    	let t;
+
+    	const block = {
+    		c: function create() {
+    			t = text(/*$dataStatus*/ ctx[15]);
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, t, anchor);
+    		},
+    		p: function update(ctx, dirty) {
+    			if (dirty[0] & /*$dataStatus*/ 32768) set_data_dev(t, /*$dataStatus*/ ctx[15]);
+    		},
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(t);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_if_block_15.name,
+    		type: "if",
+    		source: "(1278:20) {#if $dataStatus}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (1324:16) {#if $filterOptions}
+    function create_if_block_13(ctx) {
+    	let div3;
+    	let div1;
+    	let h2;
+    	let t1;
+    	let div0;
+    	let t2;
+    	let div0_tabindex_value;
+    	let t3;
+    	let div2;
+    	let each_blocks = [];
+    	let each_1_lookup = new Map();
+    	let div3_class_value;
+    	let mounted;
+    	let dispose;
+    	let each_value_8 = /*$filterOptions*/ ctx[1]?.filterSelection || [];
+    	validate_each_argument(each_value_8);
+    	const get_key = ctx => /*filterSelection*/ ctx[112]?.filterSelectionName || {};
+    	validate_each_keys(ctx, each_value_8, get_each_context_8, get_key);
+
+    	for (let i = 0; i < each_value_8.length; i += 1) {
+    		let child_ctx = get_each_context_8(ctx, each_value_8, i);
+    		let key = get_key(child_ctx);
+    		each_1_lookup.set(key, each_blocks[i] = create_each_block_8(key, child_ctx));
+    	}
+
+    	const block = {
+    		c: function create() {
+    			div3 = element("div");
+    			div1 = element("div");
+    			h2 = element("h2");
+    			h2.textContent = "Filters";
+    			t1 = space();
+    			div0 = element("div");
+    			t2 = text("×");
+    			t3 = space();
+    			div2 = element("div");
+
+    			for (let i = 0; i < each_blocks.length; i += 1) {
+    				each_blocks[i].c();
+    			}
+
+    			attr_dev(h2, "class", "svelte-1d2ae4n");
+    			add_location(h2, file$2, 1329, 28, 53491);
+    			attr_dev(div0, "class", "closing-x svelte-1d2ae4n");
+
+    			attr_dev(div0, "tabindex", div0_tabindex_value = /*selectedFilterTypeElement*/ ctx[5] && /*windowWidth*/ ctx[3] <= 425
+    			? "0"
+    			: "");
+
+    			add_location(div0, file$2, 1331, 28, 53621);
+    			attr_dev(div1, "class", "header svelte-1d2ae4n");
+    			add_location(div1, file$2, 1328, 24, 53441);
+    			attr_dev(div2, "class", "options svelte-1d2ae4n");
+    			add_location(div2, file$2, 1345, 24, 54285);
+    			attr_dev(div3, "class", div3_class_value = "" + (null_to_empty("options-wrap-filter-info " + (/*selectedFilterTypeElement*/ ctx[5] ? "" : "hide")) + " svelte-1d2ae4n"));
+    			add_location(div3, file$2, 1324, 20, 53254);
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, div3, anchor);
+    			append_dev(div3, div1);
+    			append_dev(div1, h2);
+    			append_dev(div1, t1);
+    			append_dev(div1, div0);
+    			append_dev(div0, t2);
+    			append_dev(div3, t3);
+    			append_dev(div3, div2);
+
+    			for (let i = 0; i < each_blocks.length; i += 1) {
+    				if (each_blocks[i]) {
+    					each_blocks[i].m(div2, null);
+    				}
+    			}
+
+    			if (!mounted) {
+    				dispose = [
+    					listen_dev(div0, "keydown", /*keydown_handler_1*/ ctx[48], false, false, false, false),
+    					listen_dev(div0, "click", /*handleShowFilterTypes*/ ctx[21], false, false, false, false)
+    				];
+
+    				mounted = true;
+    			}
+    		},
+    		p: function update(ctx, dirty) {
+    			if (dirty[0] & /*selectedFilterTypeElement, windowWidth*/ 40 && div0_tabindex_value !== (div0_tabindex_value = /*selectedFilterTypeElement*/ ctx[5] && /*windowWidth*/ ctx[3] <= 425
+    			? "0"
+    			: "")) {
+    				attr_dev(div0, "tabindex", div0_tabindex_value);
+    			}
+
+    			if (dirty[0] & /*handleFilterTypes, $filterOptions*/ 1048578) {
+    				each_value_8 = /*$filterOptions*/ ctx[1]?.filterSelection || [];
+    				validate_each_argument(each_value_8);
+    				validate_each_keys(ctx, each_value_8, get_each_context_8, get_key);
+    				each_blocks = update_keyed_each(each_blocks, dirty, get_key, 1, ctx, each_value_8, each_1_lookup, div2, destroy_block, create_each_block_8, null, get_each_context_8);
+    			}
+
+    			if (dirty[0] & /*selectedFilterTypeElement*/ 32 && div3_class_value !== (div3_class_value = "" + (null_to_empty("options-wrap-filter-info " + (/*selectedFilterTypeElement*/ ctx[5] ? "" : "hide")) + " svelte-1d2ae4n"))) {
+    				attr_dev(div3, "class", div3_class_value);
+    			}
+    		},
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(div3);
+
+    			for (let i = 0; i < each_blocks.length; i += 1) {
+    				each_blocks[i].d();
+    			}
+
+    			mounted = false;
+    			run_all(dispose);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_if_block_13.name,
+    		type: "if",
+    		source: "(1324:16) {#if $filterOptions}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (1347:28) {#each $filterOptions?.filterSelection || [] as filterSelection (filterSelection?.filterSelectionName || {}
+    function create_each_block_8(key_1, ctx) {
+    	let div;
+    	let h3;
+    	let t0_value = (/*filterSelection*/ ctx[112]?.filterSelectionName || "") + "";
+    	let t0;
+    	let t1;
+    	let mounted;
+    	let dispose;
+
+    	function keydown_handler_2(...args) {
+    		return /*keydown_handler_2*/ ctx[49](/*filterSelection*/ ctx[112], ...args);
+    	}
+
+    	const block = {
+    		key: key_1,
+    		first: null,
+    		c: function create() {
+    			div = element("div");
+    			h3 = element("h3");
+    			t0 = text(t0_value);
+    			t1 = space();
+    			attr_dev(h3, "class", "svelte-1d2ae4n");
+
+    			set_style(h3, "color", (/*filterSelection*/ ctx[112]?.isSelected)
+    			? "#3db4f2"
+    			: "inherit");
+
+    			add_location(h3, file$2, 1358, 36, 55096);
+    			attr_dev(div, "class", "option svelte-1d2ae4n");
+    			add_location(div, file$2, 1347, 32, 54479);
+    			this.first = div;
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, div, anchor);
+    			append_dev(div, h3);
+    			append_dev(h3, t0);
+    			append_dev(div, t1);
+
+    			if (!mounted) {
+    				dispose = [
+    					listen_dev(
+    						div,
+    						"click",
+    						function () {
+    							if (is_function(/*handleFilterTypes*/ ctx[20](/*filterSelection*/ ctx[112]?.filterSelectionName))) /*handleFilterTypes*/ ctx[20](/*filterSelection*/ ctx[112]?.filterSelectionName).apply(this, arguments);
+    						},
+    						false,
+    						false,
+    						false,
+    						false
+    					),
+    					listen_dev(div, "keydown", keydown_handler_2, false, false, false, false)
+    				];
+
+    				mounted = true;
+    			}
+    		},
+    		p: function update(new_ctx, dirty) {
+    			ctx = new_ctx;
+    			if (dirty[0] & /*$filterOptions*/ 2 && t0_value !== (t0_value = (/*filterSelection*/ ctx[112]?.filterSelectionName || "") + "")) set_data_dev(t0, t0_value);
+
+    			if (dirty[0] & /*$filterOptions*/ 2) {
+    				set_style(h3, "color", (/*filterSelection*/ ctx[112]?.isSelected)
+    				? "#3db4f2"
+    				: "inherit");
+    			}
+    		},
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(div);
+    			mounted = false;
+    			run_all(dispose);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_each_block_8.name,
+    		type: "each",
+    		source: "(1347:28) {#each $filterOptions?.filterSelection || [] as filterSelection (filterSelection?.filterSelectionName || {}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (1733:8) {:else}
+    function create_else_block_5(ctx) {
+    	let each_1_anchor;
+    	let each_value_7 = Array(10);
+    	validate_each_argument(each_value_7);
+    	let each_blocks = [];
+
+    	for (let i = 0; i < each_value_7.length; i += 1) {
+    		each_blocks[i] = create_each_block_7(get_each_context_7(ctx, each_value_7, i));
+    	}
+
+    	const block = {
+    		c: function create() {
+    			for (let i = 0; i < each_blocks.length; i += 1) {
+    				each_blocks[i].c();
+    			}
+
+    			each_1_anchor = empty();
+    		},
+    		m: function mount(target, anchor) {
+    			for (let i = 0; i < each_blocks.length; i += 1) {
+    				if (each_blocks[i]) {
+    					each_blocks[i].m(target, anchor);
+    				}
+    			}
+
+    			insert_dev(target, each_1_anchor, anchor);
+    		},
+    		p: noop,
+    		d: function destroy(detaching) {
+    			destroy_each(each_blocks, detaching);
+    			if (detaching) detach_dev(each_1_anchor);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_else_block_5.name,
+    		type: "else",
+    		source: "(1733:8) {:else}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (1409:8) {#if $filterOptions}
+    function create_if_block_6(ctx) {
+    	let each_blocks = [];
+    	let each_1_lookup = new Map();
+    	let each_1_anchor;
+    	let each_value_2 = /*$filterOptions*/ ctx[1]?.filterSelection || [];
+    	validate_each_argument(each_value_2);
+    	const get_key = ctx => /*filterSelection*/ ctx[112].filterSelectionName || {};
+    	validate_each_keys(ctx, each_value_2, get_each_context_2, get_key);
+
+    	for (let i = 0; i < each_value_2.length; i += 1) {
+    		let child_ctx = get_each_context_2(ctx, each_value_2, i);
+    		let key = get_key(child_ctx);
+    		each_1_lookup.set(key, each_blocks[i] = create_each_block_2(key, child_ctx));
+    	}
+
+    	const block = {
+    		c: function create() {
+    			for (let i = 0; i < each_blocks.length; i += 1) {
+    				each_blocks[i].c();
+    			}
+
+    			each_1_anchor = empty();
+    		},
+    		m: function mount(target, anchor) {
+    			for (let i = 0; i < each_blocks.length; i += 1) {
+    				if (each_blocks[i]) {
+    					each_blocks[i].m(target, anchor);
+    				}
+    			}
+
+    			insert_dev(target, each_1_anchor, anchor);
+    		},
+    		p: function update(ctx, dirty) {
+    			if (dirty[0] & /*$filterOptions, conditionalInputNumberList, showFilterOptions, handleInputNumber, handleCheckboxChange, $initData, Init, maxFilterSelectionHeight, handleFilterSelectOptionChange, closeFilterSelect, windowWidth, filterSelect*/ 130564382 | dirty[1] & /*pleaseWaitAlert*/ 32) {
+    				each_value_2 = /*$filterOptions*/ ctx[1]?.filterSelection || [];
+    				validate_each_argument(each_value_2);
+    				validate_each_keys(ctx, each_value_2, get_each_context_2, get_key);
+    				each_blocks = update_keyed_each(each_blocks, dirty, get_key, 1, ctx, each_value_2, each_1_lookup, each_1_anchor.parentNode, destroy_block, create_each_block_2, each_1_anchor, get_each_context_2);
+    			}
+    		},
+    		d: function destroy(detaching) {
+    			for (let i = 0; i < each_blocks.length; i += 1) {
+    				each_blocks[i].d(detaching);
+    			}
+
+    			if (detaching) detach_dev(each_1_anchor);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_if_block_6.name,
+    		type: "if",
+    		source: "(1409:8) {#if $filterOptions}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (1734:12) {#each Array(10) as _}
+    function create_each_block_7(ctx) {
+    	let div2;
+    	let div0;
+    	let t0;
+    	let div1;
+    	let t1;
+
+    	const block = {
+    		c: function create() {
+    			div2 = element("div");
+    			div0 = element("div");
+    			t0 = space();
+    			div1 = element("div");
+    			t1 = space();
+    			attr_dev(div0, "class", "filter-name skeleton shimmer svelte-1d2ae4n");
+    			add_location(div0, file$2, 1735, 20, 76900);
+    			attr_dev(div1, "class", "select skeleton shimmer svelte-1d2ae4n");
+    			add_location(div1, file$2, 1736, 20, 76966);
+    			attr_dev(div2, "class", "filter-select svelte-1d2ae4n");
+    			add_location(div2, file$2, 1734, 16, 76851);
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, div2, anchor);
+    			append_dev(div2, div0);
+    			append_dev(div2, t0);
+    			append_dev(div2, div1);
+    			append_dev(div2, t1);
+    		},
+    		p: noop,
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(div2);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_each_block_7.name,
+    		type: "each",
+    		source: "(1734:12) {#each Array(10) as _}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (1478:28) {:else}
+    function create_else_block_4(ctx) {
+    	let svg;
+    	let path;
+
+    	const block = {
+    		c: function create() {
+    			svg = svg_element("svg");
+    			path = svg_element("path");
+    			attr_dev(path, "d", "M201 343c13 12 33 12 46 0l160-160a32 32 0 0 0-46-46L224 275 87 137a32 32 0 0 0-46 46l160 160z");
+    			attr_dev(path, "class", "svelte-1d2ae4n");
+    			add_location(path, file$2, 1480, 36, 61239);
+    			attr_dev(svg, "class", "angle-down svelte-1d2ae4n");
+    			attr_dev(svg, "viewBox", "0 0 512 512");
+    			add_location(svg, file$2, 1478, 32, 61098);
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, svg, anchor);
+    			append_dev(svg, path);
+    		},
+    		p: noop,
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(svg);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_else_block_4.name,
+    		type: "else",
+    		source: "(1478:28) {:else}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (1464:28) {#if Dropdown.selected && Dropdown.options.length && !Init}
+    function create_if_block_12(ctx) {
+    	let svg;
+    	let path;
+    	let mounted;
+    	let dispose;
+
+    	function keydown_handler_4(...args) {
+    		return /*keydown_handler_4*/ ctx[52](/*dropdownIdx*/ ctx[123], ...args);
+    	}
+
+    	const block = {
+    		c: function create() {
+    			svg = svg_element("svg");
+    			path = svg_element("path");
+    			attr_dev(path, "d", "M201 137c13-12 33-12 46 0l160 160a32 32 0 0 1-46 46L224 205 87 343a32 32 0 0 1-46-46l160-160z");
+    			attr_dev(path, "class", "svelte-1d2ae4n");
+    			add_location(path, file$2, 1473, 36, 60803);
+    			attr_dev(svg, "class", "angle-up svelte-1d2ae4n");
+    			attr_dev(svg, "viewBox", "0 0 512 512");
+    			add_location(svg, file$2, 1464, 32, 60288);
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, svg, anchor);
+    			append_dev(svg, path);
+
+    			if (!mounted) {
+    				dispose = [
+    					listen_dev(svg, "keydown", keydown_handler_4, false, false, false, false),
+    					listen_dev(
+    						svg,
+    						"click",
+    						function () {
+    							if (is_function(/*closeFilterSelect*/ ctx[23](/*dropdownIdx*/ ctx[123]))) /*closeFilterSelect*/ ctx[23](/*dropdownIdx*/ ctx[123]).apply(this, arguments);
+    						},
+    						false,
+    						false,
+    						false,
+    						false
+    					)
+    				];
+
+    				mounted = true;
+    			}
+    		},
+    		p: function update(new_ctx, dirty) {
+    			ctx = new_ctx;
+    		},
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(svg);
+    			mounted = false;
+    			run_all(dispose);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_if_block_12.name,
+    		type: "if",
+    		source: "(1464:28) {#if Dropdown.selected && Dropdown.options.length && !Init}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (1610:36) {:else}
+    function create_else_block_3(ctx) {
+    	let div;
+    	let h3;
+
+    	const block = {
+    		c: function create() {
+    			div = element("div");
+    			h3 = element("h3");
+    			h3.textContent = "No Results";
+    			attr_dev(h3, "class", "svelte-1d2ae4n");
+    			add_location(h3, file$2, 1611, 44, 70151);
+    			attr_dev(div, "class", "option svelte-1d2ae4n");
+    			add_location(div, file$2, 1610, 40, 70085);
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, div, anchor);
+    			append_dev(div, h3);
+    		},
+    		p: noop,
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(div);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_else_block_3.name,
+    		type: "else",
+    		source: "(1610:36) {:else}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (1554:36) {#if Dropdown.options?.filter?.(({ optionName }) => hasPartialMatch(optionName, Dropdown?.optKeyword) || Dropdown?.optKeyword === "")?.length}
+    function create_if_block_10(ctx) {
+    	let each_blocks = [];
+    	let each_1_lookup = new Map();
+    	let each_1_anchor;
+    	let each_value_6 = /*Dropdown*/ ctx[121].options || [];
+    	validate_each_argument(each_value_6);
+    	const get_key = ctx => /*filterSelection*/ ctx[112].filterSelectionName + /*Dropdown*/ ctx[121].filName + /*option*/ ctx[124].optionName || {};
+    	validate_each_keys(ctx, each_value_6, get_each_context_6, get_key);
+
+    	for (let i = 0; i < each_value_6.length; i += 1) {
+    		let child_ctx = get_each_context_6(ctx, each_value_6, i);
+    		let key = get_key(child_ctx);
+    		each_1_lookup.set(key, each_blocks[i] = create_each_block_6(key, child_ctx));
+    	}
+
+    	const block = {
+    		c: function create() {
+    			for (let i = 0; i < each_blocks.length; i += 1) {
+    				each_blocks[i].c();
+    			}
+
+    			each_1_anchor = empty();
+    		},
+    		m: function mount(target, anchor) {
+    			for (let i = 0; i < each_blocks.length; i += 1) {
+    				if (each_blocks[i]) {
+    					each_blocks[i].m(target, anchor);
+    				}
+    			}
+
+    			insert_dev(target, each_1_anchor, anchor);
+    		},
+    		p: function update(ctx, dirty) {
+    			if (dirty[0] & /*$filterOptions, handleFilterSelectOptionChange*/ 16777218) {
+    				each_value_6 = /*Dropdown*/ ctx[121].options || [];
+    				validate_each_argument(each_value_6);
+    				validate_each_keys(ctx, each_value_6, get_each_context_6, get_key);
+    				each_blocks = update_keyed_each(each_blocks, dirty, get_key, 1, ctx, each_value_6, each_1_lookup, each_1_anchor.parentNode, destroy_block, create_each_block_6, each_1_anchor, get_each_context_6);
+    			}
+    		},
+    		d: function destroy(detaching) {
+    			for (let i = 0; i < each_blocks.length; i += 1) {
+    				each_blocks[i].d(detaching);
+    			}
+
+    			if (detaching) detach_dev(each_1_anchor);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_if_block_10.name,
+    		type: "if",
+    		source: "(1554:36) {#if Dropdown.options?.filter?.(({ optionName }) => hasPartialMatch(optionName, Dropdown?.optKeyword) || Dropdown?.optKeyword === \\\"\\\")?.length}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (1586:48) {#if option.selected === "included" || (option.selected === "excluded" && Dropdown.changeType !== "read")}
+    function create_if_block_11(ctx) {
+    	let svg;
+    	let path;
+    	let path_d_value;
+
+    	const block = {
+    		c: function create() {
+    			svg = svg_element("svg");
+    			path = svg_element("path");
+
+    			attr_dev(path, "d", path_d_value = /*option*/ ctx[124].selected === "excluded" || /*filterSelection*/ ctx[112].filterSelectionName === "Content Caution"
+    			? // circle-xmark
+    				"M256 48a208 208 0 1 1 0 416 208 208 0 1 1 0-416zm0 464a256 256 0 1 0 0-512 256 256 0 1 0 0 512zm-81-337c-9 9-9 25 0 34l47 47-47 47c-9 9-9 24 0 34s25 9 34 0l47-47 47 47c9 9 24 9 34 0s9-25 0-34l-47-47 47-47c9-10 9-25 0-34s-25-9-34 0l-47 47-47-47c-10-9-25-9-34 0z"
+    			: // circle-check
+    				"M256 48a208 208 0 1 1 0 416 208 208 0 1 1 0-416zm0 464a256 256 0 1 0 0-512 256 256 0 1 0 0 512zm113-303c9-9 9-25 0-34s-25-9-34 0L224 286l-47-47c-9-9-24-9-34 0s-9 25 0 34l64 64c10 9 25 9 34 0l128-128z");
+
+    			attr_dev(path, "class", "svelte-1d2ae4n");
+    			add_location(path, file$2, 1595, 56, 68604);
+    			attr_dev(svg, "viewBox", "0 0 512 512");
+    			attr_dev(svg, "class", "svelte-1d2ae4n");
+
+    			set_style(svg, "--optionColor", /*option*/ ctx[124].selected === "included"
+    			? // green
+    				"#5f9ea0"
+    			: // red
+    				"#e85d75");
+
+    			add_location(svg, file$2, 1586, 52, 67953);
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, svg, anchor);
+    			append_dev(svg, path);
+    		},
+    		p: function update(ctx, dirty) {
+    			if (dirty[0] & /*$filterOptions*/ 2 && path_d_value !== (path_d_value = /*option*/ ctx[124].selected === "excluded" || /*filterSelection*/ ctx[112].filterSelectionName === "Content Caution"
+    			? // circle-xmark
+    				"M256 48a208 208 0 1 1 0 416 208 208 0 1 1 0-416zm0 464a256 256 0 1 0 0-512 256 256 0 1 0 0 512zm-81-337c-9 9-9 25 0 34l47 47-47 47c-9 9-9 24 0 34s25 9 34 0l47-47 47 47c9 9 24 9 34 0s9-25 0-34l-47-47 47-47c9-10 9-25 0-34s-25-9-34 0l-47 47-47-47c-10-9-25-9-34 0z"
+    			: // circle-check
+    				"M256 48a208 208 0 1 1 0 416 208 208 0 1 1 0-416zm0 464a256 256 0 1 0 0-512 256 256 0 1 0 0 512zm113-303c9-9 9-25 0-34s-25-9-34 0L224 286l-47-47c-9-9-24-9-34 0s-9 25 0 34l64 64c10 9 25 9 34 0l128-128z")) {
+    				attr_dev(path, "d", path_d_value);
+    			}
+
+    			if (dirty[0] & /*$filterOptions*/ 2) {
+    				set_style(svg, "--optionColor", /*option*/ ctx[124].selected === "included"
+    				? // green
+    					"#5f9ea0"
+    				: // red
+    					"#e85d75");
+    			}
+    		},
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(svg);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_if_block_11.name,
+    		type: "if",
+    		source: "(1586:48) {#if option.selected === \\\"included\\\" || (option.selected === \\\"excluded\\\" && Dropdown.changeType !== \\\"read\\\")}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (1555:40) {#each Dropdown.options || [] as option, optionIdx (filterSelection.filterSelectionName + Dropdown.filName + option.optionName || {}
+    function create_each_block_6(key_1, ctx) {
+    	let div;
+    	let h3;
+    	let t0_value = (/*option*/ ctx[124].optionName || "") + "";
+    	let t0;
+    	let t1;
+    	let div_class_value;
+    	let mounted;
+    	let dispose;
+    	let if_block = (/*option*/ ctx[124].selected === "included" || /*option*/ ctx[124].selected === "excluded" && /*Dropdown*/ ctx[121].changeType !== "read") && create_if_block_11(ctx);
+
+    	function keydown_handler_7(...args) {
+    		return /*keydown_handler_7*/ ctx[57](/*option*/ ctx[124], /*Dropdown*/ ctx[121], /*optionIdx*/ ctx[126], /*dropdownIdx*/ ctx[123], /*filterSelection*/ ctx[112], ...args);
+    	}
+
+    	const block = {
+    		key: key_1,
+    		first: null,
+    		c: function create() {
+    			div = element("div");
+    			h3 = element("h3");
+    			t0 = text(t0_value);
+    			t1 = space();
+    			if (if_block) if_block.c();
+    			attr_dev(h3, "class", "svelte-1d2ae4n");
+    			add_location(h3, file$2, 1582, 48, 67605);
+
+    			attr_dev(div, "class", div_class_value = "" + (null_to_empty("option " + (hasPartialMatch(/*option*/ ctx[124].optionName, /*Dropdown*/ ctx[121].optKeyword)
+    			? ""
+    			: "disable-interaction")) + " svelte-1d2ae4n"));
+
+    			add_location(div, file$2, 1555, 44, 65690);
+    			this.first = div;
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, div, anchor);
+    			append_dev(div, h3);
+    			append_dev(h3, t0);
+    			append_dev(div, t1);
+    			if (if_block) if_block.m(div, null);
+
+    			if (!mounted) {
+    				dispose = [
+    					listen_dev(
+    						div,
+    						"click",
+    						function () {
+    							if (is_function(/*handleFilterSelectOptionChange*/ ctx[24](/*option*/ ctx[124].optionName, /*Dropdown*/ ctx[121].filName, /*optionIdx*/ ctx[126], /*dropdownIdx*/ ctx[123], /*Dropdown*/ ctx[121].changeType, /*filterSelection*/ ctx[112].filterSelectionName))) /*handleFilterSelectOptionChange*/ ctx[24](/*option*/ ctx[124].optionName, /*Dropdown*/ ctx[121].filName, /*optionIdx*/ ctx[126], /*dropdownIdx*/ ctx[123], /*Dropdown*/ ctx[121].changeType, /*filterSelection*/ ctx[112].filterSelectionName).apply(this, arguments);
+    						},
+    						false,
+    						false,
+    						false,
+    						false
+    					),
+    					listen_dev(div, "keydown", keydown_handler_7, false, false, false, false)
+    				];
+
+    				mounted = true;
+    			}
+    		},
+    		p: function update(new_ctx, dirty) {
+    			ctx = new_ctx;
+    			if (dirty[0] & /*$filterOptions*/ 2 && t0_value !== (t0_value = (/*option*/ ctx[124].optionName || "") + "")) set_data_dev(t0, t0_value);
+
+    			if (/*option*/ ctx[124].selected === "included" || /*option*/ ctx[124].selected === "excluded" && /*Dropdown*/ ctx[121].changeType !== "read") {
+    				if (if_block) {
+    					if_block.p(ctx, dirty);
+    				} else {
+    					if_block = create_if_block_11(ctx);
+    					if_block.c();
+    					if_block.m(div, null);
+    				}
+    			} else if (if_block) {
+    				if_block.d(1);
+    				if_block = null;
+    			}
+
+    			if (dirty[0] & /*$filterOptions*/ 2 && div_class_value !== (div_class_value = "" + (null_to_empty("option " + (hasPartialMatch(/*option*/ ctx[124].optionName, /*Dropdown*/ ctx[121].optKeyword)
+    			? ""
+    			: "disable-interaction")) + " svelte-1d2ae4n"))) {
+    				attr_dev(div, "class", div_class_value);
+    			}
+    		},
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(div);
+    			if (if_block) if_block.d();
+    			mounted = false;
+    			run_all(dispose);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_each_block_6.name,
+    		type: "each",
+    		source: "(1555:40) {#each Dropdown.options || [] as option, optionIdx (filterSelection.filterSelectionName + Dropdown.filName + option.optionName || {}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (1411:16) {#each filterSelection.filters.Dropdown || [] as Dropdown, dropdownIdx (filterSelection.filterSelectionName + Dropdown.filName || {}
+    function create_each_block_5(key_1, ctx) {
+    	let div8;
+    	let div0;
+    	let h20;
+    	let t0_value = (/*Dropdown*/ ctx[121].filName || "") + "";
+    	let t0;
+    	let t1;
+    	let div2;
+    	let div1;
+    	let label0;
+    	let t2_value = /*filterSelection*/ ctx[112].filterSelectionName + " " + /*Dropdown*/ ctx[121].filName + "";
+    	let t2;
+    	let label0_for_value;
+    	let t3;
+    	let input0;
+    	let input0_id_value;
+    	let input0_disabled_value;
+    	let t4;
+    	let div2_tabindex_value;
+    	let t5;
+    	let div7;
+    	let div6;
+    	let div4;
+    	let h21;
+    	let t6_value = /*Dropdown*/ ctx[121].filName + "";
+    	let t6;
+    	let t7;
+    	let div3;
+    	let t8;
+    	let div3_tabindex_value;
+    	let t9;
+    	let label1;
+    	let t10_value = "Search " + /*filterSelection*/ ctx[112].filterSelectionName + " " + /*Dropdown*/ ctx[121].filName + "";
+    	let t10;
+    	let label1_for_value;
+    	let t11;
+    	let input1;
+    	let input1_id_value;
+    	let input1_disabled_value;
+    	let t12;
+    	let div5;
+    	let show_if;
+    	let div6_class_value;
+    	let div7_class_value;
+    	let style___maxFilterSelectionHeight = `${/*maxFilterSelectionHeight*/ ctx[4]}px`;
+    	let div8_class_value;
+    	let mounted;
+    	let dispose;
+
+    	function func(...args) {
+    		return /*func*/ ctx[45](/*Dropdown*/ ctx[121], ...args);
+    	}
+
+    	function input0_input_handler() {
+    		/*input0_input_handler*/ ctx[51].call(input0, /*filSelIdx*/ ctx[114], /*dropdownIdx*/ ctx[123]);
+    	}
+
+    	function select_block_type_3(ctx, dirty) {
+    		if (/*Dropdown*/ ctx[121].selected && /*Dropdown*/ ctx[121].options.length && !/*Init*/ ctx[2]) return create_if_block_12;
+    		return create_else_block_4;
+    	}
+
+    	let current_block_type = select_block_type_3(ctx);
+    	let if_block0 = current_block_type(ctx);
+
+    	function keydown_handler_5(...args) {
+    		return /*keydown_handler_5*/ ctx[53](/*dropdownIdx*/ ctx[123], ...args);
+    	}
+
+    	function click_handler(...args) {
+    		return /*click_handler*/ ctx[54](/*dropdownIdx*/ ctx[123], ...args);
+    	}
+
+    	function keydown_handler_6(...args) {
+    		return /*keydown_handler_6*/ ctx[55](/*dropdownIdx*/ ctx[123], ...args);
+    	}
+
+    	function input1_input_handler() {
+    		/*input1_input_handler*/ ctx[56].call(input1, /*filSelIdx*/ ctx[114], /*dropdownIdx*/ ctx[123]);
+    	}
+
+    	function select_block_type_4(ctx, dirty) {
+    		if (dirty[0] & /*$filterOptions*/ 2) show_if = null;
+    		if (show_if == null) show_if = !!/*Dropdown*/ ctx[121].options?.filter?.(func)?.length;
+    		if (show_if) return create_if_block_10;
+    		return create_else_block_3;
+    	}
+
+    	let current_block_type_1 = select_block_type_4(ctx, [-1, -1, -1, -1, -1]);
+    	let if_block1 = current_block_type_1(ctx);
+
+    	const block = {
+    		key: key_1,
+    		first: null,
+    		c: function create() {
+    			div8 = element("div");
+    			div0 = element("div");
+    			h20 = element("h2");
+    			t0 = text(t0_value);
+    			t1 = space();
+    			div2 = element("div");
+    			div1 = element("div");
+    			label0 = element("label");
+    			t2 = text(t2_value);
+    			t3 = space();
+    			input0 = element("input");
+    			t4 = space();
+    			if_block0.c();
+    			t5 = space();
+    			div7 = element("div");
+    			div6 = element("div");
+    			div4 = element("div");
+    			h21 = element("h2");
+    			t6 = text(t6_value);
+    			t7 = space();
+    			div3 = element("div");
+    			t8 = text("×");
+    			t9 = space();
+    			label1 = element("label");
+    			t10 = text(t10_value);
+    			t11 = space();
+    			input1 = element("input");
+    			t12 = space();
+    			div5 = element("div");
+    			if_block1.c();
+    			attr_dev(h20, "class", "svelte-1d2ae4n");
+    			add_location(h20, file$2, 1418, 28, 57740);
+    			attr_dev(div0, "class", "filter-name svelte-1d2ae4n");
+    			add_location(div0, file$2, 1417, 24, 57685);
+    			attr_dev(label0, "class", "disable-interaction svelte-1d2ae4n");
+    			attr_dev(label0, "for", label0_for_value = /*filterSelection*/ ctx[112].filterSelectionName + /*Dropdown*/ ctx[121].filName);
+    			add_location(label0, file$2, 1438, 32, 58751);
+    			attr_dev(input0, "id", input0_id_value = /*filterSelection*/ ctx[112].filterSelectionName + /*Dropdown*/ ctx[121].filName);
+    			attr_dev(input0, "placeholder", "Any");
+    			attr_dev(input0, "type", "search");
+    			attr_dev(input0, "enterkeyhint", "search");
+    			attr_dev(input0, "autocomplete", "off");
+    			attr_dev(input0, "class", "" + (null_to_empty("value-input") + " svelte-1d2ae4n"));
+    			input0.disabled = input0_disabled_value = !/*showFilterOptions*/ ctx[8] || /*windowWidth*/ ctx[3] <= 425 || !/*filterSelection*/ ctx[112].isSelected;
+    			add_location(input0, file$2, 1447, 32, 59254);
+    			attr_dev(div1, "class", "value-wrap svelte-1d2ae4n");
+    			add_location(div1, file$2, 1437, 28, 58693);
+    			attr_dev(div2, "class", "select svelte-1d2ae4n");
+
+    			attr_dev(div2, "tabindex", div2_tabindex_value = /*showFilterOptions*/ ctx[8] && /*windowWidth*/ ctx[3] <= 425 && /*filterSelection*/ ctx[112].isSelected
+    			? "0"
+    			: "");
+
+    			add_location(div2, file$2, 1421, 24, 57911);
+    			attr_dev(h21, "class", "svelte-1d2ae4n");
+    			add_location(h21, file$2, 1505, 36, 62572);
+    			attr_dev(div3, "class", "closing-x svelte-1d2ae4n");
+
+    			attr_dev(div3, "tabindex", div3_tabindex_value = /*showFilterOptions*/ ctx[8] && /*Dropdown*/ ctx[121].selected
+    			? "0"
+    			: "");
+
+    			add_location(div3, file$2, 1507, 36, 62729);
+    			attr_dev(div4, "class", "header svelte-1d2ae4n");
+    			add_location(div4, file$2, 1504, 32, 62514);
+    			attr_dev(label1, "class", "disable-interaction svelte-1d2ae4n");
+    			attr_dev(label1, "for", label1_for_value = "Search " + (/*filterSelection*/ ctx[112].filterSelectionName + /*Dropdown*/ ctx[121].filName));
+    			add_location(label1, file$2, 1523, 32, 63599);
+    			attr_dev(input1, "id", input1_id_value = "Search " + (/*filterSelection*/ ctx[112].filterSelectionName + /*Dropdown*/ ctx[121].filName));
+    			attr_dev(input1, "placeholder", "Any");
+    			attr_dev(input1, "type", "search");
+    			attr_dev(input1, "enterkeyhint", "search");
+    			attr_dev(input1, "autocomplete", "off");
+    			input1.disabled = input1_disabled_value = !/*showFilterOptions*/ ctx[8] || !/*filterSelection*/ ctx[112].isSelected || !/*Dropdown*/ ctx[121].selected;
+    			attr_dev(input1, "class", "svelte-1d2ae4n");
+    			add_location(input1, file$2, 1534, 32, 64214);
+    			attr_dev(div5, "class", "options svelte-1d2ae4n");
+    			add_location(div5, file$2, 1549, 32, 65123);
+
+    			attr_dev(div6, "class", div6_class_value = "" + (null_to_empty("options-wrap-filter-info " + (/*Dropdown*/ ctx[121].options.length && /*Dropdown*/ ctx[121].selected === true && !/*Init*/ ctx[2]
+    			? ""
+    			: "hide")) + " svelte-1d2ae4n"));
+
+    			add_location(div6, file$2, 1496, 28, 62102);
+
+    			attr_dev(div7, "class", div7_class_value = "" + (null_to_empty("options-wrap " + (/*Dropdown*/ ctx[121].options.length && /*Dropdown*/ ctx[121].selected === true && !/*Init*/ ctx[2]
+    			? ""
+    			: "disable-interaction hide")) + " svelte-1d2ae4n"));
+
+    			set_style(div7, "--maxFilterSelectionHeight", style___maxFilterSelectionHeight);
+    			add_location(div7, file$2, 1486, 24, 61556);
+
+    			attr_dev(div8, "class", div8_class_value = "" + (null_to_empty("filter-select " + (/*filterSelection*/ ctx[112].isSelected
+    			? ""
+    			: "disable-interaction")) + " svelte-1d2ae4n"));
+
+    			add_location(div8, file$2, 1411, 20, 57427);
+    			this.first = div8;
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, div8, anchor);
+    			append_dev(div8, div0);
+    			append_dev(div0, h20);
+    			append_dev(h20, t0);
+    			append_dev(div8, t1);
+    			append_dev(div8, div2);
+    			append_dev(div2, div1);
+    			append_dev(div1, label0);
+    			append_dev(label0, t2);
+    			append_dev(div1, t3);
+    			append_dev(div1, input0);
+    			set_input_value(input0, /*$filterOptions*/ ctx[1].filterSelection[/*filSelIdx*/ ctx[114]].filters.Dropdown[/*dropdownIdx*/ ctx[123]].optKeyword);
+    			append_dev(div2, t4);
+    			if_block0.m(div2, null);
+    			append_dev(div8, t5);
+    			append_dev(div8, div7);
+    			append_dev(div7, div6);
+    			append_dev(div6, div4);
+    			append_dev(div4, h21);
+    			append_dev(h21, t6);
+    			append_dev(div4, t7);
+    			append_dev(div4, div3);
+    			append_dev(div3, t8);
+    			append_dev(div6, t9);
+    			append_dev(div6, label1);
+    			append_dev(label1, t10);
+    			append_dev(div6, t11);
+    			append_dev(div6, input1);
+    			set_input_value(input1, /*$filterOptions*/ ctx[1].filterSelection[/*filSelIdx*/ ctx[114]].filters.Dropdown[/*dropdownIdx*/ ctx[123]].optKeyword);
+    			append_dev(div6, t12);
+    			append_dev(div6, div5);
+    			if_block1.m(div5, null);
+
+    			if (!mounted) {
+    				dispose = [
+    					listen_dev(input0, "input", input0_input_handler),
+    					listen_dev(div2, "keydown", keydown_handler_5, false, false, false, false),
+    					listen_dev(div2, "click", click_handler, false, false, false, false),
+    					listen_dev(div3, "keydown", keydown_handler_6, false, false, false, false),
+    					listen_dev(
+    						div3,
+    						"click",
+    						function () {
+    							if (is_function(/*closeFilterSelect*/ ctx[23](/*dropdownIdx*/ ctx[123]))) /*closeFilterSelect*/ ctx[23](/*dropdownIdx*/ ctx[123]).apply(this, arguments);
+    						},
+    						false,
+    						false,
+    						false,
+    						false
+    					),
+    					listen_dev(input1, "input", input1_input_handler),
+    					listen_dev(div5, "wheel", stop_propagation(wheel_handler), { passive: true }, false, true, false),
+    					listen_dev(div7, "wheel", stop_propagation(wheel_handler_1), { passive: true }, false, true, false)
+    				];
+
+    				mounted = true;
+    			}
+    		},
+    		p: function update(new_ctx, dirty) {
+    			ctx = new_ctx;
+    			if (dirty[0] & /*$filterOptions*/ 2 && t0_value !== (t0_value = (/*Dropdown*/ ctx[121].filName || "") + "")) set_data_dev(t0, t0_value);
+    			if (dirty[0] & /*$filterOptions*/ 2 && t2_value !== (t2_value = /*filterSelection*/ ctx[112].filterSelectionName + " " + /*Dropdown*/ ctx[121].filName + "")) set_data_dev(t2, t2_value);
+
+    			if (dirty[0] & /*$filterOptions*/ 2 && label0_for_value !== (label0_for_value = /*filterSelection*/ ctx[112].filterSelectionName + /*Dropdown*/ ctx[121].filName)) {
+    				attr_dev(label0, "for", label0_for_value);
+    			}
+
+    			if (dirty[0] & /*$filterOptions*/ 2 && input0_id_value !== (input0_id_value = /*filterSelection*/ ctx[112].filterSelectionName + /*Dropdown*/ ctx[121].filName)) {
+    				attr_dev(input0, "id", input0_id_value);
+    			}
+
+    			if (dirty[0] & /*showFilterOptions, windowWidth, $filterOptions*/ 266 && input0_disabled_value !== (input0_disabled_value = !/*showFilterOptions*/ ctx[8] || /*windowWidth*/ ctx[3] <= 425 || !/*filterSelection*/ ctx[112].isSelected)) {
+    				prop_dev(input0, "disabled", input0_disabled_value);
+    			}
+
+    			if (dirty[0] & /*$filterOptions*/ 2 && input0.value !== /*$filterOptions*/ ctx[1].filterSelection[/*filSelIdx*/ ctx[114]].filters.Dropdown[/*dropdownIdx*/ ctx[123]].optKeyword) {
+    				set_input_value(input0, /*$filterOptions*/ ctx[1].filterSelection[/*filSelIdx*/ ctx[114]].filters.Dropdown[/*dropdownIdx*/ ctx[123]].optKeyword);
+    			}
+
+    			if (current_block_type === (current_block_type = select_block_type_3(ctx)) && if_block0) {
+    				if_block0.p(ctx, dirty);
+    			} else {
+    				if_block0.d(1);
+    				if_block0 = current_block_type(ctx);
+
+    				if (if_block0) {
+    					if_block0.c();
+    					if_block0.m(div2, null);
+    				}
+    			}
+
+    			if (dirty[0] & /*showFilterOptions, windowWidth, $filterOptions*/ 266 && div2_tabindex_value !== (div2_tabindex_value = /*showFilterOptions*/ ctx[8] && /*windowWidth*/ ctx[3] <= 425 && /*filterSelection*/ ctx[112].isSelected
+    			? "0"
+    			: "")) {
+    				attr_dev(div2, "tabindex", div2_tabindex_value);
+    			}
+
+    			if (dirty[0] & /*$filterOptions*/ 2 && t6_value !== (t6_value = /*Dropdown*/ ctx[121].filName + "")) set_data_dev(t6, t6_value);
+
+    			if (dirty[0] & /*showFilterOptions, $filterOptions*/ 258 && div3_tabindex_value !== (div3_tabindex_value = /*showFilterOptions*/ ctx[8] && /*Dropdown*/ ctx[121].selected
+    			? "0"
+    			: "")) {
+    				attr_dev(div3, "tabindex", div3_tabindex_value);
+    			}
+
+    			if (dirty[0] & /*$filterOptions*/ 2 && t10_value !== (t10_value = "Search " + /*filterSelection*/ ctx[112].filterSelectionName + " " + /*Dropdown*/ ctx[121].filName + "")) set_data_dev(t10, t10_value);
+
+    			if (dirty[0] & /*$filterOptions*/ 2 && label1_for_value !== (label1_for_value = "Search " + (/*filterSelection*/ ctx[112].filterSelectionName + /*Dropdown*/ ctx[121].filName))) {
+    				attr_dev(label1, "for", label1_for_value);
+    			}
+
+    			if (dirty[0] & /*$filterOptions*/ 2 && input1_id_value !== (input1_id_value = "Search " + (/*filterSelection*/ ctx[112].filterSelectionName + /*Dropdown*/ ctx[121].filName))) {
+    				attr_dev(input1, "id", input1_id_value);
+    			}
+
+    			if (dirty[0] & /*showFilterOptions, $filterOptions*/ 258 && input1_disabled_value !== (input1_disabled_value = !/*showFilterOptions*/ ctx[8] || !/*filterSelection*/ ctx[112].isSelected || !/*Dropdown*/ ctx[121].selected)) {
+    				prop_dev(input1, "disabled", input1_disabled_value);
+    			}
+
+    			if (dirty[0] & /*$filterOptions*/ 2 && input1.value !== /*$filterOptions*/ ctx[1].filterSelection[/*filSelIdx*/ ctx[114]].filters.Dropdown[/*dropdownIdx*/ ctx[123]].optKeyword) {
+    				set_input_value(input1, /*$filterOptions*/ ctx[1].filterSelection[/*filSelIdx*/ ctx[114]].filters.Dropdown[/*dropdownIdx*/ ctx[123]].optKeyword);
+    			}
+
+    			if (current_block_type_1 === (current_block_type_1 = select_block_type_4(ctx, dirty)) && if_block1) {
+    				if_block1.p(ctx, dirty);
+    			} else {
+    				if_block1.d(1);
+    				if_block1 = current_block_type_1(ctx);
+
+    				if (if_block1) {
+    					if_block1.c();
+    					if_block1.m(div5, null);
+    				}
+    			}
+
+    			if (dirty[0] & /*$filterOptions, Init*/ 6 && div6_class_value !== (div6_class_value = "" + (null_to_empty("options-wrap-filter-info " + (/*Dropdown*/ ctx[121].options.length && /*Dropdown*/ ctx[121].selected === true && !/*Init*/ ctx[2]
+    			? ""
+    			: "hide")) + " svelte-1d2ae4n"))) {
+    				attr_dev(div6, "class", div6_class_value);
+    			}
+
+    			if (dirty[0] & /*$filterOptions, Init*/ 6 && div7_class_value !== (div7_class_value = "" + (null_to_empty("options-wrap " + (/*Dropdown*/ ctx[121].options.length && /*Dropdown*/ ctx[121].selected === true && !/*Init*/ ctx[2]
+    			? ""
+    			: "disable-interaction hide")) + " svelte-1d2ae4n"))) {
+    				attr_dev(div7, "class", div7_class_value);
+    			}
+
+    			if (dirty[0] & /*maxFilterSelectionHeight*/ 16 && style___maxFilterSelectionHeight !== (style___maxFilterSelectionHeight = `${/*maxFilterSelectionHeight*/ ctx[4]}px`)) {
+    				set_style(div7, "--maxFilterSelectionHeight", style___maxFilterSelectionHeight);
+    			}
+
+    			if (dirty[0] & /*$filterOptions*/ 2 && div8_class_value !== (div8_class_value = "" + (null_to_empty("filter-select " + (/*filterSelection*/ ctx[112].isSelected
+    			? ""
+    			: "disable-interaction")) + " svelte-1d2ae4n"))) {
+    				attr_dev(div8, "class", div8_class_value);
+    			}
+    		},
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(div8);
+    			if_block0.d();
+    			if_block1.d();
+    			mounted = false;
+    			run_all(dispose);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_each_block_5.name,
+    		type: "each",
+    		source: "(1411:16) {#each filterSelection.filters.Dropdown || [] as Dropdown, dropdownIdx (filterSelection.filterSelectionName + Dropdown.filName || {}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (1621:20) {#if filterSelection.isSelected}
+    function create_if_block_8(ctx) {
+    	let div3;
+    	let div0;
+    	let t0;
+    	let div2;
+    	let label;
+    	let t1_value = /*Checkbox*/ ctx[118].filName + "";
+    	let t1;
+    	let label_for_value;
+    	let t2;
+    	let t3;
+    	let div1;
+    	let t4_value = (/*Checkbox*/ ctx[118].filName || "") + "";
+    	let t4;
+    	let mounted;
+    	let dispose;
+
+    	function select_block_type_5(ctx, dirty) {
+    		if (/*$initData*/ ctx[14]) return create_if_block_9;
+    		return create_else_block_2;
+    	}
+
+    	let current_block_type = select_block_type_5(ctx);
+    	let if_block = current_block_type(ctx);
+
+    	function click_handler_1(...args) {
+    		return /*click_handler_1*/ ctx[61](/*Checkbox*/ ctx[118], /*checkboxIdx*/ ctx[120], /*filterSelection*/ ctx[112], ...args);
+    	}
+
+    	function keydown_handler_8(...args) {
+    		return /*keydown_handler_8*/ ctx[62](/*Checkbox*/ ctx[118], /*checkboxIdx*/ ctx[120], /*filterSelection*/ ctx[112], ...args);
+    	}
+
+    	const block = {
+    		c: function create() {
+    			div3 = element("div");
+    			div0 = element("div");
+    			t0 = space();
+    			div2 = element("div");
+    			label = element("label");
+    			t1 = text(t1_value);
+    			t2 = space();
+    			if_block.c();
+    			t3 = space();
+    			div1 = element("div");
+    			t4 = text(t4_value);
+    			attr_dev(div0, "class", "svelte-1d2ae4n");
+    			set_style(div0, "visibility", `none`);
+    			add_location(div0, file$2, 1622, 28, 70713);
+    			attr_dev(label, "class", "disable-interaction svelte-1d2ae4n");
+    			attr_dev(label, "for", label_for_value = "Checkbox: " + /*Checkbox*/ ctx[118].filName);
+    			add_location(label, file$2, 1641, 32, 71724);
+    			attr_dev(div1, "class", "checkbox-label svelte-1d2ae4n");
+    			add_location(div1, file$2, 1675, 32, 73689);
+    			attr_dev(div2, "class", "checkbox-wrap svelte-1d2ae4n");
+    			add_location(div2, file$2, 1623, 28, 70774);
+    			attr_dev(div3, "class", "filter-checkbox svelte-1d2ae4n");
+    			add_location(div3, file$2, 1621, 24, 70654);
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, div3, anchor);
+    			append_dev(div3, div0);
+    			append_dev(div3, t0);
+    			append_dev(div3, div2);
+    			append_dev(div2, label);
+    			append_dev(label, t1);
+    			append_dev(div2, t2);
+    			if_block.m(div2, null);
+    			append_dev(div2, t3);
+    			append_dev(div2, div1);
+    			append_dev(div1, t4);
+
+    			if (!mounted) {
+    				dispose = [
+    					listen_dev(div2, "click", click_handler_1, false, false, false, false),
+    					listen_dev(div2, "keydown", keydown_handler_8, false, false, false, false)
+    				];
+
+    				mounted = true;
+    			}
+    		},
+    		p: function update(new_ctx, dirty) {
+    			ctx = new_ctx;
+    			if (dirty[0] & /*$filterOptions*/ 2 && t1_value !== (t1_value = /*Checkbox*/ ctx[118].filName + "")) set_data_dev(t1, t1_value);
+
+    			if (dirty[0] & /*$filterOptions*/ 2 && label_for_value !== (label_for_value = "Checkbox: " + /*Checkbox*/ ctx[118].filName)) {
+    				attr_dev(label, "for", label_for_value);
+    			}
+
+    			if (current_block_type === (current_block_type = select_block_type_5(ctx)) && if_block) {
+    				if_block.p(ctx, dirty);
+    			} else {
+    				if_block.d(1);
+    				if_block = current_block_type(ctx);
+
+    				if (if_block) {
+    					if_block.c();
+    					if_block.m(div2, t3);
+    				}
+    			}
+
+    			if (dirty[0] & /*$filterOptions*/ 2 && t4_value !== (t4_value = (/*Checkbox*/ ctx[118].filName || "") + "")) set_data_dev(t4, t4_value);
+    		},
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(div3);
+    			if_block.d();
+    			mounted = false;
+    			run_all(dispose);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_if_block_8.name,
+    		type: "if",
+    		source: "(1621:20) {#if filterSelection.isSelected}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (1660:32) {:else}
+    function create_else_block_2(ctx) {
+    	let input;
+    	let input_id_value;
+    	let input_disabled_value;
+    	let mounted;
+    	let dispose;
+
+    	function change_handler_1(...args) {
+    		return /*change_handler_1*/ ctx[59](/*Checkbox*/ ctx[118], /*checkboxIdx*/ ctx[120], /*filterSelection*/ ctx[112], ...args);
+    	}
+
+    	function input_change_handler() {
+    		/*input_change_handler*/ ctx[60].call(input, /*each_value_4*/ ctx[119], /*checkboxIdx*/ ctx[120]);
+    	}
+
+    	const block = {
+    		c: function create() {
+    			input = element("input");
+    			attr_dev(input, "id", input_id_value = "Checkbox: " + /*Checkbox*/ ctx[118].filName);
+    			attr_dev(input, "type", "checkbox");
+    			attr_dev(input, "class", "checkbox svelte-1d2ae4n");
+    			input.disabled = input_disabled_value = !/*showFilterOptions*/ ctx[8];
+    			add_location(input, file$2, 1660, 36, 72790);
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, input, anchor);
+    			input.checked = /*Checkbox*/ ctx[118].isSelected;
+
+    			if (!mounted) {
+    				dispose = [
+    					listen_dev(input, "change", change_handler_1, false, false, false, false),
+    					listen_dev(input, "change", input_change_handler)
+    				];
+
+    				mounted = true;
+    			}
+    		},
+    		p: function update(new_ctx, dirty) {
+    			ctx = new_ctx;
+
+    			if (dirty[0] & /*$filterOptions*/ 2 && input_id_value !== (input_id_value = "Checkbox: " + /*Checkbox*/ ctx[118].filName)) {
+    				attr_dev(input, "id", input_id_value);
+    			}
+
+    			if (dirty[0] & /*showFilterOptions*/ 256 && input_disabled_value !== (input_disabled_value = !/*showFilterOptions*/ ctx[8])) {
+    				prop_dev(input, "disabled", input_disabled_value);
+    			}
+
+    			if (dirty[0] & /*$filterOptions*/ 2) {
+    				input.checked = /*Checkbox*/ ctx[118].isSelected;
+    			}
+    		},
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(input);
+    			mounted = false;
+    			run_all(dispose);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_else_block_2.name,
+    		type: "else",
+    		source: "(1660:32) {:else}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (1648:32) {#if $initData}
+    function create_if_block_9(ctx) {
+    	let input;
+    	let input_id_value;
+    	let input_checked_value;
+    	let input_disabled_value;
+    	let mounted;
+    	let dispose;
+
+    	const block = {
+    		c: function create() {
+    			input = element("input");
+    			attr_dev(input, "id", input_id_value = "Checkbox: " + /*Checkbox*/ ctx[118].filName);
+    			attr_dev(input, "type", "checkbox");
+    			attr_dev(input, "class", "checkbox svelte-1d2ae4n");
+    			input.checked = input_checked_value = /*Checkbox*/ ctx[118].isSelected;
+    			input.disabled = input_disabled_value = !/*showFilterOptions*/ ctx[8];
+    			add_location(input, file$2, 1648, 36, 72090);
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, input, anchor);
+
+    			if (!mounted) {
+    				dispose = listen_dev(input, "change", /*change_handler*/ ctx[58], false, false, false, false);
+    				mounted = true;
+    			}
+    		},
+    		p: function update(ctx, dirty) {
+    			if (dirty[0] & /*$filterOptions*/ 2 && input_id_value !== (input_id_value = "Checkbox: " + /*Checkbox*/ ctx[118].filName)) {
+    				attr_dev(input, "id", input_id_value);
+    			}
+
+    			if (dirty[0] & /*$filterOptions*/ 2 && input_checked_value !== (input_checked_value = /*Checkbox*/ ctx[118].isSelected)) {
+    				prop_dev(input, "checked", input_checked_value);
+    			}
+
+    			if (dirty[0] & /*showFilterOptions*/ 256 && input_disabled_value !== (input_disabled_value = !/*showFilterOptions*/ ctx[8])) {
+    				prop_dev(input, "disabled", input_disabled_value);
+    			}
+    		},
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(input);
+    			mounted = false;
+    			dispose();
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_if_block_9.name,
+    		type: "if",
+    		source: "(1648:32) {#if $initData}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (1620:16) {#each filterSelection.filters.Checkbox || [] as Checkbox, checkboxIdx (filterSelection.filterSelectionName + Checkbox.filName || {}
+    function create_each_block_4(key_1, ctx) {
+    	let first;
+    	let if_block_anchor;
+    	let if_block = /*filterSelection*/ ctx[112].isSelected && create_if_block_8(ctx);
+
+    	const block = {
+    		key: key_1,
+    		first: null,
+    		c: function create() {
+    			first = empty();
+    			if (if_block) if_block.c();
+    			if_block_anchor = empty();
+    			this.first = first;
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, first, anchor);
+    			if (if_block) if_block.m(target, anchor);
+    			insert_dev(target, if_block_anchor, anchor);
+    		},
+    		p: function update(new_ctx, dirty) {
+    			ctx = new_ctx;
+
+    			if (/*filterSelection*/ ctx[112].isSelected) {
+    				if (if_block) {
+    					if_block.p(ctx, dirty);
+    				} else {
+    					if_block = create_if_block_8(ctx);
+    					if_block.c();
+    					if_block.m(if_block_anchor.parentNode, if_block_anchor);
+    				}
+    			} else if (if_block) {
+    				if_block.d(1);
+    				if_block = null;
+    			}
+    		},
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(first);
+    			if (if_block) if_block.d(detaching);
+    			if (detaching) detach_dev(if_block_anchor);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_each_block_4.name,
+    		type: "each",
+    		source: "(1620:16) {#each filterSelection.filters.Checkbox || [] as Checkbox, checkboxIdx (filterSelection.filterSelectionName + Checkbox.filName || {}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (1684:20) {#if filterSelection.isSelected}
+    function create_if_block_7(ctx) {
+    	let div2;
+    	let div0;
+    	let h2;
+    	let t0_value = (/*inputNum*/ ctx[115].filName || "") + "";
+    	let t0;
+    	let t1;
+    	let div1;
+    	let label;
+    	let t2_value = "Number Filter: " + /*inputNum*/ ctx[115].filName + "";
+    	let t2;
+    	let label_for_value;
+    	let t3;
+    	let input;
+    	let input_id_value;
+    	let input_placeholder_value;
+    	let input_value_value;
+    	let input_disabled_value;
+    	let t4;
+    	let mounted;
+    	let dispose;
+
+    	function input_handler(...args) {
+    		return /*input_handler*/ ctx[63](/*inputNumIdx*/ ctx[117], /*inputNum*/ ctx[115], /*filterSelection*/ ctx[112], ...args);
+    	}
+
+    	const block = {
+    		c: function create() {
+    			div2 = element("div");
+    			div0 = element("div");
+    			h2 = element("h2");
+    			t0 = text(t0_value);
+    			t1 = space();
+    			div1 = element("div");
+    			label = element("label");
+    			t2 = text(t2_value);
+    			t3 = space();
+    			input = element("input");
+    			t4 = space();
+    			attr_dev(h2, "class", "svelte-1d2ae4n");
+    			add_location(h2, file$2, 1691, 32, 74520);
+    			attr_dev(div0, "class", "filter-input-number-name svelte-1d2ae4n");
+    			add_location(div0, file$2, 1690, 28, 74448);
+    			attr_dev(label, "class", "disable-interaction svelte-1d2ae4n");
+    			attr_dev(label, "for", label_for_value = "Number Filter: " + /*inputNum*/ ctx[115].filName);
+    			add_location(label, file$2, 1694, 32, 74690);
+    			attr_dev(input, "id", input_id_value = "Number Filter: " + /*inputNum*/ ctx[115].filName);
+    			attr_dev(input, "class", "value-input-number svelte-1d2ae4n");
+    			attr_dev(input, "type", "text");
+
+    			attr_dev(input, "placeholder", input_placeholder_value = /*inputNum*/ ctx[115].filName === "scoring system"
+    			? "Default: User Scoring"
+    			: /*conditionalInputNumberList*/ ctx[19].includes(/*inputNum*/ ctx[115].filName)
+    				? ">123 or 123"
+    				: /*inputNum*/ ctx[115].defaultValue !== null
+    					? "Default: " + /*inputNum*/ ctx[115].defaultValue
+    					: "123");
+
+    			input.value = input_value_value = /*inputNum*/ ctx[115].numberValue || "";
+    			input.disabled = input_disabled_value = !/*showFilterOptions*/ ctx[8];
+    			add_location(input, file$2, 1700, 32, 75028);
+    			attr_dev(div1, "class", "value-input-number-wrap svelte-1d2ae4n");
+    			add_location(div1, file$2, 1693, 28, 74619);
+    			attr_dev(div2, "class", "filter-input-number svelte-1d2ae4n");
+    			set_style(div2, "display", /*filterSelection*/ ctx[112].isSelected ? "" : "none");
+    			add_location(div2, file$2, 1684, 24, 74178);
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, div2, anchor);
+    			append_dev(div2, div0);
+    			append_dev(div0, h2);
+    			append_dev(h2, t0);
+    			append_dev(div2, t1);
+    			append_dev(div2, div1);
+    			append_dev(div1, label);
+    			append_dev(label, t2);
+    			append_dev(div1, t3);
+    			append_dev(div1, input);
+    			append_dev(div2, t4);
+
+    			if (!mounted) {
+    				dispose = listen_dev(input, "input", input_handler, false, false, false, false);
+    				mounted = true;
+    			}
+    		},
+    		p: function update(new_ctx, dirty) {
+    			ctx = new_ctx;
+    			if (dirty[0] & /*$filterOptions*/ 2 && t0_value !== (t0_value = (/*inputNum*/ ctx[115].filName || "") + "")) set_data_dev(t0, t0_value);
+    			if (dirty[0] & /*$filterOptions*/ 2 && t2_value !== (t2_value = "Number Filter: " + /*inputNum*/ ctx[115].filName + "")) set_data_dev(t2, t2_value);
+
+    			if (dirty[0] & /*$filterOptions*/ 2 && label_for_value !== (label_for_value = "Number Filter: " + /*inputNum*/ ctx[115].filName)) {
+    				attr_dev(label, "for", label_for_value);
+    			}
+
+    			if (dirty[0] & /*$filterOptions*/ 2 && input_id_value !== (input_id_value = "Number Filter: " + /*inputNum*/ ctx[115].filName)) {
+    				attr_dev(input, "id", input_id_value);
+    			}
+
+    			if (dirty[0] & /*$filterOptions*/ 2 && input_placeholder_value !== (input_placeholder_value = /*inputNum*/ ctx[115].filName === "scoring system"
+    			? "Default: User Scoring"
+    			: /*conditionalInputNumberList*/ ctx[19].includes(/*inputNum*/ ctx[115].filName)
+    				? ">123 or 123"
+    				: /*inputNum*/ ctx[115].defaultValue !== null
+    					? "Default: " + /*inputNum*/ ctx[115].defaultValue
+    					: "123")) {
+    				attr_dev(input, "placeholder", input_placeholder_value);
+    			}
+
+    			if (dirty[0] & /*$filterOptions*/ 2 && input_value_value !== (input_value_value = /*inputNum*/ ctx[115].numberValue || "") && input.value !== input_value_value) {
+    				prop_dev(input, "value", input_value_value);
+    			}
+
+    			if (dirty[0] & /*showFilterOptions*/ 256 && input_disabled_value !== (input_disabled_value = !/*showFilterOptions*/ ctx[8])) {
+    				prop_dev(input, "disabled", input_disabled_value);
+    			}
+
+    			if (dirty[0] & /*$filterOptions*/ 2) {
+    				set_style(div2, "display", /*filterSelection*/ ctx[112].isSelected ? "" : "none");
+    			}
+    		},
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(div2);
+    			mounted = false;
+    			dispose();
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_if_block_7.name,
+    		type: "if",
+    		source: "(1684:20) {#if filterSelection.isSelected}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (1683:16) {#each filterSelection.filters["Input Number"] || [] as inputNum, inputNumIdx (filterSelection.filterSelectionName + inputNum.filName || {}
+    function create_each_block_3(key_1, ctx) {
+    	let first;
+    	let if_block_anchor;
+    	let if_block = /*filterSelection*/ ctx[112].isSelected && create_if_block_7(ctx);
+
+    	const block = {
+    		key: key_1,
+    		first: null,
+    		c: function create() {
+    			first = empty();
+    			if (if_block) if_block.c();
+    			if_block_anchor = empty();
+    			this.first = first;
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, first, anchor);
+    			if (if_block) if_block.m(target, anchor);
+    			insert_dev(target, if_block_anchor, anchor);
+    		},
+    		p: function update(new_ctx, dirty) {
+    			ctx = new_ctx;
+
+    			if (/*filterSelection*/ ctx[112].isSelected) {
+    				if (if_block) {
+    					if_block.p(ctx, dirty);
+    				} else {
+    					if_block = create_if_block_7(ctx);
+    					if_block.c();
+    					if_block.m(if_block_anchor.parentNode, if_block_anchor);
+    				}
+    			} else if (if_block) {
+    				if_block.d(1);
+    				if_block = null;
+    			}
+    		},
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(first);
+    			if (if_block) if_block.d(detaching);
+    			if (detaching) detach_dev(if_block_anchor);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_each_block_3.name,
+    		type: "each",
+    		source: "(1683:16) {#each filterSelection.filters[\\\"Input Number\\\"] || [] as inputNum, inputNumIdx (filterSelection.filterSelectionName + inputNum.filName || {}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (1410:12) {#each $filterOptions?.filterSelection || [] as filterSelection, filSelIdx (filterSelection.filterSelectionName || {}
+    function create_each_block_2(key_1, ctx) {
+    	let first;
+    	let each_blocks_2 = [];
+    	let each0_lookup = new Map();
+    	let t0;
+    	let each_blocks_1 = [];
+    	let each1_lookup = new Map();
+    	let t1;
+    	let each_blocks = [];
+    	let each2_lookup = new Map();
+    	let each2_anchor;
+    	let each_value_5 = /*filterSelection*/ ctx[112].filters.Dropdown || [];
+    	validate_each_argument(each_value_5);
+    	const get_key = ctx => /*filterSelection*/ ctx[112].filterSelectionName + /*Dropdown*/ ctx[121].filName || {};
+    	validate_each_keys(ctx, each_value_5, get_each_context_5, get_key);
+
+    	for (let i = 0; i < each_value_5.length; i += 1) {
+    		let child_ctx = get_each_context_5(ctx, each_value_5, i);
+    		let key = get_key(child_ctx);
+    		each0_lookup.set(key, each_blocks_2[i] = create_each_block_5(key, child_ctx));
+    	}
+
+    	let each_value_4 = /*filterSelection*/ ctx[112].filters.Checkbox || [];
+    	validate_each_argument(each_value_4);
+    	const get_key_1 = ctx => /*filterSelection*/ ctx[112].filterSelectionName + /*Checkbox*/ ctx[118].filName || {};
+    	validate_each_keys(ctx, each_value_4, get_each_context_4, get_key_1);
+
+    	for (let i = 0; i < each_value_4.length; i += 1) {
+    		let child_ctx = get_each_context_4(ctx, each_value_4, i);
+    		let key = get_key_1(child_ctx);
+    		each1_lookup.set(key, each_blocks_1[i] = create_each_block_4(key, child_ctx));
+    	}
+
+    	let each_value_3 = /*filterSelection*/ ctx[112].filters["Input Number"] || [];
+    	validate_each_argument(each_value_3);
+    	const get_key_2 = ctx => /*filterSelection*/ ctx[112].filterSelectionName + /*inputNum*/ ctx[115].filName || {};
+    	validate_each_keys(ctx, each_value_3, get_each_context_3, get_key_2);
+
+    	for (let i = 0; i < each_value_3.length; i += 1) {
+    		let child_ctx = get_each_context_3(ctx, each_value_3, i);
+    		let key = get_key_2(child_ctx);
+    		each2_lookup.set(key, each_blocks[i] = create_each_block_3(key, child_ctx));
+    	}
+
+    	const block = {
+    		key: key_1,
+    		first: null,
+    		c: function create() {
+    			first = empty();
+
+    			for (let i = 0; i < each_blocks_2.length; i += 1) {
+    				each_blocks_2[i].c();
+    			}
+
+    			t0 = space();
+
+    			for (let i = 0; i < each_blocks_1.length; i += 1) {
+    				each_blocks_1[i].c();
+    			}
+
+    			t1 = space();
+
+    			for (let i = 0; i < each_blocks.length; i += 1) {
+    				each_blocks[i].c();
+    			}
+
+    			each2_anchor = empty();
+    			this.first = first;
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, first, anchor);
+
+    			for (let i = 0; i < each_blocks_2.length; i += 1) {
+    				if (each_blocks_2[i]) {
+    					each_blocks_2[i].m(target, anchor);
+    				}
+    			}
+
+    			insert_dev(target, t0, anchor);
+
+    			for (let i = 0; i < each_blocks_1.length; i += 1) {
+    				if (each_blocks_1[i]) {
+    					each_blocks_1[i].m(target, anchor);
+    				}
+    			}
+
+    			insert_dev(target, t1, anchor);
+
+    			for (let i = 0; i < each_blocks.length; i += 1) {
+    				if (each_blocks[i]) {
+    					each_blocks[i].m(target, anchor);
+    				}
+    			}
+
+    			insert_dev(target, each2_anchor, anchor);
+    		},
+    		p: function update(new_ctx, dirty) {
+    			ctx = new_ctx;
+
+    			if (dirty[0] & /*$filterOptions, Init, maxFilterSelectionHeight, handleFilterSelectOptionChange, showFilterOptions, closeFilterSelect, windowWidth, filterSelect*/ 29360414) {
+    				each_value_5 = /*filterSelection*/ ctx[112].filters.Dropdown || [];
+    				validate_each_argument(each_value_5);
+    				validate_each_keys(ctx, each_value_5, get_each_context_5, get_key);
+    				each_blocks_2 = update_keyed_each(each_blocks_2, dirty, get_key, 1, ctx, each_value_5, each0_lookup, t0.parentNode, destroy_block, create_each_block_5, t0, get_each_context_5);
+    			}
+
+    			if (dirty[0] & /*handleCheckboxChange, $filterOptions, showFilterOptions, $initData*/ 33571074 | dirty[1] & /*pleaseWaitAlert*/ 32) {
+    				each_value_4 = /*filterSelection*/ ctx[112].filters.Checkbox || [];
+    				validate_each_argument(each_value_4);
+    				validate_each_keys(ctx, each_value_4, get_each_context_4, get_key_1);
+    				each_blocks_1 = update_keyed_each(each_blocks_1, dirty, get_key_1, 1, ctx, each_value_4, each1_lookup, t1.parentNode, destroy_block, create_each_block_4, t1, get_each_context_4);
+    			}
+
+    			if (dirty[0] & /*$filterOptions, conditionalInputNumberList, showFilterOptions, handleInputNumber*/ 67633410) {
+    				each_value_3 = /*filterSelection*/ ctx[112].filters["Input Number"] || [];
+    				validate_each_argument(each_value_3);
+    				validate_each_keys(ctx, each_value_3, get_each_context_3, get_key_2);
+    				each_blocks = update_keyed_each(each_blocks, dirty, get_key_2, 1, ctx, each_value_3, each2_lookup, each2_anchor.parentNode, destroy_block, create_each_block_3, each2_anchor, get_each_context_3);
+    			}
+    		},
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(first);
+
+    			for (let i = 0; i < each_blocks_2.length; i += 1) {
+    				each_blocks_2[i].d(detaching);
+    			}
+
+    			if (detaching) detach_dev(t0);
+
+    			for (let i = 0; i < each_blocks_1.length; i += 1) {
+    				each_blocks_1[i].d(detaching);
+    			}
+
+    			if (detaching) detach_dev(t1);
+
+    			for (let i = 0; i < each_blocks.length; i += 1) {
+    				each_blocks[i].d(detaching);
+    			}
+
+    			if (detaching) detach_dev(each2_anchor);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_each_block_2.name,
+    		type: "each",
+    		source: "(1410:12) {#each $filterOptions?.filterSelection || [] as filterSelection, filSelIdx (filterSelection.filterSelectionName || {}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (1744:8) {#if !showAllActiveFilters}
+    function create_if_block_5(ctx) {
+    	let div;
+    	let svg;
+    	let path;
+    	let mounted;
+    	let dispose;
+
+    	const block = {
+    		c: function create() {
+    			div = element("div");
+    			svg = svg_element("svg");
+    			path = svg_element("path");
+    			attr_dev(path, "d", "M367 413 100 145a192 192 0 0 0 268 268zm45-46A192 192 0 0 0 145 99l269 268zM1 256a256 256 0 1 1 512 0 256 256 0 1 1-512 0z");
+    			attr_dev(path, "class", "svelte-1d2ae4n");
+    			add_location(path, file$2, 1753, 20, 77621);
+    			attr_dev(svg, "viewBox", "0 0 512 512");
+    			attr_dev(svg, "class", "svelte-1d2ae4n");
+    			add_location(svg, file$2, 1752, 16, 77572);
+    			attr_dev(div, "tabindex", "0");
+    			attr_dev(div, "class", "empty-tagFilter svelte-1d2ae4n");
+    			attr_dev(div, "title", "Remove Filters");
+    			add_location(div, file$2, 1744, 12, 77267);
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, div, anchor);
+    			append_dev(div, svg);
+    			append_dev(svg, path);
+
+    			if (!mounted) {
+    				dispose = [
+    					listen_dev(div, "click", /*removeAllActiveTag*/ ctx[29], false, false, false, false),
+    					listen_dev(div, "keydown", /*keydown_handler_9*/ ctx[65], false, false, false, false)
+    				];
+
+    				mounted = true;
+    			}
+    		},
+    		p: noop,
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(div);
+    			mounted = false;
+    			run_all(dispose);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_if_block_5.name,
+    		type: "if",
+    		source: "(1744:8) {#if !showAllActiveFilters}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (1765:12) {#if showAllActiveFilters}
+    function create_if_block_4(ctx) {
+    	let div;
+    	let svg;
+    	let path;
+    	let mounted;
+    	let dispose;
+
+    	const block = {
+    		c: function create() {
+    			div = element("div");
+    			svg = svg_element("svg");
+    			path = svg_element("path");
+    			attr_dev(path, "d", "M367 413 100 145a192 192 0 0 0 268 268zm45-46A192 192 0 0 0 145 99l269 268zM1 256a256 256 0 1 1 512 0 256 256 0 1 1-512 0z");
+    			attr_dev(path, "class", "svelte-1d2ae4n");
+    			add_location(path, file$2, 1775, 24, 78492);
+    			attr_dev(svg, "viewBox", "0 0 512 512");
+    			attr_dev(svg, "class", "svelte-1d2ae4n");
+    			add_location(svg, file$2, 1774, 20, 78439);
+    			attr_dev(div, "tabindex", "0");
+    			attr_dev(div, "class", "empty-tagFilter svelte-1d2ae4n");
+    			attr_dev(div, "title", "Remove Filters");
+    			add_location(div, file$2, 1765, 16, 78077);
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, div, anchor);
+    			append_dev(div, svg);
+    			append_dev(svg, path);
+
+    			if (!mounted) {
+    				dispose = [
+    					listen_dev(div, "click", /*removeAllActiveTag*/ ctx[29], false, false, false, false),
+    					listen_dev(div, "keydown", /*keydown_handler_10*/ ctx[66], false, false, false, false)
+    				];
+
+    				mounted = true;
+    			}
+    		},
+    		p: noop,
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(div);
+    			mounted = false;
+    			run_all(dispose);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_if_block_4.name,
+    		type: "if",
+    		source: "(1765:12) {#if showAllActiveFilters}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (1829:20) {:else}
+    function create_else_block_1(ctx) {
+    	let h3;
+    	let t_value = (/*activeTagFiltersArray*/ ctx[109]?.optionName || "") + "";
+    	let t;
+
+    	const block = {
+    		c: function create() {
+    			h3 = element("h3");
+    			t = text(t_value);
+    			attr_dev(h3, "class", "svelte-1d2ae4n");
+    			add_location(h3, file$2, 1829, 24, 81328);
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, h3, anchor);
+    			append_dev(h3, t);
+    		},
+    		p: function update(ctx, dirty) {
+    			if (dirty[0] & /*activeTagFiltersArrays*/ 1024 && t_value !== (t_value = (/*activeTagFiltersArray*/ ctx[109]?.optionName || "") + "")) set_data_dev(t, t_value);
+    		},
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(h3);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_else_block_1.name,
+    		type: "else",
+    		source: "(1829:20) {:else}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (1823:64) 
+    function create_if_block_3(ctx) {
+    	let h3;
+    	let t_value = (/*activeTagFiltersArray*/ ctx[109]?.optionType + ": " + /*activeTagFiltersArray*/ ctx[109]?.optionName || "") + "";
+    	let t;
+
+    	const block = {
+    		c: function create() {
+    			h3 = element("h3");
+    			t = text(t_value);
+    			attr_dev(h3, "class", "svelte-1d2ae4n");
+    			add_location(h3, file$2, 1823, 24, 81058);
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, h3, anchor);
+    			append_dev(h3, t);
+    		},
+    		p: function update(ctx, dirty) {
+    			if (dirty[0] & /*activeTagFiltersArrays*/ 1024 && t_value !== (t_value = (/*activeTagFiltersArray*/ ctx[109]?.optionType + ": " + /*activeTagFiltersArray*/ ctx[109]?.optionName || "") + "")) set_data_dev(t, t_value);
+    		},
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(h3);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_if_block_3.name,
+    		type: "if",
+    		source: "(1823:64) ",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (1817:20) {#if activeTagFiltersArray?.filterType === "input number"}
+    function create_if_block_2(ctx) {
+    	let h3;
+    	let t_value = (/*activeTagFiltersArray*/ ctx[109]?.optionName + ": " + /*activeTagFiltersArray*/ ctx[109]?.optionValue || "") + "";
+    	let t;
+
+    	const block = {
+    		c: function create() {
+    			h3 = element("h3");
+    			t = text(t_value);
+    			attr_dev(h3, "class", "svelte-1d2ae4n");
+    			add_location(h3, file$2, 1817, 24, 80750);
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, h3, anchor);
+    			append_dev(h3, t);
+    		},
+    		p: function update(ctx, dirty) {
+    			if (dirty[0] & /*activeTagFiltersArrays*/ 1024 && t_value !== (t_value = (/*activeTagFiltersArray*/ ctx[109]?.optionName + ": " + /*activeTagFiltersArray*/ ctx[109]?.optionValue || "") + "")) set_data_dev(t, t_value);
+    		},
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(h3);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_if_block_2.name,
+    		type: "if",
+    		source: "(1817:20) {#if activeTagFiltersArray?.filterType === \\\"input number\\\"}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (1782:12) {#each activeTagFiltersArrays || [] as activeTagFiltersArray (activeTagFiltersArray?.optionName + activeTagFiltersArray?.optionIdx + (activeTagFiltersArray?.optionType ?? "") || {}
+    function create_each_block_1(key_1, ctx) {
+    	let div;
+    	let t0;
+    	let svg;
+    	let path;
+    	let t1;
+    	let div_outro;
+    	let current;
+    	let mounted;
+    	let dispose;
+
+    	function select_block_type_6(ctx, dirty) {
+    		if (/*activeTagFiltersArray*/ ctx[109]?.filterType === "input number") return create_if_block_2;
+    		if (/*activeTagFiltersArray*/ ctx[109]?.optionType) return create_if_block_3;
+    		return create_else_block_1;
+    	}
+
+    	let current_block_type = select_block_type_6(ctx);
+    	let if_block = current_block_type(ctx);
+
+    	function click_handler_2(...args) {
+    		return /*click_handler_2*/ ctx[67](/*activeTagFiltersArray*/ ctx[109], ...args);
+    	}
+
+    	function keydown_handler_11(...args) {
+    		return /*keydown_handler_11*/ ctx[68](/*activeTagFiltersArray*/ ctx[109], ...args);
+    	}
+
+    	function click_handler_3(...args) {
+    		return /*click_handler_3*/ ctx[69](/*activeTagFiltersArray*/ ctx[109], ...args);
+    	}
+
+    	function keydown_handler_12(...args) {
+    		return /*keydown_handler_12*/ ctx[70](/*activeTagFiltersArray*/ ctx[109], ...args);
+    	}
+
+    	const block = {
+    		key: key_1,
+    		first: null,
+    		c: function create() {
+    			div = element("div");
+    			if_block.c();
+    			t0 = space();
+    			svg = svg_element("svg");
+    			path = svg_element("path");
+    			t1 = space();
+    			attr_dev(path, "d", "M343 151a32 32 0 0 0-46-46L192 211 87 105a32 32 0 0 0-46 46l106 105L41 361a32 32 0 0 0 46 46l105-106 105 106a32 32 0 0 0 46-46L237 256l106-105z");
+    			attr_dev(path, "class", "svelte-1d2ae4n");
+    			add_location(path, file$2, 1856, 24, 82701);
+    			attr_dev(svg, "class", "removeActiveTag svelte-1d2ae4n");
+    			attr_dev(svg, "viewBox", "0 0 400 512");
+    			attr_dev(svg, "tabindex", "0");
+    			add_location(svg, file$2, 1832, 20, 81463);
+    			attr_dev(div, "class", "activeTagFilter svelte-1d2ae4n");
+    			attr_dev(div, "tabindex", "0");
+
+    			set_style(div, "--activeTagFilterColor", /*activeTagFiltersArray*/ ctx[109]?.selected === "included"
+    			? "#5f9ea0"
+    			: /*activeTagFiltersArray*/ ctx[109]?.selected === "excluded"
+    				? "#e85d75"
+    				: "#000");
+
+    			add_location(div, file$2, 1782, 16, 78966);
+    			this.first = div;
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, div, anchor);
+    			if_block.m(div, null);
+    			append_dev(div, t0);
+    			append_dev(div, svg);
+    			append_dev(svg, path);
+    			append_dev(div, t1);
+    			current = true;
+
+    			if (!mounted) {
+    				dispose = [
+    					listen_dev(svg, "click", prevent_default(click_handler_2), false, true, false, false),
+    					listen_dev(svg, "keydown", keydown_handler_11, false, false, false, false),
+    					listen_dev(div, "click", click_handler_3, false, false, false, false),
+    					listen_dev(div, "keydown", keydown_handler_12, false, false, false, false)
+    				];
+
+    				mounted = true;
+    			}
+    		},
+    		p: function update(new_ctx, dirty) {
+    			ctx = new_ctx;
+
+    			if (current_block_type === (current_block_type = select_block_type_6(ctx)) && if_block) {
+    				if_block.p(ctx, dirty);
+    			} else {
+    				if_block.d(1);
+    				if_block = current_block_type(ctx);
+
+    				if (if_block) {
+    					if_block.c();
+    					if_block.m(div, t0);
+    				}
+    			}
+
+    			if (dirty[0] & /*activeTagFiltersArrays*/ 1024) {
+    				set_style(div, "--activeTagFilterColor", /*activeTagFiltersArray*/ ctx[109]?.selected === "included"
+    				? "#5f9ea0"
+    				: /*activeTagFiltersArray*/ ctx[109]?.selected === "excluded"
+    					? "#e85d75"
+    					: "#000");
+    			}
+    		},
+    		i: function intro(local) {
+    			if (current) return;
+    			if (div_outro) div_outro.end(1);
+    			current = true;
+    		},
+    		o: function outro(local) {
+    			div_outro = create_out_transition(div, fade, { duration: 200 });
+    			current = false;
+    		},
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(div);
+    			if_block.d();
+    			if (detaching && div_outro) div_outro.end();
+    			mounted = false;
+    			run_all(dispose);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_each_block_1.name,
+    		type: "each",
+    		source: "(1782:12) {#each activeTagFiltersArrays || [] as activeTagFiltersArray (activeTagFiltersArray?.optionName + activeTagFiltersArray?.optionIdx + (activeTagFiltersArray?.optionType ?? \\\"\\\") || {}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (1989:4) {:else}
+    function create_else_block(ctx) {
+    	let div2;
+    	let div0;
+    	let t;
+    	let div1;
+    	let mounted;
+    	let dispose;
+
+    	const block = {
+    		c: function create() {
+    			div2 = element("div");
+    			div0 = element("div");
+    			t = space();
+    			div1 = element("div");
+    			attr_dev(div0, "tabindex", "0");
+    			attr_dev(div0, "class", "changeGridView svelte-1d2ae4n");
+    			add_location(div0, file$2, 1991, 12, 89592);
+    			attr_dev(div1, "class", "sortFilter skeleton shimmer svelte-1d2ae4n");
+    			add_location(div1, file$2, 1997, 12, 89814);
+    			attr_dev(div2, "class", "last-filter-option svelte-1d2ae4n");
+    			add_location(div2, file$2, 1990, 8, 89546);
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, div2, anchor);
+    			append_dev(div2, div0);
+    			append_dev(div2, t);
+    			append_dev(div2, div1);
+
+    			if (!mounted) {
+    				dispose = [
+    					listen_dev(div0, "click", /*handleGridView*/ ctx[33], false, false, false, false),
+    					listen_dev(div0, "keydown", /*keydown_handler_19*/ ctx[77], false, false, false, false)
+    				];
+
+    				mounted = true;
+    			}
+    		},
+    		p: noop,
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(div2);
+    			mounted = false;
+    			run_all(dispose);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_else_block.name,
+    		type: "else",
+    		source: "(1989:4) {:else}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (1885:4) {#if $filterOptions}
+    function create_if_block$2(ctx) {
+    	let div7;
+    	let div0;
+    	let svg0;
+    	let path0;
+    	let path0_d_value;
+    	let svg0_viewBox_value;
+    	let t0;
+    	let div6;
+    	let svg1;
+    	let path1;
+    	let path1_d_value;
+    	let svg1_viewBox_value;
+    	let svg1_tabindex_value;
+    	let t1;
+    	let h20;
+    	let t2_value = (/*selectedSortName*/ ctx[11] || "") + "";
+    	let t2;
+    	let h20_tabindex_value;
+    	let t3;
+    	let div5;
+    	let div4;
+    	let div2;
+    	let h21;
+    	let t5;
+    	let div1;
+    	let t6;
+    	let div1_tabindex_value;
+    	let t7;
+    	let div3;
+    	let each_blocks = [];
+    	let each_1_lookup = new Map();
+    	let div4_class_value;
+    	let div5_class_value;
+    	let style___maxFilterSelectionHeight = `${/*maxFilterSelectionHeight*/ ctx[4]}px`;
+    	let mounted;
+    	let dispose;
+    	let each_value = /*$filterOptions*/ ctx[1]?.sortFilter || [];
+    	validate_each_argument(each_value);
+    	const get_key = ctx => /*sortFilter*/ ctx[106]?.sortName || {};
+    	validate_each_keys(ctx, each_value, get_each_context, get_key);
+
+    	for (let i = 0; i < each_value.length; i += 1) {
+    		let child_ctx = get_each_context(ctx, each_value, i);
+    		let key = get_key(child_ctx);
+    		each_1_lookup.set(key, each_blocks[i] = create_each_block(key, child_ctx));
+    	}
+
+    	const block = {
+    		c: function create() {
+    			div7 = element("div");
+    			div0 = element("div");
+    			svg0 = svg_element("svg");
+    			path0 = svg_element("path");
+    			t0 = space();
+    			div6 = element("div");
+    			svg1 = svg_element("svg");
+    			path1 = svg_element("path");
+    			t1 = space();
+    			h20 = element("h2");
+    			t2 = text(t2_value);
+    			t3 = space();
+    			div5 = element("div");
+    			div4 = element("div");
+    			div2 = element("div");
+    			h21 = element("h2");
+    			h21.textContent = "Sort By";
+    			t5 = space();
+    			div1 = element("div");
+    			t6 = text("×");
+    			t7 = space();
+    			div3 = element("div");
+
+    			for (let i = 0; i < each_blocks.length; i += 1) {
+    				each_blocks[i].c();
+    			}
+
+    			attr_dev(path0, "d", path0_d_value = /*isFullViewed*/ ctx[13]
+    			? // arrows-up-down
+    				"M183 9a32 32 0 0 0-46 0l-96 96a32 32 0 0 0 46 46l41-42v294l-41-42a32 32 0 0 0-46 46l96 96c13 12 33 12 46 0l96-96a32 32 0 0 0-46-46l-41 42V109l41 42a32 32 0 0 0 46-46L183 9z"
+    			: // arrows-left-right
+    				"m407 375 96-96c12-13 12-33 0-46l-96-96a32 32 0 0 0-46 46l42 41H109l42-41a32 32 0 0 0-46-46L9 233a32 32 0 0 0 0 46l96 96a32 32 0 0 0 46-46l-42-41h294l-42 41a32 32 0 0 0 46 46z");
+
+    			attr_dev(path0, "class", "svelte-1d2ae4n");
+    			add_location(path0, file$2, 1894, 20, 84346);
+    			attr_dev(svg0, "viewBox", svg0_viewBox_value = `0 0 ${/*isFullViewed*/ ctx[13] ? "312" : "512"} 512`);
+    			attr_dev(svg0, "class", "svelte-1d2ae4n");
+    			add_location(svg0, file$2, 1893, 16, 84267);
+    			attr_dev(div0, "tabindex", "0");
+    			attr_dev(div0, "class", "changeGridView svelte-1d2ae4n");
+    			add_location(div0, file$2, 1887, 12, 84042);
+
+    			attr_dev(path1, "d", path1_d_value = // sortdown
+    			/*selectedSortType*/ ctx[12] === "asc"
+    			? "M183 41a32 32 0 0 0-46 0L9 169c-9 10-12 23-7 35s17 20 30 20h256a32 32 0 0 0 23-55L183 41z"
+    			: // sort up
+    				"M183 471a32 32 0 0 1-46 0L9 343c-9-10-12-23-7-35s17-20 30-20h256a32 32 0 0 1 23 55L183 471z");
+
+    			attr_dev(path1, "class", "svelte-1d2ae4n");
+    			add_location(path1, file$2, 1912, 20, 85402);
+    			attr_dev(svg1, "viewBox", svg1_viewBox_value = `0 ${/*selectedSortType*/ ctx[12] === "asc" ? "-" : ""}140 320 512`);
+    			attr_dev(svg1, "tabindex", svg1_tabindex_value = /*selectedSortElement*/ ctx[6] ? "" : "0");
+    			attr_dev(svg1, "class", "svelte-1d2ae4n");
+    			add_location(svg1, file$2, 1904, 16, 85032);
+    			attr_dev(h20, "tabindex", h20_tabindex_value = /*selectedSortElement*/ ctx[6] ? "" : "0");
+    			attr_dev(h20, "class", "svelte-1d2ae4n");
+    			add_location(h20, file$2, 1920, 16, 85856);
+    			attr_dev(h21, "class", "svelte-1d2ae4n");
+    			add_location(h21, file$2, 1938, 28, 86683);
+    			attr_dev(div1, "class", "closing-x svelte-1d2ae4n");
+
+    			attr_dev(div1, "tabindex", div1_tabindex_value = /*selectedSortElement*/ ctx[6] && /*windowWidth*/ ctx[3] <= 425
+    			? "0"
+    			: "");
+
+    			add_location(div1, file$2, 1940, 28, 86813);
+    			attr_dev(div2, "class", "header svelte-1d2ae4n");
+    			add_location(div2, file$2, 1937, 24, 86633);
+    			attr_dev(div3, "class", "options svelte-1d2ae4n");
+    			add_location(div3, file$2, 1954, 24, 87471);
+    			attr_dev(div4, "class", div4_class_value = "" + (null_to_empty("options-wrap-filter-info " + (/*selectedSortElement*/ ctx[6] ? "" : "hide")) + " svelte-1d2ae4n"));
+    			add_location(div4, file$2, 1933, 20, 86452);
+
+    			attr_dev(div5, "class", div5_class_value = "" + (null_to_empty("options-wrap " + (/*selectedSortElement*/ ctx[6]
+    			? ""
+    			: "disable-interaction hide")) + " svelte-1d2ae4n"));
+
+    			set_style(div5, "--maxFilterSelectionHeight", style___maxFilterSelectionHeight);
+    			add_location(div5, file$2, 1928, 16, 86194);
+    			attr_dev(div6, "class", "sortFilter svelte-1d2ae4n");
+    			add_location(div6, file$2, 1903, 12, 84990);
+    			attr_dev(div7, "class", "last-filter-option svelte-1d2ae4n");
+    			add_location(div7, file$2, 1886, 8, 83996);
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, div7, anchor);
+    			append_dev(div7, div0);
+    			append_dev(div0, svg0);
+    			append_dev(svg0, path0);
+    			append_dev(div7, t0);
+    			append_dev(div7, div6);
+    			append_dev(div6, svg1);
+    			append_dev(svg1, path1);
+    			append_dev(div6, t1);
+    			append_dev(div6, h20);
+    			append_dev(h20, t2);
+    			append_dev(div6, t3);
+    			append_dev(div6, div5);
+    			append_dev(div5, div4);
+    			append_dev(div4, div2);
+    			append_dev(div2, h21);
+    			append_dev(div2, t5);
+    			append_dev(div2, div1);
+    			append_dev(div1, t6);
+    			append_dev(div4, t7);
+    			append_dev(div4, div3);
+
+    			for (let i = 0; i < each_blocks.length; i += 1) {
+    				if (each_blocks[i]) {
+    					each_blocks[i].m(div3, null);
+    				}
+    			}
+
+    			if (!mounted) {
+    				dispose = [
+    					listen_dev(div0, "click", /*handleGridView*/ ctx[33], false, false, false, false),
+    					listen_dev(div0, "keydown", /*keydown_handler_14*/ ctx[72], false, false, false, false),
+    					listen_dev(svg1, "click", /*changeSortType*/ ctx[32], false, false, false, false),
+    					listen_dev(svg1, "keydown", /*keydown_handler_15*/ ctx[73], false, false, false, false),
+    					listen_dev(h20, "click", /*handleSortFilterPopup*/ ctx[30], false, false, false, false),
+    					listen_dev(h20, "keydown", /*keydown_handler_16*/ ctx[74], false, false, false, false),
+    					listen_dev(div1, "keydown", /*keydown_handler_17*/ ctx[75], false, false, false, false),
+    					listen_dev(div1, "click", /*handleSortFilterPopup*/ ctx[30], false, false, false, false)
+    				];
+
+    				mounted = true;
+    			}
+    		},
+    		p: function update(ctx, dirty) {
+    			if (dirty[0] & /*isFullViewed*/ 8192 && path0_d_value !== (path0_d_value = /*isFullViewed*/ ctx[13]
+    			? // arrows-up-down
+    				"M183 9a32 32 0 0 0-46 0l-96 96a32 32 0 0 0 46 46l41-42v294l-41-42a32 32 0 0 0-46 46l96 96c13 12 33 12 46 0l96-96a32 32 0 0 0-46-46l-41 42V109l41 42a32 32 0 0 0 46-46L183 9z"
+    			: // arrows-left-right
+    				"m407 375 96-96c12-13 12-33 0-46l-96-96a32 32 0 0 0-46 46l42 41H109l42-41a32 32 0 0 0-46-46L9 233a32 32 0 0 0 0 46l96 96a32 32 0 0 0 46-46l-42-41h294l-42 41a32 32 0 0 0 46 46z")) {
+    				attr_dev(path0, "d", path0_d_value);
+    			}
+
+    			if (dirty[0] & /*isFullViewed*/ 8192 && svg0_viewBox_value !== (svg0_viewBox_value = `0 0 ${/*isFullViewed*/ ctx[13] ? "312" : "512"} 512`)) {
+    				attr_dev(svg0, "viewBox", svg0_viewBox_value);
+    			}
+
+    			if (dirty[0] & /*selectedSortType*/ 4096 && path1_d_value !== (path1_d_value = // sortdown
+    			/*selectedSortType*/ ctx[12] === "asc"
+    			? "M183 41a32 32 0 0 0-46 0L9 169c-9 10-12 23-7 35s17 20 30 20h256a32 32 0 0 0 23-55L183 41z"
+    			: // sort up
+    				"M183 471a32 32 0 0 1-46 0L9 343c-9-10-12-23-7-35s17-20 30-20h256a32 32 0 0 1 23 55L183 471z")) {
+    				attr_dev(path1, "d", path1_d_value);
+    			}
+
+    			if (dirty[0] & /*selectedSortType*/ 4096 && svg1_viewBox_value !== (svg1_viewBox_value = `0 ${/*selectedSortType*/ ctx[12] === "asc" ? "-" : ""}140 320 512`)) {
+    				attr_dev(svg1, "viewBox", svg1_viewBox_value);
+    			}
+
+    			if (dirty[0] & /*selectedSortElement*/ 64 && svg1_tabindex_value !== (svg1_tabindex_value = /*selectedSortElement*/ ctx[6] ? "" : "0")) {
+    				attr_dev(svg1, "tabindex", svg1_tabindex_value);
+    			}
+
+    			if (dirty[0] & /*selectedSortName*/ 2048 && t2_value !== (t2_value = (/*selectedSortName*/ ctx[11] || "") + "")) set_data_dev(t2, t2_value);
+
+    			if (dirty[0] & /*selectedSortElement*/ 64 && h20_tabindex_value !== (h20_tabindex_value = /*selectedSortElement*/ ctx[6] ? "" : "0")) {
+    				attr_dev(h20, "tabindex", h20_tabindex_value);
+    			}
+
+    			if (dirty[0] & /*selectedSortElement, windowWidth*/ 72 && div1_tabindex_value !== (div1_tabindex_value = /*selectedSortElement*/ ctx[6] && /*windowWidth*/ ctx[3] <= 425
+    			? "0"
+    			: "")) {
+    				attr_dev(div1, "tabindex", div1_tabindex_value);
+    			}
+
+    			if (dirty[0] & /*$filterOptions, selectedSortType, selectedSortName*/ 6146 | dirty[1] & /*changeSort*/ 1) {
+    				each_value = /*$filterOptions*/ ctx[1]?.sortFilter || [];
+    				validate_each_argument(each_value);
+    				validate_each_keys(ctx, each_value, get_each_context, get_key);
+    				each_blocks = update_keyed_each(each_blocks, dirty, get_key, 1, ctx, each_value, each_1_lookup, div3, destroy_block, create_each_block, null, get_each_context);
+    			}
+
+    			if (dirty[0] & /*selectedSortElement*/ 64 && div4_class_value !== (div4_class_value = "" + (null_to_empty("options-wrap-filter-info " + (/*selectedSortElement*/ ctx[6] ? "" : "hide")) + " svelte-1d2ae4n"))) {
+    				attr_dev(div4, "class", div4_class_value);
+    			}
+
+    			if (dirty[0] & /*selectedSortElement*/ 64 && div5_class_value !== (div5_class_value = "" + (null_to_empty("options-wrap " + (/*selectedSortElement*/ ctx[6]
+    			? ""
+    			: "disable-interaction hide")) + " svelte-1d2ae4n"))) {
+    				attr_dev(div5, "class", div5_class_value);
+    			}
+
+    			if (dirty[0] & /*maxFilterSelectionHeight*/ 16 && style___maxFilterSelectionHeight !== (style___maxFilterSelectionHeight = `${/*maxFilterSelectionHeight*/ ctx[4]}px`)) {
+    				set_style(div5, "--maxFilterSelectionHeight", style___maxFilterSelectionHeight);
+    			}
+    		},
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(div7);
+
+    			for (let i = 0; i < each_blocks.length; i += 1) {
+    				each_blocks[i].d();
+    			}
+
+    			mounted = false;
+    			run_all(dispose);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_if_block$2.name,
+    		type: "if",
+    		source: "(1885:4) {#if $filterOptions}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (1965:36) {#if selectedSortName === sortFilter?.sortName}
+    function create_if_block_1$2(ctx) {
+    	let svg;
+    	let path;
+    	let path_d_value;
+    	let svg_viewBox_value;
+
+    	const block = {
+    		c: function create() {
+    			svg = svg_element("svg");
+    			path = svg_element("path");
+
+    			attr_dev(path, "d", path_d_value = // sortdown
+    			/*selectedSortType*/ ctx[12] === "asc"
+    			? "M183 41a32 32 0 0 0-46 0L9 169c-9 10-12 23-7 35s17 20 30 20h256a32 32 0 0 0 23-55L183 41z"
+    			: // sort up
+    				"M183 471a32 32 0 0 1-46 0L9 343c-9-10-12-23-7-35s17-20 30-20h256a32 32 0 0 1 23 55L183 471z");
+
+    			attr_dev(path, "class", "svelte-1d2ae4n");
+    			add_location(path, file$2, 1972, 44, 88615);
+    			attr_dev(svg, "viewBox", svg_viewBox_value = `0 ${/*selectedSortType*/ ctx[12] === "asc" ? "-180" : "100"} 320 512`);
+    			attr_dev(svg, "class", "svelte-1d2ae4n");
+    			add_location(svg, file$2, 1965, 40, 88206);
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, svg, anchor);
+    			append_dev(svg, path);
+    		},
+    		p: function update(ctx, dirty) {
+    			if (dirty[0] & /*selectedSortType*/ 4096 && path_d_value !== (path_d_value = // sortdown
+    			/*selectedSortType*/ ctx[12] === "asc"
+    			? "M183 41a32 32 0 0 0-46 0L9 169c-9 10-12 23-7 35s17 20 30 20h256a32 32 0 0 0 23-55L183 41z"
+    			: // sort up
+    				"M183 471a32 32 0 0 1-46 0L9 343c-9-10-12-23-7-35s17-20 30-20h256a32 32 0 0 1 23 55L183 471z")) {
+    				attr_dev(path, "d", path_d_value);
+    			}
+
+    			if (dirty[0] & /*selectedSortType*/ 4096 && svg_viewBox_value !== (svg_viewBox_value = `0 ${/*selectedSortType*/ ctx[12] === "asc" ? "-180" : "100"} 320 512`)) {
+    				attr_dev(svg, "viewBox", svg_viewBox_value);
+    			}
+    		},
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(svg);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_if_block_1$2.name,
+    		type: "if",
+    		source: "(1965:36) {#if selectedSortName === sortFilter?.sortName}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (1956:28) {#each $filterOptions?.sortFilter || [] as sortFilter (sortFilter?.sortName || {}
+    function create_each_block(key_1, ctx) {
+    	let div;
+    	let h3;
+    	let t0_value = (/*sortFilter*/ ctx[106]?.sortName || "") + "";
+    	let t0;
+    	let t1;
+    	let t2;
+    	let mounted;
+    	let dispose;
+    	let if_block = /*selectedSortName*/ ctx[11] === /*sortFilter*/ ctx[106]?.sortName && create_if_block_1$2(ctx);
+
+    	function keydown_handler_18(...args) {
+    		return /*keydown_handler_18*/ ctx[76](/*sortFilter*/ ctx[106], ...args);
+    	}
+
+    	const block = {
+    		key: key_1,
+    		first: null,
+    		c: function create() {
+    			div = element("div");
+    			h3 = element("h3");
+    			t0 = text(t0_value);
+    			t1 = space();
+    			if (if_block) if_block.c();
+    			t2 = space();
+    			attr_dev(h3, "class", "svelte-1d2ae4n");
+    			add_location(h3, file$2, 1963, 36, 88042);
+    			attr_dev(div, "class", "option svelte-1d2ae4n");
+    			add_location(div, file$2, 1956, 32, 87639);
+    			this.first = div;
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, div, anchor);
+    			append_dev(div, h3);
+    			append_dev(h3, t0);
+    			append_dev(div, t1);
+    			if (if_block) if_block.m(div, null);
+    			append_dev(div, t2);
+
+    			if (!mounted) {
+    				dispose = [
+    					listen_dev(
+    						div,
+    						"click",
+    						function () {
+    							if (is_function(/*changeSort*/ ctx[31](/*sortFilter*/ ctx[106]?.sortName))) /*changeSort*/ ctx[31](/*sortFilter*/ ctx[106]?.sortName).apply(this, arguments);
+    						},
+    						false,
+    						false,
+    						false,
+    						false
+    					),
+    					listen_dev(div, "keydown", keydown_handler_18, false, false, false, false)
+    				];
+
+    				mounted = true;
+    			}
+    		},
+    		p: function update(new_ctx, dirty) {
+    			ctx = new_ctx;
+    			if (dirty[0] & /*$filterOptions*/ 2 && t0_value !== (t0_value = (/*sortFilter*/ ctx[106]?.sortName || "") + "")) set_data_dev(t0, t0_value);
+
+    			if (/*selectedSortName*/ ctx[11] === /*sortFilter*/ ctx[106]?.sortName) {
+    				if (if_block) {
+    					if_block.p(ctx, dirty);
+    				} else {
+    					if_block = create_if_block_1$2(ctx);
+    					if_block.c();
+    					if_block.m(div, t2);
+    				}
+    			} else if (if_block) {
+    				if_block.d(1);
+    				if_block = null;
+    			}
+    		},
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(div);
+    			if (if_block) if_block.d();
+    			mounted = false;
+    			run_all(dispose);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_each_block.name,
+    		type: "each",
+    		source: "(1956:28) {#each $filterOptions?.sortFilter || [] as sortFilter (sortFilter?.sortName || {}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    function create_fragment$2(ctx) {
+    	let main;
+    	let div0;
+    	let t0;
+    	let t1;
+    	let div4;
+    	let label;
+    	let t3;
+    	let input;
+    	let t4;
+    	let div2;
+    	let svg0;
+    	let path0;
+    	let svg0_tabindex_value;
+    	let t5;
+    	let div1;
+    	let div1_class_value;
+    	let style___maxFilterSelectionHeight = `${/*maxFilterSelectionHeight*/ ctx[4]}px`;
+    	let t6;
+    	let div3;
+    	let svg1;
+    	let path1;
+    	let t7;
+    	let div5;
+    	let div5_class_value;
+    	let t8;
+    	let div8;
+    	let t9;
+    	let div6;
+    	let t10;
+    	let each_blocks = [];
+    	let each_1_lookup = new Map();
+    	let t11;
+    	let div7;
+    	let svg2;
+    	let path2;
+    	let path2_d_value;
+    	let svg2_class_value;
+    	let div8_class_value;
+    	let t12;
+    	let t13;
+    	let current;
+    	let mounted;
+    	let dispose;
+
+    	function select_block_type(ctx, dirty) {
+    		if (/*$filterOptions*/ ctx[1]) return create_if_block_17;
+    		return create_else_block_7;
+    	}
+
+    	let current_block_type = select_block_type(ctx);
+    	let if_block0 = current_block_type(ctx);
+    	let if_block1 = (/*$dataStatus*/ ctx[15] || !/*$username*/ ctx[17]) && create_if_block_14(ctx);
+    	let if_block2 = /*$filterOptions*/ ctx[1] && create_if_block_13(ctx);
+
+    	function select_block_type_2(ctx, dirty) {
+    		if (/*$filterOptions*/ ctx[1]) return create_if_block_6;
+    		return create_else_block_5;
+    	}
+
+    	let current_block_type_1 = select_block_type_2(ctx);
+    	let if_block3 = current_block_type_1(ctx);
+    	let if_block4 = !/*showAllActiveFilters*/ ctx[7] && create_if_block_5(ctx);
+    	let if_block5 = /*showAllActiveFilters*/ ctx[7] && create_if_block_4(ctx);
+    	let each_value_1 = /*activeTagFiltersArrays*/ ctx[10] || [];
+    	validate_each_argument(each_value_1);
+    	const get_key = ctx => /*activeTagFiltersArray*/ ctx[109]?.optionName + /*activeTagFiltersArray*/ ctx[109]?.optionIdx + (/*activeTagFiltersArray*/ ctx[109]?.optionType ?? "") || {};
+    	validate_each_keys(ctx, each_value_1, get_each_context_1, get_key);
+
+    	for (let i = 0; i < each_value_1.length; i += 1) {
+    		let child_ctx = get_each_context_1(ctx, each_value_1, i);
+    		let key = get_key(child_ctx);
+    		each_1_lookup.set(key, each_blocks[i] = create_each_block_1(key, child_ctx));
+    	}
+
+    	function select_block_type_7(ctx, dirty) {
+    		if (/*$filterOptions*/ ctx[1]) return create_if_block$2;
+    		return create_else_block;
+    	}
+
+    	let current_block_type_2 = select_block_type_7(ctx);
+    	let if_block6 = current_block_type_2(ctx);
+    	const default_slot_template = /*#slots*/ ctx[44].default;
+    	const default_slot = create_slot(default_slot_template, ctx, /*$$scope*/ ctx[43], null);
+
+    	const block = {
+    		c: function create() {
+    			main = element("main");
+    			div0 = element("div");
+    			if_block0.c();
+    			t0 = space();
+    			if (if_block1) if_block1.c();
+    			t1 = space();
+    			div4 = element("div");
+    			label = element("label");
+    			label.textContent = "Search Title";
+    			t3 = space();
+    			input = element("input");
+    			t4 = space();
+    			div2 = element("div");
+    			svg0 = svg_element("svg");
+    			path0 = svg_element("path");
+    			t5 = space();
+    			div1 = element("div");
+    			if (if_block2) if_block2.c();
+    			t6 = space();
+    			div3 = element("div");
+    			svg1 = svg_element("svg");
+    			path1 = svg_element("path");
+    			t7 = space();
+    			div5 = element("div");
+    			if_block3.c();
+    			t8 = space();
+    			div8 = element("div");
+    			if (if_block4) if_block4.c();
+    			t9 = space();
+    			div6 = element("div");
+    			if (if_block5) if_block5.c();
+    			t10 = space();
+
+    			for (let i = 0; i < each_blocks.length; i += 1) {
+    				each_blocks[i].c();
+    			}
+
+    			t11 = space();
+    			div7 = element("div");
+    			svg2 = svg_element("svg");
+    			path2 = svg_element("path");
+    			t12 = space();
+    			if_block6.c();
+    			t13 = space();
+    			if (default_slot) default_slot.c();
+    			attr_dev(div0, "class", "home-status svelte-1d2ae4n");
+    			add_location(div0, file$2, 1264, 4, 50735);
+    			attr_dev(label, "class", "disable-interaction svelte-1d2ae4n");
+    			attr_dev(label, "for", "input-search");
+    			add_location(label, file$2, 1289, 8, 51537);
+    			attr_dev(input, "id", "input-search");
+    			attr_dev(input, "class", "input-search svelte-1d2ae4n");
+    			attr_dev(input, "type", "search");
+    			attr_dev(input, "enterkeyhint", "search");
+    			attr_dev(input, "autocomplete", "off");
+    			attr_dev(input, "placeholder", "Search");
+    			add_location(input, file$2, 1292, 8, 51645);
+    			attr_dev(path0, "d", "M0 416c0 18 14 32 32 32h55a80 80 0 0 0 146 0h247a32 32 0 1 0 0-64H233a80 80 0 0 0-146 0H32c-18 0-32 14-32 32zm128 0a32 32 0 1 1 64 0 32 32 0 1 1-64 0zm192-160a32 32 0 1 1 64 0 32 32 0 1 1-64 0zm32-80c-33 0-61 20-73 48H32a32 32 0 1 0 0 64h247a80 80 0 0 0 146 0h55a32 32 0 1 0 0-64h-55a80 80 0 0 0-73-48zm-160-48a32 32 0 1 1 0-64 32 32 0 1 1 0 64zm73-64a80 80 0 0 0-146 0H32a32 32 0 1 0 0 64h87a80 80 0 0 0 146 0h215a32 32 0 1 0 0-64H265z");
+    			attr_dev(path0, "class", "svelte-1d2ae4n");
+    			add_location(path0, file$2, 1312, 16, 52397);
+    			attr_dev(svg0, "class", "input-search-wrap-icon svelte-1d2ae4n");
+    			attr_dev(svg0, "viewBox", "0 0 512 512");
+    			attr_dev(svg0, "tabindex", svg0_tabindex_value = /*selectedFilterTypeElement*/ ctx[5] ? "" : "0");
+    			add_location(svg0, file$2, 1303, 12, 52020);
+
+    			attr_dev(div1, "class", div1_class_value = "" + (null_to_empty("options-wrap " + (/*selectedFilterTypeElement*/ ctx[5]
+    			? ""
+    			: "disable-interaction hide")) + " svelte-1d2ae4n"));
+
+    			set_style(div1, "--maxFilterSelectionHeight", style___maxFilterSelectionHeight);
+    			add_location(div1, file$2, 1316, 12, 52918);
+    			attr_dev(div2, "class", "filterType svelte-1d2ae4n");
+    			add_location(div2, file$2, 1301, 8, 51914);
+    			attr_dev(path1, "d", "M4 55c7-14 21-23 36-23h432c16 0 30 9 36 23s5 30-5 42L320 321v127c0 12-7 23-18 29s-23 4-33-3l-64-48c-8-6-13-16-13-26v-79L9 97a40 40 0 0 1-5-42z");
+    			attr_dev(path1, "class", "svelte-1d2ae4n");
+    			add_location(path1, file$2, 1384, 16, 56178);
+    			attr_dev(svg1, "class", "showFilterOptions svelte-1d2ae4n");
+    			attr_dev(svg1, "tabindex", "0");
+    			attr_dev(svg1, "viewBox", "0 0 512 512");
+    			add_location(svg1, file$2, 1375, 12, 55838);
+    			attr_dev(div3, "class", "showFilterOptions-container svelte-1d2ae4n");
+    			add_location(div3, file$2, 1373, 8, 55715);
+    			attr_dev(div4, "class", "input-search-wrap svelte-1d2ae4n");
+    			add_location(div4, file$2, 1288, 4, 51496);
+
+    			attr_dev(div5, "class", div5_class_value = "" + (null_to_empty("filters " + (/*showFilterOptions*/ ctx[8]
+    			? ""
+    			: "disable-interaction") + (/*$hasWheel*/ ctx[18] ? " hasWheel" : "")) + " svelte-1d2ae4n"));
+
+    			attr_dev(div5, "id", "filters");
+    			set_style(div5, "--maxPaddingHeight", /*maxFilterSelectionHeight*/ ctx[4] + 65 + "px");
+    			add_location(div5, file$2, 1390, 4, 56425);
+    			attr_dev(div6, "id", "tagFilters");
+    			attr_dev(div6, "class", "tagFilters svelte-1d2ae4n");
+    			set_style(div6, "max-height", /*showAllActiveFilters*/ ctx[7] ? "200px" : "30px");
+    			add_location(div6, file$2, 1759, 8, 77871);
+
+    			attr_dev(path2, "d", path2_d_value = /*showAllActiveFilters*/ ctx[7]
+    			? // angle-up
+    				"M201 137c13-12 33-12 46 0l160 160a32 32 0 0 1-46 46L224 205 87 343a32 32 0 0 1-46-46l160-160z"
+    			: // angle-down
+    				"M201 343c13 12 33 12 46 0l160-160a32 32 0 0 0-46-46L224 275 87 137a32 32 0 0 0-46 46l160 160z");
+
+    			attr_dev(path2, "class", "svelte-1d2ae4n");
+    			add_location(path2, file$2, 1874, 16, 83451);
+    			attr_dev(svg2, "class", svg2_class_value = "" + (null_to_empty("angle-" + (/*showAllActiveFilters*/ ctx[7] ? "up" : "down")) + " svelte-1d2ae4n"));
+    			attr_dev(svg2, "viewBox", "0 0 450 512");
+    			add_location(svg2, file$2, 1870, 12, 83300);
+    			attr_dev(div7, "tabindex", "0");
+    			attr_dev(div7, "class", "showHideActiveFilters svelte-1d2ae4n");
+    			add_location(div7, file$2, 1864, 8, 83074);
+    			attr_dev(div8, "class", div8_class_value = "" + (null_to_empty("activeFilters" + (/*showAllActiveFilters*/ ctx[7] ? " seenMore" : "")) + " svelte-1d2ae4n"));
+    			add_location(div8, file$2, 1742, 4, 77143);
+    			attr_dev(main, "id", "main-home");
+    			attr_dev(main, "class", "svelte-1d2ae4n");
+    			set_style(main, "--filters-space", /*showFilterOptions*/ ctx[8] ? "80px" : "");
+    			add_location(main, file$2, 1263, 0, 50652);
+    		},
+    		l: function claim(nodes) {
+    			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, main, anchor);
+    			append_dev(main, div0);
+    			if_block0.m(div0, null);
+    			append_dev(div0, t0);
+    			if (if_block1) if_block1.m(div0, null);
+    			append_dev(main, t1);
+    			append_dev(main, div4);
+    			append_dev(div4, label);
+    			append_dev(div4, t3);
+    			append_dev(div4, input);
+    			set_input_value(input, /*$searchedAnimeKeyword*/ ctx[16]);
+    			append_dev(div4, t4);
+    			append_dev(div4, div2);
+    			append_dev(div2, svg0);
+    			append_dev(svg0, path0);
+    			append_dev(div2, t5);
+    			append_dev(div2, div1);
+    			if (if_block2) if_block2.m(div1, null);
+    			append_dev(div4, t6);
+    			append_dev(div4, div3);
+    			append_dev(div3, svg1);
+    			append_dev(svg1, path1);
+    			append_dev(main, t7);
+    			append_dev(main, div5);
+    			if_block3.m(div5, null);
+    			append_dev(main, t8);
+    			append_dev(main, div8);
+    			if (if_block4) if_block4.m(div8, null);
+    			append_dev(div8, t9);
+    			append_dev(div8, div6);
+    			if (if_block5) if_block5.m(div6, null);
+    			append_dev(div6, t10);
+
+    			for (let i = 0; i < each_blocks.length; i += 1) {
+    				if (each_blocks[i]) {
+    					each_blocks[i].m(div6, null);
+    				}
+    			}
+
+    			append_dev(div8, t11);
+    			append_dev(div8, div7);
+    			append_dev(div7, svg2);
+    			append_dev(svg2, path2);
+    			append_dev(main, t12);
+    			if_block6.m(main, null);
+    			append_dev(main, t13);
+
+    			if (default_slot) {
+    				default_slot.m(main, null);
+    			}
+
+    			current = true;
+
+    			if (!mounted) {
+    				dispose = [
+    					listen_dev(input, "input", /*input_input_handler*/ ctx[46]),
+    					listen_dev(svg0, "click", /*handleShowFilterTypes*/ ctx[21], false, false, false, false),
+    					listen_dev(svg0, "keydown", /*keydown_handler*/ ctx[47], false, false, false, false),
+    					listen_dev(svg1, "click", /*handleShowFilterOptions*/ ctx[34], false, false, false, false),
+    					listen_dev(svg1, "keydown", /*keydown_handler_3*/ ctx[50], false, false, false, false),
+    					listen_dev(div5, "wheel", /*wheel_handler_2*/ ctx[64], false, false, false, false),
+    					listen_dev(div7, "click", /*handleShowActiveFilters*/ ctx[35], false, false, false, false),
+    					listen_dev(div7, "keydown", /*keydown_handler_13*/ ctx[71], false, false, false, false)
+    				];
+
+    				mounted = true;
+    			}
+    		},
+    		p: function update(ctx, dirty) {
+    			if (current_block_type === (current_block_type = select_block_type(ctx)) && if_block0) {
+    				if_block0.p(ctx, dirty);
+    			} else {
+    				if_block0.d(1);
+    				if_block0 = current_block_type(ctx);
+
+    				if (if_block0) {
+    					if_block0.c();
+    					if_block0.m(div0, t0);
+    				}
+    			}
+
+    			if (/*$dataStatus*/ ctx[15] || !/*$username*/ ctx[17]) {
+    				if (if_block1) {
+    					if_block1.p(ctx, dirty);
+
+    					if (dirty[0] & /*$dataStatus, $username*/ 163840) {
+    						transition_in(if_block1, 1);
+    					}
+    				} else {
+    					if_block1 = create_if_block_14(ctx);
+    					if_block1.c();
+    					transition_in(if_block1, 1);
+    					if_block1.m(div0, null);
+    				}
+    			} else if (if_block1) {
+    				group_outros();
+
+    				transition_out(if_block1, 1, 1, () => {
+    					if_block1 = null;
+    				});
+
+    				check_outros();
+    			}
+
+    			if (dirty[0] & /*$searchedAnimeKeyword*/ 65536 && input.value !== /*$searchedAnimeKeyword*/ ctx[16]) {
+    				set_input_value(input, /*$searchedAnimeKeyword*/ ctx[16]);
+    			}
+
+    			if (!current || dirty[0] & /*selectedFilterTypeElement*/ 32 && svg0_tabindex_value !== (svg0_tabindex_value = /*selectedFilterTypeElement*/ ctx[5] ? "" : "0")) {
+    				attr_dev(svg0, "tabindex", svg0_tabindex_value);
+    			}
+
+    			if (/*$filterOptions*/ ctx[1]) {
+    				if (if_block2) {
+    					if_block2.p(ctx, dirty);
+    				} else {
+    					if_block2 = create_if_block_13(ctx);
+    					if_block2.c();
+    					if_block2.m(div1, null);
+    				}
+    			} else if (if_block2) {
+    				if_block2.d(1);
+    				if_block2 = null;
+    			}
+
+    			if (!current || dirty[0] & /*selectedFilterTypeElement*/ 32 && div1_class_value !== (div1_class_value = "" + (null_to_empty("options-wrap " + (/*selectedFilterTypeElement*/ ctx[5]
+    			? ""
+    			: "disable-interaction hide")) + " svelte-1d2ae4n"))) {
+    				attr_dev(div1, "class", div1_class_value);
+    			}
+
+    			if (dirty[0] & /*maxFilterSelectionHeight*/ 16 && style___maxFilterSelectionHeight !== (style___maxFilterSelectionHeight = `${/*maxFilterSelectionHeight*/ ctx[4]}px`)) {
+    				set_style(div1, "--maxFilterSelectionHeight", style___maxFilterSelectionHeight);
+    			}
+
+    			if (current_block_type_1 === (current_block_type_1 = select_block_type_2(ctx)) && if_block3) {
+    				if_block3.p(ctx, dirty);
+    			} else {
+    				if_block3.d(1);
+    				if_block3 = current_block_type_1(ctx);
+
+    				if (if_block3) {
+    					if_block3.c();
+    					if_block3.m(div5, null);
+    				}
+    			}
+
+    			if (!current || dirty[0] & /*showFilterOptions, $hasWheel*/ 262400 && div5_class_value !== (div5_class_value = "" + (null_to_empty("filters " + (/*showFilterOptions*/ ctx[8]
+    			? ""
+    			: "disable-interaction") + (/*$hasWheel*/ ctx[18] ? " hasWheel" : "")) + " svelte-1d2ae4n"))) {
+    				attr_dev(div5, "class", div5_class_value);
+    			}
+
+    			if (dirty[0] & /*maxFilterSelectionHeight*/ 16) {
+    				set_style(div5, "--maxPaddingHeight", /*maxFilterSelectionHeight*/ ctx[4] + 65 + "px");
+    			}
+
+    			if (!/*showAllActiveFilters*/ ctx[7]) {
+    				if (if_block4) {
+    					if_block4.p(ctx, dirty);
+    				} else {
+    					if_block4 = create_if_block_5(ctx);
+    					if_block4.c();
+    					if_block4.m(div8, t9);
+    				}
+    			} else if (if_block4) {
+    				if_block4.d(1);
+    				if_block4 = null;
+    			}
+
+    			if (/*showAllActiveFilters*/ ctx[7]) {
+    				if (if_block5) {
+    					if_block5.p(ctx, dirty);
+    				} else {
+    					if_block5 = create_if_block_4(ctx);
+    					if_block5.c();
+    					if_block5.m(div6, t10);
+    				}
+    			} else if (if_block5) {
+    				if_block5.d(1);
+    				if_block5 = null;
+    			}
+
+    			if (dirty[0] & /*activeTagFiltersArrays, changeActiveSelect, removeActiveTag*/ 402654208) {
+    				each_value_1 = /*activeTagFiltersArrays*/ ctx[10] || [];
+    				validate_each_argument(each_value_1);
+    				group_outros();
+    				validate_each_keys(ctx, each_value_1, get_each_context_1, get_key);
+    				each_blocks = update_keyed_each(each_blocks, dirty, get_key, 1, ctx, each_value_1, each_1_lookup, div6, outro_and_destroy_block, create_each_block_1, null, get_each_context_1);
+    				check_outros();
+    			}
+
+    			if (dirty[0] & /*showAllActiveFilters*/ 128) {
+    				set_style(div6, "max-height", /*showAllActiveFilters*/ ctx[7] ? "200px" : "30px");
+    			}
+
+    			if (!current || dirty[0] & /*showAllActiveFilters*/ 128 && path2_d_value !== (path2_d_value = /*showAllActiveFilters*/ ctx[7]
+    			? // angle-up
+    				"M201 137c13-12 33-12 46 0l160 160a32 32 0 0 1-46 46L224 205 87 343a32 32 0 0 1-46-46l160-160z"
+    			: // angle-down
+    				"M201 343c13 12 33 12 46 0l160-160a32 32 0 0 0-46-46L224 275 87 137a32 32 0 0 0-46 46l160 160z")) {
+    				attr_dev(path2, "d", path2_d_value);
+    			}
+
+    			if (!current || dirty[0] & /*showAllActiveFilters*/ 128 && svg2_class_value !== (svg2_class_value = "" + (null_to_empty("angle-" + (/*showAllActiveFilters*/ ctx[7] ? "up" : "down")) + " svelte-1d2ae4n"))) {
+    				attr_dev(svg2, "class", svg2_class_value);
+    			}
+
+    			if (!current || dirty[0] & /*showAllActiveFilters*/ 128 && div8_class_value !== (div8_class_value = "" + (null_to_empty("activeFilters" + (/*showAllActiveFilters*/ ctx[7] ? " seenMore" : "")) + " svelte-1d2ae4n"))) {
+    				attr_dev(div8, "class", div8_class_value);
+    			}
+
+    			if (current_block_type_2 === (current_block_type_2 = select_block_type_7(ctx)) && if_block6) {
+    				if_block6.p(ctx, dirty);
+    			} else {
+    				if_block6.d(1);
+    				if_block6 = current_block_type_2(ctx);
+
+    				if (if_block6) {
+    					if_block6.c();
+    					if_block6.m(main, t13);
+    				}
+    			}
+
+    			if (default_slot) {
+    				if (default_slot.p && (!current || dirty[1] & /*$$scope*/ 4096)) {
+    					update_slot_base(
+    						default_slot,
+    						default_slot_template,
+    						ctx,
+    						/*$$scope*/ ctx[43],
+    						!current
+    						? get_all_dirty_from_scope(/*$$scope*/ ctx[43])
+    						: get_slot_changes(default_slot_template, /*$$scope*/ ctx[43], dirty, null),
+    						null
+    					);
+    				}
+    			}
+
+    			if (dirty[0] & /*showFilterOptions*/ 256) {
+    				set_style(main, "--filters-space", /*showFilterOptions*/ ctx[8] ? "80px" : "");
+    			}
+    		},
+    		i: function intro(local) {
+    			if (current) return;
+    			transition_in(if_block1);
+
+    			for (let i = 0; i < each_value_1.length; i += 1) {
+    				transition_in(each_blocks[i]);
+    			}
+
+    			transition_in(default_slot, local);
+    			current = true;
+    		},
+    		o: function outro(local) {
+    			transition_out(if_block1);
+
+    			for (let i = 0; i < each_blocks.length; i += 1) {
+    				transition_out(each_blocks[i]);
+    			}
+
+    			transition_out(default_slot, local);
+    			current = false;
+    		},
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(main);
+    			if_block0.d();
+    			if (if_block1) if_block1.d();
+    			if (if_block2) if_block2.d();
+    			if_block3.d();
+    			if (if_block4) if_block4.d();
+    			if (if_block5) if_block5.d();
+
+    			for (let i = 0; i < each_blocks.length; i += 1) {
+    				each_blocks[i].d();
+    			}
+
+    			if_block6.d();
+    			if (default_slot) default_slot.d(detaching);
+    			mounted = false;
+    			run_all(dispose);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_fragment$2.name,
+    		type: "component",
+    		source: "",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    function hasPartialMatch(strings, searchString) {
+    	if (typeof strings === "string" && typeof searchString === "string") {
+    		return strings.toLowerCase().includes(searchString.trim().toLowerCase());
+    	}
+    }
+
+    function horizontalWheel(event, parentClass) {
+    	let element = event.target;
+    	let classList = element.classList;
+
+    	if (!classList.contains(parentClass)) {
+    		element = element.closest("." + parentClass);
+    	}
+
+    	if (element.scrollWidth <= element.clientWidth) return;
+
+    	if (event.deltaY !== 0 && event.deltaX === 0) {
+    		event.preventDefault();
+    		event.stopPropagation();
+    		element.scrollLeft = Math.max(0, element.scrollLeft + event.deltaY);
+    	}
+    }
+
+    const wheel_handler = () => {
+    	
+    };
+
+    const wheel_handler_1 = () => {
+    	
+    };
+
+    function instance$2($$self, $$props, $$invalidate) {
+    	let isFullViewed;
+    	let $android;
+    	let $gridFullView;
+    	let $confirmPromise;
+    	let $filterOptions;
+    	let $animeLoaderWorker;
+    	let $finalAnimeList;
+    	let $checkAnimeLoaderStatus;
+    	let $initData;
+    	let $activeTagFilters;
+    	let $dataStatus;
+    	let $hiddenEntries;
+    	let $searchedAnimeKeyword;
+    	let $isImporting;
+    	let $username;
+    	let $hasWheel;
+    	validate_store(android$1, 'android');
+    	component_subscribe($$self, android$1, $$value => $$invalidate(40, $android = $$value));
+    	validate_store(gridFullView, 'gridFullView');
+    	component_subscribe($$self, gridFullView, $$value => $$invalidate(41, $gridFullView = $$value));
+    	validate_store(confirmPromise, 'confirmPromise');
+    	component_subscribe($$self, confirmPromise, $$value => $$invalidate(86, $confirmPromise = $$value));
+    	validate_store(filterOptions, 'filterOptions');
+    	component_subscribe($$self, filterOptions, $$value => $$invalidate(1, $filterOptions = $$value));
+    	validate_store(animeLoaderWorker$1, 'animeLoaderWorker');
+    	component_subscribe($$self, animeLoaderWorker$1, $$value => $$invalidate(87, $animeLoaderWorker = $$value));
+    	validate_store(finalAnimeList, 'finalAnimeList');
+    	component_subscribe($$self, finalAnimeList, $$value => $$invalidate(88, $finalAnimeList = $$value));
+    	validate_store(checkAnimeLoaderStatus, 'checkAnimeLoaderStatus');
+    	component_subscribe($$self, checkAnimeLoaderStatus, $$value => $$invalidate(89, $checkAnimeLoaderStatus = $$value));
+    	validate_store(initData, 'initData');
+    	component_subscribe($$self, initData, $$value => $$invalidate(14, $initData = $$value));
+    	validate_store(activeTagFilters, 'activeTagFilters');
+    	component_subscribe($$self, activeTagFilters, $$value => $$invalidate(42, $activeTagFilters = $$value));
+    	validate_store(dataStatus, 'dataStatus');
+    	component_subscribe($$self, dataStatus, $$value => $$invalidate(15, $dataStatus = $$value));
+    	validate_store(hiddenEntries, 'hiddenEntries');
+    	component_subscribe($$self, hiddenEntries, $$value => $$invalidate(90, $hiddenEntries = $$value));
+    	validate_store(searchedAnimeKeyword, 'searchedAnimeKeyword');
+    	component_subscribe($$self, searchedAnimeKeyword, $$value => $$invalidate(16, $searchedAnimeKeyword = $$value));
+    	validate_store(isImporting, 'isImporting');
+    	component_subscribe($$self, isImporting, $$value => $$invalidate(91, $isImporting = $$value));
+    	validate_store(username, 'username');
+    	component_subscribe($$self, username, $$value => $$invalidate(17, $username = $$value));
+    	validate_store(hasWheel, 'hasWheel');
+    	component_subscribe($$self, hasWheel, $$value => $$invalidate(18, $hasWheel = $$value));
+    	let { $$slots: slots = {}, $$scope } = $$props;
+    	validate_slots('Search', slots, ['default']);
+    	let Init = true;
+    	let windowWidth = Math.max(window.visualViewport.width, window.innerWidth);
+    	let windowHeight = Math.max(window.visualViewport.height, window.innerHeight);
+    	let maxFilterSelectionHeight = windowHeight * 0.3;
+    	let selectedFilterTypeElement;
+    	let selectedFilterElement;
+    	let selectedSortElement;
+    	let highlightedEl;
+    	let filterScrollTimeout;
+    	let filterIsScrolling;
+    	let showAllActiveFilters = false;
+    	let showFilterOptions = false;
+    	let nameChangeUpdateProcessedList = ["Algorithm Filter"];
+    	let nameChangeUpdateFinalList = ["sort", "Anime Filter", "Content Caution"];
+    	let conditionalInputNumberList = ["weighted score", "score", "average score", "user score", "popularity"];
+    	let isUpdatingRec = false, isLoadingAnime = false;
+
+    	let scrollingToTop,
+    		activeTagFiltersArrays,
+    		selectedFilterSelectionIdx,
+    		selectedFilterSelectionName,
+    		selectedSortIdx,
+    		selectedSort,
+    		selectedSortName,
+    		selectedSortType;
+
+    	async function saveFilters(changeName) {
+    		if ($initData) return;
+
+    		if (nameChangeUpdateProcessedList.includes(changeName)) {
+    			isUpdatingRec = true;
+    			set_store_value(dataStatus, $dataStatus = "Updating List", $dataStatus);
+    			_processRecommendedAnimeList();
+    		} else if (nameChangeUpdateFinalList.includes(changeName)) {
+    			isLoadingAnime = true;
+    			set_store_value(dataStatus, $dataStatus = "Updating List", $dataStatus);
+    			_loadAnime();
+    		} else if (!isLoadingAnime && !isUpdatingRec && !$isImporting) {
+    			await saveJSON($filterOptions, "filterOptions");
+    			await saveJSON($activeTagFilters, "activeTagFilters");
+    		}
+    	}
+
+    	function _loadAnime() {
+    		if ($animeLoaderWorker) {
+    			$animeLoaderWorker.terminate();
+    			set_store_value(animeLoaderWorker$1, $animeLoaderWorker = null, $animeLoaderWorker);
+    		}
+
+    		animeLoader({
+    			filterOptions: $filterOptions,
+    			activeTagFilters: $activeTagFilters
+    		}).then(async data => {
+    			isUpdatingRec = isLoadingAnime = false;
+    			set_store_value(animeLoaderWorker$1, $animeLoaderWorker = data.animeLoaderWorker, $animeLoaderWorker);
+    			set_store_value(searchedAnimeKeyword, $searchedAnimeKeyword = "", $searchedAnimeKeyword);
+
+    			if (data?.isNew) {
+    				set_store_value(finalAnimeList, $finalAnimeList = data.finalAnimeList, $finalAnimeList);
+    				set_store_value(hiddenEntries, $hiddenEntries = data.hiddenEntries, $hiddenEntries);
+    			}
+
+    			set_store_value(dataStatus, $dataStatus = null, $dataStatus);
+    			return;
+    		}).catch(error => {
+    			throw error;
+    		});
+    	}
+
+    	async function _processRecommendedAnimeList() {
+    		await saveJSON(true, "shouldProcessRecommendation");
+
+    		processRecommendedAnimeList({
+    			filterOptions: $filterOptions,
+    			activeTagFilters: $activeTagFilters
+    		}).then(async () => {
+    			await saveJSON(false, "shouldProcessRecommendation");
+    			updateFilters.update(e => !e);
+    			_loadAnime();
+    		}).catch(error => {
+    			_loadAnime();
+    			throw error;
+    		});
+    	}
+
+    	async function scrollToFirstTagFilter() {
+    		let parentEl = document.getElementById("tagFilters");
+    		await tick();
+
+    		if (parentEl instanceof Element) {
+    			parentEl.scrollTop = 0;
+    		}
+    	}
+
+    	async function scrollToFirstFilter() {
+    		let parentEl = document.getElementById("filters");
+    		await tick();
+
+    		if (parentEl instanceof Element) {
+    			parentEl.scrollLeft = 0;
+    		}
+    	}
+
+    	function windowResized() {
+    		windowHeight = Math.max(window.visualViewport.height, window.innerHeight);
+    		$$invalidate(4, maxFilterSelectionHeight = windowHeight * 0.3);
+    		$$invalidate(3, windowWidth = Math.max(window.visualViewport.width, window.innerWidth));
+    	}
+
+    	async function handleFilterTypes(newFilterTypeName) {
+    		if ($initData) return pleaseWaitAlert();
+    		let idxTypeSelected = selectedFilterSelectionIdx;
+    		let nameTypeSelected = $filterOptions?.filterSelection?.[idxTypeSelected].filterSelectionName;
+
+    		if (nameTypeSelected !== newFilterTypeName) {
+    			// Close Filter Dropdown
+    			$$invalidate(6, selectedSortElement = false);
+
+    			// Reload Anime for Async Animation
+    			if ($finalAnimeList?.length > 36 && !$gridFullView) {
+    				await callAsyncAnimeReload();
+    			}
+
+    			// Close Filter Selection Dropdown
+    			$filterOptions?.filterSelection?.[idxTypeSelected].filters.Dropdown.forEach(e => {
+    				e.selected = false;
+    			});
+
+    			set_store_value(filterOptions, $filterOptions.filterSelection[idxTypeSelected] = $filterOptions?.filterSelection?.[idxTypeSelected], $filterOptions);
+    			selectedFilterElement = null;
+
+    			// Change Filter Type
+    			set_store_value(filterOptions, $filterOptions.filterSelection[idxTypeSelected].isSelected = false, $filterOptions);
+
+    			let newIdxFilterTypeSelected = $filterOptions?.filterSelection?.findIndex(({ filterSelectionName }) => filterSelectionName === newFilterTypeName);
+    			set_store_value(filterOptions, $filterOptions.filterSelection[newIdxFilterTypeSelected].isSelected = true, $filterOptions);
+    			scrollToFirstFilter();
+    			scrollToFirstTagFilter();
+    			saveFilters();
+    		}
+
+    		if (highlightedEl instanceof Element && highlightedEl.closest(".filterType")) {
+    			removeClass(highlightedEl, "highlight");
+    			highlightedEl = null;
+    		}
+
+    		$$invalidate(5, selectedFilterTypeElement = false);
+    	}
+
+    	function handleShowFilterTypes(event) {
+    		if ($initData && ($filterOptions?.filterSelection?.length ?? 0) < 1) {
+    			return pleaseWaitAlert();
+    		}
+
+    		let element = event.target;
+    		let classList = element.classList;
+    		let filterTypEl = element.closest(".filterType");
+    		let optionsWrap = element.closest(".options-wrap");
+
+    		if ((classList.contains("filterType") || filterTypEl) && !selectedFilterTypeElement) {
+    			$$invalidate(5, selectedFilterTypeElement = true);
+    		} else if ((!optionsWrap || classList.contains("closing-x")) && !classList.contains("options-wrap")) {
+    			if (highlightedEl instanceof Element && highlightedEl.closest(".filterType")) {
+    				removeClass(highlightedEl, "highlight");
+    				highlightedEl = null;
+    			}
+
+    			$$invalidate(5, selectedFilterTypeElement = false);
+    		}
+    	}
+
+    	function handleFilterScroll() {
+    		if (filterScrollTimeout) clearTimeout(filterScrollTimeout);
+    		filterIsScrolling = true;
+
+    		filterScrollTimeout = setTimeout(
+    			() => {
+    				filterIsScrolling = false;
+    			},
+    			300
+    		);
+    	}
+
+    	function filterSelect(event, dropdownIdx) {
+    		if (filterIsScrolling && event.pointerType === "mouse") return;
+    		let element = event.target;
+    		let filSelectEl = element.closest(".filter-select");
+    		if (filSelectEl === selectedFilterElement) return;
+    		let idxTypeSelected = selectedFilterSelectionIdx;
+
+    		if (selectedFilterElement instanceof Element) {
+    			let filterSelectChildrenArray = Array.from(selectedFilterElement.parentElement.children).filter(el => {
+    				return !el.classList.contains("disable-interaction");
+    			});
+
+    			let selectedIndex = filterSelectChildrenArray.indexOf(selectedFilterElement);
+
+    			if ($filterOptions.filterSelection[idxTypeSelected].filters.Dropdown[selectedIndex]) {
+    				set_store_value(filterOptions, $filterOptions.filterSelection[idxTypeSelected].filters.Dropdown[selectedIndex].selected = false, $filterOptions);
+    			}
+    		}
+
+    		if (Init) $$invalidate(2, Init = false);
+
+    		if (highlightedEl instanceof Element && highlightedEl.closest(".filter-select")) {
+    			removeClass(highlightedEl, "highlight");
+    			highlightedEl = null;
+    		}
+
+    		set_store_value(filterOptions, $filterOptions.filterSelection[idxTypeSelected].filters.Dropdown[dropdownIdx].selected = true, $filterOptions);
+    		selectedFilterElement = filSelectEl;
+    	}
+
+    	function closeFilterSelect(dropDownIdx) {
+    		let idxTypeSelected = selectedFilterSelectionIdx;
+    		set_store_value(filterOptions, $filterOptions.filterSelection[idxTypeSelected].filters.Dropdown[dropDownIdx].selected = false, $filterOptions);
+
+    		if (highlightedEl instanceof Element && highlightedEl.closest(".filter-select")) {
+    			removeClass(highlightedEl, "highlight");
+    			highlightedEl = null;
+    		}
+
+    		selectedFilterElement = null;
+    	}
+
+    	async function clickOutsideListener(event) {
+    		if ($filterOptions?.filterSelection?.length < 1 || !$filterOptions) return;
+    		let element = event.target;
+    		let classList = element.classList;
+
+    		if (classList.contains("options-wrap") && getComputedStyle(element).position === "fixed") {
+    			// Small Screen Width
+    			if (highlightedEl instanceof Element) {
+    				removeClass(highlightedEl, "highlight");
+    				highlightedEl = null;
+    			}
+
+    			// Close Filter Type Dropdown
+    			$$invalidate(5, selectedFilterTypeElement = false);
+
+    			// Close Sort Filter Dropdown
+    			$$invalidate(6, selectedSortElement = false);
+
+    			// Close Filter Selection Dropdown
+    			let idxTypeSelected = selectedFilterSelectionIdx;
+
+    			$filterOptions?.filterSelection?.[idxTypeSelected].filters.Dropdown.forEach(e => {
+    				e.selected = false;
+    			});
+
+    			set_store_value(filterOptions, $filterOptions.filterSelection[idxTypeSelected] = $filterOptions?.filterSelection?.[idxTypeSelected], $filterOptions);
+    			selectedFilterElement = null;
+    		} else if (!classList.contains("options-wrap") && !element.closest(".options-wrap")) {
+    			// Large Screen Width
+    			// Filter Type Dropdown
+    			let filterTypeEl = element.closest(".filterType");
+
+    			if (!classList.contains("filterType") && !filterTypeEl) {
+    				if (highlightedEl instanceof Element && highlightedEl.closest(".filterType")) {
+    					removeClass(highlightedEl, "highlight");
+    					highlightedEl = null;
+    				}
+
+    				$$invalidate(5, selectedFilterTypeElement = false);
+    			}
+
+    			// Sort Filter Dropdown
+    			let sortSelectEl = element.closest(".sortFilter");
+
+    			if (!classList.contains("sortFilter") && !sortSelectEl) {
+    				if (highlightedEl instanceof Element && highlightedEl.closest(".sortFilter")) {
+    					removeClass(highlightedEl, "highlight");
+    					highlightedEl = null;
+    				}
+
+    				$$invalidate(6, selectedSortElement = false);
+    			}
+
+    			// Filter Selection Dropdown
+    			let inputDropdownSelectEl = element.closest(".select");
+
+    			let inputDropdownAngleDown = element.closest(".angle-down");
+
+    			if (!classList.contains("select") && !classList.contains("angle-down") && !inputDropdownAngleDown && !inputDropdownSelectEl) {
+    				if (highlightedEl instanceof Element && highlightedEl.closest(".filter-select")) {
+    					removeClass(highlightedEl, "highlight");
+    					highlightedEl = null;
+    				}
+
+    				let idxTypeSelected = selectedFilterSelectionIdx;
+
+    				$filterOptions?.filterSelection?.[idxTypeSelected].filters.Dropdown.forEach(e => {
+    					e.selected = false;
+    				});
+
+    				set_store_value(filterOptions, $filterOptions.filterSelection[idxTypeSelected] = $filterOptions?.filterSelection?.[idxTypeSelected], $filterOptions);
+    				selectedFilterElement = null;
+    			}
+    		}
+    	}
+
+    	function handleFilterSelectOptionChange(
+    		optionName,
+    	optionType,
+    	optionIdx,
+    	dropdownIdx,
+    	changeType,
+    	filterSelectionName
+    	) {
+    		if ($initData) return pleaseWaitAlert();
+    		let idxTypeSelected = selectedFilterSelectionIdx;
+    		let nameTypeSelected = $filterOptions?.filterSelection?.[idxTypeSelected].filterSelectionName;
+    		let currentValue = $filterOptions?.filterSelection?.[idxTypeSelected].filters.Dropdown[dropdownIdx].options[optionIdx].selected;
+
+    		if (currentValue === "none" || currentValue === true) {
+    			// true is default value of selections
+    			set_store_value(filterOptions, $filterOptions.filterSelection[idxTypeSelected].filters.Dropdown[dropdownIdx].options[optionIdx].selected = "included", $filterOptions);
+
+    			let hasActiveFilter = false;
+
+    			set_store_value(
+    				activeTagFilters,
+    				$activeTagFilters[nameTypeSelected] = $activeTagFilters[nameTypeSelected].map(e => {
+    					if (e.optionName + e.optionIdx + e.optionType === optionName + optionIdx + optionType) {
+    						hasActiveFilter = true;
+    						e.selected = "included";
+    					}
+
+    					return e;
+    				}),
+    				$activeTagFilters
+    			);
+
+    			if (!hasActiveFilter) {
+    				$activeTagFilters[nameTypeSelected].unshift({
+    					optionName,
+    					optionType,
+    					optionIdx,
+    					categIdx: dropdownIdx,
+    					selected: "included",
+    					changeType,
+    					filterType: "dropdown"
+    				});
+
+    				activeTagFilters.set($activeTagFilters);
+    			}
+    		} else if (currentValue === "included" && changeType === "write") {
+    			set_store_value(filterOptions, $filterOptions.filterSelection[idxTypeSelected].filters.Dropdown[dropdownIdx].options[optionIdx].selected = "excluded", $filterOptions);
+
+    			set_store_value(
+    				activeTagFilters,
+    				$activeTagFilters[nameTypeSelected] = $activeTagFilters[nameTypeSelected].map(e => {
+    					if (e.optionIdx === optionIdx && e.optionName === optionName && e.filterType === "dropdown" && e.categIdx === dropdownIdx && e.selected === "included" && e.optionType === optionType) {
+    						e.selected = "excluded";
+    					}
+
+    					return e;
+    				}),
+    				$activeTagFilters
+    			);
+    		} else {
+    			set_store_value(filterOptions, $filterOptions.filterSelection[idxTypeSelected].filters.Dropdown[dropdownIdx].options[optionIdx].selected = "none", $filterOptions);
+    			set_store_value(activeTagFilters, $activeTagFilters[nameTypeSelected] = $activeTagFilters[nameTypeSelected].filter(e => !(e.optionIdx === optionIdx && e.optionName === optionName && e.filterType === "dropdown" && e.categIdx === dropdownIdx && e.optionType === optionType)), $activeTagFilters);
+    		}
+
+    		saveFilters(filterSelectionName);
+    	}
+
+    	function handleCheckboxChange(event, checkBoxName, checkboxIdx, filterSelectionName) {
+    		let element = event.target;
+    		let classList = element.classList;
+    		let keyCode = event.which || event.keyCode || 0;
+
+    		if (classList.contains("checkbox") && event.type === "click" || classList.contains("checkbox") && keyCode !== 13 && event.type === "keydown" || filterIsScrolling && event.pointerType === "mouse") {
+    			return;
+    		}
+
+    		if ($initData) {
+    			if (!classList.contains("checkbox")) {
+    				pleaseWaitAlert();
+    			}
+
+    			return;
+    		}
+
+    		// Prevent Default
+    		let idxTypeSelected = selectedFilterSelectionIdx;
+
+    		let nameTypeSelected = $filterOptions?.filterSelection?.[idxTypeSelected].filterSelectionName;
+    		let isChecked = $filterOptions?.filterSelection?.[idxTypeSelected].filters.Checkbox[checkboxIdx].isSelected;
+
+    		if (isChecked) {
+    			set_store_value(activeTagFilters, $activeTagFilters[nameTypeSelected] = $activeTagFilters[nameTypeSelected].filter(e => !(e.optionIdx === checkboxIdx && e.optionName === checkBoxName && e.filterType === "checkbox" && e.selected === "included")), $activeTagFilters);
+    		} else {
+    			let hasActiveFilter = false;
+
+    			set_store_value(
+    				activeTagFilters,
+    				$activeTagFilters[nameTypeSelected] = $activeTagFilters[nameTypeSelected].map(e => {
+    					if (e.optionName + e.optionIdx === checkBoxName + checkboxIdx) {
+    						hasActiveFilter = true;
+    						e.selected = "included";
+    					}
+
+    					return e;
+    				}),
+    				$activeTagFilters
+    			);
+
+    			if (!hasActiveFilter) {
+    				$activeTagFilters[nameTypeSelected].unshift({
+    					optionName: checkBoxName,
+    					optionIdx: checkboxIdx,
+    					filterType: "checkbox",
+    					selected: "included",
+    					changeType: "read"
+    				});
+
+    				activeTagFilters.set($activeTagFilters);
+    			}
+    		}
+
+    		set_store_value(filterOptions, $filterOptions.filterSelection[idxTypeSelected].filters.Checkbox[checkboxIdx].isSelected = !$filterOptions?.filterSelection?.[idxTypeSelected].filters.Checkbox[checkboxIdx].isSelected, $filterOptions);
+    		saveFilters(filterSelectionName);
+    	}
+
+    	function handleInputNumber(
+    		event,
+    	newValue,
+    	inputNumIdx,
+    	inputNumberName,
+    	maxValue,
+    	minValue,
+    	filterSelectionName
+    	) {
+    		if ($initData) return pleaseWaitAlert();
+    		let idxTypeSelected = selectedFilterSelectionIdx;
+    		let nameTypeSelected = $filterOptions?.filterSelection?.[idxTypeSelected].filterSelectionName;
+    		let currentValue = $filterOptions?.filterSelection?.[idxTypeSelected].filters["Input Number"][inputNumIdx].numberValue;
+
+    		if (conditionalInputNumberList.includes(inputNumberName) && (/^(>=|<=|<|>).*($)/).test(newValue)) {
+    			let newSplitValue = newValue.split(/(<=|>=|<|>)/).filter(e => e); // Check if it starts or ends with comparison operators
+    			// Remove White Space
+
+    			if (newValue !== currentValue && newSplitValue.length <= 2) {
+    				let currentSplitValue = newValue.split(/(<=|>=|<|>)/).filter(e => e); // Remove White Space
+    				let newCMPOperator, newCMPNumber;
+
+    				if (newSplitValue[0].includes(">") || newSplitValue[0].includes("<")) {
+    					newCMPOperator = newSplitValue[0];
+    					newCMPNumber = newSplitValue[1];
+    				} else {
+    					newCMPOperator = newSplitValue[1];
+    					newCMPNumber = newSplitValue[0];
+    				}
+
+    				if (currentSplitValue[0].includes(">") || currentSplitValue[0].includes("<")) {
+    					currentSplitValue[0];
+    					currentSplitValue[1];
+    				} else {
+    					currentSplitValue[1];
+    					currentSplitValue[0];
+    				}
+
+    				if (newValue !== currentValue && (!isNaN(newCMPNumber) && (parseFloat(newCMPNumber) >= minValue || typeof minValue !== "number") && (parseFloat(newCMPNumber) <= maxValue || typeof maxValue !== "number") || !newCMPNumber)) {
+    					let shouldReload = false;
+
+    					if (!newCMPNumber) {
+    						shouldReload = true;
+    						set_store_value(activeTagFilters, $activeTagFilters[nameTypeSelected] = $activeTagFilters[nameTypeSelected].filter(e => !(e.optionIdx === inputNumIdx && e.optionName === inputNumberName && e.filterType === "input number")), $activeTagFilters);
+    					} else {
+    						let hasActiveFilter = false;
+
+    						set_store_value(
+    							activeTagFilters,
+    							$activeTagFilters[nameTypeSelected] = $activeTagFilters[nameTypeSelected].map(e => {
+    								if (e.optionName + e.optionIdx === inputNumberName + inputNumIdx) {
+    									shouldReload = e.selected !== "none";
+    									hasActiveFilter = true;
+    									e.optionValue = newValue;
+    									e.CMPoperator = newCMPOperator;
+    									e.CMPNumber = newCMPNumber;
+    								}
+
+    								return e;
+    							}),
+    							$activeTagFilters
+    						);
+
+    						if (!hasActiveFilter) {
+    							shouldReload = true;
+
+    							$activeTagFilters[nameTypeSelected].unshift({
+    								optionName: inputNumberName,
+    								optionValue: newValue,
+    								CMPoperator: newCMPOperator,
+    								CMPNumber: newCMPNumber,
+    								optionIdx: inputNumIdx,
+    								filterType: "input number",
+    								selected: "included",
+    								changeType: "read"
+    							});
+
+    							activeTagFilters.set($activeTagFilters);
+    						}
+    					}
+
+    					set_store_value(filterOptions, $filterOptions.filterSelection[idxTypeSelected].filters["Input Number"][inputNumIdx].numberValue = newValue, $filterOptions);
+
+    					if (shouldReload) {
+    						saveFilters(filterSelectionName);
+    					}
+    				} else {
+    					changeInputValue(event.target, currentValue);
+    				}
+    			} else {
+    				changeInputValue(event.target, currentValue);
+    			}
+    		} else {
+    			if (newValue !== currentValue && (!isNaN(newValue) && (parseFloat(newValue) >= minValue || typeof minValue !== "number") && (parseFloat(newValue) <= maxValue || typeof maxValue !== "number") || newValue === "")) {
+    				let shouldReload = false;
+
+    				if (newValue === "") {
+    					shouldReload = true;
+    					set_store_value(activeTagFilters, $activeTagFilters[nameTypeSelected] = $activeTagFilters[nameTypeSelected].filter(e => !(e.optionIdx === inputNumIdx && e.optionName === inputNumberName && e.optionValue === currentValue && e.filterType === "input number")), $activeTagFilters);
+    				} else {
+    					let hasActiveFilter = false;
+
+    					set_store_value(
+    						activeTagFilters,
+    						$activeTagFilters[nameTypeSelected] = $activeTagFilters[nameTypeSelected].map(e => {
+    							if (e.optionName + e.optionIdx === inputNumberName + inputNumIdx) {
+    								shouldReload = e.selected !== "none";
+    								hasActiveFilter = true;
+    								e.optionValue = newValue;
+    							}
+
+    							return e;
+    						}),
+    						$activeTagFilters
+    					);
+
+    					if (!hasActiveFilter) {
+    						shouldReload = true;
+
+    						$activeTagFilters[nameTypeSelected].unshift({
+    							optionName: inputNumberName,
+    							optionValue: newValue,
+    							optionIdx: inputNumIdx,
+    							filterType: "input number",
+    							selected: "included",
+    							changeType: "read"
+    						});
+
+    						activeTagFilters.set($activeTagFilters);
+    					}
+    				}
+
+    				set_store_value(filterOptions, $filterOptions.filterSelection[idxTypeSelected].filters["Input Number"][inputNumIdx].numberValue = newValue, $filterOptions);
+
+    				if (shouldReload) {
+    					saveFilters(filterSelectionName);
+    				}
+    			} else {
+    				changeInputValue(event.target, currentValue);
+    			}
+    		}
+    	}
+
+    	function changeActiveSelect(
+    		event,
+    	optionIdx,
+    	optionName,
+    	filterType,
+    	categIdx,
+    	changeType,
+    	optionType,
+    	optionValue
+    	) {
+    		if ($initData) return pleaseWaitAlert();
+    		let element = event?.target;
+    		let classList = element?.classList;
+    		if (classList?.contains?.("removeActiveTag") || element?.closest?.(".removeActiveTag")) return;
+    		let idxTypeSelected = selectedFilterSelectionIdx;
+    		let nameTypeSelected = $filterOptions?.filterSelection?.[idxTypeSelected].filterSelectionName;
+
+    		if (filterType === "input number") {
+    			let elementIdx = $activeTagFilters[nameTypeSelected].findIndex(item => item.optionName === optionName && item.optionValue === optionValue && item.optionIdx === optionIdx && item.filterType === "input number");
+
+    			if (elementIdx >= 0) {
+    				let currentSelect = $activeTagFilters[nameTypeSelected][elementIdx].selected;
+
+    				if (currentSelect === "included") {
+    					set_store_value(activeTagFilters, $activeTagFilters[nameTypeSelected][elementIdx].selected = "none", $activeTagFilters);
+    				} else if (currentSelect != null) {
+    					set_store_value(activeTagFilters, $activeTagFilters[nameTypeSelected][elementIdx].selected = "included", $activeTagFilters);
+    				}
+    			}
+    		} else if (filterType === "checkbox") {
+    			let tagFilterIdx = $activeTagFilters[nameTypeSelected].findIndex(e => e.optionIdx === optionIdx && e.optionName === optionName && e.filterType === filterType);
+    			let checkboxSelection = $activeTagFilters?.[nameTypeSelected]?.[tagFilterIdx]?.selected;
+
+    			if (checkboxSelection === "included") {
+    				set_store_value(activeTagFilters, $activeTagFilters[nameTypeSelected][tagFilterIdx].selected = "none", $activeTagFilters);
+    				set_store_value(filterOptions, $filterOptions.filterSelection[idxTypeSelected].filters.Checkbox[optionIdx].isSelected = false, $filterOptions);
+    			} else if (checkboxSelection != null) {
+    				set_store_value(activeTagFilters, $activeTagFilters[nameTypeSelected][tagFilterIdx].selected = "included", $activeTagFilters);
+    				set_store_value(filterOptions, $filterOptions.filterSelection[idxTypeSelected].filters.Checkbox[optionIdx].isSelected = true, $filterOptions);
+    			}
+    		} else if (filterType === "dropdown") {
+    			let currentSelect = $filterOptions?.filterSelection?.[idxTypeSelected].filters.Dropdown[categIdx].options[optionIdx].selected;
+
+    			if (currentSelect === "included" && changeType === "write") {
+    				set_store_value(filterOptions, $filterOptions.filterSelection[idxTypeSelected].filters.Dropdown[categIdx].options[optionIdx].selected = "excluded", $filterOptions);
+
+    				set_store_value(
+    					activeTagFilters,
+    					$activeTagFilters[nameTypeSelected] = $activeTagFilters[nameTypeSelected].map(e => {
+    						if (e.optionIdx === optionIdx && e.optionName === optionName && e.selected === "included" && (e.optionType ? e.optionType === optionType : true)) {
+    							e.selected = "excluded";
+    						}
+
+    						return e;
+    					}),
+    					$activeTagFilters
+    				);
+    			} else if (currentSelect === "none") {
+    				set_store_value(filterOptions, $filterOptions.filterSelection[idxTypeSelected].filters.Dropdown[categIdx].options[optionIdx].selected = "included", $filterOptions);
+
+    				set_store_value(
+    					activeTagFilters,
+    					$activeTagFilters[nameTypeSelected] = $activeTagFilters[nameTypeSelected].map(e => {
+    						if (e.optionIdx === optionIdx && e.optionName === optionName && e.selected === "none" && (e.optionType ? e.optionType === optionType : true)) {
+    							e.selected = "included";
+    						}
+
+    						return e;
+    					}),
+    					$activeTagFilters
+    				);
+    			} else {
+    				set_store_value(filterOptions, $filterOptions.filterSelection[idxTypeSelected].filters.Dropdown[categIdx].options[optionIdx].selected = "none", $filterOptions);
+
+    				set_store_value(
+    					activeTagFilters,
+    					$activeTagFilters[nameTypeSelected] = $activeTagFilters[nameTypeSelected].map(e => {
+    						if (e.optionIdx === optionIdx && e.optionName === optionName && (e.optionType ? e.optionType === optionType : true)) {
+    							e.selected = "none";
+    						}
+
+    						return e;
+    					}),
+    					$activeTagFilters
+    				);
+    			}
+    		}
+
+    		saveFilters(nameTypeSelected);
+    	}
+
+    	function removeActiveTag(event, optionIdx, optionName, filterType, categIdx, optionType) {
+    		if ($initData) return pleaseWaitAlert();
+    		let idxTypeSelected = selectedFilterSelectionIdx;
+    		let nameTypeSelected = $filterOptions?.filterSelection?.[idxTypeSelected].filterSelectionName;
+
+    		if (filterType === "checkbox") {
+    			// Is Checkbox
+    			set_store_value(filterOptions, $filterOptions.filterSelection[idxTypeSelected].filters.Checkbox[optionIdx].isSelected = false, $filterOptions);
+    		} else if (filterType === "input number") {
+    			// Is Input Number
+    			set_store_value(filterOptions, $filterOptions.filterSelection[idxTypeSelected].filters["Input Number"][optionIdx].numberValue = "", $filterOptions);
+    		} else {
+    			// Is Only Read optionName
+    			set_store_value(filterOptions, $filterOptions.filterSelection[idxTypeSelected].filters.Dropdown[categIdx].options[optionIdx].selected = "none", $filterOptions);
+    		}
+
+    		set_store_value(activeTagFilters, $activeTagFilters[nameTypeSelected] = $activeTagFilters[nameTypeSelected].filter(e => !(e.optionName === optionName && e.optionIdx === optionIdx && e.filterType === filterType && (e.optionType ? e.optionType === optionType : true))), $activeTagFilters);
+    		saveFilters(nameTypeSelected);
+    	}
+
+    	async function removeAllActiveTag(event) {
+    		if ($initData) return pleaseWaitAlert();
+    		let idxTypeSelected = selectedFilterSelectionIdx;
+    		let nameTypeSelected = $filterOptions?.filterSelection?.[idxTypeSelected].filterSelectionName;
+    		let hasActiveFilter = $activeTagFilters?.[nameTypeSelected]?.length;
+
+    		if (hasActiveFilter && await $confirmPromise("Do you want to remove all filters?")) {
+    			// Remove Active Number Input
+    			$filterOptions?.filterSelection?.[idxTypeSelected].filters["Input Number"].forEach(e => {
+    				e.numberValue = "";
+    			});
+
+    			// Remove Checkbox
+    			$filterOptions?.filterSelection?.[idxTypeSelected].filters.Checkbox.forEach(e => {
+    				e.isSelected = false;
+    			});
+
+    			// Remove Dropdown
+    			$filterOptions?.filterSelection?.[idxTypeSelected].filters.Dropdown.forEach(({ options }, dropdownIdx) => {
+    				options.forEach(({ selected }, optionsIdx) => {
+    					selected = "none";
+    					set_store_value(filterOptions, $filterOptions.filterSelection[idxTypeSelected].filters.Dropdown[dropdownIdx].options[optionsIdx].selected = selected, $filterOptions);
+    				});
+    			});
+
+    			set_store_value(filterOptions, $filterOptions.filterSelection[idxTypeSelected] = $filterOptions?.filterSelection?.[idxTypeSelected], $filterOptions);
+    			set_store_value(activeTagFilters, $activeTagFilters[nameTypeSelected] = [], $activeTagFilters);
+    			saveFilters(nameTypeSelected);
+    		}
+    	}
+
+    	function handleSortFilterPopup(event) {
+    		let element = event.target;
+    		let classList = element.classList;
+    		let sortSelectEl = element.closest(".sortFilter");
+    		let optionsWrap = element.closest(".options-wrap");
+
+    		if ((classList.contains("sortFilter") || sortSelectEl) && !selectedSortElement) {
+    			$$invalidate(6, selectedSortElement = true);
+    		} else if ((!optionsWrap || classList.contains("closing-x")) && !classList.contains("options-wrap")) {
+    			if (highlightedEl instanceof Element && highlightedEl.closest(".sortFilter")) {
+    				removeClass(highlightedEl, "highlight");
+    				highlightedEl = null;
+    			}
+
+    			$$invalidate(6, selectedSortElement = false);
+    		}
+    	}
+
+    	function changeSort(newSortName) {
+    		if ($initData) return pleaseWaitAlert();
+    		let idxSortSelected = selectedSortIdx;
+    		let selectedSortFilter = $filterOptions?.sortFilter?.[idxSortSelected];
+    		let sortName = selectedSortFilter?.sortName;
+    		let sortType = selectedSortFilter?.sortType;
+
+    		if (sortName === newSortName) {
+    			let newSortType = sortType === "desc" ? "asc" : "desc";
+    			set_store_value(filterOptions, $filterOptions.sortFilter[idxSortSelected].sortType = newSortType, $filterOptions);
+    		} else if (sortName !== newSortName) {
+    			set_store_value(filterOptions, $filterOptions.sortFilter[idxSortSelected].sortType = "none", $filterOptions);
+    			let idxNewSortSelected = $filterOptions?.sortFilter?.findIndex(({ sortName }) => sortName === newSortName);
+    			set_store_value(filterOptions, $filterOptions.sortFilter[idxNewSortSelected].sortType = "desc", $filterOptions);
+    		}
+
+    		saveFilters("sort");
+
+    		if (highlightedEl instanceof Element && highlightedEl.closest(".sortFilter")) {
+    			removeClass(highlightedEl, "highlight");
+    			highlightedEl = null;
+    		}
+
+    		$$invalidate(6, selectedSortElement = false);
+    	}
+
+    	function changeSortType() {
+    		if ($initData) return pleaseWaitAlert();
+    		let idxSortSelected = selectedSortIdx;
+    		let sortType = $filterOptions?.sortFilter?.[idxSortSelected]?.sortType;
+
+    		if (sortType === "desc") {
+    			set_store_value(filterOptions, $filterOptions.sortFilter[idxSortSelected].sortType = "asc", $filterOptions);
+    		} else {
+    			set_store_value(filterOptions, $filterOptions.sortFilter[idxSortSelected].sortType = "desc", $filterOptions);
+    		}
+
+    		saveFilters("sort");
+    	}
+
+    	function handleDropdownKeyDown(event) {
+    		let keyCode = event.which || event.keyCode || 0;
+
+    		// 38up 40down 13enter
+    		if (keyCode == 38 || keyCode == 40) {
+    			var element = Array.from(document.getElementsByClassName("options-wrap") || []).find(el => {
+    				return !el.classList.contains("disable-interaction");
+    			});
+
+    			if (element?.closest?.(".filterType") || element?.closest?.(".sortFilter") || element?.closest?.(".filter-select")) {
+    				event.preventDefault();
+
+    				// handle sortFilter
+    				if (highlightedEl instanceof Element && highlightedEl?.closest?.(".options")?.children?.length) {
+    					let parent = highlightedEl.closest(".options");
+    					let options = Array.from(parent.querySelectorAll(".option"));
+    					let currentidx = options.indexOf(highlightedEl);
+    					let nextEl, iteratedEl, firstEl, lastEl;
+
+    					for (let idx = 0; idx < options.length; idx++) {
+    						if (!options[idx].classList.contains("disable-interaction")) {
+    							if (keyCode === 38) {
+    								// Prev
+    								lastEl = options[idx];
+
+    								if (idx < currentidx) {
+    									iteratedEl = options[idx];
+    								} else if (iteratedEl) {
+    									nextEl = iteratedEl;
+    									break;
+    								}
+    							} else {
+    								// next
+    								if (!firstEl) {
+    									firstEl = options[idx];
+    								}
+
+    								if (idx > currentidx) {
+    									nextEl = options[idx];
+    									break;
+    								}
+    							}
+    						}
+    					}
+
+    					let isFirstOrLast = false;
+
+    					if (!(nextEl instanceof Element)) {
+    						if (firstEl instanceof Element) {
+    							nextEl = firstEl;
+    							isFirstOrLast = true;
+    						} else if (lastEl instanceof Element) {
+    							nextEl = lastEl;
+    							isFirstOrLast = true;
+    						}
+    					}
+
+    					if (nextEl instanceof Element) {
+    						removeClass(highlightedEl, "highlight");
+    						highlightedEl = nextEl;
+    						addClass(highlightedEl, "highlight");
+
+    						highlightedEl.scrollIntoView({
+    							behavior: isFirstOrLast ? "auto" : "smooth",
+    							container: parent,
+    							block: "center",
+    							inline: "nearest"
+    						});
+    					}
+    				} else {
+    					let options = element.querySelectorAll(".option:not(.disable-interaction)");
+    					highlightedEl = options[0];
+
+    					if (highlightedEl instanceof Element) {
+    						addClass(highlightedEl, "highlight");
+
+    						highlightedEl.scrollIntoView({
+    							behavior: "smooth",
+    							container: parent,
+    							block: "center",
+    							inline: "nearest"
+    						});
+    					}
+    				}
+    			}
+    		} else if (keyCode === 13) {
+    			if (highlightedEl instanceof Element) {
+    				let keydownEvent = new KeyboardEvent("keydown", { key: "Enter" });
+    				highlightedEl.dispatchEvent(keydownEvent);
+    			}
+    		} else {
+    			var element = Array.from(document.getElementsByClassName("options-wrap") || []).find(el => !el.classList.contains("disable-interaction"));
+    			if (element?.closest?.(".filter-select") && keyCode !== 9 || element instanceof Element && getComputedStyle(element).position === "fixed") return;
+    			let idxTypeSelected = selectedFilterSelectionIdx;
+    			$$invalidate(5, selectedFilterTypeElement = null);
+    			$$invalidate(6, selectedSortElement = null);
+
+    			if ($filterOptions?.filterSelection?.length > 0) {
+    				$filterOptions?.filterSelection?.[idxTypeSelected].filters.Dropdown.forEach(e => {
+    					e.selected = false;
+    				});
+
+    				set_store_value(filterOptions, $filterOptions.filterSelection[idxTypeSelected] = $filterOptions?.filterSelection?.[idxTypeSelected], $filterOptions);
+    			}
+
+    			selectedFilterElement = null;
+
+    			if (highlightedEl instanceof Element) {
+    				removeClass(highlightedEl, "highlight");
+    				highlightedEl = null;
+    			}
+    		}
+    	}
+
+    	async function handleGridView() {
+    		set_store_value(gridFullView, $gridFullView = !$gridFullView, $gridFullView);
+    		saveIDBdata($gridFullView, "gridFullView");
+    	}
+
+    	async function handleShowFilterOptions(val = null) {
+    		if ($finalAnimeList?.length > 36 && !$gridFullView) {
+    			await callAsyncAnimeReload();
+    		}
+
+    		if (typeof val === "boolean") {
+    			$$invalidate(8, showFilterOptions = val);
+    		} else {
+    			$$invalidate(8, showFilterOptions = !showFilterOptions);
+    		}
+    	}
+
+    	async function handleShowActiveFilters(val = null) {
+    		if ($finalAnimeList?.length > 36 && !$gridFullView) {
+    			await callAsyncAnimeReload();
+    		}
+
+    		if (typeof val === "boolean") {
+    			$$invalidate(7, showAllActiveFilters = val);
+    		} else {
+    			$$invalidate(7, showAllActiveFilters = !showAllActiveFilters);
+    		}
+
+    		scrollToFirstTagFilter();
+    	}
+
+    	let asyncAnimeReloadPromise;
+
+    	function callAsyncAnimeReload() {
+    		return new Promise(resolve => {
+    				if ($animeLoaderWorker instanceof Worker) {
+    					$checkAnimeLoaderStatus().then(() => {
+    						set_store_value(finalAnimeList, $finalAnimeList = null, $finalAnimeList);
+    						$animeLoaderWorker?.postMessage?.({ reload: true });
+    					}).catch(() => {
+    						$confirmPromise({
+    							isAlert: true,
+    							title: "Something went wrong",
+    							text: "Action failed, please try again."
+    						});
+    					});
+    				}
+
+    				asyncAnimeReloadPromise = { resolve };
+    			});
+    	}
+
+    	asyncAnimeReloaded.subscribe(val => {
+    		if (typeof val !== "boolean") return;
+    		asyncAnimeReloadPromise?.resolve?.();
+    	});
+
+    	window.checkOpenDropdown = () => {
+    		return (selectedFilterElement || selectedFilterTypeElement || selectedSortElement) && Math.max(window.visualViewport.width, window.innerWidth) <= 425;
+    	};
+
+    	function closeDropdown() {
+    		// Small Screen Width
+    		if (highlightedEl instanceof Element) {
+    			removeClass(highlightedEl, "highlight");
+    			highlightedEl = null;
+    		}
+
+    		// Close Filter Type Dropdown
+    		$$invalidate(5, selectedFilterTypeElement = false);
+
+    		// Close Sort Filter Dropdown
+    		$$invalidate(6, selectedSortElement = false);
+
+    		// Close Filter Selection Dropdown
+    		let idxTypeSelected = selectedFilterSelectionIdx;
+
+    		$filterOptions?.filterSelection?.[idxTypeSelected].filters.Dropdown.forEach(e => {
+    			e.selected = false;
+    		});
+
+    		set_store_value(filterOptions, $filterOptions.filterSelection[idxTypeSelected] = $filterOptions?.filterSelection?.[idxTypeSelected], $filterOptions);
+    		selectedFilterElement = null;
+    	}
+
+    	window.closeDropdown = closeDropdown;
+
+    	onMount(() => {
+    		// Init
+    		let filterEl = document.getElementById("filters");
+
+    		filterEl.addEventListener("scroll", handleFilterScroll, { passive: true });
+
+    		dragScroll(filterEl, "x", event => {
+    			let element = event?.target;
+    			return selectedFilterElement && (element?.classList?.contains?.("options-wrap") || element?.closest?.(".options-wrap"));
+    		});
+
+    		document.addEventListener("keydown", handleDropdownKeyDown);
+    		window.addEventListener("resize", windowResized);
+    		window.addEventListener("click", clickOutsideListener);
+    	});
+
+    	function pleaseWaitAlert() {
+    		$confirmPromise({
+    			isAlert: true,
+    			title: "Initializing resources",
+    			text: "Please wait a moment..."
+    		});
+    	}
+
+    	let checkedOriginalSizeForGridView = windowWidth > 750 && windowHeight > 695;
+    	const writable_props = [];
+
+    	Object.keys($$props).forEach(key => {
+    		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== '$$' && key !== 'slot') console.warn(`<Search> was created with unknown prop '${key}'`);
+    	});
+
+    	const func = (Dropdown, { optionName }) => hasPartialMatch(optionName, Dropdown?.optKeyword) || Dropdown?.optKeyword === "";
+
+    	function input_input_handler() {
+    		$searchedAnimeKeyword = this.value;
+    		searchedAnimeKeyword.set($searchedAnimeKeyword);
+    	}
+
+    	const keydown_handler = e => e.key === "Enter" && handleShowFilterTypes(e);
+    	const keydown_handler_1 = e => e.key === "Enter" && handleShowFilterTypes(e);
+    	const keydown_handler_2 = (filterSelection, e) => e.key === "Enter" && handleFilterTypes(filterSelection?.filterSelectionName);
+    	const keydown_handler_3 = e => e.key === "Enter" && handleShowFilterOptions(e);
+
+    	function input0_input_handler(filSelIdx, dropdownIdx) {
+    		$filterOptions.filterSelection[filSelIdx].filters.Dropdown[dropdownIdx].optKeyword = this.value;
+    		filterOptions.set($filterOptions);
+    	}
+
+    	const keydown_handler_4 = (dropdownIdx, e) => e.key === "Enter" && closeFilterSelect(dropdownIdx);
+    	const keydown_handler_5 = (dropdownIdx, e) => (e.key === "Enter" || e.key === "ArrowDown" || e.key === "ArrowUp") && filterSelect(e, dropdownIdx);
+
+    	const click_handler = (dropdownIdx, e) => {
+    		filterSelect(e, dropdownIdx);
+    	};
+
+    	const keydown_handler_6 = (dropdownIdx, e) => e.key === "Enter" && closeFilterSelect(dropdownIdx);
+
+    	function input1_input_handler(filSelIdx, dropdownIdx) {
+    		$filterOptions.filterSelection[filSelIdx].filters.Dropdown[dropdownIdx].optKeyword = this.value;
+    		filterOptions.set($filterOptions);
+    	}
+
+    	const keydown_handler_7 = (option, Dropdown, optionIdx, dropdownIdx, filterSelection, e) => e.key === "Enter" && handleFilterSelectOptionChange(option.optionName, Dropdown.filName, optionIdx, dropdownIdx, Dropdown.changeType, filterSelection.filterSelectionName);
+
+    	const change_handler = e => {
+    		e.target.checked = false;
+    		pleaseWaitAlert();
+    	};
+
+    	const change_handler_1 = (Checkbox, checkboxIdx, filterSelection, e) => handleCheckboxChange(e, Checkbox.filName, checkboxIdx, filterSelection.filterSelectionName);
+
+    	function input_change_handler(each_value_4, checkboxIdx) {
+    		each_value_4[checkboxIdx].isSelected = this.checked;
+    	}
+
+    	const click_handler_1 = (Checkbox, checkboxIdx, filterSelection, e) => handleCheckboxChange(e, Checkbox.filName, checkboxIdx, filterSelection.filterSelectionName);
+    	const keydown_handler_8 = (Checkbox, checkboxIdx, filterSelection, e) => e.key === "Enter" && handleCheckboxChange(e, Checkbox.filName, checkboxIdx, filterSelection.filterSelectionName);
+    	const input_handler = (inputNumIdx, inputNum, filterSelection, e) => handleInputNumber(e, e.target.value, inputNumIdx, inputNum.filName, inputNum.maxValue, inputNum.minValue, filterSelection.filterSelectionName);
+
+    	const wheel_handler_2 = e => {
+    		horizontalWheel(e, "filters");
+
+    		if (isFullViewed) {
+    			if (!scrollingToTop && e.deltaY < 0) {
+    				$$invalidate(9, scrollingToTop = true);
+    				let newScrollPosition = 0;
+    				document.documentElement.scrollTop = newScrollPosition;
+    				$$invalidate(9, scrollingToTop = false);
+    			}
+    		}
+    	};
+
+    	const keydown_handler_9 = e => e.key === "Enter" && removeAllActiveTag();
+    	const keydown_handler_10 = e => e.key === "Enter" && removeAllActiveTag();
+    	const click_handler_2 = (activeTagFiltersArray, e) => removeActiveTag(e, activeTagFiltersArray?.optionIdx, activeTagFiltersArray?.optionName, activeTagFiltersArray?.filterType, activeTagFiltersArray?.categIdx, activeTagFiltersArray?.optionType);
+    	const keydown_handler_11 = (activeTagFiltersArray, e) => e.key === "Enter" && removeActiveTag(e, activeTagFiltersArray?.optionIdx, activeTagFiltersArray?.optionName, activeTagFiltersArray?.filterType, activeTagFiltersArray?.categIdx, activeTagFiltersArray?.optionType);
+    	const click_handler_3 = (activeTagFiltersArray, e) => changeActiveSelect(e, activeTagFiltersArray?.optionIdx, activeTagFiltersArray?.optionName, activeTagFiltersArray?.filterType, activeTagFiltersArray?.categIdx, activeTagFiltersArray?.changeType, activeTagFiltersArray?.optionType, activeTagFiltersArray?.optionValue);
+    	const keydown_handler_12 = (activeTagFiltersArray, e) => e.key === "Enter" && changeActiveSelect(e, activeTagFiltersArray?.optionIdx, activeTagFiltersArray?.optionName, activeTagFiltersArray?.filterType, activeTagFiltersArray?.categIdx, activeTagFiltersArray?.changeType, activeTagFiltersArray?.optionType, activeTagFiltersArray?.optionValue);
+    	const keydown_handler_13 = e => e.key === "Enter" && handleShowActiveFilters();
+    	const keydown_handler_14 = e => e.key === "Enter" && handleGridView();
+    	const keydown_handler_15 = e => e.key === "Enter" && changeSortType();
+    	const keydown_handler_16 = e => e.key === "Enter" && handleSortFilterPopup(e);
+    	const keydown_handler_17 = e => e.key === "Enter" && handleSortFilterPopup(e);
+    	const keydown_handler_18 = (sortFilter, e) => e.key === "Enter" && changeSort(sortFilter?.sortName);
+    	const keydown_handler_19 = e => e.key === "Enter" && handleGridView();
+
+    	$$self.$$set = $$props => {
+    		if ('$$scope' in $$props) $$invalidate(43, $$scope = $$props.$$scope);
+    	};
+
+    	$$self.$capture_state = () => ({
+    		onMount,
+    		tick,
+    		saveJSON,
+    		android: android$1,
+    		finalAnimeList,
+    		animeLoaderWorker: animeLoaderWorker$1,
+    		filterOptions,
+    		activeTagFilters,
+    		searchedAnimeKeyword,
+    		dataStatus,
+    		username,
+    		initData,
+    		confirmPromise,
+    		asyncAnimeReloaded,
+    		checkAnimeLoaderStatus,
+    		gridFullView,
+    		hasWheel,
+    		updateFilters,
+    		isImporting,
+    		hiddenEntries,
+    		fade,
+    		addClass,
+    		changeInputValue,
+    		dragScroll,
+    		removeClass,
+    		getLocalStorage,
+    		animeLoader,
+    		processRecommendedAnimeList,
+    		saveIDBdata,
+    		Init,
+    		windowWidth,
+    		windowHeight,
+    		maxFilterSelectionHeight,
+    		selectedFilterTypeElement,
+    		selectedFilterElement,
+    		selectedSortElement,
+    		highlightedEl,
+    		filterScrollTimeout,
+    		filterIsScrolling,
+    		showAllActiveFilters,
+    		showFilterOptions,
+    		nameChangeUpdateProcessedList,
+    		nameChangeUpdateFinalList,
+    		conditionalInputNumberList,
+    		isUpdatingRec,
+    		isLoadingAnime,
+    		scrollingToTop,
+    		activeTagFiltersArrays,
+    		selectedFilterSelectionIdx,
+    		selectedFilterSelectionName,
+    		selectedSortIdx,
+    		selectedSort,
+    		selectedSortName,
+    		selectedSortType,
+    		saveFilters,
+    		_loadAnime,
+    		_processRecommendedAnimeList,
+    		scrollToFirstTagFilter,
+    		scrollToFirstFilter,
+    		windowResized,
+    		handleFilterTypes,
+    		handleShowFilterTypes,
+    		handleFilterScroll,
+    		filterSelect,
+    		closeFilterSelect,
+    		clickOutsideListener,
+    		handleFilterSelectOptionChange,
+    		handleCheckboxChange,
+    		handleInputNumber,
+    		changeActiveSelect,
+    		removeActiveTag,
+    		removeAllActiveTag,
+    		handleSortFilterPopup,
+    		changeSort,
+    		changeSortType,
+    		handleDropdownKeyDown,
+    		handleGridView,
+    		handleShowFilterOptions,
+    		handleShowActiveFilters,
+    		asyncAnimeReloadPromise,
+    		callAsyncAnimeReload,
+    		hasPartialMatch,
+    		closeDropdown,
+    		pleaseWaitAlert,
+    		horizontalWheel,
+    		checkedOriginalSizeForGridView,
+    		isFullViewed,
+    		$android,
+    		$gridFullView,
+    		$confirmPromise,
+    		$filterOptions,
+    		$animeLoaderWorker,
+    		$finalAnimeList,
+    		$checkAnimeLoaderStatus,
+    		$initData,
+    		$activeTagFilters,
+    		$dataStatus,
+    		$hiddenEntries,
+    		$searchedAnimeKeyword,
+    		$isImporting,
+    		$username,
+    		$hasWheel
+    	});
+
+    	$$self.$inject_state = $$props => {
+    		if ('Init' in $$props) $$invalidate(2, Init = $$props.Init);
+    		if ('windowWidth' in $$props) $$invalidate(3, windowWidth = $$props.windowWidth);
+    		if ('windowHeight' in $$props) windowHeight = $$props.windowHeight;
+    		if ('maxFilterSelectionHeight' in $$props) $$invalidate(4, maxFilterSelectionHeight = $$props.maxFilterSelectionHeight);
+    		if ('selectedFilterTypeElement' in $$props) $$invalidate(5, selectedFilterTypeElement = $$props.selectedFilterTypeElement);
+    		if ('selectedFilterElement' in $$props) selectedFilterElement = $$props.selectedFilterElement;
+    		if ('selectedSortElement' in $$props) $$invalidate(6, selectedSortElement = $$props.selectedSortElement);
+    		if ('highlightedEl' in $$props) highlightedEl = $$props.highlightedEl;
+    		if ('filterScrollTimeout' in $$props) filterScrollTimeout = $$props.filterScrollTimeout;
+    		if ('filterIsScrolling' in $$props) filterIsScrolling = $$props.filterIsScrolling;
+    		if ('showAllActiveFilters' in $$props) $$invalidate(7, showAllActiveFilters = $$props.showAllActiveFilters);
+    		if ('showFilterOptions' in $$props) $$invalidate(8, showFilterOptions = $$props.showFilterOptions);
+    		if ('nameChangeUpdateProcessedList' in $$props) nameChangeUpdateProcessedList = $$props.nameChangeUpdateProcessedList;
+    		if ('nameChangeUpdateFinalList' in $$props) nameChangeUpdateFinalList = $$props.nameChangeUpdateFinalList;
+    		if ('conditionalInputNumberList' in $$props) $$invalidate(19, conditionalInputNumberList = $$props.conditionalInputNumberList);
+    		if ('isUpdatingRec' in $$props) isUpdatingRec = $$props.isUpdatingRec;
+    		if ('isLoadingAnime' in $$props) isLoadingAnime = $$props.isLoadingAnime;
+    		if ('scrollingToTop' in $$props) $$invalidate(9, scrollingToTop = $$props.scrollingToTop);
+    		if ('activeTagFiltersArrays' in $$props) $$invalidate(10, activeTagFiltersArrays = $$props.activeTagFiltersArrays);
+    		if ('selectedFilterSelectionIdx' in $$props) $$invalidate(37, selectedFilterSelectionIdx = $$props.selectedFilterSelectionIdx);
+    		if ('selectedFilterSelectionName' in $$props) $$invalidate(0, selectedFilterSelectionName = $$props.selectedFilterSelectionName);
+    		if ('selectedSortIdx' in $$props) $$invalidate(38, selectedSortIdx = $$props.selectedSortIdx);
+    		if ('selectedSort' in $$props) $$invalidate(39, selectedSort = $$props.selectedSort);
+    		if ('selectedSortName' in $$props) $$invalidate(11, selectedSortName = $$props.selectedSortName);
+    		if ('selectedSortType' in $$props) $$invalidate(12, selectedSortType = $$props.selectedSortType);
+    		if ('asyncAnimeReloadPromise' in $$props) asyncAnimeReloadPromise = $$props.asyncAnimeReloadPromise;
+    		if ('checkedOriginalSizeForGridView' in $$props) $$invalidate(105, checkedOriginalSizeForGridView = $$props.checkedOriginalSizeForGridView);
+    		if ('isFullViewed' in $$props) $$invalidate(13, isFullViewed = $$props.isFullViewed);
+    	};
+
+    	if ($$props && "$$inject" in $$props) {
+    		$$self.$inject_state($$props.$$inject);
+    	}
+
+    	$$self.$$.update = () => {
+    		if ($$self.$$.dirty[0] & /*$filterOptions*/ 2) {
+    			$$invalidate(37, selectedFilterSelectionIdx = $filterOptions?.filterSelection?.findIndex(({ isSelected }) => isSelected));
+    		}
+
+    		if ($$self.$$.dirty[0] & /*$filterOptions*/ 2 | $$self.$$.dirty[1] & /*selectedFilterSelectionIdx*/ 64) {
+    			$$invalidate(0, selectedFilterSelectionName = $filterOptions?.filterSelection?.[selectedFilterSelectionIdx]?.filterSelectionName);
+    		}
+
+    		if ($$self.$$.dirty[0] & /*selectedFilterSelectionName*/ 1 | $$self.$$.dirty[1] & /*$activeTagFilters*/ 2048) {
+    			$$invalidate(10, activeTagFiltersArrays = $activeTagFilters?.[selectedFilterSelectionName] || []);
+    		}
+
+    		if ($$self.$$.dirty[0] & /*$filterOptions*/ 2) {
+    			$$invalidate(38, selectedSortIdx = $filterOptions?.sortFilter?.findIndex(({ sortType }) => sortType !== "none"));
+    		}
+
+    		if ($$self.$$.dirty[0] & /*$filterOptions*/ 2 | $$self.$$.dirty[1] & /*selectedSortIdx*/ 128) {
+    			$$invalidate(39, selectedSort = $filterOptions?.sortFilter?.[selectedSortIdx]);
+    		}
+
+    		if ($$self.$$.dirty[1] & /*selectedSort*/ 256) {
+    			$$invalidate(11, selectedSortName = selectedSort?.sortName);
+    		}
+
+    		if ($$self.$$.dirty[1] & /*selectedSort*/ 256) {
+    			$$invalidate(12, selectedSortType = selectedSort?.sortType);
+    		}
+
+    		if ($$self.$$.dirty[1] & /*$gridFullView, $android*/ 1536) {
+    			$$invalidate(13, isFullViewed = $gridFullView ?? getLocalStorage("gridFullView") ?? (!$android && checkedOriginalSizeForGridView));
+    		}
+    	};
+
+    	return [
+    		selectedFilterSelectionName,
+    		$filterOptions,
+    		Init,
+    		windowWidth,
+    		maxFilterSelectionHeight,
+    		selectedFilterTypeElement,
+    		selectedSortElement,
+    		showAllActiveFilters,
+    		showFilterOptions,
+    		scrollingToTop,
+    		activeTagFiltersArrays,
+    		selectedSortName,
+    		selectedSortType,
+    		isFullViewed,
+    		$initData,
+    		$dataStatus,
+    		$searchedAnimeKeyword,
+    		$username,
+    		$hasWheel,
+    		conditionalInputNumberList,
+    		handleFilterTypes,
+    		handleShowFilterTypes,
+    		filterSelect,
+    		closeFilterSelect,
+    		handleFilterSelectOptionChange,
+    		handleCheckboxChange,
+    		handleInputNumber,
+    		changeActiveSelect,
+    		removeActiveTag,
+    		removeAllActiveTag,
+    		handleSortFilterPopup,
+    		changeSort,
+    		changeSortType,
+    		handleGridView,
+    		handleShowFilterOptions,
+    		handleShowActiveFilters,
+    		pleaseWaitAlert,
+    		selectedFilterSelectionIdx,
+    		selectedSortIdx,
+    		selectedSort,
+    		$android,
+    		$gridFullView,
+    		$activeTagFilters,
+    		$$scope,
+    		slots,
+    		func,
+    		input_input_handler,
+    		keydown_handler,
+    		keydown_handler_1,
+    		keydown_handler_2,
+    		keydown_handler_3,
+    		input0_input_handler,
+    		keydown_handler_4,
+    		keydown_handler_5,
+    		click_handler,
+    		keydown_handler_6,
+    		input1_input_handler,
+    		keydown_handler_7,
+    		change_handler,
+    		change_handler_1,
+    		input_change_handler,
+    		click_handler_1,
+    		keydown_handler_8,
+    		input_handler,
+    		wheel_handler_2,
+    		keydown_handler_9,
+    		keydown_handler_10,
+    		click_handler_2,
+    		keydown_handler_11,
+    		click_handler_3,
+    		keydown_handler_12,
+    		keydown_handler_13,
+    		keydown_handler_14,
+    		keydown_handler_15,
+    		keydown_handler_16,
+    		keydown_handler_17,
+    		keydown_handler_18,
+    		keydown_handler_19
+    	];
+    }
+
+    class Search extends SvelteComponentDev {
+    	constructor(options) {
+    		super(options);
+    		init(this, options, instance$2, create_fragment$2, safe_not_equal, {}, null, [-1, -1, -1, -1, -1]);
+
+    		dispatch_dev("SvelteRegisterComponent", {
+    			component: this,
+    			tagName: "Search",
+    			options,
+    			id: create_fragment$2.name
+    		});
+    	}
+    }
+
+    /* src\components\Others\Confirm.svelte generated by Svelte v3.59.1 */
+    const file$1 = "src\\components\\Others\\Confirm.svelte";
+
+    // (56:0) {#if showConfirm}
+    function create_if_block$1(ctx) {
+    	let div4;
+    	let div3;
+    	let div2;
+    	let div0;
+    	let h20;
+    	let t0;
+    	let t1;
+    	let h21;
+    	let t2;
+    	let div1;
+    	let t3;
+    	let button;
+    	let t4;
+    	let div2_outro;
+    	let current;
+    	let mounted;
+    	let dispose;
+    	let if_block = !/*isAlert*/ ctx[1] && create_if_block_1$1(ctx);
+
+    	const block = {
+    		c: function create() {
+    			div4 = element("div");
+    			div3 = element("div");
+    			div2 = element("div");
+    			div0 = element("div");
+    			h20 = element("h2");
+    			t0 = text(/*confirmTitle*/ ctx[2]);
+    			t1 = space();
+    			h21 = element("h2");
+    			t2 = space();
+    			div1 = element("div");
+    			if (if_block) if_block.c();
+    			t3 = space();
+    			button = element("button");
+    			t4 = text(/*confirmLabel*/ ctx[4]);
+    			attr_dev(h20, "class", "confirm-title svelte-iuqa3i");
+    			add_location(h20, file$1, 65, 20, 2133);
+    			attr_dev(h21, "class", "confirm-text svelte-iuqa3i");
+    			add_location(h21, file$1, 66, 20, 2200);
+    			attr_dev(div0, "class", "confirm-info-container svelte-iuqa3i");
+    			add_location(div0, file$1, 64, 16, 2075);
+    			attr_dev(button, "class", "button svelte-iuqa3i");
+    			add_location(button, file$1, 80, 20, 2790);
+    			attr_dev(div1, "class", "confirm-button-container svelte-iuqa3i");
+    			add_location(div1, file$1, 70, 16, 2339);
+    			attr_dev(div2, "class", "confirm-container svelte-iuqa3i");
+    			add_location(div2, file$1, 63, 12, 1997);
+    			attr_dev(div3, "class", "confirm-wrapper svelte-iuqa3i");
+    			add_location(div3, file$1, 62, 8, 1954);
+    			attr_dev(div4, "class", "confirm svelte-iuqa3i");
+    			add_location(div4, file$1, 56, 4, 1732);
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, div4, anchor);
+    			append_dev(div4, div3);
+    			append_dev(div3, div2);
+    			append_dev(div2, div0);
+    			append_dev(div0, h20);
+    			append_dev(h20, t0);
+    			append_dev(div0, t1);
+    			append_dev(div0, h21);
+    			h21.innerHTML = /*confirmText*/ ctx[3];
+    			append_dev(div2, t2);
+    			append_dev(div2, div1);
+    			if (if_block) if_block.m(div1, null);
+    			append_dev(div1, t3);
+    			append_dev(div1, button);
+    			append_dev(button, t4);
+    			/*button_binding*/ ctx[11](button);
+    			current = true;
+
+    			if (!mounted) {
+    				dispose = [
+    					listen_dev(button, "click", /*handleConfirm*/ ctx[7], false, false, false, false),
+    					listen_dev(button, "keydown", /*keydown_handler_1*/ ctx[12], false, false, false, false),
+    					listen_dev(div4, "click", /*handleConfirmVisibility*/ ctx[9], false, false, false, false),
+    					listen_dev(div4, "touchend", /*handleConfirmVisibility*/ ctx[9], { passive: true }, false, false, false),
+    					listen_dev(div4, "keydown", /*keydown_handler_2*/ ctx[13], false, false, false, false)
+    				];
+
+    				mounted = true;
+    			}
+    		},
+    		p: function update(ctx, dirty) {
+    			if (!current || dirty & /*confirmTitle*/ 4) set_data_dev(t0, /*confirmTitle*/ ctx[2]);
+    			if (!current || dirty & /*confirmText*/ 8) h21.innerHTML = /*confirmText*/ ctx[3];
+    			if (!/*isAlert*/ ctx[1]) {
+    				if (if_block) {
+    					if_block.p(ctx, dirty);
+    				} else {
+    					if_block = create_if_block_1$1(ctx);
+    					if_block.c();
+    					if_block.m(div1, t3);
+    				}
+    			} else if (if_block) {
+    				if_block.d(1);
+    				if_block = null;
+    			}
+
+    			if (!current || dirty & /*confirmLabel*/ 16) set_data_dev(t4, /*confirmLabel*/ ctx[4]);
+    		},
+    		i: function intro(local) {
+    			if (current) return;
+    			if (div2_outro) div2_outro.end(1);
+    			current = true;
+    		},
+    		o: function outro(local) {
+    			div2_outro = create_out_transition(div2, fade, { duration: 200 });
+    			current = false;
+    		},
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(div4);
+    			if (if_block) if_block.d();
+    			/*button_binding*/ ctx[11](null);
+    			if (detaching && div2_outro) div2_outro.end();
+    			mounted = false;
+    			run_all(dispose);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_if_block$1.name,
+    		type: "if",
+    		source: "(56:0) {#if showConfirm}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (72:20) {#if !isAlert}
+    function create_if_block_1$1(ctx) {
+    	let button;
+    	let t;
+    	let mounted;
+    	let dispose;
+
+    	const block = {
+    		c: function create() {
+    			button = element("button");
+    			t = text(/*cancelLabel*/ ctx[5]);
+    			attr_dev(button, "class", "button svelte-iuqa3i");
+    			add_location(button, file$1, 72, 24, 2439);
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, button, anchor);
+    			append_dev(button, t);
+
+    			if (!mounted) {
+    				dispose = [
+    					listen_dev(button, "click", /*handleCancel*/ ctx[8], false, false, false, false),
+    					listen_dev(button, "keydown", /*keydown_handler*/ ctx[10], false, false, false, false)
+    				];
+
+    				mounted = true;
+    			}
+    		},
+    		p: function update(ctx, dirty) {
+    			if (dirty & /*cancelLabel*/ 32) set_data_dev(t, /*cancelLabel*/ ctx[5]);
+    		},
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(button);
+    			mounted = false;
+    			run_all(dispose);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_if_block_1$1.name,
+    		type: "if",
+    		source: "(72:20) {#if !isAlert}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    function create_fragment$1(ctx) {
+    	let if_block_anchor;
+    	let current;
+    	let if_block = /*showConfirm*/ ctx[0] && create_if_block$1(ctx);
+
+    	const block = {
+    		c: function create() {
+    			if (if_block) if_block.c();
+    			if_block_anchor = empty();
+    		},
+    		l: function claim(nodes) {
+    			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
+    		},
+    		m: function mount(target, anchor) {
+    			if (if_block) if_block.m(target, anchor);
+    			insert_dev(target, if_block_anchor, anchor);
+    			current = true;
+    		},
+    		p: function update(ctx, [dirty]) {
+    			if (/*showConfirm*/ ctx[0]) {
+    				if (if_block) {
+    					if_block.p(ctx, dirty);
+
+    					if (dirty & /*showConfirm*/ 1) {
+    						transition_in(if_block, 1);
+    					}
+    				} else {
+    					if_block = create_if_block$1(ctx);
+    					if_block.c();
+    					transition_in(if_block, 1);
+    					if_block.m(if_block_anchor.parentNode, if_block_anchor);
+    				}
+    			} else if (if_block) {
+    				group_outros();
+
+    				transition_out(if_block, 1, 1, () => {
+    					if_block = null;
+    				});
+
+    				check_outros();
+    			}
+    		},
+    		i: function intro(local) {
+    			if (current) return;
+    			transition_in(if_block);
+    			current = true;
+    		},
+    		o: function outro(local) {
+    			transition_out(if_block);
+    			current = false;
+    		},
+    		d: function destroy(detaching) {
+    			if (if_block) if_block.d(detaching);
+    			if (detaching) detach_dev(if_block_anchor);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_fragment$1.name,
+    		type: "component",
+    		source: "",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    function instance$1($$self, $$props, $$invalidate) {
+    	let { $$slots: slots = {}, $$scope } = $$props;
+    	validate_slots('Confirm', slots, []);
+    	const dispatch = createEventDispatcher();
+    	let { showConfirm = false } = $$props;
+    	let { isAlert = false } = $$props;
+    	let { confirmTitle = "Confirmation" } = $$props;
+    	let { confirmText = "Do you want to continue?" } = $$props;
+    	let { confirmLabel = "OK" } = $$props;
+    	let { cancelLabel = "CANCEL" } = $$props;
+    	let confirmButtonEl;
+    	let isRecentlyOpened = false, isRecentlyOpenedTimeout;
+
+    	function handleConfirm(e) {
+    		if (isRecentlyOpened && e.type !== "keydown") return;
+    		$$invalidate(0, showConfirm = false);
+    		dispatch("confirmed");
+    	}
+
+    	function handleCancel(e) {
+    		if (isRecentlyOpened && e.type !== "keydown") return;
+    		$$invalidate(0, showConfirm = false);
+    		dispatch("cancelled");
+    	}
+
+    	function handleConfirmVisibility(e) {
+    		if (isRecentlyOpened && e.type !== "keydown") return;
+    		let target = e.target;
+    		let classList = target.classList;
+    		if (target.closest(".confirm-container") || classList.contains("confirm-container")) return;
+    		handleCancel(e);
+    	}
+
+    	afterUpdate(() => {
+    		if (showConfirm) {
+    			isRecentlyOpened = true;
+
+    			isRecentlyOpenedTimeout = setTimeout(
+    				() => {
+    					isRecentlyOpened = false;
+    				},
+    				200
+    			);
+
+    			confirmButtonEl?.focus?.();
+    		} else {
+    			if (isRecentlyOpenedTimeout) clearTimeout(isRecentlyOpenedTimeout);
+    			isRecentlyOpened = false;
+    		}
+    	});
+
+    	const writable_props = [
+    		'showConfirm',
+    		'isAlert',
+    		'confirmTitle',
+    		'confirmText',
+    		'confirmLabel',
+    		'cancelLabel'
+    	];
+
+    	Object.keys($$props).forEach(key => {
+    		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== '$$' && key !== 'slot') console.warn(`<Confirm> was created with unknown prop '${key}'`);
+    	});
+
+    	const keydown_handler = e => e.key === "Enter" && handleCancel(e);
+
+    	function button_binding($$value) {
+    		binding_callbacks[$$value ? 'unshift' : 'push'](() => {
+    			confirmButtonEl = $$value;
+    			$$invalidate(6, confirmButtonEl);
+    		});
+    	}
+
+    	const keydown_handler_1 = e => e.key === "Enter" && handleConfirm(e);
+    	const keydown_handler_2 = e => e.key === "Enter" && handleConfirmVisibility(e);
+
+    	$$self.$$set = $$props => {
+    		if ('showConfirm' in $$props) $$invalidate(0, showConfirm = $$props.showConfirm);
+    		if ('isAlert' in $$props) $$invalidate(1, isAlert = $$props.isAlert);
+    		if ('confirmTitle' in $$props) $$invalidate(2, confirmTitle = $$props.confirmTitle);
+    		if ('confirmText' in $$props) $$invalidate(3, confirmText = $$props.confirmText);
+    		if ('confirmLabel' in $$props) $$invalidate(4, confirmLabel = $$props.confirmLabel);
+    		if ('cancelLabel' in $$props) $$invalidate(5, cancelLabel = $$props.cancelLabel);
+    	};
+
+    	$$self.$capture_state = () => ({
+    		fade,
+    		createEventDispatcher,
+    		afterUpdate,
+    		popupVisible,
+    		dispatch,
+    		showConfirm,
+    		isAlert,
+    		confirmTitle,
+    		confirmText,
+    		confirmLabel,
+    		cancelLabel,
+    		confirmButtonEl,
+    		isRecentlyOpened,
+    		isRecentlyOpenedTimeout,
+    		handleConfirm,
+    		handleCancel,
+    		handleConfirmVisibility
+    	});
+
+    	$$self.$inject_state = $$props => {
+    		if ('showConfirm' in $$props) $$invalidate(0, showConfirm = $$props.showConfirm);
+    		if ('isAlert' in $$props) $$invalidate(1, isAlert = $$props.isAlert);
+    		if ('confirmTitle' in $$props) $$invalidate(2, confirmTitle = $$props.confirmTitle);
+    		if ('confirmText' in $$props) $$invalidate(3, confirmText = $$props.confirmText);
+    		if ('confirmLabel' in $$props) $$invalidate(4, confirmLabel = $$props.confirmLabel);
+    		if ('cancelLabel' in $$props) $$invalidate(5, cancelLabel = $$props.cancelLabel);
+    		if ('confirmButtonEl' in $$props) $$invalidate(6, confirmButtonEl = $$props.confirmButtonEl);
+    		if ('isRecentlyOpened' in $$props) isRecentlyOpened = $$props.isRecentlyOpened;
+    		if ('isRecentlyOpenedTimeout' in $$props) isRecentlyOpenedTimeout = $$props.isRecentlyOpenedTimeout;
+    	};
+
+    	if ($$props && "$$inject" in $$props) {
+    		$$self.$inject_state($$props.$$inject);
+    	}
+
+    	return [
+    		showConfirm,
+    		isAlert,
+    		confirmTitle,
+    		confirmText,
+    		confirmLabel,
+    		cancelLabel,
+    		confirmButtonEl,
+    		handleConfirm,
+    		handleCancel,
+    		handleConfirmVisibility,
+    		keydown_handler,
+    		button_binding,
+    		keydown_handler_1,
+    		keydown_handler_2
+    	];
+    }
+
+    class Confirm extends SvelteComponentDev {
+    	constructor(options) {
+    		super(options);
+
+    		init(this, options, instance$1, create_fragment$1, safe_not_equal, {
+    			showConfirm: 0,
+    			isAlert: 1,
+    			confirmTitle: 2,
+    			confirmText: 3,
+    			confirmLabel: 4,
+    			cancelLabel: 5
+    		});
+
+    		dispatch_dev("SvelteRegisterComponent", {
+    			component: this,
+    			tagName: "Confirm",
+    			options,
+    			id: create_fragment$1.name
+    		});
+    	}
+
+    	get showConfirm() {
+    		throw new Error("<Confirm>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+    	}
+
+    	set showConfirm(value) {
+    		throw new Error("<Confirm>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+    	}
+
+    	get isAlert() {
+    		throw new Error("<Confirm>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+    	}
+
+    	set isAlert(value) {
+    		throw new Error("<Confirm>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+    	}
+
+    	get confirmTitle() {
+    		throw new Error("<Confirm>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+    	}
+
+    	set confirmTitle(value) {
+    		throw new Error("<Confirm>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+    	}
+
+    	get confirmText() {
+    		throw new Error("<Confirm>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+    	}
+
+    	set confirmText(value) {
+    		throw new Error("<Confirm>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+    	}
+
+    	get confirmLabel() {
+    		throw new Error("<Confirm>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+    	}
+
+    	set confirmLabel(value) {
+    		throw new Error("<Confirm>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+    	}
+
+    	get cancelLabel() {
+    		throw new Error("<Confirm>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+    	}
+
+    	set cancelLabel(value) {
+    		throw new Error("<Confirm>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+    	}
+    }
+
+    // Component
+    // Anime
+
+    var C = {
+        Fixed: {
+            Navigator: Navigator,
+            Menu: Menu,
+        },
+        Anime: {
+            AnimeGrid: AnimeGrid,
+            Fixed: {
+                AnimePopup: AnimePopup,
+                AnimeOptionsPopup: AnimeOptionsPopup
+            }
+        },
+        Others: {
+            Search: Search,
+            Confirm: Confirm
+        }
+    };
+
+    // package.json
+    var name = "@vercel/analytics";
+    var version = "1.0.1";
+
+    // src/queue.ts
+    var initQueue = () => {
+      if (window.va)
+        return;
+      window.va = function a(...params) {
+        (window.vaq = window.vaq || []).push(params);
+      };
+    };
+
+    // src/utils.ts
+    function isBrowser() {
+      return typeof window !== "undefined";
+    }
+    function detectEnvironment() {
+      try {
+        const env = process.env.NODE_ENV;
+        if (env === "development" || env === "test") {
+          return "development";
+        }
+      } catch (e) {
+      }
+      return "production";
+    }
+    function setMode(mode = "auto") {
+      if (mode === "auto") {
+        window.vam = detectEnvironment();
+        return;
+      }
+      window.vam = mode;
+    }
+    function getMode() {
+      return window.vam || "production";
+    }
+    function isDevelopment() {
+      return getMode() === "development";
+    }
+
+    // src/generic.ts
+    function inject(props = {
+      debug: true
+    }) {
+      var _a;
+      if (!isBrowser())
+        return;
+      setMode(props.mode);
+      initQueue();
+      if (props.beforeSend) {
+        (_a = window.va) == null ? void 0 : _a.call(window, "beforeSend", props.beforeSend);
+      }
+      const src = isDevelopment() ? "https://va.vercel-scripts.com/v1/script.debug.js" : "/_vercel/insights/script.js";
+      if (document.head.querySelector(`script[src*="${src}"]`))
+        return;
+      const script = document.createElement("script");
+      script.src = src;
+      script.defer = true;
+      script.setAttribute("data-sdkn", name);
+      script.setAttribute("data-sdkv", version);
+      if (isDevelopment() && props.debug === false) {
+        script.setAttribute("data-debug", "false");
+      }
+      document.head.appendChild(script);
+    }
+
+    /* src\App.svelte generated by Svelte v3.59.1 */
+
+    const { console: console_1 } = globals;
+    const file = "src\\App.svelte";
+
+    // (1092:1) {#if _progress > 0 && _progress < 100}
+    function create_if_block_1(ctx) {
+    	let div;
+    	let div_outro;
+    	let current;
+    	let mounted;
+    	let dispose;
+
+    	const block = {
+    		c: function create() {
+    			div = element("div");
+    			attr_dev(div, "class", "progress svelte-8lnr17");
+    			set_style(div, "--progress", "-" + (100 - /*_progress*/ ctx[6]) + "%");
+    			add_location(div, file, 1092, 2, 29378);
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, div, anchor);
+    			current = true;
+
+    			if (!mounted) {
+    				dispose = listen_dev(div, "outrostart", outrostart_handler, false, false, false, false);
+    				mounted = true;
+    			}
+    		},
+    		p: function update(ctx, dirty) {
+    			if (dirty[0] & /*_progress*/ 64) {
+    				set_style(div, "--progress", "-" + (100 - /*_progress*/ ctx[6]) + "%");
+    			}
+    		},
+    		i: function intro(local) {
+    			if (current) return;
+    			if (div_outro) div_outro.end(1);
+    			current = true;
+    		},
+    		o: function outro(local) {
+    			div_outro = create_out_transition(div, fade, { duration: 0, delay: 400 });
+    			current = false;
+    		},
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(div);
+    			if (detaching && div_outro) div_outro.end();
+    			mounted = false;
+    			dispose();
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_if_block_1.name,
+    		type: "if",
+    		source: "(1092:1) {#if _progress > 0 && _progress < 100}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (1106:2) <C.Others.Search>
+    function create_default_slot(ctx) {
+    	let c_anime_animegrid;
+    	let current;
+    	c_anime_animegrid = new C.Anime.AnimeGrid({ $$inline: true });
+
+    	const block = {
+    		c: function create() {
+    			create_component(c_anime_animegrid.$$.fragment);
+    		},
+    		m: function mount(target, anchor) {
+    			mount_component(c_anime_animegrid, target, anchor);
+    			current = true;
+    		},
+    		i: function intro(local) {
+    			if (current) return;
+    			transition_in(c_anime_animegrid.$$.fragment, local);
+    			current = true;
+    		},
+    		o: function outro(local) {
+    			transition_out(c_anime_animegrid.$$.fragment, local);
+    			current = false;
+    		},
+    		d: function destroy(detaching) {
+    			destroy_component(c_anime_animegrid, detaching);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_default_slot.name,
+    		type: "slot",
+    		source: "(1106:2) <C.Others.Search>",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (1123:1) {#if $listUpdateAvailable}
+    function create_if_block(ctx) {
+    	let div;
+    	let svg;
+    	let path;
+    	let svg_class_value;
+    	let t0;
+    	let h3;
+    	let div_outro;
+    	let current;
+    	let mounted;
+    	let dispose;
+
+    	const block = {
+    		c: function create() {
+    			div = element("div");
+    			svg = svg_element("svg");
+    			path = svg_element("path");
+    			t0 = space();
+    			h3 = element("h3");
+    			h3.textContent = "List Update";
+    			attr_dev(path, "d", "M105 203a160 160 0 0 1 264-60l17 17h-50a32 32 0 1 0 0 64h128c18 0 32-14 32-32V64a32 32 0 1 0-64 0v51l-18-17a224 224 0 0 0-369 83 32 32 0 0 0 60 22zm-66 86a32 32 0 0 0-23 31v128a32 32 0 1 0 64 0v-51l18 17a224 224 0 0 0 369-83 32 32 0 0 0-60-22 160 160 0 0 1-264 60l-17-17h50a32 32 0 1 0 0-64H48a39 39 0 0 0-9 1z");
+    			add_location(path, file, 1136, 4, 30532);
+    			attr_dev(svg, "class", svg_class_value = "" + (null_to_empty("list-update-icon" + (/*$listIsUpdating*/ ctx[7] ? " spin" : "")) + " svelte-8lnr17"));
+    			attr_dev(svg, "viewBox", "0 0 512 512");
+    			add_location(svg, file, 1131, 3, 30394);
+    			attr_dev(h3, "class", "list-update-label svelte-8lnr17");
+    			add_location(h3, file, 1140, 3, 30882);
+    			attr_dev(div, "class", "list-update-container svelte-8lnr17");
+    			attr_dev(div, "tabindex", "0");
+    			add_location(div, file, 1124, 2, 30211);
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, div, anchor);
+    			append_dev(div, svg);
+    			append_dev(svg, path);
+    			append_dev(div, t0);
+    			append_dev(div, h3);
+    			current = true;
+
+    			if (!mounted) {
+    				dispose = [
+    					listen_dev(div, "click", /*updateList*/ ctx[11], false, false, false, false),
+    					listen_dev(div, "keydown", /*keydown_handler*/ ctx[17], false, false, false, false)
+    				];
+
+    				mounted = true;
+    			}
+    		},
+    		p: function update(ctx, dirty) {
+    			if (!current || dirty[0] & /*$listIsUpdating*/ 128 && svg_class_value !== (svg_class_value = "" + (null_to_empty("list-update-icon" + (/*$listIsUpdating*/ ctx[7] ? " spin" : "")) + " svelte-8lnr17"))) {
+    				attr_dev(svg, "class", svg_class_value);
+    			}
+    		},
+    		i: function intro(local) {
+    			if (current) return;
+    			if (div_outro) div_outro.end(1);
+    			current = true;
+    		},
+    		o: function outro(local) {
+    			div_outro = create_out_transition(div, fade, { duration: 200 });
+    			current = false;
+    		},
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(div);
+    			if (detaching && div_outro) div_outro.end();
+    			mounted = false;
+    			run_all(dispose);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_if_block.name,
+    		type: "if",
+    		source: "(1123:1) {#if $listUpdateAvailable}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    function create_fragment(ctx) {
+    	let main;
+    	let t0;
+    	let c_fixed_navigator;
+    	let t1;
+    	let c_fixed_menu;
+    	let t2;
+    	let div;
+    	let c_others_search;
+    	let t3;
+    	let c_anime_fixed_animepopup;
+    	let t4;
+    	let c_anime_fixed_animeoptionspopup;
+    	let t5;
+    	let c_others_confirm;
+    	let t6;
+    	let current;
+    	let if_block0 = /*_progress*/ ctx[6] > 0 && /*_progress*/ ctx[6] < 100 && create_if_block_1(ctx);
+    	c_fixed_navigator = new C.Fixed.Navigator({ $$inline: true });
+    	c_fixed_menu = new C.Fixed.Menu({ $$inline: true });
+
+    	c_others_search = new C.Others.Search({
+    			props: {
+    				$$slots: { default: [create_default_slot] },
+    				$$scope: { ctx }
+    			},
+    			$$inline: true
+    		});
+
+    	c_anime_fixed_animepopup = new C.Anime.Fixed.AnimePopup({ $$inline: true });
+    	c_anime_fixed_animeoptionspopup = new C.Anime.Fixed.AnimeOptionsPopup({ $$inline: true });
+
+    	c_others_confirm = new C.Others.Confirm({
+    			props: {
+    				showConfirm: /*_showConfirm*/ ctx[0],
+    				isAlert: /*_isAlert*/ ctx[1],
+    				confirmTitle: /*_confirmTitle*/ ctx[2],
+    				confirmText: /*_confirmText*/ ctx[3],
+    				confirmLabel: /*_confirmLabel*/ ctx[4],
+    				cancelLabel: /*_cancelLabel*/ ctx[5]
+    			},
+    			$$inline: true
+    		});
+
+    	c_others_confirm.$on("confirmed", /*handleConfirmationConfirmed*/ ctx[9]);
+    	c_others_confirm.$on("cancelled", /*handleConfirmationCancelled*/ ctx[10]);
+    	let if_block1 = /*$listUpdateAvailable*/ ctx[8] && create_if_block(ctx);
+
+    	const block = {
+    		c: function create() {
+    			main = element("main");
+    			if (if_block0) if_block0.c();
+    			t0 = space();
+    			create_component(c_fixed_navigator.$$.fragment);
+    			t1 = space();
+    			create_component(c_fixed_menu.$$.fragment);
+    			t2 = space();
+    			div = element("div");
+    			create_component(c_others_search.$$.fragment);
+    			t3 = space();
+    			create_component(c_anime_fixed_animepopup.$$.fragment);
+    			t4 = space();
+    			create_component(c_anime_fixed_animeoptionspopup.$$.fragment);
+    			t5 = space();
+    			create_component(c_others_confirm.$$.fragment);
+    			t6 = space();
+    			if (if_block1) if_block1.c();
+    			attr_dev(div, "class", "home svelte-8lnr17");
+    			attr_dev(div, "id", "home");
+    			add_location(div, file, 1104, 1, 29649);
+    			attr_dev(main, "class", "svelte-8lnr17");
+    			add_location(main, file, 1090, 0, 29327);
+    		},
+    		l: function claim(nodes) {
+    			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, main, anchor);
+    			if (if_block0) if_block0.m(main, null);
+    			append_dev(main, t0);
+    			mount_component(c_fixed_navigator, main, null);
+    			append_dev(main, t1);
+    			mount_component(c_fixed_menu, main, null);
+    			append_dev(main, t2);
+    			append_dev(main, div);
+    			mount_component(c_others_search, div, null);
+    			append_dev(div, t3);
+    			mount_component(c_anime_fixed_animepopup, div, null);
+    			append_dev(main, t4);
+    			mount_component(c_anime_fixed_animeoptionspopup, main, null);
+    			append_dev(main, t5);
+    			mount_component(c_others_confirm, main, null);
+    			append_dev(main, t6);
+    			if (if_block1) if_block1.m(main, null);
+    			current = true;
+    		},
+    		p: function update(ctx, dirty) {
+    			if (/*_progress*/ ctx[6] > 0 && /*_progress*/ ctx[6] < 100) {
+    				if (if_block0) {
+    					if_block0.p(ctx, dirty);
+
+    					if (dirty[0] & /*_progress*/ 64) {
+    						transition_in(if_block0, 1);
+    					}
+    				} else {
+    					if_block0 = create_if_block_1(ctx);
+    					if_block0.c();
+    					transition_in(if_block0, 1);
+    					if_block0.m(main, t0);
+    				}
+    			} else if (if_block0) {
+    				group_outros();
+
+    				transition_out(if_block0, 1, 1, () => {
+    					if_block0 = null;
+    				});
+
+    				check_outros();
+    			}
+
+    			const c_others_search_changes = {};
+
+    			if (dirty[2] & /*$$scope*/ 16) {
+    				c_others_search_changes.$$scope = { dirty, ctx };
+    			}
+
+    			c_others_search.$set(c_others_search_changes);
+    			const c_others_confirm_changes = {};
+    			if (dirty[0] & /*_showConfirm*/ 1) c_others_confirm_changes.showConfirm = /*_showConfirm*/ ctx[0];
+    			if (dirty[0] & /*_isAlert*/ 2) c_others_confirm_changes.isAlert = /*_isAlert*/ ctx[1];
+    			if (dirty[0] & /*_confirmTitle*/ 4) c_others_confirm_changes.confirmTitle = /*_confirmTitle*/ ctx[2];
+    			if (dirty[0] & /*_confirmText*/ 8) c_others_confirm_changes.confirmText = /*_confirmText*/ ctx[3];
+    			if (dirty[0] & /*_confirmLabel*/ 16) c_others_confirm_changes.confirmLabel = /*_confirmLabel*/ ctx[4];
+    			if (dirty[0] & /*_cancelLabel*/ 32) c_others_confirm_changes.cancelLabel = /*_cancelLabel*/ ctx[5];
+    			c_others_confirm.$set(c_others_confirm_changes);
+
+    			if (/*$listUpdateAvailable*/ ctx[8]) {
+    				if (if_block1) {
+    					if_block1.p(ctx, dirty);
+
+    					if (dirty[0] & /*$listUpdateAvailable*/ 256) {
+    						transition_in(if_block1, 1);
+    					}
+    				} else {
+    					if_block1 = create_if_block(ctx);
+    					if_block1.c();
+    					transition_in(if_block1, 1);
+    					if_block1.m(main, null);
+    				}
+    			} else if (if_block1) {
+    				group_outros();
+
+    				transition_out(if_block1, 1, 1, () => {
+    					if_block1 = null;
+    				});
+
+    				check_outros();
+    			}
+    		},
+    		i: function intro(local) {
+    			if (current) return;
+    			transition_in(if_block0);
+    			transition_in(c_fixed_navigator.$$.fragment, local);
+    			transition_in(c_fixed_menu.$$.fragment, local);
+    			transition_in(c_others_search.$$.fragment, local);
+    			transition_in(c_anime_fixed_animepopup.$$.fragment, local);
+    			transition_in(c_anime_fixed_animeoptionspopup.$$.fragment, local);
+    			transition_in(c_others_confirm.$$.fragment, local);
+    			transition_in(if_block1);
+    			current = true;
+    		},
+    		o: function outro(local) {
+    			transition_out(if_block0);
+    			transition_out(c_fixed_navigator.$$.fragment, local);
+    			transition_out(c_fixed_menu.$$.fragment, local);
+    			transition_out(c_others_search.$$.fragment, local);
+    			transition_out(c_anime_fixed_animepopup.$$.fragment, local);
+    			transition_out(c_anime_fixed_animeoptionspopup.$$.fragment, local);
+    			transition_out(c_others_confirm.$$.fragment, local);
+    			transition_out(if_block1);
+    			current = false;
+    		},
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(main);
+    			if (if_block0) if_block0.d();
+    			destroy_component(c_fixed_navigator);
+    			destroy_component(c_fixed_menu);
+    			destroy_component(c_others_search);
+    			destroy_component(c_anime_fixed_animepopup);
+    			destroy_component(c_anime_fixed_animeoptionspopup);
+    			destroy_component(c_others_confirm);
+    			if (if_block1) if_block1.d();
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_fragment.name,
+    		type: "component",
+    		source: "",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    const outrostart_handler = e => {
+    	e.target.style.setProperty("--progress", "0%");
+    };
+
+    function instance($$self, $$props, $$invalidate) {
+    	let $isFullViewed;
+    	let $animeOptionVisible;
+    	let $android;
+    	let $confirmPromise;
+    	let $dataStatus;
+    	let $hiddenEntries;
+    	let $finalAnimeList;
+    	let $searchedAnimeKeyword;
+    	let $animeLoaderWorker;
+    	let $listIsUpdating;
+    	let $isScrolling;
+    	let $shouldGoBack;
+    	let $gridFullView;
+    	let $popupVisible;
+    	let $menuVisible;
+    	let $userRequestIsRunning;
+    	let $autoUpdateInterval;
+    	let $autoExportInterval;
+    	let $initData;
+    	let $hasWheel;
+    	let $autoUpdate;
+    	let $autoExport;
+    	let $scrollingTimeout;
+    	let $lastRunnedAutoExportDate;
+    	let $lastRunnedAutoUpdateDate;
+    	let $listUpdateAvailable;
+    	let $autoPlay;
+    	let $filterOptions;
+    	let $activeTagFilters;
+    	let $username;
+    	let $exportPathIsAvailable;
+    	let $appID;
+    	validate_store(isFullViewed, 'isFullViewed');
+    	component_subscribe($$self, isFullViewed, $$value => $$invalidate(14, $isFullViewed = $$value));
+    	validate_store(animeOptionVisible, 'animeOptionVisible');
+    	component_subscribe($$self, animeOptionVisible, $$value => $$invalidate(15, $animeOptionVisible = $$value));
+    	validate_store(android$1, 'android');
+    	component_subscribe($$self, android$1, $$value => $$invalidate(16, $android = $$value));
+    	validate_store(confirmPromise, 'confirmPromise');
+    	component_subscribe($$self, confirmPromise, $$value => $$invalidate(30, $confirmPromise = $$value));
+    	validate_store(dataStatus, 'dataStatus');
+    	component_subscribe($$self, dataStatus, $$value => $$invalidate(31, $dataStatus = $$value));
+    	validate_store(hiddenEntries, 'hiddenEntries');
+    	component_subscribe($$self, hiddenEntries, $$value => $$invalidate(32, $hiddenEntries = $$value));
+    	validate_store(finalAnimeList, 'finalAnimeList');
+    	component_subscribe($$self, finalAnimeList, $$value => $$invalidate(33, $finalAnimeList = $$value));
+    	validate_store(searchedAnimeKeyword, 'searchedAnimeKeyword');
+    	component_subscribe($$self, searchedAnimeKeyword, $$value => $$invalidate(34, $searchedAnimeKeyword = $$value));
+    	validate_store(animeLoaderWorker$1, 'animeLoaderWorker');
+    	component_subscribe($$self, animeLoaderWorker$1, $$value => $$invalidate(35, $animeLoaderWorker = $$value));
+    	validate_store(listIsUpdating, 'listIsUpdating');
+    	component_subscribe($$self, listIsUpdating, $$value => $$invalidate(7, $listIsUpdating = $$value));
+    	validate_store(isScrolling, 'isScrolling');
+    	component_subscribe($$self, isScrolling, $$value => $$invalidate(36, $isScrolling = $$value));
+    	validate_store(shouldGoBack, 'shouldGoBack');
+    	component_subscribe($$self, shouldGoBack, $$value => $$invalidate(37, $shouldGoBack = $$value));
+    	validate_store(gridFullView, 'gridFullView');
+    	component_subscribe($$self, gridFullView, $$value => $$invalidate(38, $gridFullView = $$value));
+    	validate_store(popupVisible, 'popupVisible');
+    	component_subscribe($$self, popupVisible, $$value => $$invalidate(39, $popupVisible = $$value));
+    	validate_store(menuVisible, 'menuVisible');
+    	component_subscribe($$self, menuVisible, $$value => $$invalidate(40, $menuVisible = $$value));
+    	validate_store(userRequestIsRunning, 'userRequestIsRunning');
+    	component_subscribe($$self, userRequestIsRunning, $$value => $$invalidate(41, $userRequestIsRunning = $$value));
+    	validate_store(autoUpdateInterval, 'autoUpdateInterval');
+    	component_subscribe($$self, autoUpdateInterval, $$value => $$invalidate(42, $autoUpdateInterval = $$value));
+    	validate_store(autoExportInterval, 'autoExportInterval');
+    	component_subscribe($$self, autoExportInterval, $$value => $$invalidate(43, $autoExportInterval = $$value));
+    	validate_store(initData, 'initData');
+    	component_subscribe($$self, initData, $$value => $$invalidate(44, $initData = $$value));
+    	validate_store(hasWheel, 'hasWheel');
+    	component_subscribe($$self, hasWheel, $$value => $$invalidate(45, $hasWheel = $$value));
+    	validate_store(autoUpdate, 'autoUpdate');
+    	component_subscribe($$self, autoUpdate, $$value => $$invalidate(46, $autoUpdate = $$value));
+    	validate_store(autoExport, 'autoExport');
+    	component_subscribe($$self, autoExport, $$value => $$invalidate(47, $autoExport = $$value));
+    	validate_store(scrollingTimeout, 'scrollingTimeout');
+    	component_subscribe($$self, scrollingTimeout, $$value => $$invalidate(48, $scrollingTimeout = $$value));
+    	validate_store(lastRunnedAutoExportDate, 'lastRunnedAutoExportDate');
+    	component_subscribe($$self, lastRunnedAutoExportDate, $$value => $$invalidate(49, $lastRunnedAutoExportDate = $$value));
+    	validate_store(lastRunnedAutoUpdateDate, 'lastRunnedAutoUpdateDate');
+    	component_subscribe($$self, lastRunnedAutoUpdateDate, $$value => $$invalidate(50, $lastRunnedAutoUpdateDate = $$value));
+    	validate_store(listUpdateAvailable, 'listUpdateAvailable');
+    	component_subscribe($$self, listUpdateAvailable, $$value => $$invalidate(8, $listUpdateAvailable = $$value));
+    	validate_store(autoPlay, 'autoPlay');
+    	component_subscribe($$self, autoPlay, $$value => $$invalidate(51, $autoPlay = $$value));
+    	validate_store(filterOptions, 'filterOptions');
+    	component_subscribe($$self, filterOptions, $$value => $$invalidate(52, $filterOptions = $$value));
+    	validate_store(activeTagFilters, 'activeTagFilters');
+    	component_subscribe($$self, activeTagFilters, $$value => $$invalidate(53, $activeTagFilters = $$value));
+    	validate_store(username, 'username');
+    	component_subscribe($$self, username, $$value => $$invalidate(54, $username = $$value));
+    	validate_store(exportPathIsAvailable, 'exportPathIsAvailable');
+    	component_subscribe($$self, exportPathIsAvailable, $$value => $$invalidate(55, $exportPathIsAvailable = $$value));
+    	validate_store(appID, 'appID');
+    	component_subscribe($$self, appID, $$value => $$invalidate(56, $appID = $$value));
+    	let { $$slots: slots = {}, $$scope } = $$props;
+    	validate_slots('App', slots, []);
+    	set_store_value(android$1, $android = isAndroid(), $android); // Android/Browser Identifier
+    	let windowWidth = Math.max(window.visualViewport.width, window.innerWidth);
+    	let windowHeight = Math.max(window.visualViewport.height, window.innerHeight);
+    	let usernameInputEl, animeGridEl;
+    	inject(); // Vercel Analytics
+
+    	window.onload = () => {
+    		window.dataLayer = window.dataLayer || [];
+
+    		function gtag() {
+    			dataLayer.push(arguments);
+    		}
+
+    		gtag("js", new Date());
+
+    		if (window.location.origin === "https://kanshi.vercel.app") {
+    			gtag("config", "G-F5E8XNQS20");
+    		} else {
+    			gtag("config", "G-PPMY92TJCE");
+    		}
+    	}; // Google Analytics
+
+    	// For Youtube API
+    	const onYouTubeIframeAPIReady = new Function();
+
+    	window.onYouTubeIframeAPIReady = onYouTubeIframeAPIReady;
+
+    	// Init Data
+    	let initDataPromises = [];
+
+    	set_store_value(dataStatus, $dataStatus = "Getting Existing Data", $dataStatus);
+
+    	let pleaseWaitStatusInterval = setInterval(
+    		() => {
+    			if (!$dataStatus) {
+    				set_store_value(dataStatus, $dataStatus = "Please Wait...", $dataStatus);
+    			}
+    		},
+    		200
+    	);
+
+    	new Promise(async resolve => {
+    			// Check App ID
+    			set_store_value(appID, $appID = await getWebVersion(), $appID);
+
+    			if ($android && navigator.onLine) {
+    				try {
+    					if ($appID) {
+    						JSBridge.checkAppID($appID, false);
+    					}
+    				} catch(e) {
+    					window.updateAppAlert?.();
+    				}
+    			}
+
+    			let _gridFullView = await retrieveJSON("gridFullView") ?? (!$android && windowWidth > 750 && windowHeight > 695);
+
+    			if (typeof _gridFullView === "boolean") {
+    				setLocalStorage("gridFullView", _gridFullView);
+    				set_store_value(gridFullView, $gridFullView = _gridFullView, $gridFullView);
+    			}
+
+    			resolve();
+    		}).then(() => {
+    		// Get Export Folder for Android
+    		if (!$android) {
+    			(async () => {
+    				set_store_value(exportPathIsAvailable, $exportPathIsAvailable = await retrieveJSON("exportPathIsAvailable"), $exportPathIsAvailable);
+
+    				if (typeof $exportPathIsAvailable === "boolean") {
+    					setLocalStorage("exportPathIsAvailable", $exportPathIsAvailable);
+    				}
+    			})();
+    		}
+
+    		// Check/Get/Update/Process Anime Entries
+    		initDataPromises.push(new Promise(async (resolve, reject) => {
+    				let _lastAnimeUpdate = await retrieveJSON("lastAnimeUpdate");
+    				let shouldGetAnimeEntries = !(_lastAnimeUpdate instanceof Date && !isNaN(_lastAnimeUpdate));
+
+    				if (!shouldGetAnimeEntries) {
+    					let animeEntriesIsEmpty = await retrieveJSON("animeEntriesIsEmpty");
+
+    					if (animeEntriesIsEmpty) {
+    						shouldGetAnimeEntries = true;
+    					}
+    				}
+
+    				if (shouldGetAnimeEntries) {
+    					set_store_value(finalAnimeList, $finalAnimeList = null, $finalAnimeList);
+
+    					getAnimeEntries().then(() => {
+    						resolve();
+    					}).catch(async () => {
+    						reject();
+    					});
+    				} else {
+    					resolve();
+    				}
+    			}));
+
+    		// Check/Update/Process User Anime Entries
+    		initDataPromises.push(new Promise(async resolve => {
+    				// let accessToken = getAnilistAccessTokenFromURL();
+    				// if (accessToken) {
+    				// 	await saveIDBdata(accessToken, "access_token");
+    				// 	$anilistAccessToken = accessToken;
+    				// } else {
+    				// 	$anilistAccessToken = await retrieveJSON("access_token");
+    				// }
+    				// if ($anilistAccessToken) {
+    				// 	let getUsername = () => {
+    				// 		fetch("https://graphql.anilist.co", {
+    				// 			method: "POST",
+    				// 			headers: {
+    				// 				Authorization: "Bearer " + $anilistAccessToken,
+    				// 				"Content-Type": "application/json",
+    				// 				Accept: "application/json",
+    				// 			},
+    				// 			body: JSON.stringify({
+    				// 				query: `{Viewer{name}}`,
+    				// 			}),
+    				// 		})
+    				// 			.then(async (response) => {
+    				// 				return await response.json();
+    				// 			})
+    				// 			.then(async (result) => {
+    				// 				if (
+    				// 					typeof result?.errors?.[0]?.message === "string"
+    				// 				) {
+    				// 					setTimeout(() => {
+    				// 						return getUsername();
+    				// 					}, 60000);
+    				// 				} else {
+    				// 					let savedUsername = await retrieveJSON(
+    				// 						"username"
+    				// 					);
+    				// 					let _username = result.data.Viewer.name;
+    				// 					if (_username && savedUsername !== _username) {
+    				// 						requestUserEntries({
+    				// 							username: _username,
+    				// 						})
+    				// 							.then(({ newusername }) => {
+    				// 								if (newusername) {
+    				// 									$username = newusername || "";
+    				// 									importantUpdate.update(
+    				// 										(e) => !e
+    				// 									);
+    				// 								}
+    				// 							})
+    				// 							.catch((error) => {
+    				// 								$dataStatus =
+    				// 									"Something went wrong...";
+    				// 								console.error(error);
+    				// 							});
+    				// 					} else {
+    				// 						$username =
+    				// 							_username || savedUsername || "";
+    				// 					}
+    				// 					resolve();
+    				// 				}
+    				// 			})
+    				// 			.catch(() => {
+    				// 				setTimeout(() => {
+    				// 					return getUsername();
+    				// 				}, 60000);
+    				// 				resolve();
+    				// 			});
+    				// 	};
+    				// 	getUsername();
+    				// } else {
+    				let _username = await retrieveJSON("username");
+
+    				if (_username) {
+    					setLocalStorage("username", _username);
+    					set_store_value(username, $username = _username, $username);
+    				}
+
+    				resolve();
+    			})); // }
+
+    		// Check/Get/Update Filter Options Selection
+    		initDataPromises.push(new Promise(async resolve => {
+    				getFilterOptions().then(data => {
+    					set_store_value(activeTagFilters, $activeTagFilters = data.activeTagFilters, $activeTagFilters);
+    					set_store_value(filterOptions, $filterOptions = data.filterOptions, $filterOptions);
+    					resolve();
+    				}).catch(() => {
+    					reject();
+    				});
+    			}));
+
+    		// Get Existing Data If there are any
+    		initDataPromises.push(new Promise(async resolve => {
+    				// Auto Play
+    				let _autoPlay = await retrieveJSON("autoPlay");
+
+    				if (typeof _autoPlay === "boolean") {
+    					setLocalStorage("autoPlay", _autoPlay);
+    					set_store_value(autoPlay, $autoPlay = _autoPlay, $autoPlay);
+    				}
+
+    				// Get Auto Functions
+    				set_store_value(lastRunnedAutoUpdateDate, $lastRunnedAutoUpdateDate = await retrieveJSON("lastRunnedAutoUpdateDate"), $lastRunnedAutoUpdateDate);
+
+    				set_store_value(lastRunnedAutoExportDate, $lastRunnedAutoExportDate = await retrieveJSON("lastRunnedAutoExportDate"), $lastRunnedAutoExportDate);
+    				set_store_value(autoUpdate, $autoUpdate = await retrieveJSON("autoUpdate") ?? false, $autoUpdate);
+    				setLocalStorage("autoUpdate", $autoUpdate);
+    				set_store_value(autoExport, $autoExport = await retrieveJSON("autoExport") ?? false, $autoExport);
+    				setLocalStorage("autoExport", $autoExport);
+    				resolve();
+    			}));
+
+    		Promise.all(initDataPromises).then(async () => {
+    			// Get/Show List
+    			let shouldProcessRecommendation = await retrieveJSON("shouldProcessRecommendation");
+
+    			if (!shouldProcessRecommendation) {
+    				let recommendedAnimeListLen = await retrieveJSON("recommendedAnimeListLength");
+
+    				if (recommendedAnimeListLen < 1) {
+    					shouldProcessRecommendation = true;
+    				}
+    			}
+
+    			new Promise(async resolve => {
+    					if (shouldProcessRecommendation) {
+    						processRecommendedAnimeList().then(async () => {
+    							await saveJSON(false, "shouldProcessRecommendation");
+    							resolve(false);
+    						}).catch(error => {
+    							throw error;
+    						});
+    					} else {
+    						resolve(true);
+    					}
+    				}).then(loadSaved => {
+    				animeLoader({ loadSaved }).then(async data => {
+    					set_store_value(animeLoaderWorker$1, $animeLoaderWorker = data.animeLoaderWorker, $animeLoaderWorker);
+    					set_store_value(searchedAnimeKeyword, $searchedAnimeKeyword = "", $searchedAnimeKeyword);
+
+    					if (data?.isNew) {
+    						set_store_value(finalAnimeList, $finalAnimeList = data.finalAnimeList, $finalAnimeList);
+    						set_store_value(hiddenEntries, $hiddenEntries = data.hiddenEntries, $hiddenEntries);
+    						set_store_value(dataStatus, $dataStatus = null, $dataStatus);
+    						checkAutoFunctions(true);
+    						set_store_value(initData, $initData = false, $initData);
+    					}
+
+    					return;
+    				}).catch(error => {
+    					throw error;
+    				});
+    			});
+    		}).catch(async error => {
+    			checkAutoFunctions(true);
+    			set_store_value(initData, $initData = false, $initData);
+    			set_store_value(dataStatus, $dataStatus = "Something went wrong...", $dataStatus);
+
+    			if ($android) {
+    				$confirmPromise?.({
+    					isAlert: true,
+    					title: "Something Went Wrong",
+    					text: "App may not be working properly, you may want to restart and make sure you're running the latest version."
+    				});
+    			} else {
+    				$confirmPromise?.({
+    					isAlert: true,
+    					title: "Something Went Wrong",
+    					text: "App may not be working properly, you may want to refresh the page, or if not clear the cookies but backup your data first."
+    				});
+    			}
+
+    			console.error(error);
+    		});
+    	});
+
+    	// function getAnilistAccessTokenFromURL() {
+    	// 	let urlParams = new URLSearchParams(window.location.hash.slice(1));
+    	// 	return urlParams.get("access_token");
+    	// }
+    	function checkAutoFunctions(initCheck = false) {
+    		// auto Update
+    		if (initCheck) {
+    			set_store_value(userRequestIsRunning, $userRequestIsRunning = true, $userRequestIsRunning);
+
+    			requestUserEntries().then(() => {
+    				set_store_value(userRequestIsRunning, $userRequestIsRunning = false, $userRequestIsRunning);
+
+    				requestAnimeEntries().finally(() => {
+    					checkAutoExportOnLoad();
+    				});
+    			}).catch(error => {
+    				checkAutoExportOnLoad();
+    				set_store_value(userRequestIsRunning, $userRequestIsRunning = false, $userRequestIsRunning);
+    				set_store_value(dataStatus, $dataStatus = "Something went wrong...", $dataStatus);
+    				console.error(error);
+    			});
+    		} else {
+    			if (autoUpdateIsPastDate() && $autoUpdate) {
+    				set_store_value(userRequestIsRunning, $userRequestIsRunning = true, $userRequestIsRunning);
+
+    				requestUserEntries().then(() => {
+    					set_store_value(userRequestIsRunning, $userRequestIsRunning = false, $userRequestIsRunning);
+
+    					requestAnimeEntries().finally(() => {
+    						checkAutoExportOnLoad();
+    					});
+    				}).catch(error => {
+    					checkAutoExportOnLoad();
+    					set_store_value(userRequestIsRunning, $userRequestIsRunning = false, $userRequestIsRunning);
+    					set_store_value(dataStatus, $dataStatus = "Something went wrong...", $dataStatus);
+    					console.error(error);
+    				});
+    			} else {
+    				checkAutoExportOnLoad();
+    			}
+    		}
+    	}
+
+    	function checkAutoExportOnLoad() {
+    		if ($autoExport) {
+    			if (autoExportIsPastDate()) {
+    				exportUserData();
+    			}
+    		}
+    	}
+
+    	initData.subscribe(async val => {
+    		if (val === false) {
+    			clearInterval(pleaseWaitStatusInterval);
+    		}
+    	});
+
+    	finalAnimeList.subscribe(async val => {
+    		if (!$initData) return;
+
+    		if (val?.length > 0 && $initData !== false) {
+    			set_store_value(initData, $initData = false, $initData);
+    		} // Have Loaded Recommendations
+    	});
+
+    	// Reactive Functions
+    	importantLoad.subscribe(async val => {
+    		if (typeof val !== "boolean" || $initData) return;
+    		set_store_value(listUpdateAvailable, $listUpdateAvailable = false, $listUpdateAvailable);
+
+    		if ($animeLoaderWorker) {
+    			$animeLoaderWorker.terminate();
+    			set_store_value(animeLoaderWorker$1, $animeLoaderWorker = null, $animeLoaderWorker);
+    		}
+
+    		animeLoader().then(async data => {
+    			set_store_value(animeLoaderWorker$1, $animeLoaderWorker = data.animeLoaderWorker, $animeLoaderWorker);
+    			set_store_value(searchedAnimeKeyword, $searchedAnimeKeyword = "", $searchedAnimeKeyword);
+
+    			if (data?.isNew) {
+    				set_store_value(finalAnimeList, $finalAnimeList = data.finalAnimeList, $finalAnimeList);
+    				set_store_value(hiddenEntries, $hiddenEntries = data.hiddenEntries, $hiddenEntries);
+    			}
+
+    			set_store_value(dataStatus, $dataStatus = null, $dataStatus);
+    			return;
+    		}).catch(error => {
+    			throw error;
+    		});
+    	});
+
+    	importantUpdate.subscribe(async val => {
+    		if (typeof val !== "boolean" || $initData) return;
+    		await saveJSON(true, "shouldProcessRecommendation");
+    		set_store_value(listUpdateAvailable, $listUpdateAvailable = false, $listUpdateAvailable);
+
+    		processRecommendedAnimeList().then(async () => {
+    			await saveJSON(false, "shouldProcessRecommendation");
+    			updateFilters.update(e => !e);
+    			importantLoad.update(e => !e);
+    		}).catch(error => {
+    			importantLoad.update(e => !e);
+    			throw error;
+    		});
+    	});
+
+    	updateRecommendationList.subscribe(async val => {
+    		if (typeof val !== "boolean" || $initData) return;
+    		await saveJSON(true, "shouldProcessRecommendation");
+
+    		processRecommendedAnimeList().then(async () => {
+    			await saveJSON(false, "shouldProcessRecommendation");
+    			updateFilters.update(e => !e);
+    			loadAnime.update(e => !e);
+    		}).catch(error => {
+    			loadAnime.update(e => !e);
+    			throw error;
+    		});
+    	});
+
+    	loadAnime.subscribe(async val => {
+    		if (typeof val !== "boolean" || $initData) return;
+
+    		if (($popupVisible || ($gridFullView
+    		? animeGridEl.scrollLeft > 500
+    		: document.documentElement.scrollTop > Math.max(0, animeGridEl?.offsetTop - 55))) && $finalAnimeList?.length) {
+    			set_store_value(listUpdateAvailable, $listUpdateAvailable = true, $listUpdateAvailable);
+    		} else {
+    			if ($animeLoaderWorker) {
+    				$animeLoaderWorker.terminate();
+    				set_store_value(animeLoaderWorker$1, $animeLoaderWorker = null, $animeLoaderWorker);
+    			}
+
+    			animeLoader().then(async data => {
+    				set_store_value(animeLoaderWorker$1, $animeLoaderWorker = data.animeLoaderWorker, $animeLoaderWorker);
+    				set_store_value(searchedAnimeKeyword, $searchedAnimeKeyword = "", $searchedAnimeKeyword);
+
+    				if (data?.isNew) {
+    					set_store_value(finalAnimeList, $finalAnimeList = data.finalAnimeList, $finalAnimeList);
+    					set_store_value(hiddenEntries, $hiddenEntries = data.hiddenEntries, $hiddenEntries);
+    				}
+
+    				set_store_value(dataStatus, $dataStatus = null, $dataStatus);
+    				return;
+    			}).catch(error => {
+    				throw error;
+    			});
+    		}
+    	});
+
+    	updateFilters.subscribe(async val => {
+    		if (typeof val !== "boolean" || $initData) return;
+    		getFilterOptions();
+    	});
+
+    	let hourINMS = 60 * 60 * 1000;
+
+    	autoUpdate.subscribe(async val => {
+    		if (val === true) {
+    			saveJSON(true, "autoUpdate");
+
+    			// Check Run First
+    			if (autoUpdateIsPastDate()) {
+    				checkAutoFunctions();
+    				if ($autoUpdateInterval) clearInterval($autoUpdateInterval);
+
+    				set_store_value(
+    					autoUpdateInterval,
+    					$autoUpdateInterval = setInterval(
+    						() => {
+    							if ($autoUpdate) {
+    								checkAutoFunctions();
+    							}
+    						},
+    						hourINMS
+    					),
+    					$autoUpdateInterval
+    				);
+    			} else {
+    				let timeLeft = hourINMS - (new Date().getTime() - $lastRunnedAutoUpdateDate?.getTime()) || 0;
+
+    				setTimeout(
+    					() => {
+    						if ($autoUpdate === false) return;
+    						checkAutoFunctions();
+    						if ($autoUpdateInterval) clearInterval($autoUpdateInterval);
+
+    						set_store_value(
+    							autoUpdateInterval,
+    							$autoUpdateInterval = setInterval(
+    								() => {
+    									if ($autoUpdate) {
+    										checkAutoFunctions();
+    									}
+    								},
+    								hourINMS
+    							),
+    							$autoUpdateInterval
+    						);
+    					},
+    					Math.min(timeLeft, 2000000000)
+    				);
+    			}
+    		} else if (val === false) {
+    			if ($autoUpdateInterval) clearInterval($autoUpdateInterval);
+    			saveJSON(false, "autoUpdate");
+    		}
+    	});
+
+    	function autoUpdateIsPastDate() {
+    		let isPastDate = false;
+
+    		if (!$lastRunnedAutoUpdateDate) isPastDate = true; else if ($lastRunnedAutoUpdateDate instanceof Date && !isNaN($lastRunnedAutoUpdateDate)) {
+    			if (new Date().getTime() - $lastRunnedAutoUpdateDate.getTime() > hourINMS) {
+    				isPastDate = true;
+    			}
+    		}
+
+    		return isPastDate;
+    	}
+
+    	runUpdate.subscribe(val => {
+    		if (typeof val !== "boolean" || $initData || !navigator.onLine) return;
+    		set_store_value(userRequestIsRunning, $userRequestIsRunning = true, $userRequestIsRunning);
+
+    		requestUserEntries().then(() => {
+    			set_store_value(userRequestIsRunning, $userRequestIsRunning = false, $userRequestIsRunning);
+    			requestAnimeEntries();
+    		}).catch(error => {
+    			set_store_value(userRequestIsRunning, $userRequestIsRunning = false, $userRequestIsRunning);
+    			set_store_value(dataStatus, $dataStatus = "Something went wrong...", $dataStatus);
+    			console.error(error);
+    		});
+    	});
+
+    	autoExport.subscribe(async val => {
+    		if (val === true) {
+    			saveJSON(true, "autoExport");
+
+    			if (autoExportIsPastDate()) {
+    				checkAutoFunctions();
+    				if ($autoExportInterval) clearInterval($autoExportInterval);
+
+    				set_store_value(
+    					autoExportInterval,
+    					$autoExportInterval = setInterval(
+    						() => {
+    							if ($autoExport) {
+    								checkAutoFunctions();
+    							}
+    						},
+    						hourINMS
+    					),
+    					$autoExportInterval
+    				);
+    			} else {
+    				let timeLeft = hourINMS - (new Date().getTime() - $lastRunnedAutoExportDate?.getTime()) || 0;
+
+    				setTimeout(
+    					() => {
+    						if ($autoExport === false) return;
+    						checkAutoFunctions();
+    						if ($autoExportInterval) clearInterval($autoExportInterval);
+
+    						set_store_value(
+    							autoExportInterval,
+    							$autoExportInterval = setInterval(
+    								() => {
+    									if ($autoExport) {
+    										checkAutoFunctions();
+    									}
+    								},
+    								hourINMS
+    							),
+    							$autoExportInterval
+    						);
+    					},
+    					Math.min(timeLeft, 2000000000)
+    				);
+    			}
+    		} else if (val === false) {
+    			if ($autoExportInterval) clearInterval($autoExportInterval);
+    			saveJSON(false, "autoExport");
+    		}
+    	});
+
+    	function autoExportIsPastDate() {
+    		// Check Run First
+    		let isPastDate = false;
+
+    		if (!$lastRunnedAutoExportDate) isPastDate = true; else if ($lastRunnedAutoExportDate instanceof Date && !isNaN($lastRunnedAutoExportDate)) {
+    			if (new Date().getTime() - $lastRunnedAutoExportDate.getTime() > hourINMS) {
+    				isPastDate = true;
+    			}
+    		}
+
+    		return isPastDate;
+    	}
+
+    	runExport.subscribe(val => {
+    		if (typeof val !== "boolean" || $initData) return;
+    		exportUserData();
+    	});
+
+    	runIsScrolling.subscribe(val => {
+    		if (typeof val !== "boolean") return;
+    		if (!$isScrolling) set_store_value(isScrolling, $isScrolling = true, $isScrolling);
+    		if ($scrollingTimeout) clearTimeout($scrollingTimeout);
+
+    		set_store_value(
+    			scrollingTimeout,
+    			$scrollingTimeout = setTimeout(
+    				() => {
+    					set_store_value(isScrolling, $isScrolling = false, $isScrolling);
+    				},
+    				500
+    			),
+    			$scrollingTimeout
+    		);
+    	});
+
+    	listUpdateAvailable.subscribe(val => {
+    		if (!val) {
+    			set_store_value(listIsUpdating, $listIsUpdating = false, $listIsUpdating);
+    		}
+    	});
+
+    	// Global Function For Android/Browser
+    	document.addEventListener("visibilitychange", () => {
+    		if ($initData || $android || document.visibilityState !== "visible") return;
+
+    		if ($userRequestIsRunning && (autoUpdateIsPastDate() || autoExportIsPastDate())) {
+    			checkAutoFunctions();
+
+    			if ($autoExport && !$autoExportInterval) {
+    				autoExport.update(e => e);
+    			}
+
+    			if ($autoUpdate && !$autoUpdateInterval) {
+    				autoUpdate.update(e => e);
+    			}
+    		} else if (!$userRequestIsRunning) {
+    			set_store_value(userRequestIsRunning, $userRequestIsRunning = true, $userRequestIsRunning);
+    			requestUserEntries({ visibilityChange: true }).then(() => set_store_value(userRequestIsRunning, $userRequestIsRunning = false, $userRequestIsRunning));
+    		}
+    	});
+
+    	let _showConfirm = false;
+
+    	if ("scrollRestoration" in window.history) {
+    		window.history.scrollRestoration = "manual"; // Disable scrolling to top when navigating back
+    	}
+
+    	let windowWheel = () => {
+    		set_store_value(hasWheel, $hasWheel = true, $hasWheel);
+    		window.removeEventListener("wheel", windowWheel, { passive: true });
+    	};
+
+    	window.addEventListener("wheel", windowWheel, { passive: true });
+
+    	window.checkEntries = () => {
+    		if ($initData) return;
+
+    		if ($userRequestIsRunning && (autoUpdateIsPastDate() || autoExportIsPastDate())) {
+    			checkAutoFunctions();
+
+    			if (!$autoExportInterval) {
+    				autoExport.update(e => e);
+    			}
+
+    			if (!$autoUpdateInterval) {
+    				autoUpdate.update(e => e);
+    			}
+    		} else if (!$userRequestIsRunning) {
+    			set_store_value(userRequestIsRunning, $userRequestIsRunning = true, $userRequestIsRunning);
+    			requestUserEntries({ visibilityChange: true }).then(() => set_store_value(userRequestIsRunning, $userRequestIsRunning = false, $userRequestIsRunning));
+    		}
+    	};
+
+    	window.addEventListener("popstate", () => {
+    		window.backPressed();
+    	});
+
+    	let willExit = false, exitScrollTimeout;
+
+    	window.backPressed = () => {
+    		if ($shouldGoBack && !$android) {
+    			window.history.go(-1); // Only in Browser
+    		} else {
+    			if (!$android) {
+    				window.history.pushState("visited", ""); // Push Popped State
+    			}
+
+    			if (_showConfirm) {
+    				handleConfirmationCancelled();
+    				$$invalidate(0, _showConfirm = false);
+    				willExit = false;
+    				return;
+    			} else if (usernameInputEl && usernameInputEl === document?.activeElement && Math.max(window.visualViewport.width, window.innerWidth) <= 750) {
+    				usernameInputEl?.focus?.();
+    				usernameInputEl?.blur?.();
+    				willExit = false;
+    				return;
+    			} else if ($menuVisible) {
+    				set_store_value(menuVisible, $menuVisible = false, $menuVisible);
+    				willExit = false;
+    				return;
+    			} else if (window.checkOpenFullScreenItem?.()) {
+    				window.closeFullScreenItem?.();
+    				willExit = false;
+    				return;
+    			} else if ($popupVisible) {
+    				set_store_value(popupVisible, $popupVisible = false, $popupVisible);
+    				willExit = false;
+    				return;
+    			} else if ($animeOptionVisible) {
+    				set_store_value(animeOptionVisible, $animeOptionVisible = false, $animeOptionVisible);
+    				willExit = false;
+    				return;
+    			} else if (window.checkOpenDropdown?.()) {
+    				window.closeDropdown?.();
+    				willExit = false;
+    				return;
+    			} else if (!willExit) {
+    				willExit = true;
+
+    				if ($gridFullView) {
+    					animeGridEl.style.overflow = "hidden";
+    					animeGridEl.style.overflow = "";
+
+    					animeGridEl?.children?.[0]?.scrollIntoView?.({
+    						container: animeGridEl,
+    						behavior: "smooth",
+    						block: "nearest",
+    						inline: "start"
+    					});
+    				} else {
+    					if ($android || !matchMedia("(hover:hover)").matches) {
+    						document.documentElement.style.overflow = "hidden";
+    						document.documentElement.style.overflow = "";
+    					}
+
+    					window.scrollTo({ top: -9999, behavior: "smooth" });
+    				}
+
+    				return;
+    			} else {
+    				if ($gridFullView) {
+    					animeGridEl.style.overflow = "hidden";
+    					animeGridEl.scrollLeft = 0;
+    					clearTimeout(exitScrollTimeout);
+
+    					exitScrollTimeout = setTimeout(
+    						() => {
+    							animeGridEl.style.overflow = "";
+    						},
+    						100
+    					);
+    				} else {
+    					if ($android || !matchMedia("(hover:hover)").matches) {
+    						document.documentElement.style.overflow = "hidden";
+    					}
+
+    					document.documentElement.scrollTop = 0;
+    					document.body.scrollTop = 0;
+    					window.scrollY = 0;
+
+    					if ($android || !matchMedia("(hover:hover)").matches) {
+    						clearTimeout(exitScrollTimeout);
+
+    						exitScrollTimeout = setTimeout(
+    							() => {
+    								document.documentElement.style.overflow = "";
+    							},
+    							100
+    						);
+    					}
+    				}
+
+    				try {
+    					JSBridge.willExit();
+    				} catch(e) {
+    					
+    				}
+
+    				window.setShouldGoBack(true);
+    				willExit = false;
+    			}
+    		}
+    	};
+
+    	gridFullView.subscribe(async val => {
+    		await tick();
+
+    		if (val) {
+    			if (animeGridEl?.scrollLeft > 500) {
+    				window.setShouldGoBack(false);
+    			}
+    		} else {
+    			if (document.documentElement.scrollTop > Math.max(0, animeGridEl?.offsetTop - 55)) {
+    				window.setShouldGoBack(false);
+    			}
+    		}
+    	});
+
+    	popupVisible.subscribe(val => {
+    		if (val === true) window.setShouldGoBack(false);
+    	});
+
+    	menuVisible.subscribe(val => {
+    		if (val === true) window.setShouldGoBack(false);
+    	});
+
+    	window.addEventListener(
+    		"scroll",
+    		() => {
+    			if (document.documentElement.scrollTop > Math.max(0, animeGridEl?.offsetTop - 55) && !willExit) window.setShouldGoBack(false);
+    			runIsScrolling.update(e => !e);
+    		},
+    		{ passive: true }
+    	);
+
+    	onMount(() => {
+    		usernameInputEl = document.getElementById("usernameInput");
+    		animeGridEl = document.getElementById("anime-grid");
+
+    		animeGridEl?.addEventListener(
+    			"scroll",
+    			() => {
+    				if (animeGridEl.scrollLeft > Math.max(0, animeGridEl?.offsetTop - 55) && !willExit) window.setShouldGoBack(false);
+    				if (!$gridFullView) return;
+    				runIsScrolling.update(e => !e);
+    			},
+    			{ passive: true }
+    		);
+
+    		document.getElementById("popup-container").addEventListener(
+    			"scroll",
+    			() => {
+    				runIsScrolling.update(e => !e);
+    			},
+    			{ passive: true }
+    		);
+
+    		$$invalidate(12, windowWidth = Math.max(window.visualViewport.width, window.innerWidth));
+    		windowHeight = Math.max(window.visualViewport.height, window.innerHeight);
+
+    		window.addEventListener("resize", () => {
+    			windowHeight = Math.max(window.visualViewport.height, window.innerHeight);
+    			$$invalidate(12, windowWidth = Math.max(window.visualViewport.width, window.innerWidth));
+    		});
+    	});
+
+    	window.setShouldGoBack = _shouldGoBack => {
+    		if (!_shouldGoBack) willExit = false;
+
+    		if ($android) {
+    			try {
+    				JSBridge.setShouldGoBack(_shouldGoBack);
+    			} catch(e) {
+    				
+    			}
+    		} else {
+    			if (window.history.state !== "visited") {
+    				// Only Add 1 state
+    				window.history.pushState("visited", "");
+    			}
+
+    			set_store_value(shouldGoBack, $shouldGoBack = _shouldGoBack, $shouldGoBack);
+    		}
+    	};
+
+    	window.copyToClipBoard = text => {
+    		if ($android) {
+    			try {
+    				JSBridge.copyToClipBoard(text);
+    			} catch(e) {
+    				
+    			}
+    		} else {
+    			navigator?.clipboard?.writeText?.(text);
+    		}
+    	};
+
+    	let isChangingPopupVisible, isChangingPopupVisibleTimeout;
+
+    	popupIsGoingBack.subscribe(() => {
+    		clearTimeout(isChangingPopupVisibleTimeout);
+    		isChangingPopupVisible = true;
+
+    		isChangingPopupVisibleTimeout = setTimeout(
+    			() => {
+    				isChangingPopupVisible = false;
+    			},
+    			500
+    		);
+    	});
+
+    	let copytimeoutId;
+    	let copyhold = false;
+
+    	document.addEventListener("pointerdown", e => {
+    		if (e.pointerType === "mouse") return;
+    		let target = e.target;
+    		let classList = target.classList;
+    		if (!classList.contains("copy")) target = target.closest(".copy");
+
+    		if (target) {
+    			copyhold = true;
+    			if (copytimeoutId) clearTimeout(copytimeoutId);
+
+    			copytimeoutId = setTimeout(
+    				() => {
+    					let text = target.getAttribute("copy-value");
+
+    					if (text && !$isScrolling && copyhold && !isChangingPopupVisible) {
+    						target.style.pointerEvents = "none";
+
+    						setTimeout(
+    							() => {
+    								target.style.pointerEvents = "";
+    							},
+    							500
+    						);
+
+    						let text2 = target.getAttribute("copy-value-2");
+
+    						if (text2 && !ncsCompare(text2, text)) {
+    							if ($android) {
+    								window.copyToClipBoard(text2);
+    								window.copyToClipBoard(text);
+    							} else {
+    								window.copyToClipBoard(text2);
+
+    								setTimeout(
+    									() => {
+    										window.copyToClipBoard(text);
+    									},
+    									300
+    								);
+    							}
+    						} else {
+    							window.copyToClipBoard(text);
+    						}
+    					}
+    				},
+    				500
+    			);
+    		}
+    	});
+
+    	document.addEventListener("pointerup", e => {
+    		if (e.pointerType === "mouse") return;
+    		let target = e.target;
+    		let classList = target.classList;
+    		if (!classList.contains("copy")) target = target.closest(".copy");
+
+    		if (target) {
+    			copyhold = false;
+    			if (copytimeoutId) clearTimeout(copytimeoutId);
+    		}
+    	});
+
+    	document.addEventListener("pointercancel", e => {
+    		if (e.pointerType === "mouse") return;
+    		let target = e.target;
+    		let classList = target.classList;
+    		if (!classList.contains("copy")) target = target.closest(".copy");
+
+    		if (target) {
+    			copyhold = false;
+    			if (copytimeoutId) clearTimeout(copytimeoutId);
+    		}
+    	});
+
+    	let _isAlert, _confirmTitle, _confirmText, _confirmLabel, _cancelLabel;
+    	let _confirmModalPromise;
+
+    	set_store_value(
+    		confirmPromise,
+    		$confirmPromise = window.confirmPromise = async confirmValues => {
+    			return new Promise(resolve => {
+    					$$invalidate(1, _isAlert = confirmValues?.isAlert || false);
+    					$$invalidate(2, _confirmTitle = confirmValues?.title || (_isAlert ? "Heads Up" : "Confirmation"));
+
+    					$$invalidate(3, _confirmText = (typeof confirmValues === "string"
+    					? confirmValues
+    					: confirmValues?.text) || "Are you sure you want to continue");
+
+    					$$invalidate(4, _confirmLabel = confirmValues?.confirmLabel || "OK");
+    					$$invalidate(5, _cancelLabel = confirmValues?.cancelLabel || "CANCEL");
+    					$$invalidate(0, _showConfirm = true);
+    					_confirmModalPromise = { resolve };
+    				});
+    		},
+    		$confirmPromise
+    	);
+
+    	function handleConfirmationConfirmed() {
+    		_confirmModalPromise?.resolve?.(true);
+    		_confirmModalPromise = $$invalidate(1, _isAlert = $$invalidate(2, _confirmTitle = $$invalidate(3, _confirmText = $$invalidate(4, _confirmLabel = $$invalidate(5, _cancelLabel = undefined)))));
+    		$$invalidate(0, _showConfirm = false);
+    	}
+
+    	function handleConfirmationCancelled() {
+    		_confirmModalPromise?.resolve?.(false);
+    		_confirmModalPromise = $$invalidate(1, _isAlert = $$invalidate(2, _confirmTitle = $$invalidate(3, _confirmText = $$invalidate(4, _confirmLabel = $$invalidate(5, _cancelLabel = undefined)))));
+    		$$invalidate(0, _showConfirm = false);
+    	}
+
+    	async function updateList() {
+    		if (await $confirmPromise({
+    			title: "List update is available",
+    			text: "Are you sure you want to refresh the list?"
+    		})) {
+    			set_store_value(listIsUpdating, $listIsUpdating = true, $listIsUpdating);
+
+    			if ($animeLoaderWorker) {
+    				$animeLoaderWorker.terminate();
+    				set_store_value(animeLoaderWorker$1, $animeLoaderWorker = null, $animeLoaderWorker);
+    			}
+
+    			animeLoader().then(async data => {
+    				set_store_value(animeLoaderWorker$1, $animeLoaderWorker = data.animeLoaderWorker, $animeLoaderWorker);
+    				set_store_value(searchedAnimeKeyword, $searchedAnimeKeyword = "", $searchedAnimeKeyword);
+
+    				if (data?.isNew) {
+    					set_store_value(finalAnimeList, $finalAnimeList = data.finalAnimeList, $finalAnimeList);
+    					set_store_value(hiddenEntries, $hiddenEntries = data.hiddenEntries, $hiddenEntries);
+    				}
+
+    				set_store_value(dataStatus, $dataStatus = null, $dataStatus);
+    				return;
+    			}).catch(error => {
+    				throw error;
+    			});
+    		}
+    	}
+
+    	window.updateAppAlert = async () => {
+    		if (await $confirmPromise?.({
+    			title: "New updates are available",
+    			text: "You may want to download the new version.",
+    			confirmLabel: "DOWNLOAD"
+    		})) {
+    			try {
+    				JSBridge.downloadUpdate();
+    			} catch(e) {
+    				window.open("https://github.com/u-Kuro/Kanshi.Anime-Recommendation/raw/main/Kanshi.apk", "_blank");
+    			}
+    		}
+    	};
+
+    	let _progress = 0, progressFrame, progressChangeStart = performance.now();
+
+    	progress.subscribe(val => {
+    		if (val >= 100 || val <= 0 || performance.now() - progressChangeStart > 300) {
+    			cancelAnimationFrame(progressFrame);
+
+    			progressFrame = requestAnimationFrame(() => {
+    				$$invalidate(6, _progress = val);
+    			});
+
+    			progressChangeStart = performance.now();
+    		}
+    	});
+
+    	let changeStatusBarColorTimeout;
+    	const writable_props = [];
+
+    	Object.keys($$props).forEach(key => {
+    		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== '$$' && key !== 'slot') console_1.warn(`<App> was created with unknown prop '${key}'`);
+    	});
+
+    	const keydown_handler = e => e.key === "Enter" && updateList();
+
+    	$$self.$capture_state = () => ({
+    		getWebVersion,
+    		C,
+    		onMount,
+    		tick,
+    		fade,
+    		inject,
+    		retrieveJSON,
+    		saveJSON,
+    		appID,
+    		android: android$1,
+    		username,
+    		hiddenEntries,
+    		filterOptions,
+    		activeTagFilters,
+    		finalAnimeList,
+    		animeLoaderWorker: animeLoaderWorker$1,
+    		initData,
+    		gridFullView,
+    		searchedAnimeKeyword,
+    		dataStatus,
+    		userRequestIsRunning,
+    		autoUpdate,
+    		autoUpdateInterval,
+    		lastRunnedAutoUpdateDate,
+    		exportPathIsAvailable,
+    		autoExport,
+    		autoExportInterval,
+    		lastRunnedAutoExportDate,
+    		autoPlay,
+    		popupVisible,
+    		menuVisible,
+    		shouldGoBack,
+    		isScrolling,
+    		scrollingTimeout,
+    		listUpdateAvailable,
+    		listIsUpdating,
+    		isFullViewed,
+    		runUpdate,
+    		runExport,
+    		importantLoad,
+    		importantUpdate,
+    		updateRecommendationList,
+    		loadAnime,
+    		updateFilters,
+    		animeOptionVisible,
+    		runIsScrolling,
+    		confirmPromise,
+    		hasWheel,
+    		progress,
+    		popupIsGoingBack,
+    		getAnimeEntries,
+    		getFilterOptions,
+    		requestAnimeEntries,
+    		requestUserEntries,
+    		processRecommendedAnimeList,
+    		animeLoader,
+    		exportUserData,
+    		isAndroid,
+    		ncsCompare,
+    		setLocalStorage,
+    		windowWidth,
+    		windowHeight,
+    		usernameInputEl,
+    		animeGridEl,
+    		onYouTubeIframeAPIReady,
+    		initDataPromises,
+    		pleaseWaitStatusInterval,
+    		checkAutoFunctions,
+    		checkAutoExportOnLoad,
+    		hourINMS,
+    		autoUpdateIsPastDate,
+    		autoExportIsPastDate,
+    		_showConfirm,
+    		windowWheel,
+    		willExit,
+    		exitScrollTimeout,
+    		isChangingPopupVisible,
+    		isChangingPopupVisibleTimeout,
+    		copytimeoutId,
+    		copyhold,
+    		_isAlert,
+    		_confirmTitle,
+    		_confirmText,
+    		_confirmLabel,
+    		_cancelLabel,
+    		_confirmModalPromise,
+    		handleConfirmationConfirmed,
+    		handleConfirmationCancelled,
+    		updateList,
+    		_progress,
+    		progressFrame,
+    		progressChangeStart,
+    		changeStatusBarColorTimeout,
+    		$isFullViewed,
+    		$animeOptionVisible,
+    		$android,
+    		$confirmPromise,
+    		$dataStatus,
+    		$hiddenEntries,
+    		$finalAnimeList,
+    		$searchedAnimeKeyword,
+    		$animeLoaderWorker,
+    		$listIsUpdating,
+    		$isScrolling,
+    		$shouldGoBack,
+    		$gridFullView,
+    		$popupVisible,
+    		$menuVisible,
+    		$userRequestIsRunning,
+    		$autoUpdateInterval,
+    		$autoExportInterval,
+    		$initData,
+    		$hasWheel,
+    		$autoUpdate,
+    		$autoExport,
+    		$scrollingTimeout,
+    		$lastRunnedAutoExportDate,
+    		$lastRunnedAutoUpdateDate,
+    		$listUpdateAvailable,
+    		$autoPlay,
+    		$filterOptions,
+    		$activeTagFilters,
+    		$username,
+    		$exportPathIsAvailable,
+    		$appID
+    	});
+
+    	$$self.$inject_state = $$props => {
+    		if ('windowWidth' in $$props) $$invalidate(12, windowWidth = $$props.windowWidth);
+    		if ('windowHeight' in $$props) windowHeight = $$props.windowHeight;
+    		if ('usernameInputEl' in $$props) usernameInputEl = $$props.usernameInputEl;
+    		if ('animeGridEl' in $$props) animeGridEl = $$props.animeGridEl;
+    		if ('initDataPromises' in $$props) initDataPromises = $$props.initDataPromises;
+    		if ('pleaseWaitStatusInterval' in $$props) pleaseWaitStatusInterval = $$props.pleaseWaitStatusInterval;
+    		if ('hourINMS' in $$props) hourINMS = $$props.hourINMS;
+    		if ('_showConfirm' in $$props) $$invalidate(0, _showConfirm = $$props._showConfirm);
+    		if ('windowWheel' in $$props) windowWheel = $$props.windowWheel;
+    		if ('willExit' in $$props) willExit = $$props.willExit;
+    		if ('exitScrollTimeout' in $$props) exitScrollTimeout = $$props.exitScrollTimeout;
+    		if ('isChangingPopupVisible' in $$props) isChangingPopupVisible = $$props.isChangingPopupVisible;
+    		if ('isChangingPopupVisibleTimeout' in $$props) isChangingPopupVisibleTimeout = $$props.isChangingPopupVisibleTimeout;
+    		if ('copytimeoutId' in $$props) copytimeoutId = $$props.copytimeoutId;
+    		if ('copyhold' in $$props) copyhold = $$props.copyhold;
+    		if ('_isAlert' in $$props) $$invalidate(1, _isAlert = $$props._isAlert);
+    		if ('_confirmTitle' in $$props) $$invalidate(2, _confirmTitle = $$props._confirmTitle);
+    		if ('_confirmText' in $$props) $$invalidate(3, _confirmText = $$props._confirmText);
+    		if ('_confirmLabel' in $$props) $$invalidate(4, _confirmLabel = $$props._confirmLabel);
+    		if ('_cancelLabel' in $$props) $$invalidate(5, _cancelLabel = $$props._cancelLabel);
+    		if ('_confirmModalPromise' in $$props) _confirmModalPromise = $$props._confirmModalPromise;
+    		if ('_progress' in $$props) $$invalidate(6, _progress = $$props._progress);
+    		if ('progressFrame' in $$props) progressFrame = $$props.progressFrame;
+    		if ('progressChangeStart' in $$props) progressChangeStart = $$props.progressChangeStart;
+    		if ('changeStatusBarColorTimeout' in $$props) $$invalidate(13, changeStatusBarColorTimeout = $$props.changeStatusBarColorTimeout);
+    	};
+
+    	if ($$props && "$$inject" in $$props) {
+    		$$self.$inject_state($$props.$$inject);
+    	}
+
+    	$$self.$$.update = () => {
+    		if ($$self.$$.dirty[0] & /*$android, $animeOptionVisible, windowWidth, _showConfirm, $isFullViewed, changeStatusBarColorTimeout*/ 126977) {
+    			{
+    				if ($android) {
+    					try {
+    						let isOverlay = $animeOptionVisible && windowWidth >= 750 || _showConfirm || $isFullViewed;
+    						clearTimeout(changeStatusBarColorTimeout);
+
+    						if (isOverlay) {
+    							JSBridge.changeStatusBarColor(true);
+    						} else {
+    							$$invalidate(13, changeStatusBarColorTimeout = setTimeout(
+    								() => {
+    									JSBridge.changeStatusBarColor(false);
+    								},
+    								200
+    							));
+    						}
+    					} catch(e) {
+    						
+    					}
+    				}
+    			}
+    		}
+    	};
+
+    	return [
+    		_showConfirm,
+    		_isAlert,
+    		_confirmTitle,
+    		_confirmText,
+    		_confirmLabel,
+    		_cancelLabel,
+    		_progress,
+    		$listIsUpdating,
+    		$listUpdateAvailable,
+    		handleConfirmationConfirmed,
+    		handleConfirmationCancelled,
+    		updateList,
+    		windowWidth,
+    		changeStatusBarColorTimeout,
+    		$isFullViewed,
+    		$animeOptionVisible,
+    		$android,
+    		keydown_handler
+    	];
+    }
+
+    class App extends SvelteComponentDev {
+    	constructor(options) {
+    		super(options);
+    		init(this, options, instance, create_fragment, safe_not_equal, {}, null, [-1, -1, -1]);
+
+    		dispatch_dev("SvelteRegisterComponent", {
+    			component: this,
+    			tagName: "App",
+    			options,
+    			id: create_fragment.name
+    		});
+    	}
+    }
+
+    const app = new App({
+    	target: document.body
+    });
+
+    return app;
+
+})();
 //# sourceMappingURL=bundle.js.map
