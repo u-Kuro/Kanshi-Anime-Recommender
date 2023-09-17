@@ -302,8 +302,8 @@
                 timeDifMS = nextAiringDate.getTime() - new Date().getTime();
             }
         }
-        if (timeDifMS > 0 && nextEpisode > 1 && episodes > nextEpisode) {
-            return `(${nextEpisode - 1}/${episodes})`;
+        if (timeDifMS > 0 && episodes >= 1 && episodes >= nextEpisode) {
+            return `(${Math.max(nextEpisode - 1, 0)}/${episodes})`;
         } else if (
             timeDifMS <= 0 &&
             typeof nextEpisode === "number" &&
