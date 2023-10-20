@@ -290,7 +290,11 @@ public class MainActivity extends AppCompatActivity {
                     } catch (Exception ignored) {
                         Toast.makeText(getApplicationContext(), "Can't open the link.", Toast.LENGTH_LONG).show();
                     }
-                } else if (url.startsWith("https://www.youtube.com") || url.startsWith("https://m.youtube.com") || url.startsWith("https://youtu.be")) {
+                } else if (url.startsWith("https://www.youtube.com")
+                        || url.startsWith("https://m.youtube.com")
+                        || url.startsWith("https://youtube.com")
+                        || url.startsWith("https://youtu.be")
+                ) {
                     fromYoutube = true;
                     Intent intent = new Intent(MainActivity.this, YoutubeViewActivity.class);
                     intent.putExtra("url", url);

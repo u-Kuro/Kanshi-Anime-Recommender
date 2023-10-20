@@ -301,15 +301,24 @@ public class YoutubeViewActivity extends AppCompatActivity {
                 String url = request.getUrl().toString();
                 if (url.startsWith("intent://")) {
                     try {
-                        Context context = view.getContext();
-                        Intent intent = Intent.parseUri(url, Intent.URI_INTENT_SCHEME);
-                        if (intent != null) {
-                            PackageManager packageManager = context.getPackageManager();
-                            ResolveInfo info = packageManager.resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY);
-                            if (info != null) {
-                                context.startActivity(intent);
-                            } else {
-                                Toast.makeText(getApplicationContext(), "Can't open the link.", Toast.LENGTH_LONG).show();
+                        if (url.startsWith("intent://www.youtube.com")
+                                || url.startsWith("intent://m.youtube.com")
+                                || url.startsWith("intent://youtube.com")
+                                || url.startsWith("intent://youtu.be")
+                        ) {
+                            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://"+url.substring(9)));
+                            startActivity(intent);
+                        } else {
+                            Context context = view.getContext();
+                            Intent intent = Intent.parseUri(url, Intent.URI_INTENT_SCHEME);
+                            if (intent != null) {
+                                PackageManager packageManager = context.getPackageManager();
+                                ResolveInfo info = packageManager.resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY);
+                                if (info != null) {
+                                    context.startActivity(intent);
+                                } else {
+                                    Toast.makeText(getApplicationContext(), "Can't open the link.", Toast.LENGTH_LONG).show();
+                                }
                             }
                         }
                     } catch (Exception ignored) {
@@ -317,9 +326,16 @@ public class YoutubeViewActivity extends AppCompatActivity {
                     }
                 } else if (url.startsWith("https://www.youtube.com")
                         || url.startsWith("https://m.youtube.com")
+                        || url.startsWith("https://youtube.com")
                         || url.startsWith("https://youtu.be")
-                        || url.startsWith("https://accounts.google.com")
                         || url.startsWith("https://accounts.youtube.com")
+                        || url.startsWith("https://accounts.google.com")
+                        || url.startsWith("https://myaccount.google.com")
+                        || url.startsWith("https://gds.google.com")
+                        || url.startsWith("https://www.gds.google.com")
+                        || url.startsWith("https://www.myaccount.google.com")
+                        || url.startsWith("https://www.accounts.google.com")
+                        || url.startsWith("https://www.accounts.youtube.com")
                 ) {
                     if (webViewIsLoaded) {
                         Intent intent = new Intent(YoutubeViewActivity.this, YoutubeViewActivity.class);
