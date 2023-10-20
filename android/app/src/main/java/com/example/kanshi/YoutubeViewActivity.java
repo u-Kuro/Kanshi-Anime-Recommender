@@ -34,6 +34,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
@@ -91,6 +92,24 @@ public class YoutubeViewActivity extends AppCompatActivity {
         getWindow().getDecorView().setBackgroundColor(Color.BLACK);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_web);
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                if (webView.canGoBack()) {
+                    webView.goBack();
+                } else {
+                    isFinished = true;
+                    webView.onPause();
+                    webView.pauseTimers();
+                    if (!webViewFailedToLoad) {
+                        webView.loadUrl("");
+                    }
+                    webView.onPause();
+                    webView.pauseTimers();
+                    finish();
+                }
+            }
+        });
 
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -322,7 +341,19 @@ public class YoutubeViewActivity extends AppCompatActivity {
                         Toast.makeText(getApplicationContext(), "Can't open the link.", Toast.LENGTH_LONG).show();
                     }
                     if (view.getUrl()==null || view.getUrl().startsWith("https://www.youtube.com/redirect")) {
-                        onBackPressed();
+                        if (webView.canGoBack()) {
+                            webView.goBack();
+                        } else {
+                            isFinished = true;
+                            webView.onPause();
+                            webView.pauseTimers();
+                            if (!webViewFailedToLoad) {
+                                webView.loadUrl("");
+                            }
+                            webView.onPause();
+                            webView.pauseTimers();
+                            finish();
+                        }
                     }
                 }
                 return true;
@@ -395,24 +426,6 @@ public class YoutubeViewActivity extends AppCompatActivity {
                 setMargins(webView, 0, actionBar.getHeight(), 0, 0);
             }
             getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
-        }
-    }
-
-    @Override
-    public void onBackPressed() {
-        if (webView.canGoBack()) {
-            webView.goBack();
-        } else {
-            super.onBackPressed();
-            isFinished = true;
-            webView.onPause();
-            webView.pauseTimers();
-            if (!webViewFailedToLoad) {
-                webView.loadUrl("");
-            }
-            webView.onPause();
-            webView.pauseTimers();
-            finish();
         }
     }
 

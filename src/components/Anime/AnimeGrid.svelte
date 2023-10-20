@@ -34,8 +34,6 @@
 
     const emptyImage =
         "data:image/png;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=";
-    const loadingImage =
-        "data:image/jpeg;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=";
     let windowHeight = Math.max(
         window.visualViewport.height,
         window.innerHeight
@@ -382,8 +380,8 @@
     }
 
     async function addImage(node, imageUrl) {
-        if (imageUrl && imageUrl !== emptyImage) {
-            node.src = loadingImage;
+        if (imageUrl && imageUrl!==emptyImage) {
+            node.src = imageUrl;
             let newImageUrl = await cacheImage(imageUrl);
             if (newImageUrl) {
                 node.src = newImageUrl;
@@ -460,13 +458,11 @@
                                 width="180px"
                                 height="254.531px"
                                 on:load={(e) => {
-                                    if (e?.target?.src !== loadingImage) {
-                                        removeClass(e.target, "fade-out");
-                                        addClass(
-                                            e.target?.closest?.(".shimmer"),
-                                            "loaded"
-                                        );
-                                    }
+                                    removeClass(e.target, "fade-out");
+                                    addClass(
+                                        e.target?.closest?.(".shimmer"),
+                                        "loaded"
+                                    );
                                 }}
                                 on:error={(e) => {
                                     addClass(e.target, "fade-out");

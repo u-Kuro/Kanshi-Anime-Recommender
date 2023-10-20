@@ -3,6 +3,7 @@ package com.example.kanshi;
 import static android.Manifest.permission.POST_NOTIFICATIONS;
 import static com.example.kanshi.Utils.*;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
@@ -70,7 +71,7 @@ import androidx.core.content.FileProvider;
 import androidx.core.splashscreen.SplashScreen;
 
 public class MainActivity extends AppCompatActivity {
-    public final int appID = 173;
+    public final int appID = 174;
     public boolean webViewIsLoaded = false;
     public boolean permissionIsAsked = false;
     public SharedPreferences prefs;
@@ -178,6 +179,26 @@ public class MainActivity extends AppCompatActivity {
         getWindow().getDecorView().setBackgroundColor(Color.BLACK);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                if(webView.getUrl()!=null && (webView.getUrl().startsWith("file:///android_asset/www/index.html") || webView.getUrl().startsWith("https://u-kuro.github.io/Kanshi.Anime-Recommendation"))){
+                    if(!shouldGoBack){
+                        webView.post(() -> webView.loadUrl("javascript:window?.backPressed?.();"));
+                    } else {
+                        hideToast();
+                        moveTaskToBack(true);
+                    }
+                } else {
+                    if (webView.canGoBack()) {
+                        webView.goBack();
+                    } else {
+                        hideToast();
+                        finish();
+                    }
+                }
+            }
+        });
         // Keep Awake on Lock Screen
         PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
         wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "KeepAwake:");
@@ -873,24 +894,6 @@ public class MainActivity extends AppCompatActivity {
         }),999999999);
     }
 
-    @Override
-    public void onBackPressed() {
-        if(webView.getUrl()!=null && (webView.getUrl().startsWith("file:///android_asset/www/index.html") || webView.getUrl().startsWith("https://u-kuro.github.io/Kanshi.Anime-Recommendation"))){
-            if(!shouldGoBack){
-                webView.post(() -> webView.loadUrl("javascript:window?.backPressed?.();"));
-            } else {
-                hideToast();
-                moveTaskToBack(true);
-            }
-        } else {
-            if (webView.canGoBack()) {
-                webView.goBack();
-            } else {
-                hideToast();
-                super.onBackPressed();
-            }
-        }
-    }
     public void showDialog(AlertDialog.Builder alertDialog) {
         if (currentDialog != null && currentDialog.isShowing()) {
             currentDialog.dismiss();

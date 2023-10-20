@@ -43,8 +43,6 @@
 
     const emptyImage =
         "data:image/png;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=";
-    const loadingImage =
-        "data:image/jpeg;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=";
     let isOnline = window.navigator.onLine;
 
     let animeGridParentEl,
@@ -1308,7 +1306,7 @@
 
     async function addImage(node, imageUrl) {
         if (imageUrl && imageUrl !== emptyImage) {
-            node.src = loadingImage;
+            node.src = imageUrl;
             let newImageUrl = await cacheImage(imageUrl);
             if (newImageUrl) {
                 node.src = newImageUrl;
@@ -1377,15 +1375,8 @@
                                                 : " Thumbnail")}
                                         class="bannerImg fade-out"
                                         on:load={(e) => {
-                                            if (
-                                                e?.target?.src !== loadingImage
-                                            ) {
-                                                removeClass(
-                                                    e.target,
-                                                    "fade-out"
-                                                );
-                                                addClass(e.target, "fade-in");
-                                            }
+                                            removeClass(e.target, "fade-out");
+                                            addClass(e.target, "fade-in");
                                         }}
                                         on:error={(e) => {
                                             removeClass(e.target, "fade-in");
