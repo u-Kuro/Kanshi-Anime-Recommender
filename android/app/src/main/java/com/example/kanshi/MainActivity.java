@@ -63,6 +63,10 @@ import java.net.URL;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import androidx.browser.customtabs.CustomTabColorSchemeParams;
 import androidx.browser.customtabs.CustomTabsIntent;
@@ -71,7 +75,7 @@ import androidx.core.content.FileProvider;
 import androidx.core.splashscreen.SplashScreen;
 
 public class MainActivity extends AppCompatActivity {
-    public final int appID = 174;
+    public final int appID = 175;
     public boolean webViewIsLoaded = false;
     public boolean permissionIsAsked = false;
     public SharedPreferences prefs;
@@ -938,29 +942,29 @@ public class MainActivity extends AppCompatActivity {
                 .thenAccept(callback::onConnectionResult);
     }
     private boolean checkAppConnection(int timeout) {
-        try {
-            URL url = new URL("https://u-kuro.github.io/Kanshi.Anime-Recommendation/");
-            HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
-            urlConnection.setRequestMethod("HEAD");
-            Thread connectionThread = new Thread(() -> {
-                try {
-                    urlConnection.getResponseCode();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            });
-            connectionThread.start();
-            connectionThread.join(timeout);
-            if (connectionThread.isAlive()) {
-                connectionThread.interrupt();
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        Future<Boolean> future = executor.submit(() -> {
+            try {
+                URL url = new URL("https://u-kuro.github.io/Kanshi.Anime-Recommendation/");
+                HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+                urlConnection.setRequestMethod("HEAD");
+                urlConnection.setConnectTimeout(timeout);
+                urlConnection.setReadTimeout(timeout);
+                int responseCode = urlConnection.getResponseCode();
+                return responseCode == HttpURLConnection.HTTP_OK;
+            } catch (IOException e) {
+                e.printStackTrace();
                 return false;
-            } else {
-                return true;
             }
-        } catch (IOException | InterruptedException e) {
+        });
+        try {
+            return future.get(timeout, TimeUnit.MILLISECONDS);
+        } catch (Exception e) {
             e.printStackTrace();
+            return false;
+        } finally {
+            executor.shutdown();
         }
-        return false;
     }
     interface ConnectivityCallback {
         void onConnectionResult(boolean isConnected);

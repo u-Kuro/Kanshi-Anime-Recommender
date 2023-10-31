@@ -9,8 +9,8 @@ android {
         applicationId "com.example.kanshi"
         minSdk 21
         targetSdk 34
-        versionCode 55
-        versionName "4.0.0"
+        versionCode 56
+        versionName "4.1.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -30,7 +30,7 @@ android {
 dependencies {
     implementation 'androidx.browser:browser:1.6.0'
     implementation 'androidx.work:work-runtime:2.8.1'
-    implementation 'com.google.firebase:firebase-analytics:21.4.0'
+    implementation 'com.google.firebase:firebase-analytics:21.5.0'
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'com.google.android.material:material:1.10.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'

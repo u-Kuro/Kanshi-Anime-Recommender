@@ -607,9 +607,9 @@
                             typeof maxValue !== "number")) ||
                         !newCMPNumber)
                 ) {
-                    let shouldReload = false
+                    let shouldReload = false;
                     if (!newCMPNumber) {
-                        shouldReload = true
+                        shouldReload = true;
                         $activeTagFilters[nameTypeSelected] = $activeTagFilters[
                             nameTypeSelected
                         ].filter(
@@ -629,7 +629,7 @@
                                 e.optionName + e.optionIdx ===
                                 inputNumberName + inputNumIdx
                             ) {
-                                shouldReload = e.selected !== "none"
+                                shouldReload = e.selected !== "none";
                                 hasActiveFilter = true;
                                 e.optionValue = newValue;
                                 e.CMPoperator = newCMPOperator;
@@ -638,7 +638,7 @@
                             return e;
                         });
                         if (!hasActiveFilter) {
-                            shouldReload = true
+                            shouldReload = true;
                             $activeTagFilters[nameTypeSelected].unshift({
                                 optionName: inputNumberName,
                                 optionValue: newValue,
@@ -674,9 +674,9 @@
                         typeof maxValue !== "number")) ||
                     newValue === "")
             ) {
-                let shouldReload = false
+                let shouldReload = false;
                 if (newValue === "") {
-                    shouldReload = true
+                    shouldReload = true;
                     $activeTagFilters[nameTypeSelected] = $activeTagFilters[
                         nameTypeSelected
                     ].filter(
@@ -697,8 +697,10 @@
                             e.optionName + e.optionIdx ===
                             inputNumberName + inputNumIdx
                         ) {
-                            shouldReload = e.selected !== "none"
+                            shouldReload = e.selected !== "none";
                             hasActiveFilter = true;
+                            delete e.CMPoperator;
+                            delete e.CMPNumber;
                             e.optionValue = newValue;
                         }
                         return e;
@@ -738,9 +740,13 @@
         optionValue
     ) {
         if ($initData) return pleaseWaitAlert();
-        let element = event?.target
-        let classList = element?.classList
-        if (classList?.contains?.("removeActiveTag") || element?.closest?.(".removeActiveTag")) return
+        let element = event?.target;
+        let classList = element?.classList;
+        if (
+            classList?.contains?.("removeActiveTag") ||
+            element?.closest?.(".removeActiveTag")
+        )
+            return;
         let idxTypeSelected = selectedFilterSelectionIdx;
         let nameTypeSelected =
             $filterOptions?.filterSelection?.[idxTypeSelected]

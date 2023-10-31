@@ -380,7 +380,7 @@
     }
 
     async function addImage(node, imageUrl) {
-        if (imageUrl && imageUrl!==emptyImage) {
+        if (imageUrl && imageUrl !== emptyImage) {
             node.src = imageUrl;
             let newImageUrl = await cacheImage(imageUrl);
             if (newImageUrl) {
@@ -405,7 +405,13 @@
                 if (!scrollingToBottom) {
                     scrollingToBottom = true;
                     let newScrollPosition =
-                        window.scrollMaxY || Number.MAX_SAFE_INTEGER;
+                        Math.max(
+                            document.body.scrollHeight,
+                            document.body.offsetHeight,
+                            document.documentElement.clientHeight,
+                            document.documentElement.scrollHeight,
+                            document.documentElement.offsetHeight
+                        ) || Number.MAX_SAFE_INTEGER;
                     document.documentElement.scrollTop = newScrollPosition;
                     scrollingToBottom = false;
                 }
