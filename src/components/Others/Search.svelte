@@ -2640,6 +2640,12 @@
         }
     }
 
+    @media screen and (max-height: 445px) {
+        .options-wrap-filter-info {
+            top: max(25vh, 55px) !important;
+        }
+    }
+
     @media screen and (max-width: 425px) {
         .filters {
             padding-bottom: 0;
@@ -2695,8 +2701,8 @@
             background-color: #0b1622;
             color: white !important;
             border-radius: 6px 6px 0px 0px;
-            top: 25vh;
-            max-height: 60vh !important;
+            top: 140px;
+            max-height: 65vh !important;
             position: absolute;
             opacity: 1 !important;
             transition: opacity 0.2s ease !important;
@@ -2732,7 +2738,7 @@
             flex-direction: column !important;
             background-color: #151f2e !important;
             width: 100% !important;
-            max-height: calc(60vh - 112px) !important;
+            height: calc(65vh - 112px);
             border-radius: 0px 0px 6px 6px !important;
             padding: 6px 11px !important;
             overflow-y: auto !important;
@@ -2742,6 +2748,12 @@
             gap: 0 !important;
             min-height: 59px !important;
             overscroll-behavior: contain !important;
+        }
+
+        .filterType .options,
+        .sortFilter .options {
+            height: unset !important;
+            max-height: calc(65vh - 112px) !important;
         }
 
         .options-wrap .options::-webkit-scrollbar {
