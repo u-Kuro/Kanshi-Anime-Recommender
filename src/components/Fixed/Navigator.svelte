@@ -443,7 +443,6 @@
         font-size: 1.33rem;
         font-weight: 400;
         outline: none;
-        text-transform: uppercase;
         border: none;
         background-color: #0b1622 !important;
         color: white !important;
@@ -620,5 +619,12 @@
         min-width: 0 !important;
         min-height: 0 !important;
         overflow: hidden !important;
+    }
+    @media screen and (max-width: 275px) {
+        .nav.inputfocused #usernameInput {
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+            min-width: 25px !important;
+        }
     }
 </style>
