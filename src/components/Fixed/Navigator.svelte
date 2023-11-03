@@ -436,7 +436,7 @@
         border-radius: 6px;
         justify-self: left;
         align-items: center;
-        max-width: min(165px, 100%);
+        max-width: min(185px, 100%);
     }
     #usernameInput {
         font-family: system-ui !important;
@@ -453,6 +453,7 @@
         border-radius: 6px;
         height: 2.625em;
         max-width: 100%;
+        min-width: 185px;
         width: 100%;
         cursor: auto;
     }
