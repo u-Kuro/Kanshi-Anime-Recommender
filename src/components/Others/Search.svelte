@@ -1259,6 +1259,7 @@
         }
     }
 
+    let shouldScrollSnap = getLocalStorage("nonScrollSnapFilters") ?? true;
     let checkedOriginalSizeForGridView =
         windowWidth > 750 && windowHeight > 695;
     $: isFullViewed =
@@ -1395,9 +1396,10 @@
         </div>
     </div>
     <div
-        class={"filters " +
-            (showFilterOptions ? "" : "disable-interaction") +
-            ($hasWheel ? " hasWheel" : "")}
+        class={"filters" +
+            (showFilterOptions ? "" : " disable-interaction") +
+            ($hasWheel ? " hasWheel" : "") +
+            (shouldScrollSnap && $android ? " android" : "")}
         id="filters"
         on:wheel={(e) => {
             horizontalWheel(e, "filters");
@@ -2600,6 +2602,9 @@
 
     .filters {
         scroll-snap-type: x mandatory;
+    }
+    .filters.android {
+        scroll-snap-type: none !important;
     }
     .filters > * {
         scroll-snap-align: start;
