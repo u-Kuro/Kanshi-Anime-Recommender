@@ -24,6 +24,8 @@ import { cacheRequest } from "./caching";
 let terminateDelay = 1000;
 let dataStatusPrio = false
 let isExporting = false;
+let isCurrentlyImporting = false;
+let isGettingNewEntries = false;
 
 let passedFilterOptions, passedActiveTagFilters
 
@@ -162,6 +164,13 @@ let requestAnimeEntriesTerminateTimeout, requestAnimeEntriesWorker;
 const requestAnimeEntries = (_data) => {
     return new Promise((resolve, reject) => {
         if (requestAnimeEntriesWorker) requestAnimeEntriesWorker.terminate()
+        if (!get(initData)) {
+            if (isGettingNewEntries
+                || isCurrentlyImporting
+                || isExporting
+                || get(isImporting)
+            ) return
+        }
         progress.set(0)
         cacheRequest("./webapi/worker/requestAnimeEntries.js")
             .then(url => {
@@ -184,6 +193,20 @@ const requestAnimeEntries = (_data) => {
                     } else if (data?.errorDuringInit !== undefined) {
                         resolve(data)
                     } else {
+                        if (data.getEntries) {
+                            isGettingNewEntries = true
+                            stopConflictingWorkers({ isGettingNewEntries: true })
+                            getAnimeEntries()
+                                .then(() => {
+                                    isGettingNewEntries = false
+                                    runUpdate.update(e => !e)
+                                    updateRecommendationList.update(e => !e)
+                                })
+                                .catch(() => {
+                                    isGettingNewEntries = false
+                                    runUpdate.update(e => !e)
+                                })
+                        }
                         requestAnimeEntriesTerminateTimeout = setTimeout(() => {
                             requestAnimeEntriesWorker.terminate();
                         }, terminateDelay)
@@ -192,10 +215,12 @@ const requestAnimeEntries = (_data) => {
                     }
                 }
                 requestAnimeEntriesWorker.onerror = (error) => {
+                    isGettingNewEntries = false
                     progress.set(100)
                     reject(error)
                 }
             }).catch((error) => {
+                isGettingNewEntries = false
                 progress.set(100)
                 alertError()
                 reject(error)
@@ -205,12 +230,16 @@ const requestAnimeEntries = (_data) => {
 let requestUserEntriesTerminateTimeout, requestUserEntriesWorker;
 const requestUserEntries = (_data) => {
     return new Promise((resolve, reject) => {
+        if (requestUserEntriesWorker) requestUserEntriesWorker.terminate()
         if (!get(initData)) {
-            if (isExporting || get(isImporting)) {
+            if (isExporting
+                || get(isImporting)
+                || isCurrentlyImporting
+                || isGettingNewEntries
+            ) {
                 userRequestIsRunning.set(false)
             }
         }
-        if (requestUserEntriesWorker) requestUserEntriesWorker.terminate()
         progress.set(0)
         cacheRequest("./webapi/worker/requestUserEntries.js")
             .then(url => {
@@ -281,9 +310,9 @@ let exportUserDataWorker;
 const exportUserData = (_data) => {
     return new Promise((resolve, reject) => {
         if (!get(initData)) {
-            if (get(isImporting)) return
-            stopConflictingWorkers()
+            if (get(isImporting) || isCurrentlyImporting || isGettingNewEntries) return
             isExporting = true
+            stopConflictingWorkers({ isExporting: true })
         }
         if (exportUserDataWorker) exportUserDataWorker.terminate()
         progress.set(0)
@@ -352,9 +381,10 @@ let importUserDataTerminateTimeout, importUserDataWorker;
 const importUserData = (_data) => {
     return new Promise((resolve, reject) => {
         if (!get(initData)) {
-            if (isExporting) return
-            stopConflictingWorkers()
+            if (isExporting || isGettingNewEntries) return
+            isCurrentlyImporting = true
             isImporting.set(true)
+            stopConflictingWorkers({ isImporting: true })
         }
         if (importUserDataWorker) importUserDataWorker.terminate()
         progress.set(0)
@@ -370,6 +400,7 @@ const importUserData = (_data) => {
                         }
                     } else if (data?.error !== undefined) {
                         isImporting.set(false)
+                        isCurrentlyImporting = false
                         loadAnime.update((e) => !e)
                         window.confirmPromise?.({
                             isAlert: true,
@@ -391,6 +422,7 @@ const importUserData = (_data) => {
                         lastRunnedAutoExportDate.set(data.importedlastRunnedAutoExportDate)
                     } else if (data?.updateFilters !== undefined) {
                         isImporting.set(false)
+                        isCurrentlyImporting = false
                         getFilterOptions()
                             .then((data) => {
                                 activeTagFilters.set(data.activeTagFilters)
@@ -398,9 +430,11 @@ const importUserData = (_data) => {
                             })
                     } else if (data?.updateRecommendationList !== undefined) {
                         isImporting.set(false)
+                        isCurrentlyImporting = false
                         importantUpdate.update(e => !e)
                     } else {
                         isImporting.set(false)
+                        isCurrentlyImporting = false
                         runUpdate.update(e => !e)
                         dataStatusPrio = false
                         importUserDataTerminateTimeout = setTimeout(() => {
@@ -412,6 +446,7 @@ const importUserData = (_data) => {
                 }
                 importUserDataWorker.onerror = (error) => {
                     isImporting.set(false)
+                    isCurrentlyImporting = false
                     window.confirmPromise?.({
                         isAlert: true,
                         title: "Import Failed",
@@ -424,6 +459,7 @@ const importUserData = (_data) => {
             }).catch((error) => {
                 progress.set(100)
                 isImporting.set(false)
+                isCurrentlyImporting = false
                 loadAnime.update((e) => !e)
                 alertError()
                 reject(error)
@@ -579,15 +615,17 @@ const getFilterOptions = (_data) => {
     })
 }
 
-function stopConflictingWorkers() {
+function stopConflictingWorkers(blocker) {
     progress.set(0)
     requestAnimeEntriesWorker?.terminate?.()
+    isGettingNewEntries = blocker?.isGettingNewEntries ?? false
     requestUserEntriesWorker?.terminate?.()
     userRequestIsRunning.set(false)
     importUserDataWorker?.terminate?.()
-    isImporting.set(false)
+    isImporting.set(blocker?.isImporting ?? false)
+    isCurrentlyImporting = blocker?.isImporting ?? false
     exportUserDataWorker?.terminate?.()
-    isExporting = false
+    isExporting = blocker?.isExporting ?? false
     getFilterOptionsWorker?.terminate?.()
     clearInterval(gettingAnimeEntriesInterval)
     gettingAnimeEntriesInterval = null
