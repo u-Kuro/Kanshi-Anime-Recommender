@@ -33,12 +33,16 @@ let passedFilterOptions, passedActiveTagFilters
 let animeLoaderWorker;
 const animeLoader = (_data = {}) => {
     return new Promise((resolve, reject) => {
+        if (animeLoaderWorker) {
+            animeLoaderWorker?.terminate?.()
+            animeLoaderWorker = null
+        }
         dataStatusPrio = true
         progress.set(0)
         cacheRequest("./webapi/worker/animeLoader.js")
             .then(url => {
                 if (animeLoaderWorker) {
-                    animeLoaderWorker.terminate()
+                    animeLoaderWorker?.terminate?.()
                     animeLoaderWorker = null
                 }
                 if (_data?.filterOptions && _data?.activeTagFilters) {
@@ -65,6 +69,7 @@ const animeLoader = (_data = {}) => {
                             passedFilterOptions = passedActiveTagFilters = undefined
                         }
                         dataStatusPrio = false
+                        if (!animeLoaderWorker) return
                         animeLoaderWorker.onmessage = null
                         listUpdateAvailable.set(false)
                         progress.set(100)
@@ -87,12 +92,20 @@ let processRecommendedAnimeListTerminateTimeout;
 let processRecommendedAnimeListWorker;
 const processRecommendedAnimeList = (_data = {}) => {
     return new Promise((resolve, reject) => {
+        if (processRecommendedAnimeListTerminateTimeout) clearTimeout(processRecommendedAnimeListTerminateTimeout);
+        if (processRecommendedAnimeListWorker) {
+            processRecommendedAnimeListWorker?.terminate?.();
+            processRecommendedAnimeListWorker = null
+        }
         dataStatusPrio = true
-        if (processRecommendedAnimeListWorker) processRecommendedAnimeListWorker.terminate();
         progress.set(0)
         cacheRequest("./webapi/worker/processRecommendedAnimeList.js")
             .then(url => {
                 if (processRecommendedAnimeListTerminateTimeout) clearTimeout(processRecommendedAnimeListTerminateTimeout);
+                if (processRecommendedAnimeListWorker) {
+                    processRecommendedAnimeListWorker?.terminate?.();
+                    processRecommendedAnimeListWorker = null
+                }
                 if (_data?.filterOptions && _data?.activeTagFilters) {
                     passedFilterOptions = _data?.filterOptions
                     passedActiveTagFilters = _data?.activeTagFilters
@@ -143,7 +156,7 @@ const processRecommendedAnimeList = (_data = {}) => {
                         }
                         dataStatusPrio = false
                         processRecommendedAnimeListTerminateTimeout = setTimeout(() => {
-                            processRecommendedAnimeListWorker.terminate();
+                            processRecommendedAnimeListWorker?.terminate?.();
                         }, terminateDelay);
                         progress.set(100)
                         resolve()
@@ -163,7 +176,11 @@ const processRecommendedAnimeList = (_data = {}) => {
 let requestAnimeEntriesTerminateTimeout, requestAnimeEntriesWorker;
 const requestAnimeEntries = (_data) => {
     return new Promise((resolve, reject) => {
-        if (requestAnimeEntriesWorker) requestAnimeEntriesWorker.terminate()
+        if (requestAnimeEntriesTerminateTimeout) clearTimeout(requestAnimeEntriesTerminateTimeout)
+        if (requestAnimeEntriesWorker) {
+            requestAnimeEntriesWorker?.terminate?.()
+            requestAnimeEntriesWorker = null
+        }
         if (!get(initData)) {
             if (isGettingNewEntries
                 || isCurrentlyImporting
@@ -174,8 +191,12 @@ const requestAnimeEntries = (_data) => {
         progress.set(0)
         cacheRequest("./webapi/worker/requestAnimeEntries.js")
             .then(url => {
-                requestAnimeEntriesWorker = new Worker(url)
                 if (requestAnimeEntriesTerminateTimeout) clearTimeout(requestAnimeEntriesTerminateTimeout)
+                if (requestAnimeEntriesWorker) {
+                    requestAnimeEntriesWorker?.terminate?.()
+                    requestAnimeEntriesWorker = null
+                }
+                requestAnimeEntriesWorker = new Worker(url)
                 requestAnimeEntriesWorker.postMessage(_data)
                 requestAnimeEntriesWorker.onmessage = ({ data }) => {
                     if (data?.hasOwnProperty("progress")) {
@@ -208,7 +229,7 @@ const requestAnimeEntries = (_data) => {
                                 })
                         }
                         requestAnimeEntriesTerminateTimeout = setTimeout(() => {
-                            requestAnimeEntriesWorker.terminate();
+                            requestAnimeEntriesWorker?.terminate?.();
                         }, terminateDelay)
                         progress.set(100)
                         resolve(data)
@@ -230,7 +251,11 @@ const requestAnimeEntries = (_data) => {
 let requestUserEntriesTerminateTimeout, requestUserEntriesWorker;
 const requestUserEntries = (_data) => {
     return new Promise((resolve, reject) => {
-        if (requestUserEntriesWorker) requestUserEntriesWorker.terminate()
+        if (requestUserEntriesTerminateTimeout) clearTimeout(requestUserEntriesTerminateTimeout)
+        if (requestUserEntriesWorker) {
+            requestUserEntriesWorker?.terminate?.()
+            requestUserEntriesWorker = null
+        }
         if (!get(initData)) {
             if (isExporting
                 || get(isImporting)
@@ -243,8 +268,12 @@ const requestUserEntries = (_data) => {
         progress.set(0)
         cacheRequest("./webapi/worker/requestUserEntries.js")
             .then(url => {
-                requestUserEntriesWorker = new Worker(url)
                 if (requestUserEntriesTerminateTimeout) clearTimeout(requestUserEntriesTerminateTimeout)
+                if (requestUserEntriesWorker) {
+                    requestUserEntriesWorker?.terminate?.()
+                    requestUserEntriesWorker = null
+                }
+                requestUserEntriesWorker = new Worker(url)
                 requestUserEntriesWorker.postMessage(_data)
                 requestUserEntriesWorker.onmessage = ({ data }) => {
                     if (data?.hasOwnProperty("progress")) {
@@ -262,7 +291,7 @@ const requestUserEntries = (_data) => {
                                     text: "User is not found, you may want to try again..."
                                 })
                                 requestUserEntriesTerminateTimeout = setTimeout(() => {
-                                    requestUserEntriesWorker.terminate();
+                                    requestUserEntriesWorker?.terminate?.();
                                 }, terminateDelay)
                                 progress.set(100)
                                 reject(data)
@@ -272,7 +301,7 @@ const requestUserEntries = (_data) => {
                         userRequestIsRunning.set(false)
                         loadAnime.update((e) => !e)
                         requestUserEntriesTerminateTimeout = setTimeout(() => {
-                            requestUserEntriesWorker.terminate();
+                            requestUserEntriesWorker?.terminate?.();
                         }, terminateDelay)
                         progress.set(100)
                         reject(data)
@@ -281,7 +310,7 @@ const requestUserEntries = (_data) => {
                     } else {
                         userRequestIsRunning.set(false)
                         requestUserEntriesTerminateTimeout = setTimeout(() => {
-                            requestUserEntriesWorker.terminate();
+                            requestUserEntriesWorker?.terminate?.();
                         }, terminateDelay)
                         progress.set(100)
                         resolve(data)
@@ -291,7 +320,7 @@ const requestUserEntries = (_data) => {
                     userRequestIsRunning.set(false)
                     loadAnime.update((e) => !e)
                     requestUserEntriesTerminateTimeout = setTimeout(() => {
-                        requestUserEntriesWorker.terminate();
+                        requestUserEntriesWorker?.terminate?.();
                     }, terminateDelay)
                     progress.set(100)
                     reject(error)
@@ -309,15 +338,22 @@ const requestUserEntries = (_data) => {
 let exportUserDataWorker;
 const exportUserData = (_data) => {
     return new Promise((resolve, reject) => {
+        if (exportUserDataWorker) {
+            exportUserDataWorker?.terminate?.()
+            exportUserDataWorker = null
+        }
         if (!get(initData)) {
             if (get(isImporting) || isCurrentlyImporting || isGettingNewEntries) return
             isExporting = true
             stopConflictingWorkers({ isExporting: true })
         }
-        if (exportUserDataWorker) exportUserDataWorker.terminate()
         progress.set(0)
         cacheRequest("./webapi/worker/exportUserData.js")
             .then(url => {
+                if (exportUserDataWorker) {
+                    exportUserDataWorker?.terminate?.()
+                    exportUserDataWorker = null
+                }
                 exportUserDataWorker = new Worker(url)
                 if (get(android)) {
                     exportUserDataWorker.postMessage('android')
@@ -345,7 +381,7 @@ const exportUserData = (_data) => {
                             let username = data.username ?? null
                             JSBridge.exportJSON(chunk, 2, `Kanshi.${username?.toLowerCase() || "Backup"}.json`)
                             progress.set(100)
-                            exportUserDataWorker.terminate();
+                            exportUserDataWorker?.terminate?.();
                             isExporting = false
                             resolve(data)
                         }
@@ -380,18 +416,26 @@ const exportUserData = (_data) => {
 let importUserDataTerminateTimeout, importUserDataWorker;
 const importUserData = (_data) => {
     return new Promise((resolve, reject) => {
+        if (importUserDataTerminateTimeout) clearTimeout(importUserDataTerminateTimeout)
+        if (importUserDataWorker) {
+            importUserDataWorker?.terminate?.()
+            importUserDataWorker = null
+        }
         if (!get(initData)) {
             if (isExporting || isGettingNewEntries) return
             isCurrentlyImporting = true
             isImporting.set(true)
             stopConflictingWorkers({ isImporting: true })
         }
-        if (importUserDataWorker) importUserDataWorker.terminate()
         progress.set(0)
         cacheRequest("./webapi/worker/importUserData.js")
             .then(url => {
-                importUserDataWorker = new Worker(url)
                 if (importUserDataTerminateTimeout) clearTimeout(importUserDataTerminateTimeout)
+                if (importUserDataWorker) {
+                    importUserDataWorker?.terminate?.()
+                    importUserDataWorker = null
+                }
+                importUserDataWorker = new Worker(url)
                 importUserDataWorker.postMessage(_data)
                 importUserDataWorker.onmessage = ({ data }) => {
                     if (data?.hasOwnProperty("progress")) {
@@ -438,7 +482,7 @@ const importUserData = (_data) => {
                         runUpdate.update(e => !e)
                         dataStatusPrio = false
                         importUserDataTerminateTimeout = setTimeout(() => {
-                            importUserDataWorker.terminate();
+                            importUserDataWorker?.terminate?.();
                         }, terminateDelay)
                         progress.set(100)
                         resolve(data)
@@ -478,7 +522,7 @@ const getIDBdata = (name) => {
                     if (data?.hasOwnProperty("status")) {
                         dataStatus.set(data.status)
                     } else {
-                        worker.terminate()
+                        worker?.terminate?.()
                         resolve(data)
                     }
                 }
@@ -501,8 +545,7 @@ const saveIDBdata = (_data, name) => {
                         dataStatus.set(data.status)
                     } else {
                         setTimeout(() => {
-                            worker.terminate();
-                            worker = null
+                            worker?.terminate?.();
                         }, terminateDelay)
                         resolve()
                     }
@@ -536,8 +579,8 @@ const getAnimeEntries = (_data) => {
                     clearInterval(gettingAnimeEntriesInterval)
                     gettingAnimeEntriesInterval = null
                 }
-                let worker = new Worker(url)
                 if (getAnimeEntriesTerminateTimeout) clearTimeout(getAnimeEntriesTerminateTimeout)
+                let worker = new Worker(url)
                 worker.postMessage(_data)
                 worker.onmessage = ({ data }) => {
                     if (data?.hasOwnProperty("status")) {
@@ -548,7 +591,7 @@ const getAnimeEntries = (_data) => {
                         dataStatusPrio = false
                         updateRecommendationList.update(e => !e)
                         getAnimeEntriesTerminateTimeout = setTimeout(() => {
-                            worker.terminate();
+                            worker?.terminate?.();
                         }, terminateDelay)
                         resolve(data)
                     }
@@ -573,6 +616,11 @@ const getAnimeEntries = (_data) => {
 let getFilterOptionsTerminateTimeout, getFilterOptionsInterval, getFilterOptionsWorker;
 const getFilterOptions = (_data) => {
     return new Promise((resolve, reject) => {
+        if (getFilterOptionsTerminateTimeout) clearTimeout(getFilterOptionsTerminateTimeout)
+        if (getFilterOptionsWorker) {
+            getFilterOptionsWorker?.terminate?.()
+            getFilterOptionsWorker = null
+        }
         getFilterOptionsInterval = setInterval(() => {
             if (!gettingAnimeEntriesInterval) {
                 dataStatus.set("Getting Filters")
@@ -580,13 +628,16 @@ const getFilterOptions = (_data) => {
         }, 300)
         cacheRequest("./webapi/worker/getFilterOptions.js")
             .then(url => {
+                if (getFilterOptionsTerminateTimeout) clearTimeout(getFilterOptionsTerminateTimeout)
+                if (getFilterOptionsWorker) {
+                    getFilterOptionsWorker?.terminate?.()
+                    getFilterOptionsWorker = null
+                }
                 if (getFilterOptionsInterval) {
                     clearInterval(getFilterOptionsInterval)
                     getFilterOptionsInterval = null
                 }
-                if (getFilterOptionsWorker) getFilterOptionsWorker.terminate()
                 getFilterOptionsWorker = new Worker(url)
-                if (getFilterOptionsTerminateTimeout) clearTimeout(getFilterOptionsTerminateTimeout)
                 getFilterOptionsWorker.postMessage(_data)
                 getFilterOptionsWorker.onmessage = ({ data }) => {
                     if (data?.hasOwnProperty("status")) {
@@ -595,7 +646,7 @@ const getFilterOptions = (_data) => {
                     } else {
                         dataStatusPrio = false
                         getFilterOptionsTerminateTimeout = setTimeout(() => {
-                            getFilterOptionsWorker.terminate();
+                            getFilterOptionsWorker?.terminate?.();
                         }, terminateDelay)
                         resolve(data)
                     }

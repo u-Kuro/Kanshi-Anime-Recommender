@@ -75,7 +75,7 @@ import androidx.core.content.FileProvider;
 import androidx.core.splashscreen.SplashScreen;
 
 public class MainActivity extends AppCompatActivity {
-    public final int appID = 185;
+    public final int appID = 186;
     public boolean webViewIsLoaded = false;
     public boolean permissionIsAsked = false;
     public SharedPreferences prefs;
@@ -516,6 +516,11 @@ public class MainActivity extends AppCompatActivity {
         @JavascriptInterface
         public void exportJSON(String chunk, int status, String fileName){
             if(status==0) {
+                if (writer!=null) {
+                    try {
+                        writer.close();
+                    } catch (Exception ignored) {}
+                }
                 if (!Environment.isExternalStorageManager()) {
                     showDialog(new AlertDialog.Builder(MainActivity.this)
                             .setTitle("Permission for external storage")
