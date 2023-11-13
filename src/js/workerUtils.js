@@ -15,7 +15,8 @@ import {
     isImporting,
     progress,
     android,
-    listUpdateAvailable
+    listUpdateAvailable,
+    searchedAnimeKeyword
 } from "./globalValues";
 import { get } from "svelte/store";
 import { downloadLink, isJsonObject, setLocalStorage } from "../js/others/helper.js"
@@ -55,6 +56,7 @@ const animeLoader = (_data = {}) => {
                     _data.hasPassedFilters = true;
                 }
                 animeLoaderWorker = new Worker(url)
+                _data.reloadedFilterKeyword = get(searchedAnimeKeyword) || ""
                 animeLoaderWorker.postMessage(_data)
                 animeLoaderWorker.onmessage = ({ data }) => {
                     if (data?.hasOwnProperty("progress")) {

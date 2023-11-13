@@ -16,7 +16,6 @@
 		animeLoaderWorker,
 		initData,
 		gridFullView,
-		searchedAnimeKeyword,
 		dataStatus,
 		userRequestIsRunning,
 		autoUpdate,
@@ -322,7 +321,6 @@
 					animeLoader({ loadSaved })
 						.then(async (data) => {
 							$animeLoaderWorker = data.animeLoaderWorker;
-							$searchedAnimeKeyword = "";
 							if (data?.isNew) {
 								$finalAnimeList = data.finalAnimeList;
 								$hiddenEntries = data.hiddenEntries;
@@ -433,7 +431,6 @@
 		animeLoader()
 			.then(async (data) => {
 				$animeLoaderWorker = data.animeLoaderWorker;
-				$searchedAnimeKeyword = "";
 				if (data?.isNew) {
 					$finalAnimeList = data.finalAnimeList;
 					$hiddenEntries = data.hiddenEntries;
@@ -494,7 +491,6 @@
 			animeLoader()
 				.then(async (data) => {
 					$animeLoaderWorker = data.animeLoaderWorker;
-					$searchedAnimeKeyword = "";
 					if (data?.isNew) {
 						$finalAnimeList = data.finalAnimeList;
 						$hiddenEntries = data.hiddenEntries;
@@ -1017,7 +1013,6 @@
 			animeLoader()
 				.then(async (data) => {
 					$animeLoaderWorker = data.animeLoaderWorker;
-					$searchedAnimeKeyword = "";
 					if (data?.isNew) {
 						$finalAnimeList = data.finalAnimeList;
 						$hiddenEntries = data.hiddenEntries;

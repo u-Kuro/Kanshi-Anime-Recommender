@@ -19,7 +19,6 @@
         initData,
         updateRecommendationList,
         listUpdateAvailable,
-        searchedAnimeKeyword,
         checkAnimeLoaderStatus,
         popupIsGoingBack,
         earlisetReleaseDate,
@@ -847,7 +846,6 @@
                 .then(async (data) => {
                     $listUpdateAvailable = false;
                     $animeLoaderWorker = data.animeLoaderWorker;
-                    $searchedAnimeKeyword = "";
                     if (data?.isNew) {
                         $finalAnimeList = data.finalAnimeList;
                         $hiddenEntries = data.hiddenEntries;

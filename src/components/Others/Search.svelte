@@ -117,7 +117,6 @@
             .then(async (data) => {
                 isUpdatingRec = isLoadingAnime = false;
                 $animeLoaderWorker = data.animeLoaderWorker;
-                $searchedAnimeKeyword = "";
                 if (data?.isNew) {
                     $finalAnimeList = data.finalAnimeList;
                     $hiddenEntries = data.hiddenEntries;
