@@ -78,7 +78,9 @@
         if (typeof youtubeSearchTitle !== "string" || youtubeSearchTitle === "")
             return;
         window.open(
-            `https://www.youtube.com/results?search_query=${youtubeSearchTitle} Anime`,
+            `https://www.youtube.com/results?search_query=${encodeURIComponent(
+                youtubeSearchTitle + " Anime"
+            )}`,
             "_blank"
         );
     }

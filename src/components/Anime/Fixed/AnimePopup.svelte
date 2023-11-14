@@ -198,7 +198,7 @@
         }
         if (typeof animeTitle !== "string" || animeTitle === "") return;
         window.open(
-            `https://www.youtube.com/results?search_query=${animeTitle} Anime`,
+            `https://www.youtube.com/results?search_query=${encodeURIComponent(animeTitle + ' Anime')}`,
             "_blank"
         );
     }
