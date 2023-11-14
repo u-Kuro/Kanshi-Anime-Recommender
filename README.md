@@ -7,7 +7,6 @@ This app is designed to provide anime recommendations based on your personal rat
 <h2 align="center"></h2>
 
 ## Android / Website
-
 [<img src="https://i.imgur.com/RtS6ib5.png" width="105px;" />](https://github.com/u-Kuro/Kanshi.Anime-Recommendation/raw/main/Kanshi.apk)
 [<img src="https://i.imgur.com/vXJ8zt8.png" width="105px;" />](https://kanshi.vercel.app)
 
