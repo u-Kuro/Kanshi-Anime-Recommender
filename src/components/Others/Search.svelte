@@ -6,10 +6,10 @@
         finalAnimeList,
         animeLoaderWorker,
         filterOptions,
+        selectedCustomFilter,
         activeTagFilters,
         searchedAnimeKeyword,
         dataStatus,
-        username,
         initData,
         confirmPromise,
         asyncAnimeReloaded,
@@ -19,6 +19,8 @@
         updateFilters,
         isImporting,
         hiddenEntries,
+        extraInfo,
+        loadingFilterOptions,
     } from "../../js/globalValues.js";
     import { fade } from "svelte/transition";
     import {
@@ -30,6 +32,7 @@
     } from "../../js/others/helper.js";
     import {
         animeLoader,
+        getExtraInfo,
         processRecommendedAnimeList,
         saveIDBdata,
     } from "../../js/workerUtils.js";
@@ -51,7 +54,6 @@
     let filterScrollTimeout;
     let filterIsScrolling;
 
-    let showAllActiveFilters = false;
     let showFilterOptions = false;
 
     let nameChangeUpdateProcessedList = ["Algorithm Filter"];
@@ -62,6 +64,7 @@
         "average score",
         "user score",
         "popularity",
+        "year",
     ];
     let isUpdatingRec = false,
         isLoadingAnime = false;
@@ -81,7 +84,10 @@
         $filterOptions?.filterSelection?.[selectedFilterSelectionIdx]
             ?.filterSelectionName;
     $: activeTagFiltersArrays =
-        $activeTagFilters?.[selectedFilterSelectionName] || [];
+        $activeTagFilters?.[$selectedCustomFilter]?.[
+            selectedFilterSelectionName
+        ] || [];
+    $: customFilters = Object.keys($activeTagFilters || {}).sort();
     $: selectedSortIdx = $filterOptions?.sortFilter?.findIndex(
         ({ sortType }) => sortType !== "none"
     );
@@ -113,6 +119,7 @@
         animeLoader({
             filterOptions: $filterOptions,
             activeTagFilters: $activeTagFilters,
+            selectedCustomFilter: $selectedCustomFilter,
         })
             .then(async (data) => {
                 isUpdatingRec = isLoadingAnime = false;
@@ -134,6 +141,7 @@
         processRecommendedAnimeList({
             filterOptions: $filterOptions,
             activeTagFilters: $activeTagFilters,
+            selectedCustomFilter: $selectedCustomFilter,
         })
             .then(async () => {
                 await saveJSON(false, "shouldProcessRecommendation");
@@ -170,8 +178,9 @@
         maxFilterSelectionHeight = windowHeight * 0.3;
         windowWidth = Math.max(window.visualViewport.width, window.innerWidth);
     }
-    async function handleFilterTypes(newFilterTypeName) {
+    async function handleFilterTypes(event, newFilterTypeName) {
         if ($initData) return pleaseWaitAlert();
+        event?.stopPropagation?.();
         let idxTypeSelected = selectedFilterSelectionIdx;
         let nameTypeSelected =
             $filterOptions?.filterSelection?.[idxTypeSelected]
@@ -225,7 +234,8 @@
         let optionsWrap = element.closest(".options-wrap");
         if (
             (classList.contains("filterType") || filterTypEl) &&
-            !selectedFilterTypeElement
+            !selectedFilterTypeElement &&
+            !classList.contains("closing-x")
         ) {
             selectedFilterTypeElement = true;
         } else if (
@@ -410,20 +420,23 @@
                 dropdownIdx
             ].options[optionIdx].selected = "included";
             let hasActiveFilter = false;
-            $activeTagFilters[nameTypeSelected] = $activeTagFilters[
-                nameTypeSelected
-            ].map((e) => {
-                if (
-                    e.optionName + e.optionIdx + e.optionType ===
-                    optionName + optionIdx + optionType
-                ) {
-                    hasActiveFilter = true;
-                    e.selected = "included";
-                }
-                return e;
-            });
+            $activeTagFilters[$selectedCustomFilter][nameTypeSelected] =
+                $activeTagFilters?.[$selectedCustomFilter]?.[
+                    nameTypeSelected
+                ].map((e) => {
+                    if (
+                        e.optionName + e.optionIdx + e.optionType ===
+                        optionName + optionIdx + optionType
+                    ) {
+                        hasActiveFilter = true;
+                        e.selected = "included";
+                    }
+                    return e;
+                });
             if (!hasActiveFilter) {
-                $activeTagFilters[nameTypeSelected].unshift({
+                $activeTagFilters?.[$selectedCustomFilter]?.[
+                    nameTypeSelected
+                ].unshift({
                     optionName: optionName,
                     optionType: optionType,
                     optionIdx: optionIdx,
@@ -432,44 +445,48 @@
                     changeType: changeType,
                     filterType: "dropdown",
                 });
-                $activeTagFilters[nameTypeSelected] =
-                    $activeTagFilters[nameTypeSelected];
+                $activeTagFilters[$selectedCustomFilter][nameTypeSelected] =
+                    $activeTagFilters?.[$selectedCustomFilter]?.[
+                        nameTypeSelected
+                    ];
             }
         } else if (currentValue === "included" && changeType === "write") {
             $filterOptions.filterSelection[idxTypeSelected].filters.Dropdown[
                 dropdownIdx
             ].options[optionIdx].selected = "excluded";
-            $activeTagFilters[nameTypeSelected] = $activeTagFilters[
-                nameTypeSelected
-            ].map((e) => {
-                if (
-                    e.optionIdx === optionIdx &&
-                    e.optionName === optionName &&
-                    e.filterType === "dropdown" &&
-                    e.categIdx === dropdownIdx &&
-                    e.selected === "included" &&
-                    e.optionType === optionType
-                ) {
-                    e.selected = "excluded";
-                }
-                return e;
-            });
-        } else {
-            $filterOptions.filterSelection[idxTypeSelected].filters.Dropdown[
-                dropdownIdx
-            ].options[optionIdx].selected = "none";
-            $activeTagFilters[nameTypeSelected] = $activeTagFilters[
-                nameTypeSelected
-            ].filter(
-                (e) =>
-                    !(
+            $activeTagFilters[$selectedCustomFilter][nameTypeSelected] =
+                $activeTagFilters?.[$selectedCustomFilter]?.[
+                    nameTypeSelected
+                ].map((e) => {
+                    if (
                         e.optionIdx === optionIdx &&
                         e.optionName === optionName &&
                         e.filterType === "dropdown" &&
                         e.categIdx === dropdownIdx &&
+                        e.selected === "included" &&
                         e.optionType === optionType
-                    )
-            );
+                    ) {
+                        e.selected = "excluded";
+                    }
+                    return e;
+                });
+        } else {
+            $filterOptions.filterSelection[idxTypeSelected].filters.Dropdown[
+                dropdownIdx
+            ].options[optionIdx].selected = "none";
+            $activeTagFilters[$selectedCustomFilter][nameTypeSelected] =
+                $activeTagFilters?.[$selectedCustomFilter]?.[
+                    nameTypeSelected
+                ].filter(
+                    (e) =>
+                        !(
+                            e.optionIdx === optionIdx &&
+                            e.optionName === optionName &&
+                            e.filterType === "dropdown" &&
+                            e.categIdx === dropdownIdx &&
+                            e.optionType === optionType
+                        )
+                );
         }
         saveFilters(filterSelectionName);
     }
@@ -507,38 +524,47 @@
                 checkboxIdx
             ].isSelected;
         if (isChecked) {
-            $activeTagFilters[nameTypeSelected] = $activeTagFilters[
-                nameTypeSelected
-            ].filter(
-                (e) =>
-                    !(
-                        e.optionIdx === checkboxIdx &&
-                        e.optionName === checkBoxName &&
-                        e.filterType === "checkbox" &&
-                        e.selected === "included"
-                    )
-            );
+            $activeTagFilters[$selectedCustomFilter][nameTypeSelected] =
+                $activeTagFilters?.[$selectedCustomFilter]?.[
+                    nameTypeSelected
+                ].filter(
+                    (e) =>
+                        !(
+                            e.optionIdx === checkboxIdx &&
+                            e.optionName === checkBoxName &&
+                            e.filterType === "checkbox" &&
+                            e.selected === "included"
+                        )
+                );
         } else {
             let hasActiveFilter = false;
-            $activeTagFilters[nameTypeSelected] = $activeTagFilters[
-                nameTypeSelected
-            ].map((e) => {
-                if (e.optionName + e.optionIdx === checkBoxName + checkboxIdx) {
-                    hasActiveFilter = true;
-                    e.selected = "included";
-                }
-                return e;
-            });
+            $activeTagFilters[$selectedCustomFilter][nameTypeSelected] =
+                $activeTagFilters?.[$selectedCustomFilter]?.[
+                    nameTypeSelected
+                ].map((e) => {
+                    if (
+                        e.optionName + e.optionIdx ===
+                        checkBoxName + checkboxIdx
+                    ) {
+                        hasActiveFilter = true;
+                        e.selected = "included";
+                    }
+                    return e;
+                });
             if (!hasActiveFilter) {
-                $activeTagFilters[nameTypeSelected].unshift({
+                $activeTagFilters?.[$selectedCustomFilter]?.[
+                    nameTypeSelected
+                ].unshift({
                     optionName: checkBoxName,
                     optionIdx: checkboxIdx,
                     filterType: "checkbox",
                     selected: "included",
                     changeType: "read",
                 });
-                $activeTagFilters[nameTypeSelected] =
-                    $activeTagFilters[nameTypeSelected];
+                $activeTagFilters[$selectedCustomFilter][nameTypeSelected] =
+                    $activeTagFilters?.[$selectedCustomFilter]?.[
+                        nameTypeSelected
+                    ];
             }
         }
         $filterOptions.filterSelection[idxTypeSelected].filters.Checkbox[
@@ -609,7 +635,9 @@
                     let shouldReload = false;
                     if (!newCMPNumber) {
                         shouldReload = true;
-                        $activeTagFilters[nameTypeSelected] = $activeTagFilters[
+                        $activeTagFilters[$selectedCustomFilter][
+                            nameTypeSelected
+                        ] = $activeTagFilters?.[$selectedCustomFilter]?.[
                             nameTypeSelected
                         ].filter(
                             (e) =>
@@ -621,7 +649,9 @@
                         );
                     } else {
                         let hasActiveFilter = false;
-                        $activeTagFilters[nameTypeSelected] = $activeTagFilters[
+                        $activeTagFilters[$selectedCustomFilter][
+                            nameTypeSelected
+                        ] = $activeTagFilters?.[$selectedCustomFilter]?.[
                             nameTypeSelected
                         ].map((e) => {
                             if (
@@ -638,7 +668,9 @@
                         });
                         if (!hasActiveFilter) {
                             shouldReload = true;
-                            $activeTagFilters[nameTypeSelected].unshift({
+                            $activeTagFilters?.[$selectedCustomFilter]?.[
+                                nameTypeSelected
+                            ].unshift({
                                 optionName: inputNumberName,
                                 optionValue: newValue,
                                 CMPoperator: newCMPOperator,
@@ -676,37 +708,41 @@
                 let shouldReload = false;
                 if (newValue === "") {
                     shouldReload = true;
-                    $activeTagFilters[nameTypeSelected] = $activeTagFilters[
-                        nameTypeSelected
-                    ].filter(
-                        (e) =>
-                            !(
-                                e.optionIdx === inputNumIdx &&
-                                e.optionName === inputNumberName &&
-                                e.optionValue === currentValue &&
-                                e.filterType === "input number"
-                            )
-                    );
+                    $activeTagFilters[$selectedCustomFilter][nameTypeSelected] =
+                        $activeTagFilters?.[$selectedCustomFilter]?.[
+                            nameTypeSelected
+                        ].filter(
+                            (e) =>
+                                !(
+                                    e.optionIdx === inputNumIdx &&
+                                    e.optionName === inputNumberName &&
+                                    e.optionValue === currentValue &&
+                                    e.filterType === "input number"
+                                )
+                        );
                 } else {
                     let hasActiveFilter = false;
-                    $activeTagFilters[nameTypeSelected] = $activeTagFilters[
-                        nameTypeSelected
-                    ].map((e) => {
-                        if (
-                            e.optionName + e.optionIdx ===
-                            inputNumberName + inputNumIdx
-                        ) {
-                            shouldReload = e.selected !== "none";
-                            hasActiveFilter = true;
-                            delete e.CMPoperator;
-                            delete e.CMPNumber;
-                            e.optionValue = newValue;
-                        }
-                        return e;
-                    });
+                    $activeTagFilters[$selectedCustomFilter][nameTypeSelected] =
+                        $activeTagFilters?.[$selectedCustomFilter]?.[
+                            nameTypeSelected
+                        ].map((e) => {
+                            if (
+                                e.optionName + e.optionIdx ===
+                                inputNumberName + inputNumIdx
+                            ) {
+                                shouldReload = e.selected !== "none";
+                                hasActiveFilter = true;
+                                delete e.CMPoperator;
+                                delete e.CMPNumber;
+                                e.optionValue = newValue;
+                            }
+                            return e;
+                        });
                     if (!hasActiveFilter) {
                         shouldReload = true;
-                        $activeTagFilters[nameTypeSelected].unshift({
+                        $activeTagFilters?.[$selectedCustomFilter]?.[
+                            nameTypeSelected
+                        ].unshift({
                             optionName: inputNumberName,
                             optionValue: newValue,
                             optionIdx: inputNumIdx,
@@ -751,7 +787,9 @@
             $filterOptions?.filterSelection?.[idxTypeSelected]
                 .filterSelectionName;
         if (filterType === "input number") {
-            let elementIdx = $activeTagFilters[nameTypeSelected].findIndex(
+            let elementIdx = $activeTagFilters?.[$selectedCustomFilter]?.[
+                nameTypeSelected
+            ].findIndex(
                 (item) =>
                     item.optionName === optionName &&
                     item.optionValue === optionValue &&
@@ -760,33 +798,43 @@
             );
             if (elementIdx >= 0) {
                 let currentSelect =
-                    $activeTagFilters[nameTypeSelected][elementIdx].selected;
+                    $activeTagFilters?.[$selectedCustomFilter]?.[
+                        nameTypeSelected
+                    ][elementIdx].selected;
                 if (currentSelect === "included") {
-                    $activeTagFilters[nameTypeSelected][elementIdx].selected =
-                        "none";
+                    $activeTagFilters[$selectedCustomFilter][nameTypeSelected][
+                        elementIdx
+                    ].selected = "none";
                 } else if (currentSelect != null) {
-                    $activeTagFilters[nameTypeSelected][elementIdx].selected =
-                        "included";
+                    $activeTagFilters[$selectedCustomFilter][nameTypeSelected][
+                        elementIdx
+                    ].selected = "included";
                 }
             }
         } else if (filterType === "checkbox") {
-            let tagFilterIdx = $activeTagFilters[nameTypeSelected].findIndex(
+            let tagFilterIdx = $activeTagFilters?.[$selectedCustomFilter]?.[
+                nameTypeSelected
+            ].findIndex(
                 (e) =>
                     e.optionIdx === optionIdx &&
                     e.optionName === optionName &&
                     e.filterType === filterType
             );
             let checkboxSelection =
-                $activeTagFilters?.[nameTypeSelected]?.[tagFilterIdx]?.selected;
+                $activeTagFilters?.[$selectedCustomFilter]?.[
+                    nameTypeSelected
+                ]?.[tagFilterIdx]?.selected;
             if (checkboxSelection === "included") {
-                $activeTagFilters[nameTypeSelected][tagFilterIdx].selected =
-                    "none";
+                $activeTagFilters[$selectedCustomFilter][nameTypeSelected][
+                    tagFilterIdx
+                ].selected = "none";
                 $filterOptions.filterSelection[
                     idxTypeSelected
                 ].filters.Checkbox[optionIdx].isSelected = false;
             } else if (checkboxSelection != null) {
-                $activeTagFilters[nameTypeSelected][tagFilterIdx].selected =
-                    "included";
+                $activeTagFilters[$selectedCustomFilter][nameTypeSelected][
+                    tagFilterIdx
+                ].selected = "included";
                 $filterOptions.filterSelection[
                     idxTypeSelected
                 ].filters.Checkbox[optionIdx].isSelected = true;
@@ -800,54 +848,57 @@
                     idxTypeSelected
                 ].filters.Dropdown[categIdx].options[optionIdx].selected =
                     "excluded";
-                $activeTagFilters[nameTypeSelected] = $activeTagFilters[
-                    nameTypeSelected
-                ].map((e) => {
-                    if (
-                        e.optionIdx === optionIdx &&
-                        e.optionName === optionName &&
-                        e.selected === "included" &&
-                        (e.optionType ? e.optionType === optionType : true)
-                    ) {
-                        e.selected = "excluded";
-                    }
-                    return e;
-                });
+                $activeTagFilters[$selectedCustomFilter][nameTypeSelected] =
+                    $activeTagFilters?.[$selectedCustomFilter]?.[
+                        nameTypeSelected
+                    ].map((e) => {
+                        if (
+                            e.optionIdx === optionIdx &&
+                            e.optionName === optionName &&
+                            e.selected === "included" &&
+                            (e.optionType ? e.optionType === optionType : true)
+                        ) {
+                            e.selected = "excluded";
+                        }
+                        return e;
+                    });
             } else if (currentSelect === "none") {
                 $filterOptions.filterSelection[
                     idxTypeSelected
                 ].filters.Dropdown[categIdx].options[optionIdx].selected =
                     "included";
-                $activeTagFilters[nameTypeSelected] = $activeTagFilters[
-                    nameTypeSelected
-                ].map((e) => {
-                    if (
-                        e.optionIdx === optionIdx &&
-                        e.optionName === optionName &&
-                        e.selected === "none" &&
-                        (e.optionType ? e.optionType === optionType : true)
-                    ) {
-                        e.selected = "included";
-                    }
-                    return e;
-                });
+                $activeTagFilters[$selectedCustomFilter][nameTypeSelected] =
+                    $activeTagFilters?.[$selectedCustomFilter]?.[
+                        nameTypeSelected
+                    ].map((e) => {
+                        if (
+                            e.optionIdx === optionIdx &&
+                            e.optionName === optionName &&
+                            e.selected === "none" &&
+                            (e.optionType ? e.optionType === optionType : true)
+                        ) {
+                            e.selected = "included";
+                        }
+                        return e;
+                    });
             } else {
                 $filterOptions.filterSelection[
                     idxTypeSelected
                 ].filters.Dropdown[categIdx].options[optionIdx].selected =
                     "none";
-                $activeTagFilters[nameTypeSelected] = $activeTagFilters[
-                    nameTypeSelected
-                ].map((e) => {
-                    if (
-                        e.optionIdx === optionIdx &&
-                        e.optionName === optionName &&
-                        (e.optionType ? e.optionType === optionType : true)
-                    ) {
-                        e.selected = "none";
-                    }
-                    return e;
-                });
+                $activeTagFilters[$selectedCustomFilter][nameTypeSelected] =
+                    $activeTagFilters?.[$selectedCustomFilter]?.[
+                        nameTypeSelected
+                    ].map((e) => {
+                        if (
+                            e.optionIdx === optionIdx &&
+                            e.optionName === optionName &&
+                            (e.optionType ? e.optionType === optionType : true)
+                        ) {
+                            e.selected = "none";
+                        }
+                        return e;
+                    });
             }
         }
         saveFilters(nameTypeSelected);
@@ -881,17 +932,18 @@
                 categIdx
             ].options[optionIdx].selected = "none";
         }
-        $activeTagFilters[nameTypeSelected] = $activeTagFilters[
-            nameTypeSelected
-        ].filter(
-            (e) =>
-                !(
-                    e.optionName === optionName &&
-                    e.optionIdx === optionIdx &&
-                    e.filterType === filterType &&
-                    (e.optionType ? e.optionType === optionType : true)
-                )
-        );
+        $activeTagFilters[$selectedCustomFilter][nameTypeSelected] =
+            $activeTagFilters?.[$selectedCustomFilter]?.[
+                nameTypeSelected
+            ].filter(
+                (e) =>
+                    !(
+                        e.optionName === optionName &&
+                        e.optionIdx === optionIdx &&
+                        e.filterType === filterType &&
+                        (e.optionType ? e.optionType === optionType : true)
+                    )
+            );
         saveFilters(nameTypeSelected);
     }
     async function removeAllActiveTag(event) {
@@ -900,7 +952,9 @@
         let nameTypeSelected =
             $filterOptions?.filterSelection?.[idxTypeSelected]
                 .filterSelectionName;
-        let hasActiveFilter = $activeTagFilters?.[nameTypeSelected]?.length;
+        let hasActiveFilter =
+            $activeTagFilters?.[$selectedCustomFilter]?.[nameTypeSelected]
+                ?.length;
         if (
             hasActiveFilter &&
             (await $confirmPromise("Do you want to remove all filters?"))
@@ -932,7 +986,7 @@
             });
             $filterOptions.filterSelection[idxTypeSelected] =
                 $filterOptions?.filterSelection?.[idxTypeSelected];
-            $activeTagFilters[nameTypeSelected] = [];
+            $activeTagFilters[$selectedCustomFilter][nameTypeSelected] = [];
             saveFilters(nameTypeSelected);
         }
     }
@@ -1133,6 +1187,8 @@
         if ($finalAnimeList?.length > 36 && !$gridFullView) {
             await callAsyncAnimeReload();
         }
+        customFilterName = $selectedCustomFilter;
+        editCustomFilterName = false;
         if (typeof val === "boolean") {
             showFilterOptions = val;
         } else {
@@ -1140,17 +1196,6 @@
         }
     }
 
-    async function handleShowActiveFilters(val = null) {
-        if ($finalAnimeList?.length > 36 && !$gridFullView) {
-            await callAsyncAnimeReload();
-        }
-        if (typeof val === "boolean") {
-            showAllActiveFilters = val;
-        } else {
-            showAllActiveFilters = !showAllActiveFilters;
-        }
-        scrollToFirstTagFilter();
-    }
     let asyncAnimeReloadPromise;
     function callAsyncAnimeReload() {
         return new Promise((resolve) => {
@@ -1184,6 +1229,119 @@
                 .includes(searchString.trim().toLowerCase());
         }
     }
+
+    $: customFilterName = $selectedCustomFilter;
+    let previousCustomFilterName;
+    $: {
+        if ($selectedCustomFilter) {
+            if (previousCustomFilterName !== $selectedCustomFilter) {
+                $loadingFilterOptions = true;
+            }
+            if (previousCustomFilterName) {
+                let array1 =
+                    $activeTagFilters?.[previousCustomFilterName]?.[
+                        "Algorithm Filter"
+                    ] || [];
+                let array2 =
+                    $activeTagFilters?.[$selectedCustomFilter]?.[
+                        "Algorithm Filter"
+                    ] || [];
+                if (arraysAreEqual(array1, array2)) {
+                    _loadAnime();
+                } else {
+                    _processRecommendedAnimeList();
+                }
+            } else {
+                _processRecommendedAnimeList();
+            }
+            previousCustomFilterName = $selectedCustomFilter;
+        }
+    }
+    function arraysAreEqual(arr1, arr2) {
+        if (arr1.length !== arr2.length) return false;
+        let sortedArr1 = arr1.map((obj) => JSON.stringify(obj)).sort();
+        let sortedArr2 = arr2.map((obj) => JSON.stringify(obj)).sort();
+        for (let i = 0; i < sortedArr1.length; i++) {
+            if (sortedArr1[i] !== sortedArr2[i]) return false;
+        }
+        return true;
+    }
+    async function saveCustomFilterName() {
+        if (customFilterName && $selectedCustomFilter !== customFilterName) {
+            if (
+                await $confirmPromise({
+                    title: "Change custom filter name",
+                    text: `Do you want to change the custom filter name to "${customFilterName}"`,
+                })
+            ) {
+                editCustomFilterName = false;
+                $activeTagFilters[customFilterName] = JSON.parse(
+                    JSON.stringify($activeTagFilters?.[$selectedCustomFilter])
+                );
+                previousCustomFilterName = customFilterName;
+                $activeTagFilters = $activeTagFilters;
+                delete $activeTagFilters[$selectedCustomFilter];
+                $selectedCustomFilter = customFilterName;
+                await saveJSON($activeTagFilters, "activeTagFilters");
+                await saveJSON($selectedCustomFilter, "selectedCustomFilter");
+            }
+        }
+    }
+    async function addCustomFilter() {
+        if (customFilterName && $selectedCustomFilter !== customFilterName) {
+            if (
+                await $confirmPromise({
+                    title: "Add custom filter",
+                    text: `Do you want to add the custom filter "${customFilterName}"`,
+                })
+            ) {
+                editCustomFilterName = false;
+                $activeTagFilters[customFilterName] = JSON.parse(
+                    JSON.stringify($activeTagFilters?.[$selectedCustomFilter])
+                );
+                $selectedCustomFilter = customFilterName;
+                await saveJSON($activeTagFilters, "activeTagFilters");
+                await saveJSON($selectedCustomFilter, "selectedCustomFilter");
+            }
+        }
+    }
+
+    async function removeCustomFilter() {
+        let customFilterCount = Object.keys($activeTagFilters || {}).length;
+        if (customFilterCount > 1) {
+            if (
+                await $confirmPromise({
+                    title: "Delete custom filter",
+                    text: `Do you want to delete the custom filter "${$selectedCustomFilter}"`,
+                })
+            ) {
+                $loadingFilterOptions = true;
+                let newSelectedCustomFilterName;
+                for (let key in $activeTagFilters) {
+                    if (key !== $selectedCustomFilter) {
+                        newSelectedCustomFilterName = key;
+                        break;
+                    }
+                }
+                if (
+                    $activeTagFilters[$selectedCustomFilter] &&
+                    newSelectedCustomFilterName
+                ) {
+                    delete $activeTagFilters[$selectedCustomFilter];
+                    $activeTagFilters = $activeTagFilters;
+                    $selectedCustomFilter = newSelectedCustomFilterName;
+                }
+            }
+        } else {
+            $confirmPromise({
+                isAlert: true,
+                title: "Action failed",
+                text: "Requires atleast one custom filter.",
+            });
+        }
+    }
+
+    let editCustomFilterName = false;
 
     window.checkOpenDropdown = () => {
         return (
@@ -1265,118 +1423,122 @@
         $gridFullView ??
         getLocalStorage("gridFullView") ??
         (!$android && checkedOriginalSizeForGridView);
+    let homeStatusClick = 0;
+    let showExtraInfo;
 </script>
 
-<main id="main-home" style:--filters-space={showFilterOptions ? "80px" : ""}>
+<main
+    id="main-home"
+    style:--filters-space={showFilterOptions ? "80px" : ""}
+    style:--active-tag-filter-space={!$loadingFilterOptions && showFilterOptions
+        ? "auto"
+        : ""}
+    style:--custom-filter-settings-space={showFilterOptions ? "30px" : ""}
+>
     <div class="home-status">
-        {#if $filterOptions}
-            <span>
-                <h2>
-                    {selectedFilterSelectionName || ""}
-                </h2>
-            </span>
-        {:else}
-            <div class="skeleton shimmer" />
-        {/if}
-        {#if $dataStatus || !$username}
-            <span out:fade={{ duration: 200 }} class="data-status">
-                <h2>
-                    {#if $dataStatus}
-                        {$dataStatus}
-                    {:else if !$username && !$initData}
-                        {"No Anilist Username Found"}
-                    {:else}
-                        {""}
-                    {/if}
-                </h2>
-            </span>
-        {/if}
+        <span out:fade={{ duration: 200 }} class="data-status">
+            <h2
+                on:click={(e) => {
+                    getExtraInfo();
+                    if (homeStatusClick < 5 && !$initData) {
+                        showExtraInfo = true;
+                        ++homeStatusClick;
+                    } else {
+                        showExtraInfo = false;
+                        homeStatusClick = 0;
+                    }
+                }}
+                on:keydown={() => {}}
+            >
+                {#if $dataStatus && !showExtraInfo}
+                    {$dataStatus}
+                {:else}
+                    {$extraInfo || "Browse an anime to watch..."}
+                {/if}
+            </h2>
+        </span>
     </div>
-    <div class="input-search-wrap">
-        <label class="disable-interaction" for="input-search">
+    <div
+        class="custom-filter-wrap"
+        style:--editcancel-icon={showFilterOptions ? "2.5em" : ""}
+        style:--save-icon={showFilterOptions &&
+        editCustomFilterName &&
+        customFilterName &&
+        $selectedCustomFilter !== customFilterName
+            ? "2.5em"
+            : ""}
+    >
+        <label class="disable-interaction" for="custom-filter-name">
             Search Title
         </label>
         <input
-            id="input-search"
-            class="input-search"
-            type="search"
-            enterkeyhint="search"
+            id="custom-filter-name"
+            class="custom-filter"
+            type="text"
             autocomplete="off"
-            placeholder="Search"
-            bind:value={$searchedAnimeKeyword}
+            placeholder="Custom Filter"
+            disabled={!editCustomFilterName}
+            bind:value={customFilterName}
         />
-        <div class="filterType">
-            <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
-            <svg
-                class="input-search-wrap-icon"
-                viewBox="0 0 512 512"
-                tabindex={selectedFilterTypeElement ? "" : "0"}
-                on:click={handleShowFilterTypes}
-                on:keydown={(e) =>
-                    e.key === "Enter" && handleShowFilterTypes(e)}
+        {#if !editCustomFilterName || !showFilterOptions}
+            <select
+                class="custom-filter-selection"
+                style:--edit-icon-width={showFilterOptions ? "3.5em" : "0px"}
+                bind:value={$selectedCustomFilter}
+                disabled={editCustomFilterName && showFilterOptions}
             >
-                <!-- sliders -->
-                <path
-                    d="M0 416c0 18 14 32 32 32h55a80 80 0 0 0 146 0h247a32 32 0 1 0 0-64H233a80 80 0 0 0-146 0H32c-18 0-32 14-32 32zm128 0a32 32 0 1 1 64 0 32 32 0 1 1-64 0zm192-160a32 32 0 1 1 64 0 32 32 0 1 1-64 0zm32-80c-33 0-61 20-73 48H32a32 32 0 1 0 0 64h247a80 80 0 0 0 146 0h55a32 32 0 1 0 0-64h-55a80 80 0 0 0-73-48zm-160-48a32 32 0 1 1 0-64 32 32 0 1 1 0 64zm73-64a80 80 0 0 0-146 0H32a32 32 0 1 0 0 64h87a80 80 0 0 0 146 0h215a32 32 0 1 0 0-64H265z"
-                />
-            </svg>
-            <div
-                class={"options-wrap " +
-                    (selectedFilterTypeElement
-                        ? ""
-                        : "disable-interaction hide")}
-                style:--maxFilterSelectionHeight="{maxFilterSelectionHeight}px"
-            >
-                {#if $filterOptions}
-                    <div
-                        class={"options-wrap-filter-info " +
-                            (selectedFilterTypeElement ? "" : "hide")}
+                {#each customFilters || [] as filterName (filterName)}
+                    <option value={filterName}>{filterName}</option>
+                {/each}
+            </select>
+        {/if}
+        {#if showFilterOptions}
+            {#if editCustomFilterName && customFilterName && $selectedCustomFilter !== customFilterName}
+                <div class="showFilterOptions-container">
+                    <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
+                    <svg
+                        class="save-custom-name"
+                        tabindex={editCustomFilterName ? "0" : "-1"}
+                        viewBox="0 0 448 512"
+                        on:click={saveCustomFilterName}
+                        on:keydown={(e) => {
+                            if (e.key !== "Enter") return;
+                            saveCustomFilterName(e);
+                        }}
                     >
-                        <div class="header">
-                            <h2>Filters</h2>
-                            <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
-                            <div
-                                class="closing-x"
-                                tabindex={selectedFilterTypeElement &&
-                                windowWidth <= 425
-                                    ? "0"
-                                    : ""}
-                                on:keydown={(e) =>
-                                    e.key === "Enter" &&
-                                    handleShowFilterTypes(e)}
-                                on:click={handleShowFilterTypes}
-                            >
-                                ×
-                            </div>
-                        </div>
-                        <div class="options">
-                            {#each $filterOptions?.filterSelection || [] as filterSelection (filterSelection?.filterSelectionName || {})}
-                                <div
-                                    class="option"
-                                    on:click={handleFilterTypes(
-                                        filterSelection?.filterSelectionName
-                                    )}
-                                    on:keydown={(e) =>
-                                        e.key === "Enter" &&
-                                        handleFilterTypes(
-                                            filterSelection?.filterSelectionName
-                                        )}
-                                >
-                                    <h3
-                                        style:color={filterSelection?.isSelected
-                                            ? "#3db4f2"
-                                            : "inherit"}
-                                    >
-                                        {filterSelection?.filterSelectionName ||
-                                            ""}
-                                    </h3>
-                                </div>
-                            {/each}
-                        </div>
-                    </div>
-                {/if}
+                        <!-- xmark and edit -->
+                        <path
+                            d="M48 96v320c0 9 7 16 16 16h320c9 0 16-7 16-16V171c0-5-2-9-5-12l34-34c12 12 19 29 19 46v245c0 35-29 64-64 64H64c-35 0-64-29-64-64V96c0-35 29-64 64-64h246c17 0 33 7 45 19l74 74-34 34-74-74-1-1v100c0 13-11 24-24 24H104c-13 0-24-11-24-24V80H64c-9 0-16 7-16 16zm80-16v80h144V80H128zm32 240a64 64 0 1 1 128 0 64 64 0 1 1-128 0z"
+                        /></svg
+                    >
+                </div>
+            {/if}
+            <div class="showFilterOptions-container">
+                <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
+                <svg
+                    class="editcancel-custom-name"
+                    tabindex={showFilterOptions ? "0" : "-1"}
+                    viewBox={"0 0" +
+                        (editCustomFilterName ? " 384 512" : " 512 512")}
+                    on:click={() => {
+                        editCustomFilterName = !editCustomFilterName;
+                        customFilterName = $selectedCustomFilter;
+                    }}
+                    on:keydown={(e) => {
+                        if (e.key !== "Enter") return;
+                        editCustomFilterName = !editCustomFilterName;
+                        customFilterName = $selectedCustomFilter;
+                    }}
+                >
+                    <!-- xmark and edit -->
+                    <path
+                        d={editCustomFilterName
+                            ? "M342.6 150.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L192 210.7 86.6 105.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L146.7 256 41.4 361.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L192 301.3 297.4 406.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L237.3 256 342.6 150.6z"
+                            : "M472 22a56 56 0 0 0-80 0l-30 30 98 98 30-30c22-22 22-58 0-80l-18-18zM172 242c-6 6-10 13-13 22l-30 88a24 24 0 0 0 31 31l89-30c8-3 15-7 21-13l168-168-98-98-168 168zM96 64c-53 0-96 43-96 96v256c0 53 43 96 96 96h256c53 0 96-43 96-96v-96a32 32 0 1 0-64 0v96c0 18-14 32-32 32H96c-18 0-32-14-32-32V160c0-18 14-32 32-32h96a32 32 0 1 0 0-64H96z"}
+                    /></svg
+                >
             </div>
-        </div>
+        {/if}
         <div class="showFilterOptions-container">
             <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
             <svg
@@ -1387,12 +1549,158 @@
                 on:keydown={(e) =>
                     e.key === "Enter" && handleShowFilterOptions(e)}
             >
-                <!-- filter -->
+                <!-- slider -->
                 <path
-                    d="M4 55c7-14 21-23 36-23h432c16 0 30 9 36 23s5 30-5 42L320 321v127c0 12-7 23-18 29s-23 4-33-3l-64-48c-8-6-13-16-13-26v-79L9 97a40 40 0 0 1-5-42z"
+                    d="M0 416c0 18 14 32 32 32h55a80 80 0 0 0 146 0h247a32 32 0 1 0 0-64H233a80 80 0 0 0-146 0H32c-18 0-32 14-32 32zm128 0a32 32 0 1 1 64 0 32 32 0 1 1-64 0zm192-160a32 32 0 1 1 64 0 32 32 0 1 1-64 0zm32-80c-33 0-61 20-73 48H32a32 32 0 1 0 0 64h247a80 80 0 0 0 146 0h55a32 32 0 1 0 0-64h-55a80 80 0 0 0-73-48zm-160-48a32 32 0 1 1 0-64 32 32 0 1 1 0 64zm73-64a80 80 0 0 0-146 0H32a32 32 0 1 0 0 64h87a80 80 0 0 0 146 0h215a32 32 0 1 0 0-64H265z"
                 /></svg
             >
         </div>
+    </div>
+    <div
+        class={"custom-filter-settings-wrap" +
+            (showFilterOptions ? "" : " disable-interaction")}
+        style:--add-icon-size={customFilterName &&
+        $selectedCustomFilter !== customFilterName
+            ? "2.5em"
+            : ""}
+        style:--remove-icon-size={customFilters?.length > 1 ? "2.5em" : ""}
+    >
+        {#if $filterOptions && !$loadingFilterOptions}
+            <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
+            <span
+                class="filterType"
+                on:click={handleShowFilterTypes}
+                on:keydown={(e) =>
+                    e.key === "Enter" && handleShowFilterTypes(e)}
+            >
+                <h2 class="filterType-dropdown">
+                    {selectedFilterSelectionName || ""}
+                    <svg
+                        viewBox="0 140 320 512"
+                        tabindex={showFilterOptions ? "0" : "-1"}
+                    >
+                        <!-- chevron down -->
+                        <path
+                            d="M183 471a32 32 0 0 1-46 0L9 343c-9-10-12-23-7-35s17-20 30-20h256a32 32 0 0 1 23 55L183 471z"
+                        /></svg
+                    >
+                </h2>
+                <div
+                    class={"options-wrap " +
+                        (selectedFilterTypeElement
+                            ? ""
+                            : "disable-interaction hide")}
+                    style:--maxFilterSelectionHeight="{maxFilterSelectionHeight}px"
+                >
+                    {#if $filterOptions}
+                        <div
+                            class={"options-wrap-filter-info " +
+                                (selectedFilterTypeElement ? "" : "hide")}
+                        >
+                            <div class="header">
+                                <h2>Filters</h2>
+
+                                <div
+                                    class="closing-x"
+                                    tabindex={selectedFilterTypeElement &&
+                                    windowWidth <= 425
+                                        ? "0"
+                                        : "-1"}
+                                    on:keydown={(e) =>
+                                        e.key === "Enter" &&
+                                        handleShowFilterTypes(e)}
+                                    on:click={handleShowFilterTypes}
+                                >
+                                    ×
+                                </div>
+                            </div>
+                            <div class="options">
+                                {#each $filterOptions?.filterSelection || [] as filterSelection (filterSelection?.filterSelectionName || {})}
+                                    <div
+                                        class="option"
+                                        on:click={(e) =>
+                                            handleFilterTypes(
+                                                e,
+                                                filterSelection?.filterSelectionName
+                                            )}
+                                        on:keydown={(e) =>
+                                            e.key === "Enter" &&
+                                            handleFilterTypes(
+                                                filterSelection?.filterSelectionName
+                                            )}
+                                    >
+                                        <h3
+                                            style:color={filterSelection?.isSelected
+                                                ? "#3db4f2"
+                                                : "inherit"}
+                                        >
+                                            {filterSelection?.filterSelectionName ||
+                                                ""}
+                                        </h3>
+                                    </div>
+                                {/each}
+                            </div>
+                        </div>
+                    {/if}
+                </div>
+            </span>
+        {:else}
+            <div class="skeleton shimmer" />
+        {/if}
+        <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
+        {#if showFilterOptions && customFilters?.length > 1}
+            <div
+                tabindex="0"
+                class="remove-custom-filter"
+                title="Delete Custom Filter"
+                style:visibility={customFilters?.length > 1 ? "" : "hidden"}
+                on:click={(e) =>
+                    customFilters?.length > 1 && removeCustomFilter(e)}
+                on:keydown={(e) =>
+                    customFilters?.length > 1 &&
+                    e.key === "Enter" &&
+                    removeCustomFilter(e)}
+            >
+                <svg class="filterType-wrap-icon" viewBox="0 0 448 512">
+                    <!-- minus -->
+                    <path
+                        d="M432 256c0 18-14 32-32 32H48a32 32 0 1 1 0-64h352c18 0 32 14 32 32z"
+                    />
+                </svg>
+            </div>
+        {/if}
+        <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
+        {#if showFilterOptions && customFilterName && $selectedCustomFilter !== customFilterName}
+            <div
+                tabindex="0"
+                class="add-custom-filter"
+                title="Add Custom Filter"
+                on:click={(e) => {
+                    if (
+                        !customFilterName ||
+                        $selectedCustomFilter === customFilterName
+                    )
+                        return;
+                    addCustomFilter(e);
+                }}
+                on:keydown={(e) => {
+                    if (
+                        e.key !== "Enter" ||
+                        !customFilterName ||
+                        $selectedCustomFilter === customFilterName
+                    )
+                        return;
+                    addCustomFilter(e);
+                }}
+            >
+                <svg class="filterType-wrap-icon" viewBox="0 0 448 512">
+                    <!-- add -->
+                    <path
+                        d={"M256 80a32 32 0 1 0-64 0v144H48a32 32 0 1 0 0 64h144v144a32 32 0 1 0 64 0V288h144a32 32 0 1 0 0-64H256V80z"}
+                    />
+                </svg>
+            </div>
+        {/if}
     </div>
     <div
         class={"filters" +
@@ -1413,7 +1721,7 @@
         }}
         style:--maxPaddingHeight={maxFilterSelectionHeight + 65 + "px"}
     >
-        {#if $filterOptions}
+        {#if $filterOptions && !$loadingFilterOptions}
             {#each $filterOptions?.filterSelection || [] as filterSelection, filSelIdx (filterSelection.filterSelectionName || {})}
                 {#each filterSelection.filters.Dropdown || [] as Dropdown, dropdownIdx (filterSelection.filterSelectionName + Dropdown.filName || {})}
                     <div
@@ -1432,7 +1740,7 @@
                             windowWidth <= 425 &&
                             filterSelection.isSelected
                                 ? "0"
-                                : ""}
+                                : "-1"}
                             on:keydown={(e) =>
                                 (e.key === "Enter" ||
                                     e.key === "ArrowDown" ||
@@ -1453,6 +1761,7 @@
                                         Dropdown.filName}
                                 </label>
                                 <input
+                                    tabindex={showFilterOptions ? "0" : "-1"}
                                     id={filterSelection.filterSelectionName +
                                         Dropdown.filName}
                                     placeholder="Any"
@@ -1517,7 +1826,7 @@
                                         tabindex={showFilterOptions &&
                                         Dropdown.selected
                                             ? "0"
-                                            : ""}
+                                            : "-1"}
                                         on:keydown={(e) =>
                                             e.key === "Enter" &&
                                             closeFilterSelect(dropdownIdx)}
@@ -1540,6 +1849,7 @@
                                         Dropdown.filName}
                                 </label>
                                 <input
+                                    tabindex={showFilterOptions ? "0" : "-1"}
                                     id={"Search " +
                                         (filterSelection.filterSelectionName +
                                             Dropdown.filName)}
@@ -1654,6 +1964,9 @@
                                 </label>
                                 {#if $initData}
                                     <input
+                                        tabindex={showFilterOptions
+                                            ? "0"
+                                            : "-1"}
                                         id={"Checkbox: " + Checkbox.filName}
                                         type="checkbox"
                                         class="checkbox"
@@ -1666,6 +1979,9 @@
                                     />
                                 {:else}
                                     <input
+                                        tabindex={showFilterOptions
+                                            ? "0"
+                                            : "-1"}
                                         id={"Checkbox: " + Checkbox.filName}
                                         type="checkbox"
                                         class="checkbox"
@@ -1706,6 +2022,7 @@
                                     {"Number Filter: " + inputNum.filName}
                                 </label>
                                 <input
+                                    tabindex={showFilterOptions ? "0" : "-1"}
                                     id={"Number Filter: " + inputNum.filName}
                                     class="value-input-number"
                                     type="text"
@@ -1747,10 +2064,15 @@
         {/if}
     </div>
     <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
-    <div class={"activeFilters" + (showAllActiveFilters ? " seenMore" : "")}>
-        {#if !showAllActiveFilters}
+    <div
+        class={"activeFilters" +
+            (!$loadingFilterOptions && showFilterOptions
+                ? ""
+                : " disable-interaction")}
+    >
+        <div id="tagFilters" class="tagFilters">
             <div
-                tabindex="0"
+                tabindex={showFilterOptions ? "0" : "-1"}
                 class="empty-tagFilter"
                 title="Remove Filters"
                 on:click={removeAllActiveTag}
@@ -1763,33 +2085,10 @@
                     />
                 </svg>
             </div>
-        {/if}
-        <div
-            id="tagFilters"
-            class="tagFilters"
-            style:max-height={showAllActiveFilters ? "200px" : "30px"}
-        >
-            {#if showAllActiveFilters}
-                <div
-                    tabindex="0"
-                    class="empty-tagFilter"
-                    title="Remove Filters"
-                    on:click={removeAllActiveTag}
-                    on:keydown={(e) =>
-                        e.key === "Enter" && removeAllActiveTag(e)}
-                >
-                    <!-- Ban -->
-                    <svg viewBox="0 0 512 512">
-                        <path
-                            d="M367 413 100 145a192 192 0 0 0 268 268zm45-46A192 192 0 0 0 145 99l269 268zM1 256a256 256 0 1 1 512 0 256 256 0 1 1-512 0z"
-                        />
-                    </svg>
-                </div>
-            {/if}
             {#each activeTagFiltersArrays || [] as activeTagFiltersArray (activeTagFiltersArray?.optionName + activeTagFiltersArray?.optionIdx + (activeTagFiltersArray?.optionType ?? "") || {})}
                 <div
                     class="activeTagFilter"
-                    tabindex="0"
+                    tabindex={showFilterOptions ? "0" : "-1"}
                     out:fade={{ duration: 200 }}
                     style:--activeTagFilterColor={activeTagFiltersArray?.selected ===
                     "included"
@@ -1840,7 +2139,7 @@
                     <svg
                         class="removeActiveTag"
                         viewBox="0 0 400 512"
-                        tabindex="0"
+                        tabindex={showFilterOptions ? "0" : "-1"}
                         on:click|preventDefault={(e) =>
                             removeActiveTag(
                                 e,
@@ -1868,26 +2167,20 @@
                 </div>
             {/each}
         </div>
-        <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
-        <div
-            tabindex="0"
-            class="showHideActiveFilters"
-            on:click={handleShowActiveFilters}
-            on:keydown={(e) => e.key === "Enter" && handleShowActiveFilters()}
-        >
-            <svg
-                class={"angle-" + (showAllActiveFilters ? "up" : "down")}
-                viewBox="0 0 450 512"
-            >
-                <path
-                    d={showAllActiveFilters
-                        ? // angle-up
-                          "M201 137c13-12 33-12 46 0l160 160a32 32 0 0 1-46 46L224 205 87 343a32 32 0 0 1-46-46l160-160z"
-                        : // angle-down
-                          "M201 343c13 12 33 12 46 0l160-160a32 32 0 0 0-46-46L224 275 87 137a32 32 0 0 0-46 46l160 160z"}
-                />
-            </svg>
-        </div>
+    </div>
+    <div class="input-search-wrap">
+        <label class="disable-interaction" for="input-search">
+            Search Title
+        </label>
+        <input
+            id="input-search"
+            class="input-search"
+            type="search"
+            enterkeyhint="search"
+            autocomplete="off"
+            placeholder="Search"
+            bind:value={$searchedAnimeKeyword}
+        />
     </div>
     {#if $filterOptions}
         <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
@@ -2021,10 +2314,13 @@
 
     main {
         --filters-space: ;
+        --active-tag-filter-space: ;
+        --custom-filter-settings-space: ;
         display: grid;
         grid-template-rows:
-            20px 58.5px var(--filters-space) auto
-            50px auto;
+            20px 58.5px var(--custom-filter-settings-space) var(--filters-space)
+            var(--active-tag-filter-space)
+            58.5px 50px auto;
         padding-top: 1.5em;
         transition: opacity 0.2s ease;
     }
@@ -2033,13 +2329,14 @@
         border-radius: 6px !important;
         background-color: rgba(30, 42, 56, 0.8) !important;
     }
-
-    .input-search-wrap {
+    .custom-filter-wrap {
+        --editcancel-icon: ;
+        --save-icon: ;
         display: grid;
-        grid-template-columns: auto 2.5em 2.5em;
+        grid-template-columns: auto var(--save-icon) var(--editcancel-icon) 2.5em;
         align-items: center;
         column-gap: 2em;
-        padding: 8px 15px;
+        padding: 8px 15px 8px 0px;
         background-color: rgb(21, 31, 46);
         border-radius: 6px;
         width: 100%;
@@ -2047,7 +2344,30 @@
         position: relative;
         margin-top: 1.5em;
     }
-    .input-search {
+    .input-search-wrap {
+        display: grid;
+        grid-template-columns: 1fr;
+        align-items: center;
+        column-gap: 2em;
+        padding: 8px 15px;
+        background-color: rgb(21, 31, 46);
+        border-radius: 6px;
+        width: 100%;
+        height: 4em;
+        position: relative;
+        margin-top: 1.5em;
+    }
+    .custom-filter-selection {
+        --edit-icon-width: 0px;
+        background-color: inherit;
+        color: inherit;
+        position: absolute;
+        opacity: 0;
+        width: calc(100% - var(--edit-icon-width) - 3.5em);
+        height: 100%;
+    }
+    .input-search,
+    .custom-filter {
         outline: none;
         border: none;
         background-color: rgb(21, 31, 46);
@@ -2055,20 +2375,37 @@
         width: 100%;
         cursor: text;
     }
-    .input-search-wrap-icon {
-        height: 2.5em;
-        width: 2.5em;
-        cursor: pointer;
+    .custom-filter {
+        padding-left: 15px;
     }
-    .filterType {
-        display: flex;
+    .add-custom-filter,
+    .remove-custom-filter {
+        width: 3em;
+        height: 3em;
+        display: grid;
         justify-content: center;
         align-items: center;
     }
+    .filterType-wrap-icon {
+        height: 2em;
+        width: 2em;
+        cursor: pointer;
+    }
+    .filterType-dropdown {
+        display: grid;
+        grid-template-columns: auto 1em;
+        gap: 0.4em;
+        align-items: center;
+    }
+    .filterType-dropdown > svg {
+        width: 1em;
+        height: 1em;
+        margin-top: 0.4em;
+    }
     .filterType .options-wrap {
         position: absolute;
-        right: 0;
-        top: 41px;
+        left: 0;
+        top: 2.25em;
         background-color: rgb(21, 31, 46);
         overflow-y: auto;
         overflow-x: hidden;
@@ -2117,9 +2454,53 @@
         cursor: pointer;
     }
 
+    .editcancel-custom-name,
+    .save-custom-name {
+        height: 2em;
+        width: 2em;
+        cursor: pointer;
+    }
+
+    .custom-filter-settings-wrap {
+        --add-icon-size: ;
+        --remove-icon-size: ;
+        display: grid;
+        grid-template-columns: 1fr var(--remove-icon-size) var(--add-icon-size);
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+        column-gap: 15px;
+        height: max-content;
+        min-height: 30px;
+        margin-top: 1em;
+        padding: 0px 2px;
+        position: relative;
+    }
+
+    .custom-filter-settings-wrap .skeleton {
+        height: 18px;
+        width: 100px;
+    }
+
+    .filterType {
+        overflow-x: auto;
+        overflow-y: hidden;
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+
+    .filterType::-webkit-scrollbar {
+        display: none;
+    }
+
+    .filterType h2 {
+        white-space: nowrap;
+        user-select: none;
+    }
+
     .home-status {
         display: grid;
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: 1fr;
         justify-content: space-between;
         align-items: center;
         width: 100%;
@@ -2341,7 +2722,7 @@
         gap: 15px;
         min-height: 28px;
         width: 100%;
-        grid-template-columns: 3em calc(100% - 56px - 34px) 3em;
+        grid-template-columns: 1fr;
         margin-top: 2em;
     }
     .activeFilters.seenMore {
@@ -2368,6 +2749,7 @@
         flex-wrap: wrap;
         align-items: center;
         justify-content: space-between;
+        max-height: 200px;
         gap: 15px;
         user-select: none;
         overflow-y: auto;

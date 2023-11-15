@@ -11,6 +11,7 @@
 		username,
 		hiddenEntries,
 		filterOptions,
+		selectedCustomFilter,
 		activeTagFilters,
 		finalAnimeList,
 		animeLoaderWorker,
@@ -58,6 +59,7 @@
 		processRecommendedAnimeList,
 		animeLoader,
 		exportUserData,
+		getExtraInfo,
 	} from "./js/workerUtils.js";
 	import {
 		isAndroid,
@@ -253,6 +255,7 @@
 			new Promise(async (resolve) => {
 				getFilterOptions()
 					.then((data) => {
+						$selectedCustomFilter = data.selectedCustomFilter;
 						$activeTagFilters = data.activeTagFilters;
 						$filterOptions = data.filterOptions;
 						resolve();
@@ -410,6 +413,7 @@
 	initData.subscribe(async (val) => {
 		if (val === false) {
 			clearInterval(pleaseWaitStatusInterval);
+			getExtraInfo();
 		}
 	});
 

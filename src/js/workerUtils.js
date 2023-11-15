@@ -3,6 +3,7 @@ import {
     updateRecommendationList,
     username,
     activeTagFilters,
+    selectedCustomFilter,
     filterOptions,
     lastRunnedAutoUpdateDate,
     lastRunnedAutoExportDate,
@@ -16,7 +17,9 @@ import {
     progress,
     android,
     listUpdateAvailable,
-    searchedAnimeKeyword
+    searchedAnimeKeyword,
+    loadingFilterOptions,
+    extraInfo
 } from "./globalValues";
 import { get } from "svelte/store";
 import { downloadLink, isJsonObject, setLocalStorage } from "../js/others/helper.js"
@@ -28,7 +31,7 @@ let isExporting = false;
 let isCurrentlyImporting = false;
 let isGettingNewEntries = false;
 
-let passedFilterOptions, passedActiveTagFilters
+let passedFilterOptions, passedActiveTagFilters, passedSelectedCustomFilter
 
 // Reactinve Functions
 let animeLoaderWorker;
@@ -46,12 +49,14 @@ const animeLoader = (_data = {}) => {
                     animeLoaderWorker?.terminate?.()
                     animeLoaderWorker = null
                 }
-                if (_data?.filterOptions && _data?.activeTagFilters) {
+                if (_data?.filterOptions && _data?.activeTagFilters && _data?.selectedCustomFilter) {
                     passedFilterOptions = _data?.filterOptions
+                    passedSelectedCustomFilter = _data?.selectedCustomFilter
                     passedActiveTagFilters = _data?.activeTagFilters
                     _data.hasPassedFilters = true;
-                } else if (passedFilterOptions && passedActiveTagFilters) {
+                } else if (passedFilterOptions && passedActiveTagFilters && passedSelectedCustomFilter) {
                     _data.filterOptions = passedFilterOptions
+                    _data.selectedCustomFilter = passedSelectedCustomFilter
                     _data.activeTagFilters = passedActiveTagFilters
                     _data.hasPassedFilters = true;
                 }
@@ -66,14 +71,18 @@ const animeLoader = (_data = {}) => {
                     } else if (data?.hasOwnProperty("status")) {
                         dataStatusPrio = true
                         dataStatus.set(data.status)
+                    } else if (data?.filterOptions) {
+                        filterOptions.set(data.filterOptions)
+                        loadingFilterOptions.set(false)
                     } else if (data?.isNew) {
                         if (data?.hasPassedFilters === true) {
-                            passedFilterOptions = passedActiveTagFilters = undefined
+                            passedFilterOptions = passedSelectedCustomFilter = passedActiveTagFilters = undefined
                         }
                         dataStatusPrio = false
                         if (!animeLoaderWorker) return
                         animeLoaderWorker.onmessage = null
                         listUpdateAvailable.set(false)
+                        loadingFilterOptions.set(false)
                         progress.set(100)
                         resolve(Object.assign({}, data, { animeLoaderWorker: animeLoaderWorker }))
                     }
@@ -471,6 +480,7 @@ const importUserData = (_data) => {
                         isCurrentlyImporting = false
                         getFilterOptions()
                             .then((data) => {
+                                selectedCustomFilter.set(data.selectedCustomFilter)
                                 activeTagFilters.set(data.activeTagFilters)
                                 filterOptions.set(data.filterOptions)
                             })
@@ -513,6 +523,44 @@ const importUserData = (_data) => {
     })
 }
 
+let extraInfoIndex = 1, getExtraInfoTimeout
+const getExtraInfo = () => {
+    return new Promise((resolve, reject) => {
+        clearTimeout(getExtraInfoTimeout)
+        cacheRequest("./webapi/worker/getExtraInfo.js")
+            .then(url => {
+                clearTimeout(getExtraInfoTimeout)
+                let worker = new Worker(url)
+                worker.postMessage({ number: extraInfoIndex })
+                worker.onmessage = ({ data }) => {
+                    if (typeof extraInfoIndex === "number" && extraInfoIndex < 5) {
+                        ++extraInfoIndex
+                    } else {
+                        extraInfoIndex = 1
+                    }
+                    if (typeof data?.message === "string") {
+                        extraInfo.set(data.message)
+                        getExtraInfoTimeout = setTimeout(() => {
+                            getExtraInfo()
+                        }, 1000 * 15)
+                        worker?.terminate?.()
+                        resolve()
+                    } else {
+                        clearTimeout(getExtraInfoTimeout)
+                        worker?.terminate?.()
+                        getExtraInfo()
+                    }
+                }
+                worker.onerror = (error) => {
+                    reject(error)
+                }
+            }).catch(() => {
+                alertError()
+                reject(error)
+            })
+    })
+}
+
 // IndexedDB
 const getIDBdata = (name) => {
     return new Promise((resolve, reject) => {
@@ -537,6 +585,7 @@ const getIDBdata = (name) => {
             })
     })
 }
+
 const saveIDBdata = (_data, name) => {
     return new Promise((resolve, reject) => {
         cacheRequest("./webapi/worker/saveIDBdata.js")
@@ -713,5 +762,6 @@ export {
     exportUserData,
     importUserData,
     processRecommendedAnimeList,
-    animeLoader
+    animeLoader,
+    getExtraInfo
 }

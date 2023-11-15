@@ -14,7 +14,9 @@ const lastUserAnimeUpdate = writable(null)
 const hiddenEntries = writable(null)
 
 const filterOptions = writable(null)
+const selectedCustomFilter = writable(null)
 const activeTagFilters = writable(null)
+const loadingFilterOptions = writable(false)
 const finalAnimeList = writable(null)
 const animeLoaderWorker = writable(null)
 const dataStatus = writable(null)
@@ -36,6 +38,7 @@ const autoPlay = writable(getLocalStorage('autoPlay') || null)
 const initData = writable(true)
 const gridFullView = writable(getLocalStorage('gridFullView') || null)
 
+const extraInfo = writable(null)
 const mostRecentAiringDateTimeout = writable(null)
 const earlisetReleaseDate = writable(null)
 const checkAnimeLoaderStatus = writable(false)
@@ -80,7 +83,9 @@ export {
     lastUserAnimeUpdate,
     hiddenEntries,
     filterOptions,
+    selectedCustomFilter,
     activeTagFilters,
+    loadingFilterOptions,
     finalAnimeList,
     animeLoaderWorker,
     dataStatus,
@@ -97,6 +102,7 @@ export {
     autoPlay,
     initData,
     gridFullView,
+    extraInfo,
     mostRecentAiringDateTimeout,
     earlisetReleaseDate,
     checkAnimeLoaderStatus,

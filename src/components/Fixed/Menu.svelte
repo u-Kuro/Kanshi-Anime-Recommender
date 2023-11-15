@@ -192,13 +192,14 @@
                     filterSelectionIdx ?? -1
                 ].filters.Checkbox[checkBoxFilterIdx ?? -1].isSelected = false;
             }
-            if ($activeTagFilters?.["Anime Filter"]) {
-                $activeTagFilters["Anime Filter"] = $activeTagFilters[
-                    "Anime Filter"
-                ].filter(
-                    ({ optionName, filterType }) =>
-                        optionName !== "hidden" && filterType !== "checkbox"
-                );
+            if ($activeTagFilters?.[selectedCustomFilter]?.["Anime Filter"]) {
+                $activeTagFilters[selectedCustomFilter]["Anime Filter"] =
+                    $activeTagFilters?.[selectedCustomFilter]?.[
+                        "Anime Filter"
+                    ].filter(
+                        ({ optionName, filterType }) =>
+                            optionName !== "hidden" && filterType !== "checkbox"
+                    );
             }
             await saveJSON($filterOptions, "filterOptions");
             await saveJSON($activeTagFilters, "activeTagFilters");
