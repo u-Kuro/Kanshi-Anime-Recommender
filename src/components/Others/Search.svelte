@@ -21,6 +21,8 @@
         hiddenEntries,
         extraInfo,
         loadingFilterOptions,
+        customFilters,
+        showFilterOptions,
     } from "../../js/globalValues.js";
     import { fade } from "svelte/transition";
     import {
@@ -46,6 +48,7 @@
     );
     let maxFilterSelectionHeight = windowHeight * 0.3;
 
+    let selectedCustomFilterElement;
     let selectedFilterTypeElement;
     let selectedFilterElement;
     let selectedSortElement;
@@ -53,8 +56,6 @@
 
     let filterScrollTimeout;
     let filterIsScrolling;
-
-    let showFilterOptions = false;
 
     let nameChangeUpdateProcessedList = ["Algorithm Filter"];
     let nameChangeUpdateFinalList = ["sort", "Anime Filter", "Content Caution"];
@@ -87,13 +88,16 @@
         $activeTagFilters?.[$selectedCustomFilter]?.[
             selectedFilterSelectionName
         ] || [];
-    $: customFilters = Object.keys($activeTagFilters || {}).sort();
     $: selectedSortIdx = $filterOptions?.sortFilter?.findIndex(
         ({ sortType }) => sortType !== "none"
     );
     $: selectedSort = $filterOptions?.sortFilter?.[selectedSortIdx];
     $: selectedSortName = selectedSort?.sortName;
     $: selectedSortType = selectedSort?.sortType;
+
+    activeTagFilters.subscribe((val) => {
+        $customFilters = Object.keys(val || {}).sort();
+    });
 
     async function saveFilters(changeName) {
         if ($initData) return;
@@ -324,6 +328,8 @@
                 removeClass(highlightedEl, "highlight");
                 highlightedEl = null;
             }
+            // CLose Custom Filter Dropdown
+            selectedCustomFilterElement = false;
             // Close Filter Type Dropdown
             selectedFilterTypeElement = false;
             // Close Sort Filter Dropdown
@@ -343,6 +349,19 @@
             !element.closest(".options-wrap")
         ) {
             // Large Screen Width
+            // Custom Filter Dropdown
+            let customFilterEl = element.closest(".custom-filter-wrap");
+            if (!classList.contains("custom-filter-wrap") && !customFilterEl) {
+                if (
+                    highlightedEl instanceof Element &&
+                    highlightedEl.closest(".custom-filter-wrap")
+                ) {
+                    removeClass(highlightedEl, "highlight");
+                    highlightedEl = null;
+                }
+                selectedCustomFilterElement = false;
+            }
+
             // Filter Type Dropdown
             let filterTypeEl = element.closest(".filterType");
             if (!classList.contains("filterType") && !filterTypeEl) {
@@ -1063,10 +1082,10 @@
             if (
                 element?.closest?.(".filterType") ||
                 element?.closest?.(".sortFilter") ||
-                element?.closest?.(".filter-select")
+                element?.closest?.(".filter-select") ||
+                element?.closest?.(".custom-filter-wrap")
             ) {
                 event.preventDefault();
-                // handle sortFilter
                 if (
                     highlightedEl instanceof Element &&
                     highlightedEl?.closest?.(".options")?.children?.length
@@ -1159,6 +1178,7 @@
             )
                 return;
             let idxTypeSelected = selectedFilterSelectionIdx;
+            selectedCustomFilterElement = null;
             selectedFilterTypeElement = null;
             selectedSortElement = null;
             if ($filterOptions?.filterSelection?.length > 0) {
@@ -1183,16 +1203,17 @@
         saveIDBdata($gridFullView, "gridFullView");
     }
 
-    async function handleShowFilterOptions(val = null) {
+    async function handleShowFilterOptions(event, val = null) {
+        selectedCustomFilterElement = false;
         if ($finalAnimeList?.length > 36 && !$gridFullView) {
             await callAsyncAnimeReload();
         }
         customFilterName = $selectedCustomFilter;
         editCustomFilterName = false;
         if (typeof val === "boolean") {
-            showFilterOptions = val;
+            $showFilterOptions = val;
         } else {
-            showFilterOptions = !showFilterOptions;
+            $showFilterOptions = !$showFilterOptions;
         }
     }
 
@@ -1266,7 +1287,47 @@
         }
         return true;
     }
-    async function saveCustomFilterName() {
+
+    function handleCustomFilterPopup(event) {
+        if ($initData) return;
+        let element = event.target;
+        let classList = element.classList;
+        let iconActions = element.closest(".custom-filter-icon-wrap");
+        if (iconActions || classList.contains("custom-filter-icon-wrap"))
+            return;
+        let option = element.closest(".option");
+        if (option || classList.contains("option")) return;
+        let sortSelectEl = element.closest(".custom-filter-wrap");
+        let optionsWrap = element.closest(".options-wrap");
+        if (
+            (classList.contains("custom-filter-wrap") || sortSelectEl) &&
+            !selectedCustomFilterElement &&
+            !classList.contains("closing-x")
+        ) {
+            selectedCustomFilterElement = true;
+        } else if (
+            (!optionsWrap || classList.contains("closing-x")) &&
+            !classList.contains("options-wrap")
+        ) {
+            if (
+                highlightedEl instanceof Element &&
+                highlightedEl.closest(".custom-filter-wrap")
+            ) {
+                removeClass(highlightedEl, "highlight");
+                highlightedEl = null;
+            }
+            selectedCustomFilterElement = false;
+        }
+    }
+    async function selectCustomFilter(event, selectedCustomFilterName) {
+        if ($initData) {
+            return pleaseWaitAlert();
+        }
+        event?.stopPropagation?.();
+        $selectedCustomFilter = selectedCustomFilterName;
+        selectedCustomFilterElement = false;
+    }
+    async function saveCustomFilterName(event) {
         if (customFilterName && $selectedCustomFilter !== customFilterName) {
             if (
                 await $confirmPromise({
@@ -1300,6 +1361,7 @@
                     JSON.stringify($activeTagFilters?.[$selectedCustomFilter])
                 );
                 $selectedCustomFilter = customFilterName;
+                $activeTagFilters = $activeTagFilters;
                 await saveJSON($activeTagFilters, "activeTagFilters");
                 await saveJSON($selectedCustomFilter, "selectedCustomFilter");
             }
@@ -1345,7 +1407,8 @@
 
     window.checkOpenDropdown = () => {
         return (
-            (selectedFilterElement ||
+            (selectedCustomFilterElement ||
+                selectedFilterElement ||
                 selectedFilterTypeElement ||
                 selectedSortElement) &&
             Math.max(window.visualViewport.width, window.innerWidth) <= 425
@@ -1357,6 +1420,8 @@
             removeClass(highlightedEl, "highlight");
             highlightedEl = null;
         }
+        // Close Custom Filter Dropdown
+        selectedCustomFilterElement = false;
         // Close Filter Type Dropdown
         selectedFilterTypeElement = false;
         // Close Sort Filter Dropdown
@@ -1429,44 +1494,30 @@
 
 <main
     id="main-home"
-    style:--filters-space={showFilterOptions ? "80px" : ""}
-    style:--active-tag-filter-space={!$loadingFilterOptions && showFilterOptions
+    style:--filters-space={$showFilterOptions ? "80px" : ""}
+    style:--active-tag-filter-space={!$loadingFilterOptions &&
+    $showFilterOptions
         ? "auto"
         : ""}
-    style:--custom-filter-settings-space={showFilterOptions ? "30px" : ""}
+    style:--custom-filter-settings-space={$showFilterOptions ? "30px" : ""}
 >
-    <div class="home-status">
-        <span out:fade={{ duration: 200 }} class="data-status">
-            <h2
-                on:click={(e) => {
-                    getExtraInfo();
-                    if (homeStatusClick < 5 && !$initData) {
-                        showExtraInfo = true;
-                        ++homeStatusClick;
-                    } else {
-                        showExtraInfo = false;
-                        homeStatusClick = 0;
-                    }
-                }}
-                on:keydown={() => {}}
-            >
-                {#if $dataStatus && !showExtraInfo}
-                    {$dataStatus}
-                {:else}
-                    {$extraInfo || "Browse an anime to watch..."}
-                {/if}
-            </h2>
-        </span>
-    </div>
+    <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
     <div
+        id="custom-filter-wrap"
         class="custom-filter-wrap"
-        style:--editcancel-icon={showFilterOptions ? "2.5em" : ""}
-        style:--save-icon={showFilterOptions &&
+        tabindex={selectedCustomFilterElement ? "" : "0"}
+        style:--editcancel-icon={!$initData && $showFilterOptions
+            ? "2.5em"
+            : ""}
+        style:--save-icon={!$initData &&
+        $showFilterOptions &&
         editCustomFilterName &&
         customFilterName &&
         $selectedCustomFilter !== customFilterName
             ? "2.5em"
             : ""}
+        on:keydown={(e) => e.key === "Enter" && handleCustomFilterPopup(e)}
+        on:click={handleCustomFilterPopup}
     >
         <label class="disable-interaction" for="custom-filter-name">
             Search Title
@@ -1477,24 +1528,68 @@
             type="text"
             autocomplete="off"
             placeholder="Custom Filter"
+            style:pointer-events={editCustomFilterName ? "" : "none"}
             disabled={!editCustomFilterName}
             bind:value={customFilterName}
         />
-        {#if !editCustomFilterName || !showFilterOptions}
-            <select
-                class="custom-filter-selection"
-                style:--edit-icon-width={showFilterOptions ? "3.5em" : "0px"}
-                bind:value={$selectedCustomFilter}
-                disabled={editCustomFilterName && showFilterOptions}
+        {#if !$initData && (!editCustomFilterName || !$showFilterOptions)}
+            <div
+                class={"options-wrap " +
+                    (selectedCustomFilterElement
+                        ? ""
+                        : "disable-interaction hide")}
+                style:--maxFilterSelectionHeight="{maxFilterSelectionHeight}px"
             >
-                {#each customFilters || [] as filterName (filterName)}
-                    <option value={filterName}>{filterName}</option>
-                {/each}
-            </select>
+                {#if $filterOptions}
+                    <div
+                        class={"options-wrap-filter-info " +
+                            (selectedCustomFilterElement ? "" : "hide")}
+                    >
+                        <div class="header">
+                            <h2>Your Filters</h2>
+                            <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
+                            <div
+                                class="closing-x"
+                                tabindex={selectedCustomFilterElement &&
+                                windowWidth <= 425
+                                    ? "0"
+                                    : "-1"}
+                                on:keydown={(e) =>
+                                    e.key === "Enter" &&
+                                    handleCustomFilterPopup(e)}
+                                on:click={handleCustomFilterPopup}
+                            >
+                                ×
+                            </div>
+                        </div>
+                        <div class="options">
+                            {#each $customFilters || [] as filterName (filterName || {})}
+                                <div
+                                    class="option"
+                                    on:click={(e) =>
+                                        selectCustomFilter(e, filterName)}
+                                    on:keydown={(e) =>
+                                        e.key === "Enter" &&
+                                        selectCustomFilter(e, filterName)}
+                                >
+                                    <h3
+                                        style:color={filterName ===
+                                        $selectedCustomFilter
+                                            ? "#3db4f2"
+                                            : "inherit"}
+                                    >
+                                        {filterName || ""}
+                                    </h3>
+                                </div>
+                            {/each}
+                        </div>
+                    </div>
+                {/if}
+            </div>
         {/if}
-        {#if showFilterOptions}
+        {#if $showFilterOptions && !$initData}
             {#if editCustomFilterName && customFilterName && $selectedCustomFilter !== customFilterName}
-                <div class="showFilterOptions-container">
+                <div class="custom-filter-icon-wrap">
                     <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                     <svg
                         class="save-custom-name"
@@ -1513,21 +1608,23 @@
                     >
                 </div>
             {/if}
-            <div class="showFilterOptions-container">
+            <div class="custom-filter-icon-wrap">
                 <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                 <svg
                     class="editcancel-custom-name"
-                    tabindex={showFilterOptions ? "0" : "-1"}
+                    tabindex={$showFilterOptions ? "0" : "-1"}
                     viewBox={"0 0" +
                         (editCustomFilterName ? " 384 512" : " 512 512")}
                     on:click={() => {
                         editCustomFilterName = !editCustomFilterName;
                         customFilterName = $selectedCustomFilter;
+                        selectedCustomFilterElement = false;
                     }}
                     on:keydown={(e) => {
                         if (e.key !== "Enter") return;
                         editCustomFilterName = !editCustomFilterName;
                         customFilterName = $selectedCustomFilter;
+                        selectedCustomFilterElement = false;
                     }}
                 >
                     <!-- xmark and edit -->
@@ -1539,7 +1636,7 @@
                 >
             </div>
         {/if}
-        <div class="showFilterOptions-container">
+        <div class="custom-filter-icon-wrap">
             <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
             <svg
                 class="showFilterOptions"
@@ -1558,12 +1655,12 @@
     </div>
     <div
         class={"custom-filter-settings-wrap" +
-            (showFilterOptions ? "" : " disable-interaction")}
+            ($showFilterOptions ? "" : " disable-interaction")}
         style:--add-icon-size={customFilterName &&
         $selectedCustomFilter !== customFilterName
             ? "2.5em"
             : ""}
-        style:--remove-icon-size={customFilters?.length > 1 ? "2.5em" : ""}
+        style:--remove-icon-size={$customFilters?.length > 1 ? "2.5em" : ""}
     >
         {#if $filterOptions && !$loadingFilterOptions}
             <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
@@ -1577,7 +1674,10 @@
                     {selectedFilterSelectionName || ""}
                     <svg
                         viewBox="0 140 320 512"
-                        tabindex={showFilterOptions ? "0" : "-1"}
+                        tabindex={$showFilterOptions &&
+                        !selectedFilterTypeElement
+                            ? "0"
+                            : ""}
                     >
                         <!-- chevron down -->
                         <path
@@ -1626,6 +1726,7 @@
                                         on:keydown={(e) =>
                                             e.key === "Enter" &&
                                             handleFilterTypes(
+                                                e,
                                                 filterSelection?.filterSelectionName
                                             )}
                                     >
@@ -1648,16 +1749,16 @@
             <div class="skeleton shimmer" />
         {/if}
         <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
-        {#if showFilterOptions && customFilters?.length > 1}
+        {#if $showFilterOptions && $customFilters?.length > 1}
             <div
                 tabindex="0"
                 class="remove-custom-filter"
                 title="Delete Custom Filter"
-                style:visibility={customFilters?.length > 1 ? "" : "hidden"}
+                style:visibility={$customFilters?.length > 1 ? "" : "hidden"}
                 on:click={(e) =>
-                    customFilters?.length > 1 && removeCustomFilter(e)}
+                    $customFilters?.length > 1 && removeCustomFilter(e)}
                 on:keydown={(e) =>
-                    customFilters?.length > 1 &&
+                    $customFilters?.length > 1 &&
                     e.key === "Enter" &&
                     removeCustomFilter(e)}
             >
@@ -1670,7 +1771,7 @@
             </div>
         {/if}
         <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
-        {#if showFilterOptions && customFilterName && $selectedCustomFilter !== customFilterName}
+        {#if $showFilterOptions && customFilterName && $selectedCustomFilter !== customFilterName}
             <div
                 tabindex="0"
                 class="add-custom-filter"
@@ -1704,7 +1805,7 @@
     </div>
     <div
         class={"filters" +
-            (showFilterOptions ? "" : " disable-interaction") +
+            ($showFilterOptions ? "" : " disable-interaction") +
             ($hasWheel ? " hasWheel" : "") +
             (shouldScrollSnap && $android ? " android" : "")}
         id="filters"
@@ -1736,7 +1837,7 @@
                         <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                         <div
                             class="select"
-                            tabindex={showFilterOptions &&
+                            tabindex={$showFilterOptions &&
                             windowWidth <= 425 &&
                             filterSelection.isSelected
                                 ? "0"
@@ -1761,7 +1862,7 @@
                                         Dropdown.filName}
                                 </label>
                                 <input
-                                    tabindex={showFilterOptions ? "0" : "-1"}
+                                    tabindex={$showFilterOptions ? "0" : "-1"}
                                     id={filterSelection.filterSelectionName +
                                         Dropdown.filName}
                                     placeholder="Any"
@@ -1772,7 +1873,7 @@
                                     bind:value={$filterOptions.filterSelection[
                                         filSelIdx
                                     ].filters.Dropdown[dropdownIdx].optKeyword}
-                                    disabled={!showFilterOptions ||
+                                    disabled={!$showFilterOptions ||
                                         windowWidth <= 425 ||
                                         !filterSelection.isSelected}
                                 />
@@ -1823,7 +1924,7 @@
                                     <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                                     <div
                                         class="closing-x"
-                                        tabindex={showFilterOptions &&
+                                        tabindex={$showFilterOptions &&
                                         Dropdown.selected
                                             ? "0"
                                             : "-1"}
@@ -1849,7 +1950,7 @@
                                         Dropdown.filName}
                                 </label>
                                 <input
-                                    tabindex={showFilterOptions ? "0" : "-1"}
+                                    tabindex={$showFilterOptions ? "0" : "-1"}
                                     id={"Search " +
                                         (filterSelection.filterSelectionName +
                                             Dropdown.filName)}
@@ -1860,7 +1961,7 @@
                                     bind:value={$filterOptions.filterSelection[
                                         filSelIdx
                                     ].filters.Dropdown[dropdownIdx].optKeyword}
-                                    disabled={!showFilterOptions ||
+                                    disabled={!$showFilterOptions ||
                                         !filterSelection.isSelected ||
                                         !Dropdown.selected}
                                 />
@@ -1964,7 +2065,7 @@
                                 </label>
                                 {#if $initData}
                                     <input
-                                        tabindex={showFilterOptions
+                                        tabindex={$showFilterOptions
                                             ? "0"
                                             : "-1"}
                                         id={"Checkbox: " + Checkbox.filName}
@@ -1975,11 +2076,11 @@
                                             pleaseWaitAlert();
                                         }}
                                         checked={Checkbox.isSelected}
-                                        disabled={!showFilterOptions}
+                                        disabled={!$showFilterOptions}
                                     />
                                 {:else}
                                     <input
-                                        tabindex={showFilterOptions
+                                        tabindex={$showFilterOptions
                                             ? "0"
                                             : "-1"}
                                         id={"Checkbox: " + Checkbox.filName}
@@ -1993,7 +2094,7 @@
                                                 filterSelection.filterSelectionName
                                             )}
                                         bind:checked={Checkbox.isSelected}
-                                        disabled={!showFilterOptions}
+                                        disabled={!$showFilterOptions}
                                     />
                                 {/if}
                                 <div class="checkbox-label">
@@ -2022,7 +2123,7 @@
                                     {"Number Filter: " + inputNum.filName}
                                 </label>
                                 <input
-                                    tabindex={showFilterOptions ? "0" : "-1"}
+                                    tabindex={$showFilterOptions ? "0" : "-1"}
                                     id={"Number Filter: " + inputNum.filName}
                                     class="value-input-number"
                                     type="text"
@@ -2047,7 +2148,7 @@
                                             inputNum.minValue,
                                             filterSelection.filterSelectionName
                                         )}
-                                    disabled={!showFilterOptions}
+                                    disabled={!$showFilterOptions}
                                 />
                             </div>
                         </div>
@@ -2066,13 +2167,13 @@
     <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
     <div
         class={"activeFilters" +
-            (!$loadingFilterOptions && showFilterOptions
+            (!$loadingFilterOptions && $showFilterOptions
                 ? ""
                 : " disable-interaction")}
     >
         <div id="tagFilters" class="tagFilters">
             <div
-                tabindex={showFilterOptions ? "0" : "-1"}
+                tabindex={$showFilterOptions ? "0" : "-1"}
                 class="empty-tagFilter"
                 title="Remove Filters"
                 on:click={removeAllActiveTag}
@@ -2088,7 +2189,7 @@
             {#each activeTagFiltersArrays || [] as activeTagFiltersArray (activeTagFiltersArray?.optionName + activeTagFiltersArray?.optionIdx + (activeTagFiltersArray?.optionType ?? "") || {})}
                 <div
                     class="activeTagFilter"
-                    tabindex={showFilterOptions ? "0" : "-1"}
+                    tabindex={$showFilterOptions ? "0" : "-1"}
                     out:fade={{ duration: 200 }}
                     style:--activeTagFilterColor={activeTagFiltersArray?.selected ===
                     "included"
@@ -2139,7 +2240,7 @@
                     <svg
                         class="removeActiveTag"
                         viewBox="0 0 400 512"
-                        tabindex={showFilterOptions ? "0" : "-1"}
+                        tabindex={$showFilterOptions ? "0" : "-1"}
                         on:click|preventDefault={(e) =>
                             removeActiveTag(
                                 e,
@@ -2168,7 +2269,30 @@
             {/each}
         </div>
     </div>
-    <div class="input-search-wrap">
+    <div id="home-status" class="home-status">
+        <span out:fade={{ duration: 200 }} class="data-status">
+            <h2
+                on:click={(e) => {
+                    getExtraInfo();
+                    if (homeStatusClick < 5 && !$initData) {
+                        showExtraInfo = true;
+                        ++homeStatusClick;
+                    } else {
+                        showExtraInfo = false;
+                        homeStatusClick = 0;
+                    }
+                }}
+                on:keydown={() => {}}
+            >
+                {#if $dataStatus && !showExtraInfo}
+                    {$dataStatus}
+                {:else}
+                    {$extraInfo || "Browse an anime to watch"}
+                {/if}
+            </h2>
+        </span>
+    </div>
+    <div class="input-search-wrap" id="input-search-wrap">
         <label class="disable-interaction" for="input-search">
             Search Title
         </label>
@@ -2318,9 +2442,8 @@
         --custom-filter-settings-space: ;
         display: grid;
         grid-template-rows:
-            20px 58.5px var(--custom-filter-settings-space) var(--filters-space)
-            var(--active-tag-filter-space)
-            58.5px 50px auto;
+            42px var(--custom-filter-settings-space) var(--filters-space)
+            var(--active-tag-filter-space) 35px 42px 45px auto;
         padding-top: 1.5em;
         transition: opacity 0.2s ease;
     }
@@ -2328,6 +2451,10 @@
     .skeleton {
         border-radius: 6px !important;
         background-color: rgba(30, 42, 56, 0.8) !important;
+    }
+    .options-wrap {
+        box-shadow: 0 14px 28px rgba(0, 0, 0, 0.25),
+            0 10px 10px rgba(0, 0, 0, 0.22) !important;
     }
     .custom-filter-wrap {
         --editcancel-icon: ;
@@ -2342,7 +2469,46 @@
         width: 100%;
         height: max-content;
         position: relative;
-        margin-top: 1.5em;
+    }
+    .custom-filter-wrap .options-wrap {
+        position: absolute;
+        left: 0;
+        top: 4.25em;
+        background-color: rgb(21, 31, 46);
+        overflow-y: auto;
+        overflow-x: hidden;
+        overscroll-behavior: contain;
+        max-height: var(--maxFilterSelectionHeight);
+        margin-top: 1px;
+        border-radius: 6px;
+        padding: 6px;
+        z-index: 1;
+        cursor: default;
+        width: 100%;
+    }
+    .custom-filter-wrap .options {
+        display: flex;
+        align-items: start;
+        flex-direction: column;
+        cursor: default;
+        gap: 5px;
+        width: 100%;
+    }
+    .custom-filter-wrap .option {
+        color: inherit;
+        display: grid;
+        align-items: center;
+        padding: 5px;
+        width: 100%;
+        grid-template-columns: auto 12px;
+        grid-column-gap: 8px;
+        cursor: pointer;
+        user-select: none;
+        border-radius: 6px;
+    }
+    .custom-filter-wrap .option h3 {
+        cursor: pointer;
+        text-transform: capitalize;
     }
     .input-search-wrap {
         display: grid;
@@ -2355,7 +2521,6 @@
         width: 100%;
         height: 4em;
         position: relative;
-        margin-top: 1.5em;
     }
     .custom-filter-selection {
         --edit-icon-width: 0px;
@@ -2405,7 +2570,7 @@
     .filterType .options-wrap {
         position: absolute;
         left: 0;
-        top: 2.25em;
+        top: 2.75em;
         background-color: rgb(21, 31, 46);
         overflow-y: auto;
         overflow-x: hidden;
@@ -2442,7 +2607,7 @@
         text-transform: capitalize;
     }
 
-    .showFilterOptions-container {
+    .custom-filter-icon-wrap {
         display: flex;
         justify-content: center;
         align-items: center;
@@ -2506,6 +2671,7 @@
         width: 100%;
         column-gap: 10px;
         height: 20px;
+        margin-top: 0.5em;
     }
 
     .home-status .skeleton {
@@ -2529,7 +2695,7 @@
     }
 
     .home-status .data-status h2 {
-        margin-left: auto;
+        margin: auto;
     }
 
     .filters {
@@ -2714,6 +2880,12 @@
         cursor: pointer;
     }
 
+    @media screen and (hover: hover) {
+        .option:hover h3 {
+            color: rgb(61, 180, 242) !important;
+        }
+    }
+
     .activeFilters {
         padding: 0 1.2em 0 8px;
         display: grid;
@@ -2833,13 +3005,12 @@
     }
 
     .last-filter-option {
-        padding-left: 8px;
         display: flex;
         justify-content: space-between;
         align-items: center;
         gap: 8px;
         min-height: 3em;
-        margin-top: 2em;
+        margin-top: 1.2em;
     }
 
     .sortFilter {
@@ -3028,7 +3199,7 @@
 
     @media screen and (max-height: 445px) {
         .options-wrap-filter-info {
-            top: max(25vh, 55px) !important;
+            top: max(25vh, 48px) !important;
         }
     }
 
@@ -3044,7 +3215,8 @@
         }
         .filterType .options-wrap,
         .filter-select .options-wrap,
-        .sortFilter .options-wrap {
+        .sortFilter .options-wrap,
+        .custom-filter-wrap .options-wrap {
             position: fixed !important;
             display: flex !important;
             flex-direction: column !important;
@@ -3137,7 +3309,8 @@
         }
 
         .filterType .options,
-        .sortFilter .options {
+        .sortFilter .options,
+        .custom-filter-wrap .options {
             height: unset !important;
             max-height: calc(65vh - 112px) !important;
         }

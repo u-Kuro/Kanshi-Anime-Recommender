@@ -209,7 +209,7 @@
                 }
             };
             val.onerror = (error) => {
-                $dataStatus = "Something went wrong...";
+                $dataStatus = "Something went wrong";
                 console.error(error);
             };
             val?.postMessage?.({
@@ -400,7 +400,10 @@
             ($finalAnimeList?.length === 0 && !$initData ? "empty" : "")}
         bind:this={animeGridEl}
         on:wheel={(e) => {
-            if (isFullViewed) {
+            if (
+                isFullViewed &&
+                animeGridEl.scrollWidth > animeGridEl.clientWidth
+            ) {
                 horizontalWheel(e, "image-grid");
                 if (!scrollingToBottom) {
                     scrollingToBottom = true;
@@ -590,12 +593,13 @@
     main {
         width: 100%;
         height: 100%;
-        padding: 2em 0;
+        padding: 2em 0px 5em 0px;
         position: relative;
         overflow-x: hidden;
     }
+
     main.fullView {
-        padding: 8px 0;
+        padding: 12px 0;
     }
 
     .skeleton {
@@ -680,7 +684,7 @@
         flex-direction: column;
         justify-content: space-evenly;
         align-content: flex-start;
-        height: max(calc(var(--anime-grid-height) - 265px), 210px);
+        height: max(calc(var(--anime-grid-height) - 260px), 210px);
         overflow-y: hidden;
         overflow-x: auto;
     }
@@ -853,6 +857,8 @@
         border-radius: 50%;
         width: 44px;
         height: 44px;
+        box-shadow: 0 14px 28px rgba(0, 0, 0, 0.25),
+            0 10px 10px rgba(0, 0, 0, 0.22);
     }
 
     @media screen and (max-width: 425px) {

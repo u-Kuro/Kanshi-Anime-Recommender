@@ -14,7 +14,7 @@
         android:id="@+id/progressbar"
         android:layout_width="match_parent"
         android:layout_height="1dp"
-        app:layout_constraintTop_toTopOf="@+id/mainConstraint"
+        app:layout_constraintBottom_toBottomOf="parent"
         android:progressBackgroundTint="@color/dark_blue"
         android:progressTint="@color/white_blue"
         android:progressBackgroundTintMode="src_over"

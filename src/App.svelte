@@ -35,6 +35,7 @@
 		listUpdateAvailable,
 		listIsUpdating,
 		isFullViewed,
+		customFilNavIsShown,
 		// Reactive Functions
 		runUpdate,
 		runExport,
@@ -49,6 +50,7 @@
 		hasWheel,
 		progress,
 		popupIsGoingBack,
+		mobileKeyIsUp,
 		// anilistAccessToken,
 	} from "./js/globalValues.js";
 	import {
@@ -73,6 +75,7 @@
 		window.visualViewport.height,
 		window.innerHeight
 	);
+	$mobileKeyIsUp = windowHeight / screen.height < 0.75;
 	let usernameInputEl, animeGridEl;
 
 	inject(); // Vercel Analytics
@@ -99,7 +102,7 @@
 	$dataStatus = "Getting Existing Data";
 	let pleaseWaitStatusInterval = setInterval(() => {
 		if (!$dataStatus) {
-			$dataStatus = "Please Wait...";
+			$dataStatus = "Please Wait";
 		}
 	}, 200);
 
@@ -116,9 +119,7 @@
 			}
 		}
 
-		let _gridFullView =
-			(await retrieveJSON("gridFullView")) ??
-			(!$android && windowWidth > 750 && windowHeight > 695);
+		let _gridFullView = (await retrieveJSON("gridFullView")) ?? false;
 		if (typeof _gridFullView === "boolean") {
 			setLocalStorage("gridFullView", _gridFullView);
 			$gridFullView = _gridFullView;
@@ -221,7 +222,7 @@
 				// 							})
 				// 							.catch((error) => {
 				// 								$dataStatus =
-				// 									"Something went wrong...";
+				// 									"Something went wrong";
 				// 								console.error(error);
 				// 							});
 				// 					} else {
@@ -341,7 +342,7 @@
 			.catch(async (error) => {
 				checkAutoFunctions(true);
 				$initData = false;
-				$dataStatus = "Something went wrong...";
+				$dataStatus = "Something went wrong";
 				if ($android) {
 					$confirmPromise?.({
 						isAlert: true,
@@ -378,7 +379,7 @@
 				.catch((error) => {
 					checkAutoExportOnLoad();
 					$userRequestIsRunning = false;
-					$dataStatus = "Something went wrong...";
+					$dataStatus = "Something went wrong";
 					console.error(error);
 				});
 		} else {
@@ -394,7 +395,7 @@
 					.catch((error) => {
 						checkAutoExportOnLoad();
 						$userRequestIsRunning = false;
-						$dataStatus = "Something went wrong...";
+						$dataStatus = "Something went wrong";
 						console.error(error);
 					});
 			} else {
@@ -483,7 +484,7 @@
 				($gridFullView
 					? animeGridEl.scrollLeft > 500
 					: document.documentElement.scrollTop >
-					  Math.max(0, animeGridEl?.offsetTop - 55))) &&
+					  Math.max(0, animeGridEl?.offsetTop - 48))) &&
 			$finalAnimeList?.length
 		) {
 			$listUpdateAvailable = true;
@@ -571,7 +572,7 @@
 			})
 			.catch((error) => {
 				$userRequestIsRunning = false;
-				$dataStatus = "Something went wrong...";
+				$dataStatus = "Something went wrong";
 				console.error(error);
 			});
 	});
@@ -799,7 +800,7 @@
 		} else {
 			if (
 				document.documentElement.scrollTop >
-				Math.max(0, animeGridEl?.offsetTop - 55)
+				Math.max(0, animeGridEl?.offsetTop - 48)
 			) {
 				window.setShouldGoBack(false);
 			}
@@ -816,7 +817,7 @@
 		() => {
 			if (
 				document.documentElement.scrollTop >
-					Math.max(0, animeGridEl?.offsetTop - 55) &&
+					Math.max(0, animeGridEl?.offsetTop - 48) &&
 				!willExit
 			)
 				window.setShouldGoBack(false);
@@ -832,7 +833,7 @@
 			() => {
 				if (
 					animeGridEl.scrollLeft >
-						Math.max(0, animeGridEl?.offsetTop - 55) &&
+						Math.max(0, animeGridEl?.offsetTop - 48) &&
 					!willExit
 				)
 					window.setShouldGoBack(false);
@@ -1066,6 +1067,19 @@
 		}
 	});
 
+	let customFilNavTimeout;
+	customFilNavIsShown.subscribe(() => {
+		clearTimeout(customFilNavTimeout);
+		Object.assign(document?.getElementById?.("progress")?.style || {}, {
+			display: "none",
+		});
+		customFilNavTimeout = setTimeout(() => {
+			Object.assign(document?.getElementById?.("progress")?.style || {}, {
+				display: "",
+			});
+		}, 400);
+	});
+
 	let changeStatusBarColorTimeout;
 	$: {
 		if ($android) {
@@ -1094,7 +1108,9 @@
 			on:outrostart={(e) => {
 				e.target.style.setProperty("--progress", "0%");
 			}}
+			id="progress"
 			class="progress"
+			style:--top={$customFilNavIsShown ? "94px" : "46px"}
 			style:--progress={"-" + (100 - _progress) + "%"}
 		/>
 	{/if}
@@ -1107,6 +1123,8 @@
 		</C.Others.Search>
 		<C.Anime.Fixed.AnimePopup />
 	</div>
+
+	<C.Fixed.CustomFilter />
 
 	<C.Anime.Fixed.AnimeOptionsPopup />
 	<C.Others.Confirm
@@ -1149,9 +1167,9 @@
 		overflow-x: hidden;
 	}
 	.home {
-		height: calc(100% - 55px);
+		height: calc(100% - 48px);
 		width: 100%;
-		margin: 55px auto 0;
+		margin: 48px auto 0;
 		max-width: 1140px;
 		padding-left: 50px;
 		padding-right: 50px;
@@ -1161,7 +1179,7 @@
 		position: fixed;
 		top: 0px;
 		z-index: 1003;
-		height: 0.12em;
+		height: 0.2em;
 		width: 100%;
 		transform: translateX(var(--progress));
 		-webkit-transform: translateX(var(--progress));
@@ -1191,6 +1209,8 @@
 		-ms-transform: translateZ(0);
 		-moz-transform: translateZ(0);
 		-o-transform: translateZ(0);
+		box-shadow: 0 14px 28px rgba(0, 0, 0, 0.25),
+			0 10px 10px rgba(0, 0, 0, 0.22);
 	}
 	.list-update-icon {
 		height: 1.5em;
@@ -1204,9 +1224,10 @@
 
 	@media screen and (max-width: 750px) {
 		.progress {
-			z-index: 1000 !important;
-			top: 53px !important;
+			--top: -9999px;
 			height: 1px !important;
+			top: var(--top) !important;
+			z-index: 1000 !important;
 		}
 		.home {
 			padding: 0 1em;

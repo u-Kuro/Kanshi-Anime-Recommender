@@ -276,8 +276,8 @@
 
     @media screen and (max-width: 750px) {
         .anime-options {
-            height: calc(100% - 55px) !important;
-            top: 55px !important;
+            height: calc(100% - 48px) !important;
+            top: 48px !important;
         }
     }
 

@@ -30,7 +30,7 @@
     async function importData() {
         if ($initData) return pleaseWaitAlert();
         if (!(importFileInput instanceof Element))
-            return ($dataStatus = "Something went wrong...");
+            return ($dataStatus = "Something went wrong");
         if (
             await $confirmPromise({
                 text: "Are you sure you want to import your Data?",
@@ -42,7 +42,7 @@
 
     async function importJSONFile() {
         if (!(importFileInput instanceof Element))
-            return ($dataStatus = "Something went wrong...");
+            return ($dataStatus = "Something went wrong");
         let importedFile = importFileInput.files?.[0];
         if (importedFile) {
             let filename = importedFile.name;
@@ -69,7 +69,7 @@
                             importFileInput.value = null;
                     })
                     .catch((error) => {
-                        $dataStatus = error || "Something went wrong...";
+                        $dataStatus = error || "Something went wrong";
                         importFileInput.value = null;
                         importantUpdate.update((e) => !e);
                     });
@@ -421,7 +421,7 @@
         -moz-transform: translateZ(0);
         -o-transform: translateZ(0);
         position: fixed;
-        padding-top: 55px;
+        padding-top: 48px;
         top: 0;
         width: 100%;
         height: 100%;

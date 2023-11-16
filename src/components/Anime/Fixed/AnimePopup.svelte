@@ -198,7 +198,9 @@
         }
         if (typeof animeTitle !== "string" || animeTitle === "") return;
         window.open(
-            `https://www.youtube.com/results?search_query=${encodeURIComponent(animeTitle + ' Anime')}`,
+            `https://www.youtube.com/results?search_query=${encodeURIComponent(
+                animeTitle + " Anime"
+            )}`,
             "_blank"
         );
     }
@@ -1067,7 +1069,7 @@
                 JSBridge.isOnline(false);
             } catch (e) {}
         }
-        $dataStatus = "Currently Offline...";
+        $dataStatus = "Currently Offline";
         isOnline = false;
     });
     function loadYouTubeAPI() {
@@ -2100,11 +2102,13 @@
         overscroll-behavior: contain;
         background-color: #151f2e;
         transition: opacity 0.2s ease;
-        margin-top: 55px;
+        margin-top: 48px;
         -ms-overflow-style: none;
         scrollbar-width: none;
         opacity: 0;
         scroll-behavior: auto;
+        box-shadow: 0 14px 28px rgba(0, 0, 0, 0.25),
+            0 10px 10px rgba(0, 0, 0, 0.22);
     }
 
     .popup-container.willChange {

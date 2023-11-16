@@ -1,7 +1,7 @@
 <script>
     import { fade } from "svelte/transition";
     import { createEventDispatcher, afterUpdate } from "svelte";
-    import { popupVisible } from "../../js/globalValues";
+    import { initData } from "../../js/globalValues.js";
 
     const dispatch = createEventDispatcher();
 
@@ -15,6 +15,17 @@
 
     let isRecentlyOpened = false,
         isRecentlyOpenedTimeout;
+
+    initData.subscribe((val) => {
+        if (
+            val === false &&
+            confirmTitle === "Initializing resources" &&
+            isAlert
+        ) {
+            showConfirm = false;
+        }
+    });
+
     function handleConfirm(e) {
         if (isRecentlyOpened && e.type !== "keydown") return;
         showConfirm = false;

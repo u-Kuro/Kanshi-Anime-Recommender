@@ -19,7 +19,7 @@ import {
     listUpdateAvailable,
     searchedAnimeKeyword,
     loadingFilterOptions,
-    extraInfo
+    extraInfo,
 } from "./globalValues";
 import { get } from "svelte/store";
 import { downloadLink, isJsonObject, setLocalStorage } from "../js/others/helper.js"
@@ -74,6 +74,8 @@ const animeLoader = (_data = {}) => {
                     } else if (data?.filterOptions) {
                         filterOptions.set(data.filterOptions)
                         loadingFilterOptions.set(false)
+                    } else if (typeof data?.changedCustomFilter === "string" && data?.changedCustomFilter) {
+                        selectedCustomFilter.set(data.changedCustomFilter)
                     } else if (data?.isNew) {
                         if (data?.hasPassedFilters === true) {
                             passedFilterOptions = passedSelectedCustomFilter = passedActiveTagFilters = undefined
@@ -299,7 +301,7 @@ const requestUserEntries = (_data) => {
                                 loadAnime.update((e) => !e)
                                 window.confirmPromise({
                                     isAlert: true,
-                                    text: "User is not found, you may want to try again..."
+                                    text: "User is not found, you may want to try again"
                                 })
                                 requestUserEntriesTerminateTimeout = setTimeout(() => {
                                     requestUserEntriesWorker?.terminate?.();
@@ -463,7 +465,7 @@ const importUserData = (_data) => {
                             text: "File has not been imported, please ensure that file is in a supported format (e.g., .json)",
                         })
                         progress.set(100)
-                        reject(data?.error || "Something went wrong...")
+                        reject(data?.error || "Something went wrong")
                     } else if (data?.hasOwnProperty("status")) {
                         dataStatusPrio = true
                         dataStatus.set(data.status)
@@ -510,7 +512,7 @@ const importUserData = (_data) => {
                     })
                     loadAnime.update((e) => !e)
                     progress.set(100)
-                    reject(error || "Something went wrong...")
+                    reject(error || "Something went wrong")
                 }
             }).catch((error) => {
                 progress.set(100)

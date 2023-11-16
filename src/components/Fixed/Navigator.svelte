@@ -100,7 +100,7 @@
                                     }
                                 })
                                 .catch((error) => {
-                                    $dataStatus = "Something went wrong...";
+                                    $dataStatus = "Something went wrong";
                                     console.error(error);
                                 });
                         } else {
@@ -141,7 +141,7 @@
                                     importantUpdate.update((e) => !e);
                                 })
                                 .catch((error) => {
-                                    $dataStatus = "Something went wrong...";
+                                    $dataStatus = "Something went wrong";
                                     console.error(error);
                                 });
                         } else {
@@ -395,10 +395,9 @@
         position: fixed;
         top: 0;
         width: 100%;
-        height: 55px;
+        height: 48px;
         background-color: #0b1622;
         color: white;
-        border-bottom: 1px solid #152232;
         transform: translateZ(0);
         -webkit-transform: translateZ(0);
         -ms-transform: translateZ(0);
@@ -432,7 +431,7 @@
     .input-search {
         display: flex;
         gap: 1.5em;
-        height: 56px;
+        height: 49px;
         border-radius: 6px;
         justify-self: left;
         align-items: center;
@@ -495,7 +494,7 @@
     @media screen and (max-width: 425px) {
         .go-back-container {
             min-width: 5em;
-            min-height: 56px;
+            min-height: 49px;
             padding: 0 1em;
             justify-content: center;
             align-items: center;
@@ -503,7 +502,7 @@
         }
         .logo-icon-container {
             min-width: 5em;
-            min-height: 56px;
+            min-height: 49px;
             padding: 0 1em;
             justify-content: center;
             align-items: center;
@@ -527,7 +526,7 @@
         cursor: pointer;
         align-items: center;
         justify-content: start;
-        height: 56px;
+        height: 49px;
         max-width: min(100%, 165px);
         min-width: 30px;
     }
