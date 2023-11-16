@@ -12,7 +12,10 @@
         activeTagFilters,
         menuVisible,
         popupVisible,
+        animeOptionVisible,
         showFilterOptions,
+        dropdownIsVisible,
+        confirmIsVisible,
     } from "../../js/globalValues.js";
     import { onMount } from "svelte";
     import { fly } from "svelte/transition";
@@ -59,7 +62,10 @@
             belowHomeCustomFilEl &&
             !$initData &&
             !$menuVisible &&
-            !$popupVisible;
+            !$popupVisible &&
+            !$animeOptionVisible &&
+            !$dropdownIsVisible &&
+            !$confirmIsVisible;
     }
 
     async function selectCustomFilter(selectedCustomFilterName) {
@@ -69,7 +75,7 @@
         goBackGrid();
         if (selectedCustomFilterName === $selectedCustomFilter) return;
         $selectedCustomFilter = selectedCustomFilterName;
-        window?.closeDropdown?.();
+        $dropdownIsVisible = false;
     }
 
     function goBackGrid() {
@@ -186,7 +192,7 @@
     .custom-filters-nav {
         z-index: 991;
         position: fixed;
-        top: 48px;
+        top: 47px;
         width: 100%;
         height: 48px;
         background-color: #0b1622;
@@ -196,6 +202,11 @@
         -ms-transform: translateZ(0);
         -moz-transform: translateZ(0);
         -o-transform: translateZ(0);
+    }
+    @media screen and (max-width: 750px) {
+        .custom-filters-nav {
+            z-index: 994 !important;
+        }
     }
     .nav {
         display: flex;

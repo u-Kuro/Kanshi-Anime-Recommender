@@ -23,6 +23,7 @@
         loadingFilterOptions,
         customFilters,
         showFilterOptions,
+        dropdownIsVisible,
     } from "../../js/globalValues.js";
     import { fade } from "svelte/transition";
     import {
@@ -1404,40 +1405,47 @@
     }
 
     let editCustomFilterName = false;
-
-    window.checkOpenDropdown = () => {
-        return (
+    $: {
+        $dropdownIsVisible =
             (selectedCustomFilterElement ||
                 selectedFilterElement ||
                 selectedFilterTypeElement ||
                 selectedSortElement) &&
-            Math.max(window.visualViewport.width, window.innerWidth) <= 425
-        );
-    };
-    function closeDropdown() {
-        // Small Screen Width
-        if (highlightedEl instanceof Element) {
-            removeClass(highlightedEl, "highlight");
-            highlightedEl = null;
-        }
-        // Close Custom Filter Dropdown
-        selectedCustomFilterElement = false;
-        // Close Filter Type Dropdown
-        selectedFilterTypeElement = false;
-        // Close Sort Filter Dropdown
-        selectedSortElement = false;
-        // Close Filter Selection Dropdown
-        let idxTypeSelected = selectedFilterSelectionIdx;
-        $filterOptions?.filterSelection?.[
-            idxTypeSelected
-        ].filters.Dropdown.forEach((e) => {
-            e.selected = false;
-        });
-        $filterOptions.filterSelection[idxTypeSelected] =
-            $filterOptions?.filterSelection?.[idxTypeSelected];
-        selectedFilterElement = null;
+            Math.max(window.visualViewport.width, window.innerWidth) <= 425;
     }
-    window.closeDropdown = closeDropdown;
+
+    dropdownIsVisible.subscribe((val) => {
+        if (val === false) {
+            // Small Screen Width
+            if (highlightedEl instanceof Element) {
+                removeClass(highlightedEl, "highlight");
+                highlightedEl = null;
+            }
+            // Close Custom Filter Dropdown
+            selectedCustomFilterElement = false;
+            // Close Filter Type Dropdown
+            selectedFilterTypeElement = false;
+            // Close Sort Filter Dropdown
+            selectedSortElement = false;
+            // Close Filter Selection Dropdown
+            let idxTypeSelected = selectedFilterSelectionIdx;
+            $filterOptions?.filterSelection?.[
+                idxTypeSelected
+            ]?.filters?.Dropdown?.forEach?.((e) => {
+                if (e?.selected != null) {
+                    e.selected = false;
+                }
+            });
+            if (
+                idxTypeSelected != null &&
+                $filterOptions?.filterSelection?.[idxTypeSelected]
+            ) {
+                $filterOptions.filterSelection[idxTypeSelected] =
+                    $filterOptions?.filterSelection?.[idxTypeSelected];
+            }
+            selectedFilterElement = null;
+        }
+    });
 
     onMount(() => {
         // Init
@@ -2272,9 +2280,9 @@
     <div id="home-status" class="home-status">
         <span out:fade={{ duration: 200 }} class="data-status">
             <h2
-                on:click={(e) => {
-                    getExtraInfo();
-                    if (homeStatusClick < 5 && !$initData) {
+                on:click={async (e) => {
+                    if (homeStatusClick < 6 && !$initData) {
+                        await getExtraInfo();
                         showExtraInfo = true;
                         ++homeStatusClick;
                     } else {

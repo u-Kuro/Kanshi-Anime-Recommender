@@ -36,6 +36,7 @@
 		listIsUpdating,
 		isFullViewed,
 		customFilNavIsShown,
+		confirmIsVisible,
 		// Reactive Functions
 		runUpdate,
 		runExport,
@@ -51,6 +52,7 @@
 		progress,
 		popupIsGoingBack,
 		mobileKeyIsUp,
+		dropdownIsVisible,
 		// anilistAccessToken,
 	} from "./js/globalValues.js";
 	import {
@@ -666,7 +668,6 @@
 		}
 	});
 
-	let _showConfirm = false;
 	if ("scrollRestoration" in window.history) {
 		window.history.scrollRestoration = "manual"; // Disable scrolling to top when navigating back
 	}
@@ -708,9 +709,9 @@
 			if (!$android) {
 				window.history.pushState("visited", ""); // Push Popped State
 			}
-			if (_showConfirm) {
+			if ($confirmIsVisible) {
 				handleConfirmationCancelled();
-				_showConfirm = false;
+				$confirmIsVisible = false;
 				willExit = false;
 				return;
 			} else if (
@@ -738,8 +739,8 @@
 				$animeOptionVisible = false;
 				willExit = false;
 				return;
-			} else if (window.checkOpenDropdown?.()) {
-				window.closeDropdown?.();
+			} else if ($dropdownIsVisible) {
+				$dropdownIsVisible = false;
 				willExit = false;
 				return;
 			} else if (!willExit) {
@@ -863,6 +864,15 @@
 				window.visualViewport.width,
 				window.innerWidth
 			);
+			if (windowWidth > 750) {
+				Object.assign(
+					document?.getElementById?.("progress")?.style || {},
+					{
+						display: "",
+						zIndex: "",
+					}
+				);
+			}
 		});
 	});
 
@@ -976,7 +986,7 @@
 				"Are you sure you want to continue";
 			_confirmLabel = confirmValues?.confirmLabel || "OK";
 			_cancelLabel = confirmValues?.cancelLabel || "CANCEL";
-			_showConfirm = true;
+			$confirmIsVisible = true;
 			_confirmModalPromise = { resolve };
 		});
 	};
@@ -989,7 +999,7 @@
 			_confirmLabel =
 			_cancelLabel =
 				undefined;
-		_showConfirm = false;
+		$confirmIsVisible = false;
 	}
 	function handleConfirmationCancelled() {
 		_confirmModalPromise?.resolve?.(false);
@@ -1000,8 +1010,20 @@
 			_confirmLabel =
 			_cancelLabel =
 				undefined;
-		_showConfirm = false;
+		$confirmIsVisible = false;
 	}
+	confirmIsVisible.subscribe((val) => {
+		if (val === false) {
+			_confirmModalPromise?.resolve?.(false);
+			_confirmModalPromise =
+				_isAlert =
+				_confirmTitle =
+				_confirmText =
+				_confirmLabel =
+				_cancelLabel =
+					undefined;
+		}
+	});
 
 	async function updateList() {
 		if (
@@ -1070,14 +1092,21 @@
 	let customFilNavTimeout;
 	customFilNavIsShown.subscribe(() => {
 		clearTimeout(customFilNavTimeout);
-		Object.assign(document?.getElementById?.("progress")?.style || {}, {
-			display: "none",
-		});
-		customFilNavTimeout = setTimeout(() => {
+		if (windowWidth <= 750) {
 			Object.assign(document?.getElementById?.("progress")?.style || {}, {
-				display: "",
+				display: "none",
+				zIndex: "991",
 			});
-		}, 400);
+			customFilNavTimeout = setTimeout(() => {
+				Object.assign(
+					document?.getElementById?.("progress")?.style || {},
+					{
+						display: "",
+						zIndex: "",
+					}
+				);
+			}, 300);
+		}
 	});
 
 	let changeStatusBarColorTimeout;
@@ -1086,7 +1115,7 @@
 			try {
 				let isOverlay =
 					($animeOptionVisible && windowWidth >= 750) ||
-					_showConfirm ||
+					$confirmIsVisible ||
 					$isFullViewed;
 				clearTimeout(changeStatusBarColorTimeout);
 				if (isOverlay) {
@@ -1128,7 +1157,7 @@
 
 	<C.Anime.Fixed.AnimeOptionsPopup />
 	<C.Others.Confirm
-		showConfirm={_showConfirm}
+		showConfirm={$confirmIsVisible}
 		on:confirmed={handleConfirmationConfirmed}
 		on:cancelled={handleConfirmationCancelled}
 		isAlert={_isAlert}

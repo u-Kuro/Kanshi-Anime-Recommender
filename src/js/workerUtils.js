@@ -535,11 +535,12 @@ const getExtraInfo = () => {
                 let worker = new Worker(url)
                 worker.postMessage({ number: extraInfoIndex })
                 worker.onmessage = ({ data }) => {
-                    if (typeof extraInfoIndex === "number" && extraInfoIndex < 5) {
+                    if (typeof extraInfoIndex === "number" && extraInfoIndex < 6) {
                         ++extraInfoIndex
                     } else {
                         extraInfoIndex = 1
                     }
+                    clearTimeout(getExtraInfoTimeout)
                     if (typeof data?.message === "string") {
                         extraInfo.set(data.message)
                         getExtraInfoTimeout = setTimeout(() => {
@@ -548,7 +549,6 @@ const getExtraInfo = () => {
                         worker?.terminate?.()
                         resolve()
                     } else {
-                        clearTimeout(getExtraInfoTimeout)
                         worker?.terminate?.()
                         getExtraInfo()
                     }

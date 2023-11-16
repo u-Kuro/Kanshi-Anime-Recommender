@@ -65,6 +65,8 @@ const asyncAnimeReloaded = writable(null)
 const isFullViewed = writable(null)
 const customFilNavIsShown = writable(null)
 const showFilterOptions = writable(null)
+const dropdownIsVisible = writable(null)
+const confirmIsVisible = writable(null)
 // Reactive Functions
 const runUpdate = writable(null)
 const runExport = writable(null)
@@ -133,6 +135,8 @@ export {
     isFullViewed,
     customFilNavIsShown,
     showFilterOptions,
+    dropdownIsVisible,
+    confirmIsVisible,
     // Reactive Functions
     runUpdate,
     runExport,
