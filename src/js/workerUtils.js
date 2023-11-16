@@ -545,7 +545,7 @@ const getExtraInfo = () => {
                         extraInfo.set(data.message)
                         getExtraInfoTimeout = setTimeout(() => {
                             getExtraInfo()
-                        }, 1000 * 15)
+                        }, 1000 * 30)
                         worker?.terminate?.()
                         resolve()
                     } else {

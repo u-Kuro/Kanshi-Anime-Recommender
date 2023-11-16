@@ -18,7 +18,6 @@
         confirmIsVisible,
     } from "../../js/globalValues.js";
     import { onMount } from "svelte";
-    import { fly } from "svelte/transition";
     import { getLocalStorage } from "../../js/others/helper.js";
 
     let windowWidth = Math.max(window.visualViewport.width, window.innerWidth);
@@ -155,39 +154,42 @@
     }
 </script>
 
-{#if $customFilNavIsShown}
-    <div class="custom-filters-nav" transition:fly={{ y: -48, duration: 300 }}>
-        <nav
-            class={"nav" +
-                ($hasWheel ? " hasWheel" : "") +
-                (shouldScrollSnap && $android ? " android" : "")}
-            on:wheel={(e) => {
-                horizontalWheel(e, "nav");
-            }}
-        >
-            {#each $customFilters as filterName (filterName || {})}
-                <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
-                <span
-                    tabindex="0"
-                    on:click={selectCustomFilter(filterName)}
-                    on:keydown={(e) => {
-                        e.key === "Enter" && selectCustomFilter(filterName);
-                    }}
-                    class={"custom-filter" +
-                        (filterName === $selectedCustomFilter
-                            ? " selected"
-                            : "")}
-                    >{filterName || ""}
-                </span>
-            {/each}
-        </nav>
-    </div>
-{/if}
+<div class={"custom-filters-nav" + ($customFilNavIsShown ? " show" : "")}>
+    <nav
+        class={"nav" +
+            ($hasWheel ? " hasWheel" : "") +
+            (shouldScrollSnap && $android ? " android" : "")}
+        on:wheel={(e) => {
+            horizontalWheel(e, "nav");
+        }}
+    >
+        {#each $customFilters as filterName (filterName || {})}
+            <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
+            <span
+                tabindex="0"
+                on:click={selectCustomFilter(filterName)}
+                on:keydown={(e) => {
+                    e.key === "Enter" && selectCustomFilter(filterName);
+                }}
+                class={"custom-filter" +
+                    (filterName === $selectedCustomFilter ? " selected" : "")}
+                >{filterName || ""}
+            </span>
+        {/each}
+    </nav>
+</div>
 
 <style>
     :global(.html) {
         --min-height: unset;
         min-height: var(--min-height);
+    }
+    .custom-filters-nav.show {
+        transform: translateZ(0) !important;
+        -webkit-transform: translateZ(0) !important;
+        -ms-transform: translateZ(0) !important;
+        -moz-transform: translateZ(0) !important;
+        -o-transform: translateZ(0) !important;
     }
     .custom-filters-nav {
         z-index: 991;
@@ -197,11 +199,12 @@
         height: 48px;
         background-color: #0b1622;
         color: white;
-        transform: translateZ(0);
-        -webkit-transform: translateZ(0);
-        -ms-transform: translateZ(0);
-        -moz-transform: translateZ(0);
-        -o-transform: translateZ(0);
+        transform: translateY(-47px) translateZ(0);
+        -webkit-transform: translateY(-47px) translateZ(0);
+        -ms-transform: translateY(-47px) translateZ(0);
+        -moz-transform: translateY(-47px) translateZ(0);
+        -o-transform: translateY(-47px) translateZ(0);
+        transition: transform 0.2s linear;
     }
     @media screen and (max-width: 750px) {
         .custom-filters-nav {

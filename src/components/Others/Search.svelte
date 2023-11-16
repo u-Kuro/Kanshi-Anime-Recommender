@@ -2281,8 +2281,8 @@
         <span out:fade={{ duration: 200 }} class="data-status">
             <h2
                 on:click={async (e) => {
+                    await getExtraInfo();
                     if (homeStatusClick < 6 && !$initData) {
-                        await getExtraInfo();
                         showExtraInfo = true;
                         ++homeStatusClick;
                     } else {
