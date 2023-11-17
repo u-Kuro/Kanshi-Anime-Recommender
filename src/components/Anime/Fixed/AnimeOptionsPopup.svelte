@@ -274,13 +274,6 @@
         display: none;
     }
 
-    @media screen and (max-width: 750px) {
-        .anime-options {
-            height: calc(100% - 48px) !important;
-            top: 48px !important;
-        }
-    }
-
     .anime-options-container {
         animation: fadeIn 0.2s ease;
         display: flex;

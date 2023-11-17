@@ -165,7 +165,9 @@
         let element = event.target;
         let classList = element.classList;
         if (
-            !classList.contains("nav") &&
+            !(
+                classList.contains("nav") || classList.contains("nav-container")
+            ) &&
             !(classList.contains("logo-icon") || element.closest(".logo-icon"))
         )
             return;
@@ -390,9 +392,12 @@
     ::-ms-input-placeholder {
         color: white !important;
     }
+    :global(#main.full-screen-popup) > .nav-container {
+        position: fixed !important;
+    }
     .nav-container {
         z-index: 993;
-        position: fixed;
+        position: absolute;
         top: 0;
         width: 100%;
         height: 48px;
@@ -535,13 +540,12 @@
         text-transform: none;
     }
     @media screen and (max-width: 750px) {
-        .nav {
-            padding: 0 1em !important;
-        }
-    }
-    @media screen and (max-width: 750px) {
         .nav-container {
             z-index: 999 !important;
+            border-bottom: 1px solid rgb(35 45 65) !important;
+        }
+        .nav {
+            padding: 0 1em !important;
         }
         .nav.popupvisible {
             grid-template-columns: 3em calc(100% - 3em - 6em) 3em !important;

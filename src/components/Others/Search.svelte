@@ -1757,7 +1757,7 @@
             <div class="skeleton shimmer" />
         {/if}
         <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
-        {#if $showFilterOptions && $customFilters?.length > 1}
+        {#if $showFilterOptions && $customFilters?.length > 1 && !$initData}
             <div
                 tabindex="0"
                 class="remove-custom-filter"
@@ -1828,7 +1828,9 @@
                 }
             }
         }}
-        style:--maxPaddingHeight={maxFilterSelectionHeight + 65 + "px"}
+        style:--maxPaddingHeight={selectedFilterElement
+            ? maxFilterSelectionHeight + 65 + "px"
+            : "0"}
     >
         {#if $filterOptions && !$loadingFilterOptions}
             {#each $filterOptions?.filterSelection || [] as filterSelection, filSelIdx (filterSelection.filterSelectionName || {})}
@@ -2174,6 +2176,7 @@
     </div>
     <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
     <div
+        id="activeFilters"
         class={"activeFilters" +
             (!$loadingFilterOptions && $showFilterOptions
                 ? ""
@@ -2229,21 +2232,23 @@
                             activeTagFiltersArray?.optionValue
                         )}
                 >
-                    {#if activeTagFiltersArray?.filterType === "input number"}
-                        <h3>
-                            {activeTagFiltersArray?.optionName +
-                                ": " +
-                                activeTagFiltersArray?.optionValue || ""}
-                        </h3>
-                    {:else if activeTagFiltersArray?.optionType}
-                        <h3>
-                            {activeTagFiltersArray?.optionType +
-                                ": " +
-                                activeTagFiltersArray?.optionName || ""}
-                        </h3>
-                    {:else}
-                        <h3>{activeTagFiltersArray?.optionName || ""}</h3>
-                    {/if}
+                    <div class="activeFilter">
+                        {#if activeTagFiltersArray?.filterType === "input number"}
+                            <h3>
+                                {activeTagFiltersArray?.optionName +
+                                    ": " +
+                                    activeTagFiltersArray?.optionValue || ""}
+                            </h3>
+                        {:else if activeTagFiltersArray?.optionType}
+                            <h3>
+                                {activeTagFiltersArray?.optionType +
+                                    ": " +
+                                    activeTagFiltersArray?.optionName || ""}
+                            </h3>
+                        {:else}
+                            <h3>{activeTagFiltersArray?.optionName || ""}</h3>
+                        {/if}
+                    </div>
                     <!-- xmark -->
                     <svg
                         class="removeActiveTag"
@@ -2451,7 +2456,7 @@
         display: grid;
         grid-template-rows:
             42px var(--custom-filter-settings-space) var(--filters-space)
-            var(--active-tag-filter-space) 35px 42px 45px auto;
+            var(--active-tag-filter-space) 44px 42px 45px auto;
         padding-top: 1.5em;
         transition: opacity 0.2s ease;
     }
@@ -2567,13 +2572,12 @@
     .filterType-dropdown {
         display: grid;
         grid-template-columns: auto 1em;
-        gap: 0.4em;
+        gap: 0.2em;
         align-items: center;
     }
     .filterType-dropdown > svg {
         width: 1em;
         height: 1em;
-        margin-top: 0.4em;
     }
     .filterType .options-wrap {
         position: absolute;
@@ -2679,7 +2683,7 @@
         width: 100%;
         column-gap: 10px;
         height: 20px;
-        margin-top: 0.5em;
+        margin-top: 1em;
     }
 
     .home-status .skeleton {
@@ -2688,6 +2692,7 @@
     }
 
     .home-status span {
+        margin: 0 1em;
         overflow-x: auto;
         overflow-y: hidden;
         -ms-overflow-style: none;
@@ -2895,7 +2900,6 @@
     }
 
     .activeFilters {
-        padding: 0 1.2em 0 8px;
         display: grid;
         align-items: start;
         justify-content: space-between;
@@ -2959,7 +2963,8 @@
         animation: fadeIn 0.2s ease;
         background-color: var(--activeTagFilterColor);
         padding: 0em 10px;
-        display: flex;
+        display: grid;
+        grid-template-columns: calc(100% - 2em) 2em;
         flex: 1;
         justify-content: space-between;
         align-items: center;
@@ -2967,9 +2972,23 @@
         border-radius: 6px;
         cursor: pointer;
         height: 30px;
+        max-width: 100%;
     }
-    .activeTagFilter h3 {
-        line-height: 1px;
+    .activeFilter {
+        height: 100%;
+        display: grid;
+        align-items: center;
+        text-wrap: nowrap;
+        overflow-x: auto;
+        width: max-content;
+        max-width: 100%;
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+    .activeFilter::-webkit-scrollbar {
+        display: none;
+    }
+    .activeFilter > h3 {
         line-height: 1px;
         min-width: max-content;
         text-transform: capitalize;

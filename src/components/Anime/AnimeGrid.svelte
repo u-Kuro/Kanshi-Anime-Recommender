@@ -22,6 +22,7 @@
         mostRecentAiringDateTimeout,
         earlisetReleaseDate,
         listUpdateAvailable,
+        showFilterOptions,
     } from "../../js/globalValues.js";
     import {
         addClass,
@@ -73,25 +74,6 @@
             }
         );
     }
-
-    onMount(() => {
-        windowHeight = Math.max(
-            window.visualViewport.height,
-            window.innerHeight
-        );
-        windowWidth = Math.max(window.visualViewport.width, window.innerWidth);
-        animeGridEl = animeGridEl || document.getElementById("anime-grid");
-        window.addEventListener("resize", () => {
-            windowHeight = Math.max(
-                window.visualViewport.height,
-                window.innerHeight
-            );
-            windowWidth = Math.max(
-                window.visualViewport.width,
-                window.innerWidth
-            );
-        });
-    });
 
     let animeLoaderIsAlivePromise,
         checkAnimeLoaderStatusTimeout,
@@ -333,24 +315,48 @@
         }
     }
 
+    let isFullViewed;
     let lastLeftScroll, currentLeftScroll;
-    let scrollingToBottom;
     let belowGrid;
     let afterFullGrid;
+    let isWholeGridSeen,
+        isOnVeryLeftOfAnimeGrid = true;
+    let isOnVeryLeftOfAnimeGridTimeout;
     let checkedOriginalSizeForGridView =
         windowWidth > 750 && windowHeight > 695;
-    $: isFullViewed =
-        $gridFullView ??
-        getLocalStorage("gridFullView") ??
-        (!$android && checkedOriginalSizeForGridView);
+    $: {
+        isFullViewed =
+            $gridFullView ??
+            getLocalStorage("gridFullView") ??
+            (!$android && checkedOriginalSizeForGridView);
+
+        isWholeGridSeen =
+            isFullViewed &&
+            windowHeight > animeGridEl?.getBoundingClientRect?.()?.bottom + 10;
+
+        clearTimeout(isOnVeryLeftOfAnimeGridTimeout);
+        if (isFullViewed && animeGridEl?.scrollLeft < 1) {
+            isOnVeryLeftOfAnimeGridTimeout = setTimeout(() => {
+                isOnVeryLeftOfAnimeGrid =
+                    isFullViewed && animeGridEl?.scrollLeft < 1;
+            }, 1000);
+        } else {
+            isOnVeryLeftOfAnimeGrid = false;
+        }
+    }
     $: shouldShowGoBackInFullView =
         isFullViewed &&
         afterFullGrid &&
         (currentLeftScroll < lastLeftScroll || windowWidth > 596.5);
     $: shouldShowGoBack = !isFullViewed && !$listUpdateAvailable && belowGrid;
+
     window.addEventListener(
         "scroll",
         () => {
+            isWholeGridSeen =
+                isFullViewed &&
+                windowHeight >
+                    animeGridEl?.getBoundingClientRect?.()?.bottom + 10;
             if (document.documentElement.scrollTop > 500) {
                 belowGrid = true;
             } else {
@@ -359,6 +365,17 @@
         },
         { passive: true }
     );
+
+    let filterOptiChangeTimeout;
+    showFilterOptions.subscribe(() => {
+        clearTimeout(filterOptiChangeTimeout);
+        filterOptiChangeTimeout = setTimeout(() => {
+            isWholeGridSeen =
+                isFullViewed &&
+                windowHeight >
+                    animeGridEl?.getBoundingClientRect?.()?.bottom + 10;
+        }, 16);
+    });
 
     function goBackGrid() {
         if (isFullViewed) {
@@ -390,6 +407,45 @@
             node.src = emptyImage;
         }
     }
+
+    onMount(() => {
+        windowHeight = Math.max(
+            window.visualViewport.height,
+            window.innerHeight
+        );
+        windowWidth = Math.max(window.visualViewport.width, window.innerWidth);
+        animeGridEl = animeGridEl || document.getElementById("anime-grid");
+        window.addEventListener("resize", () => {
+            windowHeight = Math.max(
+                window.visualViewport.height,
+                window.innerHeight
+            );
+            windowWidth = Math.max(
+                window.visualViewport.width,
+                window.innerWidth
+            );
+        });
+        let waitForOnVeryLeft;
+        animeGridEl.addEventListener("scroll", () => {
+            if (!waitForOnVeryLeft) {
+                clearTimeout(isOnVeryLeftOfAnimeGridTimeout);
+            }
+            if (isFullViewed && animeGridEl?.scrollLeft < 1) {
+                if (!waitForOnVeryLeft) {
+                    waitForOnVeryLeft = true;
+                    isOnVeryLeftOfAnimeGridTimeout = setTimeout(() => {
+                        isOnVeryLeftOfAnimeGrid =
+                            isFullViewed && animeGridEl?.scrollLeft < 1;
+                        waitForOnVeryLeft = false;
+                    }, 8);
+                }
+            } else {
+                clearTimeout(isOnVeryLeftOfAnimeGridTimeout);
+                waitForOnVeryLeft = false;
+                isOnVeryLeftOfAnimeGrid = false;
+            }
+        });
+    });
 </script>
 
 <main class={isFullViewed ? "fullView" : ""}>
@@ -402,22 +458,14 @@
         on:wheel={(e) => {
             if (
                 isFullViewed &&
-                animeGridEl.scrollWidth > animeGridEl.clientWidth
+                animeGridEl.scrollWidth > animeGridEl.clientWidth &&
+                Math.abs(e?.deltaY) > Math.abs(e?.deltaX)
             ) {
+                // If its not scrolled at the very bottom of the screen and see next
+                if (!isWholeGridSeen && e?.deltaY > 0) return;
+                // If its scrolled to very left and see previous
+                if (isOnVeryLeftOfAnimeGrid && e?.deltaY < 0) return;
                 horizontalWheel(e, "image-grid");
-                if (!scrollingToBottom) {
-                    scrollingToBottom = true;
-                    let newScrollPosition =
-                        Math.max(
-                            document.body.scrollHeight,
-                            document.body.offsetHeight,
-                            document.documentElement.clientHeight,
-                            document.documentElement.scrollHeight,
-                            document.documentElement.offsetHeight
-                        ) || Number.MAX_SAFE_INTEGER;
-                    document.documentElement.scrollTop = newScrollPosition;
-                    scrollingToBottom = false;
-                }
             }
         }}
         on:scroll={(e) => {

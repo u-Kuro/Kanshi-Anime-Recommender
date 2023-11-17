@@ -11,11 +11,8 @@
         hasWheel,
         activeTagFilters,
         menuVisible,
-        popupVisible,
-        animeOptionVisible,
         showFilterOptions,
         dropdownIsVisible,
-        confirmIsVisible,
     } from "../../js/globalValues.js";
     import { onMount } from "svelte";
     import { getLocalStorage } from "../../js/others/helper.js";
@@ -28,7 +25,7 @@
     let belowHomeCustomFilEl = false;
     let homeCustomFilterEl;
     let animeGridEl;
-    let homeStatusEl;
+    let activeFiltersEl;
     let checkedOriginalSizeForGridView =
         windowWidth > 750 && windowHeight > 695;
     $: isFullViewed =
@@ -36,7 +33,7 @@
         getLocalStorage("gridFullView") ??
         (!$android && checkedOriginalSizeForGridView);
 
-    gridFullView.subscribe((val) => {
+    gridFullView.subscribe(() => {
         setMinHeight();
     });
 
@@ -53,6 +50,8 @@
         }
     }
 
+    let isScrolledUp;
+
     $: {
         $customFilNavIsShown =
             !isFullViewed &&
@@ -60,11 +59,7 @@
             $customFilters?.length > 1 &&
             belowHomeCustomFilEl &&
             !$initData &&
-            !$menuVisible &&
-            !$popupVisible &&
-            !$animeOptionVisible &&
-            !$dropdownIsVisible &&
-            !$confirmIsVisible;
+            isScrolledUp;
     }
 
     async function selectCustomFilter(selectedCustomFilterName) {
@@ -92,7 +87,10 @@
                 document.documentElement.style.overflow = "hidden";
                 document.documentElement.style.overflow = "";
             }
-            let scrollTop = $showFilterOptions ? -9999 : 37;
+            let scrollTop =
+                ($showFilterOptions
+                    ? activeFiltersEl?.offsetTop - 48 - 20 || 167
+                    : 58) + 1;
             document.documentElement.scrollTop = window.scrollY = scrollTop;
         }
     }
@@ -117,10 +115,16 @@
             !isFullViewed &&
             !$mobileKeyIsUp &&
             $customFilters?.length > 1 &&
-            !$initData;
+            belowHomeCustomFilEl &&
+            !$initData &&
+            isScrolledUp;
     });
 
+    let lastScrollTop;
     window.addEventListener("scroll", () => {
+        let scrollTop = document.documentElement.scrollTop;
+        isScrolledUp = scrollTop < lastScrollTop;
+        lastScrollTop = scrollTop;
         checkBelowCurtomFilterEl();
     });
 
@@ -129,20 +133,36 @@
     });
 
     function checkBelowCurtomFilterEl() {
-        if ($showFilterOptions) {
+        if ($showFilterOptions && activeFiltersEl) {
             belowHomeCustomFilEl =
                 document.documentElement.scrollTop >=
-                homeStatusEl.offsetTop - 48 * 2;
-        } else {
+                activeFiltersEl.offsetTop - 48 - 20;
+        } else if (homeCustomFilterEl) {
             let rect = homeCustomFilterEl?.getBoundingClientRect?.();
-            belowHomeCustomFilEl = rect && rect?.top - 40 <= 0;
+            belowHomeCustomFilEl = rect && rect?.top - 18 <= 0;
+        }
+    }
+
+    function handleMenuVisibility(event) {
+        if (matchMedia("(pointer:fine)").matches) {
+            let element = event.target;
+            let classList = element.classList;
+            if (
+                !(
+                    classList.contains("nav") ||
+                    classList.contains("custom-filters-nav")
+                )
+            )
+                return;
+            $menuVisible = !$menuVisible;
         }
     }
 
     onMount(() => {
         homeCustomFilterEl = document.getElementById("custom-filter-name");
         animeGridEl = document.getElementById("anime-grid");
-        homeStatusEl = document.getElementById("home-status");
+        activeFiltersEl = document.getElementById("activeFilters");
+        lastScrollTop = document.documentElement.scrollTop;
     });
 
     async function pleaseWaitAlert() {
@@ -154,7 +174,11 @@
     }
 </script>
 
-<div class={"custom-filters-nav" + ($customFilNavIsShown ? " show" : "")}>
+<div
+    class={"custom-filters-nav" + ($customFilNavIsShown ? " show" : "")}
+    on:click={handleMenuVisibility}
+    on:keydown={(e) => e.key === "Enter" && handleMenuVisibility(e)}
+>
     <nav
         class={"nav" +
             ($hasWheel ? " hasWheel" : "") +
@@ -194,21 +218,22 @@
     .custom-filters-nav {
         z-index: 991;
         position: fixed;
-        top: 47px;
+        top: 0px;
         width: 100%;
         height: 48px;
         background-color: #0b1622;
         color: white;
-        transform: translateY(-47px) translateZ(0);
-        -webkit-transform: translateY(-47px) translateZ(0);
-        -ms-transform: translateY(-47px) translateZ(0);
-        -moz-transform: translateY(-47px) translateZ(0);
-        -o-transform: translateY(-47px) translateZ(0);
+        transform: translateY(-48px) translateZ(0);
+        -webkit-transform: translateY(-48px) translateZ(0);
+        -ms-transform: translateY(-48px) translateZ(0);
+        -moz-transform: translateY(-48px) translateZ(0);
+        -o-transform: translateY(-48px) translateZ(0);
         transition: transform 0.2s linear;
     }
     @media screen and (max-width: 750px) {
         .custom-filters-nav {
             z-index: 994 !important;
+            border-bottom: 1px solid rgb(35 45 65) !important;
         }
     }
     .nav {

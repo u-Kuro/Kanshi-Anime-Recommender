@@ -813,9 +813,11 @@
 	menuVisible.subscribe((val) => {
 		if (val === true) window.setShouldGoBack(false);
 	});
+	let isBelowAbsoluteProgress = false;
 	window.addEventListener(
 		"scroll",
 		() => {
+			isBelowAbsoluteProgress = document.documentElement.scrollTop > 47;
 			if (
 				document.documentElement.scrollTop >
 					Math.max(0, animeGridEl?.offsetTop - 48) &&
@@ -1130,7 +1132,10 @@
 	}
 </script>
 
-<main>
+<main
+	id="main"
+	class={$popupVisible || $menuVisible ? " full-screen-popup" : ""}
+>
 	{#if _progress > 0 && _progress < 100}
 		<div
 			out:fade={{ duration: 0, delay: 400 }}
@@ -1138,8 +1143,12 @@
 				e.target.style.setProperty("--progress", "0%");
 			}}
 			id="progress"
-			class="progress"
-			style:--top={$customFilNavIsShown ? "94px" : "46px"}
+			class={"progress" +
+				($customFilNavIsShown ? " has-custom-filter-nav" : "") +
+				(isBelowAbsoluteProgress ? " is-below-absolute-progress" : "")}
+			style:--top={$customFilNavIsShown || $popupVisible || $menuVisible
+				? "46px"
+				: "0px"}
 			style:--progress={"-" + (100 - _progress) + "%"}
 		/>
 	{/if}
@@ -1192,16 +1201,20 @@
 <style>
 	main {
 		width: 100%;
-		min-height: 100vh;
-		overflow-x: hidden;
+		min-height: calc(100vh - 48px);
+		overflow-x: clip;
 	}
 	.home {
-		height: calc(100% - 48px);
+		height: calc(100% - 48px) !important;
 		width: 100%;
-		margin: 48px auto 0;
+		margin: 48px auto 0 !important;
 		max-width: 1140px;
 		padding-left: 50px;
 		padding-right: 50px;
+	}
+	.progress.has-custom-filter-nav,
+	:global(#main.full-screen-popup) > .progress {
+		position: fixed !important;
 	}
 	.progress {
 		background-color: #909cb8;
@@ -1250,9 +1263,19 @@
 		font-size: 1.5rem;
 		cursor: pointer;
 	}
-
 	@media screen and (max-width: 750px) {
 		.progress {
+			position: absolute;
+			height: 1px !important;
+			top: 46px !important;
+		}
+		.progress.is-below-absolute-progress {
+			position: fixed;
+			height: 0.2em !important;
+			top: 0px !important;
+		}
+		.progress.has-custom-filter-nav,
+		:global(#main.full-screen-popup) > .progress {
 			--top: -9999px;
 			height: 1px !important;
 			top: var(--top) !important;
