@@ -232,7 +232,7 @@
     }
     @media screen and (max-width: 750px) {
         .custom-filters-nav {
-            z-index: 994 !important;
+            z-index: 992 !important;
             border-bottom: 1px solid rgb(35 45 65) !important;
         }
     }

@@ -1116,9 +1116,10 @@
 		if ($android) {
 			try {
 				let isOverlay =
-					($animeOptionVisible && windowWidth >= 750) ||
+					$animeOptionVisible ||
 					$confirmIsVisible ||
-					$isFullViewed;
+					$isFullViewed ||
+					($dropdownIsVisible && windowWidth <= 750);
 				clearTimeout(changeStatusBarColorTimeout);
 				if (isOverlay) {
 					JSBridge.changeStatusBarColor(true);
@@ -1268,6 +1269,7 @@
 			position: absolute;
 			height: 1px !important;
 			top: 46px !important;
+			z-index: 1000;
 		}
 		.progress.is-below-absolute-progress {
 			position: fixed;
@@ -1282,6 +1284,12 @@
 			top: var(--top) !important;
 			z-index: 1000 !important;
 		}
+
+		:global(#main:not(.full-screen-popup))
+			> .progress.has-custom-filter-nav {
+			z-index: 993 !important;
+		}
+
 		.home {
 			padding: 0 1em;
 		}
