@@ -24,6 +24,8 @@
         customFilters,
         showFilterOptions,
         dropdownIsVisible,
+        popupVisible,
+        customFilterFloatingIconVisible,
     } from "../../js/globalValues.js";
     import { fade } from "svelte/transition";
     import {
@@ -48,6 +50,9 @@
         window.innerHeight
     );
     let maxFilterSelectionHeight = windowHeight * 0.3;
+
+    let animeGridEl;
+    let popupContainer;
 
     let selectedCustomFilterElement;
     let selectedFilterTypeElement;
@@ -95,6 +100,11 @@
     $: selectedSort = $filterOptions?.sortFilter?.[selectedSortIdx];
     $: selectedSortName = selectedSort?.sortName;
     $: selectedSortType = selectedSort?.sortType;
+
+    $: $customFilterFloatingIconVisible =
+        !$initData &&
+        windowWidth <= 750 &&
+        ($android || !window?.matchMedia?.("(pointer:fine)")?.matches);
 
     activeTagFilters.subscribe((val) => {
         $customFilters = Object.keys(val || {}).sort();
@@ -352,7 +362,15 @@
             // Large Screen Width
             // Custom Filter Dropdown
             let customFilterEl = element.closest(".custom-filter-wrap");
-            if (!classList.contains("custom-filter-wrap") && !customFilterEl) {
+            let customFilterFloatingIcon = element.closest(
+                ".custom-filter-floating-icon"
+            );
+            if (
+                !classList.contains("custom-filter-wrap") &&
+                !customFilterEl &&
+                !classList.contains("custom-filter-floating-icon") &&
+                !customFilterFloatingIcon
+            ) {
                 if (
                     highlightedEl instanceof Element &&
                     highlightedEl.closest(".custom-filter-wrap")
@@ -1140,9 +1158,7 @@
                         addClass(highlightedEl, "highlight");
                         highlightedEl.scrollIntoView({
                             behavior: isFirstOrLast ? "auto" : "smooth",
-                            container: parent,
-                            block: "center",
-                            inline: "nearest",
+                            block: "nearest",
                         });
                     }
                 } else {
@@ -1154,9 +1170,7 @@
                         addClass(highlightedEl, "highlight");
                         highlightedEl.scrollIntoView({
                             behavior: "smooth",
-                            container: parent,
-                            block: "center",
-                            inline: "nearest",
+                            block: "nearest",
                         });
                     }
                 }
@@ -1300,10 +1314,15 @@
         if (option || classList.contains("option")) return;
         let sortSelectEl = element.closest(".custom-filter-wrap");
         let optionsWrap = element.closest(".options-wrap");
+        let customFilterFloatingIcon = element.closest(
+            ".custom-filter-floating-icon"
+        );
         if (
-            (classList.contains("custom-filter-wrap") || sortSelectEl) &&
-            !selectedCustomFilterElement &&
-            !classList.contains("closing-x")
+            ((classList.contains("custom-filter-wrap") || sortSelectEl) &&
+                !selectedCustomFilterElement &&
+                !classList.contains("closing-x")) ||
+            classList.contains("custom-filter-floating-icon") ||
+            customFilterFloatingIcon
         ) {
             selectedCustomFilterElement = true;
         } else if (
@@ -1325,6 +1344,20 @@
             return pleaseWaitAlert();
         }
         event?.stopPropagation?.();
+        if (
+            (!$showFilterOptions || !isFullViewed) &&
+            document.documentElement.scrollTop > 48
+        ) {
+            window.scrollY = document.documentElement.scrollTop = 48;
+        }
+        if (isFullViewed) {
+            animeGridEl?.children?.[0]?.scrollIntoView?.({
+                behavior: "smooth",
+            });
+        }
+        if ($popupVisible) {
+            popupContainer.scrollTop = 0;
+        }
         $selectedCustomFilter = selectedCustomFilterName;
         selectedCustomFilterElement = false;
     }
@@ -1342,7 +1375,9 @@
                 ) {
                     editCustomFilterName = false;
                     previousCustomFilterName = $selectedCustomFilter;
-                    let savedCustomFilterName = customFilterName || ("Custom Filter " +(new Date).getTime())
+                    let savedCustomFilterName =
+                        customFilterName ||
+                        "Custom Filter " + new Date().getTime();
                     $activeTagFilters[savedCustomFilterName] = JSON.parse(
                         JSON.stringify(
                             $activeTagFilters?.[previousCustomFilterName]
@@ -1379,7 +1414,9 @@
                 ) {
                     editCustomFilterName = false;
                     let previousCustomFilterName = $selectedCustomFilter;
-                    let addedCustomFilterName = customFilterName || ("Custom Filter " +(new Date).getTime())
+                    let addedCustomFilterName =
+                        customFilterName ||
+                        "Custom Filter " + new Date().getTime();
                     $activeTagFilters[addedCustomFilterName] = JSON.parse(
                         JSON.stringify(
                             $activeTagFilters?.[previousCustomFilterName]
@@ -1488,6 +1525,8 @@
         filterEl.addEventListener("scroll", handleFilterScroll, {
             passive: true,
         });
+        animeGridEl = document.getElementById("anime-grid");
+        popupContainer = document?.getElementById("popup-container");
         dragScroll(filterEl, "x", (event) => {
             let element = event?.target;
             return (
@@ -1525,12 +1564,7 @@
     }
 
     let shouldScrollSnap = getLocalStorage("nonScrollSnapFilters") ?? true;
-    let checkedOriginalSizeForGridView =
-        windowWidth > 750 && windowHeight > 695;
-    $: isFullViewed =
-        $gridFullView ??
-        getLocalStorage("gridFullView") ??
-        (!$android && checkedOriginalSizeForGridView);
+    $: isFullViewed = $gridFullView ?? getLocalStorage("gridFullView") ?? true;
     let homeStatusClick = 0;
     let showExtraInfo;
 </script>
@@ -1640,23 +1674,25 @@
                         class="save-custom-name"
                         tabindex={editCustomFilterName ? "0" : "-1"}
                         viewBox="0 0 448 512"
-                        on:click={()=> {
-                            if(
+                        on:click={() => {
+                            if (
                                 !$selectedCustomFilter ||
                                 !customFilterName ||
                                 !$activeTagFilters ||
                                 $activeTagFilters?.[customFilterName]
-                            ) return
-                            saveCustomFilterName()
+                            )
+                                return;
+                            saveCustomFilterName();
                         }}
                         on:keydown={(e) => {
                             if (e.key !== "Enter") return;
-                            if(
+                            if (
                                 !$selectedCustomFilter ||
                                 !customFilterName ||
                                 !$activeTagFilters ||
                                 $activeTagFilters?.[customFilterName]
-                            ) return
+                            )
+                                return;
                             saveCustomFilterName(e);
                         }}
                     >
@@ -2490,6 +2526,23 @@
         </div>
     {/if}
     <slot />
+    {#if $customFilterFloatingIconVisible}
+        <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
+        <div
+            class={"custom-filter-floating-icon" +
+                ($popupVisible ? " popup-visible" : "")}
+            tabindex="0"
+            on:keydown={(e) => e.key === "Enter" && handleCustomFilterPopup(e)}
+            on:click={handleCustomFilterPopup}
+            out:fade={{ duration: 200 }}
+        >
+            <svg viewBox="0 0 512 512">
+                <path
+                    d="m345 39 128 129c52 53 52 139 0 192L361 473a24 24 0 0 1-34-34l112-113c34-34 34-90 0-124L311 73a24 24 0 0 1 34-34zM0 230V80c0-26 22-48 48-48h150c17 0 33 7 45 19l168 168c25 25 25 65 0 90L277 443a64 64 0 0 1-90 0L19 275a63 63 0 0 1-19-45zm144-86a32 32 0 1 0-64 0 32 32 0 1 0 64 0z"
+                />
+            </svg>
+        </div>
+    {/if}
 </main>
 
 <style>
@@ -3270,6 +3323,44 @@
         min-width: 0 !important;
         min-height: 0 !important;
         overflow: hidden !important;
+    }
+
+    .custom-filter-floating-icon {
+        position: fixed !important;
+        bottom: 4.5em !important;
+        right: 3em !important;
+        transform: translateZ(0) !important;
+        -webkit-transform: translateZ(0) !important;
+        -ms-transform: translateZ(0) !important;
+        -moz-transform: translateZ(0) !important;
+        -o-transform: translateZ(0) !important;
+        animation: fadeIn 0.2s ease;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 6px;
+        background-color: rgba(102, 102, 102, 0.6);
+        cursor: pointer;
+        border-radius: 50%;
+        width: 60px;
+        height: 60px;
+        box-shadow: 0 14px 28px rgba(0, 0, 0, 0.25),
+            0 10px 10px rgba(0, 0, 0, 0.22);
+        z-index: 994 !important;
+    }
+    .custom-filter-floating-icon.popup-visible {
+        z-index: 996 !important;
+    }
+
+    .custom-filter-floating-icon svg {
+        width: 3em;
+        height: 3em;
+    }
+
+    @media screen and (pointer: fine) or (min-width: 750px) {
+        .custom-filter-floating-icon {
+            display: none;
+        }
     }
 
     @media screen and (hover: hover) and (pointer: fine) {

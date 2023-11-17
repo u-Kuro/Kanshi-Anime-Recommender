@@ -6,32 +6,20 @@
         initData,
         gridFullView,
         android,
-        mobileKeyIsUp,
-        customFilNavIsShown,
         hasWheel,
-        activeTagFilters,
-        menuVisible,
         showFilterOptions,
         dropdownIsVisible,
+        popupVisible,
+        customFilterVisible,
     } from "../../js/globalValues.js";
     import { onMount } from "svelte";
     import { getLocalStorage } from "../../js/others/helper.js";
 
     let windowWidth = Math.max(window.visualViewport.width, window.innerWidth);
-    let windowHeight = Math.max(
-        window.visualViewport.height,
-        window.innerHeight
-    );
-    let belowHomeCustomFilEl = false;
-    let homeCustomFilterEl;
+    let customFiltersNav;
     let animeGridEl;
-    let activeFiltersEl;
-    let checkedOriginalSizeForGridView =
-        windowWidth > 750 && windowHeight > 695;
-    $: isFullViewed =
-        $gridFullView ??
-        getLocalStorage("gridFullView") ??
-        (!$android && checkedOriginalSizeForGridView);
+    let popupContainer;
+    $: isFullViewed = $gridFullView ?? getLocalStorage("gridFullView") ?? true;
 
     gridFullView.subscribe(() => {
         setMinHeight();
@@ -50,18 +38,6 @@
         }
     }
 
-    let isScrolledUp;
-
-    $: {
-        $customFilNavIsShown =
-            !isFullViewed &&
-            !$mobileKeyIsUp &&
-            $customFilters?.length > 1 &&
-            belowHomeCustomFilEl &&
-            !$initData &&
-            isScrolledUp;
-    }
-
     async function selectCustomFilter(selectedCustomFilterName) {
         if ($initData) {
             return pleaseWaitAlert();
@@ -73,25 +49,16 @@
     }
 
     function goBackGrid() {
+        if (!$showFilterOptions || !isFullViewed) {
+            window.scrollY = document.documentElement.scrollTop = 48;
+        }
         if (isFullViewed) {
-            animeGridEl.style.overflow = "hidden";
-            animeGridEl.style.overflow = "";
             animeGridEl?.children?.[0]?.scrollIntoView?.({
-                container: animeGridEl,
                 behavior: "smooth",
-                block: "nearest",
-                inline: "start",
             });
-        } else {
-            if ($android || !matchMedia("(hover:hover)").matches) {
-                document.documentElement.style.overflow = "hidden";
-                document.documentElement.style.overflow = "";
-            }
-            let scrollTop =
-                ($showFilterOptions
-                    ? activeFiltersEl?.offsetTop - 48 - 20 || 167
-                    : 58) + 1;
-            document.documentElement.scrollTop = window.scrollY = scrollTop;
+        }
+        if ($popupVisible) {
+            popupContainer.scrollTop = 0;
         }
     }
 
@@ -110,59 +77,22 @@
         }
     }
 
-    activeTagFilters.subscribe(() => {
-        $customFilNavIsShown =
-            !isFullViewed &&
-            !$mobileKeyIsUp &&
-            $customFilters?.length > 1 &&
-            belowHomeCustomFilEl &&
-            !$initData &&
-            isScrolledUp;
-    });
-
     let lastScrollTop;
     window.addEventListener("scroll", () => {
         let scrollTop = document.documentElement.scrollTop;
-        isScrolledUp = scrollTop < lastScrollTop;
         lastScrollTop = scrollTop;
-        checkBelowCurtomFilterEl();
     });
-
-    showFilterOptions.subscribe(() => {
-        checkBelowCurtomFilterEl();
+    window.addEventListener("resize", () => {
+        windowWidth = Math.max(window.visualViewport.width, window.innerWidth);
     });
-
-    function checkBelowCurtomFilterEl() {
-        if ($showFilterOptions && activeFiltersEl) {
-            belowHomeCustomFilEl =
-                document.documentElement.scrollTop >=
-                activeFiltersEl.offsetTop - 48 - 20;
-        } else if (homeCustomFilterEl) {
-            let rect = homeCustomFilterEl?.getBoundingClientRect?.();
-            belowHomeCustomFilEl = rect && rect?.top - 18 <= 0;
-        }
-    }
-
-    function handleMenuVisibility(event) {
-        if (matchMedia("(pointer:fine)").matches) {
-            let element = event.target;
-            let classList = element.classList;
-            if (
-                !(
-                    classList.contains("nav") ||
-                    classList.contains("custom-filters-nav")
-                )
-            )
-                return;
-            $menuVisible = !$menuVisible;
-        }
-    }
 
     onMount(() => {
-        homeCustomFilterEl = document.getElementById("custom-filter-name");
+        windowWidth = Math.max(window.visualViewport.width, window.innerWidth);
+        customFiltersNav =
+            customFiltersNav || document.getElementById("custom-filters-nav");
         animeGridEl = document.getElementById("anime-grid");
-        activeFiltersEl = document.getElementById("activeFilters");
         lastScrollTop = document.documentElement.scrollTop;
+        popupContainer = document?.getElementById("popup-container");
     });
 
     async function pleaseWaitAlert() {
@@ -172,14 +102,19 @@
             text: "Please wait a moment...",
         });
     }
+
+    $: {
+        $customFilterVisible =
+            !$android &&
+            window?.matchMedia?.("(pointer:fine)")?.matches &&
+            !$initData;
+    }
 </script>
 
-<div
-    class={"custom-filters-nav" + ($customFilNavIsShown ? " show" : "")}
-    on:click={handleMenuVisibility}
-    on:keydown={(e) => e.key === "Enter" && handleMenuVisibility(e)}
->
+<div class={"custom-filters-nav" + (!$customFilterVisible ? " hide" : "")}>
     <nav
+        id="custom-filters-nav"
+        bind:this={customFiltersNav}
         class={"nav" +
             ($hasWheel ? " hasWheel" : "") +
             (shouldScrollSnap && $android ? " android" : "")}
@@ -208,31 +143,30 @@
         --min-height: unset;
         min-height: var(--min-height);
     }
-    .custom-filters-nav.show {
+    .custom-filters-nav.hide {
+        transform: translateY(48px) translateZ(0) !important;
+        -webkit-transform: translateY(48px) translateZ(0) !important;
+        -ms-transform: translateY(48px) translateZ(0) !important;
+        -moz-transform: translateY(48px) translateZ(0) !important;
+        -o-transform: translateY(48px) translateZ(0) !important;
+    }
+    .custom-filters-nav {
+        z-index: 991;
+        position: fixed;
+        bottom: 0px;
+        width: 100%;
+        height: 48px;
+        background-color: rgba(21, 31, 46, 0.9);
+        color: white;
         transform: translateZ(0) !important;
         -webkit-transform: translateZ(0) !important;
         -ms-transform: translateZ(0) !important;
         -moz-transform: translateZ(0) !important;
         -o-transform: translateZ(0) !important;
-    }
-    .custom-filters-nav {
-        z-index: 991;
-        position: fixed;
-        top: 0px;
-        width: 100%;
-        height: 48px;
-        background-color: #0b1622;
-        color: white;
-        transform: translateY(-48px) translateZ(0);
-        -webkit-transform: translateY(-48px) translateZ(0);
-        -ms-transform: translateY(-48px) translateZ(0);
-        -moz-transform: translateY(-48px) translateZ(0);
-        -o-transform: translateY(-48px) translateZ(0);
-        transition: transform 0.2s linear;
+        transition: transform 0.3s ease;
     }
     @media screen and (max-width: 750px) {
         .custom-filters-nav {
-            z-index: 992 !important;
             border-bottom: 1px solid rgb(35 45 65) !important;
         }
     }
@@ -245,8 +179,8 @@
         -webkit-user-select: none;
         user-select: none;
         max-width: 1140px;
-        gap: 1.5em;
-        padding: 0.5em 0px;
+        gap: 3em;
+        padding: 0 1em;
         overflow-x: auto !important;
         -ms-overflow-style: none;
         scrollbar-width: none;
@@ -272,21 +206,44 @@
         align-items: center;
         justify-content: center;
         text-wrap: nowrap;
-        background-color: #151f2e;
-        font-size: 1.2rem;
-        border-radius: 5px;
-        height: 90%;
-        padding: 0.5em 1em;
+        background-color: transparent;
+        font-size: 1.3rem;
+        font-weight: 500;
+        height: 80%;
         scroll-snap-align: start;
+        margin-bottom: auto;
+        border-top: 3px solid transparent;
     }
     .custom-filter.selected {
-        background-color: rgb(24 62 104) !important;
+        color: rgb(150 200 255) !important;
+        border-top: 3px solid rgb(150 200 255) !important;
     }
     @media screen and (max-width: 750px) {
         .nav {
-            padding: 0.5em 0px !important;
             margin: 0px 1em !important;
             width: calc(100% - 20px) !important;
         }
+    }
+    .disable-interaction {
+        pointer-events: none !important;
+        position: fixed !important;
+        transform: translateY(-99999px) translateZ(0) !important;
+        -webkit-transform: translateY(-99999px) translateZ(0) !important;
+        -ms-transform: translateY(-99999px) translateZ(0) !important;
+        -moz-transform: translateY(-99999px) translateZ(0) !important;
+        -o-transform: translateY(-99999px) translateZ(0) !important;
+        user-select: none !important;
+        touch-action: none !important;
+        cursor: not-allowed !important;
+        -webkit-user-drag: none !important;
+        -moz-user-select: none !important;
+        -ms-user-select: none !important;
+        height: 0 !important;
+        width: 0 !important;
+        max-width: 0 !important;
+        max-height: 0 !important;
+        min-width: 0 !important;
+        min-height: 0 !important;
+        overflow: hidden !important;
     }
 </style>

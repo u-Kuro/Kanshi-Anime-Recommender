@@ -480,7 +480,6 @@
                 animeGridParentEl.style.overflow = "";
                 animeGrid.scrollIntoView({
                     behavior: "smooth",
-                    block: "nearest",
                 });
             }
         }, 300);

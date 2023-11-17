@@ -35,8 +35,8 @@
 		listUpdateAvailable,
 		listIsUpdating,
 		isFullViewed,
-		customFilNavIsShown,
 		confirmIsVisible,
+		customFilterVisible,
 		// Reactive Functions
 		runUpdate,
 		runExport,
@@ -51,8 +51,8 @@
 		hasWheel,
 		progress,
 		popupIsGoingBack,
-		mobileKeyIsUp,
 		dropdownIsVisible,
+		customFilterFloatingIconVisible,
 		// anilistAccessToken,
 	} from "./js/globalValues.js";
 	import {
@@ -77,7 +77,6 @@
 		window.visualViewport.height,
 		window.innerHeight
 	);
-	$mobileKeyIsUp = windowHeight / screen.height < 0.75;
 	let usernameInputEl, animeGridEl;
 
 	inject(); // Vercel Analytics
@@ -485,8 +484,7 @@
 			($popupVisible ||
 				($gridFullView
 					? animeGridEl.scrollLeft > 500
-					: document.documentElement.scrollTop >
-					  Math.max(0, animeGridEl?.offsetTop - 48))) &&
+					: animeGridEl?.getBoundingClientRect?.()?.top < 0)) &&
 			$finalAnimeList?.length
 		) {
 			$listUpdateAvailable = true;
@@ -749,10 +747,7 @@
 					animeGridEl.style.overflow = "hidden";
 					animeGridEl.style.overflow = "";
 					animeGridEl?.children?.[0]?.scrollIntoView?.({
-						container: animeGridEl,
 						behavior: "smooth",
-						block: "nearest",
-						inline: "start",
 					});
 				} else {
 					if ($android || !matchMedia("(hover:hover)").matches) {
@@ -799,10 +794,7 @@
 				window.setShouldGoBack(false);
 			}
 		} else {
-			if (
-				document.documentElement.scrollTop >
-				Math.max(0, animeGridEl?.offsetTop - 48)
-			) {
+			if (animeGridEl?.getBoundingClientRect?.()?.top < 0) {
 				window.setShouldGoBack(false);
 			}
 		}
@@ -813,70 +805,20 @@
 	menuVisible.subscribe((val) => {
 		if (val === true) window.setShouldGoBack(false);
 	});
-	let isBelowAbsoluteProgress = false;
+	let isBelowNav = false;
+	let updateIconIsManual = false;
 	window.addEventListener(
 		"scroll",
 		() => {
-			isBelowAbsoluteProgress = document.documentElement.scrollTop > 47;
-			if (
-				document.documentElement.scrollTop >
-					Math.max(0, animeGridEl?.offsetTop - 48) &&
-				!willExit
-			)
+			updateIconIsManual =
+				animeGridEl?.getBoundingClientRect?.()?.top < 0;
+			isBelowNav = document.documentElement.scrollTop > 47;
+			if (animeGridEl?.getBoundingClientRect?.()?.top < 0 && !willExit)
 				window.setShouldGoBack(false);
 			runIsScrolling.update((e) => !e);
 		},
 		{ passive: true }
 	);
-	onMount(() => {
-		usernameInputEl = document.getElementById("usernameInput");
-		animeGridEl = document.getElementById("anime-grid");
-		animeGridEl?.addEventListener(
-			"scroll",
-			() => {
-				if (
-					animeGridEl.scrollLeft >
-						Math.max(0, animeGridEl?.offsetTop - 48) &&
-					!willExit
-				)
-					window.setShouldGoBack(false);
-				if (!$gridFullView) return;
-				runIsScrolling.update((e) => !e);
-			},
-			{ passive: true }
-		);
-		document.getElementById("popup-container").addEventListener(
-			"scroll",
-			() => {
-				runIsScrolling.update((e) => !e);
-			},
-			{ passive: true }
-		);
-		windowWidth = Math.max(window.visualViewport.width, window.innerWidth);
-		windowHeight = Math.max(
-			window.visualViewport.height,
-			window.innerHeight
-		);
-		window.addEventListener("resize", () => {
-			windowHeight = Math.max(
-				window.visualViewport.height,
-				window.innerHeight
-			);
-			windowWidth = Math.max(
-				window.visualViewport.width,
-				window.innerWidth
-			);
-			if (windowWidth > 750) {
-				Object.assign(
-					document?.getElementById?.("progress")?.style || {},
-					{
-						display: "",
-						zIndex: "",
-					}
-				);
-			}
-		});
-	});
 
 	window.setShouldGoBack = (_shouldGoBack) => {
 		if (!_shouldGoBack) willExit = false;
@@ -1035,6 +977,13 @@
 			})
 		) {
 			$listIsUpdating = true;
+			if (!$gridFullView) {
+				if ($android || !matchMedia("(hover:hover)").matches) {
+					document.documentElement.style.overflow = "hidden";
+					document.documentElement.style.overflow = "";
+				}
+				window.scrollTo({ top: -9999, behavior: "smooth" });
+			}
 			if ($animeLoaderWorker) {
 				$animeLoaderWorker.terminate();
 				$animeLoaderWorker = null;
@@ -1091,26 +1040,6 @@
 		}
 	});
 
-	let customFilNavTimeout;
-	customFilNavIsShown.subscribe(() => {
-		clearTimeout(customFilNavTimeout);
-		if (windowWidth <= 750) {
-			Object.assign(document?.getElementById?.("progress")?.style || {}, {
-				display: "none",
-				zIndex: "991",
-			});
-			customFilNavTimeout = setTimeout(() => {
-				Object.assign(
-					document?.getElementById?.("progress")?.style || {},
-					{
-						display: "",
-						zIndex: "",
-					}
-				);
-			}, 300);
-		}
-	});
-
 	let changeStatusBarColorTimeout;
 	$: {
 		if ($android) {
@@ -1131,6 +1060,54 @@
 			} catch (e) {}
 		}
 	}
+
+	onMount(() => {
+		usernameInputEl = document.getElementById("usernameInput");
+		animeGridEl = document.getElementById("anime-grid");
+		animeGridEl?.addEventListener(
+			"scroll",
+			() => {
+				updateIconIsManual =
+					animeGridEl?.getBoundingClientRect?.()?.top < 0;
+				if (animeGridEl.scrollLeft > 500 && !willExit)
+					window.setShouldGoBack(false);
+				if (!$gridFullView) return;
+				runIsScrolling.update((e) => !e);
+			},
+			{ passive: true }
+		);
+		document.getElementById("popup-container").addEventListener(
+			"scroll",
+			() => {
+				runIsScrolling.update((e) => !e);
+			},
+			{ passive: true }
+		);
+		windowWidth = Math.max(window.visualViewport.width, window.innerWidth);
+		windowHeight = Math.max(
+			window.visualViewport.height,
+			window.innerHeight
+		);
+		window.addEventListener("resize", () => {
+			windowHeight = Math.max(
+				window.visualViewport.height,
+				window.innerHeight
+			);
+			windowWidth = Math.max(
+				window.visualViewport.width,
+				window.innerWidth
+			);
+			if (windowWidth > 750) {
+				Object.assign(
+					document?.getElementById?.("progress")?.style || {},
+					{
+						display: "",
+						zIndex: "",
+					}
+				);
+			}
+		});
+	});
 </script>
 
 <main
@@ -1145,11 +1122,7 @@
 			}}
 			id="progress"
 			class={"progress" +
-				($customFilNavIsShown ? " has-custom-filter-nav" : "") +
-				(isBelowAbsoluteProgress ? " is-below-absolute-progress" : "")}
-			style:--top={$customFilNavIsShown || $popupVisible || $menuVisible
-				? "46px"
-				: "0px"}
+				(isBelowNav ? " is-below-absolute-progress" : "")}
 			style:--progress={"-" + (100 - _progress) + "%"}
 		/>
 	{/if}
@@ -1176,10 +1149,14 @@
 		confirmLabel={_confirmLabel}
 		cancelLabel={_cancelLabel}
 	/>
-	{#if $listUpdateAvailable}
+	{#if $listUpdateAvailable && updateIconIsManual}
 		<!-- svelte-ignore a11y-no-noninteractive-tabindex -->
 		<div
-			class="list-update-container"
+			class={"list-update-container" +
+				($customFilterVisible ? " custom-filter-visible" : "") +
+				($customFilterFloatingIconVisible
+					? " custom-filter-floating-visible"
+					: "")}
 			tabindex="0"
 			on:click={updateList}
 			on:keydown={(e) => e.key === "Enter" && updateList(e)}
@@ -1234,17 +1211,18 @@
 	.list-update-container {
 		animation: fadeIn 0.2s ease;
 		position: fixed;
-		bottom: 3em;
+		top: unset;
+		bottom: 4.5em;
 		right: 3em;
 		display: flex;
 		justify-content: center;
 		align-items: center;
 		gap: 5px;
-		background-color: rgb(21, 31, 46);
+		background-color: rgba(102, 102, 102, 0.6);
 		border-radius: 6px;
 		cursor: pointer;
 		user-select: none;
-		min-width: 44px;
+		min-width: 60px;
 		min-height: 40px;
 		padding: 8px;
 		transform: translateZ(0);
@@ -1254,6 +1232,15 @@
 		-o-transform: translateZ(0);
 		box-shadow: 0 14px 28px rgba(0, 0, 0, 0.25),
 			0 10px 10px rgba(0, 0, 0, 0.22);
+	}
+	.list-update-container.custom-filter-visible {
+		bottom: 6em !important;
+		top: unset !important;
+	}
+	.list-update-container.custom-filter-floating-visible {
+		bottom: unset !important;
+		top: 3em !important;
+		right: 3em !important;
 	}
 	.list-update-icon {
 		height: 1.5em;
@@ -1277,17 +1264,11 @@
 			top: 0px !important;
 			z-index: 1003 !important;
 		}
-		.progress.has-custom-filter-nav,
+
 		:global(#main.full-screen-popup) > .progress {
-			--top: -9999px;
 			height: 1px !important;
 			top: var(--top) !important;
 			z-index: 1000 !important;
-		}
-
-		:global(#main:not(.full-screen-popup))
-			> .progress.has-custom-filter-nav {
-			z-index: 993 !important;
 		}
 
 		.home {
@@ -1297,15 +1278,15 @@
 
 	@media screen and (max-width: 425px) {
 		.list-update-container {
-			min-height: 44px !important;
+			min-height: 60px !important;
 		}
 		.list-update-container {
 			border-radius: 50%;
 			padding: 0px;
 		}
 		.list-update-icon {
-			height: 2em !important;
-			width: 2em !important;
+			height: 3em !important;
+			width: 3em !important;
 		}
 		.list-update-label {
 			display: none;

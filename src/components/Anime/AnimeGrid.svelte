@@ -23,6 +23,8 @@
         earlisetReleaseDate,
         listUpdateAvailable,
         showFilterOptions,
+        customFilterVisible,
+        customFilterFloatingIconVisible,
     } from "../../js/globalValues.js";
     import {
         addClass,
@@ -322,17 +324,13 @@
     let isWholeGridSeen,
         isOnVeryLeftOfAnimeGrid = true;
     let isOnVeryLeftOfAnimeGridTimeout;
-    let checkedOriginalSizeForGridView =
-        windowWidth > 750 && windowHeight > 695;
     $: {
-        isFullViewed =
-            $gridFullView ??
-            getLocalStorage("gridFullView") ??
-            (!$android && checkedOriginalSizeForGridView);
+        isFullViewed = $gridFullView ?? getLocalStorage("gridFullView") ?? true;
 
         isWholeGridSeen =
             isFullViewed &&
-            windowHeight > animeGridEl?.getBoundingClientRect?.()?.bottom + 10;
+            windowHeight >
+                animeGridEl?.getBoundingClientRect?.()?.bottom + 10 + 48;
 
         clearTimeout(isOnVeryLeftOfAnimeGridTimeout);
         if (isFullViewed && animeGridEl?.scrollLeft < 1) {
@@ -356,8 +354,8 @@
             isWholeGridSeen =
                 isFullViewed &&
                 windowHeight >
-                    animeGridEl?.getBoundingClientRect?.()?.bottom + 10;
-            if (document.documentElement.scrollTop > 500) {
+                    animeGridEl?.getBoundingClientRect?.()?.bottom + 10 + 48;
+            if (animeGridEl?.getBoundingClientRect?.()?.top < 0) {
                 belowGrid = true;
             } else {
                 belowGrid = false;
@@ -373,7 +371,7 @@
             isWholeGridSeen =
                 isFullViewed &&
                 windowHeight >
-                    animeGridEl?.getBoundingClientRect?.()?.bottom + 10;
+                    animeGridEl?.getBoundingClientRect?.()?.bottom + 10 + 48;
         }, 16);
     });
 
@@ -382,10 +380,7 @@
             animeGridEl.style.overflow = "hidden";
             animeGridEl.style.overflow = "";
             animeGridEl?.children?.[0]?.scrollIntoView?.({
-                container: animeGridEl,
                 behavior: "smooth",
-                block: "nearest",
-                inline: "start",
             });
         } else {
             if ($android || !matchMedia("(hover:hover)").matches) {
@@ -614,7 +609,11 @@
         <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
         <div
             class={"go-back-grid" +
-                (shouldShowGoBackInFullView ? " fullView" : "")}
+                (shouldShowGoBackInFullView ? " fullView" : "") +
+                ($customFilterVisible ? " custom-filter-visible" : "") +
+                ($customFilterFloatingIconVisible
+                    ? " custom-filter-floating-visible"
+                    : "")}
             tabindex="0"
             on:click={goBackGrid}
             on:keydown={(e) => e.key === "Enter" && goBackGrid(e)}
@@ -648,6 +647,7 @@
 
     main.fullView {
         padding: 12px 0;
+        margin-bottom: 48px;
     }
 
     .skeleton {
@@ -871,24 +871,10 @@
         width: 1em;
     }
 
-    .go-back-grid.fullView {
-        position: absolute !important;
-        right: unset !important;
-        bottom: unset !important;
-        top: 50% !important;
-        left: 8px !important;
-        transform: translateY(-50%) translateZ(0) !important;
-        -webkit-transform: translateY(-50%) translateZ(0) !important;
-        -ms-transform: translateY(-50%) translateZ(0) !important;
-        -moz-transform: translateY(-50%) translateZ(0) !important;
-        -o-transform: translateY(-50%) translateZ(0) !important;
-    }
-
     .go-back-grid {
         position: fixed !important;
         top: unset !important;
-        left: unset !important;
-        bottom: 3em !important;
+        bottom: 4.5em !important;
         right: 3em !important;
         transform: translateZ(0) !important;
         -webkit-transform: translateZ(0) !important;
@@ -900,24 +886,54 @@
         justify-content: center;
         align-items: center;
         gap: 6px;
-        background-color: rgb(21, 31, 46);
+        background-color: rgba(102, 102, 102, 0.6);
         cursor: pointer;
         border-radius: 50%;
-        width: 44px;
-        height: 44px;
+        width: 60px;
+        height: 60px;
         box-shadow: 0 14px 28px rgba(0, 0, 0, 0.25),
             0 10px 10px rgba(0, 0, 0, 0.22);
     }
 
+    .go-back-grid.custom-filter-visible {
+        top: unset !important;
+        bottom: 6em !important;
+    }
+
+    .go-back-grid.custom-filter-floating-visible {
+        bottom: unset !important;
+        top: 3em !important;
+        right: 3em !important;
+    }
+
+    .go-back-grid.fullView {
+        position: absolute !important;
+        right: unset !important;
+        bottom: unset !important;
+        top: 50% !important;
+        left: 8px !important;
+        transform: translateY(-100%) translateZ(0) !important;
+        -webkit-transform: translateY(-100%) translateZ(0) !important;
+        -ms-transform: translateY(-100%) translateZ(0) !important;
+        -moz-transform: translateY(-100%) translateZ(0) !important;
+        -o-transform: translateY(-100%) translateZ(0) !important;
+        width: 44px !important;
+        height: 44px !important;
+    }
+
     @media screen and (max-width: 425px) {
-        .go-back-grid {
+        .go-back-grid.fullView {
             left: 0;
         }
     }
 
+    .go-back-grid.fullView svg {
+        width: 2em !important;
+        height: 2em !important;
+    }
     .go-back-grid svg {
-        width: 2em;
-        height: 2em;
+        width: 3em;
+        height: 3em;
     }
 
     .empty {

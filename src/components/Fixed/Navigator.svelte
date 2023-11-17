@@ -235,20 +235,14 @@
                 popupContainer.style.overflow = "hidden";
                 popupContainer.style.overflow = "";
                 popupContainer?.children?.[0]?.scrollIntoView?.({
-                    container: popupContainer,
                     behavior: "smooth",
-                    block: "start",
-                    inline: "nearest",
                 });
             } else {
                 if ($gridFullView) {
                     animeGridEl.style.overflow = "hidden";
                     animeGridEl.style.overflow = "";
                     animeGridEl?.children?.[0]?.scrollIntoView?.({
-                        container: animeGridEl,
                         behavior: "smooth",
-                        block: "nearest",
-                        inline: "start",
                     });
                 } else {
                     document.documentElement.style.overflow = "hidden";
@@ -300,7 +294,7 @@
 </script>
 
 <div
-    class="nav-container"
+    class={"nav-container" + ($menuVisible ? " menu-visible" : "")}
     on:keydown={(e) => e.key === "Enter" && handleMenuVisibility(e)}
     on:click={handleMenuVisibility}
 >
@@ -392,22 +386,23 @@
     ::-ms-input-placeholder {
         color: white !important;
     }
-    :global(#main.full-screen-popup) > .nav-container {
+    .nav-container.menu-visible {
+        z-index: 993 !important;
         position: fixed !important;
+        transform: translateZ(0);
+        -webkit-transform: translateZ(0);
+        -ms-transform: translateZ(0);
+        -moz-transform: translateZ(0);
+        -o-transform: translateZ(0);
     }
     .nav-container {
-        z-index: 993;
+        z-index: 0;
         position: absolute;
         top: 0;
         width: 100%;
         height: 48px;
         background-color: #0b1622;
         color: white;
-        transform: translateZ(0);
-        -webkit-transform: translateZ(0);
-        -ms-transform: translateZ(0);
-        -moz-transform: translateZ(0);
-        -o-transform: translateZ(0);
     }
     .nav {
         display: grid;
@@ -540,8 +535,16 @@
         text-transform: none;
     }
     @media screen and (max-width: 750px) {
-        .nav-container {
+        :global(#main.full-screen-popup) > .nav-container {
+            position: fixed !important;
+            transform: translateZ(0);
+            -webkit-transform: translateZ(0);
+            -ms-transform: translateZ(0);
+            -moz-transform: translateZ(0);
+            -o-transform: translateZ(0);
             z-index: 999 !important;
+        }
+        .nav-container {
             border-bottom: 1px solid rgb(35 45 65) !important;
         }
         .nav {

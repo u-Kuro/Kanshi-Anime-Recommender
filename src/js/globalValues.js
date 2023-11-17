@@ -3,7 +3,6 @@ import { getLocalStorage } from "../js/others/helper.js"
 
 const appID = writable(null)
 const android = writable(null)
-const mobileKeyIsUp = writable(null)
 const inApp = writable(true)
 const progress = writable(0)
 // const anilistAccessToken = writable(null)
@@ -63,10 +62,11 @@ const isScrolling = writable(null)
 const scrollingTimeout = writable(null)
 const asyncAnimeReloaded = writable(null)
 const isFullViewed = writable(null)
-const customFilNavIsShown = writable(null)
 const showFilterOptions = writable(null)
 const dropdownIsVisible = writable(null)
 const confirmIsVisible = writable(null)
+const customFilterVisible = writable(null)
+const customFilterFloatingIconVisible = writable(null)
 // Reactive Functions
 const runUpdate = writable(null)
 const runExport = writable(null)
@@ -81,7 +81,6 @@ export {
     appID,
     android,
     inApp,
-    mobileKeyIsUp,
     hasWheel,
     progress,
     // anilistAccessToken,
@@ -133,10 +132,11 @@ export {
     scrollingTimeout,
     asyncAnimeReloaded,
     isFullViewed,
-    customFilNavIsShown,
     showFilterOptions,
     dropdownIsVisible,
     confirmIsVisible,
+    customFilterVisible,
+    customFilterFloatingIconVisible,
     // Reactive Functions
     runUpdate,
     runExport,
