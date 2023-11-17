@@ -1336,63 +1336,98 @@
                     text: `Do you want to change the custom filter name to "${customFilterName}"`,
                 })
             ) {
-                editCustomFilterName = false;
-                $activeTagFilters[customFilterName] = JSON.parse(
-                    JSON.stringify($activeTagFilters?.[$selectedCustomFilter])
-                );
-                previousCustomFilterName = customFilterName;
-                $activeTagFilters = $activeTagFilters;
-                delete $activeTagFilters[$selectedCustomFilter];
-                $selectedCustomFilter = customFilterName;
-                await saveJSON($activeTagFilters, "activeTagFilters");
-                await saveJSON($selectedCustomFilter, "selectedCustomFilter");
+                if (
+                    customFilterName &&
+                    $selectedCustomFilter !== customFilterName
+                ) {
+                    editCustomFilterName = false;
+                    previousCustomFilterName = $selectedCustomFilter;
+                    let savedCustomFilterName = customFilterName || ("Custom Filter " +(new Date).getTime())
+                    $activeTagFilters[savedCustomFilterName] = JSON.parse(
+                        JSON.stringify(
+                            $activeTagFilters?.[previousCustomFilterName]
+                        )
+                    );
+                    delete $activeTagFilters?.[previousCustomFilterName];
+                    $selectedCustomFilter = savedCustomFilterName;
+                    $activeTagFilters = $activeTagFilters;
+                    await saveJSON($activeTagFilters, "activeTagFilters");
+                    await saveJSON(
+                        $selectedCustomFilter,
+                        "selectedCustomFilter"
+                    );
+                }
             }
         }
     }
     async function addCustomFilter() {
-        if (customFilterName && $selectedCustomFilter !== customFilterName) {
+        if (
+            customFilterName &&
+            $activeTagFilters &&
+            !$activeTagFilters?.[customFilterName]
+        ) {
             if (
                 await $confirmPromise({
                     title: "Add custom filter",
                     text: `Do you want to add the custom filter "${customFilterName}"`,
                 })
             ) {
-                editCustomFilterName = false;
-                $activeTagFilters[customFilterName] = JSON.parse(
-                    JSON.stringify($activeTagFilters?.[$selectedCustomFilter])
-                );
-                $selectedCustomFilter = customFilterName;
-                $activeTagFilters = $activeTagFilters;
-                await saveJSON($activeTagFilters, "activeTagFilters");
-                await saveJSON($selectedCustomFilter, "selectedCustomFilter");
+                if (
+                    customFilterName &&
+                    $activeTagFilters &&
+                    !$activeTagFilters?.[customFilterName]
+                ) {
+                    editCustomFilterName = false;
+                    let previousCustomFilterName = $selectedCustomFilter;
+                    let addedCustomFilterName = customFilterName || ("Custom Filter " +(new Date).getTime())
+                    $activeTagFilters[addedCustomFilterName] = JSON.parse(
+                        JSON.stringify(
+                            $activeTagFilters?.[previousCustomFilterName]
+                        )
+                    );
+                    $selectedCustomFilter = addedCustomFilterName;
+                    $activeTagFilters = $activeTagFilters;
+                    await saveJSON($activeTagFilters, "activeTagFilters");
+                    await saveJSON(
+                        $selectedCustomFilter,
+                        "selectedCustomFilter"
+                    );
+                }
             }
         }
     }
 
     async function removeCustomFilter() {
-        let customFilterCount = Object.keys($activeTagFilters || {}).length;
-        if (customFilterCount > 1) {
+        if (
+            $selectedCustomFilter &&
+            $activeTagFilters &&
+            $activeTagFilters?.[$selectedCustomFilter] &&
+            Object.keys($activeTagFilters || {}).length > 1
+        ) {
             if (
                 await $confirmPromise({
                     title: "Delete custom filter",
                     text: `Do you want to delete the custom filter "${$selectedCustomFilter}"`,
                 })
             ) {
-                $loadingFilterOptions = true;
-                let newSelectedCustomFilterName;
-                for (let key in $activeTagFilters) {
-                    if (key !== $selectedCustomFilter) {
-                        newSelectedCustomFilterName = key;
-                        break;
-                    }
-                }
                 if (
-                    $activeTagFilters[$selectedCustomFilter] &&
-                    newSelectedCustomFilterName
+                    $selectedCustomFilter &&
+                    $activeTagFilters &&
+                    $activeTagFilters?.[$selectedCustomFilter] &&
+                    Object.keys($activeTagFilters || {}).length > 1
                 ) {
-                    delete $activeTagFilters[$selectedCustomFilter];
+                    $loadingFilterOptions = true;
+                    editCustomFilterName = false;
+                    let newCustomFilterName;
+                    for (let key in $activeTagFilters) {
+                        if (key !== $selectedCustomFilter) {
+                            newCustomFilterName = key;
+                            break;
+                        }
+                    }
+                    delete $activeTagFilters?.[$selectedCustomFilter];
                     $activeTagFilters = $activeTagFilters;
-                    $selectedCustomFilter = newSelectedCustomFilterName;
+                    $selectedCustomFilter = newCustomFilterName;
                 }
             }
         } else {
@@ -1520,8 +1555,10 @@
         style:--save-icon={!$initData &&
         $showFilterOptions &&
         editCustomFilterName &&
+        $selectedCustomFilter &&
         customFilterName &&
-        $selectedCustomFilter !== customFilterName
+        $activeTagFilters &&
+        !$activeTagFilters?.[customFilterName]
             ? "2.5em"
             : ""}
         on:keydown={(e) => e.key === "Enter" && handleCustomFilterPopup(e)}
@@ -1596,16 +1633,30 @@
             </div>
         {/if}
         {#if $showFilterOptions && !$initData}
-            {#if editCustomFilterName && customFilterName && $selectedCustomFilter !== customFilterName}
+            {#if editCustomFilterName && customFilterName && $selectedCustomFilter && $activeTagFilters && !$activeTagFilters?.[customFilterName]}
                 <div class="custom-filter-icon-wrap">
                     <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                     <svg
                         class="save-custom-name"
                         tabindex={editCustomFilterName ? "0" : "-1"}
                         viewBox="0 0 448 512"
-                        on:click={saveCustomFilterName}
+                        on:click={()=> {
+                            if(
+                                !$selectedCustomFilter ||
+                                !customFilterName ||
+                                !$activeTagFilters ||
+                                $activeTagFilters?.[customFilterName]
+                            ) return
+                            saveCustomFilterName()
+                        }}
                         on:keydown={(e) => {
                             if (e.key !== "Enter") return;
+                            if(
+                                !$selectedCustomFilter ||
+                                !customFilterName ||
+                                !$activeTagFilters ||
+                                $activeTagFilters?.[customFilterName]
+                            ) return
                             saveCustomFilterName(e);
                         }}
                     >
@@ -1665,7 +1716,8 @@
         class={"custom-filter-settings-wrap" +
             ($showFilterOptions ? "" : " disable-interaction")}
         style:--add-icon-size={customFilterName &&
-        $selectedCustomFilter !== customFilterName
+        $activeTagFilters &&
+        !$activeTagFilters?.[customFilterName]
             ? "2.5em"
             : ""}
         style:--remove-icon-size={$customFilters?.length > 1 ? "2.5em" : ""}
@@ -1779,7 +1831,7 @@
             </div>
         {/if}
         <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
-        {#if $showFilterOptions && customFilterName && $selectedCustomFilter !== customFilterName}
+        {#if $showFilterOptions && customFilterName && $activeTagFilters && !$activeTagFilters?.[customFilterName]}
             <div
                 tabindex="0"
                 class="add-custom-filter"
@@ -1787,7 +1839,8 @@
                 on:click={(e) => {
                     if (
                         !customFilterName ||
-                        $selectedCustomFilter === customFilterName
+                        !$activeTagFilters ||
+                        $activeTagFilters?.[customFilterName]
                     )
                         return;
                     addCustomFilter(e);
@@ -1796,7 +1849,8 @@
                     if (
                         e.key !== "Enter" ||
                         !customFilterName ||
-                        $selectedCustomFilter === customFilterName
+                        !$activeTagFilters ||
+                        $activeTagFilters?.[customFilterName]
                     )
                         return;
                     addCustomFilter(e);
