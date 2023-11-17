@@ -1273,6 +1273,7 @@
 			position: fixed;
 			height: 0.2em !important;
 			top: 0px !important;
+			z-index: 1003 !important;
 		}
 		.progress.has-custom-filter-nav,
 		:global(#main.full-screen-popup) > .progress {

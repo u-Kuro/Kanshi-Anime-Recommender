@@ -2835,7 +2835,7 @@
         -moz-transform: translateZ(0);
         -o-transform: translateZ(0);
         position: fixed;
-        z-index: 999;
+        z-index: 1001;
         left: 0;
         top: 0;
         width: 100%;
