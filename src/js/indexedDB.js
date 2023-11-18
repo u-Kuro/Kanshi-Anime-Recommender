@@ -4,7 +4,7 @@ async function IDBinit() {
     return await new Promise((resolve) => {
         let request = indexedDB.open("Kanshi.Anime.Recommendations.Anilist.W~uPtWCq=vG$TR:Zl^#t<vdS]I~N70", 1)
         request.onerror = (error) => {
-            alert("Your browser is not supported, to continue please update to recent version, use non private/incognito, or use another browser.")
+            alert("Your browser is not supported, to continue please update to recent app version, use non private/incognito, or use another browser.")
             console.error(error)
         }
         request.onsuccess = (event) => {

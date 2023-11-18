@@ -15,7 +15,6 @@
         runUpdate,
         runExport,
         confirmPromise,
-        initData,
         importantUpdate,
         importantLoad,
         popupVisible,
@@ -28,12 +27,11 @@
     let importFileInput;
 
     async function importData() {
-        if ($initData) return pleaseWaitAlert();
         if (!(importFileInput instanceof Element))
             return ($dataStatus = "Something went wrong");
         if (
             await $confirmPromise({
-                text: "Are you sure you want to import your Data?",
+                text: "Do you want to import your data?",
             })
         ) {
             importFileInput.click();
@@ -46,11 +44,12 @@
         let importedFile = importFileInput.files?.[0];
         if (importedFile) {
             let filename = importedFile.name;
+            let filenameToShow = filename
+                ? `named <span style="color:#00cbf9;">${filename}</span> `
+                : "";
             if (
                 await $confirmPromise(
-                    `File ${
-                        filename ? "named [" + filename + "] " : ""
-                    }has been detected, do you want to continue the import?`
+                    `File ${filenameToShow}has been detected, do you want to import the file?`
                 )
             ) {
                 await saveJSON(true, "shouldProcessRecommendation");
@@ -95,28 +94,22 @@
     };
 
     async function exportData() {
-        if ($initData) return pleaseWaitAlert();
         if (!$exportPathIsAvailable && $android) return handleExportFolder();
-        if (
-            await $confirmPromise("Are you sure you want to export your data?")
-        ) {
+        if (await $confirmPromise("Do you want to export your data?")) {
             $menuVisible = false;
             runExport.update((e) => !e);
         }
     }
 
     async function updateList() {
-        if ($initData) return pleaseWaitAlert();
-        else if (!navigator.onLine) {
+        if (!navigator.onLine) {
             return $confirmPromise({
                 isAlert: true,
                 title: "Currently offline",
                 text: "It seems that you're currently offline and unable to update.",
             });
         }
-        if (
-            await $confirmPromise("Are you sure you want to update your list?")
-        ) {
+        if (await $confirmPromise("Do you want to update your list?")) {
             $menuVisible = false;
             runUpdate.update((e) => !e);
         }
@@ -125,7 +118,7 @@
     async function handleUpdateEveryHour() {
         if (
             await $confirmPromise(
-                `Are you sure you want to ${
+                `Do you want to ${
                     $autoUpdate ? "disable" : "enable"
                 } auto-update?`
             )
@@ -138,7 +131,7 @@
         if (!$exportPathIsAvailable && $android) return handleExportFolder();
         if (
             await $confirmPromise(
-                `Are you sure you want to ${
+                `Do you want to ${
                     $autoExport ? "disable" : "enable"
                 } auto-export?`
             )
@@ -155,17 +148,16 @@
     }
 
     async function showAllHiddenEntries() {
-        if ($initData) return pleaseWaitAlert();
         if (jsonIsEmpty($hiddenEntries)) {
             // Alert No Hidden Entries
             $confirmPromise({
                 isAlert: true,
-                text: "There is currently no hidden entries.",
+                text: "There are currently no hidden entries.",
             });
             return;
         } else if (
             await $confirmPromise(
-                "Are you sure you want to show all hidden anime entries?"
+                "Do you want to show all your hidden anime entries?"
             )
         ) {
             if ($animeLoaderWorker) {
@@ -210,9 +202,7 @@
 
     async function anilistSignup() {
         if (
-            await $confirmPromise(
-                "Are you sure want to sign-up an anilist account?"
-            )
+            await $confirmPromise("Do you want to sign-up an AniList account?")
         ) {
             window.open("https://anilist.co/signup", "_blank");
         }
@@ -248,9 +238,7 @@
     }
 
     async function reload() {
-        if (
-            await $confirmPromise("Are you sure want to reload the resources?")
-        ) {
+        if (await $confirmPromise("Do you want to reload the app resources?")) {
             document.querySelectorAll("script")?.forEach((script) => {
                 if (
                     script.src &&
@@ -270,7 +258,7 @@
 
     async function refresh() {
         if (!$android) return;
-        if (await $confirmPromise("Are you sure want to refresh the app?")) {
+        if (await $confirmPromise("Do you want to refresh the app?")) {
             try {
                 JSBridge.refreshWeb();
             } catch (e) {}
@@ -279,19 +267,15 @@
 
     async function clearCache() {
         if (!$android) return;
-        if (await $confirmPromise("Are you sure want to clear the cache?")) {
+        if (
+            await $confirmPromise(
+                "Do you want to clear your cache to receive the latest application updates?"
+            )
+        ) {
             try {
                 JSBridge.clearCache();
             } catch (e) {}
         }
-    }
-
-    function pleaseWaitAlert() {
-        $confirmPromise({
-            isAlert: true,
-            title: "Initializing resources",
-            text: "Please wait a moment...",
-        });
     }
 </script>
 

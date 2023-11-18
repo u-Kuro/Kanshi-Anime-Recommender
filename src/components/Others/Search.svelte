@@ -240,7 +240,7 @@
         selectedFilterTypeElement = false;
     }
     function handleShowFilterTypes(event) {
-        if ($initData && ($filterOptions?.filterSelection?.length ?? 0) < 1) {
+        if ($initData || ($filterOptions?.filterSelection?.length ?? 0) < 1) {
             return pleaseWaitAlert();
         }
         let element = event.target;
@@ -1363,10 +1363,11 @@
     }
     async function saveCustomFilterName(event) {
         if (customFilterName && $selectedCustomFilter !== customFilterName) {
+            let customFilterNameToShow = `<span style="color:#00cbf9;">${customFilterName}</span>`;
             if (
                 await $confirmPromise({
-                    title: "Change custom filter name",
-                    text: `Do you want to change the custom filter name to "${customFilterName}"`,
+                    title: "Save custom filter",
+                    text: `Do you want to change the custom filter name to ${customFilterNameToShow}?`,
                 })
             ) {
                 if (
@@ -1401,10 +1402,11 @@
             $activeTagFilters &&
             !$activeTagFilters?.[customFilterName]
         ) {
+            let customFilterNameToShow = `<span style="color:#00cbf9;">${customFilterName}</span>`;
             if (
                 await $confirmPromise({
                     title: "Add custom filter",
-                    text: `Do you want to add the custom filter "${customFilterName}"`,
+                    text: `Do you want to add the custom filter named ${customFilterNameToShow}?`,
                 })
             ) {
                 if (
@@ -1441,10 +1443,11 @@
             $activeTagFilters?.[$selectedCustomFilter] &&
             Object.keys($activeTagFilters || {}).length > 1
         ) {
+            let customFilterNameToShow = `<span style="color:#00cbf9;">${$selectedCustomFilter}</span>`;
             if (
                 await $confirmPromise({
                     title: "Delete custom filter",
-                    text: `Do you want to delete the custom filter "${$selectedCustomFilter}"`,
+                    text: `Do you want to delete the custom filter named ${customFilterNameToShow}?`,
                 })
             ) {
                 if (
@@ -2171,40 +2174,26 @@
                                 >
                                     {Checkbox.filName}
                                 </label>
-                                {#if $initData}
-                                    <input
-                                        tabindex={$showFilterOptions
-                                            ? "0"
-                                            : "-1"}
-                                        id={"Checkbox: " + Checkbox.filName}
-                                        type="checkbox"
-                                        class="checkbox"
-                                        on:change={(e) => {
-                                            e.target.checked = false;
-                                            pleaseWaitAlert();
-                                        }}
-                                        checked={Checkbox.isSelected}
-                                        disabled={!$showFilterOptions}
-                                    />
-                                {:else}
-                                    <input
-                                        tabindex={$showFilterOptions
-                                            ? "0"
-                                            : "-1"}
-                                        id={"Checkbox: " + Checkbox.filName}
-                                        type="checkbox"
-                                        class="checkbox"
-                                        on:change={(e) =>
+                                <input
+                                    tabindex={$showFilterOptions ? "0" : "-1"}
+                                    id={"Checkbox: " + Checkbox.filName}
+                                    type="checkbox"
+                                    class="checkbox"
+                                    on:change={async (e) => {
+                                        if ($initData) {
+                                            return pleaseWaitAlert();
+                                        } else {
                                             handleCheckboxChange(
                                                 e,
                                                 Checkbox.filName,
                                                 checkboxIdx,
                                                 filterSelection.filterSelectionName
-                                            )}
-                                        bind:checked={Checkbox.isSelected}
-                                        disabled={!$showFilterOptions}
-                                    />
-                                {/if}
+                                            );
+                                        }
+                                    }}
+                                    bind:checked={Checkbox.isSelected}
+                                    disabled={!$showFilterOptions}
+                                />
                                 <div class="checkbox-label">
                                     {Checkbox.filName || ""}
                                 </div>

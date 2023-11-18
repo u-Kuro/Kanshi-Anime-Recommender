@@ -301,7 +301,7 @@ const requestUserEntries = (_data) => {
                                 loadAnime.update((e) => !e)
                                 window.confirmPromise({
                                     isAlert: true,
-                                    text: "User is not found, you may want to try again"
+                                    text: "User was not found, please try again."
                                 })
                                 requestUserEntriesTerminateTimeout = setTimeout(() => {
                                     requestUserEntriesWorker?.terminate?.();
@@ -413,8 +413,8 @@ const exportUserData = (_data) => {
                     isExporting = false
                     window.confirmPromise?.({
                         isAlert: true,
-                        title: "Export Failed",
-                        text: "Data is not exported, please try again in a later time.",
+                        title: "Export failed",
+                        text: "Data was not exported, please try again.",
                     })
                     reject(error)
                 }
@@ -461,8 +461,8 @@ const importUserData = (_data) => {
                         loadAnime.update((e) => !e)
                         window.confirmPromise?.({
                             isAlert: true,
-                            title: "Import Failed",
-                            text: "File has not been imported, please ensure that file is in a supported format (e.g., .json)",
+                            title: "Import failed",
+                            text: "File was not imported, please ensure that file is in a supported format (e.g., .json).",
                         })
                         progress.set(100)
                         reject(data?.error || "Something went wrong")
@@ -507,8 +507,8 @@ const importUserData = (_data) => {
                     isCurrentlyImporting = false
                     window.confirmPromise?.({
                         isAlert: true,
-                        title: "Import Failed",
-                        text: "File has not been imported, please ensure that file is in a supported format (e.g., .json)",
+                        title: "Import failed",
+                        text: "File was not imported, please ensure that file is in a supported format (e.g., .json).",
                     })
                     loadAnime.update((e) => !e)
                     progress.set(100)
@@ -742,14 +742,14 @@ function alertError() {
     if (get(android)) {
         window.confirmPromise?.({
             isAlert: true,
-            title: "Something Went Wrong",
+            title: "Something went wrong",
             text: "App may not be working properly, you may want to restart and make sure you're running the latest version.",
         })
     } else {
         window.confirmPromise?.({
             isAlert: true,
-            title: "Something Went Wrong",
-            text: "App may not be working properly, you may want to refresh the page, or if not clear the cookies but backup your data first.",
+            title: "Something went wrong",
+            text: "App may not be working properly, you may want to refresh the page, or if not clear your cookies but backup your data first.",
         })
     }
 }

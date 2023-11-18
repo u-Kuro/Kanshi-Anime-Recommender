@@ -41,10 +41,20 @@
         );
     });
 
-    async function updateUsername(event) {
+    let awaitForInit;
+    initData.subscribe((val) => {
+        if (val === false) {
+            awaitForInit?.resolve?.();
+        }
+    });
+    async function updateUsername(event, isReconfirm = false) {
         if ($initData) {
-            await pleaseWaitAlert();
-            focusInputUsernameEl();
+            pleaseWaitAlert();
+            new Promise((resolve) => {
+                awaitForInit = { resolve };
+            }).then(() => {
+                updateUsername(event, true);
+            });
             return;
         }
         let element = event.target;
@@ -65,10 +75,13 @@
                     });
                 }
                 (async () => {
+                    let usernameToShow = `<span style="color:#00cbf9;">${typedUsername}</span>`;
                     if ($username) {
                         if (
                             await $confirmPromise(
-                                `Currently connected to ${$username}, do you want to change account?`
+                                `Do you${
+                                    isReconfirm ? " still" : ""
+                                } want to connect to ${usernameToShow}?`
                             )
                         ) {
                             $menuVisible = false;
@@ -109,7 +122,9 @@
                     } else {
                         if (
                             await $confirmPromise(
-                                `Are you sure you want to connect to ${typedUsername}?`
+                                `Do you${
+                                    isReconfirm ? " still" : ""
+                                } want to connect to ${usernameToShow}?`
                             )
                         ) {
                             $menuVisible = false;

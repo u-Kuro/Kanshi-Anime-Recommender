@@ -115,7 +115,7 @@
         if (isHidden) {
             if (
                 await $confirmPromise(
-                    `Are you sure you want to show ${title} in your recommendation list?`
+                    `Do you want to unhide ${title} in your recommendation list?`
                 )
             ) {
                 $checkAnimeLoaderStatus()
@@ -134,14 +134,14 @@
                         $confirmPromise({
                             isAlert: true,
                             title: "Something went wrong",
-                            text: "Showing anime has failed, please try again.",
+                            text: "Failed to unhide the anime, please try again.",
                         });
                     });
             }
         } else {
             if (
                 await $confirmPromise(
-                    `Are you sure you want to hide ${title} in your recommendation list?`
+                    `Do you want to hide ${title} in your recommendation list?`
                 )
             ) {
                 $checkAnimeLoaderStatus()
@@ -159,7 +159,7 @@
                         $confirmPromise({
                             isAlert: true,
                             title: "Something went wrong",
-                            text: "Hiding anime has failed, please try again.",
+                            text: "Failed to hide the anime, please try again.",
                         });
                     });
             }
@@ -180,8 +180,8 @@
         if (typeof animeTitle !== "string" || animeTitle === "") return;
         if (
             await $confirmPromise({
-                title: "See Related Videos",
-                text: "Are you sure you want see more related videos in YouTube?",
+                title: "See related videos",
+                text: "Do you want to see more related videos in YouTube?",
             })
         ) {
             handleMoreVideos(animeTitle);
@@ -836,8 +836,8 @@
     async function updateList(event) {
         if (
             await $confirmPromise({
-                title: "List update is available",
-                text: "Are you sure you want to refresh the list?",
+                title: "List has an update",
+                text: "Do you want to refresh your list?",
             })
         ) {
             $listIsUpdating = true;

@@ -115,7 +115,7 @@
         if (isHidden) {
             if (
                 await $confirmPromise(
-                    `Are you sure you want to show ${title} in your recommendation list?`
+                    `Do you want to unhide ${title} in your recommendation list?`
                 )
             ) {
                 $checkAnimeLoaderStatus()
@@ -134,7 +134,7 @@
                         $confirmPromise({
                             isAlert: true,
                             title: "Something went wrong",
-                            text: "Showing anime has failed, please try again.",
+                            text: "Failed to unhide the anime, please try again.",
                         });
                     });
                 $animeOptionVisible = false;
@@ -142,7 +142,7 @@
         } else {
             if (
                 await $confirmPromise(
-                    `Are you sure you want to hide ${title} in your recommendation list?`
+                    `Do you want to hide ${title} in your recommendation list?`
                 )
             ) {
                 $checkAnimeLoaderStatus()
@@ -160,7 +160,7 @@
                         $confirmPromise({
                             isAlert: true,
                             title: "Something went wrong",
-                            text: "Hiding anime has failed, please try again.",
+                            text: "Failed to hide the anime, please try again.",
                         });
                     });
                 $animeOptionVisible = false;

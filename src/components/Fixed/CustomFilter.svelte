@@ -97,9 +97,7 @@
     }
 
     async function selectCustomFilter(selectedCustomFilterName) {
-        if ($initData) {
-            return pleaseWaitAlert();
-        }
+        if ($initData) return pleaseWaitAlert();
         goBackGrid(selectedCustomFilterName);
         if (selectedCustomFilterName === $selectedCustomFilter) {
             if ($listUpdateAvailable) {
@@ -175,6 +173,14 @@
         }
     }
 
+    async function pleaseWaitAlert() {
+        return await $confirmPromise({
+            isAlert: true,
+            title: "Initializing resources",
+            text: "Please wait a moment...",
+        });
+    }
+
     let lastScrollTop;
     window.addEventListener("scroll", () => {
         let scrollTop = document.documentElement.scrollTop;
@@ -198,14 +204,6 @@
         lastScrollTop = document.documentElement.scrollTop;
         popupContainer = document?.getElementById("popup-container");
     });
-
-    async function pleaseWaitAlert() {
-        return await $confirmPromise({
-            isAlert: true,
-            title: "Initializing resources",
-            text: "Please wait a moment...",
-        });
-    }
 </script>
 
 <div class={"custom-filters-nav" + ($initData ? " hide" : "")}>

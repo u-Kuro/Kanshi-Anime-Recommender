@@ -16,20 +16,25 @@
     let isRecentlyOpened = false,
         isRecentlyOpenedTimeout;
 
+    function isPleaseWaitAlert() {
+        return confirmTitle === "Initializing resources" && isAlert;
+    }
+
     initData.subscribe((val) => {
-        if (
-            val === false &&
-            confirmTitle === "Initializing resources" &&
-            isAlert
-        ) {
+        if (val === false && isPleaseWaitAlert()) {
             showConfirm = false;
+            dispatch("cancelled");
         }
     });
 
     function handleConfirm(e) {
         if (isRecentlyOpened && e.type !== "keydown") return;
         showConfirm = false;
-        dispatch("confirmed");
+        if ($initData) {
+            dispatch("cancelled");
+        } else {
+            dispatch("confirmed");
+        }
     }
 
     function handleCancel(e) {
@@ -47,7 +52,8 @@
             classList.contains("confirm-container")
         )
             return;
-        handleCancel(e);
+        showConfirm = false;
+        dispatch("cancelled");
     }
 
     afterUpdate(() => {
@@ -74,13 +80,17 @@
         <div class="confirm-wrapper">
             <div class="confirm-container" out:fade={{ duration: 200 }}>
                 <div class="confirm-info-container">
-                    <h2 class="confirm-title">{confirmTitle}</h2>
+                    <h2 class="confirm-title">
+                        {$initData ? "Initializing resources" : confirmTitle}
+                    </h2>
                     <h2 class="confirm-text">
-                        {@html confirmText}
+                        {@html $initData
+                            ? "Please wait a moment..."
+                            : confirmText}
                     </h2>
                 </div>
                 <div class="confirm-button-container">
-                    {#if !isAlert}
+                    {#if !isAlert && !$initData}
                         <button
                             class="button"
                             on:click={handleCancel}

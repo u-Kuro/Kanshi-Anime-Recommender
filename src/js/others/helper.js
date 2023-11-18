@@ -464,6 +464,14 @@ const makeArrayUnique = (arr) => {
   return uniqueArray;
 }
 
+const capitalize = (s) => {
+  if (typeof s === "string") {
+    return s.split(" ").map((e) => e.substring(0, 1).toUpperCase() + e.substring(1)).join(" ")
+  } else {
+    return s
+  }
+}
+
 const LocalStorageID = "Kanshi.Anime.Recommendations.Anilist.W~uPtWCq=vG$TR:Zl^#t<vdS]I~N70"
 const getLocalStorage = (key) => {
   let data;
@@ -475,11 +483,13 @@ const getLocalStorage = (key) => {
     return data ?? null;
   }
 }
+
 const setLocalStorage = (key, data) => {
   try {
     localStorage.setItem(LocalStorageID + key, data)
   } catch (ex) { }
 }
+
 const hasValidOrigin = (url) => {
   try {
     return (new URL(url)).origin !== 'null'
@@ -487,6 +497,7 @@ const hasValidOrigin = (url) => {
     return false
   }
 }
+
 const isMobile = () => {
   try {
     let check = false;
@@ -494,10 +505,12 @@ const isMobile = () => {
     return check;
   } catch (e) { }
 };
+
 export {
   setLocalStorage,
   getLocalStorage,
   makeArrayUnique,
+  capitalize,
   getMostVisibleElementFromArray,
   addClass,
   removeClass,

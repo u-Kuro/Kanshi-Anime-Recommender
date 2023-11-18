@@ -348,14 +348,14 @@
 				if ($android) {
 					$confirmPromise?.({
 						isAlert: true,
-						title: "Something Went Wrong",
+						title: "Something went wrong",
 						text: "App may not be working properly, you may want to restart and make sure you're running the latest version.",
 					});
 				} else {
 					$confirmPromise?.({
 						isAlert: true,
-						title: "Something Went Wrong",
-						text: "App may not be working properly, you may want to refresh the page, or if not clear the cookies but backup your data first.",
+						title: "Something went wrong",
+						text: "App may not be working properly, you may want to refresh the page, or if not clear your cookies but backup your data first.",
 					});
 				}
 				console.error(error);
@@ -932,8 +932,7 @@
 			_confirmText =
 				(typeof confirmValues === "string"
 					? confirmValues
-					: confirmValues?.text) ||
-				"Are you sure you want to continue";
+					: confirmValues?.text) || "Do you want to continue?";
 			_confirmLabel = confirmValues?.confirmLabel || "OK";
 			_cancelLabel = confirmValues?.cancelLabel || "CANCEL";
 			$confirmIsVisible = true;
@@ -1107,7 +1106,8 @@
 
 <main
 	id="main"
-	class={($popupVisible || $menuVisible ? " full-screen-popup" : "")+($android?" android":"")}
+	class={($popupVisible || $menuVisible ? " full-screen-popup" : "") +
+		($android ? " android" : "")}
 >
 	{#if _progress > 0 && _progress < 100}
 		<div
