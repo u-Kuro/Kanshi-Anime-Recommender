@@ -36,7 +36,6 @@
 		listIsUpdating,
 		isFullViewed,
 		confirmIsVisible,
-		customFilterVisible,
 		// Reactive Functions
 		runUpdate,
 		runExport,
@@ -52,7 +51,6 @@
 		progress,
 		popupIsGoingBack,
 		dropdownIsVisible,
-		customFilterFloatingIconVisible,
 		// anilistAccessToken,
 	} from "./js/globalValues.js";
 	import {
@@ -72,7 +70,10 @@
 	} from "./js/others/helper.js";
 
 	$android = isAndroid(); // Android/Browser Identifier
-	let windowWidth = Math.max(window.visualViewport.width, window.innerWidth);
+	let windowWidth = Math.max(
+		document?.documentElement?.getBoundingClientRect?.()?.width,
+		window.innerWidth
+	);
 	let windowHeight = Math.max(
 		window.visualViewport.height,
 		window.innerHeight
@@ -715,7 +716,10 @@
 			} else if (
 				usernameInputEl &&
 				usernameInputEl === document?.activeElement &&
-				Math.max(window.visualViewport.width, window.innerWidth) <= 750
+				Math.max(
+					document?.documentElement?.getBoundingClientRect?.()?.width,
+					window.innerWidth
+				) <= 750
 			) {
 				usernameInputEl?.focus?.();
 				usernameInputEl?.blur?.();
@@ -810,8 +814,10 @@
 	window.addEventListener(
 		"scroll",
 		() => {
-			updateIconIsManual =
-				animeGridEl?.getBoundingClientRect?.()?.top < 0;
+			let shouldUpdate = animeGridEl?.getBoundingClientRect?.()?.top > 0;
+			if ($listUpdateAvailable && shouldUpdate) {
+				updateList();
+			}
 			isBelowNav = document.documentElement.scrollTop > 47;
 			if (animeGridEl?.getBoundingClientRect?.()?.top < 0 && !willExit)
 				window.setShouldGoBack(false);
@@ -970,38 +976,24 @@
 	});
 
 	async function updateList() {
-		if (
-			await $confirmPromise({
-				title: "List update is available",
-				text: "Are you sure you want to refresh the list?",
-			})
-		) {
-			$listIsUpdating = true;
-			if (!$gridFullView) {
-				if ($android || !matchMedia("(hover:hover)").matches) {
-					document.documentElement.style.overflow = "hidden";
-					document.documentElement.style.overflow = "";
-				}
-				window.scrollTo({ top: -9999, behavior: "smooth" });
-			}
-			if ($animeLoaderWorker) {
-				$animeLoaderWorker.terminate();
-				$animeLoaderWorker = null;
-			}
-			animeLoader()
-				.then(async (data) => {
-					$animeLoaderWorker = data.animeLoaderWorker;
-					if (data?.isNew) {
-						$finalAnimeList = data.finalAnimeList;
-						$hiddenEntries = data.hiddenEntries;
-					}
-					$dataStatus = null;
-					return;
-				})
-				.catch((error) => {
-					throw error;
-				});
+		$listIsUpdating = true;
+		if ($animeLoaderWorker) {
+			$animeLoaderWorker.terminate();
+			$animeLoaderWorker = null;
 		}
+		animeLoader()
+			.then(async (data) => {
+				$animeLoaderWorker = data.animeLoaderWorker;
+				if (data?.isNew) {
+					$finalAnimeList = data.finalAnimeList;
+					$hiddenEntries = data.hiddenEntries;
+				}
+				$dataStatus = null;
+				return;
+			})
+			.catch((error) => {
+				throw error;
+			});
 	}
 
 	window.updateAppAlert = async () => {
@@ -1083,7 +1075,10 @@
 			},
 			{ passive: true }
 		);
-		windowWidth = Math.max(window.visualViewport.width, window.innerWidth);
+		windowWidth = Math.max(
+			document?.documentElement?.getBoundingClientRect?.()?.width,
+			window.innerWidth
+		);
 		windowHeight = Math.max(
 			window.visualViewport.height,
 			window.innerHeight
@@ -1094,7 +1089,7 @@
 				window.innerHeight
 			);
 			windowWidth = Math.max(
-				window.visualViewport.width,
+				document?.documentElement?.getBoundingClientRect?.()?.width,
 				window.innerWidth
 			);
 			if (windowWidth > 750) {
@@ -1112,7 +1107,7 @@
 
 <main
 	id="main"
-	class={$popupVisible || $menuVisible ? " full-screen-popup" : ""}
+	class={($popupVisible || $menuVisible ? " full-screen-popup" : "")+($android?" android":"")}
 >
 	{#if _progress > 0 && _progress < 100}
 		<div
@@ -1149,31 +1144,6 @@
 		confirmLabel={_confirmLabel}
 		cancelLabel={_cancelLabel}
 	/>
-	{#if $listUpdateAvailable && updateIconIsManual}
-		<!-- svelte-ignore a11y-no-noninteractive-tabindex -->
-		<div
-			class={"list-update-container" +
-				($customFilterVisible ? " custom-filter-visible" : "") +
-				($customFilterFloatingIconVisible
-					? " custom-filter-floating-visible"
-					: "")}
-			tabindex="0"
-			on:click={updateList}
-			on:keydown={(e) => e.key === "Enter" && updateList(e)}
-			out:fade={{ duration: 200 }}
-		>
-			<svg
-				class={"list-update-icon" + ($listIsUpdating ? " spin" : "")}
-				viewBox="0 0 512 512"
-			>
-				<!-- arrows rotate -->
-				<path
-					d="M105 203a160 160 0 0 1 264-60l17 17h-50a32 32 0 1 0 0 64h128c18 0 32-14 32-32V64a32 32 0 1 0-64 0v51l-18-17a224 224 0 0 0-369 83 32 32 0 0 0 60 22zm-66 86a32 32 0 0 0-23 31v128a32 32 0 1 0 64 0v-51l18 17a224 224 0 0 0 369-83 32 32 0 0 0-60-22 160 160 0 0 1-264 60l-17-17h50a32 32 0 1 0 0-64H48a39 39 0 0 0-9 1z"
-				/>
-			</svg>
-			<h3 class="list-update-label">List Update</h3>
-		</div>
-	{/if}
 </main>
 
 <style>
@@ -1181,6 +1151,14 @@
 		width: 100%;
 		min-height: calc(100vh - 48px);
 		overflow-x: clip;
+	}
+	main.android {
+		user-select: none !important;
+	}
+	@media screen and not (pointer: fine) {
+		main {
+			user-select: none !important;
+		}
 	}
 	.home {
 		height: calc(100% - 48px) !important;
@@ -1208,49 +1186,6 @@
 		-o-transform: translateX(var(--progress));
 		transition: transform 0.3s linear;
 	}
-	.list-update-container {
-		animation: fadeIn 0.2s ease;
-		position: fixed;
-		top: unset;
-		bottom: 4.5em;
-		right: 3em;
-		display: flex;
-		justify-content: center;
-		align-items: center;
-		gap: 5px;
-		background-color: rgba(102, 102, 102, 0.6);
-		border-radius: 6px;
-		cursor: pointer;
-		user-select: none;
-		min-width: 60px;
-		min-height: 40px;
-		padding: 8px;
-		transform: translateZ(0);
-		-webkit-transform: translateZ(0);
-		-ms-transform: translateZ(0);
-		-moz-transform: translateZ(0);
-		-o-transform: translateZ(0);
-		box-shadow: 0 14px 28px rgba(0, 0, 0, 0.25),
-			0 10px 10px rgba(0, 0, 0, 0.22);
-	}
-	.list-update-container.custom-filter-visible {
-		bottom: 6em !important;
-		top: unset !important;
-	}
-	.list-update-container.custom-filter-floating-visible {
-		bottom: unset !important;
-		top: 3em !important;
-		right: 3em !important;
-	}
-	.list-update-icon {
-		height: 1.5em;
-		width: 1.5em;
-		cursor: pointer;
-	}
-	.list-update-label {
-		font-size: 1.5rem;
-		cursor: pointer;
-	}
 	@media screen and (max-width: 750px) {
 		.progress {
 			position: absolute;
@@ -1273,23 +1208,6 @@
 
 		.home {
 			padding: 0 1em;
-		}
-	}
-
-	@media screen and (max-width: 425px) {
-		.list-update-container {
-			min-height: 60px !important;
-		}
-		.list-update-container {
-			border-radius: 50%;
-			padding: 0px;
-		}
-		.list-update-icon {
-			height: 3em !important;
-			width: 3em !important;
-		}
-		.list-update-label {
-			display: none;
 		}
 	}
 </style>

@@ -10,12 +10,21 @@
         showFilterOptions,
         dropdownIsVisible,
         popupVisible,
-        customFilterVisible,
+        listIsUpdating,
+        animeLoaderWorker,
+        finalAnimeList,
+        hiddenEntries,
+        dataStatus,
+        listUpdateAvailable,
     } from "../../js/globalValues.js";
-    import { onMount } from "svelte";
+    import { onMount, tick } from "svelte";
     import { getLocalStorage } from "../../js/others/helper.js";
+    import { animeLoader } from "../../js/workerUtils.js";
 
-    let windowWidth = Math.max(window.visualViewport.width, window.innerWidth);
+    let windowWidth = Math.max(
+        document?.documentElement?.getBoundingClientRect?.()?.width,
+        window.innerWidth
+    );
     let customFiltersNav;
     let animeGridEl;
     let popupContainer;
@@ -38,23 +47,112 @@
         }
     }
 
+    async function updateList() {
+        $listIsUpdating = true;
+        if ($animeLoaderWorker) {
+            $animeLoaderWorker.terminate();
+            $animeLoaderWorker = null;
+        }
+        animeLoader()
+            .then(async (data) => {
+                $animeLoaderWorker = data.animeLoaderWorker;
+                if (data?.isNew) {
+                    $finalAnimeList = data.finalAnimeList;
+                    $hiddenEntries = data.hiddenEntries;
+                }
+                $dataStatus = null;
+                return;
+            })
+            .catch((error) => {
+                throw error;
+            });
+    }
+
+    let unsub = customFilters.subscribe(() => {
+        if ($selectedCustomFilter) return;
+        scrollToSelectedCustomFilter();
+    });
+    selectedCustomFilter.subscribe((val) => {
+        if (val && unsub) {
+            unsub();
+            unsub = null;
+        }
+        scrollToSelectedCustomFilter(val);
+    });
+
+    async function scrollToSelectedCustomFilter(val = $selectedCustomFilter) {
+        if (!customFiltersNav) return;
+        await tick();
+        let elementToScroll = Array.from(customFiltersNav?.children || []).find(
+            (e) => e?.innerText === val
+        );
+        let scrollPosition =
+            elementToScroll?.offsetLeft -
+            document?.documentElement?.getBoundingClientRect?.()?.width / 2 +
+            elementToScroll?.offsetWidth / 2;
+        customFiltersNav?.scrollTo?.({
+            left: scrollPosition,
+            behavior: "smooth",
+        });
+    }
+
     async function selectCustomFilter(selectedCustomFilterName) {
         if ($initData) {
             return pleaseWaitAlert();
         }
-        goBackGrid();
-        if (selectedCustomFilterName === $selectedCustomFilter) return;
+        goBackGrid(selectedCustomFilterName);
+        if (selectedCustomFilterName === $selectedCustomFilter) {
+            if ($listUpdateAvailable) {
+                updateList();
+            }
+            return;
+        }
         $selectedCustomFilter = selectedCustomFilterName;
         $dropdownIsVisible = false;
     }
 
-    function goBackGrid() {
-        if (!$showFilterOptions || !isFullViewed) {
-            window.scrollY = document.documentElement.scrollTop = 48;
+    let lastClicked, lastClickedTimeout, clickedOnce;
+    function goBackGrid(selectedCustomFilterName) {
+        let isDoubleClicked;
+        if (lastClicked === selectedCustomFilterName) {
+            lastClicked = selectedCustomFilterName;
+            if (clickedOnce) {
+                isDoubleClicked = true;
+                clickedOnce = false;
+            } else {
+                clickedOnce = true;
+                lastClickedTimeout = setTimeout(() => {
+                    clickedOnce = false;
+                }, 500);
+            }
+        } else {
+            lastClicked = selectedCustomFilterName;
+            clickedOnce = true;
+            clearTimeout(lastClickedTimeout);
+        }
+        let scrollTop;
+        if ($showFilterOptions && isFullViewed) {
+            scrollTop = -9999;
+        } else {
+            if (isFullViewed) {
+                scrollTop = 65;
+            } else {
+                scrollTop = 48;
+            }
+        }
+        if ($android || !matchMedia("(hover:hover)").matches) {
+            document.documentElement.style.overflow = "hidden";
+            document.documentElement.style.overflow = "";
+        }
+        if (isDoubleClicked) {
+            window.scrollY = document.documentElement.scrollTop = scrollTop;
+        } else {
+            window.scrollTo({ top: scrollTop, behavior: "smooth" });
         }
         if (isFullViewed) {
             animeGridEl?.children?.[0]?.scrollIntoView?.({
                 behavior: "smooth",
+                block: "nearest",
             });
         }
         if ($popupVisible) {
@@ -83,11 +181,17 @@
         lastScrollTop = scrollTop;
     });
     window.addEventListener("resize", () => {
-        windowWidth = Math.max(window.visualViewport.width, window.innerWidth);
+        windowWidth = Math.max(
+            document?.documentElement?.getBoundingClientRect?.()?.width,
+            window.innerWidth
+        );
     });
 
     onMount(() => {
-        windowWidth = Math.max(window.visualViewport.width, window.innerWidth);
+        windowWidth = Math.max(
+            document?.documentElement?.getBoundingClientRect?.()?.width,
+            window.innerWidth
+        );
         customFiltersNav =
             customFiltersNav || document.getElementById("custom-filters-nav");
         animeGridEl = document.getElementById("anime-grid");
@@ -102,16 +206,9 @@
             text: "Please wait a moment...",
         });
     }
-
-    $: {
-        $customFilterVisible =
-            !$android &&
-            window?.matchMedia?.("(pointer:fine)")?.matches &&
-            !$initData;
-    }
 </script>
 
-<div class={"custom-filters-nav" + (!$customFilterVisible ? " hide" : "")}>
+<div class={"custom-filters-nav" + ($initData ? " hide" : "")}>
     <nav
         id="custom-filters-nav"
         bind:this={customFiltersNav}
@@ -144,18 +241,18 @@
         min-height: var(--min-height);
     }
     .custom-filters-nav.hide {
-        transform: translateY(48px) translateZ(0) !important;
-        -webkit-transform: translateY(48px) translateZ(0) !important;
-        -ms-transform: translateY(48px) translateZ(0) !important;
-        -moz-transform: translateY(48px) translateZ(0) !important;
-        -o-transform: translateY(48px) translateZ(0) !important;
+        transform: translateY(65px) translateZ(0) !important;
+        -webkit-transform: translateY(65px) translateZ(0) !important;
+        -ms-transform: translateY(65px) translateZ(0) !important;
+        -moz-transform: translateY(65px) translateZ(0) !important;
+        -o-transform: translateY(65px) translateZ(0) !important;
     }
     .custom-filters-nav {
         z-index: 991;
         position: fixed;
         bottom: 0px;
         width: 100%;
-        height: 48px;
+        height: 65px;
         background-color: rgba(21, 31, 46, 0.9);
         color: white;
         transform: translateZ(0) !important;
@@ -179,7 +276,7 @@
         -webkit-user-select: none;
         user-select: none;
         max-width: 1140px;
-        gap: 3em;
+        gap: 2.5em;
         padding: 0 1em;
         overflow-x: auto !important;
         -ms-overflow-style: none;
@@ -209,10 +306,11 @@
         background-color: transparent;
         font-size: 1.3rem;
         font-weight: 500;
-        height: 80%;
+        height: 100%;
         scroll-snap-align: start;
         margin-bottom: auto;
         border-top: 3px solid transparent;
+        padding: 1em;
     }
     .custom-filter.selected {
         color: rgb(150 200 255) !important;
@@ -220,8 +318,9 @@
     }
     @media screen and (max-width: 750px) {
         .nav {
-            margin: 0px 1em !important;
-            width: calc(100% - 20px) !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            width: 100% !important;
         }
     }
     .disable-interaction {

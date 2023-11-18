@@ -240,6 +240,7 @@ public class YoutubeViewActivity extends AppCompatActivity {
         webSettings.setCacheMode(WebSettings.LOAD_DEFAULT);
         webSettings.setAllowUniversalAccessFromFileURLs(true);
         webSettings.setMediaPlaybackRequiresUserGesture(true);
+        webSettings.setDefaultFontSize(16);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             webSettings.setOffscreenPreRaster(true);
         }

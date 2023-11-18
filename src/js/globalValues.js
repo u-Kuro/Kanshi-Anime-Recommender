@@ -65,8 +65,6 @@ const isFullViewed = writable(null)
 const showFilterOptions = writable(null)
 const dropdownIsVisible = writable(null)
 const confirmIsVisible = writable(null)
-const customFilterVisible = writable(null)
-const customFilterFloatingIconVisible = writable(null)
 // Reactive Functions
 const runUpdate = writable(null)
 const runExport = writable(null)
@@ -135,8 +133,6 @@ export {
     showFilterOptions,
     dropdownIsVisible,
     confirmIsVisible,
-    customFilterVisible,
-    customFilterFloatingIconVisible,
     // Reactive Functions
     runUpdate,
     runExport,

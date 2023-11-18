@@ -53,7 +53,10 @@
         popupAnimeObserver,
         fullImagePopup,
         fullDescriptionPopup,
-        windowWidth = Math.max(window.visualViewport.width, window.innerWidth),
+        windowWidth = Math.max(
+            document?.documentElement?.getBoundingClientRect?.()?.width,
+            window.innerWidth
+        ),
         windowHeight = Math.max(
             window.visualViewport.height,
             window.innerHeight
@@ -403,7 +406,7 @@
             )
                 return;
             windowWidth = Math.max(
-                window.visualViewport.width,
+                document?.documentElement?.getBoundingClientRect?.()?.width,
                 window.innerWidth
             );
             windowHeight = Math.max(
@@ -830,7 +833,6 @@
         }
     }
 
-    let updateListIconSpinningTimeout;
     async function updateList(event) {
         if (
             await $confirmPromise({

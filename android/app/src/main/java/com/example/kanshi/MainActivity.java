@@ -75,7 +75,7 @@ import androidx.core.content.FileProvider;
 import androidx.core.splashscreen.SplashScreen;
 
 public class MainActivity extends AppCompatActivity {
-    public final int appID = 200;
+    public final int appID = 201;
     public boolean webViewIsLoaded = false;
     public boolean permissionIsAsked = false;
     public SharedPreferences prefs;
@@ -241,11 +241,10 @@ public class MainActivity extends AppCompatActivity {
         webSettings.setCacheMode(WebSettings.LOAD_CACHE_ELSE_NETWORK);
         webSettings.setAllowUniversalAccessFromFileURLs(true);
         webSettings.setMediaPlaybackRequiresUserGesture(false);
+        webSettings.setDefaultFontSize(16);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             webSettings.setOffscreenPreRaster(true);
         }
-        // prevent the default behavior of WebView for long press events
-        webView.setOnLongClickListener(v -> true);
         // Set WebView Configs
         webView.setVerticalScrollBarEnabled(false);
         webView.setHorizontalScrollBarEnabled(false);

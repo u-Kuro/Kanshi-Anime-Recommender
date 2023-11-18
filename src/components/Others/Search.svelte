@@ -25,7 +25,6 @@
         showFilterOptions,
         dropdownIsVisible,
         popupVisible,
-        customFilterFloatingIconVisible,
     } from "../../js/globalValues.js";
     import { fade } from "svelte/transition";
     import {
@@ -44,7 +43,10 @@
 
     let Init = true;
 
-    let windowWidth = Math.max(window.visualViewport.width, window.innerWidth);
+    let windowWidth = Math.max(
+        document?.documentElement?.getBoundingClientRect?.()?.width,
+        window.innerWidth
+    );
     let windowHeight = Math.max(
         window.visualViewport.height,
         window.innerHeight
@@ -100,11 +102,6 @@
     $: selectedSort = $filterOptions?.sortFilter?.[selectedSortIdx];
     $: selectedSortName = selectedSort?.sortName;
     $: selectedSortType = selectedSort?.sortType;
-
-    $: $customFilterFloatingIconVisible =
-        !$initData &&
-        windowWidth <= 750 &&
-        ($android || !window?.matchMedia?.("(pointer:fine)")?.matches);
 
     activeTagFilters.subscribe((val) => {
         $customFilters = Object.keys(val || {}).sort();
@@ -191,7 +188,10 @@
             window.innerHeight
         );
         maxFilterSelectionHeight = windowHeight * 0.3;
-        windowWidth = Math.max(window.visualViewport.width, window.innerWidth);
+        windowWidth = Math.max(
+            document?.documentElement?.getBoundingClientRect?.()?.width,
+            window.innerWidth
+        );
     }
     async function handleFilterTypes(event, newFilterTypeName) {
         if ($initData) return pleaseWaitAlert();
@@ -362,14 +362,14 @@
             // Large Screen Width
             // Custom Filter Dropdown
             let customFilterEl = element.closest(".custom-filter-wrap");
-            let customFilterFloatingIcon = element.closest(
-                ".custom-filter-floating-icon"
-            );
+            // let customFilterFloatingIcon = element.closest(
+            //     ".custom-filter-floating-icon"
+            // );
             if (
                 !classList.contains("custom-filter-wrap") &&
-                !customFilterEl &&
-                !classList.contains("custom-filter-floating-icon") &&
-                !customFilterFloatingIcon
+                !customFilterEl
+                // &&!classList.contains("custom-filter-floating-icon") &&
+                // !customFilterFloatingIcon
             ) {
                 if (
                     highlightedEl instanceof Element &&
@@ -1314,15 +1314,15 @@
         if (option || classList.contains("option")) return;
         let sortSelectEl = element.closest(".custom-filter-wrap");
         let optionsWrap = element.closest(".options-wrap");
-        let customFilterFloatingIcon = element.closest(
-            ".custom-filter-floating-icon"
-        );
+        // let customFilterFloatingIcon = element.closest(
+        //     ".custom-filter-floating-icon"
+        // );
         if (
-            ((classList.contains("custom-filter-wrap") || sortSelectEl) &&
-                !selectedCustomFilterElement &&
-                !classList.contains("closing-x")) ||
-            classList.contains("custom-filter-floating-icon") ||
-            customFilterFloatingIcon
+            (classList.contains("custom-filter-wrap") || sortSelectEl) &&
+            !selectedCustomFilterElement &&
+            !classList.contains("closing-x")
+            // || classList.contains("custom-filter-floating-icon") ||
+            // customFilterFloatingIcon
         ) {
             selectedCustomFilterElement = true;
         } else if (
@@ -1483,7 +1483,10 @@
                 selectedFilterElement ||
                 selectedFilterTypeElement ||
                 selectedSortElement) &&
-            Math.max(window.visualViewport.width, window.innerWidth) <= 425;
+            Math.max(
+                document?.documentElement?.getBoundingClientRect?.()?.width,
+                window.innerWidth
+            ) <= 425;
     }
 
     dropdownIsVisible.subscribe((val) => {
@@ -2526,23 +2529,6 @@
         </div>
     {/if}
     <slot />
-    {#if $customFilterFloatingIconVisible}
-        <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
-        <div
-            class={"custom-filter-floating-icon" +
-                ($popupVisible ? " popup-visible" : "")}
-            tabindex="0"
-            on:keydown={(e) => e.key === "Enter" && handleCustomFilterPopup(e)}
-            on:click={handleCustomFilterPopup}
-            out:fade={{ duration: 200 }}
-        >
-            <svg viewBox="0 0 512 512">
-                <path
-                    d="m345 39 128 129c52 53 52 139 0 192L361 473a24 24 0 0 1-34-34l112-113c34-34 34-90 0-124L311 73a24 24 0 0 1 34-34zM0 230V80c0-26 22-48 48-48h150c17 0 33 7 45 19l168 168c25 25 25 65 0 90L277 443a64 64 0 0 1-90 0L19 275a63 63 0 0 1-19-45zm144-86a32 32 0 1 0-64 0 32 32 0 1 0 64 0z"
-                />
-            </svg>
-        </div>
-    {/if}
 </main>
 
 <style>
@@ -3325,7 +3311,7 @@
         overflow: hidden !important;
     }
 
-    .custom-filter-floating-icon {
+    /* .custom-filter-floating-icon {
         position: fixed !important;
         bottom: 4.5em !important;
         right: 3em !important;
@@ -3347,21 +3333,21 @@
         box-shadow: 0 14px 28px rgba(0, 0, 0, 0.25),
             0 10px 10px rgba(0, 0, 0, 0.22);
         z-index: 994 !important;
-    }
-    .custom-filter-floating-icon.popup-visible {
+    } */
+    /* .custom-filter-floating-icon.popup-visible {
         z-index: 996 !important;
     }
 
     .custom-filter-floating-icon svg {
         width: 3em;
         height: 3em;
-    }
+    } */
 
-    @media screen and (pointer: fine) or (min-width: 750px) {
+    /* @media screen and (pointer: fine) or (min-width: 750px) {
         .custom-filter-floating-icon {
             display: none;
         }
-    }
+    } */
 
     @media screen and (hover: hover) and (pointer: fine) {
         .filters {

@@ -21,10 +21,7 @@
         gridFullView,
         mostRecentAiringDateTimeout,
         earlisetReleaseDate,
-        listUpdateAvailable,
         showFilterOptions,
-        customFilterVisible,
-        customFilterFloatingIconVisible,
     } from "../../js/globalValues.js";
     import {
         addClass,
@@ -41,10 +38,13 @@
         window.visualViewport.height,
         window.innerHeight
     );
-    let windowWidth = Math.max(window.visualViewport.width, window.innerWidth);
+    let windowWidth = Math.max(
+        document?.documentElement?.getBoundingClientRect?.()?.width,
+        window.innerWidth
+    );
     let animeGridEl;
     let isRunningIntersectEvent;
-    let numberOfLoadedGrid = 13;
+    let numberOfLoadedGrid = 1;
     let observerDelay = 16;
 
     function addLastAnimeObserver() {
@@ -330,7 +330,7 @@
         isWholeGridSeen =
             isFullViewed &&
             windowHeight >
-                animeGridEl?.getBoundingClientRect?.()?.bottom + 10 + 48;
+                animeGridEl?.getBoundingClientRect?.()?.bottom + 10 + 57;
 
         clearTimeout(isOnVeryLeftOfAnimeGridTimeout);
         if (isFullViewed && animeGridEl?.scrollLeft < 1) {
@@ -346,7 +346,6 @@
         isFullViewed &&
         afterFullGrid &&
         (currentLeftScroll < lastLeftScroll || windowWidth > 596.5);
-    $: shouldShowGoBack = !isFullViewed && !$listUpdateAvailable && belowGrid;
 
     window.addEventListener(
         "scroll",
@@ -354,7 +353,7 @@
             isWholeGridSeen =
                 isFullViewed &&
                 windowHeight >
-                    animeGridEl?.getBoundingClientRect?.()?.bottom + 10 + 48;
+                    animeGridEl?.getBoundingClientRect?.()?.bottom + 10 + 57;
             if (animeGridEl?.getBoundingClientRect?.()?.top < 0) {
                 belowGrid = true;
             } else {
@@ -371,7 +370,7 @@
             isWholeGridSeen =
                 isFullViewed &&
                 windowHeight >
-                    animeGridEl?.getBoundingClientRect?.()?.bottom + 10 + 48;
+                    animeGridEl?.getBoundingClientRect?.()?.bottom + 10 + 57;
         }, 16);
     });
 
@@ -408,7 +407,10 @@
             window.visualViewport.height,
             window.innerHeight
         );
-        windowWidth = Math.max(window.visualViewport.width, window.innerWidth);
+        windowWidth = Math.max(
+            document?.documentElement?.getBoundingClientRect?.()?.width,
+            window.innerWidth
+        );
         animeGridEl = animeGridEl || document.getElementById("anime-grid");
         window.addEventListener("resize", () => {
             windowHeight = Math.max(
@@ -416,7 +418,7 @@
                 window.innerHeight
             );
             windowWidth = Math.max(
-                window.visualViewport.width,
+                document?.documentElement?.getBoundingClientRect?.()?.width,
                 window.innerWidth
             );
         });
@@ -448,7 +450,7 @@
         id="anime-grid"
         class={"image-grid " +
             (isFullViewed ? " fullView" : "") +
-            ($finalAnimeList?.length === 0 && !$initData ? "empty" : "")}
+            ($finalAnimeList?.length === 0 && !$initData ? " empty" : "")}
         bind:this={animeGridEl}
         on:wheel={(e) => {
             if (
@@ -605,15 +607,11 @@
             <div class="empty">No Results</div>
         {/if}
     </div>
-    {#if !$android && (shouldShowGoBackInFullView || shouldShowGoBack)}
+    {#if !$android && shouldShowGoBackInFullView && $finalAnimeList?.length}
         <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
         <div
             class={"go-back-grid" +
-                (shouldShowGoBackInFullView ? " fullView" : "") +
-                ($customFilterVisible ? " custom-filter-visible" : "") +
-                ($customFilterFloatingIconVisible
-                    ? " custom-filter-floating-visible"
-                    : "")}
+                (shouldShowGoBackInFullView ? " fullView" : "")}
             tabindex="0"
             on:click={goBackGrid}
             on:keydown={(e) => e.key === "Enter" && goBackGrid(e)}
@@ -647,7 +645,7 @@
 
     main.fullView {
         padding: 12px 0;
-        margin-bottom: 48px;
+        margin-bottom: 57px;
     }
 
     .skeleton {
@@ -736,6 +734,7 @@
         overflow-y: hidden;
         overflow-x: auto;
     }
+
     .image-grid.fullView.empty {
         justify-content: start;
         align-content: center;
@@ -893,17 +892,6 @@
         height: 60px;
         box-shadow: 0 14px 28px rgba(0, 0, 0, 0.25),
             0 10px 10px rgba(0, 0, 0, 0.22);
-    }
-
-    .go-back-grid.custom-filter-visible {
-        top: unset !important;
-        bottom: 6em !important;
-    }
-
-    .go-back-grid.custom-filter-floating-visible {
-        bottom: unset !important;
-        top: 3em !important;
-        right: 3em !important;
     }
 
     .go-back-grid.fullView {
