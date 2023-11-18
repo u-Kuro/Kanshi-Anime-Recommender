@@ -1570,6 +1570,11 @@
     $: isFullViewed = $gridFullView ?? getLocalStorage("gridFullView") ?? true;
     let homeStatusClick = 0;
     let showExtraInfo;
+
+    let trimAllEmptyCharRegex = new RegExp("ㅤ", "g");
+    function trimAllEmptyChar(str) {
+        return str?.replace?.(trimAllEmptyCharRegex, "").trim();
+    }
 </script>
 
 <main
@@ -1660,7 +1665,7 @@
                                             ? "#3db4f2"
                                             : "inherit"}
                                     >
-                                        {filterName || ""}
+                                        {trimAllEmptyChar(filterName) || ""}
                                     </h3>
                                 </div>
                             {/each}
