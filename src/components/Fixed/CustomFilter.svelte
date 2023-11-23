@@ -20,15 +20,31 @@
     import { onMount, tick } from "svelte";
     import { getLocalStorage } from "../../js/others/helper.js";
     import { animeLoader } from "../../js/workerUtils.js";
+    import { element } from "svelte/internal";
 
     let windowWidth = Math.max(
         document?.documentElement?.getBoundingClientRect?.()?.width,
-        window.innerWidth
+        window.innerWidth,
     );
     let customFiltersNav;
+    let customFiltersNavVisible;
     let animeGridEl;
     let popupContainer;
+    let lastScrollTop = 0,
+        isScrolledUp,
+        isScrolledYMax,
+        customFilterClicked;
+    $: isScrolledYMax =
+        lastScrollTop >=
+        document?.documentElement?.scrollHeight - window?.innerHeight - 1;
     $: isFullViewed = $gridFullView ?? getLocalStorage("gridFullView") ?? true;
+    $: customFiltersNavVisible =
+        !$initData &&
+        (!$android ||
+            isFullViewed ||
+            isScrolledUp ||
+            isScrolledYMax ||
+            customFilterClicked);
 
     gridFullView.subscribe(() => {
         setMinHeight();
@@ -84,7 +100,7 @@
         if (!customFiltersNav) return;
         await tick();
         let elementToScroll = Array.from(customFiltersNav?.children || []).find(
-            (e) => e?.innerText === val
+            (e) => e?.innerText === val,
         );
         let scrollPosition =
             elementToScroll?.offsetLeft -
@@ -98,6 +114,7 @@
 
     async function selectCustomFilter(selectedCustomFilterName) {
         if ($initData) return pleaseWaitAlert();
+        customFilterClicked = true;
         goBackGrid(selectedCustomFilterName);
         if (selectedCustomFilterName === $selectedCustomFilter) {
             if ($listUpdateAvailable) {
@@ -181,22 +198,35 @@
         });
     }
 
-    let lastScrollTop;
+    window.addEventListener("wheel", () => {
+        customFilterClicked = false;
+    });
+    window.addEventListener("pointerdown", (event) => {
+        if (event?.target?.classList?.contains?.("custom-filter") ?? true) {
+            return;
+        }
+        customFilterClicked = false;
+    });
     window.addEventListener("scroll", () => {
         let scrollTop = document.documentElement.scrollTop;
+        if (isScrolledUp) {
+            isScrolledUp = lastScrollTop >= scrollTop;
+        } else {
+            isScrolledUp = lastScrollTop - scrollTop > 1;
+        }
         lastScrollTop = scrollTop;
     });
     window.addEventListener("resize", () => {
         windowWidth = Math.max(
             document?.documentElement?.getBoundingClientRect?.()?.width,
-            window.innerWidth
+            window.innerWidth,
         );
     });
 
     onMount(() => {
         windowWidth = Math.max(
             document?.documentElement?.getBoundingClientRect?.()?.width,
-            window.innerWidth
+            window.innerWidth,
         );
         customFiltersNav =
             customFiltersNav || document.getElementById("custom-filters-nav");
@@ -206,7 +236,7 @@
     });
 </script>
 
-<div class={"custom-filters-nav" + ($initData ? " hide" : "")}>
+<div class={"custom-filters-nav" + (customFiltersNavVisible ? "" : " hide")}>
     <nav
         id="custom-filters-nav"
         bind:this={customFiltersNav}
@@ -259,11 +289,6 @@
         -moz-transform: translateZ(0) !important;
         -o-transform: translateZ(0) !important;
         transition: transform 0.3s ease;
-    }
-    @media screen and (max-width: 750px) {
-        .custom-filters-nav {
-            border-bottom: 1px solid rgb(35 45 65) !important;
-        }
     }
     .nav {
         display: flex;

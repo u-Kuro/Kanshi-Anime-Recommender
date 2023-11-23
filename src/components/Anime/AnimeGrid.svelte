@@ -769,9 +769,14 @@
     }
     .image-grid__card > .shimmer {
         position: relative;
-        padding-bottom: calc(181 / 128 * 100%);
+        padding-bottom: min(calc(181 / 128 * 100%), 209px);
         background-color: rgba(30, 42, 56, 0.8);
         border-radius: 0.25em;
+    }
+    @media screen and (min-width: 580px) {
+        .image-grid__card > .shimmer {
+            padding-bottom: calc(181 / 128 * 100%);
+        }
     }
 
     .image-grid.fullView .image-grid__card > .shimmer {

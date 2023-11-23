@@ -255,7 +255,7 @@
 
 		// Check/Get/Update Filter Options Selection
 		initDataPromises.push(
-			new Promise(async (resolve) => {
+			new Promise(async (resolve, reject) => {
 				getFilterOptions()
 					.then((data) => {
 						$selectedCustomFilter = data.selectedCustomFilter;
