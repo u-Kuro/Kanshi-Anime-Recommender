@@ -22,6 +22,7 @@
     import {
         getElementWidth,
         getLocalStorage,
+        trimAllEmptyChar,
     } from "../../js/others/helper.js";
     import { animeLoader } from "../../js/workerUtils.js";
 
@@ -133,7 +134,7 @@
         await tick();
         let elementToScroll = Array.from(customFiltersNav?.children || []).find(
             (e) =>
-                e?.innerText?.trim?.() === val?.trim?.() &&
+                trimAllEmptyChar(e?.innerText) === trimAllEmptyChar(val) &&
                 e?.classList?.contains?.("custom-filter"),
         );
         if (elementToScroll instanceof Element) {
@@ -386,7 +387,7 @@
                 }}
                 class={"custom-filter" +
                     (filterName === $selectedCustomFilter ? " selected" : "")}
-                >{filterName || ""}
+                >{trimAllEmptyChar(filterName) || ""}
             </span>
         {/each}
     </nav>

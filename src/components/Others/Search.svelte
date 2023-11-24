@@ -33,6 +33,7 @@
         dragScroll,
         removeClass,
         getLocalStorage,
+        trimAllEmptyChar,
     } from "../../js/others/helper.js";
     import {
         animeLoader,
@@ -1573,11 +1574,6 @@
     $: isFullViewed = $gridFullView ?? getLocalStorage("gridFullView") ?? true;
     let homeStatusClick = 0;
     let showExtraInfo;
-
-    let trimAllEmptyCharRegex = new RegExp("ㅤ", "g");
-    function trimAllEmptyChar(str) {
-        return str?.replace?.(trimAllEmptyCharRegex, "").trim();
-    }
 </script>
 
 <main

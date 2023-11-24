@@ -297,6 +297,11 @@ const formatNumber = (number, dec = 2) => {
   }
 }
 
+let trimAllEmptyCharRegex = new RegExp("ㅤ", "g");
+const trimAllEmptyChar = (str) => {
+  return str?.replace?.(trimAllEmptyCharRegex, "")?.trim?.() || "";
+}
+
 const ncsCompare = (str1, str2) => {
   try {
     if (typeof str1 !== "string" || typeof str2 !== "string") {
@@ -539,6 +544,7 @@ export {
   fetchAniListData,
   formatNumber,
   ncsCompare,
+  trimAllEmptyChar,
   msToTime,
   changeInputValue,
   dragScroll,
