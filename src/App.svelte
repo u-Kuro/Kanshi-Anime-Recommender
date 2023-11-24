@@ -72,11 +72,11 @@
 	$android = isAndroid(); // Android/Browser Identifier
 	let windowWidth = Math.max(
 		document?.documentElement?.getBoundingClientRect?.()?.width,
-		window.innerWidth
+		window.innerWidth,
 	);
 	let windowHeight = Math.max(
 		window.visualViewport.height,
-		window.innerHeight
+		window.innerHeight,
 	);
 	let usernameInputEl, animeGridEl;
 
@@ -132,12 +132,12 @@
 		if (!$android) {
 			(async () => {
 				$exportPathIsAvailable = await retrieveJSON(
-					"exportPathIsAvailable"
+					"exportPathIsAvailable",
 				);
 				if (typeof $exportPathIsAvailable === "boolean") {
 					setLocalStorage(
 						"exportPathIsAvailable",
-						$exportPathIsAvailable
+						$exportPathIsAvailable,
 					);
 				}
 			})();
@@ -151,7 +151,7 @@
 				);
 				if (!shouldGetAnimeEntries) {
 					let animeEntriesIsEmpty = await retrieveJSON(
-						"animeEntriesIsEmpty"
+						"animeEntriesIsEmpty",
 					);
 					if (animeEntriesIsEmpty) {
 						shouldGetAnimeEntries = true;
@@ -169,7 +169,7 @@
 				} else {
 					resolve();
 				}
-			})
+			}),
 		);
 
 		// Check/Update/Process User Anime Entries
@@ -250,7 +250,7 @@
 				}
 				resolve();
 				// }
-			})
+			}),
 		);
 
 		// Check/Get/Update Filter Options Selection
@@ -266,7 +266,7 @@
 					.catch(() => {
 						reject();
 					});
-			})
+			}),
 		);
 
 		// Get Existing Data If there are any
@@ -280,28 +280,28 @@
 				}
 				// Get Auto Functions
 				$lastRunnedAutoUpdateDate = await retrieveJSON(
-					"lastRunnedAutoUpdateDate"
+					"lastRunnedAutoUpdateDate",
 				);
 				$lastRunnedAutoExportDate = await retrieveJSON(
-					"lastRunnedAutoExportDate"
+					"lastRunnedAutoExportDate",
 				);
 				$autoUpdate = (await retrieveJSON("autoUpdate")) ?? false;
 				setLocalStorage("autoUpdate", $autoUpdate);
 				$autoExport = (await retrieveJSON("autoExport")) ?? false;
 				setLocalStorage("autoExport", $autoExport);
 				resolve();
-			})
+			}),
 		);
 
 		Promise.all(initDataPromises)
 			.then(async () => {
 				// Get/Show List
 				let shouldProcessRecommendation = await retrieveJSON(
-					"shouldProcessRecommendation"
+					"shouldProcessRecommendation",
 				);
 				if (!shouldProcessRecommendation) {
 					let recommendedAnimeListLen = await retrieveJSON(
-						"recommendedAnimeListLength"
+						"recommendedAnimeListLength",
 					);
 					if (recommendedAnimeListLen < 1) {
 						shouldProcessRecommendation = true;
@@ -313,7 +313,7 @@
 							.then(async () => {
 								await saveJSON(
 									false,
-									"shouldProcessRecommendation"
+									"shouldProcessRecommendation",
 								);
 								resolve(false);
 							})
@@ -531,16 +531,20 @@
 					hourINMS -
 						(new Date().getTime() -
 							$lastRunnedAutoUpdateDate?.getTime()) || 0;
-				setTimeout(() => {
-					if ($autoUpdate === false) return;
-					checkAutoFunctions();
-					if ($autoUpdateInterval) clearInterval($autoUpdateInterval);
-					$autoUpdateInterval = setInterval(() => {
-						if ($autoUpdate) {
-							checkAutoFunctions();
-						}
-					}, hourINMS);
-				}, Math.min(timeLeft, 2000000000));
+				setTimeout(
+					() => {
+						if ($autoUpdate === false) return;
+						checkAutoFunctions();
+						if ($autoUpdateInterval)
+							clearInterval($autoUpdateInterval);
+						$autoUpdateInterval = setInterval(() => {
+							if ($autoUpdate) {
+								checkAutoFunctions();
+							}
+						}, hourINMS);
+					},
+					Math.min(timeLeft, 2000000000),
+				);
 			}
 		} else if (val === false) {
 			if ($autoUpdateInterval) clearInterval($autoUpdateInterval);
@@ -593,16 +597,20 @@
 					hourINMS -
 						(new Date().getTime() -
 							$lastRunnedAutoExportDate?.getTime()) || 0;
-				setTimeout(() => {
-					if ($autoExport === false) return;
-					checkAutoFunctions();
-					if ($autoExportInterval) clearInterval($autoExportInterval);
-					$autoExportInterval = setInterval(() => {
-						if ($autoExport) {
-							checkAutoFunctions();
-						}
-					}, hourINMS);
-				}, Math.min(timeLeft, 2000000000));
+				setTimeout(
+					() => {
+						if ($autoExport === false) return;
+						checkAutoFunctions();
+						if ($autoExportInterval)
+							clearInterval($autoExportInterval);
+						$autoExportInterval = setInterval(() => {
+							if ($autoExport) {
+								checkAutoFunctions();
+							}
+						}, hourINMS);
+					},
+					Math.min(timeLeft, 2000000000),
+				);
 			}
 		} else if (val === false) {
 			if ($autoExportInterval) clearInterval($autoExportInterval);
@@ -662,7 +670,7 @@
 		} else if (!$userRequestIsRunning) {
 			$userRequestIsRunning = true;
 			requestUserEntries({ visibilityChange: true }).then(
-				() => ($userRequestIsRunning = false)
+				() => ($userRequestIsRunning = false),
 			);
 		}
 	});
@@ -691,7 +699,7 @@
 		} else if (!$userRequestIsRunning) {
 			$userRequestIsRunning = true;
 			requestUserEntries({ visibilityChange: true }).then(
-				() => ($userRequestIsRunning = false)
+				() => ($userRequestIsRunning = false),
 			);
 		}
 	};
@@ -718,7 +726,7 @@
 				usernameInputEl === document?.activeElement &&
 				Math.max(
 					document?.documentElement?.getBoundingClientRect?.()?.width,
-					window.innerWidth
+					window.innerWidth,
 				) <= 750
 			) {
 				usernameInputEl?.focus?.();
@@ -754,6 +762,7 @@
 						behavior: "smooth",
 					});
 				} else {
+					window.showCustomFilter?.();
 					if ($android || !matchMedia("(hover:hover)").matches) {
 						document.documentElement.style.overflow = "hidden";
 						document.documentElement.style.overflow = "";
@@ -770,6 +779,7 @@
 						animeGridEl.style.overflow = "";
 					}, 100);
 				} else {
+					window.showCustomFilter?.();
 					if ($android || !matchMedia("(hover:hover)").matches) {
 						document.documentElement.style.overflow = "hidden";
 					}
@@ -823,7 +833,7 @@
 				window.setShouldGoBack(false);
 			runIsScrolling.update((e) => !e);
 		},
-		{ passive: true }
+		{ passive: true },
 	);
 
 	window.setShouldGoBack = (_shouldGoBack) => {
@@ -1008,7 +1018,7 @@
 			} catch (e) {
 				window.open(
 					"https://github.com/u-Kuro/Kanshi.Anime-Recommendation/raw/main/Kanshi.apk",
-					"_blank"
+					"_blank",
 				);
 			}
 		}
@@ -1065,31 +1075,31 @@
 				if (!$gridFullView) return;
 				runIsScrolling.update((e) => !e);
 			},
-			{ passive: true }
+			{ passive: true },
 		);
 		document.getElementById("popup-container").addEventListener(
 			"scroll",
 			() => {
 				runIsScrolling.update((e) => !e);
 			},
-			{ passive: true }
+			{ passive: true },
 		);
 		windowWidth = Math.max(
 			document?.documentElement?.getBoundingClientRect?.()?.width,
-			window.innerWidth
+			window.innerWidth,
 		);
 		windowHeight = Math.max(
 			window.visualViewport.height,
-			window.innerHeight
+			window.innerHeight,
 		);
 		window.addEventListener("resize", () => {
 			windowHeight = Math.max(
 				window.visualViewport.height,
-				window.innerHeight
+				window.innerHeight,
 			);
 			windowWidth = Math.max(
 				document?.documentElement?.getBoundingClientRect?.()?.width,
-				window.innerWidth
+				window.innerWidth,
 			);
 			if (windowWidth > 750) {
 				Object.assign(
@@ -1097,7 +1107,7 @@
 					{
 						display: "",
 						zIndex: "",
-					}
+					},
 				);
 			}
 		});

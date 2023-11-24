@@ -13,6 +13,9 @@
     export let cancelLabel = "CANCEL";
     let confirmButtonEl;
 
+    $: shouldShowPleaseWait =
+        $initData && confirmTitle !== "New updates are available";
+
     let isRecentlyOpened = false,
         isRecentlyOpenedTimeout;
 
@@ -30,7 +33,7 @@
     function handleConfirm(e) {
         if (isRecentlyOpened && e.type !== "keydown") return;
         showConfirm = false;
-        if ($initData) {
+        if (shouldShowPleaseWait) {
             dispatch("cancelled");
         } else {
             dispatch("confirmed");
@@ -81,16 +84,18 @@
             <div class="confirm-container" out:fade={{ duration: 200 }}>
                 <div class="confirm-info-container">
                     <h2 class="confirm-title">
-                        {$initData ? "Initializing resources" : confirmTitle}
+                        {shouldShowPleaseWait
+                            ? "Initializing resources"
+                            : confirmTitle}
                     </h2>
                     <h2 class="confirm-text">
-                        {@html $initData
+                        {@html shouldShowPleaseWait
                             ? "Please wait a moment..."
                             : confirmText}
                     </h2>
                 </div>
                 <div class="confirm-button-container">
-                    {#if !isAlert && !$initData}
+                    {#if !isAlert && !shouldShowPleaseWait}
                         <button
                             class="button"
                             on:click={handleCancel}

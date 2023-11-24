@@ -37,7 +37,7 @@
         writableSubscriptions.push(
             username.subscribe((val) => {
                 typedUsername = val || "";
-            })
+            }),
         );
     });
 
@@ -81,7 +81,7 @@
                             await $confirmPromise(
                                 `Do you${
                                     isReconfirm ? " still" : ""
-                                } want to connect to ${usernameToShow}?`
+                                } want to connect to ${usernameToShow}?`,
                             )
                         ) {
                             $menuVisible = false;
@@ -105,7 +105,7 @@
                                     if (newusername) {
                                         setLocalStorage(
                                             "username",
-                                            newusername
+                                            newusername,
                                         );
                                         typedUsername = $username =
                                             newusername || "";
@@ -124,7 +124,7 @@
                             await $confirmPromise(
                                 `Do you${
                                     isReconfirm ? " still" : ""
-                                } want to connect to ${usernameToShow}?`
+                                } want to connect to ${usernameToShow}?`,
                             )
                         ) {
                             $menuVisible = false;
@@ -148,7 +148,7 @@
                                     if (newusername) {
                                         setLocalStorage(
                                             "username",
-                                            newusername
+                                            newusername,
                                         );
                                         typedUsername = $username =
                                             newusername || "";
@@ -260,6 +260,7 @@
                         behavior: "smooth",
                     });
                 } else {
+                    window.showCustomFilter?.();
                     document.documentElement.style.overflow = "hidden";
                     document.documentElement.style.overflow = "";
                     window.scrollTo({ top: -9999, behavior: "smooth" });
@@ -319,8 +320,8 @@
             ($popupVisible || $menuVisible
                 ? "popupvisible"
                 : inputUsernameEl === document?.activeElement
-                ? "inputfocused"
-                : "")}
+                  ? "inputfocused"
+                  : "")}
         bind:this={navEl}
     >
         <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
