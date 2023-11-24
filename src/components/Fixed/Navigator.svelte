@@ -68,6 +68,7 @@
             if (!typedUsername) return;
             if (typedUsername !== $username) {
                 if (!navigator.onLine) {
+                    typedUsername = $username || "";
                     return $confirmPromise({
                         isAlert: true,
                         title: "Currently Offline",
@@ -110,13 +111,17 @@
                                         typedUsername = $username =
                                             newusername || "";
                                         importantUpdate.update((e) => !e);
+                                    } else {
+                                        typedUsername = $username || "";
                                     }
                                 })
                                 .catch((error) => {
+                                    typedUsername = $username || "";
                                     $dataStatus = "Something went wrong";
                                     console.error(error);
                                 });
                         } else {
+                            typedUsername = $username || "";
                             focusInputUsernameEl();
                         }
                     } else {
@@ -152,14 +157,18 @@
                                         );
                                         typedUsername = $username =
                                             newusername || "";
+                                    } else {
+                                        typedUsername = $username || "";
                                     }
                                     importantUpdate.update((e) => !e);
                                 })
                                 .catch((error) => {
+                                    typedUsername = $username || "";
                                     $dataStatus = "Something went wrong";
                                     console.error(error);
                                 });
                         } else {
+                            typedUsername = $username || "";
                             focusInputUsernameEl();
                         }
                     }

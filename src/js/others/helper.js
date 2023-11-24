@@ -245,7 +245,6 @@ const scrollToElementAmount = (parent, target, position = 'top') => {
   }
 };
 
-
 const makeFetchRequest = (url, options) => {
   return new Promise((resolve, reject) => {
     fetch(url, options).then(response => {
@@ -451,6 +450,19 @@ const removeClass = (element, className) => {
   element?.classList?.remove?.(className)
 }
 
+const getElementWidth = (element) => {
+  try {
+    const elementComputedStyle = window?.getComputedStyle?.(element, null)
+    let elementWidth = element?.getBoundingClientRect?.()?.width
+    elementWidth -=
+      parseFloat(elementComputedStyle?.paddingLeft) +
+      parseFloat(elementComputedStyle?.paddingRight)
+    return elementWidth
+  } catch (e) {
+    return
+  }
+}
+
 const makeArrayUnique = (arr) => {
   const uniqueArray = [];
   const seenValues = {};
@@ -514,6 +526,7 @@ export {
   getMostVisibleElementFromArray,
   addClass,
   removeClass,
+  getElementWidth,
   downloadLink,
   isAndroid,
   isJsonObject,

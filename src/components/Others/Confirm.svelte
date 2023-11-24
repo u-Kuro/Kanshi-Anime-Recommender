@@ -11,10 +11,10 @@
     export let confirmText = "Do you want to continue?";
     export let confirmLabel = "OK";
     export let cancelLabel = "CANCEL";
+    export let isImportant = false;
     let confirmButtonEl;
 
-    $: shouldShowPleaseWait =
-        $initData && confirmTitle !== "New updates are available";
+    $: shouldShowPleaseWait = $initData && !isAlert && !isImportant;
 
     let isRecentlyOpened = false,
         isRecentlyOpenedTimeout;

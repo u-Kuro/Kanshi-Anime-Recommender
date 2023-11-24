@@ -55,11 +55,11 @@
         fullDescriptionPopup,
         windowWidth = Math.max(
             document?.documentElement?.getBoundingClientRect?.()?.width,
-            window.innerWidth
+            window.innerWidth,
         ),
         windowHeight = Math.max(
             window.visualViewport.height,
-            window.innerHeight
+            window.innerHeight,
         ),
         videoLoops = {};
 
@@ -78,12 +78,12 @@
                     getMostVisibleElement(
                         popupContainer,
                         ".popup-header",
-                        windowHeight > 360 ? 0.5 : 0
+                        windowHeight > 360 ? 0.5 : 0,
                     ) ||
                     getMostVisibleElement(
                         popupContainer,
                         ".popup-content",
-                        0
+                        0,
                     )?.getElementsByClassName("popup-header")?.[0];
                 mostVisiblePopupHeader = visiblePopupHeader;
                 playMostVisibleTrailer();
@@ -92,7 +92,7 @@
                 root: null,
                 rootMargin: "100%",
                 threshold: [0.5, 0],
-            }
+            },
         );
     }
 
@@ -115,7 +115,7 @@
         if (isHidden) {
             if (
                 await $confirmPromise(
-                    `Do you want to unhide ${title} in your recommendation list?`
+                    `Do you want to unhide ${title} in your recommendation list?`,
                 )
             ) {
                 $checkAnimeLoaderStatus()
@@ -141,7 +141,7 @@
         } else {
             if (
                 await $confirmPromise(
-                    `Do you want to hide ${title} in your recommendation list?`
+                    `Do you want to hide ${title} in your recommendation list?`,
                 )
             ) {
                 $checkAnimeLoaderStatus()
@@ -182,6 +182,7 @@
             await $confirmPromise({
                 title: "See related videos",
                 text: "Do you want to see more related videos in YouTube?",
+                isImportant: true,
             })
         ) {
             handleMoreVideos(animeTitle);
@@ -202,9 +203,9 @@
         if (typeof animeTitle !== "string" || animeTitle === "") return;
         window.open(
             `https://www.youtube.com/results?search_query=${encodeURIComponent(
-                animeTitle + " Anime"
+                animeTitle + " Anime",
             )}`,
-            "_blank"
+            "_blank",
         );
     }
 
@@ -249,7 +250,7 @@
                     popupContainer,
                     openedAnimePopupEl,
                     "top",
-                    "instant"
+                    "instant",
                 );
                 // Animate Opening
                 requestAnimationFrame(() => {
@@ -281,7 +282,7 @@
                 ];
                 let trailerEl =
                     openedAnimes[0][0]?.popupHeader?.querySelector?.(
-                        ".trailer"
+                        ".trailer",
                     ) ||
                     popupContainer?.children?.[
                         $openedAnimePopupIdx
@@ -352,7 +353,7 @@
                 let popupHeader =
                     anime.popupHeader ||
                     popupContainer.children?.[animeIdx]?.querySelector?.(
-                        ".popup-header"
+                        ".popup-header",
                     );
                 if (popupHeader instanceof Element) {
                     popupAnimeObserver?.observe?.(popupHeader);
@@ -407,11 +408,11 @@
                 return;
             windowWidth = Math.max(
                 document?.documentElement?.getBoundingClientRect?.()?.width,
-                window.innerWidth
+                window.innerWidth,
             );
             windowHeight = Math.max(
                 window.visualViewport.height,
-                window.innerHeight
+                window.innerHeight,
             );
         });
 
@@ -427,7 +428,7 @@
                 let isPlaying = $ytPlayers?.some(
                     ({ ytPlayer }) =>
                         visibleTrailer === ytPlayer.g &&
-                        ytPlayer?.getPlayerState?.() === 1
+                        ytPlayer?.getPlayerState?.() === 1,
                 );
                 $ytPlayers.forEach(({ ytPlayer }) => {
                     ytPlayer?.pauseVideo?.();
@@ -464,7 +465,7 @@
         // Scroll in Grid
         let visibleTrailerIdx =
             getChildIndex(
-                mostVisiblePopupHeader?.closest?.(".popup-content")
+                mostVisiblePopupHeader?.closest?.(".popup-content"),
             ) ?? -1;
         if (scrollToGridTimeout) clearTimeout(scrollToGridTimeout);
         scrollToGridTimeout = setTimeout(() => {
@@ -489,7 +490,7 @@
         let haveTrailer;
         if (visibleTrailer instanceof Element) {
             haveTrailer = $ytPlayers?.some(
-                ({ ytPlayer }) => ytPlayer.g === visibleTrailer
+                ({ ytPlayer }) => ytPlayer.g === visibleTrailer,
             );
         }
         if (haveTrailer) {
@@ -613,7 +614,7 @@
         let popupHeader =
             openedAnime?.popupHeader ||
             popupContainer.children?.[headerIdx]?.querySelector(
-                ".popup-header"
+                ".popup-header",
             );
         let ytPlayerEl =
             popupHeader?.querySelector?.(".trailer") ||
@@ -634,7 +635,7 @@
                 $ytPlayers.forEach((_ytPlayer, index) => {
                     if (_ytPlayer.headerIdx === -1) return;
                     let distance = Math.abs(
-                        _ytPlayer.headerIdx - currentHeaderIdx
+                        _ytPlayer.headerIdx - currentHeaderIdx,
                     );
                     if (distance > furthestDistance) {
                         furthestDistance = distance;
@@ -643,7 +644,7 @@
                 });
                 let destroyedPlayer = $ytPlayers?.splice?.(
                     destroyedPlayerIdx,
-                    1
+                    1,
                 )?.[0]?.ytPlayer;
                 let destroyedPopupHeader =
                     destroyedPlayer?.g?.closest?.(".popup-header");
@@ -667,7 +668,7 @@
             // Add a Unique ID
             ytPlayerEl.setAttribute(
                 "id",
-                "yt-player" + Date.now() + Math.random()
+                "yt-player" + Date.now() + Math.random(),
             );
             let ytPlayer = new YT.Player(ytPlayerEl, {
                 playerVars: {
@@ -708,7 +709,7 @@
         let popupHeader = trailerEl?.parentElement;
         let popupImg = popupHeader?.querySelector?.(".popup-img");
         $ytPlayers = $ytPlayers.filter(
-            (_ytPlayer) => _ytPlayer.ytPlayer !== ytPlayer
+            (_ytPlayer) => _ytPlayer.ytPlayer !== ytPlayer,
         );
         ytPlayer.destroy();
         addClass(trailerEl, "display-none");
@@ -758,7 +759,7 @@
         ) {
             $ytPlayers?.forEach(
                 ({ ytPlayer }) =>
-                    ytPlayer?.g !== _ytPlayer?.g && ytPlayer?.pauseVideo?.()
+                    ytPlayer?.g !== _ytPlayer?.g && ytPlayer?.pauseVideo?.(),
             );
             currentYtPlayer = _ytPlayer;
             addClass(popupImg, "fade-out");
@@ -786,7 +787,7 @@
                 failingTrailers[anime.id] = true;
             }
             $ytPlayers = $ytPlayers.filter(
-                (_ytPlayer) => _ytPlayer.ytPlayer !== ytPlayer
+                (_ytPlayer) => _ytPlayer.ytPlayer !== ytPlayer,
             );
             ytPlayer.destroy();
             addClass(trailerEl, "display-none");
@@ -884,12 +885,12 @@
         ) {
             text = ` · <span style="color:rgb(61, 180, 242);">${nextEpisode}/${episodes} in ${formatDateDifference(
                 nextAiringDate,
-                timeDifMS
+                timeDifMS,
             )}</span>`;
         } else if (timeDifMS > 0 && typeof nextEpisode === "number") {
             text = ` · <span style="color:rgb(61, 180, 242);">Ep ${nextEpisode} in ${formatDateDifference(
                 nextAiringDate,
-                timeDifMS
+                timeDifMS,
             )}</span>`;
         } else if (
             timeDifMS <= 0 &&
@@ -925,15 +926,15 @@
 
         if (timeDifference > oneWeek) {
             return `${msToTime(timeDifference, 1)}, ${formatMonth(
-                endDate
+                endDate,
             )} ${formatDay(endDate)} ${formatYear(endDate)}`;
         } else if (timeDifference <= oneWeek && timeDifference > oneDay) {
             return `${msToTime(timeDifference, 1)}, ${formatWeekday(
-                endDate
+                endDate,
             )}, ${formatTime(endDate).toLowerCase()}`;
         } else {
             return `${msToTime(timeDifference, 2)}, ${formatTime(
-                endDate
+                endDate,
             ).toLowerCase()}`;
         }
     }
@@ -1076,7 +1077,7 @@
     function loadYouTubeAPI() {
         return new Promise((resolve) => {
             let existingScript = document.getElementById(
-                "www-widgetapi-script"
+                "www-widgetapi-script",
             );
             if (existingScript) {
                 existingScript.parentElement.removeChild(existingScript);
@@ -1185,7 +1186,7 @@
     function handlePopupContainerUp(event) {
         if ($popupIsGoingBack) {
             endX = Array.from(event.changedTouches)?.find(
-                (touch) => touch.identifier === touchID
+                (touch) => touch.identifier === touchID,
             )?.clientX;
             if (typeof endX === "number") {
                 let xThreshold = 48;
@@ -1233,7 +1234,7 @@
                 Math.abs(
                     element.scrollHeight -
                         element.clientHeight -
-                        element.scrollTop
+                        element.scrollTop,
                 ) < 1;
             let isScrolledYMax = fvIsScrolledTopMax || fvIsScrolledBottomMax;
             if (isScrolledYMax) {
@@ -1250,10 +1251,10 @@
     function fullViewTouchEnd(e) {
         if (!fvIsScrolled) {
             let endY = Array.from(e?.changedTouches || [])?.find(
-                (touch) => touch?.identifier === fvTouchId
+                (touch) => touch?.identifier === fvTouchId,
             )?.clientY;
             let endX = Array.from(e?.changedTouches || [])?.find(
-                (touch) => touch?.identifier === fvTouchId
+                (touch) => touch?.identifier === fvTouchId,
             )?.clientX;
             let deltaY = endY - fvStartY;
             let deltaX = endX - fvStartX;
@@ -1454,10 +1455,10 @@
                                         {windowWidth >= 320
                                             ? "List Update"
                                             : windowWidth >= 205
-                                            ? "Update"
-                                            : windowWidth >= 180
-                                            ? "List"
-                                            : ""}
+                                              ? "Update"
+                                              : windowWidth >= 180
+                                                ? "List"
+                                                : ""}
                                     </h3>
                                 </div>
                             {/if}
@@ -1580,7 +1581,7 @@
                                             {anime?.format || "NA"}
                                             {#key $earlisetReleaseDate || 1}
                                                 {@html getFormattedAnimeFormat(
-                                                    anime
+                                                    anime,
                                                 ) || " · NA"}
                                             {/key}
                                             {anime?.formattedDuration ||
@@ -1590,7 +1591,7 @@
                                         <h4>
                                             {anime?.format || "NA"}
                                             {@html getFormattedAnimeFormat(
-                                                anime
+                                                anime,
                                             ) || " · NA"}
                                             {anime?.formattedDuration ||
                                                 " · NA"}
@@ -1685,13 +1686,13 @@
                                                     ) {
                                                         let info =
                                                             e?.target?.closest?.(
-                                                                ".info"
+                                                                ".info",
                                                             ) || e?.target;
                                                         if (info) {
                                                             anime.hasStudioDragScroll = true;
                                                             dragScroll(
                                                                 info,
-                                                                "x"
+                                                                "x",
                                                             );
                                                         }
                                                     }
@@ -1741,13 +1742,13 @@
                                                     ) {
                                                         let info =
                                                             e?.target?.closest?.(
-                                                                ".info"
+                                                                ".info",
                                                             ) || e?.target;
                                                         if (info) {
                                                             anime.hasGenreDragScroll = true;
                                                             dragScroll(
                                                                 info,
-                                                                "x"
+                                                                "x",
                                                             );
                                                         }
                                                     }
@@ -1782,13 +1783,13 @@
                                                     ) {
                                                         let info =
                                                             e?.target?.closest?.(
-                                                                ".info"
+                                                                ".info",
                                                             ) || e?.target;
                                                         if (info) {
                                                             anime.hasTagDragScroll = true;
                                                             dragScroll(
                                                                 info,
-                                                                "x"
+                                                                "x",
                                                             );
                                                         }
                                                     }
@@ -1824,8 +1825,8 @@
                                             (anime.coverImageUrl
                                                 ? " Cover"
                                                 : anime.bannerImageUrl
-                                                ? " Banner"
-                                                : " Thumbnail")}
+                                                  ? " Banner"
+                                                  : " Thumbnail")}
                                         tabindex="0"
                                         class={"coverImg" +
                                             (!anime.coverImageUrl &&
@@ -1866,7 +1867,7 @@
                                                 window.setShouldGoBack(false);
                                                 fullDescriptionPopup =
                                                     editHTMLString(
-                                                        anime?.description
+                                                        anime?.description,
                                                     );
                                                 fullImagePopup = null;
                                             }}
@@ -1875,7 +1876,7 @@
                                                 if (e.key === "Enter") {
                                                     fullDescriptionPopup =
                                                         editHTMLString(
-                                                            anime?.description
+                                                            anime?.description,
                                                         );
                                                     fullImagePopup = null;
                                                 }
@@ -1884,7 +1885,7 @@
                                             <h3>Description</h3>
                                             <div class="anime-description">
                                                 {@html editHTMLString(
-                                                    anime?.description
+                                                    anime?.description,
                                                 )}
                                             </div>
                                         </div>
@@ -1899,13 +1900,13 @@
                                         : ""}
                                     on:click={handleHideShow(
                                         anime.id,
-                                        anime?.shownTitle
+                                        anime?.shownTitle,
                                     )}
                                     on:keydown={(e) =>
                                         e.key === "Enter" &&
                                         handleHideShow(
                                             anime.id,
-                                            anime?.shownTitle
+                                            anime?.shownTitle,
                                         )}
                                 >
                                     <!-- circle minus -->
@@ -2108,7 +2109,8 @@
         scrollbar-width: none;
         opacity: 0;
         scroll-behavior: auto;
-        box-shadow: 0 14px 28px rgba(0, 0, 0, 0.25),
+        box-shadow:
+            0 14px 28px rgba(0, 0, 0, 0.25),
             0 10px 10px rgba(0, 0, 0, 0.22);
     }
 
@@ -2878,7 +2880,8 @@
         -moz-transform: translateZ(0);
         -o-transform: translateZ(0);
         border-radius: 6px;
-        box-shadow: 0 14px 28px rgba(0, 0, 0, 0.25),
+        box-shadow:
+            0 14px 28px rgba(0, 0, 0, 0.25),
             0 10px 10px rgba(0, 0, 0, 0.22);
         user-select: none;
         cursor: pointer;

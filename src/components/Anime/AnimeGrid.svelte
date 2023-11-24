@@ -36,11 +36,11 @@
         "data:image/png;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=";
     let windowHeight = Math.max(
         window.visualViewport.height,
-        window.innerHeight
+        window.innerHeight,
     );
     let windowWidth = Math.max(
         document?.documentElement?.getBoundingClientRect?.()?.width,
-        window.innerWidth
+        window.innerWidth,
     );
     let animeGridEl;
     let isRunningIntersectEvent;
@@ -73,7 +73,7 @@
                 root: null,
                 rootMargin: "100%",
                 threshold: [0, 1],
-            }
+            },
         );
     }
 
@@ -127,15 +127,21 @@
                     ) {
                         $earlisetReleaseDate = data.earliestReleaseDate;
                         clearTimeout($mostRecentAiringDateTimeout);
-                        $mostRecentAiringDateTimeout = setTimeout(() => {
-                            if ($animeLoaderWorker instanceof Worker) {
-                                $checkAnimeLoaderStatus().then(() => {
-                                    $animeLoaderWorker?.postMessage?.({
-                                        getEarlisetReleaseDate: true,
+                        $mostRecentAiringDateTimeout = setTimeout(
+                            () => {
+                                if ($animeLoaderWorker instanceof Worker) {
+                                    $checkAnimeLoaderStatus().then(() => {
+                                        $animeLoaderWorker?.postMessage?.({
+                                            getEarlisetReleaseDate: true,
+                                        });
                                     });
-                                });
-                            }
-                        }, Math.min(data.timeBeforeEarliestReleaseDate, 2000000000));
+                                }
+                            },
+                            Math.min(
+                                data.timeBeforeEarliestReleaseDate,
+                                2000000000,
+                            ),
+                        );
                     }
                 } else if (data.finalAnimeList instanceof Array) {
                     if (data?.reload === true) {
@@ -146,7 +152,7 @@
                     } else if (data.isNew === false) {
                         if ($finalAnimeList instanceof Array) {
                             $finalAnimeList = $finalAnimeList.concat(
-                                data.finalAnimeList
+                                data.finalAnimeList,
                             );
                             if (data.isLast) {
                                 $shownAllInList = true;
@@ -178,10 +184,10 @@
                         $animeObserver.observe(gridElement);
                     }
                     let removedIdx = $finalAnimeList.findIndex(
-                        ({ id }) => id === data.removedID
+                        ({ id }) => id === data.removedID,
                     );
                     $finalAnimeList = $finalAnimeList.filter(
-                        ({ id }) => id !== data.removedID
+                        ({ id }) => id !== data.removedID,
                     );
                     if (removedIdx >= 0) {
                         $animeIdxRemoved = null;
@@ -360,7 +366,7 @@
                 belowGrid = false;
             }
         },
-        { passive: true }
+        { passive: true },
     );
 
     let filterOptiChangeTimeout;
@@ -405,21 +411,21 @@
     onMount(() => {
         windowHeight = Math.max(
             window.visualViewport.height,
-            window.innerHeight
+            window.innerHeight,
         );
         windowWidth = Math.max(
             document?.documentElement?.getBoundingClientRect?.()?.width,
-            window.innerWidth
+            window.innerWidth,
         );
         animeGridEl = animeGridEl || document.getElementById("anime-grid");
         window.addEventListener("resize", () => {
             windowHeight = Math.max(
                 window.visualViewport.height,
-                window.innerHeight
+                window.innerHeight,
             );
             windowWidth = Math.max(
                 document?.documentElement?.getBoundingClientRect?.()?.width,
-                window.innerWidth
+                window.innerWidth,
             );
         });
         let waitForOnVeryLeft;
@@ -515,7 +521,7 @@
                                     removeClass(e.target, "fade-out");
                                     addClass(
                                         e.target?.closest?.(".shimmer"),
-                                        "loaded"
+                                        "loaded",
                                     );
                                 }}
                                 on:error={(e) => {
@@ -551,7 +557,7 @@
                                             {#key $earlisetReleaseDate || 1}
                                                 {getFinishedEpisode(
                                                     anime.episodes,
-                                                    anime.nextAiringEpisode
+                                                    anime.nextAiringEpisode,
                                                 )}
                                             {/key}
                                         {:else}
@@ -789,7 +795,9 @@
         border-radius: 0.25em;
         display: block;
         cursor: pointer;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+        box-shadow:
+            0 1px 3px rgba(0, 0, 0, 0.12),
+            0 1px 2px rgba(0, 0, 0, 0.24);
         transition: opacity 0.2s ease;
         object-fit: cover;
         -o-object-fit: cover;
@@ -807,7 +815,8 @@
     .image-grid__card:not(.skeleton):focus .image-grid__card-thumb,
     .image-grid__card:not(.skeleton):hover .image-grid__card-thumb {
         opacity: 0.5 !important;
-        box-shadow: 0 14px 28px rgba(0, 0, 0, 0.25),
+        box-shadow:
+            0 14px 28px rgba(0, 0, 0, 0.25),
             0 10px 10px rgba(0, 0, 0, 0.22);
     }
 
@@ -895,7 +904,8 @@
         border-radius: 50%;
         width: 60px;
         height: 60px;
-        box-shadow: 0 14px 28px rgba(0, 0, 0, 0.25),
+        box-shadow:
+            0 14px 28px rgba(0, 0, 0, 0.25),
             0 10px 10px rgba(0, 0, 0, 0.22);
     }
 

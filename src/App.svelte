@@ -930,7 +930,12 @@
 		}
 	});
 
-	let _isAlert, _confirmTitle, _confirmText, _confirmLabel, _cancelLabel;
+	let _isAlert,
+		_confirmTitle,
+		_confirmText,
+		_confirmLabel,
+		_cancelLabel,
+		_isImportant;
 	let _confirmModalPromise;
 
 	$confirmPromise = window.confirmPromise = async (confirmValues) => {
@@ -945,6 +950,7 @@
 					: confirmValues?.text) || "Do you want to continue?";
 			_confirmLabel = confirmValues?.confirmLabel || "OK";
 			_cancelLabel = confirmValues?.cancelLabel || "CANCEL";
+			_isImportant = confirmValues?.isImportant ?? false;
 			$confirmIsVisible = true;
 			_confirmModalPromise = { resolve };
 		});
@@ -957,6 +963,7 @@
 			_confirmText =
 			_confirmLabel =
 			_cancelLabel =
+			_isImportant =
 				undefined;
 		$confirmIsVisible = false;
 	}
@@ -968,6 +975,7 @@
 			_confirmText =
 			_confirmLabel =
 			_cancelLabel =
+			_isImportant =
 				undefined;
 		$confirmIsVisible = false;
 	}
@@ -980,6 +988,7 @@
 				_confirmText =
 				_confirmLabel =
 				_cancelLabel =
+				_isImportant =
 					undefined;
 		}
 	});
@@ -1011,6 +1020,7 @@
 				title: "New updates are available",
 				text: "You may want to download the new version.",
 				confirmLabel: "DOWNLOAD",
+				isImportant: true,
 			})
 		) {
 			try {
@@ -1153,6 +1163,7 @@
 		confirmText={_confirmText}
 		confirmLabel={_confirmLabel}
 		cancelLabel={_cancelLabel}
+		isImportant={_isImportant}
 	/>
 </main>
 

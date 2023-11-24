@@ -18,6 +18,7 @@
         importantUpdate,
         importantLoad,
         popupVisible,
+        selectedCustomFilter,
     } from "../../js/globalValues.js";
     import { fade } from "svelte/transition";
     import { saveJSON } from "../../js/indexedDB.js";
@@ -29,11 +30,7 @@
     async function importData() {
         if (!(importFileInput instanceof Element))
             return ($dataStatus = "Something went wrong");
-        if (
-            await $confirmPromise({
-                text: "Do you want to import your data?",
-            })
-        ) {
+        if (await $confirmPromise("Do you want to import your data?")) {
             importFileInput.click();
         }
     }
@@ -49,7 +46,7 @@
                 : "";
             if (
                 await $confirmPromise(
-                    `File ${filenameToShow}has been detected, do you want to import the file?`
+                    `File ${filenameToShow}has been detected, do you want to import the file?`,
                 )
             ) {
                 await saveJSON(true, "shouldProcessRecommendation");
@@ -120,7 +117,7 @@
             await $confirmPromise(
                 `Do you want to ${
                     $autoUpdate ? "disable" : "enable"
-                } auto-update?`
+                } auto-update?`,
             )
         ) {
             $autoUpdate = !$autoUpdate;
@@ -133,7 +130,7 @@
             await $confirmPromise(
                 `Do you want to ${
                     $autoExport ? "disable" : "enable"
-                } auto-export?`
+                } auto-export?`,
             )
         ) {
             $autoExport = !$autoExport;
@@ -157,7 +154,7 @@
             return;
         } else if (
             await $confirmPromise(
-                "Do you want to show all your hidden anime entries?"
+                "Do you want to show all your hidden anime entries?",
             )
         ) {
             if ($animeLoaderWorker) {
@@ -169,32 +166,38 @@
             }
             $dataStatus = "Updating List";
             $menuVisible = false;
-            let filterSelectionIdx =
-                $filterOptions?.filterSelection?.findIndex?.(
-                    ({ filterSelectionName }) =>
-                        filterSelectionName === "Anime Filter"
-                );
-            let checkBoxFilterIdx = $filterOptions?.filterSelection?.[
-                filterSelectionIdx ?? -1
-            ]?.filters?.Checkbox?.findIndex?.(
-                ({ filName }) => filName === "hidden anime"
-            );
-            if (filterSelectionIdx >= 0 && checkBoxFilterIdx >= 0) {
-                $filterOptions.filterSelection[
-                    filterSelectionIdx ?? -1
-                ].filters.Checkbox[checkBoxFilterIdx ?? -1].isSelected = false;
-            }
-            if ($activeTagFilters?.[selectedCustomFilter]?.["Anime Filter"]) {
-                $activeTagFilters[selectedCustomFilter]["Anime Filter"] =
-                    $activeTagFilters?.[selectedCustomFilter]?.[
-                        "Anime Filter"
-                    ].filter(
-                        ({ optionName, filterType }) =>
-                            optionName !== "hidden" && filterType !== "checkbox"
+            try {
+                let filterSelectionIdx =
+                    $filterOptions?.filterSelection?.findIndex?.(
+                        ({ filterSelectionName }) =>
+                            filterSelectionName === "Anime Filter",
                     );
-            }
-            await saveJSON($filterOptions, "filterOptions");
-            await saveJSON($activeTagFilters, "activeTagFilters");
+                let checkBoxFilterIdx = $filterOptions?.filterSelection?.[
+                    filterSelectionIdx ?? -1
+                ]?.filters?.Checkbox?.findIndex?.(
+                    ({ filName }) => filName === "hidden anime",
+                );
+                if (filterSelectionIdx >= 0 && checkBoxFilterIdx >= 0) {
+                    $filterOptions.filterSelection[
+                        filterSelectionIdx ?? -1
+                    ].filters.Checkbox[checkBoxFilterIdx ?? -1].isSelected =
+                        false;
+                }
+                if (
+                    $activeTagFilters?.[$selectedCustomFilter]?.["Anime Filter"]
+                ) {
+                    $activeTagFilters[$selectedCustomFilter]["Anime Filter"] =
+                        $activeTagFilters?.[$selectedCustomFilter]?.[
+                            "Anime Filter"
+                        ].filter(
+                            ({ optionName, filterType }) =>
+                                optionName !== "hidden" &&
+                                filterType !== "checkbox",
+                        );
+                }
+                await saveJSON($filterOptions, "filterOptions");
+                await saveJSON($activeTagFilters, "activeTagFilters");
+            } catch (ex) {}
             await saveJSON({}, "hiddenEntries");
             importantLoad.update((e) => !e);
         }
@@ -202,7 +205,10 @@
 
     async function anilistSignup() {
         if (
-            await $confirmPromise("Do you want to sign-up an AniList account?")
+            await $confirmPromise({
+                text: "Do you want to sign-up an AniList account?",
+                isImportant: true,
+            })
         ) {
             window.open("https://anilist.co/signup", "_blank");
         }
@@ -238,7 +244,12 @@
     }
 
     async function reload() {
-        if (await $confirmPromise("Do you want to reload the app resources?")) {
+        if (
+            await $confirmPromise({
+                text: "Do you want to reload the app resources?",
+                isImportant: true,
+            })
+        ) {
             document.querySelectorAll("script")?.forEach((script) => {
                 if (
                     script.src &&
@@ -258,7 +269,12 @@
 
     async function refresh() {
         if (!$android) return;
-        if (await $confirmPromise("Do you want to refresh the app?")) {
+        if (
+            await $confirmPromise({
+                text: "Do you want to refresh the app?",
+                isImportant: true,
+            })
+        ) {
             try {
                 JSBridge.refreshWeb();
             } catch (e) {}
@@ -268,9 +284,10 @@
     async function clearCache() {
         if (!$android) return;
         if (
-            await $confirmPromise(
-                "Do you want to clear your cache to receive the latest application updates?"
-            )
+            await $confirmPromise({
+                text: "Do you want to clear your cache to receive the latest application updates?",
+                isImportant: true,
+            })
         ) {
             try {
                 JSBridge.clearCache();

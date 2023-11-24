@@ -19,7 +19,10 @@
         shownAllInList,
     } from "../../js/globalValues.js";
     import { onMount, tick } from "svelte";
-    import { getLocalStorage } from "../../js/others/helper.js";
+    import {
+        getElementWidth,
+        getLocalStorage,
+    } from "../../js/others/helper.js";
     import { animeLoader } from "../../js/workerUtils.js";
 
     let windowWidth = Math.max(
@@ -124,20 +127,58 @@
         scrollToSelectedCustomFilter(val);
     });
 
+    let selectedElementIndicatorWidth, selectedElementIndicatorOffsetLeft;
     async function scrollToSelectedCustomFilter(val = $selectedCustomFilter) {
         if (!customFiltersNav) return;
         await tick();
         let elementToScroll = Array.from(customFiltersNav?.children || []).find(
-            (e) => e?.innerText === val,
+            (e) =>
+                e?.innerText?.trim?.() === val?.trim?.() &&
+                e?.classList?.contains?.("custom-filter"),
         );
-        let scrollPosition =
-            elementToScroll?.offsetLeft -
-            document?.documentElement?.getBoundingClientRect?.()?.width / 2 +
-            elementToScroll?.offsetWidth / 2;
-        customFiltersNav?.scrollTo?.({
-            left: scrollPosition,
-            behavior: "smooth",
-        });
+        if (elementToScroll instanceof Element) {
+            let selectedElementWidth = getElementWidth(elementToScroll) || 26;
+            selectedElementIndicatorWidth = selectedElementWidth * 0.9;
+
+            selectedElementIndicatorOffsetLeft =
+                elementToScroll?.offsetLeft +
+                parseFloat(
+                    window?.getComputedStyle?.(elementToScroll, null)
+                        ?.paddingLeft,
+                ) +
+                (selectedElementWidth - selectedElementIndicatorWidth) / 2;
+            let scrollPosition =
+                elementToScroll?.offsetLeft -
+                document?.documentElement?.getBoundingClientRect?.()?.width /
+                    2 +
+                elementToScroll?.offsetWidth / 2;
+            customFiltersNav?.scrollTo?.({
+                left: scrollPosition,
+                behavior: "smooth",
+            });
+        } else {
+            selectedElementIndicatorOffsetLeft = selectedElementIndicatorWidth =
+                -99;
+        }
+    }
+
+    let goToNextPrevCustomFilterTimeout;
+    function goToNextPrevCustomFilter(event, next = true) {
+        if (event?.target?.classList?.contains("custom-filter")) return;
+        if ($initData) return pleaseWaitAlert();
+        clearTimeout(goToNextPrevCustomFilterTimeout);
+        goToNextPrevCustomFilterTimeout = setTimeout(() => {
+            let selectedCustomFilterIdx = $customFilters.indexOf(
+                $selectedCustomFilter,
+            );
+            if (selectedCustomFilterIdx < 0) return;
+            let idxToSelect = selectedCustomFilterIdx + (next ? 1 : -1);
+            if (idxToSelect >= 0 && $customFilters?.length > idxToSelect) {
+                let selectingCustomFilterName = $customFilters?.[idxToSelect];
+                if (selectingCustomFilterName)
+                    selectCustomFilter(selectingCustomFilterName);
+            }
+        }, 8);
     }
 
     async function selectCustomFilter(selectedCustomFilterName) {
@@ -278,6 +319,7 @@
             document?.documentElement?.getBoundingClientRect?.()?.width,
             window.innerWidth,
         );
+        scrollToSelectedCustomFilter();
     });
     window.addEventListener("scroll", () => {
         lastScrollTop = document.documentElement.scrollTop;
@@ -296,6 +338,7 @@
     });
 </script>
 
+<!-- svelte-ignore a11y-no-noninteractive-tabindex -->
 <div
     class={"custom-filters-nav" +
         (!$android || isScrolledYMax || isFullViewed
@@ -305,6 +348,20 @@
               : " hide")}
     style:--opacity={$android ? customFilOpacity : ""}
 >
+    <div
+        class="prev-custom-filter"
+        on:click={(e) => goToNextPrevCustomFilter(e, false)}
+        on:keydown={(e) => {
+            e.key === "Enter" && goToNextPrevCustomFilter(e, false);
+        }}
+    ></div>
+    <div
+        class="next-custom-filter"
+        on:click={(e) => goToNextPrevCustomFilter(e, true)}
+        on:keydown={(e) => {
+            e.key === "Enter" && goToNextPrevCustomFilter(true);
+        }}
+    ></div>
     <nav
         id="custom-filters-nav"
         bind:this={customFiltersNav}
@@ -315,8 +372,12 @@
             horizontalWheel(e, "nav");
         }}
     >
+        <div
+            class="selected-custom-filter-indicator"
+            style:--width={selectedElementIndicatorWidth + "px"}
+            style:--translateY={selectedElementIndicatorOffsetLeft + "px"}
+        ></div>
         {#each $customFilters as filterName (filterName || {})}
-            <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
             <span
                 tabindex="0"
                 on:click={selectCustomFilter(filterName)}
@@ -362,6 +423,7 @@
     }
     .nav {
         display: flex;
+        position: relative;
         width: min(calc(100% - 100px), calc(1140px - 100px));
         height: 100%;
         align-items: center;
@@ -391,6 +453,36 @@
     .nav::-webkit-scrollbar {
         display: none;
     }
+    .prev-custom-filter,
+    .next-custom-filter {
+        height: 100%;
+        width: 40px;
+        position: absolute;
+        top: 0;
+        opacity: 0 !important;
+        z-index: 1 !important;
+    }
+    .prev-custom-filter {
+        left: 0;
+    }
+    .next-custom-filter {
+        right: 0;
+    }
+    .selected-custom-filter-indicator {
+        --width: -999px;
+        --translateY: -999px;
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 5px;
+        background-color: rgb(150 200 255);
+        border-radius: 0px 0px 1000px 1000px;
+        width: var(--width);
+        translate: var(--translateY);
+        transition:
+            translate 0.15s ease-out,
+            width 0.075s ease-out 0.075s;
+    }
     .custom-filter {
         display: flex;
         align-items: center;
@@ -402,18 +494,42 @@
         height: 100%;
         scroll-snap-align: start;
         margin-bottom: auto;
-        border-top: 3px solid transparent;
         padding: 1em;
+        z-index: 2 !important;
     }
     .custom-filter.selected {
         color: rgb(150 200 255) !important;
-        border-top: 3px solid rgb(150 200 255) !important;
     }
     @media screen and (max-width: 750px) {
         .nav {
             margin: 0 !important;
             padding: 0 !important;
             width: 100% !important;
+        }
+    }
+    @media screen and (min-width: 750px) {
+        .prev-custom-filter,
+        .next-custom-filter {
+            pointer-events: none !important;
+            position: fixed !important;
+            transform: translateY(-99999px) translateZ(0) !important;
+            -webkit-transform: translateY(-99999px) translateZ(0) !important;
+            -ms-transform: translateY(-99999px) translateZ(0) !important;
+            -moz-transform: translateY(-99999px) translateZ(0) !important;
+            -o-transform: translateY(-99999px) translateZ(0) !important;
+            user-select: none !important;
+            touch-action: none !important;
+            cursor: not-allowed !important;
+            -webkit-user-drag: none !important;
+            -moz-user-select: none !important;
+            -ms-user-select: none !important;
+            height: 0 !important;
+            width: 0 !important;
+            max-width: 0 !important;
+            max-height: 0 !important;
+            min-width: 0 !important;
+            min-height: 0 !important;
+            overflow: hidden !important;
         }
     }
     .disable-interaction {

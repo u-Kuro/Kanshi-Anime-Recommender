@@ -301,7 +301,7 @@ const requestUserEntries = (_data) => {
                                 loadAnime.update((e) => !e)
                                 window.confirmPromise({
                                     isAlert: true,
-                                    text: "User was not found, please try again."
+                                    text: "User was not found, please try again.",
                                 })
                                 requestUserEntriesTerminateTimeout = setTimeout(() => {
                                     requestUserEntriesWorker?.terminate?.();
@@ -525,16 +525,20 @@ const importUserData = (_data) => {
     })
 }
 
-let extraInfoIndex = 1, getExtraInfoTimeout
+let extraInfoIndex = 1, getExtraInfoTimeout, getExtraInfoWorker
 const getExtraInfo = () => {
     return new Promise((resolve, reject) => {
         clearTimeout(getExtraInfoTimeout)
+        getExtraInfoWorker?.terminate?.()
+        getExtraInfoWorker = null
         cacheRequest("./webapi/worker/getExtraInfo.js")
             .then(url => {
                 clearTimeout(getExtraInfoTimeout)
-                let worker = new Worker(url)
-                worker.postMessage({ number: extraInfoIndex })
-                worker.onmessage = ({ data }) => {
+                getExtraInfoWorker?.terminate?.()
+                getExtraInfoWorker = null
+                getExtraInfoWorker = new Worker(url)
+                getExtraInfoWorker.postMessage({ number: extraInfoIndex })
+                getExtraInfoWorker.onmessage = ({ data }) => {
                     if (typeof extraInfoIndex === "number" && extraInfoIndex < 6) {
                         ++extraInfoIndex
                     } else {
@@ -546,14 +550,14 @@ const getExtraInfo = () => {
                         getExtraInfoTimeout = setTimeout(() => {
                             getExtraInfo()
                         }, 1000 * 30)
-                        worker?.terminate?.()
+                        getExtraInfoWorker?.terminate?.()
                         resolve()
                     } else {
-                        worker?.terminate?.()
+                        getExtraInfoWorker?.terminate?.()
                         getExtraInfo()
                     }
                 }
-                worker.onerror = (error) => {
+                getExtraInfoWorker.onerror = (error) => {
                     reject(error)
                 }
             }).catch(() => {

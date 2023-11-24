@@ -45,11 +45,11 @@
 
     let windowWidth = Math.max(
         document?.documentElement?.getBoundingClientRect?.()?.width,
-        window.innerWidth
+        window.innerWidth,
     );
     let windowHeight = Math.max(
         window.visualViewport.height,
-        window.innerHeight
+        window.innerHeight,
     );
     let maxFilterSelectionHeight = windowHeight * 0.3;
 
@@ -87,7 +87,7 @@
         selectedSortName,
         selectedSortType;
     $: selectedFilterSelectionIdx = $filterOptions?.filterSelection?.findIndex(
-        ({ isSelected }) => isSelected
+        ({ isSelected }) => isSelected,
     );
     $: selectedFilterSelectionName =
         $filterOptions?.filterSelection?.[selectedFilterSelectionIdx]
@@ -97,7 +97,7 @@
             selectedFilterSelectionName
         ] || [];
     $: selectedSortIdx = $filterOptions?.sortFilter?.findIndex(
-        ({ sortType }) => sortType !== "none"
+        ({ sortType }) => sortType !== "none",
     );
     $: selectedSort = $filterOptions?.sortFilter?.[selectedSortIdx];
     $: selectedSortName = selectedSort?.sortName;
@@ -185,12 +185,12 @@
     function windowResized() {
         windowHeight = Math.max(
             window.visualViewport.height,
-            window.innerHeight
+            window.innerHeight,
         );
         maxFilterSelectionHeight = windowHeight * 0.3;
         windowWidth = Math.max(
             document?.documentElement?.getBoundingClientRect?.()?.width,
-            window.innerWidth
+            window.innerWidth,
         );
     }
     async function handleFilterTypes(event, newFilterTypeName) {
@@ -221,7 +221,7 @@
             let newIdxFilterTypeSelected =
                 $filterOptions?.filterSelection?.findIndex(
                     ({ filterSelectionName }) =>
-                        filterSelectionName === newFilterTypeName
+                        filterSelectionName === newFilterTypeName,
                 );
             $filterOptions.filterSelection[
                 newIdxFilterTypeSelected
@@ -282,12 +282,12 @@
         let idxTypeSelected = selectedFilterSelectionIdx;
         if (selectedFilterElement instanceof Element) {
             let filterSelectChildrenArray = Array.from(
-                selectedFilterElement.parentElement.children
+                selectedFilterElement.parentElement.children,
             ).filter((el) => {
                 return !el.classList.contains("disable-interaction");
             });
             let selectedIndex = filterSelectChildrenArray.indexOf(
-                selectedFilterElement
+                selectedFilterElement,
             );
             if (
                 $filterOptions.filterSelection[idxTypeSelected].filters
@@ -441,7 +441,7 @@
         optionIdx,
         dropdownIdx,
         changeType,
-        filterSelectionName
+        filterSelectionName,
     ) {
         if ($initData) return pleaseWaitAlert();
         let idxTypeSelected = selectedFilterSelectionIdx;
@@ -523,7 +523,7 @@
                             e.filterType === "dropdown" &&
                             e.categIdx === dropdownIdx &&
                             e.optionType === optionType
-                        )
+                        ),
                 );
         }
         saveFilters(filterSelectionName);
@@ -532,7 +532,7 @@
         event,
         checkBoxName,
         checkboxIdx,
-        filterSelectionName
+        filterSelectionName,
     ) {
         let element = event.target;
         let classList = element.classList;
@@ -572,7 +572,7 @@
                             e.optionName === checkBoxName &&
                             e.filterType === "checkbox" &&
                             e.selected === "included"
-                        )
+                        ),
                 );
         } else {
             let hasActiveFilter = false;
@@ -619,7 +619,7 @@
         inputNumberName,
         maxValue,
         minValue,
-        filterSelectionName
+        filterSelectionName,
     ) {
         if ($initData) return pleaseWaitAlert();
         let idxTypeSelected = selectedFilterSelectionIdx;
@@ -683,7 +683,7 @@
                                     e.optionIdx === inputNumIdx &&
                                     e.optionName === inputNumberName &&
                                     e.filterType === "input number"
-                                )
+                                ),
                         );
                     } else {
                         let hasActiveFilter = false;
@@ -756,7 +756,7 @@
                                     e.optionName === inputNumberName &&
                                     e.optionValue === currentValue &&
                                     e.filterType === "input number"
-                                )
+                                ),
                         );
                 } else {
                     let hasActiveFilter = false;
@@ -810,7 +810,7 @@
         categIdx,
         changeType,
         optionType,
-        optionValue
+        optionValue,
     ) {
         if ($initData) return pleaseWaitAlert();
         let element = event?.target;
@@ -832,7 +832,7 @@
                     item.optionName === optionName &&
                     item.optionValue === optionValue &&
                     item.optionIdx === optionIdx &&
-                    item.filterType === "input number"
+                    item.filterType === "input number",
             );
             if (elementIdx >= 0) {
                 let currentSelect =
@@ -856,7 +856,7 @@
                 (e) =>
                     e.optionIdx === optionIdx &&
                     e.optionName === optionName &&
-                    e.filterType === filterType
+                    e.filterType === filterType,
             );
             let checkboxSelection =
                 $activeTagFilters?.[$selectedCustomFilter]?.[
@@ -947,7 +947,7 @@
         optionName,
         filterType,
         categIdx,
-        optionType
+        optionType,
     ) {
         if ($initData) return pleaseWaitAlert();
         let idxTypeSelected = selectedFilterSelectionIdx;
@@ -980,7 +980,7 @@
                         e.optionIdx === optionIdx &&
                         e.filterType === filterType &&
                         (e.optionType ? e.optionType === optionType : true)
-                    )
+                    ),
             );
         saveFilters(nameTypeSelected);
     }
@@ -1064,7 +1064,7 @@
         } else if (sortName !== newSortName) {
             $filterOptions.sortFilter[idxSortSelected].sortType = "none";
             let idxNewSortSelected = $filterOptions?.sortFilter?.findIndex(
-                ({ sortName }) => sortName === newSortName
+                ({ sortName }) => sortName === newSortName,
             );
             $filterOptions.sortFilter[idxNewSortSelected].sortType = "desc";
         }
@@ -1094,7 +1094,7 @@
         // 38up 40down 13enter
         if (keyCode == 38 || keyCode == 40) {
             var element = Array.from(
-                document.getElementsByClassName("options-wrap") || []
+                document.getElementsByClassName("options-wrap") || [],
             ).find((el) => {
                 return !el.classList.contains("disable-interaction");
             });
@@ -1111,14 +1111,14 @@
                 ) {
                     let parent = highlightedEl.closest(".options");
                     let options = Array.from(
-                        parent.querySelectorAll(".option")
+                        parent.querySelectorAll(".option"),
                     );
                     let currentidx = options.indexOf(highlightedEl);
                     let nextEl, iteratedEl, firstEl, lastEl;
                     for (let idx = 0; idx < options.length; idx++) {
                         if (
                             !options[idx].classList.contains(
-                                "disable-interaction"
+                                "disable-interaction",
                             )
                         ) {
                             if (keyCode === 38) {
@@ -1163,7 +1163,7 @@
                     }
                 } else {
                     let options = element.querySelectorAll(
-                        ".option:not(.disable-interaction)"
+                        ".option:not(.disable-interaction)",
                     );
                     highlightedEl = options[0];
                     if (highlightedEl instanceof Element) {
@@ -1184,7 +1184,7 @@
             }
         } else {
             var element = Array.from(
-                document.getElementsByClassName("options-wrap") || []
+                document.getElementsByClassName("options-wrap") || [],
             ).find((el) => !el.classList.contains("disable-interaction"));
             if (
                 (element?.closest?.(".filter-select") && keyCode !== 9) ||
@@ -1304,12 +1304,12 @@
     }
 
     function handleCustomFilterPopup(event) {
-        if ($initData) return;
         let element = event.target;
         let classList = element.classList;
         let iconActions = element.closest(".custom-filter-icon-wrap");
         if (iconActions || classList.contains("custom-filter-icon-wrap"))
             return;
+        if ($initData) return pleaseWaitAlert();
         let option = element.closest(".option");
         if (option || classList.contains("option")) return;
         let sortSelectEl = element.closest(".custom-filter-wrap");
@@ -1381,8 +1381,8 @@
                         "Custom Filter " + new Date().getTime();
                     $activeTagFilters[savedCustomFilterName] = JSON.parse(
                         JSON.stringify(
-                            $activeTagFilters?.[previousCustomFilterName]
-                        )
+                            $activeTagFilters?.[previousCustomFilterName],
+                        ),
                     );
                     delete $activeTagFilters?.[previousCustomFilterName];
                     $selectedCustomFilter = savedCustomFilterName;
@@ -1390,7 +1390,7 @@
                     await saveJSON($activeTagFilters, "activeTagFilters");
                     await saveJSON(
                         $selectedCustomFilter,
-                        "selectedCustomFilter"
+                        "selectedCustomFilter",
                     );
                 }
             }
@@ -1421,15 +1421,15 @@
                         "Custom Filter " + new Date().getTime();
                     $activeTagFilters[addedCustomFilterName] = JSON.parse(
                         JSON.stringify(
-                            $activeTagFilters?.[previousCustomFilterName]
-                        )
+                            $activeTagFilters?.[previousCustomFilterName],
+                        ),
                     );
                     $selectedCustomFilter = addedCustomFilterName;
                     $activeTagFilters = $activeTagFilters;
                     await saveJSON($activeTagFilters, "activeTagFilters");
                     await saveJSON(
                         $selectedCustomFilter,
-                        "selectedCustomFilter"
+                        "selectedCustomFilter",
                     );
                 }
             }
@@ -1488,7 +1488,7 @@
                 selectedSortElement) &&
             Math.max(
                 document?.documentElement?.getBoundingClientRect?.()?.width,
-                window.innerWidth
+                window.innerWidth,
             ) <= 425;
     }
 
@@ -1828,13 +1828,13 @@
                                         on:click={(e) =>
                                             handleFilterTypes(
                                                 e,
-                                                filterSelection?.filterSelectionName
+                                                filterSelection?.filterSelectionName,
                                             )}
                                         on:keydown={(e) =>
                                             e.key === "Enter" &&
                                             handleFilterTypes(
                                                 e,
-                                                filterSelection?.filterSelectionName
+                                                filterSelection?.filterSelectionName,
                                             )}
                                     >
                                         <h3
@@ -2043,7 +2043,7 @@
                                             e.key === "Enter" &&
                                             closeFilterSelect(dropdownIdx)}
                                         on:click={closeFilterSelect(
-                                            dropdownIdx
+                                            dropdownIdx,
                                         )}
                                     >
                                         ×
@@ -2086,7 +2086,7 @@
                                                 class={"option " +
                                                     (hasPartialMatch(
                                                         option.optionName,
-                                                        Dropdown.optKeyword
+                                                        Dropdown.optKeyword,
                                                     )
                                                         ? ""
                                                         : "disable-interaction")}
@@ -2096,7 +2096,7 @@
                                                     optionIdx,
                                                     dropdownIdx,
                                                     Dropdown.changeType,
-                                                    filterSelection.filterSelectionName
+                                                    filterSelection.filterSelectionName,
                                                 )}
                                                 on:keydown={(e) =>
                                                     e.key === "Enter" &&
@@ -2106,7 +2106,7 @@
                                                         optionIdx,
                                                         dropdownIdx,
                                                         Dropdown.changeType,
-                                                        filterSelection.filterSelectionName
+                                                        filterSelection.filterSelectionName,
                                                     )}
                                             >
                                                 <h3>
@@ -2157,7 +2157,7 @@
                                         e,
                                         Checkbox.filName,
                                         checkboxIdx,
-                                        filterSelection.filterSelectionName
+                                        filterSelection.filterSelectionName,
                                     )}
                                 on:keydown={(e) =>
                                     e.key === "Enter" &&
@@ -2165,7 +2165,7 @@
                                         e,
                                         Checkbox.filName,
                                         checkboxIdx,
-                                        filterSelection.filterSelectionName
+                                        filterSelection.filterSelectionName,
                                     )}
                             >
                                 <label
@@ -2187,7 +2187,7 @@
                                                 e,
                                                 Checkbox.filName,
                                                 checkboxIdx,
-                                                filterSelection.filterSelectionName
+                                                filterSelection.filterSelectionName,
                                             );
                                         }
                                     }}
@@ -2228,12 +2228,13 @@
                                     "scoring system"
                                         ? "Default: User Scoring"
                                         : conditionalInputNumberList.includes(
-                                              inputNum.filName
-                                          )
-                                        ? ">123 or 123"
-                                        : inputNum.defaultValue !== null
-                                        ? "Default: " + inputNum.defaultValue
-                                        : "123"}
+                                                inputNum.filName,
+                                            )
+                                          ? ">123 or 123"
+                                          : inputNum.defaultValue !== null
+                                            ? "Default: " +
+                                              inputNum.defaultValue
+                                            : "123"}
                                     value={inputNum.numberValue || ""}
                                     on:input={(e) =>
                                         handleInputNumber(
@@ -2243,7 +2244,7 @@
                                             inputNum.filName,
                                             inputNum.maxValue,
                                             inputNum.minValue,
-                                            filterSelection.filterSelectionName
+                                            filterSelection.filterSelectionName,
                                         )}
                                     disabled={!$showFilterOptions}
                                 />
@@ -2265,7 +2266,7 @@
     <div
         id="activeFilters"
         class={"activeFilters" +
-            (!$loadingFilterOptions && $showFilterOptions
+            (!$initData && !$loadingFilterOptions && $showFilterOptions
                 ? ""
                 : " disable-interaction")}
     >
@@ -2293,8 +2294,8 @@
                     "included"
                         ? "#5f9ea0"
                         : activeTagFiltersArray?.selected === "excluded"
-                        ? "#e85d75"
-                        : "#000"}
+                          ? "#e85d75"
+                          : "#000"}
                     on:click={(e) =>
                         changeActiveSelect(
                             e,
@@ -2304,7 +2305,7 @@
                             activeTagFiltersArray?.categIdx,
                             activeTagFiltersArray?.changeType,
                             activeTagFiltersArray?.optionType,
-                            activeTagFiltersArray?.optionValue
+                            activeTagFiltersArray?.optionValue,
                         )}
                     on:keydown={(e) =>
                         e.key === "Enter" &&
@@ -2316,7 +2317,7 @@
                             activeTagFiltersArray?.categIdx,
                             activeTagFiltersArray?.changeType,
                             activeTagFiltersArray?.optionType,
-                            activeTagFiltersArray?.optionValue
+                            activeTagFiltersArray?.optionValue,
                         )}
                 >
                     <div class="activeFilter">
@@ -2348,7 +2349,7 @@
                                 activeTagFiltersArray?.optionName,
                                 activeTagFiltersArray?.filterType,
                                 activeTagFiltersArray?.categIdx,
-                                activeTagFiltersArray?.optionType
+                                activeTagFiltersArray?.optionType,
                             )}
                         on:keydown={(e) =>
                             e.key === "Enter" &&
@@ -2358,7 +2359,7 @@
                                 activeTagFiltersArray?.optionName,
                                 activeTagFiltersArray?.filterType,
                                 activeTagFiltersArray?.categIdx,
-                                activeTagFiltersArray?.optionType
+                                activeTagFiltersArray?.optionType,
                             )}
                     >
                         <path
@@ -2553,7 +2554,8 @@
         background-color: rgba(30, 42, 56, 0.8) !important;
     }
     .options-wrap {
-        box-shadow: 0 14px 28px rgba(0, 0, 0, 0.25),
+        box-shadow:
+            0 14px 28px rgba(0, 0, 0, 0.25),
             0 10px 10px rgba(0, 0, 0, 0.22) !important;
     }
     .custom-filter-wrap {
