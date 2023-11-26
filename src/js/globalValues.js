@@ -62,7 +62,7 @@ const isScrolling = writable(null)
 const scrollingTimeout = writable(null)
 const asyncAnimeReloaded = writable(null)
 const isFullViewed = writable(null)
-const showFilterOptions = writable(null)
+const showFilterOptions = writable(getLocalStorage("showFilterOptions") || null)
 const dropdownIsVisible = writable(null)
 const confirmIsVisible = writable(null)
 // Reactive Functions

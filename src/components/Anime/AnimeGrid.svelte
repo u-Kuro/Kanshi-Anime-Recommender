@@ -40,6 +40,7 @@
     );
     let windowWidth = Math.max(
         document?.documentElement?.getBoundingClientRect?.()?.width,
+        window.visualViewport.width,
         window.innerWidth,
     );
     let animeGridEl;
@@ -415,6 +416,7 @@
         );
         windowWidth = Math.max(
             document?.documentElement?.getBoundingClientRect?.()?.width,
+            window.visualViewport.width,
             window.innerWidth,
         );
         animeGridEl = animeGridEl || document.getElementById("anime-grid");
@@ -425,6 +427,7 @@
             );
             windowWidth = Math.max(
                 document?.documentElement?.getBoundingClientRect?.()?.width,
+                window.visualViewport.width,
                 window.innerWidth,
             );
         });

@@ -75,7 +75,7 @@ import androidx.core.content.FileProvider;
 import androidx.core.splashscreen.SplashScreen;
 
 public class MainActivity extends AppCompatActivity {
-    public final int appID = 207;
+    public final int appID = 209;
     public boolean webViewIsLoaded = false;
     public boolean permissionIsAsked = false;
     public SharedPreferences prefs;
@@ -518,6 +518,7 @@ public class MainActivity extends AppCompatActivity {
                 if (writer!=null) {
                     try {
                         writer.close();
+                        writer = null;
                     } catch (Exception ignored) {}
                 }
                 if (!Environment.isExternalStorageManager()) {
@@ -556,17 +557,25 @@ public class MainActivity extends AppCompatActivity {
                                 if (tempFileIsDeleted) {
                                     writer = new BufferedWriter(new FileWriter(tempFile, true));
                                 } else {
+                                    if (writer!=null) {
+                                        try {
+                                            writer.close();
+                                            writer = null;
+                                        } catch (Exception ignored) {}
+                                    }
+                                    isExported(false);
                                     showToast(Toast.makeText(getApplicationContext(), "Error: Temporary data can't be re-written, please delete tmp.json first in the selected directory.", Toast.LENGTH_LONG));
                                 }
                             } catch (Exception e) {
                                 if(writer!=null){
                                     try {
                                         writer.close();
+                                        writer = null;
                                     } catch (Exception e2) {
-                                        showToast(Toast.makeText(getApplicationContext(), "Error: An exception occurred initializing the tmp.json file.", Toast.LENGTH_LONG));
                                         e.printStackTrace();
                                     }
                                 }
+                                isExported(false);
                                 showToast(Toast.makeText(getApplicationContext(), "Error: An exception occurred initializing the tmp.json file.", Toast.LENGTH_LONG));
                                 e.printStackTrace();
                             }
@@ -603,51 +612,62 @@ public class MainActivity extends AppCompatActivity {
                 } catch (Exception e) {
                     try {
                         writer.close();
+                        writer = null;
                     } catch (Exception e2) {
-                        showToast(Toast.makeText(getApplicationContext(), "Error: An exception occurred while writing to tmp.json file.", Toast.LENGTH_LONG));
                         e.printStackTrace();
                     }
+                    isExported(false);
                     showToast(Toast.makeText(getApplicationContext(), "Error: An exception occurred while writing to tmp.json file.", Toast.LENGTH_LONG));
                     e.printStackTrace();
                 }
             } else if(status==2&&writer!=null){
-                try{
-                    writer.write(chunk);
-                    writer.close();
-                    boolean fileIsDeleted = false,
-                            fileIsNew = false;
-                    File file = new File(directoryPath + fileName);
-                    if (file.exists()) {
-                        fileIsDeleted = file.delete();
-                        //noinspection ResultOfMethodCallIgnored
-                        file.createNewFile();
-                    } else {
-                        //noinspection ResultOfMethodCallIgnored
-                        file.createNewFile();
-                        fileIsNew = true;
-                    }
-                    if(fileIsDeleted || fileIsNew){
-                        if (tempFile==null || !tempFile.exists() || !tempFile.renameTo(file)) {
-                            showToast(Toast.makeText(getApplicationContext(), "Failed to export.", Toast.LENGTH_LONG));
-                            if (fileIsNew) {
-                                //noinspection ResultOfMethodCallIgnored
-                                file.delete();
-                            }
-                        }
-                        if (tempFile!=null) {
+                try {
+                    int lastStringLen = Math.min(chunk.length(), 3);
+                    String lastNCharacters = new String(new char[lastStringLen]).replace("\0", "}");
+                    if (chunk.endsWith(lastNCharacters)) {
+                        writer.write(chunk);
+                        writer.close();
+                        writer = null;
+                        boolean fileIsDeleted = false,
+                                fileIsNew = false;
+                        File file = new File(directoryPath + fileName);
+                        if (file.exists()) {
+                            fileIsDeleted = file.delete();
                             //noinspection ResultOfMethodCallIgnored
-                            tempFile.delete();
+                            file.createNewFile();
+                        } else {
+                            //noinspection ResultOfMethodCallIgnored
+                            file.createNewFile();
+                            fileIsNew = true;
+                        }
+                        if (fileIsDeleted || fileIsNew) {
+                            if (tempFile == null || !tempFile.exists() || !tempFile.renameTo(file)) {
+                                isExported(false);
+                                if (fileIsNew) {
+                                    //noinspection ResultOfMethodCallIgnored
+                                    file.delete();
+                                }
+                            } else {
+                                isExported(true);
+                            }
+                            if (tempFile != null) {
+                                //noinspection ResultOfMethodCallIgnored
+                                tempFile.delete();
+                            }
+                        } else {
+                            isExported(false);
                         }
                     } else {
-                        showToast(Toast.makeText(getApplicationContext(), "Data can't be re-written, please delete it first in the selected directory.", Toast.LENGTH_LONG));
+                        isExported(false);
                     }
                 } catch (Exception e) {
                     try {
                         writer.close();
+                        writer = null;
                     } catch (Exception e2) {
-                        showToast(Toast.makeText(getApplicationContext(), "An exception occurred in finalizing the exported file, your back-up was saved in tmp.json but is not guaranteed to work.", Toast.LENGTH_LONG));
                         e.printStackTrace();
                     }
+                    isExported(false);
                     showToast(Toast.makeText(getApplicationContext(), "An exception occurred in finalizing the exported file, your back-up was saved in tmp.json but is not guaranteed to work.", Toast.LENGTH_LONG));
                     e.printStackTrace();
                 }
@@ -882,6 +902,19 @@ public class MainActivity extends AppCompatActivity {
                     .setNegativeButton("CANCEL", null));
             }
         });
+    }
+
+    public void isExported(boolean success) {
+        if (success) {
+            webView.post(() -> webView.loadUrl("javascript:window?.isExported?.(true)"));
+        } else {
+            webView.post(() -> webView.loadUrl("javascript:window?.isExported?.(false)"));
+            showDialog(new AlertDialog.Builder(MainActivity.this)
+                .setTitle("Export failed")
+                .setMessage("Data was not exported, please try again.")
+                .setPositiveButton("OK", (dialogInterface, i) -> webView.post(() -> webView.loadUrl("javascript:window?.runExport?.()")))
+                .setNegativeButton("CANCEL", null));
+        }
     }
 
     @RequiresApi(api = Build.VERSION_CODES.N)

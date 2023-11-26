@@ -348,7 +348,14 @@ const requestUserEntries = (_data) => {
     })
 }
 
-let exportUserDataWorker;
+let exportUserDataWorker, waitForExportApproval;
+window.isExported = (success = true) => {
+    if (success) {
+        waitForExportApproval?.resolve?.()
+    } else {
+        waitForExportApproval?.reject?.()
+    }
+}
 const exportUserData = (_data) => {
     return new Promise((resolve, reject) => {
         if (exportUserDataWorker) {
@@ -360,9 +367,13 @@ const exportUserData = (_data) => {
             isExporting = true
             stopConflictingWorkers({ isExporting: true })
         }
+        waitForExportApproval?.reject?.()
+        waitForExportApproval = null
         progress.set(0)
         cacheRequest("./webapi/worker/exportUserData.js")
             .then(url => {
+                waitForExportApproval?.reject?.()
+                waitForExportApproval = null
                 if (exportUserDataWorker) {
                     exportUserDataWorker?.terminate?.()
                     exportUserDataWorker = null
@@ -393,10 +404,19 @@ const exportUserData = (_data) => {
                         } else if (state === 2) {
                             let username = data.username ?? null
                             JSBridge.exportJSON(chunk, 2, `Kanshi.${username?.toLowerCase() || "Backup"}.json`)
-                            progress.set(100)
-                            exportUserDataWorker?.terminate?.();
                             isExporting = false
-                            resolve(data)
+                            exportUserDataWorker?.terminate?.();
+                            new Promise((resolve, reject) => {
+                                waitForExportApproval = { resolve, reject }
+                            }).then(() => {
+                                dataStatus.set("Data has been Exported")
+                            }).catch(() => {
+                                waitForExportApproval?.reject?.()
+                            }).finally(() => {
+                                waitForExportApproval = null
+                                progress.set(100)
+                                resolve(data)
+                            })
                         }
                     } else {
                         dataStatusPrio = false
@@ -411,6 +431,8 @@ const exportUserData = (_data) => {
                 exportUserDataWorker.onerror = (error) => {
                     progress.set(100)
                     isExporting = false
+                    waitForExportApproval?.reject?.()
+                    waitForExportApproval = null
                     window.confirmPromise?.({
                         isAlert: true,
                         title: "Export failed",
@@ -421,6 +443,8 @@ const exportUserData = (_data) => {
             }).catch((error) => {
                 progress.set(100)
                 isExporting = false
+                waitForExportApproval?.reject?.()
+                waitForExportApproval = null
                 alertError()
                 reject(error)
             })

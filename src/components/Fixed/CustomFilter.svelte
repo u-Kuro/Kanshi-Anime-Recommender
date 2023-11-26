@@ -28,6 +28,7 @@
 
     let windowWidth = Math.max(
         document?.documentElement?.getBoundingClientRect?.()?.width,
+        window.visualViewport.width,
         window.innerWidth,
     );
     let customFiltersNav;
@@ -150,8 +151,7 @@
                 (selectedElementWidth - selectedElementIndicatorWidth) / 2;
             let scrollPosition =
                 elementToScroll?.offsetLeft -
-                document?.documentElement?.getBoundingClientRect?.()?.width /
-                    2 +
+                customFiltersNav?.clientWidth / 2 +
                 elementToScroll?.offsetWidth / 2;
             customFiltersNav?.scrollTo?.({
                 left: scrollPosition,
@@ -318,6 +318,7 @@
     window.addEventListener("resize", () => {
         windowWidth = Math.max(
             document?.documentElement?.getBoundingClientRect?.()?.width,
+            window.visualViewport.width,
             window.innerWidth,
         );
         scrollToSelectedCustomFilter();
@@ -329,6 +330,7 @@
     onMount(() => {
         windowWidth = Math.max(
             document?.documentElement?.getBoundingClientRect?.()?.width,
+            window.visualViewport.width,
             window.innerWidth,
         );
         customFiltersNav =
@@ -433,7 +435,7 @@
         user-select: none;
         max-width: 1140px;
         gap: 2.5em;
-        padding: 0 1em;
+        padding: 0;
         overflow-x: auto !important;
         -ms-overflow-style: none;
         scrollbar-width: none;

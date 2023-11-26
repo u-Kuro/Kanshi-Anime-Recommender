@@ -55,6 +55,7 @@
         fullDescriptionPopup,
         windowWidth = Math.max(
             document?.documentElement?.getBoundingClientRect?.()?.width,
+            window.visualViewport.width,
             window.innerWidth,
         ),
         windowHeight = Math.max(
@@ -408,6 +409,7 @@
                 return;
             windowWidth = Math.max(
                 document?.documentElement?.getBoundingClientRect?.()?.width,
+                window.visualViewport.width,
                 window.innerWidth,
             );
             windowHeight = Math.max(
@@ -1286,6 +1288,10 @@
                 false;
     }
 
+    window.showFullScreenInfo = (info) => {
+        fullDescriptionPopup = editHTMLString(info);
+        fullImagePopup = null;
+    };
     window.checkOpenFullScreenItem = () => {
         return fullImagePopup || fullDescriptionPopup;
     };
@@ -1317,6 +1323,11 @@
             node.src = emptyImage;
         }
     }
+
+    window.showPopupInfo = (info) => {
+        fullDescriptionPopup = editHTMLString(info);
+        fullImagePopup = null;
+    };
 </script>
 
 <div
@@ -2922,6 +2933,34 @@
     :global(.fullPopupDescription a) {
         color: rgb(0 168 255) !important;
         text-decoration: none !important;
+    }
+    :global(.fullPopupDescription:has(.is-custom-table)) {
+        border-radius: 1em !important;
+    }
+    :global(.fullPopupDescription > .is-custom-table) {
+        width: min(90vw, 380px) !important;
+        background-color: rgba(0, 0, 0, 1) !important;
+        padding: 1em 2em !important;
+        display: grid !important;
+        gap: 0.5em !important;
+    }
+    :global(.fullPopupDescription .custom-table-header) {
+        border-bottom: 1px solid white !important;
+        height: 2.75em !important;
+    }
+    :global(.fullPopupDescription .custom-table-h1) {
+        text-transform: capitalize !important;
+        font-size: 1.5rem !important;
+        font-weight: 500 !important;
+    }
+    :global(.fullPopupDescription .custom-table-list) {
+        list-style: none !important;
+        display: grid !important;
+        gap: 1em !important;
+        padding: 0.5em 0 !important;
+    }
+    :global(.fullPopupDescription .custom-table-list > li) {
+        text-transform: capitalize !important;
     }
     .disable-interaction {
         pointer-events: none !important;

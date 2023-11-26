@@ -72,6 +72,7 @@
 	$android = isAndroid(); // Android/Browser Identifier
 	let windowWidth = Math.max(
 		document?.documentElement?.getBoundingClientRect?.()?.width,
+		window.visualViewport.width,
 		window.innerWidth,
 	);
 	let windowHeight = Math.max(
@@ -638,6 +639,9 @@
 		if (typeof val !== "boolean" || $initData) return;
 		exportUserData();
 	});
+	window.runExport = () => {
+		$runExport = !$runExport;
+	};
 	runIsScrolling.subscribe((val) => {
 		if (typeof val !== "boolean") return;
 		if (!$isScrolling) $isScrolling = true;
@@ -1096,6 +1100,7 @@
 		);
 		windowWidth = Math.max(
 			document?.documentElement?.getBoundingClientRect?.()?.width,
+			window.visualViewport.width,
 			window.innerWidth,
 		);
 		windowHeight = Math.max(
@@ -1109,6 +1114,7 @@
 			);
 			windowWidth = Math.max(
 				document?.documentElement?.getBoundingClientRect?.()?.width,
+				window.visualViewport.width,
 				window.innerWidth,
 			);
 			if (windowWidth > 750) {

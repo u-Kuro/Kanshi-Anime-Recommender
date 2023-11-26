@@ -1,6 +1,6 @@
 <script>
     import { onMount, tick } from "svelte";
-    import { saveJSON } from "../../js/indexedDB.js";
+    import { retrieveJSON, saveJSON } from "../../js/indexedDB.js";
     import {
         android,
         finalAnimeList,
@@ -34,6 +34,9 @@
         removeClass,
         getLocalStorage,
         trimAllEmptyChar,
+        isJsonObject,
+        jsonIsEmpty,
+        setLocalStorage,
     } from "../../js/others/helper.js";
     import {
         animeLoader,
@@ -46,6 +49,7 @@
 
     let windowWidth = Math.max(
         document?.documentElement?.getBoundingClientRect?.()?.width,
+        window.visualViewport.width,
         window.innerWidth,
     );
     let windowHeight = Math.max(
@@ -65,6 +69,8 @@
 
     let filterScrollTimeout;
     let filterIsScrolling;
+
+    let tagCategoryInfo = {};
 
     let nameChangeUpdateProcessedList = ["Algorithm Filter"];
     let nameChangeUpdateFinalList = ["sort", "Anime Filter", "Content Caution"];
@@ -87,6 +93,32 @@
         selectedSort,
         selectedSortName,
         selectedSortType;
+    let sortFilterContents = [
+        {
+            sortName: "weighted score",
+            sortType: "desc",
+        },
+        {
+            sortName: "date",
+            sortType: "none",
+        },
+        {
+            sortName: "user score",
+            sortType: "none",
+        },
+        {
+            sortName: "average score",
+            sortType: "none",
+        },
+        {
+            sortName: "score",
+            sortType: "none",
+        },
+        {
+            sortName: "popularity",
+            sortType: "none",
+        },
+    ];
     $: selectedFilterSelectionIdx = $filterOptions?.filterSelection?.findIndex(
         ({ isSelected }) => isSelected,
     );
@@ -97,10 +129,13 @@
         $activeTagFilters?.[$selectedCustomFilter]?.[
             selectedFilterSelectionName
         ] || [];
-    $: selectedSortIdx = $filterOptions?.sortFilter?.findIndex(
-        ({ sortType }) => sortType !== "none",
-    );
-    $: selectedSort = $filterOptions?.sortFilter?.[selectedSortIdx];
+    $: selectedSortIdx =
+        $filterOptions?.sortFilter?.[$selectedCustomFilter]?.findIndex?.(
+            ({ sortType }) => sortType !== "none",
+        ) || 0;
+    $: selectedSort = $filterOptions?.sortFilter?.[$selectedCustomFilter]?.[
+        selectedSortIdx
+    ] || { sortName: "weighted score", sortType: "desc" };
     $: selectedSortName = selectedSort?.sortName;
     $: selectedSortType = selectedSort?.sortType;
 
@@ -191,6 +226,7 @@
         maxFilterSelectionHeight = windowHeight * 0.3;
         windowWidth = Math.max(
             document?.documentElement?.getBoundingClientRect?.()?.width,
+            window.visualViewport.width,
             window.innerWidth,
         );
     }
@@ -358,20 +394,19 @@
             selectedFilterElement = null;
         } else if (
             !classList.contains("options-wrap") &&
-            !element.closest(".options-wrap")
+            !element.closest(".options-wrap") &&
+            !classList.contains("fullPopupWrapper") &&
+            !element.closest(".fullPopupWrapper") &&
+            !classList.contains("item-info") &&
+            !classList.contains("extra-item-info") &&
+            !classList.contains("item-info-path") &&
+            !element.closest(".item-info") &&
+            !element.closest(".extra-item-info")
         ) {
             // Large Screen Width
             // Custom Filter Dropdown
             let customFilterEl = element.closest(".custom-filter-wrap");
-            // let customFilterFloatingIcon = element.closest(
-            //     ".custom-filter-floating-icon"
-            // );
-            if (
-                !classList.contains("custom-filter-wrap") &&
-                !customFilterEl
-                // &&!classList.contains("custom-filter-floating-icon") &&
-                // !customFilterFloatingIcon
-            ) {
+            if (!classList.contains("custom-filter-wrap") && !customFilterEl) {
                 if (
                     highlightedEl instanceof Element &&
                     highlightedEl.closest(".custom-filter-wrap")
@@ -1056,18 +1091,39 @@
     function changeSort(newSortName) {
         if ($initData) return pleaseWaitAlert();
         let idxSortSelected = selectedSortIdx;
-        let selectedSortFilter = $filterOptions?.sortFilter?.[idxSortSelected];
+        let selectedSortFilter = $filterOptions?.sortFilter?.[
+            $selectedCustomFilter
+        ]?.[idxSortSelected] || {
+            sortName: "weighted score",
+            sortType: "desc",
+        };
         let sortName = selectedSortFilter?.sortName;
         let sortType = selectedSortFilter?.sortType;
-        if (sortName === newSortName) {
-            let newSortType = sortType === "desc" ? "asc" : "desc";
-            $filterOptions.sortFilter[idxSortSelected].sortType = newSortType;
-        } else if (sortName !== newSortName) {
-            $filterOptions.sortFilter[idxSortSelected].sortType = "none";
-            let idxNewSortSelected = $filterOptions?.sortFilter?.findIndex(
-                ({ sortName }) => sortName === newSortName,
-            );
-            $filterOptions.sortFilter[idxNewSortSelected].sortType = "desc";
+        if (
+            isJsonObject(
+                $filterOptions?.sortFilter?.[$selectedCustomFilter]?.[
+                    idxSortSelected
+                ],
+            )
+        ) {
+            if (sortName === newSortName) {
+                let newSortType = sortType === "desc" ? "asc" : "desc";
+                $filterOptions.sortFilter[$selectedCustomFilter][
+                    idxSortSelected
+                ].sortType = newSortType;
+            } else if (sortName !== newSortName) {
+                $filterOptions.sortFilter[$selectedCustomFilter][
+                    idxSortSelected
+                ].sortType = "none";
+                let idxNewSortSelected = $filterOptions?.sortFilter?.[
+                    $selectedCustomFilter
+                ]?.findIndex?.(({ sortName }) => sortName === newSortName);
+                if (idxNewSortSelected >= 0) {
+                    $filterOptions.sortFilter[$selectedCustomFilter][
+                        idxNewSortSelected
+                    ].sortType = "desc";
+                }
+            }
         }
         saveFilters("sort");
         if (
@@ -1082,11 +1138,26 @@
     function changeSortType() {
         if ($initData) return pleaseWaitAlert();
         let idxSortSelected = selectedSortIdx;
-        let sortType = $filterOptions?.sortFilter?.[idxSortSelected]?.sortType;
-        if (sortType === "desc") {
-            $filterOptions.sortFilter[idxSortSelected].sortType = "asc";
-        } else {
-            $filterOptions.sortFilter[idxSortSelected].sortType = "desc";
+        let sortType =
+            $filterOptions?.sortFilter?.[$selectedCustomFilter]?.[
+                idxSortSelected
+            ]?.sortType || "desc";
+        if (
+            isJsonObject(
+                $filterOptions?.sortFilter?.[$selectedCustomFilter]?.[
+                    idxSortSelected
+                ],
+            )
+        ) {
+            if (sortType === "desc") {
+                $filterOptions.sortFilter[$selectedCustomFilter][
+                    idxSortSelected
+                ].sortType = "asc";
+            } else {
+                $filterOptions.sortFilter[$selectedCustomFilter][
+                    idxSortSelected
+                ].sortType = "desc";
+            }
         }
         saveFilters("sort");
     }
@@ -1231,6 +1302,7 @@
         } else {
             $showFilterOptions = !$showFilterOptions;
         }
+        setLocalStorage("showFilterOptions", $showFilterOptions);
     }
 
     let asyncAnimeReloadPromise;
@@ -1385,9 +1457,23 @@
                             $activeTagFilters?.[previousCustomFilterName],
                         ),
                     );
+                    if (isJsonObject($filterOptions.sortFilter)) {
+                        $filterOptions.sortFilter[savedCustomFilterName] =
+                            JSON.parse(
+                                JSON.stringify(
+                                    $filterOptions.sortFilter?.[
+                                        previousCustomFilterName
+                                    ] || sortFilterContents,
+                                ),
+                            );
+                    }
                     delete $activeTagFilters?.[previousCustomFilterName];
+                    delete $filterOptions?.sortFilter?.[
+                        previousCustomFilterName
+                    ];
                     $selectedCustomFilter = savedCustomFilterName;
                     $activeTagFilters = $activeTagFilters;
+                    await saveJSON($filterOptions, "filterOptions");
                     await saveJSON($activeTagFilters, "activeTagFilters");
                     await saveJSON(
                         $selectedCustomFilter,
@@ -1425,8 +1511,19 @@
                             $activeTagFilters?.[previousCustomFilterName],
                         ),
                     );
+                    if (isJsonObject($filterOptions.sortFilter)) {
+                        $filterOptions.sortFilter[addedCustomFilterName] =
+                            JSON.parse(
+                                JSON.stringify(
+                                    $filterOptions?.sortFilter?.[
+                                        previousCustomFilterName
+                                    ] || sortFilterContents,
+                                ),
+                            );
+                    }
                     $selectedCustomFilter = addedCustomFilterName;
                     $activeTagFilters = $activeTagFilters;
+                    await saveJSON($filterOptions, "filterOptions");
                     await saveJSON($activeTagFilters, "activeTagFilters");
                     await saveJSON(
                         $selectedCustomFilter,
@@ -1466,6 +1563,7 @@
                             break;
                         }
                     }
+                    delete $filterOptions?.sortFilter?.[$selectedCustomFilter];
                     delete $activeTagFilters?.[$selectedCustomFilter];
                     $activeTagFilters = $activeTagFilters;
                     $selectedCustomFilter = newCustomFilterName;
@@ -1478,6 +1576,123 @@
                 text: "Requires atleast one custom filter.",
             });
         }
+    }
+
+    function getTagCategoryInfo() {
+        fetch("https://graphql.anilist.co", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                Accept: "application/json",
+            },
+            body: JSON.stringify({
+                query: `{MediaTagCollection{name category}}`,
+            }),
+        })
+            .then(async (response) => {
+                return await response?.json?.();
+            })
+            .then(async (result) => {
+                let mediaTagCollection = result?.data?.MediaTagCollection || [];
+                for (let i = 0; i < mediaTagCollection?.length; i++) {
+                    let tagCollected = mediaTagCollection?.[i];
+                    let category = tagCollected?.category;
+                    let tag = tagCollected?.name;
+                    if (!tag || !category) continue;
+                    category = cleanText(category);
+                    tag = cleanText(tag);
+                    if (!tagCategoryInfo[category]) {
+                        tagCategoryInfo[category] = {};
+                    }
+                    tagCategoryInfo[category][tag] = true;
+                }
+                setLocalStorage(
+                    "tagCategoryInfo",
+                    JSON.stringify(tagCategoryInfo),
+                );
+                await saveJSON(tagCategoryInfo, "tagCategoryInfo");
+                let lastTagCategoryInfoUpdate = new Date();
+                setLocalStorage(
+                    "lastTagCategoryInfoUpdate",
+                    JSON.stringify(lastTagCategoryInfoUpdate),
+                );
+                saveJSON(
+                    lastTagCategoryInfoUpdate,
+                    "lastTagCategoryInfoUpdate",
+                );
+            });
+    }
+
+    function getTagFilterInfoText(tagORCategory, dropdownName) {
+        if (dropdownName === "tag") {
+            for (let category in tagCategoryInfo) {
+                for (let tag in tagCategoryInfo[category]) {
+                    if (tag === tagORCategory) {
+                        return category || "";
+                    }
+                }
+            }
+        } else if (dropdownName === "tag category") {
+            let categoryInfo = tagCategoryInfo?.[tagORCategory];
+            if (
+                !tagORCategory ||
+                !isJsonObject(categoryInfo) ||
+                jsonIsEmpty(categoryInfo)
+            )
+                return "";
+            return Object.keys(categoryInfo).join(", ");
+        } else {
+            return "";
+        }
+    }
+
+    function getTagCategoryInfoHTML(tagCategory) {
+        let categoryInfo = tagCategoryInfo?.[tagCategory];
+        if (
+            !tagCategory ||
+            !isJsonObject(categoryInfo) ||
+            jsonIsEmpty(categoryInfo)
+        )
+            return "";
+
+        return `
+            <div class="is-custom-table">
+                <header class="custom-table-header">
+                    <h1 class="custom-table-h1">${tagCategory}</h1>
+                </header>
+                <ul class="custom-table-list">
+                    <li>
+                    ${Object.keys(tagCategoryInfo?.[tagCategory]).join(
+                        "</li><li>",
+                    )}
+                    </li>
+                </ul> 
+            </div>
+        `;
+    }
+
+    function getTagInfoHTML(tag) {
+        let tagCategory = getTagFilterInfoText(tag, "tag");
+        if (!tagCategory) return "";
+        return `
+            <div class="is-custom-table">
+                <header class="custom-table-header">
+                    <h1 class="custom-table-h1">${tagCategory}</h1>
+                </header>
+                <ul class="custom-table-list">
+                    <li>${tag}</li>
+                </ul> 
+            </div>
+        `;
+    }
+
+    function cleanText(k) {
+        k = k !== "_" ? k?.replace?.(/\_/g, " ") : k;
+        k = k !== '\\"' ? k?.replace?.(/\\"/g, '"') : k;
+        k = k?.replace?.(/\b(tv|ona|ova)\b/gi, (match) =>
+            match?.toUpperCase?.(),
+        );
+        return k?.toLowerCase?.() || "";
     }
 
     let editCustomFilterName = false;
@@ -1526,7 +1741,7 @@
         }
     });
 
-    onMount(() => {
+    onMount(async () => {
         // Init
         let filterEl = document.getElementById("filters");
         filterEl.addEventListener("scroll", handleFilterScroll, {
@@ -1546,6 +1761,28 @@
         document.addEventListener("keydown", handleDropdownKeyDown);
         window.addEventListener("resize", windowResized);
         window.addEventListener("click", clickOutsideListener);
+        //
+        let tempTagCategoryInfo =
+            getLocalStorage("tagCategoryInfo") ||
+            (await retrieveJSON("tagCategoryInfo"));
+        if (isJsonObject(tempTagCategoryInfo)) {
+            tagCategoryInfo = tempTagCategoryInfo;
+        }
+        let lastTagCategoryInfoUpdateTimestamp = new Date(
+            getLocalStorage("lastTagCategoryInfoUpdate") ||
+                (await retrieveJSON("lastTagCategoryInfoUpdate")),
+        ).getTime();
+        if (lastTagCategoryInfoUpdateTimestamp > 0) {
+            let nextSeasonAverageTimestamp = 7884000000;
+            let nextSeason = new Date(
+                lastTagCategoryInfoUpdateTimestamp + nextSeasonAverageTimestamp,
+            );
+            if (nextSeason.getTime() < new Date().getTime()) {
+                getTagCategoryInfo();
+            }
+        } else {
+            getTagCategoryInfo();
+        }
     });
 
     function pleaseWaitAlert() {
@@ -1579,7 +1816,8 @@
 <main
     id="main-home"
     style:--filters-space={$showFilterOptions ? "80px" : ""}
-    style:--active-tag-filter-space={!$loadingFilterOptions &&
+    style:--active-tag-filter-space={!$initData &&
+    !$loadingFilterOptions &&
     $showFilterOptions
         ? "auto"
         : ""}
@@ -2079,6 +2317,10 @@
                                     {#if Dropdown.options?.filter?.(({ optionName }) => hasPartialMatch(optionName, Dropdown?.optKeyword) || Dropdown?.optKeyword === "")?.length}
                                         {#each Dropdown.options || [] as option, optionIdx (filterSelection.filterSelectionName + Dropdown.filName + option.optionName || {})}
                                             <div
+                                                title={getTagFilterInfoText(
+                                                    option?.optionName,
+                                                    Dropdown.filName,
+                                                ) || ""}
                                                 class={"option " +
                                                     (hasPartialMatch(
                                                         option.optionName,
@@ -2110,6 +2352,7 @@
                                                 </h3>
                                                 {#if option.selected === "included" || (option.selected === "excluded" && Dropdown.changeType !== "read")}
                                                     <svg
+                                                        class="item-info"
                                                         viewBox="0 0 512 512"
                                                         style:--optionColor={option.selected ===
                                                         "included"
@@ -2119,6 +2362,7 @@
                                                               "#e85d75"}
                                                     >
                                                         <path
+                                                            class="item-info-path"
                                                             d={option.selected ===
                                                                 "excluded" ||
                                                             filterSelection.filterSelectionName ===
@@ -2129,6 +2373,53 @@
                                                                   "M256 48a208 208 0 1 1 0 416 208 208 0 1 1 0-416zm0 464a256 256 0 1 0 0-512 256 256 0 1 0 0 512zm113-303c9-9 9-25 0-34s-25-9-34 0L224 286l-47-47c-9-9-24-9-34 0s-9 25 0 34l64 64c10 9 25 9 34 0l128-128z"}
                                                         />
                                                     </svg>
+                                                {/if}
+                                                {#if ((Dropdown.filName === "tag" && getTagFilterInfoText(option?.optionName, Dropdown.filName)) || (Dropdown.filName === "tag category" && tagCategoryInfo?.[option.optionName])) && typeof window?.showFullScreenInfo === "function"}
+                                                    <svg
+                                                        class="extra-item-info"
+                                                        viewBox="0 0 512 512"
+                                                        on:click|stopPropagation={() => {
+                                                            let category =
+                                                                Dropdown.filName ===
+                                                                "tag category"
+                                                                    ? option?.optionName
+                                                                    : getTagFilterInfoText(
+                                                                          option?.optionName,
+                                                                          "tag",
+                                                                      );
+                                                            window?.showFullScreenInfo?.(
+                                                                getTagCategoryInfoHTML(
+                                                                    category,
+                                                                ) || "",
+                                                            );
+                                                        }}
+                                                        on:keydown|stopPropagation={(
+                                                            e,
+                                                        ) => {
+                                                            if (
+                                                                e.key ===
+                                                                "Enter"
+                                                            ) {
+                                                                let category =
+                                                                    Dropdown.filName ===
+                                                                    "tag category"
+                                                                        ? option?.optionName
+                                                                        : getTagFilterInfoText(
+                                                                              option?.optionName,
+                                                                              "tag",
+                                                                          );
+                                                                window?.showFullScreenInfo?.(
+                                                                    getTagCategoryInfoHTML(
+                                                                        category,
+                                                                    ) || "",
+                                                                );
+                                                            }
+                                                        }}
+                                                        ><path
+                                                            class="item-info-path"
+                                                            d="M256 512a256 256 0 1 0 0-512 256 256 0 1 0 0 512zm-40-176h24v-64h-24a24 24 0 1 1 0-48h48c13 0 24 11 24 24v88h8a24 24 0 1 1 0 48h-80a24 24 0 1 1 0-48zm40-208a32 32 0 1 1 0 64 32 32 0 1 1 0-64z"
+                                                        /></svg
+                                                    >
                                                 {/if}
                                             </div>
                                         {/each}
@@ -2474,7 +2765,7 @@
                             </div>
                         </div>
                         <div class="options">
-                            {#each $filterOptions?.sortFilter || [] as sortFilter (sortFilter?.sortName || {})}
+                            {#each $filterOptions?.sortFilter?.[$selectedCustomFilter] || sortFilterContents as sortFilter (sortFilter?.sortName || {})}
                                 <div
                                     class="option"
                                     on:click={changeSort(sortFilter?.sortName)}
@@ -2927,6 +3218,16 @@
         cursor: pointer;
         user-select: none;
         border-radius: 6px;
+    }
+
+    .extra-item-info {
+        fill: #fff !important;
+        margin-left: auto !important;
+        width: 100% !important;
+    }
+
+    .filter-select .option:has(.extra-item-info):has(.item-info) {
+        grid-template-columns: auto 1.4em 1.4em;
     }
 
     .filter-select .option h3 {
@@ -3403,7 +3704,7 @@
         .options-wrap-filter-info {
             display: flex !important;
             flex-direction: column;
-            width: 95vw;
+            width: min(95%, 95vw);
             padding: 14px 0 0 0;
             gap: 14px;
             background-color: #0b1622;
@@ -3478,9 +3779,23 @@
         .filter-select .option {
             grid-template-columns: auto 1.8em !important;
         }
+        .filter-select .option:has(.extra-item-info) {
+            grid-template-columns: auto 4em !important;
+        }
+        .filter-select .option:has(.extra-item-info):has(.item-info) {
+            grid-template-columns: auto 1.8em 4em !important;
+        }
         .option svg {
             height: 1.8em !important;
             width: 1.8em !important;
+        }
+        .extra-item-info > path {
+            translate: 25px !important;
+        }
+        .option .extra-item-info {
+            fill: #fff !important;
+            margin-left: auto !important;
+            width: 50% !important;
         }
     }
 </style>
