@@ -2944,14 +2944,27 @@
         display: grid !important;
         gap: 0.5em !important;
     }
-    :global(.fullPopupDescription .custom-table-header) {
+    :global(.fullPopupDescription .custom-header) {
         border-bottom: 1px solid white !important;
-        height: 2.75em !important;
+        padding: 0 0 1em 0 !important;
+        display: flex !important;
+        gap: 0.4em !important;
+        align-items: center !important;
+        justify-content: space-between !important;
     }
-    :global(.fullPopupDescription .custom-table-h1) {
+    :global(.fullPopupDescription .custom-h1) {
         text-transform: capitalize !important;
         font-size: 1.5rem !important;
         font-weight: 500 !important;
+        height: 2.3rem !important;
+        cursor: pointer !important;
+    }
+    :global(.fullPopupDescription .custom-extra) {
+        text-transform: capitalize !important;
+        height: 2rem !important;
+        width: fit-content !important;
+        min-width: 4.5em !important;
+        cursor: pointer !important;
     }
     :global(.fullPopupDescription .custom-table-list) {
         list-style: none !important;
@@ -2961,6 +2974,14 @@
     }
     :global(.fullPopupDescription .custom-table-list > li) {
         text-transform: capitalize !important;
+        width: fit-content !important;
+        min-width: 4.5em !important;
+        cursor: pointer !important;
+    }
+    :global(.fullPopupDescription .custom-description) {
+        padding: 0.5em !important;
+        text-align: justify !important;
+        text-indent: 2rem !important;
     }
     .disable-interaction {
         pointer-events: none !important;

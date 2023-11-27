@@ -311,12 +311,14 @@
             filterIsScrolling = false;
         }, 300);
     }
+
     function filterSelect(event, dropdownIdx) {
         if (filterIsScrolling && event.pointerType === "mouse") return;
         let element = event.target;
         let filSelectEl = element.closest(".filter-select");
         if (filSelectEl === selectedFilterElement) return;
         let idxTypeSelected = selectedFilterSelectionIdx;
+        if (Init) Init = false;
         if (selectedFilterElement instanceof Element) {
             let filterSelectChildrenArray = Array.from(
                 selectedFilterElement.parentElement.children,
@@ -335,7 +337,6 @@
                 ].filters.Dropdown[selectedIndex].selected = false;
             }
         }
-        if (Init) Init = false;
         if (
             highlightedEl instanceof Element &&
             highlightedEl.closest(".filter-select")
@@ -348,6 +349,7 @@
         ].selected = true;
         selectedFilterElement = filSelectEl;
     }
+
     function closeFilterSelect(dropDownIdx) {
         let idxTypeSelected = selectedFilterSelectionIdx;
         $filterOptions.filterSelection[idxTypeSelected].filters.Dropdown[
@@ -1578,7 +1580,7 @@
         }
     }
 
-    function getTagCategoryInfo() {
+    function getTagCategoryData() {
         fetch("https://graphql.anilist.co", {
             method: "POST",
             headers: {
@@ -1586,7 +1588,7 @@
                 Accept: "application/json",
             },
             body: JSON.stringify({
-                query: `{MediaTagCollection{name category}}`,
+                query: `{MediaTagCollection{name category description}}`,
             }),
         })
             .then(async (response) => {
@@ -1598,13 +1600,14 @@
                     let tagCollected = mediaTagCollection?.[i];
                     let category = tagCollected?.category;
                     let tag = tagCollected?.name;
+                    let description = tagCollected?.description;
                     if (!tag || !category) continue;
                     category = cleanText(category);
                     tag = cleanText(tag);
-                    if (!tagCategoryInfo[category]) {
+                    if (!isJsonObject(tagCategoryInfo[category])) {
                         tagCategoryInfo[category] = {};
                     }
-                    tagCategoryInfo[category][tag] = true;
+                    tagCategoryInfo[category][tag] = description || "";
                 }
                 setLocalStorage(
                     "tagCategoryInfo",
@@ -1623,27 +1626,31 @@
             });
     }
 
-    function getTagFilterInfoText(tagORCategory, dropdownName) {
-        if (dropdownName === "tag") {
-            for (let category in tagCategoryInfo) {
-                for (let tag in tagCategoryInfo[category]) {
-                    if (tag === tagORCategory) {
-                        return category || "";
+    function getTagFilterInfoText({ tag, category }, infoToGet) {
+        if (infoToGet === "tag category" && tag != null) {
+            for (let eCategory in tagCategoryInfo) {
+                for (let eTag in tagCategoryInfo[eCategory]) {
+                    if (eTag === tag) {
+                        return eCategory || "";
                     }
                 }
             }
-        } else if (dropdownName === "tag category") {
-            let categoryInfo = tagCategoryInfo?.[tagORCategory];
-            if (
-                !tagORCategory ||
-                !isJsonObject(categoryInfo) ||
-                jsonIsEmpty(categoryInfo)
-            )
-                return "";
-            return Object.keys(categoryInfo).join(", ");
-        } else {
-            return "";
+        } else if (infoToGet === "category and description" && tag != null) {
+            if (category == null) {
+                category = getTagFilterInfoText({ tag }, "tag category");
+            }
+            let description = tagCategoryInfo?.[category]?.[tag];
+            if (description) {
+                return `Description: ${description}\nCategory: ${category}`;
+            }
+        } else if (infoToGet === "all tags" && category != null) {
+            let categoryInfo = tagCategoryInfo?.[category];
+            let categoryTagsArray = Object.keys(categoryInfo || {});
+            if (!jsonIsEmpty(categoryInfo)) {
+                return categoryTagsArray.join(", ");
+            }
         }
+        return "";
     }
 
     function getTagCategoryInfoHTML(tagCategory) {
@@ -1654,37 +1661,60 @@
             jsonIsEmpty(categoryInfo)
         )
             return "";
-
+        let tagCategoryList = "";
+        let tagCategoryListArray =
+            Object.keys(tagCategoryInfo?.[tagCategory]) || [];
+        for (let i = 0; i < tagCategoryListArray.length; i++) {
+            tagCategoryList += `
+                <li onclick="window?.showTagInfoHTML?.(event,'${tagCategoryListArray[i]}','${tagCategory}')">
+                    ${tagCategoryListArray[i]}
+                </li>
+            `;
+        }
         return `
             <div class="is-custom-table">
-                <header class="custom-table-header">
-                    <h1 class="custom-table-h1">${tagCategory}</h1>
+                <header class="custom-header">
+                    <h1 class="custom-h1">${tagCategory}</h1>
                 </header>
                 <ul class="custom-table-list">
-                    <li>
-                    ${Object.keys(tagCategoryInfo?.[tagCategory]).join(
-                        "</li><li>",
-                    )}
-                    </li>
+                    ${tagCategoryList}
                 </ul> 
             </div>
         `;
     }
 
-    function getTagInfoHTML(tag) {
-        let tagCategory = getTagFilterInfoText(tag, "tag");
-        if (!tagCategory) return "";
+    function getTagInfoHTML(tag, tagCategory) {
+        if (tagCategory == null) {
+            tagCategory = getTagFilterInfoText({ tag }, "tag category");
+        }
+        let description = tagCategoryInfo?.[tagCategory]?.[tag];
+        if (!tagCategory || !description) return "";
         return `
             <div class="is-custom-table">
-                <header class="custom-table-header">
-                    <h1 class="custom-table-h1">${tagCategory}</h1>
+                <header class="custom-header">
+                    <h1 class="custom-h1">${tag}</h1>
+                    <h4 class="custom-extra" onclick="window?.showTagCategoryInfoHTML?.(event,'${tagCategory}')">${tagCategory}</h4>
                 </header>
-                <ul class="custom-table-list">
-                    <li>${tag}</li>
-                </ul> 
+                <div class="custom-description">${description}</div>
             </div>
         `;
     }
+
+    window.showTagInfoHTML = (event, tag, tagCategory) => {
+        event.stopPropagation();
+        let tagInfoHTML = getTagInfoHTML(tag, tagCategory);
+        if (tagInfoHTML) {
+            window?.showFullScreenInfo?.(tagInfoHTML);
+        }
+    };
+
+    window.showTagCategoryInfoHTML = (event, tagCategory) => {
+        event.stopPropagation();
+        let tagCategoryInfoHTML = getTagCategoryInfoHTML(tagCategory);
+        if (tagCategoryInfoHTML) {
+            window?.showFullScreenInfo?.(tagCategoryInfoHTML);
+        }
+    };
 
     function cleanText(k) {
         k = k !== "_" ? k?.replace?.(/\_/g, " ") : k;
@@ -1698,18 +1728,14 @@
     let editCustomFilterName = false;
     $: {
         $dropdownIsVisible =
-            (selectedCustomFilterElement ||
-                selectedFilterElement ||
-                selectedFilterTypeElement ||
-                selectedSortElement) &&
-            Math.max(
-                document?.documentElement?.getBoundingClientRect?.()?.width,
-                window.innerWidth,
-            ) <= 425;
+            selectedCustomFilterElement ||
+            selectedFilterElement ||
+            selectedFilterTypeElement ||
+            selectedSortElement;
     }
 
     dropdownIsVisible.subscribe((val) => {
-        if (val === false) {
+        if (val === false && windowWidth <= 425) {
             // Small Screen Width
             if (highlightedEl instanceof Element) {
                 removeClass(highlightedEl, "highlight");
@@ -1740,6 +1766,16 @@
             selectedFilterElement = null;
         }
     });
+
+    function hasTagCategoryInfoData() {
+        for (let category in tagCategoryInfo) {
+            for (let tag in tagCategoryInfo[category]) {
+                return typeof tagCategoryInfo[category][tag] === "string";
+            }
+            return false;
+        }
+        return false;
+    }
 
     onMount(async () => {
         // Init
@@ -1772,16 +1808,19 @@
             getLocalStorage("lastTagCategoryInfoUpdate") ||
                 (await retrieveJSON("lastTagCategoryInfoUpdate")),
         ).getTime();
-        if (lastTagCategoryInfoUpdateTimestamp > 0) {
+        if (
+            lastTagCategoryInfoUpdateTimestamp > 0 &&
+            hasTagCategoryInfoData()
+        ) {
             let nextSeasonAverageTimestamp = 7884000000;
             let nextSeason = new Date(
                 lastTagCategoryInfoUpdateTimestamp + nextSeasonAverageTimestamp,
             );
             if (nextSeason.getTime() < new Date().getTime()) {
-                getTagCategoryInfo();
+                getTagCategoryData();
             }
         } else {
-            getTagCategoryInfo();
+            getTagCategoryData();
         }
     });
 
@@ -2318,8 +2357,25 @@
                                         {#each Dropdown.options || [] as option, optionIdx (filterSelection.filterSelectionName + Dropdown.filName + option.optionName || {})}
                                             <div
                                                 title={getTagFilterInfoText(
-                                                    option?.optionName,
-                                                    Dropdown.filName,
+                                                    Dropdown.filName ===
+                                                        "tag category"
+                                                        ? {
+                                                              category:
+                                                                  option?.optionName,
+                                                          }
+                                                        : Dropdown.filName ===
+                                                            "tag"
+                                                          ? {
+                                                                tag: option?.optionName,
+                                                            }
+                                                          : {},
+                                                    Dropdown.filName ===
+                                                        "tag category"
+                                                        ? "all tags"
+                                                        : Dropdown.filName ===
+                                                            "tag"
+                                                          ? "category and description"
+                                                          : "",
                                                 ) || ""}
                                                 class={"option " +
                                                     (hasPartialMatch(
@@ -2374,23 +2430,31 @@
                                                         />
                                                     </svg>
                                                 {/if}
-                                                {#if ((Dropdown.filName === "tag" && getTagFilterInfoText(option?.optionName, Dropdown.filName)) || (Dropdown.filName === "tag category" && tagCategoryInfo?.[option.optionName])) && typeof window?.showFullScreenInfo === "function"}
+                                                {#if typeof window?.showFullScreenInfo === "function" && ((Dropdown?.filName === "tag" && getTagFilterInfoText({ tag: option?.optionName }, "category and description")) || (Dropdown.filName === "tag category" && !jsonIsEmpty(tagCategoryInfo?.[option?.optionName])))}
                                                     <svg
                                                         class="extra-item-info"
                                                         viewBox="0 0 512 512"
                                                         on:click|stopPropagation={() => {
-                                                            let category =
+                                                            let htmlToShow = "";
+                                                            if (
+                                                                Dropdown.filName ===
+                                                                "tag"
+                                                            ) {
+                                                                htmlToShow =
+                                                                    getTagInfoHTML(
+                                                                        option?.optionName,
+                                                                    );
+                                                            } else if (
                                                                 Dropdown.filName ===
                                                                 "tag category"
-                                                                    ? option?.optionName
-                                                                    : getTagFilterInfoText(
-                                                                          option?.optionName,
-                                                                          "tag",
-                                                                      );
+                                                            ) {
+                                                                htmlToShow =
+                                                                    getTagCategoryInfoHTML(
+                                                                        option?.optionName,
+                                                                    );
+                                                            }
                                                             window?.showFullScreenInfo?.(
-                                                                getTagCategoryInfoHTML(
-                                                                    category,
-                                                                ) || "",
+                                                                htmlToShow,
                                                             );
                                                         }}
                                                         on:keydown|stopPropagation={(
@@ -2400,18 +2464,27 @@
                                                                 e.key ===
                                                                 "Enter"
                                                             ) {
-                                                                let category =
+                                                                let htmlToShow =
+                                                                    "";
+                                                                if (
+                                                                    Dropdown.filName ===
+                                                                    "tag"
+                                                                ) {
+                                                                    htmlToShow =
+                                                                        getTagInfoHTML(
+                                                                            option?.optionName,
+                                                                        );
+                                                                } else if (
                                                                     Dropdown.filName ===
                                                                     "tag category"
-                                                                        ? option?.optionName
-                                                                        : getTagFilterInfoText(
-                                                                              option?.optionName,
-                                                                              "tag",
-                                                                          );
+                                                                ) {
+                                                                    htmlToShow =
+                                                                        getTagCategoryInfoHTML(
+                                                                            option?.optionName,
+                                                                        );
+                                                                }
                                                                 window?.showFullScreenInfo?.(
-                                                                    getTagCategoryInfoHTML(
-                                                                        category,
-                                                                    ) || "",
+                                                                    htmlToShow,
                                                                 );
                                                             }
                                                         }}

@@ -166,38 +166,6 @@
             }
             $dataStatus = "Updating List";
             $menuVisible = false;
-            try {
-                let filterSelectionIdx =
-                    $filterOptions?.filterSelection?.findIndex?.(
-                        ({ filterSelectionName }) =>
-                            filterSelectionName === "Anime Filter",
-                    );
-                let checkBoxFilterIdx = $filterOptions?.filterSelection?.[
-                    filterSelectionIdx ?? -1
-                ]?.filters?.Checkbox?.findIndex?.(
-                    ({ filName }) => filName === "hidden anime",
-                );
-                if (filterSelectionIdx >= 0 && checkBoxFilterIdx >= 0) {
-                    $filterOptions.filterSelection[
-                        filterSelectionIdx ?? -1
-                    ].filters.Checkbox[checkBoxFilterIdx ?? -1].isSelected =
-                        false;
-                }
-                if (
-                    $activeTagFilters?.[$selectedCustomFilter]?.["Anime Filter"]
-                ) {
-                    $activeTagFilters[$selectedCustomFilter]["Anime Filter"] =
-                        $activeTagFilters?.[$selectedCustomFilter]?.[
-                            "Anime Filter"
-                        ].filter(
-                            ({ optionName, filterType }) =>
-                                optionName !== "hidden" &&
-                                filterType !== "checkbox",
-                        );
-                }
-                await saveJSON($filterOptions, "filterOptions");
-                await saveJSON($activeTagFilters, "activeTagFilters");
-            } catch (ex) {}
             await saveJSON({}, "hiddenEntries");
             importantLoad.update((e) => !e);
         }

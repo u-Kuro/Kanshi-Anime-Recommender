@@ -408,8 +408,6 @@ const exportUserData = (_data) => {
                             exportUserDataWorker?.terminate?.();
                             new Promise((resolve, reject) => {
                                 waitForExportApproval = { resolve, reject }
-                            }).then(() => {
-                                dataStatus.set("Data has been Exported")
                             }).catch(() => {
                                 waitForExportApproval?.reject?.()
                             }).finally(() => {

@@ -344,9 +344,10 @@
 <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
 <div
     class={"custom-filters-nav" +
-        (!$android || isScrolledYMax || isFullViewed
+        ((!$android || isScrolledYMax || isFullViewed) && $customFilters?.length
             ? " persistent-show"
-            : customFilNavIsAnimating || customFiltersNavVisible
+            : (customFilNavIsAnimating || customFiltersNavVisible) &&
+                $customFilters?.length
               ? ""
               : " hide")}
     style:--opacity={$android ? customFilOpacity : ""}
