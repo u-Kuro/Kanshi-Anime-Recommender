@@ -3111,6 +3111,7 @@
     .filterType {
         overflow-x: auto;
         overflow-y: hidden;
+        width: fit-content;
         -ms-overflow-style: none;
         scrollbar-width: none;
     }

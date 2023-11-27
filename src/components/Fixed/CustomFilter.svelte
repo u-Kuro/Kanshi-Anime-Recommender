@@ -460,7 +460,7 @@
     .prev-custom-filter,
     .next-custom-filter {
         height: 100%;
-        width: 40px;
+        width: 48px;
         position: absolute;
         top: 0;
         opacity: 0 !important;

@@ -890,7 +890,7 @@
     .go-back-grid {
         position: fixed !important;
         top: unset !important;
-        bottom: 4.5em !important;
+        bottom: 4.8em !important;
         right: 3em !important;
         transform: translateZ(0) !important;
         -webkit-transform: translateZ(0) !important;

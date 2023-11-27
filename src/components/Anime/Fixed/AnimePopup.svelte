@@ -2939,48 +2939,54 @@
     }
     :global(.fullPopupDescription > .is-custom-table) {
         width: min(90vw, 380px) !important;
-        background-color: rgba(0, 0, 0, 1) !important;
+        background-color: rgb(0,0,0) !important;
         padding: 1em 2em !important;
-        display: grid !important;
+        display: flex !important;
+        flex-wrap: wrap;
         gap: 0.5em !important;
     }
     :global(.fullPopupDescription .custom-header) {
         border-bottom: 1px solid white !important;
-        padding: 0 0 1em 0 !important;
+        padding: 0 0 0.5em 0 !important;
         display: flex !important;
-        gap: 0.4em !important;
+        flex-wrap: wrap;
+        column-gap: 2em !important;
         align-items: center !important;
         justify-content: space-between !important;
+        width: 100% !important;
     }
     :global(.fullPopupDescription .custom-h1) {
         text-transform: capitalize !important;
         font-size: 1.5rem !important;
         font-weight: 500 !important;
-        height: 2.3rem !important;
+        min-height: 2.3rem !important;
         cursor: pointer !important;
     }
     :global(.fullPopupDescription .custom-extra) {
         text-transform: capitalize !important;
-        height: 2rem !important;
+        min-height: 2rem !important;
         width: fit-content !important;
-        min-width: 4.5em !important;
+        min-width: 4.8em !important;
         cursor: pointer !important;
+        text-indent: 0.5em !important;
+        text-align: end !important;
     }
     :global(.fullPopupDescription .custom-table-list) {
         list-style: none !important;
         display: grid !important;
         gap: 1em !important;
         padding: 0.5em 0 !important;
+        width: 100% !important;
+        min-width: 100% !important;
     }
     :global(.fullPopupDescription .custom-table-list > li) {
         text-transform: capitalize !important;
         width: fit-content !important;
-        min-width: 4.5em !important;
+        min-width: 50% !important;
         cursor: pointer !important;
     }
     :global(.fullPopupDescription .custom-description) {
         padding: 0.5em !important;
-        text-align: justify !important;
         text-indent: 2rem !important;
     }
     .disable-interaction {
