@@ -10,15 +10,12 @@
         autoUpdate,
         autoExport,
         exportPathIsAvailable,
-        filterOptions,
-        activeTagFilters,
         runUpdate,
         runExport,
         confirmPromise,
         importantUpdate,
-        importantLoad,
         popupVisible,
-        selectedCustomFilter,
+        listUpdateAvailable,
     } from "../../js/globalValues.js";
     import { fade } from "svelte/transition";
     import { saveJSON } from "../../js/indexedDB.js";
@@ -49,7 +46,6 @@
                     `File ${filenameToShow}has been detected, do you want to import the file?`,
                 )
             ) {
-                await saveJSON(true, "shouldProcessRecommendation");
                 $menuVisible = false;
                 if (!$popupVisible) {
                     document.documentElement.style.overflow = "hidden";
@@ -166,8 +162,20 @@
             }
             $dataStatus = "Updating List";
             $menuVisible = false;
-            await saveJSON({}, "hiddenEntries");
-            importantLoad.update((e) => !e);
+            $listUpdateAvailable = false;
+            animeLoader({ hiddenEntries: $hiddenEntries })
+                .then(async (data) => {
+                    $animeLoaderWorker = data.animeLoaderWorker;
+                    if (data?.isNew) {
+                        $finalAnimeList = data.finalAnimeList;
+                        $hiddenEntries = data.hiddenEntries;
+                    }
+                    $dataStatus = null;
+                    return;
+                })
+                .catch((error) => {
+                    console.error(error);
+                });
         }
     }
 

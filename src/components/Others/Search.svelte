@@ -119,9 +119,10 @@
             sortType: "none",
         },
     ];
-    $: selectedFilterSelectionIdx = $filterOptions?.filterSelection?.findIndex(
-        ({ isSelected }) => isSelected,
-    );
+    $: selectedFilterSelectionIdx =
+        $filterOptions?.filterSelection?.findIndex?.(
+            ({ isSelected }) => isSelected,
+        );
     $: selectedFilterSelectionName =
         $filterOptions?.filterSelection?.[selectedFilterSelectionIdx]
             ?.filterSelectionName;
@@ -144,7 +145,8 @@
     });
 
     async function saveFilters(changeName) {
-        if ($initData) return;
+        if (!$filterOptions || !$activeTagFilters || !$selectedCustomFilter)
+            return pleaseWaitAlert();
         if (nameChangeUpdateProcessedList.includes(changeName)) {
             isUpdatingRec = true;
             $dataStatus = "Updating List";
@@ -159,11 +161,11 @@
         }
     }
 
-    function _loadAnime() {
-        if ($animeLoaderWorker) {
-            $animeLoaderWorker.terminate();
-            $animeLoaderWorker = null;
-        }
+    async function _loadAnime() {
+        $animeLoaderWorker?.terminate?.();
+        $animeLoaderWorker = null;
+
+        await saveJSON(true, "shouldLoadAnime");
         animeLoader({
             filterOptions: $filterOptions,
             activeTagFilters: $activeTagFilters,
@@ -172,7 +174,7 @@
             .then(async (data) => {
                 isUpdatingRec = isLoadingAnime = false;
                 $animeLoaderWorker = data.animeLoaderWorker;
-                if (data?.isNew) {
+                if (data.isNew) {
                     $finalAnimeList = data.finalAnimeList;
                     $hiddenEntries = data.hiddenEntries;
                 }
@@ -180,7 +182,7 @@
                 return;
             })
             .catch((error) => {
-                throw error;
+                console.error(error);
             });
     }
 
@@ -192,13 +194,12 @@
             selectedCustomFilter: $selectedCustomFilter,
         })
             .then(async () => {
-                await saveJSON(false, "shouldProcessRecommendation");
                 updateFilters.update((e) => !e);
                 _loadAnime();
             })
             .catch((error) => {
                 _loadAnime();
-                throw error;
+                console.error(error);
             });
     }
 
@@ -231,13 +232,17 @@
         );
     }
     async function handleFilterTypes(event, newFilterTypeName) {
-        if ($initData) return pleaseWaitAlert();
+        if (!$filterOptions || !$activeTagFilters || !$selectedCustomFilter)
+            return pleaseWaitAlert();
         event?.stopPropagation?.();
         let idxTypeSelected = selectedFilterSelectionIdx;
         let nameTypeSelected =
             $filterOptions?.filterSelection?.[idxTypeSelected]
-                .filterSelectionName;
-        if (nameTypeSelected !== newFilterTypeName) {
+                ?.filterSelectionName;
+        if (
+            nameTypeSelected !== newFilterTypeName &&
+            isJsonObject($filterOptions?.filterSelection?.[idxTypeSelected])
+        ) {
             // Close Filter Dropdown
             selectedSortElement = false;
             // Reload Anime for Async Animation
@@ -247,7 +252,7 @@
             // Close Filter Selection Dropdown
             $filterOptions?.filterSelection?.[
                 idxTypeSelected
-            ].filters.Dropdown.forEach((e) => {
+            ]?.filters?.Dropdown?.forEach?.((e) => {
                 e.selected = false;
             });
             $filterOptions.filterSelection[idxTypeSelected] =
@@ -256,13 +261,19 @@
             // Change Filter Type
             $filterOptions.filterSelection[idxTypeSelected].isSelected = false;
             let newIdxFilterTypeSelected =
-                $filterOptions?.filterSelection?.findIndex(
+                $filterOptions?.filterSelection?.findIndex?.(
                     ({ filterSelectionName }) =>
                         filterSelectionName === newFilterTypeName,
                 );
-            $filterOptions.filterSelection[
-                newIdxFilterTypeSelected
-            ].isSelected = true;
+            if (
+                isJsonObject(
+                    $filterOptions?.filterSelection?.[newIdxFilterTypeSelected],
+                )
+            ) {
+                $filterOptions.filterSelection[
+                    newIdxFilterTypeSelected
+                ].isSelected = true;
+            }
             scrollToFirstFilter();
             scrollToFirstTagFilter();
             saveFilters();
@@ -277,13 +288,12 @@
         selectedFilterTypeElement = false;
     }
     function handleShowFilterTypes(event) {
-        if ($initData || ($filterOptions?.filterSelection?.length ?? 0) < 1) {
+        if (!$filterOptions || !$activeTagFilters || !$selectedCustomFilter)
             return pleaseWaitAlert();
-        }
         let element = event.target;
-        let classList = element.classList;
-        let filterTypEl = element.closest(".filterType");
-        let optionsWrap = element.closest(".options-wrap");
+        let classList = element?.classList || [];
+        let filterTypEl = element?.closest?.(".filterType");
+        let optionsWrap = element?.closest?.(".options-wrap");
         if (
             (classList.contains("filterType") || filterTypEl) &&
             !selectedFilterTypeElement &&
@@ -315,22 +325,24 @@
     function filterSelect(event, dropdownIdx) {
         if (filterIsScrolling && event.pointerType === "mouse") return;
         let element = event.target;
-        let filSelectEl = element.closest(".filter-select");
+        let filSelectEl = element?.closest?.(".filter-select");
         if (filSelectEl === selectedFilterElement) return;
         let idxTypeSelected = selectedFilterSelectionIdx;
         if (Init) Init = false;
         if (selectedFilterElement instanceof Element) {
             let filterSelectChildrenArray = Array.from(
-                selectedFilterElement.parentElement.children,
+                selectedFilterElement?.parentElement?.children || [],
             ).filter((el) => {
-                return !el.classList.contains("disable-interaction");
+                return !el?.classList?.contains?.("disable-interaction");
             });
-            let selectedIndex = filterSelectChildrenArray.indexOf(
+            let selectedIndex = filterSelectChildrenArray?.indexOf?.(
                 selectedFilterElement,
             );
             if (
-                $filterOptions.filterSelection[idxTypeSelected].filters
-                    .Dropdown[selectedIndex]
+                isJsonObject(
+                    $filterOptions?.filterSelection?.[idxTypeSelected]?.filters
+                        ?.Dropdown?.[selectedIndex],
+                )
             ) {
                 $filterOptions.filterSelection[
                     idxTypeSelected
@@ -344,14 +356,28 @@
             removeClass(highlightedEl, "highlight");
             highlightedEl = null;
         }
-        $filterOptions.filterSelection[idxTypeSelected].filters.Dropdown[
-            dropdownIdx
-        ].selected = true;
+        if (
+            isJsonObject(
+                $filterOptions.filterSelection[idxTypeSelected].filters
+                    .Dropdown[dropdownIdx],
+            )
+        ) {
+            $filterOptions.filterSelection[idxTypeSelected].filters.Dropdown[
+                dropdownIdx
+            ].selected = true;
+        }
         selectedFilterElement = filSelectEl;
     }
 
     function closeFilterSelect(dropDownIdx) {
         let idxTypeSelected = selectedFilterSelectionIdx;
+        if (
+            !isJsonObject(
+                $filterOptions?.filterSelection?.[idxTypeSelected]?.filters
+                    ?.Dropdown?.[dropDownIdx],
+            )
+        )
+            return;
         $filterOptions.filterSelection[idxTypeSelected].filters.Dropdown[
             dropDownIdx
         ].selected = false;
@@ -367,8 +393,8 @@
     async function clickOutsideListener(event) {
         if ($filterOptions?.filterSelection?.length < 1 || !$filterOptions)
             return;
-        let element = event.target;
-        let classList = element.classList;
+        let element = event?.target;
+        let classList = element?.classList || [];
         if (
             classList.contains("options-wrap") &&
             getComputedStyle(element).position === "fixed"
@@ -388,26 +414,28 @@
             let idxTypeSelected = selectedFilterSelectionIdx;
             $filterOptions?.filterSelection?.[
                 idxTypeSelected
-            ].filters.Dropdown.forEach((e) => {
+            ]?.filters?.Dropdown?.forEach?.((e) => {
                 e.selected = false;
             });
-            $filterOptions.filterSelection[idxTypeSelected] =
-                $filterOptions?.filterSelection?.[idxTypeSelected];
+            if ($filterOptions?.filterSelection?.[idxTypeSelected]) {
+                $filterOptions.filterSelection[idxTypeSelected] =
+                    $filterOptions?.filterSelection?.[idxTypeSelected];
+            }
             selectedFilterElement = null;
         } else if (
             !classList.contains("options-wrap") &&
-            !element.closest(".options-wrap") &&
+            !element?.closest?.(".options-wrap") &&
             !classList.contains("fullPopupWrapper") &&
-            !element.closest(".fullPopupWrapper") &&
+            !element?.closest?.(".fullPopupWrapper") &&
             !classList.contains("item-info") &&
             !classList.contains("extra-item-info") &&
             !classList.contains("item-info-path") &&
-            !element.closest(".item-info") &&
-            !element.closest(".extra-item-info")
+            !element?.closest?.(".item-info") &&
+            !element?.closest?.(".extra-item-info")
         ) {
             // Large Screen Width
             // Custom Filter Dropdown
-            let customFilterEl = element.closest(".custom-filter-wrap");
+            let customFilterEl = element?.closest?.(".custom-filter-wrap");
             if (!classList.contains("custom-filter-wrap") && !customFilterEl) {
                 if (
                     highlightedEl instanceof Element &&
@@ -420,7 +448,7 @@
             }
 
             // Filter Type Dropdown
-            let filterTypeEl = element.closest(".filterType");
+            let filterTypeEl = element?.closest(".filterType");
             if (!classList.contains("filterType") && !filterTypeEl) {
                 if (
                     highlightedEl instanceof Element &&
@@ -433,7 +461,7 @@
             }
 
             // Sort Filter Dropdown
-            let sortSelectEl = element.closest(".sortFilter");
+            let sortSelectEl = element?.closest(".sortFilter");
             if (!classList.contains("sortFilter") && !sortSelectEl) {
                 if (
                     highlightedEl instanceof Element &&
@@ -446,8 +474,8 @@
             }
 
             // Filter Selection Dropdown
-            let inputDropdownSelectEl = element.closest(".select");
-            let inputDropdownAngleDown = element.closest(".angle-down");
+            let inputDropdownSelectEl = element?.closest(".select");
+            let inputDropdownAngleDown = element?.closest(".angle-down");
             if (
                 !classList.contains("select") &&
                 !classList.contains("angle-down") &&
@@ -462,13 +490,16 @@
                     highlightedEl = null;
                 }
                 let idxTypeSelected = selectedFilterSelectionIdx;
+
                 $filterOptions?.filterSelection?.[
                     idxTypeSelected
-                ].filters.Dropdown.forEach((e) => {
+                ]?.filters?.Dropdown?.forEach?.((e) => {
                     e.selected = false;
                 });
-                $filterOptions.filterSelection[idxTypeSelected] =
-                    $filterOptions?.filterSelection?.[idxTypeSelected];
+                if ($filterOptions?.filterSelection?.[idxTypeSelected]) {
+                    $filterOptions.filterSelection[idxTypeSelected] =
+                        $filterOptions?.filterSelection?.[idxTypeSelected];
+                }
                 selectedFilterElement = null;
             }
         }
@@ -481,16 +512,21 @@
         changeType,
         filterSelectionName,
     ) {
-        if ($initData) return pleaseWaitAlert();
+        if (!$filterOptions || !$activeTagFilters || !$selectedCustomFilter)
+            return pleaseWaitAlert();
         let idxTypeSelected = selectedFilterSelectionIdx;
         let nameTypeSelected =
             $filterOptions?.filterSelection?.[idxTypeSelected]
-                .filterSelectionName;
+                ?.filterSelectionName;
         let currentValue =
-            $filterOptions?.filterSelection?.[idxTypeSelected].filters.Dropdown[
-                dropdownIdx
-            ].options[optionIdx].selected;
-        if (currentValue === "none" || currentValue === true) {
+            $filterOptions?.filterSelection?.[idxTypeSelected]?.filters
+                ?.Dropdown?.[dropdownIdx]?.options?.[optionIdx]?.selected;
+        if (
+            (currentValue === "none" || currentValue === true) &&
+            $activeTagFilters?.[$selectedCustomFilter]?.[
+                nameTypeSelected
+            ] instanceof Array
+        ) {
             // true is default value of selections
             $filterOptions.filterSelection[idxTypeSelected].filters.Dropdown[
                 dropdownIdx
@@ -499,7 +535,7 @@
             $activeTagFilters[$selectedCustomFilter][nameTypeSelected] =
                 $activeTagFilters?.[$selectedCustomFilter]?.[
                     nameTypeSelected
-                ].map((e) => {
+                ]?.map?.((e) => {
                     if (
                         e.optionName + e.optionIdx + e.optionType ===
                         optionName + optionIdx + optionType
@@ -512,7 +548,7 @@
             if (!hasActiveFilter) {
                 $activeTagFilters?.[$selectedCustomFilter]?.[
                     nameTypeSelected
-                ].unshift({
+                ]?.unshift?.({
                     optionName: optionName,
                     optionType: optionType,
                     optionIdx: optionIdx,
@@ -526,7 +562,17 @@
                         nameTypeSelected
                     ];
             }
-        } else if (currentValue === "included" && changeType === "write") {
+        } else if (
+            currentValue === "included" &&
+            changeType === "write" &&
+            isJsonObject(
+                $filterOptions?.filterSelection?.[idxTypeSelected]?.filters
+                    ?.Dropdown?.[dropdownIdx]?.options?.[optionIdx],
+            ) &&
+            $activeTagFilters?.[$selectedCustomFilter]?.[
+                nameTypeSelected
+            ] instanceof Array
+        ) {
             $filterOptions.filterSelection[idxTypeSelected].filters.Dropdown[
                 dropdownIdx
             ].options[optionIdx].selected = "excluded";
@@ -546,7 +592,15 @@
                     }
                     return e;
                 });
-        } else {
+        } else if (
+            isJsonObject(
+                $filterOptions?.filterSelection?.[idxTypeSelected]?.filters
+                    ?.Dropdown?.[dropdownIdx]?.options?.[optionIdx],
+            ) &&
+            $activeTagFilters?.[$selectedCustomFilter]?.[
+                nameTypeSelected
+            ] instanceof Array
+        ) {
             $filterOptions.filterSelection[idxTypeSelected].filters.Dropdown[
                 dropdownIdx
             ].options[optionIdx].selected = "none";
@@ -573,7 +627,7 @@
         filterSelectionName,
     ) {
         let element = event.target;
-        let classList = element.classList;
+        let classList = element?.classList || [];
         let keyCode = event.which || event.keyCode || 0;
         if (
             (classList.contains("checkbox") && event.type === "click") ||
@@ -584,7 +638,7 @@
         ) {
             return;
         }
-        if ($initData) {
+        if (!$filterOptions || !$activeTagFilters || !$selectedCustomFilter) {
             if (!classList.contains("checkbox")) {
                 pleaseWaitAlert();
             }
@@ -594,12 +648,16 @@
         let idxTypeSelected = selectedFilterSelectionIdx;
         let nameTypeSelected =
             $filterOptions?.filterSelection?.[idxTypeSelected]
-                .filterSelectionName;
+                ?.filterSelectionName;
         let isChecked =
-            $filterOptions?.filterSelection?.[idxTypeSelected].filters.Checkbox[
-                checkboxIdx
-            ].isSelected;
-        if (isChecked) {
+            $filterOptions?.filterSelection?.[idxTypeSelected]?.filters
+                ?.Checkbox?.[checkboxIdx]?.isSelected;
+        if (
+            isChecked &&
+            $activeTagFilters?.[$selectedCustomFilter]?.[
+                nameTypeSelected
+            ] instanceof Array
+        ) {
             $activeTagFilters[$selectedCustomFilter][nameTypeSelected] =
                 $activeTagFilters?.[$selectedCustomFilter]?.[
                     nameTypeSelected
@@ -612,7 +670,11 @@
                             e.selected === "included"
                         ),
                 );
-        } else {
+        } else if (
+            $activeTagFilters?.[$selectedCustomFilter]?.[
+                nameTypeSelected
+            ] instanceof Array
+        ) {
             let hasActiveFilter = false;
             $activeTagFilters[$selectedCustomFilter][nameTypeSelected] =
                 $activeTagFilters?.[$selectedCustomFilter]?.[
@@ -630,7 +692,7 @@
             if (!hasActiveFilter) {
                 $activeTagFilters?.[$selectedCustomFilter]?.[
                     nameTypeSelected
-                ].unshift({
+                ]?.unshift?.({
                     optionName: checkBoxName,
                     optionIdx: checkboxIdx,
                     filterType: "checkbox",
@@ -643,11 +705,17 @@
                     ];
             }
         }
-        $filterOptions.filterSelection[idxTypeSelected].filters.Checkbox[
-            checkboxIdx
-        ].isSelected =
-            !$filterOptions?.filterSelection?.[idxTypeSelected].filters
-                .Checkbox[checkboxIdx].isSelected;
+        if (
+            isJsonObject(
+                $filterOptions?.filterSelection?.[idxTypeSelected]?.filters
+                    ?.Checkbox?.[checkboxIdx],
+            )
+        )
+            $filterOptions.filterSelection[idxTypeSelected].filters.Checkbox[
+                checkboxIdx
+            ].isSelected =
+                !$filterOptions?.filterSelection?.[idxTypeSelected].filters
+                    .Checkbox[checkboxIdx].isSelected;
         saveFilters(filterSelectionName);
     }
     function handleInputNumber(
@@ -659,20 +727,23 @@
         minValue,
         filterSelectionName,
     ) {
-        if ($initData) return pleaseWaitAlert();
+        if (!$filterOptions || !$activeTagFilters || !$selectedCustomFilter)
+            return pleaseWaitAlert();
         let idxTypeSelected = selectedFilterSelectionIdx;
         let nameTypeSelected =
             $filterOptions?.filterSelection?.[idxTypeSelected]
-                .filterSelectionName;
+                ?.filterSelectionName;
         let currentValue =
-            $filterOptions?.filterSelection?.[idxTypeSelected].filters[
+            $filterOptions?.filterSelection?.[idxTypeSelected]?.filters?.[
                 "Input Number"
-            ][inputNumIdx].numberValue;
+            ]?.[inputNumIdx]?.numberValue;
         if (
             conditionalInputNumberList.includes(inputNumberName) &&
             /^(>=|<=|<|>).*($)/.test(newValue) // Check if it starts or ends with comparison operators
         ) {
-            let newSplitValue = newValue.split(/(<=|>=|<|>)/).filter((e) => e); // Remove White Space
+            let newSplitValue = newValue
+                ?.split(/(<=|>=|<|>)/)
+                ?.filter?.((e) => e); // Remove White Space
             if (newValue !== currentValue && newSplitValue.length <= 2) {
                 let currentSplitValue = newValue
                     .split(/(<=|>=|<|>)/)
@@ -706,10 +777,19 @@
                             typeof minValue !== "number") &&
                         (parseFloat(newCMPNumber) <= maxValue ||
                             typeof maxValue !== "number")) ||
-                        !newCMPNumber)
+                        !newCMPNumber) &&
+                    isJsonObject(
+                        $filterOptions?.filterSelection?.[idxTypeSelected]
+                            ?.filters?.["Input Number"]?.[inputNumIdx],
+                    )
                 ) {
                     let shouldReload = false;
-                    if (!newCMPNumber) {
+                    if (
+                        !newCMPNumber &&
+                        $activeTagFilters?.[$selectedCustomFilter]?.[
+                            nameTypeSelected
+                        ] instanceof Array
+                    ) {
                         shouldReload = true;
                         $activeTagFilters[$selectedCustomFilter][
                             nameTypeSelected
@@ -723,7 +803,11 @@
                                     e.filterType === "input number"
                                 ),
                         );
-                    } else {
+                    } else if (
+                        $activeTagFilters?.[$selectedCustomFilter]?.[
+                            nameTypeSelected
+                        ] instanceof Array
+                    ) {
                         let hasActiveFilter = false;
                         $activeTagFilters[$selectedCustomFilter][
                             nameTypeSelected
@@ -771,7 +855,16 @@
             } else {
                 changeInputValue(event.target, currentValue);
             }
-        } else {
+        } else if (
+            $activeTagFilters?.[$selectedCustomFilter]?.[
+                nameTypeSelected
+            ] instanceof Array &&
+            isJsonObject(
+                $filterOptions.filterSelection[idxTypeSelected].filters[
+                    "Input Number"
+                ][inputNumIdx],
+            )
+        ) {
             if (
                 newValue !== currentValue &&
                 ((!isNaN(newValue) &&
@@ -850,7 +943,8 @@
         optionType,
         optionValue,
     ) {
-        if ($initData) return pleaseWaitAlert();
+        if (!$filterOptions || !$activeTagFilters || !$selectedCustomFilter)
+            return pleaseWaitAlert();
         let element = event?.target;
         let classList = element?.classList;
         if (
@@ -861,11 +955,11 @@
         let idxTypeSelected = selectedFilterSelectionIdx;
         let nameTypeSelected =
             $filterOptions?.filterSelection?.[idxTypeSelected]
-                .filterSelectionName;
+                ?.filterSelectionName;
         if (filterType === "input number") {
             let elementIdx = $activeTagFilters?.[$selectedCustomFilter]?.[
                 nameTypeSelected
-            ].findIndex(
+            ]?.findIndex?.(
                 (item) =>
                     item.optionName === optionName &&
                     item.optionValue === optionValue &&
@@ -876,7 +970,15 @@
                 let currentSelect =
                     $activeTagFilters?.[$selectedCustomFilter]?.[
                         nameTypeSelected
-                    ][elementIdx].selected;
+                    ]?.[elementIdx]?.selected;
+                if (
+                    !isJsonObject(
+                        $activeTagFilters[$selectedCustomFilter][
+                            nameTypeSelected
+                        ][elementIdx],
+                    )
+                )
+                    return;
                 if (currentSelect === "included") {
                     $activeTagFilters[$selectedCustomFilter][nameTypeSelected][
                         elementIdx
@@ -890,12 +992,20 @@
         } else if (filterType === "checkbox") {
             let tagFilterIdx = $activeTagFilters?.[$selectedCustomFilter]?.[
                 nameTypeSelected
-            ].findIndex(
+            ]?.findIndex?.(
                 (e) =>
                     e.optionIdx === optionIdx &&
                     e.optionName === optionName &&
                     e.filterType === filterType,
             );
+            if (
+                !isJsonObject(
+                    $activeTagFilters[$selectedCustomFilter][nameTypeSelected][
+                        tagFilterIdx
+                    ],
+                )
+            )
+                return;
             let checkboxSelection =
                 $activeTagFilters?.[$selectedCustomFilter]?.[
                     nameTypeSelected
@@ -917,8 +1027,8 @@
             }
         } else if (filterType === "dropdown") {
             let currentSelect =
-                $filterOptions?.filterSelection?.[idxTypeSelected].filters
-                    .Dropdown[categIdx].options[optionIdx].selected;
+                $filterOptions?.filterSelection?.[idxTypeSelected]?.filters
+                    ?.Dropdown?.[categIdx]?.options?.[optionIdx]?.selected;
             if (currentSelect === "included" && changeType === "write") {
                 $filterOptions.filterSelection[
                     idxTypeSelected
@@ -957,7 +1067,15 @@
                         }
                         return e;
                     });
-            } else {
+            } else if (
+                isJsonObject(
+                    $filterOptions.filterSelection[idxTypeSelected].filters
+                        .Dropdown[categIdx].options[optionIdx],
+                ) &&
+                $activeTagFilters[$selectedCustomFilter][
+                    nameTypeSelected
+                ] instanceof Array
+            ) {
                 $filterOptions.filterSelection[
                     idxTypeSelected
                 ].filters.Dropdown[categIdx].options[optionIdx].selected =
@@ -987,11 +1105,24 @@
         categIdx,
         optionType,
     ) {
-        if ($initData) return pleaseWaitAlert();
+        if (!$filterOptions || !$activeTagFilters || !$selectedCustomFilter)
+            return pleaseWaitAlert();
         let idxTypeSelected = selectedFilterSelectionIdx;
         let nameTypeSelected =
             $filterOptions?.filterSelection?.[idxTypeSelected]
-                .filterSelectionName;
+                ?.filterSelectionName;
+        if (
+            !isJsonObject(
+                $filterOptions.filterSelection[idxTypeSelected].filters
+                    .Checkbox[optionIdx],
+            ) ||
+            !(
+                $activeTagFilters?.[$selectedCustomFilter]?.[
+                    nameTypeSelected
+                ] instanceof Array
+            )
+        )
+            return;
         if (filterType === "checkbox") {
             // Is Checkbox
             $filterOptions.filterSelection[idxTypeSelected].filters.Checkbox[
@@ -1023,41 +1154,53 @@
         saveFilters(nameTypeSelected);
     }
     async function removeAllActiveTag(event) {
-        if ($initData) return pleaseWaitAlert();
+        if (!$filterOptions || !$activeTagFilters || !$selectedCustomFilter)
+            return pleaseWaitAlert();
         let idxTypeSelected = selectedFilterSelectionIdx;
         let nameTypeSelected =
             $filterOptions?.filterSelection?.[idxTypeSelected]
-                .filterSelectionName;
+                ?.filterSelectionName;
         let hasActiveFilter =
             $activeTagFilters?.[$selectedCustomFilter]?.[nameTypeSelected]
                 ?.length;
         if (
             hasActiveFilter &&
+            $filterOptions?.filterSelection?.[idxTypeSelected] &&
+            $activeTagFilters?.[$selectedCustomFilter]?.[nameTypeSelected] &&
             (await $confirmPromise("Do you want to remove all filters?"))
         ) {
             // Remove Active Number Input
-            $filterOptions?.filterSelection?.[idxTypeSelected].filters[
+            $filterOptions?.filterSelection?.[idxTypeSelected]?.filters?.[
                 "Input Number"
-            ].forEach((e) => {
+            ]?.forEach?.((e) => {
                 e.numberValue = "";
             });
             // Remove Checkbox
             $filterOptions?.filterSelection?.[
                 idxTypeSelected
-            ].filters.Checkbox.forEach((e) => {
+            ]?.filters?.Checkbox?.forEach?.((e) => {
                 e.isSelected = false;
             });
             // Remove Dropdown
             $filterOptions?.filterSelection?.[
                 idxTypeSelected
-            ].filters.Dropdown.forEach(({ options }, dropdownIdx) => {
-                options.forEach(({ selected }, optionsIdx) => {
+            ]?.filters?.Dropdown?.forEach?.(({ options }, dropdownIdx) => {
+                options?.forEach?.(({ selected }, optionsIdx) => {
                     selected = "none";
-                    $filterOptions.filterSelection[
-                        idxTypeSelected
-                    ].filters.Dropdown[dropdownIdx].options[
-                        optionsIdx
-                    ].selected = selected;
+                    if (
+                        isJsonObject(
+                            $filterOptions.filterSelection[idxTypeSelected]
+                                .filters.Dropdown[dropdownIdx].options[
+                                optionsIdx
+                            ],
+                        )
+                    ) {
+                        $filterOptions.filterSelection[
+                            idxTypeSelected
+                        ].filters.Dropdown[dropdownIdx].options[
+                            optionsIdx
+                        ].selected = selected;
+                    }
                 });
             });
             $filterOptions.filterSelection[idxTypeSelected] =
@@ -1091,7 +1234,8 @@
         }
     }
     function changeSort(newSortName) {
-        if ($initData) return pleaseWaitAlert();
+        if (!$filterOptions || !$activeTagFilters || !$selectedCustomFilter)
+            return pleaseWaitAlert();
         let idxSortSelected = selectedSortIdx;
         let selectedSortFilter = $filterOptions?.sortFilter?.[
             $selectedCustomFilter
@@ -1120,7 +1264,13 @@
                 let idxNewSortSelected = $filterOptions?.sortFilter?.[
                     $selectedCustomFilter
                 ]?.findIndex?.(({ sortName }) => sortName === newSortName);
-                if (idxNewSortSelected >= 0) {
+                if (
+                    isJsonObject(
+                        $filterOptions.sortFilter[$selectedCustomFilter][
+                            idxNewSortSelected
+                        ],
+                    )
+                ) {
                     $filterOptions.sortFilter[$selectedCustomFilter][
                         idxNewSortSelected
                     ].sortType = "desc";
@@ -1138,7 +1288,8 @@
         selectedSortElement = false;
     }
     function changeSortType() {
-        if ($initData) return pleaseWaitAlert();
+        if (!$filterOptions || !$activeTagFilters || !$selectedCustomFilter)
+            return pleaseWaitAlert();
         let idxSortSelected = selectedSortIdx;
         let sortType =
             $filterOptions?.sortFilter?.[$selectedCustomFilter]?.[
@@ -1168,9 +1319,9 @@
         // 38up 40down 13enter
         if (keyCode == 38 || keyCode == 40) {
             var element = Array.from(
-                document.getElementsByClassName("options-wrap") || [],
-            ).find((el) => {
-                return !el.classList.contains("disable-interaction");
+                document?.getElementsByClassName?.("options-wrap") || [],
+            )?.find?.((el) => {
+                return !el?.classList?.contains?.("disable-interaction");
             });
             if (
                 element?.closest?.(".filterType") ||
@@ -1341,7 +1492,8 @@
         }
     }
 
-    $: customFilterName = $selectedCustomFilter;
+    $: customFilterName =
+        $selectedCustomFilter || getLocalStorage("selectedCustomFilter");
     let previousCustomFilterName;
     $: {
         if ($selectedCustomFilter) {
@@ -1362,8 +1514,6 @@
                 } else {
                     _processRecommendedAnimeList();
                 }
-            } else {
-                _processRecommendedAnimeList();
             }
             previousCustomFilterName = $selectedCustomFilter;
         }
@@ -1384,20 +1534,16 @@
         let iconActions = element.closest(".custom-filter-icon-wrap");
         if (iconActions || classList.contains("custom-filter-icon-wrap"))
             return;
-        if ($initData) return pleaseWaitAlert();
+        if (!$filterOptions || !$activeTagFilters || !$selectedCustomFilter)
+            return pleaseWaitAlert();
         let option = element.closest(".option");
         if (option || classList.contains("option")) return;
         let sortSelectEl = element.closest(".custom-filter-wrap");
         let optionsWrap = element.closest(".options-wrap");
-        // let customFilterFloatingIcon = element.closest(
-        //     ".custom-filter-floating-icon"
-        // );
         if (
             (classList.contains("custom-filter-wrap") || sortSelectEl) &&
             !selectedCustomFilterElement &&
             !classList.contains("closing-x")
-            // || classList.contains("custom-filter-floating-icon") ||
-            // customFilterFloatingIcon
         ) {
             selectedCustomFilterElement = true;
         } else if (
@@ -1415,9 +1561,8 @@
         }
     }
     async function selectCustomFilter(event, selectedCustomFilterName) {
-        if ($initData) {
+        if (!$filterOptions || !$activeTagFilters || !$selectedCustomFilter)
             return pleaseWaitAlert();
-        }
         event?.stopPropagation?.();
         if (
             (!$showFilterOptions || !isFullViewed) &&
@@ -1437,6 +1582,12 @@
         selectedCustomFilterElement = false;
     }
     async function saveCustomFilterName(event) {
+        if (
+            !$filterOptions ||
+            !isJsonObject($activeTagFilters) ||
+            !$selectedCustomFilter
+        )
+            return pleaseWaitAlert();
         if (customFilterName && $selectedCustomFilter !== customFilterName) {
             let customFilterNameToShow = `<span style="color:#00cbf9;">${customFilterName}</span>`;
             if (
@@ -1459,7 +1610,10 @@
                             $activeTagFilters?.[previousCustomFilterName],
                         ),
                     );
-                    if (isJsonObject($filterOptions.sortFilter)) {
+                    if (
+                        isJsonObject($filterOptions?.sortFilter) &&
+                        $filterOptions?.sortFilter?.[savedCustomFilterName]
+                    ) {
                         $filterOptions.sortFilter[savedCustomFilterName] =
                             JSON.parse(
                                 JSON.stringify(
@@ -1487,6 +1641,12 @@
     }
     async function addCustomFilter() {
         if (
+            !$filterOptions ||
+            !isJsonObject($activeTagFilters) ||
+            !$selectedCustomFilter
+        )
+            return pleaseWaitAlert();
+        if (
             customFilterName &&
             $activeTagFilters &&
             !$activeTagFilters?.[customFilterName]
@@ -1513,7 +1673,10 @@
                             $activeTagFilters?.[previousCustomFilterName],
                         ),
                     );
-                    if (isJsonObject($filterOptions.sortFilter)) {
+                    if (
+                        isJsonObject($filterOptions.sortFilter) &&
+                        $filterOptions?.sortFilter?.[addedCustomFilterName]
+                    ) {
                         $filterOptions.sortFilter[addedCustomFilterName] =
                             JSON.parse(
                                 JSON.stringify(
@@ -1537,6 +1700,12 @@
     }
 
     async function removeCustomFilter() {
+        if (
+            !$filterOptions ||
+            !isJsonObject($activeTagFilters) ||
+            !$selectedCustomFilter
+        )
+            return pleaseWaitAlert();
         if (
             $selectedCustomFilter &&
             $activeTagFilters &&
@@ -1604,7 +1773,7 @@
                     if (!tag || !category) continue;
                     category = cleanText(category);
                     tag = cleanText(tag);
-                    if (!isJsonObject(tagCategoryInfo[category])) {
+                    if (!isJsonObject(tagCategoryInfo?.[category])) {
                         tagCategoryInfo[category] = {};
                     }
                     tagCategoryInfo[category][tag] = description || "";
@@ -1855,8 +2024,7 @@
 <main
     id="main-home"
     style:--filters-space={$showFilterOptions ? "80px" : ""}
-    style:--active-tag-filter-space={!$initData &&
-    !$loadingFilterOptions &&
+    style:--active-tag-filter-space={!$loadingFilterOptions &&
     $showFilterOptions
         ? "auto"
         : ""}
@@ -1867,11 +2035,8 @@
         id="custom-filter-wrap"
         class="custom-filter-wrap"
         tabindex={selectedCustomFilterElement ? "" : "0"}
-        style:--editcancel-icon={!$initData && $showFilterOptions
-            ? "2.5em"
-            : ""}
-        style:--save-icon={!$initData &&
-        $showFilterOptions &&
+        style:--editcancel-icon={$showFilterOptions ? "2.5em" : ""}
+        style:--save-icon={$showFilterOptions &&
         editCustomFilterName &&
         $selectedCustomFilter &&
         customFilterName &&
@@ -1895,7 +2060,7 @@
             disabled={!editCustomFilterName}
             bind:value={customFilterName}
         />
-        {#if !$initData && (!editCustomFilterName || !$showFilterOptions)}
+        {#if !editCustomFilterName || !$showFilterOptions}
             <div
                 class={"options-wrap " +
                     (selectedCustomFilterElement
@@ -1950,7 +2115,7 @@
                 {/if}
             </div>
         {/if}
-        {#if $showFilterOptions && !$initData}
+        {#if $showFilterOptions}
             {#if editCustomFilterName && customFilterName && $selectedCustomFilter && $activeTagFilters && !$activeTagFilters?.[customFilterName]}
                 <div class="custom-filter-icon-wrap">
                     <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
@@ -2129,7 +2294,7 @@
             <div class="skeleton shimmer" />
         {/if}
         <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
-        {#if $showFilterOptions && $customFilters?.length > 1 && !$initData}
+        {#if $showFilterOptions && $customFilters?.length > 1}
             <div
                 tabindex="0"
                 class="remove-custom-filter"
@@ -2540,7 +2705,11 @@
                                     type="checkbox"
                                     class="checkbox"
                                     on:change={async (e) => {
-                                        if ($initData) {
+                                        if (
+                                            !$filterOptions ||
+                                            !$activeTagFilters ||
+                                            !$selectedCustomFilter
+                                        ) {
                                             return pleaseWaitAlert();
                                         } else {
                                             handleCheckboxChange(
@@ -2626,7 +2795,7 @@
     <div
         id="activeFilters"
         class={"activeFilters" +
-            (!$initData && !$loadingFilterOptions && $showFilterOptions
+            (!$loadingFilterOptions && $showFilterOptions
                 ? ""
                 : " disable-interaction")}
     >

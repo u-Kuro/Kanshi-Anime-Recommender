@@ -3,7 +3,6 @@
         confirmPromise,
         customFilters,
         selectedCustomFilter,
-        initData,
         gridFullView,
         android,
         hasWheel,
@@ -17,11 +16,13 @@
         dataStatus,
         listUpdateAvailable,
         shownAllInList,
+        initData,
     } from "../../js/globalValues.js";
     import { onMount, tick } from "svelte";
     import {
         getElementWidth,
         getLocalStorage,
+        setLocalStorage,
         trimAllEmptyChar,
     } from "../../js/others/helper.js";
     import { animeLoader } from "../../js/workerUtils.js";
@@ -76,7 +77,8 @@
         }
     }
     $: {
-        customFiltersNavVisible = !$initData && (!$android || showCustomFilter);
+        customFiltersNavVisible =
+            $customFilters?.length && (!$android || showCustomFilter);
     }
 
     gridFullView.subscribe(() => {
@@ -113,7 +115,7 @@
                 return;
             })
             .catch((error) => {
-                throw error;
+                console.error(error);
             });
     }
 
@@ -122,11 +124,13 @@
         scrollToSelectedCustomFilter();
     });
     selectedCustomFilter.subscribe((val) => {
-        if (val && unsub) {
-            unsub();
-            unsub = null;
+        if (typeof val === "string") {
+            if (unsub) {
+                unsub?.();
+                unsub = null;
+            }
+            scrollToSelectedCustomFilter(val);
         }
-        scrollToSelectedCustomFilter(val);
     });
 
     let selectedElementIndicatorWidth, selectedElementIndicatorOffsetLeft;
@@ -166,7 +170,7 @@
     let goToNextPrevCustomFilterTimeout;
     function goToNextPrevCustomFilter(event, next = true) {
         if (event?.target?.classList?.contains("custom-filter")) return;
-        if ($initData) return pleaseWaitAlert();
+        if (!$customFilters?.length) return pleaseWaitAlert();
         clearTimeout(goToNextPrevCustomFilterTimeout);
         goToNextPrevCustomFilterTimeout = setTimeout(() => {
             let selectedCustomFilterIdx = $customFilters.indexOf(
@@ -183,7 +187,7 @@
     }
 
     async function selectCustomFilter(selectedCustomFilterName) {
-        if ($initData) return pleaseWaitAlert();
+        if (!$customFilters?.length) return pleaseWaitAlert();
         customFilterNavVisibility(true);
         goBackGrid(selectedCustomFilterName);
         if (selectedCustomFilterName === $selectedCustomFilter) {

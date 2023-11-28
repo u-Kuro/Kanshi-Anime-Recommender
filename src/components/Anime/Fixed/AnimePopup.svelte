@@ -109,6 +109,7 @@
     }
 
     async function handleHideShow(animeID, title) {
+        if (!$hiddenEntries) return pleaseWaitAlert();
         let isHidden = $hiddenEntries[animeID];
         title = title
             ? `<span style="color:#00cbf9;">${title}</span>`
@@ -120,7 +121,7 @@
                 )
             ) {
                 $checkAnimeLoaderStatus()
-                    .then(() => {
+                    .then(async () => {
                         delete $hiddenEntries[animeID];
                         $hiddenEntries = $hiddenEntries;
                         if ($finalAnimeList.length) {
@@ -146,7 +147,7 @@
                 )
             ) {
                 $checkAnimeLoaderStatus()
-                    .then(() => {
+                    .then(async () => {
                         $hiddenEntries[animeID] = true;
                         if ($finalAnimeList.length) {
                             if ($animeLoaderWorker instanceof Worker) {
@@ -165,6 +166,14 @@
                     });
             }
         }
+    }
+
+    async function pleaseWaitAlert() {
+        return await $confirmPromise({
+            isAlert: true,
+            title: "Initializing resources",
+            text: "Please wait a moment...",
+        });
     }
 
     async function askToOpenYoutube(title) {
@@ -225,12 +234,6 @@
             ) {
                 scrollToElement(popupContainer, newPopupContent, "top");
             }
-        }
-    });
-
-    hiddenEntries.subscribe(async (val) => {
-        if (isJsonObject(val)) {
-            await saveJSON(val, "hiddenEntries");
         }
     });
 
@@ -860,7 +863,7 @@
                     return;
                 })
                 .catch((error) => {
-                    throw error;
+                    console.error(error);
                 });
         }
     }
@@ -1021,9 +1024,6 @@
             } catch (e) {}
         }
         $dataStatus = "Reconnected Successfully";
-        if ($initData) {
-            $initData = false;
-        }
         if (!$finalAnimeList?.length) {
             $updateRecommendationList = !$updateRecommendationList;
         }
@@ -1932,7 +1932,7 @@
                                                 ? "Show"
                                                 : "Hide")}
                                     {:else}
-                                        N/A
+                                        Loading...
                                     {/if}
                                 </button>
                                 <button
@@ -2939,7 +2939,7 @@
     }
     :global(.fullPopupDescription > .is-custom-table) {
         width: min(90vw, 380px) !important;
-        background-color: rgb(0,0,0) !important;
+        background-color: rgb(0, 0, 0) !important;
         padding: 1em 2em !important;
         display: flex !important;
         flex-wrap: wrap;

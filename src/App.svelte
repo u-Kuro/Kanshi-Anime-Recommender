@@ -65,6 +65,7 @@
 	} from "./js/workerUtils.js";
 	import {
 		isAndroid,
+		isJsonObject,
 		ncsCompare,
 		setLocalStorage,
 	} from "./js/others/helper.js";
@@ -127,7 +128,18 @@
 			setLocalStorage("gridFullView", _gridFullView);
 			$gridFullView = _gridFullView;
 		}
-		resolve();
+		await animeLoader({ loadInit: true })
+			.then(async (data) => {
+				$animeLoaderWorker = data.animeLoaderWorker;
+				if (data?.isNew) {
+					$finalAnimeList = data.finalAnimeList;
+					resolve();
+				}
+			})
+			.catch(async () => {
+				await saveJSON(true, "shouldLoadAnime");
+				resolve();
+			});
 	}).then(() => {
 		// Get Export Folder for Android
 		if (!$android) {
@@ -270,37 +282,32 @@
 			}),
 		);
 
-		// Get Existing Data If there are any
-		initDataPromises.push(
-			new Promise(async (resolve) => {
-				// Auto Play
-				let _autoPlay = await retrieveJSON("autoPlay");
-				if (typeof _autoPlay === "boolean") {
-					setLocalStorage("autoPlay", _autoPlay);
-					$autoPlay = _autoPlay;
-				}
-				// Get Auto Functions
-				$lastRunnedAutoUpdateDate = await retrieveJSON(
-					"lastRunnedAutoUpdateDate",
-				);
-				$lastRunnedAutoExportDate = await retrieveJSON(
-					"lastRunnedAutoExportDate",
-				);
-				$autoUpdate = (await retrieveJSON("autoUpdate")) ?? false;
-				setLocalStorage("autoUpdate", $autoUpdate);
-				$autoExport = (await retrieveJSON("autoExport")) ?? false;
-				setLocalStorage("autoExport", $autoExport);
-				resolve();
-			}),
-		);
-
 		Promise.all(initDataPromises)
 			.then(async () => {
+				$initData = false;
+				(async () => {
+					if (!isJsonObject($hiddenEntries)) {
+						$hiddenEntries = await retrieveJSON("hiddenEntries");
+					}
+					$autoPlay =
+						$autoPlay ?? (await retrieveJSON("autoPlay")) ?? false;
+					setLocalStorage("autoPlay", $autoPlay);
+					$autoUpdate =
+						$autoUpdate ??
+						(await retrieveJSON("autoUpdate")) ??
+						false;
+					setLocalStorage("autoUpdate", $autoUpdate);
+					$autoExport =
+						$autoExport ??
+						(await retrieveJSON("autoExport")) ??
+						false;
+					setLocalStorage("autoExport", $autoExport);
+				})();
 				// Get/Show List
 				let shouldProcessRecommendation = await retrieveJSON(
 					"shouldProcessRecommendation",
 				);
-				if (!shouldProcessRecommendation) {
+				if (shouldProcessRecommendation === undefined) {
 					let recommendedAnimeListLen = await retrieveJSON(
 						"recommendedAnimeListLength",
 					);
@@ -312,65 +319,80 @@
 					if (shouldProcessRecommendation) {
 						processRecommendedAnimeList()
 							.then(async () => {
-								await saveJSON(
-									false,
-									"shouldProcessRecommendation",
-								);
 								resolve(false);
 							})
-							.catch((error) => {
-								throw error;
-							});
+							.catch(initFailed);
 					} else {
 						resolve(true);
 					}
-				}).then((loadSaved) => {
-					animeLoader({ loadSaved })
-						.then(async (data) => {
-							$animeLoaderWorker = data.animeLoaderWorker;
-							if (data?.isNew) {
-								$finalAnimeList = data.finalAnimeList;
-								$hiddenEntries = data.hiddenEntries;
-								$dataStatus = null;
-								checkAutoFunctions(true);
-								$initData = false;
+				}).then(async (shouldLoadAnime) => {
+					if (!shouldLoadAnime) {
+						shouldLoadAnime = await retrieveJSON("shouldLoadAnime");
+						if (shouldLoadAnime === undefined) {
+							let finalAnimeListLen = await retrieveJSON(
+								"finalAnimeListLength",
+							);
+							if (finalAnimeListLen < 1) {
+								shouldLoadAnime = true;
 							}
-							return;
-						})
-						.catch((error) => {
-							throw error;
-						});
+						}
+					}
+					if (shouldLoadAnime) {
+						animeLoader()
+							.then(async (data) => {
+								$animeLoaderWorker = data.animeLoaderWorker;
+								if (data?.isNew) {
+									$finalAnimeList = data.finalAnimeList;
+									$hiddenEntries = data.hiddenEntries;
+									$dataStatus = null;
+									checkAutoFunctions(true);
+								}
+								return;
+							})
+							.catch(initFailed);
+					} else {
+						$dataStatus = null;
+						checkAutoFunctions(true);
+					}
 				});
 			})
-			.catch(async (error) => {
-				checkAutoFunctions(true);
-				$initData = false;
-				$dataStatus = "Something went wrong";
-				if ($android) {
-					$confirmPromise?.({
-						isAlert: true,
-						title: "Something went wrong",
-						text: "App may not be working properly, you may want to restart and make sure you're running the latest version.",
-					});
-				} else {
-					$confirmPromise?.({
-						isAlert: true,
-						title: "Something went wrong",
-						text: "App may not be working properly, you may want to refresh the page, or if not clear your cookies but backup your data first.",
-					});
-				}
-				console.error(error);
-			});
+			.catch(initFailed);
 	});
+
+	async function initFailed() {
+		checkAutoFunctions(true);
+		$dataStatus = "Something went wrong";
+		if ($android) {
+			$confirmPromise?.({
+				isAlert: true,
+				title: "Something went wrong",
+				text: "App may not be working properly, you may want to restart and make sure you're running the latest version.",
+			});
+		} else {
+			$confirmPromise?.({
+				isAlert: true,
+				title: "Something went wrong",
+				text: "App may not be working properly, you may want to refresh the page, or if not clear your cookies but backup your data first.",
+			});
+		}
+		$initData = false;
+		console.error(error);
+	}
 
 	// function getAnilistAccessTokenFromURL() {
 	// 	let urlParams = new URLSearchParams(window.location.hash.slice(1));
 	// 	return urlParams.get("access_token");
 	// }
 
-	function checkAutoFunctions(initCheck = false) {
+	async function checkAutoFunctions(initCheck = false) {
 		// auto Update
 		if (initCheck) {
+			$lastRunnedAutoUpdateDate = await retrieveJSON(
+				"lastRunnedAutoUpdateDate",
+			);
+			$lastRunnedAutoExportDate = await retrieveJSON(
+				"lastRunnedAutoExportDate",
+			);
 			$userRequestIsRunning = true;
 			requestUserEntries()
 				.then(() => {
@@ -421,13 +443,6 @@
 		}
 	});
 
-	finalAnimeList.subscribe(async (val) => {
-		if (!$initData) return;
-		if (val?.length > 0 && $initData !== false) {
-			$initData = false;
-		} // Have Loaded Recommendations
-	});
-
 	// Reactive Functions
 	importantLoad.subscribe(async (val) => {
 		if (typeof val !== "boolean" || $initData) return;
@@ -447,7 +462,7 @@
 				return;
 			})
 			.catch((error) => {
-				throw error;
+				console.error(error);
 			});
 	});
 	importantUpdate.subscribe(async (val) => {
@@ -456,13 +471,12 @@
 		$listUpdateAvailable = false;
 		processRecommendedAnimeList()
 			.then(async () => {
-				await saveJSON(false, "shouldProcessRecommendation");
 				updateFilters.update((e) => !e);
 				importantLoad.update((e) => !e);
 			})
 			.catch((error) => {
 				importantLoad.update((e) => !e);
-				throw error;
+				console.error(error);
 			});
 	});
 	updateRecommendationList.subscribe(async (val) => {
@@ -470,13 +484,12 @@
 		await saveJSON(true, "shouldProcessRecommendation");
 		processRecommendedAnimeList()
 			.then(async () => {
-				await saveJSON(false, "shouldProcessRecommendation");
 				updateFilters.update((e) => !e);
 				loadAnime.update((e) => !e);
 			})
 			.catch((error) => {
 				loadAnime.update((e) => !e);
-				throw error;
+				console.error(error);
 			});
 	});
 
@@ -489,6 +502,7 @@
 					: animeGridEl?.getBoundingClientRect?.()?.top < 0)) &&
 			$finalAnimeList?.length
 		) {
+			await saveJSON(true, "shouldLoadAnime");
 			$listUpdateAvailable = true;
 		} else {
 			if ($animeLoaderWorker) {
@@ -506,7 +520,7 @@
 					return;
 				})
 				.catch((error) => {
-					throw error;
+					console.error(error);
 				});
 		}
 	});
@@ -1014,7 +1028,7 @@
 				return;
 			})
 			.catch((error) => {
-				throw error;
+				console.error(error);
 			});
 	}
 

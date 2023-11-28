@@ -79,9 +79,9 @@
             return;
         window.open(
             `https://www.youtube.com/results?search_query=${encodeURIComponent(
-                youtubeSearchTitle + " Anime"
+                youtubeSearchTitle + " Anime",
             )}`,
-            "_blank"
+            "_blank",
         );
     }
 
@@ -108,6 +108,7 @@
 
     async function handleHideShow(e) {
         if (isRecentlyOpened && e.type !== "keydown") return;
+        if (!$hiddenEntries) return pleaseWaitAlert();
         let title = shownTitle
             ? `<span style="color:#00cbf9;">${shownTitle}</span>`
             : "this anime";
@@ -115,17 +116,17 @@
         if (isHidden) {
             if (
                 await $confirmPromise(
-                    `Do you want to unhide ${title} in your recommendation list?`
+                    `Do you want to unhide ${title} in your recommendation list?`,
                 )
             ) {
                 $checkAnimeLoaderStatus()
-                    .then(() => {
+                    .then(async () => {
                         delete $hiddenEntries[animeID];
-                        $hiddenEntries = $hiddenEntries;
                         if ($finalAnimeList.length) {
                             if ($animeLoaderWorker instanceof Worker) {
                                 $animeLoaderWorker?.postMessage?.({
                                     removeID: animeID,
+                                    hiddenEntries: $hiddenEntries,
                                 });
                             }
                         }
@@ -142,16 +143,17 @@
         } else {
             if (
                 await $confirmPromise(
-                    `Do you want to hide ${title} in your recommendation list?`
+                    `Do you want to hide ${title} in your recommendation list?`,
                 )
             ) {
                 $checkAnimeLoaderStatus()
-                    .then(() => {
+                    .then(async () => {
                         $hiddenEntries[animeID] = true;
                         if ($finalAnimeList.length) {
                             if ($animeLoaderWorker instanceof Worker) {
                                 $animeLoaderWorker?.postMessage?.({
                                     removeID: animeID,
+                                    hiddenEntries: $hiddenEntries,
                                 });
                             }
                         }
@@ -166,6 +168,14 @@
                 $animeOptionVisible = false;
             }
         }
+    }
+
+    async function pleaseWaitAlert() {
+        return await $confirmPromise({
+            isAlert: true,
+            title: "Initializing resources",
+            text: "Please wait a moment...",
+        });
     }
 
     function loadAnimeOption() {
@@ -240,7 +250,11 @@
                 on:click={handleHideShow}
                 on:keydown={(e) => e.key === "Enter" && handleHideShow(e)}
                 ><h2 class="option-title">
-                    {($hiddenEntries[animeID] ? "Show" : "Hide") + " Anime"}
+                    {!$hiddenEntries
+                        ? "Please Wait..."
+                        : $hiddenEntries[animeID]
+                          ? "Show"
+                          : "Hide" + " Anime"}
                 </h2></span
             >
         </div>

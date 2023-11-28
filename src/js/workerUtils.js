@@ -71,7 +71,8 @@ const animeLoader = (_data = {}) => {
                     } else if (data?.hasOwnProperty("status")) {
                         dataStatusPrio = true
                         dataStatus.set(data.status)
-                    } else if (data?.filterOptions) {
+                    } else if (data?.filterOptions && typeof data?.selectedCustomFilter === "string") {
+                        setLocalStorage("selectedCustomFilter", data?.selectedCustomFilter)
                         filterOptions.set(data.filterOptions)
                         loadingFilterOptions.set(false)
                     } else if (typeof data?.changedCustomFilter === "string" && data?.changedCustomFilter) {
