@@ -284,7 +284,7 @@ const formatNumber = (number, dec = 2) => {
 
     if (Math.abs(number) >= 1000) {
       return formatter.format(number);
-    } else if (Math.abs(number) < 0.01) {
+    } else if (Math.abs(number) < 0.01 && Math.abs(number) > 0) {
       return number.toExponential(0);
     } else {
       return (
