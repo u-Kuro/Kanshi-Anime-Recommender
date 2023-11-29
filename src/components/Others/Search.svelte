@@ -118,6 +118,14 @@
             sortName: "popularity",
             sortType: "none",
         },
+        {
+            sortName: "trending",
+            sortType: "none",
+        },
+        {
+            sortName: "favorites",
+            sortType: "none",
+        },
     ];
     $: selectedFilterSelectionIdx =
         $filterOptions?.filterSelection?.findIndex?.(
@@ -2025,7 +2033,8 @@
     id="main-home"
     style:--filters-space={$showFilterOptions ? "80px" : ""}
     style:--active-tag-filter-space={!$loadingFilterOptions &&
-    $showFilterOptions
+    $showFilterOptions &&
+    !$initData
         ? "auto"
         : ""}
     style:--custom-filter-settings-space={$showFilterOptions ? "30px" : ""}
@@ -2795,7 +2804,7 @@
     <div
         id="activeFilters"
         class={"activeFilters" +
-            (!$loadingFilterOptions && $showFilterOptions
+            (!$loadingFilterOptions && $showFilterOptions && !$initData
                 ? ""
                 : " disable-interaction")}
     >
@@ -2936,25 +2945,26 @@
             bind:value={$searchedAnimeKeyword}
         />
     </div>
-    {#if $filterOptions}
-        <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
-        <div class="last-filter-option">
-            <div
-                tabindex="0"
-                class="changeGridView"
-                on:click={handleGridView}
-                on:keydown={(e) => e.key === "Enter" && handleGridView()}
-            >
-                <svg viewBox={`0 0 ${isFullViewed ? "312" : "512"} 512`}>
-                    <path
-                        d={isFullViewed
-                            ? // arrows-up-down
-                              "M183 9a32 32 0 0 0-46 0l-96 96a32 32 0 0 0 46 46l41-42v294l-41-42a32 32 0 0 0-46 46l96 96c13 12 33 12 46 0l96-96a32 32 0 0 0-46-46l-41 42V109l41 42a32 32 0 0 0 46-46L183 9z"
-                            : // arrows-left-right
-                              "m407 375 96-96c12-13 12-33 0-46l-96-96a32 32 0 0 0-46 46l42 41H109l42-41a32 32 0 0 0-46-46L9 233a32 32 0 0 0 0 46l96 96a32 32 0 0 0 46-46l-42-41h294l-42 41a32 32 0 0 0 46 46z"}
-                    />
-                </svg>
-            </div>
+
+    <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
+    <div class="last-filter-option">
+        <div
+            tabindex="0"
+            class="changeGridView"
+            on:click={handleGridView}
+            on:keydown={(e) => e.key === "Enter" && handleGridView()}
+        >
+            <svg viewBox={`0 0 ${isFullViewed ? "312" : "512"} 512`}>
+                <path
+                    d={isFullViewed
+                        ? // arrows-up-down
+                          "M183 9a32 32 0 0 0-46 0l-96 96a32 32 0 0 0 46 46l41-42v294l-41-42a32 32 0 0 0-46 46l96 96c13 12 33 12 46 0l96-96a32 32 0 0 0-46-46l-41 42V109l41 42a32 32 0 0 0 46-46L183 9z"
+                        : // arrows-left-right
+                          "m407 375 96-96c12-13 12-33 0-46l-96-96a32 32 0 0 0-46 46l42 41H109l42-41a32 32 0 0 0-46-46L9 233a32 32 0 0 0 0 46l96 96a32 32 0 0 0 46-46l-42-41h294l-42 41a32 32 0 0 0 46 46z"}
+                />
+            </svg>
+        </div>
+        {#if $filterOptions?.sortFilter}
             <div class="sortFilter">
                 <svg
                     viewBox={`0 ${
@@ -3039,19 +3049,11 @@
                     </div>
                 </div>
             </div>
-        </div>
-    {:else}
-        <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
-        <div class="last-filter-option">
-            <div
-                tabindex="0"
-                class="changeGridView"
-                on:click={handleGridView}
-                on:keydown={(e) => e.key === "Enter" && handleGridView()}
-            />
+        {:else}
             <div class="sortFilter skeleton shimmer" />
-        </div>
-    {/if}
+        {/if}
+    </div>
+
     <slot />
 </main>
 
@@ -3428,8 +3430,14 @@
         background-color: transparent;
     }
     .options-wrap::-webkit-scrollbar-thumb {
-        background-color: #b9cadd;
-        border-radius: 5px;
+        background-color: transparent;
+        border-radius: 9999px;
+    }
+    .options-wrap:hover::-webkit-scrollbar-thumb,
+    .options-wrap:active::-webkit-scrollbar-thumb,
+    .options-wrap:focus::-webkit-scrollbar-thumb {
+        background-color: rgba(162, 168, 169, 0.75);
+        border-right: 2px solid rgb(21, 31, 46);
     }
 
     .options {
@@ -3730,6 +3738,11 @@
         user-select: none;
         border-radius: 6px;
     }
+
+    .options .option:last-child {
+        padding-bottom: 15px;
+    }
+
     .sortFilter .option svg {
         margin-left: auto;
         height: 1.5em;

@@ -28,6 +28,7 @@
         isJsonObject,
         removeClass,
         getLocalStorage,
+        setLocalStorage,
     } from "../../js/others/helper.js";
     import { fade } from "svelte/transition";
     import { cacheImage } from "../../js/caching.js";
@@ -248,6 +249,7 @@
     searchedAnimeKeyword.subscribe(async (val) => {
         if (typeof val === "string") {
             if ($animeLoaderWorker instanceof Worker) {
+                setLocalStorage("searchedAnimeKeyword", val);
                 $shownAllInList = false;
                 $checkAnimeLoaderStatus().then(() => {
                     $animeLoaderWorker?.postMessage?.({

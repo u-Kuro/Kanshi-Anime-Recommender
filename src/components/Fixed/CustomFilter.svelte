@@ -16,13 +16,11 @@
         dataStatus,
         listUpdateAvailable,
         shownAllInList,
-        initData,
     } from "../../js/globalValues.js";
     import { onMount, tick } from "svelte";
     import {
         getElementWidth,
         getLocalStorage,
-        setLocalStorage,
         trimAllEmptyChar,
     } from "../../js/others/helper.js";
     import { animeLoader } from "../../js/workerUtils.js";
@@ -94,7 +92,7 @@
             document.documentElement.style.minHeight = "";
         } else {
             document.documentElement.style.minHeight =
-                screen.height + 37 + "px";
+                screen.height + 48 + "px";
         }
     }
 
