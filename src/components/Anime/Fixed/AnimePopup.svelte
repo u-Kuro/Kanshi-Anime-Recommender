@@ -451,12 +451,6 @@
                         }
                     }
                 }
-            } else if (e.ctrlKey && e.key?.toLowerCase?.() === "x") {
-                e.preventDefault();
-                $popupVisible = !$popupVisible;
-            } else if (e.ctrlKey && e.key?.toLowerCase?.() === "k") {
-                e.preventDefault();
-                $autoPlay = !$autoPlay;
             }
         });
     });

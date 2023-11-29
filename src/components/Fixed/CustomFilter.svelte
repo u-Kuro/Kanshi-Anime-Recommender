@@ -41,6 +41,7 @@
         customFilNavIsAnimating,
         customFilOpacity;
 
+    $android = true;
     let showCustomFilterNavTimeout;
     function customFilterNavVisibility(show) {
         return new Promise((resolve) => {
@@ -58,6 +59,7 @@
             }
         });
     }
+
     $: {
         isScrolledYMax =
             lastScrollTop >=
@@ -117,16 +119,23 @@
             });
     }
 
-    let unsub = customFilters.subscribe(() => {
+    let unsub = customFilters.subscribe((val) => {
+        if (val?.length) unsubCustomFilters();
         if ($selectedCustomFilter) return;
         scrollToSelectedCustomFilter();
     });
-    selectedCustomFilter.subscribe((val) => {
-        if (typeof val === "string") {
+    function unsubCustomFilters() {
+        try {
             if (unsub) {
                 unsub?.();
                 unsub = null;
+                customFilterNavVisibility(true);
+                unsubCustomFilters = null;
             }
+        } catch (e) {}
+    }
+    selectedCustomFilter.subscribe((val) => {
+        if (typeof val === "string") {
             scrollToSelectedCustomFilter(val);
         }
     });
