@@ -41,7 +41,6 @@
         customFilNavIsAnimating,
         customFilOpacity;
 
-    $android = true;
     let showCustomFilterNavTimeout;
     function customFilterNavVisibility(show) {
         return new Promise((resolve) => {
