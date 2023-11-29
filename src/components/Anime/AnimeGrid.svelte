@@ -6,7 +6,6 @@
         searchedAnimeKeyword,
         animeLoaderWorker,
         dataStatus,
-        filterOptions,
         animeObserver,
         popupVisible,
         openedAnimePopupIdx,
@@ -576,19 +575,47 @@
                                 </div>
                                 <div class="brief-info">
                                     <span>
-                                        <!-- star -->
-                                        <svg
-                                            viewBox="0 0 576 512"
-                                            class={`${anime?.contentCautionColor}-fill star`}
-                                            ><path
-                                                d="M317 18a32 32 0 0 0-58 0l-64 132-144 22a32 32 0 0 0-17 54l104 103-25 146a32 32 0 0 0 47 33l128-68 129 68a32 32 0 0 0 46-33l-24-146 104-103a32 32 0 0 0-18-54l-144-22-64-132z"
-                                            /></svg
-                                        >
-                                        {#if $filterOptions}
-                                            {anime?.shownScore || "N/A"}
-                                        {:else}
-                                            {anime?.formattedWeightedScore ||
-                                                "N/A"}
+                                        {#if anime?.shownScore != null}
+                                            <!-- star -->
+                                            <svg
+                                                viewBox="0 0 576 512"
+                                                class={`${anime?.contentCautionColor}-fill score`}
+                                                ><path
+                                                    d="M317 18a32 32 0 0 0-58 0l-64 132-144 22a32 32 0 0 0-17 54l104 103-25 146a32 32 0 0 0 47 33l128-68 129 68a32 32 0 0 0 46-33l-24-146 104-103a32 32 0 0 0-18-54l-144-22-64-132z"
+                                                /></svg
+                                            >
+                                            {anime?.shownScore ?? "N/A"}
+                                        {:else if anime?.shownCount != null}
+                                            <!-- people -->
+                                            <svg
+                                                viewBox="0 0 640 512"
+                                                class={`${anime?.contentCautionColor}-fill score`}
+                                            >
+                                                <path
+                                                    d="M96 128a128 128 0 1 1 256 0 128 128 0 1 1-256 0zM0 482c0-98 80-178 178-178h92c98 0 178 80 178 178 0 17-13 30-30 30H30c-17 0-30-13-30-30zm609 30H471c6-9 9-20 9-32v-8c0-61-27-115-70-152h69c89 0 161 72 161 161 0 17-14 31-31 31zM432 256c-31 0-59-13-79-33a159 159 0 0 0 13-169 112 112 0 1 1 66 202z"
+                                                /></svg
+                                            >
+                                            {anime?.shownCount ?? "N/A"}
+                                        {:else if anime?.shownFavorites != null}
+                                            <svg
+                                                viewBox="0 0 512 512"
+                                                class={`${anime?.contentCautionColor}-fill score`}
+                                            >
+                                                <path
+                                                    d="m48 300 180 169a41 41 0 0 0 56 0l180-169c31-28 48-68 48-109v-6A143 143 0 0 0 268 84l-12 12-12-12A143 143 0 0 0 0 185v6c0 41 17 81 48 109z"
+                                                /></svg
+                                            >
+                                            {anime?.shownFavorites ?? "N/A"}
+                                        {:else if anime?.shownActivity != null}
+                                            <svg
+                                                viewBox="0 0 512 512"
+                                                class={`${anime?.contentCautionColor}-fill score`}
+                                            >
+                                                <path
+                                                    d="M64 64a32 32 0 1 0-64 0v336c0 44 36 80 80 80h400a32 32 0 1 0 0-64H80c-9 0-16-7-16-16V64zm407 87a32 32 0 0 0-46-46L320 211l-57-58a32 32 0 0 0-46 0L105 265a32 32 0 0 0 46 46l89-90 57 58c13 12 33 12 46 0l128-128z"
+                                                /></svg
+                                            >
+                                            {anime?.shownActivity ?? "N/A"}
                                         {/if}
                                     </span>
                                 </div>
@@ -884,7 +911,7 @@
         height: 0.75em;
         width: 0.75em;
     }
-    .brief-info .star {
+    .brief-info .score {
         height: 1em;
         width: 1em;
     }
