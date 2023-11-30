@@ -1119,11 +1119,24 @@
         let nameTypeSelected =
             $filterOptions?.filterSelection?.[idxTypeSelected]
                 ?.filterSelectionName;
+        let toChangeIsJson =
+            $filterOptions?.filterSelection?.[idxTypeSelected]?.filters;
+        if (filterType === "checkbox") {
+            // Is Checkbox
+            toChangeIsJson = isJsonObject(
+                toChangeIsJson?.Checkbox?.[optionIdx],
+            );
+        } else if (filterType === "input number") {
+            toChangeIsJson = isJsonObject(
+                toChangeIsJson?.["Input Number"]?.[optionIdx],
+            );
+        } else {
+            toChangeIsJson = isJsonObject(
+                toChangeIsJson?.Dropdown?.[categIdx]?.options?.[optionIdx],
+            );
+        }
         if (
-            !isJsonObject(
-                $filterOptions.filterSelection[idxTypeSelected].filters
-                    .Checkbox[optionIdx],
-            ) ||
+            !toChangeIsJson ||
             !(
                 $activeTagFilters?.[$selectedCustomFilter]?.[
                     nameTypeSelected
