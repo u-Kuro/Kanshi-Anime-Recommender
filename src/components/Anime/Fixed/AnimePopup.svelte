@@ -128,6 +128,7 @@
                             if ($animeLoaderWorker instanceof Worker) {
                                 $animeLoaderWorker?.postMessage?.({
                                     removeID: animeID,
+                                    hiddenEntries: $hiddenEntries,
                                 });
                             }
                         }
@@ -153,6 +154,7 @@
                             if ($animeLoaderWorker instanceof Worker) {
                                 $animeLoaderWorker?.postMessage?.({
                                     removeID: animeID,
+                                    hiddenEntries: $hiddenEntries,
                                 });
                             }
                         }
