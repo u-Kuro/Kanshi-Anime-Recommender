@@ -1609,19 +1609,21 @@
                                             copy-value={`${
                                                 anime?.season || ""
                                             }${
-                                                anime?.year
-                                                    ? " " + anime.year
-                                                    : ""
-                                            }` || "NA"}
+                                                anime?.season && anime?.year
+                                                    ? " " + anime?.year
+                                                    : anime?.year || ""
+                                            }` || ""}
                                         >
                                             {`${anime?.season || ""}${
-                                                anime?.year
-                                                    ? " " + anime.year
-                                                    : ""
+                                                anime?.season && anime?.year
+                                                    ? " " + anime?.year
+                                                    : anime?.year || ""
                                             }` || "NA"}
                                         </span>
                                     {:else}
-                                        <h4>NA</h4>
+                                        <span style="text-align: right;"
+                                            >NA</span
+                                        >
                                     {/if}
                                 </div>
                                 <div
