@@ -1610,7 +1610,9 @@
         )
             return pleaseWaitAlert();
         if (customFilterName && $selectedCustomFilter !== customFilterName) {
-            let customFilterNameToShow = `<span style="color:#00cbf9;">${customFilterName}</span>`;
+            let customFilterNameToShow = `<span style="color:#00cbf9;">${trimAllEmptyChar(
+                customFilterName,
+            )}</span>`;
             if (
                 await $confirmPromise({
                     title: "Save custom filter",
@@ -1626,15 +1628,7 @@
                     let savedCustomFilterName =
                         customFilterName ||
                         "Custom Filter " + new Date().getTime();
-                    $activeTagFilters[savedCustomFilterName] = JSON.parse(
-                        JSON.stringify(
-                            $activeTagFilters?.[previousCustomFilterName],
-                        ),
-                    );
-                    if (
-                        isJsonObject($filterOptions?.sortFilter) &&
-                        $filterOptions?.sortFilter?.[savedCustomFilterName]
-                    ) {
+                    if (isJsonObject($filterOptions?.sortFilter)) {
                         $filterOptions.sortFilter[savedCustomFilterName] =
                             JSON.parse(
                                 JSON.stringify(
@@ -1644,6 +1638,11 @@
                                 ),
                             );
                     }
+                    $activeTagFilters[savedCustomFilterName] = JSON.parse(
+                        JSON.stringify(
+                            $activeTagFilters?.[previousCustomFilterName],
+                        ),
+                    );
                     delete $activeTagFilters?.[previousCustomFilterName];
                     delete $filterOptions?.sortFilter?.[
                         previousCustomFilterName
@@ -1672,7 +1671,9 @@
             $activeTagFilters &&
             !$activeTagFilters?.[customFilterName]
         ) {
-            let customFilterNameToShow = `<span style="color:#00cbf9;">${customFilterName}</span>`;
+            let customFilterNameToShow = `<span style="color:#00cbf9;">${trimAllEmptyChar(
+                customFilterName,
+            )}</span>`;
             if (
                 await $confirmPromise({
                     title: "Add custom filter",
@@ -1689,15 +1690,7 @@
                     let addedCustomFilterName =
                         customFilterName ||
                         "Custom Filter " + new Date().getTime();
-                    $activeTagFilters[addedCustomFilterName] = JSON.parse(
-                        JSON.stringify(
-                            $activeTagFilters?.[previousCustomFilterName],
-                        ),
-                    );
-                    if (
-                        isJsonObject($filterOptions.sortFilter) &&
-                        $filterOptions?.sortFilter?.[addedCustomFilterName]
-                    ) {
+                    if (isJsonObject($filterOptions.sortFilter)) {
                         $filterOptions.sortFilter[addedCustomFilterName] =
                             JSON.parse(
                                 JSON.stringify(
@@ -1707,6 +1700,11 @@
                                 ),
                             );
                     }
+                    $activeTagFilters[addedCustomFilterName] = JSON.parse(
+                        JSON.stringify(
+                            $activeTagFilters?.[previousCustomFilterName],
+                        ),
+                    );
                     $selectedCustomFilter = addedCustomFilterName;
                     $activeTagFilters = $activeTagFilters;
                     await saveJSON($filterOptions, "filterOptions");
@@ -1733,7 +1731,9 @@
             $activeTagFilters?.[$selectedCustomFilter] &&
             Object.keys($activeTagFilters || {}).length > 1
         ) {
-            let customFilterNameToShow = `<span style="color:#00cbf9;">${$selectedCustomFilter}</span>`;
+            let customFilterNameToShow = `<span style="color:#00cbf9;">${trimAllEmptyChar(
+                $selectedCustomFilter,
+            )}</span>`;
             if (
                 await $confirmPromise({
                     title: "Delete custom filter",

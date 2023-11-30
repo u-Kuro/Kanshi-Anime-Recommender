@@ -145,7 +145,7 @@
         await tick();
         let elementToScroll = Array.from(customFiltersNav?.children || []).find(
             (e) =>
-                trimAllEmptyChar(e?.innerText) === trimAllEmptyChar(val) &&
+                e?.getAttribute?.("custom-filter-name") === val &&
                 e?.classList?.contains?.("custom-filter"),
         );
         if (elementToScroll instanceof Element) {
@@ -398,6 +398,7 @@
                 on:keydown={(e) => {
                     e.key === "Enter" && selectCustomFilter(filterName);
                 }}
+                custom-filter-name={filterName}
                 class={"custom-filter" +
                     (filterName === $selectedCustomFilter ? " selected" : "")}
                 >{trimAllEmptyChar(filterName) || ""}
