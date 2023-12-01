@@ -2111,7 +2111,7 @@
         overflow-y: auto;
         overflow-x: hidden;
         overscroll-behavior: contain;
-        background-color: #151f2e;
+        background: rgba(0, 0, 0, 0.75);
         transition: opacity 0.2s ease;
         margin-top: 48px;
         -ms-overflow-style: none;
@@ -2189,7 +2189,7 @@
         display: grid;
         grid-template-columns: 100%;
         color: #a2a8bd;
-        background-color: #151f2e;
+        background: linear-gradient(to bottom, hsl(210deg 50% 5%) 20%, #0b1621);
         max-width: 640px;
     }
     .popup-content.hidden {
@@ -2315,7 +2315,7 @@
     .popup-body {
         overflow: hidden;
         touch-action: pan-y;
-        margin: 1em 1em 0 1em;
+        margin: 0 1em 0 1em;
     }
 
     .popup-info {
@@ -2490,7 +2490,7 @@
     }
 
     .anime-description-wrapper {
-        background-color: #0b1622;
+        border: 1px solid hsl(211.3deg 51.11% 15%);
         border-radius: 6px;
         padding: 1em 1.5em;
         flex: 1;
@@ -2561,7 +2561,7 @@
         width: 100%;
         height: 4.8em;
         margin: auto;
-        border-top: 1px solid #9ba0b2;
+        border-top: 1px solid hsl(211.3deg 51.11% 15%);
     }
 
     .footer svg {
@@ -2686,7 +2686,7 @@
     .tags-info-content {
         flex-wrap: wrap;
         flex-direction: column;
-        max-height: 6em;
+        max-height: 6.4em;
     }
 
     .tags-info-content > span {
@@ -2703,7 +2703,7 @@
     .info > span,
     .info > a {
         color: #9ba0b2;
-        background: #0b1622;
+        border: 1px solid hsl(211.3deg 51.11% 15%);
         padding: 8px 10px;
         border-radius: 6px;
         white-space: nowrap;
@@ -2721,7 +2721,6 @@
     }
 
     .popup-controls {
-        background: #0b1622 !important;
         display: flex;
         padding: 5px 1em;
         user-select: none;
@@ -2789,7 +2788,7 @@
         left: 0;
         right: 0;
         bottom: 0;
-        background-color: #0b1622;
+        background-color: transparent;
         -webkit-transition: 0.4s transform;
         transition: 0.4s transform;
         border: 2px solid #9ba0b2;

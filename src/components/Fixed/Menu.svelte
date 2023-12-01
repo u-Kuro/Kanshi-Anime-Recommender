@@ -425,12 +425,12 @@
         display: none;
     }
     .button {
-        -moz-box-shadow: 0 3px 20px 0 #2b2d42;
-        -webkit-box-shadow: 0 3px 20px 0 #2b2d42;
-        box-shadow: 0 3px 20px 0 #2b2d42;
+        -moz-box-shadow: 0 3px 20px 0 hsl(211.3deg 51.11% 15%);
+        -webkit-box-shadow: 0 3px 20px 0 hsl(211.3deg 51.11% 15%);
+        box-shadow: 0 3px 20px 0 hsl(211.3deg 51.11% 15%);
         font-size: clamp(1.2rem, 1.3rem, 1.4rem);
         border-radius: 2em;
-        background-color: rgb(24 62 104);
+        background-color: hsl(211.3deg 51.11% 20%);
         color: white;
         padding: 0.8em 1.6em;
         border: none;

@@ -3110,7 +3110,7 @@
         align-items: center;
         column-gap: 2em;
         padding: 8px 15px 8px 0px;
-        background-color: rgb(21, 31, 46);
+        background-color: hsl(216 37% 12% / 1);
         border-radius: 6px;
         width: 100%;
         height: max-content;
@@ -3120,7 +3120,7 @@
         position: absolute;
         left: 0;
         top: 4.25em;
-        background-color: rgb(21, 31, 46);
+        background-color: hsl(216 37% 12% / 1);
         overflow-y: auto;
         overflow-x: hidden;
         overscroll-behavior: contain;
@@ -3162,7 +3162,7 @@
         align-items: center;
         column-gap: 2em;
         padding: 8px 15px;
-        background-color: rgb(21, 31, 46);
+        background-color: hsl(216 37% 12%);
         border-radius: 6px;
         width: 100%;
         height: 4em;
@@ -3181,7 +3181,7 @@
     .custom-filter {
         outline: none;
         border: none;
-        background-color: rgb(21, 31, 46);
+        background-color: transparent;
         color: white;
         width: 100%;
         cursor: text;
@@ -3216,7 +3216,7 @@
         position: absolute;
         left: 0;
         top: 2.75em;
-        background-color: rgb(21, 31, 46);
+        background-color: hsl(216 37% 12% / 1);
         overflow-y: auto;
         overflow-x: hidden;
         overscroll-behavior: contain;
@@ -3393,7 +3393,7 @@
     }
     .filter-select .select {
         align-items: center;
-        background: rgb(21, 31, 46);
+        background: hsl(216 37% 12% / 1);
         border-radius: 6px;
         display: grid;
         grid-template-columns: auto 24px;
@@ -3426,7 +3426,7 @@
     .filter-select .options-wrap {
         position: absolute;
         top: 61px;
-        background-color: rgb(21, 31, 46);
+        background-color: hsl(216 37% 12% / 1);
         width: 165px;
         overflow-y: auto;
         overscroll-behavior: contain;
@@ -3450,7 +3450,7 @@
     .options-wrap:active::-webkit-scrollbar-thumb,
     .options-wrap:focus::-webkit-scrollbar-thumb {
         background-color: rgba(162, 168, 169, 0.75);
-        border-right: 2px solid rgb(21, 31, 46);
+        border-right: 2px solid hsl(216 37% 12% / 1);
     }
 
     .options {
@@ -3517,7 +3517,7 @@
     }
     .filter-checkbox .checkbox-wrap,
     .filter-input-number .value-input-number-wrap {
-        background: rgb(21, 31, 46);
+        background: hsl(216 37% 12% / 1);
         border-radius: 6px;
         display: flex;
         column-gap: 8px;
@@ -3655,7 +3655,7 @@
         display: flex;
         justify-content: center;
         align-items: center;
-        background: rgb(21, 31, 46);
+        background: hsl(216 37% 12% / 1);
         border-radius: 6px;
         cursor: pointer;
         width: 3em;
@@ -3720,7 +3720,7 @@
         display: flex;
         right: 0;
         top: 20px;
-        background-color: rgb(21, 31, 46);
+        background-color: hsl(216 37% 12% / 1);
         overflow-y: auto;
         overflow-x: hidden;
         overscroll-behavior: contain;
@@ -4000,7 +4000,8 @@
         }
         .options-wrap-filter-info input {
             display: initial !important;
-            background: #151f2e;
+            background: transparent !important;
+            border: 2px solid hsl(211.3deg 51.11% 12.5%) !important;
             padding: 14px 12px;
             border-radius: 6px;
             font-size: 1.6rem;
@@ -4014,7 +4015,7 @@
         .options-wrap .options {
             display: flex !important;
             flex-direction: column !important;
-            background-color: #151f2e !important;
+            border-top: 2px solid hsl(211.3deg 51.11% 12.5%) !important;
             width: 100% !important;
             height: calc(65vh - 112px);
             border-radius: 0px 0px 6px 6px !important;
