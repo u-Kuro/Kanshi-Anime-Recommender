@@ -842,7 +842,9 @@
 	window.addEventListener(
 		"scroll",
 		() => {
-			let shouldUpdate = animeGridEl?.getBoundingClientRect?.()?.top > 0;
+			let shouldUpdate =
+				animeGridEl?.getBoundingClientRect?.()?.top > 0 &&
+				!$popupVisible;
 			if ($listUpdateAvailable && shouldUpdate) {
 				updateList();
 			}

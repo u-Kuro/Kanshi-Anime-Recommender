@@ -1284,10 +1284,14 @@
                 false;
     }
 
-    window.showFullScreenInfo = (info) => {
+    function showFullScreenInfo(info) {
+        if (!info) return;
+        window.setShouldGoBack(false);
         fullDescriptionPopup = editHTMLString(info);
         fullImagePopup = null;
-    };
+    }
+    window.showFullScreenInfo = showFullScreenInfo;
+
     window.checkOpenFullScreenItem = () => {
         return fullImagePopup || fullDescriptionPopup;
     };
@@ -1320,10 +1324,14 @@
         }
     }
 
-    window.showPopupInfo = (info) => {
-        fullDescriptionPopup = editHTMLString(info);
-        fullImagePopup = null;
-    };
+    function cleanText(k) {
+        k = k !== "_" ? k?.replace?.(/\_/g, " ") : k;
+        k = k !== '\\"' ? k?.replace?.(/\\"/g, '"') : k;
+        k = k?.replace?.(/\b(tv|ona|ova)\b/gi, (match) =>
+            match?.toUpperCase?.(),
+        );
+        return k?.toLowerCase?.() || "";
+    }
 </script>
 
 <div
@@ -1806,6 +1814,34 @@
                                             >
                                                 {#each anime.tags as tags (tags?.tag || {})}
                                                     <span
+                                                        on:click={() => {
+                                                            if (
+                                                                !itemIsScrolling
+                                                            ) {
+                                                                showFullScreenInfo(
+                                                                    window?.getTagInfoHTML?.(
+                                                                        cleanText(
+                                                                            tags?.tagName,
+                                                                        ),
+                                                                    ),
+                                                                );
+                                                            }
+                                                        }}
+                                                        on:keydown={(e) => {
+                                                            if (
+                                                                e.key ===
+                                                                    "Enter" &&
+                                                                !itemIsScrolling
+                                                            ) {
+                                                                showFullScreenInfo(
+                                                                    window?.getTagInfoHTML?.(
+                                                                        cleanText(
+                                                                            tags?.tagName,
+                                                                        ),
+                                                                    ),
+                                                                );
+                                                            }
+                                                        }}
                                                         class={"copy " +
                                                             (tags?.tagColor
                                                                 ? `${tags?.tagColor}-color`
@@ -1872,24 +1908,15 @@
                                         <div
                                             class="anime-description-wrapper"
                                             tabindex="0"
-                                            on:click={() => {
-                                                window.setShouldGoBack(false);
-                                                fullDescriptionPopup =
-                                                    editHTMLString(
-                                                        anime?.description,
-                                                    );
-                                                fullImagePopup = null;
-                                            }}
-                                            on:keydown={(e) => {
-                                                window.setShouldGoBack(false);
-                                                if (e.key === "Enter") {
-                                                    fullDescriptionPopup =
-                                                        editHTMLString(
-                                                            anime?.description,
-                                                        );
-                                                    fullImagePopup = null;
-                                                }
-                                            }}
+                                            on:click={() =>
+                                                showFullScreenInfo(
+                                                    anime?.description,
+                                                )}
+                                            on:keydown={(e) =>
+                                                e.key === "Enter" &&
+                                                showFullScreenInfo(
+                                                    anime?.description,
+                                                )}
                                         >
                                             <h3>Description</h3>
                                             <div class="anime-description">
@@ -2329,7 +2356,7 @@
     }
 
     .anime-title-container {
-        padding: 8px 0 5px 0;
+        padding: 5px 0;
         width: 100%;
         overflow-x: auto;
         overflow-y: hidden;
@@ -2722,7 +2749,7 @@
 
     .popup-controls {
         display: flex;
-        padding: 5px 1em;
+        padding: 10px 1em 5px 1em;
         user-select: none;
         justify-content: space-between;
         gap: 1em;

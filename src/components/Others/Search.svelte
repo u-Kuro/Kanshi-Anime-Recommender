@@ -1889,6 +1889,7 @@
             </div>
         `;
     }
+    window.getTagInfoHTML = getTagInfoHTML;
 
     window.showTagInfoHTML = (event, tag, tagCategory) => {
         event.stopPropagation();
@@ -3984,6 +3985,7 @@
             position: absolute;
             opacity: 1 !important;
             transition: opacity 0.2s ease !important;
+            overflow: hidden !important;
         }
         .options-wrap-filter-info.hide {
             opacity: 0 !important;

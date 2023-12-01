@@ -451,7 +451,7 @@
         }
     }
     .button.selected {
-        background-color: #0b1622 !important;
+        background-color: hsl(200.55deg 20% 50%) !important;
         color: white !important;
     }
 

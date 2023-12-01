@@ -426,7 +426,7 @@
         bottom: 0px;
         width: 100%;
         height: 65px;
-        background-color: rgba(21, 31, 46, 0.9);
+        background-color: rgba(11, 22, 34, 0.9);
         color: white;
         transform: translateZ(0);
         -webkit-transform: translateZ(0);
@@ -490,7 +490,7 @@
         top: 0;
         left: 0;
         height: 5px;
-        background-color: rgb(150 200 255);
+        background-color: rgb(61, 180, 242);
         border-radius: 0px 0px 1000px 1000px;
         width: var(--width);
         translate: var(--translateY);
@@ -513,7 +513,7 @@
         z-index: 2 !important;
     }
     .custom-filter.selected {
-        color: rgb(150 200 255) !important;
+        color: rgb(61, 180, 242) !important;
     }
     @media screen and (max-width: 750px) {
         .nav {
