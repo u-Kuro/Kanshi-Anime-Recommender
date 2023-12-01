@@ -23,8 +23,9 @@ This app is designed to provide anime recommendations based on your personal rat
 <h2 align="center"></h2>
 
 ## Website Preview
-![Website Preview 1](https://i.imgur.com/yJW4liR.png)
-![Website Preview 2](https://i.imgur.com/FQiXVOH.png)
+![Website Preview 1](https://i.imgur.com/FQiXVOH.png)
+![Website Preview 2](https://i.imgur.com/yJW4liR.png)
+
 
 <h2 align="center"></h2>
 
