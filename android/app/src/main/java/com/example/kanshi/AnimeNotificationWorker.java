@@ -450,25 +450,30 @@ public class AnimeNotificationWorker extends Worker {
                                 long releaseDateMillis = airingSchedule.getLong("airingAt") * 1000L;
                                 int episode = airingSchedule.getInt("episode");
                                 boolean isEdited = false;
-                                if (episode > anime.releaseEpisode && releaseDateMillis > lastSentNotificationTime) {
-                                    anime.releaseEpisode = episode;
-                                    anime.releaseDateMillis = releaseDateMillis;
-                                    AnimeNotificationManager.allAnimeNotification.put(anime.animeId + "-" + anime.releaseEpisode, anime);
-                                    isEdited = true;
-                                    delayAnimeReleaseUpdate();
-                                }
                                 if (media != null && !media.isNull("episodes")) {
                                     int episodes = media.getInt("episodes");
-                                    if (anime.releaseEpisode >= episodes) {
-                                        anime.maxEpisode = episodes;
+                                    if (anime.releaseEpisode >= episodes && anime.maxEpisode!=episodes) {
+                                        anime.maxEpisode = episode;
+                                        AnimeNotificationManager.allAnimeNotification.put(anime.animeId + "-" + anime.releaseEpisode, anime);
                                         isEdited = true;
                                     }
+                                }
+                                AnimeNotification newAnimeRelease;
+                                if (episode > anime.releaseEpisode && releaseDateMillis > lastSentNotificationTime) {
+                                    newAnimeRelease = new AnimeNotification(anime.animeId, anime.title, episode, anime.maxEpisode, releaseDateMillis, anime.imageByte, anime.isMyAnime);
+                                    if (isEdited) {
+                                        newAnimeRelease.maxEpisode = episode;
+                                    } else {
+                                        isEdited = true;
+                                    }
+                                    AnimeNotificationManager.allAnimeNotification.put(newAnimeRelease.animeId + "-" + newAnimeRelease.releaseEpisode, newAnimeRelease);
                                 }
                                 if (isEdited) {
                                     LocalPersistence.writeObjectToFile(this.getApplicationContext(), AnimeNotificationManager.allAnimeNotification, "allAnimeNotification");
                                 }
                                 AnimeNotificationManager.allAnimeToUpdate.remove(String.valueOf(anime.animeId));
                                 LocalPersistence.writeObjectToFile(this.getApplicationContext(), AnimeNotificationManager.allAnimeToUpdate, "allAnimeToUpdate");
+                                delayAnimeReleaseUpdate();
                             } catch (JSONException ignored) {
                             }
                         }
