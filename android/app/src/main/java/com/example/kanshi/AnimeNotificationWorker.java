@@ -453,16 +453,18 @@ public class AnimeNotificationWorker extends Worker {
                                 boolean isEdited = false;
                                 if (media != null && !media.isNull("episodes")) {
                                     episodes = media.getInt("episodes");
-                                    if (anime.releaseEpisode >= episodes && anime.maxEpisode != episodes) {
+                                    if (anime.maxEpisode != episodes && episodes >= anime.releaseEpisode) {
                                         anime.maxEpisode = episodes;
                                         AnimeNotificationManager.allAnimeNotification.put(anime.animeId + "-" + anime.releaseEpisode, anime);
                                         isEdited = true;
+                                    } else {
+                                        episodes = anime.maxEpisode;
                                     }
                                 } else {
                                     episodes = anime.maxEpisode;
                                 }
                                 AnimeNotification newAnimeRelease;
-                                if (episode > anime.releaseEpisode && releaseDateMillis > lastSentNotificationTime) {
+                                if (episode > anime.releaseEpisode && releaseDateMillis > anime.releaseDateMillis) {
                                     newAnimeRelease = new AnimeNotification(anime.animeId, anime.title, episode, episodes, releaseDateMillis, anime.imageByte, anime.isMyAnime);
                                     AnimeNotificationManager.allAnimeNotification.put(newAnimeRelease.animeId + "-" + newAnimeRelease.releaseEpisode, newAnimeRelease);
                                     isEdited = true;
