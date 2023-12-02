@@ -61,6 +61,7 @@ public class AnimeNotificationManager {
     private static final Handler showRecentReleasesHandler = new Handler(Looper.getMainLooper());
     private static final ConcurrentHashMap<String, Boolean> ongoingImageDownloads = new ConcurrentHashMap<>();
     public static final ConcurrentHashMap<String, AnimeNotification> allAnimeNotification = new ConcurrentHashMap<>();
+    public static final ConcurrentHashMap<String, AnimeNotification> allAnimeToUpdate = new ConcurrentHashMap<>();
     public static AnimeNotification nearestNotificationInfo = null;
     public static long nearestNotificationTime = 0L;
 

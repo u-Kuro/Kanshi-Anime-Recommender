@@ -49,13 +49,7 @@ public class AnimeNotificationWorker extends Worker {
 
     private static final int ANIME_RELEASE_PENDING_INTENT = 997;
     private static final int ANIME_RELEASE_UPDATE_PENDING_INTENT = 996;
-    private static final long TWELVE_HOURS_IN_MILLIS = TimeUnit.HOURS.toMillis(12);
-    private static final long DAY_IN_MILLIS = TimeUnit.DAYS.toMillis(1);
-    private static final long ONE_WEEK_IN_MILLIS = TimeUnit.DAYS.toMillis(7);
-    public final String apiUrl = "https://graphql.anilist.co";
     public final String retryKey = "Kanshi-Anime-Recommendation.Retry";
-
-    public static final ConcurrentHashMap<String, AnimeNotification> allAnimeToUpdate = new ConcurrentHashMap<>();
 
     public AnimeNotificationWorker(@NonNull Context context, @NonNull WorkerParameters workerParams) {
         super(context, workerParams);
@@ -66,19 +60,20 @@ public class AnimeNotificationWorker extends Worker {
     @Override
     public Result doWork() {
         String action = getInputData().getString("action");
+        @SuppressWarnings("unchecked") ConcurrentHashMap<String, AnimeNotification> $allAnimeToUpdate = (ConcurrentHashMap<String, AnimeNotification>) LocalPersistence.readObjectFromFile(this.getApplicationContext(),"allAnimeToUpdate");
+        if ($allAnimeToUpdate != null && $allAnimeToUpdate.size() > 0) {
+            AnimeNotificationManager.allAnimeToUpdate.putAll($allAnimeToUpdate);
+        }
+        @SuppressWarnings("unchecked") ConcurrentHashMap<String, AnimeNotification> $allAnimeNotification = (ConcurrentHashMap<String, AnimeNotification>) LocalPersistence.readObjectFromFile(this.getApplicationContext(), "allAnimeNotification");
+        if ($allAnimeNotification != null && $allAnimeNotification.size() > 0) {
+            AnimeNotificationManager.allAnimeNotification.putAll($allAnimeNotification);
+        }
         if ("ANIME_RELEASE_UPDATE".equals(action)) {
             delayAnimeReleaseUpdate();
-            @SuppressWarnings("unchecked") ConcurrentHashMap<String, AnimeNotification> $allAnimeToUpdate = (ConcurrentHashMap<String, AnimeNotification>) LocalPersistence.readObjectFromFile(this.getApplicationContext(),"allAnimeToUpdate");
-            if ($allAnimeToUpdate != null && $allAnimeToUpdate.size() > 0) {
-                allAnimeToUpdate.putAll($allAnimeToUpdate);
-            }
             animeReleaseUpdate();
         } else {
             boolean isBooted = getInputData().getBoolean("isBooted", false);
-            @SuppressWarnings("unchecked") ConcurrentHashMap<String, AnimeNotification> $allAnimeNotification = (ConcurrentHashMap<String, AnimeNotification>) LocalPersistence.readObjectFromFile(this.getApplicationContext(), "allAnimeNotification");
-            if ($allAnimeNotification != null && $allAnimeNotification.size() > 0) {
-                AnimeNotificationManager.allAnimeNotification.putAll($allAnimeNotification);
-            }
+
             showNotification(isBooted);
         }
         return Result.success();
@@ -359,6 +354,7 @@ public class AnimeNotificationWorker extends Worker {
         prefsEdit.putLong("lastSentNotificationTime", currentSentNotificationTime).apply();
 
         HashSet<String> animeNotificationsToBeRemoved = new HashSet<>();
+        long DAY_IN_MILLIS = TimeUnit.DAYS.toMillis(1);
         for (AnimeNotification anime : AnimeNotificationManager.allAnimeNotification.values()) {
             // If ReleaseDate was Before 1 day ago
             if (anime.releaseDateMillis < (System.currentTimeMillis() - DAY_IN_MILLIS)) {
@@ -372,10 +368,10 @@ public class AnimeNotificationWorker extends Worker {
         getNewNotification(newNearestNotificationInfo);
         @SuppressWarnings("unchecked") ConcurrentHashMap<String, AnimeNotification> $allAnimeToUpdate = (ConcurrentHashMap<String, AnimeNotification>) LocalPersistence.readObjectFromFile(this.getApplicationContext(),"allAnimeToUpdate");
         if ($allAnimeToUpdate != null && $allAnimeToUpdate.size() > 0) {
-            allAnimeToUpdate.putAll($allAnimeToUpdate);
+            AnimeNotificationManager.allAnimeToUpdate.putAll($allAnimeToUpdate);
         }
         for (AnimeNotification anime : recentlyAiredAnime) {
-            allAnimeToUpdate.put(String.valueOf(anime.animeId),anime);
+            AnimeNotificationManager.allAnimeToUpdate.put(String.valueOf(anime.animeId),anime);
             getAiringAnime(anime, lastSentNotificationTime, 0);
         }
     }
@@ -437,7 +433,7 @@ public class AnimeNotificationWorker extends Worker {
                         try {
                             String message = response.getJSONArray("error").getJSONObject(0).getString("message");
                             if ("Not Found.".equals(message)) {
-                                allAnimeToUpdate.remove(String.valueOf(anime.animeId));
+                                AnimeNotificationManager.allAnimeToUpdate.remove(String.valueOf(anime.animeId));
                             }
                         } catch (JSONException ignored) {}
                     } else {
@@ -454,13 +450,12 @@ public class AnimeNotificationWorker extends Worker {
                                 long releaseDateMillis = airingSchedule.getLong("airingAt") * 1000L;
                                 int episode = airingSchedule.getInt("episode");
                                 boolean isEdited = false;
-                                if (episode >= 0) {
+                                if (episode > anime.releaseEpisode && releaseDateMillis > lastSentNotificationTime) {
                                     anime.releaseEpisode = episode;
-                                    isEdited = true;
-                                }
-                                if (releaseDateMillis > lastSentNotificationTime) {
                                     anime.releaseDateMillis = releaseDateMillis;
+                                    AnimeNotificationManager.allAnimeNotification.put(anime.animeId + "-" + anime.releaseEpisode, anime);
                                     isEdited = true;
+                                    delayAnimeReleaseUpdate();
                                 }
                                 if (media != null && !media.isNull("episodes")) {
                                     int episodes = media.getInt("episodes");
@@ -470,12 +465,10 @@ public class AnimeNotificationWorker extends Worker {
                                     }
                                 }
                                 if (isEdited) {
-                                    AnimeNotificationManager.allAnimeNotification.put(anime.animeId + "-" + anime.releaseEpisode, anime);
                                     LocalPersistence.writeObjectToFile(this.getApplicationContext(), AnimeNotificationManager.allAnimeNotification, "allAnimeNotification");
                                 }
-                                allAnimeToUpdate.remove(String.valueOf(anime.animeId));
-                                LocalPersistence.writeObjectToFile(this.getApplicationContext(), allAnimeToUpdate, "allAnimeToUpdate");
-                                delayAnimeReleaseUpdate();
+                                AnimeNotificationManager.allAnimeToUpdate.remove(String.valueOf(anime.animeId));
+                                LocalPersistence.writeObjectToFile(this.getApplicationContext(), AnimeNotificationManager.allAnimeToUpdate, "allAnimeToUpdate");
                             } catch (JSONException ignored) {
                             }
                         }
@@ -490,19 +483,20 @@ public class AnimeNotificationWorker extends Worker {
         SharedPreferences prefs = this.getApplicationContext().getSharedPreferences("com.example.kanshi", Context.MODE_PRIVATE);
         long lastSentNotificationTime = prefs.getLong("lastSentNotificationTime", 0L);
         HashSet<String> animeUpdatesToBeRemoved = new HashSet<>();
-        for (AnimeNotification anime : allAnimeToUpdate.values()) {
+        long ONE_WEEK_IN_MILLIS = TimeUnit.DAYS.toMillis(7);
+        for (AnimeNotification anime : AnimeNotificationManager.allAnimeToUpdate.values()) {
             // If ReleaseDate was Before 1 week ago
             if (anime.releaseDateMillis < (System.currentTimeMillis() - ONE_WEEK_IN_MILLIS)) {
                 animeUpdatesToBeRemoved.add(String.valueOf(anime.animeId));
             }
         }
         for (String animeId : animeUpdatesToBeRemoved) {
-            allAnimeToUpdate.remove(animeId);
+            AnimeNotificationManager.allAnimeToUpdate.remove(animeId);
         }
-        for (AnimeNotification anime : allAnimeToUpdate.values()) {
+        for (AnimeNotification anime : AnimeNotificationManager.allAnimeToUpdate.values()) {
             getAiringAnime(anime, lastSentNotificationTime, 0);
         }
-        LocalPersistence.writeObjectToFile(this.getApplicationContext(), allAnimeToUpdate, "allAnimeToUpdate");
+        LocalPersistence.writeObjectToFile(this.getApplicationContext(), AnimeNotificationManager.allAnimeToUpdate, "allAnimeToUpdate");
     }
 
     private void delayAnimeReleaseUpdate() {
@@ -516,6 +510,7 @@ public class AnimeNotificationWorker extends Worker {
         alarmManager.cancel(newPendingIntent);
         // Create New
         newPendingIntent = PendingIntent.getBroadcast(this.getApplicationContext(), ANIME_RELEASE_UPDATE_PENDING_INTENT, newIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        long TWELVE_HOURS_IN_MILLIS = TimeUnit.HOURS.toMillis(12);
         long nextUpdateInMillis = System.currentTimeMillis()+TWELVE_HOURS_IN_MILLIS;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             if (alarmManager.canScheduleExactAlarms()) {
@@ -544,6 +539,7 @@ public class AnimeNotificationWorker extends Worker {
         ExecutorService executor = Executors.newSingleThreadExecutor();
         Future<JSONObject> future = executor.submit(()->{
             try {
+                String apiUrl = "https://graphql.anilist.co";
                 URL url = new URL(apiUrl);
                 HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
                 urlConnection.setRequestMethod("POST");
