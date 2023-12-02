@@ -53,6 +53,7 @@ public class AnimeNotificationManager {
     private static final int NOTIFICATION_ID_BASE = 1000;
     private static final int NOTIFICATION_MY_ANIME = 999;
     private static final int NOTIFICATION_OTHER_ANIME = 998;
+    private static final int ANIME_RELEASE_PENDING_INTENT = 997;
     private static final ExecutorService notificationImageDownloaderExecutor = Executors.newFixedThreadPool(1);
     private static final ExecutorService showRecentReleasesExecutor = Executors.newFixedThreadPool(1);
     private static final ScheduledExecutorService addNotificationFutureExecutor = Executors.newScheduledThreadPool(1);
@@ -61,7 +62,7 @@ public class AnimeNotificationManager {
     private static final ConcurrentHashMap<String, Boolean> ongoingImageDownloads = new ConcurrentHashMap<>();
     public static final ConcurrentHashMap<String, AnimeNotification> allAnimeNotification = new ConcurrentHashMap<>();
     public static AnimeNotification nearestNotificationInfo = null;
-    public static long nearestNotificationTime = 0;
+    public static long nearestNotificationTime = 0L;
 
     public static void scheduleAnimeNotification(Context context, int animeId, String title, int releaseEpisode, int maxEpisode, long releaseDateMillis, String imageUrl, boolean isMyAnime) {
         context = context.getApplicationContext();
@@ -121,8 +122,7 @@ public class AnimeNotificationManager {
             if (nearestNotificationInfo!=null) {
                 Intent oldIntent = new Intent(context, NotificationReceiver.class);
                 oldIntent.setAction("ANIME_NOTIFICATION");
-                int notificationId = nearestNotificationInfo.animeId;
-                PendingIntent oldPendingIntent = PendingIntent.getBroadcast(context, notificationId, oldIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+                PendingIntent oldPendingIntent = PendingIntent.getBroadcast(context, ANIME_RELEASE_PENDING_INTENT, oldIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
                 AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
                 // Cancel Old
                 oldPendingIntent.cancel();
@@ -133,10 +133,9 @@ public class AnimeNotificationManager {
             intent.setAction("ANIME_NOTIFICATION");
             allAnimeNotification.put(anime.animeId+"-"+anime.releaseEpisode, anime);
             writeAnimeNotificationInFile(context);
-            int notificationId = nearestNotificationInfo.animeId;
             // Create New
             AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
-            PendingIntent pendingIntent = PendingIntent.getBroadcast(context, notificationId, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+            PendingIntent pendingIntent = PendingIntent.getBroadcast(context, ANIME_RELEASE_PENDING_INTENT, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 if (alarmManager.canScheduleExactAlarms()) {
                     alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, nearestNotificationTime, pendingIntent);
@@ -191,6 +190,17 @@ public class AnimeNotificationManager {
             ) {
                 Data data = new Data.Builder()
                         .putBoolean("isBooted", !(intent.getAction().equals("ANIME_NOTIFICATION")))
+                        .putString("action", "ANIME_NOTIFICATION")
+                        .build();
+                OneTimeWorkRequest workRequest = new OneTimeWorkRequest.Builder(AnimeNotificationWorker.class)
+                        .setConstraints(Constraints.NONE)
+                        .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
+                        .setInputData(data)
+                        .build();
+                WorkManager.getInstance(context).enqueue(workRequest);
+            } else if ("ANIME_RELEASE_UPDATE".equals(intent.getAction())) {
+                Data data = new Data.Builder()
+                        .putString("action", "ANIME_RELEASE_UPDATE")
                         .build();
                 OneTimeWorkRequest workRequest = new OneTimeWorkRequest.Builder(AnimeNotificationWorker.class)
                         .setConstraints(Constraints.NONE)
@@ -240,8 +250,8 @@ public class AnimeNotificationManager {
                     allAnimeNotification.putAll($allAnimeNotification);
                 }
 
-                long lastSentMyAnimeNotificationTime = 0;
-                long lastSentOtherAnimeNotificationTime = 0;
+                long lastSentMyAnimeNotificationTime = 0L;
+                long lastSentOtherAnimeNotificationTime = 0L;
                 HashMap<String, AnimeNotification> myAnimeNotifications = new HashMap<>();
                 HashMap<String, AnimeNotification> animeNotifications = new HashMap<>();
 

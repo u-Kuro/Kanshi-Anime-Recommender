@@ -26,7 +26,7 @@ public class DownloadUtils {
         BroadcastReceiver receiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                long downloadId = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1);
+                long downloadId = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1L);
                 if (downloadId == enqueueId) {
                     // Retrieve the downloaded file name
                     String downloadedFilePath = getDownloadedFilePath(downloadId);

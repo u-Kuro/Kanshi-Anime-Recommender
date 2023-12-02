@@ -75,7 +75,7 @@ import androidx.core.content.FileProvider;
 import androidx.core.splashscreen.SplashScreen;
 
 public class MainActivity extends AppCompatActivity {
-    public final int appID = 224;
+    public final int appID = 225;
     public boolean webViewIsLoaded = false;
     public boolean permissionIsAsked = false;
     public SharedPreferences prefs;
@@ -988,6 +988,7 @@ public class MainActivity extends AppCompatActivity {
                 urlConnection.setConnectTimeout(timeout);
                 urlConnection.setReadTimeout(timeout);
                 int responseCode = urlConnection.getResponseCode();
+                urlConnection.disconnect();
                 return responseCode == HttpURLConnection.HTTP_OK;
             } catch (IOException e) {
                 e.printStackTrace();

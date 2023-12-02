@@ -5,9 +5,9 @@ import java.io.Serializable;
 class AnimeNotification implements Serializable {
     final int animeId;
     final String title;
-    final int releaseEpisode;
-    final int maxEpisode;
-    final long releaseDateMillis;
+    public int releaseEpisode;
+    public int maxEpisode;
+    public long releaseDateMillis;
     final byte[] imageByte;
     final boolean isMyAnime;
     public AnimeNotification(int animeId, String title, int releaseEpisode, int maxEpisode, long releaseDateMillis, byte[] imageByte, boolean isMyAnime) {

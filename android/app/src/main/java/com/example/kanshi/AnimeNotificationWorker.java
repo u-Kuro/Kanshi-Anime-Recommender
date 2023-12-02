@@ -14,6 +14,7 @@ import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Build;
+import android.os.Looper;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
@@ -22,15 +23,39 @@ import androidx.core.app.NotificationManagerCompat;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.BufferedReader;
+import java.io.DataOutputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 public class AnimeNotificationWorker extends Worker {
+
+    private static final int ANIME_RELEASE_PENDING_INTENT = 997;
+    private static final int ANIME_RELEASE_UPDATE_PENDING_INTENT = 996;
+    private static final long TWELVE_HOURS_IN_MILLIS = TimeUnit.HOURS.toMillis(12);
+    private static final long DAY_IN_MILLIS = TimeUnit.DAYS.toMillis(1);
+    private static final long ONE_WEEK_IN_MILLIS = TimeUnit.DAYS.toMillis(7);
+    public final String apiUrl = "https://graphql.anilist.co";
+    public final String retryKey = "Kanshi-Anime-Recommendation.Retry";
+
+    public static final ConcurrentHashMap<String, AnimeNotification> allAnimeToUpdate = new ConcurrentHashMap<>();
 
     public AnimeNotificationWorker(@NonNull Context context, @NonNull WorkerParameters workerParams) {
         super(context, workerParams);
@@ -40,12 +65,22 @@ public class AnimeNotificationWorker extends Worker {
     @NonNull
     @Override
     public Result doWork() {
-        boolean isBooted = getInputData().getBoolean("isBooted", false);
-        @SuppressWarnings("unchecked") ConcurrentHashMap<String, AnimeNotification> $allAnimeNotification = (ConcurrentHashMap<String, AnimeNotification>) LocalPersistence.readObjectFromFile(this.getApplicationContext(), "allAnimeNotification");
-        if ($allAnimeNotification!=null && $allAnimeNotification.size()>0) {
-            AnimeNotificationManager.allAnimeNotification.putAll($allAnimeNotification);
+        String action = getInputData().getString("action");
+        if ("ANIME_RELEASE_UPDATE".equals(action)) {
+            delayAnimeReleaseUpdate();
+            @SuppressWarnings("unchecked") ConcurrentHashMap<String, AnimeNotification> $allAnimeToUpdate = (ConcurrentHashMap<String, AnimeNotification>) LocalPersistence.readObjectFromFile(this.getApplicationContext(),"allAnimeToUpdate");
+            if ($allAnimeToUpdate != null && $allAnimeToUpdate.size() > 0) {
+                allAnimeToUpdate.putAll($allAnimeToUpdate);
+            }
+            animeReleaseUpdate();
+        } else {
+            boolean isBooted = getInputData().getBoolean("isBooted", false);
+            @SuppressWarnings("unchecked") ConcurrentHashMap<String, AnimeNotification> $allAnimeNotification = (ConcurrentHashMap<String, AnimeNotification>) LocalPersistence.readObjectFromFile(this.getApplicationContext(), "allAnimeNotification");
+            if ($allAnimeNotification != null && $allAnimeNotification.size() > 0) {
+                AnimeNotificationManager.allAnimeNotification.putAll($allAnimeNotification);
+            }
+            showNotification(isBooted);
         }
-        showNotification(isBooted);
         return Result.success();
     }
 
@@ -65,11 +100,11 @@ public class AnimeNotificationWorker extends Worker {
         HashMap<String, AnimeNotification> myAnimeNotifications = new HashMap<>();
         HashMap<String, AnimeNotification> animeNotifications = new HashMap<>();
 
-        long lastSentNotificationTime = prefs.getLong("lastSentNotificationTime", 0);
+        long lastSentNotificationTime = prefs.getLong("lastSentNotificationTime", 0L);
         long currentSentNotificationTime = lastSentNotificationTime;
-        long newNearestNotificationTime = 0;
-        long lastSentMyAnimeNotificationTime = 0;
-        long lastSentOtherAnimeNotificationTime = 0;
+        long newNearestNotificationTime = 0L;
+        long lastSentMyAnimeNotificationTime = 0L;
+        long lastSentOtherAnimeNotificationTime = 0L;
         AnimeNotification newNearestNotificationInfo = null;
 
         boolean hasMyAnime = false;
@@ -125,6 +160,8 @@ public class AnimeNotificationWorker extends Worker {
             lastSentOtherAnimeNotificationTime = System.currentTimeMillis();
         }
 
+        List<AnimeNotification> recentlyAiredAnime = new ArrayList<>();
+
         boolean hasJustAiredMA = false;
         Notification.MessagingStyle styleMA = new Notification.MessagingStyle("")
                 .setGroupConversation(true);
@@ -156,7 +193,11 @@ public class AnimeNotificationWorker extends Worker {
             }
             Person item = itemBuilder.build();
             boolean justAired = anime.releaseDateMillis > Math.min(lastSentNotificationTime, System.currentTimeMillis()-(1000*60));
-            String addedInfo = justAired? " just aired." : " aired.";
+            String addedInfo = " aired.";
+            if (justAired) {
+                addedInfo = " just aired.";
+                recentlyAiredAnime.add(anime);
+            }
             if (justAired && !hasJustAiredMA) {
                 hasJustAiredMA = true;
             }
@@ -230,7 +271,11 @@ public class AnimeNotificationWorker extends Worker {
             }
             Person item = itemBuilder.build();
             boolean justAired = anime.releaseDateMillis > Math.min(lastSentNotificationTime, System.currentTimeMillis()-(1000*60));
-            String addedInfo = justAired? " just aired." : " aired.";
+            String addedInfo = " aired.";
+            if (justAired) {
+                addedInfo = " just aired.";
+                recentlyAiredAnime.add(anime);
+            }
             if (justAired && !hasJustAiredOA) {
                 hasJustAiredOA = true;
             }
@@ -316,7 +361,6 @@ public class AnimeNotificationWorker extends Worker {
         HashSet<String> animeNotificationsToBeRemoved = new HashSet<>();
         for (AnimeNotification anime : AnimeNotificationManager.allAnimeNotification.values()) {
             // If ReleaseDate was Before 1 day ago
-            int DAY_IN_MILLIS = 1000 * 60 * 60 * 24;
             if (anime.releaseDateMillis < (System.currentTimeMillis() - DAY_IN_MILLIS)) {
                 animeNotificationsToBeRemoved.add(anime.animeId+"-"+anime.releaseEpisode);
             }
@@ -326,6 +370,14 @@ public class AnimeNotificationWorker extends Worker {
         }
         LocalPersistence.writeObjectToFile(this.getApplicationContext(), AnimeNotificationManager.allAnimeNotification, "allAnimeNotification");
         getNewNotification(newNearestNotificationInfo);
+        @SuppressWarnings("unchecked") ConcurrentHashMap<String, AnimeNotification> $allAnimeToUpdate = (ConcurrentHashMap<String, AnimeNotification>) LocalPersistence.readObjectFromFile(this.getApplicationContext(),"allAnimeToUpdate");
+        if ($allAnimeToUpdate != null && $allAnimeToUpdate.size() > 0) {
+            allAnimeToUpdate.putAll($allAnimeToUpdate);
+        }
+        for (AnimeNotification anime : recentlyAiredAnime) {
+            allAnimeToUpdate.put(String.valueOf(anime.animeId),anime);
+            getAiringAnime(anime, lastSentNotificationTime, 0);
+        }
     }
 
     public void getNewNotification(AnimeNotification newNearestNotificationInfo) {
@@ -336,14 +388,13 @@ public class AnimeNotificationWorker extends Worker {
             Intent newIntent = new Intent(this.getApplicationContext(), AnimeNotificationManager.NotificationReceiver.class);
             newIntent.setAction("ANIME_NOTIFICATION");
 
-            int notificationId = newNearestNotificationInfo.animeId;
-            PendingIntent newPendingIntent = PendingIntent.getBroadcast(this.getApplicationContext(), notificationId, newIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+            PendingIntent newPendingIntent = PendingIntent.getBroadcast(this.getApplicationContext(), ANIME_RELEASE_PENDING_INTENT, newIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
             AlarmManager alarmManager = (AlarmManager) this.getApplicationContext().getSystemService(Context.ALARM_SERVICE);
             // Cancel Old
             newPendingIntent.cancel();
             alarmManager.cancel(newPendingIntent);
             // Create New
-            newPendingIntent = PendingIntent.getBroadcast(this.getApplicationContext(), notificationId, newIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+            newPendingIntent = PendingIntent.getBroadcast(this.getApplicationContext(), ANIME_RELEASE_PENDING_INTENT, newIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 if (alarmManager.canScheduleExactAlarms()) {
                     alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, newNearestNotificationInfo.releaseDateMillis, newPendingIntent);
@@ -362,6 +413,199 @@ public class AnimeNotificationWorker extends Worker {
                 }
             }
         }
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.N)
+    private void getAiringAnime(AnimeNotification anime, long lastSentNotificationTime, int retries) {
+        if (retries>=4) {
+            return;
+        }
+        try {
+            long lastSentNotificationTimeSecLong = lastSentNotificationTime/1000L;
+            int lastSentNotificationTimeSec;
+            if (lastSentNotificationTimeSecLong<Integer.MAX_VALUE) {
+                lastSentNotificationTimeSec = (int) lastSentNotificationTimeSecLong;
+            } else {
+                lastSentNotificationTimeSec = Integer.MAX_VALUE;
+            }
+            String query = "{AiringSchedule(mediaId:"+ anime.animeId +",notYetAired:true,airingAt_greater:"+lastSentNotificationTimeSec+"){media{episodes}airingAt episode}}";
+            JSONObject jsonData = new JSONObject();
+            jsonData.put("query", query);
+            makePostRequest(response -> {
+                if (response!=null) {
+                    if (response.has("error")) {
+                        try {
+                            String message = response.getJSONArray("error").getJSONObject(0).getString("message");
+                            if ("Not Found.".equals(message)) {
+                                allAnimeToUpdate.remove(String.valueOf(anime.animeId));
+                            }
+                        } catch (JSONException ignored) {}
+                    } else {
+                        if (response.has(retryKey) || !response.has("data")) {
+                            // Call Another
+                            new android.os.Handler(Looper.getMainLooper()).postDelayed(() -> getAiringAnime(anime, lastSentNotificationTime, retries + 1), 60000);
+                        } else {
+                            try {
+                                JSONObject airingSchedule = response.getJSONObject("data").getJSONObject("AiringSchedule");
+                                JSONObject media = null;
+                                if (!airingSchedule.isNull("media")) {
+                                    media = airingSchedule.getJSONObject("media");
+                                }
+                                long releaseDateMillis = airingSchedule.getLong("airingAt") * 1000L;
+                                int episode = airingSchedule.getInt("episode");
+                                boolean isEdited = false;
+                                if (episode >= 0) {
+                                    anime.releaseEpisode = episode;
+                                    isEdited = true;
+                                }
+                                if (releaseDateMillis > lastSentNotificationTime) {
+                                    anime.releaseDateMillis = releaseDateMillis;
+                                    isEdited = true;
+                                }
+                                if (media != null && !media.isNull("episodes")) {
+                                    int episodes = media.getInt("episodes");
+                                    if (anime.releaseEpisode >= episodes) {
+                                        anime.maxEpisode = episodes;
+                                        isEdited = true;
+                                    }
+                                }
+                                if (isEdited) {
+                                    AnimeNotificationManager.allAnimeNotification.put(anime.animeId + "-" + anime.releaseEpisode, anime);
+                                    LocalPersistence.writeObjectToFile(this.getApplicationContext(), AnimeNotificationManager.allAnimeNotification, "allAnimeNotification");
+                                }
+                                allAnimeToUpdate.remove(String.valueOf(anime.animeId));
+                                LocalPersistence.writeObjectToFile(this.getApplicationContext(), allAnimeToUpdate, "allAnimeToUpdate");
+                                delayAnimeReleaseUpdate();
+                            } catch (JSONException ignored) {
+                            }
+                        }
+                    }
+                }
+            },jsonData);
+        } catch (JSONException ignored) {}
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.N)
+    private void animeReleaseUpdate() {
+        SharedPreferences prefs = this.getApplicationContext().getSharedPreferences("com.example.kanshi", Context.MODE_PRIVATE);
+        long lastSentNotificationTime = prefs.getLong("lastSentNotificationTime", 0L);
+        HashSet<String> animeUpdatesToBeRemoved = new HashSet<>();
+        for (AnimeNotification anime : allAnimeToUpdate.values()) {
+            // If ReleaseDate was Before 1 week ago
+            if (anime.releaseDateMillis < (System.currentTimeMillis() - ONE_WEEK_IN_MILLIS)) {
+                animeUpdatesToBeRemoved.add(String.valueOf(anime.animeId));
+            }
+        }
+        for (String animeId : animeUpdatesToBeRemoved) {
+            allAnimeToUpdate.remove(animeId);
+        }
+        for (AnimeNotification anime : allAnimeToUpdate.values()) {
+            getAiringAnime(anime, lastSentNotificationTime, 0);
+        }
+        LocalPersistence.writeObjectToFile(this.getApplicationContext(), allAnimeToUpdate, "allAnimeToUpdate");
+    }
+
+    private void delayAnimeReleaseUpdate() {
+        Intent newIntent = new Intent(this.getApplicationContext(), AnimeNotificationManager.NotificationReceiver.class);
+        newIntent.setAction("ANIME_RELEASE_UPDATE");
+
+        PendingIntent newPendingIntent = PendingIntent.getBroadcast(this.getApplicationContext(), ANIME_RELEASE_UPDATE_PENDING_INTENT, newIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        AlarmManager alarmManager = (AlarmManager) this.getApplicationContext().getSystemService(Context.ALARM_SERVICE);
+        // Cancel Old
+        newPendingIntent.cancel();
+        alarmManager.cancel(newPendingIntent);
+        // Create New
+        newPendingIntent = PendingIntent.getBroadcast(this.getApplicationContext(), ANIME_RELEASE_UPDATE_PENDING_INTENT, newIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        long nextUpdateInMillis = System.currentTimeMillis()+TWELVE_HOURS_IN_MILLIS;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            if (alarmManager.canScheduleExactAlarms()) {
+                alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, nextUpdateInMillis, newPendingIntent);
+            } else {
+                alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, nextUpdateInMillis, newPendingIntent);
+            }
+        } else {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, nextUpdateInMillis, newPendingIntent);
+            } else {
+                try {
+                    alarmManager.setExact(AlarmManager.RTC_WAKEUP, nextUpdateInMillis, newPendingIntent);
+                } catch (SecurityException ignored) {
+                    alarmManager.set(AlarmManager.RTC_WAKEUP, nextUpdateInMillis, newPendingIntent);
+                }
+            }
+        }
+    }
+    @RequiresApi(api = Build.VERSION_CODES.N)
+    private void makePostRequest(PostRequestCallback callback, JSONObject jsonData) {
+        CompletableFuture.supplyAsync(() -> postRequest(jsonData))
+                .thenAccept(callback::onResponse);
+    }
+    public JSONObject postRequest(JSONObject jsonData) {
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        Future<JSONObject> future = executor.submit(()->{
+            try {
+                URL url = new URL(apiUrl);
+                HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+                urlConnection.setRequestMethod("POST");
+                urlConnection.setDoOutput(true);
+                urlConnection.setRequestProperty("Content-Type", "application/json");
+                urlConnection.setRequestProperty("Accept", "application/json");
+                // Write the JSON data to the output stream
+                DataOutputStream wr = new DataOutputStream(urlConnection.getOutputStream());
+                byte[] postData = jsonData.toString().getBytes(StandardCharsets.UTF_8);
+                wr.write(postData);
+
+                int responseCode = urlConnection.getResponseCode();
+
+                if (responseCode == HttpURLConnection.HTTP_OK) {
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(urlConnection.getInputStream()));
+                    StringBuilder response = new StringBuilder();
+                    String line;
+
+                    while ((line = reader.readLine()) != null) {
+                        response.append(line);
+                    }
+
+                    reader.close();
+
+                    urlConnection.disconnect();
+
+                    // Parse the JSON response and return as JSONObject
+                    JSONObject responseJSON = new JSONObject(response.toString());
+                    String rateLimitStr = urlConnection.getHeaderField("x-ratelimit-remaining");
+                    try {
+                        int rateLimit = Integer.parseInt(rateLimitStr);
+                        responseJSON.put("rateLimit", rateLimit);
+                    } catch (NumberFormatException ignored){
+                    }
+                    return responseJSON;
+                } else {
+                    urlConnection.disconnect();
+                    JSONObject jsonObject = new JSONObject();
+                    try {
+                        jsonObject.put(retryKey,true);
+                        return jsonObject;
+                    } catch (JSONException ex) {
+                        return null;
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                return null;
+            }
+        });
+        try {
+            return future.get();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        } finally {
+            executor.shutdown();
+        }
+    }
+
+    interface PostRequestCallback {
+        void onResponse(JSONObject response);
     }
 }
 
