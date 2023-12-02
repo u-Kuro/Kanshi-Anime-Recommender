@@ -449,24 +449,23 @@ public class AnimeNotificationWorker extends Worker {
                                 }
                                 long releaseDateMillis = airingSchedule.getLong("airingAt") * 1000L;
                                 int episode = airingSchedule.getInt("episode");
+                                int episodes;
                                 boolean isEdited = false;
                                 if (media != null && !media.isNull("episodes")) {
-                                    int episodes = media.getInt("episodes");
-                                    if (anime.releaseEpisode >= episodes && anime.maxEpisode!=episodes) {
-                                        anime.maxEpisode = episode;
+                                    episodes = media.getInt("episodes");
+                                    if (anime.releaseEpisode >= episodes && anime.maxEpisode != episodes) {
+                                        anime.maxEpisode = episodes;
                                         AnimeNotificationManager.allAnimeNotification.put(anime.animeId + "-" + anime.releaseEpisode, anime);
                                         isEdited = true;
                                     }
+                                } else {
+                                    episodes = anime.maxEpisode;
                                 }
                                 AnimeNotification newAnimeRelease;
                                 if (episode > anime.releaseEpisode && releaseDateMillis > lastSentNotificationTime) {
-                                    newAnimeRelease = new AnimeNotification(anime.animeId, anime.title, episode, anime.maxEpisode, releaseDateMillis, anime.imageByte, anime.isMyAnime);
-                                    if (isEdited) {
-                                        newAnimeRelease.maxEpisode = episode;
-                                    } else {
-                                        isEdited = true;
-                                    }
+                                    newAnimeRelease = new AnimeNotification(anime.animeId, anime.title, episode, episodes, releaseDateMillis, anime.imageByte, anime.isMyAnime);
                                     AnimeNotificationManager.allAnimeNotification.put(newAnimeRelease.animeId + "-" + newAnimeRelease.releaseEpisode, newAnimeRelease);
+                                    isEdited = true;
                                 }
                                 if (isEdited) {
                                     LocalPersistence.writeObjectToFile(this.getApplicationContext(), AnimeNotificationManager.allAnimeNotification, "allAnimeNotification");
