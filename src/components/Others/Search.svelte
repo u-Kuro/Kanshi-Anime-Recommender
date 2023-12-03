@@ -25,6 +25,7 @@
         showFilterOptions,
         dropdownIsVisible,
         popupVisible,
+        showStatus,
     } from "../../js/globalValues.js";
     import { fade } from "svelte/transition";
     import {
@@ -2040,7 +2041,6 @@
     let shouldScrollSnap = getLocalStorage("nonScrollSnapFilters") ?? true;
     $: isFullViewed = $gridFullView ?? getLocalStorage("gridFullView") ?? true;
     let homeStatusClick = 0;
-    let showExtraInfo;
 </script>
 
 <main
@@ -2928,16 +2928,14 @@
                 on:click={async (e) => {
                     await getExtraInfo();
                     if (homeStatusClick < 6 && !$initData) {
-                        showExtraInfo = true;
                         ++homeStatusClick;
                     } else {
-                        showExtraInfo = false;
                         homeStatusClick = 0;
                     }
                 }}
                 on:keydown={() => {}}
             >
-                {#if $dataStatus && !showExtraInfo}
+                {#if $dataStatus && $showStatus}
                     {$dataStatus}
                 {:else}
                     {$extraInfo || "Browse an anime to watch"}

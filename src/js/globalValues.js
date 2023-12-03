@@ -24,21 +24,21 @@ const dataStatus = writable(null)
 
 const isImporting = writable(false)
 const userRequestIsRunning = writable(null)
-const autoUpdate = writable(getLocalStorage('autoUpdate') || null)
+const autoUpdate = writable(getLocalStorage('autoUpdate') ?? null)
 const autoUpdateInterval = writable(null)
 const lastRunnedAutoUpdateDate = writable(null)
 
-const exportPathIsAvailable = writable(getLocalStorage('exportPathIsAvailable') || null)
-const autoExport = writable(getLocalStorage('autoExport') || null)
+const exportPathIsAvailable = writable(getLocalStorage('exportPathIsAvailable') ?? null)
+const autoExport = writable(getLocalStorage('autoExport') ?? null)
 const autoExportInterval = writable(null)
 const lastRunnedAutoExportDate = writable(null)
 
 const ytPlayers = writable([])
-const autoPlay = writable(getLocalStorage('autoPlay') || null)
+const autoPlay = writable(getLocalStorage('autoPlay') ?? null)
 
 const initData = writable(true)
-const gridFullView = writable(getLocalStorage('gridFullView') || null)
-
+const gridFullView = writable(getLocalStorage('gridFullView') ?? null)
+const showStatus = writable(getLocalStorage('showStatus') ?? true)
 const extraInfo = writable(null)
 const mostRecentAiringDateTimeout = writable(null)
 const earlisetReleaseDate = writable(null)
@@ -62,7 +62,7 @@ const isScrolling = writable(null)
 const scrollingTimeout = writable(null)
 const asyncAnimeReloaded = writable(null)
 const isFullViewed = writable(null)
-const showFilterOptions = writable(getLocalStorage("showFilterOptions") || null)
+const showFilterOptions = writable(getLocalStorage("showFilterOptions") ?? null)
 const dropdownIsVisible = writable(null)
 const confirmIsVisible = writable(null)
 // Reactive Functions
@@ -107,6 +107,7 @@ export {
     autoPlay,
     initData,
     gridFullView,
+    showStatus,
     extraInfo,
     mostRecentAiringDateTimeout,
     earlisetReleaseDate,

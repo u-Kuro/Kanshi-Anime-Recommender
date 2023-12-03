@@ -16,6 +16,7 @@
         importantUpdate,
         popupVisible,
         listUpdateAvailable,
+        showStatus,
     } from "../../js/globalValues.js";
     import { fade } from "svelte/transition";
     import { saveJSON } from "../../js/indexedDB.js";
@@ -179,6 +180,19 @@
         }
     }
 
+    async function showDataStatus() {
+        if (
+            await $confirmPromise({
+                text: `Do you want ${
+                    $showStatus ? "hide" : "show"
+                } the status information in your home page?`,
+                isImportant: true,
+            })
+        ) {
+            $showStatus = !$showStatus;
+        }
+    }
+
     async function anilistSignup() {
         if (
             await $confirmPromise({
@@ -309,6 +323,12 @@
                 on:click={showAllHiddenEntries}
                 on:keydown={(e) => e.key === "Enter" && showAllHiddenEntries(e)}
                 >Show All Hidden Entries</button
+            >
+            <button
+                class={"button " + ($showStatus ? "selected" : "")}
+                on:click={showDataStatus}
+                on:keydown={(e) => e.key === "Enter" && showDataStatus(e)}
+                >Show Status</button
             >
             <button
                 class="button"
