@@ -325,12 +325,6 @@
                 >Show All Hidden Entries</button
             >
             <button
-                class={"button " + ($showStatus ? "selected" : "")}
-                on:click={showDataStatus}
-                on:keydown={(e) => e.key === "Enter" && showDataStatus(e)}
-                >Show Status</button
-            >
-            <button
                 class="button"
                 on:click={importData}
                 on:keydown={(e) => e.key === "Enter" && importData(e)}
@@ -354,6 +348,12 @@
                 </button>
             {/if}
             <button
+                class={"button " + ($showStatus ? "selected" : "")}
+                on:click={showDataStatus}
+                on:keydown={(e) => e.key === "Enter" && showDataStatus(e)}
+                >Show Status</button
+            >
+            <button
                 class={"button " + ($autoUpdate ? "selected" : "")}
                 on:click={handleUpdateEveryHour}
                 on:keydown={(e) =>
@@ -369,12 +369,6 @@
                     >Auto Export</button
                 >
             {/if}
-            <button
-                class="button"
-                on:click={anilistSignup}
-                on:keydown={(e) => e.key === "Enter" && anilistSignup(e)}
-                >Create an Anilist Account</button
-            >
             {#if $android}
                 <button
                     class="button"
@@ -410,6 +404,12 @@
                 class="button"
                 on:keydown={(e) => e.key === "Enter" && reload(e)}
                 on:click={reload}>Reload</button
+            >
+            <button
+                class="button"
+                on:click={anilistSignup}
+                on:keydown={(e) => e.key === "Enter" && anilistSignup(e)}
+                >Create an Anilist Account</button
             >
         </div>
     </div>
