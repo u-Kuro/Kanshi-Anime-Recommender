@@ -226,6 +226,11 @@
                 isImportant: true,
             })
         ) {
+            if ($android) {
+                try {
+                    JSBridge?.callUpdateNotifications?.();
+                } catch (e) {}
+            }
             document.querySelectorAll("script")?.forEach((script) => {
                 if (
                     script.src &&

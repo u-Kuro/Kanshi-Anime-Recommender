@@ -60,9 +60,12 @@ import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -75,7 +78,7 @@ import androidx.core.content.FileProvider;
 import androidx.core.splashscreen.SplashScreen;
 
 public class MainActivity extends AppCompatActivity {
-    public final int appID = 230;
+    public final int appID = 231;
     public boolean webViewIsLoaded = false;
     public boolean permissionIsAsked = false;
     public SharedPreferences prefs;
@@ -439,7 +442,6 @@ public class MainActivity extends AppCompatActivity {
     public String getThisPath(Uri docUri){
         return getPath(this, docUri);
     }
-
     @Override
     public void onWindowFocusChanged(boolean hasFocus) {
         webView.setKeepScreenOn(true);
@@ -811,6 +813,30 @@ public class MainActivity extends AppCompatActivity {
                 AnimeNotificationManager.scheduleAnimeNotification(MainActivity.this, animeId, title, releaseEpisode, maxEpisode, releaseDateMillis, imageUrl, isMyAnime);
             }
         }
+        @JavascriptInterface
+        public void callUpdateNotifications() {
+            updateCurrentNotifications();
+        }
+        @JavascriptInterface
+        public void updateNotifications(int animeId, boolean isMyAnime) {
+            if (AnimeNotificationManager.allAnimeNotification.size()==0) {
+                try {
+                    @SuppressWarnings("unchecked") ConcurrentHashMap<String, AnimeNotification> $allAnimeNotification = (ConcurrentHashMap<String, AnimeNotification>) LocalPersistence.readObjectFromFile(MainActivity.this, "allAnimeNotification");
+                    if ($allAnimeNotification != null && $allAnimeNotification.size() > 0) {
+                        AnimeNotificationManager.allAnimeNotification.putAll($allAnimeNotification);
+                    }
+                } catch (Exception ignored) {}
+            }
+            ConcurrentHashMap<String, AnimeNotification> updatedAnimeNotifications = new ConcurrentHashMap<>();
+            for (AnimeNotification anime : AnimeNotificationManager.allAnimeNotification.values()) {
+                if (anime.animeId==animeId) {
+                    AnimeNotification newAnime = new AnimeNotification(anime.animeId, anime.title, anime.releaseEpisode, anime.maxEpisode, anime.releaseDateMillis, anime.imageByte, isMyAnime);
+                    updatedAnimeNotifications.put(anime.animeId+"-"+anime.releaseEpisode, newAnime);
+                }
+            }
+            AnimeNotificationManager.allAnimeNotification.putAll(updatedAnimeNotifications);
+            LocalPersistence.writeObjectToFile(MainActivity.this, AnimeNotificationManager.allAnimeNotification, "allAnimeNotification");
+        }
         @RequiresApi(api = Build.VERSION_CODES.P)
         @JavascriptInterface
         public void showRecentReleases() {
@@ -831,6 +857,20 @@ public class MainActivity extends AppCompatActivity {
                 getWindow().setStatusBarColor(overlayColor);
             }
         }
+    }
+
+    public void updateCurrentNotifications() {
+        ConcurrentHashMap<String, AnimeNotification> allAnimeNotification = new ConcurrentHashMap<>();
+        @SuppressWarnings("unchecked") ConcurrentHashMap<String, AnimeNotification> $allAnimeNotification = (ConcurrentHashMap<String, AnimeNotification>) LocalPersistence.readObjectFromFile(MainActivity.this, "allAnimeNotification");
+        if ($allAnimeNotification != null && $allAnimeNotification.size() > 0) {
+            allAnimeNotification.putAll($allAnimeNotification);
+        }
+        Set<String> animeIdsToBeUpdated = new HashSet<>();
+        for (AnimeNotification anime : allAnimeNotification.values()) {
+            animeIdsToBeUpdated.add(String.valueOf(anime.animeId));
+        }
+        String joinedAnimeIds = String.join(",", animeIdsToBeUpdated);
+        webView.post(() -> webView.loadUrl("javascript:window?.updateNotifications?.(["+joinedAnimeIds+"])"));
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)

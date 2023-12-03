@@ -32,6 +32,7 @@ let isCurrentlyImporting = false;
 let isGettingNewEntries = false;
 
 let passedFilterOptions, passedActiveTagFilters, passedSelectedCustomFilter
+let shouldUpdateNotifications = false
 
 // Reactinve Functions
 let animeLoaderWorker;
@@ -152,7 +153,7 @@ const processRecommendedAnimeList = (_data = {}) => {
                                     && typeof aniReleaseNotif?.isMyAnime === "boolean"
                                     && typeof aniReleaseNotif?.imageURL === "string"
                                 ) {
-                                    JSBridge.addAnimeReleaseNotification(
+                                    JSBridge?.addAnimeReleaseNotification?.(
                                         aniReleaseNotif.id,
                                         aniReleaseNotif.title,
                                         aniReleaseNotif.releaseEpisodes,
@@ -165,6 +166,12 @@ const processRecommendedAnimeList = (_data = {}) => {
                             } catch (e) { }
                         }
                     } else {
+                        if (shouldUpdateNotifications && get(android)) {
+                            shouldUpdateNotifications = false
+                            try {
+                                JSBridge?.callUpdateNotifications?.()
+                            } catch (e) { }
+                        }
                         if (data?.hasPassedFilters === true) {
                             passedFilterOptions = passedActiveTagFilters = undefined
                         }
@@ -320,6 +327,9 @@ const requestUserEntries = (_data) => {
                         progress.set(100)
                         reject(data)
                     } else if (data?.updateRecommendationList !== undefined) {
+                        if (get(android)) {
+                            shouldUpdateNotifications = true
+                        }
                         updateRecommendationList.update(e => !e)
                     } else {
                         userRequestIsRunning.set(false)
@@ -394,28 +404,37 @@ const exportUserData = (_data) => {
                         dataStatusPrio = true
                         dataStatus.set(data.status)
                     } else if (get(android)) {
-                        dataStatusPrio = false
-                        let chunk = data.chunk
-                        let state = data.state
-                        // 0 - start | 1 - ongoing | 2 - done
-                        if (state === 0) {
-                            JSBridge.exportJSON('', 0, '')
-                        } else if (state === 1) {
-                            JSBridge.exportJSON(chunk, 1, '')
-                        } else if (state === 2) {
-                            let username = data.username ?? null
-                            JSBridge.exportJSON(chunk, 2, `Kanshi.${username?.toLowerCase() || "Backup"}.json`)
+                        try {
+                            dataStatusPrio = false
+                            let chunk = data.chunk
+                            let state = data.state
+                            // 0 - start | 1 - ongoing | 2 - done
+                            if (state === 0) {
+                                JSBridge.exportJSON('', 0, '')
+                            } else if (state === 1) {
+                                JSBridge.exportJSON(chunk, 1, '')
+                            } else if (state === 2) {
+                                let username = data.username ?? null
+                                JSBridge.exportJSON(chunk, 2, `Kanshi.${username?.toLowerCase() || "Backup"}.json`)
+                                isExporting = false
+                                exportUserDataWorker?.terminate?.();
+                                new Promise((resolve, reject) => {
+                                    waitForExportApproval = { resolve, reject }
+                                }).catch(() => {
+                                    waitForExportApproval?.reject?.()
+                                }).finally(() => {
+                                    waitForExportApproval = null
+                                    progress.set(100)
+                                    resolve(data)
+                                })
+                            }
+                        } catch (e) {
                             isExporting = false
                             exportUserDataWorker?.terminate?.();
-                            new Promise((resolve, reject) => {
-                                waitForExportApproval = { resolve, reject }
-                            }).catch(() => {
-                                waitForExportApproval?.reject?.()
-                            }).finally(() => {
-                                waitForExportApproval = null
-                                progress.set(100)
-                                resolve(data)
-                            })
+                            waitForExportApproval?.reject?.()
+                            waitForExportApproval = null
+                            progress.set(100)
+                            resolve(data)
                         }
                     } else {
                         dataStatusPrio = false
@@ -510,6 +529,9 @@ const importUserData = (_data) => {
                                 filterOptions.set(data.filterOptions)
                             })
                     } else if (data?.updateRecommendationList !== undefined) {
+                        if (get(android)) {
+                            shouldUpdateNotifications = true
+                        }
                         isImporting.set(false)
                         isCurrentlyImporting = false
                         importantUpdate.update(e => !e)
@@ -596,7 +618,7 @@ const getIDBdata = (name) => {
         cacheRequest("./webapi/worker/getIDBdata.js")
             .then(url => {
                 let worker = new Worker(url)
-                worker.postMessage({ name: name })
+                worker.postMessage({ name })
                 worker.onmessage = ({ data }) => {
                     if (data?.hasOwnProperty("status")) {
                         dataStatus.set(data.status)
@@ -608,10 +630,42 @@ const getIDBdata = (name) => {
                 worker.onerror = (error) => {
                     reject(error)
                 }
-            }).catch(() => {
+            }).catch((error) => {
                 alertError()
                 reject(error)
             })
+    })
+}
+window.updateNotifications = async (aniIdsNotificationToBeUpdated = []) => {
+    if (!get(android)) return
+    new Promise((resolve, reject) => {
+        cacheRequest("./webapi/worker/getIDBdata.js")
+            .then(url => {
+                let worker = new Worker(url)
+                worker.postMessage({ name: "aniIdsNotificationToBeUpdated", aniIdsNotificationToBeUpdated })
+                worker.onmessage = ({ data }) => {
+                    if (data?.hasOwnProperty("status")) {
+                        dataStatus.set(data.status)
+                    } else {
+                        worker?.terminate?.()
+                        resolve(data)
+                    }
+                }
+                worker.onerror = (error) => {
+                    reject(error)
+                }
+            }).catch((error) => {
+                alertError()
+                reject(error)
+            })
+    }).then((userAnimeAndNot = {}) => {
+        try {
+            for (let animeId in userAnimeAndNot) {
+                if (typeof animeId === "number" && typeof userAnimeAndNot[animeId] === "boolean") {
+                    JSBridge?.updateNotifications?.(animeId, userAnimeAndNot[animeId])
+                }
+            }
+        } catch (ex) { }
     })
 }
 
