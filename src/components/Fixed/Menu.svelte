@@ -218,21 +218,6 @@
         } catch (e) {}
     }
 
-    function checkForUpdates() {
-        if (!navigator.onLine) {
-            return $confirmPromise({
-                isAlert: true,
-                title: "Currently offline",
-                text: "It seems that you're currently offline and unable to check for updates.",
-            });
-        } else {
-            if (!$android) return;
-            try {
-                JSBridge.checkAppID($appID, true);
-            } catch (e) {}
-        }
-    }
-
     async function reload() {
         if (
             await $confirmPromise({
@@ -376,14 +361,6 @@
                         e.key === "Enter" && showRecentReleases(e)}
                     on:click={showRecentReleases}>Show Recent Releases</button
                 >
-                {#if !window.location.protocol.startsWith("file:")}
-                    <button
-                        class="button"
-                        on:keydown={(e) =>
-                            e.key === "Enter" && checkForUpdates(e)}
-                        on:click={checkForUpdates}>Check for Updates</button
-                    >
-                {/if}
                 <button
                     class="button"
                     on:keydown={(e) => e.key === "Enter" && switchAppMode(e)}
