@@ -127,6 +127,10 @@
             sortName: "favorites",
             sortType: "none",
         },
+        {
+            sortName: "date added",
+            sortType: "none"
+        },
     ];
     $: selectedFilterSelectionIdx =
         $filterOptions?.filterSelection?.findIndex?.(
