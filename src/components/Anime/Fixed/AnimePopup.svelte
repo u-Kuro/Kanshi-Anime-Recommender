@@ -1713,7 +1713,7 @@
                                     </h4>
                                 </div>
                                 <div class="info-contents">
-                                    {#if anime.studios?.length}
+                                    {#if anime?.shownStudios?.length}
                                         <div>
                                             <div class="info-categ">
                                                 Studios
@@ -1742,7 +1742,7 @@
                                                     }
                                                 }}
                                             >
-                                                {#each anime.studios as studios (studios?.studio || {})}
+                                                {#each anime.shownStudios as studios (studios?.studio || {})}
                                                     <a
                                                         class={"copy" +
                                                             (studios?.studioColor
@@ -1771,7 +1771,7 @@
                                             </div>
                                         </div>
                                     {/if}
-                                    {#if anime.genres.length}
+                                    {#if anime?.shownGenres?.length}
                                         <div>
                                             <div class="info-categ">Genres</div>
                                             <div
@@ -1798,7 +1798,7 @@
                                                     }
                                                 }}
                                             >
-                                                {#each anime.genres as genres (genres?.genre || {})}
+                                                {#each anime.shownGenres as genres (genres?.genre || {})}
                                                     <span
                                                         class={"copy " +
                                                             (genres?.genreColor
@@ -1813,7 +1813,7 @@
                                             </div>
                                         </div>
                                     {/if}
-                                    {#if anime?.tags?.length}
+                                    {#if anime?.shownTags?.length}
                                         <div class="tag-info">
                                             <div
                                                 class={"tags-info-content info"}
@@ -1839,7 +1839,7 @@
                                                     }
                                                 }}
                                             >
-                                                {#each anime.tags as tags (tags?.tag || {})}
+                                                {#each anime.shownTags as tags (tags?.tag || {})}
                                                     <span
                                                         on:click={() => {
                                                             if (
