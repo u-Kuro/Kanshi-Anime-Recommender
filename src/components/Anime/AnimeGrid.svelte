@@ -21,6 +21,8 @@
         mostRecentAiringDateTimeout,
         earlisetReleaseDate,
         showFilterOptions,
+        newFinalAnime,
+        progress,
     } from "../../js/globalValues.js";
     import {
         addClass,
@@ -28,6 +30,9 @@
         removeClass,
         getLocalStorage,
         setLocalStorage,
+        removeLocalStorage,
+        getLastVisibleElement,
+        getChildIndex,
     } from "../../js/others/helper.js";
     import { fade } from "svelte/transition";
     import { cacheImage } from "../../js/caching.js";
@@ -43,12 +48,16 @@
         window.visualViewport.width,
         window.innerWidth,
     );
+
+    let shownFinalAnimeListCount = 0;
     let animeGridEl;
     let isRunningIntersectEvent;
     let numberOfLoadedGrid = 1;
-    let observerDelay = 16;
+    // let observerDelay = 0;
 
     function addLastAnimeObserver() {
+        $animeObserver?.disconnect?.();
+        $animeObserver = null;
         isRunningIntersectEvent = false;
         $animeObserver = new IntersectionObserver(
             (entries) => {
@@ -57,7 +66,7 @@
                     if (entry.isIntersecting) {
                         if (isRunningIntersectEvent) return;
                         isRunningIntersectEvent = true;
-                        setTimeout(() => {
+                        requestAnimationFrame(() => {
                             if ($animeLoaderWorker instanceof Worker) {
                                 $checkAnimeLoaderStatus().then(() => {
                                     $animeLoaderWorker?.postMessage?.({
@@ -66,7 +75,7 @@
                                 });
                             }
                             isRunningIntersectEvent = false;
-                        }, observerDelay);
+                        });
                     }
                 });
             },
@@ -76,8 +85,14 @@
                 threshold: [0, 1],
             },
         );
+        Array.from(
+            document.querySelectorAll(".image-grid__card.dummy") || [],
+        ).forEach((entry) => {
+            $animeObserver.observe(entry);
+        });
     }
 
+    let errorCountMult = 5;
     let animeLoaderIsAlivePromise,
         checkAnimeLoaderStatusTimeout,
         isAsyncLoad = false;
@@ -93,11 +108,12 @@
                 clearTimeout(checkAnimeLoaderStatusTimeout);
                 checkAnimeLoaderStatusTimeout = setTimeout(() => {
                     reject();
-                }, 1000);
+                }, 1000 * errorCountMult);
             })
                 .catch(() => {
+                    ++errorCountMult;
+                    $animeLoaderWorker?.terminate?.();
                     $animeLoaderWorker = null;
-                    $finalAnimeList = null;
                     $importantLoad = !$importantLoad;
                     animeLoaderIsAlivePromise = null;
                 })
@@ -146,24 +162,51 @@
                     }
                 } else if (data.finalAnimeList instanceof Array) {
                     if (data?.reload === true) {
-                        $finalAnimeList = data.finalAnimeList;
+                        if ($finalAnimeList instanceof Array) {
+                            $finalAnimeList = $finalAnimeList?.slice?.(
+                                0,
+                                Math.min(
+                                    window.getLastShownFinalAnimeLength() || 0,
+                                    data.finalAnimeListCount,
+                                ),
+                            );
+                        }
+                        data?.finalAnimeList?.forEach?.((anime, idx) => {
+                            $newFinalAnime = {
+                                id: anime.id,
+                                idx: data.shownAnimeListCount + idx,
+                                finalAnimeList: anime,
+                            };
+                        });
                         isAsyncLoad = true;
                     } else if (data.isNew === true) {
-                        $finalAnimeList = data.finalAnimeList;
+                        if ($finalAnimeList instanceof Array) {
+                            $finalAnimeList = $finalAnimeList?.slice?.(
+                                0,
+                                Math.min(
+                                    window.getLastShownFinalAnimeLength() || 0,
+                                    data.finalAnimeListCount,
+                                ),
+                            );
+                        }
+                        data?.finalAnimeList?.forEach?.((anime, idx) => {
+                            $newFinalAnime = {
+                                idx: data.shownAnimeListCount + idx,
+                                finalAnimeList: anime,
+                            };
+                        });
                     } else if (data.isNew === false) {
                         if ($finalAnimeList instanceof Array) {
-                            $finalAnimeList = $finalAnimeList.concat(
-                                data.finalAnimeList,
-                            );
+                            data?.finalAnimeList?.forEach?.((anime, idx) => {
+                                $newFinalAnime = {
+                                    idx: data.shownAnimeListCount + idx,
+                                    finalAnimeList: anime,
+                                };
+                            });
                             if (data.isLast) {
                                 $shownAllInList = true;
-                                if (
-                                    $animeObserver instanceof
-                                    IntersectionObserver
-                                ) {
-                                    $animeObserver.disconnect();
-                                    $animeObserver = null;
-                                }
+                                $animeObserver?.disconnect?.();
+                                $animeObserver = null;
                             }
                         }
                     }
@@ -209,24 +252,109 @@
         }
     });
 
+    window.getLastShownFinalAnimeLength = () => {
+        animeGridEl = animeGridEl || document.getElementById("anime-grid");
+        let popupContainerEl = document.getElementById("popup-container");
+        let lastVisiblePopup = getLastVisibleElement(
+            ".popup-content",
+            popupContainerEl,
+        );
+        let lastVisibleGrid = getLastVisibleElement(
+            ".image-grid__card",
+            animeGridEl,
+        );
+        let lastVisiblePopupIdx = getChildIndex(lastVisiblePopup);
+        let lastVisibleGridIdx = getChildIndex(lastVisibleGrid);
+        if (lastVisibleGridIdx == null && lastVisiblePopupIdx == null) {
+            return $finalAnimeList.length || 0;
+        } else {
+            return Math.max(
+                lastVisiblePopupIdx ? lastVisiblePopupIdx + 1 : 0,
+                lastVisibleGridIdx ? lastVisibleGridIdx + 1 : 0,
+            );
+        }
+    };
+
+    let lessenItemTimeout;
+    newFinalAnime.subscribe(async (val) => {
+        if (
+            typeof val?.finalAnimeList?.id === "number" &&
+            typeof val?.idx === "number"
+        ) {
+            if ($finalAnimeList instanceof Array) {
+                if (
+                    $finalAnimeList?.[val.idx] &&
+                    $finalAnimeList?.[val.idx]?.id === val?.finalAnimeList?.id
+                ) {
+                    $finalAnimeList[val.idx] = val.finalAnimeList;
+                } else {
+                    $finalAnimeList = $finalAnimeList?.map?.((anime) => {
+                        if (anime.id === val?.finalAnimeList?.id) {
+                            anime.id = {};
+                        }
+                        return anime;
+                    });
+                    if (val.idx < $finalAnimeList?.length) {
+                        $finalAnimeList[val.idx] = val.finalAnimeList;
+                    } else {
+                        $finalAnimeList.push(val.finalAnimeList);
+                    }
+                }
+                $finalAnimeList = $finalAnimeList;
+            } else {
+                $finalAnimeList = [val.finalAnimeList];
+            }
+            if (val?.idx < shownFinalAnimeListCount - 1) {
+                cancelAnimationFrame(lessenItemTimeout);
+                lessenItemTimeout = requestAnimationFrame(() => {
+                    $finalAnimeList = $finalAnimeList?.slice?.(
+                        0,
+                        window.getLastShownFinalAnimeLength() || 0,
+                    );
+                });
+                if (isRunningIntersectEvent) return;
+                $progress = (val?.idx / (shownFinalAnimeListCount - 1)) * 100;
+                isRunningIntersectEvent = true;
+                requestAnimationFrame(() => {
+                    if ($animeLoaderWorker instanceof Worker) {
+                        $checkAnimeLoaderStatus().then(() => {
+                            $animeLoaderWorker?.postMessage?.({
+                                loadMore: true,
+                            });
+                        });
+                    }
+                    isRunningIntersectEvent = false;
+                });
+            } else {
+                $progress = 100;
+            }
+        }
+    });
+
     finalAnimeList.subscribe(async (val) => {
         if (val instanceof Array && val.length) {
+            shownFinalAnimeListCount = val.length;
             if ($shownAllInList) {
                 $shownAllInList = false;
             }
-            if ($animeObserver) {
-                $animeObserver.disconnect();
-                $animeObserver = null;
-            }
             await tick();
             addLastAnimeObserver();
-            let gridElementIdx = $finalAnimeList.length - 1;
-            let gridElement =
-                $finalAnimeList[gridElementIdx].gridElement ||
-                animeGridEl.children?.[gridElementIdx];
+            let lastGridElementIdx = $finalAnimeList.length - 1;
+            let lastGridElement =
+                $finalAnimeList[lastGridElementIdx].gridElement ||
+                animeGridEl.children?.[lastGridElementIdx];
             if ($animeObserver instanceof IntersectionObserver) {
-                if (gridElement instanceof Element) {
-                    $animeObserver.observe(gridElement);
+                if ($finalAnimeList.length >= 11) {
+                    let prevGridElementIdx = $finalAnimeList.length - 11;
+                    let prevGridElement =
+                        $finalAnimeList[prevGridElementIdx].gridElement ||
+                        animeGridEl.children?.[prevGridElementIdx];
+                    if (prevGridElement instanceof Element) {
+                        $animeObserver.observe(prevGridElement);
+                    }
+                }
+                if (lastGridElement instanceof Element) {
+                    $animeObserver.observe(lastGridElement);
                 }
             }
             if (isAsyncLoad) {
@@ -234,6 +362,7 @@
                 isAsyncLoad = false;
             }
         } else {
+            shownFinalAnimeListCount = 0;
             if ($animeObserver) {
                 $animeObserver?.disconnect?.();
                 $animeObserver = null;
@@ -248,7 +377,9 @@
     searchedAnimeKeyword.subscribe(async (val) => {
         if (typeof val === "string") {
             if ($animeLoaderWorker instanceof Worker) {
-                setLocalStorage("searchedAnimeKeyword", val);
+                setLocalStorage("searchedAnimeKeyword", val).catch(() => {
+                    removeLocalStorage("searchedAnimeKeyword");
+                });
                 $shownAllInList = false;
                 $checkAnimeLoaderStatus().then(() => {
                     $animeLoaderWorker?.postMessage?.({
@@ -333,7 +464,8 @@
         isOnVeryLeftOfAnimeGrid = true;
     let isOnVeryLeftOfAnimeGridTimeout;
     $: {
-        isFullViewed = $gridFullView ?? getLocalStorage("gridFullView") ?? true;
+        isFullViewed =
+            $gridFullView ?? getLocalStorage("gridFullView") ?? false;
 
         isWholeGridSeen =
             isFullViewed &&
@@ -386,9 +518,7 @@
         if (isFullViewed) {
             animeGridEl.style.overflow = "hidden";
             animeGridEl.style.overflow = "";
-            animeGridEl?.children?.[0]?.scrollIntoView?.({
-                behavior: "smooth",
-            });
+            animeGridEl.scroll({ left: 0, behavior: "smooth" });
         } else {
             if ($android || !matchMedia("(hover:hover)").matches) {
                 document.documentElement.style.overflow = "hidden";
@@ -625,21 +755,21 @@
                 </div>
             {/each}
             {#each Array($shownAllInList ? 0 : 1) as _}
-                <div class="image-grid__card skeleton">
+                <div class="image-grid__card skeleton dummy">
                     <div class="shimmer" />
                 </div>
             {/each}
             {#each Array(isFullViewed ? Math.floor((windowHeight ?? 1100) / 220) : 5) as _}
-                <div class="image-grid__card" />
+                <div class="image-grid__card dummy" />
             {/each}
         {:else if !$finalAnimeList || $initData}
             {#each Array(21) as _}
-                <div class="image-grid__card skeleton">
+                <div class="image-grid__card skeleton dummy">
                     <div class="shimmer" />
                 </div>
             {/each}
             {#each Array(5) as _}
-                <div class="image-grid__card" />
+                <div class="image-grid__card dummy" />
             {/each}
         {:else}
             <div class="empty">No Results</div>
@@ -743,6 +873,7 @@
             auto-fill,
             minmax(min(100% / 2 - 1rem, 180px), 180px)
         );
+        overflow-anchor: visible;
         -ms-overflow-style: none;
         scrollbar-width: none;
     }

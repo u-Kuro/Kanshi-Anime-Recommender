@@ -51,6 +51,7 @@
 		progress,
 		popupIsGoingBack,
 		dropdownIsVisible,
+		newFinalAnime,
 		// anilistAccessToken,
 	} from "./js/globalValues.js";
 	import {
@@ -64,9 +65,11 @@
 		getExtraInfo,
 	} from "./js/workerUtils.js";
 	import {
+		getLocalStorage,
 		isAndroid,
 		isJsonObject,
 		ncsCompare,
+		removeLocalStorage,
 		setLocalStorage,
 	} from "./js/others/helper.js";
 
@@ -123,18 +126,40 @@
 			}
 		}
 
-		let _gridFullView = (await retrieveJSON("gridFullView")) ?? false;
-		if (typeof _gridFullView === "boolean") {
-			setLocalStorage("gridFullView", _gridFullView);
-			$gridFullView = _gridFullView;
+		$gridFullView =
+			$gridFullView ??
+			getLocalStorage("gridFullView") ??
+			(await retrieveJSON("gridFullView"));
+		if ($gridFullView == null) {
+			$gridFullView = false;
+			setLocalStorage("gridFullView", $gridFullView).catch(() => {
+				saveJSON($gridFullView, "gridFullView");
+				removeLocalStorage("gridFullView");
+			});
 		}
+
 		await animeLoader({ loadInit: true })
 			.then(async (data) => {
 				$animeLoaderWorker = data.animeLoaderWorker;
 				if (data?.isNew) {
-					$finalAnimeList = data.finalAnimeList;
-					resolve();
+					if ($finalAnimeList instanceof Array) {
+						$finalAnimeList = $finalAnimeList?.slice?.(
+							0,
+							Math.min(
+								window.getLastShownFinalAnimeLength() || 0,
+								data.finalAnimeListCount,
+							),
+						);
+					}
+					data?.finalAnimeList?.forEach?.((anime, idx) => {
+						$newFinalAnime = {
+							id: anime.id,
+							idx: data.shownAnimeListCount + idx,
+							finalAnimeList: anime,
+						};
+					});
 				}
+				resolve();
 			})
 			.catch(async () => {
 				await saveJSON(true, "shouldLoadAnime");
@@ -142,19 +167,28 @@
 			});
 	}).then(() => {
 		// Get Export Folder for Android
-		if (!$android) {
-			(async () => {
-				$exportPathIsAvailable = await retrieveJSON(
-					"exportPathIsAvailable",
-				);
-				if (typeof $exportPathIsAvailable === "boolean") {
+		(async () => {
+			if ($android) {
+				$exportPathIsAvailable =
+					$exportPathIsAvailable ??
+					getLocalStorage("exportPathIsAvailable") ??
+					(await retrieveJSON("exportPathIsAvailable"));
+				if ($exportPathIsAvailable == null) {
+					$exportPathIsAvailable = false;
 					setLocalStorage(
 						"exportPathIsAvailable",
 						$exportPathIsAvailable,
-					);
+					).catch(() => {
+						saveJSON(
+							$exportPathIsAvailable,
+							"exportPathIsAvailable",
+						);
+						removeLocalStorage("exportPathIsAvailable");
+					});
 				}
-			})();
-		}
+			}
+		})();
+
 		// Check/Get/Update/Process Anime Entries
 		initDataPromises.push(
 			new Promise(async (resolve, reject) => {
@@ -180,6 +214,19 @@
 							reject();
 						});
 				} else {
+					if (navigator.onLine) {
+						$userRequestIsRunning = true;
+						requestUserEntries()
+							.then(() => {
+								$userRequestIsRunning = false;
+								requestAnimeEntries();
+							})
+							.catch((error) => {
+								$userRequestIsRunning = false;
+								$dataStatus = "Something went wrong";
+								console.error(error);
+							});
+					}
 					resolve();
 				}
 			}),
@@ -258,7 +305,9 @@
 				// } else {
 				let _username = await retrieveJSON("username");
 				if (_username) {
-					setLocalStorage("username", _username);
+					setLocalStorage("username", _username).catch(() => {
+						removeLocalStorage("username");
+					});
 					$username = _username;
 				}
 				resolve();
@@ -289,19 +338,32 @@
 					if (!isJsonObject($hiddenEntries)) {
 						$hiddenEntries = await retrieveJSON("hiddenEntries");
 					}
-					$autoPlay =
-						$autoPlay ?? (await retrieveJSON("autoPlay")) ?? false;
-					setLocalStorage("autoPlay", $autoPlay);
+					$autoPlay = $autoPlay ?? (await retrieveJSON("autoPlay"));
+					if ($autoPlay == null) {
+						$autoPlay = false;
+						setLocalStorage("autoPlay", $autoPlay).catch(() => {
+							saveJSON($autoPlay, "autoPlay");
+							removeLocalStorage("autoPlay");
+						});
+					}
 					$autoUpdate =
-						$autoUpdate ??
-						(await retrieveJSON("autoUpdate")) ??
-						false;
-					setLocalStorage("autoUpdate", $autoUpdate);
+						$autoUpdate ?? (await retrieveJSON("autoUpdate"));
+					if (!$autoUpdate) {
+						$autoUpdate = false;
+						setLocalStorage("autoUpdate", $autoUpdate).catch(() => {
+							saveJSON($autoUpdate, "autoUpdate");
+							removeLocalStorage("autoUpdate");
+						});
+					}
 					$autoExport =
-						$autoExport ??
-						(await retrieveJSON("autoExport")) ??
-						false;
-					setLocalStorage("autoExport", $autoExport);
+						$autoExport ?? (await retrieveJSON("autoExport"));
+					if ($autoExport == null) {
+						$autoExport = false;
+						setLocalStorage("autoExport", $autoExport).catch(() => {
+							saveJSON($autoExport, "autoExport");
+							removeLocalStorage("autoExport");
+						});
+					}
 				})();
 				// Get/Show List
 				let shouldProcessRecommendation = await retrieveJSON(
@@ -342,8 +404,30 @@
 							.then(async (data) => {
 								$animeLoaderWorker = data.animeLoaderWorker;
 								if (data?.isNew) {
-									$finalAnimeList = data.finalAnimeList;
-									$hiddenEntries = data.hiddenEntries;
+									if ($finalAnimeList instanceof Array) {
+										$finalAnimeList =
+											$finalAnimeList?.slice?.(
+												0,
+												Math.min(
+													window.getLastShownFinalAnimeLength() ||
+														0,
+													data.finalAnimeListCount,
+												),
+											);
+									}
+									data?.finalAnimeList?.forEach?.(
+										(anime, idx) => {
+											$newFinalAnime = {
+												id: anime.id,
+												idx:
+													data.shownAnimeListCount +
+													idx,
+												finalAnimeList: anime,
+											};
+										},
+									);
+									$hiddenEntries =
+										data.hiddenEntries || $hiddenEntries;
 									$dataStatus = null;
 									checkAutoFunctions(true);
 								}
@@ -455,8 +539,23 @@
 			.then(async (data) => {
 				$animeLoaderWorker = data.animeLoaderWorker;
 				if (data?.isNew) {
-					$finalAnimeList = data.finalAnimeList;
-					$hiddenEntries = data.hiddenEntries;
+					if ($finalAnimeList instanceof Array) {
+						$finalAnimeList = $finalAnimeList?.slice?.(
+							0,
+							Math.min(
+								window.getLastShownFinalAnimeLength() || 0,
+								data.finalAnimeListCount,
+							),
+						);
+					}
+					data?.finalAnimeList?.forEach?.((anime, idx) => {
+						$newFinalAnime = {
+							id: anime.id,
+							idx: data.shownAnimeListCount + idx,
+							finalAnimeList: anime,
+						};
+					});
+					$hiddenEntries = data.hiddenEntries || $hiddenEntries;
 				}
 				$dataStatus = null;
 				return;
@@ -513,8 +612,23 @@
 				.then(async (data) => {
 					$animeLoaderWorker = data.animeLoaderWorker;
 					if (data?.isNew) {
-						$finalAnimeList = data.finalAnimeList;
-						$hiddenEntries = data.hiddenEntries;
+						if ($finalAnimeList instanceof Array) {
+							$finalAnimeList = $finalAnimeList?.slice?.(
+								0,
+								Math.min(
+									window.getLastShownFinalAnimeLength() || 0,
+									data.finalAnimeListCount,
+								),
+							);
+						}
+						data?.finalAnimeList?.forEach?.((anime, idx) => {
+							$newFinalAnime = {
+								id: anime.id,
+								idx: data.shownAnimeListCount + idx,
+								finalAnimeList: anime,
+							};
+						});
+						$hiddenEntries = data.hiddenEntries || $hiddenEntries;
 					}
 					$dataStatus = null;
 					return;
@@ -776,9 +890,7 @@
 				if ($gridFullView) {
 					animeGridEl.style.overflow = "hidden";
 					animeGridEl.style.overflow = "";
-					animeGridEl?.children?.[0]?.scrollIntoView?.({
-						behavior: "smooth",
-					});
+					animeGridEl.scroll({ left: 0, behavior: "smooth" });
 				} else {
 					window.showCustomFilter?.();
 					if ($android || !matchMedia("(hover:hover)").matches) {
@@ -1023,8 +1135,23 @@
 			.then(async (data) => {
 				$animeLoaderWorker = data.animeLoaderWorker;
 				if (data?.isNew) {
-					$finalAnimeList = data.finalAnimeList;
-					$hiddenEntries = data.hiddenEntries;
+					if ($finalAnimeList instanceof Array) {
+						$finalAnimeList = $finalAnimeList?.slice?.(
+							0,
+							Math.min(
+								window.getLastShownFinalAnimeLength() || 0,
+								data.finalAnimeListCount,
+							),
+						);
+					}
+					data?.finalAnimeList?.forEach?.((anime, idx) => {
+						$newFinalAnime = {
+							id: anime.id,
+							idx: data.shownAnimeListCount + idx,
+							finalAnimeList: anime,
+						};
+					});
+					$hiddenEntries = data.hiddenEntries || $hiddenEntries;
 				}
 				$dataStatus = null;
 				return;

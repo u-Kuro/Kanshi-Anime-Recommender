@@ -16,6 +16,7 @@
         dataStatus,
         listUpdateAvailable,
         shownAllInList,
+        newFinalAnime,
     } from "../../js/globalValues.js";
     import { onMount, tick } from "svelte";
     import {
@@ -70,7 +71,8 @@
         }
     }
     $: {
-        isFullViewed = $gridFullView ?? getLocalStorage("gridFullView") ?? true;
+        isFullViewed =
+            $gridFullView ?? getLocalStorage("gridFullView") ?? false;
         if (isFullViewed) {
             customFilOpacity = 1;
         }
@@ -107,8 +109,23 @@
             .then(async (data) => {
                 $animeLoaderWorker = data.animeLoaderWorker;
                 if (data?.isNew) {
-                    $finalAnimeList = data.finalAnimeList;
-                    $hiddenEntries = data.hiddenEntries;
+                    if ($finalAnimeList instanceof Array) {
+                        $finalAnimeList = $finalAnimeList?.slice?.(
+                            0,
+                            Math.min(
+                                window.getLastShownFinalAnimeLength() || 0,
+                                data.finalAnimeListCount,
+                            ),
+                        );
+                    }
+                    data?.finalAnimeList?.forEach?.((anime, idx) => {
+                        $newFinalAnime = {
+                            id: anime.id,
+                            idx: data.shownAnimeListCount + idx,
+                            finalAnimeList: anime,
+                        };
+                    });
+                    $hiddenEntries = data.hiddenEntries || $hiddenEntries;
                 }
                 $dataStatus = null;
                 return;
@@ -192,8 +209,10 @@
         }, 8);
     }
 
+    let scrollFullGridTimeout;
     async function selectCustomFilter(selectedCustomFilterName) {
         if (!$customFilters?.length) return pleaseWaitAlert();
+        clearTimeout(scrollFullGridTimeout);
         customFilterNavVisibility(true);
         goBackGrid(selectedCustomFilterName);
         if (selectedCustomFilterName === $selectedCustomFilter) {
@@ -207,7 +226,7 @@
     }
 
     let lastClicked, lastClickedTimeout, clickedOnce;
-    function goBackGrid(selectedCustomFilterName) {
+    async function goBackGrid(selectedCustomFilterName) {
         let isDoubleClicked;
         if (lastClicked === selectedCustomFilterName) {
             lastClicked = selectedCustomFilterName;
@@ -245,10 +264,17 @@
             window.scrollTo({ top: scrollTop, behavior: "smooth" });
         }
         if (isFullViewed) {
-            animeGridEl?.children?.[0]?.scrollIntoView?.({
-                behavior: "smooth",
-                block: "nearest",
-            });
+            if (matchMedia("(pointer:fine)").matches) {
+                scrollFullGridTimeout = setTimeout(() => {
+                    animeGridEl.style.overflow = "hidden";
+                    animeGridEl.style.overflow = "";
+                    animeGridEl.scroll({ left: 0, behavior: "smooth" });
+                }, 100);
+            } else {
+                animeGridEl.style.overflow = "hidden";
+                animeGridEl.style.overflow = "";
+                animeGridEl.scroll({ left: 0, behavior: "smooth" });
+            }
         }
         if ($popupVisible) {
             popupContainer.scrollTop = 0;
@@ -417,7 +443,7 @@
         opacity: 0 !important;
     }
     .custom-filters-nav.persistent-show {
-        display: unset !important;
+        display: flex !important;
         opacity: 1 !important;
     }
     .custom-filters-nav {

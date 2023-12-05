@@ -14,6 +14,7 @@
     import {
         addClass,
         removeClass,
+        removeLocalStorage,
         setLocalStorage,
     } from "../../js/others/helper.js";
     import { requestUserEntries } from "../../js/workerUtils.js";
@@ -107,7 +108,9 @@
                                         setLocalStorage(
                                             "username",
                                             newusername,
-                                        );
+                                        ).catch(() => {
+                                            removeLocalStorage("username");
+                                        });
                                         typedUsername = $username =
                                             newusername || "";
                                         importantUpdate.update((e) => !e);
@@ -154,7 +157,9 @@
                                         setLocalStorage(
                                             "username",
                                             newusername,
-                                        );
+                                        ).catch(() => {
+                                            removeLocalStorage("username");
+                                        });
                                         typedUsername = $username =
                                             newusername || "";
                                     } else {
@@ -258,16 +263,12 @@
             if ($popupVisible) {
                 popupContainer.style.overflow = "hidden";
                 popupContainer.style.overflow = "";
-                popupContainer?.children?.[0]?.scrollIntoView?.({
-                    behavior: "smooth",
-                });
+                popupContainer.scroll({ top: 0, behavior: "smooth" });
             } else {
                 if ($gridFullView) {
                     animeGridEl.style.overflow = "hidden";
                     animeGridEl.style.overflow = "";
-                    animeGridEl?.children?.[0]?.scrollIntoView?.({
-                        behavior: "smooth",
-                    });
+                    animeGridEl.scroll({ left: 0, behavior: "smooth" });
                 } else {
                     window.showCustomFilter?.();
                     document.documentElement.style.overflow = "hidden";

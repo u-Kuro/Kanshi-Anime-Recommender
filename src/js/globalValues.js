@@ -19,6 +19,7 @@ const activeTagFilters = writable(null)
 const customFilters = writable(null)
 const loadingFilterOptions = writable(false)
 const finalAnimeList = writable(null)
+const newFinalAnime = writable([])
 const animeLoaderWorker = writable(null)
 const dataStatus = writable(null)
 
@@ -46,7 +47,7 @@ const checkAnimeLoaderStatus = writable(false)
 const animeObserver = writable(null)
 const animeIdxRemoved = writable(null)
 const shownAllInList = writable(false)
-const searchedAnimeKeyword = writable(getLocalStorage("searchedAnimeKeyword") || "")
+const searchedAnimeKeyword = writable(getLocalStorage('searchedAnimeKeyword') || '')
 const numberOfNextLoadedGrid = writable(null)
 const confirmPromise = writable(null)
 const menuVisible = writable(false)
@@ -62,7 +63,7 @@ const isScrolling = writable(null)
 const scrollingTimeout = writable(null)
 const asyncAnimeReloaded = writable(null)
 const isFullViewed = writable(null)
-const showFilterOptions = writable(getLocalStorage("showFilterOptions") ?? null)
+const showFilterOptions = writable(getLocalStorage('showFilterOptions') ?? null)
 const dropdownIsVisible = writable(null)
 const confirmIsVisible = writable(null)
 // Reactive Functions
@@ -92,6 +93,7 @@ export {
     customFilters,
     loadingFilterOptions,
     finalAnimeList,
+    newFinalAnime,
     animeLoaderWorker,
     dataStatus,
     userRequestIsRunning,

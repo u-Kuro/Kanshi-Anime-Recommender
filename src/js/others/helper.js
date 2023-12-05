@@ -41,17 +41,36 @@ function msToTime(duration, limit) {
     return
   }
 }
-
+function getLastVisibleElement(childSelector, parent) {
+  try {
+    let childElements
+    if (parent instanceof Element) {
+      childElements = parent?.querySelectorAll?.(childSelector)
+    } else {
+      childElements = document?.querySelectorAll?.(childSelector)
+    }
+    if (childElements instanceof NodeList) {
+      let windowViewHeight = window?.visualViewport?.height || window.innerHeight
+      childElements = Array.from(childElements)
+      for (let i = 0; i < childElements.length; i++) {
+        let rect = childElements[i]?.getBoundingClientRect?.()
+        if (rect && rect.top > windowViewHeight) {
+          return childElements[Math.max(0, i - 1)]
+        }
+      }
+    }
+  } catch (ex) { }
+}
 function getMostVisibleElement(parent, childSelector, intersectionRatioThreshold = 0.5) {
   try {
-    var childElements;
+    let childElements;
     if (childSelector instanceof Array) {
       childElements = childSelector;
     } else {
       childElements = parent.querySelectorAll(childSelector);
     }
-    var mostVisibleElement = null;
-    var highestVisibleRatio = 0;
+    let mostVisibleElement = null;
+    let highestVisibleRatio = 0;
     let twoElements = []
     let parentScroll = parent.scrollTop
     for (let i = 0; i < childElements.length; i++) {
@@ -66,11 +85,11 @@ function getMostVisibleElement(parent, childSelector, intersectionRatioThreshold
         break;
       }
     }
-    var parentRect = parent.getBoundingClientRect();
+    let parentRect = parent.getBoundingClientRect();
     twoElements.forEach((childElement) => {
-      var childRect = childElement.getBoundingClientRect();
-      var intersectionHeight = Math.min(childRect.bottom, parentRect.bottom) - Math.max(childRect.top, parentRect.top);
-      var intersectionRatio = intersectionHeight / childRect.height;
+      let childRect = childElement.getBoundingClientRect();
+      let intersectionHeight = Math.min(childRect.bottom, parentRect.bottom) - Math.max(childRect.top, parentRect.top);
+      let intersectionRatio = intersectionHeight / childRect.height;
       if (intersectionRatio >= intersectionRatioThreshold && intersectionRatio > highestVisibleRatio) {
         highestVisibleRatio = intersectionRatio;
         mostVisibleElement = childElement;
@@ -87,15 +106,15 @@ function getMostVisibleElementFromArray(parent, elements, intersectionRatioThres
   try {
     if (!elements.length) return null;
     let mostVisibleElement = null;
-    var highestVisibleRatio = 0;
+    let highestVisibleRatio = 0;
     let parentRect = parent.getBoundingClientRect();
     if (elements instanceof HTMLCollection) {
       elements = Array.from(elements);
     }
     elements?.forEach?.((child) => {
       let childRect = child.getBoundingClientRect();
-      var intersectionHeight = Math.min(childRect.bottom, parentRect.bottom) - Math.max(childRect.top, parentRect.top);
-      var intersectionRatio = intersectionHeight / childRect.height;
+      let intersectionHeight = Math.min(childRect.bottom, parentRect.bottom) - Math.max(childRect.top, parentRect.top);
+      let intersectionRatio = intersectionHeight / childRect.height;
       if (intersectionRatio > highestVisibleRatio) {
         if (intersectionRatioThreshold === 0 && intersectionRatio > intersectionRatioThreshold) {
           highestVisibleRatio = intersectionRatio;
@@ -115,26 +134,26 @@ function getMostVisibleElementFromArray(parent, elements, intersectionRatioThres
 
 function isElementVisible(parent, element, intersectionRatioThreshold = 0) {
   try {
-    var boundingRect = element.getBoundingClientRect();
-    var parentRect = parent.getBoundingClientRect();
-    var overflowX = getComputedStyle(parent).overflowX;
-    var overflowY = getComputedStyle(parent).overflowY;
-    var isParentScrollable = overflowX === 'auto' || overflowX === 'scroll' || overflowY === 'auto' || overflowY === 'scroll';
+    let boundingRect = element.getBoundingClientRect();
+    let parentRect = parent.getBoundingClientRect();
+    let overflowX = getComputedStyle(parent).overflowX;
+    let overflowY = getComputedStyle(parent).overflowY;
+    let isParentScrollable = overflowX === 'auto' || overflowX === 'scroll' || overflowY === 'auto' || overflowY === 'scroll';
     if (isParentScrollable) {
-      var scrollLeft = parent.scrollLeft;
-      var scrollTop = parent.scrollTop;
-      var isVisible = (
+      let scrollLeft = parent.scrollLeft;
+      let scrollTop = parent.scrollTop;
+      let isVisible = (
         boundingRect.top >= parentRect.top &&
         boundingRect.left >= parentRect.left &&
         boundingRect.bottom <= parentRect.bottom &&
         boundingRect.right <= parentRect.right
       );
       if (!isVisible) {
-        var intersectionTop = Math.max(boundingRect.top, parentRect.top) - Math.min(boundingRect.bottom, parentRect.bottom);
-        var intersectionLeft = Math.max(boundingRect.left, parentRect.left) - Math.min(boundingRect.right, parentRect.right);
-        var intersectionArea = intersectionTop * intersectionLeft;
-        var elementArea = Math.min(boundingRect.height, window.innerHeight) * Math.min(boundingRect.width, window.innerWidth);
-        var intersectionRatio = intersectionArea / elementArea;
+        let intersectionTop = Math.max(boundingRect.top, parentRect.top) - Math.min(boundingRect.bottom, parentRect.bottom);
+        let intersectionLeft = Math.max(boundingRect.left, parentRect.left) - Math.min(boundingRect.right, parentRect.right);
+        let intersectionArea = intersectionTop * intersectionLeft;
+        let elementArea = Math.min(boundingRect.height, window.innerHeight) * Math.min(boundingRect.width, window.innerWidth);
+        let intersectionRatio = intersectionArea / elementArea;
         isVisible = intersectionRatio >= intersectionRatioThreshold;
       }
       if (!isVisible) {
@@ -149,9 +168,9 @@ function isElementVisible(parent, element, intersectionRatioThreshold = 0) {
         width: boundingRect.width
       };
     }
-    var windowHeight = window.innerHeight || document.documentElement.clientHeight;
-    var windowWidth = window.innerWidth || document.documentElement.clientWidth;
-    var isVisibleInWindow = (
+    let windowHeight = window.innerHeight || document.documentElement.clientHeight;
+    let windowWidth = window.innerWidth || document.documentElement.clientWidth;
+    let isVisibleInWindow = (
       boundingRect.top >= 0 &&
       boundingRect.left >= 0 &&
       boundingRect.bottom <= windowHeight &&
@@ -502,8 +521,19 @@ const getLocalStorage = (key) => {
 }
 
 const setLocalStorage = (key, data) => {
+  return new Promise((resolve, reject) => {
+    try {
+      localStorage.setItem(LocalStorageID + key, data)
+      resolve()
+    } catch (ex) {
+      reject()
+    }
+  })
+}
+
+const removeLocalStorage = (key) => {
   try {
-    localStorage.setItem(LocalStorageID + key, data)
+    localStorage.removeItem(LocalStorageID + key);
   } catch (ex) { }
 }
 
@@ -526,9 +556,11 @@ const isMobile = () => {
 export {
   setLocalStorage,
   getLocalStorage,
+  removeLocalStorage,
   makeArrayUnique,
   capitalize,
   getMostVisibleElementFromArray,
+  getLastVisibleElement,
   addClass,
   removeClass,
   getElementWidth,

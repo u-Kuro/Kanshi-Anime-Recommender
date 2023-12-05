@@ -22,7 +22,7 @@ import {
     extraInfo,
 } from "./globalValues";
 import { get } from "svelte/store";
-import { downloadLink, isJsonObject, setLocalStorage } from "../js/others/helper.js"
+import { downloadLink, isJsonObject, removeLocalStorage, setLocalStorage } from "../js/others/helper.js"
 import { cacheRequest } from "./caching";
 
 let terminateDelay = 1000;
@@ -73,7 +73,9 @@ const animeLoader = (_data = {}) => {
                         dataStatusPrio = true
                         dataStatus.set(data.status)
                     } else if (data?.filterOptions && typeof data?.selectedCustomFilter === "string") {
-                        setLocalStorage("selectedCustomFilter", data?.selectedCustomFilter)
+                        setLocalStorage("selectedCustomFilter", data?.selectedCustomFilter).catch(() => {
+                            removeLocalStorage("selectedCustomFilter")
+                        })
                         filterOptions.set(data.filterOptions)
                         loadingFilterOptions.set(false)
                     } else if (typeof data?.changedCustomFilter === "string" && data?.changedCustomFilter) {
@@ -688,9 +690,6 @@ const saveIDBdata = (_data, name) => {
                     reject(error)
                 }
                 worker.postMessage({ data: _data, name: name })
-                if (typeof _data === "boolean") {
-                    setLocalStorage(name, _data);
-                }
             }).catch((error) => {
                 alertError()
                 reject(error)

@@ -1,6 +1,5 @@
 <script>
     import {
-        appID,
         android,
         menuVisible,
         hiddenEntries,
@@ -17,11 +16,16 @@
         popupVisible,
         listUpdateAvailable,
         showStatus,
+        newFinalAnime,
     } from "../../js/globalValues.js";
     import { fade } from "svelte/transition";
     import { saveJSON } from "../../js/indexedDB.js";
     import { importUserData } from "../../js/workerUtils.js";
-    import { jsonIsEmpty, setLocalStorage } from "../../js/others/helper.js";
+    import {
+        jsonIsEmpty,
+        removeLocalStorage,
+        setLocalStorage,
+    } from "../../js/others/helper.js";
 
     let importFileInput;
 
@@ -83,8 +87,12 @@
     }
     window.setExportPathAvailability = async (value = true) => {
         $exportPathIsAvailable = value;
-        setLocalStorage("exportPathIsAvailable", value);
-        await saveJSON(value, "exportPathIsAvailable");
+        setLocalStorage("exportPathIsAvailable", $exportPathIsAvailable).catch(
+            () => {
+                saveJSON($exportPathIsAvailable, "exportPathIsAvailable");
+                removeLocalStorage("exportPathIsAvailable");
+            },
+        );
     };
 
     async function exportData() {
@@ -164,12 +172,28 @@
             $dataStatus = "Updating List";
             $menuVisible = false;
             $listUpdateAvailable = false;
+            await saveJSON(true, "shouldLoadNewAnime");
             animeLoader({ hiddenEntries: $hiddenEntries })
                 .then(async (data) => {
                     $animeLoaderWorker = data.animeLoaderWorker;
                     if (data?.isNew) {
-                        $finalAnimeList = data.finalAnimeList;
-                        $hiddenEntries = data.hiddenEntries;
+                        if ($finalAnimeList instanceof Array) {
+                            $finalAnimeList = $finalAnimeList?.slice?.(
+                                0,
+                                Math.min(
+                                    window.getLastShownFinalAnimeLength() || 0,
+                                    data.finalAnimeListCount,
+                                ),
+                            );
+                        }
+                        data?.finalAnimeList?.forEach?.((anime, idx) => {
+                            $newFinalAnime = {
+                                id: anime.id,
+                                idx: data.shownAnimeListCount + idx,
+                                finalAnimeList: anime,
+                            };
+                        });
+                        $hiddenEntries = data.hiddenEntries || $hiddenEntries;
                     }
                     $dataStatus = null;
                     return;

@@ -26,6 +26,7 @@
         dropdownIsVisible,
         popupVisible,
         showStatus,
+        newFinalAnime,
     } from "../../js/globalValues.js";
     import { fade } from "svelte/transition";
     import {
@@ -38,12 +39,12 @@
         isJsonObject,
         jsonIsEmpty,
         setLocalStorage,
+        removeLocalStorage,
     } from "../../js/others/helper.js";
     import {
         animeLoader,
         getExtraInfo,
         processRecommendedAnimeList,
-        saveIDBdata,
     } from "../../js/workerUtils.js";
 
     let Init = true;
@@ -129,7 +130,7 @@
         },
         {
             sortName: "date added",
-            sortType: "none"
+            sortType: "none",
         },
     ];
     $: selectedFilterSelectionIdx =
@@ -167,18 +168,19 @@
         } else if (nameChangeUpdateFinalList.includes(changeName)) {
             isLoadingAnime = true;
             $dataStatus = "Updating List";
-            _loadAnime();
+            _loadAnime(true);
         } else if (!isLoadingAnime && !isUpdatingRec && !$isImporting) {
             await saveJSON($filterOptions, "filterOptions");
             await saveJSON($activeTagFilters, "activeTagFilters");
         }
     }
 
-    async function _loadAnime() {
+    async function _loadAnime(changedCurrentFilter = true) {
         $animeLoaderWorker?.terminate?.();
         $animeLoaderWorker = null;
-
-        await saveJSON(true, "shouldLoadAnime");
+        if (changedCurrentFilter) {
+            await saveJSON(true, "shouldLoadAnime");
+        }
         animeLoader({
             filterOptions: $filterOptions,
             activeTagFilters: $activeTagFilters,
@@ -188,8 +190,23 @@
                 isUpdatingRec = isLoadingAnime = false;
                 $animeLoaderWorker = data.animeLoaderWorker;
                 if (data.isNew) {
-                    $finalAnimeList = data.finalAnimeList;
-                    $hiddenEntries = data.hiddenEntries;
+                    if ($finalAnimeList instanceof Array) {
+                        $finalAnimeList = $finalAnimeList?.slice?.(
+                            0,
+                            Math.min(
+                                window.getLastShownFinalAnimeLength() || 0,
+                                data.finalAnimeListCount,
+                            ),
+                        );
+                    }
+                    data?.finalAnimeList?.forEach?.((anime, idx) => {
+                        $newFinalAnime = {
+                            id: anime.id,
+                            idx: data.shownAnimeListCount + idx,
+                            finalAnimeList: anime,
+                        };
+                    });
+                    $hiddenEntries = data.hiddenEntries || $hiddenEntries;
                 }
                 $dataStatus = null;
                 return;
@@ -208,10 +225,10 @@
         })
             .then(async () => {
                 updateFilters.update((e) => !e);
-                _loadAnime();
+                _loadAnime(true);
             })
             .catch((error) => {
-                _loadAnime();
+                _loadAnime(true);
                 console.error(error);
             });
     }
@@ -1466,7 +1483,10 @@
 
     async function handleGridView() {
         $gridFullView = !$gridFullView;
-        saveIDBdata($gridFullView, "gridFullView");
+        setLocalStorage($gridFullView, "gridFullView").catch(() => {
+            saveJSON($gridFullView, "gridFullView");
+            removeLocalStorage("gridFullView");
+        });
     }
 
     async function handleShowFilterOptions(event, val = null) {
@@ -1481,7 +1501,9 @@
         } else {
             $showFilterOptions = !$showFilterOptions;
         }
-        setLocalStorage("showFilterOptions", $showFilterOptions);
+        setLocalStorage("showFilterOptions", $showFilterOptions).catch(() => {
+            removeLocalStorage("showFilterOptions");
+        });
     }
 
     let asyncAnimeReloadPromise;
@@ -1536,7 +1558,7 @@
                         "Algorithm Filter"
                     ] || [];
                 if (arraysAreEqual(array1, array2)) {
-                    _loadAnime();
+                    _loadAnime(false);
                 } else {
                     _processRecommendedAnimeList();
                 }
@@ -1597,9 +1619,9 @@
             window.scrollY = document.documentElement.scrollTop = 48;
         }
         if (isFullViewed) {
-            animeGridEl?.children?.[0]?.scrollIntoView?.({
-                behavior: "smooth",
-            });
+            animeGridEl.style.overflow = "hidden";
+            animeGridEl.style.overflow = "";
+            animeGridEl.scroll({ left: 0, behavior: "smooth" });
         }
         if ($popupVisible) {
             popupContainer.scrollTop = 0;
@@ -2043,7 +2065,7 @@
     }
 
     let shouldScrollSnap = getLocalStorage("nonScrollSnapFilters") ?? true;
-    $: isFullViewed = $gridFullView ?? getLocalStorage("gridFullView") ?? true;
+    $: isFullViewed = $gridFullView ?? getLocalStorage("gridFullView") ?? false;
     let homeStatusClick = 0;
 </script>
 
@@ -2848,10 +2870,10 @@
                     out:fade={{ duration: 200 }}
                     style:--activeTagFilterColor={activeTagFiltersArray?.selected ===
                     "included"
-                        ? "#5f9ea0"
+                        ? "hsl(185deg, 65%, 50%)"
                         : activeTagFiltersArray?.selected === "excluded"
-                          ? "#e85d75"
-                          : "#000"}
+                          ? "hsl(345deg, 75%, 60%)"
+                          : "hsl(0deg, 0%, 50%)"}
                     on:click={(e) =>
                         changeActiveSelect(
                             e,
@@ -2880,13 +2902,13 @@
                         {#if activeTagFiltersArray?.filterType === "input number"}
                             <h3>
                                 {activeTagFiltersArray?.optionName +
-                                    ": " +
+                                    " : " +
                                     activeTagFiltersArray?.optionValue || ""}
                             </h3>
                         {:else if activeTagFiltersArray?.optionType}
                             <h3>
                                 {activeTagFiltersArray?.optionType +
-                                    ": " +
+                                    " : " +
                                     activeTagFiltersArray?.optionName || ""}
                             </h3>
                         {:else}
@@ -3614,7 +3636,9 @@
 
     .activeFilters .activeTagFilter {
         animation: fadeIn 0.2s ease;
-        background-color: var(--activeTagFilterColor);
+        background-color: hsl(216 37% 12%);
+        color: var(--activeTagFilterColor);
+        border: 1px solid var(--activeTagFilterColor);
         padding: 0em 10px;
         display: grid;
         grid-template-columns: calc(100% - 2em) 2em;
@@ -3646,12 +3670,11 @@
         min-width: max-content;
         text-transform: capitalize;
         cursor: pointer;
-        color: white !important;
     }
     .activeTagFilter svg {
         width: 1.5rem;
         height: 1.5rem;
-        fill: white !important;
+        fill: var(--activeTagFilterColor) !important;
     }
 
     .changeGridView {

@@ -24,6 +24,7 @@
         earlisetReleaseDate,
         listIsUpdating,
         isFullViewed,
+        newFinalAnime,
     } from "../../../js/globalValues.js";
     import {
         isJsonObject,
@@ -72,6 +73,8 @@
     })();
 
     function addPopupObserver() {
+        popupAnimeObserver?.disconnect?.();
+        popupAnimeObserver = null;
         popupAnimeObserver = new IntersectionObserver(
             () => {
                 if (!$popupVisible) return;
@@ -371,6 +374,15 @@
                 lastAnimeContent.popupContent ||
                 popupContainer.children?.[observedIdx];
             if ($animeObserver && lastPopupContent instanceof Element) {
+                if (observedIdx > 0) {
+                    let prevAnimeContent = $finalAnimeList[observedIdx - 1];
+                    let prevPopupContent =
+                        prevAnimeContent.popupContent ||
+                        popupContainer.children?.[observedIdx - 1];
+                    if (prevPopupContent instanceof Element) {
+                        $animeObserver.observe(prevPopupContent);
+                    }
+                }
                 // Popup Observed
                 $animeObserver.observe(lastPopupContent);
             }
@@ -852,8 +864,23 @@
                     $listUpdateAvailable = false;
                     $animeLoaderWorker = data.animeLoaderWorker;
                     if (data?.isNew) {
-                        $finalAnimeList = data.finalAnimeList;
-                        $hiddenEntries = data.hiddenEntries;
+                        if ($finalAnimeList instanceof Array) {
+                            $finalAnimeList = $finalAnimeList?.slice?.(
+                                0,
+                                Math.min(
+                                    window.getLastShownFinalAnimeLength() || 0,
+                                    data.finalAnimeListCount,
+                                ),
+                            );
+                        }
+                        data?.finalAnimeList?.forEach?.((anime, idx) => {
+                            $newFinalAnime = {
+                                id: anime.id,
+                                idx: data.shownAnimeListCount + idx,
+                                finalAnimeList: anime,
+                            };
+                        });
+                        $hiddenEntries = data.hiddenEntries || $hiddenEntries;
                     }
                     $dataStatus = null;
                     return;
@@ -2105,7 +2132,7 @@
         top: 0;
         width: 100%;
         height: 100%;
-        background-color: transparent;
+        background-color: rgba(0, 0, 0, 0.7);
         display: flex;
         justify-content: center;
         overflow: hidden;
@@ -2137,8 +2164,9 @@
         max-width: 640px;
         overflow-y: auto;
         overflow-x: hidden;
+        overflow-anchor: visible;
         overscroll-behavior: contain;
-        background: rgba(0, 0, 0, 0.75);
+        background: linear-gradient(to bottom, hsl(210deg 50% 5%) 20%, #0b1621);
         transition: opacity 0.2s ease;
         margin-top: 48px;
         -ms-overflow-style: none;
@@ -2646,10 +2674,6 @@
     }
 
     @media screen and (min-width: 641px) {
-        .popup-wrapper {
-            background-color: rgba(0, 0, 0, 0.7) !important;
-        }
-
         .fullPopupDescription {
             font-size: 1.5rem !important;
         }
@@ -2689,6 +2713,20 @@
     @media screen and (min-width: 640px) {
         .popup-info {
             padding: 0 1em;
+        }
+    }
+
+    @media (pointer: fine) {
+        .popup-container::-webkit-scrollbar {
+            display: unset !important;
+            width: 7px !important;
+        }
+        .popup-container::-webkit-scrollbar-track {
+            background-color: black;
+        }
+        .popup-container::-webkit-scrollbar-thumb {
+            background-color: #9ba0b2;
+            border-radius: 9999px;
         }
     }
 
