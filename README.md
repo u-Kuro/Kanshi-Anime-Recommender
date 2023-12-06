@@ -6,7 +6,7 @@ This app is tailored to offer <b>anime recommendations</b> by analyzing your <b>
 
 By eliminating the need to depend on others' preferences, it can suggest <b>underrated</b> and <b>underwatched</b> anime that align with your taste. 
 
-That said, the app allows you to tailor <b>customize your recommendation algorithm</b>, including the option to <b>choose your own features (genres, tags, etc.)</b> and to <b>assign their weights</b>.
+That said, the app allows you to <b>customize your recommendation algorithm</b>, including the option to <b>choose your own features (genres, tags, etc.)</b> and to <b>assign their weights</b>.
 
 If you're struggling to decide on your next watch, this tool can assist you in discovering new anime that precisely match your preferences. it's <b>free</b> and <b>runs locally</b> for your convenience.
 
