@@ -23,6 +23,9 @@
         showFilterOptions,
         newFinalAnime,
         progress,
+        filterOptions,
+        loadingFilterOptions,
+        selectedCustomFilter,
     } from "../../js/globalValues.js";
     import {
         addClass,
@@ -133,8 +136,31 @@
                     }
                 }
                 await tick();
-                if (data?.status !== undefined) $dataStatus = data.status;
-                else if (data.getEarlisetReleaseDate === true) {
+                if (data?.hasOwnProperty?.("progress")) {
+                    if (data?.progress >= 0 && data?.progress <= 100) {
+                        progress.set(data.progress);
+                    }
+                }
+                if (data?.hasOwnProperty?.("status")) {
+                    $dataStatus = data.status;
+                } else if (
+                    data?.filterOptions &&
+                    typeof data?.selectedCustomFilter === "string"
+                ) {
+                    setLocalStorage(
+                        "selectedCustomFilter",
+                        data?.selectedCustomFilter,
+                    ).catch(() => {
+                        removeLocalStorage("selectedCustomFilter");
+                    });
+                    $filterOptions = data.filterOptions;
+                    $loadingFilterOptions = false;
+                } else if (
+                    typeof data?.changedCustomFilter === "string" &&
+                    data?.changedCustomFilter
+                ) {
+                    $selectedCustomFilter = data.changedCustomFilter;
+                } else if (data.getEarlisetReleaseDate === true) {
                     if (
                         data.earliestReleaseDate &&
                         data?.timeBeforeEarliestReleaseDate > 0 &&

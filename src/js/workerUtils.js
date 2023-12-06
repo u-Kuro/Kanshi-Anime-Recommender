@@ -94,7 +94,9 @@ const animeLoader = (_data = {}) => {
                         if (!animeLoaderWorker) return
                         animeLoaderWorker.onmessage = null
                         listUpdateAvailable.set(false)
-                        loadingFilterOptions.set(false)
+                        if (!data?.filterOptionsIsNotLoaded) {
+                            loadingFilterOptions.set(false)
+                        }
                         progress.set(100)
                         resolve(Object.assign({}, data, { animeLoaderWorker: animeLoaderWorker }))
                     }

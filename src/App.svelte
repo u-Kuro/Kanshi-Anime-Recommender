@@ -1192,7 +1192,11 @@
 		) {
 			cancelAnimationFrame(progressFrame);
 			progressFrame = requestAnimationFrame(() => {
-				_progress = val;
+				if (_progress < 100 && _progress > 0) {
+					_progress = Math.max(val, _progress);
+				} else {
+					_progress = val
+				}
 			});
 			progressChangeStart = performance.now();
 		}
