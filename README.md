@@ -2,13 +2,13 @@
   <img src="https://i.imgur.com/6duwbXo.png" height="100px;" width="100px;" />
   <h2 align="center">Kanshi.</h2>
 </p>
-This app is tailored to offer <b>anime recommendations</b> by analyzing your <b>personal ratings on Anilist</b>. 
+This app is tailored to offer <b>anime recommendations</b> by analyzing your <b>personal ratings on AniList</b>. 
 
 By eliminating the need to depend on others' preferences, it can suggest <b>underrated</b> and <b>underwatched</b> anime that align with your taste. 
 
-That said, the app allows you to <b>customize your recommendation algorithm</b>, including the option to <b>choose your own features (genres, tags, etc.)</b> and to <b>assign their weights</b>.
+That said, the app allows you to <b>customize your recommendation algorithm</b>, including the option to <b>choose your own features (genres, tags, etc.)</b> and to <b>assign weights</b>.
 
-If you're struggling to decide on your next watch, this tool can assist you in discovering new anime that precisely match your preferences. it's <b>free</b> and <b>runs locally</b> for your convenience.
+If you're struggling to decide on your next watch, this tool can assist you in discovering new anime that precisely match your preferences. it's also <b>free</b> and <b>runs locally</b> for your convenience.
 
 <h2 align="center"></h2>
 
