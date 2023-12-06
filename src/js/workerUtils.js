@@ -20,6 +20,7 @@ import {
     searchedAnimeKeyword,
     loadingFilterOptions,
     extraInfo,
+    finalAnimeList
 } from "./globalValues";
 import { get } from "svelte/store";
 import { downloadLink, isJsonObject, removeLocalStorage, setLocalStorage } from "../js/others/helper.js"
@@ -42,6 +43,13 @@ const animeLoader = (_data = {}) => {
             animeLoaderWorker?.terminate?.()
             animeLoaderWorker = null
         }
+        finalAnimeList.update((e) => e?.map?.((anime) => {
+            anime.isLoading = true;
+            return anime;
+        })?.slice?.(
+            0,
+            window.getLastShownFinalAnimeLength() || 0,
+        ));
         dataStatusPrio = true
         progress.set(0)
         cacheRequest("./webapi/worker/animeLoader.js")
@@ -54,12 +62,10 @@ const animeLoader = (_data = {}) => {
                     passedFilterOptions = _data?.filterOptions
                     passedSelectedCustomFilter = _data?.selectedCustomFilter
                     passedActiveTagFilters = _data?.activeTagFilters
-                    _data.hasPassedFilters = true;
                 } else if (passedFilterOptions && passedActiveTagFilters && passedSelectedCustomFilter) {
                     _data.filterOptions = passedFilterOptions
                     _data.selectedCustomFilter = passedSelectedCustomFilter
                     _data.activeTagFilters = passedActiveTagFilters
-                    _data.hasPassedFilters = true;
                 }
                 animeLoaderWorker = new Worker(url)
                 _data.reloadedFilterKeyword = get(searchedAnimeKeyword) || ""
@@ -94,11 +100,19 @@ const animeLoader = (_data = {}) => {
                     }
                 }
                 animeLoaderWorker.onerror = (error) => {
+                    finalAnimeList.update((e) => e?.map?.((anime) => {
+                        anime.isLoading = false;
+                        return anime;
+                    }))
                     progress.set(100)
                     reject(error)
                 }
             })
             .catch((error) => {
+                finalAnimeList.update((e) => e?.map?.((anime) => {
+                    anime.isLoading = false;
+                    return anime;
+                }))
                 progress.set(100)
                 alertError()
                 reject(error)

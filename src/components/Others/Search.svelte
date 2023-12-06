@@ -175,16 +175,14 @@
         }
     }
 
-    async function _loadAnime(changedCurrentFilter = true) {
+    async function _loadAnime(hasPassedFilters = true, loadNewList = true) {
         $animeLoaderWorker?.terminate?.();
         $animeLoaderWorker = null;
-        if (changedCurrentFilter) {
-            await saveJSON(true, "shouldLoadAnime");
-        }
         animeLoader({
             filterOptions: $filterOptions,
             activeTagFilters: $activeTagFilters,
             selectedCustomFilter: $selectedCustomFilter,
+            hasPassedFilters,
         })
             .then(async (data) => {
                 isUpdatingRec = isLoadingAnime = false;
@@ -225,7 +223,7 @@
         })
             .then(async () => {
                 updateFilters.update((e) => !e);
-                _loadAnime(true);
+                _loadAnime(true, false);
             })
             .catch((error) => {
                 _loadAnime(true);
@@ -1547,8 +1545,6 @@
         if ($selectedCustomFilter) {
             if (previousCustomFilterName !== $selectedCustomFilter) {
                 $loadingFilterOptions = true;
-            }
-            if (previousCustomFilterName) {
                 let array1 =
                     $activeTagFilters?.[previousCustomFilterName]?.[
                         "Algorithm Filter"

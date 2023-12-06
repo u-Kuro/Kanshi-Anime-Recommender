@@ -284,13 +284,14 @@
             if ($finalAnimeList instanceof Array) {
                 if (
                     $finalAnimeList?.[val.idx] &&
-                    $finalAnimeList?.[val.idx]?.id === val?.finalAnimeList?.id
+                    Math.abs($finalAnimeList?.[val.idx]?.id) ===
+                        val?.finalAnimeList?.id
                 ) {
                     $finalAnimeList[val.idx] = val.finalAnimeList;
                 } else {
                     $finalAnimeList = $finalAnimeList?.map?.((anime) => {
-                        if (anime.id === val?.finalAnimeList?.id) {
-                            anime.id = {};
+                        if (Math.abs(anime.id) === val?.finalAnimeList?.id) {
+                            anime.id = -anime.id;
                         }
                         return anime;
                     });
@@ -618,9 +619,10 @@
         style:--anime-grid-height={windowHeight + "px"}
     >
         {#if $finalAnimeList?.length}
-            {#each $finalAnimeList || [] as anime, animeIdx (anime?.id || {})}
+            {#each $finalAnimeList || [] as anime, animeIdx (anime?.id ?? {})}
                 <div
-                    class="image-grid__card"
+                    class={"image-grid__card" +
+                        (anime?.isLoading ? " loading" : "")}
                     bind:this={anime.gridElement}
                     title={anime?.briefInfo || ""}
                 >
@@ -819,6 +821,10 @@
     .skeleton {
         border-radius: 6px !important;
         background-color: rgba(30, 42, 56, 0.8) !important;
+    }
+
+    .image-grid__card.loading {
+        animation: loadingImage 1.5s ease-in-out infinite;
     }
 
     .image-grid__card.hidden {
@@ -1155,6 +1161,18 @@
             -ms-transform: translateX(100%) translateZ(0);
             -moz-transform: translateX(100%) translateZ(0);
             -o-transform: translateX(100%) translateZ(0);
+        }
+    }
+
+    @keyframes loadingImage {
+        0% {
+            opacity: 1;
+        }
+        50% {
+            opacity: 0.5;
+        }
+        100% {
+            opacity: 1;
         }
     }
 
