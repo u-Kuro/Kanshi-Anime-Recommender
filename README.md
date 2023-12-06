@@ -30,7 +30,8 @@ If you're struggling to decide on your next watch, this tool can assist you in d
 
 ## Website Preview
 ![Website Preview 1](https://i.imgur.com/yJW4liR.png)
-![Website Preview 2](https://i.imgur.com/SajIzv7.png)
+![Website Preview 2](https://i.imgur.com/FQiXVOH.png
+)
 
 
 
