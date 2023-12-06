@@ -1,4 +1,4 @@
-const version = 241;
+const version = 242;
 export default async function getWebVersion() {
     try {
         let path = window.location.pathname;
