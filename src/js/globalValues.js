@@ -9,7 +9,7 @@ const progress = writable(0)
 const hasWheel = writable(false)
 const lastAnimeUpdate = writable(null)
 
-const username = writable(getLocalStorage('username') || null)
+const username = writable(getLocalStorage('username') || '')
 const lastUserAnimeUpdate = writable(null)
 const hiddenEntries = writable(null)
 
@@ -23,6 +23,8 @@ const newFinalAnime = writable([])
 const animeLoaderWorker = writable(null)
 const dataStatus = writable(null)
 
+const isLoadingAnime = writable(false)
+const isProcessingList = writable(false)
 const isImporting = writable(false)
 const userRequestIsRunning = writable(null)
 const autoUpdate = writable(getLocalStorage('autoUpdate') ?? null)
@@ -41,6 +43,7 @@ const initData = writable(true)
 const gridFullView = writable(getLocalStorage('gridFullView') ?? null)
 const showStatus = writable(getLocalStorage('showStatus') ?? true)
 const extraInfo = writable(null)
+const currentExtraInfo = writable(null)
 const mostRecentAiringDateTimeout = writable(null)
 const earlisetReleaseDate = writable(null)
 const checkAnimeLoaderStatus = writable(false)
@@ -72,7 +75,6 @@ const runExport = writable(null)
 const importantUpdate = writable(null)
 const importantLoad = writable(null)
 const updateRecommendationList = writable(null)
-const updateFilters = writable(null)
 const loadAnime = writable(null)
 const runIsScrolling = writable(null)
 
@@ -97,6 +99,8 @@ export {
     animeLoaderWorker,
     dataStatus,
     userRequestIsRunning,
+    isLoadingAnime,
+    isProcessingList,
     isImporting,
     autoUpdate,
     autoUpdateInterval,
@@ -111,6 +115,7 @@ export {
     gridFullView,
     showStatus,
     extraInfo,
+    currentExtraInfo,
     mostRecentAiringDateTimeout,
     earlisetReleaseDate,
     checkAnimeLoaderStatus,
@@ -142,7 +147,6 @@ export {
     importantLoad,
     importantUpdate,
     updateRecommendationList,
-    updateFilters,
     loadAnime,
     runIsScrolling
 }

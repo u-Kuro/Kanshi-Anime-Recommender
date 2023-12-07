@@ -16,7 +16,6 @@
         checkAnimeLoaderStatus,
         gridFullView,
         hasWheel,
-        updateFilters,
         isImporting,
         hiddenEntries,
         extraInfo,
@@ -27,6 +26,9 @@
         popupVisible,
         showStatus,
         newFinalAnime,
+        isLoadingAnime,
+        isProcessingList,
+        currentExtraInfo,
     } from "../../js/globalValues.js";
     import { fade } from "svelte/transition";
     import {
@@ -84,8 +86,6 @@
         "popularity",
         "year",
     ];
-    let isUpdatingRec = false,
-        isLoadingAnime = false;
 
     let scrollingToTop,
         activeTagFiltersArrays,
@@ -162,20 +162,19 @@
         if (!$filterOptions || !$activeTagFilters || !$selectedCustomFilter)
             return pleaseWaitAlert();
         if (nameChangeUpdateProcessedList.includes(changeName)) {
-            isUpdatingRec = true;
+            $isProcessingList = true;
             $dataStatus = "Updating List";
             _processRecommendedAnimeList();
         } else if (nameChangeUpdateFinalList.includes(changeName)) {
-            isLoadingAnime = true;
+            $isLoadingAnime = true;
             $dataStatus = "Updating List";
             _loadAnime(true);
-        } else if (!isLoadingAnime && !isUpdatingRec && !$isImporting) {
+        } else if (!$isLoadingAnime && !$isProcessingList && !$isImporting) {
             await saveJSON($filterOptions, "filterOptions");
-            await saveJSON($activeTagFilters, "activeTagFilters");
         }
     }
 
-    async function _loadAnime(hasPassedFilters = true, loadNewList = true) {
+    async function _loadAnime(hasPassedFilters = true) {
         $animeLoaderWorker?.terminate?.();
         $animeLoaderWorker = null;
         animeLoader({
@@ -185,7 +184,6 @@
             hasPassedFilters,
         })
             .then(async (data) => {
-                isUpdatingRec = isLoadingAnime = false;
                 $animeLoaderWorker = data.animeLoaderWorker;
                 if (data.isNew) {
                     if ($finalAnimeList instanceof Array) {
@@ -197,13 +195,16 @@
                             ),
                         );
                     }
-                    data?.finalAnimeList?.forEach?.((anime, idx) => {
-                        $newFinalAnime = {
-                            id: anime.id,
-                            idx: data.shownAnimeListCount + idx,
-                            finalAnimeList: anime,
-                        };
-                    });
+                    if (data?.finalAnimeList?.length > 0) {
+                        data?.finalAnimeList?.forEach?.((anime, idx) => {
+                            $newFinalAnime = {
+                                idx: data.shownAnimeListCount + idx,
+                                finalAnimeList: anime,
+                            };
+                        });
+                    } else {
+                        $finalAnimeList = [];
+                    }
                     $hiddenEntries = data.hiddenEntries || $hiddenEntries;
                 }
                 $dataStatus = null;
@@ -221,13 +222,11 @@
             activeTagFilters: $activeTagFilters,
             selectedCustomFilter: $selectedCustomFilter,
         })
-            .then(async () => {
-                updateFilters.update((e) => !e);
-                _loadAnime(true, false);
-            })
             .catch((error) => {
-                _loadAnime(true);
                 console.error(error);
+            })
+            .finally(() => {
+                _loadAnime(true);
             });
     }
 
@@ -1274,6 +1273,7 @@
             selectedSortElement = false;
         }
     }
+
     function changeSort(newSortName) {
         if (!$filterOptions || !$activeTagFilters || !$selectedCustomFilter)
             return pleaseWaitAlert();
@@ -1481,10 +1481,13 @@
 
     async function handleGridView() {
         $gridFullView = !$gridFullView;
-        setLocalStorage($gridFullView, "gridFullView").catch(() => {
-            saveJSON($gridFullView, "gridFullView");
-            removeLocalStorage("gridFullView");
-        });
+        setLocalStorage("gridFullView", $gridFullView)
+            .catch(() => {
+                removeLocalStorage("gridFullView");
+            })
+            .finally(() => {
+                saveJSON($gridFullView, "gridFullView");
+            });
     }
 
     async function handleShowFilterOptions(event, val = null) {
@@ -1510,7 +1513,6 @@
             if ($animeLoaderWorker instanceof Worker) {
                 $checkAnimeLoaderStatus()
                     .then(() => {
-                        $finalAnimeList = null;
                         $animeLoaderWorker?.postMessage?.({
                             reload: true,
                         });
@@ -1543,7 +1545,10 @@
     let previousCustomFilterName;
     $: {
         if ($selectedCustomFilter) {
-            if (previousCustomFilterName !== $selectedCustomFilter) {
+            if (
+                previousCustomFilterName &&
+                previousCustomFilterName !== $selectedCustomFilter
+            ) {
                 $loadingFilterOptions = true;
                 let array1 =
                     $activeTagFilters?.[previousCustomFilterName]?.[
@@ -1625,7 +1630,7 @@
         $selectedCustomFilter = selectedCustomFilterName;
         selectedCustomFilterElement = false;
     }
-    async function saveCustomFilterName(event) {
+    async function saveCustomFilterName() {
         if (
             !$filterOptions ||
             !isJsonObject($activeTagFilters) ||
@@ -1646,6 +1651,7 @@
                     customFilterName &&
                     $selectedCustomFilter !== customFilterName
                 ) {
+                    await saveJSON(true, "shouldLoadAnime");
                     editCustomFilterName = false;
                     previousCustomFilterName = $selectedCustomFilter;
                     let savedCustomFilterName =
@@ -1666,18 +1672,16 @@
                             $activeTagFilters?.[previousCustomFilterName],
                         ),
                     );
+                    // Add
+                    $activeTagFilters = $activeTagFilters;
+                    $selectedCustomFilter = savedCustomFilterName;
+                    // Delete
                     delete $activeTagFilters?.[previousCustomFilterName];
                     delete $filterOptions?.sortFilter?.[
                         previousCustomFilterName
                     ];
-                    $selectedCustomFilter = savedCustomFilterName;
                     $activeTagFilters = $activeTagFilters;
-                    await saveJSON($filterOptions, "filterOptions");
-                    await saveJSON($activeTagFilters, "activeTagFilters");
-                    await saveJSON(
-                        $selectedCustomFilter,
-                        "selectedCustomFilter",
-                    );
+                    $filterOptions = $filterOptions;
                 }
             }
         }
@@ -1708,6 +1712,7 @@
                     $activeTagFilters &&
                     !$activeTagFilters?.[customFilterName]
                 ) {
+                    await saveJSON(true, "shouldLoadAnime");
                     editCustomFilterName = false;
                     let previousCustomFilterName = $selectedCustomFilter;
                     let addedCustomFilterName =
@@ -1722,20 +1727,15 @@
                                     ] || sortFilterContents,
                                 ),
                             );
+                        $filterOptions = $filterOptions;
                     }
                     $activeTagFilters[addedCustomFilterName] = JSON.parse(
                         JSON.stringify(
                             $activeTagFilters?.[previousCustomFilterName],
                         ),
                     );
-                    $selectedCustomFilter = addedCustomFilterName;
                     $activeTagFilters = $activeTagFilters;
-                    await saveJSON($filterOptions, "filterOptions");
-                    await saveJSON($activeTagFilters, "activeTagFilters");
-                    await saveJSON(
-                        $selectedCustomFilter,
-                        "selectedCustomFilter",
-                    );
+                    $selectedCustomFilter = addedCustomFilterName;
                 }
             }
         }
@@ -1769,18 +1769,21 @@
                     $activeTagFilters?.[$selectedCustomFilter] &&
                     Object.keys($activeTagFilters || {}).length > 1
                 ) {
+                    let previousCustomFilter = $selectedCustomFilter;
+                    await saveJSON(true, "shouldLoadAnime");
                     $loadingFilterOptions = true;
                     editCustomFilterName = false;
                     let newCustomFilterName;
                     for (let key in $activeTagFilters) {
-                        if (key !== $selectedCustomFilter) {
+                        if (key !== previousCustomFilter) {
                             newCustomFilterName = key;
                             break;
                         }
                     }
-                    delete $filterOptions?.sortFilter?.[$selectedCustomFilter];
-                    delete $activeTagFilters?.[$selectedCustomFilter];
+                    delete $activeTagFilters?.[previousCustomFilter];
+                    delete $filterOptions?.sortFilter?.[previousCustomFilter];
                     $activeTagFilters = $activeTagFilters;
+                    $filterOptions = $filterOptions;
                     $selectedCustomFilter = newCustomFilterName;
                 }
             }
@@ -2062,7 +2065,8 @@
 
     let shouldScrollSnap = getLocalStorage("nonScrollSnapFilters") ?? true;
     $: isFullViewed = $gridFullView ?? getLocalStorage("gridFullView") ?? false;
-    let homeStatusClick = 0;
+    let lowestExtraInfo,
+        homeStatusClick = 0;
 </script>
 
 <main
@@ -2187,7 +2191,7 @@
                                 $activeTagFilters?.[customFilterName]
                             )
                                 return;
-                            saveCustomFilterName(e);
+                            saveCustomFilterName();
                         }}
                     >
                         <!-- xmark and edit -->
@@ -2947,20 +2951,15 @@
     <div id="home-status" class="home-status">
         <span out:fade={{ duration: 200 }} class="data-status">
             <h2
-                on:click={async (e) => {
-                    await getExtraInfo();
-                    if (homeStatusClick < 6 && !$initData) {
-                        ++homeStatusClick;
-                    } else {
-                        homeStatusClick = 0;
-                    }
+                on:click={(e) => {
+                    getExtraInfo();
                 }}
                 on:keydown={() => {}}
             >
                 {#if $dataStatus && $showStatus}
                     {$dataStatus}
                 {:else}
-                    {$extraInfo || "Browse an anime to watch"}
+                    {$extraInfo?.[$currentExtraInfo] || "Please Wait"}
                 {/if}
             </h2>
         </span>

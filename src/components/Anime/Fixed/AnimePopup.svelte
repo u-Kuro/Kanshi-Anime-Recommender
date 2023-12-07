@@ -36,6 +36,13 @@
         removeClass,
         getMostVisibleElement,
         dragScroll,
+        formatYear,
+        formatMonth,
+        formatDay,
+        formatTime,
+        formatWeekday,
+        setLocalStorage,
+        removeLocalStorage,
     } from "../../../js/others/helper.js";
     import { retrieveJSON, saveJSON } from "../../../js/indexedDB.js";
     import { animeLoader } from "../../../js/workerUtils.js";
@@ -392,9 +399,16 @@
         }
     });
 
+    function changeAutoPlay() {
+        $autoPlay = !$autoPlay;
+    }
+
     autoPlay.subscribe(async (val) => {
         if (typeof val === "boolean") {
             await saveJSON(val, "autoPlay");
+            setLocalStorage("autoPlay", val).catch(() => {
+                removeLocalStorage("autoPlay");
+            });
             if (val === true) {
                 await tick();
                 let visibleTrailer =
@@ -873,13 +887,16 @@
                                 ),
                             );
                         }
-                        data?.finalAnimeList?.forEach?.((anime, idx) => {
-                            $newFinalAnime = {
-                                id: anime.id,
-                                idx: data.shownAnimeListCount + idx,
-                                finalAnimeList: anime,
-                            };
-                        });
+                        if (data?.finalAnimeList?.length > 0) {
+                            data?.finalAnimeList?.forEach?.((anime, idx) => {
+                                $newFinalAnime = {
+                                    idx: data.shownAnimeListCount + idx,
+                                    finalAnimeList: anime,
+                                };
+                            });
+                        } else {
+                            $finalAnimeList = [];
+                        }
                         $hiddenEntries = data.hiddenEntries || $hiddenEntries;
                     }
                     $dataStatus = null;
@@ -931,27 +948,12 @@
         }
         return text;
     }
+    const oneMinute = 60 * 1000;
+    const oneHour = 60 * oneMinute;
+    const oneDay = 24 * oneHour;
+    const oneWeek = 7 * oneDay;
+
     function formatDateDifference(endDate, timeDifference) {
-        const oneMinute = 60 * 1000;
-        const oneHour = 60 * oneMinute;
-        const oneDay = 24 * oneHour;
-        const oneWeek = 7 * oneDay;
-
-        const formatYear = (date) =>
-            date.toLocaleDateString(undefined, { year: "numeric" });
-        const formatMonth = (date) =>
-            date.toLocaleDateString(undefined, { month: "short" });
-        const formatDay = (date) =>
-            date.toLocaleDateString(undefined, { day: "numeric" });
-        const formatTime = (date) =>
-            date.toLocaleTimeString(undefined, {
-                hour: "numeric",
-                minute: "2-digit",
-                hour12: true,
-            });
-        const formatWeekday = (date) =>
-            date.toLocaleDateString(undefined, { weekday: "short" });
-
         if (timeDifference > oneWeek) {
             return `${msToTime(timeDifference, 1)}, ${formatMonth(
                 endDate,
@@ -1453,19 +1455,14 @@
                                         tabindex="0"
                                         on:keydown={(e) =>
                                             e.key === "Enter" &&
-                                            (() => ($autoPlay = !$autoPlay))()}
+                                            changeAutoPlay(e)}
                                     />
                                 </label>
                                 <h3
                                     class="autoplay-label"
-                                    on:click={() => {
-                                        $autoPlay = !$autoPlay;
-                                    }}
-                                    on:keydown={(e) => {
-                                        if (e.key === "Enter") {
-                                            $autoPlay = !$autoPlay;
-                                        }
-                                    }}
+                                    on:click={changeAutoPlay}
+                                    on:keydown={(e) =>
+                                        e.key === "Enter" && changeAutoPlay(e)}
                                 >
                                     {#if windowWidth >= 290}
                                         Auto Play

@@ -20,7 +20,10 @@ import {
     searchedAnimeKeyword,
     loadingFilterOptions,
     extraInfo,
-    finalAnimeList
+    currentExtraInfo,
+    finalAnimeList,
+    isLoadingAnime,
+    isProcessingList
 } from "./globalValues";
 import { get } from "svelte/store";
 import { downloadLink, isJsonObject, removeLocalStorage, setLocalStorage } from "../js/others/helper.js"
@@ -37,6 +40,10 @@ let shouldUpdateNotifications = false
 
 // Reactinve Functions
 let animeLoaderWorker;
+let reloadedFilterKeyword = ""
+searchedAnimeKeyword.subscribe((val) => {
+    reloadedFilterKeyword = val || ""
+})
 const animeLoader = (_data = {}) => {
     return new Promise((resolve, reject) => {
         if (animeLoaderWorker) {
@@ -67,8 +74,9 @@ const animeLoader = (_data = {}) => {
                     _data.selectedCustomFilter = passedSelectedCustomFilter
                     _data.activeTagFilters = passedActiveTagFilters
                 }
+                isLoadingAnime.set(true)
                 animeLoaderWorker = new Worker(url)
-                _data.reloadedFilterKeyword = get(searchedAnimeKeyword) || ""
+                _data.reloadedFilterKeyword = reloadedFilterKeyword
                 animeLoaderWorker.postMessage(_data)
                 animeLoaderWorker.onmessage = ({ data }) => {
                     if (data?.hasOwnProperty("progress")) {
@@ -93,10 +101,9 @@ const animeLoader = (_data = {}) => {
                         dataStatusPrio = false
                         if (!animeLoaderWorker) return
                         animeLoaderWorker.onmessage = null
+                        isLoadingAnime.set(false)
                         listUpdateAvailable.set(false)
-                        if (!data?.filterOptionsIsNotLoaded) {
-                            loadingFilterOptions.set(false)
-                        }
+                        loadingFilterOptions.set(false)
                         progress.set(100)
                         resolve(Object.assign({}, data, { animeLoaderWorker: animeLoaderWorker }))
                     }
@@ -106,6 +113,7 @@ const animeLoader = (_data = {}) => {
                         anime.isLoading = false;
                         return anime;
                     }))
+                    isLoadingAnime.set(false)
                     progress.set(100)
                     reject(error)
                 }
@@ -115,6 +123,7 @@ const animeLoader = (_data = {}) => {
                     anime.isLoading = false;
                     return anime;
                 }))
+                isLoadingAnime.set(false)
                 progress.set(100)
                 alertError()
                 reject(error)
@@ -148,6 +157,7 @@ const processRecommendedAnimeList = (_data = {}) => {
                     _data.activeTagFilters = passedActiveTagFilters
                     _data.hasPassedFilters = true;
                 }
+                isProcessingList.set(true)
                 processRecommendedAnimeListWorker = new Worker(url);
                 processRecommendedAnimeListWorker.postMessage(_data);
                 processRecommendedAnimeListWorker.onmessage = ({ data }) => {
@@ -197,15 +207,18 @@ const processRecommendedAnimeList = (_data = {}) => {
                         processRecommendedAnimeListTerminateTimeout = setTimeout(() => {
                             processRecommendedAnimeListWorker?.terminate?.();
                         }, terminateDelay);
+                        isProcessingList.set(false)
                         progress.set(100)
                         resolve()
                     }
                 };
                 processRecommendedAnimeListWorker.onerror = (error) => {
+                    isProcessingList.set(false)
                     progress.set(100)
                     reject(error);
                 };
             }).catch((error) => {
+                isProcessingList.set(false)
                 progress.set(100)
                 alertError()
                 reject(error)
@@ -213,6 +226,19 @@ const processRecommendedAnimeList = (_data = {}) => {
     });
 };
 let requestAnimeEntriesTerminateTimeout, requestAnimeEntriesWorker;
+function sendAnimeListProcess(minimizeTransaction) {
+    if (requestAnimeEntriesWorker instanceof Worker) {
+        requestAnimeEntriesWorker?.postMessage?.({ minimizeTransaction })
+    }
+}
+isLoadingAnime.subscribe((val) => {
+    sendAnimeListProcess(val)
+})
+isProcessingList.subscribe((val) => {
+    if (val === true) {
+        sendAnimeListProcess(val)
+    }
+})
 const requestAnimeEntries = (_data) => {
     return new Promise((resolve, reject) => {
         if (requestAnimeEntriesTerminateTimeout) clearTimeout(requestAnimeEntriesTerminateTimeout)
@@ -516,6 +542,7 @@ const importUserData = (_data) => {
                             progress.set(data.progress)
                         }
                     } else if (data?.error !== undefined) {
+                        dataStatusPrio = false
                         isImporting.set(false)
                         isCurrentlyImporting = false
                         loadAnime.update((e) => !e)
@@ -537,35 +564,36 @@ const importUserData = (_data) => {
                         lastRunnedAutoUpdateDate.set(data.importedlastRunnedAutoUpdateDate)
                     } else if (data?.importedlastRunnedAutoExportDate instanceof Date && !isNaN(data?.importedlastRunnedAutoExportDate)) {
                         lastRunnedAutoExportDate.set(data.importedlastRunnedAutoExportDate)
-                    } else if (data?.updateFilters !== undefined) {
-                        isImporting.set(false)
-                        isCurrentlyImporting = false
+                    } else {
                         getFilterOptions()
                             .then((data) => {
                                 selectedCustomFilter.set(data.selectedCustomFilter)
                                 activeTagFilters.set(data.activeTagFilters)
                                 filterOptions.set(data.filterOptions)
+                                if (get(android)) {
+                                    shouldUpdateNotifications = true
+                                }
+                                dataStatusPrio = false
+                                isImporting.set(false)
+                                isCurrentlyImporting = false
+                                importantUpdate.update(e => !e)
+                                runUpdate.update(e => !e)
+                                importUserDataTerminateTimeout = setTimeout(() => {
+                                    importUserDataWorker?.terminate?.();
+                                }, terminateDelay)
+                                progress.set(100)
+                                resolve(data)
+                            }).catch(() => {
+                                dataStatusPrio = false
+                                isImporting.set(false)
+                                isCurrentlyImporting = false
+                                progress.set(100)
+                                importUserDataWorker?.terminate?.();
                             })
-                    } else if (data?.updateRecommendationList !== undefined) {
-                        if (get(android)) {
-                            shouldUpdateNotifications = true
-                        }
-                        isImporting.set(false)
-                        isCurrentlyImporting = false
-                        importantUpdate.update(e => !e)
-                    } else {
-                        isImporting.set(false)
-                        isCurrentlyImporting = false
-                        runUpdate.update(e => !e)
-                        dataStatusPrio = false
-                        importUserDataTerminateTimeout = setTimeout(() => {
-                            importUserDataWorker?.terminate?.();
-                        }, terminateDelay)
-                        progress.set(100)
-                        resolve(data)
                     }
                 }
                 importUserDataWorker.onerror = (error) => {
+                    dataStatusPrio = false
                     isImporting.set(false)
                     isCurrentlyImporting = false
                     window.confirmPromise?.({
@@ -578,19 +606,31 @@ const importUserData = (_data) => {
                     reject(error || "Something went wrong")
                 }
             }).catch((error) => {
-                progress.set(100)
+                dataStatusPrio = false
                 isImporting.set(false)
                 isCurrentlyImporting = false
                 loadAnime.update((e) => !e)
+                progress.set(100)
                 alertError()
                 reject(error)
             })
     })
 }
 
-let extraInfoIndex = 1, getExtraInfoTimeout, getExtraInfoWorker
+let gotAround, nextInfoCheck = -1, getExtraInfoTimeout, getExtraInfoWorker
+const waitForExtraInfo = () => {
+    clearTimeout(getExtraInfoTimeout)
+    getExtraInfoTimeout = setTimeout(() => {
+        if (get(isLoadingAnime) || get(isProcessingList)) {
+            return waitForExtraInfo()
+        } else {
+            return getExtraInfo()
+        }
+    }, 1000 * 5)
+}
 const getExtraInfo = () => {
     return new Promise((resolve, reject) => {
+        if (get(initData)) return
         clearTimeout(getExtraInfoTimeout)
         getExtraInfoWorker?.terminate?.()
         getExtraInfoWorker = null
@@ -599,25 +639,45 @@ const getExtraInfo = () => {
                 clearTimeout(getExtraInfoTimeout)
                 getExtraInfoWorker?.terminate?.()
                 getExtraInfoWorker = null
+                let extraInfoIndex
+                if (!gotAround) {
+                    extraInfoIndex = parseInt(get(currentExtraInfo))
+                    if (isNaN(extraInfoIndex)) {
+                        extraInfoIndex = 0
+                    } else if (extraInfoIndex < 4) {
+                        ++extraInfoIndex
+                    } else {
+                        ++extraInfoIndex
+                        gotAround = true
+                    }
+                    currentExtraInfo.set(extraInfoIndex)
+                } else {
+                    if (typeof nextInfoCheck === "number" && nextInfoCheck < 5) {
+                        ++nextInfoCheck
+                    } else {
+                        nextInfoCheck = 0
+                    }
+                    extraInfoIndex = nextInfoCheck
+                }
                 getExtraInfoWorker = new Worker(url)
                 getExtraInfoWorker.postMessage({ number: extraInfoIndex })
                 getExtraInfoWorker.onmessage = ({ data }) => {
-                    if (typeof extraInfoIndex === "number" && extraInfoIndex < 6) {
-                        ++extraInfoIndex
-                    } else {
-                        extraInfoIndex = 1
-                    }
                     clearTimeout(getExtraInfoTimeout)
-                    if (typeof data?.message === "string") {
-                        extraInfo.set(data.message)
-                        getExtraInfoTimeout = setTimeout(() => {
-                            getExtraInfo()
-                        }, 1000 * 30)
+                    if (typeof data?.message === "string" && data?.key != null) {
+                        let thisExtraInfo = get(extraInfo) || {}
+                        thisExtraInfo[data.key] = data?.message
+                        extraInfo.set(thisExtraInfo)
+                        currentExtraInfo.set(data.key)
+                        waitForExtraInfo()
                         getExtraInfoWorker?.terminate?.()
                         resolve()
                     } else {
                         getExtraInfoWorker?.terminate?.()
-                        getExtraInfo()
+                        if (!gotAround) {
+                            getExtraInfo()
+                        } else {
+                            waitForExtraInfo()
+                        }
                     }
                 }
                 getExtraInfoWorker.onerror = (error) => {

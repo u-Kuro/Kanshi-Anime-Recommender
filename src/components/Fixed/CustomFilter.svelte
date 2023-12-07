@@ -118,13 +118,16 @@
                             ),
                         );
                     }
-                    data?.finalAnimeList?.forEach?.((anime, idx) => {
-                        $newFinalAnime = {
-                            id: anime.id,
-                            idx: data.shownAnimeListCount + idx,
-                            finalAnimeList: anime,
-                        };
-                    });
+                    if (data?.finalAnimeList?.length > 0) {
+                        data?.finalAnimeList?.forEach?.((anime, idx) => {
+                            $newFinalAnime = {
+                                idx: data.shownAnimeListCount + idx,
+                                finalAnimeList: anime,
+                            };
+                        });
+                    } else {
+                        $finalAnimeList = [];
+                    }
                     $hiddenEntries = data.hiddenEntries || $hiddenEntries;
                 }
                 $dataStatus = null;

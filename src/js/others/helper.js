@@ -1,30 +1,30 @@
-
 const isJsonObject = (obj) => {
   return Object.prototype.toString.call(obj) === "[object Object]"
 }
-
 const jsonIsEmpty = (obj) => {
   for (const key in obj) {
     return false;
   }
   return true;
 }
-
 function msToTime(duration, limit) {
   try {
-    let seconds = Math.floor((duration / 1000) % 60),
-      minutes = Math.floor((duration / (1000 * 60)) % 60),
-      hours = Math.floor((duration / (1000 * 60 * 60)) % 24),
-      days = Math.floor((duration / (1000 * 60 * 60 * 24)) % 7),
-      weeks = Math.floor((duration / (1000 * 60 * 60 * 24 * 7)) % 4),
-      months = Math.floor((duration / (1000 * 60 * 60 * 24 * 7 * 4)) % 12),
-      years = Math.floor((duration / (1000 * 60 * 60 * 24 * 7 * 4 * 12)) % 10),
-      decades = Math.floor((duration / (1000 * 60 * 60 * 24 * 7 * 4 * 12 * 10)) % 10),
-      century = Math.floor((duration / (1000 * 60 * 60 * 24 * 7 * 4 * 12 * 10 * 10)) % 10),
-      millenium = Math.floor((duration / (1000 * 60 * 60 * 24 * 7 * 4 * 12 * 10 * 10 * 10)) % 10);
+    if (duration < 1e3) {
+      return "0s";
+    }
+    let seconds = Math.floor((duration / 1e3) % 60),
+      minutes = Math.floor((duration / 6e4) % 60),
+      hours = Math.floor((duration / 3.6e6) % 24),
+      days = Math.floor((duration / 8.64e7) % 7),
+      weeks = Math.floor((duration / 6.048e8) % 4),
+      months = Math.floor((duration / 2.4192e9) % 12),
+      years = Math.floor((duration / 2.90304e10) % 10),
+      decades = Math.floor((duration / 2.90304e11) % 10),
+      century = Math.floor((duration / 2.90304e12) % 10),
+      millenium = Math.floor((duration / 2.90304e13) % 10);
     let time = []
-    if (millenium <= 0 && century <= 0 && decades <= 0 && years <= 0 && months <= 0 && weeks <= 0 && days <= 0 && hours <= 0 && minutes <= 0 && seconds <= 0) return "0s"
     if (millenium > 0) time.push(`${millenium}mil`)
+    if (century > 0) time.push(`${century}c`)
     if (decades > 0) time.push(`${decades}dec`)
     if (years > 0) time.push(`${years}y`)
     if (months > 0) time.push(`${months}mon`)
@@ -38,9 +38,14 @@ function msToTime(duration, limit) {
     }
     return time.join(" ")
   } catch (e) {
-    return
+    return ""
   }
 }
+const formatYear = (date) => date.toLocaleDateString(undefined, { year: "numeric" });
+const formatMonth = (date) => date.toLocaleDateString(undefined, { month: "short" });
+const formatDay = (date) => date.toLocaleDateString(undefined, { day: "numeric" });
+const formatTime = (date) => date.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit", hour12: true });
+const formatWeekday = (date) => date.toLocaleDateString(undefined, { weekday: "short" });
 function getLastVisibleElement(childSelector, parent) {
   try {
     let childElements
@@ -582,5 +587,10 @@ export {
   dragScroll,
   isElementVisible,
   hasValidOrigin,
-  isMobile
+  isMobile,
+  formatYear,
+  formatMonth,
+  formatDay,
+  formatTime,
+  formatWeekday,
 }

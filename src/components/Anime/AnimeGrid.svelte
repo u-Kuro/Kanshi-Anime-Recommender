@@ -23,9 +23,6 @@
         showFilterOptions,
         newFinalAnime,
         progress,
-        filterOptions,
-        loadingFilterOptions,
-        selectedCustomFilter,
     } from "../../js/globalValues.js";
     import {
         addClass,
@@ -56,7 +53,7 @@
     let animeGridEl;
     let isRunningIntersectEvent;
     let numberOfLoadedGrid = 1;
-    // let observerDelay = 0;
+    let observerDelay = 100;
 
     function addLastAnimeObserver() {
         $animeObserver?.disconnect?.();
@@ -69,7 +66,7 @@
                     if (entry.isIntersecting) {
                         if (isRunningIntersectEvent) return;
                         isRunningIntersectEvent = true;
-                        requestAnimationFrame(() => {
+                        setTimeout(() => {
                             if ($animeLoaderWorker instanceof Worker) {
                                 $checkAnimeLoaderStatus().then(() => {
                                     $animeLoaderWorker?.postMessage?.({
@@ -78,7 +75,7 @@
                                 });
                             }
                             isRunningIntersectEvent = false;
-                        });
+                        }, observerDelay);
                     }
                 });
             },
@@ -143,23 +140,6 @@
                 }
                 if (data?.hasOwnProperty?.("status")) {
                     $dataStatus = data.status;
-                } else if (
-                    data?.filterOptions &&
-                    typeof data?.selectedCustomFilter === "string"
-                ) {
-                    setLocalStorage(
-                        "selectedCustomFilter",
-                        data?.selectedCustomFilter,
-                    ).catch(() => {
-                        removeLocalStorage("selectedCustomFilter");
-                    });
-                    $filterOptions = data.filterOptions;
-                    $loadingFilterOptions = false;
-                } else if (
-                    typeof data?.changedCustomFilter === "string" &&
-                    data?.changedCustomFilter
-                ) {
-                    $selectedCustomFilter = data.changedCustomFilter;
                 } else if (data.getEarlisetReleaseDate === true) {
                     if (
                         data.earliestReleaseDate &&
@@ -188,6 +168,7 @@
                     }
                 } else if (data.finalAnimeList instanceof Array) {
                     if (data?.reload === true) {
+                        isAsyncLoad = true;
                         if ($finalAnimeList instanceof Array) {
                             $finalAnimeList = $finalAnimeList?.slice?.(
                                 0,
@@ -197,14 +178,16 @@
                                 ),
                             );
                         }
-                        data?.finalAnimeList?.forEach?.((anime, idx) => {
-                            $newFinalAnime = {
-                                id: anime.id,
-                                idx: data.shownAnimeListCount + idx,
-                                finalAnimeList: anime,
-                            };
-                        });
-                        isAsyncLoad = true;
+                        if (data?.finalAnimeList?.length > 0) {
+                            data?.finalAnimeList?.forEach?.((anime, idx) => {
+                                $newFinalAnime = {
+                                    idx: data.shownAnimeListCount + idx,
+                                    finalAnimeList: anime,
+                                };
+                            });
+                        } else {
+                            $finalAnimeList = [];
+                        }
                     } else if (data.isNew === true) {
                         if ($finalAnimeList instanceof Array) {
                             $finalAnimeList = $finalAnimeList?.slice?.(
@@ -215,20 +198,28 @@
                                 ),
                             );
                         }
-                        data?.finalAnimeList?.forEach?.((anime, idx) => {
-                            $newFinalAnime = {
-                                idx: data.shownAnimeListCount + idx,
-                                finalAnimeList: anime,
-                            };
-                        });
-                    } else if (data.isNew === false) {
-                        if ($finalAnimeList instanceof Array) {
+                        if (data?.finalAnimeList?.length > 0) {
                             data?.finalAnimeList?.forEach?.((anime, idx) => {
                                 $newFinalAnime = {
                                     idx: data.shownAnimeListCount + idx,
                                     finalAnimeList: anime,
                                 };
                             });
+                        } else {
+                            $finalAnimeList = [];
+                        }
+                    } else if (data.isNew === false) {
+                        if ($finalAnimeList instanceof Array) {
+                            if (data?.finalAnimeList?.length > 0) {
+                                data?.finalAnimeList?.forEach?.(
+                                    (anime, idx) => {
+                                        $newFinalAnime = {
+                                            idx: data.shownAnimeListCount + idx,
+                                            finalAnimeList: anime,
+                                        };
+                                    },
+                                );
+                            }
                             if (data.isLast) {
                                 $shownAllInList = true;
                                 $animeObserver?.disconnect?.();
@@ -331,27 +322,27 @@
             } else {
                 $finalAnimeList = [val.finalAnimeList];
             }
-            if (val?.idx < shownFinalAnimeListCount - 1) {
-                cancelAnimationFrame(lessenItemTimeout);
-                lessenItemTimeout = requestAnimationFrame(() => {
+            if (
+                val?.idx < shownFinalAnimeListCount - 1 ||
+                shownFinalAnimeListCount <= 0
+            ) {
+                lessenItemTimeout = setTimeout(() => {
                     $finalAnimeList = $finalAnimeList?.slice?.(
                         0,
                         window.getLastShownFinalAnimeLength() || 0,
                     );
-                });
+                }, observerDelay);
                 if (isRunningIntersectEvent) return;
                 $progress = (val?.idx / (shownFinalAnimeListCount - 1)) * 100;
                 isRunningIntersectEvent = true;
-                requestAnimationFrame(() => {
-                    if ($animeLoaderWorker instanceof Worker) {
-                        $checkAnimeLoaderStatus().then(() => {
-                            $animeLoaderWorker?.postMessage?.({
-                                loadMore: true,
-                            });
+                setTimeout(() => {
+                    $checkAnimeLoaderStatus().then(() => {
+                        $animeLoaderWorker?.postMessage?.({
+                            loadMore: true,
                         });
-                    }
-                    isRunningIntersectEvent = false;
-                });
+                        isRunningIntersectEvent = false;
+                    });
+                }, observerDelay);
             } else {
                 $progress = 100;
             }
@@ -364,7 +355,6 @@
             if ($shownAllInList) {
                 $shownAllInList = false;
             }
-            await tick();
             addLastAnimeObserver();
             let lastGridElementIdx = $finalAnimeList.length - 1;
             let lastGridElement =

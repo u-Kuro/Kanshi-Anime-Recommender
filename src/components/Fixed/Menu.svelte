@@ -20,7 +20,7 @@
     } from "../../js/globalValues.js";
     import { fade } from "svelte/transition";
     import { saveJSON } from "../../js/indexedDB.js";
-    import { importUserData } from "../../js/workerUtils.js";
+    import { animeLoader, importUserData } from "../../js/workerUtils.js";
     import {
         jsonIsEmpty,
         removeLocalStorage,
@@ -87,12 +87,13 @@
     }
     window.setExportPathAvailability = async (value = true) => {
         $exportPathIsAvailable = value;
-        setLocalStorage("exportPathIsAvailable", $exportPathIsAvailable).catch(
-            () => {
-                saveJSON($exportPathIsAvailable, "exportPathIsAvailable");
+        setLocalStorage("exportPathIsAvailable", value)
+            .catch(() => {
                 removeLocalStorage("exportPathIsAvailable");
-            },
-        );
+            })
+            .finally(() => {
+                saveJSON(value, "exportPathIsAvailable");
+            });
     };
 
     async function exportData() {
@@ -126,6 +127,13 @@
             )
         ) {
             $autoUpdate = !$autoUpdate;
+            setLocalStorage("autoUpdate", $autoUpdate)
+                .catch(() => {
+                    removeLocalStorage("autoUpdate");
+                })
+                .finally(() => {
+                    saveJSON($autoUpdate, "autoUpdate");
+                });
         }
     }
 
@@ -139,6 +147,13 @@
             )
         ) {
             $autoExport = !$autoExport;
+            setLocalStorage("autoExport", $autoExport)
+                .catch(() => {
+                    removeLocalStorage("autoExport");
+                })
+                .finally(() => {
+                    saveJSON($autoExport, "autoExport");
+                });
         }
     }
 
@@ -172,8 +187,7 @@
             $dataStatus = "Updating List";
             $menuVisible = false;
             $listUpdateAvailable = false;
-            await saveJSON(true, "shouldLoadNewAnime");
-            animeLoader({ hiddenEntries: $hiddenEntries })
+            animeLoader({ hiddenEntries: {} })
                 .then(async (data) => {
                     $animeLoaderWorker = data.animeLoaderWorker;
                     if (data?.isNew) {
@@ -186,13 +200,16 @@
                                 ),
                             );
                         }
-                        data?.finalAnimeList?.forEach?.((anime, idx) => {
-                            $newFinalAnime = {
-                                id: anime.id,
-                                idx: data.shownAnimeListCount + idx,
-                                finalAnimeList: anime,
-                            };
-                        });
+                        if (data?.finalAnimeList?.length > 0) {
+                            data?.finalAnimeList?.forEach?.((anime, idx) => {
+                                $newFinalAnime = {
+                                    idx: data.shownAnimeListCount + idx,
+                                    finalAnimeList: anime,
+                                };
+                            });
+                        } else {
+                            $finalAnimeList = [];
+                        }
                         $hiddenEntries = data.hiddenEntries || $hiddenEntries;
                     }
                     $dataStatus = null;
@@ -214,6 +231,13 @@
             })
         ) {
             $showStatus = !$showStatus;
+            setLocalStorage("showStatus", $showStatus)
+                .catch(() => {
+                    removeLocalStorage("showStatus");
+                })
+                .finally(() => {
+                    saveJSON($showStatus, "showStatus");
+                });
         }
     }
 

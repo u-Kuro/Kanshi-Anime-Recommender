@@ -43,7 +43,6 @@
 		importantUpdate,
 		updateRecommendationList,
 		loadAnime,
-		updateFilters,
 		animeOptionVisible,
 		runIsScrolling,
 		confirmPromise,
@@ -52,6 +51,7 @@
 		popupIsGoingBack,
 		dropdownIsVisible,
 		newFinalAnime,
+		showStatus,
 		// anilistAccessToken,
 	} from "./js/globalValues.js";
 	import {
@@ -85,25 +85,6 @@
 	);
 	let usernameInputEl, animeGridEl;
 
-	inject(); // Vercel Analytics
-
-	window.onload = () => {
-		window.dataLayer = window.dataLayer || [];
-		function gtag() {
-			dataLayer.push(arguments);
-		}
-		gtag("js", new Date());
-		if (window.location.origin === "https://kanshi.vercel.app") {
-			gtag("config", "G-F5E8XNQS20");
-		} else {
-			gtag("config", "G-PPMY92TJCE");
-		}
-	}; // Google Analytics
-
-	// For Youtube API
-	const onYouTubeIframeAPIReady = new Function();
-	window.onYouTubeIframeAPIReady = onYouTubeIframeAPIReady;
-
 	// Init Data
 	let initDataPromises = [];
 	$dataStatus = "Getting Existing Data";
@@ -132,10 +113,13 @@
 			(await retrieveJSON("gridFullView"));
 		if ($gridFullView == null) {
 			$gridFullView = false;
-			setLocalStorage("gridFullView", $gridFullView).catch(() => {
-				saveJSON($gridFullView, "gridFullView");
-				removeLocalStorage("gridFullView");
-			});
+			setLocalStorage("gridFullView", false)
+				.catch(() => {
+					removeLocalStorage("gridFullView");
+				})
+				.finally(() => {
+					saveJSON(false, "gridFullView");
+				});
 		}
 
 		await animeLoader({ loadInit: true })
@@ -151,13 +135,16 @@
 							),
 						);
 					}
-					data?.finalAnimeList?.forEach?.((anime, idx) => {
-						$newFinalAnime = {
-							id: anime.id,
-							idx: data.shownAnimeListCount + idx,
-							finalAnimeList: anime,
-						};
-					});
+					if (data?.finalAnimeList?.length > 0) {
+						data?.finalAnimeList?.forEach?.((anime, idx) => {
+							$newFinalAnime = {
+								idx: data.shownAnimeListCount + idx,
+								finalAnimeList: anime,
+							};
+						});
+					} else {
+						$finalAnimeList = [];
+					}
 				}
 				resolve();
 			})
@@ -175,16 +162,13 @@
 					(await retrieveJSON("exportPathIsAvailable"));
 				if ($exportPathIsAvailable == null) {
 					$exportPathIsAvailable = false;
-					setLocalStorage(
-						"exportPathIsAvailable",
-						$exportPathIsAvailable,
-					).catch(() => {
-						saveJSON(
-							$exportPathIsAvailable,
-							"exportPathIsAvailable",
-						);
-						removeLocalStorage("exportPathIsAvailable");
-					});
+					setLocalStorage("exportPathIsAvailable", false)
+						.catch(() => {
+							removeLocalStorage("exportPathIsAvailable");
+						})
+						.finally(() => {
+							saveJSON(false, "exportPathIsAvailable");
+						});
 				}
 			}
 		})();
@@ -338,31 +322,61 @@
 					if (!isJsonObject($hiddenEntries)) {
 						$hiddenEntries = await retrieveJSON("hiddenEntries");
 					}
-					$autoPlay = $autoPlay ?? (await retrieveJSON("autoPlay"));
+					$autoPlay =
+						$autoPlay ??
+						getLocalStorage("autoPlay") ??
+						(await retrieveJSON("autoPlay"));
 					if ($autoPlay == null) {
 						$autoPlay = false;
-						setLocalStorage("autoPlay", $autoPlay).catch(() => {
-							saveJSON($autoPlay, "autoPlay");
-							removeLocalStorage("autoPlay");
-						});
+						setLocalStorage("autoPlay", false)
+							.catch(() => {
+								removeLocalStorage("autoPlay");
+							})
+							.finally(() => {
+								saveJSON(false, "autoPlay");
+							});
 					}
 					$autoUpdate =
-						$autoUpdate ?? (await retrieveJSON("autoUpdate"));
-					if (!$autoUpdate) {
+						$autoUpdate ??
+						getLocalStorage("autoUpdate") ??
+						(await retrieveJSON("autoUpdate"));
+					if ($autoUpdate == null) {
 						$autoUpdate = false;
-						setLocalStorage("autoUpdate", $autoUpdate).catch(() => {
-							saveJSON($autoUpdate, "autoUpdate");
-							removeLocalStorage("autoUpdate");
-						});
+						setLocalStorage("autoUpdate", false)
+							.catch(() => {
+								removeLocalStorage("autoUpdate");
+							})
+							.finally(() => {
+								saveJSON(false, "autoUpdate");
+							});
 					}
 					$autoExport =
-						$autoExport ?? (await retrieveJSON("autoExport"));
+						$autoExport ??
+						getLocalStorage("autoExport") ??
+						(await retrieveJSON("autoExport"));
 					if ($autoExport == null) {
 						$autoExport = false;
-						setLocalStorage("autoExport", $autoExport).catch(() => {
-							saveJSON($autoExport, "autoExport");
-							removeLocalStorage("autoExport");
-						});
+						setLocalStorage("autoExport", false)
+							.catch(() => {
+								removeLocalStorage("autoExport");
+							})
+							.finally(() => {
+								saveJSON(false, "autoExport");
+							});
+					}
+					$showStatus =
+						$showStatus ??
+						getLocalStorage("showStatus") ??
+						(await retrieveJSON("showStatus"));
+					if ($showStatus == null) {
+						$showStatus = true;
+						setLocalStorage("showStatus", true)
+							.catch(() => {
+								removeLocalStorage("showStatus");
+							})
+							.finally(() => {
+								saveJSON(true, "showStatus");
+							});
 					}
 				})();
 				// Get/Show List
@@ -383,9 +397,11 @@
 							.then(async () => {
 								resolve(false);
 							})
-							.catch(initFailed);
+							.catch(() => {
+								resolve(true);
+							});
 					} else {
-						resolve(true);
+						resolve();
 					}
 				}).then(async (shouldLoadAnime) => {
 					if (!shouldLoadAnime) {
@@ -415,21 +431,25 @@
 												),
 											);
 									}
-									data?.finalAnimeList?.forEach?.(
-										(anime, idx) => {
-											$newFinalAnime = {
-												id: anime.id,
-												idx:
-													data.shownAnimeListCount +
-													idx,
-												finalAnimeList: anime,
-											};
-										},
-									);
+									if (data?.finalAnimeList?.length > 0) {
+										data?.finalAnimeList?.forEach?.(
+											(anime, idx) => {
+												$newFinalAnime = {
+													idx:
+														data.shownAnimeListCount +
+														idx,
+													finalAnimeList: anime,
+												};
+											},
+										);
+									} else {
+										$finalAnimeList = [];
+									}
 									$hiddenEntries =
 										data.hiddenEntries || $hiddenEntries;
 									$dataStatus = null;
 									checkAutoFunctions(true);
+									loadAnalytics();
 								}
 								return;
 							})
@@ -437,6 +457,7 @@
 					} else {
 						$dataStatus = null;
 						checkAutoFunctions(true);
+						loadAnalytics();
 					}
 				});
 			})
@@ -461,6 +482,7 @@
 		}
 		$initData = false;
 		console.error(error);
+		loadAnalytics();
 	}
 
 	// function getAnilistAccessTokenFromURL() {
@@ -471,28 +493,7 @@
 	async function checkAutoFunctions(initCheck = false) {
 		// auto Update
 		if (initCheck) {
-			$lastRunnedAutoUpdateDate = await retrieveJSON(
-				"lastRunnedAutoUpdateDate",
-			);
-			$lastRunnedAutoExportDate = await retrieveJSON(
-				"lastRunnedAutoExportDate",
-			);
-			$userRequestIsRunning = true;
-			requestUserEntries()
-				.then(() => {
-					$userRequestIsRunning = false;
-					requestAnimeEntries().finally(() => {
-						checkAutoExportOnLoad();
-					});
-				})
-				.catch((error) => {
-					checkAutoExportOnLoad();
-					$userRequestIsRunning = false;
-					$dataStatus = "Something went wrong";
-					console.error(error);
-				});
-		} else {
-			if (autoUpdateIsPastDate() && $autoUpdate) {
+			if (!$userRequestIsRunning) {
 				$userRequestIsRunning = true;
 				requestUserEntries()
 					.then(() => {
@@ -507,6 +508,34 @@
 						$dataStatus = "Something went wrong";
 						console.error(error);
 					});
+			} else {
+				requestAnimeEntries().finally(() => {
+					checkAutoExportOnLoad();
+				});
+			}
+		} else {
+			if (autoUpdateIsPastDate() && $autoUpdate) {
+				$userRequestIsRunning = true;
+				if (!$userRequestIsRunning) {
+					$userRequestIsRunning = true;
+					requestUserEntries()
+						.then(() => {
+							$userRequestIsRunning = false;
+							requestAnimeEntries().finally(() => {
+								checkAutoExportOnLoad();
+							});
+						})
+						.catch((error) => {
+							checkAutoExportOnLoad();
+							$userRequestIsRunning = false;
+							$dataStatus = "Something went wrong";
+							console.error(error);
+						});
+				} else {
+					requestAnimeEntries().finally(() => {
+						checkAutoExportOnLoad();
+					});
+				}
 			} else {
 				checkAutoExportOnLoad();
 			}
@@ -548,13 +577,16 @@
 							),
 						);
 					}
-					data?.finalAnimeList?.forEach?.((anime, idx) => {
-						$newFinalAnime = {
-							id: anime.id,
-							idx: data.shownAnimeListCount + idx,
-							finalAnimeList: anime,
-						};
-					});
+					if (data?.finalAnimeList?.length > 0) {
+						data?.finalAnimeList?.forEach?.((anime, idx) => {
+							$newFinalAnime = {
+								idx: data.shownAnimeListCount + idx,
+								finalAnimeList: anime,
+							};
+						});
+					} else {
+						$finalAnimeList = [];
+					}
 					$hiddenEntries = data.hiddenEntries || $hiddenEntries;
 				}
 				$dataStatus = null;
@@ -570,7 +602,6 @@
 		$listUpdateAvailable = false;
 		processRecommendedAnimeList()
 			.then(async () => {
-				updateFilters.update((e) => !e);
 				importantLoad.update((e) => !e);
 			})
 			.catch((error) => {
@@ -583,7 +614,6 @@
 		await saveJSON(true, "shouldProcessRecommendation");
 		processRecommendedAnimeList()
 			.then(async () => {
-				updateFilters.update((e) => !e);
 				loadAnime.update((e) => !e);
 			})
 			.catch((error) => {
@@ -621,13 +651,16 @@
 								),
 							);
 						}
-						data?.finalAnimeList?.forEach?.((anime, idx) => {
-							$newFinalAnime = {
-								id: anime.id,
-								idx: data.shownAnimeListCount + idx,
-								finalAnimeList: anime,
-							};
-						});
+						if (data?.finalAnimeList?.length > 0) {
+							data?.finalAnimeList?.forEach?.((anime, idx) => {
+								$newFinalAnime = {
+									idx: data.shownAnimeListCount + idx,
+									finalAnimeList: anime,
+								};
+							});
+						} else {
+							$finalAnimeList = [];
+						}
 						$hiddenEntries = data.hiddenEntries || $hiddenEntries;
 					}
 					$dataStatus = null;
@@ -637,10 +670,6 @@
 					console.error(error);
 				});
 		}
-	});
-	updateFilters.subscribe(async (val) => {
-		if (typeof val !== "boolean" || $initData) return;
-		getFilterOptions();
 	});
 	let hourINMS = 60 * 60 * 1000;
 	autoUpdate.subscribe(async (val) => {
@@ -680,8 +709,11 @@
 			saveJSON(false, "autoUpdate");
 		}
 	});
-	function autoUpdateIsPastDate() {
+	async function autoUpdateIsPastDate() {
 		let isPastDate = false;
+		$lastRunnedAutoUpdateDate = await retrieveJSON(
+			"lastRunnedAutoUpdateDate",
+		);
 		if (!$lastRunnedAutoUpdateDate) isPastDate = true;
 		else if (
 			$lastRunnedAutoUpdateDate instanceof Date &&
@@ -698,17 +730,21 @@
 	}
 	runUpdate.subscribe((val) => {
 		if (typeof val !== "boolean" || $initData || !navigator.onLine) return;
-		$userRequestIsRunning = true;
-		requestUserEntries()
-			.then(() => {
-				$userRequestIsRunning = false;
-				requestAnimeEntries();
-			})
-			.catch((error) => {
-				$userRequestIsRunning = false;
-				$dataStatus = "Something went wrong";
-				console.error(error);
-			});
+		if (!$userRequestIsRunning) {
+			$userRequestIsRunning = true;
+			requestUserEntries()
+				.then(() => {
+					$userRequestIsRunning = false;
+					requestAnimeEntries();
+				})
+				.catch((error) => {
+					$userRequestIsRunning = false;
+					$dataStatus = "Something went wrong";
+					console.error(error);
+				});
+		} else {
+			requestAnimeEntries();
+		}
 	});
 	autoExport.subscribe(async (val) => {
 		if (val === true) {
@@ -746,9 +782,12 @@
 			saveJSON(false, "autoExport");
 		}
 	});
-	function autoExportIsPastDate() {
+	async function autoExportIsPastDate() {
 		// Check Run First
 		let isPastDate = false;
+		$lastRunnedAutoExportDate = await retrieveJSON(
+			"lastRunnedAutoExportDate",
+		);
 		if (!$lastRunnedAutoExportDate) isPastDate = true;
 		else if (
 			$lastRunnedAutoExportDate instanceof Date &&
@@ -772,8 +811,8 @@
 	};
 	runIsScrolling.subscribe((val) => {
 		if (typeof val !== "boolean") return;
-		if (!$isScrolling) $isScrolling = true;
-		if ($scrollingTimeout) clearTimeout($scrollingTimeout);
+		$isScrolling = true;
+		clearTimeout($scrollingTimeout);
 		$scrollingTimeout = setTimeout(() => {
 			$isScrolling = false;
 		}, 500);
@@ -1144,13 +1183,16 @@
 							),
 						);
 					}
-					data?.finalAnimeList?.forEach?.((anime, idx) => {
-						$newFinalAnime = {
-							id: anime.id,
-							idx: data.shownAnimeListCount + idx,
-							finalAnimeList: anime,
-						};
-					});
+					if (data?.finalAnimeList?.length > 0) {
+						data?.finalAnimeList?.forEach?.((anime, idx) => {
+							$newFinalAnime = {
+								idx: data.shownAnimeListCount + idx,
+								finalAnimeList: anime,
+							};
+						});
+					} else {
+						$finalAnimeList = [];
+					}
 					$hiddenEntries = data.hiddenEntries || $hiddenEntries;
 				}
 				$dataStatus = null;
@@ -1195,7 +1237,7 @@
 				if (_progress < 100 && _progress > 0) {
 					_progress = Math.max(val, _progress);
 				} else {
-					_progress = val
+					_progress = val;
 				}
 			});
 			progressChangeStart = performance.now();
@@ -1275,6 +1317,28 @@
 			}
 		});
 	});
+	function loadAnalytics() {
+		(async () => {
+			inject(); // Vercel Analytics
+
+			window.onload = () => {
+				window.dataLayer = window.dataLayer || [];
+				function gtag() {
+					dataLayer.push(arguments);
+				}
+				gtag("js", new Date());
+				if (window.location.origin === "https://kanshi.vercel.app") {
+					gtag("config", "G-F5E8XNQS20");
+				} else {
+					gtag("config", "G-PPMY92TJCE");
+				}
+			}; // Google Analytics
+
+			// For Youtube API
+			const onYouTubeIframeAPIReady = new Function();
+			window.onYouTubeIframeAPIReady = onYouTubeIframeAPIReady;
+		})();
+	}
 </script>
 
 <main
