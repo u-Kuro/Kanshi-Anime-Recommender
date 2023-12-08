@@ -320,7 +320,8 @@
 				$initData = false;
 				(async () => {
 					if (!isJsonObject($hiddenEntries)) {
-						$hiddenEntries = await retrieveJSON("hiddenEntries");
+						$hiddenEntries =
+							(await retrieveJSON("hiddenEntries")) || {};
 					}
 					$autoPlay =
 						$autoPlay ??
