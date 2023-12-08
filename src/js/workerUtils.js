@@ -639,7 +639,7 @@ const getExtraInfo = () => {
                 clearTimeout(getExtraInfoTimeout)
                 getExtraInfoWorker?.terminate?.()
                 getExtraInfoWorker = null
-                let extraInfoIndex
+                let thisExtraInfo, extraInfoIndex
                 if (!gotAround) {
                     extraInfoIndex = parseInt(get(currentExtraInfo))
                     if (isNaN(extraInfoIndex)) {
@@ -658,13 +658,17 @@ const getExtraInfo = () => {
                         nextInfoCheck = 0
                     }
                     extraInfoIndex = nextInfoCheck
+                    thisExtraInfo = get(extraInfo) || {}
+                    if (thisExtraInfo?.[extraInfoIndex]) {
+                        currentExtraInfo.set(extraInfoIndex)
+                    }
                 }
                 getExtraInfoWorker = new Worker(url)
                 getExtraInfoWorker.postMessage({ number: extraInfoIndex })
                 getExtraInfoWorker.onmessage = ({ data }) => {
                     clearTimeout(getExtraInfoTimeout)
                     if (typeof data?.message === "string" && data?.key != null) {
-                        let thisExtraInfo = get(extraInfo) || {}
+                        thisExtraInfo = thisExtraInfo || get(extraInfo) || {}
                         thisExtraInfo[data.key] = data?.message
                         extraInfo.set(thisExtraInfo)
                         currentExtraInfo.set(data.key)
