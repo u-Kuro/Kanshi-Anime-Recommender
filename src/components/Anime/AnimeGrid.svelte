@@ -53,7 +53,6 @@
     let animeGridEl;
     let isRunningIntersectEvent;
     let numberOfLoadedGrid = 1;
-    let observerDelay = 100;
 
     function addLastAnimeObserver() {
         $animeObserver?.disconnect?.();
@@ -61,12 +60,11 @@
         isRunningIntersectEvent = false;
         $animeObserver = new IntersectionObserver(
             (entries) => {
-                if ($shownAllInList) return;
                 entries.forEach((entry) => {
                     if (entry.isIntersecting) {
                         if (isRunningIntersectEvent) return;
                         isRunningIntersectEvent = true;
-                        setTimeout(() => {
+                        requestAnimationFrame(() => {
                             if ($animeLoaderWorker instanceof Worker) {
                                 $checkAnimeLoaderStatus().then(() => {
                                     $animeLoaderWorker?.postMessage?.({
@@ -75,7 +73,7 @@
                                 });
                             }
                             isRunningIntersectEvent = false;
-                        }, observerDelay);
+                        });
                     }
                 });
             },
@@ -85,11 +83,6 @@
                 threshold: [0, 1],
             },
         );
-        Array.from(
-            document.querySelectorAll(".image-grid__card.dummy") || [],
-        ).forEach((entry) => {
-            $animeObserver.observe(entry);
-        });
     }
 
     let errorCountMult = 5;
@@ -220,11 +213,9 @@
                                     },
                                 );
                             }
-                            if (data.isLast) {
-                                $shownAllInList = true;
-                                $animeObserver?.disconnect?.();
-                                $animeObserver = null;
-                            }
+                        }
+                        if (data.isLast) {
+                            $shownAllInList = true;
                         }
                     }
                     val?.postMessage?.({
@@ -298,12 +289,21 @@
             typeof val?.finalAnimeList?.id === "number" &&
             typeof val?.idx === "number"
         ) {
+            if ($shownAllInList && val.idx === 0) {
+                $shownAllInList = false;
+            }
             if ($finalAnimeList instanceof Array) {
                 if (
                     $finalAnimeList?.[val.idx] &&
                     Math.abs($finalAnimeList?.[val.idx]?.id) ===
                         val?.finalAnimeList?.id
                 ) {
+                    $finalAnimeList = $finalAnimeList?.filter?.(
+                        (anime, idx) => {
+                            if (idx === val.idx) return true;
+                            return anime.id !== val?.finalAnimeList?.id;
+                        },
+                    );
                     $finalAnimeList[val.idx] = val.finalAnimeList;
                 } else {
                     $finalAnimeList = $finalAnimeList?.map?.((anime) => {
@@ -311,6 +311,9 @@
                             anime.id = -anime.id;
                         }
                         return anime;
+                    });
+                    $finalAnimeList = $finalAnimeList?.filter?.((anime) => {
+                        return anime.id !== val?.finalAnimeList?.id;
                     });
                     if (val.idx < $finalAnimeList?.length) {
                         $finalAnimeList[val.idx] = val.finalAnimeList;
@@ -324,25 +327,29 @@
             }
             if (
                 val?.idx < shownFinalAnimeListCount - 1 ||
-                shownFinalAnimeListCount <= 0
+                shownFinalAnimeListCount <= 1
             ) {
-                lessenItemTimeout = setTimeout(() => {
+                cancelAnimationFrame(lessenItemTimeout);
+                lessenItemTimeout = requestAnimationFrame(() => {
                     $finalAnimeList = $finalAnimeList?.slice?.(
                         0,
                         window.getLastShownFinalAnimeLength() || 0,
                     );
-                }, observerDelay);
+                });
                 if (isRunningIntersectEvent) return;
-                $progress = (val?.idx / (shownFinalAnimeListCount - 1)) * 100;
+                $progress = Math.min(
+                    (val?.idx / (shownFinalAnimeListCount - 1)) * 100,
+                    100,
+                );
                 isRunningIntersectEvent = true;
-                setTimeout(() => {
+                requestAnimationFrame(() => {
                     $checkAnimeLoaderStatus().then(() => {
                         $animeLoaderWorker?.postMessage?.({
                             loadMore: true,
                         });
                         isRunningIntersectEvent = false;
                     });
-                }, observerDelay);
+                });
             } else {
                 $progress = 100;
             }
@@ -352,9 +359,6 @@
     finalAnimeList.subscribe(async (val) => {
         if (val instanceof Array && val.length) {
             shownFinalAnimeListCount = val.length;
-            if ($shownAllInList) {
-                $shownAllInList = false;
-            }
             addLastAnimeObserver();
             let lastGridElementIdx = $finalAnimeList.length - 1;
             let lastGridElement =
@@ -380,10 +384,6 @@
             }
         } else {
             shownFinalAnimeListCount = 0;
-            if ($animeObserver) {
-                $animeObserver?.disconnect?.();
-                $animeObserver = null;
-            }
             if (isAsyncLoad) {
                 $asyncAnimeReloaded = !$asyncAnimeReloaded;
                 isAsyncLoad = false;
@@ -397,7 +397,6 @@
                 setLocalStorage("searchedAnimeKeyword", val).catch(() => {
                     removeLocalStorage("searchedAnimeKeyword");
                 });
-                $shownAllInList = false;
                 $checkAnimeLoaderStatus().then(() => {
                     $animeLoaderWorker?.postMessage?.({
                         filterKeyword: val,

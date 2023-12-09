@@ -40,10 +40,6 @@ let shouldUpdateNotifications = false
 
 // Reactinve Functions
 let animeLoaderWorker;
-let reloadedFilterKeyword = ""
-searchedAnimeKeyword.subscribe((val) => {
-    reloadedFilterKeyword = val || ""
-})
 const animeLoader = (_data = {}) => {
     return new Promise((resolve, reject) => {
         if (animeLoaderWorker) {
@@ -76,7 +72,7 @@ const animeLoader = (_data = {}) => {
                 }
                 isLoadingAnime.set(true)
                 animeLoaderWorker = new Worker(url)
-                _data.reloadedFilterKeyword = reloadedFilterKeyword
+                _data.reloadedFilterKeyword = get(searchedAnimeKeyword) || ""
                 animeLoaderWorker.postMessage(_data)
                 animeLoaderWorker.onmessage = ({ data }) => {
                     if (data?.hasOwnProperty("progress")) {
