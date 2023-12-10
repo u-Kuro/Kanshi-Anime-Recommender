@@ -1,1 +1,0 @@
-self.addEventListener("install",(e=>{})),self.addEventListener("fetch",(e=>e.respondWith(fetch(e.request).catch((e=>new Response("",{status:500,statusText:"Internal Server Error"}))))));

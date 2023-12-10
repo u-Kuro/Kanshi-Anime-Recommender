@@ -1298,7 +1298,9 @@
 	});
 	function loadAnalytics() {
 		(async () => {
-			inject?.(); // Vercel Analytics
+			if (window?.location?.origin === "https://kanshi.vercel.app") {
+				inject?.(); // Vercel Analytics
+			}
 			window.onload = () => {
 				window.dataLayer = window.dataLayer || [];
 				function gtag() {
