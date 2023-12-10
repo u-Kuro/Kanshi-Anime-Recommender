@@ -1,1 +1,1 @@
-self.addEventListener("install",e=>{}),self.addEventListener("fetch",e=>e.respondWith(fetch(e.request)))
+self.addEventListener("install",e=>{}),self.addEventListener("fetch",e=>e.request.url!==self.location.href&&e.respondWith(fetch(e.request)))
