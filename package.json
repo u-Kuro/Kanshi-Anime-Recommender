@@ -19,7 +19,7 @@
     "svelte": "^3.55.0"
   },
   "dependencies": {
-    "@vercel/analytics": "^1.0.1",
+    "@vercel/analytics": "^1.1.1",
     "sirv-cli": "^2.0.0"
   },
   "description": "<p align=\"center\">\r   <img src=\"https://i.imgur.com/6duwbXo.png\" height=\"100px;\" width=\"100px;\" />\r   <h2 align=\"center\">Kanshi.</h2>\r </p>\r This app is designed to provide anime recommendations based on your personal ratings of anime shows on Anilist. It uses an algorithm to analyze your ratings and suggest other anime shows that you may enjoy. If you're having trouble deciding what to watch next, this app can help you discover new anime that match your preferences.",

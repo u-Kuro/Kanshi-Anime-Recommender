@@ -3,7 +3,6 @@
 	import C from "./components/index.js";
 	import { onMount, tick } from "svelte";
 	import { fade } from "svelte/transition";
-	import { inject } from "@vercel/analytics";
 	import { retrieveJSON, saveJSON } from "./js/indexedDB.js";
 	import {
 		appID,
@@ -1298,10 +1297,6 @@
 	});
 	function loadAnalytics() {
 		(async () => {
-			if (window.location.origin === "https://kanshi.vercel.app") {
-				inject(); // Vercel Analytics
-			}
-
 			window.onload = () => {
 				window.dataLayer = window.dataLayer || [];
 				function gtag() {
