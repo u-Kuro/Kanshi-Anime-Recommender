@@ -310,37 +310,46 @@
         startY,
         endY,
         yThreshold = 48;
-    window.addEventListener("touchstart", (event) => {
-        if (
-            touchID != null ||
-            (event?.target?.classList?.contains?.("custom-filter") ?? true)
-        ) {
-            return;
-        }
-        startY = event.touches[0].clientY;
-        touchID = event.touches[0].identifier;
-    });
 
-    window.addEventListener("touchmove", (event) => {
-        if (touchID == null) return;
-        endY = Array.from(event.changedTouches)?.find(
-            (touch) => touch.identifier === touchID,
-        )?.clientY;
-        if (typeof endY === "number") {
-            let deltaY = endY - startY;
-            let newCustomFilOpacity = Math.min(
-                Math.abs(deltaY / yThreshold),
-                1,
-            );
-            if (!customFiltersNavVisible && deltaY > 0) {
-                customFilNavIsAnimating = true;
-                customFilOpacity = newCustomFilOpacity;
-            } else if (customFiltersNavVisible && deltaY < 0) {
-                customFilNavIsAnimating = true;
-                customFilOpacity = 1 - newCustomFilOpacity;
+    window.addEventListener(
+        "touchstart",
+        (event) => {
+            if (
+                touchID != null ||
+                (event?.target?.classList?.contains?.("custom-filter") ?? true)
+            ) {
+                return;
             }
-        }
-    });
+            startY = event.touches[0].clientY;
+            touchID = event.touches[0].identifier;
+        },
+        { passive: true },
+    );
+
+    window.addEventListener(
+        "touchmove",
+        (event) => {
+            if (touchID == null) return;
+            endY = Array.from(event.changedTouches)?.find(
+                (touch) => touch.identifier === touchID,
+            )?.clientY;
+            if (typeof endY === "number") {
+                let deltaY = endY - startY;
+                let newCustomFilOpacity = Math.min(
+                    Math.abs(deltaY / yThreshold),
+                    1,
+                );
+                if (!customFiltersNavVisible && deltaY > 0) {
+                    customFilNavIsAnimating = true;
+                    customFilOpacity = newCustomFilOpacity;
+                } else if (customFiltersNavVisible && deltaY < 0) {
+                    customFilNavIsAnimating = true;
+                    customFilOpacity = 1 - newCustomFilOpacity;
+                }
+            }
+        },
+        { passive: true },
+    );
     window.showCustomFilter = () => {
         customFilterNavVisibility(true);
     };
@@ -352,8 +361,8 @@
             }
         });
     }
-    window.addEventListener("touchend", touchedUp);
-    window.addEventListener("touchcancel", touchedUp);
+    window.addEventListener("touchend", touchedUp, { passive: true });
+    window.addEventListener("touchcancel", touchedUp, { passive: true });
     window.addEventListener("resize", () => {
         windowWidth = Math.max(
             document?.documentElement?.getBoundingClientRect?.()?.width,
@@ -411,7 +420,7 @@
         class={"nav" +
             ($hasWheel ? " hasWheel" : "") +
             (shouldScrollSnap && $android ? " android" : "")}
-        on:wheel={(e) => {
+        on:wheel|passive={(e) => {
             horizontalWheel(e, "nav");
         }}
     >

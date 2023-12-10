@@ -1,7 +1,11 @@
-const version = 248;
+const version = 249;
 export default async function getWebVersion() {
     try {
-        let path = window.location.pathname;
+        let location = window.location
+        if (location.protocol.includes("file")) {
+            return version
+        }
+        let path = location.pathname;
         path = path.endsWith('/') ? path : path + '/'
         path = path.includes('/index.html') ? path.replace('/index.html', '') : path
         let response = await fetch(`${path}version.json`, {

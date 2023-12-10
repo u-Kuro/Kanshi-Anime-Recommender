@@ -126,13 +126,10 @@
 			.then(async (data) => {
 				$animeLoaderWorker = data.animeLoaderWorker;
 				if (data?.isNew) {
-					if ($finalAnimeList instanceof Array) {
+					if ($finalAnimeList?.length > data?.finalAnimeListCount) {
 						$finalAnimeList = $finalAnimeList?.slice?.(
 							0,
-							Math.min(
-								window.getLastShownFinalAnimeLength() || 0,
-								data.finalAnimeListCount,
-							),
+							data.finalAnimeListCount,
 						);
 					}
 					if (data?.finalAnimeList?.length > 0) {
@@ -421,15 +418,14 @@
 							.then(async (data) => {
 								$animeLoaderWorker = data.animeLoaderWorker;
 								if (data?.isNew) {
-									if ($finalAnimeList instanceof Array) {
+									if (
+										$finalAnimeList?.length >
+										data?.finalAnimeListCount
+									) {
 										$finalAnimeList =
 											$finalAnimeList?.slice?.(
 												0,
-												Math.min(
-													window.getLastShownFinalAnimeLength() ||
-														0,
-													data.finalAnimeListCount,
-												),
+												data.finalAnimeListCount,
 											);
 									}
 									if (data?.finalAnimeList?.length > 0) {
@@ -569,13 +565,10 @@
 			.then(async (data) => {
 				$animeLoaderWorker = data.animeLoaderWorker;
 				if (data?.isNew) {
-					if ($finalAnimeList instanceof Array) {
+					if ($finalAnimeList?.length > data?.finalAnimeListCount) {
 						$finalAnimeList = $finalAnimeList?.slice?.(
 							0,
-							Math.min(
-								window.getLastShownFinalAnimeLength() || 0,
-								data.finalAnimeListCount,
-							),
+							data.finalAnimeListCount,
 						);
 					}
 					if (data?.finalAnimeList?.length > 0) {
@@ -643,13 +636,12 @@
 				.then(async (data) => {
 					$animeLoaderWorker = data.animeLoaderWorker;
 					if (data?.isNew) {
-						if ($finalAnimeList instanceof Array) {
+						if (
+							$finalAnimeList?.length > data?.finalAnimeListCount
+						) {
 							$finalAnimeList = $finalAnimeList?.slice?.(
 								0,
-								Math.min(
-									window.getLastShownFinalAnimeLength() || 0,
-									data.finalAnimeListCount,
-								),
+								data.finalAnimeListCount,
 							);
 						}
 						if (data?.finalAnimeList?.length > 0) {
@@ -991,22 +983,17 @@
 	});
 	let isBelowNav = false;
 	let updateIconIsManual = false;
-	window.addEventListener(
-		"scroll",
-		() => {
-			let shouldUpdate =
-				animeGridEl?.getBoundingClientRect?.()?.top > 0 &&
-				!$popupVisible;
-			if ($listUpdateAvailable && shouldUpdate) {
-				updateList();
-			}
-			isBelowNav = document.documentElement.scrollTop > 47;
-			if (animeGridEl?.getBoundingClientRect?.()?.top < 0 && !willExit)
-				window.setShouldGoBack(false);
-			runIsScrolling.update((e) => !e);
-		},
-		{ passive: true },
-	);
+	window.addEventListener("scroll", () => {
+		let shouldUpdate =
+			animeGridEl?.getBoundingClientRect?.()?.top > 0 && !$popupVisible;
+		if ($listUpdateAvailable && shouldUpdate) {
+			updateList();
+		}
+		isBelowNav = document.documentElement.scrollTop > 47;
+		if (animeGridEl?.getBoundingClientRect?.()?.top < 0 && !willExit)
+			window.setShouldGoBack(false);
+		runIsScrolling.update((e) => !e);
+	});
 
 	window.setShouldGoBack = (_shouldGoBack) => {
 		if (!_shouldGoBack) willExit = false;
@@ -1175,13 +1162,10 @@
 			.then(async (data) => {
 				$animeLoaderWorker = data.animeLoaderWorker;
 				if (data?.isNew) {
-					if ($finalAnimeList instanceof Array) {
+					if ($finalAnimeList?.length > data?.finalAnimeListCount) {
 						$finalAnimeList = $finalAnimeList?.slice?.(
 							0,
-							Math.min(
-								window.getLastShownFinalAnimeLength() || 0,
-								data.finalAnimeListCount,
-							),
+							data.finalAnimeListCount,
 						);
 					}
 					if (data?.finalAnimeList?.length > 0) {
@@ -1269,25 +1253,19 @@
 	onMount(() => {
 		usernameInputEl = document.getElementById("usernameInput");
 		animeGridEl = document.getElementById("anime-grid");
-		animeGridEl?.addEventListener(
-			"scroll",
-			() => {
-				updateIconIsManual =
-					animeGridEl?.getBoundingClientRect?.()?.top < 0;
-				if (animeGridEl.scrollLeft > 500 && !willExit)
-					window.setShouldGoBack(false);
-				if (!$gridFullView) return;
+		animeGridEl?.addEventListener("scroll", () => {
+			updateIconIsManual =
+				animeGridEl?.getBoundingClientRect?.()?.top < 0;
+			if (animeGridEl.scrollLeft > 500 && !willExit)
+				window.setShouldGoBack(false);
+			if (!$gridFullView) return;
+			runIsScrolling.update((e) => !e);
+		});
+		document
+			.getElementById("popup-container")
+			.addEventListener("scroll", () => {
 				runIsScrolling.update((e) => !e);
-			},
-			{ passive: true },
-		);
-		document.getElementById("popup-container").addEventListener(
-			"scroll",
-			() => {
-				runIsScrolling.update((e) => !e);
-			},
-			{ passive: true },
-		);
+			});
 		windowWidth = Math.max(
 			document?.documentElement?.getBoundingClientRect?.()?.width,
 			window.visualViewport.width,
@@ -1320,7 +1298,9 @@
 	});
 	function loadAnalytics() {
 		(async () => {
-			inject(); // Vercel Analytics
+			if (window.location.origin === "https://kanshi.vercel.app") {
+				inject(); // Vercel Analytics
+			}
 
 			window.onload = () => {
 				window.dataLayer = window.dataLayer || [];

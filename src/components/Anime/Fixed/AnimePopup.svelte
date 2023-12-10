@@ -891,13 +891,12 @@
                     $listUpdateAvailable = false;
                     $animeLoaderWorker = data.animeLoaderWorker;
                     if (data?.isNew) {
-                        if ($finalAnimeList instanceof Array) {
+                        if (
+                            $finalAnimeList?.length > data?.finalAnimeListCount
+                        ) {
                             $finalAnimeList = $finalAnimeList?.slice?.(
                                 0,
-                                Math.min(
-                                    window.getLastShownFinalAnimeLength() || 0,
-                                    data.finalAnimeListCount,
-                                ),
+                                data.finalAnimeListCount,
                             );
                         }
                         if (data?.finalAnimeList?.length > 0) {

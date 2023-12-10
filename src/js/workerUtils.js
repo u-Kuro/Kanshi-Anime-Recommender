@@ -49,10 +49,7 @@ const animeLoader = (_data = {}) => {
         finalAnimeList.update((e) => e?.map?.((anime) => {
             anime.isLoading = true;
             return anime;
-        })?.slice?.(
-            0,
-            window.getLastShownFinalAnimeLength() || 0,
-        ));
+        }));
         dataStatusPrio = true
         progress.set(0)
         cacheRequest("./webapi/worker/animeLoader.js")
@@ -101,7 +98,8 @@ const animeLoader = (_data = {}) => {
                         listUpdateAvailable.set(false)
                         loadingFilterOptions.set(false)
                         progress.set(100)
-                        resolve(Object.assign({}, data, { animeLoaderWorker: animeLoaderWorker }))
+                        data.animeLoaderWorker = animeLoaderWorker
+                        resolve(data)
                     }
                 }
                 animeLoaderWorker.onerror = (error) => {

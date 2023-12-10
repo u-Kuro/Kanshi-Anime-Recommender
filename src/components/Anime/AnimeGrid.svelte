@@ -31,8 +31,6 @@
         getLocalStorage,
         setLocalStorage,
         removeLocalStorage,
-        getLastVisibleElement,
-        getChildIndex,
     } from "../../js/others/helper.js";
     import { fade } from "svelte/transition";
     import { cacheImage } from "../../js/caching.js";
@@ -52,7 +50,10 @@
     let shownFinalAnimeListCount = 0;
     let animeGridEl;
     let isRunningIntersectEvent;
-    let numberOfLoadedGrid = 1;
+    let numberOfPageLoadedGrid = Math.max(
+        5,
+        ((windowHeight - 239) / 250.525) * 5,
+    );
 
     function addLastAnimeObserver() {
         $animeObserver?.disconnect?.();
@@ -162,13 +163,12 @@
                 } else if (data.finalAnimeList instanceof Array) {
                     if (data?.reload === true) {
                         isAsyncLoad = true;
-                        if ($finalAnimeList instanceof Array) {
+                        if (
+                            $finalAnimeList?.length > data?.finalAnimeListCount
+                        ) {
                             $finalAnimeList = $finalAnimeList?.slice?.(
                                 0,
-                                Math.min(
-                                    window.getLastShownFinalAnimeLength() || 0,
-                                    data.finalAnimeListCount,
-                                ),
+                                data.finalAnimeListCount,
                             );
                         }
                         if (data?.finalAnimeList?.length > 0) {
@@ -182,13 +182,12 @@
                             $finalAnimeList = [];
                         }
                     } else if (data.isNew === true) {
-                        if ($finalAnimeList instanceof Array) {
+                        if (
+                            $finalAnimeList?.length > data?.finalAnimeListCount
+                        ) {
                             $finalAnimeList = $finalAnimeList?.slice?.(
                                 0,
-                                Math.min(
-                                    window.getLastShownFinalAnimeLength() || 0,
-                                    data.finalAnimeListCount,
-                                ),
+                                data.finalAnimeListCount,
                             );
                         }
                         if (data?.finalAnimeList?.length > 0) {
@@ -260,30 +259,6 @@
         }
     });
 
-    window.getLastShownFinalAnimeLength = () => {
-        animeGridEl = animeGridEl || document.getElementById("anime-grid");
-        let popupContainerEl = document.getElementById("popup-container");
-        let lastVisiblePopup = getLastVisibleElement(
-            ".popup-content",
-            popupContainerEl,
-        );
-        let lastVisibleGrid = getLastVisibleElement(
-            ".image-grid__card",
-            animeGridEl,
-        );
-        let lastVisiblePopupIdx = getChildIndex(lastVisiblePopup);
-        let lastVisibleGridIdx = getChildIndex(lastVisibleGrid);
-        if (lastVisibleGridIdx == null && lastVisiblePopupIdx == null) {
-            return $finalAnimeList.length || 0;
-        } else {
-            return Math.max(
-                lastVisiblePopupIdx ? lastVisiblePopupIdx + 1 : 0,
-                lastVisibleGridIdx ? lastVisibleGridIdx + 1 : 0,
-            );
-        }
-    };
-
-    let lessenItemTimeout;
     newFinalAnime.subscribe(async (val) => {
         if (
             typeof val?.finalAnimeList?.id === "number" &&
@@ -329,13 +304,6 @@
                 val?.idx < shownFinalAnimeListCount - 1 ||
                 shownFinalAnimeListCount <= 1
             ) {
-                cancelAnimationFrame(lessenItemTimeout);
-                lessenItemTimeout = requestAnimationFrame(() => {
-                    $finalAnimeList = $finalAnimeList?.slice?.(
-                        0,
-                        window.getLastShownFinalAnimeLength() || 0,
-                    );
-                });
                 if (isRunningIntersectEvent) return;
                 $progress = Math.min(
                     (val?.idx / (shownFinalAnimeListCount - 1)) * 100,
@@ -365,7 +333,7 @@
                 $finalAnimeList[lastGridElementIdx].gridElement ||
                 animeGridEl.children?.[lastGridElementIdx];
             if ($animeObserver instanceof IntersectionObserver) {
-                if ($finalAnimeList.length >= 11) {
+                if (!$initData && $finalAnimeList.length >= 11) {
                     let prevGridElementIdx = $finalAnimeList.length - 11;
                     let prevGridElement =
                         $finalAnimeList[prevGridElementIdx].gridElement ||
@@ -503,21 +471,17 @@
         afterFullGrid &&
         (currentLeftScroll < lastLeftScroll || windowWidth > 596.5);
 
-    window.addEventListener(
-        "scroll",
-        () => {
-            isWholeGridSeen =
-                isFullViewed &&
-                windowHeight >
-                    animeGridEl?.getBoundingClientRect?.()?.bottom + 10 + 57;
-            if (animeGridEl?.getBoundingClientRect?.()?.top < 0) {
-                belowGrid = true;
-            } else {
-                belowGrid = false;
-            }
-        },
-        { passive: true },
-    );
+    window.addEventListener("scroll", () => {
+        isWholeGridSeen =
+            isFullViewed &&
+            windowHeight >
+                animeGridEl?.getBoundingClientRect?.()?.bottom + 10 + 57;
+        if (animeGridEl?.getBoundingClientRect?.()?.top < 0) {
+            belowGrid = true;
+        } else {
+            belowGrid = false;
+        }
+    });
 
     let filterOptiChangeTimeout;
     showFilterOptions.subscribe(() => {
@@ -608,7 +572,7 @@
             (isFullViewed ? " fullView" : "") +
             ($finalAnimeList?.length === 0 && !$initData ? " empty" : "")}
         bind:this={animeGridEl}
-        on:wheel={(e) => {
+        on:wheel|passive={(e) => {
             if (
                 isFullViewed &&
                 animeGridEl.scrollWidth > animeGridEl.clientWidth &&
@@ -658,10 +622,10 @@
                                     anime?.bannerImageUrl ||
                                     anime?.trailerThumbnailUrl ||
                                     emptyImage}
-                                fetchpriority={animeIdx > numberOfLoadedGrid
+                                fetchpriority={animeIdx > numberOfPageLoadedGrid
                                     ? ""
                                     : "high"}
-                                loading={animeIdx > numberOfLoadedGrid
+                                loading={animeIdx > numberOfPageLoadedGrid
                                     ? "lazy"
                                     : "eager"}
                                 class={"image-grid__card-thumb  fade-out"}
