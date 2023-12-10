@@ -1,4 +1,5 @@
 <script>
+	import { inject } from "@vercel/analytics";
 	import getWebVersion from "./version";
 	import C from "./components/index.js";
 	import { onMount, tick } from "svelte";
@@ -1297,6 +1298,7 @@
 	});
 	function loadAnalytics() {
 		(async () => {
+			inject?.(); // Vercel Analytics
 			window.onload = () => {
 				window.dataLayer = window.dataLayer || [];
 				function gtag() {
