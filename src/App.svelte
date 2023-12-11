@@ -74,27 +74,11 @@
 	} from "./js/others/helper.js";
 
 	$android = isAndroid(); // Android/Browser Identifier
-	let windowWidth = Math.max(
-		document?.documentElement?.getBoundingClientRect?.()?.width,
-		window.visualViewport.width,
-		window.innerWidth,
-	);
-	let windowHeight = Math.max(
-		window.visualViewport.height,
-		window.innerHeight,
-	);
-	let usernameInputEl, animeGridEl;
 
 	// Init Data
 	let initDataPromises = [];
-	$dataStatus = "Getting Existing Data";
-	let pleaseWaitStatusInterval = setInterval(() => {
-		if (!$dataStatus) {
-			$dataStatus = "Please Wait";
-		}
-	}, 200);
 
-	new Promise(async (resolve) => {
+	window.kanshiInit = new Promise(async (resolve) => {
 		// Check App ID
 		$appID = await getWebVersion();
 		if ($android && navigator.onLine) {
@@ -149,317 +133,327 @@
 				await saveJSON(true, "shouldLoadAnime");
 				resolve();
 			});
-	}).then(() => {
-		// Get Export Folder for Android
-		(async () => {
-			if ($android) {
-				$exportPathIsAvailable =
-					$exportPathIsAvailable ??
-					getLocalStorage("exportPathIsAvailable") ??
-					(await retrieveJSON("exportPathIsAvailable"));
-				if ($exportPathIsAvailable == null) {
-					$exportPathIsAvailable = false;
-					setLocalStorage("exportPathIsAvailable", false)
-						.catch(() => {
-							removeLocalStorage("exportPathIsAvailable");
-						})
-						.finally(() => {
-							saveJSON(false, "exportPathIsAvailable");
-						});
+	})
+		.then(() => {
+			// Get Export Folder for Android
+			(async () => {
+				if ($android) {
+					$exportPathIsAvailable =
+						$exportPathIsAvailable ??
+						getLocalStorage("exportPathIsAvailable") ??
+						(await retrieveJSON("exportPathIsAvailable"));
+					if ($exportPathIsAvailable == null) {
+						$exportPathIsAvailable = false;
+						setLocalStorage("exportPathIsAvailable", false)
+							.catch(() => {
+								removeLocalStorage("exportPathIsAvailable");
+							})
+							.finally(() => {
+								saveJSON(false, "exportPathIsAvailable");
+							});
+					}
 				}
-			}
-		})();
+			})();
 
-		// Check/Get/Update/Process Anime Entries
-		initDataPromises.push(
-			new Promise(async (resolve, reject) => {
-				let _lastAnimeUpdate = await retrieveJSON("lastAnimeUpdate");
-				let shouldGetAnimeEntries = !(
-					_lastAnimeUpdate instanceof Date && !isNaN(_lastAnimeUpdate)
-				);
-				if (!shouldGetAnimeEntries) {
-					let animeEntriesIsEmpty = await retrieveJSON(
-						"animeEntriesIsEmpty",
+			// Check/Get/Update/Process Anime Entries
+			initDataPromises.push(
+				new Promise(async (resolve, reject) => {
+					let _lastAnimeUpdate =
+						await retrieveJSON("lastAnimeUpdate");
+					let shouldGetAnimeEntries = !(
+						_lastAnimeUpdate instanceof Date &&
+						!isNaN(_lastAnimeUpdate)
 					);
-					if (animeEntriesIsEmpty) {
-						shouldGetAnimeEntries = true;
-					}
-				}
-				if (shouldGetAnimeEntries) {
-					$finalAnimeList = null;
-					getAnimeEntries()
-						.then(() => {
-							resolve();
-						})
-						.catch(async () => {
-							reject();
-						});
-				} else {
-					if (navigator.onLine) {
-						$userRequestIsRunning = true;
-						requestUserEntries()
-							.then(() => {
-								$userRequestIsRunning = false;
-								requestAnimeEntries();
-							})
-							.catch((error) => {
-								$userRequestIsRunning = false;
-								$dataStatus = "Something went wrong";
-								console.error(error);
-							});
-					}
-					resolve();
-				}
-			}),
-		);
-
-		// Check/Update/Process User Anime Entries
-		initDataPromises.push(
-			new Promise(async (resolve) => {
-				// let accessToken = getAnilistAccessTokenFromURL();
-				// if (accessToken) {
-				// 	await saveIDBdata(accessToken, "access_token");
-				// 	$anilistAccessToken = accessToken;
-				// } else {
-				// 	$anilistAccessToken = await retrieveJSON("access_token");
-				// }
-				// if ($anilistAccessToken) {
-				// 	let getUsername = () => {
-				// 		fetch("https://graphql.anilist.co", {
-				// 			method: "POST",
-				// 			headers: {
-				// 				Authorization: "Bearer " + $anilistAccessToken,
-				// 				"Content-Type": "application/json",
-				// 				Accept: "application/json",
-				// 			},
-				// 			body: JSON.stringify({
-				// 				query: `{Viewer{name}}`,
-				// 			}),
-				// 		})
-				// 			.then(async (response) => {
-				// 				return await response.json();
-				// 			})
-				// 			.then(async (result) => {
-				// 				if (
-				// 					typeof result?.errors?.[0]?.message === "string"
-				// 				) {
-				// 					setTimeout(() => {
-				// 						return getUsername();
-				// 					}, 60000);
-				// 				} else {
-				// 					let savedUsername = await retrieveJSON(
-				// 						"username"
-				// 					);
-				// 					let _username = result.data.Viewer.name;
-				// 					if (_username && savedUsername !== _username) {
-				// 						requestUserEntries({
-				// 							username: _username,
-				// 						})
-				// 							.then(({ newusername }) => {
-				// 								if (newusername) {
-				// 									$username = newusername || "";
-				// 									importantUpdate.update(
-				// 										(e) => !e
-				// 									);
-				// 								}
-				// 							})
-				// 							.catch((error) => {
-				// 								$dataStatus =
-				// 									"Something went wrong";
-				// 								console.error(error);
-				// 							});
-				// 					} else {
-				// 						$username =
-				// 							_username || savedUsername || "";
-				// 					}
-				// 					resolve();
-				// 				}
-				// 			})
-				// 			.catch(() => {
-				// 				setTimeout(() => {
-				// 					return getUsername();
-				// 				}, 60000);
-				// 				resolve();
-				// 			});
-				// 	};
-				// 	getUsername();
-				// } else {
-				let _username = await retrieveJSON("username");
-				if (_username) {
-					setLocalStorage("username", _username).catch(() => {
-						removeLocalStorage("username");
-					});
-					$username = _username;
-				}
-				resolve();
-				// }
-			}),
-		);
-
-		// Check/Get/Update Filter Options Selection
-		initDataPromises.push(
-			new Promise(async (resolve, reject) => {
-				getFilterOptions()
-					.then((data) => {
-						$selectedCustomFilter = data.selectedCustomFilter;
-						$activeTagFilters = data.activeTagFilters;
-						$filterOptions = data.filterOptions;
-						resolve();
-					})
-					.catch(() => {
-						reject();
-					});
-			}),
-		);
-
-		Promise.all(initDataPromises)
-			.then(async () => {
-				$initData = false;
-				(async () => {
-					if (!isJsonObject($hiddenEntries)) {
-						$hiddenEntries =
-							(await retrieveJSON("hiddenEntries")) || {};
-					}
-					$autoPlay =
-						$autoPlay ??
-						getLocalStorage("autoPlay") ??
-						(await retrieveJSON("autoPlay"));
-					if ($autoPlay == null) {
-						$autoPlay = false;
-						setLocalStorage("autoPlay", false)
-							.catch(() => {
-								removeLocalStorage("autoPlay");
-							})
-							.finally(() => {
-								saveJSON(false, "autoPlay");
-							});
-					}
-					$autoUpdate =
-						$autoUpdate ??
-						getLocalStorage("autoUpdate") ??
-						(await retrieveJSON("autoUpdate"));
-					if ($autoUpdate == null) {
-						$autoUpdate = false;
-						setLocalStorage("autoUpdate", false)
-							.catch(() => {
-								removeLocalStorage("autoUpdate");
-							})
-							.finally(() => {
-								saveJSON(false, "autoUpdate");
-							});
-					}
-					$autoExport =
-						$autoExport ??
-						getLocalStorage("autoExport") ??
-						(await retrieveJSON("autoExport"));
-					if ($autoExport == null) {
-						$autoExport = false;
-						setLocalStorage("autoExport", false)
-							.catch(() => {
-								removeLocalStorage("autoExport");
-							})
-							.finally(() => {
-								saveJSON(false, "autoExport");
-							});
-					}
-					$showStatus =
-						$showStatus ??
-						getLocalStorage("showStatus") ??
-						(await retrieveJSON("showStatus"));
-					if ($showStatus == null) {
-						$showStatus = true;
-						setLocalStorage("showStatus", true)
-							.catch(() => {
-								removeLocalStorage("showStatus");
-							})
-							.finally(() => {
-								saveJSON(true, "showStatus");
-							});
-					}
-				})();
-				// Get/Show List
-				let shouldProcessRecommendation = await retrieveJSON(
-					"shouldProcessRecommendation",
-				);
-				if (shouldProcessRecommendation === undefined) {
-					let recommendedAnimeListLen = await retrieveJSON(
-						"recommendedAnimeListLength",
-					);
-					if (recommendedAnimeListLen < 1) {
-						shouldProcessRecommendation = true;
-					}
-				}
-				new Promise(async (resolve) => {
-					if (shouldProcessRecommendation) {
-						processRecommendedAnimeList()
-							.then(async () => {
-								resolve(false);
-							})
-							.catch(() => {
-								resolve(true);
-							});
-					} else {
-						resolve();
-					}
-				}).then(async (shouldLoadAnime) => {
-					if (!shouldLoadAnime) {
-						shouldLoadAnime = await retrieveJSON("shouldLoadAnime");
-						if (shouldLoadAnime === undefined) {
-							let finalAnimeListLen = await retrieveJSON(
-								"finalAnimeListLength",
-							);
-							if (finalAnimeListLen < 1) {
-								shouldLoadAnime = true;
-							}
+					if (!shouldGetAnimeEntries) {
+						let animeEntriesIsEmpty = await retrieveJSON(
+							"animeEntriesIsEmpty",
+						);
+						if (animeEntriesIsEmpty) {
+							shouldGetAnimeEntries = true;
 						}
 					}
-					if (shouldLoadAnime) {
-						animeLoader()
-							.then(async (data) => {
-								$animeLoaderWorker = data.animeLoaderWorker;
-								if (data?.isNew) {
-									if (
-										$finalAnimeList?.length >
-										data?.finalAnimeListCount
-									) {
-										$finalAnimeList =
-											$finalAnimeList?.slice?.(
-												0,
-												data.finalAnimeListCount,
-											);
-									}
-									if (data?.finalAnimeList?.length > 0) {
-										data?.finalAnimeList?.forEach?.(
-											(anime, idx) => {
-												$newFinalAnime = {
-													idx:
-														data.shownAnimeListCount +
-														idx,
-													finalAnimeList: anime,
-												};
-											},
-										);
-									} else {
-										$finalAnimeList = [];
-									}
-									$hiddenEntries =
-										data.hiddenEntries || $hiddenEntries;
-									$dataStatus = null;
-									checkAutoFunctions(true);
-									loadAnalytics();
-								}
-								return;
+					if (shouldGetAnimeEntries) {
+						$finalAnimeList = null;
+						getAnimeEntries()
+							.then(() => {
+								resolve();
 							})
-							.catch(initFailed);
+							.catch(async () => {
+								reject();
+							});
 					} else {
-						$dataStatus = null;
-						checkAutoFunctions(true);
-						loadAnalytics();
+						if (navigator.onLine) {
+							$userRequestIsRunning = true;
+							requestUserEntries()
+								.then(() => {
+									$userRequestIsRunning = false;
+									requestAnimeEntries();
+								})
+								.catch((error) => {
+									$userRequestIsRunning = false;
+									$dataStatus = "Something went wrong";
+									console.error(error);
+								});
+						}
+						resolve();
 					}
-				});
-			})
-			.catch(initFailed);
-	});
+				}),
+			);
+
+			// Check/Update/Process User Anime Entries
+			initDataPromises.push(
+				new Promise(async (resolve) => {
+					// let accessToken = getAnilistAccessTokenFromURL();
+					// if (accessToken) {
+					// 	await saveJSON(accessToken, "access_token");
+					// 	$anilistAccessToken = accessToken;
+					// } else {
+					// 	$anilistAccessToken = await retrieveJSON("access_token");
+					// }
+					// if ($anilistAccessToken) {
+					// 	let getUsername = () => {
+					// 		fetch("https://graphql.anilist.co", {
+					// 			method: "POST",
+					// 			headers: {
+					// 				Authorization: "Bearer " + $anilistAccessToken,
+					// 				"Content-Type": "application/json",
+					// 				Accept: "application/json",
+					// 			},
+					// 			body: JSON.stringify({
+					// 				query: `{Viewer{name}}`,
+					// 			}),
+					// 		})
+					// 			.then(async (response) => {
+					// 				return await response.json();
+					// 			})
+					// 			.then(async (result) => {
+					// 				if (
+					// 					typeof result?.errors?.[0]?.message === "string"
+					// 				) {
+					// 					setTimeout(() => {
+					// 						return getUsername();
+					// 					}, 60000);
+					// 				} else {
+					// 					let savedUsername = await retrieveJSON(
+					// 						"username"
+					// 					);
+					// 					let _username = result.data.Viewer.name;
+					// 					if (_username && savedUsername !== _username) {
+					// 						requestUserEntries({
+					// 							username: _username,
+					// 						})
+					// 							.then(({ newusername }) => {
+					// 								if (newusername) {
+					// 									$username = newusername || "";
+					// 									importantUpdate.update(
+					// 										(e) => !e
+					// 									);
+					// 								}
+					// 							})
+					// 							.catch((error) => {
+					// 								$dataStatus =
+					// 									"Something went wrong";
+					// 								console.error(error);
+					// 							});
+					// 					} else {
+					// 						$username =
+					// 							_username || savedUsername || "";
+					// 					}
+					// 					resolve();
+					// 				}
+					// 			})
+					// 			.catch(() => {
+					// 				setTimeout(() => {
+					// 					return getUsername();
+					// 				}, 60000);
+					// 				resolve();
+					// 			});
+					// 	};
+					// 	getUsername();
+					// } else {
+					let _username = await retrieveJSON("username");
+					if (_username) {
+						setLocalStorage("username", _username).catch(() => {
+							removeLocalStorage("username");
+						});
+						$username = _username;
+					}
+					resolve();
+					// }
+				}),
+			);
+
+			// Check/Get/Update Filter Options Selection
+			initDataPromises.push(
+				new Promise(async (resolve, reject) => {
+					getFilterOptions()
+						.then((data) => {
+							$selectedCustomFilter = data.selectedCustomFilter;
+							$activeTagFilters = data.activeTagFilters;
+							$filterOptions = data.filterOptions;
+							resolve();
+						})
+						.catch(() => {
+							reject();
+						});
+				}),
+			);
+
+			Promise.all(initDataPromises)
+				.then(async () => {
+					$initData = false;
+					(async () => {
+						if (!isJsonObject($hiddenEntries)) {
+							$hiddenEntries =
+								(await retrieveJSON("hiddenEntries")) || {};
+						}
+						$autoPlay =
+							$autoPlay ??
+							getLocalStorage("autoPlay") ??
+							(await retrieveJSON("autoPlay"));
+						if ($autoPlay == null) {
+							$autoPlay = false;
+							setLocalStorage("autoPlay", false)
+								.catch(() => {
+									removeLocalStorage("autoPlay");
+								})
+								.finally(() => {
+									saveJSON(false, "autoPlay");
+								});
+						}
+						$autoUpdate =
+							$autoUpdate ??
+							getLocalStorage("autoUpdate") ??
+							(await retrieveJSON("autoUpdate"));
+						if ($autoUpdate == null) {
+							$autoUpdate = false;
+							setLocalStorage("autoUpdate", false)
+								.catch(() => {
+									removeLocalStorage("autoUpdate");
+								})
+								.finally(() => {
+									saveJSON(false, "autoUpdate");
+								});
+						}
+						$autoExport =
+							$autoExport ??
+							getLocalStorage("autoExport") ??
+							(await retrieveJSON("autoExport"));
+						if ($autoExport == null) {
+							$autoExport = false;
+							setLocalStorage("autoExport", false)
+								.catch(() => {
+									removeLocalStorage("autoExport");
+								})
+								.finally(() => {
+									saveJSON(false, "autoExport");
+								});
+						}
+						$showStatus =
+							$showStatus ??
+							getLocalStorage("showStatus") ??
+							(await retrieveJSON("showStatus"));
+						if ($showStatus == null) {
+							$showStatus = true;
+							setLocalStorage("showStatus", true)
+								.catch(() => {
+									removeLocalStorage("showStatus");
+								})
+								.finally(() => {
+									saveJSON(true, "showStatus");
+								});
+						}
+					})();
+					// Get/Show List
+					let shouldProcessRecommendation = await retrieveJSON(
+						"shouldProcessRecommendation",
+					);
+					if (shouldProcessRecommendation === undefined) {
+						let recommendedAnimeListLen = await retrieveJSON(
+							"recommendedAnimeListLength",
+						);
+						if (recommendedAnimeListLen < 1) {
+							shouldProcessRecommendation = true;
+						}
+					}
+					new Promise(async (resolve) => {
+						if (shouldProcessRecommendation) {
+							processRecommendedAnimeList()
+								.then(async () => {
+									resolve(false);
+								})
+								.catch(() => {
+									resolve(true);
+								});
+						} else {
+							resolve();
+						}
+					}).then(async (shouldLoadAnime) => {
+						if (!shouldLoadAnime) {
+							shouldLoadAnime =
+								await retrieveJSON("shouldLoadAnime");
+							if (shouldLoadAnime === undefined) {
+								let finalAnimeListLen = await retrieveJSON(
+									"finalAnimeListLength",
+								);
+								if (finalAnimeListLen < 1) {
+									shouldLoadAnime = true;
+								}
+							}
+						}
+						if (shouldLoadAnime) {
+							animeLoader()
+								.then(async (data) => {
+									$animeLoaderWorker = data.animeLoaderWorker;
+									if (data?.isNew) {
+										if (
+											$finalAnimeList?.length >
+											data?.finalAnimeListCount
+										) {
+											$finalAnimeList =
+												$finalAnimeList?.slice?.(
+													0,
+													data.finalAnimeListCount,
+												);
+										}
+										if (data?.finalAnimeList?.length > 0) {
+											data?.finalAnimeList?.forEach?.(
+												(anime, idx) => {
+													$newFinalAnime = {
+														idx:
+															data.shownAnimeListCount +
+															idx,
+														finalAnimeList: anime,
+													};
+												},
+											);
+										} else {
+											$finalAnimeList = [];
+										}
+										$hiddenEntries =
+											data.hiddenEntries ||
+											$hiddenEntries;
+										$dataStatus = null;
+										checkAutoFunctions(true);
+										loadAnalytics();
+									}
+									return;
+								})
+								.catch(initFailed);
+						} else {
+							$dataStatus = null;
+							checkAutoFunctions(true);
+							loadAnalytics();
+						}
+					});
+				})
+				.catch(initFailed);
+		})
+		.finally(() => {
+			try {
+				delete window?.kanshiInit;
+			} catch (e) {}
+		});
 
 	async function initFailed() {
 		checkAutoFunctions(true);
@@ -482,12 +476,36 @@
 		loadAnalytics();
 	}
 
+	let windowWidth = Math.max(
+		document?.documentElement?.getBoundingClientRect?.()?.width,
+		window.visualViewport.width,
+		window.innerWidth,
+	);
+	let windowHeight = Math.max(
+		window.visualViewport.height,
+		window.innerHeight,
+	);
+	let usernameInputEl, animeGridEl;
+
+	$dataStatus = "Getting Existing Data";
+	let pleaseWaitStatusInterval = setInterval(() => {
+		if (!$dataStatus) {
+			$dataStatus = "Please Wait";
+		}
+	}, 200);
+
 	// function getAnilistAccessTokenFromURL() {
 	// 	let urlParams = new URLSearchParams(window.location.hash.slice(1));
 	// 	return urlParams.get("access_token");
 	// }
 
 	async function checkAutoFunctions(initCheck = false) {
+		if ($appID == null) {
+			window?.kanshiInit?.then?.(() => {
+				checkAutoFunctions(initCheck);
+			});
+			return;
+		}
 		// auto Update
 		if (initCheck) {
 			if (!$userRequestIsRunning) {
@@ -667,7 +685,9 @@
 	let hourINMS = 60 * 60 * 1000;
 	autoUpdate.subscribe(async (val) => {
 		if (val === true) {
-			saveJSON(true, "autoUpdate");
+			if ($appID != null) {
+				saveJSON(true, "autoUpdate");
+			}
 			// Check Run First
 			if (autoUpdateIsPastDate()) {
 				checkAutoFunctions();
@@ -699,10 +719,18 @@
 			}
 		} else if (val === false) {
 			if ($autoUpdateInterval) clearInterval($autoUpdateInterval);
-			saveJSON(false, "autoUpdate");
+			if ($appID != null) {
+				saveJSON(false, "autoUpdate");
+			}
 		}
 	});
 	async function autoUpdateIsPastDate() {
+		if ($appID == null) {
+			window?.kanshiInit?.then?.(() => {
+				autoUpdateIsPastDate();
+			});
+			return;
+		}
 		let isPastDate = false;
 		$lastRunnedAutoUpdateDate = await retrieveJSON(
 			"lastRunnedAutoUpdateDate",
@@ -741,7 +769,9 @@
 	});
 	autoExport.subscribe(async (val) => {
 		if (val === true) {
-			saveJSON(true, "autoExport");
+			if ($appID != null) {
+				saveJSON(true, "autoExport");
+			}
 			if (autoExportIsPastDate()) {
 				checkAutoFunctions();
 				if ($autoExportInterval) clearInterval($autoExportInterval);
@@ -772,10 +802,18 @@
 			}
 		} else if (val === false) {
 			if ($autoExportInterval) clearInterval($autoExportInterval);
-			saveJSON(false, "autoExport");
+			if ($appID != null) {
+				saveJSON(false, "autoExport");
+			}
 		}
 	});
 	async function autoExportIsPastDate() {
+		if ($appID == null) {
+			window?.kanshiInit?.then?.(() => {
+				autoExportIsPastDate();
+			});
+			return;
+		}
 		// Check Run First
 		let isPastDate = false;
 		$lastRunnedAutoExportDate = await retrieveJSON(
@@ -1296,27 +1334,49 @@
 			}
 		});
 	});
+
 	function loadAnalytics() {
 		(async () => {
-			if (window?.location?.origin === "https://kanshi.vercel.app") {
+			// For Youtube API
+			window.onYouTubeIframeAPIReady = () => {};
+			let YTscript = document.createElement("script");
+			YTscript.src = "https://www.youtube.com/iframe_api?v=16";
+			YTscript.id = "www-widgetapi-script";
+			YTscript.defer = true;
+			YTscript.onerror = () => {
+				resolve();
+			};
+			YTscript.onload = () => {
+				window?.onYouTubeIframeAPIReady?.();
+			};
+			document.head.appendChild(YTscript);
+
+			let isVercel =
+				window?.location?.origin === "https://kanshi.vercel.app";
+			// Google Analytics
+			let GAscript = document.createElement("script");
+			if (isVercel) {
 				inject?.(); // Vercel Analytics
+				GAscript.src =
+					"https://www.googletagmanager.com/gtag/js?id=G-F5E8XNQS20";
+			} else {
+				GAscript.src =
+					"https://www.googletagmanager.com/gtag/js?id=G-PPMY92TJCE";
 			}
-			window.onload = () => {
+			GAscript.defer = true;
+			GAscript.onload = () => {
 				window.dataLayer = window.dataLayer || [];
 				function gtag() {
 					dataLayer.push(arguments);
 				}
 				gtag("js", new Date());
-				if (window.location.origin === "https://kanshi.vercel.app") {
+				if (isVercel) {
 					gtag("config", "G-F5E8XNQS20");
 				} else {
 					gtag("config", "G-PPMY92TJCE");
 				}
-			}; // Google Analytics
-
-			// For Youtube API
-			const onYouTubeIframeAPIReady = new Function();
-			window.onYouTubeIframeAPIReady = onYouTubeIframeAPIReady;
+			};
+			document.head.appendChild(GAscript);
 		})();
 	}
 </script>

@@ -25,6 +25,7 @@
         listIsUpdating,
         isFullViewed,
         newFinalAnime,
+        appID,
     } from "../../../js/globalValues.js";
     import {
         isJsonObject,
@@ -76,7 +77,10 @@
         !$android && matchMedia("(hover:hover)").matches ? 50 : 100;
 
     (async () => {
-        savedYtVolume = (await retrieveJSON("savedYtVolume")) || savedYtVolume;
+        window?.kanshiInit?.then?.(async () => {
+            savedYtVolume =
+                (await retrieveJSON("savedYtVolume")) || savedYtVolume;
+        });
     })();
 
     let checkMostVisiblePopupAnimeFrame;
@@ -418,10 +422,12 @@
 
     autoPlay.subscribe(async (val) => {
         if (typeof val === "boolean") {
-            await saveJSON(val, "autoPlay");
-            setLocalStorage("autoPlay", val).catch(() => {
-                removeLocalStorage("autoPlay");
-            });
+            if ($appID != null) {
+                await saveJSON(val, "autoPlay");
+                setLocalStorage("autoPlay", val).catch(() => {
+                    removeLocalStorage("autoPlay");
+                });
+            }
             if (val === true) {
                 await tick();
                 let visibleTrailer =
@@ -1123,6 +1129,7 @@
             }
             let tag = document.createElement("script");
             tag.src = "https://www.youtube.com/iframe_api?v=16";
+            tag.id = "www-widgetapi-script";
             tag.onerror = () => {
                 resolve();
             };

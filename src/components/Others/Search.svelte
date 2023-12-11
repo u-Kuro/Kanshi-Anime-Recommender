@@ -1991,6 +1991,36 @@
         return false;
     }
 
+    (async () => {
+        window?.kanshiInit?.then?.(async () => {
+            let tempTagCategoryInfo =
+                getLocalStorage("tagCategoryInfo") ||
+                (await retrieveJSON("tagCategoryInfo"));
+            if (isJsonObject(tempTagCategoryInfo)) {
+                tagCategoryInfo = tempTagCategoryInfo;
+            }
+            let lastTagCategoryInfoUpdateTimestamp = new Date(
+                getLocalStorage("lastTagCategoryInfoUpdate") ||
+                    (await retrieveJSON("lastTagCategoryInfoUpdate")),
+            ).getTime();
+            if (
+                lastTagCategoryInfoUpdateTimestamp > 0 &&
+                hasTagCategoryInfoData()
+            ) {
+                let nextSeasonAverageTimestamp = 7884000000;
+                let nextSeason = new Date(
+                    lastTagCategoryInfoUpdateTimestamp +
+                        nextSeasonAverageTimestamp,
+                );
+                if (nextSeason.getTime() < new Date().getTime()) {
+                    getTagCategoryData();
+                }
+            } else {
+                getTagCategoryData();
+            }
+        });
+    })();
+
     onMount(async () => {
         // Init
         let filterEl = document.getElementById("filters");
@@ -2009,31 +2039,6 @@
         document.addEventListener("keydown", handleDropdownKeyDown);
         window.addEventListener("resize", windowResized);
         window.addEventListener("click", clickOutsideListener);
-        //
-        let tempTagCategoryInfo =
-            getLocalStorage("tagCategoryInfo") ||
-            (await retrieveJSON("tagCategoryInfo"));
-        if (isJsonObject(tempTagCategoryInfo)) {
-            tagCategoryInfo = tempTagCategoryInfo;
-        }
-        let lastTagCategoryInfoUpdateTimestamp = new Date(
-            getLocalStorage("lastTagCategoryInfoUpdate") ||
-                (await retrieveJSON("lastTagCategoryInfoUpdate")),
-        ).getTime();
-        if (
-            lastTagCategoryInfoUpdateTimestamp > 0 &&
-            hasTagCategoryInfoData()
-        ) {
-            let nextSeasonAverageTimestamp = 7884000000;
-            let nextSeason = new Date(
-                lastTagCategoryInfoUpdateTimestamp + nextSeasonAverageTimestamp,
-            );
-            if (nextSeason.getTime() < new Date().getTime()) {
-                getTagCategoryData();
-            }
-        } else {
-            getTagCategoryData();
-        }
     });
 
     function pleaseWaitAlert() {
@@ -2562,49 +2567,41 @@
                                     on:wheel|stopPropagation={() => {}}
                                 >
                                     {#if Dropdown.selected}
-                                        {#if Dropdown.options?.filter?.(({ optionName }) => hasPartialMatch(optionName, Dropdown?.optKeyword) || Dropdown?.optKeyword === "")?.length}
-                                            {#each Dropdown.options || [] as option, optionIdx (filterSelection.filterSelectionName + Dropdown.filName + option.optionName || {})}
-                                                {#await new Promise( (resolve) => setTimeout(resolve, optionIdx * 16), )}{""}{:then}
-                                                    <div
-                                                        title={getTagFilterInfoText(
-                                                            Dropdown.filName ===
-                                                                "tag category"
-                                                                ? {
-                                                                      category:
-                                                                          option?.optionName,
-                                                                  }
-                                                                : Dropdown.filName ===
-                                                                    "tag"
-                                                                  ? {
-                                                                        tag: option?.optionName,
+                                        {#await new Promise((resolve)=>resolve(Dropdown?.options?.filter?.(({ optionName }) => hasPartialMatch(optionName, Dropdown?.optKeyword) || Dropdown?.optKeyword === "")))}{''}
+                                        {:then DropdownOptions}
+                                            {#if DropdownOptions?.length}
+                                                {#each DropdownOptions || [] as option, optionIdx (filterSelection.filterSelectionName + Dropdown.filName + option.optionName || {})}
+                                                    {#await new Promise( (resolve) => setTimeout(resolve, optionIdx * 16), )}{""}{:then}
+                                                        <div
+                                                            title={getTagFilterInfoText(
+                                                                Dropdown.filName ===
+                                                                    "tag category"
+                                                                    ? {
+                                                                        category:
+                                                                            option?.optionName,
                                                                     }
-                                                                  : {},
-                                                            Dropdown.filName ===
-                                                                "tag category"
-                                                                ? "all tags"
-                                                                : Dropdown.filName ===
-                                                                    "tag"
-                                                                  ? "category and description"
-                                                                  : "",
-                                                        ) || ""}
-                                                        class={"option " +
-                                                            (hasPartialMatch(
-                                                                option.optionName,
-                                                                Dropdown.optKeyword,
-                                                            )
-                                                                ? ""
-                                                                : "disable-interaction")}
-                                                        on:click={handleFilterSelectOptionChange(
-                                                            option.optionName,
-                                                            Dropdown.filName,
-                                                            optionIdx,
-                                                            dropdownIdx,
-                                                            Dropdown.changeType,
-                                                            filterSelection.filterSelectionName,
-                                                        )}
-                                                        on:keydown={(e) =>
-                                                            e.key === "Enter" &&
-                                                            handleFilterSelectOptionChange(
+                                                                    : Dropdown.filName ===
+                                                                        "tag"
+                                                                    ? {
+                                                                            tag: option?.optionName,
+                                                                        }
+                                                                    : {},
+                                                                Dropdown.filName ===
+                                                                    "tag category"
+                                                                    ? "all tags"
+                                                                    : Dropdown.filName ===
+                                                                        "tag"
+                                                                    ? "category and description"
+                                                                    : "",
+                                                            ) || ""}
+                                                            class={"option " +
+                                                                (hasPartialMatch(
+                                                                    option.optionName,
+                                                                    Dropdown.optKeyword,
+                                                                )
+                                                                    ? ""
+                                                                    : "disable-interaction")}
+                                                            on:click={handleFilterSelectOptionChange(
                                                                 option.optionName,
                                                                 Dropdown.filName,
                                                                 optionIdx,
@@ -2612,70 +2609,50 @@
                                                                 Dropdown.changeType,
                                                                 filterSelection.filterSelectionName,
                                                             )}
-                                                    >
-                                                        <h3>
-                                                            {option.optionName ||
-                                                                ""}
-                                                        </h3>
-                                                        {#if option.selected === "included" || (option.selected === "excluded" && Dropdown.changeType !== "read")}
-                                                            <svg
-                                                                class="item-info"
-                                                                viewBox="0 0 512 512"
-                                                                style:--optionColor={option.selected ===
-                                                                "included"
-                                                                    ? // green
-                                                                      "#5f9ea0"
-                                                                    : // red
-                                                                      "#e85d75"}
-                                                            >
-                                                                <path
-                                                                    class="item-info-path"
-                                                                    d={option.selected ===
-                                                                        "excluded" ||
-                                                                    filterSelection.filterSelectionName ===
-                                                                        "Content Caution"
-                                                                        ? // circle-xmark
-                                                                          "M256 48a208 208 0 1 1 0 416 208 208 0 1 1 0-416zm0 464a256 256 0 1 0 0-512 256 256 0 1 0 0 512zm-81-337c-9 9-9 25 0 34l47 47-47 47c-9 9-9 24 0 34s25 9 34 0l47-47 47 47c9 9 24 9 34 0s9-25 0-34l-47-47 47-47c9-10 9-25 0-34s-25-9-34 0l-47 47-47-47c-10-9-25-9-34 0z"
-                                                                        : // circle-check
-                                                                          "M256 48a208 208 0 1 1 0 416 208 208 0 1 1 0-416zm0 464a256 256 0 1 0 0-512 256 256 0 1 0 0 512zm113-303c9-9 9-25 0-34s-25-9-34 0L224 286l-47-47c-9-9-24-9-34 0s-9 25 0 34l64 64c10 9 25 9 34 0l128-128z"}
-                                                                />
-                                                            </svg>
-                                                        {/if}
-                                                        {#if typeof window?.showFullScreenInfo === "function" && ((Dropdown?.filName === "tag" && getTagFilterInfoText({ tag: option?.optionName }, "category and description")) || (Dropdown.filName === "tag category" && !jsonIsEmpty(tagCategoryInfo?.[option?.optionName])))}
-                                                            <svg
-                                                                class="extra-item-info"
-                                                                viewBox="0 0 512 512"
-                                                                on:click|stopPropagation={() => {
-                                                                    let htmlToShow =
-                                                                        "";
-                                                                    if (
-                                                                        Dropdown.filName ===
-                                                                        "tag"
-                                                                    ) {
-                                                                        htmlToShow =
-                                                                            getTagInfoHTML(
-                                                                                option?.optionName,
-                                                                            );
-                                                                    } else if (
-                                                                        Dropdown.filName ===
-                                                                        "tag category"
-                                                                    ) {
-                                                                        htmlToShow =
-                                                                            getTagCategoryInfoHTML(
-                                                                                option?.optionName,
-                                                                            );
-                                                                    }
-                                                                    window?.showFullScreenInfo?.(
-                                                                        htmlToShow,
-                                                                    );
-                                                                }}
-                                                                on:keydown|stopPropagation={(
-                                                                    e,
-                                                                ) => {
-                                                                    if (
-                                                                        e.key ===
-                                                                        "Enter"
-                                                                    ) {
+                                                            on:keydown={(e) =>
+                                                                e.key === "Enter" &&
+                                                                handleFilterSelectOptionChange(
+                                                                    option.optionName,
+                                                                    Dropdown.filName,
+                                                                    optionIdx,
+                                                                    dropdownIdx,
+                                                                    Dropdown.changeType,
+                                                                    filterSelection.filterSelectionName,
+                                                                )}
+                                                        >
+                                                            <h3>
+                                                                {option.optionName ||
+                                                                    ""}
+                                                            </h3>
+                                                            {#if option.selected === "included" || (option.selected === "excluded" && Dropdown.changeType !== "read")}
+                                                                <svg
+                                                                    class="item-info"
+                                                                    viewBox="0 0 512 512"
+                                                                    style:--optionColor={option.selected ===
+                                                                    "included"
+                                                                        ? // green
+                                                                        "#5f9ea0"
+                                                                        : // red
+                                                                        "#e85d75"}
+                                                                >
+                                                                    <path
+                                                                        class="item-info-path"
+                                                                        d={option.selected ===
+                                                                            "excluded" ||
+                                                                        filterSelection.filterSelectionName ===
+                                                                            "Content Caution"
+                                                                            ? // circle-xmark
+                                                                            "M256 48a208 208 0 1 1 0 416 208 208 0 1 1 0-416zm0 464a256 256 0 1 0 0-512 256 256 0 1 0 0 512zm-81-337c-9 9-9 25 0 34l47 47-47 47c-9 9-9 24 0 34s25 9 34 0l47-47 47 47c9 9 24 9 34 0s9-25 0-34l-47-47 47-47c9-10 9-25 0-34s-25-9-34 0l-47 47-47-47c-10-9-25-9-34 0z"
+                                                                            : // circle-check
+                                                                            "M256 48a208 208 0 1 1 0 416 208 208 0 1 1 0-416zm0 464a256 256 0 1 0 0-512 256 256 0 1 0 0 512zm113-303c9-9 9-25 0-34s-25-9-34 0L224 286l-47-47c-9-9-24-9-34 0s-9 25 0 34l64 64c10 9 25 9 34 0l128-128z"}
+                                                                    />
+                                                                </svg>
+                                                            {/if}
+                                                            {#if typeof window?.showFullScreenInfo === "function" && ((Dropdown?.filName === "tag" && getTagFilterInfoText({ tag: option?.optionName }, "category and description")) || (Dropdown.filName === "tag category" && !jsonIsEmpty(tagCategoryInfo?.[option?.optionName])))}
+                                                                <svg
+                                                                    class="extra-item-info"
+                                                                    viewBox="0 0 512 512"
+                                                                    on:click|stopPropagation={() => {
                                                                         let htmlToShow =
                                                                             "";
                                                                         if (
@@ -2698,22 +2675,53 @@
                                                                         window?.showFullScreenInfo?.(
                                                                             htmlToShow,
                                                                         );
-                                                                    }
-                                                                }}
-                                                                ><path
-                                                                    class="item-info-path"
-                                                                    d="M256 512a256 256 0 1 0 0-512 256 256 0 1 0 0 512zm-40-176h24v-64h-24a24 24 0 1 1 0-48h48c13 0 24 11 24 24v88h8a24 24 0 1 1 0 48h-80a24 24 0 1 1 0-48zm40-208a32 32 0 1 1 0 64 32 32 0 1 1 0-64z"
-                                                                /></svg
-                                                            >
-                                                        {/if}
-                                                    </div>
-                                                {/await}
-                                            {/each}
-                                        {:else if Dropdown.selected}
-                                            <div class="option">
-                                                <h3>No Results</h3>
-                                            </div>
-                                        {/if}
+                                                                    }}
+                                                                    on:keydown|stopPropagation={(
+                                                                        e,
+                                                                    ) => {
+                                                                        if (
+                                                                            e.key ===
+                                                                            "Enter"
+                                                                        ) {
+                                                                            let htmlToShow =
+                                                                                "";
+                                                                            if (
+                                                                                Dropdown.filName ===
+                                                                                "tag"
+                                                                            ) {
+                                                                                htmlToShow =
+                                                                                    getTagInfoHTML(
+                                                                                        option?.optionName,
+                                                                                    );
+                                                                            } else if (
+                                                                                Dropdown.filName ===
+                                                                                "tag category"
+                                                                            ) {
+                                                                                htmlToShow =
+                                                                                    getTagCategoryInfoHTML(
+                                                                                        option?.optionName,
+                                                                                    );
+                                                                            }
+                                                                            window?.showFullScreenInfo?.(
+                                                                                htmlToShow,
+                                                                            );
+                                                                        }
+                                                                    }}
+                                                                    ><path
+                                                                        class="item-info-path"
+                                                                        d="M256 512a256 256 0 1 0 0-512 256 256 0 1 0 0 512zm-40-176h24v-64h-24a24 24 0 1 1 0-48h48c13 0 24 11 24 24v88h8a24 24 0 1 1 0 48h-80a24 24 0 1 1 0-48zm40-208a32 32 0 1 1 0 64 32 32 0 1 1 0-64z"
+                                                                    /></svg
+                                                                >
+                                                            {/if}
+                                                        </div>
+                                                    {/await}
+                                                {/each}
+                                            {:else if Dropdown.selected}
+                                                <div class="option">
+                                                    <h3>No Results</h3>
+                                                </div>
+                                            {/if}
+                                        {/await}
                                     {/if}
                                 </div>
                             </div>
