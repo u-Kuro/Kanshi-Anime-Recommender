@@ -138,7 +138,7 @@
     }
 
     async function handleExportEveryHour() {
-        if (!$exportPathIsAvailable && $android) return handleExportFolder();
+        // if (!$exportPathIsAvailable && $android) return handleExportFolder();
         if (
             await $confirmPromise(
                 `Do you want to ${

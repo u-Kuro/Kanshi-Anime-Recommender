@@ -245,7 +245,7 @@ const requestAnimeEntries = (_data) => {
                 || isCurrentlyImporting
                 || isExporting
                 || get(isImporting)
-            ) return
+            ) resolve()
         }
         progress.set(0)
         cacheRequest("./webapi/worker/requestAnimeEntries.js")
@@ -322,8 +322,10 @@ const requestUserEntries = (_data) => {
                 || isGettingNewEntries
             ) {
                 userRequestIsRunning.set(false)
+                reject()
             }
         }
+        userRequestIsRunning.set(true)
         progress.set(0)
         cacheRequest("./webapi/worker/requestUserEntries.js")
             .then(url => {
@@ -333,6 +335,7 @@ const requestUserEntries = (_data) => {
                     requestUserEntriesWorker = null
                 }
                 requestUserEntriesWorker = new Worker(url)
+                userRequestIsRunning.set(true)
                 requestUserEntriesWorker.postMessage(_data)
                 requestUserEntriesWorker.onmessage = ({ data }) => {
                     if (data?.hasOwnProperty("progress")) {
@@ -620,7 +623,7 @@ const waitForExtraInfo = () => {
         } else {
             return getExtraInfo()
         }
-    }, 1000 * 5)
+    }, 1000 * 30)
 }
 const getExtraInfo = () => {
     return new Promise((resolve, reject) => {

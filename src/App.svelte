@@ -183,14 +183,11 @@
 							});
 					} else {
 						if (navigator.onLine) {
-							$userRequestIsRunning = true;
 							requestUserEntries()
 								.then(() => {
-									$userRequestIsRunning = false;
 									requestAnimeEntries();
 								})
 								.catch((error) => {
-									$userRequestIsRunning = false;
 									$dataStatus = "Something went wrong";
 									console.error(error);
 								});
@@ -498,28 +495,34 @@
 	// 	let urlParams = new URLSearchParams(window.location.hash.slice(1));
 	// 	return urlParams.get("access_token");
 	// }
-
-	async function checkAutoFunctions(initCheck = false) {
+	async function checkAutoFunctions(
+		initCheck = false,
+		visibilityChange = false,
+	) {
 		if ($appID == null) {
 			window?.kanshiInit?.then?.(() => {
 				checkAutoFunctions(initCheck);
 			});
-			return;
-		}
-		// auto Update
-		if (initCheck) {
+		} else if (initCheck) {
+			try {
+				await requestUserEntries();
+				await requestAnimeEntries();
+				checkAutoExportOnLoad();
+			} catch (e) {
+				$dataStatus = "Something went wrong";
+				console.error(error);
+				checkAutoExportOnLoad();
+			}
+		} else if ($autoUpdate && (await autoUpdateIsPastDate())) {
 			if (!$userRequestIsRunning) {
-				$userRequestIsRunning = true;
 				requestUserEntries()
 					.then(() => {
-						$userRequestIsRunning = false;
 						requestAnimeEntries().finally(() => {
 							checkAutoExportOnLoad();
 						});
 					})
 					.catch((error) => {
 						checkAutoExportOnLoad();
-						$userRequestIsRunning = false;
 						$dataStatus = "Something went wrong";
 						console.error(error);
 					});
@@ -528,37 +531,19 @@
 					checkAutoExportOnLoad();
 				});
 			}
-		} else {
-			if (autoUpdateIsPastDate() && $autoUpdate) {
-				$userRequestIsRunning = true;
-				if (!$userRequestIsRunning) {
-					$userRequestIsRunning = true;
-					requestUserEntries()
-						.then(() => {
-							$userRequestIsRunning = false;
-							requestAnimeEntries().finally(() => {
-								checkAutoExportOnLoad();
-							});
-						})
-						.catch((error) => {
-							checkAutoExportOnLoad();
-							$userRequestIsRunning = false;
-							$dataStatus = "Something went wrong";
-							console.error(error);
-						});
-				} else {
-					requestAnimeEntries().finally(() => {
-						checkAutoExportOnLoad();
-					});
+		} else if ($autoExport && (await autoExportIsPastDate())) {
+			exportUserData().finally(() => {
+				if (visibilityChange && !$userRequestIsRunning) {
+					requestUserEntries({ visibilityChange: true });
 				}
-			} else {
-				checkAutoExportOnLoad();
-			}
+			});
+		} else if (visibilityChange && !$userRequestIsRunning) {
+			requestUserEntries({ visibilityChange: true });
 		}
 	}
-	function checkAutoExportOnLoad() {
+	async function checkAutoExportOnLoad() {
 		if ($autoExport) {
-			if (autoExportIsPastDate()) {
+			if (await autoExportIsPastDate()) {
 				exportUserData();
 			}
 		}
@@ -689,7 +674,7 @@
 				saveJSON(true, "autoUpdate");
 			}
 			// Check Run First
-			if (autoUpdateIsPastDate()) {
+			if (await autoUpdateIsPastDate()) {
 				checkAutoFunctions();
 				if ($autoUpdateInterval) clearInterval($autoUpdateInterval);
 				$autoUpdateInterval = setInterval(() => {
@@ -719,18 +704,13 @@
 			}
 		} else if (val === false) {
 			if ($autoUpdateInterval) clearInterval($autoUpdateInterval);
+			$autoUpdateInterval = null;
 			if ($appID != null) {
 				saveJSON(false, "autoUpdate");
 			}
 		}
 	});
 	async function autoUpdateIsPastDate() {
-		if ($appID == null) {
-			window?.kanshiInit?.then?.(() => {
-				autoUpdateIsPastDate();
-			});
-			return;
-		}
 		let isPastDate = false;
 		$lastRunnedAutoUpdateDate = await retrieveJSON(
 			"lastRunnedAutoUpdateDate",
@@ -752,14 +732,11 @@
 	runUpdate.subscribe((val) => {
 		if (typeof val !== "boolean" || $initData || !navigator.onLine) return;
 		if (!$userRequestIsRunning) {
-			$userRequestIsRunning = true;
 			requestUserEntries()
 				.then(() => {
-					$userRequestIsRunning = false;
 					requestAnimeEntries();
 				})
 				.catch((error) => {
-					$userRequestIsRunning = false;
 					$dataStatus = "Something went wrong";
 					console.error(error);
 				});
@@ -772,7 +749,7 @@
 			if ($appID != null) {
 				saveJSON(true, "autoExport");
 			}
-			if (autoExportIsPastDate()) {
+			if (await autoExportIsPastDate()) {
 				checkAutoFunctions();
 				if ($autoExportInterval) clearInterval($autoExportInterval);
 				$autoExportInterval = setInterval(() => {
@@ -802,18 +779,13 @@
 			}
 		} else if (val === false) {
 			if ($autoExportInterval) clearInterval($autoExportInterval);
+			$autoExportInterval = null;
 			if ($appID != null) {
 				saveJSON(false, "autoExport");
 			}
 		}
 	});
 	async function autoExportIsPastDate() {
-		if ($appID == null) {
-			window?.kanshiInit?.then?.(() => {
-				autoExportIsPastDate();
-			});
-			return;
-		}
 		// Check Run First
 		let isPastDate = false;
 		$lastRunnedAutoExportDate = await retrieveJSON(
@@ -858,23 +830,13 @@
 	document.addEventListener("visibilitychange", () => {
 		if ($initData || $android || document.visibilityState !== "visible")
 			return;
-		if (
-			$userRequestIsRunning &&
-			(autoUpdateIsPastDate() || autoExportIsPastDate())
-		) {
-			checkAutoFunctions();
-			if ($autoExport && !$autoExportInterval) {
-				autoExport.update((e) => e);
-			}
-			if ($autoUpdate && !$autoUpdateInterval) {
-				autoUpdate.update((e) => e);
-			}
-		} else if (!$userRequestIsRunning) {
-			$userRequestIsRunning = true;
-			requestUserEntries({ visibilityChange: true }).then(
-				() => ($userRequestIsRunning = false),
-			);
+		if ($autoExport == null) {
+			autoExport.update((e) => e);
 		}
+		if ($autoUpdate == null) {
+			autoUpdate.update((e) => e);
+		}
+		checkAutoFunctions(false, true);
 	});
 
 	if ("scrollRestoration" in window.history) {
@@ -887,23 +849,13 @@
 	window.addEventListener("wheel", windowWheel, { passive: true });
 	window.checkEntries = () => {
 		if ($initData) return;
-		if (
-			$userRequestIsRunning &&
-			(autoUpdateIsPastDate() || autoExportIsPastDate())
-		) {
-			checkAutoFunctions();
-			if (!$autoExportInterval) {
-				autoExport.update((e) => e);
-			}
-			if (!$autoUpdateInterval) {
-				autoUpdate.update((e) => e);
-			}
-		} else if (!$userRequestIsRunning) {
-			$userRequestIsRunning = true;
-			requestUserEntries({ visibilityChange: true }).then(
-				() => ($userRequestIsRunning = false),
-			);
+		if ($autoExport == null) {
+			autoExport.update((e) => e);
 		}
+		if ($autoUpdate == null) {
+			autoUpdate.update((e) => e);
+		}
+		checkAutoFunctions(false, true);
 	};
 	window.addEventListener("popstate", () => {
 		window.backPressed();
@@ -1020,7 +972,6 @@
 		if (val === true) window.setShouldGoBack(false);
 	});
 	let isBelowNav = false;
-	let updateIconIsManual = false;
 	window.addEventListener("scroll", () => {
 		let shouldUpdate =
 			animeGridEl?.getBoundingClientRect?.()?.top > 0 && !$popupVisible;
@@ -1292,8 +1243,6 @@
 		usernameInputEl = document.getElementById("usernameInput");
 		animeGridEl = document.getElementById("anime-grid");
 		animeGridEl?.addEventListener("scroll", () => {
-			updateIconIsManual =
-				animeGridEl?.getBoundingClientRect?.()?.top < 0;
 			if (animeGridEl.scrollLeft > 500 && !willExit)
 				window.setShouldGoBack(false);
 			if (!$gridFullView) return;

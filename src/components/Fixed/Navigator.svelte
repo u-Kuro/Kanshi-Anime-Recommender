@@ -103,7 +103,6 @@
                                 username: typedUsername,
                             })
                                 .then(({ newusername }) => {
-                                    $userRequestIsRunning = false;
                                     if (newusername) {
                                         setLocalStorage(
                                             "username",
@@ -152,7 +151,6 @@
                                 username: typedUsername,
                             })
                                 .then(({ newusername }) => {
-                                    $userRequestIsRunning = false;
                                     if (newusername) {
                                         setLocalStorage(
                                             "username",
@@ -286,13 +284,6 @@
             }, 50);
         }
     }
-
-    $: typedUsername,
-        (() => {
-            if (typedUsername) {
-                inputUsernameEl?.setCustomValidity?.("");
-            }
-        })();
 
     onDestroy(() => {
         writableSubscriptions.forEach((unsub) => unsub());
