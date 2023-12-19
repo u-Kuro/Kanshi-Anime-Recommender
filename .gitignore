@@ -2,6 +2,7 @@
 /public/build/
 /public/android/
 /prettified/
+/src/js/.caching.js
 .DS_Store
 
 .vercel
