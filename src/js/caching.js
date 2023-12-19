@@ -50,7 +50,15 @@ const emptyImage = "data:image/png;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=";
 const android = isAndroid()
 let loadedImagePromises = {}
 let loadedImages = {}
+const limit = true
 const cacheImage = (url, width, height) => {
+    if (limit) {
+        if (url) {
+            return url
+        } else {
+            return emptyImage
+        }
+    }
     if (loadedImages[url]) {
         return loadedImages[url]
     } else if (loadedImagePromises[url]) {
