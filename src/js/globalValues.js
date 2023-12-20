@@ -22,6 +22,7 @@ const finalAnimeList = writable(null)
 const newFinalAnime = writable([])
 const animeLoaderWorker = writable(null)
 const dataStatus = writable(null)
+const loadingDataStatus = writable(null)
 
 const isLoadingAnime = writable(false)
 const isProcessingList = writable(false)
@@ -98,6 +99,7 @@ export {
     newFinalAnime,
     animeLoaderWorker,
     dataStatus,
+    loadingDataStatus,
     userRequestIsRunning,
     isLoadingAnime,
     isProcessingList,

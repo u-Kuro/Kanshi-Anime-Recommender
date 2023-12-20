@@ -7,7 +7,10 @@ const jsonIsEmpty = (obj) => {
   }
   return true;
 }
-function msToTime(duration, limit) {
+const roundToNearestTenth = (number) => {
+  return Math.round(number * 10) / 10;
+}
+const msToTime = (duration, limit) => {
   try {
     if (duration < 1e3) {
       return "0s";
@@ -22,9 +25,77 @@ function msToTime(duration, limit) {
       decades = Math.floor((duration / 2.90304e11) % 10),
       century = Math.floor((duration / 2.90304e12) % 10),
       millenium = Math.floor((duration / 2.90304e13) % 10);
-    let time = []
+    let time = [];
+    let maxUnit = millenium > 0 ? "mil" : century > 0 ? "cen" : decades > 0 ? "dec" : years > 0 ? "y" : months > 0 ? "mon" : weeks > 0 ? "w" : days > 0 ? "d" : hours > 0 ? "h" : minutes > 0 ? "m" : "s";
+    if (limit <= 1) {
+      switch (maxUnit) {
+        case "mil": {
+          if (century > 0) {
+            millenium += century * .1;
+            millenium = roundToNearestTenth(millenium)
+          }
+          break
+        }
+        case "cen": {
+          if (decades > 0) {
+            century += decades * .1;
+            century = roundToNearestTenth(century)
+          }
+          break
+        }
+        case "dec": {
+          if (years > 0) {
+            decades += years * .1;
+            decades = roundToNearestTenth(decades)
+          }
+          break
+        }
+        case "y": {
+          if (months > 0) {
+            years += months * .0833333333
+            years = roundToNearestTenth(years)
+          }
+          break
+        }
+        case "mon": {
+          if (weeks > 0) {
+            months += weeks * .229984378;
+            months = roundToNearestTenth(months)
+          }
+          break
+        }
+        case "w": {
+          if (days > 0) {
+            weeks += days * .142857143;
+            weeks = roundToNearestTenth(weeks)
+          }
+          break
+        }
+        case "d": {
+          if (hours > 0) {
+            days += hours * .0416666667;
+            days = roundToNearestTenth(days)
+          }
+          break
+        }
+        case "h": {
+          if (minutes > 0) {
+            hours += minutes * .0166666667;
+            hours = roundToNearestTenth(hours)
+          }
+          break
+        }
+        case "m": {
+          if (seconds > 0) {
+            minutes += seconds * .0166666667;
+            minutes = roundToNearestTenth(minutes)
+          }
+          break
+        }
+      }
+    }
     if (millenium > 0) time.push(`${millenium}mil`)
-    if (century > 0) time.push(`${century}c`)
+    if (century > 0) time.push(`${century}cen`)
     if (decades > 0) time.push(`${decades}dec`)
     if (years > 0) time.push(`${years}y`)
     if (months > 0) time.push(`${months}mon`)
@@ -36,9 +107,9 @@ function msToTime(duration, limit) {
     if (limit > 0) {
       time = time.slice(0, limit)
     }
-    return time.join(" ")
+    return time.join(" ") || "0s"
   } catch (e) {
-    return ""
+    return
   }
 }
 const formatYear = (date) => date.toLocaleDateString(undefined, { year: "numeric" });
@@ -46,7 +117,7 @@ const formatMonth = (date) => date.toLocaleDateString(undefined, { month: "short
 const formatDay = (date) => date.toLocaleDateString(undefined, { day: "numeric" });
 const formatTime = (date) => date.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit", hour12: true });
 const formatWeekday = (date) => date.toLocaleDateString(undefined, { weekday: "short" });
-function getLastVisibleElement(childSelector, parent) {
+const getLastVisibleElement = (childSelector, parent) => {
   try {
     let childElements
     if (parent instanceof Element) {
@@ -66,7 +137,7 @@ function getLastVisibleElement(childSelector, parent) {
     }
   } catch (ex) { }
 }
-function getMostVisibleElement(parent, childSelector, intersectionRatioThreshold = 0.5) {
+const getMostVisibleElement = (parent, childSelector, intersectionRatioThreshold = 0.5) => {
   try {
     let childElements;
     if (childSelector instanceof Array) {
@@ -106,8 +177,7 @@ function getMostVisibleElement(parent, childSelector, intersectionRatioThreshold
     return
   }
 }
-
-function getMostVisibleElementFromArray(parent, elements, intersectionRatioThreshold = 0.5) {
+const getMostVisibleElementFromArray = (parent, elements, intersectionRatioThreshold = 0.5) => {
   try {
     if (!elements.length) return null;
     let mostVisibleElement = null;
@@ -136,8 +206,7 @@ function getMostVisibleElementFromArray(parent, elements, intersectionRatioThres
     return
   }
 }
-
-function isElementVisible(parent, element, intersectionRatioThreshold = 0) {
+const isElementVisible = (parent, element, intersectionRatioThreshold = 0) => {
   try {
     let boundingRect = element.getBoundingClientRect();
     let parentRect = parent.getBoundingClientRect();

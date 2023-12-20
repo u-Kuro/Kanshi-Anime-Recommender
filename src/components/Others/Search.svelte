@@ -10,6 +10,7 @@
         activeTagFilters,
         searchedAnimeKeyword,
         dataStatus,
+        loadingDataStatus,
         initData,
         confirmPromise,
         asyncAnimeReloaded,
@@ -529,7 +530,6 @@
         }
     }
 
-    let filterDropdownOptionIdx = 0;
     let filterDropdownOptionsLoaded = false;
     $: {
         if (!(selectedFilterElement instanceof Element)) {
@@ -2085,12 +2085,6 @@
 
     let shouldScrollSnap = getLocalStorage("nonScrollSnapFilters") ?? true;
     $: isFullViewed = $gridFullView ?? getLocalStorage("gridFullView") ?? false;
-
-    let dropdownOptions = {};
-    async function saveDropdownOptions(promise, key) {
-        dropdownOptions[key] = promise;
-        return promise;
-    }
 </script>
 
 <main
@@ -2998,12 +2992,19 @@
         </div>
     </div>
     <div id="home-status" class="home-status">
-        <span out:fade={{ duration: 200 }} class="data-status">
+        <span
+            out:fade={{ duration: 200 }}
+            class="data-status"
+        >
             <h2
                 on:click={(e) => {
                     getExtraInfo();
                 }}
                 on:keydown={() => {}}
+                class={((!$dataStatus || !$showStatus) &&
+                $loadingDataStatus
+                    ? " loading"
+                    : "")}
             >
                 {#if $dataStatus && $showStatus}
                     {$dataStatus}
@@ -3410,8 +3411,12 @@
         user-select: none;
     }
 
-    .home-status .data-status h2 {
+    .data-status h2 {
         margin: auto;
+    }
+
+    .data-status h2.loading {
+        animation: loadingBlink 1s ease-in-out infinite;
     }
 
     .filters {
@@ -3598,8 +3603,7 @@
         width: 14px;
         height: 14px;
         border-radius: 4px;
-        border: 2px solid gray;
-        accent-color: #5f9ea0;
+        accent-color: hsl(185deg, 100%, 35%);
         cursor: pointer;
     }
     .filter-checkbox .checkbox-label {
@@ -3871,6 +3875,18 @@
             -ms-transform: translateX(100%) translateZ(0);
             -moz-transform: translateX(100%) translateZ(0);
             -o-transform: translateX(100%) translateZ(0);
+        }
+    }
+
+    @keyframes loadingBlink {
+        0% {
+            opacity: 1;
+        }
+        50% {
+            opacity: 0.5;
+        }
+        100% {
+            opacity: 1;
         }
     }
 

@@ -953,7 +953,13 @@
                 timeDifMS,
             )}</span>`;
         } else if (timeDifMS > 0 && typeof nextEpisode === "number") {
-            text = ` · <span style="color:rgb(61, 180, 242);">Ep ${nextEpisode} in ${formatDateDifference(
+            let episodeFormat = "";
+            if (episodes != null && nextEpisode === episodes) {
+                episodeFormat = `Fin ${nextEpisode}`;
+            } else {
+                episodeFormat = `Ep ${nextEpisode}`;
+            }
+            text = ` · <span style="color:rgb(61, 180, 242);">${episodeFormat} in ${formatDateDifference(
                 nextAiringDate,
                 timeDifMS,
             )}</span>`;
@@ -1668,13 +1674,17 @@
                                         on:scroll={itemScroll}
                                     >
                                         {#if anime?.nextAiringEpisode?.airingAt}
+                                            {@const formattedAnimeFormat =
+                                                getFormattedAnimeFormat(anime)}
                                             <h4>
                                                 {anime?.format || "NA"}
-                                                {#key $earlisetReleaseDate || 1}
-                                                    {@html getFormattedAnimeFormat(
-                                                        anime,
-                                                    ) || " · NA"}
-                                                {/key}
+                                                {#if formattedAnimeFormat}
+                                                    {#key $earlisetReleaseDate || 1}
+                                                        {@html formattedAnimeFormat}
+                                                    {/key}
+                                                {:else}
+                                                    {" · NA"}
+                                                {/if}
                                                 {anime?.formattedDuration ||
                                                     " · NA"}
                                             </h4>
@@ -1818,7 +1828,7 @@
                                                         >
                                                             {studios?.studio
                                                                 ?.studioName ||
-                                                                "N/A"}
+                                                                "NA"}
                                                         </a>
                                                     {/each}
                                                 </div>
@@ -1862,7 +1872,7 @@
                                                             copy-value={genres?.genre ||
                                                                 ""}
                                                             >{genres?.genre ||
-                                                                "N/A"}
+                                                                "NA"}
                                                         </span>
                                                     {/each}
                                                 </div>
@@ -1939,7 +1949,7 @@
                                                             copy-value={tags?.copyValue ||
                                                                 ""}
                                                             >{@html tags?.tag ||
-                                                                "N/A"}
+                                                                "NA"}
                                                         </span>
                                                     {/each}
                                                 </div>

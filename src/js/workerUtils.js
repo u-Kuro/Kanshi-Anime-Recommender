@@ -23,7 +23,8 @@ import {
     currentExtraInfo,
     finalAnimeList,
     isLoadingAnime,
-    isProcessingList
+    isProcessingList,
+    loadingDataStatus
 } from "./globalValues";
 import { get } from "svelte/store";
 import { downloadLink, isJsonObject, removeLocalStorage, setLocalStorage } from "../js/others/helper.js"
@@ -628,6 +629,7 @@ const waitForExtraInfo = () => {
 const getExtraInfo = () => {
     return new Promise((resolve, reject) => {
         if (get(initData)) return
+        loadingDataStatus.set(true)
         clearTimeout(getExtraInfoTimeout)
         getExtraInfoWorker?.terminate?.()
         getExtraInfoWorker = null
@@ -669,6 +671,7 @@ const getExtraInfo = () => {
                         thisExtraInfo[data.key] = data?.message
                         extraInfo.set(thisExtraInfo)
                         currentExtraInfo.set(data.key)
+                        loadingDataStatus.set(false)
                         waitForExtraInfo()
                         getExtraInfoWorker?.terminate?.()
                         resolve()
