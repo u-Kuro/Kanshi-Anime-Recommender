@@ -26,6 +26,7 @@
         isFullViewed,
         newFinalAnime,
         appID,
+        confirmIsVisible,
     } from "../../../js/globalValues.js";
     import {
         isJsonObject,
@@ -44,6 +45,7 @@
         formatWeekday,
         setLocalStorage,
         removeLocalStorage,
+        requestFrame,
     } from "../../../js/others/helper.js";
     import { retrieveJSON, saveJSON } from "../../../js/indexedDB.js";
     import { animeLoader } from "../../../js/workerUtils.js";
@@ -277,17 +279,15 @@
                 ];
             if (openedAnimePopupEl instanceof Element) {
                 // Animate Opening
-                requestAnimationFrame(() => {
-                    addClass(popupWrapper, "willChange");
-                    addClass(popupContainer, "willChange");
+                addClass(popupWrapper, "willChange");
+                addClass(popupContainer, "willChange");
 
-                    addClass(popupWrapper, "visible");
-                    addClass(popupContainer, "show");
-                    setTimeout(() => {
-                        removeClass(popupWrapper, "willChange");
-                        removeClass(popupContainer, "willChange");
-                    }, 200);
-                });
+                addClass(popupWrapper, "visible");
+                addClass(popupContainer, "show");
+                setTimeout(() => {
+                    removeClass(popupWrapper, "willChange");
+                    removeClass(popupContainer, "willChange");
+                }, 200);
                 // Try to Add YT player
                 currentHeaderIdx = $openedAnimePopupIdx;
                 let openedAnimes = [
@@ -340,38 +340,35 @@
             } else {
                 afterImmediateScrollUponPopupVisible = false;
                 // Animate Opening
-                requestAnimationFrame(() => {
-                    addClass(popupWrapper, "willChange");
-                    addClass(popupContainer, "willChange");
-
-                    addClass(popupWrapper, "visible");
-                    addClass(popupContainer, "show");
-                    setTimeout(() => {
-                        removeClass(popupWrapper, "willChange");
-                        removeClass(popupContainer, "willChange");
-                    }, 200);
-                });
-            }
-        } else if (val === false) {
-            window?.closeFullScreenItem?.();
-            requestAnimationFrame(() => {
                 addClass(popupWrapper, "willChange");
                 addClass(popupContainer, "willChange");
 
-                removeClass(popupContainer, "show");
+                addClass(popupWrapper, "visible");
+                addClass(popupContainer, "show");
                 setTimeout(() => {
-                    // Stop All Player
-                    $ytPlayers.forEach(({ ytPlayer }) => {
-                        ytPlayer?.pauseVideo?.();
-                    });
-                    removeClass(popupWrapper, "visible");
-
+                    removeClass(popupWrapper, "willChange");
                     removeClass(popupContainer, "willChange");
-                    setTimeout(() => {
-                        removeClass(popupWrapper, "willChange");
-                    }, 200);
                 }, 200);
-            });
+            }
+        } else if (val === false) {
+            window?.closeFullScreenItem?.();
+            window?.handleConfirmationCancelled?.();
+            $confirmIsVisible = false;
+
+            addClass(popupWrapper, "willChange");
+            addClass(popupContainer, "willChange");
+
+            removeClass(popupContainer, "show");
+            requestFrame(() => {
+                // Stop All Player
+                $ytPlayers.forEach(({ ytPlayer }) => {
+                    ytPlayer?.pauseVideo?.();
+                });
+                removeClass(popupWrapper, "visible");
+
+                removeClass(popupContainer, "willChange");
+                removeClass(popupWrapper, "willChange");
+            }, 200);
         }
     });
 
@@ -1430,10 +1427,16 @@
                                     (anime.trailerID ? "loader" : "")}
                                 bind:this={anime.popupHeader}
                                 tabindex="0"
-                                on:click={() => askToOpenYoutube(anime.title)}
-                                on:keydown={(e) =>
-                                    e.key === "Enter" &&
-                                    askToOpenYoutube(anime.title)}
+                                on:click={() => {
+                                    if (!$popupVisible) return;
+                                    askToOpenYoutube(anime.title);
+                                }}
+                                on:keydown={(e) => {
+                                    if (!$popupVisible) return;
+                                    if (e.key === "Enter") {
+                                        askToOpenYoutube(anime.title);
+                                    }
+                                }}
                             >
                                 <div class="popup-header-loading">
                                     <!-- k icon -->
@@ -2220,7 +2223,7 @@
         top: 0;
         width: 100%;
         height: 100%;
-        background-color: rgba(0, 0, 0, 0.7);
+        background-color: transparent;
         display: flex;
         justify-content: center;
         overflow: hidden;
@@ -2803,6 +2806,9 @@
     }
 
     @media screen and (min-width: 640px) {
+        .popup-wrapper {
+            background-color: rgba(0, 0, 0, 0.7);
+        }
         .popup-info {
             padding: 0 1em;
         }

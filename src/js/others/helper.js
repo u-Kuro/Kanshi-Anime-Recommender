@@ -7,6 +7,17 @@ const jsonIsEmpty = (obj) => {
   }
   return true;
 }
+const requestFrame = (fn = () => { }, delay = 16) => {
+  let start = performance.now()
+  const loop = (timestamp) => {
+    if (timestamp - start >= delay) {
+      fn?.()
+    } else {
+      requestAnimationFrame(loop)
+    }
+  }
+  requestAnimationFrame(loop)
+}
 const roundToNearestTenth = (number) => {
   return Math.round(number * 10) / 10;
 }
@@ -631,6 +642,7 @@ export {
   setLocalStorage,
   getLocalStorage,
   removeLocalStorage,
+  requestFrame,
   makeArrayUnique,
   capitalize,
   getMostVisibleElementFromArray,

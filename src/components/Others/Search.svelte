@@ -2992,19 +2992,15 @@
         </div>
     </div>
     <div id="home-status" class="home-status">
-        <span
-            out:fade={{ duration: 200 }}
-            class="data-status"
-        >
+        <span out:fade={{ duration: 200 }} class="data-status">
             <h2
                 on:click={(e) => {
                     getExtraInfo();
                 }}
                 on:keydown={() => {}}
-                class={((!$dataStatus || !$showStatus) &&
-                $loadingDataStatus
+                class={(!$dataStatus || !$showStatus) && $loadingDataStatus
                     ? " loading"
-                    : "")}
+                    : ""}
             >
                 {#if $dataStatus && $showStatus}
                     {$dataStatus}

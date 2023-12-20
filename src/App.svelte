@@ -1198,7 +1198,7 @@
 	};
 
 	let _progress = 0,
-		progressFrame,
+		progressTimeout,
 		progressChangeStart = performance.now();
 	progress.subscribe((val) => {
 		if (
@@ -1206,14 +1206,14 @@
 			val <= 0 ||
 			performance.now() - progressChangeStart > 300
 		) {
-			cancelAnimationFrame(progressFrame);
-			progressFrame = requestAnimationFrame(() => {
+			clearTimeout(progressTimeout);
+			progressTimeout = setTimeout(() => {
 				if (_progress < 100 && _progress > 0) {
 					_progress = Math.max(val, _progress);
 				} else {
 					_progress = val;
 				}
-			});
+			}, 16);
 			progressChangeStart = performance.now();
 		}
 	});
