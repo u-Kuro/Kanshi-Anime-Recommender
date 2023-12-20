@@ -353,6 +353,7 @@
                 });
             }
         } else if (val === false) {
+            window?.closeFullScreenItem?.();
             requestAnimationFrame(() => {
                 addClass(popupWrapper, "willChange");
                 addClass(popupContainer, "willChange");
@@ -669,7 +670,8 @@
         if (
             ytPlayerEl instanceof Element &&
             youtubeID &&
-            typeof YT !== "undefined"
+            typeof YT !== "undefined" &&
+            typeof YT?.Player === "function"
         ) {
             if ($ytPlayers.some(({ ytPlayer }) => ytPlayer.g === ytPlayerEl))
                 return;
@@ -780,19 +782,19 @@
                 }
                 videoLoops[loopedAnimeID] = setTimeout(() => {
                     _ytPlayer?.stopVideo?.();
-                    setTimeout(() => {
-                        if (
-                            mostVisiblePopupHeader === popupHeader &&
-                            _ytPlayer?.getPlayerState?.() === 5 &&
-                            _ytPlayer.g &&
-                            $inApp &&
-                            $popupVisible &&
-                            $autoPlay
-                        ) {
-                            _ytPlayer?.playVideo?.();
-                        }
-                    }, 5000);
-                }, 7 * 1000); // Play Again after 8 seconds
+                    let state = _ytPlayer?.getPlayerState?.();
+                    let canReplay = state === 5 || state === 0;
+                    if (
+                        mostVisiblePopupHeader === popupHeader &&
+                        canReplay &&
+                        _ytPlayer.g &&
+                        $inApp &&
+                        $popupVisible &&
+                        $autoPlay
+                    ) {
+                        _ytPlayer?.playVideo?.();
+                    }
+                }, 30000); // Play Again after 30 seconds
             }
         } else if (videoLoops[loopedAnimeID]) {
             clearTimeout(videoLoops[loopedAnimeID]);
@@ -1551,6 +1553,7 @@
                                         class="banner-image-button"
                                         tabindex="0"
                                         on:click={() => {
+                                            if (!$popupVisible) return;
                                             window.setShouldGoBack(false);
                                             fullImagePopup =
                                                 anime.bannerImageUrl ||
@@ -1558,6 +1561,7 @@
                                             fullDescriptionPopup = null;
                                         }}
                                         on:keydown={(e) => {
+                                            if (!$popupVisible) return;
                                             if (e.key === "Enter") {
                                                 window.setShouldGoBack(false);
                                                 fullImagePopup =
@@ -1894,6 +1898,10 @@
                                                         <span
                                                             on:click={() => {
                                                                 if (
+                                                                    !$popupVisible
+                                                                )
+                                                                    return;
+                                                                if (
                                                                     !itemIsScrolling
                                                                 ) {
                                                                     showFullScreenInfo(
@@ -1906,6 +1914,10 @@
                                                                 }
                                                             }}
                                                             on:keydown={(e) => {
+                                                                if (
+                                                                    !$popupVisible
+                                                                )
+                                                                    return;
                                                                 if (
                                                                     e.key ===
                                                                         "Enter" &&
@@ -1964,6 +1976,7 @@
                                                 );
                                             }}
                                             on:click={() => {
+                                                if (!$popupVisible) return;
                                                 window.setShouldGoBack(false);
                                                 fullImagePopup =
                                                     anime.coverImageUrl ||
@@ -1973,6 +1986,7 @@
                                                 fullDescriptionPopup = null;
                                             }}
                                             on:keydown={(e) => {
+                                                if (!$popupVisible) return;
                                                 window.setShouldGoBack(false);
                                                 if (e.key === "Enter") {
                                                     fullImagePopup =
@@ -1989,15 +2003,20 @@
                                             <div
                                                 class="anime-description-wrapper"
                                                 tabindex="0"
-                                                on:click={() =>
+                                                on:click={() => {
+                                                    if (!$popupVisible) return;
                                                     showFullScreenInfo(
                                                         anime?.description,
-                                                    )}
-                                                on:keydown={(e) =>
-                                                    e.key === "Enter" &&
-                                                    showFullScreenInfo(
-                                                        anime?.description,
-                                                    )}
+                                                    );
+                                                }}
+                                                on:keydown={(e) => {
+                                                    if (!$popupVisible) return;
+                                                    if (e.key === "Enter") {
+                                                        showFullScreenInfo(
+                                                            anime?.description,
+                                                        );
+                                                    }
+                                                }}
                                             >
                                                 <h3>Description</h3>
                                                 <div class="anime-description">

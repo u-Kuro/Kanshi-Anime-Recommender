@@ -420,7 +420,7 @@
         class={"nav" +
             ($hasWheel ? " hasWheel" : "") +
             (shouldScrollSnap && $android ? " android" : "")}
-        on:wheel|passive={(e) => {
+        on:wheel={(e) => {
             horizontalWheel(e, "nav");
         }}
     >

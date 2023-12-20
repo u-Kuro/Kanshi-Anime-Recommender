@@ -100,9 +100,12 @@
                 animeLoaderIsAlivePromise = { resolve, reject };
                 $animeLoaderWorker?.postMessage?.({ checkStatus: true });
                 clearTimeout(checkAnimeLoaderStatusTimeout);
-                checkAnimeLoaderStatusTimeout = setTimeout(() => {
-                    reject();
-                }, 1000 * errorCountMult);
+                checkAnimeLoaderStatusTimeout = setTimeout(
+                    () => {
+                        reject();
+                    },
+                    Math.min(1000 * errorCountMult, 2000000000),
+                );
             })
                 .catch(() => {
                     ++errorCountMult;
@@ -572,7 +575,7 @@
             (isFullViewed ? " fullView" : "") +
             ($finalAnimeList?.length === 0 && !$initData ? " empty" : "")}
         bind:this={animeGridEl}
-        on:wheel|passive={(e) => {
+        on:wheel={(e) => {
             if (
                 isFullViewed &&
                 animeGridEl.scrollWidth > animeGridEl.clientWidth &&

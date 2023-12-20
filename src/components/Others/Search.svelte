@@ -528,7 +528,16 @@
             }
         }
     }
-    function handleFilterSelectOptionChange(
+
+    let filterDropdownOptionIdx = 0;
+    let filterDropdownOptionsLoaded = false;
+    $: {
+        if (!(selectedFilterElement instanceof Element)) {
+            filterDropdownOptionsLoaded = false;
+        }
+    }
+
+    async function handleFilterSelectOptionChange(
         optionName,
         optionType,
         optionIdx,
@@ -552,6 +561,7 @@
             ] instanceof Array
         ) {
             // true is default value of selections
+            filterDropdownOptionsLoaded = true;
             $filterOptions.filterSelection[idxTypeSelected].filters.Dropdown[
                 dropdownIdx
             ].options[optionIdx].selected = "included";
@@ -597,6 +607,7 @@
                 nameTypeSelected
             ] instanceof Array
         ) {
+            filterDropdownOptionsLoaded = true;
             $filterOptions.filterSelection[idxTypeSelected].filters.Dropdown[
                 dropdownIdx
             ].options[optionIdx].selected = "excluded";
@@ -625,6 +636,7 @@
                 nameTypeSelected
             ] instanceof Array
         ) {
+            filterDropdownOptionsLoaded = true;
             $filterOptions.filterSelection[idxTypeSelected].filters.Dropdown[
                 dropdownIdx
             ].options[optionIdx].selected = "none";
@@ -1352,7 +1364,7 @@
         }
         saveFilters("sort");
     }
-    function handleDropdownKeyDown(event) {
+    async function handleDropdownKeyDown(event) {
         let keyCode = event.which || event.keyCode || 0;
         // 38up 40down 13enter
         if (keyCode == 38 || keyCode == 40) {
@@ -1373,6 +1385,14 @@
                     highlightedEl?.closest?.(".options")?.children?.length
                 ) {
                     let parent = highlightedEl.closest(".options");
+                    if (
+                        keyCode === 38 &&
+                        selectedFilterElement &&
+                        !highlightedEl?.previousElementSibling
+                    ) {
+                        filterDropdownOptionsLoaded = true;
+                        await tick();
+                    }
                     let options = Array.from(
                         parent.querySelectorAll(".option"),
                     );
@@ -2065,6 +2085,12 @@
 
     let shouldScrollSnap = getLocalStorage("nonScrollSnapFilters") ?? true;
     $: isFullViewed = $gridFullView ?? getLocalStorage("gridFullView") ?? false;
+
+    let dropdownOptions = {};
+    async function saveDropdownOptions(promise, key) {
+        dropdownOptions[key] = promise;
+        return promise;
+    }
 </script>
 
 <main
@@ -2403,7 +2429,7 @@
             ($hasWheel ? " hasWheel" : "") +
             (shouldScrollSnap && $android ? " android" : "")}
         id="filters"
-        on:wheel|passive={(e) => {
+        on:wheel={(e) => {
             horizontalWheel(e, "filters");
             if (isFullViewed) {
                 if (!scrollingToTop && e.deltaY < 0) {
@@ -2567,54 +2593,60 @@
                                     on:wheel|stopPropagation={() => {}}
                                 >
                                     {#if Dropdown.selected}
-                                        {#await new Promise((resolve)=>resolve(Dropdown?.options?.filter?.(({ optionName }) => hasPartialMatch(optionName, Dropdown?.optKeyword) || Dropdown?.optKeyword === "")))}{''}
-                                        {:then DropdownOptions}
+                                        {#await filterDropdownOptionsLoaded ? (Dropdown?.optKeyword === "" ? Dropdown?.options?.map?.( (option, idx) => {
+                                                          option.filteredOptionIdx = idx;
+                                                          return option;
+                                                      }, ) : Dropdown?.options?.filter?.( (option, idx) => {
+                                                          option.filteredOptionIdx = idx;
+                                                          return hasPartialMatch(option.optionName, Dropdown?.optKeyword);
+                                                      }, )) : new Promise( (resolve) => resolve(Dropdown?.optKeyword === "" ? Dropdown?.options?.map( (option, idx) => {
+                                                                        option.filteredOptionIdx = idx;
+                                                                        return option;
+                                                                    }, ) : Dropdown?.options?.filter?.( (option, idx) => {
+                                                                        option.filteredOptionIdx = idx;
+                                                                        return hasPartialMatch(option.optionName, Dropdown?.optKeyword);
+                                                                    }, )), )}{""}{:then DropdownOptions}
                                             {#if DropdownOptions?.length}
                                                 {#each DropdownOptions || [] as option, optionIdx (filterSelection.filterSelectionName + Dropdown.filName + option.optionName || {})}
-                                                    {#await new Promise( (resolve) => setTimeout(resolve, optionIdx * 16), )}{""}{:then}
+                                                    {#await filterDropdownOptionsLoaded ? 1 : new Promise( (resolve) => setTimeout(resolve, Math.min(optionIdx * 16, 2000000000)), )}{""}{:then}
                                                         <div
                                                             title={getTagFilterInfoText(
                                                                 Dropdown.filName ===
                                                                     "tag category"
                                                                     ? {
-                                                                        category:
-                                                                            option?.optionName,
-                                                                    }
+                                                                          category:
+                                                                              option?.optionName,
+                                                                      }
                                                                     : Dropdown.filName ===
                                                                         "tag"
-                                                                    ? {
+                                                                      ? {
                                                                             tag: option?.optionName,
                                                                         }
-                                                                    : {},
+                                                                      : {},
                                                                 Dropdown.filName ===
                                                                     "tag category"
                                                                     ? "all tags"
                                                                     : Dropdown.filName ===
                                                                         "tag"
-                                                                    ? "category and description"
-                                                                    : "",
+                                                                      ? "category and description"
+                                                                      : "",
                                                             ) || ""}
-                                                            class={"option " +
-                                                                (hasPartialMatch(
-                                                                    option.optionName,
-                                                                    Dropdown.optKeyword,
-                                                                )
-                                                                    ? ""
-                                                                    : "disable-interaction")}
+                                                            class="option"
                                                             on:click={handleFilterSelectOptionChange(
                                                                 option.optionName,
                                                                 Dropdown.filName,
-                                                                optionIdx,
+                                                                option.filteredOptionIdx,
                                                                 dropdownIdx,
                                                                 Dropdown.changeType,
                                                                 filterSelection.filterSelectionName,
                                                             )}
                                                             on:keydown={(e) =>
-                                                                e.key === "Enter" &&
+                                                                e.key ===
+                                                                    "Enter" &&
                                                                 handleFilterSelectOptionChange(
                                                                     option.optionName,
                                                                     Dropdown.filName,
-                                                                    optionIdx,
+                                                                    option.filteredOptionIdx,
                                                                     dropdownIdx,
                                                                     Dropdown.changeType,
                                                                     filterSelection.filterSelectionName,
@@ -2631,9 +2663,9 @@
                                                                     style:--optionColor={option.selected ===
                                                                     "included"
                                                                         ? // green
-                                                                        "#5f9ea0"
+                                                                          "#5f9ea0"
                                                                         : // red
-                                                                        "#e85d75"}
+                                                                          "#e85d75"}
                                                                 >
                                                                     <path
                                                                         class="item-info-path"
@@ -2642,9 +2674,9 @@
                                                                         filterSelection.filterSelectionName ===
                                                                             "Content Caution"
                                                                             ? // circle-xmark
-                                                                            "M256 48a208 208 0 1 1 0 416 208 208 0 1 1 0-416zm0 464a256 256 0 1 0 0-512 256 256 0 1 0 0 512zm-81-337c-9 9-9 25 0 34l47 47-47 47c-9 9-9 24 0 34s25 9 34 0l47-47 47 47c9 9 24 9 34 0s9-25 0-34l-47-47 47-47c9-10 9-25 0-34s-25-9-34 0l-47 47-47-47c-10-9-25-9-34 0z"
+                                                                              "M256 48a208 208 0 1 1 0 416 208 208 0 1 1 0-416zm0 464a256 256 0 1 0 0-512 256 256 0 1 0 0 512zm-81-337c-9 9-9 25 0 34l47 47-47 47c-9 9-9 24 0 34s25 9 34 0l47-47 47 47c9 9 24 9 34 0s9-25 0-34l-47-47 47-47c9-10 9-25 0-34s-25-9-34 0l-47 47-47-47c-10-9-25-9-34 0z"
                                                                             : // circle-check
-                                                                            "M256 48a208 208 0 1 1 0 416 208 208 0 1 1 0-416zm0 464a256 256 0 1 0 0-512 256 256 0 1 0 0 512zm113-303c9-9 9-25 0-34s-25-9-34 0L224 286l-47-47c-9-9-24-9-34 0s-9 25 0 34l64 64c10 9 25 9 34 0l128-128z"}
+                                                                              "M256 48a208 208 0 1 1 0 416 208 208 0 1 1 0-416zm0 464a256 256 0 1 0 0-512 256 256 0 1 0 0 512zm113-303c9-9 9-25 0-34s-25-9-34 0L224 286l-47-47c-9-9-24-9-34 0s-9 25 0 34l64 64c10 9 25 9 34 0l128-128z"}
                                                                     />
                                                                 </svg>
                                                             {/if}
