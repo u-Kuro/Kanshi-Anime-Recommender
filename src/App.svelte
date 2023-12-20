@@ -510,7 +510,7 @@
 				checkAutoExportOnLoad();
 			} catch (e) {
 				$dataStatus = "Something went wrong";
-				console.error(error);
+				console.error(e);
 				checkAutoExportOnLoad();
 			}
 		} else if ($autoUpdate && (await autoUpdateIsPastDate())) {
@@ -1127,6 +1127,7 @@
 				undefined;
 		$confirmIsVisible = false;
 	}
+	window.handleConfirmationCancelled = handleConfirmationCancelled;
 	confirmIsVisible.subscribe((val) => {
 		if (val === false) {
 			_confirmModalPromise?.resolve?.(false);
@@ -1287,14 +1288,13 @@
 	function loadAnalytics() {
 		(async () => {
 			// For Youtube API
-			window.onYouTubeIframeAPIReady = () => {};
+			window.onYouTubeIframeAPIReady = () => {
+				window.playMostVisibleTrailer?.();
+			};
 			let YTscript = document.createElement("script");
 			YTscript.src = "https://www.youtube.com/iframe_api?v=16";
 			YTscript.id = "www-widgetapi-script";
 			YTscript.defer = true;
-			YTscript.onerror = () => {
-				resolve();
-			};
 			YTscript.onload = () => {
 				window?.onYouTubeIframeAPIReady?.();
 			};
