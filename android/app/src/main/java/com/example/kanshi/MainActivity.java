@@ -33,6 +33,8 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Handler;
+import android.os.Looper;
 import android.os.PowerManager;
 import android.provider.DocumentsContract;
 import android.provider.Settings;
@@ -79,7 +81,7 @@ import androidx.core.splashscreen.SplashScreen;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 public class MainActivity extends AppCompatActivity {
-    public final int appID = 259;
+    public final int appID = 260;
     public boolean webViewIsLoaded = false;
     public boolean permissionIsAsked = false;
     public SharedPreferences prefs;
@@ -91,6 +93,7 @@ public class MainActivity extends AppCompatActivity {
     private MediaWebView webView;
     private ProgressBar progressbar;
     private SwipeRefreshLayout swipeRefreshLayout;
+    private boolean isPopupVisible = false;
     private boolean pageLoaded = false;
 
     private PowerManager.WakeLock wakeLock;
@@ -223,8 +226,20 @@ public class MainActivity extends AppCompatActivity {
         });
         // Add on refresh listener
         swipeRefreshLayout.setOnRefreshListener(() -> {
-            pageLoaded = false;
-            webView.reload();
+            if (isPopupVisible) {
+                webView.loadUrl("javascript:window?.returnedAppIsVisible?.(false)");
+                swipeRefreshLayout.setRefreshing(false);
+                return;
+            }
+            isAppConnectionAvailable(isConnected -> webView.post(() -> {
+                if (isConnected && !isPopupVisible) {
+                    pageLoaded = false;
+                    webView.loadUrl("https://u-kuro.github.io/Kanshi.Anime-Recommendation/");
+                } else {
+                    webView.loadUrl("javascript:window?.returnedAppIsVisible?.(false)");
+                    swipeRefreshLayout.setRefreshing(false);
+                }
+            }),1000);
         });
         // Orientation
         currentOrientation = getResources().getConfiguration().orientation;
@@ -429,19 +444,31 @@ public class MainActivity extends AppCompatActivity {
             }
         });
         WebView.setWebContentsDebuggingEnabled(BuildConfig.DEBUG);
-        pageLoaded = false;
-        webView.loadUrl("https://u-kuro.github.io/Kanshi.Anime-Recommendation/");
-        if (!permissionIsAsked) {
-            if (ActivityCompat.checkSelfPermission(this, POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                    notificationPermission.launch(POST_NOTIFICATIONS);
+        isAppConnectionAvailable(isConnected -> webView.post(() -> {
+            if (isConnected) {
+                pageLoaded = false;
+                webView.loadUrl("https://u-kuro.github.io/Kanshi.Anime-Recommendation/");
+            } else {
+                webView.loadUrl("file:///android_asset/www/index.html");
+                showDialog(new AlertDialog.Builder(MainActivity.this)
+                        .setTitle("Connection unreachable")
+                        .setMessage("Connection unreachable, do you want to reconnect indefinitely?")
+                        .setPositiveButton("OK", ((dialog, i) -> reconnectLonger()))
+                        .setNegativeButton("CANCEL",null)
+                );
+            }
+            if (!permissionIsAsked) {
+                if (ActivityCompat.checkSelfPermission(this, POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        notificationPermission.launch(POST_NOTIFICATIONS);
+                    }
                 }
             }
-        }
-        // Only works after first page load
-        webSettings.setBuiltInZoomControls(false);
-        webSettings.setDisplayZoomControls(false);
-        webSettings.setSupportZoom(false);
+            // Only works after first page load
+            webSettings.setBuiltInZoomControls(false);
+            webSettings.setDisplayZoomControls(false);
+            webSettings.setSupportZoom(false);
+        }),3000);
     }
 
     public static MainActivity getInstanceActivity() {
@@ -474,9 +501,7 @@ public class MainActivity extends AppCompatActivity {
             webView.getSettings().setOffscreenPreRaster(false);
         }
         super.onPause();
-        webView.post(() -> webView.loadUrl("javascript:" +
-            "window?.returnedAppIsVisible?.(false);" // Should Be Runned First
-        ));
+        webView.post(() -> webView.loadUrl("javascript:window?.returnedAppIsVisible?.(false)"));
     }
 
     @Override
@@ -698,9 +723,21 @@ public class MainActivity extends AppCompatActivity {
             ClipData clip = ClipData.newPlainText("Copied Text", text);
             clipboard.setPrimaryClip(clip);
         }
+        Handler setSwipeHandler;
+        Runnable setSwipeRunnable;
         @JavascriptInterface
         public void setSwipeRefreshEnabled(boolean enabled) {
-            swipeRefreshLayout.setEnabled(enabled);
+            isPopupVisible = !enabled;
+            if (setSwipeHandler!=null && setSwipeRunnable!=null) {
+                setSwipeHandler.removeCallbacks(setSwipeRunnable);
+            }
+            if (swipeRefreshLayout.isRefreshing()) {
+                setSwipeHandler = new Handler(Looper.getMainLooper());
+                setSwipeRunnable = () -> setSwipeRefreshEnabled(!isPopupVisible);
+                setSwipeHandler.postDelayed(setSwipeRunnable, 1000);
+            } else {
+                swipeRefreshLayout.setEnabled(!isPopupVisible);
+            }
         }
         @JavascriptInterface
         public void willExit() { showToast(Toast.makeText(getApplicationContext(), "Press back again to exit.", Toast.LENGTH_SHORT)); }

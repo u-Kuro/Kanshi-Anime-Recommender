@@ -17,6 +17,7 @@
         listUpdateAvailable,
         showStatus,
         newFinalAnime,
+        importantLoad,
     } from "../../js/globalValues.js";
     import { fade } from "svelte/transition";
     import { saveJSON } from "../../js/indexedDB.js";
@@ -266,6 +267,27 @@
         } catch (e) {}
     }
 
+    window.reloadResources = () => {
+        if ($android) {
+            try {
+                JSBridge?.callUpdateNotifications?.();
+            } catch (e) {}
+        }
+        document.querySelectorAll("script")?.forEach((script) => {
+            if (
+                script.src &&
+                script.src !== "https://www.youtube.com/iframe_api?v=16"
+            ) {
+                script.src = script.src;
+            }
+        });
+        document.querySelectorAll("img")?.forEach((image) => {
+            if (!image.naturalHeight) {
+                image.src = image.src;
+            }
+        });
+        window.reloadYoutube?.();
+    };
     async function reload() {
         if (
             await $confirmPromise({
@@ -273,25 +295,21 @@
                 isImportant: true,
             })
         ) {
-            if ($android) {
-                try {
-                    JSBridge?.callUpdateNotifications?.();
-                } catch (e) {}
-            }
-            document.querySelectorAll("script")?.forEach((script) => {
-                if (
-                    script.src &&
-                    script.src !== "https://www.youtube.com/iframe_api?v=16"
-                ) {
-                    script.src = script.src;
-                }
-            });
-            document.querySelectorAll("img")?.forEach((image) => {
-                if (!image.naturalHeight) {
-                    image.src = image.src;
-                }
-            });
-            window.reloadYoutube?.();
+            window?.reloadResources?.();
+        }
+    }
+
+    async function refresh() {
+        if (!$android) return;
+        if (
+            await $confirmPromise({
+                text: "Do you want to refresh the app?",
+                isImportant: true,
+            })
+        ) {
+            try {
+                JSBridge.refreshWeb();
+            } catch (e) {}
         }
     }
 
@@ -404,6 +422,11 @@
                     class="button"
                     on:keydown={(e) => e.key === "Enter" && clearCache(e)}
                     on:click={clearCache}>Clear Cache</button
+                >
+                <button
+                    class="button"
+                    on:keydown={(e) => e.key === "Enter" && refresh(e)}
+                    on:click={refresh}>Refresh</button
                 >
             {/if}
             <button
