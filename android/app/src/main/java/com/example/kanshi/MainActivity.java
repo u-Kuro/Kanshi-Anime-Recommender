@@ -81,7 +81,7 @@ import androidx.core.splashscreen.SplashScreen;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 public class MainActivity extends AppCompatActivity {
-    public final int appID = 260;
+    public final int appID = 261;
     public boolean webViewIsLoaded = false;
     public boolean permissionIsAsked = false;
     public SharedPreferences prefs;
@@ -225,21 +225,15 @@ public class MainActivity extends AppCompatActivity {
             }
         });
         // Add on refresh listener
+        final Runnable[] swipeRefreshRunnable = new Runnable[]{()->{}};
+        Handler swipeRefreshHandler = new android.os.Handler();
         swipeRefreshLayout.setOnRefreshListener(() -> {
-            if (isPopupVisible) {
-                webView.loadUrl("javascript:window?.returnedAppIsVisible?.(false)");
-                swipeRefreshLayout.setRefreshing(false);
-                return;
-            }
-            isAppConnectionAvailable(isConnected -> webView.post(() -> {
-                if (isConnected && !isPopupVisible) {
-                    pageLoaded = false;
-                    webView.loadUrl("https://u-kuro.github.io/Kanshi.Anime-Recommendation/");
-                } else {
-                    webView.loadUrl("javascript:window?.returnedAppIsVisible?.(false)");
-                    swipeRefreshLayout.setRefreshing(false);
-                }
-            }),1000);
+            try {
+                swipeRefreshHandler.removeCallbacks(swipeRefreshRunnable[0]);
+                swipeRefreshRunnable[0] = () -> swipeRefreshLayout.setRefreshing(false);
+                swipeRefreshHandler.postDelayed(swipeRefreshRunnable[0], 1000);
+            } catch (Exception ignored) {}
+            webView.loadUrl("javascript:window?.refreshAnimeList?.()");
         });
         // Orientation
         currentOrientation = getResources().getConfiguration().orientation;
@@ -738,6 +732,10 @@ public class MainActivity extends AppCompatActivity {
             } else {
                 swipeRefreshLayout.setEnabled(!isPopupVisible);
             }
+        }
+        @JavascriptInterface
+        public void listRefreshed() {
+            swipeRefreshLayout.setRefreshing(false);
         }
         @JavascriptInterface
         public void willExit() { showToast(Toast.makeText(getApplicationContext(), "Press back again to exit.", Toast.LENGTH_SHORT)); }

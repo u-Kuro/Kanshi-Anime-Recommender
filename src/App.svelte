@@ -609,7 +609,15 @@
 			});
 	});
 	updateRecommendationList.subscribe(async (val) => {
-		if (typeof val !== "boolean" || $initData) return;
+		if (typeof val !== "boolean" || $initData) {
+			if ($android && window?.isRefreshingList) {
+				window.isRefreshingList = false;
+				try {
+					JSBridge?.listRefreshed?.();
+				} catch (e) {}
+			}
+			return;
+		}
 		await saveJSON(true, "shouldProcessRecommendation");
 		processRecommendedAnimeList()
 			.then(async () => {
@@ -628,7 +636,8 @@
 				($gridFullView
 					? animeGridEl.scrollLeft > 500
 					: animeGridEl?.getBoundingClientRect?.()?.top < 0)) &&
-			$finalAnimeList?.length
+			$finalAnimeList?.length &&
+			window?.isRefreshingList !== true
 		) {
 			await saveJSON(true, "shouldLoadAnime");
 			$listUpdateAvailable = true;

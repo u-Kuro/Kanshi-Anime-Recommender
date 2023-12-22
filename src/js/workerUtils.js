@@ -39,6 +39,44 @@ let isGettingNewEntries = false;
 let passedFilterOptions, passedActiveTagFilters, passedSelectedCustomFilter
 let shouldUpdateNotifications = false
 
+window.refreshAnimeList = () => {
+    document.querySelectorAll("script")?.forEach((script) => {
+        if (
+            script.src &&
+            script.src !== "https://www.youtube.com/iframe_api?v=16"
+        ) {
+            script.src = script.src;
+        }
+    });
+    document.querySelectorAll("img")?.forEach((image) => {
+        if (!image.naturalHeight) {
+            image.src = image.src;
+        }
+    });
+    if (get(initData) || !navigator.onLine) {
+        if (get(android)) {
+            try {
+                JSBridge?.listRefreshed?.();
+            } catch (e) { }
+        }
+        return
+    }
+    window.isRefreshingList = true
+    window.reloadYoutube?.();
+    if (!get(userRequestIsRunning)) {
+        requestUserEntries()
+            .then(() => {
+                requestAnimeEntries().finally(() => {
+                    resolve()
+                });
+            })
+    } else {
+        requestAnimeEntries().finally(() => {
+            resolve()
+        });
+    }
+}
+
 // Reactinve Functions
 let animeLoaderWorker;
 const animeLoader = (_data = {}) => {
@@ -123,6 +161,13 @@ const animeLoader = (_data = {}) => {
                 alertError()
                 reject(error)
             })
+    }).finally(() => {
+        if (get(android) && window?.isRefreshingList) {
+            window.isRefreshingList = false;
+            try {
+                JSBridge?.listRefreshed?.();
+            } catch (e) { }
+        }
     })
 }
 let processRecommendedAnimeListTerminateTimeout;
@@ -615,7 +660,7 @@ const importUserData = (_data) => {
     })
 }
 
-let gotAround, nextInfoCheck = -1, getExtraInfoTimeout, getExtraInfoWorker
+let gotAround, gotAroundCont, nextInfoCheck = -1, getExtraInfoTimeout, getExtraInfoWorker
 const waitForExtraInfo = () => {
     clearTimeout(getExtraInfoTimeout)
     getExtraInfoTimeout = setTimeout(() => {
@@ -652,8 +697,10 @@ const getExtraInfo = () => {
                     currentExtraInfo.set(extraInfoIndex)
                 } else {
                     if (typeof nextInfoCheck === "number" && nextInfoCheck < 5) {
+                        gotAroundCont = false
                         ++nextInfoCheck
                     } else {
+                        gotAroundCont = true
                         nextInfoCheck = 0
                     }
                     extraInfoIndex = nextInfoCheck
@@ -680,6 +727,7 @@ const getExtraInfo = () => {
                         if (!gotAround) {
                             getExtraInfo()
                         } else {
+                            loadingDataStatus.set(false)
                             waitForExtraInfo()
                         }
                     }

@@ -266,27 +266,6 @@
         } catch (e) {}
     }
 
-    window.reloadResources = () => {
-        if ($android) {
-            try {
-                JSBridge?.callUpdateNotifications?.();
-            } catch (e) {}
-        }
-        document.querySelectorAll("script")?.forEach((script) => {
-            if (
-                script.src &&
-                script.src !== "https://www.youtube.com/iframe_api?v=16"
-            ) {
-                script.src = script.src;
-            }
-        });
-        document.querySelectorAll("img")?.forEach((image) => {
-            if (!image.naturalHeight) {
-                image.src = image.src;
-            }
-        });
-        window.reloadYoutube?.();
-    };
     async function reload() {
         if (
             await $confirmPromise({
@@ -294,7 +273,25 @@
                 isImportant: true,
             })
         ) {
-            window?.reloadResources?.();
+            if ($android) {
+                try {
+                    JSBridge?.callUpdateNotifications?.();
+                } catch (e) {}
+            }
+            document.querySelectorAll("script")?.forEach((script) => {
+                if (
+                    script.src &&
+                    script.src !== "https://www.youtube.com/iframe_api?v=16"
+                ) {
+                    script.src = script.src;
+                }
+            });
+            document.querySelectorAll("img")?.forEach((image) => {
+                if (!image.naturalHeight) {
+                    image.src = image.src;
+                }
+            });
+            window.reloadYoutube?.();
         }
     }
 
