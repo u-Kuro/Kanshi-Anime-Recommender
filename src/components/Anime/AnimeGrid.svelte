@@ -400,12 +400,12 @@
         }
     };
     function handleOpenOption(event, animeIdx) {
+        isOpeningAnimeOption = true;
         let element = event.target;
         let classList = element.classList;
         if (classList.contains("copy") || element.closest(".copy")) return;
         if (openOptionTimeout) clearTimeout(openOptionTimeout);
         openOptionTimeout = setTimeout(() => {
-            isOpeningAnimeOption = true;
             $openedAnimeOptionIdx = animeIdx;
             $animeOptionVisible = true;
         }, 500);
