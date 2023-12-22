@@ -1161,14 +1161,18 @@
     });
     function loadYouTubeAPI() {
         return new Promise((resolve) => {
-            let existingScript = document.getElementById(
-                "www-widgetapi-script",
+            let src = "https://www.youtube.com/iframe_api?v=16";
+            let existingScript = document.querySelector(
+                `#www-widgetapi-script[src="${src}"]`,
             );
+            if (!existingScript) {
+                existingScript = document.querySelector(`script[src="${src}"]`);
+            }
             if (existingScript) {
                 existingScript.parentElement.removeChild(existingScript);
             }
             let tag = document.createElement("script");
-            tag.src = "https://www.youtube.com/iframe_api?v=16";
+            tag.src = src;
             tag.id = "www-widgetapi-script";
             tag.onerror = () => {
                 resolve();

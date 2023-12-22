@@ -17,7 +17,6 @@
         listUpdateAvailable,
         showStatus,
         newFinalAnime,
-        importantLoad,
     } from "../../js/globalValues.js";
     import { fade } from "svelte/transition";
     import { saveJSON } from "../../js/indexedDB.js";
