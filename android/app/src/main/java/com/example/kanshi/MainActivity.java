@@ -76,9 +76,10 @@ import androidx.browser.customtabs.CustomTabsIntent;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.FileProvider;
 import androidx.core.splashscreen.SplashScreen;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 public class MainActivity extends AppCompatActivity {
-    public final int appID = 258;
+    public final int appID = 259;
     public boolean webViewIsLoaded = false;
     public boolean permissionIsAsked = false;
     public SharedPreferences prefs;
@@ -89,6 +90,8 @@ public class MainActivity extends AppCompatActivity {
     private String exportPath;
     private MediaWebView webView;
     private ProgressBar progressbar;
+    private SwipeRefreshLayout swipeRefreshLayout;
+    private boolean pageLoaded = false;
 
     private PowerManager.WakeLock wakeLock;
     public boolean shouldGoBack;
@@ -186,6 +189,18 @@ public class MainActivity extends AppCompatActivity {
         getWindow().getDecorView().setBackgroundColor(Color.BLACK);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        // Keep Awake on Lock Screen
+        PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+        wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "KeepAwake:");
+        wakeLock.acquire(10*60*1000L);
+        webView = findViewById(R.id.webView);
+        progressbar = findViewById(R.id.progressbar);
+        swipeRefreshLayout = findViewById(R.id.swipeRefreshLayout);
+        progressbar.setMax((int) Math.pow(10,6));
+        // Style
+        swipeRefreshLayout.setColorSchemeResources(R.color.transparent_white,R.color.white);
+        swipeRefreshLayout.setProgressBackgroundColorSchemeResource(R.color.dark_blue);
+        // Add On Press Back Listener
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
@@ -206,13 +221,11 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
-        // Keep Awake on Lock Screen
-        PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
-        wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "KeepAwake:");
-        wakeLock.acquire(10*60*1000L);
-        webView = findViewById(R.id.webView);
-        progressbar = findViewById(R.id.progressbar);
-        progressbar.setMax((int) Math.pow(10,6));
+        // Add on refresh listener
+        swipeRefreshLayout.setOnRefreshListener(() -> {
+            pageLoaded = false;
+            webView.reload();
+        });
         // Orientation
         currentOrientation = getResources().getConfiguration().orientation;
         if (currentOrientation == Configuration.ORIENTATION_LANDSCAPE) {
@@ -268,13 +281,25 @@ public class MainActivity extends AppCompatActivity {
             }
             @Override
             public void onPageFinished(WebView view, String url) {
-                CookieManager cookieManager = CookieManager.getInstance();
-                cookieManager.setAcceptCookie(true);
-                cookieManager.setAcceptThirdPartyCookies(webView,true);
-                CookieManager.getInstance().acceptCookie();
-                CookieManager.getInstance().flush();
+                if (pageLoaded) {
+                    CookieManager cookieManager = CookieManager.getInstance();
+                    cookieManager.setAcceptCookie(true);
+                    cookieManager.setAcceptThirdPartyCookies(view,true);
+                    CookieManager.getInstance().acceptCookie();
+                    CookieManager.getInstance().flush();
+                    swipeRefreshLayout.setRefreshing(false);
+                    swipeRefreshLayout.setEnabled(true);
+                    webViewIsLoaded = true;
+                } else {
+                    view.loadUrl("file:///android_asset/www/index.html");
+                    showDialog(new AlertDialog.Builder(MainActivity.this)
+                            .setTitle("Connection unreachable")
+                            .setMessage("Connection unreachable, do you want to reconnect indefinitely?")
+                            .setPositiveButton("OK", ((dialog, i) -> reconnectLonger()))
+                            .setNegativeButton("CANCEL",null)
+                    );
+                }
                 super.onPageFinished(view, url);
-                webViewIsLoaded = true;
             }
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
@@ -404,30 +429,19 @@ public class MainActivity extends AppCompatActivity {
             }
         });
         WebView.setWebContentsDebuggingEnabled(BuildConfig.DEBUG);
-        isAppConnectionAvailable(isConnected -> webView.post(() -> {
-            if (isConnected) {
-                webView.loadUrl("https://u-kuro.github.io/Kanshi.Anime-Recommendation/");
-            } else {
-                webView.loadUrl("file:///android_asset/www/index.html");
-                showDialog(new AlertDialog.Builder(MainActivity.this)
-                    .setTitle("Connection unreachable")
-                    .setMessage("Connection unreachable, do you want to reconnect indefinitely?")
-                    .setPositiveButton("OK", ((dialog, i) -> reconnectLonger()))
-                    .setNegativeButton("CANCEL",null)
-                );
-            }
-            if (!permissionIsAsked) {
-                if (ActivityCompat.checkSelfPermission(this, POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                        notificationPermission.launch(POST_NOTIFICATIONS);
-                    }
+        pageLoaded = false;
+        webView.loadUrl("https://u-kuro.github.io/Kanshi.Anime-Recommendation/");
+        if (!permissionIsAsked) {
+            if (ActivityCompat.checkSelfPermission(this, POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    notificationPermission.launch(POST_NOTIFICATIONS);
                 }
             }
-            // Only works after first page load
-            webSettings.setBuiltInZoomControls(false);
-            webSettings.setDisplayZoomControls(false);
-            webSettings.setSupportZoom(false);
-        }),3000);
+        }
+        // Only works after first page load
+        webSettings.setBuiltInZoomControls(false);
+        webSettings.setDisplayZoomControls(false);
+        webSettings.setSupportZoom(false);
     }
 
     public static MainActivity getInstanceActivity() {
@@ -512,7 +526,10 @@ public class MainActivity extends AppCompatActivity {
         BufferedWriter writer;
         File tempFile;
         String directoryPath;
-
+        @JavascriptInterface
+        public void pageIsFinished() {
+            pageLoaded = true;
+        }
         @RequiresApi(api = Build.VERSION_CODES.R)
         @JavascriptInterface
         public void exportJSON(String chunk, int status, String fileName){
@@ -682,6 +699,10 @@ public class MainActivity extends AppCompatActivity {
             clipboard.setPrimaryClip(clip);
         }
         @JavascriptInterface
+        public void setSwipeRefreshEnabled(boolean enabled) {
+            swipeRefreshLayout.setEnabled(enabled);
+        }
+        @JavascriptInterface
         public void willExit() { showToast(Toast.makeText(getApplicationContext(), "Press back again to exit.", Toast.LENGTH_SHORT)); }
         @JavascriptInterface
         public void setShouldGoBack(boolean _shouldGoBack) {
@@ -736,7 +757,10 @@ public class MainActivity extends AppCompatActivity {
                                 showDialog(new AlertDialog.Builder(MainActivity.this)
                                         .setTitle("Switch app mode")
                                         .setMessage("Do you want to switch to the online app?")
-                                        .setPositiveButton("OK", (dialogInterface, i) -> webView.loadUrl("https://u-kuro.github.io/Kanshi.Anime-Recommendation/"))
+                                        .setPositiveButton("OK", (dialogInterface, i) -> {
+                                            pageLoaded = false;
+                                            webView.loadUrl("https://u-kuro.github.io/Kanshi.Anime-Recommendation/");
+                                        })
                                         .setNegativeButton("CANCEL", null));
                             } else {
                                 showDialog(new AlertDialog.Builder(MainActivity.this)
@@ -767,7 +791,10 @@ public class MainActivity extends AppCompatActivity {
                             showDialog(new AlertDialog.Builder(MainActivity.this)
                                     .setTitle("Reconnected successfully")
                                     .setMessage("Do you want to switch to the online app?")
-                                    .setPositiveButton("OK", (dialogInterface, i) -> webView.loadUrl("https://u-kuro.github.io/Kanshi.Anime-Recommendation/"))
+                                    .setPositiveButton("OK", (dialogInterface, i) -> {
+                                        pageLoaded = false;
+                                        webView.loadUrl("https://u-kuro.github.io/Kanshi.Anime-Recommendation/");
+                                    })
                                     .setNegativeButton("CANCEL", null));
                         } else if (isConnected) {
                             showToast(Toast.makeText(getApplicationContext(), "Your internet has been restored.", Toast.LENGTH_LONG));
@@ -966,7 +993,10 @@ public class MainActivity extends AppCompatActivity {
                 showDialog(new AlertDialog.Builder(MainActivity.this)
                         .setTitle("Connected successfully")
                         .setMessage("Connection established, do you want to switch to the online app?")
-                        .setPositiveButton("OK", (dialogInterface, i) -> webView.loadUrl("https://u-kuro.github.io/Kanshi.Anime-Recommendation/"))
+                        .setPositiveButton("OK", (dialogInterface, i) -> {
+                            pageLoaded = false;
+                            webView.loadUrl("https://u-kuro.github.io/Kanshi.Anime-Recommendation/");
+                        })
                         .setNegativeButton("CANCEL", null));
             } else {
                 showDialog(new AlertDialog.Builder(MainActivity.this)

@@ -3,6 +3,7 @@ import { getLocalStorage } from "../js/others/helper.js"
 
 const appID = writable(null)
 const android = writable(null)
+const mobile = writable(null)
 const inApp = writable(true)
 const progress = writable(0)
 // const anilistAccessToken = writable(null)
@@ -81,6 +82,7 @@ const runIsScrolling = writable(null)
 
 export {
     appID,
+    mobile,
     android,
     inApp,
     hasWheel,

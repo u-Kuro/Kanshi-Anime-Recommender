@@ -295,20 +295,6 @@
         }
     }
 
-    async function refresh() {
-        if (!$android) return;
-        if (
-            await $confirmPromise({
-                text: "Do you want to refresh the app?",
-                isImportant: true,
-            })
-        ) {
-            try {
-                JSBridge.refreshWeb();
-            } catch (e) {}
-        }
-    }
-
     async function clearCache() {
         if (!$android) return;
         if (
@@ -418,11 +404,6 @@
                     class="button"
                     on:keydown={(e) => e.key === "Enter" && clearCache(e)}
                     on:click={clearCache}>Clear Cache</button
-                >
-                <button
-                    class="button"
-                    on:keydown={(e) => e.key === "Enter" && refresh(e)}
-                    on:click={refresh}>Refresh</button
                 >
             {/if}
             <button

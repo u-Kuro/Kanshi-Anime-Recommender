@@ -29,7 +29,6 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -46,13 +45,13 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.browser.customtabs.CustomTabColorSchemeParams;
 import androidx.browser.customtabs.CustomTabsIntent;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 public class YoutubeViewActivity extends AppCompatActivity {
     private MediaWebView webView;
+    private SwipeRefreshLayout swipeRefreshLayout;
     private TextView siteName;
-    LinearLayout webViewCover;
     private boolean webViewIsLoaded = false;
-    private boolean webViewFailedToLoad = false;
     private ValueCallback<Uri[]> mUploadMessage;
     private boolean isFinished = false;
     final ActivityResultLauncher<Intent> chooseImportFile =
@@ -92,24 +91,6 @@ public class YoutubeViewActivity extends AppCompatActivity {
         getWindow().getDecorView().setBackgroundColor(Color.BLACK);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_web);
-        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
-            @Override
-            public void handleOnBackPressed() {
-                if (webView.canGoBack()) {
-                    webView.goBack();
-                } else {
-                    isFinished = true;
-                    webView.onPause();
-                    webView.pauseTimers();
-                    if (!webViewFailedToLoad) {
-                        webView.loadUrl("");
-                    }
-                    webView.onPause();
-                    webView.pauseTimers();
-                    finish();
-                }
-            }
-        });
 
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -135,9 +116,23 @@ public class YoutubeViewActivity extends AppCompatActivity {
         });
 
         // Add WebView on Layout
-        webViewCover = findViewById(R.id.webViewCover);
         webView = findViewById(R.id.webView);
         siteName = findViewById(R.id.site);
+        swipeRefreshLayout = findViewById(R.id.swipeRefreshLayout);
+        swipeRefreshLayout.setColorSchemeResources(R.color.transparent_white,R.color.white);
+        swipeRefreshLayout.setProgressBackgroundColorSchemeResource(R.color.black);
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                if (webView.canGoBack()) {
+                    webView.goBack();
+                } else {
+                    isFinished = true;
+                    webView.destroy();
+                    finish();
+                }
+            }
+        });
         ProgressBar progressbar = findViewById(R.id.progressbar);
         progressbar.setMax((int) Math.pow(10,6));
         if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {
@@ -148,6 +143,7 @@ public class YoutubeViewActivity extends AppCompatActivity {
             }
             getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
         }
+        swipeRefreshLayout.setOnRefreshListener(() -> webView.reload());
         webView.setWebChromeClient(new WebChromeClient() {
             private View mCustomView;
             private CustomViewCallback mCustomViewCallback;
@@ -269,17 +265,22 @@ public class YoutubeViewActivity extends AppCompatActivity {
                 initAnchor(view);
                 CookieManager cookieManager = CookieManager.getInstance();
                 cookieManager.setAcceptCookie(true);
-                cookieManager.setAcceptThirdPartyCookies(webView,true);
+                cookieManager.setAcceptThirdPartyCookies(view,true);
                 CookieManager.getInstance().acceptCookie();
                 CookieManager.getInstance().flush();
                 if ("Web page not available".equals(view.getTitle())) {
                     siteName.setText(view.getTitle());
-                    webViewFailedToLoad = true;
-                    webViewCover.setVisibility(View.VISIBLE);
+                    if (view.canGoBack()) {
+                        view.goBack();
+                    } else {
+                        isFinished = true;
+                        webView.destroy();
+                        finish();
+                        Toast.makeText(getApplicationContext(), "Failed to load.", Toast.LENGTH_LONG).show();
+                    }
                 } else {
                     siteName.setText(R.string.youtube);
-                    webViewFailedToLoad = false;
-                    webViewCover.setVisibility(View.GONE);
+                    swipeRefreshLayout.setRefreshing(false);
                 }
                 if (!webViewIsLoaded && !isFinished) {
                     webViewIsLoaded = true;
@@ -362,13 +363,7 @@ public class YoutubeViewActivity extends AppCompatActivity {
                             webView.goBack();
                         } else {
                             isFinished = true;
-                            webView.onPause();
-                            webView.pauseTimers();
-                            if (!webViewFailedToLoad) {
-                                webView.loadUrl("");
-                            }
-                            webView.onPause();
-                            webView.pauseTimers();
+                            webView.destroy();
                             finish();
                         }
                     }
@@ -423,6 +418,7 @@ public class YoutubeViewActivity extends AppCompatActivity {
         if (MainActivity.getInstanceActivity()!=null) {
             MainActivity.getInstanceActivity().isInApp = false;
         }
+        webView.destroy();
         super.onDestroy();
     }
 

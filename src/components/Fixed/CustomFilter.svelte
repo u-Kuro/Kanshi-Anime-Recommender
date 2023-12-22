@@ -540,7 +540,7 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        text-wrap: nowrap;
+        white-space: nowrap; 
         background-color: transparent;
         font-size: 1.3rem;
         font-weight: 500;

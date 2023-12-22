@@ -23,6 +23,7 @@
         showFilterOptions,
         newFinalAnime,
         progress,
+        mobile,
     } from "../../js/globalValues.js";
     import {
         addClass,
@@ -41,6 +42,9 @@
         window.visualViewport.height,
         window.innerHeight,
     );
+    let originalWindowHeight = screen?.height
+        ? Math.min(screen.height, windowHeight)
+        : windowHeight;
     let windowWidth = Math.max(
         document?.documentElement?.getBoundingClientRect?.()?.width,
         window.visualViewport.width,
@@ -382,19 +386,27 @@
         $popupVisible = true;
     }
 
-    let openOptionTimeout;
+    let openOptionTimeout, isOpeningAnimeOption;
+    window.oncontextmenu = () => {
+        if (isOpeningAnimeOption) {
+            isOpeningAnimeOption = false;
+            return false;
+        }
+    };
     function handleOpenOption(event, animeIdx) {
         let element = event.target;
         let classList = element.classList;
         if (classList.contains("copy") || element.closest(".copy")) return;
         if (openOptionTimeout) clearTimeout(openOptionTimeout);
         openOptionTimeout = setTimeout(() => {
+            isOpeningAnimeOption = true;
             $openedAnimeOptionIdx = animeIdx;
             $animeOptionVisible = true;
         }, 500);
     }
     function cancelOpenOption() {
         if (openOptionTimeout) clearTimeout(openOptionTimeout);
+        isOpeningAnimeOption = false;
     }
 
     function getFinishedEpisode(episodes, nextAiringEpisode) {
@@ -524,10 +536,16 @@
     }
 
     onMount(() => {
-        windowHeight = Math.max(
+        let newWindowHeight = Math.max(
             window.visualViewport.height,
             window.innerHeight,
         );
+        if (newWindowHeight > windowHeight) {
+            originalWindowHeight = screen?.height
+                ? Math.min(screen.height, newWindowHeight)
+                : newWindowHeight;
+        }
+        windowHeight = newWindowHeight;
         windowWidth = Math.max(
             document?.documentElement?.getBoundingClientRect?.()?.width,
             window.visualViewport.width,
@@ -535,10 +553,16 @@
         );
         animeGridEl = animeGridEl || document.getElementById("anime-grid");
         window.addEventListener("resize", () => {
-            windowHeight = Math.max(
+            let newWindowHeight = Math.max(
                 window.visualViewport.height,
                 window.innerHeight,
             );
+            if (newWindowHeight > windowHeight) {
+                originalWindowHeight = screen?.height
+                    ? Math.min(screen.height, newWindowHeight)
+                    : newWindowHeight;
+            }
+            windowHeight = newWindowHeight;
             windowWidth = Math.max(
                 document?.documentElement?.getBoundingClientRect?.()?.width,
                 window.visualViewport.width,
@@ -598,7 +622,9 @@
                 afterFullGrid = false;
             }
         }}
-        style:--anime-grid-height={windowHeight + "px"}
+        style:--anime-grid-height={($mobile && !$android
+            ? originalWindowHeight
+            : windowHeight) + "px"}
     >
         {#if $finalAnimeList?.length}
             {#each $finalAnimeList || [] as anime, animeIdx (anime?.id ?? {})}

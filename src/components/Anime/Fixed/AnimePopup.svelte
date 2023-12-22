@@ -1636,8 +1636,6 @@
                                 <div
                                     bind:this={anime.popupInfo}
                                     class="popup-info"
-                                    style:--windowWidth={windowWidth + "px"}
-                                    style:--windowHeight={windowHeight + "px"}
                                 >
                                     <div
                                         class="anime-title-container"

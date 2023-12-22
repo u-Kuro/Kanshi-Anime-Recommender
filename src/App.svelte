@@ -52,6 +52,7 @@
 		dropdownIsVisible,
 		newFinalAnime,
 		showStatus,
+		mobile,
 		// anilistAccessToken,
 	} from "./js/globalValues.js";
 	import {
@@ -68,13 +69,14 @@
 		getLocalStorage,
 		isAndroid,
 		isJsonObject,
+		isMobile,
 		ncsCompare,
 		removeLocalStorage,
 		setLocalStorage,
 	} from "./js/others/helper.js";
 
 	$android = isAndroid(); // Android/Browser Identifier
-
+	$mobile = isMobile(); // Mobile/
 	// Init Data
 	let initDataPromises = [];
 
@@ -965,11 +967,15 @@
 			}
 		}
 	});
-	popupVisible.subscribe((val) => {
-		if (val === true) window.setShouldGoBack(false);
-	});
 	menuVisible.subscribe((val) => {
 		if (val === true) window.setShouldGoBack(false);
+	});
+	popupVisible.subscribe((val) => {
+		if (val === true) window.setShouldGoBack(false);
+		if (!$android) return;
+		try {
+			JSBridge?.setSwipeRefreshEnabled?.(!val);
+		} catch (e) {}
 	});
 	let isBelowNav = false;
 	window.addEventListener("scroll", () => {

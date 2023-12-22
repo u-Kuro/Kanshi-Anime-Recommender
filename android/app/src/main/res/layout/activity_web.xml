@@ -11,119 +11,116 @@
     android:id="@id/constraint"
     tools:ignore="Overdraw">
 
-    <com.google.android.material.appbar.AppBarLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/appbar"
-        app:layout_constraintTop_toTopOf="@id/constraint"
-        app:layout_constraintLeft_toLeftOf="@id/constraint"
-        app:layout_constraintRight_toRightOf="@id/constraint"
-        android:background="@color/black">
-
-        <androidx.appcompat.widget.Toolbar
-            android:id="@+id/toolbar"
-            android:background="@color/black"
+        <com.google.android.material.appbar.AppBarLayout
             android:layout_width="match_parent"
-            android:layout_height="?attr/actionBarSize"
-            android:minHeight="?attr/actionBarSize"
-            android:contentInsetLeft="0dp"
-            android:contentInsetStart="0dp"
-            app:contentInsetLeft="0dp"
-            app:contentInsetStart="0dp"
-            android:contentInsetRight="0dp"
-            android:contentInsetEnd="0dp"
-            app:contentInsetRight="0dp"
-            app:contentInsetEnd="0dp">
+            android:layout_height="wrap_content"
+            android:id="@+id/appbar"
+            app:layout_constraintTop_toTopOf="@id/constraint"
+            app:layout_constraintLeft_toLeftOf="@id/constraint"
+            app:layout_constraintRight_toRightOf="@id/constraint"
+            android:background="@color/black">
 
-            <RelativeLayout
+            <androidx.appcompat.widget.Toolbar
+                android:id="@+id/toolbar"
+                android:background="@color/black"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent">
+                android:layout_height="?attr/actionBarSize"
+                android:minHeight="?attr/actionBarSize"
+                android:contentInsetLeft="0dp"
+                android:contentInsetStart="0dp"
+                app:contentInsetLeft="0dp"
+                app:contentInsetStart="0dp"
+                android:contentInsetRight="0dp"
+                android:contentInsetEnd="0dp"
+                app:contentInsetRight="0dp"
+                app:contentInsetEnd="0dp">
 
                 <RelativeLayout
                     android:layout_width="match_parent"
                     android:layout_height="match_parent">
 
-                    <ImageView
-                        android:id="@+id/btnClose"
-                        android:layout_centerVertical="true"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_alignParentStart="true"
-                        android:src="@drawable/xclose_white"
-                        android:padding="8dp"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:contentDescription="Go Back"
-                        tools:ignore="HardcodedText" />
+                    <RelativeLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent">
 
-                    <TextView
-                        android:id="@+id/site"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_centerInParent="true"
-                        android:layout_toStartOf="@+id/launchURL"
-                        android:layout_toEndOf="@+id/btnClose"
-                        android:layout_marginStart="30dp"
-                        android:layout_marginEnd="30dp"
-                        android:textAlignment="center"
-                        android:ellipsize="end"
-                        android:longClickable="true"
-                        android:singleLine="true"
-                        android:textColor="@android:color/white"
-                        android:textSize="19sp"
-                        android:paddingBottom="2sp"
-                        android:textStyle="bold"
-                        android:text="@string/youtube"
-                        tools:ignore="RelativeOverlap" />
+                        <ImageView
+                            android:id="@+id/btnClose"
+                            android:layout_centerVertical="true"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_alignParentStart="true"
+                            android:src="@drawable/xclose_white"
+                            android:padding="8dp"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:contentDescription="Go Back"
+                            tools:ignore="HardcodedText" />
 
-                    <ImageView
-                        android:id="@+id/launchURL"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_alignParentEnd="true"
-                        android:src="@drawable/launch_white"
-                        android:padding="8dp"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:contentDescription="Launch URL"
-                        android:layout_centerVertical="true"
-                        tools:ignore="HardcodedText" />
+                        <TextView
+                            android:id="@+id/site"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_centerInParent="true"
+                            android:layout_toStartOf="@+id/launchURL"
+                            android:layout_toEndOf="@+id/btnClose"
+                            android:layout_marginStart="30dp"
+                            android:layout_marginEnd="30dp"
+                            android:textAlignment="center"
+                            android:ellipsize="end"
+                            android:longClickable="true"
+                            android:singleLine="true"
+                            android:textColor="@android:color/white"
+                            android:textSize="19sp"
+                            android:paddingBottom="2sp"
+                            android:textStyle="bold"
+                            android:text="@string/youtube"
+                            tools:ignore="RelativeOverlap" />
+
+                        <ImageView
+                            android:id="@+id/launchURL"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_alignParentEnd="true"
+                            android:src="@drawable/launch_white"
+                            android:padding="8dp"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:contentDescription="Launch URL"
+                            android:layout_centerVertical="true"
+                            tools:ignore="HardcodedText" />
+                    </RelativeLayout>
+
+                    <ProgressBar
+                        android:id="@+id/progressbar"
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:progressBackgroundTint="@color/black"
+                        android:progressTint="@color/white"
+                        android:progressBackgroundTintMode="src_over"
+                        android:progressTintMode="src_over"
+                        android:indeterminate="false"
+                        android:layout_alignParentBottom="true"
+                        style="?android:progressBarStyleHorizontal"/>
+
                 </RelativeLayout>
+            </androidx.appcompat.widget.Toolbar>
 
-                <ProgressBar
-                    android:id="@+id/progressbar"
-                    android:layout_width="match_parent"
-                    android:layout_height="1dp"
-                    android:progressBackgroundTint="@color/black"
-                    android:progressTint="@color/white"
-                    android:progressBackgroundTintMode="src_over"
-                    android:progressTintMode="src_over"
-                    android:indeterminate="false"
-                    android:layout_alignParentBottom="true"
-                    style="?android:progressBarStyleHorizontal"/>
-
-            </RelativeLayout>
-        </androidx.appcompat.widget.Toolbar>
-
-    </com.google.android.material.appbar.AppBarLayout>
-
-    <com.example.kanshi.MediaWebView
-        android:id="@+id/webView"
-        android:layout_width="match_parent"
+        </com.google.android.material.appbar.AppBarLayout>
+    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
         android:layout_height="match_parent"
-        android:background="@color/black"
-        android:overScrollMode="never"
-        app:layout_constraintBottom_toBottomOf="@id/constraint"
-        app:layout_constraintLeft_toLeftOf="@id/constraint"
-        app:layout_constraintRight_toRightOf="@id/constraint"
-        app:layout_constraintTop_toBottomOf="@id/appbar"
+        android:layout_width="match_parent"
         android:layout_marginTop="?attr/actionBarSize"
-    />
-    <LinearLayout
-        android:id="@+id/webViewCover"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="@color/black"
-        android:visibility="gone"
-        android:orientation="horizontal" />
+        android:id="@+id/swipeRefreshLayout">
+        <com.example.kanshi.MediaWebView
+            android:id="@+id/webView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@color/black"
+            app:layout_constraintBottom_toBottomOf="@id/constraint"
+            app:layout_constraintLeft_toLeftOf="@id/constraint"
+            app:layout_constraintRight_toRightOf="@id/constraint"
+            app:layout_constraintTop_toBottomOf="@id/appbar"
+            android:overScrollMode="never"
+        />
+    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

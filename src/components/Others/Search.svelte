@@ -3699,7 +3699,7 @@
         height: 100%;
         display: grid;
         align-items: center;
-        text-wrap: nowrap;
+        white-space: nowrap;
         overflow-x: auto;
         width: max-content;
         max-width: 100%;
