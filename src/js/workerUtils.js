@@ -66,14 +66,10 @@ window.refreshAnimeList = () => {
     if (!get(userRequestIsRunning)) {
         requestUserEntries()
             .then(() => {
-                requestAnimeEntries().finally(() => {
-                    resolve()
-                });
+                requestAnimeEntries()
             })
     } else {
-        requestAnimeEntries().finally(() => {
-            resolve()
-        });
+        requestAnimeEntries()
     }
 }
 
