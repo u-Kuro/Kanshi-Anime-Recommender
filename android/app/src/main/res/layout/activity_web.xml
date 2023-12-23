@@ -104,13 +104,8 @@
 
                 </RelativeLayout>
             </androidx.appcompat.widget.Toolbar>
-
         </com.google.android.material.appbar.AppBarLayout>
-    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
-        android:layout_height="match_parent"
-        android:layout_width="match_parent"
-        android:layout_marginTop="?attr/actionBarSize"
-        android:id="@+id/swipeRefreshLayout">
+
         <com.example.kanshi.MediaWebView
             android:id="@+id/webView"
             android:layout_width="match_parent"
@@ -120,7 +115,8 @@
             app:layout_constraintLeft_toLeftOf="@id/constraint"
             app:layout_constraintRight_toRightOf="@id/constraint"
             app:layout_constraintTop_toBottomOf="@id/appbar"
+            android:layout_marginTop="?attr/actionBarSize"
             android:overScrollMode="never"
         />
-    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+
 </androidx.constraintlayout.widget.ConstraintLayout>

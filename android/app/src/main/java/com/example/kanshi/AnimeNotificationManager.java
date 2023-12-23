@@ -26,6 +26,7 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationManagerCompat;
 import androidx.work.Constraints;
 import androidx.work.Data;
+import androidx.work.ExistingWorkPolicy;
 import androidx.work.OneTimeWorkRequest;
 import androidx.work.OutOfQuotaPolicy;
 import androidx.work.WorkManager;
@@ -43,6 +44,7 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -56,6 +58,7 @@ public class AnimeNotificationManager {
     private static final int ANIME_RELEASE_PENDING_INTENT = 997;
     private static final ExecutorService notificationImageDownloaderExecutor = Executors.newFixedThreadPool(1);
     private static final ExecutorService showRecentReleasesExecutor = Executors.newFixedThreadPool(1);
+    private static Future<?> showRecentReleasesFuture;
     private static final ScheduledExecutorService addNotificationFutureExecutor = Executors.newScheduledThreadPool(1);
     private static ScheduledFuture<?> addNotificationFuture;
     private static final Handler showRecentReleasesHandler = new Handler(Looper.getMainLooper());
@@ -189,26 +192,28 @@ public class AnimeNotificationManager {
                 "android.intent.action.BOOT_COMPLETED".equals(intent.getAction()) ||
                 "android.intent.action.QUICKBOOT_POWERON".equals(intent.getAction())
             ) {
+                String uniqueWorkName = "ANIME_NOTIFICATION";
                 Data data = new Data.Builder()
-                        .putBoolean("isBooted", !(intent.getAction().equals("ANIME_NOTIFICATION")))
-                        .putString("action", "ANIME_NOTIFICATION")
+                        .putBoolean("isBooted", !(intent.getAction().equals(uniqueWorkName)))
+                        .putString("action", uniqueWorkName)
                         .build();
                 OneTimeWorkRequest workRequest = new OneTimeWorkRequest.Builder(AnimeNotificationWorker.class)
                         .setConstraints(Constraints.NONE)
                         .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
                         .setInputData(data)
                         .build();
-                WorkManager.getInstance(context).enqueue(workRequest);
+                WorkManager.getInstance(context).enqueueUniqueWork("ANIME_NOTIFICATION", ExistingWorkPolicy.REPLACE, workRequest);
             } else if ("ANIME_RELEASE_UPDATE".equals(intent.getAction())) {
+                String uniqueWorkName = "ANIME_RELEASE_UPDATE";
                 Data data = new Data.Builder()
-                        .putString("action", "ANIME_RELEASE_UPDATE")
+                        .putString("action", uniqueWorkName)
                         .build();
                 OneTimeWorkRequest workRequest = new OneTimeWorkRequest.Builder(AnimeNotificationWorker.class)
                         .setConstraints(Constraints.NONE)
                         .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
                         .setInputData(data)
                         .build();
-                WorkManager.getInstance(context).enqueue(workRequest);
+                WorkManager.getInstance(context).enqueueUniqueWork(uniqueWorkName, ExistingWorkPolicy.REPLACE, workRequest);
             }
         }
     }
@@ -234,7 +239,10 @@ public class AnimeNotificationManager {
             return false;
         } else {
             Context finalContext = context;
-            showRecentReleasesExecutor.execute(() -> {
+            if (showRecentReleasesFuture != null && !showRecentReleasesFuture.isCancelled()) {
+                showRecentReleasesFuture.cancel(true);
+            }
+            showRecentReleasesFuture = showRecentReleasesExecutor.submit((Runnable) () -> {
                 String message = null;
                 ConcurrentHashMap<String, AnimeNotification> $allAnimeNotification = null;
                 try {
@@ -256,7 +264,8 @@ public class AnimeNotificationManager {
                 HashMap<String, AnimeNotification> myAnimeNotifications = new HashMap<>();
                 HashMap<String, AnimeNotification> animeNotifications = new HashMap<>();
 
-                for (AnimeNotification anime : allAnimeNotification.values()) {
+                List<AnimeNotification> allAnimeNotificationValues = new ArrayList<>(allAnimeNotification.values());
+                for (AnimeNotification anime : allAnimeNotificationValues) {
                     if (anime.releaseDateMillis <= System.currentTimeMillis()) {
                         if (anime.isMyAnime) {
                             if (lastSentMyAnimeNotificationTime==0 || anime.releaseDateMillis>lastSentMyAnimeNotificationTime){
@@ -303,9 +312,9 @@ public class AnimeNotificationManager {
                     boolean hasJustAiredMA = false;
                     Notification.MessagingStyle styleMA = new Notification.MessagingStyle("")
                             .setGroupConversation(true);
-                    List<AnimeNotification> sortedMyAnimeNotifications = new ArrayList<>(myAnimeNotifications.values());
-                    Collections.sort(sortedMyAnimeNotifications, Comparator.comparingLong(anime -> anime.releaseDateMillis));
-                    for (AnimeNotification anime : sortedMyAnimeNotifications) {
+                    List<AnimeNotification> sortedMyAnimeNotificationsValues = new ArrayList<>(myAnimeNotifications.values());
+                    Collections.sort(sortedMyAnimeNotificationsValues, Comparator.comparingLong(anime -> anime.releaseDateMillis));
+                    for (AnimeNotification anime : sortedMyAnimeNotificationsValues) {
                         Person.Builder itemBuilder = new Person.Builder()
                                 .setName(anime.title)
                                 .setKey(String.valueOf(anime.animeId))
@@ -375,9 +384,9 @@ public class AnimeNotificationManager {
                     boolean hasJustAiredOA = false;
                     Notification.MessagingStyle styleOA = new Notification.MessagingStyle("")
                             .setGroupConversation(true);
-                    List<AnimeNotification> sortedAnimeNotifications = new ArrayList<>(animeNotifications.values());
-                    Collections.sort(sortedAnimeNotifications, Comparator.comparingLong(anime -> anime.releaseDateMillis));
-                    for (AnimeNotification anime : sortedAnimeNotifications) {
+                    List<AnimeNotification> sortedAnimeNotificationsValues = new ArrayList<>(animeNotifications.values());
+                    Collections.sort(sortedAnimeNotificationsValues, Comparator.comparingLong(anime -> anime.releaseDateMillis));
+                    for (AnimeNotification anime : sortedAnimeNotificationsValues) {
                         Person.Builder itemBuilder = new Person.Builder()
                                 .setName(anime.title)
                                 .setKey(String.valueOf(anime.animeId))

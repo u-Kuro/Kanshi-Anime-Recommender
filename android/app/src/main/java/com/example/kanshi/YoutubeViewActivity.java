@@ -23,7 +23,6 @@ import android.webkit.CookieManager;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
-import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -39,21 +38,19 @@ import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.browser.customtabs.CustomTabColorSchemeParams;
 import androidx.browser.customtabs.CustomTabsIntent;
-import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 public class YoutubeViewActivity extends AppCompatActivity {
     private MediaWebView webView;
-    private SwipeRefreshLayout swipeRefreshLayout;
     private TextView siteName;
     private boolean webViewIsLoaded = false;
     private ValueCallback<Uri[]> mUploadMessage;
     private boolean isFinished = false;
+    private boolean fromYoutubeList = false;
     final ActivityResultLauncher<Intent> chooseImportFile =
             registerForActivityResult(
                     new ActivityResultContracts.StartActivityForResult(),
@@ -118,9 +115,6 @@ public class YoutubeViewActivity extends AppCompatActivity {
         // Add WebView on Layout
         webView = findViewById(R.id.webView);
         siteName = findViewById(R.id.site);
-        swipeRefreshLayout = findViewById(R.id.swipeRefreshLayout);
-        swipeRefreshLayout.setColorSchemeResources(R.color.transparent_white,R.color.white);
-        swipeRefreshLayout.setProgressBackgroundColorSchemeResource(R.color.black);
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
@@ -143,7 +137,6 @@ public class YoutubeViewActivity extends AppCompatActivity {
             }
             getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
         }
-        swipeRefreshLayout.setOnRefreshListener(() -> webView.reload());
         webView.setWebChromeClient(new WebChromeClient() {
             private View mCustomView;
             private CustomViewCallback mCustomViewCallback;
@@ -274,24 +267,17 @@ public class YoutubeViewActivity extends AppCompatActivity {
                         view.goBack();
                     } else {
                         isFinished = true;
-                        webView.destroy();
+                        view.destroy();
                         finish();
                         Toast.makeText(getApplicationContext(), "Failed to load.", Toast.LENGTH_LONG).show();
                     }
                 } else {
                     siteName.setText(R.string.youtube);
-                    swipeRefreshLayout.setRefreshing(false);
                 }
                 if (!webViewIsLoaded && !isFinished) {
                     webViewIsLoaded = true;
                 }
                 super.onPageFinished(view, url);
-            }
-            @Nullable
-            @Override
-            public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
-                initAnchor(view);
-                return super.shouldInterceptRequest(view, request);
             }
             @Override
             public void doUpdateVisitedHistory(WebView view, String url, boolean isReload) {
@@ -326,10 +312,13 @@ public class YoutubeViewActivity extends AppCompatActivity {
                     } catch (Exception ignored) {
                         Toast.makeText(getApplicationContext(), "Can't open the link.", Toast.LENGTH_LONG).show();
                     }
-                } else if (url.startsWith("https://www.youtube.com")
-                        || url.startsWith("https://m.youtube.com")
-                        || url.startsWith("https://youtube.com")
-                        || url.startsWith("https://youtu.be")
+                } else {
+                    boolean isYoutubeVideo = url.startsWith("https://www.youtube.com")
+                            || url.startsWith("https://m.youtube.com")
+                            || url.startsWith("https://youtube.com")
+                            || url.startsWith("https://youtu.be");
+                    if (
+                        isYoutubeVideo
                         || url.startsWith("https://accounts.youtube.com")
                         || url.startsWith("https://accounts.google.com")
                         || url.startsWith("https://myaccount.google.com")
@@ -338,33 +327,44 @@ public class YoutubeViewActivity extends AppCompatActivity {
                         || url.startsWith("https://www.myaccount.google.com")
                         || url.startsWith("https://www.accounts.google.com")
                         || url.startsWith("https://www.accounts.youtube.com")
-                ) {
-                    if (webViewIsLoaded) {
-                        Intent intent = new Intent(YoutubeViewActivity.this, YoutubeViewActivity.class);
-                        intent.putExtra("url", url);
-                        startActivity(intent);
-                        overridePendingTransition(R.anim.right_to_center, R.anim.center_to_left);
-                    } else {
-                        return false;
-                    }
-                } else {
-                    try {
-                        CustomTabsIntent customTabsIntent = new CustomTabsIntent.Builder()
-                                .setDefaultColorSchemeParams(new CustomTabColorSchemeParams.Builder().setToolbarColor(Color.BLACK).build())
-                                .setShowTitle(true)
-                                .build();
-                        customTabsIntent.launchUrl(YoutubeViewActivity.this, Uri.parse(url));
-                        overridePendingTransition(R.anim.right_to_center, R.anim.center_to_left);
-                    } catch (Exception ex) {
-                        Toast.makeText(getApplicationContext(), "Can't open the link.", Toast.LENGTH_LONG).show();
-                    }
-                    if (view.getUrl()==null || view.getUrl().startsWith("https://www.youtube.com/redirect")) {
-                        if (webView.canGoBack()) {
-                            webView.goBack();
+                    ) {
+                        if (webViewIsLoaded) {
+                            Intent intent = new Intent(YoutubeViewActivity.this, YoutubeViewActivity.class);
+                            intent.putExtra("url", url);
+                            startActivity(intent);
+                            boolean hasList = request.getUrl().getQueryParameterNames().contains("list");
+                            boolean currentlyHasVideo = false;
+                            try {
+                                currentlyHasVideo = Uri.parse(view.getUrl()).getQueryParameterNames().contains("v");
+                            } catch (Exception ignored) {}
+                            fromYoutubeList = isYoutubeVideo && hasList && currentlyHasVideo;
+                            if (fromYoutubeList) {
+                                overridePendingTransition(R.anim.fade_in, R.anim.none);
+                            } else {
+                                overridePendingTransition(R.anim.right_to_center, R.anim.center_to_left);
+                            }
                         } else {
-                            isFinished = true;
-                            webView.destroy();
-                            finish();
+                            return false;
+                        }
+                    } else {
+                        try {
+                            CustomTabsIntent customTabsIntent = new CustomTabsIntent.Builder()
+                                    .setDefaultColorSchemeParams(new CustomTabColorSchemeParams.Builder().setToolbarColor(Color.BLACK).build())
+                                    .setShowTitle(true)
+                                    .build();
+                            customTabsIntent.launchUrl(YoutubeViewActivity.this, Uri.parse(url));
+                            overridePendingTransition(R.anim.right_to_center, R.anim.center_to_left);
+                        } catch (Exception ex) {
+                            Toast.makeText(getApplicationContext(), "Can't open the link.", Toast.LENGTH_LONG).show();
+                        }
+                        if (view.getUrl() == null || view.getUrl().startsWith("https://www.youtube.com/redirect")) {
+                            if (view.canGoBack()) {
+                                view.goBack();
+                            } else {
+                                isFinished = true;
+                                view.destroy();
+                                finish();
+                            }
                         }
                     }
                 }
@@ -392,7 +392,12 @@ public class YoutubeViewActivity extends AppCompatActivity {
             webView.getSettings().setOffscreenPreRaster(true);
         }
         if (webViewIsLoaded) {
-            overridePendingTransition(R.anim.left_to_center, R.anim.center_to_right);
+            if (fromYoutubeList) {
+                fromYoutubeList = false;
+                overridePendingTransition(R.anim.none, R.anim.fade_out);
+            } else {
+                overridePendingTransition(R.anim.left_to_center, R.anim.center_to_right);
+            }
         }
         webView.onResume();
         webView.resumeTimers();
@@ -425,15 +430,14 @@ public class YoutubeViewActivity extends AppCompatActivity {
     @Override
     public void onConfigurationChanged(@NonNull Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
+        ActionBar actionBar = getSupportActionBar();
         if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-            ActionBar actionBar = getSupportActionBar();
             if (actionBar!=null) {
                 actionBar.hide();
                 setMargins(webView, 0, 0, 0, 0);
             }
             getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
         } else {
-            ActionBar actionBar = getSupportActionBar();
             if (actionBar!=null) {
                 actionBar.show();
                 setMargins(webView, 0, actionBar.getHeight(), 0, 0);
@@ -441,7 +445,6 @@ public class YoutubeViewActivity extends AppCompatActivity {
             getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
         }
     }
-
     public void initAnchor(WebView view) {
         String javascript = "javascript:(()=>{for(var e=document.querySelectorAll('a'),n=0;n<e.length;n++)e[n].setAttribute('rel','noopener noreferrer'),e[n].setAttribute('target','_blank');window.KanshiAnimeRecommendationObserver instanceof MutationObserver||(window.KanshiAnimeRecommendationObserver=new MutationObserver(e=>{e.forEach(function(e){if(e.addedNodes)for(var n=0;n<e.addedNodes.length;n++){var o=e.addedNodes[n];'A'===o.nodeName&&(o.setAttribute('rel','noopener noreferrer'),o.setAttribute('target','_blank'))}})})),!window.KanshiAnimeRecommendationObserverObserved&&window.KanshiAnimeRecommendationObserver instanceof MutationObserver&&document.body instanceof Node&&(window.KanshiAnimeRecommendationObserver.observe(document.body,{childList:!0,subtree:!0}),window.KanshiAnimeRecommendationObserverObserved=!0)})()";
         view.post(() -> view.loadUrl(javascript));
