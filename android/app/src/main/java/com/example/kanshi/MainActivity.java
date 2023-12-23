@@ -33,8 +33,6 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
-import android.os.Handler;
-import android.os.Looper;
 import android.os.PowerManager;
 import android.provider.DocumentsContract;
 import android.provider.Settings;
@@ -81,10 +79,9 @@ import androidx.browser.customtabs.CustomTabsIntent;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.FileProvider;
 import androidx.core.splashscreen.SplashScreen;
-import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 public class MainActivity extends AppCompatActivity {
-    public final int appID = 264;
+    public final int appID = 265;
     public boolean webViewIsLoaded = false;
     public boolean permissionIsAsked = false;
     public SharedPreferences prefs;
@@ -95,8 +92,6 @@ public class MainActivity extends AppCompatActivity {
     private String exportPath;
     private MediaWebView webView;
     private ProgressBar progressbar;
-    private SwipeRefreshLayout swipeRefreshLayout;
-    private boolean isPopupVisible = false;
     private boolean pageLoaded = false;
 
     private PowerManager.WakeLock wakeLock;
@@ -202,11 +197,7 @@ public class MainActivity extends AppCompatActivity {
         wakeLock.acquire(10*60*1000L);
         webView = findViewById(R.id.webView);
         progressbar = findViewById(R.id.progressbar);
-        swipeRefreshLayout = findViewById(R.id.swipeRefreshLayout);
         progressbar.setMax((int) Math.pow(10,6));
-        // Style
-        swipeRefreshLayout.setColorSchemeResources(R.color.transparent_white,R.color.white);
-        swipeRefreshLayout.setProgressBackgroundColorSchemeResource(R.color.dark_blue);
         // Add On Press Back Listener
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override
@@ -227,17 +218,6 @@ public class MainActivity extends AppCompatActivity {
                     }
                 }
             }
-        });
-        // Add on refresh listener
-        final Runnable[] swipeRefreshRunnable = new Runnable[]{()->{}};
-        Handler swipeRefreshHandler = new android.os.Handler();
-        swipeRefreshLayout.setOnRefreshListener(() -> {
-            try {
-                swipeRefreshHandler.removeCallbacks(swipeRefreshRunnable[0]);
-                swipeRefreshRunnable[0] = () -> swipeRefreshLayout.setRefreshing(false);
-                swipeRefreshHandler.postDelayed(swipeRefreshRunnable[0], 1000);
-            } catch (Exception ignored) {}
-            webView.loadUrl("javascript:window?.refreshAnimeList?.()");
         });
         // Orientation
         currentOrientation = getResources().getConfiguration().orientation;
@@ -304,8 +284,6 @@ public class MainActivity extends AppCompatActivity {
                     cookieManager.setAcceptThirdPartyCookies(view,true);
                     CookieManager.getInstance().acceptCookie();
                     CookieManager.getInstance().flush();
-                    swipeRefreshLayout.setRefreshing(false);
-                    swipeRefreshLayout.setEnabled(true);
                     webViewIsLoaded = true;
                 } else {
                     appSwitched = true;
@@ -726,26 +704,6 @@ public class MainActivity extends AppCompatActivity {
             ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
             ClipData clip = ClipData.newPlainText("Copied Text", text);
             clipboard.setPrimaryClip(clip);
-        }
-        Handler setSwipeHandler;
-        Runnable setSwipeRunnable;
-        @JavascriptInterface
-        public void setSwipeRefreshEnabled(boolean enabled) {
-            isPopupVisible = !enabled;
-            if (setSwipeHandler!=null && setSwipeRunnable!=null) {
-                setSwipeHandler.removeCallbacks(setSwipeRunnable);
-            }
-            if (swipeRefreshLayout.isRefreshing()) {
-                setSwipeHandler = new Handler(Looper.getMainLooper());
-                setSwipeRunnable = () -> setSwipeRefreshEnabled(!isPopupVisible);
-                setSwipeHandler.postDelayed(setSwipeRunnable, 1000);
-            } else {
-                swipeRefreshLayout.setEnabled(!isPopupVisible);
-            }
-        }
-        @JavascriptInterface
-        public void listRefreshed() {
-            swipeRefreshLayout.setRefreshing(false);
         }
         @JavascriptInterface
         public void willExit() { showToast(Toast.makeText(getApplicationContext(), "Press back again to exit.", Toast.LENGTH_SHORT)); }

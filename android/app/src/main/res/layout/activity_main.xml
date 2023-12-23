@@ -8,8 +8,7 @@
     android:background="@color/black"
     tools:context=".MainActivity"
     tools:ignore="Overdraw"
-    android:fitsSystemWindows="true"
-    android:id="@+id/mainConstraint">
+    android:fitsSystemWindows="true">
 
     <ProgressBar
         android:id="@+id/progressbar"
@@ -25,20 +24,15 @@
         android:layout_alignParentBottom="true"
         style="?android:progressBarStyleHorizontal"/>
 
-    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
-        android:layout_height="match_parent"
+    <com.example.kanshi.MediaWebView
+        android:id="@+id/webView"
         android:layout_width="match_parent"
-        android:id="@+id/swipeRefreshLayout">
-        <com.example.kanshi.MediaWebView
-            android:id="@+id/webView"
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            android:overScrollMode="never"
-            android:background="@color/black">
-        </com.example.kanshi.MediaWebView>
-    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+        android:layout_height="match_parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:background="@color/black"
+        android:overScrollMode="never">
+    </com.example.kanshi.MediaWebView>
 </androidx.constraintlayout.widget.ConstraintLayout>

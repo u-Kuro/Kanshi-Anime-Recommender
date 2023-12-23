@@ -621,15 +621,7 @@
 			});
 	});
 	updateRecommendationList.subscribe(async (val) => {
-		if (typeof val !== "boolean" || $initData) {
-			if ($android && window?.isRefreshingList) {
-				window.isRefreshingList = false;
-				try {
-					JSBridge?.listRefreshed?.();
-				} catch (e) {}
-			}
-			return;
-		}
+		if (typeof val !== "boolean" || $initData) return;
 		await saveJSON(true, "shouldProcessRecommendation");
 		processRecommendedAnimeList()
 			.then(async () => {
@@ -648,8 +640,7 @@
 				($gridFullView
 					? animeGridEl.scrollLeft > 500
 					: animeGridEl?.getBoundingClientRect?.()?.top < 0)) &&
-			$finalAnimeList?.length &&
-			window?.isRefreshingList !== true
+			$finalAnimeList?.length
 		) {
 			await saveJSON(true, "shouldLoadAnime");
 			$listUpdateAvailable = true;
@@ -993,10 +984,6 @@
 	});
 	popupVisible.subscribe((val) => {
 		if (val === true) window.setShouldGoBack(false);
-		if (!$android) return;
-		try {
-			JSBridge?.setSwipeRefreshEnabled?.(!val);
-		} catch (e) {}
 	});
 	let isBelowNav = false;
 	window.addEventListener("scroll", () => {

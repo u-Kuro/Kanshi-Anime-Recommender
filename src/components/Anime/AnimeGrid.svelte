@@ -364,12 +364,6 @@
                 isAsyncLoad = false;
             }
         }
-        if ($android && window?.isRefreshingList) {
-            window.isRefreshingList = false;
-            try {
-                JSBridge?.listRefreshed?.();
-            } catch (e) {}
-        }
     });
 
     searchedAnimeKeyword.subscribe(async (val) => {

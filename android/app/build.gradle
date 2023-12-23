@@ -9,8 +9,8 @@ android {
         applicationId "com.example.kanshi"
         minSdk 21
         targetSdk 34
-        versionCode 144
-        versionName "6.5.4"
+        versionCode 145
+        versionName "6.5.5"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -29,7 +29,6 @@ android {
 
 dependencies {
     implementation 'androidx.browser:browser:1.7.0'
-    implementation "androidx.swiperefreshlayout:swiperefreshlayout:1.2.0-alpha01"
     implementation 'androidx.work:work-runtime:2.9.0'
     implementation 'com.google.firebase:firebase-analytics:21.5.0'
     implementation 'androidx.appcompat:appcompat:1.6.1'

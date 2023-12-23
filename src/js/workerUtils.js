@@ -35,48 +35,9 @@ let dataStatusPrio = false
 let isExporting = false;
 let isCurrentlyImporting = false;
 let isGettingNewEntries = false;
+let isRequestingAnimeEntries = false
 
 let passedFilterOptions, passedActiveTagFilters, passedSelectedCustomFilter
-
-window.refreshAnimeList = () => {
-    let $isAndroid = get(android)
-    if ($isAndroid && get(username)) {
-        try {
-            JSBridge?.callUpdateNotifications?.();
-        } catch (e) { }
-    }
-    document.querySelectorAll("script")?.forEach((script) => {
-        if (
-            script.src &&
-            script.src !== "https://www.youtube.com/iframe_api?v=16"
-        ) {
-            script.src = script.src;
-        }
-    });
-    document.querySelectorAll("img")?.forEach((image) => {
-        if (!image.naturalHeight) {
-            image.src = image.src;
-        }
-    });
-    if (get(initData) || !navigator.onLine) {
-        if ($isAndroid) {
-            try {
-                JSBridge?.listRefreshed?.();
-            } catch (e) { }
-        }
-        return
-    }
-    window.isRefreshingList = true
-    window.reloadYoutube?.();
-    if (!get(userRequestIsRunning)) {
-        requestUserEntries()
-            .then(() => {
-                requestAnimeEntries()
-            })
-    } else {
-        requestAnimeEntries()
-    }
-}
 
 // Reactinve Functions
 let animeLoaderWorker;
@@ -162,13 +123,6 @@ const animeLoader = (_data = {}) => {
                 alertError()
                 reject(error)
             })
-    }).finally(() => {
-        if (get(android) && window?.isRefreshingList) {
-            window.isRefreshingList = false;
-            try {
-                JSBridge?.listRefreshed?.();
-            } catch (e) { }
-        }
     })
 }
 let processRecommendedAnimeListTerminateTimeout;
@@ -282,8 +236,12 @@ isProcessingList.subscribe((val) => {
         sendAnimeListProcess(val)
     }
 })
+
 const requestAnimeEntries = (_data) => {
     return new Promise((resolve, reject) => {
+        if (isRequestingAnimeEntries) {
+            resolve()
+        }
         if (requestAnimeEntriesTerminateTimeout) clearTimeout(requestAnimeEntriesTerminateTimeout)
         if (requestAnimeEntriesWorker) {
             requestAnimeEntriesWorker?.terminate?.()
@@ -306,6 +264,7 @@ const requestAnimeEntries = (_data) => {
                 }
                 requestAnimeEntriesWorker = new Worker(url)
                 requestAnimeEntriesWorker.postMessage(_data)
+                isRequestingAnimeEntries = true
                 requestAnimeEntriesWorker.onmessage = ({ data }) => {
                     if (data?.hasOwnProperty("progress")) {
                         if (!dataStatusPrio && data?.progress >= 0 && data?.progress <= 100) {
@@ -320,6 +279,7 @@ const requestAnimeEntries = (_data) => {
                     } else if (data?.lastRunnedAutoUpdateDate instanceof Date && !isNaN(data?.lastRunnedAutoUpdateDate)) {
                         lastRunnedAutoUpdateDate.set(data.lastRunnedAutoUpdateDate)
                     } else if (data?.errorDuringInit !== undefined) {
+                        isRequestingAnimeEntries = false
                         resolve(data)
                     } else {
                         if (data.getEntries) {
@@ -336,6 +296,7 @@ const requestAnimeEntries = (_data) => {
                                     runUpdate.update(e => !e)
                                 })
                         }
+                        isRequestingAnimeEntries = false
                         requestAnimeEntriesTerminateTimeout = setTimeout(() => {
                             requestAnimeEntriesWorker?.terminate?.();
                         }, terminateDelay)
@@ -344,11 +305,13 @@ const requestAnimeEntries = (_data) => {
                     }
                 }
                 requestAnimeEntriesWorker.onerror = (error) => {
+                    isRequestingAnimeEntries = false
                     isGettingNewEntries = false
                     progress.set(100)
                     reject(error)
                 }
             }).catch((error) => {
+                isRequestingAnimeEntries = false
                 isGettingNewEntries = false
                 progress.set(100)
                 alertError()
@@ -663,7 +626,7 @@ const importUserData = (_data) => {
     })
 }
 
-let gotAround, gotAroundCont, nextInfoCheck = -1, getExtraInfoTimeout, getExtraInfoWorker
+let gotAround, nextInfoCheck = -1, getExtraInfoTimeout, getExtraInfoWorker
 const waitForExtraInfo = () => {
     clearTimeout(getExtraInfoTimeout)
     getExtraInfoTimeout = setTimeout(() => {
@@ -700,10 +663,8 @@ const getExtraInfo = () => {
                     currentExtraInfo.set(extraInfoIndex)
                 } else {
                     if (typeof nextInfoCheck === "number" && nextInfoCheck < 5) {
-                        gotAroundCont = false
                         ++nextInfoCheck
                     } else {
-                        gotAroundCont = true
                         nextInfoCheck = 0
                     }
                     extraInfoIndex = nextInfoCheck
@@ -935,6 +896,7 @@ const getFilterOptions = (_data) => {
 function stopConflictingWorkers(blocker) {
     progress.set(0)
     requestAnimeEntriesWorker?.terminate?.()
+    isRequestingAnimeEntries = false
     isGettingNewEntries = blocker?.isGettingNewEntries ?? false
     requestUserEntriesWorker?.terminate?.()
     userRequestIsRunning.set(false)
