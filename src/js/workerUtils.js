@@ -37,9 +37,14 @@ let isCurrentlyImporting = false;
 let isGettingNewEntries = false;
 
 let passedFilterOptions, passedActiveTagFilters, passedSelectedCustomFilter
-let shouldUpdateNotifications = false
 
 window.refreshAnimeList = () => {
+    let $isAndroid = get(android)
+    if ($isAndroid && get(username)) {
+        try {
+            JSBridge?.callUpdateNotifications?.();
+        } catch (e) { }
+    }
     document.querySelectorAll("script")?.forEach((script) => {
         if (
             script.src &&
@@ -54,7 +59,7 @@ window.refreshAnimeList = () => {
         }
     });
     if (get(initData) || !navigator.onLine) {
-        if (get(android)) {
+        if ($isAndroid) {
             try {
                 JSBridge?.listRefreshed?.();
             } catch (e) { }
@@ -230,11 +235,13 @@ const processRecommendedAnimeList = (_data = {}) => {
                             } catch (e) { }
                         }
                     } else {
-                        if (shouldUpdateNotifications && get(android)) {
-                            shouldUpdateNotifications = false
-                            try {
-                                JSBridge?.callUpdateNotifications?.()
-                            } catch (e) { }
+                        if (window?.shouldUpdateNotifications === true && get(android)) {
+                            window.shouldUpdateNotifications = false
+                            if (get(username)) {
+                                try {
+                                    JSBridge?.callUpdateNotifications?.()
+                                } catch (e) { }
+                            }
                         }
                         if (data?.hasPassedFilters === true) {
                             passedFilterOptions = passedActiveTagFilters = undefined
@@ -411,7 +418,7 @@ const requestUserEntries = (_data) => {
                         reject(data)
                     } else if (data?.updateRecommendationList !== undefined) {
                         if (get(android)) {
-                            shouldUpdateNotifications = true
+                            window.shouldUpdateNotifications = true
                         }
                         updateRecommendationList.update(e => !e)
                     } else {
@@ -610,7 +617,7 @@ const importUserData = (_data) => {
                                 activeTagFilters.set(data.activeTagFilters)
                                 filterOptions.set(data.filterOptions)
                                 if (get(android)) {
-                                    shouldUpdateNotifications = true
+                                    window.shouldUpdateNotifications = true
                                 }
                                 dataStatusPrio = false
                                 isImporting.set(false)
@@ -787,8 +794,10 @@ window.updateNotifications = async (aniIdsNotificationToBeUpdated = []) => {
     }).then((userAnimeAndNot = {}) => {
         try {
             for (let animeId in userAnimeAndNot) {
-                if (typeof animeId === "number" && typeof userAnimeAndNot[animeId] === "boolean") {
-                    JSBridge?.updateNotifications?.(animeId, userAnimeAndNot[animeId])
+                let isMyAnime = userAnimeAndNot[animeId]
+                animeId = parseInt(animeId)
+                if (typeof animeId === "number" && !isNaN(animeId) && typeof isMyAnime === "boolean") {
+                    JSBridge?.updateNotifications?.(animeId, isMyAnime)
                 }
             }
         } catch (ex) { }

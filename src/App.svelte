@@ -129,12 +129,13 @@
 						$finalAnimeList = [];
 					}
 				}
-				resolve();
+				return;
 			})
 			.catch(async () => {
 				await saveJSON(true, "shouldLoadAnime");
-				resolve();
-			});
+				return;
+			})
+			.finally(resolve);
 	})
 		.then(() => {
 			// Get Export Folder for Android
@@ -276,6 +277,17 @@
 							removeLocalStorage("username");
 						});
 						$username = _username;
+					}
+					if (
+						$android &&
+						window?.shouldUpdateNotifications === true
+					) {
+						window.shouldUpdateNotifications = false;
+						if ($username) {
+							try {
+								JSBridge?.callUpdateNotifications?.();
+							} catch (e) {}
+						}
 					}
 					resolve();
 					// }

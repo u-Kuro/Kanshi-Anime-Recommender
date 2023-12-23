@@ -81,7 +81,7 @@ import androidx.core.splashscreen.SplashScreen;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 public class MainActivity extends AppCompatActivity {
-    public final int appID = 262;
+    public final int appID = 263;
     public boolean webViewIsLoaded = false;
     public boolean permissionIsAsked = false;
     public SharedPreferences prefs;
@@ -101,6 +101,7 @@ public class MainActivity extends AppCompatActivity {
     public Toast currentToast;
     public AlertDialog currentDialog;
     public boolean isInApp = true;
+    public boolean appSwitched = false;
     public boolean fromYoutube;
     public static WeakReference<MainActivity> weakActivity;
 
@@ -285,6 +286,10 @@ public class MainActivity extends AppCompatActivity {
         webView.setWebViewClient(new WebViewClient(){
             @Override
             public void onPageStarted(WebView view, String url, Bitmap favicon) {
+                if (appSwitched) {
+                    appSwitched = false;
+                    view.loadUrl("javascript:(()=>window.shouldUpdateNotifications=true)();");
+                }
                 super.onPageStarted(view, url, favicon);
                 webViewIsLoaded = false;
             }
@@ -300,6 +305,7 @@ public class MainActivity extends AppCompatActivity {
                     swipeRefreshLayout.setEnabled(true);
                     webViewIsLoaded = true;
                 } else {
+                    appSwitched = true;
                     view.loadUrl("file:///android_asset/www/index.html");
                     showDialog(new AlertDialog.Builder(MainActivity.this)
                             .setTitle("Connection unreachable")
@@ -439,6 +445,7 @@ public class MainActivity extends AppCompatActivity {
         });
         WebView.setWebContentsDebuggingEnabled(BuildConfig.DEBUG);
         isAppConnectionAvailable(isConnected -> webView.post(() -> {
+            appSwitched = true;
             if (isConnected) {
                 pageLoaded = false;
                 webView.loadUrl("https://u-kuro.github.io/Kanshi.Anime-Recommendation/");
@@ -779,7 +786,10 @@ public class MainActivity extends AppCompatActivity {
                         showDialog(new AlertDialog.Builder(MainActivity.this)
                                 .setTitle("Switch app mode")
                                 .setMessage("Do you want to switch to the local app?")
-                                .setPositiveButton("OK", (dialogInterface, i) -> webView.loadUrl("file:///android_asset/www/index.html"))
+                                .setPositiveButton("OK", (dialogInterface, i) -> {
+                                    appSwitched = true;
+                                    webView.loadUrl("file:///android_asset/www/index.html");
+                                })
                                 .setNegativeButton("CANCEL", null));
                     } else {
                         showToast(Toast.makeText(getApplicationContext(), "Connecting...", Toast.LENGTH_LONG));
@@ -794,6 +804,7 @@ public class MainActivity extends AppCompatActivity {
                                         .setMessage("Do you want to switch to the online app?")
                                         .setPositiveButton("OK", (dialogInterface, i) -> {
                                             pageLoaded = false;
+                                            appSwitched = true;
                                             webView.loadUrl("https://u-kuro.github.io/Kanshi.Anime-Recommendation/");
                                         })
                                         .setNegativeButton("CANCEL", null));
@@ -828,6 +839,7 @@ public class MainActivity extends AppCompatActivity {
                                     .setMessage("Do you want to switch to the online app?")
                                     .setPositiveButton("OK", (dialogInterface, i) -> {
                                         pageLoaded = false;
+                                        appSwitched = true;
                                         webView.loadUrl("https://u-kuro.github.io/Kanshi.Anime-Recommendation/");
                                     })
                                     .setNegativeButton("CANCEL", null));
@@ -1030,6 +1042,10 @@ public class MainActivity extends AppCompatActivity {
                         .setMessage("Connection established, do you want to switch to the online app?")
                         .setPositiveButton("OK", (dialogInterface, i) -> {
                             pageLoaded = false;
+                            String previousUrl = webView.getUrl();
+                            if (previousUrl==null || previousUrl.startsWith("file:///android_asset/www/index.html")) {
+                                appSwitched = true;
+                            }
                             webView.loadUrl("https://u-kuro.github.io/Kanshi.Anime-Recommendation/");
                         })
                         .setNegativeButton("CANCEL", null));

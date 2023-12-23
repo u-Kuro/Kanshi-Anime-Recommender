@@ -17,6 +17,7 @@
         listUpdateAvailable,
         showStatus,
         newFinalAnime,
+        username,
     } from "../../js/globalValues.js";
     import { fade } from "svelte/transition";
     import { saveJSON } from "../../js/indexedDB.js";
@@ -274,9 +275,11 @@
             })
         ) {
             if ($android) {
-                try {
-                    JSBridge?.callUpdateNotifications?.();
-                } catch (e) {}
+                if ($username) {
+                    try {
+                        JSBridge?.callUpdateNotifications?.();
+                    } catch (e) {}
+                }
             }
             document.querySelectorAll("script")?.forEach((script) => {
                 if (
