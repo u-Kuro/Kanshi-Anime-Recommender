@@ -241,6 +241,7 @@ const requestAnimeEntries = (_data) => {
     return new Promise((resolve, reject) => {
         if (isRequestingAnimeEntries) {
             resolve()
+            return
         }
         if (requestAnimeEntriesTerminateTimeout) clearTimeout(requestAnimeEntriesTerminateTimeout)
         if (requestAnimeEntriesWorker) {
