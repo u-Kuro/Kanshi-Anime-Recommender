@@ -282,6 +282,15 @@ const requestAnimeEntries = (_data) => {
                     } else if (data?.errorDuringInit !== undefined) {
                         isRequestingAnimeEntries = false
                         resolve(data)
+                    } else if (data?.hasOwnProperty("notifyAddedEntries")) {
+                        if (get(android)) {
+                            try {
+                                let newAddedAnimeCount = data?.notifyAddedEntries
+                                if (typeof newAddedAnimeCount === "number" && newAddedAnimeCount > 0) {
+                                    JSBridge?.showNewAddedAnimeNotification?.(newAddedAnimeCount)
+                                }
+                            } catch (e) { }
+                        }
                     } else {
                         if (data.getEntries) {
                             isGettingNewEntries = true

@@ -81,7 +81,7 @@ import androidx.core.content.FileProvider;
 import androidx.core.splashscreen.SplashScreen;
 
 public class MainActivity extends AppCompatActivity {
-    public final int appID = 265;
+    public final int appID = 266;
     public boolean webViewIsLoaded = false;
     public boolean permissionIsAsked = false;
     public SharedPreferences prefs;
@@ -895,6 +895,10 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         }
+        @JavascriptInterface
+        public void showNewAddedAnimeNotification(int addedAnimeCount) {
+            AnimeNotificationManager.recentlyAddedAnimeNotification(MainActivity.this, addedAnimeCount);
+        }
         final int cDBlue = getResources().getColor(R.color.dark_blue);
         @JavascriptInterface
         public void changeStatusBarColor(boolean isOverlay) {
@@ -911,7 +915,7 @@ public class MainActivity extends AppCompatActivity {
         if (updateCurrentNotificationsFuture != null && !updateCurrentNotificationsFuture.isCancelled()) {
             updateCurrentNotificationsFuture.cancel(true);
         }
-        updateCurrentNotificationsFuture = updateCurrentNotificationsExecutorService.submit((Runnable) () -> {
+        updateCurrentNotificationsFuture = updateCurrentNotificationsExecutorService.submit(() -> {
             if (AnimeNotificationManager.allAnimeNotification.size()==0) {
                 try {
                     @SuppressWarnings("unchecked") ConcurrentHashMap<String, AnimeNotification> $allAnimeNotification = (ConcurrentHashMap<String, AnimeNotification>) LocalPersistence.readObjectFromFile(MainActivity.this, "allAnimeNotification");

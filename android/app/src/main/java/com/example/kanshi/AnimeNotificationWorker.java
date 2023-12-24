@@ -47,6 +47,9 @@ import java.util.concurrent.TimeUnit;
 
 public class AnimeNotificationWorker extends Worker {
 
+    private static final int NOTIFICATION_ANIME_RELEASE = 1000;
+    private static final int NOTIFICATION_MY_ANIME = 999;
+    private static final int NOTIFICATION_OTHER_ANIME = 998;
     private static final int ANIME_RELEASE_PENDING_INTENT = 997;
     private static final int ANIME_RELEASE_UPDATE_PENDING_INTENT = 996;
     public final String retryKey = "Kanshi-Anime-Recommendation.Retry";
@@ -89,7 +92,9 @@ public class AnimeNotificationWorker extends Worker {
 
         NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this.getApplicationContext());
 
-        notificationManager.cancelAll();
+        notificationManager.cancel(NOTIFICATION_OTHER_ANIME);
+        notificationManager.cancel(NOTIFICATION_MY_ANIME);
+        notificationManager.cancel(NOTIFICATION_ANIME_RELEASE);
 
         byte[] dummyImage = null;
         HashMap<String, AnimeNotification> myAnimeNotifications = new HashMap<>();
