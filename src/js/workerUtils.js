@@ -211,12 +211,9 @@ const processRecommendedAnimeList = (_data = {}) => {
                             neareastAnimeCompletionAiringAt = data?.animeCompletionAiringAt
                         }
                     } else {
-                        if (neareastAnimeCompletionAiringAt) {
-                            setLocalStorage("neareastAnimeCompletionAiringAt", neareastAnimeCompletionAiringAt)
-                                .catch(() => removeLocalStorage("neareastAnimeCompletionAiringAt"))
-                                .finally(() => saveIDBdata(neareastAnimeCompletionAiringAt, "neareastAnimeCompletionAiringAt"));
-                            window?.setAnimeCompletionUpdateTimeout?.(neareastAnimeCompletionAiringAt)
-                        }
+                        setLocalStorage("neareastAnimeCompletionAiringAt", neareastAnimeCompletionAiringAt)
+                            .catch(() => removeLocalStorage("neareastAnimeCompletionAiringAt"))
+                            .finally(() => saveIDBdata(neareastAnimeCompletionAiringAt, "neareastAnimeCompletionAiringAt"));
                         setLocalStorage("lastProcessRecommendationAiringAt", lastProcessRecommendationAiringAt)
                             .catch(() => removeLocalStorage("lastProcessRecommendationAiringAt"))
                             .finally(() => saveIDBdata(lastProcessRecommendationAiringAt, "lastProcessRecommendationAiringAt"));
@@ -237,6 +234,9 @@ const processRecommendedAnimeList = (_data = {}) => {
                         }, terminateDelay);
                         isProcessingList.set(false)
                         progress.set(100)
+                        if (neareastAnimeCompletionAiringAt) {
+                            window?.setAnimeCompletionUpdateTimeout?.(neareastAnimeCompletionAiringAt)
+                        }
                         resolve()
                     }
                 };
