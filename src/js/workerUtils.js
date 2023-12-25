@@ -27,7 +27,7 @@ import {
     loadingDataStatus
 } from "./globalValues";
 import { get } from "svelte/store";
-import { downloadLink, isJsonObject, removeLocalStorage, setLocalStorage } from "../js/others/helper.js"
+import { downloadLink, isJsonObject, removeLocalStorage, setLocalStorage, showToast, } from "../js/others/helper.js"
 import { cacheRequest } from "./caching";
 
 let terminateDelay = 1000;
@@ -191,7 +191,7 @@ const processRecommendedAnimeList = (_data = {}) => {
                     } else {
                         if (window?.shouldUpdateNotifications === true && get(android)) {
                             window.shouldUpdateNotifications = false
-                            if (get(username)) {
+                            if (typeof (get(username)) === "string") {
                                 try {
                                     JSBridge?.callUpdateNotifications?.()
                                 } catch (e) { }
@@ -369,21 +369,12 @@ const requestUserEntries = (_data) => {
                     } else if (data?.hasOwnProperty("status")) {
                         if (!dataStatusPrio) {
                             dataStatus.set(data.status)
-                            if (data.status === "User not found") {
-                                userRequestIsRunning.set(false)
-                                loadAnime.update((e) => !e)
-                                window.confirmPromise({
-                                    isAlert: true,
-                                    text: "User was not found, please try again.",
-                                })
-                                requestUserEntriesTerminateTimeout = setTimeout(() => {
-                                    requestUserEntriesWorker?.terminate?.();
-                                }, terminateDelay)
-                                progress.set(100)
-                                reject(data)
-                            }
                         }
                     } else if (data?.error) {
+                        window.confirmPromise({
+                            isAlert: true,
+                            text: "Failed retrieval, " + (data?.error?.toLowerCase?.() || "please try again") + ".",
+                        })
                         userRequestIsRunning.set(false)
                         loadAnime.update((e) => !e)
                         requestUserEntriesTerminateTimeout = setTimeout(() => {
@@ -479,8 +470,8 @@ const exportUserData = (_data) => {
                             } else if (state === 1) {
                                 JSBridge.exportJSON(chunk, 1, '')
                             } else if (state === 2) {
-                                let username = data.username ?? null
-                                JSBridge.exportJSON(chunk, 2, `Kanshi.${username?.toLowerCase() || "Backup"}.json`)
+                                let username = data?.username
+                                JSBridge.exportJSON(chunk, 2, `Kanshi.${username?.toLowerCase?.() || "Backup"}.json`)
                                 isExporting = false
                                 exportUserDataWorker?.terminate?.();
                                 new Promise((resolve, reject) => {
@@ -490,6 +481,7 @@ const exportUserData = (_data) => {
                                 }).finally(() => {
                                     waitForExportApproval = null
                                     progress.set(100)
+                                    showToast("Data has been Exported")
                                     resolve(data)
                                 })
                             }
@@ -503,9 +495,9 @@ const exportUserData = (_data) => {
                         }
                     } else {
                         dataStatusPrio = false
-                        let username = data.username ?? null
+                        let username = data?.username
                         progress.set(100)
-                        downloadLink(data.url, `Kanshi.${username?.toLowerCase() || "Backup"}.json`)
+                        downloadLink(data.url, `Kanshi.${username?.toLowerCase?.() || "Backup"}.json`)
                         isExporting = false
                         resolve(data)
                         // dont terminate, can't oversee blob link lifetime
@@ -556,6 +548,7 @@ const importUserData = (_data) => {
                     importUserDataWorker = null
                 }
                 importUserDataWorker = new Worker(url)
+                removeLocalStorage("username");
                 importUserDataWorker.postMessage(_data)
                 importUserDataWorker.onmessage = ({ data }) => {
                     if (data?.hasOwnProperty("progress")) {
@@ -577,8 +570,15 @@ const importUserData = (_data) => {
                     } else if (data?.hasOwnProperty("status")) {
                         dataStatusPrio = true
                         dataStatus.set(data.status)
-                    } else if (typeof data?.importedUsername === "string") {
-                        username.set(data.importedUsername)
+                    } else if (data?.importedUsername !== undefined) {
+                        if (typeof data?.importedUsername === "string") {
+                            setLocalStorage("username", data.importedUsername).catch(() => {
+                                removeLocalStorage("username");
+                            });
+                            username.set(data.importedUsername)
+                        } else {
+                            username.set("")
+                        }
                     } else if (isJsonObject(data?.importedHiddenEntries)) {
                         hiddenEntries.set(data?.importedHiddenEntries)
                     } else if (data?.importedlastRunnedAutoUpdateDate instanceof Date && !isNaN(data?.importedlastRunnedAutoUpdateDate)) {
@@ -610,6 +610,10 @@ const importUserData = (_data) => {
                                 isCurrentlyImporting = false
                                 progress.set(100)
                                 importUserDataWorker?.terminate?.();
+                            }).finally(() => {
+                                if (get(android)) {
+                                    showToast("Data has been Imported")
+                                }
                             })
                     }
                 }

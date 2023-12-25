@@ -99,28 +99,33 @@
                             }
                             $dataStatus = "Getting User Entries";
                             $userRequestIsRunning = true;
+                            removeLocalStorage("username");
                             requestUserEntries({
                                 username: typedUsername,
                             })
                                 .then(({ newusername }) => {
                                     if (newusername) {
-                                        setLocalStorage(
-                                            "username",
-                                            newusername,
-                                        ).catch(() => {
-                                            removeLocalStorage("username");
-                                        });
                                         typedUsername = $username =
                                             newusername || "";
                                         importantUpdate.update((e) => !e);
                                     } else {
                                         typedUsername = $username || "";
                                     }
+                                    return;
                                 })
                                 .catch((error) => {
                                     typedUsername = $username || "";
                                     $dataStatus = "Something went wrong";
                                     console.error(error);
+                                    return;
+                                })
+                                .finally(() => {
+                                    setLocalStorage(
+                                        "username",
+                                        $username,
+                                    ).catch(() => {
+                                        removeLocalStorage("username");
+                                    });
                                 });
                         } else {
                             typedUsername = $username || "";
@@ -147,28 +152,33 @@
                             }
                             $dataStatus = "Getting User Entries";
                             $userRequestIsRunning = true;
+                            removeLocalStorage("username");
                             await requestUserEntries({
                                 username: typedUsername,
                             })
                                 .then(({ newusername }) => {
                                     if (newusername) {
-                                        setLocalStorage(
-                                            "username",
-                                            newusername,
-                                        ).catch(() => {
-                                            removeLocalStorage("username");
-                                        });
                                         typedUsername = $username =
                                             newusername || "";
                                     } else {
                                         typedUsername = $username || "";
                                     }
                                     importantUpdate.update((e) => !e);
+                                    return;
                                 })
                                 .catch((error) => {
                                     typedUsername = $username || "";
                                     $dataStatus = "Something went wrong";
                                     console.error(error);
+                                    return;
+                                })
+                                .finally(() => {
+                                    setLocalStorage(
+                                        "username",
+                                        $username,
+                                    ).catch(() => {
+                                        removeLocalStorage("username");
+                                    });
                                 });
                         } else {
                             typedUsername = $username || "";

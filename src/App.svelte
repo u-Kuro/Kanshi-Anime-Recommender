@@ -263,10 +263,12 @@
 					// 	getUsername();
 					// } else {
 					let _username = await retrieveJSON("username");
-					if (_username) {
-						setLocalStorage("username", _username).catch(() => {
-							removeLocalStorage("username");
-						});
+					if (_username !== $username) {
+						setLocalStorage("username", _username || "").catch(
+							() => {
+								removeLocalStorage("username");
+							},
+						);
 						$username = _username;
 					}
 					if (
@@ -274,11 +276,9 @@
 						window?.shouldUpdateNotifications === true
 					) {
 						window.shouldUpdateNotifications = false;
-						if ($username) {
-							try {
-								JSBridge?.callUpdateNotifications?.();
-							} catch (e) {}
-						}
+						try {
+							JSBridge?.callUpdateNotifications?.();
+						} catch (e) {}
 					}
 					resolve();
 					// }

@@ -81,7 +81,7 @@ import androidx.core.content.FileProvider;
 import androidx.core.splashscreen.SplashScreen;
 
 public class MainActivity extends AppCompatActivity {
-    public final int appID = 268;
+    public final int appID = 269;
     public boolean webViewIsLoaded = false;
     public boolean permissionIsAsked = false;
     public SharedPreferences prefs;
@@ -744,7 +744,6 @@ public class MainActivity extends AppCompatActivity {
             }
         }
         public boolean connectionChecking = false;
-
         @RequiresApi(api = Build.VERSION_CODES.N)
         @JavascriptInterface
         public void switchApp() {
@@ -916,6 +915,10 @@ public class MainActivity extends AppCompatActivity {
                 }
                 AnimeNotificationManager.recentlyAddedAnimeNotification(MainActivity.this, addedAnimeCount);
             }
+        }
+        @JavascriptInterface
+        public void openToast(String text, boolean isLongDuration) {
+            showToast(Toast.makeText(getApplicationContext(), text, isLongDuration ? Toast.LENGTH_LONG : Toast.LENGTH_SHORT));
         }
         final int cDBlue = getResources().getColor(R.color.dark_blue);
         @JavascriptInterface

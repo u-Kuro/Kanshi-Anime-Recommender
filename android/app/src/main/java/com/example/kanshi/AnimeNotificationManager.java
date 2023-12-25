@@ -264,8 +264,8 @@ public class AnimeNotificationManager {
                 .setSmallIcon(R.drawable.ic_stat_name)
                 .setContentTitle("Recently Added Anime +" + addedAnimeCount)
                 .setContentIntent(pendingIntent)
-                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-                .setAutoCancel(true);
+                .setAutoCancel(true)
+                .setPriority(NotificationCompat.PRIORITY_DEFAULT);
             NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
             notificationManager.cancel(NOTIFICATION_ADDED_ANIME);
             notificationManager.notify(NOTIFICATION_ADDED_ANIME, builder.build());

@@ -62,14 +62,18 @@
                 importUserData({
                     importedFile: importedFile,
                 })
-                    .then(() => {
-                        if (importFileInput instanceof Element)
-                            importFileInput.value = null;
-                    })
                     .catch((error) => {
                         $dataStatus = error || "Something went wrong";
-                        importFileInput.value = null;
                         importantUpdate.update((e) => !e);
+                        return;
+                    })
+                    .finally(() => {
+                        setLocalStorage("username", $username).catch(() => {
+                            removeLocalStorage("username");
+                        });
+                        if (importFileInput instanceof Element) {
+                            importFileInput.value = null;
+                        }
                     });
             } else {
                 if (importFileInput instanceof Element)

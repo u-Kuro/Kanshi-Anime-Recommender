@@ -538,6 +538,13 @@ const isAndroid = () => {
   }
 }
 
+const showToast = (str, isLongDuration = true) => {
+  if (typeof str !== "string" || !str?.length || typeof isLongDuration !== "boolean") return
+  try {
+    JSBridge?.openToast?.(str, isLongDuration)
+  } catch (e) { }
+}
+
 let $_pastExportUrl;
 const downloadLink = (url, fileName) => {
   if ($_pastExportUrl) {
@@ -598,8 +605,9 @@ const getLocalStorage = (key) => {
   let data;
   try {
     key = LocalStorageID + key;
-    data = localStorage.getItem(key)
-    return JSON.parse(data)
+    let value = localStorage.getItem(key)
+    data = JSON.parse(value)
+    return data
   } catch (ex) {
     return data ?? null;
   }
@@ -652,6 +660,7 @@ export {
   getElementWidth,
   downloadLink,
   isAndroid,
+  showToast,
   isJsonObject,
   jsonIsEmpty,
   getChildIndex,
