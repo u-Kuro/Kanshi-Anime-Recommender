@@ -252,25 +252,23 @@ public class AnimeNotificationManager {
     }
 
     public static void recentlyAddedAnimeNotification(Context context, int addedAnimeCount) {
-        if (addedAnimeCount > 0) {
-            context = context.getApplicationContext();
-            if (ActivityCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
-                createRecentlyAddedAnimeNotificationChannel(context);
-                PackageManager pm = context.getPackageManager();
-                Intent intent = pm.getLaunchIntentForPackage("com.example.kanshi");
-                PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_IMMUTABLE);
-                pendingIntent.cancel();
-                pendingIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_IMMUTABLE);
-                NotificationCompat.Builder builder = new NotificationCompat.Builder(context, RECENTLY_ADDED_ANIME_CHANNEL)
-                    .setSmallIcon(R.drawable.ic_stat_name)
-                    .setContentTitle("Recently Added Anime +" + addedAnimeCount)
-                    .setContentIntent(pendingIntent)
-                    .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-                    .setAutoCancel(true);
-                NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
-                notificationManager.cancel(NOTIFICATION_ADDED_ANIME);
-                notificationManager.notify(NOTIFICATION_ADDED_ANIME, builder.build());
-            }
+        context = context.getApplicationContext();
+        if (ActivityCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
+            createRecentlyAddedAnimeNotificationChannel(context);
+            PackageManager pm = context.getPackageManager();
+            Intent intent = pm.getLaunchIntentForPackage("com.example.kanshi");
+            PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_IMMUTABLE);
+            pendingIntent.cancel();
+            pendingIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_IMMUTABLE);
+            NotificationCompat.Builder builder = new NotificationCompat.Builder(context, RECENTLY_ADDED_ANIME_CHANNEL)
+                .setSmallIcon(R.drawable.ic_stat_name)
+                .setContentTitle("Recently Added Anime +" + addedAnimeCount)
+                .setContentIntent(pendingIntent)
+                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                .setAutoCancel(true);
+            NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
+            notificationManager.cancel(NOTIFICATION_ADDED_ANIME);
+            notificationManager.notify(NOTIFICATION_ADDED_ANIME, builder.build());
         }
     }
 

@@ -81,7 +81,7 @@ import androidx.core.content.FileProvider;
 import androidx.core.splashscreen.SplashScreen;
 
 public class MainActivity extends AppCompatActivity {
-    public final int appID = 267;
+    public final int appID = 268;
     public boolean webViewIsLoaded = false;
     public boolean permissionIsAsked = false;
     public SharedPreferences prefs;
@@ -96,6 +96,7 @@ public class MainActivity extends AppCompatActivity {
 
     private PowerManager.WakeLock wakeLock;
     public boolean shouldGoBack;
+    public Toast persistentToast;
     public Toast currentToast;
     public AlertDialog currentDialog;
     public boolean isInApp = true;
@@ -502,6 +503,13 @@ public class MainActivity extends AppCompatActivity {
             "window?.returnedAppIsVisible?.(true);" + // Should Be Runned First
             "window?.checkEntries?.();"
         ));
+        if (persistentToast != null) {
+            if (currentToast != null) {
+                currentToast.cancel();
+            }
+            persistentToast.show();
+            persistentToast = null;
+        }
     }
 
     @Override
@@ -897,7 +905,17 @@ public class MainActivity extends AppCompatActivity {
         }
         @JavascriptInterface
         public void showNewAddedAnimeNotification(int addedAnimeCount) {
-            AnimeNotificationManager.recentlyAddedAnimeNotification(MainActivity.this, addedAnimeCount);
+            if (addedAnimeCount>0) {
+                persistentToast = Toast.makeText(MainActivity.this, "+" + addedAnimeCount + " New Added Anime", Toast.LENGTH_LONG);
+                if (isInApp) {
+                    if (currentToast != null) {
+                        currentToast.cancel();
+                    }
+                    persistentToast.show();
+                    persistentToast = null;
+                }
+                AnimeNotificationManager.recentlyAddedAnimeNotification(MainActivity.this, addedAnimeCount);
+            }
         }
         final int cDBlue = getResources().getColor(R.color.dark_blue);
         @JavascriptInterface

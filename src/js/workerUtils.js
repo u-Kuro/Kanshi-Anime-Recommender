@@ -292,7 +292,9 @@ const requestAnimeEntries = (_data) => {
                             } catch (e) { }
                         }
                     } else {
-                        if (data.getEntries) {
+                        if (data?.noEntriesFound) {
+                            alertError()
+                        } else if (data?.getEntries === true) {
                             isGettingNewEntries = true
                             stopConflictingWorkers({ isGettingNewEntries: true })
                             getAnimeEntries()
@@ -724,14 +726,17 @@ const getIDBdata = (name) => {
                 let worker = new Worker(url)
                 worker.postMessage({ name })
                 worker.onmessage = ({ data }) => {
-                    if (data?.hasOwnProperty("status")) {
-                        dataStatus.set(data.status)
+                    worker?.terminate?.()
+                    if (data === "Failed to initialize database") {
+                        alertError()
+                        reject(data)
                     } else {
-                        worker?.terminate?.()
                         resolve(data)
                     }
                 }
                 worker.onerror = (error) => {
+                    worker?.terminate?.()
+                    alertError()
                     reject(error)
                 }
             }).catch((error) => {

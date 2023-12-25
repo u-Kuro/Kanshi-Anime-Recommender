@@ -161,21 +161,10 @@
 			// Check/Get/Update/Process Anime Entries
 			initDataPromises.push(
 				new Promise(async (resolve, reject) => {
-					let _lastAnimeUpdate =
-						await retrieveJSON("lastAnimeUpdate");
-					let shouldGetAnimeEntries = !(
-						_lastAnimeUpdate instanceof Date &&
-						!isNaN(_lastAnimeUpdate)
+					let shouldGetAnimeEntries = await retrieveJSON(
+						"animeEntriesIsEmpty",
 					);
-					if (!shouldGetAnimeEntries) {
-						let animeEntriesIsEmpty = await retrieveJSON(
-							"animeEntriesIsEmpty",
-						);
-						if (animeEntriesIsEmpty) {
-							shouldGetAnimeEntries = true;
-						}
-					}
-					if (shouldGetAnimeEntries) {
+					if (shouldGetAnimeEntries === true) {
 						$finalAnimeList = null;
 						getAnimeEntries()
 							.then(() => {
@@ -184,7 +173,7 @@
 							.catch(async () => {
 								reject();
 							});
-					} else {
+					} else if (shouldGetAnimeEntries === false) {
 						if (navigator.onLine) {
 							requestUserEntries()
 								.then(() => {
@@ -196,6 +185,8 @@
 								});
 						}
 						resolve();
+					} else {
+						reject();
 					}
 				}),
 			);
