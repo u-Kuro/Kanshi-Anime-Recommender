@@ -127,6 +127,17 @@ const animeLoader = (_data = {}) => {
 }
 let processRecommendedAnimeListTerminateTimeout;
 let processRecommendedAnimeListWorker;
+let animeCompletionUpdateTimeout
+window.setAnimeCompletionUpdateTimeout = (neareastAnimeCompletionAiringAt = 0) => {
+    if (typeof neareastAnimeCompletionAiringAt !== 'number') {
+        neareastAnimeCompletionAiringAt = 0
+    }
+    let timeLeftBeforeAnimeCompletionUpdate = (neareastAnimeCompletionAiringAt * 1000) - (new Date).getTime()
+    clearTimeout(animeCompletionUpdateTimeout)
+    animeCompletionUpdateTimeout = setTimeout(() => {
+        updateRecommendationList.update(e => !e)
+    }, Math.min(timeLeftBeforeAnimeCompletionUpdate, 2000000000))
+}
 const processRecommendedAnimeList = (_data = {}) => {
     return new Promise((resolve, reject) => {
         if (processRecommendedAnimeListTerminateTimeout) clearTimeout(processRecommendedAnimeListTerminateTimeout);
@@ -138,6 +149,8 @@ const processRecommendedAnimeList = (_data = {}) => {
         progress.set(0)
         cacheRequest("./webapi/worker/processRecommendedAnimeList.js")
             .then(url => {
+                const lastProcessRecommendationAiringAt = parseInt((new Date().getTime() / 1000))
+                let neareastAnimeCompletionAiringAt
                 if (processRecommendedAnimeListTerminateTimeout) clearTimeout(processRecommendedAnimeListTerminateTimeout);
                 if (processRecommendedAnimeListWorker) {
                     processRecommendedAnimeListWorker?.terminate?.();
@@ -188,7 +201,25 @@ const processRecommendedAnimeList = (_data = {}) => {
                                 }
                             } catch (e) { }
                         }
+                    } else if (typeof data?.animeCompletionAiringAt === "number" && data?.animeCompletionAiringAt > lastProcessRecommendationAiringAt) {
+                        if (!neareastAnimeCompletionAiringAt
+                            || (
+                                typeof neareastAnimeCompletionAiringAt === "number" &&
+                                neareastAnimeCompletionAiringAt > data?.animeCompletionAiringAt
+                            )
+                        ) {
+                            neareastAnimeCompletionAiringAt = data?.animeCompletionAiringAt
+                        }
                     } else {
+                        if (neareastAnimeCompletionAiringAt) {
+                            setLocalStorage("neareastAnimeCompletionAiringAt", neareastAnimeCompletionAiringAt)
+                                .catch(() => removeLocalStorage("neareastAnimeCompletionAiringAt"))
+                                .finally(() => saveIDBdata(neareastAnimeCompletionAiringAt, "neareastAnimeCompletionAiringAt"));
+                            window?.setAnimeCompletionUpdateTimeout?.(neareastAnimeCompletionAiringAt)
+                        }
+                        setLocalStorage("lastProcessRecommendationAiringAt", lastProcessRecommendationAiringAt)
+                            .catch(() => removeLocalStorage("lastProcessRecommendationAiringAt"))
+                            .finally(() => saveIDBdata(lastProcessRecommendationAiringAt, "lastProcessRecommendationAiringAt"));
                         if (window?.shouldUpdateNotifications === true && get(android)) {
                             window.shouldUpdateNotifications = false
                             if (typeof (get(username)) === "string") {

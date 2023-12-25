@@ -121,7 +121,7 @@
                     if (data?.finalAnimeList?.length > 0) {
                         data?.finalAnimeList?.forEach?.((anime, idx) => {
                             $newFinalAnime = {
-                                idx: data.shownAnimeListCount + idx,
+                                idx: data.lastShownAnimeListIndex + idx,
                                 finalAnimeList: anime,
                             };
                         });
@@ -540,7 +540,7 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        white-space: nowrap; 
+        white-space: nowrap;
         background-color: transparent;
         font-size: 1.3rem;
         font-weight: 500;

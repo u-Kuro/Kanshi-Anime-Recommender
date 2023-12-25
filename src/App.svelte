@@ -121,7 +121,7 @@
 					if (data?.finalAnimeList?.length > 0) {
 						data?.finalAnimeList?.forEach?.((anime, idx) => {
 							$newFinalAnime = {
-								idx: data.shownAnimeListCount + idx,
+								idx: data.lastShownAnimeListIndex + idx,
 								finalAnimeList: anime,
 							};
 						});
@@ -367,9 +367,57 @@
 						}
 					})();
 					// Get/Show List
-					let shouldProcessRecommendation = await retrieveJSON(
-						"shouldProcessRecommendation",
-					);
+					let shouldProcessRecommendation;
+					if (!shouldProcessRecommendation) {
+						let lastProcessRecommendationAiringAt =
+							getLocalStorage(
+								"lastProcessRecommendationAiringAt",
+							) ??
+							(await retrieveJSON(
+								"lastProcessRecommendationAiringAt",
+							));
+						if (
+							typeof lastProcessRecommendationAiringAt ===
+								"number" &&
+							!isNaN(lastProcessRecommendationAiringAt)
+						) {
+							let neareastAnimeCompletionAiringAt =
+								getLocalStorage(
+									"neareastAnimeCompletionAiringAt",
+								) ??
+								(await retrieveJSON(
+									"neareastAnimeCompletionAiringAt",
+								));
+							if (
+								typeof neareastAnimeCompletionAiringAt ===
+									"number" &&
+								!isNaN(neareastAnimeCompletionAiringAt)
+							) {
+								window?.setAnimeCompletionUpdateTimeout?.(
+									neareastAnimeCompletionAiringAt,
+								);
+								let neareastAnimeCompletionAiringDate =
+									new Date(
+										neareastAnimeCompletionAiringAt * 1000,
+									);
+								if (
+									neareastAnimeCompletionAiringDate <=
+										new Date() &&
+									lastProcessRecommendationAiringAt >
+										neareastAnimeCompletionAiringAt
+								) {
+									shouldProcessRecommendation = true;
+								}
+							}
+						} else {
+							shouldProcessRecommendation = true;
+						}
+					}
+					if (!shouldProcessRecommendation) {
+						shouldProcessRecommendation = await retrieveJSON(
+							"shouldProcessRecommendation",
+						);
+					}
 					if (shouldProcessRecommendation === undefined) {
 						let recommendedAnimeListLen = await retrieveJSON(
 							"recommendedAnimeListLength",
@@ -423,7 +471,7 @@
 												(anime, idx) => {
 													$newFinalAnime = {
 														idx:
-															data.shownAnimeListCount +
+															data.lastShownAnimeListIndex +
 															idx,
 														finalAnimeList: anime,
 													};
@@ -582,7 +630,7 @@
 					if (data?.finalAnimeList?.length > 0) {
 						data?.finalAnimeList?.forEach?.((anime, idx) => {
 							$newFinalAnime = {
-								idx: data.shownAnimeListCount + idx,
+								idx: data.lastShownAnimeListIndex + idx,
 								finalAnimeList: anime,
 							};
 						});
@@ -655,7 +703,7 @@
 						if (data?.finalAnimeList?.length > 0) {
 							data?.finalAnimeList?.forEach?.((anime, idx) => {
 								$newFinalAnime = {
-									idx: data.shownAnimeListCount + idx,
+									idx: data.lastShownAnimeListIndex + idx,
 									finalAnimeList: anime,
 								};
 							});
@@ -1166,7 +1214,7 @@
 					if (data?.finalAnimeList?.length > 0) {
 						data?.finalAnimeList?.forEach?.((anime, idx) => {
 							$newFinalAnime = {
-								idx: data.shownAnimeListCount + idx,
+								idx: data.lastShownAnimeListIndex + idx,
 								finalAnimeList: anime,
 							};
 						});

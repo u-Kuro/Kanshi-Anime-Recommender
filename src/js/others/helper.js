@@ -609,7 +609,7 @@ const getLocalStorage = (key) => {
     data = JSON.parse(value)
     return data
   } catch (ex) {
-    return data ?? null;
+    return undefined;
   }
 }
 

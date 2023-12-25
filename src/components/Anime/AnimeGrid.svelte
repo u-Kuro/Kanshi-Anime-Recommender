@@ -181,7 +181,7 @@
                         if (data?.finalAnimeList?.length > 0) {
                             data?.finalAnimeList?.forEach?.((anime, idx) => {
                                 $newFinalAnime = {
-                                    idx: data.shownAnimeListCount + idx,
+                                    idx: data.lastShownAnimeListIndex + idx,
                                     finalAnimeList: anime,
                                 };
                             });
@@ -200,7 +200,7 @@
                         if (data?.finalAnimeList?.length > 0) {
                             data?.finalAnimeList?.forEach?.((anime, idx) => {
                                 $newFinalAnime = {
-                                    idx: data.shownAnimeListCount + idx,
+                                    idx: data.lastShownAnimeListIndex + idx,
                                     finalAnimeList: anime,
                                 };
                             });
@@ -213,7 +213,9 @@
                                 data?.finalAnimeList?.forEach?.(
                                     (anime, idx) => {
                                         $newFinalAnime = {
-                                            idx: data.shownAnimeListCount + idx,
+                                            idx:
+                                                data.lastShownAnimeListIndex +
+                                                idx,
                                             finalAnimeList: anime,
                                         };
                                     },
