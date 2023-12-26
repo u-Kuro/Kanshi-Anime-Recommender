@@ -358,7 +358,6 @@
             } catch (e) {}
         }
     }
-    $android = true;
 </script>
 
 <input
