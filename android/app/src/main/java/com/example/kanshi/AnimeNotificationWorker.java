@@ -388,7 +388,7 @@ public class AnimeNotificationWorker extends Worker {
             AnimeNotificationManager.nearestNotificationInfo = newNearestNotificationInfo;
             AnimeNotificationManager.nearestNotificationTime = newNearestNotificationInfo.releaseDateMillis;
 
-            Intent newIntent = new Intent(this.getApplicationContext(), AnimeNotificationManager.NotificationReceiver.class);
+            Intent newIntent = new Intent(this.getApplicationContext(), MyReceiver.class);
             newIntent.setAction("ANIME_NOTIFICATION");
 
             PendingIntent newPendingIntent = PendingIntent.getBroadcast(this.getApplicationContext(), ANIME_RELEASE_PENDING_INTENT, newIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
@@ -515,7 +515,7 @@ public class AnimeNotificationWorker extends Worker {
     }
 
     private void delayAnimeReleaseUpdate() {
-        Intent newIntent = new Intent(this.getApplicationContext(), AnimeNotificationManager.NotificationReceiver.class);
+        Intent newIntent = new Intent(this.getApplicationContext(), MyReceiver.class);
         newIntent.setAction("ANIME_RELEASE_UPDATE");
 
         PendingIntent newPendingIntent = PendingIntent.getBroadcast(this.getApplicationContext(), ANIME_RELEASE_UPDATE_PENDING_INTENT, newIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);

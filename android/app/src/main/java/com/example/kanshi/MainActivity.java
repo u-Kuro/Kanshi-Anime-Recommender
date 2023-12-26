@@ -81,7 +81,8 @@ import androidx.core.content.FileProvider;
 import androidx.core.splashscreen.SplashScreen;
 
 public class MainActivity extends AppCompatActivity {
-    public final int appID = 271;
+    public final int appID = 272;
+    public boolean keepAppRunningInBackground = false;
     public boolean webViewIsLoaded = false;
     public boolean permissionIsAsked = false;
     public SharedPreferences prefs;
@@ -172,7 +173,7 @@ public class MainActivity extends AppCompatActivity {
                     isGranted -> prefsEdit.putBoolean("permissionIsAsked", true).apply()
             );
 
-    @RequiresApi(api = Build.VERSION_CODES.N)
+    @RequiresApi(api = Build.VERSION_CODES.TIRAMISU)
     @SuppressLint({"SetJavaScriptEnabled", "WrongViewCast"})
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
@@ -180,6 +181,7 @@ public class MainActivity extends AppCompatActivity {
         prefs = MainActivity.this.getSharedPreferences("com.example.kanshi", Context.MODE_PRIVATE);
         prefsEdit = prefs.edit();
         // Saved Data
+        keepAppRunningInBackground = prefs.getBoolean("keepAppRunningInBackground",true);
         exportPath = prefs.getString("savedExportPath", "");
         permissionIsAsked = prefs.getBoolean("permissionIsAsked", false);
         // Get Activity Reference
@@ -264,7 +266,7 @@ public class MainActivity extends AppCompatActivity {
         getWindow().setFlags(
                 WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
                 WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED);
-        webView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
+        webView.setLayerType(View.LAYER_TYPE_NONE, null);
         // Add Bridge to WebView
         webView.addJavascriptInterface(new JSBridge(),"JSBridge");
         webView.setWebViewClient(new WebViewClient(){
@@ -274,6 +276,7 @@ public class MainActivity extends AppCompatActivity {
                     appSwitched = false;
                     view.loadUrl("javascript:(()=>window.shouldUpdateNotifications=true)();");
                 }
+                view.loadUrl("javascript:(()=>window.keepAppRunningInBackground="+(keepAppRunningInBackground?"true":"false")+")();");
                 super.onPageStarted(view, url, favicon);
                 webViewIsLoaded = false;
             }
@@ -286,8 +289,9 @@ public class MainActivity extends AppCompatActivity {
                     CookieManager.getInstance().acceptCookie();
                     CookieManager.getInstance().flush();
                     webViewIsLoaded = true;
-                } else {
+                } else if (!url.startsWith("file")) {
                     appSwitched = true;
+                    pageLoaded = true;
                     view.loadUrl("file:///android_asset/www/index.html");
                     showDialog(new AlertDialog.Builder(MainActivity.this)
                             .setTitle("Connection unreachable")
@@ -296,6 +300,7 @@ public class MainActivity extends AppCompatActivity {
                             .setNegativeButton("CANCEL",null)
                     );
                 }
+                view.loadUrl("javascript:window?.setKeepAppRunningInBackground?.("+(keepAppRunningInBackground?"true":"false")+")");
                 super.onPageFinished(view, url);
             }
             @Override
@@ -432,6 +437,7 @@ public class MainActivity extends AppCompatActivity {
                 pageLoaded = false;
                 webView.loadUrl("https://u-kuro.github.io/Kanshi.Anime-Recommendation/");
             } else {
+                pageLoaded = true;
                 webView.loadUrl("file:///android_asset/www/index.html");
                 showDialog(new AlertDialog.Builder(MainActivity.this)
                         .setTitle("Connection unreachable")
@@ -488,7 +494,18 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
+    protected void onStop() {
+        if (keepAppRunningInBackground) {
+            Intent intent = new Intent(this, MainService.class);
+            startService(intent);
+        }
+        super.onStop();
+    }
+
+    @Override
     protected void onResume() {
+        Intent intent = new Intent(this, MainService.class);
+        stopService(intent);
         if (fromYoutube) {
             overridePendingTransition(R.anim.left_to_center, R.anim.center_to_right);
         } else {
@@ -537,13 +554,16 @@ public class MainActivity extends AppCompatActivity {
     // Native and Webview Connection
     @SuppressWarnings("unused")
     class JSBridge {
-        @SuppressWarnings({"unused"})
         BufferedWriter writer;
         File tempFile;
         String directoryPath;
         @JavascriptInterface
         public void pageIsFinished() {
             pageLoaded = true;
+        }
+        @JavascriptInterface
+        public void setKeepAppRunningInBackground(boolean enable) {
+            changeKeepAppRunningInBackground(enable);
         }
         @RequiresApi(api = Build.VERSION_CODES.R)
         @JavascriptInterface
@@ -753,9 +773,10 @@ public class MainActivity extends AppCompatActivity {
                     if (webView.getUrl().startsWith("https://u-kuro.github.io/Kanshi.Anime-Recommendation")) {
                         showDialog(new AlertDialog.Builder(MainActivity.this)
                                 .setTitle("Switch app mode")
-                                .setMessage("Do you want to switch to the local app?")
+                                .setMessage("Do you want to switch to the client app?")
                                 .setPositiveButton("OK", (dialogInterface, i) -> {
                                     appSwitched = true;
+                                    pageLoaded = true;
                                     webView.loadUrl("file:///android_asset/www/index.html");
                                 })
                                 .setNegativeButton("CANCEL", null));
@@ -769,10 +790,10 @@ public class MainActivity extends AppCompatActivity {
                             if (isConnected) {
                                 showDialog(new AlertDialog.Builder(MainActivity.this)
                                         .setTitle("Switch app mode")
-                                        .setMessage("Do you want to switch to the online app?")
+                                        .setMessage("Do you want to switch to the web app?")
                                         .setPositiveButton("OK", (dialogInterface, i) -> {
-                                            pageLoaded = false;
                                             appSwitched = true;
+                                            pageLoaded = false;
                                             webView.loadUrl("https://u-kuro.github.io/Kanshi.Anime-Recommendation/");
                                         })
                                         .setNegativeButton("CANCEL", null));
@@ -804,10 +825,10 @@ public class MainActivity extends AppCompatActivity {
                         if (isConnected && webView.getUrl().startsWith("file:///android_asset/www/index.html")) {
                             showDialog(new AlertDialog.Builder(MainActivity.this)
                                     .setTitle("Reconnected successfully")
-                                    .setMessage("Do you want to switch to the online app?")
+                                    .setMessage("Do you want to switch to the web app?")
                                     .setPositiveButton("OK", (dialogInterface, i) -> {
-                                        pageLoaded = false;
                                         appSwitched = true;
+                                        pageLoaded = false;
                                         webView.loadUrl("https://u-kuro.github.io/Kanshi.Anime-Recommendation/");
                                     })
                                     .setNegativeButton("CANCEL", null));
@@ -930,6 +951,11 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
+    public void changeKeepAppRunningInBackground(boolean enable) {
+        keepAppRunningInBackground = enable;
+        prefsEdit.putBoolean("keepAppRunningInBackground", keepAppRunningInBackground).apply();
+        webView.post(()->webView.loadUrl("javascript:window?.setKeepAppRunningInBackground?.("+(keepAppRunningInBackground?"true":"false")+")"));
+    }
     private final ExecutorService updateCurrentNotificationsExecutorService = Executors.newFixedThreadPool(1);
     private Future<?> updateCurrentNotificationsFuture;
     public void updateCurrentNotifications() {
@@ -1048,13 +1074,13 @@ public class MainActivity extends AppCompatActivity {
             if (isConnected) {
                 showDialog(new AlertDialog.Builder(MainActivity.this)
                         .setTitle("Connected successfully")
-                        .setMessage("Connection established, do you want to switch to the online app?")
+                        .setMessage("Connection established, do you want to switch to the web app?")
                         .setPositiveButton("OK", (dialogInterface, i) -> {
-                            pageLoaded = false;
                             String previousUrl = webView.getUrl();
                             if (previousUrl==null || previousUrl.startsWith("file:///android_asset/www/index.html")) {
                                 appSwitched = true;
                             }
+                            pageLoaded = false;
                             webView.loadUrl("https://u-kuro.github.io/Kanshi.Anime-Recommendation/");
                         })
                         .setNegativeButton("CANCEL", null));

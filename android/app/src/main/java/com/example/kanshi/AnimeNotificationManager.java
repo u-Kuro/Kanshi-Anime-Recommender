@@ -10,7 +10,6 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Person;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -25,12 +24,6 @@ import androidx.annotation.RequiresApi;
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
-import androidx.work.Constraints;
-import androidx.work.Data;
-import androidx.work.ExistingWorkPolicy;
-import androidx.work.OneTimeWorkRequest;
-import androidx.work.OutOfQuotaPolicy;
-import androidx.work.WorkManager;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -51,8 +44,8 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 public class AnimeNotificationManager {
-    private static final String ANIME_RELEASES_CHANNEL = "anime_releases_channel";
-    private static final String RECENTLY_ADDED_ANIME_CHANNEL = "anime_added_channel";
+    private static final String ANIME_RELEASES_CHANNEL = "anime_releases";
+    private static final String RECENTLY_ADDED_ANIME_CHANNEL = "recently_added_anime";
     private static final String ANIME_RELEASE_NOTIFICATION_GROUP = "anime_release_notification_group";
     private static final int NOTIFICATION_ANIME_RELEASE = 1000;
     private static final int NOTIFICATION_MY_ANIME = 999;
@@ -127,9 +120,9 @@ public class AnimeNotificationManager {
 
     public static void addAnimeNotification(Context context, AnimeNotification anime) {
         if ((nearestNotificationTime == 0 || anime.releaseDateMillis < nearestNotificationTime) && anime.releaseDateMillis >= System.currentTimeMillis()) {
-            Intent intent = new Intent(context, NotificationReceiver.class);
+            Intent intent = new Intent(context, MyReceiver.class);
             if (nearestNotificationInfo != null) {
-                Intent oldIntent = new Intent(context, NotificationReceiver.class);
+                Intent oldIntent = new Intent(context, MyReceiver.class);
                 oldIntent.setAction("ANIME_NOTIFICATION");
                 PendingIntent oldPendingIntent = PendingIntent.getBroadcast(context, ANIME_RELEASE_PENDING_INTENT, oldIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
                 AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
@@ -175,68 +168,35 @@ public class AnimeNotificationManager {
         addNotificationFuture = addNotificationFutureExecutor.schedule(() -> LocalPersistence.writeObjectToFile(context, allAnimeNotification, "allAnimeNotification"), 300, TimeUnit.MILLISECONDS);
     }
 
-    private static void createAnimeReleasesNotificationChannel(Context context) {
+    public static void createAnimeReleasesNotificationChannel(Context context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             context = context.getApplicationContext();
             CharSequence name = "Anime Releases";
-            String description = "Notifications for Anime Releases";
+            String description = "Notifications for anime releases";
             int importance = NotificationManager.IMPORTANCE_DEFAULT;
             NotificationChannel channel = new NotificationChannel(ANIME_RELEASES_CHANNEL, name, importance);
             channel.setDescription(description);
+            channel.enableVibration(true);
 
             NotificationManager notificationManager = context.getSystemService(NotificationManager.class);
             notificationManager.createNotificationChannel(channel);
         }
     }
 
-    private static void createRecentlyAddedAnimeNotificationChannel(Context context) {
+    public static void createRecentlyAddedAnimeNotificationChannel(Context context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             context = context.getApplicationContext();
             CharSequence name = "Recently Added Anime";
-            String description = "Notifications for Anime that are recently added";
+            String description = "Notifications for anime that are recently added";
             int importance = NotificationManager.IMPORTANCE_DEFAULT;
             NotificationChannel channel = new NotificationChannel(RECENTLY_ADDED_ANIME_CHANNEL, name, importance);
             channel.setDescription(description);
+            channel.enableVibration(true);
 
             NotificationManager notificationManager = context.getSystemService(NotificationManager.class);
             notificationManager.createNotificationChannel(channel);
         }
     }
-
-    public static class NotificationReceiver extends BroadcastReceiver {
-        @RequiresApi(api = Build.VERSION_CODES.P)
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            if ("ANIME_NOTIFICATION".equals(intent.getAction()) ||
-                    "android.intent.action.BOOT_COMPLETED".equals(intent.getAction()) ||
-                    "android.intent.action.QUICKBOOT_POWERON".equals(intent.getAction())
-            ) {
-                String uniqueWorkName = "ANIME_NOTIFICATION";
-                Data data = new Data.Builder()
-                        .putBoolean("isBooted", !(intent.getAction().equals(uniqueWorkName)))
-                        .putString("action", uniqueWorkName)
-                        .build();
-                OneTimeWorkRequest workRequest = new OneTimeWorkRequest.Builder(AnimeNotificationWorker.class)
-                        .setConstraints(Constraints.NONE)
-                        .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
-                        .setInputData(data)
-                        .build();
-                WorkManager.getInstance(context).enqueueUniqueWork("ANIME_NOTIFICATION", ExistingWorkPolicy.REPLACE, workRequest);
-            } else if ("ANIME_RELEASE_UPDATE".equals(intent.getAction())) {
-                String uniqueWorkName = "ANIME_RELEASE_UPDATE";
-                Data data = new Data.Builder()
-                        .putString("action", uniqueWorkName)
-                        .build();
-                OneTimeWorkRequest workRequest = new OneTimeWorkRequest.Builder(AnimeNotificationWorker.class)
-                        .setConstraints(Constraints.NONE)
-                        .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
-                        .setInputData(data)
-                        .build();
-                WorkManager.getInstance(context).enqueueUniqueWork(uniqueWorkName, ExistingWorkPolicy.REPLACE, workRequest);
-            }
-        }
-    }
-
     private static Bitmap downloadImage(String imageUrl) {
         try {
             URL url = new URL(imageUrl);

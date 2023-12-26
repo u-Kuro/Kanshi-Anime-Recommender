@@ -30,6 +30,26 @@
         tools:targetApi="33"
         android:alwaysRetainTaskState="true"
         android:launchMode="singleInstance">
+        <service
+            android:name=".MainService"
+            android:exported="false"
+            android:enabled="true">
+            <intent-filter>
+                <action android:name="STOP_MAIN_SERVICE" />
+                <action android:name="SET_MAIN_SERVICE" />
+                <action android:name="SWITCH_MAIN_SERVICE" />
+            </intent-filter>
+        </service>
+        <receiver android:name=".MyReceiver"
+            android:exported="false"
+            android:enabled="true">
+            <intent-filter>
+                <action android:name="ANIME_NOTIFICATION"/>
+                <action android:name="ANIME_RELEASE_UPDATE"/>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+            </intent-filter>
+        </receiver>
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="com.example.kanshi.provider"
@@ -59,16 +79,6 @@
             android:exported="true"
             android:alwaysRetainTaskState="true">
         </activity>
-        <receiver android:name="AnimeNotificationManager$NotificationReceiver"
-            android:exported="false"
-            android:enabled="true">
-            <intent-filter>
-                <action android:name="ANIME_NOTIFICATION"/>
-                <action android:name="ANIME_RELEASE_UPDATE"/>
-                <action android:name="android.intent.action.BOOT_COMPLETED" />
-                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
-            </intent-filter>
-        </receiver>
     </application>
     <queries>
         <intent>

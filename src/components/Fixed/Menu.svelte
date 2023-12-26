@@ -246,6 +246,31 @@
         }
     }
 
+    let keepAppRunningInBackground;
+    async function persistentBackgroundUpdates() {
+        if (!$android) return;
+        if (
+            await $confirmPromise({
+                text: `Do you want ${
+                    keepAppRunningInBackground ? "stop" : "keep"
+                }  the application running in background for persistent updates?`,
+                isImportant: true,
+            })
+        ) {
+            keepAppRunningInBackground = window.keepAppRunningInBackground =
+                !window.keepAppRunningInBackground;
+            try {
+                JSBridge?.setKeepAppRunningInBackground?.(
+                    keepAppRunningInBackground,
+                );
+            } catch (e) {}
+        }
+    }
+    window.setKeepAppRunningInBackground = (enabled) => {
+        keepAppRunningInBackground = window.keepAppRunningInBackground =
+            enabled;
+    };
+
     async function anilistSignup() {
         if (
             await $confirmPromise({
@@ -393,6 +418,16 @@
                 on:keydown={(e) => e.key === "Enter" && showDataStatus(e)}
                 >Show Status</button
             >
+            {#if $android && typeof keepAppRunningInBackground === "boolean"}
+                <button
+                    class={"button" +
+                        (keepAppRunningInBackground ? " selected" : "")}
+                    on:keydown={(e) =>
+                        e.key === "Enter" && persistentBackgroundUpdates(e)}
+                    on:click={persistentBackgroundUpdates}
+                    >Persistent Background Updates</button
+                >
+            {/if}
             <button
                 class={"button " + ($autoUpdate ? "selected" : "")}
                 on:click={handleUpdateEveryHour}
