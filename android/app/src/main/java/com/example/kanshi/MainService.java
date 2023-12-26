@@ -102,7 +102,7 @@ public class MainService extends Service {
         // Create a notification channel
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             CharSequence name = "Background Application";
-            String description = "Allow application in the background for updates, but can use more battery.";
+            String description = "Allow application in the background for updates, in exchange of an increase in ram and power usage.";
             int importance = NotificationManager.IMPORTANCE_MIN;
             NotificationChannel channel = new NotificationChannel(APP_IN_BACKGROUND_CHANNEL, name, importance);
             channel.setDescription(description);
@@ -199,9 +199,15 @@ public class MainService extends Service {
             Intent setIntent = new Intent(context, MainService.class);
             setIntent.setAction(SET_MAIN_SERVICE);
             PendingIntent setPendingIntent = PendingIntent.getService(context, 0, setIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE);
+            // Open App
+            PackageManager pm = context.getPackageManager();
+            Intent intent = pm.getLaunchIntentForPackage("com.example.kanshi");
+            PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_IMMUTABLE);
             Notification notification = new NotificationCompat.Builder(context, APP_IN_BACKGROUND_CHANNEL)
                     .setContentTitle("Kanshi.")
                     .setSmallIcon(R.drawable.ic_stat_name)
+                    .setContentIntent(pendingIntent)
+                    .addInvisibleAction(R.drawable.ic_stat_name,"OPEN",pendingIntent)
                     .addAction(keepAppRunningInBackground? R.drawable.check_white : R.drawable.disabled_white, keepAppRunningInBackground ? "ENABLED" : "DISABLED", setPendingIntent)
                     .addAction(R.drawable.change_white, isInWebApp ? "ON WEB" : "ON CLIENT", switchPendingIntent)
                     .addAction(R.drawable.stop_white, "EXIT", stopPendingIntent)
@@ -240,9 +246,14 @@ public class MainService extends Service {
         Intent setIntent = new Intent(context, MainService.class);
         setIntent.setAction(SET_MAIN_SERVICE);
         PendingIntent setPendingIntent = PendingIntent.getService(context, 0, setIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE);
+        // Open App
+        PackageManager pm = context.getPackageManager();
+        Intent intent = pm.getLaunchIntentForPackage("com.example.kanshi");
+        PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_IMMUTABLE);
         Notification notification = new NotificationCompat.Builder(context, APP_IN_BACKGROUND_CHANNEL)
                 .setContentTitle("Kanshi.")
                 .setSmallIcon(R.drawable.ic_stat_name)
+                .setContentIntent(pendingIntent)
                 .addAction(keepAppRunningInBackground? R.drawable.check_white : R.drawable.disabled_white, keepAppRunningInBackground ? "ENABLED" : "DISABLED", setPendingIntent)
                 .addAction(R.drawable.change_white, isInWebApp ? "ON WEB" : "ON CLIENT", switchPendingIntent)
                 .addAction(R.drawable.stop_white, "EXIT", stopPendingIntent)

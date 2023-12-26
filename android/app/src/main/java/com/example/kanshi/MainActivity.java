@@ -81,7 +81,7 @@ import androidx.core.content.FileProvider;
 import androidx.core.splashscreen.SplashScreen;
 
 public class MainActivity extends AppCompatActivity {
-    public final int appID = 272;
+    public final int appID = 273;
     public boolean keepAppRunningInBackground = false;
     public boolean webViewIsLoaded = false;
     public boolean permissionIsAsked = false;
@@ -181,7 +181,7 @@ public class MainActivity extends AppCompatActivity {
         prefs = MainActivity.this.getSharedPreferences("com.example.kanshi", Context.MODE_PRIVATE);
         prefsEdit = prefs.edit();
         // Saved Data
-        keepAppRunningInBackground = prefs.getBoolean("keepAppRunningInBackground",true);
+        keepAppRunningInBackground = prefs.getBoolean("keepAppRunningInBackground",false);
         exportPath = prefs.getString("savedExportPath", "");
         permissionIsAsked = prefs.getBoolean("permissionIsAsked", false);
         // Get Activity Reference

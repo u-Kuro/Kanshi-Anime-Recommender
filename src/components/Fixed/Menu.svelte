@@ -253,7 +253,11 @@
             await $confirmPromise({
                 text: `Do you want ${
                     keepAppRunningInBackground ? "stop" : "keep"
-                }  the application running in background for persistent updates?`,
+                }  the application running in background for persistent updates?${
+                    keepAppRunningInBackground
+                        ? ""
+                        : " Note that this will increase ram and power usage."
+                }`,
                 isImportant: true,
             })
         ) {
@@ -354,6 +358,7 @@
             } catch (e) {}
         }
     }
+    $android = true;
 </script>
 
 <input
@@ -418,16 +423,6 @@
                 on:keydown={(e) => e.key === "Enter" && showDataStatus(e)}
                 >Show Status</button
             >
-            {#if $android && typeof keepAppRunningInBackground === "boolean"}
-                <button
-                    class={"button" +
-                        (keepAppRunningInBackground ? " selected" : "")}
-                    on:keydown={(e) =>
-                        e.key === "Enter" && persistentBackgroundUpdates(e)}
-                    on:click={persistentBackgroundUpdates}
-                    >Persistent Background Updates</button
-                >
-            {/if}
             <button
                 class={"button " + ($autoUpdate ? "selected" : "")}
                 on:click={handleUpdateEveryHour}
@@ -443,18 +438,26 @@
                         e.key === "Enter" && handleExportEveryHour(e)}
                     >Auto Export</button
                 >
-            {/if}
-            {#if $android}
+                {#if typeof keepAppRunningInBackground === "boolean"}
+                    <button
+                        class={"button" +
+                            (keepAppRunningInBackground ? " selected" : "")}
+                        on:keydown={(e) =>
+                            e.key === "Enter" && persistentBackgroundUpdates(e)}
+                        on:click={persistentBackgroundUpdates}
+                        >Persistent Background Updates</button
+                    >
+                {/if}
+                <button
+                    class="button"
+                    on:keydown={(e) => e.key === "Enter" && switchAppMode(e)}
+                    on:click={switchAppMode}>Switch App Mode</button
+                >
                 <button
                     class="button"
                     on:keydown={(e) =>
                         e.key === "Enter" && showRecentReleases(e)}
                     on:click={showRecentReleases}>Show Recent Releases</button
-                >
-                <button
-                    class="button"
-                    on:keydown={(e) => e.key === "Enter" && switchAppMode(e)}
-                    on:click={switchAppMode}>Switch App Mode</button
                 >
                 <button
                     class="button"
