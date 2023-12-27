@@ -336,43 +336,59 @@
 						window?.[$isBackgroundUpdateKey] === true
 					) {
 						try {
+							let willProcessRecommendationList;
 							requestUserEntries().finally(() => {
+								willProcessRecommendationList =
+									willProcessRecommendationList ||
+									window.shouldProcessRecommendation;
 								requestAnimeEntries().finally(() => {
-									processRecommendedAnimeList().finally(
-										() => {
-											animeLoader().finally(async () => {
-												$exportPathIsAvailable =
-													$exportPathIsAvailable ??
-													(await retrieveJSON(
-														"exportPathIsAvailable",
-													));
-												$autoExport =
-													$autoExport ??
-													(await retrieveJSON(
-														"autoExport",
-													));
-												if (
-													$exportPathIsAvailable &&
-													$autoExport
-												) {
-													await new Promise(
-														(resolve) =>
-															exportUserData().finally(
-																resolve,
-															),
+									willProcessRecommendationList =
+										willProcessRecommendationList ||
+										window.shouldProcessRecommendation;
+									new Promise((resolve) => {
+										if (willProcessRecommendationList) {
+											processRecommendedAnimeList().finally(
+												() => {
+													animeLoader().finally(
+														resolve,
 													);
-												}
-												JSBridge?.backgroundUpdateIsFinished?.(
-													true,
-												);
-											});
-										},
-									);
+												},
+											);
+										} else {
+											resolve();
+										}
+									}).finally(async () => {
+										$exportPathIsAvailable =
+											$exportPathIsAvailable ??
+											(await retrieveJSON(
+												"exportPathIsAvailable",
+											));
+										$autoExport =
+											$autoExport ??
+											(await retrieveJSON("autoExport"));
+										if (
+											$exportPathIsAvailable &&
+											$autoExport
+										) {
+											await new Promise((resolve) =>
+												exportUserData().finally(
+													resolve,
+												),
+											);
+										}
+										JSBridge?.backgroundUpdateIsFinished?.(
+											true,
+											willProcessRecommendationList,
+										);
+									});
 								});
 							});
 						} catch (e) {
 							try {
-								JSBridge?.backgroundUpdateIsFinished?.(false);
+								JSBridge?.backgroundUpdateIsFinished?.(
+									false,
+									false,
+								);
 							} catch (e) {}
 						}
 					} else {
@@ -380,6 +396,7 @@
 							if ($android) {
 								try {
 									JSBridge?.backgroundUpdateIsFinished?.(
+										false,
 										false,
 									);
 								} catch (e) {}
@@ -595,7 +612,7 @@
 		$dataStatus = "Something went wrong";
 		if ($android) {
 			try {
-				JSBridge?.backgroundUpdateIsFinished?.(false);
+				JSBridge?.backgroundUpdateIsFinished?.(false, false);
 			} catch (e) {}
 			$confirmPromise?.({
 				isAlert: true,
@@ -801,6 +818,51 @@
 				console.error(error);
 			});
 	});
+	window.shouldRefreshAnimeList = async () => {
+		if ($initData) return;
+		await saveJSON(true, "shouldProcessRecommendation");
+		processRecommendedAnimeList().finally(async () => {
+			$listUpdateAvailable = false;
+			if ($animeLoaderWorker) {
+				$animeLoaderWorker.terminate();
+				$animeLoaderWorker = null;
+			}
+			animeLoader()
+				.then(async (data) => {
+					$animeLoaderWorker = data.animeLoaderWorker;
+					if (data?.isNew) {
+						if (
+							$finalAnimeList?.length > data?.finalAnimeListCount
+						) {
+							$finalAnimeList = $finalAnimeList?.slice?.(
+								0,
+								data.finalAnimeListCount,
+							);
+						}
+						if (data?.finalAnimeList?.length > 0) {
+							data?.finalAnimeList?.forEach?.((anime, idx) => {
+								$newFinalAnime = {
+									idx: data.lastShownAnimeListIndex + idx,
+									finalAnimeList: anime,
+								};
+							});
+						} else {
+							$finalAnimeList = [];
+						}
+						$hiddenEntries = data.hiddenEntries || $hiddenEntries;
+					}
+					$dataStatus = null;
+					return;
+				})
+				.catch((error) => {
+					console.error(error);
+					return;
+				})
+				.finally(() => {
+					window?.checkEntries?.();
+				});
+		});
+	};
 
 	loadAnime.subscribe(async (val) => {
 		if (typeof val !== "boolean" || $initData) return;

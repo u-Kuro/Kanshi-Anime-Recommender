@@ -317,6 +317,7 @@ const requestAnimeEntries = (_data) => {
                             dataStatus.set(data.status)
                         }
                     } else if (data?.updateRecommendationList !== undefined) {
+                        window.shouldProcessRecommendation = true
                         updateRecommendationList.update(e => !e)
                     } else if (data?.lastRunnedAutoUpdateDate instanceof Date && !isNaN(data?.lastRunnedAutoUpdateDate)) {
                         lastRunnedAutoUpdateDate.set(data.lastRunnedAutoUpdateDate)
@@ -441,7 +442,7 @@ const requestUserEntries = (_data) => {
                         reject(data)
                     } else if (data?.updateRecommendationList !== undefined) {
                         if (get(android)) {
-                            window.shouldUpdateNotifications = true
+                            window.shouldProcessRecommendation = window.shouldUpdateNotifications = true
                         }
                         updateRecommendationList.update(e => !e)
                     } else {

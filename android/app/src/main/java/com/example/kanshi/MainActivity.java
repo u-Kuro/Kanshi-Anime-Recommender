@@ -83,7 +83,7 @@ import androidx.core.content.FileProvider;
 import androidx.core.splashscreen.SplashScreen;
 
 public class MainActivity extends AppCompatActivity {
-    public final int appID = 278;
+    public final int appID = 279;
     public boolean keepAppRunningInBackground = false;
     public boolean webViewIsLoaded = false;
     public boolean permissionIsAsked = false;
@@ -106,7 +106,7 @@ public class MainActivity extends AppCompatActivity {
     public boolean appSwitched = false;
     public boolean fromYoutube;
     public static WeakReference<MainActivity> weakActivity;
-    public boolean shouldRefresh = false;
+    public boolean shouldRefreshList = false;
 
     // Activity Results
     final ActivityResultLauncher<Intent> allowApplicationUpdate =
@@ -275,8 +275,8 @@ public class MainActivity extends AppCompatActivity {
         webView.setWebViewClient(new WebViewClient(){
             @Override
             public void onPageStarted(WebView view, String url, Bitmap favicon) {
-                if (shouldRefresh) {
-                    shouldRefresh = false;
+                if (shouldRefreshList) {
+                    shouldRefreshList = false;
                 }
                 if (appSwitched) {
                     appSwitched = false;
@@ -521,7 +521,6 @@ public class MainActivity extends AppCompatActivity {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             webView.getSettings().setOffscreenPreRaster(true);
         }
-        super.onResume();
         if (persistentToast != null) {
             if (currentToast != null) {
                 currentToast.cancel();
@@ -529,15 +528,12 @@ public class MainActivity extends AppCompatActivity {
             persistentToast.show();
             persistentToast = null;
         }
-        if (shouldRefresh) {
-            shouldRefresh = false;
-            webView.reload();
-        } else {
-            webView.post(() -> webView.loadUrl("javascript:" +
-                "window?.returnedAppIsVisible?.(true);" + // Should Be Runned First
-                "window?.checkEntries?.();"
-            ));
-        }
+        super.onResume();
+        webView.post(() -> webView.loadUrl("javascript:" +
+            "window?.returnedAppIsVisible?.(true);" + // Should Be Runned First
+            (shouldRefreshList? "window?.shouldRefreshAnimeList?.();" : "window?.checkEntries?.();")
+        ));
+        shouldRefreshList = false;
     }
 
     @Override
@@ -970,8 +966,6 @@ public class MainActivity extends AppCompatActivity {
     }
     public void setBackgroundUpdates() {
         final int UPDATE_DATA_PENDING_INTENT = 994;
-        keepAppRunningInBackground = prefs.getBoolean("keepAppRunningInBackground",true);
-
         Intent newIntent = new Intent(this.getApplicationContext(), MyReceiver.class);
         newIntent.setAction("UPDATE_DATA");
 
@@ -1010,7 +1004,6 @@ public class MainActivity extends AppCompatActivity {
         keepAppRunningInBackground = enable;
         prefsEdit.putBoolean("keepAppRunningInBackground", keepAppRunningInBackground).commit();
         webView.post(()->webView.loadUrl("javascript:window?.setKeepAppRunningInBackground?.("+(keepAppRunningInBackground?"true":"false")+")"));
-        setBackgroundUpdates();
     }
     private final ExecutorService updateCurrentNotificationsExecutorService = Executors.newFixedThreadPool(1);
     private Future<?> updateCurrentNotificationsFuture;

@@ -568,8 +568,6 @@ public class MyWorker extends Worker {
     private void updateData() {
         SharedPreferences prefs = this.getApplicationContext().getSharedPreferences("com.example.kanshi", Context.MODE_PRIVATE);
         boolean keepAppRunningInBackground = prefs.getBoolean("keepAppRunningInBackground",true);
-        long currentTime = System.currentTimeMillis();
-        long backgroundUpdateTime = prefs.getLong("lastBackgroundUpdateTime",currentTime+1);
         boolean isInApp = false;
         MainActivity mainActivity = MainActivity.getInstanceActivity();
         if (mainActivity!=null) {
@@ -589,24 +587,21 @@ public class MyWorker extends Worker {
         alarmManager.cancel(newPendingIntent);
         // Create New
         newPendingIntent = PendingIntent.getBroadcast(this.getApplicationContext(), UPDATE_DATA_PENDING_INTENT, newIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
-        if (backgroundUpdateTime<=currentTime) {
-            long ONE_HOUR_IN_MILLIS = TimeUnit.HOURS.toMillis(1);
-            backgroundUpdateTime = backgroundUpdateTime + ONE_HOUR_IN_MILLIS;
-        }
+        long newBackgroundUpdateTime = System.currentTimeMillis() + TimeUnit.HOURS.toMillis(1);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             if (alarmManager.canScheduleExactAlarms()) {
-                alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, backgroundUpdateTime, newPendingIntent);
+                alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, newBackgroundUpdateTime, newPendingIntent);
             } else {
-                alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, backgroundUpdateTime, newPendingIntent);
+                alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, newBackgroundUpdateTime, newPendingIntent);
             }
         } else {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, backgroundUpdateTime, newPendingIntent);
+                alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, newBackgroundUpdateTime, newPendingIntent);
             } else {
                 try {
-                    alarmManager.setExact(AlarmManager.RTC_WAKEUP, backgroundUpdateTime, newPendingIntent);
+                    alarmManager.setExact(AlarmManager.RTC_WAKEUP, newBackgroundUpdateTime, newPendingIntent);
                 } catch (SecurityException ignored) {
-                    alarmManager.set(AlarmManager.RTC_WAKEUP, backgroundUpdateTime, newPendingIntent);
+                    alarmManager.set(AlarmManager.RTC_WAKEUP, newBackgroundUpdateTime, newPendingIntent);
                 }
             }
         }

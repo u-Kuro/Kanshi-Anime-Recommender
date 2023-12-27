@@ -286,15 +286,12 @@ public class MainService extends Service {
         }
         boolean alreadyCalled = false;
         @JavascriptInterface
-        public void backgroundUpdateIsFinished(boolean finished) {
+        public void backgroundUpdateIsFinished(boolean finished, boolean shouldRefreshList) {
             if (!alreadyCalled && finished) {
                 alreadyCalled = true;
                 MainActivity mainActivity = MainActivity.getInstanceActivity();
                 if (mainActivity != null) {
-                    if (!mainActivity.isInApp) {
-                        mainActivity.shouldRefresh = true;
-                    }
-                    mainActivity.webView.reload();
+                    mainActivity.shouldRefreshList = shouldRefreshList;
                 }
                 long backgroundUpdateTime = prefs.getLong("lastBackgroundUpdateTime", System.currentTimeMillis());
                 SharedPreferences.Editor prefsEdit = prefs.edit();
