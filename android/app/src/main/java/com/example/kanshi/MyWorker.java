@@ -568,7 +568,8 @@ public class MyWorker extends Worker {
     private void updateData() {
         SharedPreferences prefs = this.getApplicationContext().getSharedPreferences("com.example.kanshi", Context.MODE_PRIVATE);
         boolean keepAppRunningInBackground = prefs.getBoolean("keepAppRunningInBackground",true);
-        long backgroundUpdateTime = prefs.getLong("lastBackgroundUpdateTime",System.currentTimeMillis());
+        long currentTime = System.currentTimeMillis();
+        long backgroundUpdateTime = prefs.getLong("lastBackgroundUpdateTime",currentTime+1);
         boolean isInApp = false;
         if (MainActivity.getInstanceActivity()!=null) {
             isInApp = MainActivity.getInstanceActivity().isInApp;
@@ -587,7 +588,7 @@ public class MyWorker extends Worker {
         alarmManager.cancel(newPendingIntent);
         // Create New
         newPendingIntent = PendingIntent.getBroadcast(this.getApplicationContext(), UPDATE_DATA_PENDING_INTENT, newIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
-        if (backgroundUpdateTime<System.currentTimeMillis()) {
+        if (backgroundUpdateTime<=currentTime) {
             long ONE_HOUR_IN_MILLIS = TimeUnit.HOURS.toMillis(1);
             backgroundUpdateTime = backgroundUpdateTime + ONE_HOUR_IN_MILLIS;
         }

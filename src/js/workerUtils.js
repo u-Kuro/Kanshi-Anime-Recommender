@@ -103,7 +103,7 @@ const animeLoader = (_data = {}) => {
                         if (get(android) && get(isBackgroundUpdateKey) && window?.[get(isBackgroundUpdateKey)] === true) {
                             animeLoaderWorker?.terminate?.()
                             animeLoaderWorker = null
-                            resolve(data)
+                            resolve({})
                         } else {
                             data.animeLoaderWorker = animeLoaderWorker
                             resolve(data)

@@ -83,7 +83,7 @@ import androidx.core.content.FileProvider;
 import androidx.core.splashscreen.SplashScreen;
 
 public class MainActivity extends AppCompatActivity {
-    public final int appID = 275;
+    public final int appID = 276;
     public boolean keepAppRunningInBackground = false;
     public boolean webViewIsLoaded = false;
     public boolean permissionIsAsked = false;
@@ -964,9 +964,10 @@ public class MainActivity extends AppCompatActivity {
         newPendingIntent.cancel();
         alarmManager.cancel(newPendingIntent);
         // Create New
-        long backgroundUpdateTime = prefs.getLong("lastBackgroundUpdateTime",System.currentTimeMillis());
+        long currentTime = System.currentTimeMillis();
+        long backgroundUpdateTime = prefs.getLong("lastBackgroundUpdateTime",currentTime+1);
         newPendingIntent = PendingIntent.getBroadcast(this.getApplicationContext(), UPDATE_DATA_PENDING_INTENT, newIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
-        if (backgroundUpdateTime < System.currentTimeMillis()) {
+        if (backgroundUpdateTime <= currentTime) {
             long ONE_HOUR_IN_MILLIS = TimeUnit.HOURS.toMillis(1);
             backgroundUpdateTime = backgroundUpdateTime + ONE_HOUR_IN_MILLIS;
         }

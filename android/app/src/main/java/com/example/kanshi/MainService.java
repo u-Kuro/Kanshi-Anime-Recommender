@@ -213,6 +213,8 @@ public class MainService extends Service {
                     .addAction(keepAppRunningInBackground? R.drawable.check_white : R.drawable.disabled_white, keepAppRunningInBackground ? "ENABLED" : "DISABLED", setPendingIntent)
                     .addAction(R.drawable.change_white, isInWebApp ? "ON WEB" : "ON CLIENT", switchPendingIntent)
                     .addAction(R.drawable.stop_white, "EXIT", stopPendingIntent)
+                    .setOnlyAlertOnce(true)
+                    .setOngoing(true)
                     .build();
             startForeground(SERVICE_NOTIFICATION_ID, notification);
         }
@@ -259,6 +261,8 @@ public class MainService extends Service {
                 .addAction(keepAppRunningInBackground? R.drawable.check_white : R.drawable.disabled_white, keepAppRunningInBackground ? "ENABLED" : "DISABLED", setPendingIntent)
                 .addAction(R.drawable.change_white, isInWebApp ? "ON WEB" : "ON CLIENT", switchPendingIntent)
                 .addAction(R.drawable.stop_white, "EXIT", stopPendingIntent)
+                .setOnlyAlertOnce(true)
+                .setOngoing(true)
                 .build();
         NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
         notificationManager.notify(SERVICE_NOTIFICATION_ID, notification);

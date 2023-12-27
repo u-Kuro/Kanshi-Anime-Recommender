@@ -198,7 +198,7 @@
 
 			// Check/Update/Process User Anime Entries
 			initDataPromises.push(
-				new Promise(async (resolve) => {
+				new Promise(async (resolve, reject) => {
 					// let accessToken = getAnilistAccessTokenFromURL();
 					// if (accessToken) {
 					// 	await saveJSON(accessToken, "access_token");
@@ -609,7 +609,9 @@
 				text: "App may not be working properly, you may want to refresh the page, or if not clear your cookies but backup your data first.",
 			});
 		}
-		$initData = false;
+		if ($initData) {
+			$initData = false;
+		}
 		console.error(error);
 		loadAnalytics();
 	}
@@ -690,10 +692,33 @@
 		}
 	}
 
+	let addedBackgroundStatusUpdate = () => {
+		addedBackgroundStatusUpdate = undefined;
+		if (window?.[$isBackgroundUpdateKey] !== true) return;
+		if ($android) return;
+		if ($isBackgroundUpdateKey) return;
+		let sendBackgroundStatusIsRunning;
+		dataStatus.subscribe((val) => {
+			if (sendBackgroundStatusIsRunning) return;
+			if (!val) return;
+			if (typeof val !== "string") return;
+			sendBackgroundStatusIsRunning = true;
+			setTimeout(() => {
+				sendBackgroundStatusIsRunning = false;
+				let text = typeof val === "string" ? val : "";
+				try {
+					JSBridge?.sendBackgroundStatus?.(text);
+				} catch (e) {}
+			}, 1000);
+		});
+		return true;
+	};
 	initData.subscribe(async (val) => {
 		if (val === false) {
 			clearInterval(pleaseWaitStatusInterval);
-			getExtraInfo();
+			if (!addedBackgroundStatusUpdate?.()) {
+				getExtraInfo();
+			}
 		}
 	});
 
@@ -893,7 +918,7 @@
 			!isNaN($lastRunnedAutoUpdateDate)
 		) {
 			if (
-				new Date().getTime() - $lastRunnedAutoUpdateDate.getTime() >
+				new Date().getTime() - $lastRunnedAutoUpdateDate.getTime() >=
 				hourINMS
 			) {
 				isPastDate = true;
@@ -981,7 +1006,7 @@
 			!isNaN($lastRunnedAutoExportDate)
 		) {
 			if (
-				new Date().getTime() - $lastRunnedAutoExportDate.getTime() >
+				new Date().getTime() - $lastRunnedAutoExportDate.getTime() >=
 				hourINMS
 			) {
 				isPastDate = true;
@@ -1476,25 +1501,6 @@
 				}
 			}, 16);
 			progressChangeStart = performance.now();
-		}
-	});
-
-	let sendBackgroundStatusIsRunning;
-	dataStatus.subscribe((val) => {
-		if (
-			!sendBackgroundStatusIsRunning &&
-			window?.[$isBackgroundUpdateKey] === true &&
-			$android &&
-			$isBackgroundUpdateKey
-		) {
-			sendBackgroundStatusIsRunning = true;
-			setTimeout(() => {
-				sendBackgroundStatusIsRunning = false;
-				let text = typeof val === "string" ? val : "";
-				try {
-					JSBridge?.sendBackgroundStatus?.(text);
-				} catch (e) {}
-			}, 2000);
 		}
 	});
 
