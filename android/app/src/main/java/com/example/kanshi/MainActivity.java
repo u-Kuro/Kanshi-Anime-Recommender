@@ -14,7 +14,9 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.animation.ObjectAnimator;
 import android.annotation.SuppressLint;
+import android.app.AlarmManager;
 import android.app.AlertDialog;
+import android.app.PendingIntent;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
@@ -181,7 +183,7 @@ public class MainActivity extends AppCompatActivity {
         prefs = MainActivity.this.getSharedPreferences("com.example.kanshi", Context.MODE_PRIVATE);
         prefsEdit = prefs.edit();
         // Saved Data
-        keepAppRunningInBackground = prefs.getBoolean("keepAppRunningInBackground",false);
+        keepAppRunningInBackground = prefs.getBoolean("keepAppRunningInBackground",true);
         exportPath = prefs.getString("savedExportPath", "");
         permissionIsAsked = prefs.getBoolean("permissionIsAsked", false);
         // Get Activity Reference
@@ -495,15 +497,15 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onStop() {
-        if (keepAppRunningInBackground) {
-            Intent intent = new Intent(this, MainService.class);
-            startService(intent);
-        }
+        isInApp = false;
+        System.out.println("kanshibg setting backgroundUpdates after app on stop");
+        setBackgroundUpdates();
         super.onStop();
     }
 
     @Override
     protected void onResume() {
+        isInApp = true;
         Intent intent = new Intent(this, MainService.class);
         stopService(intent);
         if (fromYoutube) {
@@ -511,7 +513,6 @@ public class MainActivity extends AppCompatActivity {
         } else {
             overridePendingTransition(R.anim.none, R.anim.fade_out);
         }
-        isInApp = true;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             webView.getSettings().setOffscreenPreRaster(true);
         }
@@ -951,10 +952,50 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
+    public void setBackgroundUpdates() {
+        System.out.println("kanshibg setting backgroundUpdates in main function");
+        final int UPDATE_DATA_PENDING_INTENT = 994;
+        keepAppRunningInBackground = prefs.getBoolean("keepAppRunningInBackground",true);
+
+        Intent newIntent = new Intent(this.getApplicationContext(), MyReceiver.class);
+        newIntent.setAction("UPDATE_DATA");
+
+        PendingIntent newPendingIntent = PendingIntent.getBroadcast(this.getApplicationContext(), UPDATE_DATA_PENDING_INTENT, newIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        AlarmManager alarmManager = (AlarmManager) this.getApplicationContext().getSystemService(Context.ALARM_SERVICE);
+        // Cancel Old
+        newPendingIntent.cancel();
+        alarmManager.cancel(newPendingIntent);
+        // Create New
+        long backgroundUpdateTime = prefs.getLong("lastBackgroundUpdateTime",System.currentTimeMillis());
+        newPendingIntent = PendingIntent.getBroadcast(this.getApplicationContext(), UPDATE_DATA_PENDING_INTENT, newIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        if (backgroundUpdateTime < System.currentTimeMillis()) {
+            long ONE_HOUR_IN_MILLIS = TimeUnit.HOURS.toMillis(1);
+            backgroundUpdateTime = backgroundUpdateTime + ONE_HOUR_IN_MILLIS;
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            if (alarmManager.canScheduleExactAlarms()) {
+                alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, backgroundUpdateTime, newPendingIntent);
+            } else {
+                alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, backgroundUpdateTime, newPendingIntent);
+            }
+        } else {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, backgroundUpdateTime, newPendingIntent);
+            } else {
+                try {
+                    alarmManager.setExact(AlarmManager.RTC_WAKEUP, backgroundUpdateTime, newPendingIntent);
+                } catch (SecurityException ignored) {
+                    alarmManager.set(AlarmManager.RTC_WAKEUP, backgroundUpdateTime, newPendingIntent);
+                }
+            }
+        }
+    }
     public void changeKeepAppRunningInBackground(boolean enable) {
         keepAppRunningInBackground = enable;
-        prefsEdit.putBoolean("keepAppRunningInBackground", keepAppRunningInBackground).apply();
+        prefsEdit.putBoolean("keepAppRunningInBackground", keepAppRunningInBackground).commit();
         webView.post(()->webView.loadUrl("javascript:window?.setKeepAppRunningInBackground?.("+(keepAppRunningInBackground?"true":"false")+")"));
+        System.out.println("kanshibg setting backgroundUpdates after changing app running in bg");
+        setBackgroundUpdates();
     }
     private final ExecutorService updateCurrentNotificationsExecutorService = Executors.newFixedThreadPool(1);
     private Future<?> updateCurrentNotificationsFuture;

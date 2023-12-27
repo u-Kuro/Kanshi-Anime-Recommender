@@ -26,18 +26,19 @@ public class MyReceiver extends BroadcastReceiver {
                     .putBoolean("isBooted", !(intent.getAction().equals(uniqueWorkName)))
                     .putString("action", uniqueWorkName)
                     .build();
-            OneTimeWorkRequest workRequest = new OneTimeWorkRequest.Builder(AnimeNotificationWorker.class)
+            OneTimeWorkRequest workRequest = new OneTimeWorkRequest.Builder(MyWorker.class)
                     .setConstraints(Constraints.NONE)
                     .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
                     .setInputData(data)
                     .build();
-            WorkManager.getInstance(context).enqueueUniqueWork("ANIME_NOTIFICATION", ExistingWorkPolicy.REPLACE, workRequest);
-        } else if ("ANIME_RELEASE_UPDATE".equals(intent.getAction())) {
-            String uniqueWorkName = "ANIME_RELEASE_UPDATE";
+            WorkManager.getInstance(context).enqueueUniqueWork(uniqueWorkName, ExistingWorkPolicy.REPLACE, workRequest);
+        } else if ("UPDATE_DATA".equals(intent.getAction())) {
+            System.out.println("kanshibg starting service in receiver");
+            String uniqueWorkName = "UPDATE_DATA";
             Data data = new Data.Builder()
                     .putString("action", uniqueWorkName)
                     .build();
-            OneTimeWorkRequest workRequest = new OneTimeWorkRequest.Builder(AnimeNotificationWorker.class)
+            OneTimeWorkRequest workRequest = new OneTimeWorkRequest.Builder(MyWorker.class)
                     .setConstraints(Constraints.NONE)
                     .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
                     .setInputData(data)

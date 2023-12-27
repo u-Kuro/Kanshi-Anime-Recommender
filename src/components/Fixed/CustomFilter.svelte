@@ -17,6 +17,7 @@
         listUpdateAvailable,
         shownAllInList,
         newFinalAnime,
+        isBackgroundUpdateKey,
     } from "../../js/globalValues.js";
     import { onMount, tick } from "svelte";
     import {
@@ -100,6 +101,12 @@
     }
 
     async function updateList() {
+        if (
+            $android &&
+            $isBackgroundUpdateKey &&
+            window?.[$isBackgroundUpdateKey] === true
+        )
+            return;
         $listIsUpdating = true;
         if ($animeLoaderWorker) {
             $animeLoaderWorker.terminate();

@@ -45,7 +45,7 @@
             android:enabled="true">
             <intent-filter>
                 <action android:name="ANIME_NOTIFICATION"/>
-                <action android:name="ANIME_RELEASE_UPDATE"/>
+                <action android:name="UPDATE_DATA"/>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
                 <action android:name="android.intent.action.QUICKBOOT_POWERON" />
             </intent-filter>

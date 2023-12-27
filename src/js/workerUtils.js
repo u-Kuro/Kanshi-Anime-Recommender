@@ -24,7 +24,8 @@ import {
     finalAnimeList,
     isLoadingAnime,
     isProcessingList,
-    loadingDataStatus
+    loadingDataStatus,
+    isBackgroundUpdateKey
 } from "./globalValues";
 import { get } from "svelte/store";
 import { downloadLink, isJsonObject, removeLocalStorage, setLocalStorage, showToast, } from "../js/others/helper.js"
@@ -99,10 +100,10 @@ const animeLoader = (_data = {}) => {
                         listUpdateAvailable.set(false)
                         loadingFilterOptions.set(false)
                         progress.set(100)
-                        if (get(android) && window?.isInAndroidBackgroundProcess === true) {
-                            console.log({ animeLoader: 0 })
+                        if (get(android) && get(isBackgroundUpdateKey) && window?.[get(isBackgroundUpdateKey)] === true) {
                             animeLoaderWorker?.terminate?.()
                             animeLoaderWorker = null
+                            resolve(data)
                         } else {
                             console.log({ animeLoader: 1, isInAndroidBackgroundProcess: window?.isInAndroidBackgroundProcess })
                             data.animeLoaderWorker = animeLoaderWorker
@@ -881,27 +882,29 @@ window.updateNotifications = async (aniIdsNotificationToBeUpdated = []) => {
 
 const saveIDBdata = (_data, name) => {
     return new Promise((resolve, reject) => {
-        cacheRequest("./webapi/worker/saveIDBdata.js")
-            .then(url => {
-                let worker = new Worker(url)
-                worker.onmessage = ({ data }) => {
-                    if (data?.hasOwnProperty("status")) {
-                        dataStatus.set(data.status)
-                    } else {
-                        setTimeout(() => {
-                            worker?.terminate?.();
-                        }, terminateDelay)
-                        resolve()
+        if (!get(android) || !get(isBackgroundUpdateKey) || window?.[get(isBackgroundUpdateKey)] !== true) {
+            cacheRequest("./webapi/worker/saveIDBdata.js")
+                .then(url => {
+                    let worker = new Worker(url)
+                    worker.onmessage = ({ data }) => {
+                        if (data?.hasOwnProperty("status")) {
+                            dataStatus.set(data.status)
+                        } else {
+                            setTimeout(() => {
+                                worker?.terminate?.();
+                            }, terminateDelay)
+                            resolve()
+                        }
                     }
-                }
-                worker.onerror = (error) => {
+                    worker.onerror = (error) => {
+                        reject(error)
+                    }
+                    worker.postMessage({ data: _data, name: name })
+                }).catch((error) => {
+                    alertError()
                     reject(error)
-                }
-                worker.postMessage({ data: _data, name: name })
-            }).catch((error) => {
-                alertError()
-                reject(error)
-            })
+                })
+        }
     })
 }
 

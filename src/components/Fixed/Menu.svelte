@@ -18,6 +18,7 @@
         showStatus,
         newFinalAnime,
         username,
+        isBackgroundUpdateKey,
     } from "../../js/globalValues.js";
     import { fade } from "svelte/transition";
     import { saveJSON } from "../../js/indexedDB.js";
@@ -170,6 +171,12 @@
     }
 
     async function showAllHiddenEntries() {
+        if (
+            $android &&
+            $isBackgroundUpdateKey &&
+            window?.[$isBackgroundUpdateKey] === true
+        )
+            return;
         if (jsonIsEmpty($hiddenEntries)) {
             // Alert No Hidden Entries
             $confirmPromise({

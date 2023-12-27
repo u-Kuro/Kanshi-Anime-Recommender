@@ -30,6 +30,7 @@
         isLoadingAnime,
         isProcessingList,
         currentExtraInfo,
+        isBackgroundUpdateKey,
     } from "../../js/globalValues.js";
     import { fade } from "svelte/transition";
     import {
@@ -176,6 +177,12 @@
     }
 
     async function _loadAnime(hasPassedFilters = true) {
+        if (
+            $android &&
+            $isBackgroundUpdateKey &&
+            window?.[$isBackgroundUpdateKey] === true
+        )
+            return;
         $animeLoaderWorker?.terminate?.();
         $animeLoaderWorker = null;
         animeLoader({

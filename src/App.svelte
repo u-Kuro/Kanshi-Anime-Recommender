@@ -36,6 +36,7 @@
 		listIsUpdating,
 		isFullViewed,
 		confirmIsVisible,
+		animeOptionVisible,
 		// Reactive Functions
 		runUpdate,
 		runExport,
@@ -43,7 +44,6 @@
 		importantUpdate,
 		updateRecommendationList,
 		loadAnime,
-		animeOptionVisible,
 		runIsScrolling,
 		confirmPromise,
 		hasWheel,
@@ -53,6 +53,7 @@
 		newFinalAnime,
 		showStatus,
 		mobile,
+		isBackgroundUpdateKey,
 		// anilistAccessToken,
 	} from "./js/globalValues.js";
 	import {
@@ -93,49 +94,59 @@
 			}
 		}
 
-		$gridFullView =
-			$gridFullView ??
-			getLocalStorage("gridFullView") ??
-			(await retrieveJSON("gridFullView"));
-		if ($gridFullView == null) {
-			$gridFullView = false;
-			setLocalStorage("gridFullView", false)
-				.catch(() => {
-					removeLocalStorage("gridFullView");
-				})
-				.finally(() => {
-					saveJSON(false, "gridFullView");
-				});
-		}
+		if (
+			$android &&
+			$isBackgroundUpdateKey &&
+			window?.[$isBackgroundUpdateKey] === true
+		) {
+			resolve();
+		} else {
+			$gridFullView =
+				$gridFullView ??
+				getLocalStorage("gridFullView") ??
+				(await retrieveJSON("gridFullView"));
+			if ($gridFullView == null) {
+				$gridFullView = false;
+				setLocalStorage("gridFullView", false)
+					.catch(() => {
+						removeLocalStorage("gridFullView");
+					})
+					.finally(() => {
+						saveJSON(false, "gridFullView");
+					});
+			}
 
-		await animeLoader({ loadInit: true })
-			.then(async (data) => {
-				$animeLoaderWorker = data.animeLoaderWorker;
-				if (data?.isNew) {
-					if ($finalAnimeList?.length > data?.finalAnimeListCount) {
-						$finalAnimeList = $finalAnimeList?.slice?.(
-							0,
-							data.finalAnimeListCount,
-						);
+			await animeLoader({ loadInit: true })
+				.then(async (data) => {
+					$animeLoaderWorker = data.animeLoaderWorker;
+					if (data?.isNew) {
+						if (
+							$finalAnimeList?.length > data?.finalAnimeListCount
+						) {
+							$finalAnimeList = $finalAnimeList?.slice?.(
+								0,
+								data.finalAnimeListCount,
+							);
+						}
+						if (data?.finalAnimeList?.length > 0) {
+							data?.finalAnimeList?.forEach?.((anime, idx) => {
+								$newFinalAnime = {
+									idx: data.lastShownAnimeListIndex + idx,
+									finalAnimeList: anime,
+								};
+							});
+						} else {
+							$finalAnimeList = [];
+						}
 					}
-					if (data?.finalAnimeList?.length > 0) {
-						data?.finalAnimeList?.forEach?.((anime, idx) => {
-							$newFinalAnime = {
-								idx: data.lastShownAnimeListIndex + idx,
-								finalAnimeList: anime,
-							};
-						});
-					} else {
-						$finalAnimeList = [];
-					}
-				}
-				return;
-			})
-			.catch(async () => {
-				await saveJSON(true, "shouldLoadAnime");
-				return;
-			})
-			.finally(resolve);
+					return;
+				})
+				.catch(async () => {
+					await saveJSON(true, "shouldLoadAnime");
+					return;
+				})
+				.finally(resolve);
+		}
 	})
 		.then(() => {
 			// Get Export Folder for Android
@@ -174,16 +185,6 @@
 								reject();
 							});
 					} else if (shouldGetAnimeEntries === false) {
-						if (navigator.onLine) {
-							requestUserEntries()
-								.then(() => {
-									requestAnimeEntries();
-								})
-								.catch((error) => {
-									$dataStatus = "Something went wrong";
-									console.error(error);
-								});
-						}
 						resolve();
 					} else {
 						reject();
@@ -273,7 +274,11 @@
 					}
 					if (
 						$android &&
-						window?.shouldUpdateNotifications === true
+						window?.shouldUpdateNotifications === true &&
+						!(
+							$isBackgroundUpdateKey &&
+							window?.[$isBackgroundUpdateKey] === true
+						)
 					) {
 						window.shouldUpdateNotifications = false;
 						try {
@@ -288,214 +293,277 @@
 			// Check/Get/Update Filter Options Selection
 			initDataPromises.push(
 				new Promise(async (resolve, reject) => {
-					getFilterOptions()
-						.then((data) => {
-							$selectedCustomFilter = data.selectedCustomFilter;
-							$activeTagFilters = data.activeTagFilters;
-							$filterOptions = data.filterOptions;
-							resolve();
-						})
-						.catch(() => {
-							reject();
-						});
+					if (
+						$android &&
+						$isBackgroundUpdateKey &&
+						window?.[$isBackgroundUpdateKey] === true
+					) {
+						resolve();
+					} else {
+						getFilterOptions()
+							.then((data) => {
+								$selectedCustomFilter =
+									data.selectedCustomFilter;
+								$activeTagFilters = data.activeTagFilters;
+								$filterOptions = data.filterOptions;
+								resolve();
+							})
+							.catch(() => {
+								reject();
+							});
+					}
 				}),
 			);
 
 			Promise.all(initDataPromises)
 				.then(async () => {
 					$initData = false;
-					(async () => {
-						if (!isJsonObject($hiddenEntries)) {
-							$hiddenEntries =
-								(await retrieveJSON("hiddenEntries")) || {};
-						}
-						$autoPlay =
-							$autoPlay ??
-							getLocalStorage("autoPlay") ??
-							(await retrieveJSON("autoPlay"));
-						if ($autoPlay == null) {
-							$autoPlay = false;
-							setLocalStorage("autoPlay", false)
-								.catch(() => {
-									removeLocalStorage("autoPlay");
-								})
-								.finally(() => {
-									saveJSON(false, "autoPlay");
+					if (
+						$android &&
+						$isBackgroundUpdateKey &&
+						window?.[$isBackgroundUpdateKey] === true
+					) {
+						console.log("kanshibg requestUserEntries");
+						requestUserEntries().finally(() => {
+							console.log("kanshibg requestAnimeEntries");
+							requestAnimeEntries().finally(() => {
+								console.log(
+									"kanshibg processRecommendedAnimeList",
+								);
+								processRecommendedAnimeList().finally(() => {
+									console.log("kanshibg animeLoader");
+									animeLoader().finally(async () => {
+										console.log("kanshibg exportUserData?");
+										$exportPathIsAvailable =
+											$exportPathIsAvailable ??
+											(await retrieveJSON(
+												"exportPathIsAvailable",
+											));
+										$autoExport =
+											$autoExport ??
+											(await retrieveJSON("autoExport"));
+										if (
+											$exportPathIsAvailable &&
+											$autoExport
+										) {
+											console.log(
+												"kanshibg exportUserData",
+											);
+											await new Promise((resolve) =>
+												exportUserData().finally(
+													resolve,
+												),
+											);
+										}
+										try {
+											JSBridge?.backgroundUpdateIsFinished?.();
+											console.log("done");
+										} catch (e) {
+											console.log("done: but error");
+										}
+									});
 								});
-						}
-						$autoUpdate =
-							$autoUpdate ??
-							getLocalStorage("autoUpdate") ??
-							(await retrieveJSON("autoUpdate"));
-						if ($autoUpdate == null) {
-							$autoUpdate = false;
-							setLocalStorage("autoUpdate", false)
-								.catch(() => {
-									removeLocalStorage("autoUpdate");
-								})
-								.finally(() => {
-									saveJSON(false, "autoUpdate");
-								});
-						}
-						$autoExport =
-							$autoExport ??
-							getLocalStorage("autoExport") ??
-							(await retrieveJSON("autoExport"));
-						if ($autoExport == null) {
-							$autoExport = false;
-							setLocalStorage("autoExport", false)
-								.catch(() => {
-									removeLocalStorage("autoExport");
-								})
-								.finally(() => {
-									saveJSON(false, "autoExport");
-								});
-						}
-						$showStatus =
-							$showStatus ??
-							getLocalStorage("showStatus") ??
-							(await retrieveJSON("showStatus"));
-						if ($showStatus == null) {
-							$showStatus = true;
-							setLocalStorage("showStatus", true)
-								.catch(() => {
-									removeLocalStorage("showStatus");
-								})
-								.finally(() => {
-									saveJSON(true, "showStatus");
-								});
-						}
-					})();
-					// Get/Show List
-					let shouldProcessRecommendation;
-					if (!shouldProcessRecommendation) {
-						let lastProcessRecommendationAiringAt =
-							getLocalStorage(
-								"lastProcessRecommendationAiringAt",
-							) ??
-							(await retrieveJSON(
-								"lastProcessRecommendationAiringAt",
-							));
-						if (
-							typeof lastProcessRecommendationAiringAt ===
-								"number" &&
-							!isNaN(lastProcessRecommendationAiringAt)
-						) {
-							let neareastAnimeCompletionAiringAt =
+							});
+						});
+					} else {
+						(async () => {
+							if (!isJsonObject($hiddenEntries)) {
+								$hiddenEntries =
+									(await retrieveJSON("hiddenEntries")) || {};
+							}
+							$autoPlay =
+								$autoPlay ??
+								getLocalStorage("autoPlay") ??
+								(await retrieveJSON("autoPlay"));
+							if ($autoPlay == null) {
+								$autoPlay = false;
+								setLocalStorage("autoPlay", false)
+									.catch(() => {
+										removeLocalStorage("autoPlay");
+									})
+									.finally(() => {
+										saveJSON(false, "autoPlay");
+									});
+							}
+							$autoUpdate =
+								$autoUpdate ??
+								getLocalStorage("autoUpdate") ??
+								(await retrieveJSON("autoUpdate"));
+							if ($autoUpdate == null) {
+								$autoUpdate = false;
+								setLocalStorage("autoUpdate", false)
+									.catch(() => {
+										removeLocalStorage("autoUpdate");
+									})
+									.finally(() => {
+										saveJSON(false, "autoUpdate");
+									});
+							}
+							$autoExport =
+								$autoExport ??
+								getLocalStorage("autoExport") ??
+								(await retrieveJSON("autoExport"));
+							if ($autoExport == null) {
+								$autoExport = false;
+								setLocalStorage("autoExport", false)
+									.catch(() => {
+										removeLocalStorage("autoExport");
+									})
+									.finally(() => {
+										saveJSON(false, "autoExport");
+									});
+							}
+							$showStatus =
+								$showStatus ??
+								getLocalStorage("showStatus") ??
+								(await retrieveJSON("showStatus"));
+							if ($showStatus == null) {
+								$showStatus = true;
+								setLocalStorage("showStatus", true)
+									.catch(() => {
+										removeLocalStorage("showStatus");
+									})
+									.finally(() => {
+										saveJSON(true, "showStatus");
+									});
+							}
+						})();
+						// Get/Show List
+						let shouldProcessRecommendation;
+						if (!shouldProcessRecommendation) {
+							let lastProcessRecommendationAiringAt =
 								getLocalStorage(
-									"neareastAnimeCompletionAiringAt",
+									"lastProcessRecommendationAiringAt",
 								) ??
 								(await retrieveJSON(
-									"neareastAnimeCompletionAiringAt",
+									"lastProcessRecommendationAiringAt",
 								));
 							if (
-								typeof neareastAnimeCompletionAiringAt ===
+								typeof lastProcessRecommendationAiringAt ===
 									"number" &&
-								!isNaN(neareastAnimeCompletionAiringAt)
+								!isNaN(lastProcessRecommendationAiringAt)
 							) {
-								window?.setAnimeCompletionUpdateTimeout?.(
-									neareastAnimeCompletionAiringAt,
-								);
-								let neareastAnimeCompletionAiringDate =
-									new Date(
-										neareastAnimeCompletionAiringAt * 1000,
-									);
+								let neareastAnimeCompletionAiringAt =
+									getLocalStorage(
+										"neareastAnimeCompletionAiringAt",
+									) ??
+									(await retrieveJSON(
+										"neareastAnimeCompletionAiringAt",
+									));
 								if (
-									neareastAnimeCompletionAiringDate <=
-										new Date() &&
-									lastProcessRecommendationAiringAt >
-										neareastAnimeCompletionAiringAt
+									typeof neareastAnimeCompletionAiringAt ===
+										"number" &&
+									!isNaN(neareastAnimeCompletionAiringAt)
 								) {
-									shouldProcessRecommendation = true;
-								}
-							}
-						} else {
-							shouldProcessRecommendation = true;
-						}
-					}
-					if (!shouldProcessRecommendation) {
-						shouldProcessRecommendation = await retrieveJSON(
-							"shouldProcessRecommendation",
-						);
-					}
-					if (shouldProcessRecommendation === undefined) {
-						let recommendedAnimeListLen = await retrieveJSON(
-							"recommendedAnimeListLength",
-						);
-						if (recommendedAnimeListLen < 1) {
-							shouldProcessRecommendation = true;
-						}
-					}
-					new Promise(async (resolve) => {
-						if (shouldProcessRecommendation) {
-							processRecommendedAnimeList()
-								.then(async () => {
-									resolve(false);
-								})
-								.catch(() => {
-									resolve(true);
-								});
-						} else {
-							resolve();
-						}
-					}).then(async (shouldLoadAnime) => {
-						if (!shouldLoadAnime) {
-							shouldLoadAnime =
-								await retrieveJSON("shouldLoadAnime");
-							if (shouldLoadAnime === undefined) {
-								let finalAnimeListLen = await retrieveJSON(
-									"finalAnimeListLength",
-								);
-								if (finalAnimeListLen < 1) {
-									shouldLoadAnime = true;
-								}
-							}
-						}
-						if (shouldLoadAnime) {
-							animeLoader()
-								.then(async (data) => {
-									$animeLoaderWorker = data.animeLoaderWorker;
-									if (data?.isNew) {
-										if (
-											$finalAnimeList?.length >
-											data?.finalAnimeListCount
-										) {
-											$finalAnimeList =
-												$finalAnimeList?.slice?.(
-													0,
-													data.finalAnimeListCount,
-												);
-										}
-										if (data?.finalAnimeList?.length > 0) {
-											data?.finalAnimeList?.forEach?.(
-												(anime, idx) => {
-													$newFinalAnime = {
-														idx:
-															data.lastShownAnimeListIndex +
-															idx,
-														finalAnimeList: anime,
-													};
-												},
-											);
-										} else {
-											$finalAnimeList = [];
-										}
-										$hiddenEntries =
-											data.hiddenEntries ||
-											$hiddenEntries;
-										$dataStatus = null;
-										checkAutoFunctions(true);
-										loadAnalytics();
+									window?.setAnimeCompletionUpdateTimeout?.(
+										neareastAnimeCompletionAiringAt,
+									);
+									let neareastAnimeCompletionAiringDate =
+										new Date(
+											neareastAnimeCompletionAiringAt *
+												1000,
+										);
+									if (
+										neareastAnimeCompletionAiringDate <=
+											new Date() &&
+										lastProcessRecommendationAiringAt >
+											neareastAnimeCompletionAiringAt
+									) {
+										shouldProcessRecommendation = true;
 									}
-									return;
-								})
-								.catch(initFailed);
-						} else {
-							$dataStatus = null;
-							checkAutoFunctions(true);
-							loadAnalytics();
+								}
+							} else {
+								shouldProcessRecommendation = true;
+							}
 						}
-					});
+						if (!shouldProcessRecommendation) {
+							shouldProcessRecommendation = await retrieveJSON(
+								"shouldProcessRecommendation",
+							);
+						}
+						if (shouldProcessRecommendation === undefined) {
+							let recommendedAnimeListLen = await retrieveJSON(
+								"recommendedAnimeListLength",
+							);
+							if (recommendedAnimeListLen < 1) {
+								shouldProcessRecommendation = true;
+							}
+						}
+						new Promise(async (resolve) => {
+							if (shouldProcessRecommendation) {
+								processRecommendedAnimeList()
+									.then(async () => {
+										resolve(false);
+									})
+									.catch(() => {
+										resolve(true);
+									});
+							} else {
+								resolve();
+							}
+						}).then(async (shouldLoadAnime) => {
+							if (!shouldLoadAnime) {
+								shouldLoadAnime =
+									await retrieveJSON("shouldLoadAnime");
+								if (shouldLoadAnime === undefined) {
+									let finalAnimeListLen = await retrieveJSON(
+										"finalAnimeListLength",
+									);
+									if (finalAnimeListLen < 1) {
+										shouldLoadAnime = true;
+									}
+								}
+							}
+							if (shouldLoadAnime) {
+								animeLoader()
+									.then(async (data) => {
+										$animeLoaderWorker =
+											data.animeLoaderWorker;
+										if (data?.isNew) {
+											if (
+												$finalAnimeList?.length >
+												data?.finalAnimeListCount
+											) {
+												$finalAnimeList =
+													$finalAnimeList?.slice?.(
+														0,
+														data.finalAnimeListCount,
+													);
+											}
+											if (
+												data?.finalAnimeList?.length > 0
+											) {
+												data?.finalAnimeList?.forEach?.(
+													(anime, idx) => {
+														$newFinalAnime = {
+															idx:
+																data.lastShownAnimeListIndex +
+																idx,
+															finalAnimeList:
+																anime,
+														};
+													},
+												);
+											} else {
+												$finalAnimeList = [];
+											}
+											$hiddenEntries =
+												data.hiddenEntries ||
+												$hiddenEntries;
+											$dataStatus = null;
+											checkAutoFunctions(true);
+											loadAnalytics();
+										}
+										return;
+									})
+									.catch(initFailed);
+							} else {
+								$dataStatus = null;
+								checkAutoFunctions(true);
+								loadAnalytics();
+							}
+						});
+					}
 				})
 				.catch(initFailed);
 		})
@@ -505,10 +573,14 @@
 			} catch (e) {}
 		});
 
-	async function initFailed() {
+	async function initFailed(error) {
 		checkAutoFunctions(true);
 		$dataStatus = "Something went wrong";
 		if ($android) {
+			try {
+				console.log("error " + error);
+				JSBridge?.backgroundUpdateIsFinished?.();
+			} catch (e) {}
 			$confirmPromise?.({
 				isAlert: true,
 				title: "Something went wrong",
@@ -636,6 +708,12 @@
 	// Reactive Functions
 	importantLoad.subscribe(async (val) => {
 		if (typeof val !== "boolean" || $initData) return;
+		if (
+			$android &&
+			$isBackgroundUpdateKey &&
+			window?.[$isBackgroundUpdateKey] === true
+		)
+			return;
 		$listUpdateAvailable = false;
 		if ($animeLoaderWorker) {
 			$animeLoaderWorker.terminate();
@@ -672,6 +750,12 @@
 	});
 	importantUpdate.subscribe(async (val) => {
 		if (typeof val !== "boolean" || $initData) return;
+		if (
+			$android &&
+			$isBackgroundUpdateKey &&
+			window?.[$isBackgroundUpdateKey] === true
+		)
+			return;
 		await saveJSON(true, "shouldProcessRecommendation");
 		$listUpdateAvailable = false;
 		processRecommendedAnimeList()
@@ -685,6 +769,12 @@
 	});
 	updateRecommendationList.subscribe(async (val) => {
 		if (typeof val !== "boolean" || $initData) return;
+		if (
+			$android &&
+			$isBackgroundUpdateKey &&
+			window?.[$isBackgroundUpdateKey] === true
+		)
+			return;
 		await saveJSON(true, "shouldProcessRecommendation");
 		processRecommendedAnimeList()
 			.then(async () => {
@@ -698,6 +788,12 @@
 
 	loadAnime.subscribe(async (val) => {
 		if (typeof val !== "boolean" || $initData) return;
+		if (
+			$android &&
+			$isBackgroundUpdateKey &&
+			window?.[$isBackgroundUpdateKey] === true
+		)
+			return;
 		if (
 			($popupVisible ||
 				($gridFullView
@@ -746,11 +842,13 @@
 	});
 
 	let hourINMS = 60 * 60 * 1000;
-	window.setAutoUpdate = (val) => {
-		console.log({ autoUpdateRun: 0 });
-		autoUpdateRun(val ?? $autoUpdate);
-	};
-	async function autoUpdateRun(val) {
+	autoUpdate.subscribe(async (val) => {
+		if (
+			$android &&
+			$isBackgroundUpdateKey &&
+			window?.[$isBackgroundUpdateKey] === true
+		)
+			return;
 		console.log({ autoUpdateRun: val });
 		if (val === true) {
 			if ($appID != null) {
@@ -797,8 +895,7 @@
 				saveJSON(false, "autoUpdate");
 			}
 		}
-	}
-	autoUpdate.subscribe(autoUpdateRun);
+	});
 	async function autoUpdateIsPastDate() {
 		let isPastDate = false;
 		$lastRunnedAutoUpdateDate = await retrieveJSON(
@@ -820,6 +917,12 @@
 	}
 	runUpdate.subscribe((val) => {
 		if (typeof val !== "boolean" || $initData || !navigator.onLine) return;
+		if (
+			$android &&
+			$isBackgroundUpdateKey &&
+			window?.[$isBackgroundUpdateKey] === true
+		)
+			return;
 		if (!$userRequestIsRunning) {
 			requestUserEntries()
 				.then(() => {
@@ -833,11 +936,13 @@
 			requestAnimeEntries();
 		}
 	});
-	window.setAutoExport = (val) => {
-		console.log({ autoUpdateExport: 0 });
-		autoUpdateRun(val ?? $autoExport);
-	};
-	async function autoExportRun(val) {
+	autoExport.subscribe(async (val) => {
+		if (
+			$android &&
+			$isBackgroundUpdateKey &&
+			window?.[$isBackgroundUpdateKey] === true
+		)
+			return;
 		console.log({ autoUpdateExport: val });
 		if (val === true) {
 			if ($appID != null) {
@@ -883,8 +988,7 @@
 				saveJSON(false, "autoExport");
 			}
 		}
-	}
-	autoExport.subscribe(autoExportRun);
+	});
 	async function autoExportIsPastDate() {
 		// Check Run First
 		let isPastDate = false;
@@ -907,6 +1011,12 @@
 	}
 	runExport.subscribe((val) => {
 		if (typeof val !== "boolean" || $initData) return;
+		if (
+			$android &&
+			$isBackgroundUpdateKey &&
+			window?.[$isBackgroundUpdateKey] === true
+		)
+			return;
 		exportUserData();
 	});
 	window.runExport = () => {
@@ -929,6 +1039,12 @@
 	// Global Function For Android/Browser
 	document.addEventListener("visibilitychange", async () => {
 		if ($initData || $android || document.visibilityState !== "visible")
+			return;
+		if (
+			$android &&
+			$isBackgroundUpdateKey &&
+			window?.[$isBackgroundUpdateKey] === true
+		)
 			return;
 		if ($autoUpdate == null) {
 			$autoUpdate =
@@ -975,6 +1091,12 @@
 	window.addEventListener("wheel", windowWheel, { passive: true });
 	window.checkEntries = async () => {
 		if ($initData) return;
+		if (
+			$android &&
+			$isBackgroundUpdateKey &&
+			window?.[$isBackgroundUpdateKey] === true
+		)
+			return;
 		if ($autoUpdate == null) {
 			$autoUpdate =
 				$autoUpdate ??
@@ -1295,6 +1417,12 @@
 	});
 
 	async function updateList() {
+		if (
+			$android &&
+			$isBackgroundUpdateKey &&
+			window?.[$isBackgroundUpdateKey] === true
+		)
+			return;
 		$listIsUpdating = true;
 		if ($animeLoaderWorker) {
 			$animeLoaderWorker.terminate();
@@ -1368,6 +1496,25 @@
 				}
 			}, 16);
 			progressChangeStart = performance.now();
+		}
+	});
+
+	let sendBackgroundStatusIsRunning;
+	dataStatus.subscribe((val) => {
+		if (
+			!sendBackgroundStatusIsRunning &&
+			window?.[$isBackgroundUpdateKey] === true &&
+			$android &&
+			$isBackgroundUpdateKey
+		) {
+			sendBackgroundStatusIsRunning = true;
+			setTimeout(() => {
+				sendBackgroundStatusIsRunning = false;
+				let text = typeof val === "string" ? val : "";
+				try {
+					JSBridge?.sendBackgroundStatus?.(text);
+				} catch (e) {}
+			}, 2000);
 		}
 	});
 

@@ -13,7 +13,6 @@ import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.os.Build;
 import android.os.Environment;
-import android.os.Handler;
 import android.os.IBinder;
 import android.util.Log;
 import android.webkit.ConsoleMessage;
@@ -62,8 +61,7 @@ public class MainService extends Service {
     private final String STOP_SERVICE_ACTION = "STOP_MAIN_SERVICE";
     private final String SWITCH_MAIN_SERVICE = "SWITCH_MAIN_SERVICE";
     private final String SET_MAIN_SERVICE = "SET_MAIN_SERVICE";
-
-    private final Handler handler = new Handler();
+    final String isBackgroundUpdateKey = "Kanshi.Anime.Recommendations.Anilist.W~uPtWCq=vG$TR:Zl^#t<vdS]I~N70.isBackgroundUpdate";
 
     @Nullable
     @Override
@@ -92,7 +90,7 @@ public class MainService extends Service {
                 } else {
                     prefsEdit.putBoolean("keepAppRunningInBackground", keepAppRunningInBackground).apply();
                 }
-                updateNotificationTitle();
+                updateNotificationTitle("");
             }
         }
         return START_NOT_STICKY;
@@ -102,7 +100,7 @@ public class MainService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
-
+        System.out.println("kanshibg starting service in service");
         // Create a notification channel
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             CharSequence name = "Background Application";
@@ -145,16 +143,18 @@ public class MainService extends Service {
         webView.setWebViewClient(new WebViewClient() {
             @Override
             public void onPageStarted(WebView view, String url, Bitmap favicon) {
+                System.out.println("kanshibg service page start in service");
                 if (appSwitched) {
                     appSwitched = false;
                     view.loadUrl("javascript:(()=>window.shouldUpdateNotifications=true)();");
                 }
-                view.loadUrl("javascript:(()=>window.isInAndroidBackgroundProcess=true)();");
+                view.loadUrl("javascript:(()=>window['"+isBackgroundUpdateKey+"']=true)();");
                 super.onPageStarted(view, url, favicon);
             }
 
             @Override
             public void onPageFinished(WebView view, String url) {
+                System.out.println("kanshibg service page finished in service");
                 if (pageLoaded) {
                     CookieManager cookieManager = CookieManager.getInstance();
                     cookieManager.setAcceptCookie(true);
@@ -166,9 +166,8 @@ public class MainService extends Service {
                     pageLoaded = true;
                     view.loadUrl("file:///android_asset/www/index.html");
                 }
-                view.loadUrl("javascript:(()=>window.isInAndroidBackgroundProcess=true)();");
                 isInWebApp = url.startsWith("https://u-kuro.github.io/Kanshi.Anime-Recommendation");
-                updateNotificationTitle();
+                updateNotificationTitle("");
                 super.onPageFinished(view, url);
             }
 
@@ -225,27 +224,18 @@ public class MainService extends Service {
         appSwitched = true;
         pageLoaded = false;
         webView.loadUrl("https://u-kuro.github.io/Kanshi.Anime-Recommendation/");
-
-        // Add Auto Updates
-        Runnable updateData = new Runnable(){
-            public void run(){
-                System.out.println("xkushiii Hello, World! "+(System.currentTimeMillis()));
-                webView.loadUrl("javascript:window?.setAutoUpdate?.(true);window?.setAutoExport();");
-                handler.postDelayed(this, TimeUnit.HOURS.toMillis(1));
-            }
-        };
-        handler.post(updateData);
     }
 
     @Override
     public void onDestroy() {
-        handler.removeCallbacksAndMessages(null);
+        System.out.println("kanshibg destroying service");
         webView.destroy();
         super.onDestroy();
     }
 
     @RequiresApi(api = Build.VERSION_CODES.TIRAMISU)
-    public void updateNotificationTitle() {
+    public void updateNotificationTitle(String title) {
+        System.out.println("kanshibg update notif title in service");
         Context context = this.getApplicationContext();
         notificationPermissionIsGranted = ActivityCompat.checkSelfPermission(context, android.Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED;
         if (!notificationPermissionIsGranted) {
@@ -268,7 +258,7 @@ public class MainService extends Service {
         Intent intent = pm.getLaunchIntentForPackage("com.example.kanshi");
         PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_IMMUTABLE);
         Notification notification = new NotificationCompat.Builder(context, APP_IN_BACKGROUND_CHANNEL)
-                .setContentTitle("Kanshi.")
+                .setContentTitle(title.equals("") ?"Kanshi.":title)
                 .setSmallIcon(R.drawable.ic_stat_name)
                 .setContentIntent(pendingIntent)
                 .addAction(keepAppRunningInBackground? R.drawable.check_white : R.drawable.disabled_white, keepAppRunningInBackground ? "ENABLED" : "DISABLED", setPendingIntent)
@@ -286,7 +276,24 @@ public class MainService extends Service {
         String directoryPath;
         @JavascriptInterface
         public void pageIsFinished() {
+            System.out.println("kanshibg page finished set in service");
             pageLoaded = true;
+        }
+        @JavascriptInterface
+        public void backgroundUpdateIsFinished() {
+            System.out.println("kanshibg background update finished in service");
+            long backgroundUpdateTime = prefs.getLong("lastBackgroundUpdateTime",System.currentTimeMillis());
+            SharedPreferences.Editor prefsEdit = prefs.edit();
+            long ONE_HOUR_IN_MILLIS = TimeUnit.HOURS.toMillis(1);
+            backgroundUpdateTime = backgroundUpdateTime + ONE_HOUR_IN_MILLIS;
+            prefsEdit.putLong("lastBackgroundUpdateTime", backgroundUpdateTime).apply();
+            MainService.this.stopForeground(true);
+            MainService.this.stopSelf();
+        }
+        @RequiresApi(api = Build.VERSION_CODES.TIRAMISU)
+        @JavascriptInterface
+        public void sendBackgroundStatus(String text) {
+            updateNotificationTitle(text);
         }
         @RequiresApi(api = Build.VERSION_CODES.R)
         @JavascriptInterface

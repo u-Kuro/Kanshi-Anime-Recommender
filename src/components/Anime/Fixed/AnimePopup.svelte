@@ -27,6 +27,7 @@
         newFinalAnime,
         appID,
         confirmIsVisible,
+        isBackgroundUpdateKey,
     } from "../../../js/globalValues.js";
     import {
         isJsonObject,
@@ -914,6 +915,7 @@
     }
 
     async function updateList(event) {
+        if ($android && $isBackgroundUpdateKey && window?.[$isBackgroundUpdateKey]===true) return
         if (
             await $confirmPromise({
                 title: "List has an update",

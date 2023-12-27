@@ -45,16 +45,16 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
-public class AnimeNotificationWorker extends Worker {
+public class MyWorker extends Worker {
 
     private static final int NOTIFICATION_ANIME_RELEASE = 1000;
     private static final int NOTIFICATION_MY_ANIME = 999;
     private static final int NOTIFICATION_OTHER_ANIME = 998;
     private static final int ANIME_RELEASE_PENDING_INTENT = 997;
-    private static final int ANIME_RELEASE_UPDATE_PENDING_INTENT = 996;
+    private static final int UPDATE_DATA_PENDING_INTENT = 994;
     public final String retryKey = "Kanshi-Anime-Recommendation.Retry";
 
-    public AnimeNotificationWorker(@NonNull Context context, @NonNull WorkerParameters workerParams) {
+    public MyWorker(@NonNull Context context, @NonNull WorkerParameters workerParams) {
         super(context, workerParams);
     }
 
@@ -63,21 +63,22 @@ public class AnimeNotificationWorker extends Worker {
     @Override
     public Result doWork() {
         String action = getInputData().getString("action");
-        @SuppressWarnings("unchecked") ConcurrentHashMap<String, AnimeNotification> $allAnimeToUpdate = (ConcurrentHashMap<String, AnimeNotification>) LocalPersistence.readObjectFromFile(this.getApplicationContext(),"allAnimeToUpdate");
-        if ($allAnimeToUpdate != null && $allAnimeToUpdate.size() > 0) {
-            AnimeNotificationManager.allAnimeToUpdate.putAll($allAnimeToUpdate);
-        }
-        @SuppressWarnings("unchecked") ConcurrentHashMap<String, AnimeNotification> $allAnimeNotification = (ConcurrentHashMap<String, AnimeNotification>) LocalPersistence.readObjectFromFile(this.getApplicationContext(), "allAnimeNotification");
-        if ($allAnimeNotification != null && $allAnimeNotification.size() > 0) {
-            AnimeNotificationManager.allAnimeNotification.putAll($allAnimeNotification);
-        }
-        if ("ANIME_RELEASE_UPDATE".equals(action)) {
-            delayAnimeReleaseUpdate();
-            animeReleaseUpdate();
+        if ("UPDATE_DATA".equals(action)) {
+            updateData();
         } else {
+            @SuppressWarnings("unchecked") ConcurrentHashMap<String, AnimeNotification> $allAnimeToUpdate = (ConcurrentHashMap<String, AnimeNotification>) LocalPersistence.readObjectFromFile(this.getApplicationContext(), "allAnimeToUpdate");
+            if ($allAnimeToUpdate != null && $allAnimeToUpdate.size() > 0) {
+                AnimeNotificationManager.allAnimeToUpdate.putAll($allAnimeToUpdate);
+            }
+            @SuppressWarnings("unchecked") ConcurrentHashMap<String, AnimeNotification> $allAnimeNotification = (ConcurrentHashMap<String, AnimeNotification>) LocalPersistence.readObjectFromFile(this.getApplicationContext(), "allAnimeNotification");
+            if ($allAnimeNotification != null && $allAnimeNotification.size() > 0) {
+                AnimeNotificationManager.allAnimeNotification.putAll($allAnimeNotification);
+            }
             boolean isBooted = getInputData().getBoolean("isBooted", false);
-
             showNotification(isBooted);
+            if (isBooted) {
+                updateData();
+            }
         }
         return Result.success();
     }
@@ -481,7 +482,6 @@ public class AnimeNotificationWorker extends Worker {
                                 }
                                 AnimeNotificationManager.allAnimeToUpdate.remove(String.valueOf(anime.animeId));
                                 LocalPersistence.writeObjectToFile(this.getApplicationContext(), AnimeNotificationManager.allAnimeToUpdate, "allAnimeToUpdate");
-                                delayAnimeReleaseUpdate();
                             } catch (JSONException ignored) {
                             }
                         }
@@ -491,60 +491,6 @@ public class AnimeNotificationWorker extends Worker {
         } catch (JSONException ignored) {}
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.N)
-    private void animeReleaseUpdate() {
-        SharedPreferences prefs = this.getApplicationContext().getSharedPreferences("com.example.kanshi", Context.MODE_PRIVATE);
-        long lastSentNotificationTime = prefs.getLong("lastSentNotificationTime", 0L);
-        HashSet<String> animeUpdatesToBeRemoved = new HashSet<>();
-        long ONE_WEEK_IN_MILLIS = TimeUnit.DAYS.toMillis(7);
-        List<AnimeNotification> allAnimeNotificationValues = new ArrayList<>(AnimeNotificationManager.allAnimeNotification.values());
-        for (AnimeNotification anime : allAnimeNotificationValues) {
-            // If ReleaseDate was Before 1 week ago
-            if (anime.releaseDateMillis < (System.currentTimeMillis() - ONE_WEEK_IN_MILLIS)) {
-                animeUpdatesToBeRemoved.add(String.valueOf(anime.animeId));
-            }
-        }
-        for (String animeId : animeUpdatesToBeRemoved) {
-            AnimeNotificationManager.allAnimeToUpdate.remove(animeId);
-        }
-        allAnimeNotificationValues = new ArrayList<>(AnimeNotificationManager.allAnimeNotification.values());
-        for (AnimeNotification anime : allAnimeNotificationValues) {
-            getAiringAnime(anime, lastSentNotificationTime, 0);
-        }
-        LocalPersistence.writeObjectToFile(this.getApplicationContext(), AnimeNotificationManager.allAnimeToUpdate, "allAnimeToUpdate");
-    }
-
-    private void delayAnimeReleaseUpdate() {
-        Intent newIntent = new Intent(this.getApplicationContext(), MyReceiver.class);
-        newIntent.setAction("ANIME_RELEASE_UPDATE");
-
-        PendingIntent newPendingIntent = PendingIntent.getBroadcast(this.getApplicationContext(), ANIME_RELEASE_UPDATE_PENDING_INTENT, newIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
-        AlarmManager alarmManager = (AlarmManager) this.getApplicationContext().getSystemService(Context.ALARM_SERVICE);
-        // Cancel Old
-        newPendingIntent.cancel();
-        alarmManager.cancel(newPendingIntent);
-        // Create New
-        newPendingIntent = PendingIntent.getBroadcast(this.getApplicationContext(), ANIME_RELEASE_UPDATE_PENDING_INTENT, newIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
-        long TWELVE_HOURS_IN_MILLIS = TimeUnit.HOURS.toMillis(12);
-        long nextUpdateInMillis = System.currentTimeMillis()+TWELVE_HOURS_IN_MILLIS;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            if (alarmManager.canScheduleExactAlarms()) {
-                alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, nextUpdateInMillis, newPendingIntent);
-            } else {
-                alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, nextUpdateInMillis, newPendingIntent);
-            }
-        } else {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, nextUpdateInMillis, newPendingIntent);
-            } else {
-                try {
-                    alarmManager.setExact(AlarmManager.RTC_WAKEUP, nextUpdateInMillis, newPendingIntent);
-                } catch (SecurityException ignored) {
-                    alarmManager.set(AlarmManager.RTC_WAKEUP, nextUpdateInMillis, newPendingIntent);
-                }
-            }
-        }
-    }
     @RequiresApi(api = Build.VERSION_CODES.N)
     private void makePostRequest(PostRequestCallback callback, JSONObject jsonData) {
         CompletableFuture.supplyAsync(() -> postRequest(jsonData))
@@ -617,6 +563,53 @@ public class AnimeNotificationWorker extends Worker {
 
     interface PostRequestCallback {
         void onResponse(JSONObject response);
+    }
+
+    private void updateData() {
+        System.out.println("kanshibg starting service in worker?");
+        SharedPreferences prefs = this.getApplicationContext().getSharedPreferences("com.example.kanshi", Context.MODE_PRIVATE);
+        boolean keepAppRunningInBackground = prefs.getBoolean("keepAppRunningInBackground",true);
+        long backgroundUpdateTime = prefs.getLong("lastBackgroundUpdateTime",System.currentTimeMillis());
+        boolean isInApp = false;
+        if (MainActivity.getInstanceActivity()!=null) {
+            isInApp = MainActivity.getInstanceActivity().isInApp;
+        }
+        if (keepAppRunningInBackground && !isInApp) {
+            System.out.println("kanshibg starting service in worker");
+            Intent intent = new Intent(this.getApplicationContext(), MainService.class);
+            this.getApplicationContext().startService(intent);
+        }
+        Intent newIntent = new Intent(this.getApplicationContext(), MyReceiver.class);
+        newIntent.setAction("UPDATE_DATA");
+
+        PendingIntent newPendingIntent = PendingIntent.getBroadcast(this.getApplicationContext(), UPDATE_DATA_PENDING_INTENT, newIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        AlarmManager alarmManager = (AlarmManager) this.getApplicationContext().getSystemService(Context.ALARM_SERVICE);
+        // Cancel Old
+        newPendingIntent.cancel();
+        alarmManager.cancel(newPendingIntent);
+        // Create New
+        newPendingIntent = PendingIntent.getBroadcast(this.getApplicationContext(), UPDATE_DATA_PENDING_INTENT, newIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        if (backgroundUpdateTime<System.currentTimeMillis()) {
+            long ONE_HOUR_IN_MILLIS = TimeUnit.HOURS.toMillis(1);
+            backgroundUpdateTime = backgroundUpdateTime + ONE_HOUR_IN_MILLIS;
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            if (alarmManager.canScheduleExactAlarms()) {
+                alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, backgroundUpdateTime, newPendingIntent);
+            } else {
+                alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, backgroundUpdateTime, newPendingIntent);
+            }
+        } else {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, backgroundUpdateTime, newPendingIntent);
+            } else {
+                try {
+                    alarmManager.setExact(AlarmManager.RTC_WAKEUP, backgroundUpdateTime, newPendingIntent);
+                } catch (SecurityException ignored) {
+                    alarmManager.set(AlarmManager.RTC_WAKEUP, backgroundUpdateTime, newPendingIntent);
+                }
+            }
+        }
     }
 }
 

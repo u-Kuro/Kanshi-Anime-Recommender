@@ -3,6 +3,7 @@ import { getLocalStorage } from "../js/others/helper.js"
 
 const appID = writable(null)
 const android = writable(null)
+const isBackgroundUpdateKey = writable("Kanshi.Anime.Recommendations.Anilist.W~uPtWCq=vG$TR:Zl^#t<vdS]I~N70.isBackgroundUpdate")
 const mobile = writable(null)
 const inApp = writable(true)
 const progress = writable(0)
@@ -84,6 +85,7 @@ export {
     appID,
     mobile,
     android,
+    isBackgroundUpdateKey,
     inApp,
     hasWheel,
     progress,
