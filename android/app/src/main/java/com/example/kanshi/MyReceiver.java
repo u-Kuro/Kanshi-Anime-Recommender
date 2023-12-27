@@ -33,7 +33,6 @@ public class MyReceiver extends BroadcastReceiver {
                     .build();
             WorkManager.getInstance(context).enqueueUniqueWork(uniqueWorkName, ExistingWorkPolicy.REPLACE, workRequest);
         } else if ("UPDATE_DATA".equals(intent.getAction())) {
-            System.out.println("kanshibg starting service in receiver");
             String uniqueWorkName = "UPDATE_DATA";
             Data data = new Data.Builder()
                     .putString("action", uniqueWorkName)

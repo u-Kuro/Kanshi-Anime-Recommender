@@ -105,7 +105,6 @@ const animeLoader = (_data = {}) => {
                             animeLoaderWorker = null
                             resolve(data)
                         } else {
-                            console.log({ animeLoader: 1, isInAndroidBackgroundProcess: window?.isInAndroidBackgroundProcess })
                             data.animeLoaderWorker = animeLoaderWorker
                             resolve(data)
                         }
@@ -277,39 +276,31 @@ isProcessingList.subscribe((val) => {
 })
 
 const requestAnimeEntries = (_data) => {
-    console.log({ requestAnimeEntries: 0 });
     return new Promise((resolve, reject) => {
         if (isRequestingAnimeEntries) {
-            console.log({ requestAnimeEntries: 1 });
             resolve()
             return
         }
         if (requestAnimeEntriesTerminateTimeout) clearTimeout(requestAnimeEntriesTerminateTimeout)
         if (requestAnimeEntriesWorker) {
-            console.log({ requestAnimeEntries: 2 });
             requestAnimeEntriesWorker?.terminate?.()
             requestAnimeEntriesWorker = null
         }
         if (!get(initData)) {
-            console.log({ requestAnimeEntries: 3 });
             if (isGettingNewEntries
                 || isCurrentlyImporting
                 || isExporting
                 || get(isImporting)
             ) {
-                console.log({ requestAnimeEntries: 4 });
                 resolve()
                 return
             }
         }
-        console.log({ requestAnimeEntries: 5 });
         progress.set(0)
         cacheRequest("./webapi/worker/requestAnimeEntries.js")
             .then(url => {
-                console.log({ requestAnimeEntries: 6 });
                 if (requestAnimeEntriesTerminateTimeout) clearTimeout(requestAnimeEntriesTerminateTimeout)
                 if (requestAnimeEntriesWorker) {
-                    console.log({ requestAnimeEntries: 7 });
                     requestAnimeEntriesWorker?.terminate?.()
                     requestAnimeEntriesWorker = null
                 }
@@ -326,34 +317,25 @@ const requestAnimeEntries = (_data) => {
                             dataStatus.set(data.status)
                         }
                     } else if (data?.updateRecommendationList !== undefined) {
-                        console.log({ requestAnimeEntries: 8 });
                         updateRecommendationList.update(e => !e)
                     } else if (data?.lastRunnedAutoUpdateDate instanceof Date && !isNaN(data?.lastRunnedAutoUpdateDate)) {
-                        console.log({ requestAnimeEntries: 9 });
                         lastRunnedAutoUpdateDate.set(data.lastRunnedAutoUpdateDate)
                     } else if (data?.errorDuringInit !== undefined) {
-                        console.log({ requestAnimeEntries: 10 });
                         isRequestingAnimeEntries = false
                         resolve(data)
                     } else if (data?.hasOwnProperty("notifyAddedEntries")) {
-                        console.log({ requestAnimeEntries: 11 });
                         if (get(android)) {
-                            console.log({ requestAnimeEntries: 12 });
                             try {
                                 let newAddedAnimeCount = data?.notifyAddedEntries
                                 if (typeof newAddedAnimeCount === "number" && newAddedAnimeCount > 0) {
                                     JSBridge?.showNewAddedAnimeNotification?.(newAddedAnimeCount)
                                 }
-                            } catch (e) {
-                                console.log({ requestAnimeEntries: 13 });
-                            }
+                            } catch (e) { }
                         }
                     } else {
                         if (data?.noEntriesFound) {
-                            console.log({ requestAnimeEntries: 14 });
                             alertError()
                         } else if (data?.getEntries === true) {
-                            console.log({ requestAnimeEntries: 15 });
                             isGettingNewEntries = true
                             stopConflictingWorkers({ isGettingNewEntries: true })
                             getAnimeEntries()
@@ -369,7 +351,6 @@ const requestAnimeEntries = (_data) => {
                         }
                         isRequestingAnimeEntries = false
                         requestAnimeEntriesTerminateTimeout = setTimeout(() => {
-                            console.log({ requestAnimeEntries: 16 });
                             requestAnimeEntriesWorker?.terminate?.();
                         }, terminateDelay)
                         progress.set(100)
@@ -377,14 +358,12 @@ const requestAnimeEntries = (_data) => {
                     }
                 }
                 requestAnimeEntriesWorker.onerror = (error) => {
-                    console.log({ requestAnimeEntries: 17 });
                     isRequestingAnimeEntries = false
                     isGettingNewEntries = false
                     progress.set(100)
                     reject(error)
                 }
             }).catch((error) => {
-                console.log({ requestAnimeEntries: 18 });
                 isRequestingAnimeEntries = false
                 isGettingNewEntries = false
                 progress.set(100)
@@ -395,36 +374,29 @@ const requestAnimeEntries = (_data) => {
 }
 let requestUserEntriesTerminateTimeout, requestUserEntriesWorker;
 const requestUserEntries = (_data) => {
-    console.log({ requestUserEntries: 0 });
     return new Promise((resolve, reject) => {
         if (requestUserEntriesTerminateTimeout) clearTimeout(requestUserEntriesTerminateTimeout)
         if (requestUserEntriesWorker) {
-            console.log({ requestUserEntries: 1 });
             requestUserEntriesWorker?.terminate?.()
             requestUserEntriesWorker = null
         }
         if (!get(initData)) {
-            console.log({ requestUserEntries: 2 });
             if (isExporting
                 || get(isImporting)
                 || isCurrentlyImporting
                 || isGettingNewEntries
             ) {
-                console.log({ requestUserEntries: 3 });
                 userRequestIsRunning.set(false)
                 reject()
                 return
             }
         }
-        console.log({ requestUserEntries: 3.5 });
         userRequestIsRunning.set(true)
         progress.set(0)
         cacheRequest("./webapi/worker/requestUserEntries.js")
             .then(url => {
-                console.log({ requestUserEntries: 4 });
                 if (requestUserEntriesTerminateTimeout) clearTimeout(requestUserEntriesTerminateTimeout)
                 if (requestUserEntriesWorker) {
-                    console.log({ requestUserEntries: 5 });
                     requestUserEntriesWorker?.terminate?.()
                     requestUserEntriesWorker = null
                 }
@@ -441,7 +413,6 @@ const requestUserEntries = (_data) => {
                             dataStatus.set(data.status)
                         }
                     } else if (data?.error) {
-                        console.log({ requestUserEntries: 6 });
                         window.confirmPromise({
                             isAlert: true,
                             text: "Failed retrieval, " + (data?.error?.toLowerCase?.() || "please try again") + ".",
@@ -454,17 +425,13 @@ const requestUserEntries = (_data) => {
                         progress.set(100)
                         reject(data)
                     } else if (data?.updateRecommendationList !== undefined) {
-                        console.log({ requestUserEntries: 7 });
                         if (get(android)) {
-                            console.log({ requestUserEntries: 8 });
                             window.shouldUpdateNotifications = true
                         }
                         updateRecommendationList.update(e => !e)
                     } else {
-                        console.log({ requestUserEntries: 9 });
                         userRequestIsRunning.set(false)
                         requestUserEntriesTerminateTimeout = setTimeout(() => {
-                            console.log({ requestUserEntries: 10 });
                             requestUserEntriesWorker?.terminate?.();
                         }, terminateDelay)
                         progress.set(100)
@@ -472,18 +439,15 @@ const requestUserEntries = (_data) => {
                     }
                 }
                 requestUserEntriesWorker.onerror = (error) => {
-                    console.log({ requestUserEntries: 11 });
                     userRequestIsRunning.set(false)
                     loadAnime.update((e) => !e)
                     requestUserEntriesTerminateTimeout = setTimeout(() => {
-                        console.log({ requestUserEntries: 12 });
                         requestUserEntriesWorker?.terminate?.();
                     }, terminateDelay)
                     progress.set(100)
                     reject(error)
                 }
             }).catch((error) => {
-                console.log({ requestUserEntries: 13 });
                 userRequestIsRunning.set(false)
                 progress.set(100)
                 loadAnime.update((e) => !e)
@@ -502,40 +466,31 @@ window.isExported = (success = true) => {
     }
 }
 const exportUserData = (_data) => {
-    console.log({ exportUserData: 0 });
     return new Promise((resolve, reject) => {
         if (exportUserDataWorker) {
-            console.log({ exportUserData: 1 });
             exportUserDataWorker?.terminate?.()
             exportUserDataWorker = null
         }
         if (!get(initData)) {
-            console.log({ exportUserData: 2 });
             if (get(isImporting) || isCurrentlyImporting || isGettingNewEntries) return
-            console.log({ exportUserData: 3 });
             isExporting = true
             stopConflictingWorkers({ isExporting: true })
         }
-        console.log({ exportUserData: 4 });
         waitForExportApproval?.reject?.()
         waitForExportApproval = null
         progress.set(0)
         cacheRequest("./webapi/worker/exportUserData.js")
             .then(url => {
-                console.log({ exportUserData: 5 });
                 waitForExportApproval?.reject?.()
                 waitForExportApproval = null
                 if (exportUserDataWorker) {
-                    console.log({ exportUserData: 6 });
                     exportUserDataWorker?.terminate?.()
                     exportUserDataWorker = null
                 }
                 exportUserDataWorker = new Worker(url)
                 if (get(android)) {
-                    console.log({ exportUserData: 7 });
                     exportUserDataWorker.postMessage('android')
                 } else {
-                    console.log({ exportUserData: 8 });
                     exportUserDataWorker.postMessage('browser')
                 }
                 exportUserDataWorker.onmessage = ({ data }) => {
@@ -553,24 +508,19 @@ const exportUserData = (_data) => {
                             let state = data.state
                             // 0 - start | 1 - ongoing | 2 - done
                             if (state === 0) {
-                                console.log({ exportUserData: 9 });
                                 JSBridge.exportJSON('', 0, '')
                             } else if (state === 1) {
                                 JSBridge.exportJSON(chunk, 1, '')
                             } else if (state === 2) {
-                                console.log({ exportUserData: 10 });
                                 let username = data?.username
                                 JSBridge.exportJSON(chunk, 2, `Kanshi.${username?.toLowerCase?.() || "Backup"}.json`)
                                 isExporting = false
                                 exportUserDataWorker?.terminate?.();
                                 new Promise((resolve, reject) => {
-                                    console.log({ exportUserData: 11 });
                                     waitForExportApproval = { resolve, reject }
                                 }).catch(() => {
-                                    console.log({ exportUserData: 12 });
                                     waitForExportApproval?.reject?.()
                                 }).finally(() => {
-                                    console.log({ exportUserData: 13 });
                                     waitForExportApproval = null
                                     progress.set(100)
                                     showToast("Data has been Exported")
@@ -578,7 +528,6 @@ const exportUserData = (_data) => {
                                 })
                             }
                         } catch (e) {
-                            console.log({ exportUserData: 14 });
                             isExporting = false
                             exportUserDataWorker?.terminate?.();
                             waitForExportApproval?.reject?.()
@@ -587,7 +536,6 @@ const exportUserData = (_data) => {
                             resolve(data)
                         }
                     } else {
-                        console.log({ exportUserData: 15 });
                         dataStatusPrio = false
                         let username = data?.username
                         progress.set(100)
@@ -598,7 +546,6 @@ const exportUserData = (_data) => {
                     }
                 }
                 exportUserDataWorker.onerror = (error) => {
-                    console.log({ exportUserData: 16 });
                     progress.set(100)
                     isExporting = false
                     waitForExportApproval?.reject?.()
@@ -611,7 +558,6 @@ const exportUserData = (_data) => {
                     reject(error)
                 }
             }).catch((error) => {
-                console.log({ exportUserData: 17 });
                 progress.set(100)
                 isExporting = false
                 waitForExportApproval?.reject?.()

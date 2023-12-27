@@ -100,7 +100,6 @@ public class MainService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
-        System.out.println("kanshibg starting service in service");
         // Create a notification channel
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             CharSequence name = "Background Application";
@@ -143,7 +142,6 @@ public class MainService extends Service {
         webView.setWebViewClient(new WebViewClient() {
             @Override
             public void onPageStarted(WebView view, String url, Bitmap favicon) {
-                System.out.println("kanshibg service page start in service");
                 if (appSwitched) {
                     appSwitched = false;
                     view.loadUrl("javascript:(()=>window.shouldUpdateNotifications=true)();");
@@ -154,7 +152,6 @@ public class MainService extends Service {
 
             @Override
             public void onPageFinished(WebView view, String url) {
-                System.out.println("kanshibg service page finished in service");
                 if (pageLoaded) {
                     CookieManager cookieManager = CookieManager.getInstance();
                     cookieManager.setAcceptCookie(true);
@@ -228,14 +225,12 @@ public class MainService extends Service {
 
     @Override
     public void onDestroy() {
-        System.out.println("kanshibg destroying service");
         webView.destroy();
         super.onDestroy();
     }
 
     @RequiresApi(api = Build.VERSION_CODES.TIRAMISU)
     public void updateNotificationTitle(String title) {
-        System.out.println("kanshibg update notif title in service");
         Context context = this.getApplicationContext();
         notificationPermissionIsGranted = ActivityCompat.checkSelfPermission(context, android.Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED;
         if (!notificationPermissionIsGranted) {
@@ -276,17 +271,19 @@ public class MainService extends Service {
         String directoryPath;
         @JavascriptInterface
         public void pageIsFinished() {
-            System.out.println("kanshibg page finished set in service");
             pageLoaded = true;
         }
+        boolean alreadyCalled = false;
         @JavascriptInterface
-        public void backgroundUpdateIsFinished() {
-            System.out.println("kanshibg background update finished in service");
-            long backgroundUpdateTime = prefs.getLong("lastBackgroundUpdateTime",System.currentTimeMillis());
-            SharedPreferences.Editor prefsEdit = prefs.edit();
-            long ONE_HOUR_IN_MILLIS = TimeUnit.HOURS.toMillis(1);
-            backgroundUpdateTime = backgroundUpdateTime + ONE_HOUR_IN_MILLIS;
-            prefsEdit.putLong("lastBackgroundUpdateTime", backgroundUpdateTime).apply();
+        public void backgroundUpdateIsFinished(boolean finished) {
+            if (!alreadyCalled && finished) {
+                alreadyCalled = true;
+                long backgroundUpdateTime = prefs.getLong("lastBackgroundUpdateTime", System.currentTimeMillis());
+                SharedPreferences.Editor prefsEdit = prefs.edit();
+                long ONE_HOUR_IN_MILLIS = TimeUnit.HOURS.toMillis(1);
+                backgroundUpdateTime = backgroundUpdateTime + ONE_HOUR_IN_MILLIS;
+                prefsEdit.putLong("lastBackgroundUpdateTime", backgroundUpdateTime).apply();
+            }
             MainService.this.stopForeground(true);
             MainService.this.stopSelf();
         }
@@ -503,15 +500,15 @@ public class MainService extends Service {
                 animeIdsToBeUpdated.add(String.valueOf(anime.animeId));
             }
             String joinedAnimeIds = String.join(",", animeIdsToBeUpdated);
-            webView.post(() -> webView.loadUrl("javascript:window?.updateNotifications?.(["+joinedAnimeIds+"])"));
+            webView.loadUrl("javascript:window?.updateNotifications?.(["+joinedAnimeIds+"])");
         });
 
     }
     public void isExported(boolean success) {
         if (success) {
-            webView.post(() -> webView.loadUrl("javascript:window?.isExported?.(true)"));
+            webView.loadUrl("javascript:window?.isExported?.(true)");
         } else {
-            webView.post(() -> webView.loadUrl("javascript:window?.isExported?.(false)"));
+            webView.loadUrl("javascript:window?.isExported?.(false)");
         }
     }
 }

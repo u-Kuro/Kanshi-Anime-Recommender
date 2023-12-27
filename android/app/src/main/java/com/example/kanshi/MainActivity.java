@@ -83,7 +83,7 @@ import androidx.core.content.FileProvider;
 import androidx.core.splashscreen.SplashScreen;
 
 public class MainActivity extends AppCompatActivity {
-    public final int appID = 274;
+    public final int appID = 275;
     public boolean keepAppRunningInBackground = false;
     public boolean webViewIsLoaded = false;
     public boolean permissionIsAsked = false;
@@ -498,7 +498,6 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onStop() {
         isInApp = false;
-        System.out.println("kanshibg setting backgroundUpdates after app on stop");
         setBackgroundUpdates();
         super.onStop();
     }
@@ -953,7 +952,6 @@ public class MainActivity extends AppCompatActivity {
         }
     }
     public void setBackgroundUpdates() {
-        System.out.println("kanshibg setting backgroundUpdates in main function");
         final int UPDATE_DATA_PENDING_INTENT = 994;
         keepAppRunningInBackground = prefs.getBoolean("keepAppRunningInBackground",true);
 
@@ -994,7 +992,6 @@ public class MainActivity extends AppCompatActivity {
         keepAppRunningInBackground = enable;
         prefsEdit.putBoolean("keepAppRunningInBackground", keepAppRunningInBackground).commit();
         webView.post(()->webView.loadUrl("javascript:window?.setKeepAppRunningInBackground?.("+(keepAppRunningInBackground?"true":"false")+")"));
-        System.out.println("kanshibg setting backgroundUpdates after changing app running in bg");
         setBackgroundUpdates();
     }
     private final ExecutorService updateCurrentNotificationsExecutorService = Executors.newFixedThreadPool(1);

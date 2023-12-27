@@ -16,28 +16,33 @@ const cacheRequest = async (url) => {
                 loadedRequestUrlPromises[url] = null
                 resolve(url)
             } else {
-                let newUrl = url + "?v=" + app_id
-                fetch(newUrl, {
-                    headers: {
-                        'Cache-Control': 'public, max-age=31536000, immutable',
-                    },
-                    cache: 'force-cache'
-                }).then(async response => await response.blob())
-                    .then(blob => {
-                        try {
-                            let blobUrl = URL.createObjectURL(blob);
-                            loadedRequestUrls[url] = blobUrl;
-                            loadedRequestUrlPromises[url] = null
-                            resolve(blobUrl)
-                        } catch (e) {
+                try {
+                    let newUrl = url + "?v=" + app_id
+                    fetch(newUrl, {
+                        headers: {
+                            'Cache-Control': 'public, max-age=31536000, immutable',
+                        },
+                        cache: 'force-cache'
+                    }).then(async response => await response.blob())
+                        .then(blob => {
+                            try {
+                                let blobUrl = URL.createObjectURL(blob);
+                                loadedRequestUrls[url] = blobUrl;
+                                loadedRequestUrlPromises[url] = null
+                                resolve(blobUrl)
+                            } catch (e) {
+                                loadedRequestUrlPromises[url] = null
+                                resolve(url)
+                            }
+                        })
+                        .catch(() => {
                             loadedRequestUrlPromises[url] = null
                             resolve(url)
-                        }
-                    })
-                    .catch(() => {
-                        loadedRequestUrlPromises[url] = null
-                        resolve(url)
-                    })
+                        })
+                } catch (e) {
+                    loadedRequestUrlPromises[url] = null
+                    resolve(url)
+                }
             }
         })
         return loadedRequestUrlPromises[url]

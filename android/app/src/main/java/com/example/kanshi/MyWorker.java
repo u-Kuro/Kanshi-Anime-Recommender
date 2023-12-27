@@ -566,7 +566,6 @@ public class MyWorker extends Worker {
     }
 
     private void updateData() {
-        System.out.println("kanshibg starting service in worker?");
         SharedPreferences prefs = this.getApplicationContext().getSharedPreferences("com.example.kanshi", Context.MODE_PRIVATE);
         boolean keepAppRunningInBackground = prefs.getBoolean("keepAppRunningInBackground",true);
         long backgroundUpdateTime = prefs.getLong("lastBackgroundUpdateTime",System.currentTimeMillis());
@@ -575,7 +574,6 @@ public class MyWorker extends Worker {
             isInApp = MainActivity.getInstanceActivity().isInApp;
         }
         if (keepAppRunningInBackground && !isInApp) {
-            System.out.println("kanshibg starting service in worker");
             Intent intent = new Intent(this.getApplicationContext(), MainService.class);
             this.getApplicationContext().startService(intent);
         }

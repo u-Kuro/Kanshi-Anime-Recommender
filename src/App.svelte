@@ -172,22 +172,26 @@
 			// Check/Get/Update/Process Anime Entries
 			initDataPromises.push(
 				new Promise(async (resolve, reject) => {
-					let shouldGetAnimeEntries = await retrieveJSON(
-						"animeEntriesIsEmpty",
-					);
-					if (shouldGetAnimeEntries === true) {
-						$finalAnimeList = null;
-						getAnimeEntries()
-							.then(() => {
-								resolve();
-							})
-							.catch(async () => {
-								reject();
-							});
-					} else if (shouldGetAnimeEntries === false) {
-						resolve();
-					} else {
-						reject();
+					try {
+						let shouldGetAnimeEntries = await retrieveJSON(
+							"animeEntriesIsEmpty",
+						);
+						if (shouldGetAnimeEntries === true) {
+							$finalAnimeList = null;
+							getAnimeEntries()
+								.then(() => {
+									resolve();
+								})
+								.catch(async () => {
+									reject();
+								});
+						} else if (shouldGetAnimeEntries === false) {
+							resolve();
+						} else {
+							reject();
+						}
+					} catch (e) {
+						reject(e);
 					}
 				}),
 			);
@@ -263,29 +267,33 @@
 					// 	};
 					// 	getUsername();
 					// } else {
-					let _username = await retrieveJSON("username");
-					if (_username !== $username) {
-						setLocalStorage("username", _username || "").catch(
-							() => {
-								removeLocalStorage("username");
-							},
-						);
-						$username = _username;
+					try {
+						let _username = await retrieveJSON("username");
+						if (_username !== $username) {
+							setLocalStorage("username", _username || "").catch(
+								() => {
+									removeLocalStorage("username");
+								},
+							);
+							$username = _username;
+						}
+						if (
+							$android &&
+							window?.shouldUpdateNotifications === true &&
+							!(
+								$isBackgroundUpdateKey &&
+								window?.[$isBackgroundUpdateKey] === true
+							)
+						) {
+							window.shouldUpdateNotifications = false;
+							try {
+								JSBridge?.callUpdateNotifications?.();
+							} catch (e) {}
+						}
+						resolve();
+					} catch (e) {
+						reject(e);
 					}
-					if (
-						$android &&
-						window?.shouldUpdateNotifications === true &&
-						!(
-							$isBackgroundUpdateKey &&
-							window?.[$isBackgroundUpdateKey] === true
-						)
-					) {
-						window.shouldUpdateNotifications = false;
-						try {
-							JSBridge?.callUpdateNotifications?.();
-						} catch (e) {}
-					}
-					resolve();
 					// }
 				}),
 			);
@@ -293,24 +301,28 @@
 			// Check/Get/Update Filter Options Selection
 			initDataPromises.push(
 				new Promise(async (resolve, reject) => {
-					if (
-						$android &&
-						$isBackgroundUpdateKey &&
-						window?.[$isBackgroundUpdateKey] === true
-					) {
-						resolve();
-					} else {
-						getFilterOptions()
-							.then((data) => {
-								$selectedCustomFilter =
-									data.selectedCustomFilter;
-								$activeTagFilters = data.activeTagFilters;
-								$filterOptions = data.filterOptions;
-								resolve();
-							})
-							.catch(() => {
-								reject();
-							});
+					try {
+						if (
+							$android &&
+							$isBackgroundUpdateKey &&
+							window?.[$isBackgroundUpdateKey] === true
+						) {
+							resolve();
+						} else {
+							getFilterOptions()
+								.then((data) => {
+									$selectedCustomFilter =
+										data.selectedCustomFilter;
+									$activeTagFilters = data.activeTagFilters;
+									$filterOptions = data.filterOptions;
+									resolve();
+								})
+								.catch(() => {
+									reject();
+								});
+						}
+					} catch (e) {
+						reject(e);
 					}
 				}),
 			);
@@ -323,50 +335,55 @@
 						$isBackgroundUpdateKey &&
 						window?.[$isBackgroundUpdateKey] === true
 					) {
-						console.log("kanshibg requestUserEntries");
-						requestUserEntries().finally(() => {
-							console.log("kanshibg requestAnimeEntries");
-							requestAnimeEntries().finally(() => {
-								console.log(
-									"kanshibg processRecommendedAnimeList",
-								);
-								processRecommendedAnimeList().finally(() => {
-									console.log("kanshibg animeLoader");
-									animeLoader().finally(async () => {
-										console.log("kanshibg exportUserData?");
-										$exportPathIsAvailable =
-											$exportPathIsAvailable ??
-											(await retrieveJSON(
-												"exportPathIsAvailable",
-											));
-										$autoExport =
-											$autoExport ??
-											(await retrieveJSON("autoExport"));
-										if (
-											$exportPathIsAvailable &&
-											$autoExport
-										) {
-											console.log(
-												"kanshibg exportUserData",
-											);
-											await new Promise((resolve) =>
-												exportUserData().finally(
-													resolve,
-												),
-											);
-										}
-										try {
-											JSBridge?.backgroundUpdateIsFinished?.();
-											console.log("done");
-										} catch (e) {
-											console.log("done: but error");
-										}
-									});
+						try {
+							requestUserEntries().finally(() => {
+								requestAnimeEntries().finally(() => {
+									processRecommendedAnimeList().finally(
+										() => {
+											animeLoader().finally(async () => {
+												$exportPathIsAvailable =
+													$exportPathIsAvailable ??
+													(await retrieveJSON(
+														"exportPathIsAvailable",
+													));
+												$autoExport =
+													$autoExport ??
+													(await retrieveJSON(
+														"autoExport",
+													));
+												if (
+													$exportPathIsAvailable &&
+													$autoExport
+												) {
+													await new Promise(
+														(resolve) =>
+															exportUserData().finally(
+																resolve,
+															),
+													);
+												}
+												JSBridge?.backgroundUpdateIsFinished?.(
+													true,
+												);
+											});
+										},
+									);
 								});
 							});
-						});
+						} catch (e) {
+							try {
+								JSBridge?.backgroundUpdateIsFinished?.(false);
+							} catch (e) {}
+						}
 					} else {
 						(async () => {
+							if ($android) {
+								try {
+									JSBridge?.backgroundUpdateIsFinished?.(
+										false,
+									);
+								} catch (e) {}
+							}
 							if (!isJsonObject($hiddenEntries)) {
 								$hiddenEntries =
 									(await retrieveJSON("hiddenEntries")) || {};
@@ -578,8 +595,7 @@
 		$dataStatus = "Something went wrong";
 		if ($android) {
 			try {
-				console.log("error " + error);
-				JSBridge?.backgroundUpdateIsFinished?.();
+				JSBridge?.backgroundUpdateIsFinished?.(false);
 			} catch (e) {}
 			$confirmPromise?.({
 				isAlert: true,
@@ -624,69 +640,45 @@
 		initCheck = false,
 		visibilityChange = false,
 	) {
-		console.log({
-			checkAutoFunctions: 0,
-			initCheck,
-			visibilityChange,
-			$appID,
-			$userRequestIsRunning,
-		});
 		if ($appID == null) {
-			console.log({ checkAutoFunctions: 1 });
 			window?.kanshiInit?.then?.(() => {
-				console.log({ checkAutoFunctions: 2 });
 				checkAutoFunctions(initCheck);
 			});
 		} else if (initCheck) {
 			try {
-				console.log({ checkAutoFunctions: 3 });
 				await requestUserEntries();
-				console.log({ checkAutoFunctions: 4 });
 				await requestAnimeEntries();
-				console.log({ checkAutoFunctions: 5 });
 				checkAutoExportOnLoad();
 			} catch (e) {
-				console.log({ checkAutoFunctions: 6 });
 				$dataStatus = "Something went wrong";
 				console.error(e);
 				checkAutoExportOnLoad();
 			}
 		} else if ($autoUpdate && (await autoUpdateIsPastDate())) {
-			console.log({ checkAutoFunctions: 7 });
 			if (!$userRequestIsRunning) {
-				console.log({ checkAutoFunctions: 8 });
 				requestUserEntries()
 					.then(() => {
-						console.log({ checkAutoFunctions: 9 });
 						requestAnimeEntries().finally(() => {
-							console.log({ checkAutoFunctions: 10 });
 							checkAutoExportOnLoad();
 						});
 					})
 					.catch((error) => {
-						console.log({ checkAutoFunctions: 11 });
 						checkAutoExportOnLoad();
 						$dataStatus = "Something went wrong";
 						console.error(error);
 					});
 			} else {
-				console.log({ checkAutoFunctions: 12 });
 				requestAnimeEntries().finally(() => {
-					console.log({ checkAutoFunctions: 13 });
 					checkAutoExportOnLoad();
 				});
 			}
 		} else if ($autoExport && (await autoExportIsPastDate())) {
-			console.log({ checkAutoFunctions: 14 });
 			exportUserData().finally(() => {
-				console.log({ checkAutoFunctions: 15 });
 				if (visibilityChange && !$userRequestIsRunning) {
-					console.log({ checkAutoFunctions: 16 });
 					requestUserEntries({ visibilityChange: true });
 				}
 			});
 		} else if (visibilityChange && !$userRequestIsRunning) {
-			console.log({ checkAutoFunctions: 17 });
 			requestUserEntries({ visibilityChange: true });
 		}
 	}
@@ -849,15 +841,12 @@
 			window?.[$isBackgroundUpdateKey] === true
 		)
 			return;
-		console.log({ autoUpdateRun: val });
 		if (val === true) {
 			if ($appID != null) {
-				console.log({ autoUpdateRun: 1 });
 				saveJSON(true, "autoUpdate");
 			}
 			// Check Run First
 			if (await autoUpdateIsPastDate()) {
-				console.log({ autoUpdateRun: 2 });
 				checkAutoFunctions();
 				if ($autoUpdateInterval) clearInterval($autoUpdateInterval);
 				$autoUpdateInterval = setInterval(() => {
@@ -866,7 +855,6 @@
 					}
 				}, hourINMS);
 			} else {
-				console.log({ autoUpdateRun: 3 });
 				let timeLeft =
 					hourINMS -
 						(new Date().getTime() -
@@ -887,11 +875,9 @@
 				);
 			}
 		} else if (val === false) {
-			console.log({ autoUpdateRun: 4 });
 			if ($autoUpdateInterval) clearInterval($autoUpdateInterval);
 			$autoUpdateInterval = null;
 			if ($appID != null) {
-				console.log({ autoUpdateRun: 5 });
 				saveJSON(false, "autoUpdate");
 			}
 		}
@@ -943,14 +929,11 @@
 			window?.[$isBackgroundUpdateKey] === true
 		)
 			return;
-		console.log({ autoUpdateExport: val });
 		if (val === true) {
 			if ($appID != null) {
-				console.log({ autoUpdateExport: 1 });
 				saveJSON(true, "autoExport");
 			}
 			if (await autoExportIsPastDate()) {
-				console.log({ autoUpdateExport: 2 });
 				checkAutoFunctions();
 				if ($autoExportInterval) clearInterval($autoExportInterval);
 				$autoExportInterval = setInterval(() => {
@@ -959,7 +942,6 @@
 					}
 				}, hourINMS);
 			} else {
-				console.log({ autoUpdateExport: 3 });
 				let timeLeft =
 					hourINMS -
 						(new Date().getTime() -
@@ -980,11 +962,9 @@
 				);
 			}
 		} else if (val === false) {
-			console.log({ autoUpdateExport: 4 });
 			if ($autoExportInterval) clearInterval($autoExportInterval);
 			$autoExportInterval = null;
 			if ($appID != null) {
-				console.log({ autoUpdateExport: 5 });
 				saveJSON(false, "autoExport");
 			}
 		}
