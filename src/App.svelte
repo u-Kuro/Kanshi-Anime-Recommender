@@ -744,6 +744,7 @@
 				});
 		}
 	});
+
 	let hourINMS = 60 * 60 * 1000;
 	window.setAutoUpdate = (val) => {
 		console.log({ autoUpdateRun: 0 });
