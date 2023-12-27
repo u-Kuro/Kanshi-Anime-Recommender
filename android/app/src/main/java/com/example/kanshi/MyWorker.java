@@ -237,7 +237,7 @@ public class MyWorker extends Worker {
                 .setContentIntent(pendingIntent)
                 .setGroup(ANIME_RELEASE_NOTIFICATION_GROUP)
                 .setGroupAlertBehavior(Notification.GROUP_ALERT_SUMMARY)
-                .setNumber(myAnimeNotifications.size())
+                .setNumber(0)
                 .setWhen(lastSentMyAnimeNotificationTime)
                 .setShowWhen(true);
 
@@ -308,12 +308,12 @@ public class MyWorker extends Worker {
                 .setContentIntent(pendingIntent)
                 .setGroup(ANIME_RELEASE_NOTIFICATION_GROUP)
                 .setGroupAlertBehavior(Notification.GROUP_ALERT_SUMMARY)
-                .setNumber(animeNotifications.size())
+                .setNumber(0)
                 .setWhen(lastSentOtherAnimeNotificationTime)
                 .setShowWhen(true);
 
         String notificationTitle = "Anime Aired";
-        int animeReleaseNotificationSize = myAnimeNotifications.size() + animeNotifications.size();
+        long animeReleaseNotificationSize = myAnimeNotifications.size() + animeNotifications.size();
         if (animeReleaseNotificationSize > 1) {
             notificationTitle = notificationTitle + " +" + animeReleaseNotificationSize;
         }
@@ -456,8 +456,8 @@ public class MyWorker extends Worker {
                                     media = airingSchedule.getJSONObject("media");
                                 }
                                 long releaseDateMillis = airingSchedule.getLong("airingAt") * 1000L;
-                                int episode = airingSchedule.getInt("episode");
-                                int episodes;
+                                long episode = airingSchedule.getInt("episode");
+                                long episodes;
                                 boolean isEdited = false;
                                 if (media != null && !media.isNull("episodes")) {
                                     episodes = media.getInt("episodes");

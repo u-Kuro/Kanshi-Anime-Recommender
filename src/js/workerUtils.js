@@ -327,8 +327,23 @@ const requestAnimeEntries = (_data) => {
                         if (get(android)) {
                             try {
                                 let newAddedAnimeCount = data?.notifyAddedEntries
-                                if (typeof newAddedAnimeCount === "number" && newAddedAnimeCount > 0) {
-                                    JSBridge?.showNewAddedAnimeNotification?.(newAddedAnimeCount)
+                                if (typeof newAddedAnimeCount !== "number" || isNaN(newAddedAnimeCount) || newAddedAnimeCount > 0) {
+                                    newAddedAnimeCount = 0
+                                }
+                                let newEditedAnimeCount = data?.notifyEditedEntries
+                                if (typeof newEditedAnimeCount !== "number" || isNaN(newEditedAnimeCount) || newEditedAnimeCount > 0) {
+                                    newEditedAnimeCount = 0
+                                }
+                                if (typeof newAddedAnimeCount === "number"
+                                    && !isNaN(newAddedAnimeCount)
+                                    && typeof newEditedAnimeCount === "number"
+                                    && !isNaN(newEditedAnimeCount)
+                                    && (
+                                        newAddedAnimeCount > 0 ||
+                                        newEditedAnimeCount > 0
+                                    )
+                                ) {
+                                    JSBridge?.showNewUpdatedAnimeNotification?.(newAddedAnimeCount, newEditedAnimeCount)
                                 }
                             } catch (e) { }
                         }

@@ -134,6 +134,10 @@
             sortName: "date added",
             sortType: "none",
         },
+        {
+            sortName: "date updated",
+            sortType: "none",
+        },
     ];
     $: selectedFilterSelectionIdx =
         $filterOptions?.filterSelection?.findIndex?.(

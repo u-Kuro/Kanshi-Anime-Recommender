@@ -215,6 +215,9 @@ public class MainService extends Service {
                     .addAction(R.drawable.stop_white, "EXIT", stopPendingIntent)
                     .setOnlyAlertOnce(true)
                     .setOngoing(true)
+                    .setSilent(true)
+                    .setShowWhen(false)
+                    .setNumber(0)
                     .build();
             startForeground(SERVICE_NOTIFICATION_ID, notification);
         }
@@ -263,6 +266,9 @@ public class MainService extends Service {
                 .addAction(R.drawable.stop_white, "EXIT", stopPendingIntent)
                 .setOnlyAlertOnce(true)
                 .setOngoing(true)
+                .setSilent(true)
+                .setShowWhen(false)
+                .setNumber(0)
                 .build();
         NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
         notificationManager.notify(SERVICE_NOTIFICATION_ID, notification);
@@ -433,9 +439,9 @@ public class MainService extends Service {
                 }
             } catch (Exception ignored) {}
         }
-        final int DAY_IN_MILLIS = 1000 * 60 * 60 * 24;
+        final long DAY_IN_MILLIS = TimeUnit.DAYS.toMillis(1);
         @JavascriptInterface
-        public void addAnimeReleaseNotification(int animeId, String title, int releaseEpisode, int maxEpisode, long releaseDateMillis, String imageUrl, boolean isMyAnime) {
+        public void addAnimeReleaseNotification(long animeId, String title, long releaseEpisode, long maxEpisode, long releaseDateMillis, String imageUrl, boolean isMyAnime) {
             if (releaseDateMillis >= (System.currentTimeMillis() - DAY_IN_MILLIS)) {
                 AnimeNotificationManager.scheduleAnimeNotification(MainService.this, animeId, title, releaseEpisode, maxEpisode, releaseDateMillis, imageUrl, isMyAnime);
             }
@@ -445,11 +451,11 @@ public class MainService extends Service {
             updateCurrentNotifications();
         }
         private final ExecutorService updateNotificationsExecutorService = Executors.newFixedThreadPool(1);
-        private final Map<Integer, Future<?>> updateNotificationsFutures = new HashMap<>();
+        private final Map<String, Future<?>> updateNotificationsFutures = new HashMap<>();
         @JavascriptInterface
-        public void updateNotifications(int animeId, boolean isMyAnime) {
-            if (updateNotificationsFutures.containsKey(animeId)) {
-                Future<?> future = updateNotificationsFutures.get(animeId);
+        public void updateNotifications(long animeId, boolean isMyAnime) {
+            if (updateNotificationsFutures.containsKey(String.valueOf(animeId))) {
+                Future<?> future = updateNotificationsFutures.get(String.valueOf(animeId));
                 if (future != null && !future.isDone()) {
                     future.cancel(true);
                 }
@@ -474,13 +480,11 @@ public class MainService extends Service {
                 AnimeNotificationManager.allAnimeNotification.putAll(updatedAnimeNotifications);
                 LocalPersistence.writeObjectToFile(MainService.this, AnimeNotificationManager.allAnimeNotification, "allAnimeNotification");
             });
-            updateNotificationsFutures.put(animeId, future);
+            updateNotificationsFutures.put(String.valueOf(animeId), future);
         }
         @JavascriptInterface
-        public void showNewAddedAnimeNotification(int addedAnimeCount) {
-            if (addedAnimeCount>0) {
-                AnimeNotificationManager.recentlyAddedAnimeNotification(MainService.this, addedAnimeCount);
-            }
+        public void showNewAddedAnimeNotification(long addedAnimeCount, long updatedAnimeCount) {
+            AnimeNotificationManager.recentlyAddedAnimeNotification(MainService.this, addedAnimeCount, updatedAnimeCount);
         }
     }
     private final ExecutorService updateCurrentNotificationsExecutorService = Executors.newFixedThreadPool(1);

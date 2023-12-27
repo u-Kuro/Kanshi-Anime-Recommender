@@ -83,7 +83,7 @@ import androidx.core.content.FileProvider;
 import androidx.core.splashscreen.SplashScreen;
 
 public class MainActivity extends AppCompatActivity {
-    public final int appID = 276;
+    public final int appID = 277;
     public boolean keepAppRunningInBackground = false;
     public boolean webViewIsLoaded = false;
     public boolean permissionIsAsked = false;
@@ -433,6 +433,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
         WebView.setWebContentsDebuggingEnabled(BuildConfig.DEBUG);
+
         isAppConnectionAvailable(isConnected -> webView.post(() -> {
             appSwitched = true;
             if (isConnected) {
@@ -460,6 +461,7 @@ public class MainActivity extends AppCompatActivity {
             webSettings.setDisplayZoomControls(false);
             webSettings.setSupportZoom(false);
         }),3000);
+        // Utils.analyseStorage(this.getApplicationContext()); // Analyze Storage (STORAGE_TAG)
     }
 
     public static MainActivity getInstanceActivity() {
@@ -869,9 +871,9 @@ public class MainActivity extends AppCompatActivity {
         @RequiresApi(api = Build.VERSION_CODES.O)
         @JavascriptInterface
         public void downloadUpdate() { checkUpdate(); }
-        final int DAY_IN_MILLIS = 1000 * 60 * 60 * 24;
+        final long DAY_IN_MILLIS = TimeUnit.DAYS.toMillis(1);
         @JavascriptInterface
-        public void addAnimeReleaseNotification(int animeId, String title, int releaseEpisode, int maxEpisode, long releaseDateMillis, String imageUrl, boolean isMyAnime) {
+        public void addAnimeReleaseNotification(long animeId, String title, long releaseEpisode, long maxEpisode, long releaseDateMillis, String imageUrl, boolean isMyAnime) {
             if (releaseDateMillis >= (System.currentTimeMillis() - DAY_IN_MILLIS)) {
                 AnimeNotificationManager.scheduleAnimeNotification(MainActivity.this, animeId, title, releaseEpisode, maxEpisode, releaseDateMillis, imageUrl, isMyAnime);
             }
@@ -881,11 +883,11 @@ public class MainActivity extends AppCompatActivity {
             updateCurrentNotifications();
         }
         private final ExecutorService updateNotificationsExecutorService = Executors.newFixedThreadPool(1);
-        private final Map<Integer, Future<?>> updateNotificationsFutures = new HashMap<>();
+        private final Map<String, Future<?>> updateNotificationsFutures = new HashMap<>();
         @JavascriptInterface
-        public void updateNotifications(int animeId, boolean isMyAnime) {
-            if (updateNotificationsFutures.containsKey(animeId)) {
-                Future<?> future = updateNotificationsFutures.get(animeId);
+        public void updateNotifications(long animeId, boolean isMyAnime) {
+            if (updateNotificationsFutures.containsKey(String.valueOf(animeId))) {
+                Future<?> future = updateNotificationsFutures.get(String.valueOf(animeId));
                 if (future != null && !future.isDone()) {
                     future.cancel(true);
                 }
@@ -910,7 +912,7 @@ public class MainActivity extends AppCompatActivity {
                 AnimeNotificationManager.allAnimeNotification.putAll(updatedAnimeNotifications);
                 LocalPersistence.writeObjectToFile(MainActivity.this, AnimeNotificationManager.allAnimeNotification, "allAnimeNotification");
             });
-            updateNotificationsFutures.put(animeId, future);
+            updateNotificationsFutures.put(String.valueOf(animeId), future);
         }
         @RequiresApi(api = Build.VERSION_CODES.P)
         @JavascriptInterface
@@ -924,9 +926,15 @@ public class MainActivity extends AppCompatActivity {
             }
         }
         @JavascriptInterface
-        public void showNewAddedAnimeNotification(int addedAnimeCount) {
-            if (addedAnimeCount>0) {
-                persistentToast = Toast.makeText(MainActivity.this, "+" + addedAnimeCount + " New Added Anime", Toast.LENGTH_LONG);
+        public void showNewUpdatedAnimeNotification(long addedAnimeCount, long updatedAnimeCount) {
+            if (updatedAnimeCount>0 || addedAnimeCount>0) {
+                if (updatedAnimeCount > 0 && addedAnimeCount > 0) {
+                    persistentToast = Toast.makeText(MainActivity.this, addedAnimeCount + " New Anime / " + updatedAnimeCount + " Modification", Toast.LENGTH_LONG);
+                } else if (updatedAnimeCount > 0) {
+                    persistentToast = Toast.makeText(MainActivity.this, "+" + updatedAnimeCount + " New Modified Anime", Toast.LENGTH_LONG);
+                } else {
+                    persistentToast = Toast.makeText(MainActivity.this, "+" + addedAnimeCount + " New Added Anime", Toast.LENGTH_LONG);
+                }
                 if (isInApp) {
                     if (currentToast != null) {
                         currentToast.cancel();
@@ -934,7 +942,7 @@ public class MainActivity extends AppCompatActivity {
                     persistentToast.show();
                     persistentToast = null;
                 }
-                AnimeNotificationManager.recentlyAddedAnimeNotification(MainActivity.this, addedAnimeCount);
+                AnimeNotificationManager.recentlyAddedAnimeNotification(MainActivity.this, addedAnimeCount, updatedAnimeCount);
             }
         }
         @JavascriptInterface

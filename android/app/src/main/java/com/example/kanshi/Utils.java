@@ -20,6 +20,7 @@ import android.view.ViewGroup;
 
 import androidx.annotation.RequiresApi;
 
+/** @noinspection CommentedOutCode*/
 public class Utils {
     public static String getPath(Context context, Uri uri) {
         // DocumentProvider
@@ -155,5 +156,47 @@ public class Utils {
             v.requestLayout();
         }
     }
+
+//    @RequiresApi(api = Build.VERSION_CODES.N)
+//    public static void analyseStorage(Context context) {
+//        File appBaseFolder = context.getFilesDir().getParentFile();
+//        if (appBaseFolder != null) {
+//            Map<File, Long> fileSizes = new HashMap<>();
+//            browseFiles(appBaseFolder, fileSizes);
+//            long totalSize = fileSizes.values().stream().mapToLong(Long::longValue).sum();
+//            Log.d("STORAGE_TAG", "Total size: " + formatSize(totalSize) + " (" + totalSize + " bytes)");
+//            List<Map.Entry<File, Long>> sortedFiles = new ArrayList<>(fileSizes.entrySet());
+//            sortedFiles.sort((o1, o2) -> Long.compare(o2.getValue(), o1.getValue()));
+//            for (Map.Entry<File, Long> entry : sortedFiles) {
+//                Log.d("STORAGE_TAG", entry.getKey().getAbsolutePath() + " uses " + formatSize(entry.getValue()) + " (" + entry.getValue() + " bytes)");
+//            }
+//        } else {
+//            Log.d("STORAGE_TAG", "App folder is null");
+//        }
+//    }
+//    private static void browseFiles(File dir, Map<File, Long> fileSizes) {
+//        long dirSize = 0;
+//        for (File f : Objects.requireNonNull(dir.listFiles())) {
+//            long size = f.length();
+//            fileSizes.put(f, size);
+//            dirSize += size;
+//            if (f.isDirectory()) {
+//                browseFiles(f, fileSizes);
+//            }
+//        }
+//        fileSizes.put(dir, dirSize);
+//    }
+//    private static String formatSize(double sizeInBytes) {
+//        Locale locale = Locale.US; // Or whatever locale you want
+//        if (sizeInBytes >= 1024 * 1024 * 1024) { // Gigabytes
+//            return String.format(locale, "%.2f GB", sizeInBytes / (1024 * 1024 * 1024));
+//        } else if (sizeInBytes >= 1024 * 1024) { // Megabytes
+//            return String.format(locale, "%.2f MB", sizeInBytes / (1024 * 1024));
+//        } else if (sizeInBytes >= 1024) { // Kilobytes
+//            return String.format(locale, "%.2f KB", sizeInBytes / 1024);
+//        } else { // Bytes
+//            return String.format(locale, "%.2f B", sizeInBytes);
+//        }
+//    }
 }
 

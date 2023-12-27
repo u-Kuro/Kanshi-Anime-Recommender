@@ -3,14 +3,14 @@ package com.example.kanshi;
 import java.io.Serializable;
 
 class AnimeNotification implements Serializable {
-    final int animeId;
+    final long animeId;
     final String title;
-    final public int releaseEpisode;
-    public int maxEpisode;
+    final public long releaseEpisode;
+    public long maxEpisode;
     final public long releaseDateMillis;
     final byte[] imageByte;
     final boolean isMyAnime;
-    public AnimeNotification(int animeId, String title, int releaseEpisode, int maxEpisode, long releaseDateMillis, byte[] imageByte, boolean isMyAnime) {
+    public AnimeNotification(long animeId, String title, long releaseEpisode, long maxEpisode, long releaseDateMillis, byte[] imageByte, boolean isMyAnime) {
         this.animeId = animeId;
         this.title = title;
         this.releaseEpisode = releaseEpisode;

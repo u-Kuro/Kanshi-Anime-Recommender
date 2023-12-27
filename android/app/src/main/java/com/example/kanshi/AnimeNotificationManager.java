@@ -45,13 +45,13 @@ import java.util.concurrent.TimeUnit;
 
 public class AnimeNotificationManager {
     private static final String ANIME_RELEASES_CHANNEL = "anime_releases";
-    private static final String RECENTLY_ADDED_ANIME_CHANNEL = "recently_added_anime";
+    private static final String RECENTLY_UPDATED_ANIME_CHANNEL = "recently_updated_anime";
     private static final String ANIME_RELEASE_NOTIFICATION_GROUP = "anime_release_notification_group";
     private static final int NOTIFICATION_ANIME_RELEASE = 1000;
     private static final int NOTIFICATION_MY_ANIME = 999;
     private static final int NOTIFICATION_OTHER_ANIME = 998;
     private static final int ANIME_RELEASE_PENDING_INTENT = 997;
-    private static final int NOTIFICATION_ADDED_ANIME = 996;
+    private static final int NOTIFICATION_UPDATED_ANIME = 996;
     private static final ExecutorService notificationImageDownloaderExecutor = Executors.newFixedThreadPool(1);
     private static final ExecutorService showRecentReleasesExecutor = Executors.newFixedThreadPool(1);
     private static Future<?> showRecentReleasesFuture;
@@ -64,7 +64,7 @@ public class AnimeNotificationManager {
     public static AnimeNotification nearestNotificationInfo = null;
     public static long nearestNotificationTime = 0L;
 
-    public static void scheduleAnimeNotification(Context context, int animeId, String title, int releaseEpisode, int maxEpisode, long releaseDateMillis, String imageUrl, boolean isMyAnime) {
+    public static void scheduleAnimeNotification(Context context, long animeId, String title, long releaseEpisode, long maxEpisode, long releaseDateMillis, String imageUrl, boolean isMyAnime) {
         context = context.getApplicationContext();
         createAnimeReleasesNotificationChannel(context);
         if (allAnimeNotification.size() == 0) {
@@ -186,10 +186,10 @@ public class AnimeNotificationManager {
     public static void createRecentlyAddedAnimeNotificationChannel(Context context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             context = context.getApplicationContext();
-            CharSequence name = "Recently Added Anime";
-            String description = "Notifications for anime that are recently added";
+            CharSequence name = "Recently Updated Anime";
+            String description = "Notifications for anime that are recently added or updated (trailer or cover)";
             int importance = NotificationManager.IMPORTANCE_DEFAULT;
-            NotificationChannel channel = new NotificationChannel(RECENTLY_ADDED_ANIME_CHANNEL, name, importance);
+            NotificationChannel channel = new NotificationChannel(RECENTLY_UPDATED_ANIME_CHANNEL, name, importance);
             channel.setDescription(description);
             channel.enableVibration(true);
 
@@ -211,24 +211,34 @@ public class AnimeNotificationManager {
         }
     }
 
-    public static void recentlyAddedAnimeNotification(Context context, int addedAnimeCount) {
+    public static void recentlyAddedAnimeNotification(Context context, long addedAnimeCount, long updatedAnimeCount) {
         context = context.getApplicationContext();
         if (ActivityCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
-            createRecentlyAddedAnimeNotificationChannel(context);
-            PackageManager pm = context.getPackageManager();
-            Intent intent = pm.getLaunchIntentForPackage("com.example.kanshi");
-            PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_IMMUTABLE);
-            pendingIntent.cancel();
-            pendingIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_IMMUTABLE);
-            NotificationCompat.Builder builder = new NotificationCompat.Builder(context, RECENTLY_ADDED_ANIME_CHANNEL)
-                .setSmallIcon(R.drawable.ic_stat_name)
-                .setContentTitle("Recently Added Anime +" + addedAnimeCount)
-                .setContentIntent(pendingIntent)
-                .setAutoCancel(true)
-                .setPriority(NotificationCompat.PRIORITY_DEFAULT);
-            NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
-            notificationManager.cancel(NOTIFICATION_ADDED_ANIME);
-            notificationManager.notify(NOTIFICATION_ADDED_ANIME, builder.build());
+            if (addedAnimeCount > 0 || updatedAnimeCount > 0) {
+                createRecentlyAddedAnimeNotificationChannel(context);
+                PackageManager pm = context.getPackageManager();
+                Intent intent = pm.getLaunchIntentForPackage("com.example.kanshi");
+                PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_IMMUTABLE);
+                pendingIntent.cancel();
+                pendingIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_IMMUTABLE);
+                NotificationCompat.Builder builder = new NotificationCompat.Builder(context, RECENTLY_UPDATED_ANIME_CHANNEL)
+                        .setSmallIcon(R.drawable.ic_stat_name)
+                        .setContentIntent(pendingIntent)
+                        .setAutoCancel(true)
+                        .setShowWhen(false)
+                        .setNumber((int) (addedAnimeCount+updatedAnimeCount))
+                        .setPriority(NotificationCompat.PRIORITY_DEFAULT);
+                if (updatedAnimeCount > 0 && addedAnimeCount > 0) {
+                    builder.setContentTitle("Updates: "+addedAnimeCount+" New Anime, "+updatedAnimeCount+" "+(updatedAnimeCount>1?"Changes":"Modified"));
+                } else if (updatedAnimeCount > 0) {
+                    builder.setContentTitle("Updates: "+updatedAnimeCount+" Modified Anime");
+                } else {
+                    builder.setContentTitle("Updates: "+addedAnimeCount+" New Anime");
+                }
+                NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
+                notificationManager.cancel(NOTIFICATION_UPDATED_ANIME);
+                notificationManager.notify(NOTIFICATION_UPDATED_ANIME, builder.build());
+            }
         }
     }
 
@@ -378,7 +388,7 @@ public class AnimeNotificationManager {
                             .setContentIntent(pendingIntent)
                             .setGroup(ANIME_RELEASE_NOTIFICATION_GROUP)
                             .setGroupAlertBehavior(Notification.GROUP_ALERT_SUMMARY)
-                            .setNumber(myAnimeNotifications.size())
+                            .setNumber(0)
                             .setWhen(lastSentMyAnimeNotificationTime)
                             .setShowWhen(true);
 
@@ -445,12 +455,12 @@ public class AnimeNotificationManager {
                             .setContentIntent(pendingIntent)
                             .setGroup(ANIME_RELEASE_NOTIFICATION_GROUP)
                             .setGroupAlertBehavior(Notification.GROUP_ALERT_SUMMARY)
-                            .setNumber(animeNotifications.size())
+                            .setNumber(0)
                             .setWhen(lastSentOtherAnimeNotificationTime)
                             .setShowWhen(true);
 
                     String notificationTitle = "Anime Aired";
-                    int animeReleaseNotificationSize = myAnimeNotifications.size() + animeNotifications.size();
+                    long animeReleaseNotificationSize = myAnimeNotifications.size() + animeNotifications.size();
                     if (animeReleaseNotificationSize > 1) {
                         notificationTitle = notificationTitle + " +" + animeReleaseNotificationSize;
                     }

@@ -695,8 +695,8 @@
 	let addedBackgroundStatusUpdate = () => {
 		addedBackgroundStatusUpdate = undefined;
 		if (window?.[$isBackgroundUpdateKey] !== true) return;
-		if ($android) return;
-		if ($isBackgroundUpdateKey) return;
+		if (!$android) return;
+		if (!$isBackgroundUpdateKey) return;
 		let sendBackgroundStatusIsRunning;
 		dataStatus.subscribe((val) => {
 			if (sendBackgroundStatusIsRunning) return;
@@ -705,9 +705,8 @@
 			sendBackgroundStatusIsRunning = true;
 			setTimeout(() => {
 				sendBackgroundStatusIsRunning = false;
-				let text = typeof val === "string" ? val : "";
 				try {
-					JSBridge?.sendBackgroundStatus?.(text);
+					JSBridge?.sendBackgroundStatus?.(val);
 				} catch (e) {}
 			}, 1000);
 		});
