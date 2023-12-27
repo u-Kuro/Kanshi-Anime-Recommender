@@ -385,8 +385,9 @@ public class YoutubeViewActivity extends AppCompatActivity {
 
     @Override
     protected void onResume() {
-        if (MainActivity.getInstanceActivity()!=null) {
-            MainActivity.getInstanceActivity().isInApp = true;
+        MainActivity mainActivity = MainActivity.getInstanceActivity();
+        if (mainActivity!=null) {
+            mainActivity.isInApp = true;
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             webView.getSettings().setOffscreenPreRaster(true);
@@ -406,8 +407,9 @@ public class YoutubeViewActivity extends AppCompatActivity {
 
     @Override
     protected void onPause() {
-        if (MainActivity.getInstanceActivity()!=null) {
-            MainActivity.getInstanceActivity().isInApp = false;
+        MainActivity mainActivity = MainActivity.getInstanceActivity();
+        if (mainActivity!=null) {
+            mainActivity.isInApp = false;
         }
         autoPlayVideo(webView);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -420,8 +422,9 @@ public class YoutubeViewActivity extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
-        if (MainActivity.getInstanceActivity()!=null) {
-            MainActivity.getInstanceActivity().isInApp = false;
+        MainActivity mainActivity = MainActivity.getInstanceActivity();
+        if (mainActivity!=null) {
+            mainActivity.isInApp = false;
         }
         webView.destroy();
         super.onDestroy();

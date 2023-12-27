@@ -85,8 +85,9 @@ public class MainService extends Service {
             notificationPermissionIsGranted = ActivityCompat.checkSelfPermission(this, android.Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED;
             if (notificationPermissionIsGranted) {
                 keepAppRunningInBackground = !keepAppRunningInBackground;
-                if (MainActivity.getInstanceActivity() != null) {
-                    MainActivity.getInstanceActivity().changeKeepAppRunningInBackground(keepAppRunningInBackground);
+                MainActivity mainActivity = MainActivity.getInstanceActivity();
+                if (mainActivity != null) {
+                    mainActivity.changeKeepAppRunningInBackground(keepAppRunningInBackground);
                 } else {
                     prefsEdit.putBoolean("keepAppRunningInBackground", keepAppRunningInBackground).apply();
                 }
@@ -288,6 +289,13 @@ public class MainService extends Service {
         public void backgroundUpdateIsFinished(boolean finished) {
             if (!alreadyCalled && finished) {
                 alreadyCalled = true;
+                MainActivity mainActivity = MainActivity.getInstanceActivity();
+                if (mainActivity != null) {
+                    if (!mainActivity.isInApp) {
+                        mainActivity.shouldRefresh = true;
+                    }
+                    mainActivity.webView.reload();
+                }
                 long backgroundUpdateTime = prefs.getLong("lastBackgroundUpdateTime", System.currentTimeMillis());
                 SharedPreferences.Editor prefsEdit = prefs.edit();
                 long ONE_HOUR_IN_MILLIS = TimeUnit.HOURS.toMillis(1);

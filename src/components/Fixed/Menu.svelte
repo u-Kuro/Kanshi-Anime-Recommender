@@ -259,11 +259,11 @@
         if (
             await $confirmPromise({
                 text: `Do you want ${
-                    keepAppRunningInBackground ? "stop" : "keep"
-                }  the application running in background for persistent updates?${
+                    keepAppRunningInBackground ? "prevent" : "allow"
+                } persistent background updates?${
                     keepAppRunningInBackground
                         ? ""
-                        : " Note that this will increase ram and power usage."
+                        : " Note that this will run every hour and use ram/power usage while the update is running."
                 }`,
                 isImportant: true,
             })

@@ -83,7 +83,7 @@ import androidx.core.content.FileProvider;
 import androidx.core.splashscreen.SplashScreen;
 
 public class MainActivity extends AppCompatActivity {
-    public final int appID = 277;
+    public final int appID = 278;
     public boolean keepAppRunningInBackground = false;
     public boolean webViewIsLoaded = false;
     public boolean permissionIsAsked = false;
@@ -93,7 +93,7 @@ public class MainActivity extends AppCompatActivity {
     private int overlayColor;
     private ValueCallback<Uri[]> mUploadMessage;
     private String exportPath;
-    private MediaWebView webView;
+    public MediaWebView webView;
     private ProgressBar progressbar;
     private boolean pageLoaded = false;
 
@@ -106,6 +106,7 @@ public class MainActivity extends AppCompatActivity {
     public boolean appSwitched = false;
     public boolean fromYoutube;
     public static WeakReference<MainActivity> weakActivity;
+    public boolean shouldRefresh = false;
 
     // Activity Results
     final ActivityResultLauncher<Intent> allowApplicationUpdate =
@@ -274,6 +275,9 @@ public class MainActivity extends AppCompatActivity {
         webView.setWebViewClient(new WebViewClient(){
             @Override
             public void onPageStarted(WebView view, String url, Bitmap favicon) {
+                if (shouldRefresh) {
+                    shouldRefresh = false;
+                }
                 if (appSwitched) {
                     appSwitched = false;
                     view.loadUrl("javascript:(()=>window.shouldUpdateNotifications=true)();");
@@ -518,16 +522,21 @@ public class MainActivity extends AppCompatActivity {
             webView.getSettings().setOffscreenPreRaster(true);
         }
         super.onResume();
-        webView.post(() -> webView.loadUrl("javascript:" +
-            "window?.returnedAppIsVisible?.(true);" + // Should Be Runned First
-            "window?.checkEntries?.();"
-        ));
         if (persistentToast != null) {
             if (currentToast != null) {
                 currentToast.cancel();
             }
             persistentToast.show();
             persistentToast = null;
+        }
+        if (shouldRefresh) {
+            shouldRefresh = false;
+            webView.reload();
+        } else {
+            webView.post(() -> webView.loadUrl("javascript:" +
+                "window?.returnedAppIsVisible?.(true);" + // Should Be Runned First
+                "window?.checkEntries?.();"
+            ));
         }
     }
 

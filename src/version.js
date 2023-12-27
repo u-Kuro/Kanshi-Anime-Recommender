@@ -1,4 +1,4 @@
-const version = 277;
+const version = 278;
 export default async function getWebVersion() {
     try {
         let location = window.location

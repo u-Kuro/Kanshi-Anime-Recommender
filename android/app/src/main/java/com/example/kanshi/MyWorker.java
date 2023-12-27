@@ -571,8 +571,9 @@ public class MyWorker extends Worker {
         long currentTime = System.currentTimeMillis();
         long backgroundUpdateTime = prefs.getLong("lastBackgroundUpdateTime",currentTime+1);
         boolean isInApp = false;
-        if (MainActivity.getInstanceActivity()!=null) {
-            isInApp = MainActivity.getInstanceActivity().isInApp;
+        MainActivity mainActivity = MainActivity.getInstanceActivity();
+        if (mainActivity!=null) {
+            isInApp = mainActivity.isInApp;
         }
         if (keepAppRunningInBackground && !isInApp) {
             Intent intent = new Intent(this.getApplicationContext(), MainService.class);
