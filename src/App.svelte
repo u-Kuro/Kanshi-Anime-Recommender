@@ -86,7 +86,7 @@
 		if ($android && navigator.onLine) {
 			try {
 				if ($appID) {
-					JSBridge.checkAppID($appID, false);
+					JSBridge?.checkAppID?.($appID, false);
 				}
 			} catch (e) {
 				window.updateAppAlert?.();
@@ -552,45 +552,69 @@
 		initCheck = false,
 		visibilityChange = false,
 	) {
+		console.log({
+			checkAutoFunctions: 0,
+			initCheck,
+			visibilityChange,
+			$appID,
+			$userRequestIsRunning,
+		});
 		if ($appID == null) {
+			console.log({ checkAutoFunctions: 1 });
 			window?.kanshiInit?.then?.(() => {
+				console.log({ checkAutoFunctions: 2 });
 				checkAutoFunctions(initCheck);
 			});
 		} else if (initCheck) {
 			try {
+				console.log({ checkAutoFunctions: 3 });
 				await requestUserEntries();
+				console.log({ checkAutoFunctions: 4 });
 				await requestAnimeEntries();
+				console.log({ checkAutoFunctions: 5 });
 				checkAutoExportOnLoad();
 			} catch (e) {
+				console.log({ checkAutoFunctions: 6 });
 				$dataStatus = "Something went wrong";
 				console.error(e);
 				checkAutoExportOnLoad();
 			}
 		} else if ($autoUpdate && (await autoUpdateIsPastDate())) {
+			console.log({ checkAutoFunctions: 7 });
 			if (!$userRequestIsRunning) {
+				console.log({ checkAutoFunctions: 8 });
 				requestUserEntries()
 					.then(() => {
+						console.log({ checkAutoFunctions: 9 });
 						requestAnimeEntries().finally(() => {
+							console.log({ checkAutoFunctions: 10 });
 							checkAutoExportOnLoad();
 						});
 					})
 					.catch((error) => {
+						console.log({ checkAutoFunctions: 11 });
 						checkAutoExportOnLoad();
 						$dataStatus = "Something went wrong";
 						console.error(error);
 					});
 			} else {
+				console.log({ checkAutoFunctions: 12 });
 				requestAnimeEntries().finally(() => {
+					console.log({ checkAutoFunctions: 13 });
 					checkAutoExportOnLoad();
 				});
 			}
 		} else if ($autoExport && (await autoExportIsPastDate())) {
+			console.log({ checkAutoFunctions: 14 });
 			exportUserData().finally(() => {
+				console.log({ checkAutoFunctions: 15 });
 				if (visibilityChange && !$userRequestIsRunning) {
+					console.log({ checkAutoFunctions: 16 });
 					requestUserEntries({ visibilityChange: true });
 				}
 			});
 		} else if (visibilityChange && !$userRequestIsRunning) {
+			console.log({ checkAutoFunctions: 17 });
 			requestUserEntries({ visibilityChange: true });
 		}
 	}
@@ -721,13 +745,20 @@
 		}
 	});
 	let hourINMS = 60 * 60 * 1000;
-	autoUpdate.subscribe(async (val) => {
+	window.setAutoUpdate = (val) => {
+		console.log({ autoUpdateRun: 0 });
+		autoUpdateRun(val ?? $autoUpdate);
+	};
+	async function autoUpdateRun(val) {
+		console.log({ autoUpdateRun: val });
 		if (val === true) {
 			if ($appID != null) {
+				console.log({ autoUpdateRun: 1 });
 				saveJSON(true, "autoUpdate");
 			}
 			// Check Run First
 			if (await autoUpdateIsPastDate()) {
+				console.log({ autoUpdateRun: 2 });
 				checkAutoFunctions();
 				if ($autoUpdateInterval) clearInterval($autoUpdateInterval);
 				$autoUpdateInterval = setInterval(() => {
@@ -736,6 +767,7 @@
 					}
 				}, hourINMS);
 			} else {
+				console.log({ autoUpdateRun: 3 });
 				let timeLeft =
 					hourINMS -
 						(new Date().getTime() -
@@ -756,13 +788,16 @@
 				);
 			}
 		} else if (val === false) {
+			console.log({ autoUpdateRun: 4 });
 			if ($autoUpdateInterval) clearInterval($autoUpdateInterval);
 			$autoUpdateInterval = null;
 			if ($appID != null) {
+				console.log({ autoUpdateRun: 5 });
 				saveJSON(false, "autoUpdate");
 			}
 		}
-	});
+	}
+	autoUpdate.subscribe(autoUpdateRun);
 	async function autoUpdateIsPastDate() {
 		let isPastDate = false;
 		$lastRunnedAutoUpdateDate = await retrieveJSON(
@@ -797,12 +832,19 @@
 			requestAnimeEntries();
 		}
 	});
-	autoExport.subscribe(async (val) => {
+	window.setAutoExport = (val) => {
+		console.log({ autoUpdateExport: 0 });
+		autoUpdateRun(val ?? $autoExport);
+	};
+	async function autoExportRun(val) {
+		console.log({ autoUpdateExport: val });
 		if (val === true) {
 			if ($appID != null) {
+				console.log({ autoUpdateExport: 1 });
 				saveJSON(true, "autoExport");
 			}
 			if (await autoExportIsPastDate()) {
+				console.log({ autoUpdateExport: 2 });
 				checkAutoFunctions();
 				if ($autoExportInterval) clearInterval($autoExportInterval);
 				$autoExportInterval = setInterval(() => {
@@ -811,6 +853,7 @@
 					}
 				}, hourINMS);
 			} else {
+				console.log({ autoUpdateExport: 3 });
 				let timeLeft =
 					hourINMS -
 						(new Date().getTime() -
@@ -831,13 +874,16 @@
 				);
 			}
 		} else if (val === false) {
+			console.log({ autoUpdateExport: 4 });
 			if ($autoExportInterval) clearInterval($autoExportInterval);
 			$autoExportInterval = null;
 			if ($appID != null) {
+				console.log({ autoUpdateExport: 5 });
 				saveJSON(false, "autoExport");
 			}
 		}
-	});
+	}
+	autoExport.subscribe(autoExportRun);
 	async function autoExportIsPastDate() {
 		// Check Run First
 		let isPastDate = false;
@@ -880,14 +926,40 @@
 		}
 	});
 	// Global Function For Android/Browser
-	document.addEventListener("visibilitychange", () => {
+	document.addEventListener("visibilitychange", async () => {
 		if ($initData || $android || document.visibilityState !== "visible")
 			return;
-		if ($autoExport == null) {
-			autoExport.update((e) => e);
-		}
 		if ($autoUpdate == null) {
-			autoUpdate.update((e) => e);
+			$autoUpdate =
+				$autoUpdate ??
+				getLocalStorage("autoUpdate") ??
+				(await retrieveJSON("autoUpdate"));
+			if ($autoUpdate == null) {
+				$autoUpdate = false;
+				setLocalStorage("autoUpdate", false)
+					.catch(() => {
+						removeLocalStorage("autoUpdate");
+					})
+					.finally(() => {
+						saveJSON(false, "autoUpdate");
+					});
+			}
+		}
+		if ($autoExport == null) {
+			$autoExport =
+				$autoExport ??
+				getLocalStorage("autoExport") ??
+				(await retrieveJSON("autoExport"));
+			if ($autoExport == null) {
+				$autoExport = false;
+				setLocalStorage("autoExport", false)
+					.catch(() => {
+						removeLocalStorage("autoExport");
+					})
+					.finally(() => {
+						saveJSON(false, "autoExport");
+					});
+			}
 		}
 		checkAutoFunctions(false, true);
 	});
@@ -900,13 +972,39 @@
 		window.removeEventListener("wheel", windowWheel, { passive: true });
 	};
 	window.addEventListener("wheel", windowWheel, { passive: true });
-	window.checkEntries = () => {
+	window.checkEntries = async () => {
 		if ($initData) return;
-		if ($autoExport == null) {
-			autoExport.update((e) => e);
-		}
 		if ($autoUpdate == null) {
-			autoUpdate.update((e) => e);
+			$autoUpdate =
+				$autoUpdate ??
+				getLocalStorage("autoUpdate") ??
+				(await retrieveJSON("autoUpdate"));
+			if ($autoUpdate == null) {
+				$autoUpdate = false;
+				setLocalStorage("autoUpdate", false)
+					.catch(() => {
+						removeLocalStorage("autoUpdate");
+					})
+					.finally(() => {
+						saveJSON(false, "autoUpdate");
+					});
+			}
+		}
+		if ($autoExport == null) {
+			$autoExport =
+				$autoExport ??
+				getLocalStorage("autoExport") ??
+				(await retrieveJSON("autoExport"));
+			if ($autoExport == null) {
+				$autoExport = false;
+				setLocalStorage("autoExport", false)
+					.catch(() => {
+						removeLocalStorage("autoExport");
+					})
+					.finally(() => {
+						saveJSON(false, "autoExport");
+					});
+			}
 		}
 		checkAutoFunctions(false, true);
 	};
@@ -999,7 +1097,7 @@
 					}
 				}
 				try {
-					JSBridge.willExit();
+					JSBridge?.willExit?.();
 				} catch (e) {}
 				window.setShouldGoBack(true);
 				willExit = false;
@@ -1041,7 +1139,7 @@
 		if (!_shouldGoBack) willExit = false;
 		if ($android) {
 			try {
-				JSBridge.setShouldGoBack(_shouldGoBack);
+				JSBridge?.setShouldGoBack?.(_shouldGoBack);
 			} catch (e) {}
 		} else {
 			if (window.history.state !== "visited") {
@@ -1055,7 +1153,7 @@
 	window.copyToClipBoard = (text) => {
 		if ($android) {
 			try {
-				JSBridge.copyToClipBoard(text);
+				JSBridge?.copyToClipBoard?.(text);
 			} catch (e) {}
 		} else {
 			navigator?.clipboard?.writeText?.(text);
@@ -1241,7 +1339,7 @@
 			})
 		) {
 			try {
-				JSBridge.downloadUpdate();
+				JSBridge?.downloadUpdate?.();
 			} catch (e) {
 				window.open(
 					"https://github.com/u-Kuro/Kanshi.Anime-Recommendation/raw/main/Kanshi.apk",
@@ -1283,10 +1381,10 @@
 					($dropdownIsVisible && windowWidth <= 750);
 				clearTimeout(changeStatusBarColorTimeout);
 				if (isOverlay) {
-					JSBridge.changeStatusBarColor(true);
+					JSBridge?.changeStatusBarColor?.(true);
 				} else {
 					changeStatusBarColorTimeout = setTimeout(() => {
-						JSBridge.changeStatusBarColor(false);
+						JSBridge?.changeStatusBarColor?.(false);
 					}, 200);
 				}
 			} catch (e) {}

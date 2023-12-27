@@ -90,8 +90,8 @@
             return;
         if ($android) {
             try {
-                JSBridge.copyToClipBoard(shownTitle);
-                JSBridge.copyToClipBoard(animeCopyTitle);
+                JSBridge?.copyToClipBoard?.(shownTitle);
+                JSBridge?.copyToClipBoard?.(animeCopyTitle);
             } catch (ex) {}
         } else {
             if (shownTitle && !ncsCompare(animeCopyTitle, shownTitle)) {

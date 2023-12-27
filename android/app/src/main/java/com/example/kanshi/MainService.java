@@ -13,6 +13,7 @@ import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.os.Build;
 import android.os.Environment;
+import android.os.Handler;
 import android.os.IBinder;
 import android.util.Log;
 import android.webkit.ConsoleMessage;
@@ -43,6 +44,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 @SuppressLint("SetJavaScriptEnabled")
 public class MainService extends Service {
@@ -60,6 +62,8 @@ public class MainService extends Service {
     private final String STOP_SERVICE_ACTION = "STOP_MAIN_SERVICE";
     private final String SWITCH_MAIN_SERVICE = "SWITCH_MAIN_SERVICE";
     private final String SET_MAIN_SERVICE = "SET_MAIN_SERVICE";
+
+    private final Handler handler = new Handler();
 
     @Nullable
     @Override
@@ -145,6 +149,7 @@ public class MainService extends Service {
                     appSwitched = false;
                     view.loadUrl("javascript:(()=>window.shouldUpdateNotifications=true)();");
                 }
+                view.loadUrl("javascript:(()=>window.isInAndroidBackgroundProcess=true)();");
                 super.onPageStarted(view, url, favicon);
             }
 
@@ -161,6 +166,7 @@ public class MainService extends Service {
                     pageLoaded = true;
                     view.loadUrl("file:///android_asset/www/index.html");
                 }
+                view.loadUrl("javascript:(()=>window.isInAndroidBackgroundProcess=true)();");
                 isInWebApp = url.startsWith("https://u-kuro.github.io/Kanshi.Anime-Recommendation");
                 updateNotificationTitle();
                 super.onPageFinished(view, url);
@@ -219,10 +225,21 @@ public class MainService extends Service {
         appSwitched = true;
         pageLoaded = false;
         webView.loadUrl("https://u-kuro.github.io/Kanshi.Anime-Recommendation/");
+
+        // Add Auto Updates
+        Runnable updateData = new Runnable(){
+            public void run(){
+                System.out.println("xkushiii Hello, World! "+(System.currentTimeMillis()));
+                webView.loadUrl("javascript:window?.setAutoUpdate?.(true);window?.setAutoExport();");
+                handler.postDelayed(this, TimeUnit.HOURS.toMillis(1));
+            }
+        };
+        handler.post(updateData);
     }
 
     @Override
     public void onDestroy() {
+        handler.removeCallbacksAndMessages(null);
         webView.destroy();
         super.onDestroy();
     }

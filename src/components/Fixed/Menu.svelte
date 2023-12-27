@@ -87,7 +87,7 @@
     // Global Function For Android
     function handleExportFolder() {
         try {
-            JSBridge.chooseExportFolder();
+            JSBridge?.chooseExportFolder?.();
         } catch (e) {}
     }
     window.setExportPathAvailability = async (value = true) => {
@@ -289,14 +289,14 @@
     function showRecentReleases() {
         if (!$android) return;
         try {
-            JSBridge.showRecentReleases();
+            JSBridge?.showRecentReleases?.();
         } catch (e) {}
     }
 
     function switchAppMode() {
         if (!$android) return;
         try {
-            JSBridge.switchApp();
+            JSBridge?.switchApp?.();
         } catch (e) {}
     }
 
@@ -340,7 +340,7 @@
             })
         ) {
             try {
-                JSBridge.refreshWeb();
+                JSBridge?.refreshWeb?.();
             } catch (e) {}
         }
     }
@@ -354,7 +354,7 @@
             })
         ) {
             try {
-                JSBridge.clearCache();
+                JSBridge?.clearCache?.();
             } catch (e) {}
         }
     }

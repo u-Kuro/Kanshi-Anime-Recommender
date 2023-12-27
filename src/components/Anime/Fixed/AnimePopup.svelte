@@ -1102,7 +1102,7 @@
     window.addEventListener("online", () => {
         if ($android) {
             try {
-                JSBridge.isOnline(true);
+                JSBridge?.isOnline?.(true);
             } catch (e) {}
         }
         $dataStatus = "Reconnected Successfully";
@@ -1153,7 +1153,7 @@
     window.addEventListener("offline", () => {
         if ($android) {
             try {
-                JSBridge.isOnline(false);
+                JSBridge?.isOnline?.(false);
             } catch (e) {}
         }
         $dataStatus = "Currently Offline";
