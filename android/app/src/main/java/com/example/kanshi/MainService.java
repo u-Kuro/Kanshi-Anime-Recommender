@@ -480,7 +480,7 @@ public class MainService extends Service {
         }
     }
     private final ExecutorService updateCurrentNotificationsExecutorService = Executors.newFixedThreadPool(1);
-    private Future<?> updateCurrentNotificationsFuture;
+    private Future<String> updateCurrentNotificationsFuture;
     public void updateCurrentNotifications() {
         if (updateCurrentNotificationsFuture != null && !updateCurrentNotificationsFuture.isCancelled()) {
             updateCurrentNotificationsFuture.cancel(true);
@@ -499,10 +499,16 @@ public class MainService extends Service {
             for (AnimeNotification anime : allAnimeNotificationValues) {
                 animeIdsToBeUpdated.add(String.valueOf(anime.animeId));
             }
-            String joinedAnimeIds = String.join(",", animeIdsToBeUpdated);
-            webView.loadUrl("javascript:window?.updateNotifications?.(["+joinedAnimeIds+"])");
+            return String.join(",", animeIdsToBeUpdated);
         });
-
+        try {
+            String joinedAnimeIds = updateCurrentNotificationsFuture.get();
+            webView.loadUrl("javascript:window?.updateNotifications?.(["+joinedAnimeIds+"])");
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            updateCurrentNotificationsExecutorService.shutdown();
+        }
     }
     public void isExported(boolean success) {
         if (success) {
