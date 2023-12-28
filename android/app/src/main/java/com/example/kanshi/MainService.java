@@ -302,6 +302,7 @@ public class MainService extends Service {
             && !isAddingAnimeReleaseNotification
             && AnimeNotificationManager.ongoingImageDownloads.size()==0
         ) {
+            updateLastBackgroundUpdateTime();
             stopForeground(true);
             stopSelf();
         }
@@ -329,13 +330,11 @@ public class MainService extends Service {
     }
 
     public void finishedAddingAnimeReleaseNotification() {
-        updateLastBackgroundUpdateTime();
         isAddingAnimeReleaseNotification = false;
         stopService();
     }
 
     public void finishedAddingUpdatedAnimeNotification() {
-        updateLastBackgroundUpdateTime();
         isAddingUpdatedAnimeNotification = false;
         stopService();
     }
@@ -350,19 +349,26 @@ public class MainService extends Service {
             pageLoaded = true;
         }
         @JavascriptInterface
-        public void setShouldProcessRecommendation() {
-            shouldProcessRecommendationList = true;
+        public void setShouldProcessRecommendation(boolean shouldProcess) {
+            shouldProcessRecommendationList = shouldProcess;
+            MainActivity mainActivity = MainActivity.getInstanceActivity();
+            if (mainActivity != null) {
+                mainActivity.shouldProcessRecommendationList = shouldProcessRecommendationList;
+            }
         }
         @JavascriptInterface
-        public void setShouldLoadAnime() {
-            shouldLoadAnime = true;
+        public void setShouldLoadAnime(boolean shouldLoad) {
+            shouldLoadAnime = shouldLoad;
+            MainActivity mainActivity = MainActivity.getInstanceActivity();
+            if (mainActivity != null) {
+                mainActivity.shouldLoadAnime = shouldLoadAnime;
+            }
         }
         @JavascriptInterface
         public void backgroundUpdateIsFinished(boolean finished) {
             if (finished) {
                 lastBackgroundUpdateIsFinished = true;
             }
-            updateLastBackgroundUpdateTime();
             shouldCallStopService = true;
             stopService();
         }

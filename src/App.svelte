@@ -339,140 +339,76 @@
 							let shouldProcessRecommendation;
 							requestUserEntries().finally(() => {
 								shouldProcessRecommendation =
-									shouldProcessRecommendation ||
-									window.shouldProcessRecommendation;
+									window.KanshiBackgroundShouldProcessRecommendation;
 								requestAnimeEntries().finally(() => {
 									shouldProcessRecommendation =
 										shouldProcessRecommendation ||
-										window.shouldProcessRecommendation;
+										window.KanshiBackgroundShouldProcessRecommendation;
 									new Promise(async (resolve) => {
-										if (!shouldProcessRecommendation) {
-											let lastProcessRecommendationAiringAt =
-												getLocalStorage(
-													"lastProcessRecommendationAiringAt",
-												) ??
-												(await retrieveJSON(
-													"lastProcessRecommendationAiringAt",
-												));
-											if (
-												typeof lastProcessRecommendationAiringAt ===
-													"number" &&
-												!isNaN(
-													lastProcessRecommendationAiringAt,
-												)
-											) {
-												let neareastAnimeCompletionAiringAt =
-													getLocalStorage(
-														"neareastAnimeCompletionAiringAt",
-													) ??
-													(await retrieveJSON(
-														"neareastAnimeCompletionAiringAt",
-													));
-												if (
-													typeof neareastAnimeCompletionAiringAt ===
-														"number" &&
-													!isNaN(
-														neareastAnimeCompletionAiringAt,
-													)
-												) {
-													let neareastAnimeCompletionAiringDate =
-														new Date(
-															neareastAnimeCompletionAiringAt *
-																1000,
-														);
-													if (
-														neareastAnimeCompletionAiringDate <=
-															new Date() &&
-														lastProcessRecommendationAiringAt >
-															neareastAnimeCompletionAiringAt
-													) {
-														shouldProcessRecommendation = true;
-													}
-												}
-											} else {
-												shouldProcessRecommendation = true;
-											}
-										}
-										if (!shouldProcessRecommendation) {
-											shouldProcessRecommendation =
-												await retrieveJSON(
-													"shouldProcessRecommendation",
-												);
-										}
-										if (
-											shouldProcessRecommendation ===
-											undefined
-										) {
-											let recommendedAnimeListLen =
-												await retrieveJSON(
-													"recommendedAnimeListLength",
-												);
-											if (recommendedAnimeListLen < 1) {
-												shouldProcessRecommendation = true;
-											}
-										}
 										if (shouldProcessRecommendation) {
 											try {
-												JSBridge?.setShouldProcessRecommendation?.();
+												JSBridge?.setShouldProcessRecommendation?.(
+													true,
+												);
 											} catch (e) {}
-											processRecommendedAnimeList().finally(
-												() => {
+											processRecommendedAnimeList()
+												.then(() => {
+													try {
+														JSBridge?.setShouldProcessRecommendation?.(
+															false,
+														);
+													} catch (e) {}
 													resolve(true);
-												},
-											);
+												})
+												.catch(resolve);
 										} else {
 											resolve();
 										}
-									}).then(async (shouldLoadAnime) => {
+									}).then((recommendationListIsProcessed) => {
 										new Promise(async (resolve) => {
-											if (!shouldLoadAnime) {
-												shouldLoadAnime =
-													await retrieveJSON(
-														"shouldLoadAnime",
-													);
-												if (
-													shouldLoadAnime ===
-													undefined
-												) {
-													let finalAnimeListLen =
-														await retrieveJSON(
-															"finalAnimeListLength",
-														);
-													if (finalAnimeListLen < 1) {
-														shouldLoadAnime = true;
-													}
-												}
-											}
-											if (shouldLoadAnime) {
+											if (recommendationListIsProcessed) {
 												try {
-													JSBridge?.setShouldLoadAnime?.();
+													JSBridge?.setShouldLoadAnime?.(
+														true,
+													);
 												} catch (e) {}
-												animeLoader().finally(resolve);
+												animeLoader()
+													.then(() => {
+														try {
+															JSBridge?.setShouldLoadAnime?.(
+																false,
+															);
+														} catch (e) {}
+													})
+													.finally(resolve);
 											} else {
 												resolve();
 											}
 										}).finally(async () => {
-											$exportPathIsAvailable =
-												$exportPathIsAvailable ??
-												(await retrieveJSON(
-													"exportPathIsAvailable",
-												));
-											$autoExport =
-												$autoExport ??
-												(await retrieveJSON(
-													"autoExport",
-												));
-											if (
-												$exportPathIsAvailable &&
-												$autoExport
-											) {
-												await new Promise((resolve) =>
-													exportUserData().finally(
-														resolve,
-													),
-												);
+											let dataIsUpdated =
+												shouldProcessRecommendation;
+											if (dataIsUpdated) {
+												$exportPathIsAvailable =
+													$exportPathIsAvailable ??
+													(await retrieveJSON(
+														"exportPathIsAvailable",
+													));
+												if ($exportPathIsAvailable) {
+													$autoExport =
+														$autoExport ??
+														(await retrieveJSON(
+															"autoExport",
+														));
+													if ($autoExport) {
+														await new Promise(
+															(resolve) =>
+																exportUserData().finally(
+																	resolve,
+																),
+														);
+													}
+												}
 											}
-											console.log("eee");
 											JSBridge?.backgroundUpdateIsFinished?.(
 												true,
 											);
@@ -911,27 +847,26 @@
 				console.error(error);
 			});
 	});
-	window.shouldRefreshAnimeList = async (
-		shouldProcessRecommendation,
-		shouldLoadAnime,
-	) => {
-		if ($initData) return;
-		new Promise(async (resolve) => {
-			if (shouldProcessRecommendation) {
-				await saveJSON(true, "shouldProcessRecommendation");
-				processRecommendedAnimeList().finally(() => resolve(true));
+
+	async function runLoadAnime() {
+		return new Promise(async (resolve) => {
+			if (
+				($popupVisible ||
+					($gridFullView
+						? animeGridEl.scrollLeft > 500
+						: animeGridEl?.getBoundingClientRect?.()?.top < 0)) &&
+				$finalAnimeList?.length
+			) {
+				await saveJSON(true, "shouldLoadAnime");
+				$listUpdateAvailable = true;
+				resolve();
 			} else {
-				resolve(false);
-			}
-		}).then((thisShouldLoadAnime) => {
-			if (thisShouldLoadAnime || shouldLoadAnime) {
+				if ($animeLoaderWorker) {
+					$animeLoaderWorker.terminate();
+					$animeLoaderWorker = null;
+				}
 				animeLoader()
 					.then(async (data) => {
-						$listUpdateAvailable = false;
-						if ($animeLoaderWorker) {
-							$animeLoaderWorker.terminate();
-							$animeLoaderWorker = null;
-						}
 						$animeLoaderWorker = data.animeLoaderWorker;
 						if (data?.isNew) {
 							if (
@@ -965,16 +900,11 @@
 					})
 					.catch((error) => {
 						console.error(error);
-						return;
 					})
-					.finally(() => {
-						window?.checkEntries?.();
-					});
-			} else {
-				window?.checkEntries?.();
+					.finally(resolve);
 			}
 		});
-	};
+	}
 
 	loadAnime.subscribe(async (val) => {
 		if (typeof val !== "boolean" || $initData) return;
@@ -984,52 +914,29 @@
 			window?.[$isBackgroundUpdateKey] === true
 		)
 			return;
-		if (
-			($popupVisible ||
-				($gridFullView
-					? animeGridEl.scrollLeft > 500
-					: animeGridEl?.getBoundingClientRect?.()?.top < 0)) &&
-			$finalAnimeList?.length
-		) {
-			await saveJSON(true, "shouldLoadAnime");
-			$listUpdateAvailable = true;
-		} else {
-			if ($animeLoaderWorker) {
-				$animeLoaderWorker.terminate();
-				$animeLoaderWorker = null;
-			}
-			animeLoader()
-				.then(async (data) => {
-					$animeLoaderWorker = data.animeLoaderWorker;
-					if (data?.isNew) {
-						if (
-							$finalAnimeList?.length > data?.finalAnimeListCount
-						) {
-							$finalAnimeList = $finalAnimeList?.slice?.(
-								0,
-								data.finalAnimeListCount,
-							);
-						}
-						if (data?.finalAnimeList?.length > 0) {
-							data?.finalAnimeList?.forEach?.((anime, idx) => {
-								$newFinalAnime = {
-									idx: data.lastShownAnimeListIndex + idx,
-									finalAnimeList: anime,
-								};
-							});
-						} else {
-							$finalAnimeList = [];
-						}
-						$hiddenEntries = data.hiddenEntries || $hiddenEntries;
-					}
-					$dataStatus = null;
-					return;
-				})
-				.catch((error) => {
-					console.error(error);
-				});
-		}
+		runLoadAnime();
 	});
+
+	window.shouldRefreshAnimeList = async (
+		shouldProcessRecommendation,
+		shouldLoadAnime,
+	) => {
+		if ($initData) return;
+		new Promise(async (resolve) => {
+			if (shouldProcessRecommendation) {
+				await saveJSON(true, "shouldProcessRecommendation");
+				processRecommendedAnimeList().finally(() => resolve(true));
+			} else {
+				resolve(false);
+			}
+		}).then((thisShouldLoadAnime) => {
+			if (thisShouldLoadAnime || shouldLoadAnime) {
+				runLoadAnime().finally(() => window?.checkEntries?.());
+			} else {
+				window?.checkEntries?.();
+			}
+		});
+	};
 
 	let hourINMS = 60 * 60 * 1000;
 	autoUpdate.subscribe(async (val) => {
