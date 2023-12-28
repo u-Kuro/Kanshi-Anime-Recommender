@@ -911,49 +911,68 @@
 				console.error(error);
 			});
 	});
-	window.shouldRefreshAnimeList = async () => {
+	window.shouldRefreshAnimeList = async (
+		shouldProcessRecommendation,
+		shouldLoadAnime,
+	) => {
 		if ($initData) return;
-		await saveJSON(true, "shouldProcessRecommendation");
-		processRecommendedAnimeList().finally(async () => {
-			$listUpdateAvailable = false;
-			if ($animeLoaderWorker) {
-				$animeLoaderWorker.terminate();
-				$animeLoaderWorker = null;
+		new Promise(async (resolve) => {
+			if (shouldProcessRecommendation) {
+				await saveJSON(true, "shouldProcessRecommendation");
+				processRecommendedAnimeList().finally(() => resolve(true));
+			} else {
+				resolve(false);
 			}
-			animeLoader()
-				.then(async (data) => {
-					$animeLoaderWorker = data.animeLoaderWorker;
-					if (data?.isNew) {
-						if (
-							$finalAnimeList?.length > data?.finalAnimeListCount
-						) {
-							$finalAnimeList = $finalAnimeList?.slice?.(
-								0,
-								data.finalAnimeListCount,
-							);
+		}).then((thisShouldLoadAnime) => {
+			if (thisShouldLoadAnime || shouldLoadAnime) {
+				animeLoader()
+					.then(async (data) => {
+						$listUpdateAvailable = false;
+						if ($animeLoaderWorker) {
+							$animeLoaderWorker.terminate();
+							$animeLoaderWorker = null;
 						}
-						if (data?.finalAnimeList?.length > 0) {
-							data?.finalAnimeList?.forEach?.((anime, idx) => {
-								$newFinalAnime = {
-									idx: data.lastShownAnimeListIndex + idx,
-									finalAnimeList: anime,
-								};
-							});
-						} else {
-							$finalAnimeList = [];
+						$animeLoaderWorker = data.animeLoaderWorker;
+						if (data?.isNew) {
+							if (
+								$finalAnimeList?.length >
+								data?.finalAnimeListCount
+							) {
+								$finalAnimeList = $finalAnimeList?.slice?.(
+									0,
+									data.finalAnimeListCount,
+								);
+							}
+							if (data?.finalAnimeList?.length > 0) {
+								data?.finalAnimeList?.forEach?.(
+									(anime, idx) => {
+										$newFinalAnime = {
+											idx:
+												data.lastShownAnimeListIndex +
+												idx,
+											finalAnimeList: anime,
+										};
+									},
+								);
+							} else {
+								$finalAnimeList = [];
+							}
+							$hiddenEntries =
+								data.hiddenEntries || $hiddenEntries;
 						}
-						$hiddenEntries = data.hiddenEntries || $hiddenEntries;
-					}
-					$dataStatus = null;
-					return;
-				})
-				.catch((error) => {
-					console.error(error);
-					return;
-				})
-				.finally(() => {
-					window?.checkEntries?.();
-				});
+						$dataStatus = null;
+						return;
+					})
+					.catch((error) => {
+						console.error(error);
+						return;
+					})
+					.finally(() => {
+						window?.checkEntries?.();
+					});
+			} else {
+				window?.checkEntries?.();
+			}
 		});
 	};
 
