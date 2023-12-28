@@ -58,12 +58,11 @@ public class AnimeNotificationManager {
     private static final ScheduledExecutorService addNotificationFutureExecutor = Executors.newScheduledThreadPool(1);
     private static ScheduledFuture<?> addNotificationFuture;
     private static final Handler showRecentReleasesHandler = new Handler(Looper.getMainLooper());
-    private static final ConcurrentHashMap<String, Boolean> ongoingImageDownloads = new ConcurrentHashMap<>();
+    public static final ConcurrentHashMap<String, Boolean> ongoingImageDownloads = new ConcurrentHashMap<>();
     public static final ConcurrentHashMap<String, AnimeNotification> allAnimeNotification = new ConcurrentHashMap<>();
     public static final ConcurrentHashMap<String, AnimeNotification> allAnimeToUpdate = new ConcurrentHashMap<>();
     public static AnimeNotification nearestNotificationInfo = null;
     public static long nearestNotificationTime = 0L;
-
     public static void scheduleAnimeNotification(Context context, long animeId, String title, long releaseEpisode, long maxEpisode, long releaseDateMillis, String imageUrl, boolean isMyAnime) {
         context = context.getApplicationContext();
         createAnimeReleasesNotificationChannel(context);
@@ -104,12 +103,17 @@ public class AnimeNotificationManager {
                                 }
                                 LocalPersistence.writeObjectToFile(finalContext, stream.toByteArray(), "notificationLogoIcon");
                             }
-                        } catch (Exception ignored) {
-                        }
+                        } catch (Exception ignored) {}
                     }
                     AnimeNotification anime = new AnimeNotification(animeId, title, releaseEpisode, maxEpisode, releaseDateMillis, imageByte, isMyAnime);
                     addAnimeNotification(finalContext, anime);
                     ongoingImageDownloads.remove(animeId + "-" + releaseEpisode);
+                    if (ongoingImageDownloads.size()==0) {
+                        MainService mainService = MainService.getInstanceActivity();
+                        if (mainService!=null) {
+                            mainService.finishedAddingAnimeReleaseNotification();
+                        }
+                    }
                 });
             }
         } else {
@@ -211,7 +215,7 @@ public class AnimeNotificationManager {
         }
     }
 
-    public static void recentlyAddedAnimeNotification(Context context, long addedAnimeCount, long updatedAnimeCount) {
+    public static void recentlyUpdatedAnimeNotification(Context context, long addedAnimeCount, long updatedAnimeCount) {
         context = context.getApplicationContext();
         if (ActivityCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
             if (addedAnimeCount > 0 || updatedAnimeCount > 0) {
@@ -238,6 +242,10 @@ public class AnimeNotificationManager {
                 NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
                 notificationManager.cancel(NOTIFICATION_UPDATED_ANIME);
                 notificationManager.notify(NOTIFICATION_UPDATED_ANIME, builder.build());
+                MainService mainService = MainService.getInstanceActivity();
+                if (mainService!=null) {
+                    mainService.finishedAddingUpdatedAnimeNotification();
+                }
             }
         }
     }

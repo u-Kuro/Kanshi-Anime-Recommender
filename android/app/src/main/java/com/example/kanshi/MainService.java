@@ -33,6 +33,7 @@ import androidx.core.app.NotificationManagerCompat;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -47,11 +48,11 @@ import java.util.concurrent.TimeUnit;
 
 @SuppressLint("SetJavaScriptEnabled")
 public class MainService extends Service {
+    public static WeakReference<MainService> weakActivity;
     MediaWebView webView;
     private String exportPath;
     public SharedPreferences prefs;
     private SharedPreferences.Editor prefsEdit;
-    private boolean notificationPermissionIsGranted;
     private boolean keepAppRunningInBackground = false;
     private boolean pageLoaded = false;
     public boolean appSwitched = false;
@@ -62,6 +63,13 @@ public class MainService extends Service {
     private final String SWITCH_MAIN_SERVICE = "SWITCH_MAIN_SERVICE";
     private final String SET_MAIN_SERVICE = "SET_MAIN_SERVICE";
     final String isBackgroundUpdateKey = "Kanshi.Anime.Recommendations.Anilist.W~uPtWCq=vG$TR:Zl^#t<vdS]I~N70.isBackgroundUpdate";
+    public boolean lastBackgroundUpdateIsFinished = false;
+    public boolean lastBackgroundUpdateTimeIsAlreadyUpdated = false;
+    public boolean isAddingAnimeReleaseNotification = false;
+    public boolean isAddingUpdatedAnimeNotification = false;
+    public boolean shouldCallStopService = false;
+    public boolean shouldProcessRecommendationList = false;
+    public boolean shouldLoadAnime = false;
 
     @Nullable
     @Override
@@ -82,8 +90,7 @@ public class MainService extends Service {
                 webView.loadUrl("https://u-kuro.github.io/Kanshi.Anime-Recommendation");
             }
         } else if (SET_MAIN_SERVICE.equals(intent.getAction())) {
-            notificationPermissionIsGranted = ActivityCompat.checkSelfPermission(this, android.Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED;
-            if (notificationPermissionIsGranted) {
+            if (ActivityCompat.checkSelfPermission(this.getApplicationContext(), android.Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
                 keepAppRunningInBackground = !keepAppRunningInBackground;
                 MainActivity mainActivity = MainActivity.getInstanceActivity();
                 if (mainActivity != null) {
@@ -94,12 +101,13 @@ public class MainService extends Service {
                 updateNotificationTitle("");
             }
         }
-        return START_NOT_STICKY;
+        return START_REDELIVER_INTENT;
     }
 
     @RequiresApi(api = Build.VERSION_CODES.TIRAMISU)
     @Override
     public void onCreate() {
+        weakActivity = new WeakReference<>(MainService.this);
         super.onCreate();
         // Create a notification channel
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -175,7 +183,6 @@ public class MainService extends Service {
             }
         });
         webView.setWebChromeClient(new WebChromeClient() {
-            // Console Logs for Debugging
             @Override
             public boolean onConsoleMessage(ConsoleMessage consoleMessage) {
                 String message = consoleMessage.message();
@@ -189,7 +196,6 @@ public class MainService extends Service {
         // Start the service in the foreground
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             Context context = this.getApplicationContext();
-            notificationPermissionIsGranted = ActivityCompat.checkSelfPermission(context, android.Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED;
             // Stop Service
             Intent stopIntent = new Intent(context, MainService.class);
             stopIntent.setAction(STOP_SERVICE_ACTION);
@@ -210,8 +216,8 @@ public class MainService extends Service {
                     .setContentTitle("Kanshi.")
                     .setSmallIcon(R.drawable.ic_stat_name)
                     .setContentIntent(pendingIntent)
-                    .addInvisibleAction(R.drawable.ic_stat_name,"OPEN",pendingIntent)
-                    .addAction(keepAppRunningInBackground? R.drawable.check_white : R.drawable.disabled_white, keepAppRunningInBackground ? "ENABLED" : "DISABLED", setPendingIntent)
+                    .addInvisibleAction(R.drawable.ic_stat_name, "OPEN", pendingIntent)
+                    .addAction(keepAppRunningInBackground ? R.drawable.check_white : R.drawable.disabled_white, keepAppRunningInBackground ? "ENABLED" : "DISABLED", setPendingIntent)
                     .addAction(R.drawable.change_white, isInWebApp ? "ON WEB" : "ON CLIENT", switchPendingIntent)
                     .addAction(R.drawable.stop_white, "EXIT", stopPendingIntent)
                     .setOnlyAlertOnce(true)
@@ -220,7 +226,14 @@ public class MainService extends Service {
                     .setShowWhen(false)
                     .setNumber(0)
                     .build();
-            startForeground(SERVICE_NOTIFICATION_ID, notification);
+            try {
+                startForeground(SERVICE_NOTIFICATION_ID, notification);
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                stopForeground(true);
+                stopSelf();
+                return;
+            }
         }
 
         // Load Page
@@ -235,11 +248,18 @@ public class MainService extends Service {
         super.onDestroy();
     }
 
+    public static MainService getInstanceActivity() {
+        if (weakActivity!=null) {
+            return weakActivity.get();
+        } else {
+            return null;
+        }
+    }
+
     @RequiresApi(api = Build.VERSION_CODES.TIRAMISU)
     public void updateNotificationTitle(String title) {
         Context context = this.getApplicationContext();
-        notificationPermissionIsGranted = ActivityCompat.checkSelfPermission(context, android.Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED;
-        if (!notificationPermissionIsGranted) {
+        if (ActivityCompat.checkSelfPermission(context, android.Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
             return;
         }
         // Stop Service
@@ -275,6 +295,51 @@ public class MainService extends Service {
         notificationManager.notify(SERVICE_NOTIFICATION_ID, notification);
     }
 
+    public void stopService() {
+        if (
+            shouldCallStopService
+            && !isAddingUpdatedAnimeNotification
+            && !isAddingAnimeReleaseNotification
+            && AnimeNotificationManager.ongoingImageDownloads.size()==0
+        ) {
+            stopForeground(true);
+            stopSelf();
+        }
+    }
+
+    public void updateLastBackgroundUpdateTime() {
+        if (lastBackgroundUpdateIsFinished) {
+            MainActivity mainActivity = MainActivity.getInstanceActivity();
+            if (mainActivity != null) {
+                mainActivity.shouldProcessRecommendationList = shouldProcessRecommendationList;
+                mainActivity.shouldLoadAnime = shouldLoadAnime;
+            }
+            if (!lastBackgroundUpdateTimeIsAlreadyUpdated) {
+                lastBackgroundUpdateTimeIsAlreadyUpdated = true;
+                long currentTime = System.currentTimeMillis();
+                long backgroundUpdateTime = prefs.getLong("lastBackgroundUpdateTime", currentTime);
+                if (backgroundUpdateTime <= currentTime) {
+                    SharedPreferences.Editor prefsEdit = prefs.edit();
+                    long ONE_HOUR_IN_MILLIS = TimeUnit.HOURS.toMillis(1);
+                    backgroundUpdateTime = backgroundUpdateTime + ONE_HOUR_IN_MILLIS;
+                    prefsEdit.putLong("lastBackgroundUpdateTime", backgroundUpdateTime).apply();
+                }
+            }
+        }
+    }
+
+    public void finishedAddingAnimeReleaseNotification() {
+        updateLastBackgroundUpdateTime();
+        isAddingAnimeReleaseNotification = false;
+        stopService();
+    }
+
+    public void finishedAddingUpdatedAnimeNotification() {
+        updateLastBackgroundUpdateTime();
+        isAddingUpdatedAnimeNotification = false;
+        stopService();
+    }
+
     @SuppressWarnings("unused")
     class JSBridge {
         BufferedWriter writer;
@@ -284,23 +349,22 @@ public class MainService extends Service {
         public void pageIsFinished() {
             pageLoaded = true;
         }
-        boolean alreadyCalled = false;
         @JavascriptInterface
-        public void backgroundUpdateIsFinished(boolean finished, boolean shouldRefreshList) {
-            if (!alreadyCalled && finished) {
-                alreadyCalled = true;
-                MainActivity mainActivity = MainActivity.getInstanceActivity();
-                if (mainActivity != null) {
-                    mainActivity.shouldRefreshList = shouldRefreshList;
-                }
-                long backgroundUpdateTime = prefs.getLong("lastBackgroundUpdateTime", System.currentTimeMillis());
-                SharedPreferences.Editor prefsEdit = prefs.edit();
-                long ONE_HOUR_IN_MILLIS = TimeUnit.HOURS.toMillis(1);
-                backgroundUpdateTime = backgroundUpdateTime + ONE_HOUR_IN_MILLIS;
-                prefsEdit.putLong("lastBackgroundUpdateTime", backgroundUpdateTime).apply();
+        public void setShouldProcessRecommendation() {
+            shouldProcessRecommendationList = true;
+        }
+        @JavascriptInterface
+        public void setShouldLoadAnime() {
+            shouldLoadAnime = true;
+        }
+        @JavascriptInterface
+        public void backgroundUpdateIsFinished(boolean finished) {
+            if (finished) {
+                lastBackgroundUpdateIsFinished = true;
             }
-            MainService.this.stopForeground(true);
-            MainService.this.stopSelf();
+            updateLastBackgroundUpdateTime();
+            shouldCallStopService = true;
+            stopService();
         }
         @RequiresApi(api = Build.VERSION_CODES.TIRAMISU)
         @JavascriptInterface
@@ -448,6 +512,7 @@ public class MainService extends Service {
         @JavascriptInterface
         public void addAnimeReleaseNotification(long animeId, String title, long releaseEpisode, long maxEpisode, long releaseDateMillis, String imageUrl, boolean isMyAnime) {
             if (releaseDateMillis >= (System.currentTimeMillis() - DAY_IN_MILLIS)) {
+                isAddingAnimeReleaseNotification = true;
                 AnimeNotificationManager.scheduleAnimeNotification(MainService.this, animeId, title, releaseEpisode, maxEpisode, releaseDateMillis, imageUrl, isMyAnime);
             }
         }
@@ -488,8 +553,9 @@ public class MainService extends Service {
             updateNotificationsFutures.put(String.valueOf(animeId), future);
         }
         @JavascriptInterface
-        public void showNewAddedAnimeNotification(long addedAnimeCount, long updatedAnimeCount) {
-            AnimeNotificationManager.recentlyAddedAnimeNotification(MainService.this, addedAnimeCount, updatedAnimeCount);
+        public void showNewUpdatedAnimeNotification(long addedAnimeCount, long updatedAnimeCount) {
+            isAddingUpdatedAnimeNotification = true;
+            AnimeNotificationManager.recentlyUpdatedAnimeNotification(MainService.this, addedAnimeCount, updatedAnimeCount);
         }
     }
     private final ExecutorService updateCurrentNotificationsExecutorService = Executors.newFixedThreadPool(1);

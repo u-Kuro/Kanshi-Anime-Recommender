@@ -83,7 +83,7 @@ import androidx.core.content.FileProvider;
 import androidx.core.splashscreen.SplashScreen;
 
 public class MainActivity extends AppCompatActivity {
-    public final int appID = 279;
+    public final int appID = 280;
     public boolean keepAppRunningInBackground = false;
     public boolean webViewIsLoaded = false;
     public boolean permissionIsAsked = false;
@@ -107,6 +107,8 @@ public class MainActivity extends AppCompatActivity {
     public boolean fromYoutube;
     public static WeakReference<MainActivity> weakActivity;
     public boolean shouldRefreshList = false;
+    public boolean shouldProcessRecommendationList = false;
+    public boolean shouldLoadAnime = false;
 
     // Activity Results
     final ActivityResultLauncher<Intent> allowApplicationUpdate =
@@ -531,7 +533,12 @@ public class MainActivity extends AppCompatActivity {
         super.onResume();
         webView.post(() -> webView.loadUrl("javascript:" +
             "window?.returnedAppIsVisible?.(true);" + // Should Be Runned First
-            (shouldRefreshList? "window?.shouldRefreshAnimeList?.();" : "window?.checkEntries?.();")
+            (shouldRefreshList?
+            "window?.shouldRefreshAnimeList?.("
+                +(shouldProcessRecommendationList?"true":"false")+","
+                +(shouldLoadAnime?"true":"false")
+            +");"
+            : "window?.checkEntries?.();")
         ));
         shouldRefreshList = false;
     }
@@ -570,6 +577,12 @@ public class MainActivity extends AppCompatActivity {
         }
         @JavascriptInterface
         public void setKeepAppRunningInBackground(boolean enable) {
+            if (enable
+                && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
+                && ActivityCompat.checkSelfPermission(MainActivity.this, POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+            ) {
+                notificationPermission.launch(POST_NOTIFICATIONS);
+            }
             changeKeepAppRunningInBackground(enable);
         }
         @RequiresApi(api = Build.VERSION_CODES.R)
@@ -947,7 +960,7 @@ public class MainActivity extends AppCompatActivity {
                     persistentToast.show();
                     persistentToast = null;
                 }
-                AnimeNotificationManager.recentlyAddedAnimeNotification(MainActivity.this, addedAnimeCount, updatedAnimeCount);
+                AnimeNotificationManager.recentlyUpdatedAnimeNotification(MainActivity.this, addedAnimeCount, updatedAnimeCount);
             }
         }
         @JavascriptInterface

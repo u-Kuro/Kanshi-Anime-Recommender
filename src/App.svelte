@@ -336,59 +336,153 @@
 						window?.[$isBackgroundUpdateKey] === true
 					) {
 						try {
-							let willProcessRecommendationList;
+							let shouldProcessRecommendation;
 							requestUserEntries().finally(() => {
-								willProcessRecommendationList =
-									willProcessRecommendationList ||
+								shouldProcessRecommendation =
+									shouldProcessRecommendation ||
 									window.shouldProcessRecommendation;
 								requestAnimeEntries().finally(() => {
-									willProcessRecommendationList =
-										willProcessRecommendationList ||
+									shouldProcessRecommendation =
+										shouldProcessRecommendation ||
 										window.shouldProcessRecommendation;
-									new Promise((resolve) => {
-										if (willProcessRecommendationList) {
+									new Promise(async (resolve) => {
+										if (!shouldProcessRecommendation) {
+											let lastProcessRecommendationAiringAt =
+												getLocalStorage(
+													"lastProcessRecommendationAiringAt",
+												) ??
+												(await retrieveJSON(
+													"lastProcessRecommendationAiringAt",
+												));
+											if (
+												typeof lastProcessRecommendationAiringAt ===
+													"number" &&
+												!isNaN(
+													lastProcessRecommendationAiringAt,
+												)
+											) {
+												let neareastAnimeCompletionAiringAt =
+													getLocalStorage(
+														"neareastAnimeCompletionAiringAt",
+													) ??
+													(await retrieveJSON(
+														"neareastAnimeCompletionAiringAt",
+													));
+												if (
+													typeof neareastAnimeCompletionAiringAt ===
+														"number" &&
+													!isNaN(
+														neareastAnimeCompletionAiringAt,
+													)
+												) {
+													let neareastAnimeCompletionAiringDate =
+														new Date(
+															neareastAnimeCompletionAiringAt *
+																1000,
+														);
+													if (
+														neareastAnimeCompletionAiringDate <=
+															new Date() &&
+														lastProcessRecommendationAiringAt >
+															neareastAnimeCompletionAiringAt
+													) {
+														shouldProcessRecommendation = true;
+													}
+												}
+											} else {
+												shouldProcessRecommendation = true;
+											}
+										}
+										if (!shouldProcessRecommendation) {
+											shouldProcessRecommendation =
+												await retrieveJSON(
+													"shouldProcessRecommendation",
+												);
+										}
+										if (
+											shouldProcessRecommendation ===
+											undefined
+										) {
+											let recommendedAnimeListLen =
+												await retrieveJSON(
+													"recommendedAnimeListLength",
+												);
+											if (recommendedAnimeListLen < 1) {
+												shouldProcessRecommendation = true;
+											}
+										}
+										if (shouldProcessRecommendation) {
+											try {
+												JSBridge?.setShouldProcessRecommendation?.();
+											} catch (e) {}
 											processRecommendedAnimeList().finally(
 												() => {
-													animeLoader().finally(
-														resolve,
-													);
+													resolve(true);
 												},
 											);
 										} else {
 											resolve();
 										}
-									}).finally(async () => {
-										$exportPathIsAvailable =
-											$exportPathIsAvailable ??
-											(await retrieveJSON(
-												"exportPathIsAvailable",
-											));
-										$autoExport =
-											$autoExport ??
-											(await retrieveJSON("autoExport"));
-										if (
-											$exportPathIsAvailable &&
-											$autoExport
-										) {
-											await new Promise((resolve) =>
-												exportUserData().finally(
-													resolve,
-												),
+									}).then(async (shouldLoadAnime) => {
+										new Promise(async (resolve) => {
+											if (!shouldLoadAnime) {
+												shouldLoadAnime =
+													await retrieveJSON(
+														"shouldLoadAnime",
+													);
+												if (
+													shouldLoadAnime ===
+													undefined
+												) {
+													let finalAnimeListLen =
+														await retrieveJSON(
+															"finalAnimeListLength",
+														);
+													if (finalAnimeListLen < 1) {
+														shouldLoadAnime = true;
+													}
+												}
+											}
+											if (shouldLoadAnime) {
+												try {
+													JSBridge?.setShouldLoadAnime?.();
+												} catch (e) {}
+												animeLoader().finally(resolve);
+											} else {
+												resolve();
+											}
+										}).finally(async () => {
+											$exportPathIsAvailable =
+												$exportPathIsAvailable ??
+												(await retrieveJSON(
+													"exportPathIsAvailable",
+												));
+											$autoExport =
+												$autoExport ??
+												(await retrieveJSON(
+													"autoExport",
+												));
+											if (
+												$exportPathIsAvailable &&
+												$autoExport
+											) {
+												await new Promise((resolve) =>
+													exportUserData().finally(
+														resolve,
+													),
+												);
+											}
+											console.log("eee");
+											JSBridge?.backgroundUpdateIsFinished?.(
+												true,
 											);
-										}
-										JSBridge?.backgroundUpdateIsFinished?.(
-											true,
-											willProcessRecommendationList,
-										);
+										});
 									});
 								});
 							});
 						} catch (e) {
 							try {
-								JSBridge?.backgroundUpdateIsFinished?.(
-									false,
-									false,
-								);
+								JSBridge?.backgroundUpdateIsFinished?.(false);
 							} catch (e) {}
 						}
 					} else {
@@ -396,7 +490,6 @@
 							if ($android) {
 								try {
 									JSBridge?.backgroundUpdateIsFinished?.(
-										false,
 										false,
 									);
 								} catch (e) {}
@@ -612,7 +705,7 @@
 		$dataStatus = "Something went wrong";
 		if ($android) {
 			try {
-				JSBridge?.backgroundUpdateIsFinished?.(false, false);
+				JSBridge?.backgroundUpdateIsFinished?.(false);
 			} catch (e) {}
 			$confirmPromise?.({
 				isAlert: true,
