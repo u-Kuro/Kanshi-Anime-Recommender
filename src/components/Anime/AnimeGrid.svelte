@@ -648,33 +648,36 @@
                             e.key === "Enter" && handleOpenPopup(animeIdx)}
                     >
                         {#if anime?.coverImageUrl || anime?.bannerImageUrl || anime?.trailerThumbnailUrl}
-                            <img
-                                use:addImage={anime?.coverImageUrl ||
-                                    anime?.bannerImageUrl ||
-                                    anime?.trailerThumbnailUrl ||
-                                    emptyImage}
-                                fetchpriority={animeIdx > numberOfPageLoadedGrid
-                                    ? ""
-                                    : "high"}
-                                loading={animeIdx > numberOfPageLoadedGrid
-                                    ? "lazy"
-                                    : "eager"}
-                                class={"image-grid__card-thumb  fade-out"}
-                                alt={(anime?.shownTitle || "") + " Cover"}
-                                width="180px"
-                                height="254.531px"
-                                on:load={(e) => {
-                                    removeClass(e.target, "fade-out");
-                                    addClass(
-                                        e.target?.closest?.(".shimmer"),
-                                        "loaded",
-                                    );
-                                }}
-                                on:error={(e) => {
-                                    addClass(e.target, "fade-out");
-                                    addClass(e.target, "display-none");
-                                }}
-                            />
+                            {#key anime?.coverImageUrl || anime?.bannerImageUrl || anime?.trailerThumbnailUrl}
+                                <img
+                                    use:addImage={anime?.coverImageUrl ||
+                                        anime?.bannerImageUrl ||
+                                        anime?.trailerThumbnailUrl ||
+                                        emptyImage}
+                                    fetchpriority={animeIdx >
+                                    numberOfPageLoadedGrid
+                                        ? ""
+                                        : "high"}
+                                    loading={animeIdx > numberOfPageLoadedGrid
+                                        ? "lazy"
+                                        : "eager"}
+                                    class={"image-grid__card-thumb  fade-out"}
+                                    alt={(anime?.shownTitle || "") + " Cover"}
+                                    width="180px"
+                                    height="254.531px"
+                                    on:load={(e) => {
+                                        removeClass(e.target, "fade-out");
+                                        addClass(
+                                            e.target?.closest?.(".shimmer"),
+                                            "loaded",
+                                        );
+                                    }}
+                                    on:error={(e) => {
+                                        addClass(e.target, "fade-out");
+                                        addClass(e.target, "display-none");
+                                    }}
+                                />
+                            {/key}
                         {/if}
                         <span class="image-grid__card-title">
                             <span

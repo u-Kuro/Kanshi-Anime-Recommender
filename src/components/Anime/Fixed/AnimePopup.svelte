@@ -915,7 +915,12 @@
     }
 
     async function updateList(event) {
-        if ($android && $isBackgroundUpdateKey && window?.[$isBackgroundUpdateKey]===true) return
+        if (
+            $android &&
+            $isBackgroundUpdateKey &&
+            window?.[$isBackgroundUpdateKey] === true
+        )
+            return;
         if (
             await $confirmPromise({
                 title: "List has an update",
@@ -1492,37 +1497,45 @@
                                 {/if}
                                 <div class="popup-img">
                                     {#if anime.bannerImageUrl || anime.trailerThumbnailUrl}
-                                        <img
-                                            use:addImage={anime.bannerImageUrl ||
-                                                anime.trailerThumbnailUrl ||
-                                                emptyImage}
-                                            loading="lazy"
-                                            width="640px"
-                                            height="360px"
-                                            alt={(anime?.shownTitle || "") +
-                                                (anime.bannerImageUrl
-                                                    ? " Banner"
-                                                    : " Thumbnail")}
-                                            class="bannerImg fade-out"
-                                            on:load={(e) => {
-                                                removeClass(
-                                                    e.target,
-                                                    "fade-out",
-                                                );
-                                                addClass(e.target, "fade-in");
-                                            }}
-                                            on:error={(e) => {
-                                                removeClass(
-                                                    e.target,
-                                                    "fade-in",
-                                                );
-                                                addClass(e.target, "fade-out");
-                                                addClass(
-                                                    e.target,
-                                                    "display-none",
-                                                );
-                                            }}
-                                        />
+                                        {#key anime.bannerImageUrl || anime.trailerThumbnailUrl}
+                                            <img
+                                                use:addImage={anime.bannerImageUrl ||
+                                                    anime.trailerThumbnailUrl ||
+                                                    emptyImage}
+                                                loading="lazy"
+                                                width="640px"
+                                                height="360px"
+                                                alt={(anime?.shownTitle || "") +
+                                                    (anime.bannerImageUrl
+                                                        ? " Banner"
+                                                        : " Thumbnail")}
+                                                class="bannerImg fade-out"
+                                                on:load={(e) => {
+                                                    removeClass(
+                                                        e.target,
+                                                        "fade-out",
+                                                    );
+                                                    addClass(
+                                                        e.target,
+                                                        "fade-in",
+                                                    );
+                                                }}
+                                                on:error={(e) => {
+                                                    removeClass(
+                                                        e.target,
+                                                        "fade-in",
+                                                    );
+                                                    addClass(
+                                                        e.target,
+                                                        "fade-out",
+                                                    );
+                                                    addClass(
+                                                        e.target,
+                                                        "display-none",
+                                                    );
+                                                }}
+                                            />
+                                        {/key}
                                     {/if}
                                 </div>
                             </div>
@@ -2000,56 +2013,63 @@
                                     </div>
                                     <div class="info-profile">
                                         <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
-                                        <img
-                                            use:addImage={anime.coverImageUrl ||
-                                                anime.bannerImageUrl ||
-                                                anime.trailerThumbnailUrl ||
-                                                emptyImage}
-                                            loading="lazy"
-                                            width="150px"
-                                            height="210px"
-                                            alt={(anime?.shownTitle || "") +
-                                                (anime.coverImageUrl
-                                                    ? " Cover"
-                                                    : anime.bannerImageUrl
-                                                      ? " Banner"
-                                                      : " Thumbnail")}
-                                            tabindex="0"
-                                            class={"coverImg" +
-                                                (!anime.coverImageUrl &&
-                                                !anime.bannerImageUrl &&
-                                                !anime.trailerThumbnailUrl
-                                                    ? " display-none"
-                                                    : "")}
-                                            on:error={(e) => {
-                                                addClass(
-                                                    e.target,
-                                                    "display-none",
-                                                );
-                                            }}
-                                            on:click={() => {
-                                                if (!$popupVisible) return;
-                                                window.setShouldGoBack(false);
-                                                fullImagePopup =
-                                                    anime.coverImageUrl ||
+                                        {#key anime.coverImageUrl || anime.bannerImageUrl || anime.trailerThumbnailUrl || emptyImage}
+                                            <img
+                                                use:addImage={anime.coverImageUrl ||
                                                     anime.bannerImageUrl ||
                                                     anime.trailerThumbnailUrl ||
-                                                    emptyImage;
-                                                fullDescriptionPopup = null;
-                                            }}
-                                            on:keydown={(e) => {
-                                                if (!$popupVisible) return;
-                                                window.setShouldGoBack(false);
-                                                if (e.key === "Enter") {
+                                                    emptyImage}
+                                                loading="lazy"
+                                                width="150px"
+                                                height="210px"
+                                                alt={(anime?.shownTitle || "") +
+                                                    (anime.coverImageUrl
+                                                        ? " Cover"
+                                                        : anime.bannerImageUrl
+                                                          ? " Banner"
+                                                          : " Thumbnail")}
+                                                tabindex="0"
+                                                class={"coverImg" +
+                                                    (!anime.coverImageUrl &&
+                                                    !anime.bannerImageUrl &&
+                                                    !anime.trailerThumbnailUrl
+                                                        ? " display-none"
+                                                        : "")}
+                                                on:error={(e) => {
+                                                    addClass(
+                                                        e.target,
+                                                        "display-none",
+                                                    );
+                                                }}
+                                                on:click={() => {
+                                                    if (!$popupVisible) return;
+                                                    window.setShouldGoBack(
+                                                        false,
+                                                    );
                                                     fullImagePopup =
                                                         anime.coverImageUrl ||
                                                         anime.bannerImageUrl ||
                                                         anime.trailerThumbnailUrl ||
                                                         emptyImage;
                                                     fullDescriptionPopup = null;
-                                                }
-                                            }}
-                                        />
+                                                }}
+                                                on:keydown={(e) => {
+                                                    if (!$popupVisible) return;
+                                                    window.setShouldGoBack(
+                                                        false,
+                                                    );
+                                                    if (e.key === "Enter") {
+                                                        fullImagePopup =
+                                                            anime.coverImageUrl ||
+                                                            anime.bannerImageUrl ||
+                                                            anime.trailerThumbnailUrl ||
+                                                            emptyImage;
+                                                        fullDescriptionPopup =
+                                                            null;
+                                                    }
+                                                }}
+                                            />
+                                        {/key}
                                         {#if anime?.description}
                                             <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                                             <div
@@ -2242,20 +2262,22 @@
     >
         <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
         <div class="fullPopup" id="fullPopup">
-            <img
-                use:addImage={fullImagePopup || emptyImage}
-                tabindex="0"
-                class="fullPopupImage"
-                loading="lazy"
-                alt="Full View"
-                on:keydown={(e) =>
-                    e.key === "Enter" &&
-                    (fullDescriptionPopup = fullImagePopup = null)}
-                out:fade={{ duration: 200 }}
-                on:error={(e) => {
-                    addClass(e.target, "display-none");
-                }}
-            />
+            {#key fullImagePopup}
+                <img
+                    use:addImage={fullImagePopup || emptyImage}
+                    tabindex="0"
+                    class="fullPopupImage"
+                    loading="lazy"
+                    alt="Full View"
+                    on:keydown={(e) =>
+                        e.key === "Enter" &&
+                        (fullDescriptionPopup = fullImagePopup = null)}
+                    out:fade={{ duration: 200 }}
+                    on:error={(e) => {
+                        addClass(e.target, "display-none");
+                    }}
+                />
+            {/key}
         </div>
     </div>
 {/if}

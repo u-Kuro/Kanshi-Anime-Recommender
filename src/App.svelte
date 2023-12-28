@@ -1326,7 +1326,16 @@
 		if (val === true) window.setShouldGoBack(false);
 	});
 	popupVisible.subscribe((val) => {
-		if (val === true) window.setShouldGoBack(false);
+		if (val === true) {
+			window.setShouldGoBack(false);
+		} else if (val === false) {
+			let shouldUpdate =
+				animeGridEl?.getBoundingClientRect?.()?.top > 0 &&
+				!$popupVisible;
+			if ($listUpdateAvailable && shouldUpdate) {
+				updateList();
+			}
+		}
 	});
 	let isBelowNav = false;
 	window.addEventListener("scroll", () => {

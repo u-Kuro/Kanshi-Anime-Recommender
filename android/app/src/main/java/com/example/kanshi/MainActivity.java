@@ -83,7 +83,7 @@ import androidx.core.content.FileProvider;
 import androidx.core.splashscreen.SplashScreen;
 
 public class MainActivity extends AppCompatActivity {
-    public final int appID = 285;
+    public final int appID = 286;
     public boolean keepAppRunningInBackground = false;
     public boolean webViewIsLoaded = false;
     public boolean permissionIsAsked = false;
@@ -465,7 +465,6 @@ public class MainActivity extends AppCompatActivity {
             webSettings.setDisplayZoomControls(false);
             webSettings.setSupportZoom(false);
         }),3000);
-        // prefsEdit.putLong("lastBackgroundUpdateTime", System.currentTimeMillis()-TimeUnit.HOURS.toMillis(1)).apply();
         // Utils.analyseStorage(this.getApplicationContext()); // Analyze Storage (STORAGE_TAG)
     }
 

@@ -330,11 +330,11 @@ const requestAnimeEntries = (_data) => {
                         if (get(android)) {
                             try {
                                 let newAddedAnimeCount = data?.notifyAddedEntries
-                                if (typeof newAddedAnimeCount !== "number" || isNaN(newAddedAnimeCount) || newAddedAnimeCount > 0) {
+                                if (typeof newAddedAnimeCount !== "number" || isNaN(newAddedAnimeCount) || newAddedAnimeCount < 0) {
                                     newAddedAnimeCount = 0
                                 }
                                 let newEditedAnimeCount = data?.notifyEditedEntries
-                                if (typeof newEditedAnimeCount !== "number" || isNaN(newEditedAnimeCount) || newEditedAnimeCount > 0) {
+                                if (typeof newEditedAnimeCount !== "number" || isNaN(newEditedAnimeCount) || newEditedAnimeCount < 0) {
                                     newEditedAnimeCount = 0
                                 }
                                 if (typeof newAddedAnimeCount === "number"
