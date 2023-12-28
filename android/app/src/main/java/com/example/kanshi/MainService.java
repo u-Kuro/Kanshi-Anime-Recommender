@@ -68,7 +68,9 @@ public class MainService extends Service {
     public boolean isAddingAnimeReleaseNotification = false;
     public boolean isAddingUpdatedAnimeNotification = false;
     public boolean shouldCallStopService = false;
+    public boolean shouldRefreshList = false;
     public boolean shouldProcessRecommendationList = false;
+    public boolean shouldLoadAnime = false;
 
     @Nullable
     @Override
@@ -311,7 +313,9 @@ public class MainService extends Service {
         if (lastBackgroundUpdateIsFinished) {
             MainActivity mainActivity = MainActivity.getInstanceActivity();
             if (mainActivity != null) {
+                mainActivity.shouldRefreshList = shouldRefreshList;
                 mainActivity.shouldProcessRecommendationList = shouldProcessRecommendationList;
+                mainActivity.shouldLoadAnime = shouldLoadAnime;
             }
             if (!lastBackgroundUpdateTimeIsAlreadyUpdated) {
                 lastBackgroundUpdateTimeIsAlreadyUpdated = true;
@@ -348,13 +352,28 @@ public class MainService extends Service {
         }
         @JavascriptInterface
         public void setShouldProcessRecommendation(boolean shouldProcess) {
-            shouldProcessRecommendationList = shouldProcess;
+            if (shouldProcess && !shouldRefreshList) {
+                shouldLoadAnime = shouldProcessRecommendationList = shouldRefreshList = true;
+                MainActivity mainActivity = MainActivity.getInstanceActivity();
+                if (mainActivity != null) {
+                    mainActivity.shouldRefreshList = shouldRefreshList;
+                    mainActivity.shouldProcessRecommendationList = shouldProcessRecommendationList;
+                    mainActivity.shouldLoadAnime = shouldLoadAnime;
+                }
+            } else {
+                shouldProcessRecommendationList = shouldProcess;
+                MainActivity mainActivity = MainActivity.getInstanceActivity();
+                if (mainActivity != null) {
+                    mainActivity.shouldProcessRecommendationList = shouldProcessRecommendationList;
+                }
+            }
+        }
+        @JavascriptInterface
+        public void setShouldLoadAnime(boolean shouldLoad) {
+            shouldLoadAnime = shouldLoad;
             MainActivity mainActivity = MainActivity.getInstanceActivity();
             if (mainActivity != null) {
-                mainActivity.shouldProcessRecommendationList = shouldProcessRecommendationList;
-                if (shouldProcess || shouldProcessRecommendationList) {
-                    mainActivity.shouldLoadAnime = true;
-                }
+                mainActivity.shouldLoadAnime = shouldLoadAnime;
             }
         }
         @JavascriptInterface

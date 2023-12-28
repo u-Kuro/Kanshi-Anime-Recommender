@@ -367,7 +367,16 @@
 									}).then((recommendationListIsProcessed) => {
 										new Promise(async (resolve) => {
 											if (recommendationListIsProcessed) {
-												animeLoader().finally(resolve);
+												animeLoader()
+													.then(() => {
+														try {
+															JSBridge?.setShouldLoadAnime?.(
+																false,
+															);
+														} catch (e) {}
+														resolve();
+													})
+													.finally(resolve);
 											} else {
 												resolve();
 											}
@@ -835,7 +844,7 @@
 			});
 	});
 
-	async function runLoadAnime() {
+	async function runLoadAnime(params = {}) {
 		return new Promise(async (resolve) => {
 			if (
 				($popupVisible ||
@@ -852,7 +861,7 @@
 					$animeLoaderWorker.terminate();
 					$animeLoaderWorker = null;
 				}
-				animeLoader()
+				animeLoader(params)
 					.then(async (data) => {
 						$animeLoaderWorker = data.animeLoaderWorker;
 						if (data?.isNew) {
@@ -920,11 +929,10 @@
 				resolve(false);
 			}
 		}).then((thisShouldLoadAnime) => {
-			if (thisShouldLoadAnime || shouldLoadAnime) {
-				runLoadAnime().finally(() => window?.checkEntries?.());
-			} else {
-				window?.checkEntries?.();
-			}
+			let isAlreadyLoaded = !shouldLoadAnime && !thisShouldLoadAnime;
+			runLoadAnime(isAlreadyLoaded ? { loadInit: true } : {}).finally(
+				() => window?.checkEntries?.(),
+			);
 		});
 	};
 

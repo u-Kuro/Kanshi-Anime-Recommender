@@ -83,7 +83,7 @@ import androidx.core.content.FileProvider;
 import androidx.core.splashscreen.SplashScreen;
 
 public class MainActivity extends AppCompatActivity {
-    public final int appID = 284;
+    public final int appID = 285;
     public boolean keepAppRunningInBackground = false;
     public boolean webViewIsLoaded = false;
     public boolean permissionIsAsked = false;
@@ -106,6 +106,7 @@ public class MainActivity extends AppCompatActivity {
     public boolean appSwitched = false;
     public boolean fromYoutube;
     public static WeakReference<MainActivity> weakActivity;
+    public boolean shouldRefreshList = false;
     public boolean shouldProcessRecommendationList = false;
     public boolean shouldLoadAnime = false;
 
@@ -276,8 +277,7 @@ public class MainActivity extends AppCompatActivity {
         webView.setWebViewClient(new WebViewClient(){
             @Override
             public void onPageStarted(WebView view, String url, Bitmap favicon) {
-                shouldLoadAnime = false;
-                shouldProcessRecommendationList = false;
+                shouldRefreshList = shouldProcessRecommendationList = shouldLoadAnime = false;
                 if (appSwitched) {
                     appSwitched = false;
                     view.loadUrl("javascript:(()=>window.shouldUpdateNotifications=true)();");
@@ -465,7 +465,7 @@ public class MainActivity extends AppCompatActivity {
             webSettings.setDisplayZoomControls(false);
             webSettings.setSupportZoom(false);
         }),3000);
-        prefsEdit.putLong("lastBackgroundUpdateTime", System.currentTimeMillis()-TimeUnit.HOURS.toMillis(1)).apply();
+        // prefsEdit.putLong("lastBackgroundUpdateTime", System.currentTimeMillis()-TimeUnit.HOURS.toMillis(1)).apply();
         // Utils.analyseStorage(this.getApplicationContext()); // Analyze Storage (STORAGE_TAG)
     }
 
@@ -530,16 +530,18 @@ public class MainActivity extends AppCompatActivity {
             persistentToast = null;
         }
         super.onResume();
-        final boolean shouldRefreshList = shouldProcessRecommendationList||shouldLoadAnime;
-        webView.post(() -> webView.loadUrl("javascript:" +
-            "window?.returnedAppIsVisible?.(true);" + // Should Be Runned First
-            (shouldRefreshList?
-            "window?.shouldRefreshAnimeList?.("
-                +(shouldProcessRecommendationList?"true":"false")+","
-                +(shouldLoadAnime?"true":"false")
-            +");"
-            : "window?.checkEntries?.();")
-        ));
+        webView.post(() -> {
+            webView.loadUrl("javascript:" +
+                    "window?.returnedAppIsVisible?.(true);" + // Should Be Runned First
+                    (shouldRefreshList?
+                            "window?.shouldRefreshAnimeList?.("
+                                    +(shouldProcessRecommendationList?"true":"false")+","
+                                    +(shouldLoadAnime?"true":"false")
+                                    +");"
+                            : "window?.checkEntries?.();")
+            );
+            shouldRefreshList = shouldProcessRecommendationList = shouldLoadAnime = false;
+        });
     }
 
     @Override
