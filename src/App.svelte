@@ -900,6 +900,7 @@
 					})
 					.catch((error) => {
 						console.error(error);
+						return;
 					})
 					.finally(resolve);
 			}
@@ -925,7 +926,9 @@
 		new Promise(async (resolve) => {
 			if (shouldProcessRecommendation) {
 				await saveJSON(true, "shouldProcessRecommendation");
-				processRecommendedAnimeList().finally(() => resolve(true));
+				processRecommendedAnimeList()
+					.then(() => resolve(true))
+					.catch(() => resolve());
 			} else {
 				resolve(false);
 			}

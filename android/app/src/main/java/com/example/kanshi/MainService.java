@@ -112,7 +112,7 @@ public class MainService extends Service {
         // Create a notification channel
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             CharSequence name = "Background Application";
-            String description = "Allow application in the background for updates, in exchange of an increase in ram and power usage.";
+            String description = "Allow application in the background for updates, uses ram and power usage when update is running.";
             int importance = NotificationManager.IMPORTANCE_MIN;
             NotificationChannel channel = new NotificationChannel(APP_IN_BACKGROUND_CHANNEL, name, importance);
             channel.setDescription(description);
@@ -295,7 +295,13 @@ public class MainService extends Service {
         notificationManager.notify(SERVICE_NOTIFICATION_ID, notification);
     }
 
+    int io = 0;
     public void stopService() {
+        ++io;
+        System.out.println("kanshiiii shouldCallStopService: "+shouldCallStopService+" "+io);
+        System.out.println("kanshiiii isAddingUpdatedAnimeNotification: "+!isAddingUpdatedAnimeNotification+" "+io);
+        System.out.println("kanshiiii isAddingAnimeReleaseNotification: "+!isAddingAnimeReleaseNotification+" "+io);
+        System.out.println("kanshiiii ongoingDownloadsSize: "+AnimeNotificationManager.ongoingImageDownloads.size()+" "+io);
         if (
             shouldCallStopService
             && !isAddingUpdatedAnimeNotification
@@ -375,6 +381,8 @@ public class MainService extends Service {
         @RequiresApi(api = Build.VERSION_CODES.TIRAMISU)
         @JavascriptInterface
         public void sendBackgroundStatus(String text) {
+            isAddingUpdatedAnimeNotification = true;
+            AnimeNotificationManager.recentlyUpdatedAnimeNotification(MainService.this, 1, 2);
             updateNotificationTitle(text);
         }
         @RequiresApi(api = Build.VERSION_CODES.R)

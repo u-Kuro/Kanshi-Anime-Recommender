@@ -63,6 +63,7 @@ public class AnimeNotificationManager {
     public static final ConcurrentHashMap<String, AnimeNotification> allAnimeToUpdate = new ConcurrentHashMap<>();
     public static AnimeNotification nearestNotificationInfo = null;
     public static long nearestNotificationTime = 0L;
+
     public static void scheduleAnimeNotification(Context context, long animeId, String title, long releaseEpisode, long maxEpisode, long releaseDateMillis, String imageUrl, boolean isMyAnime) {
         context = context.getApplicationContext();
         createAnimeReleasesNotificationChannel(context);
@@ -119,6 +120,12 @@ public class AnimeNotificationManager {
         } else {
             AnimeNotification anime = new AnimeNotification(animeId, title, releaseEpisode, maxEpisode, releaseDateMillis, checkingAnime.imageByte, isMyAnime);
             addAnimeNotification(context, anime);
+            if (ongoingImageDownloads.size()==0) {
+                MainService mainService = MainService.getInstanceActivity();
+                if (mainService!=null) {
+                    mainService.finishedAddingAnimeReleaseNotification();
+                }
+            }
         }
     }
 
@@ -172,7 +179,9 @@ public class AnimeNotificationManager {
         addNotificationFuture = addNotificationFutureExecutor.schedule(() -> LocalPersistence.writeObjectToFile(context, allAnimeNotification, "allAnimeNotification"), 300, TimeUnit.MILLISECONDS);
     }
 
+    static boolean animeReleasesNotificationChannelIsAdded = false;
     public static void createAnimeReleasesNotificationChannel(Context context) {
+        if (animeReleasesNotificationChannelIsAdded) return;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             context = context.getApplicationContext();
             CharSequence name = "Anime Releases";
@@ -185,9 +194,12 @@ public class AnimeNotificationManager {
             NotificationManager notificationManager = context.getSystemService(NotificationManager.class);
             notificationManager.createNotificationChannel(channel);
         }
+        animeReleasesNotificationChannelIsAdded = true;
     }
 
+    static boolean recentlyAddedAnimeNotificationChannelIsAdded = false;
     public static void createRecentlyAddedAnimeNotificationChannel(Context context) {
+        if (recentlyAddedAnimeNotificationChannelIsAdded) return;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             context = context.getApplicationContext();
             CharSequence name = "Recently Updated Anime";
@@ -200,6 +212,7 @@ public class AnimeNotificationManager {
             NotificationManager notificationManager = context.getSystemService(NotificationManager.class);
             notificationManager.createNotificationChannel(channel);
         }
+        recentlyAddedAnimeNotificationChannelIsAdded = true;
     }
     private static Bitmap downloadImage(String imageUrl) {
         try {
