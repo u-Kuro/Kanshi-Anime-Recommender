@@ -120,11 +120,11 @@ public class AnimeNotificationManager {
         } else {
             AnimeNotification anime = new AnimeNotification(animeId, title, releaseEpisode, maxEpisode, releaseDateMillis, checkingAnime.imageByte, isMyAnime);
             addAnimeNotification(context, anime);
-            if (ongoingImageDownloads.size()==0) {
-                MainService mainService = MainService.getInstanceActivity();
-                if (mainService!=null) {
-                    mainService.finishedAddingAnimeReleaseNotification();
-                }
+        }
+        if (ongoingImageDownloads.size()==0) {
+            MainService mainService = MainService.getInstanceActivity();
+            if (mainService!=null) {
+                mainService.finishedAddingAnimeReleaseNotification();
             }
         }
     }
@@ -255,11 +255,11 @@ public class AnimeNotificationManager {
                 NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
                 notificationManager.cancel(NOTIFICATION_UPDATED_ANIME);
                 notificationManager.notify(NOTIFICATION_UPDATED_ANIME, builder.build());
-                MainService mainService = MainService.getInstanceActivity();
-                if (mainService!=null) {
-                    mainService.finishedAddingUpdatedAnimeNotification();
-                }
             }
+        }
+        MainService mainService = MainService.getInstanceActivity();
+        if (mainService!=null) {
+            mainService.finishedAddingUpdatedAnimeNotification();
         }
     }
 

@@ -367,20 +367,7 @@
 									}).then((recommendationListIsProcessed) => {
 										new Promise(async (resolve) => {
 											if (recommendationListIsProcessed) {
-												try {
-													JSBridge?.setShouldLoadAnime?.(
-														true,
-													);
-												} catch (e) {}
-												animeLoader()
-													.then(() => {
-														try {
-															JSBridge?.setShouldLoadAnime?.(
-																false,
-															);
-														} catch (e) {}
-													})
-													.finally(resolve);
+												animeLoader().finally(resolve);
 											} else {
 												resolve();
 											}

@@ -69,7 +69,6 @@ public class MainService extends Service {
     public boolean isAddingUpdatedAnimeNotification = false;
     public boolean shouldCallStopService = false;
     public boolean shouldProcessRecommendationList = false;
-    public boolean shouldLoadAnime = false;
 
     @Nullable
     @Override
@@ -313,7 +312,6 @@ public class MainService extends Service {
             MainActivity mainActivity = MainActivity.getInstanceActivity();
             if (mainActivity != null) {
                 mainActivity.shouldProcessRecommendationList = shouldProcessRecommendationList;
-                mainActivity.shouldLoadAnime = shouldLoadAnime;
             }
             if (!lastBackgroundUpdateTimeIsAlreadyUpdated) {
                 lastBackgroundUpdateTimeIsAlreadyUpdated = true;
@@ -354,14 +352,9 @@ public class MainService extends Service {
             MainActivity mainActivity = MainActivity.getInstanceActivity();
             if (mainActivity != null) {
                 mainActivity.shouldProcessRecommendationList = shouldProcessRecommendationList;
-            }
-        }
-        @JavascriptInterface
-        public void setShouldLoadAnime(boolean shouldLoad) {
-            shouldLoadAnime = shouldLoad;
-            MainActivity mainActivity = MainActivity.getInstanceActivity();
-            if (mainActivity != null) {
-                mainActivity.shouldLoadAnime = shouldLoadAnime;
+                if (shouldProcess || shouldProcessRecommendationList) {
+                    mainActivity.shouldLoadAnime = true;
+                }
             }
         }
         @JavascriptInterface
@@ -375,7 +368,6 @@ public class MainService extends Service {
         @RequiresApi(api = Build.VERSION_CODES.TIRAMISU)
         @JavascriptInterface
         public void sendBackgroundStatus(String text) {
-            isAddingUpdatedAnimeNotification = true;
             updateNotificationTitle(text);
         }
         @RequiresApi(api = Build.VERSION_CODES.R)
