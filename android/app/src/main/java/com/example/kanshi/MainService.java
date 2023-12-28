@@ -295,13 +295,7 @@ public class MainService extends Service {
         notificationManager.notify(SERVICE_NOTIFICATION_ID, notification);
     }
 
-    int io = 0;
     public void stopService() {
-        ++io;
-        System.out.println("kanshiiii shouldCallStopService: "+shouldCallStopService+" "+io);
-        System.out.println("kanshiiii isAddingUpdatedAnimeNotification: "+!isAddingUpdatedAnimeNotification+" "+io);
-        System.out.println("kanshiiii isAddingAnimeReleaseNotification: "+!isAddingAnimeReleaseNotification+" "+io);
-        System.out.println("kanshiiii ongoingDownloadsSize: "+AnimeNotificationManager.ongoingImageDownloads.size()+" "+io);
         if (
             shouldCallStopService
             && !isAddingUpdatedAnimeNotification
@@ -382,7 +376,6 @@ public class MainService extends Service {
         @JavascriptInterface
         public void sendBackgroundStatus(String text) {
             isAddingUpdatedAnimeNotification = true;
-            AnimeNotificationManager.recentlyUpdatedAnimeNotification(MainService.this, 1, 2);
             updateNotificationTitle(text);
         }
         @RequiresApi(api = Build.VERSION_CODES.R)
