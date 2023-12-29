@@ -82,6 +82,16 @@ const animeLoader = (_data = {}) => {
                     } else if (data?.hasOwnProperty("status")) {
                         dataStatusPrio = true
                         dataStatus.set(data.status)
+                    } else if (data?.error) {
+                        finalAnimeList.update((e) => e?.map?.((anime) => {
+                            anime.isLoading = false;
+                            return anime;
+                        }))
+                        isLoadingAnime.set(false)
+                        dataStatus.set(null)
+                        progress.set(100)
+                        alertError()
+                        reject()
                     } else if (data?.filterOptions && typeof data?.selectedCustomFilter === "string") {
                         setLocalStorage("selectedCustomFilter", data?.selectedCustomFilter).catch(() => {
                             removeLocalStorage("selectedCustomFilter")
@@ -184,6 +194,12 @@ const processRecommendedAnimeList = (_data = {}) => {
                     } else if (data?.hasOwnProperty("status")) {
                         dataStatusPrio = true
                         dataStatus.set(data.status);
+                    } else if (data.error) {
+                        isProcessingList.set(false)
+                        dataStatus.set(null);
+                        progress.set(100)
+                        alertError()
+                        reject();
                     } else if (data?.animeReleaseNotification) {
                         if (get(android)) {
                             try {
@@ -443,6 +459,7 @@ const requestUserEntries = (_data = {}) => {
                         requestUserEntriesTerminateTimeout = setTimeout(() => {
                             requestUserEntriesWorker?.terminate?.();
                         }, terminateDelay)
+                        dataStatus.set(null)
                         progress.set(100)
                         reject(data)
                     } else if (data?.updateRecommendationList !== undefined) {
@@ -488,6 +505,9 @@ window.isExported = (success = true) => {
 }
 const exportUserData = (_data) => {
     return new Promise((resolve, reject) => {
+        if (!get(username)) {
+            return resolve()
+        }
         if (exportUserDataWorker) {
             exportUserDataWorker?.terminate?.()
             exportUserDataWorker = null
@@ -522,6 +542,18 @@ const exportUserData = (_data) => {
                     } else if (data?.hasOwnProperty("status")) {
                         dataStatusPrio = true
                         dataStatus.set(data.status)
+                    } else if (data?.missingData) {
+                        dataStatus.set(null)
+                        progress.set(100)
+                        isExporting = false
+                        waitForExportApproval?.reject?.()
+                        waitForExportApproval = null
+                        window.confirmPromise?.({
+                            isAlert: true,
+                            title: "Export failed",
+                            text: "Data was not exported, incomplete data.",
+                        })
+                        return reject()
                     } else if (get(android)) {
                         try {
                             dataStatusPrio = false
@@ -1002,13 +1034,13 @@ function alertError() {
         window.confirmPromise?.({
             isAlert: true,
             title: "Something went wrong",
-            text: "App may not be working properly, you may want to restart and make sure you're running the latest version.",
+            text: "App may not be working properly, you may want to import your saved backup data, restart and make sure you're running the latest version.",
         })
     } else {
         window.confirmPromise?.({
             isAlert: true,
             title: "Something went wrong",
-            text: "App may not be working properly, you may want to refresh the page, or if not clear your cookies but backup your data first.",
+            text: "App may not be working properly, you may want to import your saved backup data and refresh the page.",
         })
     }
 }

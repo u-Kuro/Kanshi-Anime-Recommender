@@ -19,10 +19,17 @@
         newFinalAnime,
         username,
         isBackgroundUpdateKey,
+        extraInfo,
+        currentExtraInfo,
+        initData,
     } from "../../js/globalValues.js";
     import { fade } from "svelte/transition";
     import { saveJSON } from "../../js/indexedDB.js";
-    import { animeLoader, importUserData } from "../../js/workerUtils.js";
+    import {
+        animeLoader,
+        getExtraInfo,
+        importUserData,
+    } from "../../js/workerUtils.js";
     import {
         jsonIsEmpty,
         removeLocalStorage,
@@ -144,7 +151,8 @@
     }
 
     async function handleExportEveryHour() {
-        // if (!$exportPathIsAvailable && $android) return handleExportFolder();
+        if (!$android) return;
+        if (!$exportPathIsAvailable) return handleExportFolder();
         if (
             await $confirmPromise(
                 `Do you want to ${
@@ -293,8 +301,42 @@
         }
     }
 
-    function showRecentReleases() {
+    async function showNotice() {
+        if (!$android) {
+            let extraInfoText = $extraInfo?.[$currentExtraInfo];
+            await $confirmPromise({
+                isAlert: true,
+                title: extraInfoText ? "Some Extra Info" : "Hey hey",
+                text: extraInfoText || "Hello There, click again :)",
+            });
+            if (!$initData) {
+                getExtraInfo();
+            }
+        } else {
+            await $confirmPromise({
+                isAlert: true,
+                title: "Persist Storage",
+                text: "NOTICE! You may want to enable persistent storage to avoid data corruption, because browser automatically clears your data when disk is nearly full. Enabling notification and bookmarking this website helps to enable persistent storage.",
+            });
+        }
+        if ("Notification" in window) {
+            if (window?.Notification?.permission !== "granted") {
+                await window?.Notification?.requestPermission?.();
+            }
+        }
+        if ("navigator" in window) {
+            await window?.navigator?.storage?.persist?.();
+            await window?.navigator?.storage?.persisted?.();
+        }
+    }
+
+    async function showRecentReleases() {
         if (!$android) return;
+        if ("Notification" in window) {
+            if (window?.Notification?.permission !== "denied") {
+                await window?.Notification?.requestPermission?.();
+            }
+        }
         try {
             JSBridge?.showRecentReleases?.();
         } catch (e) {}
@@ -406,22 +448,24 @@
                 on:keydown={(e) => e.key === "Enter" && importData(e)}
                 >Import Data</button
             >
-            <button
-                class="button"
-                on:click={exportData}
-                on:keydown={(e) => e.key === "Enter" && exportData(e)}
-                >Export Data</button
-            >
-            {#if $android}
+            {#if $username}
                 <button
                     class="button"
-                    on:click={handleExportFolder}
-                    on:keydown={(e) =>
-                        e.key === "Enter" && handleExportFolder(e)}
+                    on:click={exportData}
+                    on:keydown={(e) => e.key === "Enter" && exportData(e)}
+                    >Export Data</button
                 >
-                    {($exportPathIsAvailable ? "Change" : "Set") +
-                        " Export Folder"}
-                </button>
+                {#if $android}
+                    <button
+                        class="button"
+                        on:click={handleExportFolder}
+                        on:keydown={(e) =>
+                            e.key === "Enter" && handleExportFolder(e)}
+                    >
+                        {($exportPathIsAvailable ? "Change" : "Set") +
+                            " Export Folder"}
+                    </button>
+                {/if}
             {/if}
             <button
                 class={"button " + ($showStatus ? "selected" : "")}
@@ -437,13 +481,15 @@
                 >Auto Update</button
             >
             {#if $android}
-                <button
-                    class={"button " + ($autoExport ? "selected" : "")}
-                    on:click={handleExportEveryHour}
-                    on:keydown={(e) =>
-                        e.key === "Enter" && handleExportEveryHour(e)}
-                    >Auto Export</button
-                >
+                {#if $username}
+                    <button
+                        class={"button " + ($autoExport ? "selected" : "")}
+                        on:click={handleExportEveryHour}
+                        on:keydown={(e) =>
+                            e.key === "Enter" && handleExportEveryHour(e)}
+                        >Auto Export</button
+                    >
+                {/if}
                 {#if typeof keepAppRunningInBackground === "boolean"}
                     <button
                         class={"button" +
@@ -486,6 +532,11 @@
                 on:click={anilistSignup}
                 on:keydown={(e) => e.key === "Enter" && anilistSignup(e)}
                 >Create an Anilist Account</button
+            >
+            <button
+                class="button"
+                on:keydown={(e) => e.key === "Enter" && showNotice(e)}
+                on:click={showNotice}>Notice</button
             >
         </div>
     </div>
