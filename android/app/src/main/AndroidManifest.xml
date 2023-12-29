@@ -46,7 +46,8 @@
             android:enabled="true">
             <intent-filter>
                 <action android:name="ANIME_NOTIFICATION"/>
-                <action android:name="UPDATE_DATA"/>
+                <action android:name="UPDATE_DATA_MANUAL"/>
+                <action android:name="UPDATE_DATA_AUTO"/>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
                 <action android:name="android.intent.action.QUICKBOOT_POWERON" />
             </intent-filter>

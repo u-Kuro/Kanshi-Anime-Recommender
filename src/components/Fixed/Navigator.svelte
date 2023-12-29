@@ -153,7 +153,7 @@
                             $dataStatus = "Getting User Entries";
                             $userRequestIsRunning = true;
                             removeLocalStorage("username");
-                            await requestUserEntries({
+                            requestUserEntries({
                                 username: typedUsername,
                             })
                                 .then(({ newusername }) => {

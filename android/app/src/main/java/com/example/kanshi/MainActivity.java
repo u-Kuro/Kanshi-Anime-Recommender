@@ -83,7 +83,7 @@ import androidx.core.content.FileProvider;
 import androidx.core.splashscreen.SplashScreen;
 
 public class MainActivity extends AppCompatActivity {
-    public final int appID = 286;
+    public final int appID = 287;
     public boolean keepAppRunningInBackground = false;
     public boolean webViewIsLoaded = false;
     public boolean permissionIsAsked = false;
@@ -980,7 +980,7 @@ public class MainActivity extends AppCompatActivity {
     public void setBackgroundUpdates() {
         final int UPDATE_DATA_PENDING_INTENT = 994;
         Intent newIntent = new Intent(this.getApplicationContext(), MyReceiver.class);
-        newIntent.setAction("UPDATE_DATA");
+        newIntent.setAction("UPDATE_DATA_MANUAL");
 
         PendingIntent newPendingIntent = PendingIntent.getBroadcast(this.getApplicationContext(), UPDATE_DATA_PENDING_INTENT, newIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
         AlarmManager alarmManager = (AlarmManager) this.getApplicationContext().getSystemService(Context.ALARM_SERVICE);

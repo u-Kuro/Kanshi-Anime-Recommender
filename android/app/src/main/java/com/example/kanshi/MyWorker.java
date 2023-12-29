@@ -33,11 +33,13 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.TimeZone;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -64,7 +66,8 @@ public class MyWorker extends Worker {
     public Result doWork() {
         String action = getInputData().getString("action");
         if ("UPDATE_DATA".equals(action)) {
-            updateData();
+            boolean isManual = getInputData().getBoolean("isManual",true);
+            updateData(isManual);
         } else {
             @SuppressWarnings("unchecked") ConcurrentHashMap<String, AnimeNotification> $allAnimeToUpdate = (ConcurrentHashMap<String, AnimeNotification>) LocalPersistence.readObjectFromFile(this.getApplicationContext(), "allAnimeToUpdate");
             if ($allAnimeToUpdate != null && $allAnimeToUpdate.size() > 0) {
@@ -77,7 +80,7 @@ public class MyWorker extends Worker {
             boolean isBooted = getInputData().getBoolean("isBooted", false);
             showNotification(isBooted);
             if (isBooted) {
-                updateData();
+                updateData(true);
             }
         }
         return Result.success();
@@ -565,20 +568,43 @@ public class MyWorker extends Worker {
         void onResponse(JSONObject response);
     }
 
-    private void updateData() {
-        SharedPreferences prefs = this.getApplicationContext().getSharedPreferences("com.example.kanshi", Context.MODE_PRIVATE);
-        boolean keepAppRunningInBackground = prefs.getBoolean("keepAppRunningInBackground",true);
-        boolean isInApp = false;
-        MainActivity mainActivity = MainActivity.getInstanceActivity();
-        if (mainActivity!=null) {
-            isInApp = mainActivity.isInApp;
+    private void updateData(boolean isManual) {
+        // Default 1 hour interval
+        long newBackgroundUpdateTime = System.currentTimeMillis() + TimeUnit.HOURS.toMillis(1);
+
+        // If its Early Morning Set next work at 6am
+        TimeZone tz = TimeZone.getDefault();
+        Calendar calendar = Calendar.getInstance(tz);
+        boolean isEarlyMorning = calendar.get(Calendar.HOUR_OF_DAY) < 6;
+        if (isEarlyMorning) {
+            calendar.set(Calendar.HOUR_OF_DAY, 6);
+            calendar.clear(Calendar.MINUTE);
+            calendar.clear(Calendar.SECOND);
+            calendar.clear(Calendar.MILLISECOND);
+            long sevenAmInMillis = calendar.getTimeInMillis();
+            if (sevenAmInMillis > System.currentTimeMillis()) {
+                newBackgroundUpdateTime = sevenAmInMillis;
+            }
         }
-        if (keepAppRunningInBackground && !isInApp) {
-            Intent intent = new Intent(this.getApplicationContext(), MainService.class);
-            this.getApplicationContext().startService(intent);
+
+        // Only Run Service if its set Manually or not an Early Morning
+        if (isManual || !isEarlyMorning) {
+            SharedPreferences prefs = this.getApplicationContext().getSharedPreferences("com.example.kanshi", Context.MODE_PRIVATE);
+            boolean keepAppRunningInBackground = prefs.getBoolean("keepAppRunningInBackground",true);
+            boolean isInApp = false;
+            MainActivity mainActivity = MainActivity.getInstanceActivity();
+            if (mainActivity!=null) {
+                isInApp = mainActivity.isInApp;
+            }
+            // Run service if background update is enabled and user is not in app
+            if (keepAppRunningInBackground && !isInApp) {
+                Intent intent = new Intent(this.getApplicationContext(), MainService.class);
+                this.getApplicationContext().startService(intent);
+            }
         }
+
         Intent newIntent = new Intent(this.getApplicationContext(), MyReceiver.class);
-        newIntent.setAction("UPDATE_DATA");
+        newIntent.setAction("UPDATE_DATA_AUTO");
 
         PendingIntent newPendingIntent = PendingIntent.getBroadcast(this.getApplicationContext(), UPDATE_DATA_PENDING_INTENT, newIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
         AlarmManager alarmManager = (AlarmManager) this.getApplicationContext().getSystemService(Context.ALARM_SERVICE);
@@ -587,7 +613,7 @@ public class MyWorker extends Worker {
         alarmManager.cancel(newPendingIntent);
         // Create New
         newPendingIntent = PendingIntent.getBroadcast(this.getApplicationContext(), UPDATE_DATA_PENDING_INTENT, newIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
-        long newBackgroundUpdateTime = System.currentTimeMillis() + TimeUnit.HOURS.toMillis(1);
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             if (alarmManager.canScheduleExactAlarms()) {
                 alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, newBackgroundUpdateTime, newPendingIntent);

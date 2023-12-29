@@ -31,6 +31,7 @@ import { get } from "svelte/store";
 import { downloadLink, isJsonObject, removeLocalStorage, setLocalStorage, showToast, } from "../js/others/helper.js"
 import { cacheRequest } from "./caching";
 
+let windowLocation = JSON.parse(JSON.stringify(window.location))
 let terminateDelay = 1000;
 let dataStatusPrio = false
 let isExporting = false;
@@ -275,7 +276,7 @@ isProcessingList.subscribe((val) => {
     }
 })
 
-const requestAnimeEntries = (_data) => {
+const requestAnimeEntries = (_data = {}) => {
     return new Promise((resolve, reject) => {
         if (isRequestingAnimeEntries) {
             resolve()
@@ -305,6 +306,7 @@ const requestAnimeEntries = (_data) => {
                     requestAnimeEntriesWorker = null
                 }
                 requestAnimeEntriesWorker = new Worker(url)
+                _data.windowLocation = windowLocation || JSON.parse(JSON.stringify(window.location))
                 requestAnimeEntriesWorker.postMessage(_data)
                 isRequestingAnimeEntries = true
                 requestAnimeEntriesWorker.onmessage = ({ data }) => {
@@ -391,7 +393,7 @@ const requestAnimeEntries = (_data) => {
     })
 }
 let requestUserEntriesTerminateTimeout, requestUserEntriesWorker;
-const requestUserEntries = (_data) => {
+const requestUserEntries = (_data = {}) => {
     return new Promise((resolve, reject) => {
         if (requestUserEntriesTerminateTimeout) clearTimeout(requestUserEntriesTerminateTimeout)
         if (requestUserEntriesWorker) {
@@ -420,6 +422,7 @@ const requestUserEntries = (_data) => {
                 }
                 requestUserEntriesWorker = new Worker(url)
                 userRequestIsRunning.set(true)
+                _data.windowLocation = windowLocation || JSON.parse(JSON.stringify(window.location))
                 requestUserEntriesWorker.postMessage(_data)
                 requestUserEntriesWorker.onmessage = ({ data }) => {
                     if (data?.hasOwnProperty("progress")) {
@@ -775,7 +778,7 @@ const getExtraInfo = () => {
                 getExtraInfoWorker.onerror = (error) => {
                     reject(error)
                 }
-            }).catch(() => {
+            }).catch((error) => {
                 alertError()
                 reject(error)
             })
