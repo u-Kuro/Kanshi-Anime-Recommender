@@ -336,16 +336,16 @@
 						window?.[$isBackgroundUpdateKey] === true
 					) {
 						try {
-							let shouldProcessRecommendation;
+							let dataIsUpdated;
 							requestUserEntries().finally(() => {
-								shouldProcessRecommendation =
+								dataIsUpdated =
 									window.KanshiBackgroundShouldProcessRecommendation;
 								requestAnimeEntries().finally(() => {
-									shouldProcessRecommendation =
-										shouldProcessRecommendation ||
+									dataIsUpdated =
+										dataIsUpdated ||
 										window.KanshiBackgroundShouldProcessRecommendation;
 									new Promise(async (resolve) => {
-										if (shouldProcessRecommendation) {
+										if (dataIsUpdated) {
 											try {
 												JSBridge?.setShouldProcessRecommendation?.(
 													true,
@@ -381,9 +381,10 @@
 												resolve();
 											}
 										}).finally(async () => {
-											let dataIsUpdated =
-												shouldProcessRecommendation;
-											if (dataIsUpdated) {
+											let shouldExport =
+												dataIsUpdated ||
+												(await autoExportIsPastDate());
+											if (shouldExport) {
 												$exportPathIsAvailable =
 													$exportPathIsAvailable ??
 													(await retrieveJSON(

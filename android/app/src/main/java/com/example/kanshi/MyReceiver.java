@@ -9,7 +9,6 @@ import androidx.annotation.RequiresApi;
 import androidx.work.Constraints;
 import androidx.work.Data;
 import androidx.work.ExistingWorkPolicy;
-import androidx.work.NetworkType;
 import androidx.work.OneTimeWorkRequest;
 import androidx.work.OutOfQuotaPolicy;
 import androidx.work.WorkManager;
@@ -40,11 +39,8 @@ public class MyReceiver extends BroadcastReceiver {
                     .putBoolean("isManual", "UPDATE_DATA_MANUAL".equals(action))
                     .putString("action", uniqueWorkName)
                     .build();
-            Constraints constraints = new Constraints.Builder()
-                    .setRequiredNetworkType(NetworkType.CONNECTED)
-                    .build();
             OneTimeWorkRequest workRequest = new OneTimeWorkRequest.Builder(MyWorker.class)
-                    .setConstraints(constraints)
+                    .setConstraints(Constraints.NONE)
                     .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
                     .setInputData(data)
                     .build();

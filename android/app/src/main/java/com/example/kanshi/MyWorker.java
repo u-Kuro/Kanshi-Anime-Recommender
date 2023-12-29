@@ -582,12 +582,12 @@ public class MyWorker extends Worker {
             calendar.clear(Calendar.SECOND);
             calendar.clear(Calendar.MILLISECOND);
             long sevenAmInMillis = calendar.getTimeInMillis();
-            if (sevenAmInMillis > System.currentTimeMillis()) {
+            if (sevenAmInMillis >= System.currentTimeMillis()) {
                 newBackgroundUpdateTime = sevenAmInMillis;
             }
         }
 
-        // Only Run Service if its set Manually or not an Early Morning
+        // Only Run Foreground Service if its set Manually or not an Early Morning
         if (isManual || !isEarlyMorning) {
             SharedPreferences prefs = this.getApplicationContext().getSharedPreferences("com.example.kanshi", Context.MODE_PRIVATE);
             boolean keepAppRunningInBackground = prefs.getBoolean("keepAppRunningInBackground",true);

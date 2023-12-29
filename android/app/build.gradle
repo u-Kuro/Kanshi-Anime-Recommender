@@ -9,8 +9,8 @@ android {
         applicationId "com.example.kanshi"
         minSdk 21
         targetSdk 34
-        versionCode 167
-        versionName "6.7.7"
+        versionCode 168
+        versionName "6.7.8"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
