@@ -302,7 +302,7 @@
     }
 
     async function showNotice() {
-        if (!$android) {
+        if ($android) {
             let extraInfoText = $extraInfo?.[$currentExtraInfo];
             await $confirmPromise({
                 isAlert: true,
