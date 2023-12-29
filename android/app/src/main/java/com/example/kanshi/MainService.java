@@ -56,21 +56,20 @@ public class MainService extends Service {
     private boolean keepAppRunningInBackground = false;
     private boolean pageLoaded = false;
     public boolean appSwitched = false;
-    private boolean isInWebApp = true;
     private final String APP_IN_BACKGROUND_CHANNEL = "app_in_background_channel";
     private final int SERVICE_NOTIFICATION_ID = 995;
     private final String STOP_SERVICE_ACTION = "STOP_MAIN_SERVICE";
-    private final String SWITCH_MAIN_SERVICE = "SWITCH_MAIN_SERVICE";
     private final String SET_MAIN_SERVICE = "SET_MAIN_SERVICE";
     final String isBackgroundUpdateKey = "Kanshi.Anime.Recommendations.Anilist.W~uPtWCq=vG$TR:Zl^#t<vdS]I~N70.isBackgroundUpdate";
     public boolean lastBackgroundUpdateIsFinished = false;
     public boolean lastBackgroundUpdateTimeIsAlreadyUpdated = false;
     public boolean isAddingAnimeReleaseNotification = false;
-    public boolean isAddingUpdatedAnimeNotification = false;
     public boolean shouldCallStopService = false;
     public boolean shouldRefreshList = false;
     public boolean shouldProcessRecommendationList = false;
     public boolean shouldLoadAnime = false;
+    public long addedAnimeCount = 0;
+    public long updatedAnimeCount = 0;
 
     @Nullable
     @Override
@@ -84,12 +83,6 @@ public class MainService extends Service {
         if (STOP_SERVICE_ACTION.equals(intent.getAction())) {
             stopForeground(true);
             stopSelf();
-        } else if (SWITCH_MAIN_SERVICE.equals(intent.getAction())) {
-            if (isInWebApp) {
-                webView.loadUrl("file:///android_asset/www/index.html");
-            } else {
-                webView.loadUrl("https://u-kuro.github.io/Kanshi.Anime-Recommendation");
-            }
         } else if (SET_MAIN_SERVICE.equals(intent.getAction())) {
             if (ActivityCompat.checkSelfPermission(this.getApplicationContext(), android.Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
                 keepAppRunningInBackground = !keepAppRunningInBackground;
@@ -169,11 +162,11 @@ public class MainService extends Service {
                     CookieManager.getInstance().acceptCookie();
                     CookieManager.getInstance().flush();
                 } else if (!url.startsWith("file")) {
+                    MainService.this.stopForeground(true);
+                    MainService.this.stopSelf();
                     appSwitched = true;
                     pageLoaded = true;
-                    view.loadUrl("file:///android_asset/www/index.html");
                 }
-                isInWebApp = url.startsWith("https://u-kuro.github.io/Kanshi.Anime-Recommendation");
                 updateNotificationTitle("");
                 super.onPageFinished(view, url);
             }
@@ -201,10 +194,6 @@ public class MainService extends Service {
             Intent stopIntent = new Intent(context, MainService.class);
             stopIntent.setAction(STOP_SERVICE_ACTION);
             PendingIntent stopPendingIntent = PendingIntent.getService(context, 0, stopIntent, PendingIntent.FLAG_CANCEL_CURRENT | PendingIntent.FLAG_MUTABLE);
-            // Switch
-            Intent switchIntent = new Intent(context, MainService.class);
-            switchIntent.setAction(SWITCH_MAIN_SERVICE);
-            PendingIntent switchPendingIntent = PendingIntent.getService(context, 0, switchIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE);
             // Set Keep App In Background
             Intent setIntent = new Intent(context, MainService.class);
             setIntent.setAction(SET_MAIN_SERVICE);
@@ -219,7 +208,6 @@ public class MainService extends Service {
                     .setContentIntent(pendingIntent)
                     .addInvisibleAction(R.drawable.ic_stat_name, "OPEN", pendingIntent)
                     .addAction(keepAppRunningInBackground ? R.drawable.check_white : R.drawable.disabled_white, keepAppRunningInBackground ? "ENABLED" : "DISABLED", setPendingIntent)
-                    .addAction(R.drawable.change_white, isInWebApp ? "ON WEB" : "ON CLIENT", switchPendingIntent)
                     .addAction(R.drawable.stop_white, "EXIT", stopPendingIntent)
                     .setOnlyAlertOnce(true)
                     .setOngoing(true)
@@ -246,6 +234,7 @@ public class MainService extends Service {
     @Override
     public void onDestroy() {
         webView.destroy();
+        AnimeNotificationManager.recentlyUpdatedAnimeNotification(MainService.this, addedAnimeCount, updatedAnimeCount);
         super.onDestroy();
     }
 
@@ -267,10 +256,6 @@ public class MainService extends Service {
         Intent stopIntent = new Intent(context, MainService.class);
         stopIntent.setAction(STOP_SERVICE_ACTION);
         PendingIntent stopPendingIntent = PendingIntent.getService(context, 0, stopIntent, PendingIntent.FLAG_CANCEL_CURRENT | PendingIntent.FLAG_MUTABLE);
-        // Switch
-        Intent switchIntent = new Intent(context, MainService.class);
-        switchIntent.setAction(SWITCH_MAIN_SERVICE);
-        PendingIntent switchPendingIntent = PendingIntent.getService(context, 0, switchIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE);
         // Set Keep App In Background
         Intent setIntent = new Intent(context, MainService.class);
         setIntent.setAction(SET_MAIN_SERVICE);
@@ -284,7 +269,6 @@ public class MainService extends Service {
                 .setSmallIcon(R.drawable.ic_stat_name)
                 .setContentIntent(pendingIntent)
                 .addAction(keepAppRunningInBackground? R.drawable.check_white : R.drawable.disabled_white, keepAppRunningInBackground ? "ENABLED" : "DISABLED", setPendingIntent)
-                .addAction(R.drawable.change_white, isInWebApp ? "ON WEB" : "ON CLIENT", switchPendingIntent)
                 .addAction(R.drawable.stop_white, "EXIT", stopPendingIntent)
                 .setOnlyAlertOnce(true)
                 .setOngoing(true)
@@ -299,7 +283,6 @@ public class MainService extends Service {
     public void stopService() {
         if (
             shouldCallStopService
-            && !isAddingUpdatedAnimeNotification
             && !isAddingAnimeReleaseNotification
             && AnimeNotificationManager.ongoingImageDownloads.size()==0
         ) {
@@ -333,11 +316,6 @@ public class MainService extends Service {
 
     public void finishedAddingAnimeReleaseNotification() {
         isAddingAnimeReleaseNotification = false;
-        stopService();
-    }
-
-    public void finishedAddingUpdatedAnimeNotification() {
-        isAddingUpdatedAnimeNotification = false;
         stopService();
     }
 
@@ -572,10 +550,11 @@ public class MainService extends Service {
         }
         @JavascriptInterface
         public void showNewUpdatedAnimeNotification(long addedAnimeCount, long updatedAnimeCount) {
-            isAddingUpdatedAnimeNotification = true;
-            AnimeNotificationManager.recentlyUpdatedAnimeNotification(MainService.this, addedAnimeCount, updatedAnimeCount);
+            MainService.this.addedAnimeCount = addedAnimeCount;
+            MainService.this.updatedAnimeCount = updatedAnimeCount;
         }
     }
+
     private final ExecutorService updateCurrentNotificationsExecutorService = Executors.newFixedThreadPool(1);
     private Future<String> updateCurrentNotificationsFuture;
     public void updateCurrentNotifications() {

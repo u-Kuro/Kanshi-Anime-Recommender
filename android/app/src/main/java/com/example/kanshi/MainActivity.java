@@ -465,7 +465,6 @@ public class MainActivity extends AppCompatActivity {
             webSettings.setDisplayZoomControls(false);
             webSettings.setSupportZoom(false);
         }),3000);
-        // Utils.analyseStorage(this.getApplicationContext()); // Analyze Storage (STORAGE_TAG)
     }
 
     public static MainActivity getInstanceActivity() {
@@ -945,22 +944,25 @@ public class MainActivity extends AppCompatActivity {
         }
         @JavascriptInterface
         public void showNewUpdatedAnimeNotification(long addedAnimeCount, long updatedAnimeCount) {
-            if (updatedAnimeCount>0 || addedAnimeCount>0) {
-                if (updatedAnimeCount > 0 && addedAnimeCount > 0) {
-                    persistentToast = Toast.makeText(MainActivity.this, addedAnimeCount + " New Anime / " + updatedAnimeCount + " Modification", Toast.LENGTH_LONG);
-                } else if (updatedAnimeCount > 0) {
-                    persistentToast = Toast.makeText(MainActivity.this, "+" + updatedAnimeCount + " New Modified Anime", Toast.LENGTH_LONG);
-                } else {
-                    persistentToast = Toast.makeText(MainActivity.this, "+" + addedAnimeCount + " New Added Anime", Toast.LENGTH_LONG);
-                }
-                if (isInApp) {
-                    if (currentToast != null) {
-                        currentToast.cancel();
+            String url = webView.getUrl();
+            if (url!=null && url.startsWith("https://u-kuro.github.io/Kanshi.Anime-Recommendation")) {
+                if (updatedAnimeCount > 0 || addedAnimeCount > 0) {
+                    if (updatedAnimeCount > 0 && addedAnimeCount > 0) {
+                        persistentToast = Toast.makeText(MainActivity.this, addedAnimeCount + " New Anime / " + updatedAnimeCount + " Modification", Toast.LENGTH_LONG);
+                    } else if (updatedAnimeCount > 0) {
+                        persistentToast = Toast.makeText(MainActivity.this, "+" + updatedAnimeCount + " New Modified Anime", Toast.LENGTH_LONG);
+                    } else {
+                        persistentToast = Toast.makeText(MainActivity.this, "+" + addedAnimeCount + " New Added Anime", Toast.LENGTH_LONG);
                     }
-                    persistentToast.show();
-                    persistentToast = null;
+                    if (isInApp) {
+                        if (currentToast != null) {
+                            currentToast.cancel();
+                        }
+                        persistentToast.show();
+                        persistentToast = null;
+                    }
+                    AnimeNotificationManager.recentlyUpdatedAnimeNotification(MainActivity.this, addedAnimeCount, updatedAnimeCount);
                 }
-                AnimeNotificationManager.recentlyUpdatedAnimeNotification(MainActivity.this, addedAnimeCount, updatedAnimeCount);
             }
         }
         @JavascriptInterface

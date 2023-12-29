@@ -257,10 +257,6 @@ public class AnimeNotificationManager {
                 notificationManager.notify(NOTIFICATION_UPDATED_ANIME, builder.build());
             }
         }
-        MainService mainService = MainService.getInstanceActivity();
-        if (mainService!=null) {
-            mainService.finishedAddingUpdatedAnimeNotification();
-        }
     }
 
     @RequiresApi(api = Build.VERSION_CODES.P)
