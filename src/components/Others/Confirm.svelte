@@ -171,6 +171,7 @@
         gap: 1.5em;
         padding: 2em 1em 2em 2.5em;
         cursor: default;
+        overflow: auto;
     }
 
     .confirm-info-container {

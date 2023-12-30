@@ -295,9 +295,11 @@
         background-color: #0b1622 !important;
         color: white !important;
         width: 300px;
+        max-height: 95%;
         max-width: 95%;
         border-radius: 6px;
         padding: 10px 15px;
+        overflow: auto;
     }
 
     .option-header {
