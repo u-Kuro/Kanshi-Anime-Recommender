@@ -97,29 +97,34 @@ public class MyWorker extends Worker {
         HashMap<String, AnimeNotification> animeNotifications = new HashMap<>();
 
         long lastSentNotificationTime = prefs.getLong("lastSentNotificationTime", 0L);
-        long currentSentNotificationTime = lastSentNotificationTime;
-        long newNearestNotificationTime = 0L;
-        long lastSentMyAnimeNotificationTime = 0L;
-        long lastSentOtherAnimeNotificationTime = 0L;
-        AnimeNotification newNearestNotificationInfo = null;
+        AnimeNotification nextAnimeNotificationInfo = null;
 
-        boolean hasMyAnime = false;
-        boolean shouldNotifyAfterBoot = false;
+        long mostRecentlySentNotificationTime = lastSentNotificationTime;
+        long mostRecentlySentMyAnimeNotificationTime = 0L;
+        long mostRecentlySentOtherAnimeNotificationTime = 0L;
+
+        boolean hasNewMyAnimeNotification = false;
+        boolean shouldNotify = false;
+
         List<AnimeNotification> allAnimeNotificationValues = new ArrayList<>(AnimeNotificationManager.allAnimeNotification.values());
+        long currentTimeInMillis = System.currentTimeMillis();
+        boolean hasNoPreviousNotification = lastSentNotificationTime == 0L;
+
         for (AnimeNotification anime : allAnimeNotificationValues) {
-            if (anime.releaseDateMillis <= System.currentTimeMillis()) {
-                if (isBooted && (lastSentNotificationTime == 0 || anime.releaseDateMillis > lastSentNotificationTime)) {
-                    shouldNotifyAfterBoot = true;
+            if (anime.releaseDateMillis <= currentTimeInMillis) {
+                boolean hasNewAnimeInNotification = anime.releaseDateMillis > lastSentNotificationTime;
+                if (!shouldNotify) {
+                    shouldNotify = hasNoPreviousNotification || hasNewAnimeInNotification;
                 }
-                if (anime.releaseDateMillis > currentSentNotificationTime) {
-                    currentSentNotificationTime = anime.releaseDateMillis;
+                if (anime.releaseDateMillis > mostRecentlySentNotificationTime) {
+                    mostRecentlySentNotificationTime = anime.releaseDateMillis;
                 }
                 if (anime.isMyAnime) {
-                    if (lastSentMyAnimeNotificationTime==0 || anime.releaseDateMillis>lastSentMyAnimeNotificationTime){
-                        lastSentMyAnimeNotificationTime = anime.releaseDateMillis;
+                    if (!hasNewMyAnimeNotification) {
+                        hasNewMyAnimeNotification = hasNoPreviousNotification || hasNewAnimeInNotification;
                     }
-                    if (lastSentNotificationTime == 0 || anime.releaseDateMillis > lastSentNotificationTime) {
-                        hasMyAnime = true;
+                    if (mostRecentlySentMyAnimeNotificationTime==0L || anime.releaseDateMillis > mostRecentlySentMyAnimeNotificationTime){
+                        mostRecentlySentMyAnimeNotificationTime = anime.releaseDateMillis;
                     }
                     if (myAnimeNotifications.get(String.valueOf(anime.animeId)) == null) {
                         myAnimeNotifications.put(String.valueOf(anime.animeId), anime);
@@ -130,8 +135,8 @@ public class MyWorker extends Worker {
                         }
                     }
                 } else {
-                    if (lastSentOtherAnimeNotificationTime==0 || anime.releaseDateMillis>lastSentOtherAnimeNotificationTime){
-                        lastSentOtherAnimeNotificationTime = anime.releaseDateMillis;
+                    if (mostRecentlySentOtherAnimeNotificationTime==0L || anime.releaseDateMillis > mostRecentlySentOtherAnimeNotificationTime){
+                        mostRecentlySentOtherAnimeNotificationTime = anime.releaseDateMillis;
                     }
                     if (animeNotifications.get(String.valueOf(anime.animeId)) == null) {
                         animeNotifications.put(String.valueOf(anime.animeId), anime);
@@ -143,18 +148,18 @@ public class MyWorker extends Worker {
                     }
                 }
             } else {
-                if (anime.releaseDateMillis < newNearestNotificationTime || newNearestNotificationTime == 0) {
-                    newNearestNotificationTime = anime.releaseDateMillis;
-                    newNearestNotificationInfo = anime;
+                if (nextAnimeNotificationInfo==null || nextAnimeNotificationInfo.releaseDateMillis > anime.releaseDateMillis) {
+                    nextAnimeNotificationInfo = anime;
                 }
             }
         }
 
-        if (lastSentMyAnimeNotificationTime==0) {
-            lastSentMyAnimeNotificationTime = System.currentTimeMillis();
+        // This should not be called. But, just in case something unexpected happened it is set in current time.
+        if (mostRecentlySentMyAnimeNotificationTime==0L) {
+            mostRecentlySentMyAnimeNotificationTime = currentTimeInMillis;
         }
-        if (lastSentOtherAnimeNotificationTime==0) {
-            lastSentOtherAnimeNotificationTime = System.currentTimeMillis();
+        if (mostRecentlySentOtherAnimeNotificationTime==0L) {
+            mostRecentlySentOtherAnimeNotificationTime = currentTimeInMillis;
         }
 
         List<AnimeNotification> recentlyAiredAnime = new ArrayList<>();
@@ -189,7 +194,7 @@ public class MyWorker extends Worker {
                 }
             }
             Person item = itemBuilder.build();
-            boolean justAired = anime.releaseDateMillis > Math.min(lastSentNotificationTime, System.currentTimeMillis()-(1000*60));
+            boolean justAired = anime.releaseDateMillis > Math.min(lastSentNotificationTime, currentTimeInMillis-(1000*60));
             String addedInfo = " aired.";
             if (justAired) {
                 addedInfo = " just aired.";
@@ -231,7 +236,7 @@ public class MyWorker extends Worker {
                 .setGroup(AnimeNotificationManager.ANIME_RELEASE_NOTIFICATION_GROUP)
                 .setGroupAlertBehavior(Notification.GROUP_ALERT_SUMMARY)
                 .setNumber(0)
-                .setWhen(lastSentMyAnimeNotificationTime)
+                .setWhen(mostRecentlySentMyAnimeNotificationTime)
                 .setShowWhen(true);
 
         // Other Anime Released
@@ -265,7 +270,7 @@ public class MyWorker extends Worker {
                 }
             }
             Person item = itemBuilder.build();
-            boolean justAired = anime.releaseDateMillis > Math.min(lastSentNotificationTime, System.currentTimeMillis()-(1000*60));
+            boolean justAired = anime.releaseDateMillis > Math.min(lastSentNotificationTime, currentTimeInMillis-(1000*60));
             String addedInfo = " aired.";
             if (justAired) {
                 addedInfo = " just aired.";
@@ -302,10 +307,10 @@ public class MyWorker extends Worker {
                 .setGroup(AnimeNotificationManager.ANIME_RELEASE_NOTIFICATION_GROUP)
                 .setGroupAlertBehavior(Notification.GROUP_ALERT_SUMMARY)
                 .setNumber(0)
-                .setWhen(lastSentOtherAnimeNotificationTime)
+                .setWhen(mostRecentlySentOtherAnimeNotificationTime)
                 .setShowWhen(true);
 
-        if (ActivityCompat.checkSelfPermission(this.getApplicationContext(), Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+        if (ActivityCompat.checkSelfPermission(this.getApplicationContext(), Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
             String notificationTitle = "Anime Aired";
             long animeReleaseNotificationSize = myAnimeNotifications.size() + animeNotifications.size();
             if (animeReleaseNotificationSize > 1) {
@@ -320,23 +325,23 @@ public class MyWorker extends Worker {
                     .setContentIntent(pendingIntent)
                     .setGroup(AnimeNotificationManager.ANIME_RELEASE_NOTIFICATION_GROUP)
                     .setGroupSummary(true)
-                    .setWhen(Math.max(lastSentOtherAnimeNotificationTime, lastSentMyAnimeNotificationTime))
+                    .setWhen(Math.max(mostRecentlySentOtherAnimeNotificationTime, mostRecentlySentMyAnimeNotificationTime))
                     .setShowWhen(true);
 
-            if (!hasMyAnime || isBooted) {
+            if (hasNewMyAnimeNotification) { // Set with vibration
+                notificationSummaryBuilder
+                        .setGroupAlertBehavior(Notification.GROUP_ALERT_SUMMARY);
+            } else { // Set with no vibration
                 notificationSummaryBuilder
                         .setGroupAlertBehavior(Notification.GROUP_ALERT_CHILDREN)
                         .setDefaults(Notification.DEFAULT_ALL)
                         .setVibrate(new long[]{0L});
-            } else {
-                notificationSummaryBuilder
-                        .setGroupAlertBehavior(Notification.GROUP_ALERT_SUMMARY);
             }
 
             Notification notificationMA = notificationMABuilder.build();
             Notification notificationOA = notificationOABuilder.build();
             Notification notificationSummary = notificationSummaryBuilder.build();
-            if (!isBooted || shouldNotifyAfterBoot) {
+            if (!isBooted || shouldNotify) {
                 if (animeNotifications.size() > 0 || myAnimeNotifications.size() > 0) {
                     if (animeNotifications.size() > 0) {
                         int NOTIFICATION_OTHER_ANIME = 998;
@@ -353,7 +358,7 @@ public class MyWorker extends Worker {
         }
 
         SharedPreferences.Editor prefsEdit = prefs.edit();
-        prefsEdit.putLong("lastSentNotificationTime", currentSentNotificationTime).apply();
+        prefsEdit.putLong("lastSentNotificationTime", mostRecentlySentNotificationTime).apply();
 
         HashSet<String> animeNotificationsToBeRemoved = new HashSet<>();
         long DAY_IN_MILLIS = TimeUnit.DAYS.toMillis(1);
@@ -368,7 +373,7 @@ public class MyWorker extends Worker {
             AnimeNotificationManager.allAnimeNotification.remove(animeKey);
         }
         LocalPersistence.writeObjectToFile(this.getApplicationContext(), AnimeNotificationManager.allAnimeNotification, "allAnimeNotification");
-        getNewNotification(newNearestNotificationInfo);
+        getNewNotification(nextAnimeNotificationInfo);
         @SuppressWarnings("unchecked") ConcurrentHashMap<String, AnimeNotification> $allAnimeToUpdate = (ConcurrentHashMap<String, AnimeNotification>) LocalPersistence.readObjectFromFile(this.getApplicationContext(),"allAnimeToUpdate");
         if ($allAnimeToUpdate != null && $allAnimeToUpdate.size() > 0) {
             AnimeNotificationManager.allAnimeToUpdate.putAll($allAnimeToUpdate);
@@ -379,10 +384,10 @@ public class MyWorker extends Worker {
         }
     }
 
-    public void getNewNotification(AnimeNotification newNearestNotificationInfo) {
-        if (newNearestNotificationInfo!=null) {
-            AnimeNotificationManager.nearestNotificationInfo = newNearestNotificationInfo;
-            AnimeNotificationManager.nearestNotificationTime = newNearestNotificationInfo.releaseDateMillis;
+    public void getNewNotification(AnimeNotification nextAnimeNotificationInfo) {
+        if (nextAnimeNotificationInfo!=null) {
+            AnimeNotificationManager.nearestNotificationInfo = nextAnimeNotificationInfo;
+            AnimeNotificationManager.nearestNotificationTime = nextAnimeNotificationInfo.releaseDateMillis;
 
             Intent newIntent = new Intent(this.getApplicationContext(), MyReceiver.class);
             newIntent.setAction("ANIME_NOTIFICATION");
@@ -396,18 +401,18 @@ public class MyWorker extends Worker {
             newPendingIntent = PendingIntent.getBroadcast(this.getApplicationContext(), AnimeNotificationManager.ANIME_RELEASE_PENDING_INTENT, newIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 if (alarmManager.canScheduleExactAlarms()) {
-                    alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, newNearestNotificationInfo.releaseDateMillis, newPendingIntent);
+                    alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, nextAnimeNotificationInfo.releaseDateMillis, newPendingIntent);
                 } else {
-                    alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, newNearestNotificationInfo.releaseDateMillis, newPendingIntent);
+                    alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, nextAnimeNotificationInfo.releaseDateMillis, newPendingIntent);
                 }
             } else {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, newNearestNotificationInfo.releaseDateMillis, newPendingIntent);
+                    alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, nextAnimeNotificationInfo.releaseDateMillis, newPendingIntent);
                 } else {
                     try {
-                        alarmManager.setExact(AlarmManager.RTC_WAKEUP, newNearestNotificationInfo.releaseDateMillis, newPendingIntent);
+                        alarmManager.setExact(AlarmManager.RTC_WAKEUP, nextAnimeNotificationInfo.releaseDateMillis, newPendingIntent);
                     } catch (SecurityException ignored) {
-                        alarmManager.set(AlarmManager.RTC_WAKEUP, newNearestNotificationInfo.releaseDateMillis, newPendingIntent);
+                        alarmManager.set(AlarmManager.RTC_WAKEUP, nextAnimeNotificationInfo.releaseDateMillis, newPendingIntent);
                     }
                 }
             }
