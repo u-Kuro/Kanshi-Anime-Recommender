@@ -345,7 +345,7 @@ const requestAnimeEntries = (_data = {}) => {
                         isRequestingAnimeEntries = false
                         resolve(data)
                     } else if (data?.hasOwnProperty("notifyAddedEntries")) {
-                        if (get(android)) {
+                        if (get(android) && window?.[".androidDataIsEvicted"] !== true) {
                             try {
                                 let newAddedAnimeCount = data?.notifyAddedEntries
                                 if (typeof newAddedAnimeCount !== "number" || isNaN(newAddedAnimeCount) || newAddedAnimeCount < 0) {
@@ -681,6 +681,7 @@ const importUserData = (_data) => {
                     } else if (data?.importedlastRunnedAutoExportDate instanceof Date && !isNaN(data?.importedlastRunnedAutoExportDate)) {
                         lastRunnedAutoExportDate.set(data.importedlastRunnedAutoExportDate)
                     } else {
+                        window[".androidDataIsEvicted"] = false
                         getFilterOptions()
                             .then((data) => {
                                 selectedCustomFilter.set(data.selectedCustomFilter)
@@ -879,9 +880,9 @@ window.updateNotifications = async (aniIdsNotificationToBeUpdated = []) => {
     })
 }
 
-const saveIDBdata = (_data, name) => {
+const saveIDBdata = (_data, name, isImportant = false) => {
     return new Promise((resolve, reject) => {
-        if (!get(android) || !get(isBackgroundUpdateKey) || window?.[get(isBackgroundUpdateKey)] !== true) {
+        if (!get(android) || isImportant || !get(isBackgroundUpdateKey) || window?.[get(isBackgroundUpdateKey)] !== true) {
             cacheRequest("./webapi/worker/saveIDBdata.js")
                 .then(url => {
                     let worker = new Worker(url)

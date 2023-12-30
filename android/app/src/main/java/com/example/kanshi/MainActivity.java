@@ -16,6 +16,8 @@ import android.animation.ObjectAnimator;
 import android.annotation.SuppressLint;
 import android.app.AlarmManager;
 import android.app.AlertDialog;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.ClipData;
 import android.content.ClipboardManager;
@@ -79,11 +81,13 @@ import java.util.concurrent.TimeUnit;
 import androidx.browser.customtabs.CustomTabColorSchemeParams;
 import androidx.browser.customtabs.CustomTabsIntent;
 import androidx.core.app.ActivityCompat;
+import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
 import androidx.core.content.FileProvider;
 import androidx.core.splashscreen.SplashScreen;
 
 public class MainActivity extends AppCompatActivity {
-    public final int appID = 289;
+    public final int appID = 290;
     public boolean keepAppRunningInBackground = false;
     public boolean webViewIsLoaded = false;
     public boolean permissionIsAsked = false;
@@ -96,6 +100,8 @@ public class MainActivity extends AppCompatActivity {
     public MediaWebView webView;
     private ProgressBar progressbar;
     private boolean pageLoaded = false;
+    final String uniqueKey = "Kanshi.Anime.Recommendations.Anilist.W~uPtWCq=vG$TR:Zl^#t<vdS]I~N70";
+    final String visitedKey = uniqueKey+".visited";
 
     private PowerManager.WakeLock wakeLock;
     public boolean shouldGoBack;
@@ -186,7 +192,7 @@ public class MainActivity extends AppCompatActivity {
         prefs = MainActivity.this.getSharedPreferences("com.example.kanshi", Context.MODE_PRIVATE);
         prefsEdit = prefs.edit();
         // Saved Data
-        keepAppRunningInBackground = prefs.getBoolean("keepAppRunningInBackground",true);
+        keepAppRunningInBackground = prefs.getBoolean("keepAppRunningInBackground", true);
         exportPath = prefs.getString("savedExportPath", "");
         permissionIsAsked = prefs.getBoolean("permissionIsAsked", false);
         // Get Activity Reference
@@ -202,16 +208,16 @@ public class MainActivity extends AppCompatActivity {
         // Keep Awake on Lock Screen
         PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
         wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "KeepAwake:");
-        wakeLock.acquire(10*60*1000L);
+        wakeLock.acquire(10 * 60 * 1000L);
         webView = findViewById(R.id.webView);
         progressbar = findViewById(R.id.progressbar);
-        progressbar.setMax((int) Math.pow(10,6));
+        progressbar.setMax((int) Math.pow(10, 6));
         // Add On Press Back Listener
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
-                if(webView.getUrl()!=null && (webView.getUrl().startsWith("file:///android_asset/www/index.html") || webView.getUrl().startsWith("https://u-kuro.github.io/Kanshi.Anime-Recommendation"))){
-                    if(!shouldGoBack){
+                if (webView.getUrl() != null && (webView.getUrl().startsWith("file:///android_asset/www/index.html") || webView.getUrl().startsWith("https://u-kuro.github.io/Kanshi.Anime-Recommendation"))) {
+                    if (!shouldGoBack) {
                         webView.post(() -> webView.loadUrl("javascript:window?.backPressed?.();"));
                     } else {
                         hideToast();
@@ -273,25 +279,30 @@ public class MainActivity extends AppCompatActivity {
                 WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED);
         webView.setLayerType(View.LAYER_TYPE_NONE, null);
         // Add Bridge to WebView
-        webView.addJavascriptInterface(new JSBridge(),"JSBridge");
-        webView.setWebViewClient(new WebViewClient(){
+        webView.addJavascriptInterface(new JSBridge(), "JSBridge");
+        webView.setWebViewClient(new WebViewClient() {
             @Override
             public void onPageStarted(WebView view, String url, Bitmap favicon) {
                 shouldRefreshList = shouldProcessRecommendationList = shouldLoadAnime = false;
+                boolean visited = prefs.getBoolean("visited", false);
+                if (visited) {
+                    view.loadUrl("javascript:(()=>window['"+visitedKey+"']=true)();");
+                }
                 if (appSwitched) {
                     appSwitched = false;
                     view.loadUrl("javascript:(()=>window.shouldUpdateNotifications=true)();");
                 }
-                view.loadUrl("javascript:(()=>window.keepAppRunningInBackground="+(keepAppRunningInBackground?"true":"false")+")();");
+                view.loadUrl("javascript:(()=>window.keepAppRunningInBackground=" + (keepAppRunningInBackground ? "true" : "false") + ")();");
                 super.onPageStarted(view, url, favicon);
                 webViewIsLoaded = false;
             }
+
             @Override
             public void onPageFinished(WebView view, String url) {
                 if (pageLoaded) {
                     CookieManager cookieManager = CookieManager.getInstance();
                     cookieManager.setAcceptCookie(true);
-                    cookieManager.setAcceptThirdPartyCookies(view,true);
+                    cookieManager.setAcceptThirdPartyCookies(view, true);
                     CookieManager.getInstance().acceptCookie();
                     CookieManager.getInstance().flush();
                     webViewIsLoaded = true;
@@ -300,15 +311,17 @@ public class MainActivity extends AppCompatActivity {
                     pageLoaded = true;
                     view.loadUrl("file:///android_asset/www/index.html");
                     showDialog(new AlertDialog.Builder(MainActivity.this)
-                            .setTitle("Connection unreachable")
-                            .setMessage("Connection unreachable, do you want to reconnect indefinitely?")
-                            .setPositiveButton("OK", ((dialog, i) -> reconnectLonger()))
-                            .setNegativeButton("CANCEL",null)
+                                    .setTitle("Connection unreachable")
+                                    .setMessage("Connection unreachable, do you want to reconnect indefinitely?")
+                                    .setPositiveButton("OK", ((dialog, i) -> reconnectLonger()))
+                                    .setNegativeButton("CANCEL", null),
+                            true
                     );
                 }
-                view.loadUrl("javascript:window?.setKeepAppRunningInBackground?.("+(keepAppRunningInBackground?"true":"false")+")");
+                view.loadUrl("javascript:window?.setKeepAppRunningInBackground?.(" + (keepAppRunningInBackground ? "true" : "false") + ")");
                 super.onPageFinished(view, url);
             }
+
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 // In App Browsing
@@ -360,6 +373,7 @@ public class MainActivity extends AppCompatActivity {
             private CustomViewCallback mCustomViewCallback;
             private int mOriginalOrientation;
             private int mOriginalSystemUiVisibility;
+
             // Import
             @Override
             public boolean onShowFileChooser(WebView webView, ValueCallback<Uri[]> filePathCallback, FileChooserParams fileChooserParams) {
@@ -374,28 +388,31 @@ public class MainActivity extends AppCompatActivity {
                     chooseImportFile.launch(i);
                     showToast(Toast.makeText(getApplicationContext(), "Please select your backup file.", Toast.LENGTH_LONG));
                     return true;
-                } catch (Exception e){
+                } catch (Exception e) {
                     e.printStackTrace();
                     return true;
                 }
             }
+
             // Fullscreen
             @Override
-            public Bitmap getDefaultVideoPoster(){
+            public Bitmap getDefaultVideoPoster() {
                 if (mCustomView == null) {
                     return null;
                 }
                 return BitmapFactory.decodeResource(getApplicationContext().getResources(), 2130837573);
             }
+
             @Override
             public void onHideCustomView() {
-                ((FrameLayout)getWindow().getDecorView()).removeView(this.mCustomView);
+                ((FrameLayout) getWindow().getDecorView()).removeView(this.mCustomView);
                 this.mCustomView = null;
                 getWindow().getDecorView().setSystemUiVisibility(this.mOriginalSystemUiVisibility);
                 setRequestedOrientation(this.mOriginalOrientation);
                 this.mCustomViewCallback.onCustomViewHidden();
                 this.mCustomViewCallback = null;
             }
+
             @Override
             public void onShowCustomView(View paramView, CustomViewCallback paramCustomViewCallback) {
                 if (this.mCustomView != null) {
@@ -406,19 +423,20 @@ public class MainActivity extends AppCompatActivity {
                 this.mOriginalSystemUiVisibility = getWindow().getDecorView().getSystemUiVisibility();
                 this.mOriginalOrientation = getRequestedOrientation();
                 this.mCustomViewCallback = paramCustomViewCallback;
-                ((FrameLayout)getWindow().getDecorView()).addView(this.mCustomView, new FrameLayout.LayoutParams(-1, -1));
+                ((FrameLayout) getWindow().getDecorView()).addView(this.mCustomView, new FrameLayout.LayoutParams(-1, -1));
                 getWindow().getDecorView().setSystemUiVisibility(3846 | View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
             }
+
             public void onProgressChanged(WebView view, int progress) {
                 if (webViewIsLoaded) return;
-                int newProgress = (int) Math.pow(10,4) * progress;
+                int newProgress = (int) Math.pow(10, 4) * progress;
                 ObjectAnimator.ofInt(progressbar, "progress", newProgress)
                         .setDuration(300)
                         .start();
-                if (progress==100) {
+                if (progress == 100) {
                     CookieManager cookieManager = CookieManager.getInstance();
                     cookieManager.setAcceptCookie(true);
-                    cookieManager.setAcceptThirdPartyCookies(webView,true);
+                    cookieManager.setAcceptThirdPartyCookies(webView, true);
                     CookieManager.getInstance().acceptCookie();
                     CookieManager.getInstance().flush();
                     webViewIsLoaded = true;
@@ -428,11 +446,12 @@ public class MainActivity extends AppCompatActivity {
                     animator.start();
                 }
             }
+
             // Console Logs for Debugging
             @Override
             public boolean onConsoleMessage(ConsoleMessage consoleMessage) {
                 String message = consoleMessage.message();
-                Log.d("WebConsole",message);
+                Log.d("WebConsole", message);
                 return true;
             }
         });
@@ -447,10 +466,11 @@ public class MainActivity extends AppCompatActivity {
                 pageLoaded = true;
                 webView.loadUrl("file:///android_asset/www/index.html");
                 showDialog(new AlertDialog.Builder(MainActivity.this)
-                        .setTitle("Connection unreachable")
-                        .setMessage("Connection unreachable, do you want to reconnect indefinitely?")
-                        .setPositiveButton("OK", ((dialog, i) -> reconnectLonger()))
-                        .setNegativeButton("CANCEL",null)
+                                .setTitle("Connection unreachable")
+                                .setMessage("Connection unreachable, do you want to reconnect indefinitely?")
+                                .setPositiveButton("OK", ((dialog, i) -> reconnectLonger()))
+                                .setNegativeButton("CANCEL", null),
+                        true
                 );
             }
             if (!permissionIsAsked) {
@@ -464,11 +484,11 @@ public class MainActivity extends AppCompatActivity {
             webSettings.setBuiltInZoomControls(false);
             webSettings.setDisplayZoomControls(false);
             webSettings.setSupportZoom(false);
-        }),3000);
+        }), 3000);
     }
 
     public static MainActivity getInstanceActivity() {
-        if (weakActivity!=null) {
+        if (weakActivity != null) {
             return weakActivity.get();
         } else {
             return null;
@@ -476,9 +496,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
     // Get Path From MainActivity Context
-    public String getThisPath(Uri docUri){
+    public String getThisPath(Uri docUri) {
         return getPath(this, docUri);
     }
+
     @Override
     public void onWindowFocusChanged(boolean hasFocus) {
         webView.setKeepScreenOn(true);
@@ -531,11 +552,11 @@ public class MainActivity extends AppCompatActivity {
         webView.post(() -> {
             webView.loadUrl("javascript:" +
                     "window?.returnedAppIsVisible?.(true);" + // Should Be Runned First
-                    (shouldRefreshList?
+                    (shouldRefreshList ?
                             "window?.shouldRefreshAnimeList?.("
-                                    +(shouldProcessRecommendationList?"true":"false")+","
-                                    +(shouldLoadAnime?"true":"false")
-                                    +");"
+                                    + (shouldProcessRecommendationList ? "true" : "false") + ","
+                                    + (shouldLoadAnime ? "true" : "false")
+                                    + ");"
                             : "window?.checkEntries?.();")
             );
             shouldRefreshList = shouldProcessRecommendationList = shouldLoadAnime = false;
@@ -570,9 +591,51 @@ public class MainActivity extends AppCompatActivity {
         BufferedWriter writer;
         File tempFile;
         String directoryPath;
+
         @JavascriptInterface
         public void pageIsFinished() {
             pageLoaded = true;
+        }
+        @JavascriptInterface
+        public void visited() {
+            prefsEdit.putBoolean("visited", true).apply();
+        }
+        boolean dataEvictionChannelIsAdded = false;
+        @JavascriptInterface
+        public void notifyDataEviction() {
+            if (ActivityCompat.checkSelfPermission(MainActivity.this.getApplicationContext(), android.Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
+                final String DATA_EVICTION_CHANNEL = "data_eviction_channel";
+                final int NOTIFICATION_DATA_EVICTION = 993;
+                if (!dataEvictionChannelIsAdded) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        CharSequence name = "Data Eviction";
+                        String description = "Notifications for data loss from chrome eviction.";
+                        int importance = NotificationManager.IMPORTANCE_DEFAULT;
+                        NotificationChannel channel = new NotificationChannel(DATA_EVICTION_CHANNEL, name, importance);
+                        channel.setDescription(description);
+                        channel.enableVibration(true);
+
+                        NotificationManager notificationManager = MainActivity.this.getApplicationContext().getSystemService(NotificationManager.class);
+                        notificationManager.createNotificationChannel(channel);
+                    }
+                    dataEvictionChannelIsAdded = true;
+                }
+                PackageManager pm = MainActivity.this.getApplicationContext().getPackageManager();
+                Intent intent = pm.getLaunchIntentForPackage("com.example.kanshi");
+                PendingIntent pendingIntent = PendingIntent.getActivity(MainActivity.this.getApplicationContext(), 0, intent, PendingIntent.FLAG_IMMUTABLE);
+                pendingIntent.cancel();
+                pendingIntent = PendingIntent.getActivity(MainActivity.this.getApplicationContext(), 0, intent, PendingIntent.FLAG_IMMUTABLE);
+                NotificationCompat.Builder builder = new NotificationCompat.Builder(MainActivity.this.getApplicationContext(), DATA_EVICTION_CHANNEL)
+                        .setSmallIcon(R.drawable.ic_stat_name)
+                        .setContentTitle("Possible Data Loss!")
+                        .setContentText("Some of your data may be cleared by chrome, please import your saved data.")
+                        .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                        .setContentIntent(pendingIntent);
+                NotificationManagerCompat notificationManager = NotificationManagerCompat.from(MainActivity.this.getApplicationContext());
+                notificationManager.cancel(NOTIFICATION_DATA_EVICTION);
+                notificationManager.notify(NOTIFICATION_DATA_EVICTION, builder.build());
+            }
+            showDataEvictionDialog();
         }
         @JavascriptInterface
         public void setKeepAppRunningInBackground(boolean enable) {
@@ -603,7 +666,7 @@ public class MainActivity extends AppCompatActivity {
                                 showToast(Toast.makeText(getApplicationContext(), "Allow permission for Kanshi. in here to use the export feature.", Toast.LENGTH_LONG));
                                 startActivity(new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION, uri));
                             })
-                            .setNegativeButton("CANCEL", null));
+                            .setNegativeButton("CANCEL", null),true);
                 } else {
                     if (new File(exportPath).isDirectory()) {
                         directoryPath = exportPath + File.separator;
@@ -671,7 +734,7 @@ public class MainActivity extends AppCompatActivity {
                                     chooseExportFile.launch(i);
                                     showToast(Toast.makeText(getApplicationContext(), "Select or create a directory.", Toast.LENGTH_LONG));
                                 })
-                                .setNegativeButton("CANCEL", null));
+                                .setNegativeButton("CANCEL", null),true);
                     } else {
                         Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)
                                 .addCategory(Intent.CATEGORY_DEFAULT);
@@ -773,7 +836,7 @@ public class MainActivity extends AppCompatActivity {
                                 showToast(Toast.makeText(getApplicationContext(), "Allow permission for Kanshi. in here to use the export feature.", Toast.LENGTH_LONG));
                                 startActivity(new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION, uri));
                             })
-                            .setNegativeButton("CANCEL", null));
+                            .setNegativeButton("CANCEL", null),true);
                 } else {
                     Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)
                             .addCategory(Intent.CATEGORY_DEFAULT);
@@ -798,7 +861,7 @@ public class MainActivity extends AppCompatActivity {
                                     pageLoaded = true;
                                     webView.loadUrl("file:///android_asset/www/index.html");
                                 })
-                                .setNegativeButton("CANCEL", null));
+                                .setNegativeButton("CANCEL", null),true);
                     } else {
                         showToast(Toast.makeText(getApplicationContext(), "Connecting...", Toast.LENGTH_LONG));
                         if (connectionChecking) return;
@@ -815,12 +878,12 @@ public class MainActivity extends AppCompatActivity {
                                             pageLoaded = false;
                                             webView.loadUrl("https://u-kuro.github.io/Kanshi.Anime-Recommendation/");
                                         })
-                                        .setNegativeButton("CANCEL", null));
+                                        .setNegativeButton("CANCEL", null),true);
                             } else {
                                 showDialog(new AlertDialog.Builder(MainActivity.this)
                                         .setTitle("Switch app mode")
                                         .setMessage("Connection unreachable, can't switch at this moment.")
-                                        .setPositiveButton("OK", null));
+                                        .setPositiveButton("OK", null),true);
                             }
                         }), 3000);
                     }
@@ -830,7 +893,7 @@ public class MainActivity extends AppCompatActivity {
                 showDialog(new AlertDialog.Builder(MainActivity.this)
                         .setTitle("Switch app mode")
                         .setMessage("Something went wrong, app switch is currently not working.")
-                        .setPositiveButton("OK", null));
+                        .setPositiveButton("OK", null),true);
             }
         }
 
@@ -850,7 +913,7 @@ public class MainActivity extends AppCompatActivity {
                                         pageLoaded = false;
                                         webView.loadUrl("https://u-kuro.github.io/Kanshi.Anime-Recommendation/");
                                     })
-                                    .setNegativeButton("CANCEL", null));
+                                    .setNegativeButton("CANCEL", null),true);
                         } else if (isConnected) {
                             showToast(Toast.makeText(getApplicationContext(), "Your internet has been restored.", Toast.LENGTH_LONG));
                         }
@@ -979,6 +1042,17 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
+    public void showDataEvictionDialog() {
+        showDialog(new AlertDialog.Builder(MainActivity.this)
+                .setTitle("Possible Data Loss")
+                .setMessage("Some of your data may be cleared by chrome, please import your saved data.")
+                .setPositiveButton("OK",(dialogInterface, i) -> {
+                    webView.post(()-> webView.loadUrl("javascript:window?.importAndroidUserData?.()"));
+                    prefsEdit.putBoolean("visited", false).apply();
+                })
+                .setNegativeButton("CANCEL", ((dialogInterface, i) -> prefsEdit.putBoolean("visited", false).apply()))
+        ,false);
+    }
     public void setBackgroundUpdates() {
         final int UPDATE_DATA_PENDING_INTENT = 994;
         Intent newIntent = new Intent(this.getApplicationContext(), MyReceiver.class);
@@ -1052,7 +1126,7 @@ public class MainActivity extends AppCompatActivity {
             .setTitle("New updates are available")
             .setMessage("You may want to download the new version.")
             .setPositiveButton("DOWNLOAD", (dialogInterface, i) -> checkUpdate())
-            .setNegativeButton("LATER", null));
+            .setNegativeButton("LATER", null),true);
     }
     @RequiresApi(api = Build.VERSION_CODES.O)
     public void checkUpdate() {
@@ -1068,7 +1142,7 @@ public class MainActivity extends AppCompatActivity {
                         showToast(Toast.makeText(getApplicationContext(), "Allow permission for Kanshi. in here to update within the app.", Toast.LENGTH_LONG));
                         allowApplicationUpdate.launch(intent);
                     })
-                    .setNegativeButton("CANCEL", null));
+                    .setNegativeButton("CANCEL", null),true);
         }
     }
     public void _downloadUpdate() {
@@ -1103,7 +1177,7 @@ public class MainActivity extends AppCompatActivity {
                                 Toast.makeText(MainActivity.this, "File is not found", Toast.LENGTH_LONG).show();
                             }
                         })
-                        .setNegativeButton("CANCEL", (dialogInterface, i) -> showToast(Toast.makeText(getApplicationContext(), "You may still manually install the update, apk is in your download folder.", Toast.LENGTH_LONG))).setCancelable(false));
+                        .setNegativeButton("CANCEL", (dialogInterface, i) -> showToast(Toast.makeText(getApplicationContext(), "You may still manually install the update, apk is in your download folder.", Toast.LENGTH_LONG))).setCancelable(false),true);
                 }
             }
             @Override
@@ -1112,7 +1186,7 @@ public class MainActivity extends AppCompatActivity {
                     .setTitle("Download failed")
                     .setMessage("Do you want to re-download?")
                     .setPositiveButton("OK", (dialogInterface, i) -> _downloadUpdate())
-                    .setNegativeButton("CANCEL", null));
+                    .setNegativeButton("CANCEL", null),true);
             }
         });
     }
@@ -1126,7 +1200,7 @@ public class MainActivity extends AppCompatActivity {
                 .setTitle("Export failed")
                 .setMessage("Data was not exported, please try again.")
                 .setPositiveButton("OK", (dialogInterface, i) -> webView.post(() -> webView.loadUrl("javascript:window?.runExport?.()")))
-                .setNegativeButton("CANCEL", null));
+                .setNegativeButton("CANCEL", null),true);
         }
     }
 
@@ -1147,23 +1221,24 @@ public class MainActivity extends AppCompatActivity {
                             pageLoaded = false;
                             webView.loadUrl("https://u-kuro.github.io/Kanshi.Anime-Recommendation/");
                         })
-                        .setNegativeButton("CANCEL", null));
+                        .setNegativeButton("CANCEL", null),true);
             } else {
                 showDialog(new AlertDialog.Builder(MainActivity.this)
                         .setTitle("Connection unreachable")
                         .setMessage("Connection unreachable, do you want to connect indefinitely?")
                         .setPositiveButton("OK", ((dialog, i) -> reconnectLonger()))
-                        .setNegativeButton("CANCEL",null)
+                        .setNegativeButton("CANCEL",null),true
                 );
             }
         }),999999999);
     }
 
-    public void showDialog(AlertDialog.Builder alertDialog) {
+    public void showDialog(AlertDialog.Builder alertDialog, boolean canceledOnOutsideTouch) {
         if (currentDialog != null && currentDialog.isShowing()) {
             currentDialog.dismiss();
         }
         currentDialog = alertDialog.create();
+        currentDialog.setCanceledOnTouchOutside(canceledOnOutsideTouch);
         Window dialogWindow = currentDialog.getWindow();
         if (dialogWindow!=null) {
             dialogWindow.setBackgroundDrawableResource(R.color.dark_blue);

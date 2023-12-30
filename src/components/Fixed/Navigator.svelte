@@ -10,7 +10,6 @@
         finalAnimeList,
         gridFullView,
         userRequestIsRunning,
-        android,
     } from "../../js/globalValues.js";
     import {
         addClass,
@@ -49,21 +48,7 @@
             awaitForInit?.resolve?.();
         }
     });
-    let isLoaded;
     async function updateUsername(event, isReconfirm = false) {
-        if (!isLoaded) {
-            isLoaded = true;
-            if (!$android && "navigator" in window) {
-                if (!(await window?.navigator?.storage?.persisted?.())) {
-                    $confirmPromise({
-                        isAlert: true,
-                        title: "Persist Storage",
-                        text: "NOTICE! You may want to enable persistent storage to avoid data corruption, because browser automatically clears your data when disk is nearly full. Enabling notification and bookmarking this website helps to enable persistent storage.",
-                    });
-                    await window?.navigator?.storage?.persist?.();
-                }
-            }
-        }
         if ($initData) {
             pleaseWaitAlert();
             new Promise((resolve) => {

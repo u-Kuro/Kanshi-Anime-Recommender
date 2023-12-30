@@ -44,14 +44,14 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 public class AnimeNotificationManager {
-    private static final String ANIME_RELEASES_CHANNEL = "anime_releases";
+    public static final String ANIME_RELEASES_CHANNEL = "anime_releases";
     private static final String RECENTLY_UPDATED_ANIME_CHANNEL = "recently_updated_anime";
-    private static final String ANIME_RELEASE_NOTIFICATION_GROUP = "anime_release_notification_group";
-    private static final int NOTIFICATION_ANIME_RELEASE = 1000;
-    private static final int NOTIFICATION_MY_ANIME = 999;
-    private static final int NOTIFICATION_OTHER_ANIME = 998;
-    private static final int ANIME_RELEASE_PENDING_INTENT = 997;
-    private static final int NOTIFICATION_UPDATED_ANIME = 996;
+    public static final String ANIME_RELEASE_NOTIFICATION_GROUP = "anime_release_notification_group";
+    public static final int NOTIFICATION_ANIME_RELEASE = 1000;
+    public static final int NOTIFICATION_MY_ANIME = 999;
+    public static final int NOTIFICATION_OTHER_ANIME = 998;
+    public static final int ANIME_RELEASE_PENDING_INTENT = 997;
+    public static final int NOTIFICATION_UPDATED_ANIME = 996;
     private static final ExecutorService notificationImageDownloaderExecutor = Executors.newFixedThreadPool(1);
     private static final ExecutorService showRecentReleasesExecutor = Executors.newFixedThreadPool(1);
     private static Future<?> showRecentReleasesFuture;
@@ -197,9 +197,9 @@ public class AnimeNotificationManager {
         animeReleasesNotificationChannelIsAdded = true;
     }
 
-    static boolean recentlyAddedAnimeNotificationChannelIsAdded = false;
-    public static void createRecentlyAddedAnimeNotificationChannel(Context context) {
-        if (recentlyAddedAnimeNotificationChannelIsAdded) return;
+    static boolean recentlyUpdatedAnimeNotificationChannelIsAdded = false;
+    public static void createRecentlyUpdatedAnimeNotificationChannel(Context context) {
+        if (recentlyUpdatedAnimeNotificationChannelIsAdded) return;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             context = context.getApplicationContext();
             CharSequence name = "Recently Updated Anime";
@@ -212,7 +212,7 @@ public class AnimeNotificationManager {
             NotificationManager notificationManager = context.getSystemService(NotificationManager.class);
             notificationManager.createNotificationChannel(channel);
         }
-        recentlyAddedAnimeNotificationChannelIsAdded = true;
+        recentlyUpdatedAnimeNotificationChannelIsAdded = true;
     }
     private static Bitmap downloadImage(String imageUrl) {
         try {
@@ -232,7 +232,7 @@ public class AnimeNotificationManager {
         context = context.getApplicationContext();
         if (ActivityCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
             if (addedAnimeCount > 0 || updatedAnimeCount > 0) {
-                createRecentlyAddedAnimeNotificationChannel(context);
+                createRecentlyUpdatedAnimeNotificationChannel(context);
                 PackageManager pm = context.getPackageManager();
                 Intent intent = pm.getLaunchIntentForPackage("com.example.kanshi");
                 PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_IMMUTABLE);
@@ -325,6 +325,7 @@ public class AnimeNotificationManager {
                     message = "No recent anime releases.";
                 }
                 if (message == null) {
+                    createAnimeReleasesNotificationChannel(finalContext);
                     NotificationManagerCompat notificationManager = NotificationManagerCompat.from(finalContext);
 
                     notificationManager.cancel(NOTIFICATION_OTHER_ANIME);

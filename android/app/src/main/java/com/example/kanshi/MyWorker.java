@@ -48,11 +48,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 public class MyWorker extends Worker {
-
-    private static final int NOTIFICATION_ANIME_RELEASE = 1000;
-    private static final int NOTIFICATION_MY_ANIME = 999;
-    private static final int NOTIFICATION_OTHER_ANIME = 998;
-    private static final int ANIME_RELEASE_PENDING_INTENT = 997;
     private static final int UPDATE_DATA_PENDING_INTENT = 994;
     public final String retryKey = "Kanshi-Anime-Recommendation.Retry";
 
@@ -88,17 +83,14 @@ public class MyWorker extends Worker {
 
     @RequiresApi(api = Build.VERSION_CODES.P)
     private void showNotification(boolean isBooted) {
-        if (ActivityCompat.checkSelfPermission(this.getApplicationContext(), Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
-            return;
-        }
 
         SharedPreferences prefs = this.getApplicationContext().getSharedPreferences("com.example.kanshi", Context.MODE_PRIVATE);
-
+        AnimeNotificationManager.createAnimeReleasesNotificationChannel(this.getApplicationContext());
         NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this.getApplicationContext());
 
-        notificationManager.cancel(NOTIFICATION_OTHER_ANIME);
-        notificationManager.cancel(NOTIFICATION_MY_ANIME);
-        notificationManager.cancel(NOTIFICATION_ANIME_RELEASE);
+        notificationManager.cancel(AnimeNotificationManager.NOTIFICATION_OTHER_ANIME);
+        notificationManager.cancel(AnimeNotificationManager.NOTIFICATION_MY_ANIME);
+        notificationManager.cancel(AnimeNotificationManager.NOTIFICATION_ANIME_RELEASE);
 
         byte[] dummyImage = null;
         HashMap<String, AnimeNotification> myAnimeNotifications = new HashMap<>();
@@ -231,14 +223,12 @@ public class MyWorker extends Worker {
         pendingIntent.cancel();
         pendingIntent = PendingIntent.getActivity(this.getApplicationContext(), 0, intent, PendingIntent.FLAG_IMMUTABLE);
 
-        String ANIME_RELEASE_NOTIFICATION_GROUP = "anime_release_notification_group";
-        String CHANNEL_ID = "anime_releases_channel";
-        Notification.Builder notificationMABuilder = new Notification.Builder(this.getApplicationContext(), CHANNEL_ID)
+        Notification.Builder notificationMABuilder = new Notification.Builder(this.getApplicationContext(), AnimeNotificationManager.ANIME_RELEASES_CHANNEL)
                 .setSmallIcon(R.drawable.ic_stat_name)
                 .setContentTitle(notificationTitleMA)
                 .setStyle(styleMA)
                 .setContentIntent(pendingIntent)
-                .setGroup(ANIME_RELEASE_NOTIFICATION_GROUP)
+                .setGroup(AnimeNotificationManager.ANIME_RELEASE_NOTIFICATION_GROUP)
                 .setGroupAlertBehavior(Notification.GROUP_ALERT_SUMMARY)
                 .setNumber(0)
                 .setWhen(lastSentMyAnimeNotificationTime)
@@ -303,60 +293,62 @@ public class MyWorker extends Worker {
         }
         styleOA.setConversationTitle(notificationTitleOA);
 
-        Notification.Builder notificationOABuilder = new Notification.Builder(this.getApplicationContext(), CHANNEL_ID)
+        Notification.Builder notificationOABuilder = new Notification.Builder(this.getApplicationContext(), AnimeNotificationManager.ANIME_RELEASES_CHANNEL)
                 .setContentTitle(notificationTitleOA)
                 .setSmallIcon(R.drawable.ic_stat_name)
                 .setStyle(styleOA)
                 .setPriority(Notification.PRIORITY_LOW)
                 .setContentIntent(pendingIntent)
-                .setGroup(ANIME_RELEASE_NOTIFICATION_GROUP)
+                .setGroup(AnimeNotificationManager.ANIME_RELEASE_NOTIFICATION_GROUP)
                 .setGroupAlertBehavior(Notification.GROUP_ALERT_SUMMARY)
                 .setNumber(0)
                 .setWhen(lastSentOtherAnimeNotificationTime)
                 .setShowWhen(true);
 
-        String notificationTitle = "Anime Aired";
-        long animeReleaseNotificationSize = myAnimeNotifications.size() + animeNotifications.size();
-        if (animeReleaseNotificationSize > 1) {
-            notificationTitle = notificationTitle + " +" + animeReleaseNotificationSize;
-        }
+        if (ActivityCompat.checkSelfPermission(this.getApplicationContext(), Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+            String notificationTitle = "Anime Aired";
+            long animeReleaseNotificationSize = myAnimeNotifications.size() + animeNotifications.size();
+            if (animeReleaseNotificationSize > 1) {
+                notificationTitle = notificationTitle + " +" + animeReleaseNotificationSize;
+            }
 
-        Notification.Builder notificationSummaryBuilder = new Notification.Builder(this.getApplicationContext(), CHANNEL_ID)
-                .setContentTitle(notificationTitle)
-                .setSmallIcon(R.drawable.ic_stat_name)
-                .setStyle(styleOA)
-                .setPriority(Notification.PRIORITY_DEFAULT)
-                .setContentIntent(pendingIntent)
-                .setGroup(ANIME_RELEASE_NOTIFICATION_GROUP)
-                .setGroupSummary(true)
-                .setWhen(Math.max(lastSentOtherAnimeNotificationTime, lastSentMyAnimeNotificationTime))
-                .setShowWhen(true);
+            Notification.Builder notificationSummaryBuilder = new Notification.Builder(this.getApplicationContext(), AnimeNotificationManager.ANIME_RELEASES_CHANNEL)
+                    .setContentTitle(notificationTitle)
+                    .setSmallIcon(R.drawable.ic_stat_name)
+                    .setStyle(styleOA)
+                    .setPriority(Notification.PRIORITY_DEFAULT)
+                    .setContentIntent(pendingIntent)
+                    .setGroup(AnimeNotificationManager.ANIME_RELEASE_NOTIFICATION_GROUP)
+                    .setGroupSummary(true)
+                    .setWhen(Math.max(lastSentOtherAnimeNotificationTime, lastSentMyAnimeNotificationTime))
+                    .setShowWhen(true);
 
-        if (!hasMyAnime || isBooted) {
-            notificationSummaryBuilder
-                    .setGroupAlertBehavior(Notification.GROUP_ALERT_CHILDREN)
-                    .setDefaults(Notification.DEFAULT_ALL)
-                    .setVibrate(new long[]{0L});
-        } else {
-            notificationSummaryBuilder
-                    .setGroupAlertBehavior(Notification.GROUP_ALERT_SUMMARY);
-        }
-        Notification notificationMA = notificationMABuilder.build();
-        Notification notificationOA = notificationOABuilder.build();
-        Notification notificationSummary = notificationSummaryBuilder.build();
+            if (!hasMyAnime || isBooted) {
+                notificationSummaryBuilder
+                        .setGroupAlertBehavior(Notification.GROUP_ALERT_CHILDREN)
+                        .setDefaults(Notification.DEFAULT_ALL)
+                        .setVibrate(new long[]{0L});
+            } else {
+                notificationSummaryBuilder
+                        .setGroupAlertBehavior(Notification.GROUP_ALERT_SUMMARY);
+            }
 
-        if (!isBooted || shouldNotifyAfterBoot) {
-            if (animeNotifications.size() > 0 || myAnimeNotifications.size() > 0) {
-                if (animeNotifications.size() > 0) {
-                    int NOTIFICATION_OTHER_ANIME = 998;
-                    notificationManager.notify(NOTIFICATION_OTHER_ANIME, notificationOA);
+            Notification notificationMA = notificationMABuilder.build();
+            Notification notificationOA = notificationOABuilder.build();
+            Notification notificationSummary = notificationSummaryBuilder.build();
+            if (!isBooted || shouldNotifyAfterBoot) {
+                if (animeNotifications.size() > 0 || myAnimeNotifications.size() > 0) {
+                    if (animeNotifications.size() > 0) {
+                        int NOTIFICATION_OTHER_ANIME = 998;
+                        notificationManager.notify(NOTIFICATION_OTHER_ANIME, notificationOA);
+                    }
+                    if (myAnimeNotifications.size() > 0) {
+                        int NOTIFICATION_MY_ANIME = 999;
+                        notificationManager.notify(NOTIFICATION_MY_ANIME, notificationMA);
+                    }
+                    int NOTIFICATION_ID_BASE = 1000;
+                    notificationManager.notify(NOTIFICATION_ID_BASE, notificationSummary);
                 }
-                if (myAnimeNotifications.size() > 0) {
-                    int NOTIFICATION_MY_ANIME = 999;
-                    notificationManager.notify(NOTIFICATION_MY_ANIME, notificationMA);
-                }
-                int NOTIFICATION_ID_BASE = 1000;
-                notificationManager.notify(NOTIFICATION_ID_BASE, notificationSummary);
             }
         }
 
@@ -395,13 +387,13 @@ public class MyWorker extends Worker {
             Intent newIntent = new Intent(this.getApplicationContext(), MyReceiver.class);
             newIntent.setAction("ANIME_NOTIFICATION");
 
-            PendingIntent newPendingIntent = PendingIntent.getBroadcast(this.getApplicationContext(), ANIME_RELEASE_PENDING_INTENT, newIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+            PendingIntent newPendingIntent = PendingIntent.getBroadcast(this.getApplicationContext(), AnimeNotificationManager.ANIME_RELEASE_PENDING_INTENT, newIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
             AlarmManager alarmManager = (AlarmManager) this.getApplicationContext().getSystemService(Context.ALARM_SERVICE);
             // Cancel Old
             newPendingIntent.cancel();
             alarmManager.cancel(newPendingIntent);
             // Create New
-            newPendingIntent = PendingIntent.getBroadcast(this.getApplicationContext(), ANIME_RELEASE_PENDING_INTENT, newIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+            newPendingIntent = PendingIntent.getBroadcast(this.getApplicationContext(), AnimeNotificationManager.ANIME_RELEASE_PENDING_INTENT, newIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 if (alarmManager.canScheduleExactAlarms()) {
                     alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, newNearestNotificationInfo.releaseDateMillis, newPendingIntent);

@@ -37,7 +37,6 @@
 		isFullViewed,
 		confirmIsVisible,
 		animeOptionVisible,
-		// Reactive Functions
 		runUpdate,
 		runExport,
 		importantLoad,
@@ -54,6 +53,7 @@
 		showStatus,
 		mobile,
 		isBackgroundUpdateKey,
+		visitedKey,
 		// anilistAccessToken,
 	} from "./js/globalValues.js";
 	import {
@@ -84,6 +84,33 @@
 	window.kanshiInit = new Promise(async (resolve) => {
 		// Check App ID
 		$appID = await getWebVersion();
+
+		// Check Data Loss
+		if ($android) {
+			if ($visitedKey && window[$visitedKey] === true) {
+				let isAlreadyVisited = await retrieveJSON($visitedKey);
+				if (!isAlreadyVisited) {
+					window[".androidDataIsEvicted"] = true;
+					try {
+						JSBridge?.notifyDataEviction?.();
+						if (
+							$isBackgroundUpdateKey &&
+							window?.[$isBackgroundUpdateKey] === true
+						) {
+							JSBridge?.backgroundUpdateIsFinished?.(false);
+						}
+					} catch (e) {}
+				}
+			} else {
+				await saveJSON(true, $visitedKey, true).then(() => {
+					try {
+						JSBridge?.visited?.();
+					} catch (e) {}
+				});
+			}
+		}
+
+		// Check App Version Updates
 		if ($android && navigator.onLine) {
 			try {
 				if ($appID) {
@@ -302,25 +329,17 @@
 			initDataPromises.push(
 				new Promise(async (resolve, reject) => {
 					try {
-						if (
-							$android &&
-							$isBackgroundUpdateKey &&
-							window?.[$isBackgroundUpdateKey] === true
-						) {
-							resolve();
-						} else {
-							getFilterOptions()
-								.then((data) => {
-									$selectedCustomFilter =
-										data.selectedCustomFilter;
-									$activeTagFilters = data.activeTagFilters;
-									$filterOptions = data.filterOptions;
-									resolve();
-								})
-								.catch(() => {
-									reject();
-								});
-						}
+						getFilterOptions()
+							.then((data) => {
+								$selectedCustomFilter =
+									data.selectedCustomFilter;
+								$activeTagFilters = data.activeTagFilters;
+								$filterOptions = data.filterOptions;
+								resolve();
+							})
+							.catch(() => {
+								reject();
+							});
 					} catch (e) {
 						reject(e);
 					}

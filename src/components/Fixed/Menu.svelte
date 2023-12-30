@@ -19,17 +19,10 @@
         newFinalAnime,
         username,
         isBackgroundUpdateKey,
-        extraInfo,
-        currentExtraInfo,
-        initData,
     } from "../../js/globalValues.js";
     import { fade } from "svelte/transition";
     import { saveJSON } from "../../js/indexedDB.js";
-    import {
-        animeLoader,
-        getExtraInfo,
-        importUserData,
-    } from "../../js/workerUtils.js";
+    import { animeLoader, importUserData } from "../../js/workerUtils.js";
     import {
         jsonIsEmpty,
         removeLocalStorage,
@@ -45,6 +38,7 @@
             importFileInput.click();
         }
     }
+    window.importAndroidUserData = importData;
 
     async function importJSONFile() {
         if (!(importFileInput instanceof Element))
@@ -301,33 +295,54 @@
         }
     }
 
+    let statusChange;
     async function showNotice() {
+        let persistent = await navigator?.storage?.persisted?.();
+        let notificationGranted =
+            window?.Notification?.permission === "granted";
         if ($android) {
-            let extraInfoText = $extraInfo?.[$currentExtraInfo];
             await $confirmPromise({
                 isAlert: true,
-                title: extraInfoText ? "Some Extra Info" : "Hey hey",
-                text: extraInfoText || "Hello There, click again :)",
+                title: "Possible Data Loss",
+                text: `<span style='color:hsl(345deg, 75%, 60%);'>NOTICE!</span> You may want to <span style='color:hsl(345deg, 75%, 60%);'>Back Up</span> your data using export to avoid data loss.\n\nCurrently, the used storage can be <span style='color:hsl(345deg, 75%, 60%);'>Automatically Cleared by Chrome</span> when <span style='color:hsl(345deg, 75%, 60%);'>Disk is Nearly Full</span>.\n\nPersistent Storage Status: ${
+                    persistent
+                        ? "<span style='color:hsl(185deg, 65%, 50%);'>Enabled</span>"
+                        : "<span style='color:hsl(345deg, 75%, 60%);'>Disabled</span>"
+                }`,
             });
-            if (!$initData) {
-                getExtraInfo();
-            }
         } else {
             await $confirmPromise({
                 isAlert: true,
-                title: "Persist Storage",
-                text: "NOTICE! You may want to enable persistent storage to avoid data corruption, because browser automatically clears your data when disk is nearly full. Enabling notification and bookmarking this website helps to enable persistent storage.",
+                title: "Possible Data Loss",
+                text: `<span style='color:hsl(345deg, 75%, 60%);'>NOTICE!</span> You may want to <span style='color:hsl(345deg, 75%, 60%);'>Back Up</span> your data and enable persistent storage to avoid data loss. Currently, browser can <span style='color:hsl(345deg, 75%, 60%);'>Automatically Clear your Data</span> when <span style='color:hsl(345deg, 75%, 60%);'>Disk is Nearly Full</span>. \n\nPersistent Storage Status: ${
+                    persistent
+                        ? "<span style='color:hsl(185deg, 65%, 50%);'>Enabled</span>"
+                        : "<span style='color:hsl(345deg, 75%, 60%);'>Disabled</span>"
+                }\n\nTo enable persistent storage:\n\n<span onclick="(async()=>await window?.navigator?.storage?.persist?.())();">1) Grant permission for <span style="${
+                    persistent ? "" : "text-decoration: underline;"
+                }${
+                    persistent
+                        ? "color:hsl(185deg, 65%, 50%)"
+                        : "color:hsl(345deg, 75%, 60%)"
+                };">Persistent Storage</span></span>.\n2) OR Grant permission for <span ${
+                    notificationGranted
+                        ? ""
+                        : "onclick='(async()=>await window?.Notification?.requestPermission?.())();'"
+                }><span style="${
+                    notificationGranted ? "" : "text-decoration: underline;"
+                }${
+                    notificationGranted
+                        ? "color:hsl(185deg, 65%, 50%)"
+                        : "color:hsl(345deg, 75%, 60%)"
+                };">Notification</span></span>.\n3) Bookmark this Website.`,
             });
         }
-        if ("Notification" in window) {
-            if (window?.Notification?.permission !== "granted") {
-                await window?.Notification?.requestPermission?.();
-            }
+        if (!notificationGranted) {
+            await window?.Notification?.requestPermission?.();
         }
-        if ("navigator" in window) {
-            await window?.navigator?.storage?.persist?.();
-            await window?.navigator?.storage?.persisted?.();
-        }
+        await window?.navigator?.storage?.persist?.();
+        await window?.navigator?.storage?.persisted?.();
+        statusChange = !statusChange;
     }
 
     async function showRecentReleases() {
@@ -533,11 +548,13 @@
                 on:keydown={(e) => e.key === "Enter" && anilistSignup(e)}
                 >Create an Anilist Account</button
             >
-            <button
-                class="button"
-                on:keydown={(e) => e.key === "Enter" && showNotice(e)}
-                on:click={showNotice}>Notice</button
-            >
+            {#key statusChange}
+                <button
+                    class="button"
+                    on:keydown={(e) => e.key === "Enter" && showNotice(e)}
+                    on:click={showNotice}>Notice!</button
+                >
+            {/key}
         </div>
     </div>
 {/if}

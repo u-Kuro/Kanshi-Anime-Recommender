@@ -21,9 +21,9 @@ async function IDBinit() {
         }
     })
 }
-function saveJSON(data, name) {
+function saveJSON(data, name, isImportant = false) {
     return new Promise(async (resolve, reject) => {
-        await saveIDBdata(data, name)
+        await saveIDBdata(data, name, isImportant)
             .then((message) => {
                 resolve(message)
             })

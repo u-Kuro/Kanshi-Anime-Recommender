@@ -60,7 +60,9 @@ public class MainService extends Service {
     private final int SERVICE_NOTIFICATION_ID = 995;
     private final String STOP_SERVICE_ACTION = "STOP_MAIN_SERVICE";
     private final String SET_MAIN_SERVICE = "SET_MAIN_SERVICE";
-    final String isBackgroundUpdateKey = "Kanshi.Anime.Recommendations.Anilist.W~uPtWCq=vG$TR:Zl^#t<vdS]I~N70.isBackgroundUpdate";
+    final String uniqueKey = "Kanshi.Anime.Recommendations.Anilist.W~uPtWCq=vG$TR:Zl^#t<vdS]I~N70";
+    final String isBackgroundUpdateKey = uniqueKey+".isBackgroundUpdate";
+    final String visitedKey = uniqueKey+".visited";
     public boolean lastBackgroundUpdateIsFinished = false;
     public boolean lastBackgroundUpdateTimeIsAlreadyUpdated = false;
     public boolean isAddingAnimeReleaseNotification = false;
@@ -145,11 +147,15 @@ public class MainService extends Service {
         webView.setWebViewClient(new WebViewClient() {
             @Override
             public void onPageStarted(WebView view, String url, Bitmap favicon) {
+                boolean visited = prefs.getBoolean("visited", false);
+                if (visited) {
+                    view.loadUrl("javascript:(()=>window['"+visitedKey+"']=true)();");
+                }
+                view.loadUrl("javascript:(()=>window['"+isBackgroundUpdateKey+"']=true)();");
                 if (appSwitched) {
                     appSwitched = false;
                     view.loadUrl("javascript:(()=>window.shouldUpdateNotifications=true)();");
                 }
-                view.loadUrl("javascript:(()=>window['"+isBackgroundUpdateKey+"']=true)();");
                 super.onPageStarted(view, url, favicon);
             }
 
@@ -327,6 +333,50 @@ public class MainService extends Service {
         @JavascriptInterface
         public void pageIsFinished() {
             pageLoaded = true;
+        }
+        @JavascriptInterface
+        public void visited() {
+            prefsEdit.putBoolean("visited", true).apply();
+        }
+        boolean dataEvictionChannelIsAdded = false;
+        @JavascriptInterface
+        public void notifyDataEviction() {
+            if (ActivityCompat.checkSelfPermission(MainService.this.getApplicationContext(), android.Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
+                final String DATA_EVICTION_CHANNEL = "data_eviction_channel";
+                final int NOTIFICATION_DATA_EVICTION = 993;
+                if (!dataEvictionChannelIsAdded) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        CharSequence name = "Data Eviction";
+                        String description = "Notifications for data loss from chrome eviction.";
+                        int importance = NotificationManager.IMPORTANCE_DEFAULT;
+                        NotificationChannel channel = new NotificationChannel(DATA_EVICTION_CHANNEL, name, importance);
+                        channel.setDescription(description);
+                        channel.enableVibration(true);
+
+                        NotificationManager notificationManager = MainService.this.getApplicationContext().getSystemService(NotificationManager.class);
+                        notificationManager.createNotificationChannel(channel);
+                    }
+                    dataEvictionChannelIsAdded = true;
+                }
+                PackageManager pm = MainService.this.getApplicationContext().getPackageManager();
+                Intent intent = pm.getLaunchIntentForPackage("com.example.kanshi");
+                PendingIntent pendingIntent = PendingIntent.getActivity(MainService.this.getApplicationContext(), 0, intent, PendingIntent.FLAG_IMMUTABLE);
+                pendingIntent.cancel();
+                pendingIntent = PendingIntent.getActivity(MainService.this.getApplicationContext(), 0, intent, PendingIntent.FLAG_IMMUTABLE);
+                NotificationCompat.Builder builder = new NotificationCompat.Builder(MainService.this.getApplicationContext(), DATA_EVICTION_CHANNEL)
+                        .setSmallIcon(R.drawable.ic_stat_name)
+                        .setContentTitle("Possible Data Loss!")
+                        .setContentText("Some of your data may be cleared by chrome, please import your saved data.")
+                        .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                        .setContentIntent(pendingIntent);
+                NotificationManagerCompat notificationManager = NotificationManagerCompat.from(MainService.this.getApplicationContext());
+                notificationManager.cancel(NOTIFICATION_DATA_EVICTION);
+                notificationManager.notify(NOTIFICATION_DATA_EVICTION, builder.build());
+            }
+            MainActivity mainActivity = MainActivity.getInstanceActivity();
+            if (mainActivity != null) {
+                mainActivity.showDataEvictionDialog();
+            }
         }
         @JavascriptInterface
         public void setShouldProcessRecommendation(boolean shouldProcess) {

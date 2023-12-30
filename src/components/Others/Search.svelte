@@ -176,7 +176,18 @@
             $dataStatus = "Updating List";
             _loadAnime(true);
         } else if (!$isLoadingAnime && !$isProcessingList && !$isImporting) {
-            await saveJSON($filterOptions, "filterOptions");
+            let selectedFilterSelectionName =
+                $filterOptions?.filterSelection?.[
+                    $filterOptions?.filterSelection?.findIndex?.(
+                        ({ isSelected }) => isSelected,
+                    )
+                ]?.filterSelectionName;
+            if (selectedFilterSelectionName) {
+                await saveJSON(
+                    selectedFilterSelectionName,
+                    "selectedFilterSelectionName",
+                );
+            }
         }
     }
 
