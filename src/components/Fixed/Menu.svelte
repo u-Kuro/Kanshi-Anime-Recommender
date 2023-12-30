@@ -295,7 +295,6 @@
         }
     }
 
-    let statusChange;
     async function showNotice() {
         let persistent = await navigator?.storage?.persisted?.();
         let notificationGranted =
@@ -303,22 +302,30 @@
         if ($android) {
             await $confirmPromise({
                 isAlert: true,
-                title: "Possible Data Loss",
-                text: `<span style='color:hsl(345deg, 75%, 60%);'>NOTICE!</span> You may want to <span style='color:hsl(345deg, 75%, 60%);'>Back Up</span> your data using export to avoid data loss.\n\nCurrently, the used storage can be <span style='color:hsl(345deg, 75%, 60%);'>Automatically Cleared by Chrome</span> when <span style='color:hsl(345deg, 75%, 60%);'>Disk is Nearly Full</span>.\n\nPersistent Storage Status: ${
+                title: "Possiblity for Future Data Loss",
+                text: `<div id="kanshi-show-notice"><span style='color:hsl(345deg, 75%, 60%);'>NOTICE!</span> You may want to regularly <span style='color:hsl(345deg, 75%, 60%);'>Back Up</span> your data or use auto-export to prevent future data loss.\n\nCurrently, the storage might be <span style='color:hsl(345deg, 75%, 60%);'>Automatically Cleared by Chrome</span> when your <span style='color:hsl(345deg, 75%, 60%);'>Disk is Nearly Full.</span>\n\n<span ${
+                    persistent
+                        ? ""
+                        : "onclick='(async()=>{await window?.navigator?.storage?.persisted?.();await window?.navigator?.storage?.persist?.();window?.refreshKanshiNotice?.()})()'"
+                }>Persistent Storage Status: ${
                     persistent
                         ? "<span style='color:hsl(185deg, 65%, 50%);'>Enabled</span>"
                         : "<span style='color:hsl(345deg, 75%, 60%);'>Disabled</span>"
-                }`,
+                }</span></div>`,
             });
         } else {
             await $confirmPromise({
                 isAlert: true,
-                title: "Possible Data Loss",
-                text: `<span style='color:hsl(345deg, 75%, 60%);'>NOTICE!</span> You may want to <span style='color:hsl(345deg, 75%, 60%);'>Back Up</span> your data and enable persistent storage to avoid data loss. Currently, browser can <span style='color:hsl(345deg, 75%, 60%);'>Automatically Clear your Data</span> when <span style='color:hsl(345deg, 75%, 60%);'>Disk is Nearly Full</span>. \n\nPersistent Storage Status: ${
+                title: "Possiblity for Future Data Loss",
+                text: `<div id="kanshi-show-notice"><span style='color:hsl(345deg, 75%, 60%);'>NOTICE!</span> You may want to <span style='color:hsl(345deg, 75%, 60%);'>Back Up</span> your data or enable persistent storage to prevent future data loss. Currently, browsers might <span style='color:hsl(345deg, 75%, 60%);'>Automatically Clear your Data</span> when your <span style='color:hsl(345deg, 75%, 60%);'>Disk is Nearly Full.</span>\n\nPersistent Storage Status: ${
                     persistent
                         ? "<span style='color:hsl(185deg, 65%, 50%);'>Enabled</span>"
                         : "<span style='color:hsl(345deg, 75%, 60%);'>Disabled</span>"
-                }\n\nTo enable persistent storage:\n\n<span onclick="(async()=>await window?.navigator?.storage?.persist?.())();">1) Grant permission for <span style="${
+                }\n\nTo enable persistent storage:\n\n<span ${
+                    persistent
+                        ? ""
+                        : "onclick='(async()=>{await window?.navigator?.storage?.persisted?.();await window?.navigator?.storage?.persist?.();window?.refreshKanshiNotice?.()})()'"
+                }>1) Grant permission for <span style="${
                     persistent ? "" : "text-decoration: underline;"
                 }${
                     persistent
@@ -327,23 +334,37 @@
                 };">Persistent Storage</span></span>.\n2) OR Grant permission for <span ${
                     notificationGranted
                         ? ""
-                        : "onclick='(async()=>await window?.Notification?.requestPermission?.())();'"
+                        : "onclick='(async()=>{await window?.Notification?.requestPermission?.();window?.refreshKanshiNotice?.()})()'"
                 }><span style="${
                     notificationGranted ? "" : "text-decoration: underline;"
                 }${
                     notificationGranted
                         ? "color:hsl(185deg, 65%, 50%)"
                         : "color:hsl(345deg, 75%, 60%)"
-                };">Notification</span></span>.\n3) Bookmark this Website.`,
+                };">Notification</span></span>.\n3) Bookmark this Website.</div>`,
             });
         }
         if (!notificationGranted) {
             await window?.Notification?.requestPermission?.();
         }
-        await window?.navigator?.storage?.persist?.();
-        await window?.navigator?.storage?.persisted?.();
-        statusChange = !statusChange;
+        if (!persistent) {
+            await window?.navigator?.storage?.persist?.();
+        }
     }
+    function refreshKanshiNotice() {
+        if (document?.getElementById?.("kanshi-show-notice")) {
+            showNotice();
+        }
+    }
+    try {
+        window?.navigator?.permissions
+            ?.query?.({ name: "notifications" })
+            ?.then?.((result) => (result.onchange = refreshKanshiNotice));
+        window?.navigator?.permissions
+            ?.query?.({ name: "persistent-storage" })
+            ?.then?.((result) => (result.onchange = refreshKanshiNotice));
+    } catch (e) {}
+    window.refreshKanshiNotice = refreshKanshiNotice;
 
     async function showRecentReleases() {
         if (!$android) return;
@@ -548,13 +569,11 @@
                 on:keydown={(e) => e.key === "Enter" && anilistSignup(e)}
                 >Create an Anilist Account</button
             >
-            {#key statusChange}
-                <button
-                    class="button"
-                    on:keydown={(e) => e.key === "Enter" && showNotice(e)}
-                    on:click={showNotice}>Notice!</button
-                >
-            {/key}
+            <button
+                class="button"
+                on:keydown={(e) => e.key === "Enter" && showNotice(e)}
+                on:click={showNotice}>Notice!</button
+            >
         </div>
     </div>
 {/if}
