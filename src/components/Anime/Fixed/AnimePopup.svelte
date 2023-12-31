@@ -76,8 +76,6 @@
         ),
         videoLoops = {};
 
-    let lastPlayedTrailer;
-
     let savedYtVolume =
         !$android && matchMedia("(hover:hover)").matches ? 50 : 100;
 
@@ -267,7 +265,6 @@
         }
     });
 
-    let trailerWasPlaying;
     let afterImmediateScrollUponPopupVisible;
     popupVisible.subscribe(async (val) => {
         if (
@@ -327,7 +324,12 @@
                 for (let i = 0; i < $ytPlayers?.length; i++) {
                     if ($ytPlayers[i]?.ytPlayer?.g === trailerEl) {
                         haveTrailer = true;
-                        if ($inApp && ($autoPlay || trailerWasPlaying)) {
+                        if (
+                            $inApp &&
+                            ($autoPlay ||
+                                $ytPlayers[i]?.ytPlayer?.getPlayerState?.() ===
+                                    2)
+                        ) {
                             await tick();
                             prePlayYtPlayer($ytPlayers[i]?.ytPlayer);
                             $ytPlayers[i]?.ytPlayer?.playVideo?.();
@@ -365,15 +367,7 @@
             removeClass(popupContainer, "show");
             requestFrame(() => {
                 // Stop All Player
-                let visibleTrailer =
-                    mostVisiblePopupHeader?.querySelector?.(".trailer");
                 $ytPlayers.forEach(({ ytPlayer }) => {
-                    if (
-                        ytPlayer?.g === visibleTrailer &&
-                        visibleTrailer === lastPlayedTrailer
-                    ) {
-                        trailerWasPlaying = ytPlayer?.getPlayerState?.() === 1;
-                    }
                     ytPlayer?.pauseVideo?.();
                 });
                 removeClass(popupWrapper, "visible");
@@ -516,26 +510,12 @@
         });
     });
 
-    let lastVisibleTrailer, lastVisibleTrailerIsPlaying;
     let scrollToGridTimeout, createPopupPlayersTimeout;
     async function playMostVisibleTrailer() {
         if (!$popupVisible) return;
         await tick();
         let visibleTrailer =
             mostVisiblePopupHeader?.querySelector?.(".trailer");
-        if (lastVisibleTrailer !== visibleTrailer) {
-            for (let i = 0; i < $ytPlayers?.length; i++) {
-                if (
-                    $ytPlayers[i]?.ytPlayer?.g === lastVisibleTrailer &&
-                    lastPlayedTrailer === lastVisibleTrailer
-                ) {
-                    lastVisibleTrailerIsPlaying =
-                        $ytPlayers[i]?.ytPlayer?.getPlayerState?.() === 1;
-                    break;
-                }
-            }
-            lastVisibleTrailer = visibleTrailer;
-        }
         // Scroll in Grid
         let visibleTrailerIdx =
             getChildIndex(
@@ -601,11 +581,8 @@
                     if (
                         $popupVisible &&
                         $inApp &&
-                        lastPlayedTrailer !== visibleTrailer &&
                         ($autoPlay ||
-                            (lastVisibleTrailerIsPlaying &&
-                                $ytPlayers[i]?.ytPlayer?.getPlayerState?.() ===
-                                    2))
+                            $ytPlayers[i]?.ytPlayer?.getPlayerState?.() === 2)
                     ) {
                         prePlayYtPlayer($ytPlayers[i]?.ytPlayer);
                         $ytPlayers[i]?.ytPlayer?.playVideo?.();
@@ -830,7 +807,6 @@
             videoLoops[loopedAnimeID] = null;
         }
         if (_ytPlayer?.getPlayerState?.() === 1) {
-            lastPlayedTrailer = trailerEl;
             if (
                 trailerEl?.classList?.contains?.("display-none") ||
                 !popupImg?.classList?.contains?.("display-none")
@@ -1034,7 +1010,6 @@
     }
 
     // Global Function For Android
-    let isCurrentlyPlaying = false;
     window.returnedAppIsVisible = (inAndroidApp) => {
         // Only For Android, and workaround for Alert visibility
         if (!$android) return;
@@ -1048,8 +1023,7 @@
                 if (
                     $ytPlayers[i]?.ytPlayer?.g === visibleTrailer &&
                     ($autoPlay ||
-                        ($ytPlayers[i]?.ytPlayer?.getPlayerState?.() === 2 &&
-                            isCurrentlyPlaying))
+                        $ytPlayers[i]?.ytPlayer?.getPlayerState?.() === 2)
                 ) {
                     prePlayYtPlayer($ytPlayers[i]?.ytPlayer);
                     $ytPlayers[i]?.ytPlayer?.playVideo?.();
@@ -1058,14 +1032,7 @@
                 }
             }
         } else {
-            isCurrentlyPlaying = false;
             for (let i = 0; i < $ytPlayers.length; i++) {
-                if (
-                    $ytPlayers[i]?.ytPlayer?.g === visibleTrailer &&
-                    $ytPlayers[i]?.ytPlayer?.getPlayerState?.() === 1
-                ) {
-                    isCurrentlyPlaying = true;
-                }
                 $ytPlayers[i]?.ytPlayer?.pauseVideo?.();
             }
         }
@@ -1083,8 +1050,7 @@
                 if (
                     $ytPlayers[i]?.ytPlayer?.g === visibleTrailer &&
                     ($autoPlay ||
-                        ($ytPlayers[i]?.ytPlayer?.getPlayerState?.() === 2 &&
-                            isCurrentlyPlaying))
+                        $ytPlayers[i]?.ytPlayer?.getPlayerState?.() === 2)
                 ) {
                     prePlayYtPlayer($ytPlayers[i]?.ytPlayer);
                     $ytPlayers[i]?.ytPlayer?.playVideo?.();
@@ -1093,14 +1059,7 @@
                 }
             }
         } else {
-            isCurrentlyPlaying = false;
             for (let i = 0; i < $ytPlayers.length; i++) {
-                if (
-                    $ytPlayers[i]?.ytPlayer?.g === visibleTrailer &&
-                    $ytPlayers[i]?.ytPlayer?.getPlayerState?.() === 1
-                ) {
-                    isCurrentlyPlaying = true;
-                }
                 $ytPlayers[i]?.ytPlayer?.pauseVideo?.();
             }
         }
