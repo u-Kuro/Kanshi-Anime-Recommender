@@ -505,9 +505,6 @@ window.isExported = (success = true) => {
 }
 const exportUserData = (_data) => {
     return new Promise((resolve, reject) => {
-        if (!get(username)) {
-            return resolve()
-        }
         if (exportUserDataWorker) {
             exportUserDataWorker?.terminate?.()
             exportUserDataWorker = null

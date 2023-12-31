@@ -484,24 +484,22 @@
                 on:keydown={(e) => e.key === "Enter" && importData(e)}
                 >Import Data</button
             >
-            {#if $username}
+            <button
+                class="button"
+                on:click={exportData}
+                on:keydown={(e) => e.key === "Enter" && exportData(e)}
+                >Export Data</button
+            >
+            {#if $android}
                 <button
                     class="button"
-                    on:click={exportData}
-                    on:keydown={(e) => e.key === "Enter" && exportData(e)}
-                    >Export Data</button
+                    on:click={handleExportFolder}
+                    on:keydown={(e) =>
+                        e.key === "Enter" && handleExportFolder(e)}
                 >
-                {#if $android}
-                    <button
-                        class="button"
-                        on:click={handleExportFolder}
-                        on:keydown={(e) =>
-                            e.key === "Enter" && handleExportFolder(e)}
-                    >
-                        {($exportPathIsAvailable ? "Change" : "Set") +
-                            " Export Folder"}
-                    </button>
-                {/if}
+                    {($exportPathIsAvailable ? "Change" : "Set") +
+                        " Export Folder"}
+                </button>
             {/if}
             <button
                 class={"button " + ($showStatus ? "selected" : "")}
@@ -517,15 +515,13 @@
                 >Auto Update</button
             >
             {#if $android}
-                {#if $username}
-                    <button
-                        class={"button " + ($autoExport ? "selected" : "")}
-                        on:click={handleExportEveryHour}
-                        on:keydown={(e) =>
-                            e.key === "Enter" && handleExportEveryHour(e)}
-                        >Auto Export</button
-                    >
-                {/if}
+                <button
+                    class={"button " + ($autoExport ? "selected" : "")}
+                    on:click={handleExportEveryHour}
+                    on:keydown={(e) =>
+                        e.key === "Enter" && handleExportEveryHour(e)}
+                    >Auto Export</button
+                >
                 {#if typeof keepAppRunningInBackground === "boolean"}
                     <button
                         class={"button" +
