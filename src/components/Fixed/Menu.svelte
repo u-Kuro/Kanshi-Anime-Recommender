@@ -625,6 +625,7 @@
         cursor: pointer;
         flex: 1 0 auto;
         user-select: none;
+        width: fit-content;
     }
     .menu:after {
         content: "";
@@ -649,6 +650,11 @@
         }
         .menu {
             padding: 1.5em 50px !important;
+        }
+    }
+    @media screen and (max-width: 207px) {
+        .button {
+            width: 100% !important;
         }
     }
 </style>

@@ -191,9 +191,7 @@
 
     .confirm-text {
         font-size: 1.6rem;
-        overflow-y: auto;
-        max-height: 40vh;
-        overflow-x: hidden;
+        height: fit-content;
         color: white;
         font-weight: 500;
         -ms-overflow-style: none;

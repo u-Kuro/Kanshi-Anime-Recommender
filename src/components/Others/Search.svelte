@@ -1670,25 +1670,29 @@
         selectedCustomFilterElement = false;
     }
     async function saveCustomFilterName() {
-        if (
-            !$filterOptions ||
-            !isJsonObject($activeTagFilters) ||
-            !$selectedCustomFilter
-        )
+        if (!$filterOptions || !isJsonObject($activeTagFilters))
             return pleaseWaitAlert();
-        if (customFilterName && $selectedCustomFilter !== customFilterName) {
+        let previousCustomFilterIsMissing =
+            !isJsonObject($activeTagFilters?.[$selectedCustomFilter]) ||
+            jsonIsEmpty($activeTagFilters?.[$selectedCustomFilter]);
+        if (
+            customFilterName &&
+            ($selectedCustomFilter !== customFilterName ||
+                previousCustomFilterIsMissing)
+        ) {
             let customFilterNameToShow = `<span style="color:#00cbf9;">${trimAllEmptyChar(
                 customFilterName,
             )}</span>`;
             if (
                 await $confirmPromise({
-                    title: "Save custom filter",
-                    text: `Do you want to change the custom filter name to ${customFilterNameToShow}?`,
+                    title: "Save category",
+                    text: `Do you want to change the category name to ${customFilterNameToShow}?`,
                 })
             ) {
                 if (
                     customFilterName &&
-                    $selectedCustomFilter !== customFilterName
+                    ($selectedCustomFilter !== customFilterName ||
+                        previousCustomFilterIsMissing)
                 ) {
                     await saveJSON(true, "shouldLoadAnime");
                     editCustomFilterName = false;
@@ -1708,48 +1712,55 @@
                     }
                     $activeTagFilters[savedCustomFilterName] = JSON.parse(
                         JSON.stringify(
-                            $activeTagFilters?.[previousCustomFilterName],
+                            previousCustomFilterIsMissing
+                                ? {
+                                      "Anime Filter": [],
+                                      "Content Caution": [],
+                                      "Algorithm Filter": [],
+                                  }
+                                : $activeTagFilters?.[previousCustomFilterName],
                         ),
                     );
                     // Add
                     $activeTagFilters = $activeTagFilters;
                     $selectedCustomFilter = savedCustomFilterName;
                     // Delete
-                    delete $activeTagFilters?.[previousCustomFilterName];
-                    delete $filterOptions?.sortFilter?.[
-                        previousCustomFilterName
-                    ];
-                    $activeTagFilters = $activeTagFilters;
-                    $filterOptions = $filterOptions;
+                    if (savedCustomFilterName !== previousCustomFilterName) {
+                        delete $activeTagFilters?.[previousCustomFilterName];
+                        delete $filterOptions?.sortFilter?.[
+                            previousCustomFilterName
+                        ];
+                        $activeTagFilters = $activeTagFilters;
+                        $filterOptions = $filterOptions;
+                    }
                 }
             }
         }
     }
     async function addCustomFilter() {
-        if (
-            !$filterOptions ||
-            !isJsonObject($activeTagFilters) ||
-            !$selectedCustomFilter
-        )
+        if (!$filterOptions || !isJsonObject($activeTagFilters))
             return pleaseWaitAlert();
+        let newCustomFilterCanBeReplaced =
+            !isJsonObject($activeTagFilters?.[customFilterName]) ||
+            jsonIsEmpty($activeTagFilters?.[customFilterName]);
         if (
             customFilterName &&
             $activeTagFilters &&
-            !$activeTagFilters?.[customFilterName]
+            newCustomFilterCanBeReplaced
         ) {
             let customFilterNameToShow = `<span style="color:#00cbf9;">${trimAllEmptyChar(
                 customFilterName,
             )}</span>`;
             if (
                 await $confirmPromise({
-                    title: "Add custom filter",
-                    text: `Do you want to add the custom filter named ${customFilterNameToShow}?`,
+                    title: "Add custom category",
+                    text: `Do you want to add a custom category named ${customFilterNameToShow}?`,
                 })
             ) {
                 if (
                     customFilterName &&
                     $activeTagFilters &&
-                    !$activeTagFilters?.[customFilterName]
+                    newCustomFilterCanBeReplaced
                 ) {
                     await saveJSON(true, "shouldLoadAnime");
                     editCustomFilterName = false;
@@ -1768,9 +1779,22 @@
                             );
                         $filterOptions = $filterOptions;
                     }
+                    let previousCustomFilterIsMissing =
+                        !isJsonObject(
+                            $activeTagFilters?.[previousCustomFilterName],
+                        ) ||
+                        jsonIsEmpty(
+                            $activeTagFilters?.[previousCustomFilterName],
+                        );
                     $activeTagFilters[addedCustomFilterName] = JSON.parse(
                         JSON.stringify(
-                            $activeTagFilters?.[previousCustomFilterName],
+                            previousCustomFilterIsMissing
+                                ? {
+                                      "Anime Filter": [],
+                                      "Content Caution": [],
+                                      "Algorithm Filter": [],
+                                  }
+                                : $activeTagFilters?.[previousCustomFilterName],
                         ),
                     );
                     $activeTagFilters = $activeTagFilters;
@@ -1798,8 +1822,8 @@
             )}</span>`;
             if (
                 await $confirmPromise({
-                    title: "Delete custom filter",
-                    text: `Do you want to delete the custom filter named ${customFilterNameToShow}?`,
+                    title: "Delete category",
+                    text: `Do you want to delete the category named ${customFilterNameToShow}?`,
                 })
             ) {
                 if (
@@ -1830,7 +1854,7 @@
             $confirmPromise({
                 isAlert: true,
                 title: "Action failed",
-                text: "Requires atleast one custom filter.",
+                text: "Requires atleast one category.",
             });
         }
     }
@@ -2144,7 +2168,7 @@
             class="custom-filter"
             type="text"
             autocomplete="off"
-            placeholder="Custom Filter"
+            placeholder="Category"
             style:pointer-events={editCustomFilterName ? "" : "none"}
             disabled={!editCustomFilterName}
             bind:value={customFilterName}
@@ -2163,7 +2187,7 @@
                             (selectedCustomFilterElement ? "" : "hide")}
                     >
                         <div class="header">
-                            <h2>Your Filters</h2>
+                            <div class="filter-title">Category</div>
                             <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                             <div
                                 class="closing-x"
@@ -2209,7 +2233,8 @@
                 <div class="custom-filter-icon-wrap">
                     <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                     <svg
-                        class="save-custom-name"
+                        class="save-custom-category-name"
+                        title="Save Category Name"
                         tabindex={editCustomFilterName ? "0" : "-1"}
                         viewBox="0 0 448 512"
                         on:click={() => {
@@ -2244,7 +2269,7 @@
             <div class="custom-filter-icon-wrap">
                 <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                 <svg
-                    class="editcancel-custom-name"
+                    class="editcancel-custom-category-name"
                     tabindex={$showFilterOptions ? "0" : "-1"}
                     viewBox={"0 0" +
                         (editCustomFilterName ? " 384 512" : " 512 512")}
@@ -2332,8 +2357,7 @@
                                 (selectedFilterTypeElement ? "" : "hide")}
                         >
                             <div class="header">
-                                <h2>Filters</h2>
-
+                                <div class="filter-title">Filter</div>
                                 <div
                                     class="closing-x"
                                     tabindex={selectedFilterTypeElement &&
@@ -2386,8 +2410,8 @@
         {#if $showFilterOptions && $customFilters?.length > 1}
             <div
                 tabindex="0"
-                class="remove-custom-filter"
-                title="Delete Custom Filter"
+                class="remove-custom-category"
+                title="Delete Category"
                 style:visibility={$customFilters?.length > 1 ? "" : "hidden"}
                 on:click={(e) =>
                     $customFilters?.length > 1 && removeCustomFilter(e)}
@@ -2408,8 +2432,8 @@
         {#if $showFilterOptions && customFilterName && $activeTagFilters && !$activeTagFilters?.[customFilterName]}
             <div
                 tabindex="0"
-                class="add-custom-filter"
-                title="Add Custom Filter"
+                class="add-custom-category"
+                title="Add Custom Category"
                 on:click={(e) => {
                     if (
                         !customFilterName ||
@@ -2559,7 +2583,9 @@
                                         : "hide")}
                             >
                                 <div class="header">
-                                    <h2>{Dropdown.filName}</h2>
+                                    <div class="filter-title">
+                                        {Dropdown.filName}
+                                    </div>
                                     <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                                     <div
                                         class="closing-x"
@@ -3101,7 +3127,7 @@
                             (selectedSortElement ? "" : "hide")}
                     >
                         <div class="header">
-                            <h2>Sort By</h2>
+                            <div class="filter-title">Sort By</div>
                             <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                             <div
                                 class="closing-x"
@@ -3277,8 +3303,8 @@
     .custom-filter {
         padding-left: 15px;
     }
-    .add-custom-filter,
-    .remove-custom-filter {
+    .add-custom-category,
+    .remove-custom-category {
         width: 3em;
         height: 3em;
         display: grid;
@@ -3352,8 +3378,8 @@
         cursor: pointer;
     }
 
-    .editcancel-custom-name,
-    .save-custom-name {
+    .editcancel-custom-category-name,
+    .save-custom-category-name {
         height: 2em;
         width: 2em;
         cursor: pointer;
@@ -3794,6 +3820,9 @@
         min-height: 17px;
         min-width: 109px;
     }
+    .sortFilter > h2 {
+        text-align: end;
+    }
     .sortFilter h2,
     .sortFilter h3,
     .sortFilter svg {
@@ -4085,23 +4114,36 @@
             border-radius: 6px 6px 0px 0px;
             top: 140px;
             max-height: 65vh !important;
+            min-height: 10.71em !important;
             position: absolute;
             opacity: 1 !important;
             transition: opacity 0.2s ease !important;
             overflow: hidden !important;
         }
+        #filters .options-wrap-filter-info {
+            min-height: 17.07em !important;
+        }
         .options-wrap-filter-info.hide {
             opacity: 0 !important;
         }
         .options-wrap-filter-info .header {
-            display: flex !important;
+            display: grid !important;
             padding: 0 14px;
+            grid-template-columns: auto 25px;
         }
-        .options-wrap-filter-info h2 {
+        .options-wrap-filter-info .filter-title {
             display: initial !important;
             font-size: 1.8rem;
             font-weight: bold;
             text-transform: capitalize;
+            white-space: nowrap;
+            overflow-x: auto;
+            overflow-y: hidden;
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .options-wrap-filter-info .filter-title::-webkit-scrollbar {
+            display: none;
         }
         .options-wrap-filter-info input {
             display: initial !important;

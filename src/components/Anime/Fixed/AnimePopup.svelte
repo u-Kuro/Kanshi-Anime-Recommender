@@ -1692,7 +1692,7 @@
                                                     d="M288 0c9 0 17 5 21 14l69 141 153 22c9 2 17 8 20 17s0 18-6 24L434 328l26 156c1 9-2 18-10 24s-17 6-25 1l-137-73-137 73c-8 4-18 4-25-2s-11-14-10-23l26-156L31 218a24 24 0 0 1 14-41l153-22 68-141c4-9 13-14 22-14zm0 79-53 108c-3 7-10 12-18 13L99 219l86 85c5 6 8 13 7 21l-21 120 106-57c7-3 15-3 22 1l105 56-20-120c-1-8 1-15 7-21l86-85-118-17c-8-2-15-7-18-14L288 79z"
                                                 /></svg
                                             >
-                                            <h3
+                                            <h4
                                                 class="copy"
                                                 copy-value={(anime.averageScore !=
                                                 null
@@ -1718,7 +1718,7 @@
                                                         : "NA")}
                                                 {" · "}{@html anime?.recommendedRatingInfo ||
                                                     ""}
-                                            </h3>
+                                            </h4>
                                         </div>
                                     </div>
                                     <div
@@ -1754,7 +1754,7 @@
                                             </h4>
                                         {/if}
                                         {#if anime?.season || anime?.year}
-                                            <span
+                                            <h4
                                                 style="text-align: right;"
                                                 class="copy"
                                                 copy-value={`${
@@ -1770,11 +1770,11 @@
                                                         ? " " + anime?.year
                                                         : anime?.year || ""
                                                 }` || "NA"}
-                                            </span>
+                                            </h4>
                                         {:else}
-                                            <span style="text-align: right;"
-                                                >NA</span
-                                            >
+                                            <h4 style="text-align: right;">
+                                                NA
+                                            </h4>
                                         {/if}
                                     </div>
                                     <div
@@ -2578,7 +2578,7 @@
         fill: rgb(245, 197, 24) !important;
     }
 
-    .info-rating-wrapper > h3 {
+    .info-rating-wrapper > h4 {
         white-space: nowrap;
         cursor: text;
     }
@@ -2606,7 +2606,6 @@
     .info-format::-webkit-scrollbar {
         display: none;
     }
-    .info-format > span,
     .info-format > h4 {
         white-space: nowrap;
         cursor: text;
@@ -2758,6 +2757,7 @@
         white-space: nowrap;
         -ms-overflow-style: none;
         scrollbar-width: none;
+        min-width: 1.2em;
     }
 
     .anime-title::-webkit-scrollbar {

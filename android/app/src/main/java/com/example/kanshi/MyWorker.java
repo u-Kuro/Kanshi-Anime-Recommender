@@ -569,22 +569,30 @@ public class MyWorker extends Worker {
         // Default 1 hour interval
         long newBackgroundUpdateTime = System.currentTimeMillis() + TimeUnit.HOURS.toMillis(1);
 
-        // If its Early Morning Set next work at 6am
         TimeZone tz = TimeZone.getDefault();
         Calendar calendar = Calendar.getInstance(tz);
-        boolean isEarlyMorning = calendar.get(Calendar.HOUR_OF_DAY) < 6;
-        if (isEarlyMorning) {
+
+        int hourOfDay = calendar.get(Calendar.HOUR_OF_DAY);
+        // Early morning (before 6am)
+        boolean isEarlyMorning = hourOfDay < 6;
+        // Check if the current time is less than 5am
+        // This is to ensure that there is always an hour or greater interval between updates
+        // Not really true when its currently 5:00am as it still has an hour before 6:00am
+        // But next update default (5:00am + 1hour) is still set at 6am
+        // So... Ah Eh Tooo... Blehhh...
+        boolean hasAnHourBeforeEarlyMorning = hourOfDay < 5;
+        if (hasAnHourBeforeEarlyMorning) {
             calendar.set(Calendar.HOUR_OF_DAY, 6);
             calendar.clear(Calendar.MINUTE);
             calendar.clear(Calendar.SECOND);
             calendar.clear(Calendar.MILLISECOND);
-            long sevenAmInMillis = calendar.getTimeInMillis();
-            if (sevenAmInMillis >= System.currentTimeMillis()) {
-                newBackgroundUpdateTime = sevenAmInMillis;
+            long sixAmInMillis = calendar.getTimeInMillis();
+            if (sixAmInMillis >= System.currentTimeMillis()) {
+                newBackgroundUpdateTime = sixAmInMillis;
             }
         }
 
-        // Only Run Foreground Service if its set Manually or not an Early Morning
+        // Only Run Foreground Service if its set Manually or not an Early Morning (before 6am)
         if (isManual || !isEarlyMorning) {
             SharedPreferences prefs = this.getApplicationContext().getSharedPreferences("com.example.kanshi", Context.MODE_PRIVATE);
             boolean keepAppRunningInBackground = prefs.getBoolean("keepAppRunningInBackground",true);
