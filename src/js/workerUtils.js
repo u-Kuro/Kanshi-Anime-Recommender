@@ -55,7 +55,7 @@ const animeLoader = (_data = {}) => {
         }));
         dataStatusPrio = true
         progress.set(0)
-        cacheRequest("./webapi/worker/animeLoader.js")
+        cacheRequest("./webapi/worker/animeLoader.js", 53222, "Checking Anime List")
             .then(url => {
                 if (animeLoaderWorker) {
                     animeLoaderWorker?.terminate?.()
@@ -818,7 +818,7 @@ const getExtraInfo = () => {
 // IndexedDB
 const getIDBdata = (name) => {
     return new Promise((resolve, reject) => {
-        cacheRequest("./webapi/worker/getIDBdata.js")
+        cacheRequest("./webapi/worker/getIDBdata.js", 2452, "Retrieving Some Data")
             .then(url => {
                 let worker = new Worker(url)
                 worker.postMessage({ name })
@@ -906,20 +906,13 @@ const saveIDBdata = (_data, name, isImportant = false) => {
 }
 
 // One Time Use
-let getAnimeEntriesTerminateTimeout, gettingAnimeEntriesInterval;
+let getAnimeEntriesTerminateTimeout;
 const getAnimeEntries = (_data) => {
     return new Promise((resolve, reject) => {
-        gettingAnimeEntriesInterval = setInterval(() => {
-            dataStatus.set("Getting Anime Entries")
-        }, 300)
         progress.set(0)
-        cacheRequest("./webapi/worker/getAnimeEntries.js")
+        cacheRequest("./webapi/worker/getAnimeEntries.js", 43911307, "Getting Anime Entries")
             .then(url => {
                 progress.set(25)
-                if (gettingAnimeEntriesInterval) {
-                    clearInterval(gettingAnimeEntriesInterval)
-                    gettingAnimeEntriesInterval = null
-                }
                 if (getAnimeEntriesTerminateTimeout) clearTimeout(getAnimeEntriesTerminateTimeout)
                 let worker = new Worker(url)
                 worker.postMessage(_data)
@@ -943,10 +936,6 @@ const getAnimeEntries = (_data) => {
                 }
             }).catch((error) => {
                 progress.set(100)
-                if (gettingAnimeEntriesInterval) {
-                    clearInterval(gettingAnimeEntriesInterval)
-                    gettingAnimeEntriesInterval = null
-                }
                 dataStatus.set(null)
                 alertError()
                 reject(error)
@@ -954,7 +943,7 @@ const getAnimeEntries = (_data) => {
     })
 }
 
-let getFilterOptionsTerminateTimeout, getFilterOptionsInterval, getFilterOptionsWorker;
+let getFilterOptionsTerminateTimeout, getFilterOptionsWorker;
 const getFilterOptions = (_data) => {
     return new Promise((resolve, reject) => {
         if (getFilterOptionsTerminateTimeout) clearTimeout(getFilterOptionsTerminateTimeout)
@@ -962,21 +951,12 @@ const getFilterOptions = (_data) => {
             getFilterOptionsWorker?.terminate?.()
             getFilterOptionsWorker = null
         }
-        getFilterOptionsInterval = setInterval(() => {
-            if (!gettingAnimeEntriesInterval) {
-                dataStatus.set("Getting Filters")
-            }
-        }, 300)
-        cacheRequest("./webapi/worker/getFilterOptions.js")
+        cacheRequest("./webapi/worker/getFilterOptions.js", 130051, "Initializing Filters")
             .then(url => {
                 if (getFilterOptionsTerminateTimeout) clearTimeout(getFilterOptionsTerminateTimeout)
                 if (getFilterOptionsWorker) {
                     getFilterOptionsWorker?.terminate?.()
                     getFilterOptionsWorker = null
-                }
-                if (getFilterOptionsInterval) {
-                    clearInterval(getFilterOptionsInterval)
-                    getFilterOptionsInterval = null
                 }
                 getFilterOptionsWorker = new Worker(url)
                 getFilterOptionsWorker.postMessage(_data)
@@ -996,10 +976,6 @@ const getFilterOptions = (_data) => {
                     reject(error)
                 }
             }).catch((error) => {
-                if (getFilterOptionsInterval) {
-                    clearInterval(getFilterOptionsInterval)
-                    getFilterOptionsInterval = null
-                }
                 dataStatus.set(null)
                 alertError()
                 reject(error)
@@ -1020,10 +996,6 @@ function stopConflictingWorkers(blocker) {
     exportUserDataWorker?.terminate?.()
     isExporting = blocker?.isExporting ?? false
     getFilterOptionsWorker?.terminate?.()
-    clearInterval(gettingAnimeEntriesInterval)
-    gettingAnimeEntriesInterval = null
-    clearInterval(getFilterOptionsInterval)
-    getFilterOptionsInterval = null
     dataStatus.set(null)
 }
 

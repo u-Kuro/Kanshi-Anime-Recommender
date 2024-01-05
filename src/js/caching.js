@@ -1,10 +1,10 @@
 import { isAndroid } from "./others/helper"
 import { get } from "svelte/store"
-import { appID } from "./globalValues"
+import { appID, dataStatus, progress } from "./globalValues"
 
 let loadedRequestUrlPromises = {}
 let loadedRequestUrls = {}
-const cacheRequest = async (url) => {
+const cacheRequest = async (url, totalLength, status) => {
     if (loadedRequestUrls[url]) {
         return loadedRequestUrls[url]
     } else if (loadedRequestUrlPromises[url]) {
@@ -22,7 +22,68 @@ const cacheRequest = async (url) => {
                         'Cache-Control': 'public, max-age=31536000, immutable',
                     },
                     cache: 'force-cache'
-                }).then(async response => await response.blob())
+                }).then(async response => {
+                    const reader = response?.body?.getReader?.();
+                    if (totalLength && status && typeof (reader?.read) === "function") {
+                        return await new Promise(async (resolve) => {
+                            try {
+                                new ReadableStream({
+                                    async start(controller) {
+                                        if (typeof (controller?.close) === "function") {
+                                            let receivedLength = 0;
+                                            let chunks = [];
+                                            let streamStatusFrame, isDataStatusShowing;
+                                            let push = () => {
+                                                reader.read().then(({ done, value }) => {
+                                                    if (value) {
+                                                        chunks.push(value);
+                                                        receivedLength += value?.byteLength ?? value?.length;
+                                                        if (!isDataStatusShowing) {
+                                                            isDataStatusShowing = true
+                                                            cancelAnimationFrame(streamStatusFrame)
+                                                            streamStatusFrame = requestAnimationFrame(() => {
+                                                                let percent = (receivedLength / totalLength) * 100
+                                                                let currentProgress = get(progress)
+                                                                if (percent > 0 && percent <= 100
+                                                                    && (
+                                                                        !currentProgress
+                                                                        || currentProgress >= 100
+                                                                        || percent > currentProgress)
+                                                                ) {
+                                                                    progress.set(percent)
+                                                                    dataStatus.set(`${percent.toFixed(2)}% ` + status)
+                                                                }
+                                                                isDataStatusShowing = false
+                                                            })
+                                                        }
+                                                    }
+                                                    if (done === false) {
+                                                        push();
+                                                    } else if (done === true) {
+                                                        controller.close();
+                                                        cancelAnimationFrame(streamStatusFrame)
+                                                        dataStatus.set(null)
+                                                        progress.set(100)
+                                                        resolve(new Blob(chunks))
+                                                        push = undefined
+                                                        return
+                                                    }
+                                                })
+                                            }
+                                            push();
+                                        } else {
+                                            return resolve(await response.blob())
+                                        }
+                                    }
+                                });
+                            } catch (e) {
+                                return resolve(await response.blob())
+                            }
+                        })
+                    } else {
+                        return await response.blob()
+                    }
+                })
                     .then(blob => {
                         try {
                             let blobUrl = URL.createObjectURL(blob);

@@ -104,7 +104,9 @@
 			} else {
 				await saveJSON(true, $visitedKey, true).then(() => {
 					try {
-						JSBridge?.visited?.();
+						let isWebApp =
+							!window?.location?.protocol?.includes?.("file");
+						JSBridge?.visited?.(isWebApp);
 					} catch (e) {}
 				});
 			}
@@ -683,13 +685,9 @@
 		window.visualViewport.width,
 		window.innerWidth,
 	);
-	let windowHeight = Math.max(
-		window.visualViewport.height,
-		window.innerHeight,
-	);
 	let usernameInputEl, animeGridEl;
 
-	$dataStatus = "Getting Existing Data";
+	$dataStatus = "Retrieving Some Data";
 	let pleaseWaitStatusInterval = setInterval(() => {
 		if (!$dataStatus) {
 			$dataStatus = "Please Wait";
@@ -1651,15 +1649,7 @@
 			window.visualViewport.width,
 			window.innerWidth,
 		);
-		windowHeight = Math.max(
-			window.visualViewport.height,
-			window.innerHeight,
-		);
 		window.addEventListener("resize", () => {
-			windowHeight = Math.max(
-				window.visualViewport.height,
-				window.innerHeight,
-			);
 			windowWidth = Math.max(
 				document?.documentElement?.getBoundingClientRect?.()?.width,
 				window.visualViewport.width,

@@ -87,7 +87,7 @@ import androidx.core.content.FileProvider;
 import androidx.core.splashscreen.SplashScreen;
 
 public class MainActivity extends AppCompatActivity {
-    public final int appID = 297;
+    public final int appID = 298;
     public boolean keepAppRunningInBackground = false;
     public boolean webViewIsLoaded = false;
     public boolean permissionIsAsked = false;
@@ -284,9 +284,14 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onPageStarted(WebView view, String url, Bitmap favicon) {
                 shouldRefreshList = shouldProcessRecommendationList = shouldLoadAnime = false;
-                boolean visited = prefs.getBoolean("visited", false);
+                boolean visited;
+                if (url.startsWith("file")) {
+                    visited = prefs.getBoolean("clientVisited", false);
+                } else {
+                    visited = prefs.getBoolean("visited", false);
+                }
                 if (visited) {
-                    view.loadUrl("javascript:(()=>window['"+visitedKey+"']=true)();");
+                    view.loadUrl("javascript:(()=>window['" + visitedKey + "']=true)();");
                 }
                 if (appSwitched) {
                     appSwitched = false;
@@ -597,8 +602,12 @@ public class MainActivity extends AppCompatActivity {
             pageLoaded = true;
         }
         @JavascriptInterface
-        public void visited() {
-            prefsEdit.putBoolean("visited", true).apply();
+        public void visited(boolean isWebApp) {
+            if (isWebApp) {
+                prefsEdit.putBoolean("visited", true).apply();
+            } else {
+                prefsEdit.putBoolean("clientVisited", true).apply();
+            }
         }
         boolean dataEvictionChannelIsAdded = false;
         @JavascriptInterface
@@ -1047,10 +1056,26 @@ public class MainActivity extends AppCompatActivity {
                 .setTitle("Possible Data Loss")
                 .setMessage("Some of your data may be cleared by chrome, please import your saved data.")
                 .setPositiveButton("OK",(dialogInterface, i) -> {
-                    webView.post(()-> webView.loadUrl("javascript:window?.importAndroidUserData?.()"));
-                    prefsEdit.putBoolean("visited", false).apply();
+                    webView.post(() -> webView.loadUrl("javascript:window?.importAndroidUserData?.()"));
+                    String url = webView.getUrl();
+                    if (url!=null) {
+                        if (url.startsWith("file")) {
+                            prefsEdit.putBoolean("clientVisited", false).apply();
+                        } else {
+                            prefsEdit.putBoolean("visited", false).apply();
+                        }
+                    }
                 })
-                .setNegativeButton("CANCEL", ((dialogInterface, i) -> prefsEdit.putBoolean("visited", false).apply()))
+                .setNegativeButton("CANCEL", ((dialogInterface, i) -> {
+                    String url = webView.getUrl();
+                    if (url!=null) {
+                        if (url.startsWith("file")) {
+                            prefsEdit.putBoolean("clientVisited", false).apply();
+                        } else {
+                            prefsEdit.putBoolean("visited", false).apply();
+                        }
+                    }
+                }))
         ,false);
     }
     public void setBackgroundUpdates() {
