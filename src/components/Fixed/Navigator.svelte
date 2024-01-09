@@ -26,7 +26,12 @@
         popupContainer,
         navEl,
         inputUsernameEl,
-        inputUsernameElFocused = false;
+        inputUsernameElFocused = false,
+        windowWidth = Math.max(
+            document?.documentElement?.getBoundingClientRect?.()?.width,
+            window.visualViewport.width,
+            window.innerWidth,
+        );
 
     onMount(() => {
         navEl = navEl || document?.getElementById("nav");
@@ -40,6 +45,18 @@
                 typedUsername = val || "";
             }),
         );
+        windowWidth = Math.max(
+            document?.documentElement?.getBoundingClientRect?.()?.width,
+            window.visualViewport.width,
+            window.innerWidth,
+        );
+        window.addEventListener("resize", () => {
+            windowWidth = Math.max(
+                document?.documentElement?.getBoundingClientRect?.()?.width,
+                window.visualViewport.width,
+                window.innerWidth,
+            );
+        });
     });
 
     let awaitForInit;
@@ -322,7 +339,7 @@
 
 <div
     class={"nav-container" + ($menuVisible ? " menu-visible" : "")}
-    on:keydown={(e) => e.key === "Enter" && handleMenuVisibility(e)}
+    on:keyup={(e) => e.key === "Enter" && handleMenuVisibility(e)}
     on:click={handleMenuVisibility}
 >
     <nav
@@ -343,23 +360,24 @@
                 class="goback"
                 tabindex="0"
                 viewBox="0 0 448 512"
-                on:keydown={(e) => e.key === "Enter" && handleGoBack(e)}
+                on:keyup={(e) => e.key === "Enter" && handleGoBack(e)}
                 ><path
                     d="M9 233a32 32 0 0 0 0 46l160 160a32 32 0 0 0 46-46L109 288h307a32 32 0 1 0 0-64H109l106-105a32 32 0 0 0-46-46L9 233z"
                 /></svg
             >
         </div>
         <div class="input-search">
-            <label class="disable-interaction" for="usernameInput">
+            <label class="display-none" for="usernameInput">
                 Anilist Username
             </label>
             <input
                 id="usernameInput"
                 type="search"
+                tabindex={$popupVisible && windowWidth > 750 ? "-1" : "101"}
                 enterkeyhint="search"
                 autocomplete="off"
                 placeholder="Your Anilist Username"
-                on:keydown={(e) => e.key === "Enter" && updateUsername(e)}
+                on:keyup={(e) => e.key === "Enter" && updateUsername(e)}
                 on:focusin={onfocusUsernameInput}
                 on:focusout={onfocusUsernameInput}
                 bind:value={typedUsername}
@@ -368,7 +386,7 @@
             <div
                 class={"usernameText"}
                 on:click={focusInputUsernameEl}
-                on:keydown={(e) => e.key === "Enter" && focusInputUsernameEl(e)}
+                on:keyup={(e) => e.key === "Enter" && focusInputUsernameEl(e)}
             >
                 {typedUsername || "Your Anilist Username"}
             </div>
@@ -385,8 +403,8 @@
                 viewBox="0 0 500 500"
                 class="logo-icon"
                 aria-label="Kanshi Logo"
-                tabindex="0"
-                on:keydown={(e) => {
+                tabindex={$popupVisible && windowWidth > 750 ? "-1" : "0"}
+                on:keyup={(e) => {
                     if (e.key === "Enter") {
                         e.stopPropagation();
                         $menuVisible = !$menuVisible;
@@ -585,7 +603,7 @@
             justify-self: center !important;
         }
         .nav.popupvisible .go-back-container {
-            display: flex !important;
+            display: flex;
         }
         .nav.inputfocused .input-search {
             max-width: none !important;
@@ -631,33 +649,15 @@
             padding-right: 0.812em !important;
         }
     }
-    .disable-interaction {
-        pointer-events: none !important;
-        position: fixed !important;
-        transform: translateY(-99999px) translateZ(0) !important;
-        -webkit-transform: translateY(-99999px) translateZ(0) !important;
-        -ms-transform: translateY(-99999px) translateZ(0) !important;
-        -moz-transform: translateY(-99999px) translateZ(0) !important;
-        -o-transform: translateY(-99999px) translateZ(0) !important;
-        user-select: none !important;
-        touch-action: none !important;
-        cursor: not-allowed !important;
-        -webkit-user-drag: none !important;
-        -moz-user-select: none !important;
-        -ms-user-select: none !important;
-        height: 0 !important;
-        width: 0 !important;
-        max-width: 0 !important;
-        max-height: 0 !important;
-        min-width: 0 !important;
-        min-height: 0 !important;
-        overflow: hidden !important;
-    }
     @media screen and (max-width: 275px) {
         .nav.inputfocused #usernameInput {
             padding-left: 0 !important;
             padding-right: 0 !important;
             min-width: 25px !important;
         }
+    }
+
+    .display-none {
+        display: none !important;
     }
 </style>

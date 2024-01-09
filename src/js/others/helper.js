@@ -128,6 +128,7 @@ const formatMonth = (date) => date.toLocaleDateString(undefined, { month: "short
 const formatDay = (date) => date.toLocaleDateString(undefined, { day: "numeric" });
 const formatTime = (date) => date.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit", hour12: true });
 const formatWeekday = (date) => date.toLocaleDateString(undefined, { weekday: "short" });
+
 const getLastVisibleElement = (childSelector, parent) => {
   try {
     let childElements

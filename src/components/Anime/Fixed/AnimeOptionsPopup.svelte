@@ -21,15 +21,27 @@
     let animeUrl;
     let animeIdx;
 
+    let firstActionEl;
+    function keyDown(e) {
+        if (e.key === "Tab") {
+            e.preventDefault();
+            e.stopPropagation();
+            firstActionEl?.focus?.();
+            window.removeEventListener("keydown", keyDown);
+        }
+    }
+
     let isRecentlyOpened = true,
         isRecentlyOpenedTimeout;
     animeOptionVisible.subscribe((val) => {
         if (val === true) {
+            window.addEventListener("keydown", keyDown);
             isRecentlyOpened = true;
             isRecentlyOpenedTimeout = setTimeout(() => {
                 isRecentlyOpened = false;
             }, 100);
         } else {
+            window.removeEventListener("keydown", keyDown);
             if (isRecentlyOpenedTimeout) clearTimeout(isRecentlyOpenedTimeout);
             isRecentlyOpened = false;
         }
@@ -205,13 +217,13 @@
         on:touchend|passive={handleTouchAnimeOptionVisibility}
         on:keydown={(e) => e.key === "Enter" && handleAnimeOptionVisibility(e)}
     >
+        <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
         <div class="anime-options-container" out:fade={{ duration: 200 }}>
             <div class="option-header">
                 <span class="anime-title"><h1>{shownTitle}</h1></span>
-                <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                 <div
                     class="closing-x"
-                    tabindex="0"
+                    tabindex={$popupVisible ? "" : "0"}
                     on:click={handleAnimeOptionVisibility}
                     on:keydown={(e) =>
                         e.key === "Enter" && handleAnimeOptionVisibility(e)}
@@ -220,18 +232,22 @@
                 </div>
             </div>
             <span
+                tabindex={$popupVisible ? "" : "0"}
                 class="anime-option"
                 on:click={openAnimePopup}
                 on:keydown={(e) => e.key === "Enter" && openAnimePopup(e)}
+                bind:this={firstActionEl}
                 ><h2 class="option-title">Information</h2></span
             >
             <span
+                tabindex={$popupVisible ? "" : "0"}
                 class="anime-option"
                 on:click={openInAnilist}
                 on:keydown={(e) => e.key === "Enter" && openInAnilist(e)}
                 ><h2 class="option-title">Open in Anilist</h2></span
             >
             <span
+                tabindex={$popupVisible ? "" : "0"}
                 class="anime-option"
                 on:click={openInYoutube}
                 on:keydown={(e) => e.key === "Enter" && openInYoutube(e)}
@@ -239,6 +255,7 @@
             >
             {#if animeCopyTitle}
                 <span
+                    tabindex={$popupVisible ? "" : "0"}
                     class="anime-option"
                     on:click={copyTitle}
                     on:keydown={(e) => e.key === "Enter" && copyTitle(e)}
@@ -246,6 +263,7 @@
                 >
             {/if}
             <span
+                tabindex={$popupVisible ? "" : "0"}
                 class="anime-option"
                 on:click={handleHideShow}
                 on:keydown={(e) => e.key === "Enter" && handleHideShow(e)}

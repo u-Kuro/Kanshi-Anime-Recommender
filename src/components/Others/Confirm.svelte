@@ -59,14 +59,24 @@
         dispatch("cancelled");
     }
 
+    function keyDown(e) {
+        if (e.key === "Tab") {
+            e.preventDefault();
+            e.stopPropagation();
+            confirmButtonEl?.focus?.();
+            window.removeEventListener("keydown", keyDown);
+        }
+    }
+
     afterUpdate(() => {
         if (showConfirm) {
+            window.addEventListener("keydown", keyDown);
             isRecentlyOpened = true;
             isRecentlyOpenedTimeout = setTimeout(() => {
                 isRecentlyOpened = false;
             }, 200);
-            confirmButtonEl?.focus?.();
         } else {
+            window.removeEventListener("keydown", keyDown);
             if (isRecentlyOpenedTimeout) clearTimeout(isRecentlyOpenedTimeout);
             isRecentlyOpened = false;
         }

@@ -28,6 +28,7 @@
         appID,
         confirmIsVisible,
         isBackgroundUpdateKey,
+        menuVisible,
     } from "../../../js/globalValues.js";
     import {
         isJsonObject,
@@ -74,7 +75,10 @@
             window.visualViewport.height,
             window.innerHeight,
         ),
-        videoLoops = {};
+        videoLoops = {},
+        manuallyPausedTrailers = {},
+        autoPausedTrailers = {},
+        deletingTrailers = {};
 
     let savedYtVolume =
         !$android && matchMedia("(hover:hover)").matches ? 50 : 100;
@@ -313,10 +317,14 @@
                     "instant",
                 );
                 afterImmediateScrollUponPopupVisible = true;
+                let openedPopupHeader =
+                    $finalAnimeList?.[$openedAnimePopupIdx]?.popupHeader ||
+                    popupContainer?.children?.[
+                        $openedAnimePopupIdx
+                    ]?.querySelector?.(".popup-header");
+                mostVisiblePopupHeader = openedPopupHeader;
                 let trailerEl =
-                    openedAnimes[0][0]?.popupHeader?.querySelector?.(
-                        ".trailer",
-                    ) ||
+                    openedPopupHeader?.querySelector?.(".trailer") ||
                     popupContainer?.children?.[
                         $openedAnimePopupIdx
                     ]?.querySelector?.(".trailer");
@@ -324,9 +332,13 @@
                 for (let i = 0; i < $ytPlayers?.length; i++) {
                     if ($ytPlayers[i]?.ytPlayer?.g === trailerEl) {
                         haveTrailer = true;
+                        let ytId = $ytPlayers[i]?.ytPlayer?.g?.id;
                         if (
                             $inApp &&
-                            ($autoPlay ||
+                            !manuallyPausedTrailers?.[ytId] &&
+                            (($autoPlay &&
+                                $ytPlayers[i]?.ytPlayer?.getPlayerState?.() !==
+                                    0) ||
                                 $ytPlayers[i]?.ytPlayer?.getPlayerState?.() ===
                                     2)
                         ) {
@@ -368,10 +380,13 @@
             requestFrame(() => {
                 // Stop All Player
                 $ytPlayers.forEach(({ ytPlayer }) => {
-                    ytPlayer?.pauseVideo?.();
+                    let ytId = ytPlayer?.g?.id;
+                    if (ytId && !deletingTrailers?.[ytId]) {
+                        autoPausedTrailers[ytId] = true;
+                        ytPlayer?.pauseVideo?.();
+                    }
                 });
                 removeClass(popupWrapper, "visible");
-
                 removeClass(popupContainer, "willChange");
                 removeClass(popupWrapper, "willChange");
             }, 200);
@@ -427,10 +442,12 @@
     autoPlay.subscribe(async (val) => {
         if (typeof val === "boolean") {
             if ($appID != null) {
-                await saveJSON(val, "autoPlay");
-                setLocalStorage("autoPlay", val).catch(() => {
-                    removeLocalStorage("autoPlay");
-                });
+                (async () => {
+                    saveJSON(val, "autoPlay");
+                    setLocalStorage("autoPlay", val).catch(() => {
+                        removeLocalStorage("autoPlay");
+                    });
+                })();
             }
             if (val === true) {
                 await tick();
@@ -438,14 +455,21 @@
                 let visibleTrailer =
                     mostVisiblePopupHeader?.querySelector?.(".trailer");
                 for (let i = 0; i < $ytPlayers?.length; i++) {
+                    let ytId = $ytPlayers[i]?.ytPlayer?.g?.id;
                     if (
                         $ytPlayers[i]?.ytPlayer?.g === visibleTrailer &&
-                        $inApp
+                        $inApp &&
+                        !manuallyPausedTrailers?.[ytId] &&
+                        $ytPlayers[i]?.ytPlayer?.getPlayerState?.() !== 0
                     ) {
                         prePlayYtPlayer($ytPlayers[i]?.ytPlayer);
                         $ytPlayers[i]?.ytPlayer?.playVideo?.();
                     } else {
-                        $ytPlayers[i]?.ytPlayer?.pauseVideo?.();
+                        let ytId = $ytPlayers[i]?.ytPlayer?.g?.id;
+                        if (ytId && !deletingTrailers?.[ytId]) {
+                            autoPausedTrailers[ytId] = true;
+                            $ytPlayers[i]?.ytPlayer?.pauseVideo?.();
+                        }
                     }
                 }
             }
@@ -475,8 +499,15 @@
                 window.innerHeight,
             );
         });
-
         document.addEventListener("keydown", async (e) => {
+            if (
+                (e.key === "Escape" && !document.fullscreenElement) ||
+                (e.key === " " && $popupVisible)
+            ) {
+                e.preventDefault();
+            }
+        });
+        document.addEventListener("keyup", async (e) => {
             if (e.key === "Escape" && !document.fullscreenElement) {
                 e.preventDefault();
                 window.backPressed?.();
@@ -485,29 +516,56 @@
                 e.preventDefault();
                 let visibleTrailer =
                     mostVisiblePopupHeader?.querySelector?.(".trailer");
-                let isPlaying = $ytPlayers?.some(
-                    ({ ytPlayer }) =>
-                        visibleTrailer === ytPlayer?.g &&
-                        ytPlayer?.getPlayerState?.() === 1,
-                );
-                $ytPlayers.forEach(({ ytPlayer }) => {
-                    ytPlayer?.pauseVideo?.();
+                $ytPlayers?.forEach(({ ytPlayer }) => {
+                    let trailerEl = ytPlayer?.g;
+                    let ytId = trailerEl?.id;
+                    if (ytId && !deletingTrailers?.[ytId]) {
+                        if (visibleTrailer === trailerEl) {
+                            if (ytPlayer?.getPlayerState?.() === 1) {
+                                delete autoPausedTrailers?.[ytId];
+                                manuallyPausedTrailers[ytId] = true;
+                                ytPlayer?.pauseVideo?.();
+                            } else if ($inApp) {
+                                prePlayYtPlayer(ytPlayer);
+                                ytPlayer?.playVideo?.();
+                            }
+                        } else {
+                            autoPausedTrailers[ytId] = true;
+                            ytPlayer?.pauseVideo?.();
+                        }
+                    }
                 });
-                if (!isPlaying) {
-                    await tick();
-                    for (let i = 0; i < $ytPlayers?.length; i++) {
-                        if (
-                            $ytPlayers[i]?.ytPlayer?.g === visibleTrailer &&
-                            $inApp
-                        ) {
-                            prePlayYtPlayer($ytPlayers[i]?.ytPlayer);
-                            $ytPlayers[i]?.ytPlayer?.playVideo?.();
-                            break;
+            }
+        });
+        new MutationObserver((mutationsList) => {
+            for (let mutation of mutationsList) {
+                if (mutation.type === "childList") {
+                    for (let node of mutation.removedNodes) {
+                        if (node?.matches?.("iframe.trailer")) {
+                            let ytId = node?.id;
+                            if (ytId && !deletingTrailers?.[ytId]) {
+                                deletingTrailers[ytId] = true;
+                                delete manuallyPausedTrailers?.[ytId];
+                                delete autoPausedTrailers?.[ytId];
+                                $ytPlayers =
+                                    $ytPlayers?.reduce?.((acc, e) => {
+                                        if (
+                                            e?.ytPlayer?.g === node ||
+                                            e?.ytPlayer?.g?.id === ytId
+                                        ) {
+                                            e?.ytPlayer?.destroy?.();
+                                        } else {
+                                            acc.push(e);
+                                        }
+                                        return acc;
+                                    }, []) || [];
+                                delete deletingTrailers?.[ytId];
+                            }
                         }
                     }
                 }
             }
-        });
+        }).observe(popupContainer, { childList: true, subtree: true });
     });
 
     let scrollToGridTimeout, createPopupPlayersTimeout;
@@ -578,10 +636,14 @@
                     $ytPlayers[i]?.ytPlayer?.getPlayerState?.() !== 1
                 ) {
                     await tick();
+                    let ytId = $ytPlayers[i]?.ytPlayer?.g?.id;
                     if (
                         $popupVisible &&
                         $inApp &&
-                        ($autoPlay ||
+                        !manuallyPausedTrailers?.[ytId] &&
+                        (($autoPlay &&
+                            $ytPlayers[i]?.ytPlayer?.getPlayerState?.() !==
+                                0) ||
                             $ytPlayers[i]?.ytPlayer?.getPlayerState?.() === 2)
                     ) {
                         prePlayYtPlayer($ytPlayers[i]?.ytPlayer);
@@ -629,12 +691,22 @@
                             }, 200);
                         }
                     }
-                    $ytPlayers[i]?.ytPlayer?.pauseVideo?.();
+                    let ytId = $ytPlayers[i]?.ytPlayer?.g?.id;
+                    if (ytId && !deletingTrailers?.[ytId]) {
+                        autoPausedTrailers[ytId] = true;
+                        $ytPlayers[i]?.ytPlayer?.pauseVideo?.();
+                    }
                 }
             }
         } else {
             // Pause All Players
-            $ytPlayers?.forEach(({ ytPlayer }) => ytPlayer?.pauseVideo?.());
+            $ytPlayers?.forEach(({ ytPlayer }) => {
+                let ytId = ytPlayer?.g?.id;
+                if (ytId && !deletingTrailers?.[ytId]) {
+                    autoPausedTrailers[ytId] = true;
+                    ytPlayer?.pauseVideo?.();
+                }
+            });
             // Recheck Trailer
             if (visibleTrailerIdx >= 0) {
                 currentHeaderIdx = visibleTrailerIdx;
@@ -762,9 +834,10 @@
         let trailerEl = ytPlayer?.g;
         let popupHeader = trailerEl?.parentElement;
         let popupImg = popupHeader?.querySelector?.(".popup-img");
-        $ytPlayers = $ytPlayers.filter(
-            (_ytPlayer) => _ytPlayer?.ytPlayer !== ytPlayer,
-        );
+        $ytPlayers =
+            $ytPlayers?.filter?.(
+                (_ytPlayer) => _ytPlayer?.ytPlayer !== ytPlayer,
+            ) || [];
         ytPlayer?.destroy?.();
         addClass(trailerEl, "display-none");
         removeClass(popupHeader, "loader");
@@ -780,6 +853,21 @@
         let popupContent = popupHeader?.closest?.(".popup-content");
         let loopedAnimeID =
             $finalAnimeList?.[getChildIndex(popupContent) ?? -1]?.id;
+        let ytId = trailerEl?.id;
+        if (
+            ytId &&
+            !deletingTrailers?.[ytId] &&
+            _ytPlayer?.getPlayerState?.() === 2
+        ) {
+            if (!autoPausedTrailers?.[ytId]) {
+                manuallyPausedTrailers[ytId] = true;
+            } else {
+                delete manuallyPausedTrailers?.[ytId];
+            }
+        } else {
+            delete manuallyPausedTrailers?.[ytId];
+            delete autoPausedTrailers?.[ytId];
+        }
         if (_ytPlayer?.getPlayerState?.() === 0) {
             if (loopedAnimeID != null) {
                 if (videoLoops[loopedAnimeID]) {
@@ -799,6 +887,8 @@
                         $autoPlay
                     ) {
                         _ytPlayer?.playVideo?.();
+                    } else {
+                        _ytPlayer?.stopVideo?.();
                     }
                 }, 30000); // Play Again after 30 seconds
             }
@@ -811,11 +901,15 @@
                 trailerEl?.classList?.contains?.("display-none") ||
                 !popupImg?.classList?.contains?.("display-none")
             ) {
-                $ytPlayers?.forEach(
-                    ({ ytPlayer }) =>
-                        ytPlayer?.g !== _ytPlayer?.g &&
-                        ytPlayer?.pauseVideo?.(),
-                );
+                $ytPlayers?.forEach(({ ytPlayer }) => {
+                    if (ytPlayer?.g !== _ytPlayer?.g) {
+                        let ytId = ytPlayer?.g?.id;
+                        if (ytId && !deletingTrailers?.[ytId]) {
+                            autoPausedTrailers[ytId] = true;
+                            ytPlayer?.pauseVideo?.();
+                        }
+                    }
+                });
                 currentYtPlayer = _ytPlayer;
                 addClass(popupImg, "fade-out");
                 removeClass(popupHeader, "loader");
@@ -842,9 +936,10 @@
             if (anime?.id) {
                 failingTrailers[anime.id] = true;
             }
-            $ytPlayers = $ytPlayers.filter(
-                (_ytPlayer) => _ytPlayer?.ytPlayer !== ytPlayer,
-            );
+            $ytPlayers =
+                $ytPlayers?.filter?.(
+                    (_ytPlayer) => _ytPlayer?.ytPlayer !== ytPlayer,
+                ) || [];
             ytPlayer?.destroy?.();
             addClass(trailerEl, "display-none");
             removeClass(popupHeader, "loader");
@@ -1020,20 +1115,31 @@
         if (!visibleTrailer) return;
         if ($inApp) {
             for (let i = 0; i < $ytPlayers.length; i++) {
+                let ytId = $ytPlayers[i]?.ytPlayer?.g?.id;
                 if (
                     $ytPlayers[i]?.ytPlayer?.g === visibleTrailer &&
-                    ($autoPlay ||
+                    !manuallyPausedTrailers?.[ytId] &&
+                    (($autoPlay &&
+                        $ytPlayers[i]?.ytPlayer?.getPlayerState?.() !== 0) ||
                         $ytPlayers[i]?.ytPlayer?.getPlayerState?.() === 2)
                 ) {
                     prePlayYtPlayer($ytPlayers[i]?.ytPlayer);
                     $ytPlayers[i]?.ytPlayer?.playVideo?.();
                 } else {
-                    $ytPlayers[i]?.ytPlayer?.pauseVideo?.();
+                    let ytId = $ytPlayers[i]?.ytPlayer?.g?.id;
+                    if (ytId && !deletingTrailers?.[ytId]) {
+                        autoPausedTrailers[ytId] = true;
+                        $ytPlayers[i]?.ytPlayer?.pauseVideo?.();
+                    }
                 }
             }
         } else {
             for (let i = 0; i < $ytPlayers.length; i++) {
-                $ytPlayers[i]?.ytPlayer?.pauseVideo?.();
+                let ytId = $ytPlayers[i]?.ytPlayer?.g?.id;
+                if (ytId && !deletingTrailers?.[ytId]) {
+                    autoPausedTrailers[ytId] = true;
+                    $ytPlayers[i]?.ytPlayer?.pauseVideo?.();
+                }
             }
         }
     };
@@ -1047,20 +1153,30 @@
         if (!visibleTrailer) return;
         if ($inApp) {
             for (let i = 0; i < $ytPlayers.length; i++) {
+                let ytId = $ytPlayers[i]?.ytPlayer?.g?.id;
                 if (
                     $ytPlayers[i]?.ytPlayer?.g === visibleTrailer &&
+                    !manuallyPausedTrailers?.[ytId] &&
                     ($autoPlay ||
                         $ytPlayers[i]?.ytPlayer?.getPlayerState?.() === 2)
                 ) {
                     prePlayYtPlayer($ytPlayers[i]?.ytPlayer);
                     $ytPlayers[i]?.ytPlayer?.playVideo?.();
                 } else {
-                    $ytPlayers[i]?.ytPlayer?.pauseVideo?.();
+                    let ytId = $ytPlayers[i]?.ytPlayer?.g?.id;
+                    if (ytId && !deletingTrailers?.[ytId]) {
+                        autoPausedTrailers[ytId] = true;
+                        $ytPlayers[i]?.ytPlayer?.pauseVideo?.();
+                    }
                 }
             }
         } else {
             for (let i = 0; i < $ytPlayers.length; i++) {
-                $ytPlayers[i]?.ytPlayer?.pauseVideo?.();
+                let ytId = $ytPlayers[i]?.ytPlayer?.g?.id;
+                if (ytId && !deletingTrailers?.[ytId]) {
+                    autoPausedTrailers[ytId] = true;
+                    $ytPlayers[i]?.ytPlayer?.pauseVideo?.();
+                }
             }
         }
     });
@@ -1093,24 +1209,25 @@
     });
     function reloadYoutube() {
         loadYouTubeAPI().then(() => {
-            $ytPlayers = $ytPlayers.filter(({ ytPlayer }) => {
-                if (
-                    typeof ytPlayer?.playVideo === "function" &&
-                    ytPlayer?.getPlayerState?.() !== -1 &&
-                    !isNaN(ytPlayer?.getPlayerState?.())
-                ) {
-                    return true;
-                } else {
-                    ytPlayer?.destroy?.();
-                    let popupImg = ytPlayer?.g
-                        ?.closest?.(".popup-header")
-                        ?.querySelector?.(".popup-img");
-                    if (popupImg instanceof Element) {
-                        removeClass(popupImg, "display-none");
+            $ytPlayers =
+                $ytPlayers?.filter?.(({ ytPlayer }) => {
+                    if (
+                        typeof ytPlayer?.playVideo === "function" &&
+                        ytPlayer?.getPlayerState?.() !== -1 &&
+                        !isNaN(ytPlayer?.getPlayerState?.())
+                    ) {
+                        return true;
+                    } else {
+                        ytPlayer?.destroy?.();
+                        let popupImg = ytPlayer?.g
+                            ?.closest?.(".popup-header")
+                            ?.querySelector?.(".popup-img");
+                        if (popupImg instanceof Element) {
+                            removeClass(popupImg, "display-none");
+                        }
+                        return false;
                     }
-                    return false;
-                }
-            });
+                }) || [];
             playMostVisibleTrailer();
         });
     }
@@ -1353,7 +1470,12 @@
     function showFullScreenInfo(info) {
         if (!info) return;
         window.setShouldGoBack(false);
-        fullDescriptionPopup = editHTMLString(info);
+        let newFullDescriptionPopup = editHTMLString(info);
+        if (fullDescriptionPopup === newFullDescriptionPopup) {
+            fullDescriptionPopup = null;
+        } else {
+            fullDescriptionPopup = newFullDescriptionPopup;
+        }
         fullImagePopup = null;
     }
     window.showFullScreenInfo = showFullScreenInfo;
@@ -1402,14 +1524,43 @@
     $: topPopupVisibleCount = windowHeight >= 1000 ? 2 : 1;
     $: bottomPopupVisibleCount =
         Math.floor(Math.max(1, windowHeight / 640)) || 1;
+
+    function popupMainEl(node) {
+        return {
+            destroy() {
+                let trailerEl = node?.querySelector?.(".trailer");
+                let ytId = trailerEl?.id;
+                if (ytId && !deletingTrailers?.[ytId]) {
+                    deletingTrailers[ytId] = true;
+                    delete manuallyPausedTrailers?.[ytId];
+                    delete autoPausedTrailers?.[ytId];
+                    $ytPlayers =
+                        $ytPlayers?.reduce?.((acc, e) => {
+                            if (
+                                e?.ytPlayer?.g === trailerEl ||
+                                e?.ytPlayer?.g?.id === ytId
+                            ) {
+                                e?.ytPlayer?.destroy?.();
+                            } else {
+                                acc.push(e);
+                            }
+                            return acc;
+                        }, []) || [];
+                    delete deletingTrailers?.[ytId];
+                }
+            },
+        };
+    }
 </script>
 
+<!-- svelte-ignore a11y-no-noninteractive-tabindex -->
 <div
     id="popup-wrapper"
     class="popup-wrapper"
     on:click={handlePopupVisibility}
-    on:keydown={(e) => e.key === "Enter" && handlePopupVisibility(e)}
+    on:keyup={(e) => e.key === "Enter" && handlePopupVisibility(e)}
     bind:this={popupWrapper}
+    tabindex={!$menuVisible && $popupVisible ? "0" : "-1"}
 >
     <div
         id="popup-container"
@@ -1425,18 +1576,20 @@
             {#each $finalAnimeList || [] as anime, animeIndex (anime?.id || {})}
                 <div class="popup-content" bind:this={anime.popupContent}>
                     {#if animeIndex <= currentHeaderIdx + bottomPopupVisibleCount && animeIndex >= currentHeaderIdx - topPopupVisibleCount}
-                        <div class="popup-main">
+                        <div class="popup-main" use:popupMainEl>
                             <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                             <div
                                 class={"popup-header " +
                                     (anime.trailerID ? "loader" : "")}
                                 bind:this={anime.popupHeader}
-                                tabindex="0"
+                                tabindex={!$menuVisible && $popupVisible
+                                    ? "0"
+                                    : "-1"}
                                 on:click={() => {
                                     if (!$popupVisible) return;
                                     askToOpenYoutube(anime.title);
                                 }}
-                                on:keydown={(e) => {
+                                on:keyup={(e) => {
                                     if (!$popupVisible) return;
                                     if (e.key === "Enter") {
                                         askToOpenYoutube(anime.title);
@@ -1499,122 +1652,140 @@
                                 </div>
                             </div>
                             <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
-                            <div class="popup-controls">
-                                <div class="autoPlay-container">
-                                    <label class="switch">
-                                        <label
-                                            class="disable-interaction"
-                                            for={"auto-play-" + anime?.id}
-                                        >
-                                            Auto Play
+                            <div class="popup-body">
+                                <div class="popup-controls">
+                                    <div class="autoPlay-container">
+                                        <label class="switch">
+                                            <label
+                                                class="display-none"
+                                                for={"auto-play-" + anime?.id}
+                                            >
+                                                Auto Play
+                                            </label>
+                                            <input
+                                                id={"auto-play-" + anime?.id}
+                                                type="checkbox"
+                                                class="autoplayToggle"
+                                                bind:checked={$autoPlay}
+                                            />
+                                            <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
+                                            <span
+                                                class="slider round"
+                                                tabindex={!$menuVisible &&
+                                                $popupVisible
+                                                    ? "0"
+                                                    : "-1"}
+                                                on:keyup={(e) =>
+                                                    e.key === "Enter" &&
+                                                    changeAutoPlay(e)}
+                                            />
                                         </label>
-                                        <input
-                                            id={"auto-play-" + anime?.id}
-                                            type="checkbox"
-                                            class="autoplayToggle"
-                                            bind:checked={$autoPlay}
-                                        />
-                                        <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
-                                        <span
-                                            class="slider round"
-                                            tabindex="0"
-                                            on:keydown={(e) =>
+                                        <h3
+                                            class="autoplay-label"
+                                            on:click={changeAutoPlay}
+                                            on:keyup={(e) =>
                                                 e.key === "Enter" &&
                                                 changeAutoPlay(e)}
-                                        />
-                                    </label>
-                                    <h3
-                                        class="autoplay-label"
-                                        on:click={changeAutoPlay}
-                                        on:keydown={(e) =>
-                                            e.key === "Enter" &&
-                                            changeAutoPlay(e)}
-                                    >
-                                        {#if windowWidth >= 290}
-                                            Auto Play
-                                        {:else if windowWidth >= 260}
-                                            Auto
-                                        {/if}
-                                    </h3>
-                                </div>
-                                {#if $listUpdateAvailable}
-                                    <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
-                                    <div
-                                        class="list-update-container"
-                                        tabindex="0"
-                                        on:click={updateList}
-                                        on:keydown={(e) =>
-                                            e.key === "Enter" && updateList(e)}
-                                    >
-                                        <!-- arrows rotate -->
-                                        <svg
-                                            viewBox="0 0 512 512"
-                                            class={"list-update-icon" +
-                                                ($listIsUpdating
-                                                    ? " spin"
-                                                    : "")}
                                         >
-                                            <path
-                                                d="M105 203a160 160 0 0 1 264-60l17 17h-50a32 32 0 1 0 0 64h128c18 0 32-14 32-32V64a32 32 0 1 0-64 0v51l-18-17a224 224 0 0 0-369 83 32 32 0 0 0 60 22zm-66 86a32 32 0 0 0-23 31v128a32 32 0 1 0 64 0v-51l18 17a224 224 0 0 0 369-83 32 32 0 0 0-60-22 160 160 0 0 1-264 60l-17-17h50a32 32 0 1 0 0-64H48a39 39 0 0 0-9 1z"
-                                            />
-                                        </svg>
-                                        <h3 class="list-update-label">
-                                            {windowWidth >= 320
-                                                ? "List Update"
-                                                : windowWidth >= 205
-                                                  ? "Update"
-                                                  : windowWidth >= 180
-                                                    ? "List"
-                                                    : ""}
+                                            {#if windowWidth >= 290}
+                                                Auto Play
+                                            {:else if windowWidth >= 260}
+                                                Auto
+                                            {/if}
                                         </h3>
                                     </div>
-                                {/if}
-                                {#if anime.bannerImageUrl || anime.trailerThumbnailUrl}
-                                    <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
-                                    <div
-                                        class="banner-image-button"
-                                        tabindex="0"
-                                        on:click={() => {
-                                            if (!$popupVisible) return;
-                                            window.setShouldGoBack(false);
-                                            fullImagePopup =
-                                                anime.bannerImageUrl ||
-                                                anime.trailerThumbnailUrl;
-                                            fullDescriptionPopup = null;
-                                        }}
-                                        on:keydown={(e) => {
-                                            if (!$popupVisible) return;
-                                            if (e.key === "Enter") {
+                                    {#if $listUpdateAvailable}
+                                        <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
+                                        <div
+                                            class="list-update-container"
+                                            tabindex={!$menuVisible &&
+                                            $popupVisible
+                                                ? "0"
+                                                : "-1"}
+                                            on:click={updateList}
+                                            on:keyup={(e) =>
+                                                e.key === "Enter" &&
+                                                updateList(e)}
+                                        >
+                                            <!-- arrows rotate -->
+                                            <svg
+                                                viewBox="0 0 512 512"
+                                                class={"list-update-icon" +
+                                                    ($listIsUpdating
+                                                        ? " spin"
+                                                        : "")}
+                                            >
+                                                <path
+                                                    d="M105 203a160 160 0 0 1 264-60l17 17h-50a32 32 0 1 0 0 64h128c18 0 32-14 32-32V64a32 32 0 1 0-64 0v51l-18-17a224 224 0 0 0-369 83 32 32 0 0 0 60 22zm-66 86a32 32 0 0 0-23 31v128a32 32 0 1 0 64 0v-51l18 17a224 224 0 0 0 369-83 32 32 0 0 0-60-22 160 160 0 0 1-264 60l-17-17h50a32 32 0 1 0 0-64H48a39 39 0 0 0-9 1z"
+                                                />
+                                            </svg>
+                                            <h3 class="list-update-label">
+                                                {windowWidth >= 320
+                                                    ? "List Update"
+                                                    : windowWidth >= 205
+                                                      ? "Update"
+                                                      : windowWidth >= 180
+                                                        ? "List"
+                                                        : ""}
+                                            </h3>
+                                        </div>
+                                    {/if}
+                                    {#if anime.bannerImageUrl || anime.trailerThumbnailUrl}
+                                        <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
+                                        <div
+                                            class="banner-image-button"
+                                            tabindex={!$menuVisible &&
+                                            $popupVisible
+                                                ? "0"
+                                                : "-1"}
+                                            on:click={() => {
+                                                if (!$popupVisible) return;
                                                 window.setShouldGoBack(false);
                                                 fullImagePopup =
                                                     anime.bannerImageUrl ||
                                                     anime.trailerThumbnailUrl;
                                                 fullDescriptionPopup = null;
-                                            }
-                                        }}
-                                    >
-                                        <!-- image icon -->
-                                        <svg
-                                            viewBox="0 0 512 512"
-                                            class="banner-image-icon"
+                                            }}
+                                            on:keyup={(e) => {
+                                                if (!$popupVisible) return;
+                                                if (e.key === "Enter") {
+                                                    window.setShouldGoBack(
+                                                        false,
+                                                    );
+                                                    let newFullImagePopup =
+                                                        anime.bannerImageUrl ||
+                                                        anime.trailerThumbnailUrl;
+                                                    if (
+                                                        newFullImagePopup ===
+                                                        fullImagePopup
+                                                    ) {
+                                                        fullImagePopup = null;
+                                                    } else {
+                                                        fullImagePopup =
+                                                            newFullImagePopup;
+                                                    }
+                                                    fullDescriptionPopup = null;
+                                                }
+                                            }}
                                         >
-                                            <path
-                                                d="M0 96c0-35 29-64 64-64h384c35 0 64 29 64 64v320c0 35-29 64-64 64H64c-35 0-64-29-64-64V96zm324 107a24 24 0 0 0-40 0l-87 127-26-33a24 24 0 0 0-37 0l-65 80a24 24 0 0 0 19 39h336c9 0 17-5 21-13s4-17-1-25L324 204zm-212-11a48 48 0 1 0 0-96 48 48 0 1 0 0 96z"
-                                            />
-                                        </svg>
-                                        <h3 class="banner-image-label">
-                                            {anime.bannerImageUrl
-                                                ? "Banner"
-                                                : "Thumbnail"}
-                                        </h3>
-                                    </div>
-                                {/if}
-                            </div>
-                            <div class="popup-body">
-                                <div
-                                    bind:this={anime.popupInfo}
-                                    class="popup-info"
-                                >
+                                            <!-- image icon -->
+                                            <svg
+                                                viewBox="0 0 512 512"
+                                                class="banner-image-icon"
+                                            >
+                                                <path
+                                                    d="M0 96c0-35 29-64 64-64h384c35 0 64 29 64 64v320c0 35-29 64-64 64H64c-35 0-64-29-64-64V96zm324 107a24 24 0 0 0-40 0l-87 127-26-33a24 24 0 0 0-37 0l-65 80a24 24 0 0 0 19 39h336c9 0 17-5 21-13s4-17-1-25L324 204zm-212-11a48 48 0 1 0 0-96 48 48 0 1 0 0 96z"
+                                                />
+                                            </svg>
+                                            <h3 class="banner-image-label">
+                                                {anime.bannerImageUrl
+                                                    ? "Banner"
+                                                    : "Thumbnail"}
+                                            </h3>
+                                        </div>
+                                    {/if}
+                                </div>
+                                <div class="popup-info">
                                     <div
                                         class="anime-title-container"
                                         style:overflow={$popupIsGoingBack
@@ -1623,6 +1794,10 @@
                                         on:scroll={itemScroll}
                                     >
                                         <a
+                                            tabindex={!$menuVisible &&
+                                            $popupVisible
+                                                ? ""
+                                                : "-1"}
                                             rel={anime.animeUrl
                                                 ? "noopener noreferrer"
                                                 : ""}
@@ -1752,6 +1927,7 @@
                                                     : "")}
                                         >
                                             <a
+                                                tabindex="-1"
                                                 rel={anime.animeUrl
                                                     ? "noopener noreferrer"
                                                     : ""}
@@ -1818,6 +1994,10 @@
                                                 >
                                                     {#each anime.shownStudios as studios (studios?.studio || {})}
                                                         <a
+                                                            tabindex={!$menuVisible &&
+                                                            $popupVisible
+                                                                ? ""
+                                                                : "-1"}
                                                             class={"copy" +
                                                                 (studios?.studioColor
                                                                     ? ` ${studios?.studioColor}-color`
@@ -1920,6 +2100,10 @@
                                                 >
                                                     {#each anime.shownTags as tags (tags?.tag || {})}
                                                         <span
+                                                            tabindex={!$menuVisible &&
+                                                            $popupVisible
+                                                                ? "0"
+                                                                : ""}
                                                             on:click={() => {
                                                                 if (
                                                                     !$popupVisible
@@ -1937,7 +2121,7 @@
                                                                     );
                                                                 }
                                                             }}
-                                                            on:keydown={(e) => {
+                                                            on:keyup={(e) => {
                                                                 if (
                                                                     !$popupVisible
                                                                 )
@@ -1987,7 +2171,10 @@
                                                         : anime.bannerImageUrl
                                                           ? " Banner"
                                                           : " Thumbnail")}
-                                                tabindex="0"
+                                                tabindex={!$menuVisible &&
+                                                $popupVisible
+                                                    ? "0"
+                                                    : "-1"}
                                                 class={"coverImg" +
                                                     (!anime.coverImageUrl &&
                                                     !anime.bannerImageUrl &&
@@ -2012,17 +2199,27 @@
                                                         emptyImage;
                                                     fullDescriptionPopup = null;
                                                 }}
-                                                on:keydown={(e) => {
+                                                on:keyup={(e) => {
                                                     if (!$popupVisible) return;
                                                     window.setShouldGoBack(
                                                         false,
                                                     );
                                                     if (e.key === "Enter") {
-                                                        fullImagePopup =
+                                                        let newFullImagePopup =
                                                             anime.coverImageUrl ||
                                                             anime.bannerImageUrl ||
                                                             anime.trailerThumbnailUrl ||
                                                             emptyImage;
+                                                        if (
+                                                            newFullImagePopup ===
+                                                            fullImagePopup
+                                                        ) {
+                                                            fullImagePopup =
+                                                                null;
+                                                        } else {
+                                                            fullImagePopup =
+                                                                newFullImagePopup;
+                                                        }
                                                         fullDescriptionPopup =
                                                             null;
                                                     }
@@ -2033,16 +2230,34 @@
                                             <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                                             <div
                                                 class="anime-description-wrapper"
-                                                tabindex="0"
+                                                tabindex={!$menuVisible &&
+                                                $popupVisible
+                                                    ? "0"
+                                                    : "-1"}
                                                 on:click={() => {
                                                     if (!$popupVisible) return;
                                                     showFullScreenInfo(
                                                         anime?.description,
                                                     );
                                                 }}
-                                                on:keydown={(e) => {
+                                                on:keyup={(e) => {
                                                     if (!$popupVisible) return;
                                                     if (e.key === "Enter") {
+                                                        let newFullImagePopup =
+                                                            anime.coverImageUrl ||
+                                                            anime.bannerImageUrl ||
+                                                            anime.trailerThumbnailUrl ||
+                                                            emptyImage;
+                                                        if (
+                                                            newFullImagePopup ===
+                                                            fullImagePopup
+                                                        ) {
+                                                            fullImagePopup =
+                                                                null;
+                                                        } else {
+                                                            fullImagePopup =
+                                                                newFullImagePopup;
+                                                        }
                                                         showFullScreenInfo(
                                                             anime?.description,
                                                         );
@@ -2059,87 +2274,96 @@
                                         {/if}
                                     </div>
                                 </div>
-                                <div class="footer">
-                                    <button
-                                        class="hideshowbtn"
-                                        style:overflow={$popupIsGoingBack
-                                            ? "hidden"
-                                            : ""}
-                                        on:click={() => {
-                                            if (!$popupVisible) return;
+                            </div>
+                            <div class="popup-footer">
+                                <button
+                                    tabindex={!$menuVisible && $popupVisible
+                                        ? ""
+                                        : "-1"}
+                                    class="hideshowbtn"
+                                    style:overflow={$popupIsGoingBack
+                                        ? "hidden"
+                                        : ""}
+                                    on:click={() => {
+                                        if (!$popupVisible) return;
+                                        handleHideShow(
+                                            anime.id,
+                                            anime?.shownTitle,
+                                        );
+                                    }}
+                                    on:keyup={(e) => {
+                                        if (!$popupVisible) return;
+                                        if (e.key === "Enter") {
+                                            e.stopImmediatePropagation();
                                             handleHideShow(
                                                 anime.id,
                                                 anime?.shownTitle,
                                             );
-                                        }}
-                                        on:keydown={(e) => {
-                                            if (!$popupVisible) return;
-                                            if (e.key === "Enter") {
-                                                handleHideShow(
-                                                    anime.id,
-                                                    anime?.shownTitle,
-                                                );
-                                            }
-                                        }}
+                                            e.stopImmediatePropagation();
+                                        }
+                                    }}
+                                >
+                                    <!-- circle minus -->
+                                    <svg class="hideshow" viewBox="0 0 512 512"
+                                        ><path
+                                            d="M256 512a256 256 0 1 0 0-512 256 256 0 1 0 0 512zm-72-280h144a24 24 0 1 1 0 48H184a24 24 0 1 1 0-48z"
+                                        /></svg
                                     >
-                                        <!-- circle minus -->
-                                        <svg
-                                            class="hideshow"
-                                            viewBox="0 0 512 512"
-                                            ><path
-                                                d="M256 512a256 256 0 1 0 0-512 256 256 0 1 0 0 512zm-72-280h144a24 24 0 1 1 0 48H184a24 24 0 1 1 0-48z"
-                                            /></svg
-                                        >
-                                        {#if $hiddenEntries}
-                                            {" " +
-                                                ($hiddenEntries[anime?.id]
-                                                    ? "Show"
-                                                    : "Hide")}
-                                        {:else}
-                                            Loading...
-                                        {/if}
-                                    </button>
-                                    <button
-                                        class="morevideos"
-                                        style:overflow={$popupIsGoingBack
-                                            ? "hidden"
-                                            : ""}
-                                        on:click={handleMoreVideos(anime.title)}
-                                        on:keydown={(e) =>
-                                            e.key === "Enter" &&
-                                            handleMoreVideos(anime.title)}
-                                    >
-                                        <!-- youtube logo -->
-                                        <svg viewBox="0 0 576 512">
-                                            <path
-                                                d="M550 124c-7-24-25-42-49-49-42-11-213-11-213-11S117 64 75 75c-24 7-42 25-49 49-11 43-11 132-11 132s0 90 11 133c7 23 25 41 49 48 42 11 213 11 213 11s171 0 213-11c24-7 42-25 49-48 11-43 11-133 11-133s0-89-11-132zM232 338V175l143 81-143 82z"
-                                            />
-                                        </svg> YouTube</button
-                                    >
-                                    <button
-                                        class="openanilist"
-                                        style:overflow={$popupIsGoingBack
-                                            ? "hidden"
-                                            : ""}
-                                        on:click={() => {
-                                            openInAnilist(anime.animeUrl);
-                                        }}
-                                        on:keydown={(e) =>
-                                            e.key === "Enter" &&
-                                            openInAnilist(anime.animeUrl)}
-                                    >
-                                        <!-- anilist logo -->
-                                        <svg viewBox="0 0 172 172">
-                                            <path
-                                                fill="#3a5a7e"
-                                                d="M111 111V41c0-4-2-6-6-6H91c-4 0-6 2-6 6v5l32 91h31c4 0 6-2 6-6v-14c0-4-2-6-6-6h-37z"
-                                            />
-                                            <path
-                                                d="M54 35 18 137h28l6-17h31l6 17h28L81 35H54zm5 62 9-29 9 29H59z"
-                                            />
-                                        </svg> Anilist
-                                    </button>
-                                </div>
+                                    {#if $hiddenEntries}
+                                        {" " +
+                                            ($hiddenEntries[anime?.id]
+                                                ? "Show"
+                                                : "Hide")}
+                                    {:else}
+                                        Loading...
+                                    {/if}
+                                </button>
+                                <button
+                                    tabindex={!$menuVisible && $popupVisible
+                                        ? ""
+                                        : "-1"}
+                                    class="morevideos"
+                                    style:overflow={$popupIsGoingBack
+                                        ? "hidden"
+                                        : ""}
+                                    on:click={handleMoreVideos(anime.title)}
+                                    on:keyup={(e) =>
+                                        e.key === "Enter" &&
+                                        handleMoreVideos(anime.title)}
+                                >
+                                    <!-- youtube logo -->
+                                    <svg viewBox="0 0 576 512">
+                                        <path
+                                            d="M550 124c-7-24-25-42-49-49-42-11-213-11-213-11S117 64 75 75c-24 7-42 25-49 49-11 43-11 132-11 132s0 90 11 133c7 23 25 41 49 48 42 11 213 11 213 11s171 0 213-11c24-7 42-25 49-48 11-43 11-133 11-133s0-89-11-132zM232 338V175l143 81-143 82z"
+                                        />
+                                    </svg> YouTube</button
+                                >
+                                <button
+                                    tabindex={!$menuVisible && $popupVisible
+                                        ? ""
+                                        : "-1"}
+                                    class="openanilist"
+                                    style:overflow={$popupIsGoingBack
+                                        ? "hidden"
+                                        : ""}
+                                    on:click={() => {
+                                        openInAnilist(anime.animeUrl);
+                                    }}
+                                    on:keyup={(e) =>
+                                        e.key === "Enter" &&
+                                        openInAnilist(anime.animeUrl)}
+                                >
+                                    <!-- anilist logo -->
+                                    <svg viewBox="0 0 172 172">
+                                        <path
+                                            fill="#3a5a7e"
+                                            d="M111 111V41c0-4-2-6-6-6H91c-4 0-6 2-6 6v5l32 91h31c4 0 6-2 6-6v-14c0-4-2-6-6-6h-37z"
+                                        />
+                                        <path
+                                            d="M54 35 18 137h28l6-17h31l6 17h28L81 35H54zm5 62 9-29 9 29H59z"
+                                        />
+                                    </svg> Anilist
+                                </button>
                             </div>
                         </div>
                     {:else}
@@ -2181,11 +2405,11 @@
         </div>
     </div>
 {/if}
-{#if fullDescriptionPopup}
+{#if fullDescriptionPopup || fullImagePopup}
     <div
         class="fullPopupWrapper"
         on:click={() => (fullDescriptionPopup = fullImagePopup = null)}
-        on:keydown={(e) =>
+        on:keyup={(e) =>
             e.key === "Enter" && (fullDescriptionPopup = fullImagePopup = null)}
         on:touchstart|passive={fullViewTouchStart}
         on:touchend|passive={fullViewTouchEnd}
@@ -2193,50 +2417,38 @@
     >
         <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
         <div class="fullPopup" id="fullPopup">
-            <div class="fullPopupDescriptionWrapper">
-                <div
-                    on:keydown={(e) =>
-                        e.key === "Enter" &&
-                        (fullDescriptionPopup = fullImagePopup = null)}
-                    tabindex="0"
-                    class="fullPopupDescription"
-                    out:fade={{ duration: 200 }}
-                    on:scroll={fullViewScroll}
-                >
-                    {@html fullDescriptionPopup}
+            {#if fullDescriptionPopup}
+                <div class="fullPopupDescriptionWrapper">
+                    <div
+                        on:keyup={(e) =>
+                            e.key === "Enter" &&
+                            (fullDescriptionPopup = fullImagePopup = null)}
+                        tabindex="0"
+                        class="fullPopupDescription"
+                        out:fade={{ duration: 200 }}
+                        on:scroll={fullViewScroll}
+                    >
+                        {@html fullDescriptionPopup}
+                    </div>
                 </div>
-            </div>
-        </div>
-    </div>
-{/if}
-{#if fullImagePopup}
-    <div
-        class="fullPopupWrapper"
-        on:click={() => (fullDescriptionPopup = fullImagePopup = null)}
-        on:keydown={(e) =>
-            e.key === "Enter" && (fullDescriptionPopup = fullImagePopup = null)}
-        on:touchstart|passive={fullViewTouchStart}
-        on:touchend|passive={fullViewTouchEnd}
-        on:touchcancel={fullViewTouchCancel}
-    >
-        <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
-        <div class="fullPopup" id="fullPopup">
-            {#key fullImagePopup}
-                <img
-                    use:addImage={fullImagePopup || emptyImage}
-                    tabindex="0"
-                    class="fullPopupImage"
-                    loading="lazy"
-                    alt="Full View"
-                    on:keydown={(e) =>
-                        e.key === "Enter" &&
-                        (fullDescriptionPopup = fullImagePopup = null)}
-                    out:fade={{ duration: 200 }}
-                    on:error={(e) => {
-                        addClass(e.target, "display-none");
-                    }}
-                />
-            {/key}
+            {:else if fullImagePopup}
+                {#key fullImagePopup}
+                    <img
+                        use:addImage={fullImagePopup || emptyImage}
+                        tabindex="0"
+                        class="fullPopupImage"
+                        loading="lazy"
+                        alt="Full View"
+                        on:keyup={(e) =>
+                            e.key === "Enter" &&
+                            (fullDescriptionPopup = fullImagePopup = null)}
+                        out:fade={{ duration: 200 }}
+                        on:error={(e) => {
+                            addClass(e.target, "display-none");
+                        }}
+                    />
+                {/key}
+            {/if}
         </div>
     </div>
 {/if}
@@ -2371,7 +2583,7 @@
 
     .popup-main {
         display: grid;
-        grid-template-rows: calc(min(100%, 100vw, 640px) / 16 * 9) 35px auto;
+        grid-template-rows: calc(min(100%, 100vw, 640px) / 16 * 9) auto;
     }
     :global(.popup-content.hidden > .popup-main) {
         display: none !important;
@@ -2391,7 +2603,7 @@
     }
 
     :global(.popup-header.loader .popup-header-loading) {
-        display: flex !important;
+        display: flex;
         justify-content: center;
         align-items: center;
         position: absolute;
@@ -2486,20 +2698,13 @@
         opacity: 1;
     }
 
-    .popup-body {
-        display: grid;
-        grid-template-rows: auto 48px;
-        overflow: hidden;
-        touch-action: pan-y;
-        margin: 0 1em 0 1em;
-    }
-
     .popup-info {
         overflow: hidden;
-        margin-bottom: 1em;
+        touch-action: pan-y;
+        padding-bottom: 1em;
     }
 
-    .popup-body a {
+    .popup-info a {
         color: rgb(61, 180, 242);
         text-decoration: none;
     }
@@ -2727,7 +2932,7 @@
         text-decoration: none;
     }
 
-    .footer {
+    .popup-footer {
         justify-content: space-around;
         gap: 6px;
         display: grid;
@@ -2737,20 +2942,21 @@
         width: 100%;
         height: 4.8em;
         margin: auto;
+        padding: 0 1em;
         border-top: 1px solid hsl(211.3deg 51.11% 15%);
     }
 
-    .footer svg {
+    .popup-footer svg {
         height: 2em;
         width: 2em;
     }
 
-    .footer .hideshow {
+    .popup-footer .hideshow {
         height: 1.5em;
         width: 1.5em;
     }
 
-    .footer img {
+    .popup-footer img {
         width: 23px;
         height: 23px;
         border-radius: 6px;
@@ -2782,7 +2988,7 @@
     }
 
     @media screen and (max-width: 425px) {
-        .footer {
+        .popup-footer {
             justify-content: space-between;
         }
         .info-contents {
@@ -2810,7 +3016,7 @@
         .autoplay-label,
         .list-update-label,
         .banner-image-label {
-            display: none !important;
+            display: none;
         }
     }
     @media screen and (max-width: 319px) {
@@ -2831,24 +3037,15 @@
         }
     }
 
-    @media screen and (min-width: 640px) {
-        .popup-wrapper {
-            background-color: rgba(0, 0, 0, 0.7);
-        }
-        .popup-info {
-            padding: 0 1em;
-        }
-    }
-
     @media (pointer: fine) {
         .popup-main {
             display: grid;
             grid-template-rows:
                 calc(calc(min(100%, 100vw, 640px) - 7px) / 16 * 9)
-                35px auto;
+                auto;
         }
         .popup-container::-webkit-scrollbar {
-            display: unset !important;
+            display: unset;
             width: 7px !important;
         }
         .popup-container::-webkit-scrollbar-track {
@@ -2915,12 +3112,27 @@
         display: none;
     }
 
+    .popup-body {
+        display: grid;
+        grid-template-rows: 35px auto;
+        padding: 0 1em;
+    }
+
     .popup-controls {
         display: flex;
-        padding: 10px 1em 5px 1em;
+        padding: 10px 0 5px 0;
         user-select: none;
         justify-content: space-between;
         gap: 1em;
+    }
+
+    @media screen and (min-width: 640px) {
+        .popup-wrapper {
+            background-color: rgba(0, 0, 0, 0.7);
+        }
+        .popup-body {
+            padding: 0 2em;
+        }
     }
 
     .list-update-container,
@@ -3133,14 +3345,14 @@
         width: min(90vw, 380px) !important;
         background-color: rgb(0, 0, 0) !important;
         padding: 1em 2em !important;
-        display: flex !important;
+        display: flex;
         flex-wrap: wrap;
         gap: 0.5em !important;
     }
     :global(.fullPopupDescription .custom-header) {
         border-bottom: 1px solid white !important;
         padding: 0 0 0.5em 0 !important;
-        display: flex !important;
+        display: flex;
         flex-wrap: wrap;
         column-gap: 2em !important;
         align-items: center !important;
@@ -3165,7 +3377,7 @@
     }
     :global(.fullPopupDescription .custom-table-list) {
         list-style: none !important;
-        display: grid !important;
+        display: grid;
         gap: 1em !important;
         padding: 0.5em 0 !important;
         width: 100% !important;
@@ -3181,26 +3393,7 @@
         padding: 0.5em !important;
         text-indent: 2rem !important;
     }
-    .disable-interaction {
-        pointer-events: none !important;
-        position: fixed !important;
-        transform: translateY(-99999px) translateZ(0) !important;
-        -webkit-transform: translateY(-99999px) translateZ(0) !important;
-        -ms-transform: translateY(-99999px) translateZ(0) !important;
-        -moz-transform: translateY(-99999px) translateZ(0) !important;
-        -o-transform: translateY(-99999px) translateZ(0) !important;
-        user-select: none !important;
-        touch-action: none !important;
-        cursor: not-allowed !important;
-        -webkit-user-drag: none !important;
-        -moz-user-select: none !important;
-        -ms-user-select: none !important;
-        height: 0 !important;
-        width: 0 !important;
-        max-width: 0 !important;
-        max-height: 0 !important;
-        min-width: 0 !important;
-        min-height: 0 !important;
-        overflow: hidden !important;
+    .display-none {
+        display: none !important;
     }
 </style>

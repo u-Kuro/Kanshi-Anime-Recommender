@@ -18,6 +18,7 @@
         shownAllInList,
         newFinalAnime,
         isBackgroundUpdateKey,
+        menuVisible,
     } from "../../js/globalValues.js";
     import { onMount, tick } from "svelte";
     import {
@@ -410,14 +411,14 @@
     <div
         class="prev-custom-filter"
         on:click={(e) => goToNextPrevCustomFilter(e, false)}
-        on:keydown={(e) => {
+        on:keyup={(e) => {
             e.key === "Enter" && goToNextPrevCustomFilter(e, false);
         }}
     ></div>
     <div
         class="next-custom-filter"
         on:click={(e) => goToNextPrevCustomFilter(e, true)}
-        on:keydown={(e) => {
+        on:keyup={(e) => {
             e.key === "Enter" && goToNextPrevCustomFilter(true);
         }}
     ></div>
@@ -438,9 +439,9 @@
         ></div>
         {#each $customFilters as filterName (filterName || {})}
             <span
-                tabindex="0"
+                tabindex={$menuVisible || $popupVisible ? "" : "0"}
                 on:click={selectCustomFilter(filterName)}
-                on:keydown={(e) => {
+                on:keyup={(e) => {
                     e.key === "Enter" && selectCustomFilter(filterName);
                 }}
                 custom-filter-name={filterName}
@@ -458,11 +459,11 @@
         min-height: var(--min-height);
     }
     .custom-filters-nav.hide {
-        display: block !important;
+        display: block;
         opacity: 0 !important;
     }
     .custom-filters-nav.persistent-show {
-        display: flex !important;
+        display: flex;
         opacity: 1 !important;
     }
     .custom-filters-nav {
@@ -591,27 +592,5 @@
             min-height: 0 !important;
             overflow: hidden !important;
         }
-    }
-    .disable-interaction {
-        pointer-events: none !important;
-        position: fixed !important;
-        transform: translateY(-99999px) translateZ(0) !important;
-        -webkit-transform: translateY(-99999px) translateZ(0) !important;
-        -ms-transform: translateY(-99999px) translateZ(0) !important;
-        -moz-transform: translateY(-99999px) translateZ(0) !important;
-        -o-transform: translateY(-99999px) translateZ(0) !important;
-        user-select: none !important;
-        touch-action: none !important;
-        cursor: not-allowed !important;
-        -webkit-user-drag: none !important;
-        -moz-user-select: none !important;
-        -ms-user-select: none !important;
-        height: 0 !important;
-        width: 0 !important;
-        max-width: 0 !important;
-        max-height: 0 !important;
-        min-width: 0 !important;
-        min-height: 0 !important;
-        overflow: hidden !important;
     }
 </style>

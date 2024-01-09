@@ -69,7 +69,6 @@ const listIsUpdating = writable(false)
 const popupIsGoingBack = writable(false)
 const isScrolling = writable(null)
 const scrollingTimeout = writable(null)
-const asyncAnimeReloaded = writable(null)
 const isFullViewed = writable(null)
 const showFilterOptions = writable(getLocalStorage('showFilterOptions') ?? null)
 const dropdownIsVisible = writable(null)
@@ -145,7 +144,6 @@ export {
     popupIsGoingBack,
     isScrolling,
     scrollingTimeout,
-    asyncAnimeReloaded,
     isFullViewed,
     showFilterOptions,
     dropdownIsVisible,

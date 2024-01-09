@@ -13,7 +13,6 @@
         loadingDataStatus,
         initData,
         confirmPromise,
-        asyncAnimeReloaded,
         checkAnimeLoaderStatus,
         gridFullView,
         hasWheel,
@@ -31,6 +30,7 @@
         isProcessingList,
         currentExtraInfo,
         isBackgroundUpdateKey,
+        menuVisible,
     } from "../../js/globalValues.js";
     import { fade } from "svelte/transition";
     import {
@@ -294,7 +294,7 @@
             selectedSortElement = false;
             // Reload Anime for Async Animation
             if ($finalAnimeList?.length > 36 && !$gridFullView) {
-                await callAsyncAnimeReload();
+                callAsyncAnimeReload(windowWidth <= 425);
             }
             // Close Filter Selection Dropdown
             $filterOptions?.filterSelection?.[
@@ -380,7 +380,7 @@
             let filterSelectChildrenArray = Array.from(
                 selectedFilterElement?.parentElement?.children || [],
             ).filter((el) => {
-                return !el?.classList?.contains?.("disable-interaction");
+                return !el?.classList?.contains?.("display-none");
             });
             let selectedIndex = filterSelectChildrenArray?.indexOf?.(
                 selectedFilterElement,
@@ -691,7 +691,7 @@
             (classList.contains("checkbox") && event.type === "click") ||
             (classList.contains("checkbox") &&
                 keyCode !== 13 &&
-                event.type === "keydown") ||
+                event.type === "keyup") ||
             (filterIsScrolling && event.pointerType === "mouse")
         ) {
             return;
@@ -1393,7 +1393,7 @@
             var element = Array.from(
                 document?.getElementsByClassName?.("options-wrap") || [],
             )?.find?.((el) => {
-                return !el?.classList?.contains?.("disable-interaction");
+                return !el?.classList?.contains?.("display-none");
             });
             if (
                 element?.closest?.(".filterType") ||
@@ -1421,11 +1421,7 @@
                     let currentidx = options.indexOf(highlightedEl);
                     let nextEl, iteratedEl, firstEl, lastEl;
                     for (let idx = 0; idx < options.length; idx++) {
-                        if (
-                            !options[idx].classList.contains(
-                                "disable-interaction",
-                            )
-                        ) {
+                        if (!options[idx].classList.contains("display-none")) {
                             if (keyCode === 38) {
                                 // Prev
                                 lastEl = options[idx];
@@ -1468,7 +1464,7 @@
                     }
                 } else {
                     let options = element.querySelectorAll(
-                        ".option:not(.disable-interaction)",
+                        ".option:not(.display-none)",
                     );
                     highlightedEl = options[0];
                     if (highlightedEl instanceof Element) {
@@ -1482,15 +1478,15 @@
             }
         } else if (keyCode === 13) {
             if (highlightedEl instanceof Element) {
-                let keydownEvent = new KeyboardEvent("keydown", {
+                let keyupEvent = new KeyboardEvent("keyup", {
                     key: "Enter",
                 });
-                highlightedEl.dispatchEvent(keydownEvent);
+                highlightedEl.dispatchEvent(keyupEvent);
             }
         } else {
             var element = Array.from(
                 document.getElementsByClassName("options-wrap") || [],
-            ).find((el) => !el.classList.contains("disable-interaction"));
+            ).find((el) => !el.classList.contains("display-none"));
             if (
                 (element?.closest?.(".filter-select") && keyCode !== 9) ||
                 (element instanceof Element &&
@@ -1532,7 +1528,7 @@
     async function handleShowFilterOptions(event, val = null) {
         selectedCustomFilterElement = false;
         if ($finalAnimeList?.length > 36 && !$gridFullView) {
-            await callAsyncAnimeReload();
+            callAsyncAnimeReload();
         }
         customFilterName = $selectedCustomFilter;
         editCustomFilterName = false;
@@ -1546,31 +1542,48 @@
         });
     }
 
-    let asyncAnimeReloadPromise;
-    function callAsyncAnimeReload() {
-        return new Promise((resolve) => {
-            if ($animeLoaderWorker instanceof Worker) {
-                $checkAnimeLoaderStatus()
-                    .then(() => {
-                        $animeLoaderWorker?.postMessage?.({
-                            reload: true,
-                        });
-                    })
-                    .catch(() => {
-                        $confirmPromise({
-                            isAlert: true,
-                            title: "Something went wrong",
-                            text: "Action failed, please try again.",
-                        });
-                    });
+    function callAsyncAnimeReload(checkScroll = false) {
+        if ($animeLoaderWorker instanceof Worker) {
+            if (checkScroll) {
+                scrollUpAsyncLoad();
             }
-            asyncAnimeReloadPromise = { resolve };
-        });
+            $checkAnimeLoaderStatus()
+                .then(() => {
+                    $animeLoaderWorker?.postMessage?.({
+                        reload: true,
+                    });
+                })
+                .catch(() => {
+                    $confirmPromise({
+                        isAlert: true,
+                        title: "Something went wrong",
+                        text: "Action failed, please try again.",
+                    });
+                });
+        }
     }
-    asyncAnimeReloaded.subscribe((val) => {
-        if (typeof val !== "boolean") return;
-        asyncAnimeReloadPromise?.resolve?.();
-    });
+
+    function scrollUpAsyncLoad() {
+        for (let i = 0; i < $finalAnimeList?.length; i++) {
+            let gridElement =
+                $finalAnimeList?.[i]?.gridElement || animeGridEl.children?.[i];
+
+            if (
+                gridElement?.getBoundingClientRect?.()?.y >= windowHeight &&
+                i > 36
+            ) {
+                let scrollTop;
+                if (isFullViewed) {
+                    scrollTop = 65;
+                } else {
+                    scrollTop = 48;
+                }
+                window.scrollY = document.documentElement.scrollTop = scrollTop;
+                break;
+            }
+        }
+    }
+
     function hasPartialMatch(strings, searchString) {
         if (typeof strings === "string" && typeof searchString === "string") {
             return strings
@@ -2142,12 +2155,13 @@
         ? "auto"
         : ""}
     style:--custom-filter-settings-space={$showFilterOptions ? "30px" : ""}
+    style:--close-filters-space={$showFilterOptions ? "42px" : ""}
 >
     <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
     <div
         id="custom-filter-wrap"
         class="custom-filter-wrap"
-        tabindex={selectedCustomFilterElement ? "" : "0"}
+        tabindex={$menuVisible || $popupVisible || selectedCustomFilterElement ? "" : "0"}
         style:--editcancel-icon={$showFilterOptions ? "2.5em" : ""}
         style:--save-icon={$showFilterOptions &&
         editCustomFilterName &&
@@ -2157,10 +2171,10 @@
         !$activeTagFilters?.[customFilterName]
             ? "2.5em"
             : ""}
-        on:keydown={(e) => e.key === "Enter" && handleCustomFilterPopup(e)}
+        on:keyup={(e) => e.key === "Enter" && handleCustomFilterPopup(e)}
         on:click={handleCustomFilterPopup}
     >
-        <label class="disable-interaction" for="custom-filter-name">
+        <label class="display-none" for="custom-filter-name">
             Search Title
         </label>
         <input
@@ -2176,9 +2190,7 @@
         {#if !editCustomFilterName || !$showFilterOptions}
             <div
                 class={"options-wrap " +
-                    (selectedCustomFilterElement
-                        ? ""
-                        : "disable-interaction hide")}
+                    (selectedCustomFilterElement ? "" : "display-none hide")}
                 style:--maxFilterSelectionHeight="{maxFilterSelectionHeight}px"
             >
                 {#if $filterOptions}
@@ -2191,11 +2203,12 @@
                             <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                             <div
                                 class="closing-x"
-                                tabindex={selectedCustomFilterElement &&
+                                tabindex={!$menuVisible && !$popupVisible &&
+                                selectedCustomFilterElement &&
                                 windowWidth <= 425
                                     ? "0"
                                     : "-1"}
-                                on:keydown={(e) =>
+                                on:keyup={(e) =>
                                     e.key === "Enter" &&
                                     handleCustomFilterPopup(e)}
                                 on:click={handleCustomFilterPopup}
@@ -2209,7 +2222,7 @@
                                     class="option"
                                     on:click={(e) =>
                                         selectCustomFilter(e, filterName)}
-                                    on:keydown={(e) =>
+                                    on:keyup={(e) =>
                                         e.key === "Enter" &&
                                         selectCustomFilter(e, filterName)}
                                 >
@@ -2235,7 +2248,9 @@
                     <svg
                         class="save-custom-category-name"
                         title="Save Category Name"
-                        tabindex={editCustomFilterName ? "0" : "-1"}
+                        tabindex={!$menuVisible && !$popupVisible && editCustomFilterName
+                            ? "0"
+                            : "-1"}
                         viewBox="0 0 448 512"
                         on:click={() => {
                             if (
@@ -2247,7 +2262,7 @@
                                 return;
                             saveCustomFilterName();
                         }}
-                        on:keydown={(e) => {
+                        on:keyup={(e) => {
                             if (e.key !== "Enter") return;
                             if (
                                 !$selectedCustomFilter ||
@@ -2270,7 +2285,7 @@
                 <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                 <svg
                     class="editcancel-custom-category-name"
-                    tabindex={$showFilterOptions ? "0" : "-1"}
+                    tabindex={!$menuVisible && !$popupVisible && $showFilterOptions ? "0" : "-1"}
                     viewBox={"0 0" +
                         (editCustomFilterName ? " 384 512" : " 512 512")}
                     on:click={() => {
@@ -2278,7 +2293,7 @@
                         customFilterName = $selectedCustomFilter;
                         selectedCustomFilterElement = false;
                     }}
-                    on:keydown={(e) => {
+                    on:keyup={(e) => {
                         if (e.key !== "Enter") return;
                         editCustomFilterName = !editCustomFilterName;
                         customFilterName = $selectedCustomFilter;
@@ -2298,10 +2313,10 @@
             <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
             <svg
                 class="showFilterOptions"
-                tabindex="0"
+                tabindex={$menuVisible || $popupVisible ? "" : "0"}
                 viewBox="0 0 512 512"
                 on:click={handleShowFilterOptions}
-                on:keydown={(e) =>
+                on:keyup={(e) =>
                     e.key === "Enter" && handleShowFilterOptions(e)}
             >
                 <!-- slider -->
@@ -2313,7 +2328,7 @@
     </div>
     <div
         class={"custom-filter-settings-wrap" +
-            ($showFilterOptions ? "" : " disable-interaction")}
+            ($showFilterOptions ? "" : " display-none")}
         style:--add-icon-size={customFilterName &&
         $activeTagFilters &&
         !$activeTagFilters?.[customFilterName]
@@ -2326,14 +2341,14 @@
             <span
                 class="filterType"
                 on:click={handleShowFilterTypes}
-                on:keydown={(e) =>
-                    e.key === "Enter" && handleShowFilterTypes(e)}
+                on:keyup={(e) => e.key === "Enter" && handleShowFilterTypes(e)}
             >
                 <h2 class="filterType-dropdown">
                     {selectedFilterSelectionName || ""}
                     <svg
                         viewBox="0 140 320 512"
-                        tabindex={$showFilterOptions &&
+                        tabindex={!$menuVisible && !$popupVisible &&
+                        $showFilterOptions &&
                         !selectedFilterTypeElement
                             ? "0"
                             : ""}
@@ -2346,9 +2361,7 @@
                 </h2>
                 <div
                     class={"options-wrap " +
-                        (selectedFilterTypeElement
-                            ? ""
-                            : "disable-interaction hide")}
+                        (selectedFilterTypeElement ? "" : "display-none hide")}
                     style:--maxFilterSelectionHeight="{maxFilterSelectionHeight}px"
                 >
                     {#if $filterOptions}
@@ -2360,11 +2373,12 @@
                                 <div class="filter-title">Filter</div>
                                 <div
                                     class="closing-x"
-                                    tabindex={selectedFilterTypeElement &&
+                                    tabindex={!$menuVisible && !$popupVisible &&
+                                    selectedFilterTypeElement &&
                                     windowWidth <= 425
                                         ? "0"
                                         : "-1"}
-                                    on:keydown={(e) =>
+                                    on:keyup={(e) =>
                                         e.key === "Enter" &&
                                         handleShowFilterTypes(e)}
                                     on:click={handleShowFilterTypes}
@@ -2381,7 +2395,7 @@
                                                 e,
                                                 filterSelection?.filterSelectionName,
                                             )}
-                                        on:keydown={(e) =>
+                                        on:keyup={(e) =>
                                             e.key === "Enter" &&
                                             handleFilterTypes(
                                                 e,
@@ -2409,13 +2423,13 @@
         <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
         {#if $showFilterOptions && $customFilters?.length > 1}
             <div
-                tabindex="0"
+                tabindex={$menuVisible || $popupVisible ? "" : "0"}
                 class="remove-custom-category"
                 title="Delete Category"
                 style:visibility={$customFilters?.length > 1 ? "" : "hidden"}
                 on:click={(e) =>
                     $customFilters?.length > 1 && removeCustomFilter(e)}
-                on:keydown={(e) =>
+                on:keyup={(e) =>
                     $customFilters?.length > 1 &&
                     e.key === "Enter" &&
                     removeCustomFilter(e)}
@@ -2431,7 +2445,7 @@
         <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
         {#if $showFilterOptions && customFilterName && $activeTagFilters && !$activeTagFilters?.[customFilterName]}
             <div
-                tabindex="0"
+                tabindex={$menuVisible || $popupVisible ? "" : "0"}
                 class="add-custom-category"
                 title="Add Custom Category"
                 on:click={(e) => {
@@ -2443,7 +2457,7 @@
                         return;
                     addCustomFilter(e);
                 }}
-                on:keydown={(e) => {
+                on:keyup={(e) => {
                     if (
                         e.key !== "Enter" ||
                         !customFilterName ||
@@ -2465,7 +2479,7 @@
     </div>
     <div
         class={"filters" +
-            ($showFilterOptions ? "" : " disable-interaction") +
+            ($showFilterOptions ? "" : " display-none") +
             ($hasWheel ? " hasWheel" : "") +
             (shouldScrollSnap && $android ? " android" : "")}
         id="filters"
@@ -2492,7 +2506,7 @@
                             (filterSelection.isSelected &&
                             !$loadingFilterOptions
                                 ? ""
-                                : "disable-interaction")}
+                                : "display-none")}
                     >
                         <div class="filter-name">
                             <h2>{Dropdown.filName || ""}</h2>
@@ -2500,12 +2514,13 @@
                         <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                         <div
                             class="select"
-                            tabindex={$showFilterOptions &&
+                            tabindex={!$menuVisible && !$popupVisible &&
+                            $showFilterOptions &&
                             windowWidth <= 425 &&
                             filterSelection.isSelected
                                 ? "0"
                                 : "-1"}
-                            on:keydown={(e) =>
+                            on:keyup={(e) =>
                                 (e.key === "Enter" ||
                                     e.key === "ArrowDown" ||
                                     e.key === "ArrowUp") &&
@@ -2516,7 +2531,7 @@
                         >
                             <div class="value-wrap">
                                 <label
-                                    class="disable-interaction"
+                                    class="display-none"
                                     for={filterSelection.filterSelectionName +
                                         Dropdown.filName}
                                 >
@@ -2525,7 +2540,10 @@
                                         Dropdown.filName}
                                 </label>
                                 <input
-                                    tabindex={$showFilterOptions ? "0" : "-1"}
+                                    tabindex={!$menuVisible && !$popupVisible &&
+                                    $showFilterOptions
+                                        ? "0"
+                                        : "-1"}
                                     id={filterSelection.filterSelectionName +
                                         Dropdown.filName}
                                     placeholder="Any"
@@ -2545,7 +2563,7 @@
                                 <svg
                                     class="angle-up"
                                     viewBox="0 0 512 512"
-                                    on:keydown={(e) =>
+                                    on:keyup={(e) =>
                                         e.key === "Enter" &&
                                         closeFilterSelect(dropdownIdx)}
                                     on:click={closeFilterSelect(dropdownIdx)}
@@ -2570,7 +2588,7 @@
                                 Dropdown.selected === true &&
                                 !Init
                                     ? ""
-                                    : "disable-interaction hide")}
+                                    : "display-none hide")}
                             style:--maxFilterSelectionHeight="{maxFilterSelectionHeight}px"
                             on:wheel|stopPropagation={() => {}}
                         >
@@ -2589,11 +2607,12 @@
                                     <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                                     <div
                                         class="closing-x"
-                                        tabindex={$showFilterOptions &&
+                                        tabindex={!$menuVisible && !$popupVisible &&
+                                        $showFilterOptions &&
                                         Dropdown.selected
                                             ? "0"
                                             : "-1"}
-                                        on:keydown={(e) =>
+                                        on:keyup={(e) =>
                                             e.key === "Enter" &&
                                             closeFilterSelect(dropdownIdx)}
                                         on:click={closeFilterSelect(
@@ -2604,7 +2623,7 @@
                                     </div>
                                 </div>
                                 <label
-                                    class="disable-interaction"
+                                    class="display-none"
                                     for={"Search " +
                                         (filterSelection.filterSelectionName +
                                             Dropdown.filName)}
@@ -2615,7 +2634,10 @@
                                         Dropdown.filName}
                                 </label>
                                 <input
-                                    tabindex={$showFilterOptions ? "0" : "-1"}
+                                    tabindex={!$menuVisible && !$popupVisible &&
+                                    $showFilterOptions
+                                        ? "0"
+                                        : "-1"}
                                     id={"Search " +
                                         (filterSelection.filterSelectionName +
                                             Dropdown.filName)}
@@ -2682,7 +2704,7 @@
                                                                 Dropdown.changeType,
                                                                 filterSelection.filterSelectionName,
                                                             )}
-                                                            on:keydown={(e) =>
+                                                            on:keyup={(e) =>
                                                                 e.key ===
                                                                     "Enter" &&
                                                                 handleFilterSelectOptionChange(
@@ -2750,7 +2772,7 @@
                                                                             htmlToShow,
                                                                         );
                                                                     }}
-                                                                    on:keydown|stopPropagation={(
+                                                                    on:keyup|stopPropagation={(
                                                                         e,
                                                                     ) => {
                                                                         if (
@@ -2806,9 +2828,7 @@
                     {#if filterSelection.isSelected}
                         <div
                             class={"filter-checkbox" +
-                                ($loadingFilterOptions
-                                    ? " disable-interaction"
-                                    : "")}
+                                ($loadingFilterOptions ? " display-none" : "")}
                         >
                             <div style:visibility="none" />
                             <div
@@ -2820,7 +2840,7 @@
                                         checkboxIdx,
                                         filterSelection.filterSelectionName,
                                     )}
-                                on:keydown={(e) =>
+                                on:keyup={(e) =>
                                     e.key === "Enter" &&
                                     handleCheckboxChange(
                                         e,
@@ -2830,13 +2850,16 @@
                                     )}
                             >
                                 <label
-                                    class="disable-interaction"
+                                    class="display-none"
                                     for={"Checkbox: " + Checkbox.filName}
                                 >
                                     {Checkbox.filName}
                                 </label>
                                 <input
-                                    tabindex={$showFilterOptions ? "0" : "-1"}
+                                    tabindex={!$menuVisible && !$popupVisible &&
+                                    $showFilterOptions
+                                        ? "0"
+                                        : "-1"}
                                     id={"Checkbox: " + Checkbox.filName}
                                     type="checkbox"
                                     class="checkbox"
@@ -2870,9 +2893,7 @@
                     {#if filterSelection.isSelected}
                         <div
                             class={"filter-input-number" +
-                                ($loadingFilterOptions
-                                    ? " disable-interaction"
-                                    : "")}
+                                ($loadingFilterOptions ? " display-none" : "")}
                             style:display={filterSelection.isSelected
                                 ? ""
                                 : "none"}
@@ -2882,13 +2903,16 @@
                             </div>
                             <div class="value-input-number-wrap">
                                 <label
-                                    class="disable-interaction"
+                                    class="display-none"
                                     for={"Number Filter: " + inputNum.filName}
                                 >
                                     {"Number Filter: " + inputNum.filName}
                                 </label>
                                 <input
-                                    tabindex={$showFilterOptions ? "0" : "-1"}
+                                    tabindex={!$menuVisible && !$popupVisible &&
+                                    $showFilterOptions
+                                        ? "0"
+                                        : "-1"}
                                     id={"Number Filter: " + inputNum.filName}
                                     class="value-input-number"
                                     type="text"
@@ -2937,15 +2961,15 @@
         class={"activeFilters" +
             (!$loadingFilterOptions && $showFilterOptions && !$initData
                 ? ""
-                : " disable-interaction")}
+                : " display-none")}
     >
         <div id="tagFilters" class="tagFilters">
             <div
-                tabindex={$showFilterOptions ? "0" : "-1"}
+                tabindex={!$menuVisible && !$popupVisible && $showFilterOptions ? "0" : "-1"}
                 class="empty-tagFilter"
                 title="Remove Filters"
                 on:click={removeAllActiveTag}
-                on:keydown={(e) => e.key === "Enter" && removeAllActiveTag(e)}
+                on:keyup={(e) => e.key === "Enter" && removeAllActiveTag(e)}
             >
                 <!-- Ban -->
                 <svg viewBox="0 0 512 512">
@@ -2957,8 +2981,7 @@
             {#each activeTagFiltersArrays || [] as activeTagFiltersArray (activeTagFiltersArray?.optionName + activeTagFiltersArray?.optionIdx + (activeTagFiltersArray?.optionType ?? "") || {})}
                 <div
                     class="activeTagFilter"
-                    tabindex={$showFilterOptions ? "0" : "-1"}
-                    out:fade={{ duration: 200 }}
+                    tabindex={!$menuVisible && !$popupVisible && $showFilterOptions ? "0" : "-1"}
                     style:--activeTagFilterColor={activeTagFiltersArray?.selected ===
                     "included"
                         ? "hsl(185deg, 65%, 50%)"
@@ -2976,7 +2999,7 @@
                             activeTagFiltersArray?.optionType,
                             activeTagFiltersArray?.optionValue,
                         )}
-                    on:keydown={(e) =>
+                    on:keyup={(e) =>
                         e.key === "Enter" &&
                         changeActiveSelect(
                             e,
@@ -3010,7 +3033,9 @@
                     <svg
                         class="removeActiveTag"
                         viewBox="0 0 400 512"
-                        tabindex={$showFilterOptions ? "0" : "-1"}
+                        tabindex={!$menuVisible && !$popupVisible && $showFilterOptions
+                            ? "0"
+                            : "-1"}
                         on:click|preventDefault={(e) =>
                             removeActiveTag(
                                 e,
@@ -3020,7 +3045,7 @@
                                 activeTagFiltersArray?.categIdx,
                                 activeTagFiltersArray?.optionType,
                             )}
-                        on:keydown={(e) =>
+                        on:keyup={(e) =>
                             e.key === "Enter" &&
                             removeActiveTag(
                                 e,
@@ -3039,13 +3064,27 @@
             {/each}
         </div>
     </div>
+    <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
+    <div
+        class={"close-filters" + ($showFilterOptions ? "" : " display-none")}
+        on:click={handleShowFilterOptions}
+        on:keyup={(e) => e.key === "Enter" && handleShowFilterOptions(e)}
+        tabindex={!$menuVisible && !$popupVisible && $showFilterOptions ? "0" : "-1"}
+    >
+        <!-- Angle up -->
+        <svg viewBox="0 0 512 512"
+            ><path
+                d="M201 137c13-12 33-12 46 0l160 160a32 32 0 0 1-46 46L224 205 87 343a32 32 0 0 1-46-46l160-160z"
+            ></path></svg
+        >
+    </div>
     <div id="home-status" class="home-status">
         <span out:fade={{ duration: 200 }} class="data-status">
             <h2
                 on:click={(e) => {
                     getExtraInfo();
                 }}
-                on:keydown={() => {}}
+                on:keyup={() => {}}
                 class={(!$dataStatus || !$showStatus) && $loadingDataStatus
                     ? " loading"
                     : ""}
@@ -3059,9 +3098,7 @@
         </span>
     </div>
     <div class="input-search-wrap" id="input-search-wrap">
-        <label class="disable-interaction" for="input-search">
-            Search Title
-        </label>
+        <label class="display-none" for="input-search"> Search Title </label>
         <input
             id="input-search"
             class="input-search"
@@ -3069,6 +3106,7 @@
             enterkeyhint="search"
             autocomplete="off"
             placeholder="Search"
+            tabindex={$menuVisible || $popupVisible ? "-1" : "0"}
             bind:value={$searchedAnimeKeyword}
         />
     </div>
@@ -3076,10 +3114,10 @@
     <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
     <div class="last-filter-option">
         <div
-            tabindex="0"
+            tabindex={$menuVisible || $popupVisible ? "" : "0"}
             class="changeGridView"
             on:click={handleGridView}
-            on:keydown={(e) => e.key === "Enter" && handleGridView()}
+            on:keyup={(e) => e.key === "Enter" && handleGridView()}
         >
             <svg viewBox={`0 0 ${isFullViewed ? "312" : "512"} 512`}>
                 <path
@@ -3098,8 +3136,8 @@
                         selectedSortType === "asc" ? "-" : ""
                     }140 320 512`}
                     on:click={changeSortType}
-                    on:keydown={(e) => e.key === "Enter" && changeSortType(e)}
-                    tabindex={selectedSortElement ? "" : "0"}
+                    on:keyup={(e) => e.key === "Enter" && changeSortType(e)}
+                    tabindex={$menuVisible || $popupVisible || selectedSortElement ? "" : "0"}
                 >
                     <path
                         d={// sortdown
@@ -3110,16 +3148,16 @@
                     />
                 </svg>
                 <h2
-                    tabindex={selectedSortElement ? "" : "0"}
+                    tabindex={$menuVisible || $popupVisible || selectedSortElement ? "" : "0"}
                     on:click={handleSortFilterPopup}
-                    on:keydown={(e) =>
+                    on:keyup={(e) =>
                         e.key === "Enter" && handleSortFilterPopup(e)}
                 >
                     {selectedSortName || ""}
                 </h2>
                 <div
                     class={"options-wrap " +
-                        (selectedSortElement ? "" : "disable-interaction hide")}
+                        (selectedSortElement ? "" : "display-none hide")}
                     style:--maxFilterSelectionHeight="{maxFilterSelectionHeight}px"
                 >
                     <div
@@ -3131,11 +3169,12 @@
                             <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                             <div
                                 class="closing-x"
-                                tabindex={selectedSortElement &&
+                                tabindex={!$menuVisible && !$popupVisible &&
+                                selectedSortElement &&
                                 windowWidth <= 425
                                     ? "0"
                                     : ""}
-                                on:keydown={(e) =>
+                                on:keyup={(e) =>
                                     e.key === "Enter" &&
                                     handleSortFilterPopup(e)}
                                 on:click={handleSortFilterPopup}
@@ -3148,7 +3187,7 @@
                                 <div
                                     class="option"
                                     on:click={changeSort(sortFilter?.sortName)}
-                                    on:keydown={(e) =>
+                                    on:keyup={(e) =>
                                         e.key === "Enter" &&
                                         changeSort(sortFilter?.sortName)}
                                 >
@@ -3983,66 +4022,22 @@
         scroll-snap-align: none !important;
     }
 
-    .disable-interaction {
-        pointer-events: none !important;
-        position: fixed !important;
-        transform: translateY(-99999px) translateZ(0) !important;
-        -webkit-transform: translateY(-99999px) translateZ(0) !important;
-        -ms-transform: translateY(-99999px) translateZ(0) !important;
-        -moz-transform: translateY(-99999px) translateZ(0) !important;
-        -o-transform: translateY(-99999px) translateZ(0) !important;
-        user-select: none !important;
-        touch-action: none !important;
-        cursor: not-allowed !important;
-        -webkit-user-drag: none !important;
-        -moz-user-select: none !important;
-        -ms-user-select: none !important;
-        height: 0 !important;
-        width: 0 !important;
-        max-width: 0 !important;
-        max-height: 0 !important;
-        min-width: 0 !important;
-        min-height: 0 !important;
-        overflow: hidden !important;
-    }
-
-    /* .custom-filter-floating-icon {
-        position: fixed !important;
-        bottom: 4.5em !important;
-        right: 3em !important;
-        transform: translateZ(0) !important;
-        -webkit-transform: translateZ(0) !important;
-        -ms-transform: translateZ(0) !important;
-        -moz-transform: translateZ(0) !important;
-        -o-transform: translateZ(0) !important;
-        animation: fadeIn 0.2s ease;
+    .close-filters {
+        margin-top: 1.2em;
         display: flex;
         justify-content: center;
         align-items: center;
-        gap: 6px;
-        background-color: rgba(102, 102, 102, 0.6);
+        background: hsl(216 37% 12% / 1);
+        border-radius: 6px;
         cursor: pointer;
-        border-radius: 50%;
-        width: 60px;
-        height: 60px;
-        box-shadow: 0 14px 28px rgba(0, 0, 0, 0.25),
-            0 10px 10px rgba(0, 0, 0, 0.22);
-        z-index: 994 !important;
-    } */
-    /* .custom-filter-floating-icon.popup-visible {
-        z-index: 996 !important;
+        width: 100%;
+        height: 3em;
     }
 
-    .custom-filter-floating-icon svg {
-        width: 3em;
-        height: 3em;
-    } */
-
-    /* @media screen and (pointer: fine) or (min-width: 750px) {
-        .custom-filter-floating-icon {
-            display: none;
-        }
-    } */
+    .close-filters > svg {
+        width: 2em;
+        height: 2em;
+    }
 
     @media screen and (hover: hover) and (pointer: fine) {
         .filters {
@@ -4071,7 +4066,7 @@
         .sortFilter .options-wrap,
         .custom-filter-wrap .options-wrap {
             position: fixed !important;
-            display: flex !important;
+            display: flex;
             flex-direction: column !important;
             z-index: 996 !important;
             left: -1em !important;
@@ -4104,7 +4099,7 @@
             transition: transform 0s ease 0.2s;
         }
         .options-wrap-filter-info {
-            display: flex !important;
+            display: flex;
             flex-direction: column;
             width: min(95%, 95vw);
             padding: 14px 0 0 0;
@@ -4127,12 +4122,12 @@
             opacity: 0 !important;
         }
         .options-wrap-filter-info .header {
-            display: grid !important;
+            display: grid;
             padding: 0 14px;
             grid-template-columns: auto 25px;
         }
         .options-wrap-filter-info .filter-title {
-            display: initial !important;
+            display: initial;
             font-size: 1.8rem;
             font-weight: bold;
             text-transform: capitalize;
@@ -4146,7 +4141,7 @@
             display: none;
         }
         .options-wrap-filter-info input {
-            display: initial !important;
+            display: initial;
             background: transparent !important;
             border: 2px solid hsl(211.3deg 51.11% 12.5%) !important;
             padding: 14px 12px;
@@ -4160,7 +4155,7 @@
         }
 
         .options-wrap .options {
-            display: flex !important;
+            display: flex;
             flex-direction: column !important;
             border-top: 2px solid hsl(211.3deg 51.11% 12.5%) !important;
             width: 100% !important;
@@ -4215,4 +4210,50 @@
             width: 50% !important;
         }
     }
+
+    .display-none {
+        display: none !important;
+    }
+
+    input[type="search"]:not(:hover):not(:focus):not(:disabled):not(
+            :placeholder-shown
+        )::-webkit-search-cancel-button {
+        opacity: 1 !important;
+    }
+
+    @supports (-webkit-appearance: none) and (appearance: none) {
+        input[type="search"]::-webkit-search-cancel-button {
+            -webkit-appearance: none;
+            appearance: none;
+            height: 10px;
+            width: 10px;
+            background-image: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMjMuMDUiIGhlaWdodD0iMTIzLjA1IiBzdHlsZT0iZW5hYmxlLWJhY2tncm91bmQ6bmV3IDAgMCAxMjMuMDUgMTIzLjA1IiB4bWw6c3BhY2U9InByZXNlcnZlIj48cGF0aCBkPSJtMTIxLjMyNSAxMC45MjUtOC41LTguMzk5Yy0yLjMtMi4zLTYuMS0yLjMtOC41IDBsLTQyLjQgNDIuMzk5TDE4LjcyNiAxLjcyNmMtMi4zMDEtMi4zMDEtNi4xMDEtMi4zMDEtOC41IDBsLTguNSA4LjVjLTIuMzAxIDIuMy0yLjMwMSA2LjEgMCA4LjVsNDMuMSA0My4xLTQyLjMgNDIuNWMtMi4zIDIuMy0yLjMgNi4xIDAgOC41bDguNSA4LjVjMi4zIDIuMyA2LjEgMi4zIDguNSAwbDQyLjM5OS00Mi40IDQyLjQgNDIuNGMyLjMgMi4zIDYuMSAyLjMgOC41IDBsOC41LTguNWMyLjMtMi4zIDIuMy02LjEgMC04LjVsLTQyLjUtNDIuNCA0Mi40LTQyLjM5OWE2LjEzIDYuMTMgMCAwIDAgLjEtOC42MDJ6IiBmaWxsPSIjRkZGIi8+PC9zdmc+);
+            background-size: 10px 10px;
+        }
+    }
+
+    /* 
+    .disable-interaction {
+        display: none !important;
+        pointer-events: none !important;
+        position: fixed !important;
+        transform: translateY(-99999px) translateZ(0) !important;
+        -webkit-transform: translateY(-99999px) translateZ(0) !important;
+        -ms-transform: translateY(-99999px) translateZ(0) !important;
+        -moz-transform: translateY(-99999px) translateZ(0) !important;
+        -o-transform: translateY(-99999px) translateZ(0) !important;
+        user-select: none !important;
+        touch-action: none !important;
+        cursor: not-allowed !important;
+        -webkit-user-drag: none !important;
+        -moz-user-select: none !important;
+        -ms-user-select: none !important;
+        height: 0 !important;
+        width: 0 !important;
+        max-width: 0 !important;
+        max-height: 0 !important;
+        min-width: 0 !important;
+        min-height: 0 !important;
+        overflow: hidden !important;
+    } */
 </style>

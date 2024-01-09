@@ -12,7 +12,6 @@
         animeOptionVisible,
         openedAnimeOptionIdx,
         initData,
-        asyncAnimeReloaded,
         animeIdxRemoved,
         shownAllInList,
         importantLoad,
@@ -24,6 +23,7 @@
         newFinalAnime,
         progress,
         mobile,
+        menuVisible,
     } from "../../js/globalValues.js";
     import {
         addClass,
@@ -277,6 +277,9 @@
                 $shownAllInList = false;
             }
             if ($finalAnimeList instanceof Array) {
+                if (isAsyncLoad) {
+                    lessenShownGrid();
+                }
                 if (
                     $finalAnimeList?.[val.idx] &&
                     Math.abs($finalAnimeList?.[val.idx]?.id) ===
@@ -333,6 +336,20 @@
         }
     });
 
+    function lessenShownGrid() {
+        for (let i = 0; i < $finalAnimeList?.length; i++) {
+            let gridElement =
+                $finalAnimeList?.[i]?.gridElement || animeGridEl.children?.[i];
+            if (gridElement?.getBoundingClientRect?.()?.y >= windowHeight) {
+                $finalAnimeList = $finalAnimeList.slice(0, Math.min(i + 5, 36));
+                shownFinalAnimeListCount =
+                    $finalAnimeList?.length ?? shownFinalAnimeListCount;
+                isAsyncLoad = false;
+                break;
+            }
+        }
+    }
+
     finalAnimeList.subscribe(async (val) => {
         if (val instanceof Array && val.length) {
             shownFinalAnimeListCount = val.length;
@@ -356,13 +373,11 @@
                 }
             }
             if (isAsyncLoad) {
-                $asyncAnimeReloaded = !$asyncAnimeReloaded;
                 isAsyncLoad = false;
             }
         } else {
             shownFinalAnimeListCount = 0;
             if (isAsyncLoad) {
-                $asyncAnimeReloaded = !$asyncAnimeReloaded;
                 isAsyncLoad = false;
             }
         }
@@ -639,12 +654,12 @@
                     <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                     <div
                         class="shimmer"
-                        tabindex={$popupVisible ? "" : "0"}
+                        tabindex={$menuVisible || $popupVisible ? "" : "0"}
                         on:click={handleOpenPopup(animeIdx)}
                         on:pointerdown={(e) => handleOpenOption(e, animeIdx)}
                         on:pointerup={cancelOpenOption}
                         on:pointercancel={cancelOpenOption}
-                        on:keydown={(e) =>
+                        on:keyup={(e) =>
                             e.key === "Enter" && handleOpenPopup(animeIdx)}
                     >
                         {#if anime?.coverImageUrl || anime?.bannerImageUrl || anime?.trailerThumbnailUrl}
@@ -807,9 +822,9 @@
         <div
             class={"go-back-grid" +
                 (shouldShowGoBackInFullView ? " fullView" : "")}
-            tabindex="0"
+            tabindex={$menuVisible || $popupVisible ? "" : "0"}
             on:click={goBackGrid}
-            on:keydown={(e) => e.key === "Enter" && goBackGrid(e)}
+            on:keyup={(e) => e.key === "Enter" && goBackGrid(e)}
             out:fade={{ duration: 200 }}
         >
             <svg
@@ -1205,5 +1220,9 @@
         .image-grid {
             justify-content: space-evenly;
         }
+    }
+
+    .display-none {
+        display: none !important;
     }
 </style>
