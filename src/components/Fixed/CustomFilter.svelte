@@ -328,6 +328,24 @@
             ) {
                 return;
             }
+            let element = event?.target;
+            let closestScrollableElement = element;
+            let isMainScrollableElement = true;
+            while (
+                closestScrollableElement &&
+                closestScrollableElement !== document.body
+            ) {
+                const isScrollableTop =
+                    closestScrollableElement.scrollHeight >
+                    closestScrollableElement.clientHeight;
+                if (isScrollableTop) {
+                    isMainScrollableElement = false;
+                    break;
+                }
+                closestScrollableElement =
+                    closestScrollableElement?.parentElement;
+            }
+            if (!isMainScrollableElement) return;
             startY = event.touches[0].clientY;
             touchID = event.touches[0].identifier;
         },
@@ -347,10 +365,10 @@
                     Math.abs(deltaY / yThreshold),
                     1,
                 );
-                if (!customFiltersNavVisible && deltaY > 0) {
+                if (deltaY > 0) {
                     customFilNavIsAnimating = true;
                     customFilOpacity = newCustomFilOpacity;
-                } else if (customFiltersNavVisible && deltaY < 0) {
+                } else if (deltaY < 0) {
                     customFilNavIsAnimating = true;
                     customFilOpacity = 1 - newCustomFilOpacity;
                 }
