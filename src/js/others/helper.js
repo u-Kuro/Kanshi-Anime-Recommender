@@ -617,7 +617,7 @@ const getLocalStorage = (key) => {
 const setLocalStorage = (key, data) => {
   return new Promise((resolve, reject) => {
     try {
-      localStorage.setItem(LocalStorageID + key, data)
+      localStorage.setItem(LocalStorageID + key, JSON.stringify(data))
       resolve()
     } catch (ex) {
       reject()

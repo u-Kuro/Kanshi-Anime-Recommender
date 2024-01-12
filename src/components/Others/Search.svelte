@@ -1693,7 +1693,7 @@
             ($selectedCustomFilter !== customFilterName ||
                 previousCustomFilterIsMissing)
         ) {
-            let customFilterNameToShow = `<span style="color:#00cbf9;">${trimAllEmptyChar(
+            let customFilterNameToShow = `<span style="color:hsl(var(--ac-color));">${trimAllEmptyChar(
                 customFilterName,
             )}</span>`;
             if (
@@ -1761,7 +1761,7 @@
             $activeTagFilters &&
             newCustomFilterCanBeReplaced
         ) {
-            let customFilterNameToShow = `<span style="color:#00cbf9;">${trimAllEmptyChar(
+            let customFilterNameToShow = `<span style="color:hsl(var(--ac-color));">${trimAllEmptyChar(
                 customFilterName,
             )}</span>`;
             if (
@@ -1830,7 +1830,7 @@
             $activeTagFilters?.[$selectedCustomFilter] &&
             Object.keys($activeTagFilters || {}).length > 1
         ) {
-            let customFilterNameToShow = `<span style="color:#00cbf9;">${trimAllEmptyChar(
+            let customFilterNameToShow = `<span style="color:hsl(var(--ac-color));">${trimAllEmptyChar(
                 $selectedCustomFilter,
             )}</span>`;
             if (
@@ -1901,19 +1901,18 @@
                     }
                     tagCategoryInfo[category][tag] = description || "";
                 }
-                setLocalStorage(
-                    "tagCategoryInfo",
-                    JSON.stringify(tagCategoryInfo),
-                );
+                setLocalStorage("tagCategoryInfo", tagCategoryInfo);
                 await saveJSON(tagCategoryInfo, "tagCategoryInfo");
-                let lastTagCategoryInfoUpdate = new Date();
+                let lastTagCategoryInfoUpdateAt = parseInt(
+                    new Date().getTime() / 1000,
+                );
                 setLocalStorage(
-                    "lastTagCategoryInfoUpdate",
-                    JSON.stringify(lastTagCategoryInfoUpdate),
+                    "lastTagCategoryInfoUpdateAt",
+                    lastTagCategoryInfoUpdateAt,
                 );
                 saveJSON(
-                    lastTagCategoryInfoUpdate,
-                    "lastTagCategoryInfoUpdate",
+                    lastTagCategoryInfoUpdateAt,
+                    "lastTagCategoryInfoUpdateAt",
                 );
             });
     }
@@ -2078,17 +2077,13 @@
             if (isJsonObject(tempTagCategoryInfo)) {
                 tagCategoryInfo = tempTagCategoryInfo;
             }
-            let lastTagCategoryInfoUpdateTimestamp = new Date(
-                getLocalStorage("lastTagCategoryInfoUpdate") ||
-                    (await retrieveJSON("lastTagCategoryInfoUpdate")),
-            ).getTime();
-            if (
-                lastTagCategoryInfoUpdateTimestamp > 0 &&
-                hasTagCategoryInfoData()
-            ) {
+            let lastTagCategoryInfoUpdateAt =
+                getLocalStorage("lastTagCategoryInfoUpdateAt") ||
+                (await retrieveJSON("lastTagCategoryInfoUpdateAt"));
+            if (lastTagCategoryInfoUpdateAt > 0 && hasTagCategoryInfoData()) {
                 let nextSeasonAverageTimestamp = 7884000000;
                 let nextSeason = new Date(
-                    lastTagCategoryInfoUpdateTimestamp +
+                    lastTagCategoryInfoUpdateAt * 1000 +
                         nextSeasonAverageTimestamp,
                 );
                 if (nextSeason.getTime() < new Date().getTime()) {
@@ -2161,7 +2156,9 @@
     <div
         id="custom-filter-wrap"
         class="custom-filter-wrap"
-        tabindex={$menuVisible || $popupVisible || selectedCustomFilterElement ? "" : "0"}
+        tabindex={$menuVisible || $popupVisible || selectedCustomFilterElement
+            ? ""
+            : "0"}
         style:--editcancel-icon={$showFilterOptions ? "2.5em" : ""}
         style:--save-icon={$showFilterOptions &&
         editCustomFilterName &&
@@ -2203,7 +2200,8 @@
                             <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                             <div
                                 class="closing-x"
-                                tabindex={!$menuVisible && !$popupVisible &&
+                                tabindex={!$menuVisible &&
+                                !$popupVisible &&
                                 selectedCustomFilterElement &&
                                 windowWidth <= 425
                                     ? "0"
@@ -2229,7 +2227,7 @@
                                     <h3
                                         style:color={filterName ===
                                         $selectedCustomFilter
-                                            ? "#3db4f2"
+                                            ? "hsl(var(--ac-color))"
                                             : "inherit"}
                                     >
                                         {trimAllEmptyChar(filterName) || ""}
@@ -2248,7 +2246,9 @@
                     <svg
                         class="save-custom-category-name"
                         title="Save Category Name"
-                        tabindex={!$menuVisible && !$popupVisible && editCustomFilterName
+                        tabindex={!$menuVisible &&
+                        !$popupVisible &&
+                        editCustomFilterName
                             ? "0"
                             : "-1"}
                         viewBox="0 0 448 512"
@@ -2285,7 +2285,11 @@
                 <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                 <svg
                     class="editcancel-custom-category-name"
-                    tabindex={!$menuVisible && !$popupVisible && $showFilterOptions ? "0" : "-1"}
+                    tabindex={!$menuVisible &&
+                    !$popupVisible &&
+                    $showFilterOptions
+                        ? "0"
+                        : "-1"}
                     viewBox={"0 0" +
                         (editCustomFilterName ? " 384 512" : " 512 512")}
                     on:click={() => {
@@ -2347,7 +2351,8 @@
                     {selectedFilterSelectionName || ""}
                     <svg
                         viewBox="0 140 320 512"
-                        tabindex={!$menuVisible && !$popupVisible &&
+                        tabindex={!$menuVisible &&
+                        !$popupVisible &&
                         $showFilterOptions &&
                         !selectedFilterTypeElement
                             ? "0"
@@ -2373,7 +2378,8 @@
                                 <div class="filter-title">Filter</div>
                                 <div
                                     class="closing-x"
-                                    tabindex={!$menuVisible && !$popupVisible &&
+                                    tabindex={!$menuVisible &&
+                                    !$popupVisible &&
                                     selectedFilterTypeElement &&
                                     windowWidth <= 425
                                         ? "0"
@@ -2404,7 +2410,7 @@
                                     >
                                         <h3
                                             style:color={filterSelection?.isSelected
-                                                ? "#3db4f2"
+                                                ? "hsl(var(--ac-color))"
                                                 : "inherit"}
                                         >
                                             {filterSelection?.filterSelectionName ||
@@ -2514,7 +2520,8 @@
                         <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                         <div
                             class="select"
-                            tabindex={!$menuVisible && !$popupVisible &&
+                            tabindex={!$menuVisible &&
+                            !$popupVisible &&
                             $showFilterOptions &&
                             windowWidth <= 425 &&
                             filterSelection.isSelected
@@ -2540,7 +2547,8 @@
                                         Dropdown.filName}
                                 </label>
                                 <input
-                                    tabindex={!$menuVisible && !$popupVisible &&
+                                    tabindex={!$menuVisible &&
+                                    !$popupVisible &&
                                     $showFilterOptions
                                         ? "0"
                                         : "-1"}
@@ -2607,7 +2615,8 @@
                                     <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                                     <div
                                         class="closing-x"
-                                        tabindex={!$menuVisible && !$popupVisible &&
+                                        tabindex={!$menuVisible &&
+                                        !$popupVisible &&
                                         $showFilterOptions &&
                                         Dropdown.selected
                                             ? "0"
@@ -2634,7 +2643,8 @@
                                         Dropdown.filName}
                                 </label>
                                 <input
-                                    tabindex={!$menuVisible && !$popupVisible &&
+                                    tabindex={!$menuVisible &&
+                                    !$popupVisible &&
                                     $showFilterOptions
                                         ? "0"
                                         : "-1"}
@@ -2856,7 +2866,8 @@
                                     {Checkbox.filName}
                                 </label>
                                 <input
-                                    tabindex={!$menuVisible && !$popupVisible &&
+                                    tabindex={!$menuVisible &&
+                                    !$popupVisible &&
                                     $showFilterOptions
                                         ? "0"
                                         : "-1"}
@@ -2909,7 +2920,8 @@
                                     {"Number Filter: " + inputNum.filName}
                                 </label>
                                 <input
-                                    tabindex={!$menuVisible && !$popupVisible &&
+                                    tabindex={!$menuVisible &&
+                                    !$popupVisible &&
                                     $showFilterOptions
                                         ? "0"
                                         : "-1"}
@@ -2965,7 +2977,9 @@
     >
         <div id="tagFilters" class="tagFilters">
             <div
-                tabindex={!$menuVisible && !$popupVisible && $showFilterOptions ? "0" : "-1"}
+                tabindex={!$menuVisible && !$popupVisible && $showFilterOptions
+                    ? "0"
+                    : "-1"}
                 class="empty-tagFilter"
                 title="Remove Filters"
                 on:click={removeAllActiveTag}
@@ -2981,7 +2995,11 @@
             {#each activeTagFiltersArrays || [] as activeTagFiltersArray (activeTagFiltersArray?.optionName + activeTagFiltersArray?.optionIdx + (activeTagFiltersArray?.optionType ?? "") || {})}
                 <div
                     class="activeTagFilter"
-                    tabindex={!$menuVisible && !$popupVisible && $showFilterOptions ? "0" : "-1"}
+                    tabindex={!$menuVisible &&
+                    !$popupVisible &&
+                    $showFilterOptions
+                        ? "0"
+                        : "-1"}
                     style:--activeTagFilterColor={activeTagFiltersArray?.selected ===
                     "included"
                         ? "hsl(185deg, 65%, 50%)"
@@ -3033,7 +3051,9 @@
                     <svg
                         class="removeActiveTag"
                         viewBox="0 0 400 512"
-                        tabindex={!$menuVisible && !$popupVisible && $showFilterOptions
+                        tabindex={!$menuVisible &&
+                        !$popupVisible &&
+                        $showFilterOptions
                             ? "0"
                             : "-1"}
                         on:click|preventDefault={(e) =>
@@ -3069,7 +3089,9 @@
         class={"close-filters" + ($showFilterOptions ? "" : " display-none")}
         on:click={handleShowFilterOptions}
         on:keyup={(e) => e.key === "Enter" && handleShowFilterOptions(e)}
-        tabindex={!$menuVisible && !$popupVisible && $showFilterOptions ? "0" : "-1"}
+        tabindex={!$menuVisible && !$popupVisible && $showFilterOptions
+            ? "0"
+            : "-1"}
     >
         <!-- Angle up -->
         <svg viewBox="0 0 512 512"
@@ -3137,7 +3159,11 @@
                     }140 320 512`}
                     on:click={changeSortType}
                     on:keyup={(e) => e.key === "Enter" && changeSortType(e)}
-                    tabindex={$menuVisible || $popupVisible || selectedSortElement ? "" : "0"}
+                    tabindex={$menuVisible ||
+                    $popupVisible ||
+                    selectedSortElement
+                        ? ""
+                        : "0"}
                 >
                     <path
                         d={// sortdown
@@ -3148,7 +3174,11 @@
                     />
                 </svg>
                 <h2
-                    tabindex={$menuVisible || $popupVisible || selectedSortElement ? "" : "0"}
+                    tabindex={$menuVisible ||
+                    $popupVisible ||
+                    selectedSortElement
+                        ? ""
+                        : "0"}
                     on:click={handleSortFilterPopup}
                     on:keyup={(e) =>
                         e.key === "Enter" && handleSortFilterPopup(e)}
@@ -3169,7 +3199,8 @@
                             <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                             <div
                                 class="closing-x"
-                                tabindex={!$menuVisible && !$popupVisible &&
+                                tabindex={!$menuVisible &&
+                                !$popupVisible &&
                                 selectedSortElement &&
                                 windowWidth <= 425
                                     ? "0"
@@ -3226,12 +3257,12 @@
 <style>
     ::placeholder {
         opacity: 1 !important;
-        color: #8390a0 !important;
+        color: var(--fg-color) !important;
     }
 
     :-ms-input-placeholder,
     ::-ms-input-placeholder {
-        color: #8390a0 !important;
+        color: var(--fg-color) !important;
     }
 
     main {
@@ -3248,12 +3279,12 @@
 
     .skeleton {
         border-radius: 6px !important;
-        background-color: rgba(30, 42, 56, 0.8) !important;
+        background-color: hsla(0, 0%, 10%, 0.5) !important;
     }
     .options-wrap {
         box-shadow:
             0 14px 28px rgba(0, 0, 0, 0.25),
-            0 10px 10px rgba(0, 0, 0, 0.22) !important;
+            0 10px 10px rgba(0, 0, 0, 0.2) !important;
     }
     .custom-filter-wrap {
         --editcancel-icon: ;
@@ -3263,7 +3294,8 @@
         align-items: center;
         column-gap: 2em;
         padding: 8px 15px 8px 0px;
-        background-color: hsl(216 37% 12% / 1);
+        background-color: var(--bg-color);
+        border: 1px solid var(--bd-color);
         border-radius: 6px;
         width: 100%;
         height: max-content;
@@ -3273,7 +3305,8 @@
         position: absolute;
         left: 0;
         top: 4.25em;
-        background-color: hsl(216 37% 12% / 1);
+        background-color: var(--bg-color);
+        border: 1px solid var(--bd-color);
         overflow-y: auto;
         overflow-x: hidden;
         overscroll-behavior: contain;
@@ -3294,7 +3327,7 @@
         width: 100%;
     }
     .custom-filter-wrap .option {
-        color: inherit;
+        color: var(--fg-color);
         display: grid;
         align-items: center;
         padding: 5px;
@@ -3315,7 +3348,8 @@
         align-items: center;
         column-gap: 2em;
         padding: 8px 15px;
-        background-color: hsl(216 37% 12%);
+        background-color: var(--bg-color);
+        border: 1px solid var(--bd-color);
         border-radius: 6px;
         width: 100%;
         height: 4em;
@@ -3323,8 +3357,8 @@
     }
     .custom-filter-selection {
         --edit-icon-width: 0px;
-        background-color: inherit;
-        color: inherit;
+        background-color: var(--bg-color);
+        color: var(--fg-color);
         position: absolute;
         opacity: 0;
         width: calc(100% - var(--edit-icon-width) - 3.5em);
@@ -3335,7 +3369,7 @@
         outline: none;
         border: none;
         background-color: transparent;
-        color: white;
+        color: var(--fg-color);
         width: 100%;
         cursor: text;
     }
@@ -3369,7 +3403,8 @@
         position: absolute;
         left: 0;
         top: 2.75em;
-        background-color: hsl(216 37% 12% / 1);
+        background-color: var(--bg-color);
+        border: 1px solid var(--bd-color);
         overflow-y: auto;
         overflow-x: hidden;
         overscroll-behavior: contain;
@@ -3389,7 +3424,7 @@
         width: max-content;
     }
     .filterType .option {
-        color: inherit;
+        color: var(--fg-color);
         display: grid;
         align-items: center;
         padding: 5px;
@@ -3535,7 +3570,7 @@
     .filter-input-number .value-input-number {
         text-align: center;
         background: transparent;
-        color: inherit;
+        color: var(--fg-color);
         border: none;
         outline: none;
         width: 100%;
@@ -3550,13 +3585,17 @@
     }
     .filter-select .select {
         align-items: center;
-        background: hsl(216 37% 12% / 1);
+        background: var(--bg-color);
+        border: 1px solid transparent;
         border-radius: 6px;
         display: grid;
         grid-template-columns: auto 24px;
         height: 36px;
         padding: 10px 5px;
         justify-content: space-between;
+    }
+    .filter-select .select:not(.skeleton) {
+        border: 1px solid var(--bd-color);
     }
     .filter-select .angle-down,
     .filter-select .angle-up {
@@ -3572,7 +3611,7 @@
     }
     .filter-select .value-input {
         background: transparent;
-        color: inherit;
+        color: var(--fg-color);
         border: none;
         outline: none;
         width: 100%;
@@ -3583,7 +3622,8 @@
     .filter-select .options-wrap {
         position: absolute;
         top: 61px;
-        background-color: hsl(216 37% 12% / 1);
+        background-color: var(--bg-color);
+        border: 1px solid var(--bd-color);
         width: 165px;
         overflow-y: auto;
         overscroll-behavior: contain;
@@ -3606,8 +3646,8 @@
     .options-wrap:hover::-webkit-scrollbar-thumb,
     .options-wrap:active::-webkit-scrollbar-thumb,
     .options-wrap:focus::-webkit-scrollbar-thumb {
-        background-color: rgba(162, 168, 169, 0.75);
-        border-right: 2px solid hsl(216 37% 12% / 1);
+        background-color: var(--sfg-color);
+        border-right: 2px solid var(--bg-color);
     }
 
     .options {
@@ -3618,8 +3658,8 @@
         display: none;
     }
     .highlight {
-        background-color: rgba(0, 0, 0, 0.25);
-        color: rgb(61, 180, 242) !important;
+        background-color: var(--ol-color);
+        color: hsl(var(--ac-color)) !important;
     }
 
     .filter-select .options {
@@ -3629,7 +3669,7 @@
     }
 
     .filter-select .option {
-        color: inherit;
+        color: var(--fg-color);
         display: grid;
         align-items: center;
         padding: 5px;
@@ -3674,7 +3714,8 @@
     }
     .filter-checkbox .checkbox-wrap,
     .filter-input-number .value-input-number-wrap {
-        background: hsl(216 37% 12% / 1);
+        background: var(--bg-color);
+        border: 1px solid var(--bd-color);
         border-radius: 6px;
         display: flex;
         column-gap: 8px;
@@ -3685,8 +3726,8 @@
     .filter-checkbox .checkbox {
         width: 14px;
         height: 14px;
-        border-radius: 4px;
-        accent-color: hsl(185deg, 100%, 35%);
+        border-radius: 6px;
+        accent-color: hsl(185, 65%, 40%);
         cursor: pointer;
     }
     .filter-checkbox .checkbox-label {
@@ -3699,9 +3740,9 @@
         cursor: pointer;
     }
 
-    @media screen and (hover: hover) {
+    @media (pointer: fine) and (hover: hover) {
         .option:hover h3 {
-            color: rgb(61, 180, 242) !important;
+            color: hsl(var(--ac-color)) !important;
         }
     }
 
@@ -3767,7 +3808,7 @@
 
     .activeFilters .activeTagFilter {
         animation: fadeIn 0.2s ease;
-        background-color: hsl(216 37% 12%);
+        background-color: var(--bg-color);
         color: var(--activeTagFilterColor);
         border: 1px solid var(--activeTagFilterColor);
         padding: 0em 10px;
@@ -3812,7 +3853,7 @@
         display: flex;
         justify-content: center;
         align-items: center;
-        background: hsl(216 37% 12% / 1);
+        background: var(--bg-color);
         border-radius: 6px;
         cursor: pointer;
         width: 3em;
@@ -3880,7 +3921,8 @@
         display: flex;
         right: 0;
         top: 20px;
-        background-color: hsl(216 37% 12% / 1);
+        background-color: var(--bg-color);
+        border: 1px solid var(--bd-color);
         overflow-y: auto;
         overflow-x: hidden;
         overscroll-behavior: contain;
@@ -3900,7 +3942,7 @@
         width: max-content;
     }
     .sortFilter .option {
-        color: inherit;
+        color: var(--fg-color);
         display: grid;
         align-items: center;
         padding: 5px;
@@ -3932,10 +3974,10 @@
         position: absolute;
         background: linear-gradient(
             90deg,
-            rgba(30, 42, 56, 0) 0,
-            rgba(8, 143, 214, 0.06) 40%,
-            rgba(8, 143, 214, 0.06) 60%,
-            rgba(30, 42, 56, 0)
+            hsla(0, 0%, 10%, 0) 0,
+            hsla(0, 0%, 100%, 0.06) 40%,
+            hsla(0, 0%, 100%, 0.06) 60%,
+            hsla(0, 0%, 10%, 0)
         );
         content: "";
         display: block;
@@ -4027,7 +4069,7 @@
         display: flex;
         justify-content: center;
         align-items: center;
-        background: hsl(216 37% 12% / 1);
+        background: var(--bg-color);
         border-radius: 6px;
         cursor: pointer;
         width: 100%;
@@ -4073,7 +4115,7 @@
             top: 0px;
             width: calc(100% + 2em) !important;
             height: 100% !important;
-            background-color: rgba(0, 0, 0, 0.4) !important;
+            background-color: var(--ol-color) !important;
             justify-content: center !important;
             align-items: center !important;
             overflow-y: auto !important;
@@ -4104,9 +4146,10 @@
             width: min(95%, 95vw);
             padding: 14px 0 0 0;
             gap: 14px;
-            background-color: #0b1622;
-            color: white !important;
-            border-radius: 6px 6px 0px 0px;
+            background-color: var(--bg-color);
+            color: var(--fg-color) !important;
+            border: 1px solid var(--bd-color);
+            border-radius: 6px;
             top: 140px;
             max-height: 65vh !important;
             min-height: 10.71em !important;
@@ -4142,12 +4185,12 @@
         }
         .options-wrap-filter-info input {
             display: initial;
-            background: transparent !important;
-            border: 2px solid hsl(211.3deg 51.11% 12.5%) !important;
+            background: var(--bg-color) !important;
+            border: 2px solid var(--bd-color) !important;
             padding: 14px 12px;
             border-radius: 6px;
             font-size: 1.6rem;
-            color: inherit;
+            color: var(--fg-color);
             border: none;
             outline: none;
             cursor: text;
@@ -4157,7 +4200,7 @@
         .options-wrap .options {
             display: flex;
             flex-direction: column !important;
-            border-top: 2px solid hsl(211.3deg 51.11% 12.5%) !important;
+            border-top: 2px solid var(--bd-color) !important;
             width: 100% !important;
             height: calc(65vh - 112px);
             border-radius: 0px 0px 6px 6px !important;

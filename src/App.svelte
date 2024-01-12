@@ -1362,7 +1362,7 @@
 		if ($listUpdateAvailable && shouldUpdate) {
 			updateList();
 		}
-		isBelowNav = document.documentElement.scrollTop > 47;
+		isBelowNav = document.documentElement.scrollTop > 45;
 		if (animeGridEl?.getBoundingClientRect?.()?.top < 0 && !willExit)
 			window.setShouldGoBack(false);
 		runIsScrolling.update((e) => !e);
@@ -1609,27 +1609,6 @@
 		}
 	});
 
-	let changeStatusBarColorTimeout;
-	$: {
-		if ($android) {
-			try {
-				let isOverlay =
-					$animeOptionVisible ||
-					$confirmIsVisible ||
-					$isFullViewed ||
-					($dropdownIsVisible && windowWidth <= 750);
-				clearTimeout(changeStatusBarColorTimeout);
-				if (isOverlay) {
-					JSBridge?.changeStatusBarColor?.(true);
-				} else {
-					changeStatusBarColorTimeout = setTimeout(() => {
-						JSBridge?.changeStatusBarColor?.(false);
-					}, 200);
-				}
-			} catch (e) {}
-		}
-	}
-
 	onMount(() => {
 		usernameInputEl = document.getElementById("usernameInput");
 		animeGridEl = document.getElementById("anime-grid");
@@ -1782,7 +1761,7 @@
 		position: fixed !important;
 	}
 	.progress {
-		background-color: #909cb8;
+		background-color: var(--sfg-color);
 		position: fixed;
 		top: 0px;
 		z-index: 1003;

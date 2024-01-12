@@ -47,7 +47,7 @@
         if (importedFile) {
             let filename = importedFile.name;
             let filenameToShow = filename
-                ? `named <span style="color:#00cbf9;">${filename}</span> `
+                ? `named <span style="color:hsl(var(--ac-color));">${filename}</span> `
                 : "";
             if (
                 await $confirmPromise(
@@ -494,8 +494,7 @@
                 <button
                     class="button"
                     on:click={handleExportFolder}
-                    on:keyup={(e) =>
-                        e.key === "Enter" && handleExportFolder(e)}
+                    on:keyup={(e) => e.key === "Enter" && handleExportFolder(e)}
                 >
                     {($exportPathIsAvailable ? "Change" : "Set") +
                         " Export Folder"}
@@ -510,8 +509,7 @@
             <button
                 class={"button " + ($autoUpdate ? "selected" : "")}
                 on:click={handleUpdateEveryHour}
-                on:keyup={(e) =>
-                    e.key === "Enter" && handleUpdateEveryHour(e)}
+                on:keyup={(e) => e.key === "Enter" && handleUpdateEveryHour(e)}
                 >Auto Update</button
             >
             {#if $android}
@@ -539,8 +537,7 @@
                 >
                 <button
                     class="button"
-                    on:keyup={(e) =>
-                        e.key === "Enter" && showRecentReleases(e)}
+                    on:keyup={(e) => e.key === "Enter" && showRecentReleases(e)}
                     on:click={showRecentReleases}>Show Recent Releases</button
                 >
                 <button
@@ -586,7 +583,7 @@
         top: 0;
         width: 100%;
         height: 100%;
-        background-color: rgb(0, 0, 0, 0.7);
+        background-color: var(--ol-color);
         z-index: 998;
         animation: fadeIn 0.2s ease;
     }
@@ -609,15 +606,15 @@
         display: none;
     }
     .button {
-        -moz-box-shadow: 0 3px 20px 0 hsl(211.3deg 51.11% 15%);
-        -webkit-box-shadow: 0 3px 20px 0 hsl(211.3deg 51.11% 15%);
-        box-shadow: 0 3px 20px 0 hsl(211.3deg 51.11% 15%);
+        -moz-box-shadow: 0 3px 20px 0 var(--bd-color);
+        -webkit-box-shadow: 0 3px 20px 0 var(--bd-color);
+        box-shadow: 0 3px 20px 0 var(--bd-color);
         font-size: clamp(1.2rem, 1.3rem, 1.4rem);
         border-radius: 2em;
-        background-color: hsl(211.3deg 51.11% 20%);
-        color: white;
+        background-color: var(--bg-color);
+        border: 1px solid var(--bd-color);
+        color: var(--fg-color);
         padding: 0.8em 1.6em;
-        border: none;
         cursor: pointer;
         flex: 1 0 auto;
         user-select: none;
@@ -636,8 +633,8 @@
         }
     }
     .button.selected {
-        background-color: hsl(200.55deg 20% 50%) !important;
-        color: white !important;
+        background-color: var(--bd-color) !important;
+        color: var(--fg-color) !important;
     }
 
     @media screen and (min-width: 750px) {

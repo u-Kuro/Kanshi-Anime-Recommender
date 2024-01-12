@@ -87,14 +87,13 @@ import androidx.core.content.FileProvider;
 import androidx.core.splashscreen.SplashScreen;
 
 public class MainActivity extends AppCompatActivity {
-    public final int appID = 300;
+    public final int appID = 301;
     public boolean keepAppRunningInBackground = false;
     public boolean webViewIsLoaded = false;
     public boolean permissionIsAsked = false;
     public SharedPreferences prefs;
     private SharedPreferences.Editor prefsEdit;
     private int currentOrientation;
-    private int overlayColor;
     private ValueCallback<Uri[]> mUploadMessage;
     private String exportPath;
     public MediaWebView webView;
@@ -236,12 +235,9 @@ public class MainActivity extends AppCompatActivity {
         // Orientation
         currentOrientation = getResources().getConfiguration().orientation;
         if (currentOrientation == Configuration.ORIENTATION_LANDSCAPE) {
-            overlayColor = Color.BLACK;
-            progressbar.setProgressBackgroundTintList(ColorStateList.valueOf(overlayColor));
+            progressbar.setProgressBackgroundTintList(ColorStateList.valueOf(Color.BLACK));
             getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
-            getWindow().setStatusBarColor(overlayColor);
-        } else {
-            overlayColor = getResources().getColor(R.color.dark_blue);
+            getWindow().setStatusBarColor(Color.BLACK);
         }
         // Add WebView on Layout
         webView.setBackgroundColor(Color.BLACK);
@@ -361,7 +357,7 @@ public class MainActivity extends AppCompatActivity {
                     try {
                         fromYoutube = false;
                         CustomTabsIntent customTabsIntent = new CustomTabsIntent.Builder()
-                                .setDefaultColorSchemeParams(new CustomTabColorSchemeParams.Builder().setToolbarColor(getResources().getColor(R.color.dark_blue)).build())
+                                .setDefaultColorSchemeParams(new CustomTabColorSchemeParams.Builder().setToolbarColor(getResources().getColor(R.color.black)).build())
                                 .setShowTitle(true)
                                 .build();
                         customTabsIntent.launchUrl(MainActivity.this, Uri.parse(url));
@@ -581,13 +577,11 @@ public class MainActivity extends AppCompatActivity {
         currentOrientation = newConfig.orientation;
         if (currentOrientation == Configuration.ORIENTATION_LANDSCAPE) {
             getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
-            getWindow().setStatusBarColor(Color.BLACK);
-            progressbar.setProgressBackgroundTintList(ColorStateList.valueOf(Color.BLACK));
         } else {
             getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
-            getWindow().setStatusBarColor(overlayColor);
-            progressbar.setProgressBackgroundTintList(ColorStateList.valueOf(overlayColor));
         }
+        getWindow().setStatusBarColor(Color.BLACK);
+        progressbar.setProgressBackgroundTintList(ColorStateList.valueOf(Color.BLACK));
     }
 
     // Native and Webview Connection
@@ -1041,15 +1035,6 @@ public class MainActivity extends AppCompatActivity {
         public void openToast(String text, boolean isLongDuration) {
             showToast(Toast.makeText(getApplicationContext(), text, isLongDuration ? Toast.LENGTH_LONG : Toast.LENGTH_SHORT));
         }
-        final int cDBlue = getResources().getColor(R.color.dark_blue);
-        @JavascriptInterface
-        public void changeStatusBarColor(boolean isOverlay) {
-            overlayColor = isOverlay? Color.BLACK : cDBlue;
-            if (currentOrientation == Configuration.ORIENTATION_PORTRAIT) {
-                progressbar.setProgressBackgroundTintList(ColorStateList.valueOf(overlayColor));
-                getWindow().setStatusBarColor(overlayColor);
-            }
-        }
     }
     public void showDataEvictionDialog() {
         showDialog(new AlertDialog.Builder(MainActivity.this)
@@ -1266,7 +1251,7 @@ public class MainActivity extends AppCompatActivity {
         currentDialog.setCanceledOnTouchOutside(canceledOnOutsideTouch);
         Window dialogWindow = currentDialog.getWindow();
         if (dialogWindow!=null) {
-            dialogWindow.setBackgroundDrawableResource(R.color.dark_blue);
+            dialogWindow.setBackgroundDrawableResource(R.drawable.dialog);
         }
         currentDialog.show();
     }

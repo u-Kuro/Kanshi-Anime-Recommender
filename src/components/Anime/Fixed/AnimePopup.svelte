@@ -142,7 +142,7 @@
         if (!$hiddenEntries) return pleaseWaitAlert();
         let isHidden = $hiddenEntries[animeID];
         title = title
-            ? `<span style="color:#00cbf9;">${title}</span>`
+            ? `<span style="color:hsl(var(--ac-color));">${title}</span>`
             : "this anime";
         if (isHidden) {
             if (
@@ -152,10 +152,10 @@
             ) {
                 $checkAnimeLoaderStatus()
                     .then(async () => {
-                        delete $hiddenEntries[animeID];
-                        $hiddenEntries = $hiddenEntries;
                         if ($finalAnimeList.length) {
                             if ($animeLoaderWorker instanceof Worker) {
+                                delete $hiddenEntries[animeID];
+                                $hiddenEntries = $hiddenEntries;
                                 $animeLoaderWorker?.postMessage?.({
                                     removeID: animeID,
                                     hiddenEntries: $hiddenEntries,
@@ -179,9 +179,9 @@
             ) {
                 $checkAnimeLoaderStatus()
                     .then(async () => {
-                        $hiddenEntries[animeID] = true;
                         if ($finalAnimeList.length) {
                             if ($animeLoaderWorker instanceof Worker) {
+                                $hiddenEntries[animeID] = true;
                                 $animeLoaderWorker?.postMessage?.({
                                     removeID: animeID,
                                     hiddenEntries: $hiddenEntries,
@@ -1057,7 +1057,7 @@
             typeof nextEpisode === "number" &&
             episodes > nextEpisode
         ) {
-            text = ` · <span style="color:rgb(61, 180, 242);">${nextEpisode}/${episodes} in ${formatDateDifference(
+            text = ` · <span style="color:hsl(var(--ac-color));">${nextEpisode}/${episodes} in ${formatDateDifference(
                 nextAiringDate,
                 timeDifMS,
             )}</span>`;
@@ -1068,7 +1068,7 @@
             } else {
                 episodeFormat = `Ep ${nextEpisode}`;
             }
-            text = ` · <span style="color:rgb(61, 180, 242);">${episodeFormat} in ${formatDateDifference(
+            text = ` · <span style="color:hsl(var(--ac-color));">${episodeFormat} in ${formatDateDifference(
                 nextAiringDate,
                 timeDifMS,
             )}</span>`;
@@ -2485,7 +2485,7 @@
     }
 
     .popup-wrapper svg {
-        fill: #9ba0b2 !important;
+        fill: var(--sfg-color) !important;
     }
 
     .popup-container {
@@ -2495,7 +2495,7 @@
         overflow-x: hidden;
         overflow-anchor: visible;
         overscroll-behavior: contain;
-        background: linear-gradient(to bottom, hsl(210deg 50% 5%) 20%, #0b1621);
+        background: var(--bg-color);
         transition: opacity 0.2s ease;
         margin-top: 48px;
         -ms-overflow-style: none;
@@ -2534,7 +2534,7 @@
         -moz-transform: translateY(-50%) translateX(var(--position))
             translateZ(0);
         -o-transform: translateY(-50%) translateX(var(--position)) translateZ(0);
-        background-color: rgb(103, 187, 254, 0.5);
+        background-color: hsl(var(--ac-color), 0.5);
         width: calc(44px * var(--scale));
         height: calc(44px * var(--scale));
         border-radius: 50%;
@@ -2547,7 +2547,7 @@
         justify-content: center;
         align-items: center;
         gap: 6px;
-        background-color: white;
+        background-color: var(--fg-color);
         cursor: pointer;
         border-radius: 50%;
         max-width: 44px;
@@ -2557,14 +2557,14 @@
     }
 
     .go-back-grid.willGoBack {
-        background-color: black;
+        background-color: var(--bg-color);
     }
 
     .go-back-grid.willGoBack svg {
-        fill: white;
+        fill: var(--sfg-color);
     }
     .go-back-grid svg {
-        fill: black;
+        fill: var(--bg-color);
         width: 2em;
         height: 2em;
     }
@@ -2572,8 +2572,8 @@
     .popup-content {
         display: grid;
         grid-template-columns: 100%;
-        color: #a2a8bd;
-        background: linear-gradient(to bottom, hsl(210deg 50% 5%) 20%, #0b1621);
+        color: var(--sfg-color);
+        background: var(--bg-color);
         max-width: 640px;
         min-height: 64em;
     }
@@ -2593,7 +2593,7 @@
         width: 100%;
         position: relative;
         padding-bottom: 56.25%;
-        background: #000;
+        background: var(--bg-color);
         user-select: none !important;
         cursor: pointer;
     }
@@ -2610,7 +2610,7 @@
         bottom: 1em;
         right: 1em;
         z-index: 3;
-        background-color: #000;
+        background-color: var(--bg-color);
         border-radius: 100%;
         width: 40px;
         height: 40px;
@@ -2620,7 +2620,7 @@
         animation: fadeInOut 1s infinite;
         width: 2em;
         height: 2em;
-        fill: #fff;
+        fill: var(--sfg-color);
     }
 
     .popup-content-loading {
@@ -2629,7 +2629,7 @@
         align-items: center;
         max-width: 640px;
         padding: 2em;
-        background-color: #000;
+        background-color: var(--bg-color);
     }
 
     .popup-content-loading-icon {
@@ -2657,7 +2657,7 @@
     .popup-img {
         transition: opacity 0.2s ease;
         width: 100%;
-        background-color: #000 !important;
+        background-color: var(--bg-color) !important;
         z-index: 2;
     }
 
@@ -2677,7 +2677,7 @@
         object-fit: cover;
         -o-object-fit: cover;
         object-position: center;
-        background-color: black;
+        background-color: var(--bg-color);
     }
 
     .bannerImg::after {
@@ -2687,7 +2687,7 @@
         left: 0;
         width: 100%;
         height: 100%;
-        background-color: rgba(0, 0, 0, 0.5);
+        background-color: var(--ol-color);
     }
     .bannerImg.fade-out {
         animation: fadeOut 0.2s ease forwards;
@@ -2705,7 +2705,7 @@
     }
 
     .popup-info a {
-        color: rgb(61, 180, 242);
+        color: hsl(var(--ac-color));
         text-decoration: none;
     }
 
@@ -2848,7 +2848,7 @@
         -moz-transform: translateZ(0);
         -o-transform: translateZ(0);
         border-radius: 6px;
-        background-color: #000;
+        background-color: var(--bg-color);
     }
     .coverImg.display-none + .anime-description-wrapper {
         height: unset;
@@ -2860,7 +2860,7 @@
         width: min(40% - 1em, 150px);
         user-select: none;
         cursor: pointer;
-        background-color: black;
+        background-color: var(--bg-color);
         margin: 0 auto;
     }
 
@@ -2870,7 +2870,7 @@
     }
 
     .anime-description-wrapper {
-        border: 1px solid hsl(211.3deg 51.11% 15%);
+        border: 1px solid var(--bd-color);
         border-radius: 6px;
         padding: 1em 1.5em;
         flex: 1;
@@ -2903,7 +2903,7 @@
         font-size: 1.2rem !important;
     }
     :global(.anime-description a) {
-        color: rgb(0 168 255) !important;
+        color: hsl(var(--ac-color)) !important;
         text-decoration: none !important;
     }
 
@@ -2943,7 +2943,7 @@
         height: 4.8em;
         margin: auto;
         padding: 0 1em;
-        border-top: 1px solid hsl(211.3deg 51.11% 15%);
+        border-top: 1px solid var(--bd-color);
     }
 
     .popup-footer svg {
@@ -2969,7 +2969,7 @@
         border: 0;
         background-color: transparent !important;
         cursor: pointer;
-        color: #9ba0b2;
+        color: var(--sfg-color);
         overflow: hidden;
         display: grid;
         align-items: center;
@@ -3049,10 +3049,10 @@
             width: 7px !important;
         }
         .popup-container::-webkit-scrollbar-track {
-            background-color: black;
+            background-color: var(--bg-color);
         }
         .popup-container::-webkit-scrollbar-thumb {
-            background-color: #9ba0b2;
+            background-color: var(--sfg-color);
             border-radius: 9999px;
         }
     }
@@ -3094,8 +3094,8 @@
 
     .info > span,
     .info > a {
-        color: #9ba0b2;
-        border: 1px solid hsl(211.3deg 51.11% 15%);
+        color: var(--sfg-color);
+        border: 1px solid var(--bd-color);
         padding: 8px 10px;
         border-radius: 6px;
         white-space: nowrap;
@@ -3104,7 +3104,7 @@
     }
 
     .info > a {
-        color: rgb(61, 180, 242);
+        color: hsl(var(--ac-color));
     }
 
     .info a::-webkit-scrollbar,
@@ -3128,7 +3128,7 @@
 
     @media screen and (min-width: 640px) {
         .popup-wrapper {
-            background-color: rgba(0, 0, 0, 0.7);
+            background-color: var(--ol-color);
         }
         .popup-body {
             padding: 0 2em;
@@ -3140,7 +3140,7 @@
         display: flex;
         align-items: center;
         gap: 6px;
-        color: #9ba0b2;
+        color: var(--sfg-color);
         cursor: pointer;
     }
     .list-update-icon,
@@ -3155,7 +3155,7 @@
         height: 14px;
         line-height: 14px;
         font-weight: 500;
-        color: #9ba0b2;
+        color: var(--sfg-color);
         white-space: nowrap;
         cursor: pointer;
     }
@@ -3171,7 +3171,7 @@
         height: 14px;
         line-height: 14px;
         font-weight: 500;
-        color: #9ba0b2;
+        color: var(--sfg-color);
         white-space: nowrap;
         cursor: pointer;
     }
@@ -3198,7 +3198,7 @@
         background-color: transparent;
         -webkit-transition: 0.4s transform;
         transition: 0.4s transform;
-        border: 2px solid #9ba0b2;
+        border: 2px solid var(--sfg-color);
     }
 
     .slider:before {
@@ -3208,22 +3208,22 @@
         width: 14px;
         left: 0.15em;
         bottom: 0.0772em;
-        background-color: #9ba0b2;
+        background-color: var(--sfg-color);
         -webkit-transition: 0.3s transform;
         transition: 0.3s transform;
     }
 
     .autoplayToggle:checked + .slider:before {
-        background-color: #0b1622;
+        background-color: var(--bg-color);
     }
 
     .autoplayToggle:checked + .slider {
-        background-color: #9ba0b2;
-        border: 2px solid #757575;
+        background-color: var(--sfg-color);
+        border: 2px solid var(--sfg-color);
     }
 
     .autoplayToggle:focus + .slider {
-        box-shadow: 0 0 1px #9ba0b2;
+        box-shadow: 0 0 1px var(--sfg-color);
     }
 
     .autoplayToggle:checked + .slider:before {
@@ -3258,7 +3258,7 @@
         top: 0;
         width: 100%;
         height: 100%;
-        background-color: rgba(0, 0, 0, 0.4);
+        background-color: var(--ol-color);
         overscroll-behavior: contain;
         user-select: none;
         -ms-overflow-style: none;
@@ -3297,10 +3297,10 @@
         border-radius: 6px;
         box-shadow:
             0 14px 28px rgba(0, 0, 0, 0.25),
-            0 10px 10px rgba(0, 0, 0, 0.22);
+            0 10px 10px rgba(0, 0, 0, 0.2);
         user-select: none;
         cursor: pointer;
-        background-color: #000 !important;
+        background-color: var(--bg-color) !important;
     }
     .fullPopupDescriptionWrapper {
         display: flex;
@@ -3308,7 +3308,7 @@
         align-items: center;
         width: 100%;
         height: 100%;
-        background-color: rgba(0, 0, 0, 0.5);
+        background-color: var(--ol-color);
         cursor: pointer;
     }
     .fullPopupDescription {
@@ -3325,32 +3325,33 @@
         overscroll-behavior: contain;
         user-select: none;
         cursor: pointer;
-        color: white;
+        color: var(--fg-color);
     }
     .fullPopupDescription::-webkit-scrollbar {
         display: none;
     }
     :global(.fullPopupDescription *) {
         font-size: 1.3rem !important;
-        color: white;
+        color: var(--fg-color);
     }
     :global(.fullPopupDescription a) {
-        color: rgb(0 168 255) !important;
+        color: hsl(var(--ac-color)) !important;
         text-decoration: none !important;
     }
     :global(.fullPopupDescription:has(.is-custom-table)) {
-        border-radius: 1em !important;
+        border: 1px solid var(--bd-color) !important;
+        border-radius: 6px !important;
     }
     :global(.fullPopupDescription > .is-custom-table) {
         width: min(90vw, 380px) !important;
-        background-color: rgb(0, 0, 0) !important;
+        background-color: var(--bg-color) !important;
         padding: 1em 2em !important;
         display: flex;
         flex-wrap: wrap;
         gap: 0.5em !important;
     }
     :global(.fullPopupDescription .custom-header) {
-        border-bottom: 1px solid white !important;
+        border-bottom: 1px solid var(--fg-color) !important;
         padding: 0 0 0.5em 0 !important;
         display: flex;
         flex-wrap: wrap;

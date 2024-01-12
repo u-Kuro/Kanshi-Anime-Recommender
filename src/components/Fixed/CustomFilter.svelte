@@ -324,6 +324,7 @@
         (event) => {
             if (
                 touchID != null ||
+                !$android ||
                 (event?.target?.classList?.contains?.("custom-filter") ?? true)
             ) {
                 return;
@@ -346,8 +347,8 @@
                     closestScrollableElement?.parentElement;
             }
             if (!isMainScrollableElement) return;
-            startY = event.touches[0].clientY;
-            touchID = event.touches[0].identifier;
+            startY = event?.touches?.[0]?.clientY;
+            touchID = event?.touches?.[0]?.identifier;
         },
         { passive: true },
     );
@@ -355,7 +356,7 @@
     window.addEventListener(
         "touchmove",
         (event) => {
-            if (touchID == null) return;
+            if (touchID == null || startY == null || !$android) return;
             endY = Array.from(event.changedTouches)?.find(
                 (touch) => touch.identifier === touchID,
             )?.clientY;
@@ -380,6 +381,7 @@
         customFilterNavVisibility(true);
     };
     function touchedUp() {
+        if (!$android) return;
         touchID = null;
         customFilterNavVisibility(customFilOpacity > 0.5).then(() => {
             if (touchID == null) {
@@ -490,8 +492,8 @@
         bottom: 0px;
         width: 100%;
         height: 65px;
-        background-color: rgba(11, 22, 34, 0.9);
-        color: white;
+        background-color: var(--bg-color);
+        color: var(--fg-color);
         transform: translateZ(0);
         -webkit-transform: translateZ(0);
         -ms-transform: translateZ(0);
@@ -554,7 +556,7 @@
         top: 0;
         left: 0;
         height: 5px;
-        background-color: rgb(61, 180, 242);
+        background-color: hsl(var(--ac-color));
         border-radius: 0px 0px 1000px 1000px;
         width: var(--width);
         translate: var(--translateY);
@@ -577,7 +579,7 @@
         z-index: 2 !important;
     }
     .custom-filter.selected {
-        color: rgb(61, 180, 242) !important;
+        color: hsl(var(--ac-color)) !important;
     }
     @media screen and (max-width: 750px) {
         .nav {

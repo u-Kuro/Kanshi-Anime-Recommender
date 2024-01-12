@@ -136,7 +136,7 @@
         top: 0;
         width: 100%;
         height: 100%;
-        background-color: rgba(0, 0, 0, 0.5);
+        background-color: var(--ol-color);
         overflow-y: auto;
         overflow-x: hidden;
         overscroll-behavior: contain;
@@ -172,12 +172,13 @@
         animation: fadeIn 0.2s ease;
         display: grid;
         grid-template-rows: auto 20px;
-        background-color: #0b1622;
+        background-color: var(--bg-color);
+        border: 1px solid var(--bd-color);
         width: 35em;
         min-height: 15.5em;
         max-width: 95%;
         max-height: 95%;
-        border-radius: 0px;
+        border-radius: 6px;
         gap: 1.5em;
         padding: 2em 1em 2em 2.5em;
         cursor: default;
@@ -196,13 +197,13 @@
         align-self: center;
         font-size: 2rem;
         font-weight: 500;
-        color: white;
+        color: var(--fg-color);
     }
 
     .confirm-text {
         font-size: 1.6rem;
         height: fit-content;
-        color: white;
+        color: var(--fg-color);
         font-weight: 500;
         -ms-overflow-style: none;
         scrollbar-width: none;
@@ -221,7 +222,7 @@
     }
 
     .button {
-        color: white !important;
+        color: var(--fg-color) !important;
         background-color: transparent;
         outline: none;
         border: none;
@@ -236,7 +237,7 @@
     @media (pointer: fine) {
         .button:hover,
         .button:focus {
-            background-color: rgba(0, 0, 0, 0.4);
+            background-color: var(--ol-color);
             border-radius: 6px;
         }
     }

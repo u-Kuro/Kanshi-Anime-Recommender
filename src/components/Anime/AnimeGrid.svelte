@@ -112,11 +112,13 @@
                 );
             })
                 .catch(() => {
-                    ++errorCountMult;
-                    $animeLoaderWorker?.terminate?.();
-                    $animeLoaderWorker = null;
-                    $importantLoad = !$importantLoad;
-                    animeLoaderIsAlivePromise = null;
+                    if (!$initData) {
+                        ++errorCountMult;
+                        $animeLoaderWorker?.terminate?.();
+                        $animeLoaderWorker = null;
+                        importantLoad.update((e) => !e);
+                        animeLoaderIsAlivePromise = null;
+                    }
                 })
                 .finally(() => {
                     animeLoaderIsAlivePromise = null;
@@ -385,15 +387,19 @@
 
     searchedAnimeKeyword.subscribe(async (val) => {
         if (typeof val === "string") {
-            if ($animeLoaderWorker instanceof Worker) {
+            try {
                 setLocalStorage("searchedAnimeKeyword", val).catch(() => {
                     removeLocalStorage("searchedAnimeKeyword");
                 });
-                $checkAnimeLoaderStatus().then(() => {
-                    $animeLoaderWorker?.postMessage?.({
-                        filterKeyword: val,
-                    });
+                $animeLoaderWorker.postMessage({
+                    filterKeyword: val,
                 });
+            } catch (e) {
+                if (!$initData) {
+                    $animeLoaderWorker?.terminate?.();
+                    $animeLoaderWorker = null;
+                    importantLoad.update((e) => !e);
+                }
             }
         }
     });
@@ -860,7 +866,7 @@
 
     .skeleton {
         border-radius: 6px !important;
-        background-color: rgba(30, 42, 56, 0.8) !important;
+        background-color: hsla(0, 0%, 10%, 0.5) !important;
     }
 
     .image-grid__card.loading {
@@ -985,8 +991,8 @@
     .image-grid__card > .shimmer {
         position: relative;
         padding-bottom: min(calc(181 / 128 * 100%), 209px);
-        background-color: rgba(30, 42, 56, 0.8);
-        border-radius: 0.25em;
+        background-color: hsla(0, 0%, 10%, 0.5);
+        border-radius: 6px;
     }
     @media screen and (min-width: 580px) {
         .image-grid__card > .shimmer {
@@ -1000,13 +1006,13 @@
 
     .image-grid__card-thumb {
         position: absolute;
-        background: rgba(30, 42, 56, 0.8);
-        border-radius: 0.25em;
+        background: hsla(0, 0%, 10%, 0.5);
+        border-radius: 6px;
         display: block;
         cursor: pointer;
         box-shadow:
-            0 1px 3px rgba(0, 0, 0, 0.12),
-            0 1px 2px rgba(0, 0, 0, 0.24);
+            0 1px 3px rgba(0, 0, 0, 0.15),
+            0 1px 2px rgba(0, 0, 0, 0.25);
         transition: opacity 0.2s ease;
         object-fit: cover;
         -o-object-fit: cover;
@@ -1043,7 +1049,7 @@
             rgba(0, 0, 0, 0.75),
             rgba(0, 0, 0, 0)
         );
-        color: white;
+        color: var(--fg-color);
         width: 100%;
         max-height: 100%;
         overflow-y: auto;
@@ -1108,7 +1114,8 @@
         justify-content: center;
         align-items: center;
         gap: 6px;
-        background-color: rgba(102, 102, 102, 0.6);
+        background-color: var(--ol-color);
+        border: 1px solid var(--bd-color);
         cursor: pointer;
         border-radius: 50%;
         width: 60px;
@@ -1172,10 +1179,10 @@
         position: absolute;
         background: linear-gradient(
             90deg,
-            rgba(30, 42, 56, 0) 0,
-            rgba(8, 143, 214, 0.06) 40%,
-            rgba(8, 143, 214, 0.06) 60%,
-            rgba(30, 42, 56, 0)
+            hsla(0, 0%, 10%, 0) 0,
+            hsla(0, 0%, 100%, 0.06) 40%,
+            hsla(0, 0%, 100%, 0.06) 60%,
+            hsla(0, 0%, 10%, 0)
         );
         content: "";
         display: block;

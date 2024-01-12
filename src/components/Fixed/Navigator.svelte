@@ -94,7 +94,7 @@
                     });
                 }
                 (async () => {
-                    let usernameToShow = `<span style="color:#00cbf9;">${typedUsername}</span>`;
+                    let usernameToShow = `<span style="color:hsl(var(--ac-color));">${typedUsername}</span>`;
                     if ($username) {
                         if (
                             await $confirmPromise(
@@ -424,12 +424,12 @@
 <style>
     ::placeholder {
         opacity: 1 !important;
-        color: white !important;
+        color: var(--fg-color) !important;
     }
 
     :-ms-input-placeholder,
     ::-ms-input-placeholder {
-        color: white !important;
+        color: var(--fg-color) !important;
     }
     .nav-container.menu-visible {
         z-index: 993 !important;
@@ -446,8 +446,8 @@
         top: 0;
         width: 100%;
         height: 48px;
-        background-color: #0b1622;
-        color: white;
+        background-color: var(--bg-color);
+        color: var(--fg-color);
     }
     .nav {
         display: grid;
@@ -471,7 +471,7 @@
         align-items: center;
         justify-content: center;
         border-radius: 6px;
-        fill: white;
+        fill: var(--fg-color);
     }
     .input-search {
         display: flex;
@@ -488,8 +488,8 @@
         font-weight: 400;
         outline: none;
         border: none;
-        background-color: #0b1622 !important;
-        color: white !important;
+        background-color: var(--bg-color) !important;
+        color: var(--fg-color) !important;
         text-align: start;
         padding-left: 1ch;
         padding-right: 1ch;
@@ -525,7 +525,7 @@
         width: 2em;
         align-items: center;
         justify-content: start;
-        color: white;
+        color: var(--fg-color);
         cursor: pointer;
     }
     .logo-icon-container {
@@ -590,7 +590,7 @@
             z-index: 999 !important;
         }
         .nav-container {
-            border-bottom: 1px solid rgb(35 45 65) !important;
+            border-bottom: 1px solid var(--bd-color) !important;
         }
         .nav {
             padding: 0 1em !important;
@@ -654,6 +654,17 @@
             padding-left: 0 !important;
             padding-right: 0 !important;
             min-width: 25px !important;
+        }
+    }
+
+    @supports (-webkit-appearance: none) and (appearance: none) {
+        input[type="search"]::-webkit-search-cancel-button {
+            -webkit-appearance: none;
+            appearance: none;
+            height: 10px;
+            width: 10px;
+            background-image: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMjMuMDUiIGhlaWdodD0iMTIzLjA1IiBzdHlsZT0iZW5hYmxlLWJhY2tncm91bmQ6bmV3IDAgMCAxMjMuMDUgMTIzLjA1IiB4bWw6c3BhY2U9InByZXNlcnZlIj48cGF0aCBkPSJtMTIxLjMyNSAxMC45MjUtOC41LTguMzk5Yy0yLjMtMi4zLTYuMS0yLjMtOC41IDBsLTQyLjQgNDIuMzk5TDE4LjcyNiAxLjcyNmMtMi4zMDEtMi4zMDEtNi4xMDEtMi4zMDEtOC41IDBsLTguNSA4LjVjLTIuMzAxIDIuMy0yLjMwMSA2LjEgMCA4LjVsNDMuMSA0My4xLTQyLjMgNDIuNWMtMi4zIDIuMy0yLjMgNi4xIDAgOC41bDguNSA4LjVjMi4zIDIuMyA2LjEgMi4zIDguNSAwbDQyLjM5OS00Mi40IDQyLjQgNDIuNGMyLjMgMi4zIDYuMSAyLjMgOC41IDBsOC41LTguNWMyLjMtMi4zIDIuMy02LjEgMC04LjVsLTQyLjUtNDIuNCA0Mi40LTQyLjM5OWE2LjEzIDYuMTMgMCAwIDAgLjEtOC42MDJ6IiBmaWxsPSIjRkZGIi8+PC9zdmc+);
+            background-size: 10px 10px;
         }
     }
 

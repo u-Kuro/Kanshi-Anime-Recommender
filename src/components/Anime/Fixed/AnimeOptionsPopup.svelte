@@ -122,7 +122,7 @@
         if (isRecentlyOpened && e.type !== "keydown") return;
         if (!$hiddenEntries) return pleaseWaitAlert();
         let title = shownTitle
-            ? `<span style="color:#00cbf9;">${shownTitle}</span>`
+            ? `<span style="color:hsl(var(--ac-color));">${shownTitle}</span>`
             : "this anime";
         let isHidden = $hiddenEntries[animeID];
         if (isHidden) {
@@ -133,9 +133,10 @@
             ) {
                 $checkAnimeLoaderStatus()
                     .then(async () => {
-                        delete $hiddenEntries[animeID];
                         if ($finalAnimeList.length) {
                             if ($animeLoaderWorker instanceof Worker) {
+                                delete $hiddenEntries[animeID];
+                                $hiddenEntries = $hiddenEntries;
                                 $animeLoaderWorker?.postMessage?.({
                                     removeID: animeID,
                                     hiddenEntries: $hiddenEntries,
@@ -160,9 +161,9 @@
             ) {
                 $checkAnimeLoaderStatus()
                     .then(async () => {
-                        $hiddenEntries[animeID] = true;
                         if ($finalAnimeList.length) {
                             if ($animeLoaderWorker instanceof Worker) {
+                                $hiddenEntries[animeID] = true;
                                 $animeLoaderWorker?.postMessage?.({
                                     removeID: animeID,
                                     hiddenEntries: $hiddenEntries,
@@ -293,7 +294,7 @@
         top: 0;
         width: 100%;
         height: 100%;
-        background-color: rgba(0, 0, 0, 0.4);
+        background-color: var(--ol-color);
         justify-content: center;
         align-items: center;
         overflow-y: auto;
@@ -310,8 +311,9 @@
         animation: fadeIn 0.2s ease;
         display: flex;
         flex-direction: column;
-        background-color: #0b1622 !important;
-        color: white !important;
+        background-color: var(--bg-color) !important;
+        color: var(--fg-color) !important;
+        border: 1px solid var(--bd-color);
         width: 300px;
         max-height: 95%;
         max-width: 95%;
@@ -379,6 +381,6 @@
 
     .closing-x:focus,
     .closing-x:hover {
-        background-color: rgba(0, 0, 0, 0.75);
+        background-color: var(--ol-color);
     }
 </style>
