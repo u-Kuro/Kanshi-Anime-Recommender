@@ -1761,7 +1761,7 @@
 		position: fixed !important;
 	}
 	.progress {
-		background-color: var(--sfg-color);
+		background-color: var(--fg-color);
 		position: fixed;
 		top: 0px;
 		z-index: 1003;
@@ -1774,6 +1774,7 @@
 		-o-transform: translateX(var(--progress));
 		transition: transform 0.3s linear;
 	}
+
 	@media screen and (max-width: 750px) {
 		.progress {
 			position: absolute;
@@ -1786,6 +1787,10 @@
 			height: 0.2em !important;
 			top: 0px !important;
 			z-index: 1003 !important;
+		}
+
+		#main.android > #progress.is-below-absolute-progress {
+			height: 1px !important;
 		}
 
 		:global(#main.full-screen-popup) > .progress {

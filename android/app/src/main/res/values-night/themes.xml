@@ -13,7 +13,7 @@
         <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
-        <item name="actionBarSize">55dp</item>
+        <item name="actionBarSize">47dp</item>
     </style>
     <style name="Theme.YoutubeActivity" parent="Theme.MaterialComponents.DayNight.DarkActionBar">
         <!-- Primary brand color. -->
@@ -28,7 +28,7 @@
         <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
-        <item name="actionBarSize">55dp</item>
+        <item name="actionBarSize">47dp</item>
     </style>
     <style name="Theme.Kanshi.SplashScreen" parent="Theme.SplashScreen">
         <item name="windowSplashScreenBackground">@android:color/black</item>

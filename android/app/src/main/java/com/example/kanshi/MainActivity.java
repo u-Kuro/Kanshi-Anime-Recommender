@@ -87,7 +87,7 @@ import androidx.core.content.FileProvider;
 import androidx.core.splashscreen.SplashScreen;
 
 public class MainActivity extends AppCompatActivity {
-    public final int appID = 301;
+    public final int appID = 302;
     public boolean keepAppRunningInBackground = false;
     public boolean webViewIsLoaded = false;
     public boolean permissionIsAsked = false;
@@ -109,7 +109,6 @@ public class MainActivity extends AppCompatActivity {
     public AlertDialog currentDialog;
     public boolean isInApp = true;
     public boolean appSwitched = false;
-    public boolean fromYoutube;
     public static WeakReference<MainActivity> weakActivity;
     public boolean shouldRefreshList = false;
     public boolean shouldProcessRecommendationList = false;
@@ -239,6 +238,7 @@ public class MainActivity extends AppCompatActivity {
             getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
             getWindow().setStatusBarColor(Color.BLACK);
         }
+
         // Add WebView on Layout
         webView.setBackgroundColor(Color.BLACK);
         webView.setOverScrollMode(View.OVER_SCROLL_NEVER);
@@ -337,33 +337,33 @@ public class MainActivity extends AppCompatActivity {
                             if (info != null) {
                                 context.startActivity(intent);
                             } else {
-                                Toast.makeText(getApplicationContext(), "Can't open the link.", Toast.LENGTH_LONG).show();
+                                showToast(Toast.makeText(getApplicationContext(), "Can't open the link.", Toast.LENGTH_LONG));
                             }
                         }
                     } catch (Exception ignored) {
-                        Toast.makeText(getApplicationContext(), "Can't open the link.", Toast.LENGTH_LONG).show();
+                        showToast(Toast.makeText(getApplicationContext(), "Can't open the link.", Toast.LENGTH_LONG));
                     }
                 } else if (url.startsWith("https://www.youtube.com")
                         || url.startsWith("https://m.youtube.com")
                         || url.startsWith("https://youtube.com")
                         || url.startsWith("https://youtu.be")
                 ) {
-                    fromYoutube = true;
                     Intent intent = new Intent(MainActivity.this, YoutubeViewActivity.class);
                     intent.putExtra("url", url);
                     startActivity(intent);
-                    overridePendingTransition(R.anim.right_to_center, R.anim.center_to_left);
+                    overridePendingTransition(R.anim.fade_in, R.anim.remove);
                 } else {
                     try {
-                        fromYoutube = false;
                         CustomTabsIntent customTabsIntent = new CustomTabsIntent.Builder()
-                                .setDefaultColorSchemeParams(new CustomTabColorSchemeParams.Builder().setToolbarColor(getResources().getColor(R.color.black)).build())
+                                .setDefaultColorSchemeParams(new CustomTabColorSchemeParams.Builder().setToolbarColor(getResources().getColor(R.color.dark_blue)).build())
+                                .setStartAnimations(MainActivity.this, R.anim.fade_in, R.anim.remove)
+                                .setExitAnimations(MainActivity.this, R.anim.fade_out, R.anim.remove)
                                 .setShowTitle(true)
                                 .build();
                         customTabsIntent.launchUrl(MainActivity.this, Uri.parse(url));
                         overridePendingTransition(R.anim.remove, R.anim.remove);
                     } catch (Exception ignored) {
-                        Toast.makeText(getApplicationContext(), "Can't open the link.", Toast.LENGTH_LONG).show();
+                        showToast(Toast.makeText(getApplicationContext(), "Can't open the link.", Toast.LENGTH_LONG));
                     }
                 }
                 return true;
@@ -534,11 +534,7 @@ public class MainActivity extends AppCompatActivity {
         isInApp = true;
         Intent intent = new Intent(this, MainService.class);
         stopService(intent);
-        if (fromYoutube) {
-            overridePendingTransition(R.anim.left_to_center, R.anim.center_to_right);
-        } else {
-            overridePendingTransition(R.anim.none, R.anim.fade_out);
-        }
+        overridePendingTransition(R.anim.none, R.anim.fade_out);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             webView.getSettings().setOffscreenPreRaster(true);
         }
@@ -1181,10 +1177,10 @@ public class MainActivity extends AppCompatActivity {
                                 if (!resolveInfoList.isEmpty()) {
                                     startActivity(intent);
                                 } else {
-                                    Toast.makeText(MainActivity.this, "No application available to open the APK file", Toast.LENGTH_LONG).show();
+                                    showToast(Toast.makeText(MainActivity.this, "No application available to open the APK file", Toast.LENGTH_LONG));
                                 }
                             } else {
-                                Toast.makeText(MainActivity.this, "File is not found", Toast.LENGTH_LONG).show();
+                                showToast(Toast.makeText(MainActivity.this, "File is not found", Toast.LENGTH_LONG));
                             }
                         })
                         .setNegativeButton("CANCEL", (dialogInterface, i) -> showToast(Toast.makeText(getApplicationContext(), "You may still manually install the update, apk is in your download folder.", Toast.LENGTH_LONG))).setCancelable(false),true);

@@ -13,7 +13,7 @@
 
         <com.google.android.material.appbar.AppBarLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="?attr/actionBarSize"
             android:id="@+id/appbar"
             app:layout_constraintTop_toTopOf="@id/constraint"
             app:layout_constraintLeft_toLeftOf="@id/constraint"
@@ -25,7 +25,6 @@
                 android:background="@color/black"
                 android:layout_width="match_parent"
                 android:layout_height="?attr/actionBarSize"
-                android:minHeight="?attr/actionBarSize"
                 android:contentInsetLeft="0dp"
                 android:contentInsetStart="0dp"
                 app:contentInsetLeft="0dp"
@@ -94,7 +93,7 @@
                         android:id="@+id/progressbar"
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
-                        android:progressBackgroundTint="@color/black"
+                        android:progressBackgroundTint="@color/dark_grey"
                         android:progressTint="@color/white"
                         android:progressBackgroundTintMode="src_over"
                         android:progressTintMode="src_over"

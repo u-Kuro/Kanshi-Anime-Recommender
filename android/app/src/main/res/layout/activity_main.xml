@@ -16,7 +16,7 @@
         android:layout_height="1dp"
         app:layout_constraintBottom_toBottomOf="parent"
         android:progressBackgroundTint="@color/black"
-        android:progressTint="@color/white_blue"
+        android:progressTint="@color/white"
         android:progressBackgroundTintMode="src_over"
         android:progressTintMode="src_over"
         android:indeterminate="false"

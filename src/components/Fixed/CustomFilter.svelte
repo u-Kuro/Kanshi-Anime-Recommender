@@ -317,8 +317,9 @@
     let touchID,
         startY,
         endY,
-        yThreshold = 48;
-
+        yThreshold = 48,
+        isShown,
+        isActivated;
     window.addEventListener(
         "touchstart",
         (event) => {
@@ -366,10 +367,20 @@
                     Math.abs(deltaY / yThreshold),
                     1,
                 );
-                if (deltaY > 0) {
+                if (!isActivated) {
+                    isShown = isShown ?? customFilOpacity > 0.5;
+                    if (newCustomFilOpacity >= 1) {
+                        isActivated = true;
+                        isShown = null;
+                    }
+                }
+                if (deltaY > 0 && (isShown == null || isShown === false)) {
                     customFilNavIsAnimating = true;
                     customFilOpacity = newCustomFilOpacity;
-                } else if (deltaY < 0) {
+                } else if (
+                    deltaY < 0 &&
+                    (isShown == null || isShown === true)
+                ) {
                     customFilNavIsAnimating = true;
                     customFilOpacity = 1 - newCustomFilOpacity;
                 }
@@ -382,7 +393,7 @@
     };
     function touchedUp() {
         if (!$android) return;
-        touchID = null;
+        isActivated = isShown = touchID = null;
         customFilterNavVisibility(customFilOpacity > 0.5).then(() => {
             if (touchID == null) {
                 customFilNavIsAnimating = false;
