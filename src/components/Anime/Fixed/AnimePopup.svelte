@@ -47,7 +47,6 @@
         formatWeekday,
         setLocalStorage,
         removeLocalStorage,
-        requestFrame,
     } from "../../../js/others/helper.js";
     import { retrieveJSON, saveJSON } from "../../../js/indexedDB.js";
     import { animeLoader } from "../../../js/workerUtils.js";
@@ -63,6 +62,7 @@
         currentYtPlayer,
         popupWrapper,
         popupContainer,
+        navContainerEl,
         popupAnimeObserver,
         fullImagePopup,
         fullDescriptionPopup,
@@ -287,6 +287,7 @@
                 addClass(popupWrapper, "willChange");
                 addClass(popupContainer, "willChange");
 
+                removeClass(navContainerEl, "hide");
                 addClass(popupWrapper, "visible");
                 addClass(popupContainer, "show");
                 setTimeout(() => {
@@ -361,6 +362,7 @@
                 addClass(popupWrapper, "willChange");
                 addClass(popupContainer, "willChange");
 
+                removeClass(navContainerEl, "hide");
                 addClass(popupWrapper, "visible");
                 addClass(popupContainer, "show");
                 setTimeout(() => {
@@ -376,8 +378,11 @@
             addClass(popupWrapper, "willChange");
             addClass(popupContainer, "willChange");
 
+            if (!$menuVisible && document.documentElement.scrollTop > 0) {
+                addClass(navContainerEl, "hide");
+            }
             removeClass(popupContainer, "show");
-            requestFrame(() => {
+            setTimeout(() => {
                 // Stop All Player
                 $ytPlayers.forEach(({ ytPlayer }) => {
                     let ytId = ytPlayer?.g?.id;
@@ -386,6 +391,7 @@
                         ytPlayer?.pauseVideo?.();
                     }
                 });
+                removeClass(navContainerEl, "hide");
                 removeClass(popupWrapper, "visible");
                 removeClass(popupContainer, "willChange");
                 removeClass(popupWrapper, "willChange");
@@ -481,6 +487,7 @@
         popupContainer =
             popupContainer || popupWrapper.querySelector("#popup-container");
         animeGridParentEl = document.getElementById("anime-grid");
+        navContainerEl = document.getElementById("nav-container");
         window.addEventListener("resize", () => {
             if (
                 document.fullScreen ||
@@ -1491,13 +1498,6 @@
         }
     };
 
-    $: {
-        if ($android || !matchMedia("(hover:hover)").matches) {
-            fullDescriptionPopup || fullImagePopup
-                ? addClass(document.documentElement, "overflow-hidden")
-                : removeClass(document.documentElement, "overflow-hidden");
-        }
-    }
     $: $isFullViewed = Boolean(fullDescriptionPopup || fullImagePopup);
 
     async function addImage(node, imageUrl) {
@@ -2583,7 +2583,7 @@
 
     .popup-main {
         display: grid;
-        grid-template-rows: calc(min(100%, 100vw, 640px) / 16 * 9) auto;
+        grid-template-rows: calc(min(100vw, 640px) / 16 * 9) auto;
     }
     :global(.popup-content.hidden > .popup-main) {
         display: none !important;
@@ -3041,19 +3041,26 @@
         .popup-main {
             display: grid;
             grid-template-rows:
-                calc(calc(min(100%, 100vw, 640px) - 7px) / 16 * 9)
+                calc(calc(min(100vw, 640px) - 7px) / 16 * 9)
                 auto;
+        }
+        .popup-container {
+            overflow-y: overlay !important;
+            scrollbar-gutter: stable !important;
         }
         .popup-container::-webkit-scrollbar {
             display: unset;
-            width: 7px !important;
+            width: 16px;
         }
         .popup-container::-webkit-scrollbar-track {
-            background-color: var(--bg-color);
+            background: transparent;
         }
         .popup-container::-webkit-scrollbar-thumb {
-            background-color: var(--sfg-color);
-            border-radius: 9999px;
+            height: 72px;
+            border-radius: 10px;
+            border: 5px solid transparent;
+            background-clip: content-box;
+            background-color: hsl(0, 0%, 50%);
         }
     }
 

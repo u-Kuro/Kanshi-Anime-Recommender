@@ -129,6 +129,23 @@ const formatDay = (date) => date.toLocaleDateString(undefined, { day: "numeric" 
 const formatTime = (date) => date.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit", hour12: true });
 const formatWeekday = (date) => date.toLocaleDateString(undefined, { weekday: "short" });
 
+function getScrollbarWidth() {
+  try {
+    let outer = document.createElement('div');
+    outer.style.visibility = 'hidden';
+    outer.style.overflow = 'scroll';
+    outer.style.msOverflowStyle = 'scrollbar';
+    document.body.appendChild(outer);
+    let inner = document.createElement('div');
+    outer.appendChild(inner);
+    let scrollbarWidth = (outer.offsetWidth - inner.offsetWidth);
+    outer.parentNode.removeChild(outer);
+    return scrollbarWidth;
+  } catch (e) {
+    return undefined
+  }
+}
+
 const getLastVisibleElement = (childSelector, parent) => {
   try {
     let childElements
@@ -654,6 +671,7 @@ export {
   requestFrame,
   makeArrayUnique,
   capitalize,
+  getScrollbarWidth,
   getMostVisibleElementFromArray,
   getLastVisibleElement,
   addClass,

@@ -10,6 +10,7 @@
         finalAnimeList,
         gridFullView,
         userRequestIsRunning,
+        android,
     } from "../../js/globalValues.js";
     import {
         addClass,
@@ -295,7 +296,7 @@
                     animeGridEl.style.overflow = "";
                     animeGridEl.scroll({ left: 0, behavior: "smooth" });
                 } else {
-                    window.showCustomFilter?.();
+                    window?.showCustomFilterNav?.(true);
                     document.documentElement.style.overflow = "hidden";
                     document.documentElement.style.overflow = "";
                     window.scrollTo({ top: -9999, behavior: "smooth" });
@@ -335,26 +336,58 @@
             }, 100);
         }
     }
+
+    let delayedPopupVis, delayedMenuVis;
+    popupVisible.subscribe((val) => {
+        if (!val && !$menuVisible) {
+            setTimeout(() => {
+                delayedPopupVis = val;
+            }, 200);
+        } else {
+            delayedPopupVis = val;
+        }
+    });
+
+    menuVisible.subscribe((val) => {
+        if (!val && !$popupVisible) {
+            setTimeout(() => {
+                delayedMenuVis = val;
+            }, 200);
+        } else {
+            delayedMenuVis = val;
+        }
+    });
 </script>
 
 <div
-    class={"nav-container" + ($menuVisible ? " menu-visible" : "")}
+    id="nav-container"
+    class={"nav-container" + (delayedMenuVis ? " menu-visible" : "")}
     on:keyup={(e) => e.key === "Enter" && handleMenuVisibility(e)}
     on:click={handleMenuVisibility}
 >
+    <!-- svelte-ignore a11y-click-events-have-key-events -->
+    <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
     <nav
         id="nav"
         class={"nav " +
-            ($popupVisible || $menuVisible
+            (delayedPopupVis || delayedMenuVis
                 ? "popupvisible"
                 : inputUsernameEl === document?.activeElement
                   ? "inputfocused"
                   : "")}
         bind:this={navEl}
     >
-        <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
-        <!-- svelte-ignore a11y-click-events-have-key-events -->
         <div class="go-back-container" on:click={handleGoBack}>
+            <!-- x-close -->
+            <svg
+                class="closing-x"
+                tabindex="0"
+                on:keyup={(e) => e.key === "Enter" && handleGoBack(e)}
+                viewBox="0 0 384 512"
+                ><path
+                    d="M342.6 150.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L192 210.7 86.6 105.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L146.7 256 41.4 361.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L192 301.3 297.4 406.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L237.3 256 342.6 150.6z"
+                /></svg
+            >
             <!-- arrow left -->
             <svg
                 class="goback"
@@ -377,6 +410,7 @@
                 enterkeyhint="search"
                 autocomplete="off"
                 placeholder="Your Anilist Username"
+                class={$android ? "android" : ""}
                 on:keyup={(e) => e.key === "Enter" && updateUsername(e)}
                 on:focusin={onfocusUsernameInput}
                 on:focusout={onfocusUsernameInput}
@@ -391,7 +425,6 @@
                 {typedUsername || "Your Anilist Username"}
             </div>
         </div>
-        <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
         <div
             class="logo-icon-container"
             on:pointerdown={handleGoUp}
@@ -448,6 +481,11 @@
         height: 48px;
         background-color: var(--bg-color);
         color: var(--fg-color);
+        opacity: 1;
+        transition: opacity 0.2s ease;
+    }
+    .nav-container.hide {
+        opacity: 0;
     }
     .nav {
         display: grid;
@@ -476,29 +514,25 @@
     .input-search {
         display: flex;
         gap: 1.5em;
-        height: 49px;
+        height: 48px;
         border-radius: 6px;
         justify-self: left;
         align-items: center;
         max-width: min(185px, 100%);
     }
     #usernameInput {
-        font-family: system-ui !important;
-        font-size: 1.33rem;
-        font-weight: 400;
         outline: none;
         border: none;
         background-color: var(--bg-color) !important;
         color: var(--fg-color) !important;
         text-align: start;
-        padding-left: 1ch;
-        padding-right: 1ch;
         border-radius: 6px;
-        height: 2.625em;
+        height: 40px;
         max-width: 100%;
         min-width: 185px;
         width: 100%;
         cursor: auto;
+        padding-bottom: 1px;
     }
     .nav.inputfocused #usernameInput {
         transform: translateZ(0) !important;
@@ -519,27 +553,36 @@
     #usernameInput::-webkit-search-cancel-button {
         font-size: 1.5rem;
     }
-    .goback {
+    .goback,
+    .closing-x {
+        display: none;
+    }
+    .nav.popupvisible .closing-x,
+    .nav-container.menu-visible .closing-x {
         display: flex;
+    }
+    .nav.inputfocused .closing-x {
+        display: none;
+    }
+    .nav.inputfocused .goback {
+        display: flex;
+    }
+    .goback,
+    .closing-x {
         height: 2em;
         width: 2em;
         align-items: center;
-        justify-content: start;
         color: var(--fg-color);
         cursor: pointer;
     }
-    .logo-icon-container {
-        display: flex;
-        justify-content: end;
-    }
     .go-back-container {
         display: none;
-        justify-content: start;
+        justify-content: center;
     }
     @media screen and (max-width: 425px) {
         .go-back-container {
             min-width: 5em;
-            min-height: 49px;
+            min-height: 48px;
             padding: 0 1em;
             justify-content: center;
             align-items: center;
@@ -547,7 +590,7 @@
         }
         .logo-icon-container {
             min-width: 5em;
-            min-height: 49px;
+            min-height: 48px;
             padding: 0 1em;
             justify-content: center;
             align-items: center;
@@ -560,18 +603,27 @@
     .nav.inputfocused .usernameText {
         display: none;
     }
-    .usernameText {
-        white-space: nowrap;
-        font-family: system-ui !important;
+    #usernameInput {
+        font-family: system-ui;
         font-size: 1.333rem;
         font-weight: 400;
+    }
+    #usernameInput.android {
+        font-size: 1.65rem;
+        font-weight: 500;
+    }
+    .usernameText {
+        font-family: system-ui;
+        font-size: 1.333rem;
+        font-weight: 400;
+        white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
         text-transform: uppercase;
         cursor: pointer;
         align-items: center;
         justify-content: start;
-        height: 49px;
+        height: 48px;
         max-width: min(100%, 165px);
         min-width: 30px;
     }
@@ -579,8 +631,24 @@
     #usernameInput:placeholder-shown + .usernameText {
         text-transform: none;
     }
+
+    input[type="search"]::-webkit-textfield-decoration-container {
+        gap: 1ch;
+    }
+
+    @supports (-webkit-appearance: none) and (appearance: none) {
+        input[type="search"]::-webkit-search-cancel-button {
+            -webkit-appearance: none;
+            appearance: none;
+            height: 10px;
+            width: 10px;
+            background-image: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMjMuMDUiIGhlaWdodD0iMTIzLjA1IiBzdHlsZT0iZW5hYmxlLWJhY2tncm91bmQ6bmV3IDAgMCAxMjMuMDUgMTIzLjA1IiB4bWw6c3BhY2U9InByZXNlcnZlIj48cGF0aCBkPSJtMTIxLjMyNSAxMC45MjUtOC41LTguMzk5Yy0yLjMtMi4zLTYuMS0yLjMtOC41IDBsLTQyLjQgNDIuMzk5TDE4LjcyNiAxLjcyNmMtMi4zMDEtMi4zMDEtNi4xMDEtMi4zMDEtOC41IDBsLTguNSA4LjVjLTIuMzAxIDIuMy0yLjMwMSA2LjEgMCA4LjVsNDMuMSA0My4xLTQyLjMgNDIuNWMtMi4zIDIuMy0yLjMgNi4xIDAgOC41bDguNSA4LjVjMi4zIDIuMyA2LjEgMi4zIDguNSAwbDQyLjM5OS00Mi40IDQyLjQgNDIuNGMyLjMgMi4zIDYuMSAyLjMgOC41IDBsOC41LTguNWMyLjMtMi4zIDIuMy02LjEgMC04LjVsLTQyLjUtNDIuNCA0Mi40LTQyLjM5OWE2LjEzIDYuMTMgMCAwIDAgLjEtOC42MDJ6IiBmaWxsPSIjRkZGIi8+PC9zdmc+);
+            background-size: 10px 10px;
+        }
+    }
+
     @media screen and (max-width: 750px) {
-        :global(#main.full-screen-popup) > .nav-container {
+        :global(#main.delayed-full-screen-popup) > .nav-container {
             position: fixed !important;
             transform: translateZ(0);
             -webkit-transform: translateZ(0);
@@ -593,60 +661,65 @@
             border-bottom: 1px solid var(--bd-color) !important;
         }
         .nav {
-            padding: 0 1em !important;
+            grid-template-columns: calc(100% - 5em) 5em;
+            padding: 0 !important;
+            gap: 0 !important;
         }
-        .nav.popupvisible {
-            grid-template-columns: 3em calc(100% - 3em - 6em) 3em !important;
-            gap: 1.5em !important;
+        #usernameInput {
+            font-size: 1.5rem;
+            font-weight: 500;
         }
-        .nav.popupvisible .input-search {
-            justify-self: center !important;
+        .input-search {
+            justify-self: start !important;
+            padding-left: 1em !important;
         }
-        .nav.popupvisible .go-back-container {
+        .logo-icon-container {
             display: flex;
+            justify-content: center;
+        }
+        .nav.inputfocused,
+        .nav.popupvisible,
+        .nav-container.menu-visible .nav {
+            grid-template-columns: 5em calc(100% - 10em) 5em;
+        }
+        .nav.popupvisible .input-search,
+        .nav-container.menu-visible .input-search {
+            justify-self: center !important;
+            padding-left: 0 !important;
+        }
+        .nav.inputfocused
+            input[type="search"]::-webkit-textfield-decoration-container {
+            gap: 15px;
         }
         .nav.inputfocused .input-search {
             max-width: none !important;
             width: 100% !important;
-            padding-right: 0.5em !important;
+            padding-right: 1em !important;
         }
         .nav.inputfocused #usernameInput {
             max-width: none !important;
             width: 100% !important;
-            padding-left: 1.5em !important;
+            padding-left: 15px !important;
         }
-        .nav.inputfocused {
-            grid-template-columns: 3em calc(100% - 3em - 6em) 3em !important;
-            gap: 1.5em !important;
+        @supports (-webkit-appearance: none) and (appearance: none) {
+            input[type="search"]::-webkit-search-cancel-button {
+                -webkit-appearance: none;
+                appearance: none;
+                height: 15px;
+                width: 15px;
+                background-image: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMjMuMDUiIGhlaWdodD0iMTIzLjA1IiBzdHlsZT0iZW5hYmxlLWJhY2tncm91bmQ6bmV3IDAgMCAxMjMuMDUgMTIzLjA1IiB4bWw6c3BhY2U9InByZXNlcnZlIj48cGF0aCBkPSJtMTIxLjMyNSAxMC45MjUtOC41LTguMzk5Yy0yLjMtMi4zLTYuMS0yLjMtOC41IDBsLTQyLjQgNDIuMzk5TDE4LjcyNiAxLjcyNmMtMi4zMDEtMi4zMDEtNi4xMDEtMi4zMDEtOC41IDBsLTguNSA4LjVjLTIuMzAxIDIuMy0yLjMwMSA2LjEgMCA4LjVsNDMuMSA0My4xLTQyLjMgNDIuNWMtMi4zIDIuMy0yLjMgNi4xIDAgOC41bDguNSA4LjVjMi4zIDIuMyA2LjEgMi4zIDguNSAwbDQyLjM5OS00Mi40IDQyLjQgNDIuNGMyLjMgMi4zIDYuMSAyLjMgOC41IDBsOC41LTguNWMyLjMtMi4zIDIuMy02LjEgMC04LjVsLTQyLjUtNDIuNCA0Mi40LTQyLjM5OWE2LjEzIDYuMTMgMCAwIDAgLjEtOC42MDJ6IiBmaWxsPSIjRkZGIi8+PC9zdmc+);
+                background-size: 15px 15px;
+            }
         }
-        .nav.inputfocused .go-back-container {
+        .nav.popupvisible .go-back-container,
+        .nav.inputfocused .go-back-container,
+        .nav-container.menu-visible .go-back-container {
             display: flex;
         }
     }
     @media screen and (max-width: 425px) {
         .nav {
-            grid-template-columns: calc(100% - 5em - 1.5em) 5em;
-            padding: 0 !important;
-        }
-        .nav.popupvisible .usernameText {
-            padding-left: 0em !important;
-        }
-        .nav.popupvisible .usernameText {
-            padding-left: 0em !important;
-        }
-        .usernameText {
-            padding-left: 1em !important;
-        }
-        .nav.popupvisible {
-            grid-template-columns: 5em calc(100% - 10em) 5em !important;
-            gap: 0em !important;
-        }
-        .nav.inputfocused {
-            grid-template-columns: 5em calc(100% - 10em) 5em !important;
-            gap: 0em !important;
-        }
-        .nav.inputfocused .input-search {
-            padding-right: 0.812em !important;
+            grid-template-columns: calc(100% - 5em) 5em;
         }
     }
     @media screen and (max-width: 275px) {
@@ -655,16 +728,14 @@
             padding-right: 0 !important;
             min-width: 25px !important;
         }
+        .nav.inputfocused .input-search {
+            padding: 0 !important;
+        }
     }
 
-    @supports (-webkit-appearance: none) and (appearance: none) {
-        input[type="search"]::-webkit-search-cancel-button {
-            -webkit-appearance: none;
-            appearance: none;
-            height: 10px;
-            width: 10px;
-            background-image: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMjMuMDUiIGhlaWdodD0iMTIzLjA1IiBzdHlsZT0iZW5hYmxlLWJhY2tncm91bmQ6bmV3IDAgMCAxMjMuMDUgMTIzLjA1IiB4bWw6c3BhY2U9InByZXNlcnZlIj48cGF0aCBkPSJtMTIxLjMyNSAxMC45MjUtOC41LTguMzk5Yy0yLjMtMi4zLTYuMS0yLjMtOC41IDBsLTQyLjQgNDIuMzk5TDE4LjcyNiAxLjcyNmMtMi4zMDEtMi4zMDEtNi4xMDEtMi4zMDEtOC41IDBsLTguNSA4LjVjLTIuMzAxIDIuMy0yLjMwMSA2LjEgMCA4LjVsNDMuMSA0My4xLTQyLjMgNDIuNWMtMi4zIDIuMy0yLjMgNi4xIDAgOC41bDguNSA4LjVjMi4zIDIuMyA2LjEgMi4zIDguNSAwbDQyLjM5OS00Mi40IDQyLjQgNDIuNGMyLjMgMi4zIDYuMSAyLjMgOC41IDBsOC41LTguNWMyLjMtMi4zIDIuMy02LjEgMC04LjVsLTQyLjUtNDIuNCA0Mi40LTQyLjM5OWE2LjEzIDYuMTMgMCAwIDAgLjEtOC42MDJ6IiBmaWxsPSIjRkZGIi8+PC9zdmc+);
-            background-size: 10px 10px;
+    @media screen and (max-width: 199px) {
+        #usernameInput::-webkit-search-cancel-button {
+            display: none !important;
         }
     }
 

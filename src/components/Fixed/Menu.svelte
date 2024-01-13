@@ -20,15 +20,18 @@
         username,
         isBackgroundUpdateKey,
     } from "../../js/globalValues.js";
-    import { fade } from "svelte/transition";
     import { saveJSON } from "../../js/indexedDB.js";
     import { animeLoader, importUserData } from "../../js/workerUtils.js";
     import {
         jsonIsEmpty,
         removeLocalStorage,
         setLocalStorage,
+        removeClass,
+        addClass,
     } from "../../js/others/helper.js";
+    import { onMount } from "svelte";
 
+    let menuContainerEl, navContainerEl;
     let importFileInput;
 
     async function importData() {
@@ -443,6 +446,29 @@
             } catch (e) {}
         }
     }
+
+    onMount(() => {
+        menuContainerEl =
+            menuContainerEl ?? document.getElementById("menu-container");
+        navContainerEl = document.getElementById("nav-container");
+    });
+
+    menuVisible.subscribe((val) => {
+        if (val) {
+            removeClass(navContainerEl, "hide");
+            addClass(menuContainerEl, "visible");
+            removeClass(menuContainerEl, "hide");
+        } else {
+            if (!$popupVisible && document.documentElement.scrollTop > 0) {
+                addClass(navContainerEl, "hide");
+            }
+            addClass(menuContainerEl, "hide");
+            setTimeout(() => {
+                removeClass(menuContainerEl, "visible");
+                removeClass(navContainerEl, "hide");
+            }, 200);
+        }
+    });
 </script>
 
 <input
@@ -453,123 +479,120 @@
     bind:this={importFileInput}
     on:change={importJSONFile}
 />
-{#if $menuVisible}
-    <div
-        class="menu-container"
-        on:click={(e) => {
-            if (e.pointerType !== "touch") {
-                handleMenuVisibility(e);
-            }
-        }}
-        on:touchend|passive={handleMenuVisibility}
-        on:keyup={(e) => e.key === "Enter" && handleMenuVisibility(e)}
-        out:fade={{ duration: 200 }}
-    >
-        <div class="menu">
+<div
+    id="menu-container"
+    class="menu-container"
+    on:click={(e) => {
+        if (e.pointerType !== "touch") {
+            handleMenuVisibility(e);
+        }
+    }}
+    on:touchend|passive={handleMenuVisibility}
+    on:keyup={(e) => e.key === "Enter" && handleMenuVisibility(e)}
+    bind:this={menuContainerEl}
+>
+    <div class="menu">
+        <button
+            class="button"
+            on:click={updateList}
+            on:keyup={(e) => e.key === "Enter" && updateList(e)}
+            >Update List</button
+        >
+        <button
+            class="button"
+            on:click={showAllHiddenEntries}
+            on:keyup={(e) => e.key === "Enter" && showAllHiddenEntries(e)}
+            >Show All Hidden Entries</button
+        >
+        <button
+            class="button"
+            on:click={importData}
+            on:keyup={(e) => e.key === "Enter" && importData(e)}
+            >Import Data</button
+        >
+        <button
+            class="button"
+            on:click={exportData}
+            on:keyup={(e) => e.key === "Enter" && exportData(e)}
+            >Export Data</button
+        >
+        {#if $android}
             <button
                 class="button"
-                on:click={updateList}
-                on:keyup={(e) => e.key === "Enter" && updateList(e)}
-                >Update List</button
+                on:click={handleExportFolder}
+                on:keyup={(e) => e.key === "Enter" && handleExportFolder(e)}
             >
+                {($exportPathIsAvailable ? "Change" : "Set") + " Export Folder"}
+            </button>
+        {/if}
+        <button
+            class={"button " + ($showStatus ? "selected" : "")}
+            on:click={showDataStatus}
+            on:keyup={(e) => e.key === "Enter" && showDataStatus(e)}
+            >Show Status</button
+        >
+        <button
+            class={"button " + ($autoUpdate ? "selected" : "")}
+            on:click={handleUpdateEveryHour}
+            on:keyup={(e) => e.key === "Enter" && handleUpdateEveryHour(e)}
+            >Auto Update</button
+        >
+        {#if $android}
             <button
-                class="button"
-                on:click={showAllHiddenEntries}
-                on:keyup={(e) => e.key === "Enter" && showAllHiddenEntries(e)}
-                >Show All Hidden Entries</button
+                class={"button " + ($autoExport ? "selected" : "")}
+                on:click={handleExportEveryHour}
+                on:keyup={(e) => e.key === "Enter" && handleExportEveryHour(e)}
+                >Auto Export</button
             >
-            <button
-                class="button"
-                on:click={importData}
-                on:keyup={(e) => e.key === "Enter" && importData(e)}
-                >Import Data</button
-            >
-            <button
-                class="button"
-                on:click={exportData}
-                on:keyup={(e) => e.key === "Enter" && exportData(e)}
-                >Export Data</button
-            >
-            {#if $android}
+            {#if typeof keepAppRunningInBackground === "boolean"}
                 <button
-                    class="button"
-                    on:click={handleExportFolder}
-                    on:keyup={(e) => e.key === "Enter" && handleExportFolder(e)}
-                >
-                    {($exportPathIsAvailable ? "Change" : "Set") +
-                        " Export Folder"}
-                </button>
-            {/if}
-            <button
-                class={"button " + ($showStatus ? "selected" : "")}
-                on:click={showDataStatus}
-                on:keyup={(e) => e.key === "Enter" && showDataStatus(e)}
-                >Show Status</button
-            >
-            <button
-                class={"button " + ($autoUpdate ? "selected" : "")}
-                on:click={handleUpdateEveryHour}
-                on:keyup={(e) => e.key === "Enter" && handleUpdateEveryHour(e)}
-                >Auto Update</button
-            >
-            {#if $android}
-                <button
-                    class={"button " + ($autoExport ? "selected" : "")}
-                    on:click={handleExportEveryHour}
+                    class={"button" +
+                        (keepAppRunningInBackground ? " selected" : "")}
                     on:keyup={(e) =>
-                        e.key === "Enter" && handleExportEveryHour(e)}
-                    >Auto Export</button
-                >
-                {#if typeof keepAppRunningInBackground === "boolean"}
-                    <button
-                        class={"button" +
-                            (keepAppRunningInBackground ? " selected" : "")}
-                        on:keyup={(e) =>
-                            e.key === "Enter" && persistentBackgroundUpdates(e)}
-                        on:click={persistentBackgroundUpdates}
-                        >Persistent Background Updates</button
-                    >
-                {/if}
-                <button
-                    class="button"
-                    on:keyup={(e) => e.key === "Enter" && switchAppMode(e)}
-                    on:click={switchAppMode}>Switch App Mode</button
-                >
-                <button
-                    class="button"
-                    on:keyup={(e) => e.key === "Enter" && showRecentReleases(e)}
-                    on:click={showRecentReleases}>Show Recent Releases</button
-                >
-                <button
-                    class="button"
-                    on:keyup={(e) => e.key === "Enter" && clearCache(e)}
-                    on:click={clearCache}>Clear Cache</button
-                >
-                <button
-                    class="button"
-                    on:keyup={(e) => e.key === "Enter" && refresh(e)}
-                    on:click={refresh}>Refresh</button
+                        e.key === "Enter" && persistentBackgroundUpdates(e)}
+                    on:click={persistentBackgroundUpdates}
+                    >Persistent Background Updates</button
                 >
             {/if}
             <button
                 class="button"
-                on:keyup={(e) => e.key === "Enter" && reload(e)}
-                on:click={reload}>Reload</button
+                on:keyup={(e) => e.key === "Enter" && switchAppMode(e)}
+                on:click={switchAppMode}>Switch App Mode</button
             >
             <button
                 class="button"
-                on:click={anilistSignup}
-                on:keyup={(e) => e.key === "Enter" && anilistSignup(e)}
-                >Create an Anilist Account</button
+                on:keyup={(e) => e.key === "Enter" && showRecentReleases(e)}
+                on:click={showRecentReleases}>Show Recent Releases</button
             >
             <button
                 class="button"
-                on:keyup={(e) => e.key === "Enter" && showNotice(e)}
-                on:click={showNotice}>Notice!</button
+                on:keyup={(e) => e.key === "Enter" && clearCache(e)}
+                on:click={clearCache}>Clear Cache</button
             >
-        </div>
+            <button
+                class="button"
+                on:keyup={(e) => e.key === "Enter" && refresh(e)}
+                on:click={refresh}>Refresh</button
+            >
+        {/if}
+        <button
+            class="button"
+            on:keyup={(e) => e.key === "Enter" && reload(e)}
+            on:click={reload}>Reload</button
+        >
+        <button
+            class="button"
+            on:click={anilistSignup}
+            on:keyup={(e) => e.key === "Enter" && anilistSignup(e)}
+            >Create an Anilist Account</button
+        >
+        <button
+            class="button"
+            on:keyup={(e) => e.key === "Enter" && showNotice(e)}
+            on:click={showNotice}>Notice!</button
+        >
     </div>
-{/if}
+</div>
 
 <style>
     .menu-container {
@@ -585,7 +608,23 @@
         height: 100%;
         background-color: var(--ol-color);
         z-index: 998;
-        animation: fadeIn 0.2s ease;
+        opacity: 1;
+        transform: translateY(-99999px) translateZ(0);
+        -webkit-transform: translateY(-99999px) translateZ(0);
+        -ms-transform: translateY(-99999px) translateZ(0);
+        -moz-transform: translateY(-99999px) translateZ(0);
+        -o-transform: translateY(-99999px) translateZ(0);
+        transition: opacity 0.2s ease;
+    }
+    .menu-container.visible {
+        transform: translateY(0) translateZ(0);
+        -webkit-transform: translateY(0) translateZ(0);
+        -ms-transform: translateY(0) translateZ(0);
+        -moz-transform: translateY(0) translateZ(0);
+        -o-transform: translateY(0) translateZ(0);
+    }
+    .menu-container.hide {
+        opacity: 0;
     }
     .menu {
         padding: 1.5em 1em;
@@ -633,7 +672,7 @@
         }
     }
     .button.selected {
-        background-color: var(--bd-color) !important;
+        background-color: hsl(0, 0%, 35%) !important;
         color: var(--fg-color) !important;
     }
 
@@ -649,5 +688,9 @@
         .button {
             width: 100% !important;
         }
+    }
+
+    .display-none {
+        display: none !important;
     }
 </style>

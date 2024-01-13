@@ -2292,16 +2292,24 @@
                         : "-1"}
                     viewBox={"0 0" +
                         (editCustomFilterName ? " 384 512" : " 512 512")}
-                    on:click={() => {
+                    on:click={async () => {
                         editCustomFilterName = !editCustomFilterName;
                         customFilterName = $selectedCustomFilter;
                         selectedCustomFilterElement = false;
+                        await tick();
+                        document
+                            ?.getElementById?.("custom-filter-name")
+                            ?.focus?.();
                     }}
-                    on:keyup={(e) => {
+                    on:keyup={async (e) => {
                         if (e.key !== "Enter") return;
                         editCustomFilterName = !editCustomFilterName;
                         customFilterName = $selectedCustomFilter;
                         selectedCustomFilterElement = false;
+                        await tick();
+                        document
+                            ?.getElementById?.("custom-filter-name")
+                            ?.focus?.();
                     }}
                 >
                     <!-- xmark and edit -->
@@ -3600,7 +3608,7 @@
     .filter-select .angle-down,
     .filter-select .angle-up {
         height: 1.4em;
-        width: min-content;
+        width: 1.4em;
         margin: auto;
         cursor: pointer;
     }
@@ -3633,21 +3641,27 @@
         padding: 6px;
         z-index: 1;
     }
+    .options-wrap {
+        overflow-y: overlay !important;
+        scrollbar-gutter: stable !important;
+    }
     .options-wrap::-webkit-scrollbar {
-        width: 7px !important;
+        width: 16px;
     }
     .options-wrap::-webkit-scrollbar-track {
         background-color: transparent;
     }
     .options-wrap::-webkit-scrollbar-thumb {
+        height: 72px;
+        border-radius: 8px;
+        border: 5px solid transparent;
+        background-clip: content-box;
         background-color: transparent;
-        border-radius: 9999px;
     }
     .options-wrap:hover::-webkit-scrollbar-thumb,
     .options-wrap:active::-webkit-scrollbar-thumb,
     .options-wrap:focus::-webkit-scrollbar-thumb {
-        background-color: var(--sfg-color);
-        border-right: 2px solid var(--bg-color);
+        background-color: hsl(0, 0%, 50%);
     }
 
     .options {
@@ -4070,7 +4084,7 @@
         justify-content: center;
         align-items: center;
         background: var(--bg-color);
-        border-radius: 6px;
+        border-top: 3px solid var(--bd-color);
         cursor: pointer;
         width: 100%;
         height: 3em;
@@ -4262,6 +4276,10 @@
             :placeholder-shown
         )::-webkit-search-cancel-button {
         opacity: 1 !important;
+    }
+
+    input[type="search"]::-webkit-textfield-decoration-container {
+        gap: 1ch;
     }
 
     @supports (-webkit-appearance: none) and (appearance: none) {

@@ -34,7 +34,6 @@
 		scrollingTimeout,
 		listUpdateAvailable,
 		listIsUpdating,
-		isFullViewed,
 		confirmIsVisible,
 		animeOptionVisible,
 		runUpdate,
@@ -74,6 +73,9 @@
 		ncsCompare,
 		removeLocalStorage,
 		setLocalStorage,
+		getScrollbarWidth,
+		addClass,
+		removeClass,
 	} from "./js/others/helper.js";
 
 	$android = isAndroid(); // Android/Browser Identifier
@@ -1289,7 +1291,7 @@
 					animeGridEl.style.overflow = "";
 					animeGridEl.scroll({ left: 0, behavior: "smooth" });
 				} else {
-					window.showCustomFilter?.();
+					window?.showCustomFilterNav?.(true);
 					if ($android || !matchMedia("(hover:hover)").matches) {
 						document.documentElement.style.overflow = "hidden";
 						document.documentElement.style.overflow = "";
@@ -1306,7 +1308,7 @@
 						animeGridEl.style.overflow = "";
 					}, 100);
 				} else {
-					window.showCustomFilter?.();
+					window?.showCustomFilterNav?.(true);
 					if ($android || !matchMedia("(hover:hover)").matches) {
 						document.documentElement.style.overflow = "hidden";
 					}
@@ -1343,10 +1345,20 @@
 	menuVisible.subscribe((val) => {
 		if (val === true) window.setShouldGoBack(false);
 	});
+	let scrollBarWidth = getScrollbarWidth();
+	let hasNoScrollWidth = scrollBarWidth != null && scrollBarWidth <= 0;
 	popupVisible.subscribe((val) => {
 		if (val === true) {
+			if (hasNoScrollWidth) {
+				addClass(document?.documentElement, "hide-scrollbar");
+			}
+			addClass(document?.documentElement, "popup-visible");
 			window.setShouldGoBack(false);
 		} else if (val === false) {
+			if (hasNoScrollWidth) {
+				removeClass(document?.documentElement, "hide-scrollbar");
+			}
+			removeClass(document?.documentElement, "popup-visible");
 			let shouldUpdate =
 				animeGridEl?.getBoundingClientRect?.()?.top > 0 &&
 				!$popupVisible;
@@ -1628,7 +1640,24 @@
 			window.visualViewport.width,
 			window.innerWidth,
 		);
+		let maxWindowHeight = 0;
+		let lastWindowHeight = (maxWindowHeight =
+			Math.max(window.visualViewport.height, window.innerHeight) || 0);
 		window.addEventListener("resize", () => {
+			let newWindowHeight =
+				Math.max(window.visualViewport.height, window.innerHeight) || 0;
+			let possibleVirtualKeyboardChange =
+				Math.abs(lastWindowHeight - newWindowHeight) >
+				Math.max(100, maxWindowHeight * 0.15);
+			if (possibleVirtualKeyboardChange) {
+				let isPossiblyHid = newWindowHeight > lastWindowHeight;
+				window?.showCustomFilterNav?.(isPossiblyHid, !isPossiblyHid);
+				if (isPossiblyHid) {
+					document?.activeElement?.blur?.();
+				}
+			}
+			lastWindowHeight = newWindowHeight;
+			maxWindowHeight = Math.max(maxWindowHeight, newWindowHeight) || 0;
 			windowWidth = Math.max(
 				document?.documentElement?.getBoundingClientRect?.()?.width,
 				window.visualViewport.width,
@@ -1689,11 +1718,35 @@
 			document.head.appendChild(GAscript);
 		})();
 	}
+
+	let delayedPopupVis, delayedMenuVis;
+	popupVisible.subscribe((val) => {
+		if (!val && !$menuVisible) {
+			setTimeout(() => {
+				delayedPopupVis = val;
+			}, 200);
+		} else {
+			delayedPopupVis = val;
+		}
+	});
+
+	menuVisible.subscribe((val) => {
+		if (!val && !$popupVisible) {
+			setTimeout(() => {
+				delayedMenuVis = val;
+			}, 200);
+		} else {
+			delayedMenuVis = val;
+		}
+	});
 </script>
 
 <main
 	id="main"
-	class={($popupVisible || $menuVisible ? " full-screen-popup" : "") +
+	class={($popupVisible || $menuVisible ? "full-screen-popup" : "") +
+		(delayedPopupVis || delayedMenuVis
+			? " delayed-full-screen-popup"
+			: "") +
 		($android ? " android" : "")}
 >
 	{#if _progress > 0 && _progress < 100}
@@ -1735,6 +1788,29 @@
 </main>
 
 <style>
+	:global(html) {
+		overflow-y: overlay !important;
+		scrollbar-gutter: stable !important;
+	}
+	@media screen and (min-width: 750px) {
+		:global(html::-webkit-scrollbar) {
+			width: 16px;
+		}
+		:global(html::-webkit-scrollbar-thumb) {
+			height: 72px;
+			border-radius: 10px;
+			border: 5px solid transparent;
+			background-clip: content-box;
+			background-color: hsl(0, 0%, 50%);
+		}
+		:global(html::-webkit-scrollbar-track) {
+			background: transparent;
+		}
+	}
+	:global(html.hide-scrollbar) {
+		overflow: hidden !important;
+		scrollbar-gutter: auto !important;
+	}
 	main {
 		width: 100%;
 		min-height: calc(100vh - 48px);
@@ -1788,17 +1864,14 @@
 			top: 0px !important;
 			z-index: 1003 !important;
 		}
-
 		#main.android > #progress.is-below-absolute-progress {
 			height: 1px !important;
 		}
-
 		:global(#main.full-screen-popup) > .progress {
 			height: 1px !important;
 			top: var(--top) !important;
 			z-index: 1000 !important;
 		}
-
 		.home {
 			padding: 0 1em;
 		}

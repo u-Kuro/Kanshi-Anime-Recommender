@@ -28,11 +28,6 @@
     } from "../../js/others/helper.js";
     import { animeLoader } from "../../js/workerUtils.js";
 
-    let windowWidth = Math.max(
-        document?.documentElement?.getBoundingClientRect?.()?.width,
-        window.visualViewport.width,
-        window.innerWidth,
-    );
     let customFiltersNav;
     let customFiltersNavVisible;
     let animeGridEl;
@@ -47,17 +42,21 @@
     let showCustomFilterNavTimeout;
     function customFilterNavVisibility(show) {
         return new Promise((resolve) => {
-            clearTimeout(showCustomFilterNavTimeout);
-            if (show) {
-                showCustomFilter = true;
-                customFilOpacity = 1;
-                resolve();
-            } else {
-                customFilOpacity = 0;
-                showCustomFilterNavTimeout = setTimeout(() => {
-                    showCustomFilter = false;
+            try {
+                clearTimeout(showCustomFilterNavTimeout);
+                if (show) {
+                    showCustomFilter = true;
+                    customFilOpacity = 1;
                     resolve();
-                }, 160);
+                } else {
+                    customFilOpacity = 0;
+                    showCustomFilterNavTimeout = setTimeout(() => {
+                        showCustomFilter = false;
+                        resolve();
+                    }, 160);
+                }
+            } catch (e) {
+                resolve();
             }
         });
     }
@@ -388,9 +387,28 @@
         },
         { passive: true },
     );
-    window.showCustomFilter = () => {
-        customFilterNavVisibility(true);
+    let immediateCustomFilNavChange, immediateShowTimeout;
+    window.showCustomFilterNav = (show, immediate = false) => {
+        if (immediate) {
+            immediateCustomFilNavChange = true;
+            if (show) {
+                showCustomFilter = true;
+                customFilOpacity = 1;
+            } else {
+                customFilOpacity = 0;
+                showCustomFilter = false;
+            }
+            clearTimeout(immediateShowTimeout);
+            immediateShowTimeout = setTimeout(() => {
+                immediateCustomFilNavChange = false;
+            }, 160);
+        } else {
+            clearTimeout(immediateShowTimeout);
+            immediateCustomFilNavChange = false;
+            customFilterNavVisibility(show);
+        }
     };
+
     function touchedUp() {
         if (!$android) return;
         isActivated = isShown = touchID = null;
@@ -403,11 +421,6 @@
     window.addEventListener("touchend", touchedUp, { passive: true });
     window.addEventListener("touchcancel", touchedUp, { passive: true });
     window.addEventListener("resize", () => {
-        windowWidth = Math.max(
-            document?.documentElement?.getBoundingClientRect?.()?.width,
-            window.visualViewport.width,
-            window.innerWidth,
-        );
         scrollToSelectedCustomFilter();
     });
     window.addEventListener("scroll", () => {
@@ -415,11 +428,6 @@
     });
 
     onMount(() => {
-        windowWidth = Math.max(
-            document?.documentElement?.getBoundingClientRect?.()?.width,
-            window.visualViewport.width,
-            window.innerWidth,
-        );
         customFiltersNav =
             customFiltersNav || document.getElementById("custom-filters-nav");
         animeGridEl = document.getElementById("anime-grid");
@@ -431,6 +439,7 @@
 <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
 <div
     class={"custom-filters-nav" +
+        (immediateCustomFilNavChange ? " immediate" : "") +
         ((!$android || isScrolledYMax || isFullViewed) && $customFilters?.length
             ? " persistent-show"
             : (customFilNavIsAnimating || customFiltersNavVisible) &&
@@ -512,6 +521,9 @@
         -o-transform: translateZ(0);
         transition: opacity 0.16s ease;
         opacity: var(--opacity);
+    }
+    .custom-filters-nav.immediate {
+        transition: unset !important;
     }
     .nav {
         display: flex;
