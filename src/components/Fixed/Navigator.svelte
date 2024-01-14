@@ -25,6 +25,7 @@
     let typedUsername = "";
     let animeGridEl,
         popupContainer,
+        navContainerEl,
         navEl,
         inputUsernameEl,
         inputUsernameElFocused = false,
@@ -35,6 +36,8 @@
         );
 
     onMount(() => {
+        navContainerEl =
+            navContainerEl || document.getElementById("nav-container");
         navEl = navEl || document?.getElementById("nav");
         inputUsernameEl =
             inputUsernameEl || document?.getElementById("usernameInput");
@@ -325,23 +328,15 @@
         });
     }
 
-    function onfocusUsernameInput(event) {
-        if (event.type === "focusin") {
-            inputUsernameElFocused = true;
-            addClass(navEl, "inputfocused");
-        } else {
-            setTimeout(() => {
-                removeClass(navEl, "inputfocused");
-                inputUsernameElFocused = false;
-            }, 100);
-        }
-    }
-
     let delayedPopupVis, delayedMenuVis;
     popupVisible.subscribe((val) => {
         if (!val && !$menuVisible) {
+            if (!inputUsernameElFocused) {
+                addClass(navContainerEl, "layout-change");
+            }
             setTimeout(() => {
                 delayedPopupVis = val;
+                removeClass(navContainerEl, "layout-change");
             }, 200);
         } else {
             delayedPopupVis = val;
@@ -350,17 +345,49 @@
 
     menuVisible.subscribe((val) => {
         if (!val && !$popupVisible) {
+            if (!inputUsernameElFocused) {
+                addClass(navContainerEl, "layout-change");
+            }
             setTimeout(() => {
                 delayedMenuVis = val;
+                removeClass(navContainerEl, "layout-change");
             }, 200);
         } else {
             delayedMenuVis = val;
         }
     });
+
+    let onFocusTimeout;
+    function onfocusUsernameInput(event) {
+        clearTimeout(onFocusTimeout);
+        if (event.type === "focusin") {
+            inputUsernameElFocused = true;
+            if (!$menuVisible && !$popupVisible) {
+                addClass(navContainerEl, "layout-change");
+            }
+            onFocusTimeout = setTimeout(() => {
+                addClass(navEl, "inputfocused");
+                removeClass(navContainerEl, "layout-change");
+            }, 200);
+        } else {
+            onFocusTimeout = setTimeout(() => {
+                if (!$menuVisible && !$popupVisible) {
+                    addClass(navContainerEl, "layout-change");
+                }
+                clearTimeout(onFocusTimeout);
+                onFocusTimeout = setTimeout(() => {
+                    removeClass(navEl, "inputfocused");
+                    inputUsernameElFocused = false;
+                    removeClass(navContainerEl, "layout-change");
+                }, 200);
+            }, 100);
+        }
+    }
 </script>
 
 <div
     id="nav-container"
+    bind:this={navContainerEl}
     class={"nav-container" + (delayedMenuVis ? " menu-visible" : "")}
     on:keyup={(e) => e.key === "Enter" && handleMenuVisibility(e)}
     on:click={handleMenuVisibility}
@@ -370,34 +397,34 @@
     <nav
         id="nav"
         class={"nav " +
-            (delayedPopupVis || delayedMenuVis
-                ? "popupvisible"
-                : inputUsernameEl === document?.activeElement
-                  ? "inputfocused"
-                  : "")}
+            (delayedPopupVis ? " popupvisible" : "") +
+            (delayedMenuVis ? " menu-visible" : "") +
+            (inputUsernameEl === document?.activeElement
+                ? " inputfocused"
+                : "")}
         bind:this={navEl}
     >
         <div class="go-back-container" on:click={handleGoBack}>
             <!-- x-close -->
             <svg
                 class="closing-x"
+                viewBox="0 0 24 24"
                 tabindex="0"
                 on:keyup={(e) => e.key === "Enter" && handleGoBack(e)}
-                viewBox="0 0 384 512"
-                ><path
-                    d="M342.6 150.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L192 210.7 86.6 105.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L146.7 256 41.4 361.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L192 301.3 297.4 406.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L237.3 256 342.6 150.6z"
-                /></svg
+                ><path d="m19 6-1-1-6 6-6-6-1 1 6 6-6 6 1 1 6-6 6 6 1-1-6-6Z"
+                ></path></svg
             >
             <!-- arrow left -->
             <svg
                 class="goback"
                 tabindex="0"
-                viewBox="0 0 448 512"
+                viewBox="0 0 500 500"
                 on:keyup={(e) => e.key === "Enter" && handleGoBack(e)}
-                ><path
-                    d="M9 233a32 32 0 0 0 0 46l160 160a32 32 0 0 0 46-46L109 288h307a32 32 0 1 0 0-64H109l106-105a32 32 0 0 0-46-46L9 233z"
-                /></svg
             >
+                <path
+                    d="M 30.047 225.832 C 17.045 238.409 17.045 259.255 30.047 271.832 L 190.047 431.832 C 207.752 449.537 237.985 441.437 244.465 417.251 C 247.473 406.026 244.264 394.049 236.047 385.832 L 130.047 280.832 L 437.047 280.832 C 461.68 280.832 477.076 254.165 464.76 232.832 C 459.043 222.931 448.479 216.832 437.047 216.832 L 130.047 216.832 L 236.047 111.832 C 253.752 94.127 245.651 63.894 221.465 57.413 C 210.241 54.406 198.264 57.615 190.047 65.832 L 30.047 225.832 Z"
+                />
+            </svg>
         </div>
         <div class="input-search">
             <label class="display-none" for="usernameInput">
@@ -478,7 +505,7 @@
         position: absolute;
         top: 0;
         width: 100%;
-        height: 48px;
+        height: 57px;
         background-color: var(--bg-color);
         color: var(--fg-color);
         opacity: 1;
@@ -514,7 +541,7 @@
     .input-search {
         display: flex;
         gap: 1.5em;
-        height: 48px;
+        height: 57px;
         border-radius: 6px;
         justify-self: left;
         align-items: center;
@@ -541,6 +568,7 @@
         -moz-transform: translateZ(0) !important;
         -o-transform: translateZ(0) !important;
         position: unset !important;
+        opacity: 1 !important;
     }
     #usernameInput {
         transform: translateY(-99999px) translateZ(0);
@@ -552,6 +580,11 @@
     }
     #usernameInput::-webkit-search-cancel-button {
         font-size: 1.5rem;
+    }
+    .goback path {
+        stroke-width: 25px;
+        stroke: black;
+        mix-blend-mode: lighten;
     }
     .goback,
     .closing-x {
@@ -569,19 +602,20 @@
     }
     .goback,
     .closing-x {
-        height: 2em;
-        width: 2em;
+        height: 24px;
+        width: 24px;
         align-items: center;
         color: var(--fg-color);
         cursor: pointer;
     }
     .go-back-container {
+        animation: fadeIn 0.2s ease;
         display: none;
         justify-content: center;
     }
     @media screen and (max-width: 425px) {
         .go-back-container {
-            min-width: 5em;
+            min-width: 48px;
             min-height: 48px;
             padding: 0 1em;
             justify-content: center;
@@ -589,7 +623,7 @@
             cursor: pointer;
         }
         .logo-icon-container {
-            min-width: 5em;
+            min-width: 48px;
             min-height: 48px;
             padding: 0 1em;
             justify-content: center;
@@ -598,6 +632,7 @@
         }
     }
     .usernameText {
+        animation: fadeIn 0.2s ease;
         display: flex;
     }
     .nav.inputfocused .usernameText {
@@ -607,6 +642,8 @@
         font-family: system-ui;
         font-size: 1.333rem;
         font-weight: 400;
+        transition: opacity 0.2s ease;
+        opacity: 0;
     }
     #usernameInput.android {
         font-size: 1.65rem;
@@ -623,7 +660,7 @@
         cursor: pointer;
         align-items: center;
         justify-content: start;
-        height: 48px;
+        height: 57px;
         max-width: min(100%, 165px);
         min-width: 30px;
     }
@@ -637,13 +674,14 @@
     }
 
     @supports (-webkit-appearance: none) and (appearance: none) {
-        input[type="search"]::-webkit-search-cancel-button {
+        #usernameInput[type="search"]::-webkit-search-cancel-button {
             -webkit-appearance: none;
             appearance: none;
-            height: 10px;
-            width: 10px;
-            background-image: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMjMuMDUiIGhlaWdodD0iMTIzLjA1IiBzdHlsZT0iZW5hYmxlLWJhY2tncm91bmQ6bmV3IDAgMCAxMjMuMDUgMTIzLjA1IiB4bWw6c3BhY2U9InByZXNlcnZlIj48cGF0aCBkPSJtMTIxLjMyNSAxMC45MjUtOC41LTguMzk5Yy0yLjMtMi4zLTYuMS0yLjMtOC41IDBsLTQyLjQgNDIuMzk5TDE4LjcyNiAxLjcyNmMtMi4zMDEtMi4zMDEtNi4xMDEtMi4zMDEtOC41IDBsLTguNSA4LjVjLTIuMzAxIDIuMy0yLjMwMSA2LjEgMCA4LjVsNDMuMSA0My4xLTQyLjMgNDIuNWMtMi4zIDIuMy0yLjMgNi4xIDAgOC41bDguNSA4LjVjMi4zIDIuMyA2LjEgMi4zIDguNSAwbDQyLjM5OS00Mi40IDQyLjQgNDIuNGMyLjMgMi4zIDYuMSAyLjMgOC41IDBsOC41LTguNWMyLjMtMi4zIDIuMy02LjEgMC04LjVsLTQyLjUtNDIuNCA0Mi40LTQyLjM5OWE2LjEzIDYuMTMgMCAwIDAgLjEtOC42MDJ6IiBmaWxsPSIjRkZGIi8+PC9zdmc+);
-            background-size: 10px 10px;
+            height: 17px;
+            width: 17px;
+            background-image: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgaWQ9IjEyMzEyMyI+PHBhdGggZmlsbD0iI2ZmZiIgZD0ibTE5IDYtMS0xLTYgNi02LTYtMSAxIDYgNi02IDYgMSAxIDYtNiA2IDYgMS0xLTYtNloiLz48L3N2Zz4=);
+            background-size: 17px;
+            translate: 0 1px;
         }
     }
 
@@ -661,7 +699,7 @@
             border-bottom: 1px solid var(--bd-color) !important;
         }
         .nav {
-            grid-template-columns: calc(100% - 5em) 5em;
+            grid-template-columns: calc(100% - 48px) 48px;
             padding: 0 !important;
             gap: 0 !important;
         }
@@ -680,7 +718,7 @@
         .nav.inputfocused,
         .nav.popupvisible,
         .nav-container.menu-visible .nav {
-            grid-template-columns: 5em calc(100% - 10em) 5em;
+            grid-template-columns: 48px calc(100% - 96px) 48px;
         }
         .nav.popupvisible .input-search,
         .nav-container.menu-visible .input-search {
@@ -700,15 +738,16 @@
             max-width: none !important;
             width: 100% !important;
             padding-left: 15px !important;
+            opacity: 1 !important;
         }
         @supports (-webkit-appearance: none) and (appearance: none) {
-            input[type="search"]::-webkit-search-cancel-button {
+            #usernameInput[type="search"]::-webkit-search-cancel-button {
                 -webkit-appearance: none;
                 appearance: none;
-                height: 15px;
-                width: 15px;
-                background-image: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMjMuMDUiIGhlaWdodD0iMTIzLjA1IiBzdHlsZT0iZW5hYmxlLWJhY2tncm91bmQ6bmV3IDAgMCAxMjMuMDUgMTIzLjA1IiB4bWw6c3BhY2U9InByZXNlcnZlIj48cGF0aCBkPSJtMTIxLjMyNSAxMC45MjUtOC41LTguMzk5Yy0yLjMtMi4zLTYuMS0yLjMtOC41IDBsLTQyLjQgNDIuMzk5TDE4LjcyNiAxLjcyNmMtMi4zMDEtMi4zMDEtNi4xMDEtMi4zMDEtOC41IDBsLTguNSA4LjVjLTIuMzAxIDIuMy0yLjMwMSA2LjEgMCA4LjVsNDMuMSA0My4xLTQyLjMgNDIuNWMtMi4zIDIuMy0yLjMgNi4xIDAgOC41bDguNSA4LjVjMi4zIDIuMyA2LjEgMi4zIDguNSAwbDQyLjM5OS00Mi40IDQyLjQgNDIuNGMyLjMgMi4zIDYuMSAyLjMgOC41IDBsOC41LTguNWMyLjMtMi4zIDIuMy02LjEgMC04LjVsLTQyLjUtNDIuNCA0Mi40LTQyLjM5OWE2LjEzIDYuMTMgMCAwIDAgLjEtOC42MDJ6IiBmaWxsPSIjRkZGIi8+PC9zdmc+);
-                background-size: 15px 15px;
+                height: 24px;
+                width: 24px;
+                background-image: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgaWQ9IjEyMzEyMyI+PHBhdGggZmlsbD0iI2ZmZiIgZD0ibTE5IDYtMS0xLTYgNi02LTYtMSAxIDYgNi02IDYgMSAxIDYtNiA2IDYgMS0xLTYtNloiLz48L3N2Zz4=);
+                background-size: 24px;
             }
         }
         .nav.popupvisible .go-back-container,
@@ -717,16 +756,13 @@
             display: flex;
         }
     }
-    @media screen and (max-width: 425px) {
-        .nav {
-            grid-template-columns: calc(100% - 5em) 5em;
-        }
-    }
+
     @media screen and (max-width: 275px) {
         .nav.inputfocused #usernameInput {
             padding-left: 0 !important;
             padding-right: 0 !important;
             min-width: 25px !important;
+            opacity: 1 !important;
         }
         .nav.inputfocused .input-search {
             padding: 0 !important;
@@ -737,6 +773,12 @@
         #usernameInput::-webkit-search-cancel-button {
             display: none !important;
         }
+    }
+
+    .nav-container.layout-change .input-search,
+    .nav-container.layout-change .go-back-container {
+        transition: opacity 0.2s ease;
+        opacity: 0;
     }
 
     .display-none {

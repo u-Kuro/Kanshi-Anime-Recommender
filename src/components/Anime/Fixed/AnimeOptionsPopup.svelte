@@ -61,11 +61,13 @@
 
     function handleAnimeOptionVisibility(e) {
         if (isRecentlyOpened && e.type !== "keydown") return;
-        let target = e.target;
-        let classList = target.classList;
+        let element = e.target;
+        let classList = element.classList;
         if (
-            !classList.contains("closing-x") &&
-            (target.closest(".anime-options-container") ||
+            !(
+                classList.contains("closing-x") || element.closest(".closing-x")
+            ) &&
+            (element.closest(".anime-options-container") ||
                 classList.contains("anime-options-container"))
         )
             return;
@@ -222,15 +224,18 @@
         <div class="anime-options-container" out:fade={{ duration: 200 }}>
             <div class="option-header">
                 <span class="anime-title"><h1>{shownTitle}</h1></span>
-                <div
+                <svg
+                    viewBox="0 0 24 24"
                     class="closing-x"
                     tabindex={$popupVisible ? "" : "0"}
                     on:click={handleAnimeOptionVisibility}
                     on:keydown={(e) =>
                         e.key === "Enter" && handleAnimeOptionVisibility(e)}
+                    ><path
+                        fill="#fff"
+                        d="m19 6-1-1-6 6-6-6-1 1 6 6-6 6 1 1 6-6 6 6 1-1-6-6Z"
+                    /></svg
                 >
-                    &#215;
-                </div>
             </div>
             <span
                 tabindex={$popupVisible ? "" : "0"}
@@ -363,24 +368,7 @@
     }
 
     .closing-x {
-        font-size: 25px;
-        width: 25px;
-        height: 25px;
-        text-align: center;
-        vertical-align: middle;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        line-height: 1;
-        cursor: pointer;
-        border-radius: 50%;
-        z-index: 2;
-        user-select: none;
-        background-color: transparent;
-    }
-
-    .closing-x:focus,
-    .closing-x:hover {
-        background-color: var(--ol-color);
+        width: 24px;
+        height: 24px;
     }
 </style>

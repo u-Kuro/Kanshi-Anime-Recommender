@@ -344,11 +344,13 @@
         if (
             (classList.contains("filterType") || filterTypEl) &&
             !selectedFilterTypeElement &&
-            !classList.contains("closing-x")
+            !(classList.contains("closing-x") || element.closest(".closing-x"))
         ) {
             selectedFilterTypeElement = true;
         } else if (
-            (!optionsWrap || classList.contains("closing-x")) &&
+            (!optionsWrap ||
+                classList.contains("closing-x") ||
+                element.closest(".closing-x")) &&
             !classList.contains("options-wrap")
         ) {
             if (
@@ -1291,7 +1293,9 @@
         ) {
             selectedSortElement = true;
         } else if (
-            (!optionsWrap || classList.contains("closing-x")) &&
+            (!optionsWrap ||
+                classList.contains("closing-x") ||
+                element.closest(".closing-x")) &&
             !classList.contains("options-wrap")
         ) {
             if (
@@ -1567,16 +1571,15 @@
         for (let i = 0; i < $finalAnimeList?.length; i++) {
             let gridElement =
                 $finalAnimeList?.[i]?.gridElement || animeGridEl.children?.[i];
-
             if (
                 gridElement?.getBoundingClientRect?.()?.y >= windowHeight &&
                 i > 36
             ) {
                 let scrollTop;
                 if (isFullViewed) {
-                    scrollTop = 65;
+                    scrollTop = 74;
                 } else {
-                    scrollTop = 48;
+                    scrollTop = 57;
                 }
                 window.scrollY = document.documentElement.scrollTop = scrollTop;
                 break;
@@ -1644,11 +1647,13 @@
         if (
             (classList.contains("custom-filter-wrap") || sortSelectEl) &&
             !selectedCustomFilterElement &&
-            !classList.contains("closing-x")
+            !(classList.contains("closing-x") || element.closest(".closing-x"))
         ) {
             selectedCustomFilterElement = true;
         } else if (
-            (!optionsWrap || classList.contains("closing-x")) &&
+            (!optionsWrap ||
+                classList.contains("closing-x") ||
+                element.closest(".closing-x")) &&
             !classList.contains("options-wrap")
         ) {
             if (
@@ -1667,9 +1672,9 @@
         event?.stopPropagation?.();
         if (
             (!$showFilterOptions || !isFullViewed) &&
-            document.documentElement.scrollTop > 48
+            document.documentElement.scrollTop > 57
         ) {
-            window.scrollY = document.documentElement.scrollTop = 48;
+            window.scrollY = document.documentElement.scrollTop = 57;
         }
         if (isFullViewed) {
             animeGridEl.style.overflow = "hidden";
@@ -2198,7 +2203,8 @@
                         <div class="header">
                             <div class="filter-title">Category</div>
                             <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
-                            <div
+                            <svg
+                                viewBox="0 0 24 24"
                                 class="closing-x"
                                 tabindex={!$menuVisible &&
                                 !$popupVisible &&
@@ -2210,9 +2216,11 @@
                                     e.key === "Enter" &&
                                     handleCustomFilterPopup(e)}
                                 on:click={handleCustomFilterPopup}
+                                ><path
+                                    fill="#fff"
+                                    d="m19 6-1-1-6 6-6-6-1 1 6 6-6 6 1 1 6-6 6 6 1-1-6-6Z"
+                                /></svg
                             >
-                                ×
-                            </div>
                         </div>
                         <div class="options">
                             {#each $customFilters || [] as filterName (filterName || {})}
@@ -2284,14 +2292,16 @@
             <div class="custom-filter-icon-wrap">
                 <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                 <svg
-                    class="editcancel-custom-category-name"
+                    class={editCustomFilterName
+                        ? "cancel-custom-category-name"
+                        : "edit-custom-category-name"}
                     tabindex={!$menuVisible &&
                     !$popupVisible &&
                     $showFilterOptions
                         ? "0"
                         : "-1"}
                     viewBox={"0 0" +
-                        (editCustomFilterName ? " 384 512" : " 512 512")}
+                        (editCustomFilterName ? " 24 24" : " 512 512")}
                     on:click={async () => {
                         editCustomFilterName = !editCustomFilterName;
                         customFilterName = $selectedCustomFilter;
@@ -2315,7 +2325,7 @@
                     <!-- xmark and edit -->
                     <path
                         d={editCustomFilterName
-                            ? "M342.6 150.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L192 210.7 86.6 105.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L146.7 256 41.4 361.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L192 301.3 297.4 406.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L237.3 256 342.6 150.6z"
+                            ? "m19 6-1-1-6 6-6-6-1 1 6 6-6 6 1 1 6-6 6 6 1-1-6-6Z"
                             : "M472 22a56 56 0 0 0-80 0l-30 30 98 98 30-30c22-22 22-58 0-80l-18-18zM172 242c-6 6-10 13-13 22l-30 88a24 24 0 0 0 31 31l89-30c8-3 15-7 21-13l168-168-98-98-168 168zM96 64c-53 0-96 43-96 96v256c0 53 43 96 96 96h256c53 0 96-43 96-96v-96a32 32 0 1 0-64 0v96c0 18-14 32-32 32H96c-18 0-32-14-32-32V160c0-18 14-32 32-32h96a32 32 0 1 0 0-64H96z"}
                     /></svg
                 >
@@ -2384,7 +2394,8 @@
                         >
                             <div class="header">
                                 <div class="filter-title">Filter</div>
-                                <div
+                                <svg
+                                    viewBox="0 0 24 24"
                                     class="closing-x"
                                     tabindex={!$menuVisible &&
                                     !$popupVisible &&
@@ -2396,9 +2407,11 @@
                                         e.key === "Enter" &&
                                         handleShowFilterTypes(e)}
                                     on:click={handleShowFilterTypes}
+                                    ><path
+                                        fill="#fff"
+                                        d="m19 6-1-1-6 6-6-6-1 1 6 6-6 6 1 1 6-6 6 6 1-1-6-6Z"
+                                    /></svg
                                 >
-                                    ×
-                                </div>
                             </div>
                             <div class="options">
                                 {#each $filterOptions?.filterSelection || [] as filterSelection (filterSelection?.filterSelectionName || {})}
@@ -2621,7 +2634,8 @@
                                         {Dropdown.filName}
                                     </div>
                                     <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
-                                    <div
+                                    <svg
+                                        viewBox="0 0 24 24"
                                         class="closing-x"
                                         tabindex={!$menuVisible &&
                                         !$popupVisible &&
@@ -2635,9 +2649,11 @@
                                         on:click={closeFilterSelect(
                                             dropdownIdx,
                                         )}
+                                        ><path
+                                            fill="#fff"
+                                            d="m19 6-1-1-6 6-6-6-1 1 6 6-6 6 1 1 6-6 6 6 1-1-6-6Z"
+                                        /></svg
                                     >
-                                        ×
-                                    </div>
                                 </div>
                                 <label
                                     class="display-none"
@@ -3058,7 +3074,7 @@
                     <!-- xmark -->
                     <svg
                         class="removeActiveTag"
-                        viewBox="0 0 400 512"
+                        viewBox="0 0 24 24"
                         tabindex={!$menuVisible &&
                         !$popupVisible &&
                         $showFilterOptions
@@ -3085,7 +3101,7 @@
                             )}
                     >
                         <path
-                            d="M343 151a32 32 0 0 0-46-46L192 211 87 105a32 32 0 0 0-46 46l106 105L41 361a32 32 0 0 0 46 46l105-106 105 106a32 32 0 0 0 46-46L237 256l106-105z"
+                            d="m19 6-1-1-6 6-6-6-1 1 6 6-6 6 1 1 6-6 6 6 1-1-6-6Z"
                         />
                     </svg>
                 </div>
@@ -3205,7 +3221,8 @@
                         <div class="header">
                             <div class="filter-title">Sort By</div>
                             <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
-                            <div
+                            <svg
+                                viewBox="0 0 24 24"
                                 class="closing-x"
                                 tabindex={!$menuVisible &&
                                 !$popupVisible &&
@@ -3217,9 +3234,11 @@
                                     e.key === "Enter" &&
                                     handleSortFilterPopup(e)}
                                 on:click={handleSortFilterPopup}
+                                ><path
+                                    fill="#fff"
+                                    d="m19 6-1-1-6 6-6-6-1 1 6 6-6 6 1 1 6-6 6 6 1-1-6-6Z"
+                                /></svg
                             >
-                                ×
-                            </div>
                         </div>
                         <div class="options">
                             {#each $filterOptions?.sortFilter?.[$selectedCustomFilter] || sortFilterContents as sortFilter (sortFilter?.sortName || {})}
@@ -3460,10 +3479,17 @@
         cursor: pointer;
     }
 
-    .editcancel-custom-category-name,
+    .cancel-custom-category-name {
+        height: 24px;
+        width: 24px;
+        stroke: white;
+        stroke-width: 1px;
+        cursor: pointer;
+    }
+    .edit-custom-category-name,
     .save-custom-category-name {
-        height: 2em;
-        width: 2em;
+        height: 20px;
+        width: 20px;
         cursor: pointer;
     }
 
@@ -3858,8 +3884,8 @@
         cursor: pointer;
     }
     .activeTagFilter svg {
-        width: 1.5rem;
-        height: 1.5rem;
+        width: 20px;
+        height: 20px;
         fill: var(--activeTagFilterColor) !important;
     }
 
@@ -3969,6 +3995,10 @@
     }
 
     .options .option:last-child {
+        padding-bottom: 8px;
+    }
+
+    .sortFilter .options .option:last-child {
         padding-bottom: 15px;
     }
 
@@ -4043,23 +4073,8 @@
     }
 
     .closing-x {
-        font-size: 25px;
-        width: 25px;
-        height: 25px;
-        text-align: center;
-        position: absolute;
-        right: 10px;
-        top: 10px;
-        vertical-align: middle;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        line-height: 1;
-        cursor: pointer;
-        border-radius: 50%;
-        z-index: 2;
-        user-select: none;
-        background-color: transparent;
+        width: 24px;
+        height: 24px;
     }
 
     .filters {
@@ -4095,6 +4110,35 @@
         height: 2em;
     }
 
+    input[type="search"]:not(:hover):not(:focus):not(:disabled):not(
+            :placeholder-shown
+        )::-webkit-search-cancel-button {
+        opacity: 1 !important;
+    }
+
+    input[type="search"]::-webkit-textfield-decoration-container {
+        gap: 1ch;
+    }
+
+    @supports (-webkit-appearance: none) and (appearance: none) {
+        input[type="search"]::-webkit-search-cancel-button {
+            -webkit-appearance: none;
+            appearance: none;
+            height: 15px;
+            width: 15px;
+            background-image: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgaWQ9IjEyMzEyMyI+PHBhdGggZmlsbD0iI2ZmZiIgZD0ibTE5IDYtMS0xLTYgNi02LTYtMSAxIDYgNi02IDYgMSAxIDYtNiA2IDYgMS0xLTYtNloiLz48L3N2Zz4=);
+            background-size: 15px;
+        }
+        #input-search[type="search"]::-webkit-search-cancel-button {
+            -webkit-appearance: none;
+            appearance: none;
+            height: 20px;
+            width: 20px;
+            background-image: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgaWQ9IjEyMzEyMyI+PHBhdGggZmlsbD0iI2ZmZiIgZD0ibTE5IDYtMS0xLTYgNi02LTYtMSAxIDYgNi02IDYgMSAxIDYtNiA2IDYgMS0xLTYtNloiLz48L3N2Zz4=);
+            background-size: 20px;
+        }
+    }
+
     @media screen and (hover: hover) and (pointer: fine) {
         .filters {
             scroll-snap-type: none !important;
@@ -4103,7 +4147,7 @@
 
     @media screen and (max-height: 445px) {
         .options-wrap-filter-info {
-            top: max(25vh, 48px) !important;
+            top: max(25vh, 57px) !important;
         }
     }
 
@@ -4258,6 +4302,10 @@
             height: 1.8em !important;
             width: 1.8em !important;
         }
+        .closing-x {
+            width: 24px !important;
+            height: 24px !important;
+        }
         .extra-item-info > path {
             translate: 25px !important;
         }
@@ -4266,31 +4314,21 @@
             margin-left: auto !important;
             width: 50% !important;
         }
+
+        @supports (-webkit-appearance: none) and (appearance: none) {
+            .options-wrap input[type="search"]::-webkit-search-cancel-button {
+                -webkit-appearance: none;
+                appearance: none;
+                height: 20px;
+                width: 20px;
+                background-image: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgaWQ9IjEyMzEyMyI+PHBhdGggZmlsbD0iI2ZmZiIgZD0ibTE5IDYtMS0xLTYgNi02LTYtMSAxIDYgNi02IDYgMSAxIDYtNiA2IDYgMS0xLTYtNloiLz48L3N2Zz4=);
+                background-size: 20px;
+            }
+        }
     }
 
     .display-none {
         display: none !important;
-    }
-
-    input[type="search"]:not(:hover):not(:focus):not(:disabled):not(
-            :placeholder-shown
-        )::-webkit-search-cancel-button {
-        opacity: 1 !important;
-    }
-
-    input[type="search"]::-webkit-textfield-decoration-container {
-        gap: 1ch;
-    }
-
-    @supports (-webkit-appearance: none) and (appearance: none) {
-        input[type="search"]::-webkit-search-cancel-button {
-            -webkit-appearance: none;
-            appearance: none;
-            height: 10px;
-            width: 10px;
-            background-image: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMjMuMDUiIGhlaWdodD0iMTIzLjA1IiBzdHlsZT0iZW5hYmxlLWJhY2tncm91bmQ6bmV3IDAgMCAxMjMuMDUgMTIzLjA1IiB4bWw6c3BhY2U9InByZXNlcnZlIj48cGF0aCBkPSJtMTIxLjMyNSAxMC45MjUtOC41LTguMzk5Yy0yLjMtMi4zLTYuMS0yLjMtOC41IDBsLTQyLjQgNDIuMzk5TDE4LjcyNiAxLjcyNmMtMi4zMDEtMi4zMDEtNi4xMDEtMi4zMDEtOC41IDBsLTguNSA4LjVjLTIuMzAxIDIuMy0yLjMwMSA2LjEgMCA4LjVsNDMuMSA0My4xLTQyLjMgNDIuNWMtMi4zIDIuMy0yLjMgNi4xIDAgOC41bDguNSA4LjVjMi4zIDIuMyA2LjEgMi4zIDguNSAwbDQyLjM5OS00Mi40IDQyLjQgNDIuNGMyLjMgMi4zIDYuMSAyLjMgOC41IDBsOC41LTguNWMyLjMtMi4zIDIuMy02LjEgMC04LjVsLTQyLjUtNDIuNCA0Mi40LTQyLjM5OWE2LjEzIDYuMTMgMCAwIDAgLjEtOC42MDJ6IiBmaWxsPSIjRkZGIi8+PC9zdmc+);
-            background-size: 10px 10px;
-        }
     }
 
     /* 

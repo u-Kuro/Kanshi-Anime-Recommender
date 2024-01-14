@@ -96,7 +96,7 @@
             document.documentElement.style.minHeight = "";
         } else {
             document.documentElement.style.minHeight =
-                screen.height + 48 + "px";
+                screen.height + 57 + "px";
         }
     }
 
@@ -259,9 +259,9 @@
             scrollTop = -9999;
         } else {
             if (isFullViewed) {
-                scrollTop = 65;
+                scrollTop = 74;
             } else {
-                scrollTop = 48;
+                scrollTop = 57;
             }
         }
         if ($android || !matchMedia("(hover:hover)").matches) {

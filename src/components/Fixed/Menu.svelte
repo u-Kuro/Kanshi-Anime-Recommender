@@ -455,6 +455,7 @@
 
     menuVisible.subscribe((val) => {
         if (val) {
+            addClass(navContainerEl, "hide");
             removeClass(navContainerEl, "hide");
             addClass(menuContainerEl, "visible");
             removeClass(menuContainerEl, "hide");
@@ -602,7 +603,7 @@
         -moz-transform: translateZ(0);
         -o-transform: translateZ(0);
         position: fixed;
-        padding-top: 48px;
+        padding-top: 57px;
         top: 0;
         width: 100%;
         height: 100%;
@@ -672,6 +673,7 @@
         }
     }
     .button.selected {
+        border: 1px solid hsl(0, 0%, 35%) !important;
         background-color: hsl(0, 0%, 35%) !important;
         color: var(--fg-color) !important;
     }

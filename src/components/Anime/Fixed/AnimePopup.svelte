@@ -287,6 +287,7 @@
                 addClass(popupWrapper, "willChange");
                 addClass(popupContainer, "willChange");
 
+                addClass(navContainerEl, "hide");
                 removeClass(navContainerEl, "hide");
                 addClass(popupWrapper, "visible");
                 addClass(popupContainer, "show");
@@ -362,6 +363,7 @@
                 addClass(popupWrapper, "willChange");
                 addClass(popupContainer, "willChange");
 
+                addClass(navContainerEl, "hide");
                 removeClass(navContainerEl, "hide");
                 addClass(popupWrapper, "visible");
                 addClass(popupContainer, "show");
@@ -2497,7 +2499,7 @@
         overscroll-behavior: contain;
         background: var(--bg-color);
         transition: opacity 0.2s ease;
-        margin-top: 48px;
+        margin-top: 57px;
         -ms-overflow-style: none;
         scrollbar-width: none;
         opacity: 0;
@@ -3121,13 +3123,13 @@
 
     .popup-body {
         display: grid;
-        grid-template-rows: 35px auto;
+        grid-template-rows: 30px auto;
         padding: 0 1em;
     }
 
     .popup-controls {
         display: flex;
-        padding: 10px 0 5px 0;
+        padding: 8px 0 2px 0;
         user-select: none;
         justify-content: space-between;
         gap: 1em;

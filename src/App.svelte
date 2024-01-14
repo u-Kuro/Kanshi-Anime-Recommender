@@ -1374,7 +1374,7 @@
 		if ($listUpdateAvailable && shouldUpdate) {
 			updateList();
 		}
-		isBelowNav = document.documentElement.scrollTop > 45;
+		isBelowNav = document.documentElement.scrollTop > 54;
 		if (animeGridEl?.getBoundingClientRect?.()?.top < 0 && !willExit)
 			window.setShouldGoBack(false);
 		runIsScrolling.update((e) => !e);
@@ -1813,7 +1813,7 @@
 	}
 	main {
 		width: 100%;
-		min-height: calc(100vh - 48px);
+		min-height: calc(100vh - 57px);
 		overflow-x: clip;
 	}
 	main.android {
@@ -1825,9 +1825,9 @@
 		}
 	}
 	.home {
-		height: calc(100% - 48px) !important;
+		height: calc(100% - 57px) !important;
 		width: 100%;
-		margin: 48px auto 0 !important;
+		margin: 57px auto 0 !important;
 		max-width: 1140px;
 		padding-left: 50px;
 		padding-right: 50px;
@@ -1855,7 +1855,7 @@
 		.progress {
 			position: absolute;
 			height: 1px !important;
-			top: 46px !important;
+			top: 55px !important;
 			z-index: 1000;
 		}
 		.progress.is-below-absolute-progress {
