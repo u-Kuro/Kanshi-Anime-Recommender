@@ -1345,16 +1345,23 @@
 	menuVisible.subscribe((val) => {
 		if (val === true) window.setShouldGoBack(false);
 	});
+	let maxWindowHeight = 0;
+	let lastWindowHeight = (maxWindowHeight =
+		Math.max(window.visualViewport.height, window.innerHeight) || 0);
 	let scrollBarWidth = getScrollbarWidth();
 	let hasNoScrollWidth = scrollBarWidth != null && scrollBarWidth <= 0;
+	let isShowingMainScroll;
 	popupVisible.subscribe((val) => {
+		let currentWindowHeight =
+			Math.max(window.visualViewport.height, window.innerHeight) || 0;
 		if (val === true) {
-			if (hasNoScrollWidth) {
+			if (hasNoScrollWidth && currentWindowHeight >= maxWindowHeight) {
 				addClass(document?.documentElement, "hide-scrollbar");
 			}
 			addClass(document?.documentElement, "popup-visible");
 			window.setShouldGoBack(false);
 		} else if (val === false) {
+			isShowingMainScroll = true;
 			if (hasNoScrollWidth) {
 				removeClass(document?.documentElement, "hide-scrollbar");
 			}
@@ -1365,10 +1372,21 @@
 			if ($listUpdateAvailable && shouldUpdate) {
 				updateList();
 			}
+			isShowingMainScroll = false;
 		}
 	});
 	let isBelowNav = false;
 	window.addEventListener("scroll", () => {
+		if (hasNoScrollWidth && $popupVisible) {
+			let currentWindowHeight =
+				Math.max(window.visualViewport.height, window.innerHeight) || 0;
+			if (
+				currentWindowHeight >= maxWindowHeight &&
+				!isShowingMainScroll
+			) {
+				addClass(document?.documentElement, "hide-scrollbar");
+			}
+		}
 		let shouldUpdate =
 			animeGridEl?.getBoundingClientRect?.()?.top > 0 && !$popupVisible;
 		if ($listUpdateAvailable && shouldUpdate) {
@@ -1640,9 +1658,6 @@
 			window.visualViewport.width,
 			window.innerWidth,
 		);
-		let maxWindowHeight = 0;
-		let lastWindowHeight = (maxWindowHeight =
-			Math.max(window.visualViewport.height, window.innerHeight) || 0);
 		window.addEventListener("resize", () => {
 			let newWindowHeight =
 				Math.max(window.visualViewport.height, window.innerHeight) || 0;

@@ -603,7 +603,7 @@
         -moz-transform: translateZ(0);
         -o-transform: translateZ(0);
         position: fixed;
-        padding-top: 57px;
+        padding-top: 65px;
         top: 0;
         width: 100%;
         height: 100%;
