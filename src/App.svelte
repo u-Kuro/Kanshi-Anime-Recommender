@@ -1367,6 +1367,8 @@
 				window.innerHeight || 0,
 			) || 0;
 		if (val === true) {
+			maxWindowHeight =
+				Math.max(maxWindowHeight, currentWindowHeight) || 0;
 			if (hasNoScrollWidth && currentWindowHeight >= maxWindowHeight) {
 				addClass(document?.documentElement, "hide-scrollbar");
 			}
@@ -1400,6 +1402,8 @@
 			) {
 				addClass(document?.documentElement, "hide-scrollbar");
 			}
+			maxWindowHeight =
+				Math.max(maxWindowHeight, currentWindowHeight) || 0;
 		}
 		let shouldUpdate =
 			animeGridEl?.getBoundingClientRect?.()?.top > 0 && !$popupVisible;
@@ -1693,6 +1697,9 @@
 						window?.onfocusUsernameInput?.();
 					}
 				}
+			}
+			if (newWindowHeight >= maxWindowHeight && !isShowingMainScroll) {
+				addClass(document?.documentElement, "hide-scrollbar");
 			}
 			lastWindowHeight = newWindowHeight;
 			maxWindowHeight = Math.max(maxWindowHeight, newWindowHeight) || 0;
