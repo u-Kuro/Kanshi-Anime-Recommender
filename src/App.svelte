@@ -1361,17 +1361,17 @@
 	let hasNoScrollWidth = scrollBarWidth != null && scrollBarWidth <= 0;
 	let isShowingMainScroll;
 	popupVisible.subscribe((val) => {
-		let currentWindowHeight =
-			Math.max(
-				window.visualViewport?.height || 0,
-				window.innerHeight || 0,
-			) || 0;
 		if (val === true) {
-			maxWindowHeight =
-				Math.max(maxWindowHeight, currentWindowHeight) || 0;
+			let currentWindowHeight =
+				Math.max(
+					window.visualViewport?.height || 0,
+					window.innerHeight || 0,
+				) || 0;
 			if (hasNoScrollWidth && currentWindowHeight >= maxWindowHeight) {
 				addClass(document?.documentElement, "hide-scrollbar");
 			}
+			maxWindowHeight =
+				Math.max(maxWindowHeight, currentWindowHeight) || 0;
 			addClass(document?.documentElement, "popup-visible");
 			window?.setShouldGoBack?.(false);
 		} else if (val === false) {
