@@ -1698,7 +1698,12 @@
 					}
 				}
 			}
-			if (newWindowHeight >= maxWindowHeight && !isShowingMainScroll) {
+			if (
+				hasNoScrollWidth &&
+				$popupVisible &&
+				newWindowHeight >= maxWindowHeight &&
+				!isShowingMainScroll
+			) {
 				addClass(document?.documentElement, "hide-scrollbar");
 			}
 			lastWindowHeight = newWindowHeight;
