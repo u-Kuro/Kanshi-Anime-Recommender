@@ -23,7 +23,6 @@
 		ncsCompare,
 		removeLocalStorage,
 		setLocalStorage,
-		getScrollbarWidth,
 		addClass,
 		removeClass,
 	} from "./js/others/helper.js";
@@ -1351,45 +1350,11 @@
 	menuVisible.subscribe((val) => {
 		if (val === true) window.setShouldGoBack?.(false);
 	});
-	let maxWindowHeight = 0;
-	let lastWindowHeight = (maxWindowHeight =
-		Math?.max?.(
-			window.visualViewport?.height || 0,
-			window.innerHeight || 0,
-		) || 0);
-	let scrollBarWidth = getScrollbarWidth();
-	let hasNoScrollWidth = scrollBarWidth != null && scrollBarWidth <= 0;
-	let isShowingMainScroll;
 	popupVisible.subscribe((val) => {
 		if (val === true) {
-			let currentWindowHeight =
-				Math.max(
-					window.visualViewport?.height || 0,
-					window.innerHeight || 0,
-				) || 0;
-			console.log({
-				addno: 1,
-				hasNoScrollWidth,
-				currentWindowHeight,
-				maxWindowHeight,
-			});
-			if (hasNoScrollWidth && currentWindowHeight >= maxWindowHeight) {
-				addClass(document?.documentElement, "hide-scrollbar");
-			}
-			maxWindowHeight =
-				Math.max(maxWindowHeight, currentWindowHeight) || 0;
 			addClass(document?.documentElement, "popup-visible");
 			window?.setShouldGoBack?.(false);
 		} else if (val === false) {
-			isShowingMainScroll = true;
-			console.log({
-				removeno: 1,
-				hasNoScrollWidth,
-				maxWindowHeight,
-			});
-			if (hasNoScrollWidth) {
-				removeClass(document?.documentElement, "hide-scrollbar");
-			}
 			removeClass(document?.documentElement, "popup-visible");
 			let shouldUpdate =
 				animeGridEl?.getBoundingClientRect?.()?.top > 0 &&
@@ -1397,31 +1362,10 @@
 			if ($listUpdateAvailable && shouldUpdate) {
 				updateList();
 			}
-			isShowingMainScroll = false;
 		}
 	});
 	let isBelowNav = false;
 	window.addEventListener?.("scroll", () => {
-		if (hasNoScrollWidth && $popupVisible) {
-			let currentWindowHeight = Math?.max?.(
-				window.visualViewport?.height || 0,
-				window.innerHeight || 0,
-			);
-			console.log({
-				addno: 2,
-				hasNoScrollWidth,
-				currentWindowHeight,
-				maxWindowHeight,
-			});
-			if (
-				currentWindowHeight >= maxWindowHeight &&
-				!isShowingMainScroll
-			) {
-				addClass(document?.documentElement, "hide-scrollbar");
-			}
-			maxWindowHeight =
-				Math.max(maxWindowHeight, currentWindowHeight) || 0;
-		}
 		let shouldUpdate =
 			animeGridEl?.getBoundingClientRect?.()?.top > 0 && !$popupVisible;
 		if ($listUpdateAvailable && shouldUpdate) {
@@ -1693,6 +1637,12 @@
 			window?.visualViewport?.width || 0,
 			window?.innerWidth || 0,
 		);
+		let maxWindowHeight = 0;
+		let lastWindowHeight = (maxWindowHeight =
+			Math?.max?.(
+				window.visualViewport?.height || 0,
+				window.innerHeight || 0,
+			) || 0);
 		window.addEventListener("resize", () => {
 			let newWindowHeight = Math.max(
 				window?.visualViewport?.height || 0,
@@ -1714,20 +1664,6 @@
 						window?.onfocusUsernameInput?.();
 					}
 				}
-			}
-			console.log({
-				addno: 3,
-				hasNoScrollWidth,
-				newWindowHeight,
-				maxWindowHeight,
-			});
-			if (
-				hasNoScrollWidth &&
-				$popupVisible &&
-				newWindowHeight >= maxWindowHeight &&
-				!isShowingMainScroll
-			) {
-				addClass(document?.documentElement, "hide-scrollbar");
 			}
 			lastWindowHeight = newWindowHeight;
 			maxWindowHeight = Math.max(maxWindowHeight, newWindowHeight) || 0;
@@ -1852,10 +1788,6 @@
 		:global(html::-webkit-scrollbar-track) {
 			background: transparent;
 		}
-	}
-	:global(html.hide-scrollbar) {
-		overflow: hidden !important;
-		scrollbar-gutter: auto !important;
 	}
 	main {
 		width: 100%;
