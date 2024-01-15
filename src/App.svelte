@@ -1367,6 +1367,12 @@
 					window.visualViewport?.height || 0,
 					window.innerHeight || 0,
 				) || 0;
+			console.log({
+				addno: 1,
+				hasNoScrollWidth,
+				currentWindowHeight,
+				maxWindowHeight,
+			});
 			if (hasNoScrollWidth && currentWindowHeight >= maxWindowHeight) {
 				addClass(document?.documentElement, "hide-scrollbar");
 			}
@@ -1376,6 +1382,11 @@
 			window?.setShouldGoBack?.(false);
 		} else if (val === false) {
 			isShowingMainScroll = true;
+			console.log({
+				removeno: 1,
+				hasNoScrollWidth,
+				maxWindowHeight,
+			});
 			if (hasNoScrollWidth) {
 				removeClass(document?.documentElement, "hide-scrollbar");
 			}
@@ -1396,6 +1407,12 @@
 				window.visualViewport?.height || 0,
 				window.innerHeight || 0,
 			);
+			console.log({
+				addno: 2,
+				hasNoScrollWidth,
+				currentWindowHeight,
+				maxWindowHeight,
+			});
 			if (
 				currentWindowHeight >= maxWindowHeight &&
 				!isShowingMainScroll
@@ -1698,6 +1715,12 @@
 					}
 				}
 			}
+			console.log({
+				addno: 3,
+				hasNoScrollWidth,
+				newWindowHeight,
+				maxWindowHeight,
+			});
 			if (
 				hasNoScrollWidth &&
 				$popupVisible &&
