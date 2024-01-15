@@ -1,4 +1,11 @@
 <script>
+    import { onMount, tick } from "svelte";
+    import { animeLoader } from "../../js/workerUtils.js";
+    import {
+        getElementWidth,
+        getLocalStorage,
+        trimAllEmptyChar,
+    } from "../../js/others/helper.js";
     import {
         confirmPromise,
         customFilters,
@@ -20,13 +27,6 @@
         isBackgroundUpdateKey,
         menuVisible,
     } from "../../js/globalValues.js";
-    import { onMount, tick } from "svelte";
-    import {
-        getElementWidth,
-        getLocalStorage,
-        trimAllEmptyChar,
-    } from "../../js/others/helper.js";
-    import { animeLoader } from "../../js/workerUtils.js";
 
     let customFiltersNav;
     let customFiltersNavVisible;
@@ -120,7 +120,7 @@
                         $finalAnimeList = $finalAnimeList?.slice?.(
                             0,
                             Math.min(
-                                window.getLastShownFinalAnimeLength() || 0,
+                                window.getLastShownFinalAnimeLength?.() || 0,
                                 data.finalAnimeListCount,
                             ),
                         );

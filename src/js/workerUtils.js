@@ -1,3 +1,6 @@
+import { get } from "svelte/store";
+import { cacheRequest } from "./caching.js";
+import { downloadLink, isJsonObject, removeLocalStorage, setLocalStorage, showToast, } from "../js/others/helper.js"
 import {
     dataStatus,
     updateRecommendationList,
@@ -26,12 +29,10 @@ import {
     isProcessingList,
     loadingDataStatus,
     isBackgroundUpdateKey
-} from "./globalValues";
-import { get } from "svelte/store";
-import { downloadLink, isJsonObject, removeLocalStorage, setLocalStorage, showToast, } from "../js/others/helper.js"
-import { cacheRequest } from "./caching";
+} from "./globalValues.js";
 
-let windowLocation = JSON.parse(JSON.stringify(window.location))
+
+let windowLocation = JSON.parse(JSON.stringify(window?.location))
 let terminateDelay = 1000;
 let dataStatusPrio = false
 let isExporting = false;
@@ -322,7 +323,7 @@ const requestAnimeEntries = (_data = {}) => {
                     requestAnimeEntriesWorker = null
                 }
                 requestAnimeEntriesWorker = new Worker(url)
-                _data.windowLocation = windowLocation || JSON.parse(JSON.stringify(window.location))
+                _data.windowLocation = windowLocation || JSON.parse(JSON.stringify(window?.location))
                 requestAnimeEntriesWorker.postMessage(_data)
                 isRequestingAnimeEntries = true
                 requestAnimeEntriesWorker.onmessage = ({ data }) => {
@@ -438,7 +439,7 @@ const requestUserEntries = (_data = {}) => {
                 }
                 requestUserEntriesWorker = new Worker(url)
                 userRequestIsRunning.set(true)
-                _data.windowLocation = windowLocation || JSON.parse(JSON.stringify(window.location))
+                _data.windowLocation = windowLocation || JSON.parse(JSON.stringify(window?.location))
                 requestUserEntriesWorker.postMessage(_data)
                 requestUserEntriesWorker.onmessage = ({ data }) => {
                     if (data?.hasOwnProperty("progress")) {
@@ -450,7 +451,7 @@ const requestUserEntries = (_data = {}) => {
                             dataStatus.set(data.status)
                         }
                     } else if (data?.error) {
-                        window.confirmPromise({
+                        window.confirmPromise?.({
                             isAlert: true,
                             text: "Failed retrieval, " + (data?.error?.toLowerCase?.() || "please try again") + ".",
                         })

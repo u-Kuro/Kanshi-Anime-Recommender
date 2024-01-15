@@ -1,6 +1,6 @@
-import { isAndroid } from "./others/helper"
 import { get } from "svelte/store"
-import { appID, dataStatus, progress } from "./globalValues"
+import { isAndroid } from "./others/helper.js"
+import { appID, dataStatus, progress } from "./globalValues.js"
 
 let loadedRequestUrlPromises = {}
 let loadedRequestUrls = {}

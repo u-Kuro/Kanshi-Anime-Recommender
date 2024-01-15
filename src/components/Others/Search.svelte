@@ -1,6 +1,24 @@
 <script>
     import { onMount, tick } from "svelte";
+    import { fade } from "svelte/transition";
     import { retrieveJSON, saveJSON } from "../../js/indexedDB.js";
+    import {
+        animeLoader,
+        getExtraInfo,
+        processRecommendedAnimeList,
+    } from "../../js/workerUtils.js";
+    import {
+        addClass,
+        changeInputValue,
+        dragScroll,
+        removeClass,
+        getLocalStorage,
+        trimAllEmptyChar,
+        isJsonObject,
+        jsonIsEmpty,
+        setLocalStorage,
+        removeLocalStorage,
+    } from "../../js/others/helper.js";
     import {
         android,
         finalAnimeList,
@@ -32,24 +50,6 @@
         isBackgroundUpdateKey,
         menuVisible,
     } from "../../js/globalValues.js";
-    import { fade } from "svelte/transition";
-    import {
-        addClass,
-        changeInputValue,
-        dragScroll,
-        removeClass,
-        getLocalStorage,
-        trimAllEmptyChar,
-        isJsonObject,
-        jsonIsEmpty,
-        setLocalStorage,
-        removeLocalStorage,
-    } from "../../js/others/helper.js";
-    import {
-        animeLoader,
-        getExtraInfo,
-        processRecommendedAnimeList,
-    } from "../../js/workerUtils.js";
 
     let Init = true;
 
@@ -2188,6 +2188,7 @@
             style:pointer-events={editCustomFilterName ? "" : "none"}
             disabled={!editCustomFilterName}
             bind:value={customFilterName}
+            on:focusin={() => window?.setShouldGoBack?.(false)}
         />
         {#if !editCustomFilterName || !$showFilterOptions}
             <div
@@ -2586,6 +2587,8 @@
                                     disabled={!$showFilterOptions ||
                                         windowWidth <= 425 ||
                                         !filterSelection.isSelected}
+                                    on:focusin={() =>
+                                        window?.setShouldGoBack?.(false)}
                                 />
                             </div>
                             {#if Dropdown.selected && Dropdown.options.length && !Init}
@@ -2685,6 +2688,8 @@
                                     disabled={!$showFilterOptions ||
                                         !filterSelection.isSelected ||
                                         !Dropdown.selected}
+                                    on:focusin={() =>
+                                        window?.setShouldGoBack?.(false)}
                                 />
                                 <div
                                     class="options"
@@ -2975,6 +2980,8 @@
                                             filterSelection.filterSelectionName,
                                         )}
                                     disabled={!$showFilterOptions}
+                                    on:focusin={() =>
+                                        window?.setShouldGoBack?.(false)}
                                 />
                             </div>
                         </div>
@@ -3154,6 +3161,7 @@
             placeholder="Search"
             tabindex={$menuVisible || $popupVisible ? "-1" : "0"}
             bind:value={$searchedAnimeKeyword}
+            on:focusin={() => window?.setShouldGoBack?.(false)}
         />
     </div>
 

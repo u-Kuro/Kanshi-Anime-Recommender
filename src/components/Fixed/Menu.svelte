@@ -1,4 +1,14 @@
 <script>
+    import { onMount } from "svelte";
+    import { saveJSON } from "../../js/indexedDB.js";
+    import { animeLoader, importUserData } from "../../js/workerUtils.js";
+    import {
+        jsonIsEmpty,
+        removeLocalStorage,
+        setLocalStorage,
+        removeClass,
+        addClass,
+    } from "../../js/others/helper.js";
     import {
         android,
         menuVisible,
@@ -20,16 +30,6 @@
         username,
         isBackgroundUpdateKey,
     } from "../../js/globalValues.js";
-    import { saveJSON } from "../../js/indexedDB.js";
-    import { animeLoader, importUserData } from "../../js/workerUtils.js";
-    import {
-        jsonIsEmpty,
-        removeLocalStorage,
-        setLocalStorage,
-        removeClass,
-        addClass,
-    } from "../../js/others/helper.js";
-    import { onMount } from "svelte";
 
     let menuContainerEl, navContainerEl;
     let importFileInput;
@@ -212,7 +212,8 @@
                             $finalAnimeList = $finalAnimeList?.slice?.(
                                 0,
                                 Math.min(
-                                    window.getLastShownFinalAnimeLength() || 0,
+                                    window.getLastShownFinalAnimeLength?.() ||
+                                        0,
                                     data.finalAnimeListCount,
                                 ),
                             );
@@ -455,10 +456,22 @@
 
     menuVisible.subscribe((val) => {
         if (val) {
-            addClass(navContainerEl, "hide");
-            removeClass(navContainerEl, "hide");
-            addClass(menuContainerEl, "visible");
-            removeClass(menuContainerEl, "hide");
+            if (document?.documentElement?.scrollTop <= 0 || $popupVisible) {
+                removeClass(navContainerEl, "hide");
+                addClass(menuContainerEl, "visible");
+                removeClass(menuContainerEl, "hide");
+            } else {
+                requestAnimationFrame(() => {
+                    addClass(navContainerEl, "stop-transition");
+                    addClass(navContainerEl, "hide");
+                    requestAnimationFrame(() => {
+                        removeClass(navContainerEl, "stop-transition");
+                        removeClass(navContainerEl, "hide");
+                        addClass(menuContainerEl, "visible");
+                        removeClass(menuContainerEl, "hide");
+                    });
+                });
+            }
         } else {
             if (!$popupVisible && document.documentElement.scrollTop > 0) {
                 addClass(navContainerEl, "hide");
@@ -603,8 +616,7 @@
         -moz-transform: translateZ(0);
         -o-transform: translateZ(0);
         position: fixed;
-        padding-top: 65px;
-        top: 0;
+        top: 57px;
         width: 100%;
         height: 100%;
         background-color: var(--ol-color);

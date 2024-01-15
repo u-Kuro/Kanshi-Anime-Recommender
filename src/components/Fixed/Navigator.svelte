@@ -1,4 +1,12 @@
 <script>
+    import { onMount, onDestroy } from "svelte";
+    import { requestUserEntries } from "../../js/workerUtils.js";
+    import {
+        addClass,
+        removeClass,
+        removeLocalStorage,
+        setLocalStorage,
+    } from "../../js/others/helper.js";
     import {
         username,
         dataStatus,
@@ -12,14 +20,6 @@
         userRequestIsRunning,
         android,
     } from "../../js/globalValues.js";
-    import {
-        addClass,
-        removeClass,
-        removeLocalStorage,
-        setLocalStorage,
-    } from "../../js/others/helper.js";
-    import { requestUserEntries } from "../../js/workerUtils.js";
-    import { onMount, onDestroy } from "svelte";
 
     let writableSubscriptions = [];
     let typedUsername = "";
@@ -329,6 +329,8 @@
     }
 
     let delayedPopupVis, delayedMenuVis;
+    $: navHasNoBackOption =
+        !$menuVisible && !$popupVisible && !inputUsernameElFocused;
     popupVisible.subscribe((val) => {
         if (!val && !$menuVisible) {
             if (!inputUsernameElFocused) {
@@ -337,9 +339,16 @@
             setTimeout(() => {
                 delayedPopupVis = val;
                 removeClass(navContainerEl, "layout-change");
-            }, 200);
+            }, 100);
         } else {
             delayedPopupVis = val;
+            if (navHasNoBackOption && (val || $menuVisible)) {
+                addClass(navContainerEl, "layout-change");
+                setTimeout(() => {
+                    delayedPopupVis = val;
+                    removeClass(navContainerEl, "layout-change");
+                }, 100);
+            }
         }
     });
 
@@ -351,16 +360,34 @@
             setTimeout(() => {
                 delayedMenuVis = val;
                 removeClass(navContainerEl, "layout-change");
-            }, 200);
+            }, 100);
         } else {
             delayedMenuVis = val;
+            if (navHasNoBackOption && (val || $popupVisible)) {
+                addClass(navContainerEl, "layout-change");
+                setTimeout(() => {
+                    removeClass(navContainerEl, "layout-change");
+                }, 100);
+            }
         }
     });
 
-    let onFocusTimeout;
+    let onFocusTimeout, currentUsernameInputFocusStatus;
     function onfocusUsernameInput(event) {
+        let eventType = event?.type;
+        let isFocusIn = eventType === "focusin";
+        if (isFocusIn) {
+            window?.setShouldGoBack?.(false);
+        }
+        if (
+            currentUsernameInputFocusStatus != null &&
+            (isFocusIn ? inputUsernameElFocused : !inputUsernameElFocused)
+        ) {
+            return;
+        }
+        currentUsernameInputFocusStatus = eventType ?? "focusout";
         clearTimeout(onFocusTimeout);
-        if (event.type === "focusin") {
+        if (isFocusIn) {
             inputUsernameElFocused = true;
             if (!$menuVisible && !$popupVisible) {
                 addClass(navContainerEl, "layout-change");
@@ -368,27 +395,33 @@
             onFocusTimeout = setTimeout(() => {
                 addClass(navEl, "inputfocused");
                 removeClass(navContainerEl, "layout-change");
-            }, 200);
+                currentUsernameInputFocusStatus = null;
+            }, 100);
         } else {
+            if (!$menuVisible && !$popupVisible && navHasNoBackOption) {
+                addClass(navContainerEl, "layout-change");
+            }
             onFocusTimeout = setTimeout(() => {
-                if (!$menuVisible && !$popupVisible) {
-                    addClass(navContainerEl, "layout-change");
-                }
-                clearTimeout(onFocusTimeout);
-                onFocusTimeout = setTimeout(() => {
-                    removeClass(navEl, "inputfocused");
-                    inputUsernameElFocused = false;
-                    removeClass(navContainerEl, "layout-change");
-                }, 200);
+                removeClass(navEl, "inputfocused");
+                inputUsernameElFocused = false;
+                removeClass(navContainerEl, "layout-change");
+                currentUsernameInputFocusStatus = null;
             }, 100);
         }
     }
+    window.onfocusUsernameInput = onfocusUsernameInput;
 </script>
 
 <div
     id="nav-container"
     bind:this={navContainerEl}
-    class={"nav-container" + (delayedMenuVis ? " menu-visible" : "")}
+    class={"nav-container" +
+        (delayedMenuVis ? " menu-visible" : "") +
+        (delayedMenuVis ||
+        delayedPopupVis ||
+        (!navHasNoBackOption && ($popupVisible || $menuVisible))
+            ? " delayed-full-screen-popup"
+            : "")}
     on:keyup={(e) => e.key === "Enter" && handleMenuVisibility(e)}
     on:click={handleMenuVisibility}
 >
@@ -398,7 +431,6 @@
         id="nav"
         class={"nav " +
             (delayedPopupVis ? " popupvisible" : "") +
-            (delayedMenuVis ? " menu-visible" : "") +
             (inputUsernameEl === document?.activeElement
                 ? " inputfocused"
                 : "")}
@@ -511,6 +543,9 @@
         opacity: 1;
         transition: opacity 0.2s ease;
     }
+    .nav-container.stop-transition {
+        transition: unset !important;
+    }
     .nav-container.hide {
         opacity: 0;
     }
@@ -546,6 +581,7 @@
         justify-self: left;
         align-items: center;
         max-width: min(185px, 100%);
+        opacity: 1;
     }
     #usernameInput {
         outline: none;
@@ -578,6 +614,15 @@
         -o-transform: translateY(-99999px) translateZ(0);
         position: fixed;
     }
+    input[type="search"]::-webkit-search-cancel-button {
+        opacity: 1;
+        transition: opacity 0.1s ease;
+        animation: fadeIn 0.1s ease;
+    }
+    .nav-container.layout-change
+        input[type="search"]::-webkit-search-cancel-button {
+        opacity: 0;
+    }
     #usernameInput::-webkit-search-cancel-button {
         font-size: 1.5rem;
     }
@@ -589,6 +634,12 @@
     .goback,
     .closing-x {
         display: none;
+        height: 24px;
+        width: 24px;
+        align-items: center;
+        color: var(--fg-color);
+        cursor: pointer;
+        animation: fadeIn 0.1s ease;
     }
     .nav.popupvisible .closing-x,
     .nav-container.menu-visible .closing-x {
@@ -600,18 +651,11 @@
     .nav.inputfocused .goback {
         display: flex;
     }
-    .goback,
-    .closing-x {
-        height: 24px;
-        width: 24px;
-        align-items: center;
-        color: var(--fg-color);
-        cursor: pointer;
-    }
     .go-back-container {
-        animation: fadeIn 0.2s ease;
         display: none;
         justify-content: center;
+        opacity: 1;
+        transition: opacity 0.1s ease;
     }
     @media screen and (max-width: 425px) {
         .go-back-container {
@@ -632,7 +676,6 @@
         }
     }
     .usernameText {
-        animation: fadeIn 0.2s ease;
         display: flex;
     }
     .nav.inputfocused .usernameText {
@@ -642,8 +685,6 @@
         font-family: system-ui;
         font-size: 1.333rem;
         font-weight: 400;
-        transition: opacity 0.2s ease;
-        opacity: 0;
     }
     #usernameInput.android {
         font-size: 1.65rem;
@@ -686,7 +727,16 @@
     }
 
     @media screen and (max-width: 750px) {
-        :global(#main.delayed-full-screen-popup) > .nav-container {
+        .usernameText {
+            animation: fadeIn 0.1s ease;
+        }
+        .nav-container.layout-change .go-back-container {
+            opacity: 0;
+        }
+        .nav-container.layout-change .input-search {
+            opacity: 0;
+        }
+        .nav-container.delayed-full-screen-popup {
             position: fixed !important;
             transform: translateZ(0);
             -webkit-transform: translateZ(0);
@@ -704,10 +754,13 @@
             gap: 0 !important;
         }
         #usernameInput {
+            opacity: 0;
+            transition: opacity 0.1s ease;
             font-size: 1.5rem;
             font-weight: 500;
         }
         .input-search {
+            transition: opacity 0.1s ease;
             justify-self: start !important;
             padding-left: 1em !important;
         }
@@ -773,12 +826,6 @@
         #usernameInput::-webkit-search-cancel-button {
             display: none !important;
         }
-    }
-
-    .nav-container.layout-change .input-search,
-    .nav-container.layout-change .go-back-container {
-        transition: opacity 0.2s ease;
-        opacity: 0;
     }
 
     .display-none {

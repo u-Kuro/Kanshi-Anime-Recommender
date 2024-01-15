@@ -1,10 +1,32 @@
 <script>
-	import { inject } from "@vercel/analytics";
-	import getWebVersion from "./version";
-	import C from "./components/index.js";
 	import { onMount, tick } from "svelte";
 	import { fade } from "svelte/transition";
+	import { inject } from "@vercel/analytics";
+	import C from "./components/index.js";
+	import getWebVersion from "./version.js";
 	import { retrieveJSON, saveJSON } from "./js/indexedDB.js";
+	import {
+		getAnimeEntries,
+		getFilterOptions,
+		requestAnimeEntries,
+		requestUserEntries,
+		processRecommendedAnimeList,
+		animeLoader,
+		exportUserData,
+		getExtraInfo,
+	} from "./js/workerUtils.js";
+	import {
+		getLocalStorage,
+		isAndroid,
+		isJsonObject,
+		isMobile,
+		ncsCompare,
+		removeLocalStorage,
+		setLocalStorage,
+		getScrollbarWidth,
+		addClass,
+		removeClass,
+	} from "./js/others/helper.js";
 	import {
 		appID,
 		android,
@@ -55,28 +77,6 @@
 		visitedKey,
 		// anilistAccessToken,
 	} from "./js/globalValues.js";
-	import {
-		getAnimeEntries,
-		getFilterOptions,
-		requestAnimeEntries,
-		requestUserEntries,
-		processRecommendedAnimeList,
-		animeLoader,
-		exportUserData,
-		getExtraInfo,
-	} from "./js/workerUtils.js";
-	import {
-		getLocalStorage,
-		isAndroid,
-		isJsonObject,
-		isMobile,
-		ncsCompare,
-		removeLocalStorage,
-		setLocalStorage,
-		getScrollbarWidth,
-		addClass,
-		removeClass,
-	} from "./js/others/helper.js";
 
 	$android = isAndroid(); // Android/Browser Identifier
 	$mobile = isMobile(); // Mobile/
@@ -97,7 +97,7 @@
 						JSBridge?.notifyDataEviction?.();
 						if (
 							$isBackgroundUpdateKey &&
-							window?.[$isBackgroundUpdateKey] === true
+							window[$isBackgroundUpdateKey] === true
 						) {
 							JSBridge?.backgroundUpdateIsFinished?.(false);
 						}
@@ -107,7 +107,7 @@
 				await saveJSON(true, $visitedKey, true).then(() => {
 					try {
 						let isWebApp =
-							!window?.location?.protocol?.includes?.("file");
+							!window.location?.protocol?.includes?.("file");
 						JSBridge?.visited?.(isWebApp);
 					} catch (e) {}
 				});
@@ -128,7 +128,7 @@
 		if (
 			$android &&
 			$isBackgroundUpdateKey &&
-			window?.[$isBackgroundUpdateKey] === true
+			window[$isBackgroundUpdateKey] === true
 		) {
 			resolve();
 		} else {
@@ -159,8 +159,8 @@
 								data.finalAnimeListCount,
 							);
 						}
-						if (data?.finalAnimeList?.length > 0) {
-							data?.finalAnimeList?.forEach?.((anime, idx) => {
+						if (data.finalAnimeList?.length > 0) {
+							data.finalAnimeList?.forEach?.((anime, idx) => {
 								$newFinalAnime = {
 									idx: data.lastShownAnimeListIndex + idx,
 									finalAnimeList: anime,
@@ -310,10 +310,10 @@
 						}
 						if (
 							$android &&
-							window?.shouldUpdateNotifications === true &&
+							window.shouldUpdateNotifications === true &&
 							!(
 								$isBackgroundUpdateKey &&
-								window?.[$isBackgroundUpdateKey] === true
+								window[$isBackgroundUpdateKey] === true
 							)
 						) {
 							window.shouldUpdateNotifications = false;
@@ -356,7 +356,7 @@
 					if (
 						$android &&
 						$isBackgroundUpdateKey &&
-						window?.[$isBackgroundUpdateKey] === true
+						window[$isBackgroundUpdateKey] === true
 					) {
 						try {
 							let dataIsUpdated;
@@ -538,7 +538,7 @@
 										"number" &&
 									!isNaN(neareastAnimeCompletionAiringAt)
 								) {
-									window?.setAnimeCompletionUpdateTimeout?.(
+									window.setAnimeCompletionUpdateTimeout?.(
 										neareastAnimeCompletionAiringAt,
 									);
 									let neareastAnimeCompletionAiringDate =
@@ -682,12 +682,14 @@
 		loadAnalytics();
 	}
 
-	let windowWidth = Math.max(
-		document?.documentElement?.getBoundingClientRect?.()?.width,
-		window.visualViewport.width,
-		window.innerWidth,
-	);
-	let usernameInputEl, animeGridEl;
+	let windowWidth =
+		Math.max(
+			window.document?.documentElement?.getBoundingClientRect?.()
+				?.width || 0,
+			window.visualViewport?.width || 0,
+			window.innerWidth || 0,
+		) || 0;
+	let animeGridEl;
 
 	$dataStatus = "Retrieving Some Data";
 	let pleaseWaitStatusInterval = setInterval(() => {
@@ -705,7 +707,7 @@
 		visibilityChange = false,
 	) {
 		if ($appID == null) {
-			window?.kanshiInit?.then?.(() => {
+			window.kanshiInit?.then?.(() => {
 				checkAutoFunctions(initCheck);
 			});
 		} else if (initCheck) {
@@ -951,7 +953,7 @@
 		}).then((thisShouldLoadAnime) => {
 			let isAlreadyLoaded = !shouldLoadAnime && !thisShouldLoadAnime;
 			runLoadAnime(isAlreadyLoaded ? { loadInit: true } : {}).finally(
-				() => window?.checkEntries?.(),
+				() => window.checkEntries?.(),
 			);
 		});
 	};
@@ -1184,12 +1186,12 @@
 		checkAutoFunctions(false, true);
 	});
 
-	if ("scrollRestoration" in window.history) {
+	if (window?.history) {
 		window.history.scrollRestoration = "manual"; // Disable scrolling to top when navigating back
 	}
 	let windowWheel = () => {
 		$hasWheel = true;
-		window.removeEventListener("wheel", windowWheel, { passive: true });
+		window.removeEventListener?.("wheel", windowWheel, { passive: true });
 	};
 	window.addEventListener("wheel", windowWheel, { passive: true });
 	window.checkEntries = async () => {
@@ -1197,7 +1199,7 @@
 		if (
 			$android &&
 			$isBackgroundUpdateKey &&
-			window?.[$isBackgroundUpdateKey] === true
+			window[$isBackgroundUpdateKey] === true
 		)
 			return;
 		if ($autoUpdate == null) {
@@ -1234,34 +1236,38 @@
 		}
 		checkAutoFunctions(false, true);
 	};
-	window.addEventListener("popstate", () => {
-		window.backPressed();
+	window?.addEventListener?.("popstate", () => {
+		window.backPressed?.();
 	});
 
 	let willExit = false,
 		exitScrollTimeout;
 	window.backPressed = () => {
 		if ($shouldGoBack && !$android) {
-			window.history.go(-1); // Only in Browser
+			window.history?.go?.(-1); // Only in Browser
 		} else {
 			if (!$android) {
-				window.history.pushState("visited", ""); // Push Popped State
+				window.history?.pushState?.("visited", ""); // Push Popped State
 			}
+			let activeElement = document?.activeElement;
 			if ($confirmIsVisible) {
 				handleConfirmationCancelled();
 				$confirmIsVisible = false;
 				willExit = false;
 				return;
 			} else if (
-				usernameInputEl &&
-				usernameInputEl === document?.activeElement &&
+				["INPUT", "TEXTAREA"].includes(activeElement?.tagName) &&
 				Math.max(
-					document?.documentElement?.getBoundingClientRect?.()?.width,
-					window.innerWidth,
+					document?.documentElement?.getBoundingClientRect?.()
+						?.width || 0,
+					window.visualViewport?.width || 0,
+					window.innerWidth || 0,
 				) <= 750
 			) {
-				usernameInputEl?.focus?.();
-				usernameInputEl?.blur?.();
+				activeElement?.blur?.();
+				if (activeElement?.id === "usernameInput") {
+					window.onfocusUsernameInput?.();
+				}
 				willExit = false;
 				return;
 			} else if ($menuVisible) {
@@ -1291,12 +1297,12 @@
 					animeGridEl.style.overflow = "";
 					animeGridEl.scroll({ left: 0, behavior: "smooth" });
 				} else {
-					window?.showCustomFilterNav?.(true);
+					window.showCustomFilterNav?.(true);
 					if ($android || !matchMedia("(hover:hover)").matches) {
 						document.documentElement.style.overflow = "hidden";
 						document.documentElement.style.overflow = "";
 					}
-					window.scrollTo({ top: -9999, behavior: "smooth" });
+					window.scrollTo?.({ top: -9999, behavior: "smooth" });
 				}
 				return;
 			} else {
@@ -1308,7 +1314,7 @@
 						animeGridEl.style.overflow = "";
 					}, 100);
 				} else {
-					window?.showCustomFilterNav?.(true);
+					window.showCustomFilterNav?.(true);
 					if ($android || !matchMedia("(hover:hover)").matches) {
 						document.documentElement.style.overflow = "hidden";
 					}
@@ -1325,7 +1331,7 @@
 				try {
 					JSBridge?.willExit?.();
 				} catch (e) {}
-				window.setShouldGoBack(true);
+				window.setShouldGoBack?.(true);
 				willExit = false;
 			}
 		}
@@ -1334,32 +1340,38 @@
 		await tick();
 		if (val) {
 			if (animeGridEl?.scrollLeft > 500) {
-				window.setShouldGoBack(false);
+				window.setShouldGoBack?.(false);
 			}
 		} else {
 			if (animeGridEl?.getBoundingClientRect?.()?.top < 0) {
-				window.setShouldGoBack(false);
+				window.setShouldGoBack?.(false);
 			}
 		}
 	});
 	menuVisible.subscribe((val) => {
-		if (val === true) window.setShouldGoBack(false);
+		if (val === true) window.setShouldGoBack?.(false);
 	});
 	let maxWindowHeight = 0;
 	let lastWindowHeight = (maxWindowHeight =
-		Math.max(window.visualViewport.height, window.innerHeight) || 0);
+		Math?.max?.(
+			window.visualViewport?.height || 0,
+			window.innerHeight || 0,
+		) || 0);
 	let scrollBarWidth = getScrollbarWidth();
 	let hasNoScrollWidth = scrollBarWidth != null && scrollBarWidth <= 0;
 	let isShowingMainScroll;
 	popupVisible.subscribe((val) => {
 		let currentWindowHeight =
-			Math.max(window.visualViewport.height, window.innerHeight) || 0;
+			Math.max(
+				window.visualViewport?.height || 0,
+				window.innerHeight || 0,
+			) || 0;
 		if (val === true) {
 			if (hasNoScrollWidth && currentWindowHeight >= maxWindowHeight) {
 				addClass(document?.documentElement, "hide-scrollbar");
 			}
 			addClass(document?.documentElement, "popup-visible");
-			window.setShouldGoBack(false);
+			window?.setShouldGoBack?.(false);
 		} else if (val === false) {
 			isShowingMainScroll = true;
 			if (hasNoScrollWidth) {
@@ -1376,10 +1388,12 @@
 		}
 	});
 	let isBelowNav = false;
-	window.addEventListener("scroll", () => {
+	window.addEventListener?.("scroll", () => {
 		if (hasNoScrollWidth && $popupVisible) {
-			let currentWindowHeight =
-				Math.max(window.visualViewport.height, window.innerHeight) || 0;
+			let currentWindowHeight = Math?.max?.(
+				window.visualViewport?.height || 0,
+				window.innerHeight || 0,
+			);
 			if (
 				currentWindowHeight >= maxWindowHeight &&
 				!isShowingMainScroll
@@ -1393,8 +1407,9 @@
 			updateList();
 		}
 		isBelowNav = document.documentElement.scrollTop > 54;
-		if (animeGridEl?.getBoundingClientRect?.()?.top < 0 && !willExit)
-			window.setShouldGoBack(false);
+		if (animeGridEl?.getBoundingClientRect?.()?.top < 0 && !willExit) {
+			window?.setShouldGoBack?.(false);
+		}
 		runIsScrolling.update((e) => !e);
 	});
 
@@ -1405,9 +1420,9 @@
 				JSBridge?.setShouldGoBack?.(_shouldGoBack);
 			} catch (e) {}
 		} else {
-			if (window.history.state !== "visited") {
+			if (window.history?.state !== "visited") {
 				// Only Add 1 state
-				window.history.pushState("visited", "");
+				window.history?.pushState?.("visited", "");
 			}
 			$shouldGoBack = _shouldGoBack;
 		}
@@ -1456,16 +1471,16 @@
 					let text2 = target.getAttribute("copy-value-2");
 					if (text2 && !ncsCompare(text2, text)) {
 						if ($android) {
-							window.copyToClipBoard(text2);
-							window.copyToClipBoard(text);
+							window.copyToClipBoard?.(text2);
+							window.copyToClipBoard?.(text);
 						} else {
-							window.copyToClipBoard(text2);
+							window.copyToClipBoard?.(text2);
 							setTimeout(() => {
-								window.copyToClipBoard(text);
+								window.copyToClipBoard?.(text);
 							}, 300);
 						}
 					} else {
-						window.copyToClipBoard(text);
+						window.copyToClipBoard?.(text);
 					}
 				}
 			}, 500);
@@ -1610,7 +1625,7 @@
 			try {
 				JSBridge?.downloadUpdate?.();
 			} catch (e) {
-				window.open(
+				window.open?.(
 					"https://github.com/u-Kuro/Kanshi.Anime-Recommendation/raw/main/Kanshi.apk",
 					"_blank",
 				);
@@ -1640,11 +1655,10 @@
 	});
 
 	onMount(() => {
-		usernameInputEl = document.getElementById("usernameInput");
 		animeGridEl = document.getElementById("anime-grid");
 		animeGridEl?.addEventListener("scroll", () => {
 			if (animeGridEl.scrollLeft > 500 && !willExit)
-				window.setShouldGoBack(false);
+				window.setShouldGoBack?.(false);
 			if (!$gridFullView) return;
 			runIsScrolling.update((e) => !e);
 		});
@@ -1655,28 +1669,38 @@
 			});
 		windowWidth = Math.max(
 			document?.documentElement?.getBoundingClientRect?.()?.width,
-			window.visualViewport.width,
-			window.innerWidth,
+			window?.visualViewport?.width || 0,
+			window?.innerWidth || 0,
 		);
 		window.addEventListener("resize", () => {
-			let newWindowHeight =
-				Math.max(window.visualViewport.height, window.innerHeight) || 0;
+			let newWindowHeight = Math.max(
+				window?.visualViewport?.height || 0,
+				window?.innerHeight || 0,
+			);
 			let possibleVirtualKeyboardChange =
 				Math.abs(lastWindowHeight - newWindowHeight) >
 				Math.max(100, maxWindowHeight * 0.15);
 			if (possibleVirtualKeyboardChange) {
 				let isPossiblyHid = newWindowHeight > lastWindowHeight;
 				window?.showCustomFilterNav?.(isPossiblyHid, !isPossiblyHid);
-				if (isPossiblyHid) {
-					document?.activeElement?.blur?.();
+				let activeElement = document?.activeElement;
+				if (
+					isPossiblyHid &&
+					["INPUT", "TEXTAREA"].includes(activeElement?.tagName)
+				) {
+					activeElement?.blur?.();
+					if (activeElement?.id === "usernameInput") {
+						window?.onfocusUsernameInput?.();
+					}
 				}
 			}
 			lastWindowHeight = newWindowHeight;
 			maxWindowHeight = Math.max(maxWindowHeight, newWindowHeight) || 0;
 			windowWidth = Math.max(
-				document?.documentElement?.getBoundingClientRect?.()?.width,
-				window.visualViewport.width,
-				window.innerWidth,
+				document?.documentElement?.getBoundingClientRect?.()?.width ||
+					0,
+				window?.visualViewport?.width || 0,
+				window?.innerWidth || 0,
 			);
 			if (windowWidth > 750) {
 				Object.assign(
@@ -1733,37 +1757,9 @@
 			document.head.appendChild(GAscript);
 		})();
 	}
-
-	let delayedPopupVis, delayedMenuVis;
-	popupVisible.subscribe((val) => {
-		if (!val && !$menuVisible) {
-			setTimeout(() => {
-				delayedPopupVis = val;
-			}, 200);
-		} else {
-			delayedPopupVis = val;
-		}
-	});
-
-	menuVisible.subscribe((val) => {
-		if (!val && !$popupVisible) {
-			setTimeout(() => {
-				delayedMenuVis = val;
-			}, 200);
-		} else {
-			delayedMenuVis = val;
-		}
-	});
 </script>
 
-<main
-	id="main"
-	class={($popupVisible || $menuVisible ? "full-screen-popup" : "") +
-		(delayedPopupVis || delayedMenuVis
-			? " delayed-full-screen-popup"
-			: "") +
-		($android ? " android" : "")}
->
+<main id="main" class={$android ? " android" : ""}>
 	{#if _progress > 0 && _progress < 100}
 		<div
 			out:fade={{ duration: 0, delay: 400 }}
@@ -1848,7 +1844,7 @@
 		padding-right: 50px;
 	}
 	.progress.has-custom-filter-nav,
-	:global(#main.full-screen-popup) > .progress {
+	:global(.progress:has(~ #nav-container.delayed-full-screen-popup)) {
 		position: fixed !important;
 	}
 	.progress {
@@ -1882,9 +1878,15 @@
 		#main.android > #progress.is-below-absolute-progress {
 			height: 1px !important;
 		}
-		:global(#main.full-screen-popup) > .progress {
+		:global(
+				.progress:has(
+						~ #nav-container.delayed-full-screen-popup:not(
+								.layout-change
+							):not(.hide)
+					)
+			) {
 			height: 1px !important;
-			top: var(--top) !important;
+			top: 55px !important;
 			z-index: 1000 !important;
 		}
 		.home {

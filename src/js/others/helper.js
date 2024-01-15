@@ -7,22 +7,25 @@ const jsonIsEmpty = (obj) => {
   }
   return true;
 }
-const requestFrame = (fn = () => { }, delay = 16) => {
-  let start = performance.now()
-  const loop = (timestamp) => {
-    if (timestamp - start >= delay) {
-      fn?.()
-    } else {
-      requestAnimationFrame(loop)
-    }
-  }
-  requestAnimationFrame(loop)
-}
+// const requestFrame = (fn = () => { }, delay = 16) => {
+//   let start = performance.now()
+//   const loop = (timestamp) => {
+//     if (timestamp - start >= delay) {
+//       fn?.()
+//     } else {
+//       requestAnimationFrame(loop)
+//     }
+//   }
+//   requestAnimationFrame(loop)
+// }
 const roundToNearestTenth = (number) => {
-  return Math.round(number * 10) / 10;
+  return (Math.round(number * 10) / 10) || 0;
 }
 const msToTime = (duration, limit) => {
   try {
+    if (typeof duration !== "number") {
+      return ""
+    }
     if (duration < 1e3) {
       return "0s";
     }
@@ -120,14 +123,14 @@ const msToTime = (duration, limit) => {
     }
     return time.join(" ") || "0s"
   } catch (e) {
-    return
+    return ""
   }
 }
-const formatYear = (date) => date.toLocaleDateString(undefined, { year: "numeric" });
-const formatMonth = (date) => date.toLocaleDateString(undefined, { month: "short" });
-const formatDay = (date) => date.toLocaleDateString(undefined, { day: "numeric" });
-const formatTime = (date) => date.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit", hour12: true });
-const formatWeekday = (date) => date.toLocaleDateString(undefined, { weekday: "short" });
+const formatYear = (date) => date?.toLocaleDateString?.(undefined, { year: "numeric" }) || "";
+const formatMonth = (date) => date?.toLocaleDateString?.(undefined, { month: "short" }) || "";
+const formatDay = (date) => date?.toLocaleDateString?.(undefined, { day: "numeric" }) || "";
+const formatTime = (date) => date?.toLocaleTimeString?.(undefined, { hour: "numeric", minute: "2-digit", hour12: true }) || "";
+const formatWeekday = (date) => date?.toLocaleDateString?.(undefined, { weekday: "short" }) || "";
 
 function getScrollbarWidth() {
   try {
@@ -141,31 +144,29 @@ function getScrollbarWidth() {
     let scrollbarWidth = (outer.offsetWidth - inner.offsetWidth);
     outer.parentNode.removeChild(outer);
     return scrollbarWidth;
-  } catch (e) {
-    return undefined
-  }
+  } catch (e) { }
 }
 
-const getLastVisibleElement = (childSelector, parent) => {
-  try {
-    let childElements
-    if (parent instanceof Element) {
-      childElements = parent?.querySelectorAll?.(childSelector)
-    } else {
-      childElements = document?.querySelectorAll?.(childSelector)
-    }
-    if (childElements instanceof NodeList) {
-      let windowViewHeight = window?.visualViewport?.height || window.innerHeight
-      childElements = Array.from(childElements)
-      for (let i = 0; i < childElements.length; i++) {
-        let rect = childElements[i]?.getBoundingClientRect?.()
-        if (rect && rect.top > windowViewHeight) {
-          return childElements[Math.max(0, i - 1)]
-        }
-      }
-    }
-  } catch (ex) { }
-}
+// const getLastVisibleElement = (childSelector, parent) => {
+//   try {
+//     let childElements
+//     if (parent instanceof Element) {
+//       childElements = parent?.querySelectorAll?.(childSelector)
+//     } else {
+//       childElements = document?.querySelectorAll?.(childSelector)
+//     }
+//     if (childElements instanceof NodeList) {
+//       let windowViewHeight = window?.visualViewport?.height || window.innerHeight
+//       childElements = Array.from(childElements)
+//       for (let i = 0; i < childElements.length; i++) {
+//         let rect = childElements[i]?.getBoundingClientRect?.()
+//         if (rect && rect.top > windowViewHeight) {
+//           return childElements[Math.max(0, i - 1)]
+//         }
+//       }
+//     }
+//   } catch (e) { }
+// }
 const getMostVisibleElement = (parent, childSelector, intersectionRatioThreshold = 0.5) => {
   try {
     let childElements;
@@ -201,40 +202,34 @@ const getMostVisibleElement = (parent, childSelector, intersectionRatioThreshold
       }
     });
     return mostVisibleElement;
-  } catch (ex) {
-    // console.error(ex)
-    return
-  }
+  } catch (e) { }
 }
-const getMostVisibleElementFromArray = (parent, elements, intersectionRatioThreshold = 0.5) => {
-  try {
-    if (!elements.length) return null;
-    let mostVisibleElement = null;
-    let highestVisibleRatio = 0;
-    let parentRect = parent.getBoundingClientRect();
-    if (elements instanceof HTMLCollection) {
-      elements = Array.from(elements);
-    }
-    elements?.forEach?.((child) => {
-      let childRect = child.getBoundingClientRect();
-      let intersectionHeight = Math.min(childRect.bottom, parentRect.bottom) - Math.max(childRect.top, parentRect.top);
-      let intersectionRatio = intersectionHeight / childRect.height;
-      if (intersectionRatio > highestVisibleRatio) {
-        if (intersectionRatioThreshold === 0 && intersectionRatio > intersectionRatioThreshold) {
-          highestVisibleRatio = intersectionRatio;
-          mostVisibleElement = child;
-        } else if (intersectionRatio >= intersectionRatioThreshold) {
-          highestVisibleRatio = intersectionRatio;
-          mostVisibleElement = child;
-        }
-      }
-    });
-    return mostVisibleElement;
-  } catch (ex) {
-    // console.error(ex)
-    return
-  }
-}
+// const getMostVisibleElementFromArray = (parent, elements, intersectionRatioThreshold = 0.5) => {
+//   try {
+//     if (!elements.length) return null;
+//     let mostVisibleElement = null;
+//     let highestVisibleRatio = 0;
+//     let parentRect = parent.getBoundingClientRect();
+//     if (elements instanceof HTMLCollection) {
+//       elements = Array.from(elements);
+//     }
+//     elements?.forEach?.((child) => {
+//       let childRect = child.getBoundingClientRect();
+//       let intersectionHeight = Math.min(childRect.bottom, parentRect.bottom) - Math.max(childRect.top, parentRect.top);
+//       let intersectionRatio = intersectionHeight / childRect.height;
+//       if (intersectionRatio > highestVisibleRatio) {
+//         if (intersectionRatioThreshold === 0 && intersectionRatio > intersectionRatioThreshold) {
+//           highestVisibleRatio = intersectionRatio;
+//           mostVisibleElement = child;
+//         } else if (intersectionRatio >= intersectionRatioThreshold) {
+//           highestVisibleRatio = intersectionRatio;
+//           mostVisibleElement = child;
+//         }
+//       }
+//     });
+//     return mostVisibleElement;
+//   } catch (e) { }
+// }
 const isElementVisible = (parent, element, intersectionRatioThreshold = 0) => {
   try {
     let boundingRect = element.getBoundingClientRect();
@@ -280,19 +275,13 @@ const isElementVisible = (parent, element, intersectionRatioThreshold = 0) => {
       boundingRect.right <= windowWidth
     );
     return isVisibleInWindow;
-  } catch (ex) {
-    // console.error(ex)
-    return
-  }
+  } catch (e) { }
 }
 
-const getChildIndex = (childElement, condition) => {
+const getChildIndex = (childElement) => {
   try {
     return Array.from(childElement.parentElement.children).indexOf(childElement);
-  } catch (ex) {
-    // console.error(ex)
-    return
-  }
+  } catch (e) { }
 }
 
 const scrollToElement = (parent, target, position = 'top', behavior, offset = 0) => {
@@ -344,80 +333,46 @@ const scrollToElement = (parent, target, position = 'top', behavior, offset = 0)
         parent.scrollTop = scrollAmount + offset;
       }
     }
-  } catch (ex) {
-    // console.error(ex)
-    return
-  }
+  } catch (e) { }
 };
 
-const scrollToElementAmount = (parent, target, position = 'top') => {
-  try {
-    if (typeof parent === "string") parent = document.querySelector(parent)
-    if (typeof target === "string") target = document.querySelector(target)
-    if (position === 'bottom') {
-      return target.offsetTop + target.offsetHeight - parent.offsetHeight;
-    } else {
-      let targetRect = target.getBoundingClientRect();
-      let parentRect = parent.getBoundingClientRect();
-      return targetRect.top - parentRect.top + parent.scrollTop;
-    }
-  } catch (ex) {
-    // console.error(ex)
-    return
-  }
-};
+// const scrollToElementAmount = (parent, target, position = 'top') => {
+//   try {
+//     if (typeof parent === "string") parent = document.querySelector(parent)
+//     if (typeof target === "string") target = document.querySelector(target)
+//     if (position === 'bottom') {
+//       return target.offsetTop + target.offsetHeight - parent.offsetHeight;
+//     } else {
+//       let targetRect = target.getBoundingClientRect();
+//       let parentRect = parent.getBoundingClientRect();
+//       return targetRect.top - parentRect.top + parent.scrollTop;
+//     }
+//   } catch (e) { }
+// };
 
-const makeFetchRequest = (url, options) => {
-  return new Promise((resolve, reject) => {
-    fetch(url, options).then(response => {
-      if (!response.ok) reject(`Fetch error! Status: ${response.status}`);
-      resolve(response.json());
-    }).catch(err => reject(err));
-  })
-}
+// const formatNumber = (number, dec = 2) => {
+//   if (typeof number === "number") {
+//     const formatter = new Intl.NumberFormat("en-US", {
+//       maximumFractionDigits: dec, // display up to 2 decimal places
+//       minimumFractionDigits: 0, // display at least 0 decimal places
+//       notation: "compact", // use compact notation for large numbers
+//       compactDisplay: "short", // use short notation for large numbers (K, M, etc.)
+//     });
 
-const fetchAniListData = (anilistGraphQLQuery) => {
-  return new Promise(async (resolve, reject) => {
-    const requestOptions = {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'Cache-Control': 'max-age=31536000, immutable'
-      },
-      body: JSON.stringify({
-        query: anilistGraphQLQuery
-      })
-    };
-    await makeFetchRequest('https://graphql.anilist.co', requestOptions)
-      .then(data => resolve(data))
-      .catch(error => reject(error))
-  })
-}
-
-const formatNumber = (number, dec = 2) => {
-  if (typeof number === "number") {
-    const formatter = new Intl.NumberFormat("en-US", {
-      maximumFractionDigits: dec, // display up to 2 decimal places
-      minimumFractionDigits: 0, // display at least 0 decimal places
-      notation: "compact", // use compact notation for large numbers
-      compactDisplay: "short", // use short notation for large numbers (K, M, etc.)
-    });
-
-    if (Math.abs(number) >= 1000) {
-      return formatter.format(number);
-    } else if (Math.abs(number) < 0.01 && Math.abs(number) > 0) {
-      return number.toExponential(0);
-    } else {
-      return (
-        number.toFixed(dec) ||
-        number.toLocaleString("en-US", { maximumFractionDigits: dec })
-      );
-    }
-  } else {
-    return null;
-  }
-}
+//     if (Math.abs(number) >= 1000) {
+//       return formatter.format(number);
+//     } else if (Math.abs(number) < 0.01 && Math.abs(number) > 0) {
+//       return number.toExponential(0);
+//     } else {
+//       return (
+//         number.toFixed(dec) ||
+//         number.toLocaleString("en-US", { maximumFractionDigits: dec })
+//       );
+//     }
+//   } else {
+//     return null;
+//   }
+// }
 
 let trimAllEmptyCharRegex = new RegExp("ㅤ", "g");
 const trimAllEmptyChar = (str) => {
@@ -434,123 +389,129 @@ const ncsCompare = (str1, str2) => {
 }
 
 const changeInputValue = (inputElement, newValue) => {
-  let selectionStart = Math.max(inputElement.selectionStart - 1 || 0, 0);
-  inputElement.value = newValue;
-  inputElement.setSelectionRange(selectionStart, selectionStart);
+  try {
+    let selectionStart = Math.max(inputElement.selectionStart - 1 || 0, 0);
+    inputElement.value = newValue;
+    inputElement.setSelectionRange(selectionStart, selectionStart);
+  } catch (e) { }
 }
 
 const dragScroll = (element, axis = 'xy', avoidCondition = () => false) => {
-  let curDown, curYPos, curXPos, velocityY, velocityX, currentScrollYPosition, currentScrollXPosition;
+  try {
+    let curDown, curYPos, curXPos, velocityY, velocityX, currentScrollYPosition, currentScrollXPosition;
 
-  let move = (e) => {
-    if (curDown && e.pointerType === "mouse") {
-      if (axis.toLowerCase().includes('y')) {
-        let endYPos = e.clientY;
-        let deltaY = endYPos - curYPos
-        element.scrollTop = currentScrollYPosition - deltaY;
+    let move = (e) => {
+      if (curDown && e.pointerType === "mouse") {
+        if (axis.toLowerCase().includes('y')) {
+          let endYPos = e.clientY;
+          let deltaY = endYPos - curYPos
+          element.scrollTop = currentScrollYPosition - deltaY;
+        }
+        if (axis.toLowerCase().includes('x')) {
+          let endXPos = e.clientX;
+          let deltaX = endXPos - curXPos
+          element.scrollLeft = currentScrollXPosition - deltaX;
+        }
       }
-      if (axis.toLowerCase().includes('x')) {
-        let endXPos = e.clientX;
-        let deltaX = endXPos - curXPos
-        element.scrollLeft = currentScrollXPosition - deltaX;
-      }
-    }
-  };
+    };
 
-  let down = (e) => {
-    if (e.pointerType !== "mouse" || avoidCondition(e)) return
-    velocityY = 0;
-    cancelAnimationFrame(kineticScrollYAnimation);
-    velocityX = 0;
-    cancelAnimationFrame(kineticScrollXAnimation);
-    if (axis.toLowerCase().includes('y')) {
-      curYPos = e.clientY;
-      currentScrollYPosition = element.scrollTop
-    }
-    if (axis.toLowerCase().includes('x')) {
-      curXPos = e.clientX;
-      currentScrollXPosition = element.scrollLeft
-    }
-    curDown = true;
-  };
-
-  let up = (e) => {
-    if (curDown) {
-      if (axis.toLowerCase().includes('y') && e.pointerType === "mouse") {
-        let endYPos = e.clientY;
-        let deltaY = endYPos - curYPos
-        element.scrollTop = currentScrollYPosition - deltaY;
-        velocityY = deltaY
-        simulateKineticScrollY(element)
-      }
-      if (axis.toLowerCase().includes('x') && e.pointerType === "mouse") {
-        let endXPos = e.clientX;
-        let deltaX = endXPos - curXPos
-        element.scrollLeft = currentScrollXPosition - deltaX;
-        velocityX = deltaX
-        simulateKineticScrollX(element)
-      }
-    }
-    curDown = false;
-  };
-
-  let cancel = () => curDown = false;
-
-  let kineticScrollYAnimation;
-  let simulateKineticScrollY = (container, currentScrollTop) => {
-    let shouldScroll =
-      (currentScrollTop == null || container.scrollTop === currentScrollTop)
-      && typeof velocityY === "number"
-      && container && Math.abs(velocityY) > 0.1
-    if (shouldScroll) {
-      container.scrollTop -= velocityY * 0.1;
-      let newScrollTop = container.scrollTop;
-      kineticScrollYAnimation = requestAnimationFrame(() => simulateKineticScrollY(container, newScrollTop));
-      velocityY *= 0.9;
-    } else {
+    let down = (e) => {
+      if (e.pointerType !== "mouse" || avoidCondition(e)) return
       velocityY = 0;
       cancelAnimationFrame(kineticScrollYAnimation);
-    }
-  }
-
-  let kineticScrollXAnimation;
-  let simulateKineticScrollX = (container, currentScrollLeft) => {
-    let shouldScroll =
-      (currentScrollLeft == null || container.scrollLeft === currentScrollLeft)
-      && typeof velocityX === "number"
-      && container && Math.abs(velocityX) > 0.1
-    if (shouldScroll) {
-      container.scrollLeft -= velocityX * 0.1;
-      let newScrollLeft = container.scrollLeft;
-      kineticScrollXAnimation = requestAnimationFrame(() => simulateKineticScrollX(container, newScrollLeft));
-      velocityX *= 0.9;
-    } else {
       velocityX = 0;
       cancelAnimationFrame(kineticScrollXAnimation);
-    }
-  }
+      if (axis.toLowerCase().includes('y')) {
+        curYPos = e.clientY;
+        currentScrollYPosition = element.scrollTop
+      }
+      if (axis.toLowerCase().includes('x')) {
+        curXPos = e.clientX;
+        currentScrollXPosition = element.scrollLeft
+      }
+      curDown = true;
+    };
 
-  element.addEventListener('pointermove', move);
-  element.addEventListener('pointerdown', down);
-  element.addEventListener('pointerup', up);
-  window.addEventListener('pointerup', cancel);
-  window.addEventListener('pointercancel', cancel);
-  return () => {
-    velocityX = velocityY = 0;
-    cancelAnimationFrame(kineticScrollYAnimation);
-    cancelAnimationFrame(kineticScrollXAnimation);
-    element.removeEventListener('pointermove', move);
-    element.removeEventListener('pointerdown', down);
-    element.removeEventListener('pointerup', up);
+    let up = (e) => {
+      if (curDown) {
+        if (axis.toLowerCase().includes('y') && e.pointerType === "mouse") {
+          let endYPos = e.clientY;
+          let deltaY = endYPos - curYPos
+          element.scrollTop = currentScrollYPosition - deltaY;
+          velocityY = deltaY
+          simulateKineticScrollY(element)
+        }
+        if (axis.toLowerCase().includes('x') && e.pointerType === "mouse") {
+          let endXPos = e.clientX;
+          let deltaX = endXPos - curXPos
+          element.scrollLeft = currentScrollXPosition - deltaX;
+          velocityX = deltaX
+          simulateKineticScrollX(element)
+        }
+      }
+      curDown = false;
+    };
+
+    let cancel = () => curDown = false;
+
+    let kineticScrollYAnimation;
+    let simulateKineticScrollY = (container, currentScrollTop) => {
+      let shouldScroll =
+        (currentScrollTop == null || container.scrollTop === currentScrollTop)
+        && typeof velocityY === "number"
+        && container && Math.abs(velocityY) > 0.1
+      if (shouldScroll) {
+        container.scrollTop -= velocityY * 0.1;
+        let newScrollTop = container.scrollTop;
+        kineticScrollYAnimation = requestAnimationFrame(() => simulateKineticScrollY(container, newScrollTop));
+        velocityY *= 0.9;
+      } else {
+        velocityY = 0;
+        cancelAnimationFrame(kineticScrollYAnimation);
+      }
+    }
+
+    let kineticScrollXAnimation;
+    let simulateKineticScrollX = (container, currentScrollLeft) => {
+      let shouldScroll =
+        (currentScrollLeft == null || container.scrollLeft === currentScrollLeft)
+        && typeof velocityX === "number"
+        && container && Math.abs(velocityX) > 0.1
+      if (shouldScroll) {
+        container.scrollLeft -= velocityX * 0.1;
+        let newScrollLeft = container.scrollLeft;
+        kineticScrollXAnimation = requestAnimationFrame(() => simulateKineticScrollX(container, newScrollLeft));
+        velocityX *= 0.9;
+      } else {
+        velocityX = 0;
+        cancelAnimationFrame(kineticScrollXAnimation);
+      }
+    }
+
+    element.addEventListener('pointermove', move);
+    element.addEventListener('pointerdown', down);
+    element.addEventListener('pointerup', up);
     window.addEventListener('pointerup', cancel);
     window.addEventListener('pointercancel', cancel);
-  };
+    return () => {
+      velocityX = velocityY = 0;
+      cancelAnimationFrame(kineticScrollYAnimation);
+      cancelAnimationFrame(kineticScrollXAnimation);
+      element.removeEventListener('pointermove', move);
+      element.removeEventListener('pointerdown', down);
+      element.removeEventListener('pointerup', up);
+      window.addEventListener('pointerup', cancel);
+      window.addEventListener('pointercancel', cancel);
+    };
+  } catch (e) {
+    return () => { }
+  }
 }
 
 const isAndroid = () => {
   try {
-    JSBridge.exportJSON // Android Interface
-    return true
+    // Android Interface
+    return typeof JSBridge?.exportJSON === "function"
   } catch (e) {
     return false
   }
@@ -565,23 +526,28 @@ const showToast = (str, isLongDuration = true) => {
 
 let $_pastExportUrl;
 const downloadLink = (url, fileName) => {
-  if ($_pastExportUrl) {
-    setTimeout(() => URL.revokeObjectURL($_pastExportUrl), 0)
-  }
-  $_pastExportUrl = url
-  const a = document.createElement('a')
-  a.href = url
-  a.download = fileName
-  a.click()
-  return
+  try {
+    if ($_pastExportUrl) {
+      setTimeout(() => URL.revokeObjectURL($_pastExportUrl), 0)
+    }
+    $_pastExportUrl = url
+    const a = document.createElement('a')
+    a.href = url
+    a.download = fileName
+    a.click()
+  } catch (e) { }
 }
 
 const addClass = (element, className) => {
-  element?.classList?.add?.(className)
+  try {
+    element?.classList?.add?.(className)
+  } catch (e) { }
 }
 
 const removeClass = (element, className) => {
-  element?.classList?.remove?.(className)
+  try {
+    element?.classList?.remove?.(className)
+  } catch (e) { }
 }
 
 const getElementWidth = (element) => {
@@ -592,43 +558,41 @@ const getElementWidth = (element) => {
       parseFloat(elementComputedStyle?.paddingLeft) +
       parseFloat(elementComputedStyle?.paddingRight)
     return elementWidth
-  } catch (e) {
-    return
-  }
+  } catch (e) { }
 }
 
-const makeArrayUnique = (arr) => {
-  const uniqueArray = [];
-  const seenValues = {};
-  for (const element of (arr || [])) {
-    let strElement = JSON.stringify(element)
-    if (!seenValues[strElement]) {
-      uniqueArray.push(element);
-      seenValues[strElement] = true;
-    }
-  }
-  return uniqueArray;
-}
+// const makeArrayUnique = (arr) => {
+//   const uniqueArray = [];
+//   try {
+//     const seenValues = {};
+//     for (const element of (arr || [])) {
+//       let strElement = JSON.stringify(element)
+//       if (!seenValues[strElement]) {
+//         uniqueArray.push(element);
+//         seenValues[strElement] = true;
+//       }
+//     }
+//   } catch (e) { }
+//   return uniqueArray;
+// }
 
-const capitalize = (s) => {
-  if (typeof s === "string") {
-    return s.split(" ").map((e) => e.substring(0, 1).toUpperCase() + e.substring(1)).join(" ")
-  } else {
-    return s
-  }
-}
+// const capitalize = (s) => {
+//   if (typeof s === "string") {
+//     return s.split(" ").map((e) => e.substring(0, 1).toUpperCase() + e.substring(1)).join(" ")
+//   } else {
+//     return s
+//   }
+// }
 
 const LocalStorageID = "Kanshi.Anime.Recommendations.Anilist.W~uPtWCq=vG$TR:Zl^#t<vdS]I~N70"
 const getLocalStorage = (key) => {
-  let data;
   try {
+    let data;
     key = LocalStorageID + key;
     let value = localStorage.getItem(key)
     data = JSON.parse(value)
     return data
-  } catch (ex) {
-    return undefined;
-  }
+  } catch (e) { }
 }
 
 const setLocalStorage = (key, data) => {
@@ -636,7 +600,7 @@ const setLocalStorage = (key, data) => {
     try {
       localStorage.setItem(LocalStorageID + key, JSON.stringify(data))
       resolve()
-    } catch (ex) {
+    } catch (e) {
       reject()
     }
   })
@@ -645,16 +609,16 @@ const setLocalStorage = (key, data) => {
 const removeLocalStorage = (key) => {
   try {
     localStorage.removeItem(LocalStorageID + key);
-  } catch (ex) { }
+  } catch (e) { }
 }
 
-const hasValidOrigin = (url) => {
-  try {
-    return (new URL(url)).origin !== 'null'
-  } catch (ex) {
-    return false
-  }
-}
+// const hasValidOrigin = (url) => {
+//   try {
+//     return (new URL(url)).origin !== 'null'
+//   } catch (e) {
+//     return false
+//   }
+// }
 
 const isMobile = () => {
   try {
@@ -668,12 +632,12 @@ export {
   setLocalStorage,
   getLocalStorage,
   removeLocalStorage,
-  requestFrame,
-  makeArrayUnique,
-  capitalize,
+  // requestFrame,
+  // makeArrayUnique,
+  // capitalize,
   getScrollbarWidth,
-  getMostVisibleElementFromArray,
-  getLastVisibleElement,
+  // getMostVisibleElementFromArray,
+  // getLastVisibleElement,
   addClass,
   removeClass,
   getElementWidth,
@@ -685,17 +649,15 @@ export {
   getChildIndex,
   getMostVisibleElement,
   scrollToElement,
-  scrollToElementAmount,
-  makeFetchRequest,
-  fetchAniListData,
-  formatNumber,
+  // scrollToElementAmount,
+  // formatNumber,
   ncsCompare,
   trimAllEmptyChar,
   msToTime,
   changeInputValue,
   dragScroll,
   isElementVisible,
-  hasValidOrigin,
+  // hasValidOrigin,
   isMobile,
   formatYear,
   formatMonth,

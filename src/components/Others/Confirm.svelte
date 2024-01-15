@@ -1,6 +1,6 @@
 <script>
-    import { fade } from "svelte/transition";
     import { createEventDispatcher, afterUpdate } from "svelte";
+    import { fade } from "svelte/transition";
     import { initData } from "../../js/globalValues.js";
 
     const dispatch = createEventDispatcher();

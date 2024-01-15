@@ -1,5 +1,15 @@
 <script>
     import { onMount, tick } from "svelte";
+    import { fade } from "svelte/transition";
+    import { cacheImage } from "../../js/caching.js";
+    import {
+        addClass,
+        isJsonObject,
+        removeClass,
+        getLocalStorage,
+        setLocalStorage,
+        removeLocalStorage,
+    } from "../../js/others/helper.js";
     import {
         android,
         finalAnimeList,
@@ -25,16 +35,6 @@
         mobile,
         menuVisible,
     } from "../../js/globalValues.js";
-    import {
-        addClass,
-        isJsonObject,
-        removeClass,
-        getLocalStorage,
-        setLocalStorage,
-        removeLocalStorage,
-    } from "../../js/others/helper.js";
-    import { fade } from "svelte/transition";
-    import { cacheImage } from "../../js/caching.js";
 
     const emptyImage =
         "data:image/png;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=";

@@ -1,5 +1,6 @@
 <script>
     import { fade } from "svelte/transition";
+    import { ncsCompare } from "../../../js/others/helper.js";
     import {
         android,
         animeOptionVisible,
@@ -11,8 +12,7 @@
         animeLoaderWorker,
         confirmPromise,
         checkAnimeLoaderStatus,
-    } from "../../../js/globalValues";
-    import { ncsCompare } from "../../../js/others/helper.js";
+    } from "../../../js/globalValues.js";
 
     let shownTitle;
     let youtubeSearchTitle;

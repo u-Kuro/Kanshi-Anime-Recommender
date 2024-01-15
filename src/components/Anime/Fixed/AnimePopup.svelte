@@ -1,6 +1,27 @@
 <script>
     import { onMount, tick } from "svelte";
     import { fade } from "svelte/transition";
+    import { cacheImage } from "../../../js/caching.js";
+    import { animeLoader } from "../../../js/workerUtils.js";
+    import { retrieveJSON, saveJSON } from "../../../js/indexedDB.js";
+    import {
+        isJsonObject,
+        scrollToElement,
+        getChildIndex,
+        msToTime,
+        isElementVisible,
+        addClass,
+        removeClass,
+        getMostVisibleElement,
+        dragScroll,
+        formatYear,
+        formatMonth,
+        formatDay,
+        formatTime,
+        formatWeekday,
+        setLocalStorage,
+        removeLocalStorage,
+    } from "../../../js/others/helper.js";
     import {
         finalAnimeList,
         animeLoaderWorker,
@@ -30,27 +51,6 @@
         isBackgroundUpdateKey,
         menuVisible,
     } from "../../../js/globalValues.js";
-    import {
-        isJsonObject,
-        scrollToElement,
-        getChildIndex,
-        msToTime,
-        isElementVisible,
-        addClass,
-        removeClass,
-        getMostVisibleElement,
-        dragScroll,
-        formatYear,
-        formatMonth,
-        formatDay,
-        formatTime,
-        formatWeekday,
-        setLocalStorage,
-        removeLocalStorage,
-    } from "../../../js/others/helper.js";
-    import { retrieveJSON, saveJSON } from "../../../js/indexedDB.js";
-    import { animeLoader } from "../../../js/workerUtils.js";
-    import { cacheImage } from "../../../js/caching.js";
 
     const emptyImage =
         "data:image/png;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=";
@@ -284,17 +284,22 @@
                 ];
             if (openedAnimePopupEl instanceof Element) {
                 // Animate Opening
-                addClass(popupWrapper, "willChange");
-                addClass(popupContainer, "willChange");
-
-                addClass(navContainerEl, "hide");
-                removeClass(navContainerEl, "hide");
-                addClass(popupWrapper, "visible");
-                addClass(popupContainer, "show");
-                setTimeout(() => {
-                    removeClass(popupWrapper, "willChange");
-                    removeClass(popupContainer, "willChange");
-                }, 200);
+                if (document?.documentElement?.scrollTop <= 0 || $menuVisible) {
+                    removeClass(navContainerEl, "hide");
+                    addClass(popupWrapper, "visible");
+                    addClass(popupContainer, "show");
+                } else {
+                    requestAnimationFrame(() => {
+                        addClass(navContainerEl, "stop-transition");
+                        addClass(navContainerEl, "hide");
+                        requestAnimationFrame(() => {
+                            removeClass(navContainerEl, "stop-transition");
+                            removeClass(navContainerEl, "hide");
+                            addClass(popupWrapper, "visible");
+                            addClass(popupContainer, "show");
+                        });
+                    });
+                }
                 // Try to Add YT player
                 currentHeaderIdx = $openedAnimePopupIdx;
                 let openedAnimes = [
@@ -360,26 +365,27 @@
             } else {
                 afterImmediateScrollUponPopupVisible = false;
                 // Animate Opening
-                addClass(popupWrapper, "willChange");
-                addClass(popupContainer, "willChange");
-
-                addClass(navContainerEl, "hide");
-                removeClass(navContainerEl, "hide");
-                addClass(popupWrapper, "visible");
-                addClass(popupContainer, "show");
-                setTimeout(() => {
-                    removeClass(popupWrapper, "willChange");
-                    removeClass(popupContainer, "willChange");
-                }, 200);
+                if (document?.documentElement?.scrollTop <= 0) {
+                    removeClass(navContainerEl, "hide");
+                    addClass(popupWrapper, "visible");
+                    addClass(popupContainer, "show");
+                } else {
+                    requestAnimationFrame(() => {
+                        addClass(navContainerEl, "stop-transition");
+                        addClass(navContainerEl, "hide");
+                        requestAnimationFrame(() => {
+                            removeClass(navContainerEl, "stop-transition");
+                            removeClass(navContainerEl, "hide");
+                            addClass(popupWrapper, "visible");
+                            addClass(popupContainer, "show");
+                        });
+                    });
+                }
             }
         } else if (val === false) {
             window?.closeFullScreenItem?.();
             window?.handleConfirmationCancelled?.();
             $confirmIsVisible = false;
-
-            addClass(popupWrapper, "willChange");
-            addClass(popupContainer, "willChange");
-
             if (!$menuVisible && document.documentElement.scrollTop > 0) {
                 addClass(navContainerEl, "hide");
             }
@@ -395,8 +401,6 @@
                 });
                 removeClass(navContainerEl, "hide");
                 removeClass(popupWrapper, "visible");
-                removeClass(popupContainer, "willChange");
-                removeClass(popupWrapper, "willChange");
             }, 200);
         }
     });
@@ -1314,7 +1318,9 @@
             itemIsScrolling = false;
         }, 50);
         $popupIsGoingBack = false;
-        goBackPercent = 0;
+        requestAnimationFrame(() => {
+            goBackPercent = 0;
+        });
     }
     function itemScroll() {
         itemIsScrolling = true;
@@ -1367,9 +1373,13 @@
             endX = event.touches[0].clientX;
             const deltaX = endX - startX;
             if (deltaX > 0) {
-                goBackPercent = Math.min((deltaX / 48) * 100, 100);
+                requestAnimationFrame(() => {
+                    goBackPercent = Math.min((deltaX / 48) * 100, 100);
+                });
             } else {
-                goBackPercent = 0;
+                requestAnimationFrame(() => {
+                    goBackPercent = 0;
+                });
             }
         }
     }
@@ -1387,18 +1397,24 @@
             }
             touchID = null;
             $popupIsGoingBack = false;
-            goBackPercent = 0;
+            requestAnimationFrame(() => {
+                goBackPercent = 0;
+            });
         } else {
             touchID = null;
             $popupIsGoingBack = false;
-            goBackPercent = 0;
+            requestAnimationFrame(() => {
+                goBackPercent = 0;
+            });
         }
     }
 
     function handlePopupContainerCancel() {
         touchID = null;
         $popupIsGoingBack = false;
-        goBackPercent = 0;
+        requestAnimationFrame(() => {
+            goBackPercent = 0;
+        });
     }
 
     let fvTouchId,
@@ -1478,7 +1494,7 @@
 
     function showFullScreenInfo(info) {
         if (!info) return;
-        window.setShouldGoBack(false);
+        window.setShouldGoBack?.(false);
         let newFullDescriptionPopup = editHTMLString(info);
         if (fullDescriptionPopup === newFullDescriptionPopup) {
             fullDescriptionPopup = null;
@@ -1742,7 +1758,7 @@
                                                 : "-1"}
                                             on:click={() => {
                                                 if (!$popupVisible) return;
-                                                window.setShouldGoBack(false);
+                                                window.setShouldGoBack?.(false);
                                                 fullImagePopup =
                                                     anime.bannerImageUrl ||
                                                     anime.trailerThumbnailUrl;
@@ -1751,7 +1767,7 @@
                                             on:keyup={(e) => {
                                                 if (!$popupVisible) return;
                                                 if (e.key === "Enter") {
-                                                    window.setShouldGoBack(
+                                                    window.setShouldGoBack?.(
                                                         false,
                                                     );
                                                     let newFullImagePopup =
@@ -2191,7 +2207,7 @@
                                                 }}
                                                 on:click={() => {
                                                     if (!$popupVisible) return;
-                                                    window.setShouldGoBack(
+                                                    window.setShouldGoBack?.(
                                                         false,
                                                     );
                                                     fullImagePopup =
@@ -2203,7 +2219,7 @@
                                                 }}
                                                 on:keyup={(e) => {
                                                     if (!$popupVisible) return;
-                                                    window.setShouldGoBack(
+                                                    window.setShouldGoBack?.(
                                                         false,
                                                     );
                                                     if (e.key === "Enter") {
@@ -2474,10 +2490,6 @@
         -o-transform: translateY(-99999px) translateZ(0);
     }
 
-    .popup-wrapper.willChange {
-        will-change: transform;
-    }
-
     .popup-wrapper.visible {
         transform: translateY(0) translateZ(0);
         -webkit-transform: translateY(0) translateZ(0);
@@ -2507,10 +2519,6 @@
         box-shadow:
             0 14px 28px rgba(0, 0, 0, 0.25),
             0 10px 10px rgba(0, 0, 0, 0.22);
-    }
-
-    .popup-container.willChange {
-        will-change: opacity;
     }
 
     .popup-container.show {
