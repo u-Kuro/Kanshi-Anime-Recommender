@@ -1154,7 +1154,7 @@ public class MainActivity extends AppCompatActivity {
     public void _downloadUpdate() {
         webView.post(() -> webView.clearCache(true));
         prefsEdit.putBoolean("permissionIsAsked", false).apply();
-        String fileUrl = "https://github.com/u-Kuro/Kanshi.Anime-Recommendation/raw/main/Kanshi.apk";
+        String fileUrl = "https://github.com/u-Kuro/Kanshi-Anime-Recommender/raw/main/Kanshi.apk";
         String fileName = "Kanshi.apk";
         DownloadUtils.downloadFile(MainActivity.this, fileUrl, fileName, new DownloadUtils.DownloadCallback() {
             @RequiresApi(api = Build.VERSION_CODES.O)
