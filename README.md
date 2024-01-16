@@ -18,7 +18,7 @@ If you're struggling to decide on your next watch, this tool can assist you in d
 <h2 align="center"></h2>
 
 ## Android / Website
-[<img src="https://i.imgur.com/RtS6ib5.png" width="105px;" />](https://github.com/u-Kuro/Kanshi.Anime-Recommendation/raw/main/Kanshi.apk)
+[<img src="https://i.imgur.com/RtS6ib5.png" width="105px;" />](https://github.com/u-Kuro/Kanshi-Anime-Recommender/raw/main/Kanshi.apk)
 [<img src="https://i.imgur.com/vXJ8zt8.png" width="105px;" />](https://kanshi.vercel.app)
 
 <h2 align="center"></h2>
@@ -42,4 +42,4 @@ If you're struggling to decide on your next watch, this tool can assist you in d
 <h2 align="center"></h2>
 
 ## Additional Information
-- [Alternative Website](https://u-kuro.github.io/Kanshi.Anime-Recommendation/) 
+- [Alternative Website](https://u-kuro.github.io/Kanshi-Anime-Recommender) 
