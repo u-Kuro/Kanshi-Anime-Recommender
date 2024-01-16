@@ -771,7 +771,7 @@
 				try {
 					JSBridge?.sendBackgroundStatus?.(val);
 				} catch (e) {}
-			}, 1000);
+			}, 984); // 1s with pad
 		});
 		return true;
 	};
