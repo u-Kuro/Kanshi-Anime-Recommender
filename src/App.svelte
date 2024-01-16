@@ -1591,7 +1591,7 @@
 				JSBridge?.downloadUpdate?.();
 			} catch (e) {
 				window.open?.(
-					"https://github.com/u-Kuro/Kanshi.Anime-Recommendation/raw/main/Kanshi.apk",
+					"https://github.com/u-Kuro/Kanshi-Anime-Recommender/raw/main/Kanshi.apk",
 					"_blank",
 				);
 			}

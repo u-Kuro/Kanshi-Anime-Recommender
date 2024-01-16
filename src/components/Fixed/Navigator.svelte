@@ -250,7 +250,7 @@
         //     let clientID;
         //     if (
         //         webURL.startsWith(
-        //             "https://u-kuro.github.io/Kanshi.Anime-Recommendation"
+        //             "https://u-kuro.github.io/Kanshi-Anime-Recommender"
         //         )
         //     ) {
         //         clientID = "13583";
