@@ -87,7 +87,7 @@ import androidx.core.content.FileProvider;
 import androidx.core.splashscreen.SplashScreen;
 
 public class MainActivity extends AppCompatActivity {
-    public final int appID = 308;
+    public final int appID = 309;
     public boolean keepAppRunningInBackground = false;
     public boolean webViewIsLoaded = false;
     public boolean permissionIsAsked = false;
@@ -214,7 +214,7 @@ public class MainActivity extends AppCompatActivity {
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
-                if (webView.getUrl() != null && (webView.getUrl().startsWith("file:///android_asset/www/index.html") || webView.getUrl().startsWith("https://u-kuro.github.io/Kanshi.Anime-Recommendation"))) {
+                if (webView.getUrl() != null && (webView.getUrl().startsWith("file:///android_asset/www/index.html") || webView.getUrl().startsWith("https://u-kuro.github.io/Kanshi-Anime-Recommender"))) {
                     if (!shouldGoBack) {
                         webView.post(() -> webView.loadUrl("javascript:window?.backPressed?.();"));
                     } else {
@@ -462,7 +462,7 @@ public class MainActivity extends AppCompatActivity {
             appSwitched = true;
             if (isConnected) {
                 pageLoaded = false;
-                webView.loadUrl("https://u-kuro.github.io/Kanshi.Anime-Recommendation/");
+                webView.loadUrl("https://u-kuro.github.io/Kanshi-Anime-Recommender/");
             } else {
                 pageLoaded = true;
                 webView.loadUrl("file:///android_asset/www/index.html");
@@ -851,7 +851,7 @@ public class MainActivity extends AppCompatActivity {
             try {
                 webView.post(() -> {
                     if (webView.getUrl()==null) return;
-                    if (webView.getUrl().startsWith("https://u-kuro.github.io/Kanshi.Anime-Recommendation")) {
+                    if (webView.getUrl().startsWith("https://u-kuro.github.io/Kanshi-Anime-Recommender")) {
                         showDialog(new AlertDialog.Builder(MainActivity.this)
                                 .setTitle("Switch app mode")
                                 .setMessage("Do you want to switch to the client app?")
@@ -875,7 +875,7 @@ public class MainActivity extends AppCompatActivity {
                                         .setPositiveButton("OK", (dialogInterface, i) -> {
                                             appSwitched = true;
                                             pageLoaded = false;
-                                            webView.loadUrl("https://u-kuro.github.io/Kanshi.Anime-Recommendation/");
+                                            webView.loadUrl("https://u-kuro.github.io/Kanshi-Anime-Recommender/");
                                         })
                                         .setNegativeButton("CANCEL", null),true);
                             } else {
@@ -910,7 +910,7 @@ public class MainActivity extends AppCompatActivity {
                                     .setPositiveButton("OK", (dialogInterface, i) -> {
                                         appSwitched = true;
                                         pageLoaded = false;
-                                        webView.loadUrl("https://u-kuro.github.io/Kanshi.Anime-Recommendation/");
+                                        webView.loadUrl("https://u-kuro.github.io/Kanshi-Anime-Recommender/");
                                     })
                                     .setNegativeButton("CANCEL", null),true);
                         } else if (isConnected) {
@@ -1007,7 +1007,7 @@ public class MainActivity extends AppCompatActivity {
         @JavascriptInterface
         public void showNewUpdatedAnimeNotification(long addedAnimeCount, long updatedAnimeCount) {
             String url = webView.getUrl();
-            if (url!=null && url.startsWith("https://u-kuro.github.io/Kanshi.Anime-Recommendation")) {
+            if (url!=null && url.startsWith("https://u-kuro.github.io/Kanshi-Anime-Recommender")) {
                 if (updatedAnimeCount > 0 || addedAnimeCount > 0) {
                     if (updatedAnimeCount > 0 && addedAnimeCount > 0) {
                         persistentToast = Toast.makeText(MainActivity.this, addedAnimeCount + " New Anime / " + updatedAnimeCount + " Modification", Toast.LENGTH_LONG);
@@ -1225,7 +1225,7 @@ public class MainActivity extends AppCompatActivity {
                                 appSwitched = true;
                             }
                             pageLoaded = false;
-                            webView.loadUrl("https://u-kuro.github.io/Kanshi.Anime-Recommendation/");
+                            webView.loadUrl("https://u-kuro.github.io/Kanshi-Anime-Recommender/");
                         })
                         .setNegativeButton("CANCEL", null),true);
             } else {
@@ -1283,7 +1283,7 @@ public class MainActivity extends AppCompatActivity {
         ExecutorService executor = Executors.newSingleThreadExecutor();
         Future<Boolean> future = executor.submit(() -> {
             try {
-                URL url = new URL("https://u-kuro.github.io/Kanshi.Anime-Recommendation/");
+                URL url = new URL("https://u-kuro.github.io/Kanshi-Anime-Recommender/");
                 HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
                 urlConnection.setRequestMethod("HEAD");
                 urlConnection.setConnectTimeout(timeout);

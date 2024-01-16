@@ -234,7 +234,7 @@ public class MainService extends Service {
         // Load Page
         appSwitched = true;
         pageLoaded = false;
-        webView.loadUrl("https://u-kuro.github.io/Kanshi.Anime-Recommendation/");
+        webView.loadUrl("https://u-kuro.github.io/Kanshi-Anime-Recommender/");
     }
 
     @Override
@@ -550,7 +550,7 @@ public class MainService extends Service {
                 if (isOnline && (url==null || url.startsWith("file"))) {
                     appSwitched = true;
                     pageLoaded = false;
-                    webView.loadUrl("https://u-kuro.github.io/Kanshi.Anime-Recommendation/");
+                    webView.loadUrl("https://u-kuro.github.io/Kanshi-Anime-Recommender/");
                 }
             } catch (Exception ignored) {}
         }
