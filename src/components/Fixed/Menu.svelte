@@ -8,6 +8,7 @@
         setLocalStorage,
         removeClass,
         addClass,
+        downloadLink,
     } from "../../js/others/helper.js";
     import {
         android,
@@ -29,6 +30,8 @@
         newFinalAnime,
         username,
         isBackgroundUpdateKey,
+        mobile,
+        appInstallationAsked,
     } from "../../js/globalValues.js";
 
     let menuContainerEl, navContainerEl;
@@ -123,6 +126,7 @@
             });
         }
         if (await $confirmPromise("Do you want to update your list?")) {
+            window.alreadyShownNoNetworkAlert = false;
             $menuVisible = false;
             runUpdate.update((e) => !e);
         }
@@ -137,6 +141,9 @@
             )
         ) {
             $autoUpdate = !$autoUpdate;
+            if ($autoUpdate) {
+                window.alreadyShownNoNetworkAlert = false;
+            }
             setLocalStorage("autoUpdate", $autoUpdate)
                 .catch(() => {
                     removeLocalStorage("autoUpdate");
@@ -483,6 +490,66 @@
             }, 200);
         }
     });
+
+    let hasAvailableApp, downloadAndroidApp;
+    appInstallationAsked.subscribe((val) => {
+        if (val === true) {
+            if (!$android && $mobile) {
+                const isAndroidWeb = /android/i.test(
+                    window?.navigator?.userAgent ||
+                        window?.navigator?.vendor ||
+                        window?.opera,
+                );
+                hasAvailableApp = isAndroidWeb;
+                let deferredPrompt;
+                window.addEventListener("beforeinstallprompt", (e) => {
+                    deferredPrompt = e;
+                    hasAvailableApp =
+                        isAndroidWeb ||
+                        typeof deferredPrompt?.prompt === "function";
+                });
+                downloadAndroidApp = async () => {
+                    hasAvailableApp =
+                        isAndroidWeb ||
+                        typeof deferredPrompt?.prompt === "function";
+                    if (!hasAvailableApp) return;
+                    if (
+                        await $confirmPromise({
+                            text: "Do you want to install Kanshi for your device?",
+                            isImportant: true,
+                        })
+                    ) {
+                        try {
+                            if (isAndroidWeb) {
+                                const appName = "Kanshi.apk";
+                                const appLocation = `./${appName}`;
+                                const response = await fetch(appLocation, {
+                                    method: "HEAD",
+                                });
+                                if (response?.ok) {
+                                    downloadLink(appLocation, appName);
+                                } else {
+                                    window.open?.(
+                                        "https://github.com/u-Kuro/Kanshi-Anime-Recommender/raw/main/Kanshi.apk",
+                                        "_blank",
+                                    );
+                                }
+                            } else if (
+                                typeof deferredPrompt?.prompt === "function"
+                            ) {
+                                await deferredPrompt.prompt();
+                            }
+                            return;
+                        } catch (e) {}
+                        $confirmPromise({
+                            isAlert: true,
+                            text: "App installer was not found.",
+                        });
+                    }
+                };
+            }
+        }
+    });
 </script>
 
 <input
@@ -600,6 +667,13 @@
             on:keyup={(e) => e.key === "Enter" && anilistSignup(e)}
             >Create an Anilist Account</button
         >
+        {#if $appInstallationAsked && $mobile && hasAvailableApp && !$android}
+            <button
+                class="button"
+                on:keyup={(e) => e.key === "Enter" && downloadAndroidApp(e)}
+                on:click={downloadAndroidApp}>Install App</button
+            >
+        {/if}
         <button
             class="button"
             on:keyup={(e) => e.key === "Enter" && showNotice(e)}

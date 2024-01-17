@@ -1195,6 +1195,7 @@
     });
 
     window.addEventListener("online", () => {
+        window.alreadyShownNoNetworkAlert = false;
         if ($android) {
             try {
                 JSBridge?.isOnline?.(true);

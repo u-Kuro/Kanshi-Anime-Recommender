@@ -7,6 +7,7 @@ const uniqueKey = "Kanshi.Anime.Recommendations.Anilist.W~uPtWCq=vG$TR:Zl^#t<vdS
 const isBackgroundUpdateKey = writable(uniqueKey + ".isBackgroundUpdate")
 const visitedKey = writable(uniqueKey + ".visited")
 const mobile = writable(null)
+const appInstallationAsked = writable(getLocalStorage('appInstallationAsked') ?? null)
 const inApp = writable(true)
 const progress = writable(0)
 // const anilistAccessToken = writable(null)
@@ -89,6 +90,7 @@ export {
     isBackgroundUpdateKey,
     visitedKey,
     inApp,
+    appInstallationAsked,
     hasWheel,
     progress,
     // anilistAccessToken,
