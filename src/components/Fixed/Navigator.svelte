@@ -455,13 +455,18 @@
                         }
                     } else if (typeof deferredPrompt?.prompt === "function") {
                         await deferredPrompt.prompt();
+                    } else {
+                        $confirmPromise({
+                            isAlert: true,
+                            text: "App installer was not found.",
+                        });
                     }
-                    return;
-                } catch (e) {}
-                $confirmPromise({
-                    isAlert: true,
-                    text: "App installer was not found.",
-                });
+                } catch (e) {
+                    $confirmPromise({
+                        isAlert: true,
+                        text: "App installer was not found.",
+                    });
+                }
             }
             $appInstallationAsked = true;
             setLocalStorage("appInstallationAsked", true);
