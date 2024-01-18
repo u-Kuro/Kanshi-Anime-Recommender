@@ -1771,23 +1771,9 @@
 
 <style>
 	:global(html) {
+		color-scheme: dark !important;
 		overflow-y: overlay !important;
 		scrollbar-gutter: stable !important;
-	}
-	@media screen and (min-width: 750px) {
-		:global(html::-webkit-scrollbar) {
-			width: 16px;
-		}
-		:global(html::-webkit-scrollbar-thumb) {
-			height: 72px;
-			border-radius: 10px;
-			border: 5px solid transparent;
-			background-clip: content-box;
-			background-color: hsl(0, 0%, 50%);
-		}
-		:global(html::-webkit-scrollbar-track) {
-			background: transparent;
-		}
 	}
 	main {
 		width: 100%;
