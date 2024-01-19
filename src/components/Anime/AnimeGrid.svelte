@@ -1,6 +1,7 @@
 <script>
     import { onMount, tick } from "svelte";
     import { fade } from "svelte/transition";
+    import { sineOut } from "svelte/easing";
     import { cacheImage } from "../../js/caching.js";
     import {
         addClass,
@@ -831,7 +832,7 @@
             tabindex={$menuVisible || $popupVisible ? "" : "0"}
             on:click={goBackGrid}
             on:keyup={(e) => e.key === "Enter" && goBackGrid(e)}
-            out:fade={{ duration: 200 }}
+            out:fade={{ duration: 200, easing: sineOut }}
         >
             <svg
                 viewBox={`0 0 ${
@@ -966,7 +967,7 @@
     }
 
     .image-grid__card {
-        animation: fadeIn 0.2s ease;
+        animation: fadeIn 0.2s ease-out;
         width: 100%;
         height: var(--popup-content-height);
         display: grid;
@@ -1013,7 +1014,7 @@
         box-shadow:
             0 1px 3px rgba(0, 0, 0, 0.15),
             0 1px 2px rgba(0, 0, 0, 0.25);
-        transition: opacity 0.2s ease;
+        transition: opacity 0.2s ease-out;
         object-fit: cover;
         -o-object-fit: cover;
         width: 100%;
@@ -1109,7 +1110,7 @@
         -ms-transform: translateZ(0) !important;
         -moz-transform: translateZ(0) !important;
         -o-transform: translateZ(0) !important;
-        animation: fadeIn 0.2s ease;
+        animation: fadeIn 0.2s ease-out;
         display: flex;
         justify-content: center;
         align-items: center;

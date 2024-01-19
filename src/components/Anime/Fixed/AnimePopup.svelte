@@ -1,6 +1,7 @@
 <script>
     import { onMount, tick } from "svelte";
     import { fade } from "svelte/transition";
+    import { sineOut } from "svelte/easing";
     import { cacheImage } from "../../../js/caching.js";
     import { animeLoader } from "../../../js/workerUtils.js";
     import { retrieveJSON, saveJSON } from "../../../js/indexedDB.js";
@@ -1300,7 +1301,7 @@
         endX,
         startY,
         endY,
-        goBackPercent,
+        willGoBack,
         itemIsScrolling,
         itemIsScrollingTimeout;
 
@@ -1319,9 +1320,7 @@
             itemIsScrolling = false;
         }, 50);
         $popupIsGoingBack = false;
-        requestAnimationFrame(() => {
-            goBackPercent = 0;
-        });
+        willGoBack = false;
     }
     function itemScroll() {
         itemIsScrolling = true;
@@ -1373,14 +1372,10 @@
         } else if ($popupIsGoingBack) {
             endX = event.touches[0].clientX;
             const deltaX = endX - startX;
-            if (deltaX > 0) {
-                requestAnimationFrame(() => {
-                    goBackPercent = Math.min((deltaX / 48) * 100, 100);
-                });
+            if (deltaX > 48) {
+                willGoBack = true;
             } else {
-                requestAnimationFrame(() => {
-                    goBackPercent = 0;
-                });
+                willGoBack = false;
             }
         }
     }
@@ -1390,32 +1385,25 @@
                 (touch) => touch.identifier === touchID,
             )?.clientX;
             if (typeof endX === "number") {
-                let xThreshold = 48;
                 let deltaX = endX - startX;
-                if ($popupIsGoingBack && deltaX >= xThreshold) {
+                if ($popupIsGoingBack && deltaX >= 48) {
                     $popupVisible = false;
                 }
             }
             touchID = null;
             $popupIsGoingBack = false;
-            requestAnimationFrame(() => {
-                goBackPercent = 0;
-            });
+            willGoBack = false;
         } else {
             touchID = null;
             $popupIsGoingBack = false;
-            requestAnimationFrame(() => {
-                goBackPercent = 0;
-            });
+            willGoBack = false;
         }
     }
 
     function handlePopupContainerCancel() {
         touchID = null;
         $popupIsGoingBack = false;
-        requestAnimationFrame(() => {
-            goBackPercent = 0;
-        });
+        willGoBack = false;
     }
 
     let fvTouchId,
@@ -2407,14 +2395,10 @@
 </div>
 {#if $popupVisible && $popupIsGoingBack}
     <div
-        class="go-back-grid-highlight"
-        style:--scale={Math.max(1, (goBackPercent ?? 1) * 0.01 * 2)}
-        style:--position={"-" + (100 - (goBackPercent ?? 0)) + "%"}
-        out:fade={{ duration: 200 }}
+        class={"go-back-grid-highlight" + (willGoBack ? " willGoBack" : "")}
+        out:fade={{ duration: 100, easing: sineOut }}
     >
-        <div
-            class={"go-back-grid" + (goBackPercent >= 100 ? " willGoBack" : "")}
-        >
+        <div class="go-back-grid">
             <!-- angle left -->
             <svg viewBox="0 0 320 512"
                 ><path
@@ -2444,7 +2428,7 @@
                             (fullDescriptionPopup = fullImagePopup = null)}
                         tabindex="0"
                         class="fullPopupDescription"
-                        out:fade={{ duration: 200 }}
+                        out:fade={{ duration: 200, easing: sineOut }}
                         on:scroll={fullViewScroll}
                     >
                         {@html fullDescriptionPopup}
@@ -2461,7 +2445,7 @@
                         on:keyup={(e) =>
                             e.key === "Enter" &&
                             (fullDescriptionPopup = fullImagePopup = null)}
-                        out:fade={{ duration: 200 }}
+                        out:fade={{ duration: 200, easing: sineOut }}
                         on:error={(e) => {
                             addClass(e.target, "display-none");
                         }}
@@ -2511,7 +2495,7 @@
         overflow-anchor: visible;
         overscroll-behavior: contain;
         background: var(--bg-color);
-        transition: opacity 0.2s ease;
+        transition: opacity 0.2s ease-out;
         margin-top: 57px;
         -ms-overflow-style: none;
         scrollbar-width: none;
@@ -2537,19 +2521,28 @@
         align-items: center;
         top: 50%;
         left: 0;
-        transform: translateY(-50%) translateX(var(--position)) translateZ(0);
-        -webkit-transform: translateY(-50%) translateX(var(--position))
-            translateZ(0);
-        -ms-transform: translateY(-50%) translateX(var(--position))
-            translateZ(0);
-        -moz-transform: translateY(-50%) translateX(var(--position))
-            translateZ(0);
-        -o-transform: translateY(-50%) translateX(var(--position)) translateZ(0);
+        transform: translateY(-50%) translateX(-100%) translateZ(0);
+        -webkit-transform: translateY(-50%) translateX(-100%) translateZ(0);
+        -ms-transform: translateY(-50%) translateX(-100%) translateZ(0);
+        -moz-transform: translateY(-50%) translateX(-100%) translateZ(0);
+        -o-transform: translateY(-50%) translateX(-100%) translateZ(0);
         background-color: hsl(var(--ac-color), 0.5);
-        width: calc(44px * var(--scale));
-        height: calc(44px * var(--scale));
+        width: 88px;
+        height: 88px;
         border-radius: 50%;
+        transition: transform 0.1s ease-out;
         z-index: 9000;
+    }
+
+    .go-back-grid-highlight.willGoBack {
+        transform: translateY(-50%) translateX(0) translateZ(0);
+        -webkit-transform: translateY(-50%) translateX(0) translateZ(0);
+        -ms-transform: translateY(-50%) translateX(0) translateZ(0);
+        -moz-transform: translateY(-50%) translateX(0) translateZ(0);
+        -o-transform: translateY(-50%) translateX(0) translateZ(0);
+        background-color: hsl(var(--ac-color), 0.5);
+        width: 88px;
+        height: 88px;
     }
 
     .go-back-grid {
@@ -2558,7 +2551,7 @@
         justify-content: center;
         align-items: center;
         gap: 6px;
-        background-color: var(--fg-color);
+        background-color: var(--bg-color);
         cursor: pointer;
         border-radius: 50%;
         max-width: 44px;
@@ -2566,16 +2559,8 @@
         min-width: 44px;
         min-height: 44px;
     }
-
-    .go-back-grid.willGoBack {
-        background-color: var(--bg-color);
-    }
-
-    .go-back-grid.willGoBack svg {
-        fill: var(--sfg-color);
-    }
     .go-back-grid svg {
-        fill: var(--bg-color);
+        fill: var(--sfg-color);
         width: 2em;
         height: 2em;
     }
@@ -2644,7 +2629,7 @@
     }
 
     .popup-content-loading-icon {
-        animation: fadeInOut 1s infinite;
+        animation: fadeInOut 1s infinite linear;
         width: 3.5em;
         height: 3.5em;
     }
@@ -2666,7 +2651,7 @@
     }
 
     .popup-img {
-        transition: opacity 0.2s ease;
+        transition: opacity 0.2s ease-out;
         width: 100%;
         background-color: var(--bg-color) !important;
         z-index: 2;
@@ -2701,11 +2686,11 @@
         background-color: var(--ol-color);
     }
     .bannerImg.fade-out {
-        animation: fadeOut 0.2s ease forwards;
+        animation: fadeOut 0.2s ease-out forwards;
         opacity: 0;
     }
     .bannerImg.fade-in {
-        animation: fadeIn 0.2s ease forwards;
+        animation: fadeIn 0.2s ease-out forwards;
         opacity: 1;
     }
 
@@ -3214,7 +3199,6 @@
         right: 0;
         bottom: 0;
         background-color: transparent;
-        -webkit-transition: 0.4s transform;
         transition: 0.4s transform;
         border: 2px solid var(--sfg-color);
     }
@@ -3227,7 +3211,6 @@
         left: 0.15em;
         bottom: 0.0772em;
         background-color: var(--sfg-color);
-        -webkit-transition: 0.3s transform;
         transition: 0.3s transform;
     }
 
@@ -3302,7 +3285,7 @@
     }
 
     .fullPopupImage {
-        animation: fadeIn 0.2s ease;
+        animation: fadeIn 0.2s ease-out;
         max-width: min(100%, 1000px);
         max-height: 90%;
         object-fit: cover;
@@ -3330,7 +3313,7 @@
         cursor: pointer;
     }
     .fullPopupDescription {
-        animation: fadeIn 0.2s ease;
+        animation: fadeIn 0.2s ease-out;
         letter-spacing: 0.05rem;
         line-height: 2.5rem;
         font-size: 1.3rem;

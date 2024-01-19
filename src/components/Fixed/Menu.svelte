@@ -706,7 +706,7 @@
         -ms-transform: translateY(-99999px) translateZ(0);
         -moz-transform: translateY(-99999px) translateZ(0);
         -o-transform: translateY(-99999px) translateZ(0);
-        transition: opacity 0.2s ease;
+        transition: opacity 0.2s ease-out;
     }
     .menu-container.visible {
         transform: translateY(0) translateZ(0);

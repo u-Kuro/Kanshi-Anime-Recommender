@@ -1,5 +1,6 @@
 <script>
     import { fade } from "svelte/transition";
+    import { sineOut } from "svelte/easing";
     import { ncsCompare } from "../../../js/others/helper.js";
     import {
         android,
@@ -221,7 +222,10 @@
         on:keydown={(e) => e.key === "Enter" && handleAnimeOptionVisibility(e)}
     >
         <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
-        <div class="anime-options-container" out:fade={{ duration: 200 }}>
+        <div
+            class="anime-options-container"
+            out:fade={{ duration: 200, easing: sineOut }}
+        >
             <div class="option-header">
                 <span class="anime-title"><h1>{shownTitle}</h1></span>
                 <svg
@@ -313,7 +317,7 @@
     }
 
     .anime-options-container {
-        animation: fadeIn 0.2s ease;
+        animation: fadeIn 0.2s ease-out;
         display: flex;
         flex-direction: column;
         background-color: var(--bg-color) !important;

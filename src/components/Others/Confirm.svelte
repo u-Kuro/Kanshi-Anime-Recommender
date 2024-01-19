@@ -1,6 +1,7 @@
 <script>
     import { createEventDispatcher, afterUpdate } from "svelte";
     import { fade } from "svelte/transition";
+    import { sineOut } from "svelte/easing";
     import { initData } from "../../js/globalValues.js";
 
     const dispatch = createEventDispatcher();
@@ -13,6 +14,7 @@
     export let cancelLabel = "CANCEL";
     export let isImportant = false;
     let confirmButtonEl;
+    let shouldNotDispatch;
 
     $: shouldShowPleaseWait = $initData && !isAlert && !isImportant;
 
@@ -31,6 +33,7 @@
     });
 
     function handleConfirm(e) {
+        if (shouldNotDispatch) return;
         if (isRecentlyOpened && e.type !== "keydown") return;
         showConfirm = false;
         if (shouldShowPleaseWait) {
@@ -41,6 +44,7 @@
     }
 
     function handleCancel(e) {
+        if (shouldNotDispatch) return;
         if (isRecentlyOpened && e.type !== "keydown") return;
         showConfirm = false;
         dispatch("cancelled");
@@ -59,24 +63,27 @@
         dispatch("cancelled");
     }
 
-    function keyDown(e) {
-        if (e.key === "Tab") {
-            e.preventDefault();
-            e.stopPropagation();
-            confirmButtonEl?.focus?.();
-            window.removeEventListener("keydown", keyDown);
+    window.addEventListener("keydown", (e) => {
+        if (shouldNotDispatch == null) {
+            let element = e?.target;
+            let classList = element?.classList;
+            shouldNotDispatch =
+                !classList?.contains?.("confirm-button-container") &&
+                !element?.closest?.(".confirm-button-container");
         }
-    }
+    });
+    window.addEventListener("keyup", () => {
+        shouldNotDispatch = null;
+    });
 
     afterUpdate(() => {
         if (showConfirm) {
-            window.addEventListener("keydown", keyDown);
+            confirmButtonEl?.focus?.();
             isRecentlyOpened = true;
             isRecentlyOpenedTimeout = setTimeout(() => {
                 isRecentlyOpened = false;
             }, 200);
         } else {
-            window.removeEventListener("keydown", keyDown);
             if (isRecentlyOpenedTimeout) clearTimeout(isRecentlyOpenedTimeout);
             isRecentlyOpened = false;
         }
@@ -91,7 +98,10 @@
         on:keydown={(e) => e.key === "Enter" && handleConfirmVisibility(e)}
     >
         <div class="confirm-wrapper">
-            <div class="confirm-container" out:fade={{ duration: 200 }}>
+            <div
+                class="confirm-container"
+                out:fade={{ duration: 200, easing: sineOut }}
+            >
                 <div class="confirm-info-container">
                     <h2 class="confirm-title">
                         {shouldShowPleaseWait
@@ -169,7 +179,7 @@
     }
 
     .confirm-container {
-        animation: fadeIn 0.2s ease;
+        animation: fadeIn 0.2s ease-out;
         display: grid;
         grid-template-rows: auto 20px;
         background-color: var(--bg-color);
@@ -234,10 +244,10 @@
         cursor: pointer;
     }
 
-    @media (pointer: fine) {
+    @media screen and (pointer: fine) {
         .button:hover,
         .button:focus {
-            background-color: var(--ol-color);
+            background-color: hsl(0, 0%, 10%);
             border-radius: 6px;
         }
     }

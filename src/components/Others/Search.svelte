@@ -1,6 +1,7 @@
 <script>
     import { onMount, tick } from "svelte";
     import { fade } from "svelte/transition";
+    import { sineOut } from "svelte/easing";
     import { retrieveJSON, saveJSON } from "../../js/indexedDB.js";
     import {
         animeLoader,
@@ -346,13 +347,65 @@
             !selectedFilterTypeElement &&
             !(classList.contains("closing-x") || element.closest(".closing-x"))
         ) {
-            selectedFilterTypeElement = true;
+            selectedFilterTypeElement = filterTypEl || element || true;
         } else if (
             (!optionsWrap ||
                 classList.contains("closing-x") ||
                 element.closest(".closing-x")) &&
             !classList.contains("options-wrap")
         ) {
+            let optionsWrapToClose =
+                selectedFilterTypeElement?.querySelector?.(".options-wrap");
+            if (optionsWrapToClose) {
+                addClass(optionsWrapToClose, "hide");
+                setTimeout(() => {
+                    removeClass(optionsWrapToClose, "hide");
+                    if (
+                        highlightedEl instanceof Element &&
+                        highlightedEl.closest(".filterType")
+                    ) {
+                        removeClass(highlightedEl, "highlight");
+                        highlightedEl = null;
+                    }
+                    selectedFilterTypeElement = false;
+                }, 200);
+            } else {
+                if (
+                    highlightedEl instanceof Element &&
+                    highlightedEl.closest(".filterType")
+                ) {
+                    removeClass(highlightedEl, "highlight");
+                    highlightedEl = null;
+                }
+                selectedFilterTypeElement = false;
+            }
+        }
+    }
+    function handleTouchFilterTypes(event) {
+        let element = event.target;
+        let classList = element.classList;
+        if (
+            classList?.contains?.("options-wrap-filter-info") ||
+            element?.closest?.(".options-wrap-filter-info")
+        ) {
+            return;
+        }
+        let optionsWrapToClose =
+            selectedFilterTypeElement?.querySelector?.(".options-wrap");
+        if (optionsWrapToClose) {
+            addClass(optionsWrapToClose, "hide");
+            setTimeout(() => {
+                removeClass(optionsWrapToClose, "hide");
+                if (
+                    highlightedEl instanceof Element &&
+                    highlightedEl.closest(".filterType")
+                ) {
+                    removeClass(highlightedEl, "highlight");
+                    highlightedEl = null;
+                }
+                selectedFilterTypeElement = false;
+            }, 200);
+        } else {
             if (
                 highlightedEl instanceof Element &&
                 highlightedEl.closest(".filterType")
@@ -415,7 +468,7 @@
                 dropdownIdx
             ].selected = true;
         }
-        selectedFilterElement = filSelectEl;
+        selectedFilterElement = filSelectEl || element || true;
     }
 
     function closeFilterSelect(dropDownIdx) {
@@ -427,17 +480,79 @@
             )
         )
             return;
-        $filterOptions.filterSelection[idxTypeSelected].filters.Dropdown[
-            dropDownIdx
-        ].selected = false;
-        if (
-            highlightedEl instanceof Element &&
-            highlightedEl.closest(".filter-select")
-        ) {
-            removeClass(highlightedEl, "highlight");
-            highlightedEl = null;
+        let optionsWrapToClose =
+            selectedFilterElement?.querySelector?.(".options-wrap");
+        if (optionsWrapToClose) {
+            addClass(optionsWrapToClose, "hide");
+            setTimeout(() => {
+                removeClass(optionsWrapToClose, "hide");
+                $filterOptions.filterSelection[
+                    idxTypeSelected
+                ].filters.Dropdown[dropDownIdx].selected = false;
+                if (
+                    highlightedEl instanceof Element &&
+                    highlightedEl.closest(".filter-select")
+                ) {
+                    removeClass(highlightedEl, "highlight");
+                    highlightedEl = null;
+                }
+                selectedFilterElement = null;
+            }, 200);
+        } else {
+            $filterOptions.filterSelection[idxTypeSelected].filters.Dropdown[
+                dropDownIdx
+            ].selected = false;
+            if (
+                highlightedEl instanceof Element &&
+                highlightedEl.closest(".filter-select")
+            ) {
+                removeClass(highlightedEl, "highlight");
+                highlightedEl = null;
+            }
+            selectedFilterElement = null;
         }
-        selectedFilterElement = null;
+    }
+    function handleTouchFilterSelect(event, dropDownIdx) {
+        let element = event.target;
+        let classList = element.classList;
+        if (
+            classList?.contains?.("options-wrap-filter-info") ||
+            element?.closest?.(".options-wrap-filter-info")
+        ) {
+            return;
+        }
+        let idxTypeSelected = selectedFilterSelectionIdx;
+        let optionsWrapToClose =
+            selectedFilterElement?.querySelector?.(".options-wrap");
+        if (optionsWrapToClose) {
+            addClass(optionsWrapToClose, "hide");
+            setTimeout(() => {
+                removeClass(optionsWrapToClose, "hide");
+                $filterOptions.filterSelection[
+                    idxTypeSelected
+                ].filters.Dropdown[dropDownIdx].selected = false;
+                if (
+                    highlightedEl instanceof Element &&
+                    highlightedEl.closest(".filter-select")
+                ) {
+                    removeClass(highlightedEl, "highlight");
+                    highlightedEl = null;
+                }
+                selectedFilterElement = null;
+            }, 200);
+        } else {
+            $filterOptions.filterSelection[idxTypeSelected].filters.Dropdown[
+                dropDownIdx
+            ].selected = false;
+            if (
+                highlightedEl instanceof Element &&
+                highlightedEl.closest(".filter-select")
+            ) {
+                removeClass(highlightedEl, "highlight");
+                highlightedEl = null;
+            }
+            selectedFilterElement = null;
+        }
     }
     async function clickOutsideListener(event) {
         if ($filterOptions?.filterSelection?.length < 1 || !$filterOptions)
@@ -449,28 +564,64 @@
             getComputedStyle(element).position === "fixed"
         ) {
             // Small Screen Width
-            if (highlightedEl instanceof Element) {
-                removeClass(highlightedEl, "highlight");
-                highlightedEl = null;
+            let openedDropdown =
+                selectedCustomFilterElement ||
+                selectedFilterTypeElement ||
+                selectedSortElement ||
+                selectedFilterElement;
+            let optionsWrapToClose =
+                openedDropdown?.querySelector?.(".options-wrap");
+            if (optionsWrapToClose) {
+                addClass(optionsWrapToClose, "hide");
+                setTimeout(() => {
+                    removeClass(optionsWrapToClose, "hide");
+                    if (highlightedEl instanceof Element) {
+                        removeClass(highlightedEl, "highlight");
+                        highlightedEl = null;
+                    }
+                    // CLose Custom Filter Dropdown
+                    selectedCustomFilterElement = false;
+                    // Close Filter Type Dropdown
+                    selectedFilterTypeElement = false;
+                    // Close Sort Filter Dropdown
+                    selectedSortElement = false;
+                    // Close Filter Selection Dropdown
+                    let idxTypeSelected = selectedFilterSelectionIdx;
+                    $filterOptions?.filterSelection?.[
+                        idxTypeSelected
+                    ]?.filters?.Dropdown?.forEach?.((e) => {
+                        e.selected = false;
+                    });
+                    if ($filterOptions?.filterSelection?.[idxTypeSelected]) {
+                        $filterOptions.filterSelection[idxTypeSelected] =
+                            $filterOptions?.filterSelection?.[idxTypeSelected];
+                    }
+                    selectedFilterElement = null;
+                }, 200);
+            } else {
+                if (highlightedEl instanceof Element) {
+                    removeClass(highlightedEl, "highlight");
+                    highlightedEl = null;
+                }
+                // CLose Custom Filter Dropdown
+                selectedCustomFilterElement = false;
+                // Close Filter Type Dropdown
+                selectedFilterTypeElement = false;
+                // Close Sort Filter Dropdown
+                selectedSortElement = false;
+                // Close Filter Selection Dropdown
+                let idxTypeSelected = selectedFilterSelectionIdx;
+                $filterOptions?.filterSelection?.[
+                    idxTypeSelected
+                ]?.filters?.Dropdown?.forEach?.((e) => {
+                    e.selected = false;
+                });
+                if ($filterOptions?.filterSelection?.[idxTypeSelected]) {
+                    $filterOptions.filterSelection[idxTypeSelected] =
+                        $filterOptions?.filterSelection?.[idxTypeSelected];
+                }
+                selectedFilterElement = null;
             }
-            // CLose Custom Filter Dropdown
-            selectedCustomFilterElement = false;
-            // Close Filter Type Dropdown
-            selectedFilterTypeElement = false;
-            // Close Sort Filter Dropdown
-            selectedSortElement = false;
-            // Close Filter Selection Dropdown
-            let idxTypeSelected = selectedFilterSelectionIdx;
-            $filterOptions?.filterSelection?.[
-                idxTypeSelected
-            ]?.filters?.Dropdown?.forEach?.((e) => {
-                e.selected = false;
-            });
-            if ($filterOptions?.filterSelection?.[idxTypeSelected]) {
-                $filterOptions.filterSelection[idxTypeSelected] =
-                    $filterOptions?.filterSelection?.[idxTypeSelected];
-            }
-            selectedFilterElement = null;
         } else if (
             !classList.contains("options-wrap") &&
             !element?.closest?.(".options-wrap") &&
@@ -1291,16 +1442,69 @@
             (classList.contains("sortFilter") || sortSelectEl) &&
             !selectedSortElement
         ) {
-            selectedSortElement = true;
+            selectedSortElement = sortSelectEl || element || true;
         } else if (
             (!optionsWrap ||
                 classList.contains("closing-x") ||
                 element.closest(".closing-x")) &&
             !classList.contains("options-wrap")
         ) {
+            let optionsWrapToClose =
+                selectedSortElement?.querySelector?.(".options-wrap");
+            if (optionsWrapToClose) {
+                addClass(optionsWrapToClose, "hide");
+                setTimeout(() => {
+                    removeClass(optionsWrapToClose, "hide");
+                    if (
+                        highlightedEl instanceof Element &&
+                        highlightedEl.closest(".sortFilter")
+                    ) {
+                        removeClass(highlightedEl, "highlight");
+                        highlightedEl = null;
+                    }
+                    selectedSortElement = false;
+                }, 200);
+            } else {
+                if (
+                    highlightedEl instanceof Element &&
+                    highlightedEl.closest(".sortFilter")
+                ) {
+                    removeClass(highlightedEl, "highlight");
+                    highlightedEl = null;
+                }
+                selectedSortElement = false;
+            }
+        }
+    }
+
+    function handleTouchSortFilterPopup(event) {
+        let element = event.target;
+        let classList = element.classList;
+        if (
+            classList?.contains?.("options-wrap-filter-info") ||
+            element?.closest?.(".options-wrap-filter-info")
+        ) {
+            return;
+        }
+        let optionsWrapToClose =
+            selectedSortElement?.querySelector?.(".options-wrap");
+        if (optionsWrapToClose) {
+            addClass(optionsWrapToClose, "hide");
+            setTimeout(() => {
+                removeClass(optionsWrapToClose, "hide");
+                if (
+                    highlightedEl instanceof Element &&
+                    highlightedEl.closest(".custom-filter-wrap")
+                ) {
+                    removeClass(highlightedEl, "highlight");
+                    highlightedEl = null;
+                }
+                selectedSortElement = false;
+            }, 200);
+        } else {
             if (
                 highlightedEl instanceof Element &&
-                highlightedEl.closest(".sortFilter")
+                highlightedEl.closest(".custom-filter-wrap")
             ) {
                 removeClass(highlightedEl, "highlight");
                 highlightedEl = null;
@@ -1638,8 +1842,18 @@
         let iconActions = element.closest(".custom-filter-icon-wrap");
         if (iconActions || classList.contains("custom-filter-icon-wrap"))
             return;
-        if (!$filterOptions || !$activeTagFilters || !$selectedCustomFilter)
-            return pleaseWaitAlert();
+        if (!$filterOptions || !$activeTagFilters || !$selectedCustomFilter) {
+            pleaseWaitAlert();
+            if (
+                highlightedEl instanceof Element &&
+                highlightedEl.closest(".custom-filter-wrap")
+            ) {
+                removeClass(highlightedEl, "highlight");
+                highlightedEl = null;
+            }
+            selectedCustomFilterElement = false;
+            return;
+        }
         let option = element.closest(".option");
         if (option || classList.contains("option")) return;
         let sortSelectEl = element.closest(".custom-filter-wrap");
@@ -1649,13 +1863,65 @@
             !selectedCustomFilterElement &&
             !(classList.contains("closing-x") || element.closest(".closing-x"))
         ) {
-            selectedCustomFilterElement = true;
+            selectedCustomFilterElement = sortSelectEl || element || true;
         } else if (
             (!optionsWrap ||
                 classList.contains("closing-x") ||
                 element.closest(".closing-x")) &&
             !classList.contains("options-wrap")
         ) {
+            let optionsWrapToClose =
+                selectedCustomFilterElement?.querySelector?.(".options-wrap");
+            if (optionsWrapToClose) {
+                addClass(optionsWrapToClose, "hide");
+                setTimeout(() => {
+                    removeClass(optionsWrapToClose, "hide");
+                    if (
+                        highlightedEl instanceof Element &&
+                        highlightedEl.closest(".custom-filter-wrap")
+                    ) {
+                        removeClass(highlightedEl, "highlight");
+                        highlightedEl = null;
+                    }
+                    selectedCustomFilterElement = false;
+                }, 200);
+            } else {
+                if (
+                    highlightedEl instanceof Element &&
+                    highlightedEl.closest(".custom-filter-wrap")
+                ) {
+                    removeClass(highlightedEl, "highlight");
+                    highlightedEl = null;
+                }
+                selectedCustomFilterElement = false;
+            }
+        }
+    }
+    function handleTouchCustomFilterPopup(event) {
+        let element = event.target;
+        let classList = element.classList;
+        if (
+            classList?.contains?.("options-wrap-filter-info") ||
+            element?.closest?.(".options-wrap-filter-info")
+        ) {
+            return;
+        }
+        let optionsWrapToClose =
+            selectedCustomFilterElement?.querySelector?.(".options-wrap");
+        if (optionsWrapToClose) {
+            addClass(optionsWrapToClose, "hide");
+            setTimeout(() => {
+                removeClass(optionsWrapToClose, "hide");
+                if (
+                    highlightedEl instanceof Element &&
+                    highlightedEl.closest(".custom-filter-wrap")
+                ) {
+                    removeClass(highlightedEl, "highlight");
+                    highlightedEl = null;
+                }
+                selectedCustomFilterElement = false;
+            }, 200);
+        } else {
             if (
                 highlightedEl instanceof Element &&
                 highlightedEl.closest(".custom-filter-wrap")
@@ -2034,33 +2300,74 @@
     dropdownIsVisible.subscribe((val) => {
         if (val === false && windowWidth <= 425) {
             // Small Screen Width
-            if (highlightedEl instanceof Element) {
-                removeClass(highlightedEl, "highlight");
-                highlightedEl = null;
-            }
-            // Close Custom Filter Dropdown
-            selectedCustomFilterElement = false;
-            // Close Filter Type Dropdown
-            selectedFilterTypeElement = false;
-            // Close Sort Filter Dropdown
-            selectedSortElement = false;
-            // Close Filter Selection Dropdown
-            let idxTypeSelected = selectedFilterSelectionIdx;
-            $filterOptions?.filterSelection?.[
-                idxTypeSelected
-            ]?.filters?.Dropdown?.forEach?.((e) => {
-                if (e?.selected != null) {
-                    e.selected = false;
+            let openedDropdown =
+                selectedCustomFilterElement ||
+                selectedFilterTypeElement ||
+                selectedSortElement ||
+                selectedFilterElement;
+            let optionsWrapToClose =
+                openedDropdown?.querySelector?.(".options-wrap");
+            if (optionsWrapToClose) {
+                addClass(optionsWrapToClose, "hide");
+                setTimeout(() => {
+                    removeClass(optionsWrapToClose, "hide");
+                    if (highlightedEl instanceof Element) {
+                        removeClass(highlightedEl, "highlight");
+                        highlightedEl = null;
+                    }
+                    // Close Custom Filter Dropdown
+                    selectedCustomFilterElement = false;
+                    // Close Filter Type Dropdown
+                    selectedFilterTypeElement = false;
+                    // Close Sort Filter Dropdown
+                    selectedSortElement = false;
+                    // Close Filter Selection Dropdown
+                    let idxTypeSelected = selectedFilterSelectionIdx;
+                    $filterOptions?.filterSelection?.[
+                        idxTypeSelected
+                    ]?.filters?.Dropdown?.forEach?.((e) => {
+                        if (e?.selected != null) {
+                            e.selected = false;
+                        }
+                    });
+                    if (
+                        idxTypeSelected != null &&
+                        $filterOptions?.filterSelection?.[idxTypeSelected]
+                    ) {
+                        $filterOptions.filterSelection[idxTypeSelected] =
+                            $filterOptions?.filterSelection?.[idxTypeSelected];
+                    }
+                    selectedFilterElement = null;
+                }, 200);
+            } else {
+                if (highlightedEl instanceof Element) {
+                    removeClass(highlightedEl, "highlight");
+                    highlightedEl = null;
                 }
-            });
-            if (
-                idxTypeSelected != null &&
-                $filterOptions?.filterSelection?.[idxTypeSelected]
-            ) {
-                $filterOptions.filterSelection[idxTypeSelected] =
-                    $filterOptions?.filterSelection?.[idxTypeSelected];
+                // Close Custom Filter Dropdown
+                selectedCustomFilterElement = false;
+                // Close Filter Type Dropdown
+                selectedFilterTypeElement = false;
+                // Close Sort Filter Dropdown
+                selectedSortElement = false;
+                // Close Filter Selection Dropdown
+                let idxTypeSelected = selectedFilterSelectionIdx;
+                $filterOptions?.filterSelection?.[
+                    idxTypeSelected
+                ]?.filters?.Dropdown?.forEach?.((e) => {
+                    if (e?.selected != null) {
+                        e.selected = false;
+                    }
+                });
+                if (
+                    idxTypeSelected != null &&
+                    $filterOptions?.filterSelection?.[idxTypeSelected]
+                ) {
+                    $filterOptions.filterSelection[idxTypeSelected] =
+                        $filterOptions?.filterSelection?.[idxTypeSelected];
+                }
+                selectedFilterElement = null;
             }
-            selectedFilterElement = null;
         }
     });
 
@@ -2195,6 +2502,7 @@
                 class={"options-wrap " +
                     (selectedCustomFilterElement ? "" : "display-none hide")}
                 style:--maxFilterSelectionHeight="{maxFilterSelectionHeight}px"
+                on:touchend|passive={handleTouchCustomFilterPopup}
             >
                 {#if $filterOptions}
                     <div
@@ -2387,6 +2695,7 @@
                     class={"options-wrap " +
                         (selectedFilterTypeElement ? "" : "display-none hide")}
                     style:--maxFilterSelectionHeight="{maxFilterSelectionHeight}px"
+                    on:touchend|passive={handleTouchFilterTypes}
                 >
                     {#if $filterOptions}
                         <div
@@ -2623,6 +2932,8 @@
                                     : "display-none hide")}
                             style:--maxFilterSelectionHeight="{maxFilterSelectionHeight}px"
                             on:wheel|stopPropagation={() => {}}
+                            on:touchend|passive={(e) =>
+                                handleTouchFilterSelect(e, dropdownIdx)}
                         >
                             <div
                                 class={"options-wrap-filter-info " +
@@ -3132,7 +3443,7 @@
         >
     </div>
     <div id="home-status" class="home-status">
-        <span out:fade={{ duration: 200 }} class="data-status">
+        <span out:fade={{ duration: 200, easing: sineOut }} class="data-status">
             <h2
                 on:click={(e) => {
                     getExtraInfo();
@@ -3221,6 +3532,7 @@
                     class={"options-wrap " +
                         (selectedSortElement ? "" : "display-none hide")}
                     style:--maxFilterSelectionHeight="{maxFilterSelectionHeight}px"
+                    on:touchend|passive={handleTouchSortFilterPopup}
                 >
                     <div
                         class={"options-wrap-filter-info " +
@@ -3309,7 +3621,7 @@
             42px var(--custom-filter-settings-space) var(--filters-space)
             var(--active-tag-filter-space) 44px 42px 45px auto;
         padding-top: 1.5em;
-        transition: opacity 0.2s ease;
+        transition: opacity 0.2s ease-out;
     }
 
     .skeleton {
@@ -3855,7 +4167,7 @@
     }
 
     .activeFilters .activeTagFilter {
-        animation: fadeIn 0.2s ease;
+        animation: fadeIn 0.2s ease-out;
         background-color: var(--bg-color);
         color: var(--activeTagFilterColor);
         border: 1px solid var(--activeTagFilterColor);
@@ -4197,14 +4509,17 @@
             -o-transform: translateZ(0);
         }
         .options-wrap {
+            opacity: 1;
+            transition: opacity 0.2s ease-out;
+            animation: fadeIn 0.2s ease-out;
             -ms-overflow-style: none;
             scrollbar-width: none;
         }
+        .options-wrap.hide {
+            opacity: 0;
+        }
         .options-wrap::-webkit-scrollbar {
             display: none;
-        }
-        .options-wrap.hide {
-            transition: transform 0s ease 0.2s;
         }
         .options-wrap-filter-info {
             display: flex;
@@ -4221,7 +4536,7 @@
             min-height: 10.71em !important;
             position: absolute;
             opacity: 1 !important;
-            transition: opacity 0.2s ease !important;
+            transition: opacity 0.2s ease-out !important;
             overflow: hidden !important;
         }
         #filters .options-wrap-filter-info {

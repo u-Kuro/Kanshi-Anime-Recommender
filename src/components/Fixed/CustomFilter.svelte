@@ -29,37 +29,12 @@
     } from "../../js/globalValues.js";
 
     let customFiltersNav;
-    let customFiltersNavVisible;
+    let showCustomFiltersNav = true;
     let animeGridEl;
     let popupContainer;
-    let showCustomFilter;
     let lastScrollTop = 0,
         isScrolledYMax,
-        isFullViewed,
-        customFilNavIsAnimating,
-        customFilOpacity;
-
-    let showCustomFilterNavTimeout;
-    function customFilterNavVisibility(show) {
-        return new Promise((resolve) => {
-            try {
-                clearTimeout(showCustomFilterNavTimeout);
-                if (show) {
-                    showCustomFilter = true;
-                    customFilOpacity = 1;
-                    resolve();
-                } else {
-                    customFilOpacity = 0;
-                    showCustomFilterNavTimeout = setTimeout(() => {
-                        showCustomFilter = false;
-                        resolve();
-                    }, 160);
-                }
-            } catch (e) {
-                resolve();
-            }
-        });
-    }
+        isFullViewed;
 
     $: {
         isScrolledYMax =
@@ -68,19 +43,15 @@
                     window?.innerHeight -
                     1 && $shownAllInList;
         if (isScrolledYMax) {
-            customFilOpacity = 1;
+            showCustomFiltersNav = true;
         }
     }
     $: {
         isFullViewed =
             $gridFullView ?? getLocalStorage("gridFullView") ?? false;
         if (isFullViewed) {
-            customFilOpacity = 1;
+            showCustomFiltersNav = true;
         }
-    }
-    $: {
-        customFiltersNavVisible =
-            $customFilters?.length && (!$android || showCustomFilter);
     }
 
     gridFullView.subscribe(() => {
@@ -155,7 +126,6 @@
             if (unsub) {
                 unsub?.();
                 unsub = null;
-                customFilterNavVisibility(true);
                 unsubCustomFilters = null;
             }
         } catch (e) {}
@@ -223,7 +193,6 @@
     async function selectCustomFilter(selectedCustomFilterName) {
         if (!$customFilters?.length) return pleaseWaitAlert();
         clearTimeout(scrollFullGridTimeout);
-        customFilterNavVisibility(true);
         goBackGrid(selectedCustomFilterName);
         if (selectedCustomFilterName === $selectedCustomFilter) {
             if ($listUpdateAvailable) {
@@ -313,113 +282,82 @@
             text: "Please wait a moment...",
         });
     }
-    let touchID,
-        startY,
-        endY,
-        yThreshold = 48,
-        isShown,
-        isActivated;
-    window.addEventListener(
-        "touchstart",
-        (event) => {
-            if (
-                touchID != null ||
-                !$android ||
-                (event?.target?.classList?.contains?.("custom-filter") ?? true)
-            ) {
-                return;
-            }
-            let element = event?.target;
-            let closestScrollableElement = element;
-            let isMainScrollableElement = true;
-            while (
-                closestScrollableElement &&
-                closestScrollableElement !== document.body
-            ) {
-                const isScrollableTop =
-                    closestScrollableElement.scrollHeight >
-                    closestScrollableElement.clientHeight;
-                if (isScrollableTop) {
-                    isMainScrollableElement = false;
-                    break;
-                }
-                closestScrollableElement =
-                    closestScrollableElement?.parentElement;
-            }
-            if (!isMainScrollableElement) return;
-            startY = event?.touches?.[0]?.clientY;
-            touchID = event?.touches?.[0]?.identifier;
-        },
-        { passive: true },
-    );
 
-    window.addEventListener(
-        "touchmove",
-        (event) => {
-            if (touchID == null || startY == null || !$android) return;
-            endY = Array.from(event.changedTouches)?.find(
-                (touch) => touch.identifier === touchID,
-            )?.clientY;
-            if (typeof endY === "number") {
-                let deltaY = endY - startY;
-                let newCustomFilOpacity = Math.min(
-                    Math.abs(deltaY / yThreshold),
-                    1,
-                );
-                if (!isActivated) {
-                    isShown = isShown ?? customFilOpacity > 0.5;
-                    if (newCustomFilOpacity >= 1) {
-                        isActivated = true;
-                        isShown = null;
-                    }
-                }
-                if (deltaY > 0 && (isShown == null || isShown === false)) {
-                    customFilNavIsAnimating = true;
-                    customFilOpacity = newCustomFilOpacity;
-                } else if (
-                    deltaY < 0 &&
-                    (isShown == null || isShown === true)
-                ) {
-                    customFilNavIsAnimating = true;
-                    customFilOpacity = 1 - newCustomFilOpacity;
-                }
-            }
-        },
-        { passive: true },
-    );
     let immediateCustomFilNavChange, immediateShowTimeout;
     window.showCustomFilterNav = (show, immediate = false) => {
         if (immediate) {
             immediateCustomFilNavChange = true;
-            if (show) {
-                showCustomFilter = true;
-                customFilOpacity = 1;
-            } else {
-                customFilOpacity = 0;
-                showCustomFilter = false;
-            }
+            showCustomFiltersNav = show;
             clearTimeout(immediateShowTimeout);
             immediateShowTimeout = setTimeout(() => {
                 immediateCustomFilNavChange = false;
-            }, 160);
+            }, 200);
         } else {
             clearTimeout(immediateShowTimeout);
             immediateCustomFilNavChange = false;
-            customFilterNavVisibility(show);
+            showCustomFiltersNav = show;
         }
     };
 
-    function touchedUp() {
-        if (!$android) return;
-        isActivated = isShown = touchID = null;
-        customFilterNavVisibility(customFilOpacity > 0.5).then(() => {
-            if (touchID == null) {
-                customFilNavIsAnimating = false;
-            }
-        });
+    if ($android) {
+        let touchID, startY, endY;
+        window.addEventListener(
+            "touchstart",
+            (event) => {
+                if (
+                    touchID != null ||
+                    (event?.target?.classList?.contains?.("custom-filter") ??
+                        true)
+                ) {
+                    return;
+                }
+                let element = event?.target;
+                let closestScrollableElement = element;
+                let isMainScrollableElement = true;
+                while (
+                    closestScrollableElement &&
+                    closestScrollableElement !== document.body
+                ) {
+                    const isScrollableTop =
+                        closestScrollableElement.scrollHeight >
+                        closestScrollableElement.clientHeight;
+                    if (isScrollableTop) {
+                        isMainScrollableElement = false;
+                        break;
+                    }
+                    closestScrollableElement =
+                        closestScrollableElement?.parentElement;
+                }
+                if (!isMainScrollableElement) return;
+                startY = event?.touches?.[0]?.clientY;
+                touchID = event?.touches?.[0]?.identifier;
+            },
+            { passive: true },
+        );
+
+        window.addEventListener(
+            "touchmove",
+            (event) => {
+                if (touchID == null || startY == null || !$android) return;
+                endY = Array.from(event.changedTouches)?.find(
+                    (touch) => touch.identifier === touchID,
+                )?.clientY;
+                if (typeof endY === "number") {
+                    let deltaY = endY - startY;
+                    if (deltaY !== 0) {
+                        showCustomFiltersNav = deltaY > 0;
+                    }
+                }
+            },
+            { passive: true },
+        );
+
+        function touchedUp() {
+            touchID = null;
+        }
+        window.addEventListener("touchend", touchedUp, { passive: true });
+        window.addEventListener("touchcancel", touchedUp, { passive: true });
     }
-    window.addEventListener("touchend", touchedUp, { passive: true });
-    window.addEventListener("touchcancel", touchedUp, { passive: true });
     window.addEventListener("resize", () => {
         scrollToSelectedCustomFilter();
     });
@@ -434,19 +372,22 @@
         lastScrollTop = document.documentElement.scrollTop;
         popupContainer = document?.getElementById("popup-container");
     });
+
+    let customFiltersNavVisible;
+    $: {
+        if ($customFilters?.length) {
+            customFiltersNavVisible = !$android || showCustomFiltersNav;
+        } else {
+            customFiltersNavVisible = false;
+        }
+    }
 </script>
 
 <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
 <div
     class={"custom-filters-nav" +
-        (immediateCustomFilNavChange ? " immediate" : "") +
-        ((!$android || isScrolledYMax || isFullViewed) && $customFilters?.length
-            ? " persistent-show"
-            : (customFilNavIsAnimating || customFiltersNavVisible) &&
-                $customFilters?.length
-              ? ""
-              : " hide")}
-    style:--opacity={$android ? customFilOpacity : ""}
+        (customFiltersNavVisible ? "" : " hide") +
+        (immediateCustomFilNavChange ? " immediate" : "")}
 >
     <div
         class="prev-custom-filter"
@@ -499,12 +440,7 @@
         min-height: var(--min-height);
     }
     .custom-filters-nav.hide {
-        display: block;
         opacity: 0 !important;
-    }
-    .custom-filters-nav.persistent-show {
-        display: flex;
-        opacity: 1 !important;
     }
     .custom-filters-nav {
         z-index: 991;
@@ -519,8 +455,8 @@
         -ms-transform: translateZ(0);
         -moz-transform: translateZ(0);
         -o-transform: translateZ(0);
-        transition: opacity 0.16s ease;
-        opacity: var(--opacity);
+        opacity: 1;
+        transition: opacity 0.2s ease-out;
     }
     .custom-filters-nav.immediate {
         transition: unset !important;

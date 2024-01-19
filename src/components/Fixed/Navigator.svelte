@@ -613,7 +613,7 @@
         background-color: var(--bg-color);
         color: var(--fg-color);
         opacity: 1;
-        transition: opacity 0.2s ease;
+        transition: opacity 0.2s ease-out;
     }
     .nav-container.stop-transition {
         transition: unset !important;
@@ -691,8 +691,8 @@
     }
     input[type="search"]::-webkit-search-cancel-button {
         opacity: 1;
-        transition: opacity 0.1s ease;
-        animation: fadeIn 0.1s ease;
+        transition: opacity 0.1s ease-out;
+        animation: fadeIn 0.1s ease-out;
     }
     .nav-container.layout-change
         input[type="search"]::-webkit-search-cancel-button {
@@ -714,7 +714,7 @@
         align-items: center;
         color: var(--fg-color);
         cursor: pointer;
-        animation: fadeIn 0.1s ease;
+        animation: fadeIn 0.1s ease-out;
     }
     .nav.popupvisible .closing-x,
     .nav-container.menu-visible .closing-x {
@@ -730,7 +730,7 @@
         display: none;
         justify-content: center;
         opacity: 1;
-        transition: opacity 0.1s ease;
+        transition: opacity 0.1s ease-out;
     }
     .app-installer {
         width: 80px;
@@ -743,7 +743,7 @@
         border-radius: 30px;
         border: 1px solid var(--bd-color);
         cursor: pointer;
-        animation: fadeIn 0.1s ease;
+        animation: fadeIn 0.1s ease-out;
         display: block;
     }
     @media screen and (max-width: 425px) {
@@ -817,7 +817,7 @@
 
     @media screen and (max-width: 750px) {
         .usernameText {
-            animation: fadeIn 0.1s ease;
+            animation: fadeIn 0.1s ease-out;
         }
         .nav-container.layout-change .go-back-container {
             opacity: 0;
@@ -849,12 +849,12 @@
         }
         #usernameInput {
             opacity: 0;
-            transition: opacity 0.1s ease;
+            transition: opacity 0.1s ease-out;
             font-size: 1.5rem;
             font-weight: 500;
         }
         .input-search {
-            transition: opacity 0.1s ease;
+            transition: opacity 0.1s ease-out;
             justify-self: start !important;
             padding-left: 1em !important;
         }
