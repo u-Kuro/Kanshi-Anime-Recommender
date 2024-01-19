@@ -778,6 +778,9 @@ public class MainActivity extends AppCompatActivity {
                             if (tempFile != null && tempFile.exists()) {
                                 if (tempFile.renameTo(file)) {
                                     isExported(true);
+                                    File $tempFile = new File(directoryPath + "pb.tmp.json");
+                                    //noinspection ResultOfMethodCallIgnored
+                                    $tempFile.delete();
                                 } else {
                                     isExported(false);
                                     showToast(Toast.makeText(getApplicationContext(), "An exception occurred in finalizing the exported file, your back-up was saved in tmp.json but is not guaranteed to work.", Toast.LENGTH_LONG));
@@ -785,9 +788,6 @@ public class MainActivity extends AppCompatActivity {
                                     file.delete();
                                     //noinspection ResultOfMethodCallIgnored
                                     tempFile.delete();
-                                    File $tempFile = new File(directoryPath + "pb.tmp.json");
-                                    //noinspection ResultOfMethodCallIgnored
-                                    $tempFile.delete();
                                 }
                             } else {
                                 isExported(false);

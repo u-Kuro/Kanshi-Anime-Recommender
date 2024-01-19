@@ -512,15 +512,15 @@ public class MainService extends Service {
                             if (tempFile != null && tempFile.exists()) {
                                 if (tempFile.renameTo(file)) {
                                     isExported(true);
+                                    File $tempFile = new File(directoryPath + "tmp.json");
+                                    //noinspection ResultOfMethodCallIgnored
+                                    $tempFile.delete();
                                 } else {
                                     isExported(false);
                                     //noinspection ResultOfMethodCallIgnored
                                     file.delete();
                                     //noinspection ResultOfMethodCallIgnored
                                     tempFile.delete();
-                                    File $tempFile = new File(directoryPath + "tmp.json");
-                                    //noinspection ResultOfMethodCallIgnored
-                                    $tempFile.delete();
                                 }
                             } else {
                                 isExported(false);
