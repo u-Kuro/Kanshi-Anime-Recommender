@@ -376,7 +376,8 @@
     let customFiltersNavVisible;
     $: {
         if ($customFilters?.length) {
-            customFiltersNavVisible = !$android || showCustomFiltersNav;
+            customFiltersNavVisible =
+                !$android || showCustomFiltersNav || isScrolledYMax;
         } else {
             customFiltersNavVisible = false;
         }
