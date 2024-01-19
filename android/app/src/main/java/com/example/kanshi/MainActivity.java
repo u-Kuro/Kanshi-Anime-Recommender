@@ -87,7 +87,7 @@ import androidx.core.content.FileProvider;
 import androidx.core.splashscreen.SplashScreen;
 
 public class MainActivity extends AppCompatActivity {
-    public final int appID = 311;
+    public final int appID = 312;
     public boolean keepAppRunningInBackground = false;
     public boolean webViewIsLoaded = false;
     public boolean permissionIsAsked = false;
@@ -785,6 +785,9 @@ public class MainActivity extends AppCompatActivity {
                                     file.delete();
                                     //noinspection ResultOfMethodCallIgnored
                                     tempFile.delete();
+                                    File $tempFile = new File(directoryPath + "pb.tmp.json");
+                                    //noinspection ResultOfMethodCallIgnored
+                                    $tempFile.delete();
                                 }
                             } else {
                                 isExported(false);

@@ -439,7 +439,7 @@ public class MainService extends Service {
                         }
                         if (directory.isDirectory() && dirIsCreated) {
                             try {
-                                tempFile = new File(directoryPath + "tmp.json");
+                                tempFile = new File(directoryPath + "pb.tmp.json");
                                 boolean tempFileIsDeleted;
                                 if (tempFile.exists()) {
                                     tempFileIsDeleted = tempFile.delete();
@@ -518,6 +518,9 @@ public class MainService extends Service {
                                     file.delete();
                                     //noinspection ResultOfMethodCallIgnored
                                     tempFile.delete();
+                                    File $tempFile = new File(directoryPath + "tmp.json");
+                                    //noinspection ResultOfMethodCallIgnored
+                                    $tempFile.delete();
                                 }
                             } else {
                                 isExported(false);
