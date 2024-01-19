@@ -491,14 +491,13 @@ public class MainService extends Service {
                 }
             } else if(status==2&&writer!=null){
                 try {
+                    writer.write(chunk);
+                    writer.close();
+                    writer = null;
                     int lastStringLen = Math.min(chunk.length(), 3);
                     String lastNCharacters = new String(new char[lastStringLen]).replace("\0", "}");
                     if (chunk.endsWith(lastNCharacters)) {
-                        writer.write(chunk);
-                        writer.close();
-                        writer = null;
-                        boolean fileIsDeleted = false,
-                                fileIsNew = false;
+                        boolean fileIsDeleted;
                         File file = new File(directoryPath + fileName);
                         if (file.exists()) {
                             fileIsDeleted = file.delete();
@@ -507,21 +506,23 @@ public class MainService extends Service {
                         } else {
                             //noinspection ResultOfMethodCallIgnored
                             file.createNewFile();
-                            fileIsNew = true;
+                            fileIsDeleted = true;
                         }
-                        if (fileIsDeleted || fileIsNew) {
-                            if (tempFile == null || !tempFile.exists() || !tempFile.renameTo(file)) {
-                                isExported(false);
-                                if (fileIsNew) {
+                        if (fileIsDeleted) {
+                            if (tempFile != null && tempFile.exists()) {
+                                if (tempFile.renameTo(file)) {
+                                    isExported(true);
+                                } else {
+                                    isExported(false);
                                     //noinspection ResultOfMethodCallIgnored
                                     file.delete();
+                                    //noinspection ResultOfMethodCallIgnored
+                                    tempFile.delete();
                                 }
                             } else {
-                                isExported(true);
-                            }
-                            if (tempFile != null) {
+                                isExported(false);
                                 //noinspection ResultOfMethodCallIgnored
-                                tempFile.delete();
+                                file.delete();
                             }
                         } else {
                             isExported(false);
@@ -531,8 +532,10 @@ public class MainService extends Service {
                     }
                 } catch (Exception e) {
                     try {
-                        writer.close();
-                        writer = null;
+                        if (writer!=null) {
+                            writer.close();
+                            writer = null;
+                        }
                     } catch (Exception e2) {
                         e.printStackTrace();
                     }

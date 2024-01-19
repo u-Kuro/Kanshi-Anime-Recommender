@@ -87,7 +87,7 @@ import androidx.core.content.FileProvider;
 import androidx.core.splashscreen.SplashScreen;
 
 public class MainActivity extends AppCompatActivity {
-    public final int appID = 310;
+    public final int appID = 311;
     public boolean keepAppRunningInBackground = false;
     public boolean webViewIsLoaded = false;
     public boolean permissionIsAsked = false;
@@ -757,14 +757,13 @@ public class MainActivity extends AppCompatActivity {
                 }
             } else if(status==2&&writer!=null){
                 try {
+                    writer.write(chunk);
+                    writer.close();
+                    writer = null;
                     int lastStringLen = Math.min(chunk.length(), 3);
                     String lastNCharacters = new String(new char[lastStringLen]).replace("\0", "}");
                     if (chunk.endsWith(lastNCharacters)) {
-                        writer.write(chunk);
-                        writer.close();
-                        writer = null;
-                        boolean fileIsDeleted = false,
-                                fileIsNew = false;
+                        boolean fileIsDeleted;
                         File file = new File(directoryPath + fileName);
                         if (file.exists()) {
                             fileIsDeleted = file.delete();
@@ -773,32 +772,40 @@ public class MainActivity extends AppCompatActivity {
                         } else {
                             //noinspection ResultOfMethodCallIgnored
                             file.createNewFile();
-                            fileIsNew = true;
+                            fileIsDeleted = true;
                         }
-                        if (fileIsDeleted || fileIsNew) {
-                            if (tempFile == null || !tempFile.exists() || !tempFile.renameTo(file)) {
-                                isExported(false);
-                                if (fileIsNew) {
+                        if (fileIsDeleted) {
+                            if (tempFile != null && tempFile.exists()) {
+                                if (tempFile.renameTo(file)) {
+                                    isExported(true);
+                                } else {
+                                    isExported(false);
+                                    showToast(Toast.makeText(getApplicationContext(), "An exception occurred in finalizing the exported file, your back-up was saved in tmp.json but is not guaranteed to work.", Toast.LENGTH_LONG));
                                     //noinspection ResultOfMethodCallIgnored
                                     file.delete();
+                                    //noinspection ResultOfMethodCallIgnored
+                                    tempFile.delete();
                                 }
                             } else {
-                                isExported(true);
-                            }
-                            if (tempFile != null) {
+                                isExported(false);
+                                showToast(Toast.makeText(getApplicationContext(), "An exception occurred in finalizing the exported file, your back-up was saved in tmp.json but is not guaranteed to work.", Toast.LENGTH_LONG));
                                 //noinspection ResultOfMethodCallIgnored
-                                tempFile.delete();
+                                file.delete();
                             }
                         } else {
                             isExported(false);
+                            showToast(Toast.makeText(getApplicationContext(), "An exception occurred in finalizing the exported file, your back-up was saved in tmp.json but is not guaranteed to work.", Toast.LENGTH_LONG));
                         }
                     } else {
                         isExported(false);
+                        showToast(Toast.makeText(getApplicationContext(), "An exception occurred in finalizing the exported file, your back-up was saved in tmp.json but is not guaranteed to work.", Toast.LENGTH_LONG));
                     }
                 } catch (Exception e) {
                     try {
-                        writer.close();
-                        writer = null;
+                        if (writer!=null) {
+                            writer.close();
+                            writer = null;
+                        }
                     } catch (Exception e2) {
                         e.printStackTrace();
                     }

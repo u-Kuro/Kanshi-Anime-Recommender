@@ -576,6 +576,7 @@ const exportUserData = (_data) => {
                         dataStatusPrio = true
                         dataStatus.set(data.status)
                     } else if (data?.missingData) {
+                        dataStatusPrio = false
                         dataStatus.set(null)
                         progress.set(100)
                         isExporting = false
@@ -586,20 +587,20 @@ const exportUserData = (_data) => {
                             title: "Export failed",
                             text: "Data was not exported, incomplete data.",
                         })
-                        return reject()
+                        reject()
                     } else if (get(android)) {
                         try {
-                            dataStatusPrio = false
-                            let chunk = data.chunk
+                            let chunk = data?.chunk || ""
                             let state = data.state
                             // 0 - start | 1 - ongoing | 2 - done
                             if (state === 0) {
                                 JSBridge.exportJSON('', 0, '')
-                            } else if (state === 1) {
+                            } else if (state === 1 && typeof chunk === "string") {
                                 JSBridge.exportJSON(chunk, 1, '')
-                            } else if (state === 2) {
+                            } else if (state === 2 && typeof chunk === "string") {
                                 let username = data?.username
-                                JSBridge.exportJSON(chunk, 2, `Kanshi.${username?.toLowerCase?.() || "Backup"}.json`)
+                                JSBridge.exportJSON(chunk, 2, `Kanshi.${username?.toLowerCase?.() || "backup"}.json`)
+                                dataStatusPrio = false
                                 isExporting = false
                                 exportUserDataWorker?.terminate?.();
                                 new Promise((resolve, reject) => {
@@ -611,27 +612,59 @@ const exportUserData = (_data) => {
                                     dataStatus.set(null)
                                     progress.set(100)
                                     showToast("Data has been Exported")
-                                    resolve(data)
+                                    resolve()
                                 })
+                            } else {
+                                dataStatusPrio = false
+                                isExporting = false
+                                exportUserDataWorker?.terminate?.();
+                                waitForExportApproval?.reject?.()
+                                waitForExportApproval = null
+                                window.confirmPromise?.({
+                                    isAlert: true,
+                                    title: "Export failed",
+                                    text: "Data was not exported, please try again.",
+                                })
+                                dataStatus.set(null)
+                                progress.set(100)
+                                reject()
                             }
                         } catch (e) {
+                            dataStatusPrio = false
                             isExporting = false
                             exportUserDataWorker?.terminate?.();
                             waitForExportApproval?.reject?.()
                             waitForExportApproval = null
+                            window.confirmPromise?.({
+                                isAlert: true,
+                                title: "Export failed",
+                                text: "Data was not exported, please try again.",
+                            })
                             dataStatus.set(null)
                             progress.set(100)
-                            resolve(data)
+                            reject()
                         }
-                    } else {
+                    } else if (typeof data?.url === "string" && data?.url !== "") {
                         dataStatusPrio = false
                         let username = data?.username
                         dataStatus.set(null)
                         progress.set(100)
-                        downloadLink(data.url, `Kanshi.${username?.toLowerCase?.() || "Backup"}.json`)
+                        downloadLink(data.url, `Kanshi.${username?.toLowerCase?.() || "backup"}.json`)
                         isExporting = false
-                        resolve(data)
+                        resolve()
                         // dont terminate, can't oversee blob link lifetime
+                    } else {
+                        dataStatusPrio = false
+                        exportUserDataWorker?.terminate?.();
+                        window.confirmPromise?.({
+                            isAlert: true,
+                            title: "Export failed",
+                            text: "Data was not exported, please try again.",
+                        })
+                        dataStatus.set(null)
+                        progress.set(100)
+                        isExporting = false
+                        reject()
                     }
                 }
                 exportUserDataWorker.onerror = (error) => {
