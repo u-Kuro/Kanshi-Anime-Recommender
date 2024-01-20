@@ -13,7 +13,9 @@ import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.os.Build;
 import android.os.Environment;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Looper;
 import android.util.Log;
 import android.webkit.ConsoleMessage;
 import android.webkit.CookieManager;
@@ -547,18 +549,22 @@ public class MainService extends Service {
                 }
             }
         }
-
         @RequiresApi(api = Build.VERSION_CODES.N)
         @JavascriptInterface
         public void isOnline(boolean isOnline) {
             try {
-                String url = webView.getUrl();
-                if (isOnline && (url==null || url.startsWith("file"))) {
-                    appSwitched = true;
-                    pageLoaded = false;
-                    webView.loadUrl("https://u-kuro.github.io/Kanshi-Anime-Recommender/");
-                }
-            } catch (Exception ignored) {}
+                Handler handler = new Handler(Looper.getMainLooper());
+                handler.post(() -> {
+                    String url = webView.getUrl();
+                    if (isOnline && (url==null || url.startsWith("file"))) {
+                        appSwitched = true;
+                        pageLoaded = false;
+                        webView.loadUrl("https://u-kuro.github.io/Kanshi-Anime-Recommender/");
+                    }
+                });
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
         final long DAY_IN_MILLIS = TimeUnit.DAYS.toMillis(1);
         @JavascriptInterface
@@ -635,7 +641,8 @@ public class MainService extends Service {
         });
         try {
             String joinedAnimeIds = updateCurrentNotificationsFuture.get();
-            webView.loadUrl("javascript:window?.updateNotifications?.(["+joinedAnimeIds+"])");
+            Handler handler = new Handler(Looper.getMainLooper());
+            handler.post(() -> webView.loadUrl("javascript:window?.updateNotifications?.([" + joinedAnimeIds + "])"));
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
@@ -643,10 +650,19 @@ public class MainService extends Service {
         }
     }
     public void isExported(boolean success) {
-        if (success) {
-            webView.loadUrl("javascript:window?.isExported?.(true)");
-        } else {
-            webView.loadUrl("javascript:window?.isExported?.(false)");
+        try {
+            Handler handler = new Handler(Looper.getMainLooper());
+            handler.post(() -> {
+                if (success) {
+                    webView.loadUrl("javascript:window?.isExported?.(true)");
+                } else {
+                    webView.loadUrl("javascript:window?.isExported?.(false)");
+                }
+            });
+        } catch (Exception e) {
+            e.printStackTrace();
+            MainService.this.stopForeground(true);
+            MainService.this.stopSelf();
         }
     }
 }

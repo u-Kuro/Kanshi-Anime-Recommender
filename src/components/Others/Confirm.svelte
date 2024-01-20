@@ -1,8 +1,9 @@
 <script>
-    import { createEventDispatcher, afterUpdate } from "svelte";
+    import { createEventDispatcher, afterUpdate, tick } from "svelte";
     import { fade } from "svelte/transition";
     import { sineOut } from "svelte/easing";
     import { initData } from "../../js/globalValues.js";
+    import { addClass, removeClass } from "../../js/others/helper.js";
 
     const dispatch = createEventDispatcher();
 
@@ -63,6 +64,24 @@
         dispatch("cancelled");
     }
 
+    let confirmInfoContainer;
+    async function isScrollableConfirmContainer(node) {
+        await tick();
+        confirmInfoContainer = node || confirmInfoContainer;
+        if (confirmInfoContainer instanceof Element) {
+            if (
+                confirmInfoContainer?.scrollHeight >
+                confirmInfoContainer?.clientHeight
+            ) {
+                addClass(confirmInfoContainer, "scrollable");
+            } else {
+                removeClass(confirmInfoContainer, "scrollable");
+            }
+        } else {
+            addClass(confirmInfoContainer, "scrollable");
+        }
+    }
+
     window.addEventListener("keydown", (e) => {
         if (shouldNotDispatch == null) {
             let element = e?.target;
@@ -75,6 +94,10 @@
     window.addEventListener("keyup", () => {
         shouldNotDispatch = null;
     });
+
+    $: {
+        shouldShowPleaseWait, confirmText, isScrollableConfirmContainer();
+    }
 
     afterUpdate(() => {
         if (showConfirm) {
@@ -102,12 +125,17 @@
                 class="confirm-container"
                 out:fade={{ duration: 200, easing: sineOut }}
             >
-                <div class="confirm-info-container">
+                <div class="confirm-title-wrapper">
                     <h2 class="confirm-title">
                         {shouldShowPleaseWait
                             ? "Initializing resources"
                             : confirmTitle}
                     </h2>
+                </div>
+                <div
+                    class="confirm-info-container"
+                    use:isScrollableConfirmContainer
+                >
                     <h2 class="confirm-text">
                         {@html shouldShowPleaseWait
                             ? "Please wait a moment..."
@@ -164,35 +192,39 @@
         display: none;
     }
 
+    :global(#main.maxwindowheight.popupvisible .confirm) {
+        touch-action: none;
+    }
+
     .confirm-wrapper {
         width: 100%;
         height: 100%;
         justify-content: center;
         align-items: center;
         display: flex;
-        -ms-overflow-style: none;
-        scrollbar-width: none;
-    }
-
-    .confirm-wrapper::-webkit-scrollbar {
-        display: none;
     }
 
     .confirm-container {
         animation: fadeIn 0.2s ease-out;
         display: grid;
-        grid-template-rows: auto 20px;
+        grid-template-rows: 23px calc(100% - 23px - 20px - 3em) 20px;
         background-color: var(--bg-color);
         border: 1px solid var(--bd-color);
         width: 35em;
-        min-height: 15.5em;
+        min-height: 155px;
         max-width: 95%;
         max-height: 95%;
         border-radius: 6px;
         gap: 1.5em;
         padding: 2em 1em 2em 2.5em;
         cursor: default;
-        overflow: auto;
+    }
+
+    :global(
+            #main.maxwindowheight.popupvisible
+                .confirm-info-container:not(.scrollable)
+        ) {
+        touch-action: none;
     }
 
     .confirm-info-container {
@@ -201,6 +233,33 @@
         align-content: flex-start;
         padding-right: 1.5em;
         gap: 1.2em;
+        overflow-x: hidden;
+        overflow-y: auto;
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+        overscroll-behavior: contain;
+    }
+
+    .confirm-info-container::-webkit-scrollbar {
+        display: none;
+    }
+
+    .confirm-title-wrapper {
+        height: 23px;
+        width: calc(100% - 1.5em);
+        overflow-x: auto;
+        overflow-y: hidden;
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+
+    :global(#main.maxwindowheight.popupvisible .confirm-title-wrapper) {
+        touch-action: pan-x;
+        overscroll-behavior: contain;
+    }
+
+    .confirm-title-wrapper::-webkit-scrollbar {
+        display: none;
     }
 
     .confirm-title {
@@ -208,6 +267,7 @@
         font-size: 2rem;
         font-weight: 500;
         color: var(--fg-color);
+        white-space: nowrap;
     }
 
     .confirm-text {
@@ -215,12 +275,6 @@
         height: fit-content;
         color: var(--fg-color);
         font-weight: 500;
-        -ms-overflow-style: none;
-        scrollbar-width: none;
-    }
-
-    .confirm-text::-webkit-scrollbar {
-        display: none;
     }
 
     .confirm-button-container {
@@ -247,7 +301,7 @@
     @media screen and (pointer: fine) {
         .button:hover,
         .button:focus {
-            background-color: hsl(0, 0%, 10%);
+            background-color: hsl(0, 0%, 6.4%);
             border-radius: 6px;
         }
     }

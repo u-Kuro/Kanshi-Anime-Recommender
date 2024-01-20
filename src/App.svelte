@@ -1619,6 +1619,7 @@
 		}
 	});
 
+	let isMaxWindowHeight;
 	onMount(() => {
 		animeGridEl = document.getElementById("anime-grid");
 		animeGridEl?.addEventListener("scroll", () => {
@@ -1665,6 +1666,7 @@
 					}
 				}
 			}
+			isMaxWindowHeight = newWindowHeight >= maxWindowHeight;
 			lastWindowHeight = newWindowHeight;
 			maxWindowHeight = Math.max(maxWindowHeight, newWindowHeight) || 0;
 			windowWidth = Math.max(
@@ -1730,7 +1732,12 @@
 	}
 </script>
 
-<main id="main" class={$android ? " android" : ""}>
+<main
+	id="main"
+	class={($android ? " android" : "") +
+		(isMaxWindowHeight ? " maxwindowheight" : "") +
+		($popupVisible ? " popupvisible" : "")}
+>
 	{#if _progress > 0 && _progress < 100}
 		<div
 			out:fade={{ duration: 0, delay: 400 }}

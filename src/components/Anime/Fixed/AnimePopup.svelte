@@ -495,14 +495,47 @@
             popupContainer || popupWrapper.querySelector("#popup-container");
         animeGridParentEl = document.getElementById("anime-grid");
         navContainerEl = document.getElementById("nav-container");
+        const fullScreenExitHandler = () => {
+            if (
+                !(
+                    document.fullScreen ||
+                    document.mozFullScreen ||
+                    document.webkitIsFullScreen ||
+                    document.msFullscreenElement
+                )
+            ) {
+                playMostVisibleTrailer();
+            }
+        };
+        document.addEventListener(
+            "fullscreenchange",
+            fullScreenExitHandler,
+            false,
+        );
+        document.addEventListener(
+            "mozfullscreenchange",
+            fullScreenExitHandler,
+            false,
+        );
+        document.addEventListener(
+            "MSFullscreenChange",
+            fullScreenExitHandler,
+            false,
+        );
+        document.addEventListener(
+            "webkitfullscreenchange",
+            fullScreenExitHandler,
+            false,
+        );
         window.addEventListener("resize", () => {
             if (
                 document.fullScreen ||
                 document.mozFullScreen ||
                 document.webkitIsFullScreen ||
                 document.msFullscreenElement
-            )
+            ) {
                 return;
+            }
             windowWidth = Math.max(
                 document?.documentElement?.getBoundingClientRect?.()?.width,
                 window.visualViewport.width,
@@ -584,7 +617,14 @@
 
     let scrollToGridTimeout, createPopupPlayersTimeout;
     async function playMostVisibleTrailer() {
-        if (!$popupVisible) return;
+        if (
+            !$popupVisible ||
+            document.fullScreen ||
+            document.mozFullScreen ||
+            document.webkitIsFullScreen ||
+            document.msFullscreenElement
+        )
+            return;
         await tick();
         let visibleTrailer =
             mostVisiblePopupHeader?.querySelector?.(".trailer");
@@ -1443,6 +1483,24 @@
         fvStartX = e?.touches?.[0]?.clientX;
     }
 
+    let fullPopupDescriptionEl;
+    async function isDescriptionScrollable(node) {
+        await tick();
+        fullPopupDescriptionEl = node || fullPopupDescriptionEl;
+        if (fullPopupDescriptionEl instanceof Element) {
+            if (
+                fullPopupDescriptionEl?.scrollHeight >
+                fullPopupDescriptionEl?.clientHeight
+            ) {
+                addClass(fullPopupDescriptionEl, "scrollable");
+            } else {
+                removeClass(fullPopupDescriptionEl, "scrollable");
+            }
+        } else {
+            addClass(fullPopupDescriptionEl, "scrollable");
+        }
+    }
+
     function fullViewTouchEnd(e) {
         if (!fvIsScrolled) {
             let endY = Array.from(e?.changedTouches || [])?.find(
@@ -1493,6 +1551,8 @@
         fullImagePopup = null;
     }
     window.showFullScreenInfo = showFullScreenInfo;
+
+    $: fullDescriptionPopup, isDescriptionScrollable();
 
     window.checkOpenFullScreenItem = () => {
         return fullImagePopup || fullDescriptionPopup;
@@ -1704,7 +1764,10 @@
                                     {#if $listUpdateAvailable}
                                         <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                                         <div
-                                            class="list-update-container"
+                                            class={"list-update-container" +
+                                                ($listIsUpdating
+                                                    ? " load"
+                                                    : "")}
                                             tabindex={!$menuVisible &&
                                             $popupVisible
                                                 ? "0"
@@ -1717,10 +1780,7 @@
                                             <!-- arrows rotate -->
                                             <svg
                                                 viewBox="0 0 512 512"
-                                                class={"list-update-icon" +
-                                                    ($listIsUpdating
-                                                        ? " spin"
-                                                        : "")}
+                                                class="list-update-icon"
                                             >
                                                 <path
                                                     d="M105 203a160 160 0 0 1 264-60l17 17h-50a32 32 0 1 0 0 64h128c18 0 32-14 32-32V64a32 32 0 1 0-64 0v51l-18-17a224 224 0 0 0-369 83 32 32 0 0 0 60 22zm-66 86a32 32 0 0 0-23 31v128a32 32 0 1 0 64 0v-51l18 17a224 224 0 0 0 369-83 32 32 0 0 0-60-22 160 160 0 0 1-264 60l-17-17h50a32 32 0 1 0 0-64H48a39 39 0 0 0-9 1z"
@@ -2423,6 +2483,7 @@
             {#if fullDescriptionPopup}
                 <div class="fullPopupDescriptionWrapper">
                     <div
+                        use:isDescriptionScrollable
                         on:keyup={(e) =>
                             e.key === "Enter" &&
                             (fullDescriptionPopup = fullImagePopup = null)}
@@ -3146,6 +3207,20 @@
         color: var(--sfg-color);
         cursor: pointer;
     }
+    @keyframes softFadeInOut {
+        0% {
+            opacity: 1;
+        }
+        50% {
+            opacity: 0.64;
+        }
+        100% {
+            opacity: 1;
+        }
+    }
+    .list-update-container.load {
+        animation: softFadeInOut 1s infinite;
+    }
     .list-update-icon,
     .banner-image-icon {
         height: 1.4rem;
@@ -3199,7 +3274,7 @@
         right: 0;
         bottom: 0;
         background-color: transparent;
-        transition: 0.4s transform;
+        transition: 0.16s transform ease-out;
         border: 2px solid var(--sfg-color);
     }
 
@@ -3211,7 +3286,7 @@
         left: 0.15em;
         bottom: 0.0772em;
         background-color: var(--sfg-color);
-        transition: 0.3s transform;
+        transition: 0.16s transform ease-out;
     }
 
     .autoplayToggle:checked + .slider:before {
@@ -3268,6 +3343,9 @@
     }
     .fullPopupWrapper::-webkit-scrollbar {
         display: none;
+    }
+    :global(#main.maxwindowheight.popupvisible .fullPopupWrapper) {
+        touch-action: none;
     }
     .fullPopup {
         width: 100%;
@@ -3330,6 +3408,12 @@
     }
     .fullPopupDescription::-webkit-scrollbar {
         display: none;
+    }
+    :global(
+            #main.maxwindowheight.popupvisible
+                .fullPopupDescription:not(.scrollable)
+        ) {
+        touch-action: none;
     }
     :global(.fullPopupDescription *) {
         font-size: 1.3rem !important;

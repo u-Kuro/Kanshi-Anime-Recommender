@@ -87,7 +87,7 @@ import androidx.core.content.FileProvider;
 import androidx.core.splashscreen.SplashScreen;
 
 public class MainActivity extends AppCompatActivity {
-    public final int appID = 314;
+    public final int appID = 315;
     public boolean keepAppRunningInBackground = false;
     public boolean webViewIsLoaded = false;
     public boolean permissionIsAsked = false;
@@ -170,7 +170,7 @@ public class MainActivity extends AppCompatActivity {
                                 exportPath = getThisPath(docUri);
                                 showToast(Toast.makeText(getApplicationContext(), "Export folder is selected, you may now use the export feature.", Toast.LENGTH_LONG));
                                 prefsEdit.putString("savedExportPath", exportPath).apply();
-                                webView.loadUrl("javascript:window?.setExportPathAvailability?.(true)");
+                                webView.post(()->webView.loadUrl("javascript:window?.setExportPathAvailability?.(true)"));
                             } catch (Exception e) {
                                 e.printStackTrace();
                             }
@@ -216,7 +216,7 @@ public class MainActivity extends AppCompatActivity {
             public void handleOnBackPressed() {
                 if (webView.getUrl() != null && (webView.getUrl().startsWith("file:///android_asset/www/index.html") || webView.getUrl().startsWith("https://u-kuro.github.io/Kanshi-Anime-Recommender"))) {
                     if (!shouldGoBack) {
-                        webView.post(() -> webView.loadUrl("javascript:window?.backPressed?.();"));
+                        webView.loadUrl("javascript:window?.backPressed?.();");
                     } else {
                         hideToast();
                         moveTaskToBack(true);
@@ -519,7 +519,7 @@ public class MainActivity extends AppCompatActivity {
             webView.getSettings().setOffscreenPreRaster(false);
         }
         super.onPause();
-        webView.post(() -> webView.loadUrl("javascript:window?.returnedAppIsVisible?.(false)"));
+        webView.loadUrl("javascript:window?.returnedAppIsVisible?.(false)");
     }
 
     @Override
@@ -546,18 +546,16 @@ public class MainActivity extends AppCompatActivity {
             persistentToast = null;
         }
         super.onResume();
-        webView.post(() -> {
-            webView.loadUrl("javascript:" +
-                    "window?.returnedAppIsVisible?.(true);" + // Should Be Runned First
-                    (shouldRefreshList ?
-                            "window?.shouldRefreshAnimeList?.("
-                                    + (shouldProcessRecommendationList ? "true" : "false") + ","
-                                    + (shouldLoadAnime ? "true" : "false")
-                                    + ");"
-                            : "window?.checkEntries?.();")
-            );
-            shouldRefreshList = shouldProcessRecommendationList = shouldLoadAnime = false;
-        });
+        webView.loadUrl("javascript:" +
+                "window?.returnedAppIsVisible?.(true);" + // Should Be Runned First
+                (shouldRefreshList ?
+                        "window?.shouldRefreshAnimeList?.("
+                                + (shouldProcessRecommendationList ? "true" : "false") + ","
+                                + (shouldLoadAnime ? "true" : "false")
+                                + ");"
+                        : "window?.checkEntries?.();")
+        );
+        shouldRefreshList = shouldProcessRecommendationList = shouldLoadAnime = false;
     }
 
     @Override
@@ -1016,26 +1014,28 @@ public class MainActivity extends AppCompatActivity {
         }
         @JavascriptInterface
         public void showNewUpdatedAnimeNotification(long addedAnimeCount, long updatedAnimeCount) {
-            String url = webView.getUrl();
-            if (url!=null && url.startsWith("https://u-kuro.github.io/Kanshi-Anime-Recommender")) {
-                if (updatedAnimeCount > 0 || addedAnimeCount > 0) {
-                    if (updatedAnimeCount > 0 && addedAnimeCount > 0) {
-                        persistentToast = Toast.makeText(MainActivity.this, addedAnimeCount + " New Anime / " + updatedAnimeCount + " Modification", Toast.LENGTH_LONG);
-                    } else if (updatedAnimeCount > 0) {
-                        persistentToast = Toast.makeText(MainActivity.this, "+" + updatedAnimeCount + " New Modified Anime", Toast.LENGTH_LONG);
-                    } else {
-                        persistentToast = Toast.makeText(MainActivity.this, "+" + addedAnimeCount + " New Added Anime", Toast.LENGTH_LONG);
-                    }
-                    if (isInApp) {
-                        if (currentToast != null) {
-                            currentToast.cancel();
+            webView.post(() -> {
+                String url = webView.getUrl();
+                if (url != null && url.startsWith("https://u-kuro.github.io/Kanshi-Anime-Recommender")) {
+                    if (updatedAnimeCount > 0 || addedAnimeCount > 0) {
+                        if (updatedAnimeCount > 0 && addedAnimeCount > 0) {
+                            persistentToast = Toast.makeText(MainActivity.this, addedAnimeCount + " New Anime / " + updatedAnimeCount + " Modification", Toast.LENGTH_LONG);
+                        } else if (updatedAnimeCount > 0) {
+                            persistentToast = Toast.makeText(MainActivity.this, "+" + updatedAnimeCount + " New Modified Anime", Toast.LENGTH_LONG);
+                        } else {
+                            persistentToast = Toast.makeText(MainActivity.this, "+" + addedAnimeCount + " New Added Anime", Toast.LENGTH_LONG);
                         }
-                        persistentToast.show();
-                        persistentToast = null;
+                        if (isInApp) {
+                            if (currentToast != null) {
+                                currentToast.cancel();
+                            }
+                            persistentToast.show();
+                            persistentToast = null;
+                        }
+                        AnimeNotificationManager.recentlyUpdatedAnimeNotification(MainActivity.this, addedAnimeCount, updatedAnimeCount);
                     }
-                    AnimeNotificationManager.recentlyUpdatedAnimeNotification(MainActivity.this, addedAnimeCount, updatedAnimeCount);
                 }
-            }
+            });
         }
         @JavascriptInterface
         public void openToast(String text, boolean isLongDuration) {
@@ -1044,29 +1044,29 @@ public class MainActivity extends AppCompatActivity {
     }
     public void showDataEvictionDialog() {
         showDialog(new AlertDialog.Builder(MainActivity.this)
-                .setTitle("Possible Data Loss")
-                .setMessage("Some of your data may be cleared by chrome, please import your saved data.")
-                .setPositiveButton("OK",(dialogInterface, i) -> {
-                    webView.post(() -> webView.loadUrl("javascript:window?.importAndroidUserData?.()"));
-                    String url = webView.getUrl();
-                    if (url!=null) {
-                        if (url.startsWith("file")) {
-                            prefsEdit.putBoolean("clientVisited", false).apply();
-                        } else {
-                            prefsEdit.putBoolean("visited", false).apply();
-                        }
+            .setTitle("Possible Data Loss")
+            .setMessage("Some of your data may be cleared by chrome, please import your saved data.")
+            .setPositiveButton("OK",(dialogInterface, i) -> webView.post(() -> {
+                webView.loadUrl("javascript:window?.importAndroidUserData?.()");
+                String url = webView.getUrl();
+                if (url != null) {
+                    if (url.startsWith("file")) {
+                        prefsEdit.putBoolean("clientVisited", false).apply();
+                    } else {
+                        prefsEdit.putBoolean("visited", false).apply();
                     }
-                })
-                .setNegativeButton("CANCEL", ((dialogInterface, i) -> {
-                    String url = webView.getUrl();
-                    if (url!=null) {
-                        if (url.startsWith("file")) {
-                            prefsEdit.putBoolean("clientVisited", false).apply();
-                        } else {
-                            prefsEdit.putBoolean("visited", false).apply();
-                        }
+                }
+            }))
+            .setNegativeButton("CANCEL", ((dialogInterface, i) -> webView.post(() -> {
+                String url = webView.getUrl();
+                if (url != null) {
+                    if (url.startsWith("file")) {
+                        prefsEdit.putBoolean("clientVisited", false).apply();
+                    } else {
+                        prefsEdit.putBoolean("visited", false).apply();
                     }
-                }))
+                }
+            })))
         ,false);
     }
     public void setBackgroundUpdates() {
@@ -1223,30 +1223,30 @@ public class MainActivity extends AppCompatActivity {
     @RequiresApi(api = Build.VERSION_CODES.N)
     public void reconnectLonger() {
         showToast(Toast.makeText(getApplicationContext(), "Connecting...", Toast.LENGTH_LONG));
-        isAppConnectionAvailable(isConnected -> webView.post(() -> {
+        isAppConnectionAvailable(isConnected -> {
             hideToast();
             if (isConnected) {
                 showDialog(new AlertDialog.Builder(MainActivity.this)
                         .setTitle("Connected successfully")
                         .setMessage("Connection established, do you want to switch to the web app?")
-                        .setPositiveButton("OK", (dialogInterface, i) -> {
+                        .setPositiveButton("OK", (dialogInterface, i) -> webView.post(() -> {
                             String previousUrl = webView.getUrl();
-                            if (previousUrl==null || previousUrl.startsWith("file:///android_asset/www/index.html")) {
+                            if (previousUrl == null || previousUrl.startsWith("file:///android_asset/www/index.html")) {
                                 appSwitched = true;
                             }
                             pageLoaded = false;
                             webView.loadUrl("https://u-kuro.github.io/Kanshi-Anime-Recommender/");
-                        })
-                        .setNegativeButton("CANCEL", null),true);
+                        }))
+                        .setNegativeButton("CANCEL", null), true);
             } else {
                 showDialog(new AlertDialog.Builder(MainActivity.this)
                         .setTitle("Connection unreachable")
                         .setMessage("Connection unreachable, do you want to connect indefinitely?")
                         .setPositiveButton("OK", ((dialog, i) -> reconnectLonger()))
-                        .setNegativeButton("CANCEL",null),true
+                        .setNegativeButton("CANCEL", null), true
                 );
             }
-        }),999999999);
+        },999999999);
     }
 
     public void showDialog(AlertDialog.Builder alertDialog, boolean canceledOnOutsideTouch) {

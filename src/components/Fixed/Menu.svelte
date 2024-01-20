@@ -1,5 +1,5 @@
 <script>
-    import { onMount } from "svelte";
+    import { onMount, tick } from "svelte";
     import { saveJSON } from "../../js/indexedDB.js";
     import { animeLoader, importUserData } from "../../js/workerUtils.js";
     import {
@@ -180,6 +180,21 @@
         let classList = element.classList;
         if (classList.contains("button")) return;
         $menuVisible = !$menuVisible;
+    }
+
+    let menuEl;
+    async function isScrollableMenu(node) {
+        await tick();
+        menuEl = node || menuEl;
+        if (menuEl instanceof Element) {
+            if (menuEl?.scrollHeight > menuEl?.clientHeight) {
+                addClass(menuEl, "scrollable");
+            } else {
+                removeClass(menuEl, "scrollable");
+            }
+        } else {
+            addClass(menuEl, "scrollable");
+        }
     }
 
     async function showAllHiddenEntries() {
@@ -577,7 +592,7 @@
     on:keyup={(e) => e.key === "Enter" && handleMenuVisibility(e)}
     bind:this={menuContainerEl}
 >
-    <div class="menu">
+    <div class="menu" use:isScrollableMenu>
         <button
             class="button"
             on:click={updateList}
@@ -718,6 +733,9 @@
     .menu-container.hide {
         opacity: 0;
     }
+    :global(#main.maxwindowheight.popupvisible .menu-container) {
+        touch-action: none;
+    }
     .menu {
         padding: 1.5em 1em;
         display: flex;
@@ -735,6 +753,9 @@
     }
     .menu::-webkit-scrollbar {
         display: none;
+    }
+    :global(#main.maxwindowheight.popupvisible .menu:not(.scrollable)) {
+        touch-action: none;
     }
     .button {
         -moz-box-shadow: 0 3px 20px 0 var(--bd-color);
