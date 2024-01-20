@@ -1639,11 +1639,21 @@
 			window?.innerWidth || 0,
 		);
 		let maxWindowHeight = 0;
-		let lastWindowHeight = (maxWindowHeight =
-			Math?.max?.(
-				window.visualViewport?.height || 0,
-				window.innerHeight || 0,
-			) || 0);
+		let lastWindowHeight = 0;
+		if (
+			!(
+				document.fullScreen ||
+				document.mozFullScreen ||
+				document.webkitIsFullScreen ||
+				document.msFullscreenElement
+			)
+		) {
+			lastWindowHeight = maxWindowHeight =
+				Math?.max?.(
+					window.visualViewport?.height || 0,
+					window.innerHeight || 0,
+				) || 0;
+		}
 		window.addEventListener("resize", () => {
 			let newWindowHeight = Math.max(
 				window?.visualViewport?.height || 0,
@@ -1666,9 +1676,19 @@
 					}
 				}
 			}
-			isMaxWindowHeight = newWindowHeight >= maxWindowHeight;
-			lastWindowHeight = newWindowHeight;
-			maxWindowHeight = Math.max(maxWindowHeight, newWindowHeight) || 0;
+			if (
+				!(
+					document.fullScreen ||
+					document.mozFullScreen ||
+					document.webkitIsFullScreen ||
+					document.msFullscreenElement
+				)
+			) {
+				isMaxWindowHeight = newWindowHeight >= maxWindowHeight;
+				lastWindowHeight = newWindowHeight;
+				maxWindowHeight =
+					Math.max(maxWindowHeight, newWindowHeight) || 0;
+			}
 			windowWidth = Math.max(
 				document?.documentElement?.getBoundingClientRect?.()?.width ||
 					0,
