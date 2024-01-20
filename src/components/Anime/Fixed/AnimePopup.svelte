@@ -496,12 +496,6 @@
         animeGridParentEl = document.getElementById("anime-grid");
         navContainerEl = document.getElementById("nav-container");
         const fullScreenExitHandler = () => {
-            console.log({
-                fullScreen: document.fullScreen,
-                mozFullScreen: document.mozFullScreen,
-                webkitIsFullScreen: document.webkitIsFullScreen,
-                msFullscreenElement: document.msFullscreenElement,
-            });
             if (
                 !(
                     document.fullScreen ||
@@ -623,18 +617,6 @@
 
     let scrollToGridTimeout, createPopupPlayersTimeout;
     async function playMostVisibleTrailer() {
-        console.log(2, {
-            fullScreen: document.fullScreen,
-            mozFullScreen: document.mozFullScreen,
-            webkitIsFullScreen: document.webkitIsFullScreen,
-            msFullscreenElement: document.msFullscreenElement,
-            aaa:
-                !$popupVisible ||
-                document.fullScreen ||
-                document.mozFullScreen ||
-                document.webkitIsFullScreen ||
-                document.msFullscreenElement,
-        });
         if (
             !$popupVisible ||
             document.fullScreen ||
@@ -643,12 +625,6 @@
             document.msFullscreenElement
         )
             return;
-        console.log(3, {
-            fullScreen: document.fullScreen,
-            mozFullScreen: document.mozFullScreen,
-            webkitIsFullScreen: document.webkitIsFullScreen,
-            msFullscreenElement: document.msFullscreenElement,
-        });
         await tick();
         let visibleTrailer =
             mostVisiblePopupHeader?.querySelector?.(".trailer");
