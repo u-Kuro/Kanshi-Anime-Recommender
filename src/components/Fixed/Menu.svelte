@@ -36,12 +36,16 @@
 
     let menuContainerEl, navContainerEl;
     let importFileInput;
+    let isImportConfirmPersistent;
 
-    async function importData() {
+    async function importData(isPersistent) {
         if (!(importFileInput instanceof Element))
             return ($dataStatus = "Something went wrong");
         if (await $confirmPromise("Do you want to import your data?")) {
+            isImportConfirmPersistent = isPersistent;
             importFileInput.click();
+        } else {
+            isImportConfirmPersistent = false;
         }
     }
     window.importAndroidUserData = importData;
@@ -56,9 +60,10 @@
                 ? `named <span style="color:hsl(var(--ac-color));">${filename}</span> `
                 : "";
             if (
-                await $confirmPromise(
-                    `File ${filenameToShow}has been detected, do you want to import the file?`,
-                )
+                await $confirmPromise({
+                    text: `File ${filenameToShow}has been detected, do you want to import the file?`,
+                    isPersistent: isImportConfirmPersistent,
+                })
             ) {
                 $menuVisible = false;
                 if (!$popupVisible) {
@@ -91,6 +96,7 @@
             if (importFileInput instanceof Element)
                 importFileInput.value = null;
         }
+        isImportConfirmPersistent = false;
     }
     // Global Function For Android
     function handleExportFolder() {
@@ -607,8 +613,8 @@
         >
         <button
             class="button"
-            on:click={importData}
-            on:keyup={(e) => e.key === "Enter" && importData(e)}
+            on:click={() => importData()}
+            on:keyup={(e) => e.key === "Enter" && importData()}
             >Import Data</button
         >
         <button

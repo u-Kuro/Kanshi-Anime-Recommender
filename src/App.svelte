@@ -1478,9 +1478,12 @@
 		_confirmLabel,
 		_cancelLabel,
 		_isImportant;
-	let _confirmModalPromise;
 
+	let _confirmModalPromise;
+	let isPersistent;
 	$confirmPromise = window.confirmPromise = async (confirmValues) => {
+		if (isPersistent) return;
+		isPersistent = confirmValues?.isPersistent;
 		return new Promise((resolve) => {
 			_isAlert = confirmValues?.isAlert || false;
 			_confirmTitle =
@@ -1498,6 +1501,7 @@
 		});
 	};
 	function handleConfirmationConfirmed() {
+		isPersistent = false;
 		_confirmModalPromise?.resolve?.(true);
 		_confirmModalPromise =
 			_isAlert =
@@ -1510,6 +1514,7 @@
 		$confirmIsVisible = false;
 	}
 	function handleConfirmationCancelled() {
+		isPersistent = false;
 		_confirmModalPromise?.resolve?.(false);
 		_confirmModalPromise =
 			_isAlert =
@@ -1524,6 +1529,7 @@
 	window.handleConfirmationCancelled = handleConfirmationCancelled;
 	confirmIsVisible.subscribe((val) => {
 		if (val === false) {
+			isPersistent = false;
 			_confirmModalPromise?.resolve?.(false);
 			_confirmModalPromise =
 				_isAlert =
