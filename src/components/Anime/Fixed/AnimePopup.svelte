@@ -1724,7 +1724,7 @@
                                     <div class="autoPlay-container">
                                         <label class="switch">
                                             <label
-                                                class="display-none"
+                                                class="disable-interaction"
                                                 for={"auto-play-" + anime?.id}
                                             >
                                                 Auto Play
@@ -2622,8 +2622,8 @@
     }
     .go-back-grid svg {
         fill: var(--sfg-color);
-        width: 2em;
-        height: 2em;
+        width: 20px;
+        height: 20px;
     }
 
     .popup-content {
@@ -2632,7 +2632,7 @@
         color: var(--sfg-color);
         background: var(--bg-color);
         max-width: 640px;
-        min-height: 64em;
+        min-height: 640px;
     }
     .popup-content.hidden {
         height: var(--popup-content-height);
@@ -2664,8 +2664,8 @@
         justify-content: center;
         align-items: center;
         position: absolute;
-        bottom: 1em;
-        right: 1em;
+        bottom: 10px;
+        right: 10px;
         z-index: 3;
         background-color: var(--bg-color);
         border-radius: 100%;
@@ -2675,8 +2675,8 @@
 
     :global(.popup-header.loader svg) {
         animation: fadeInOut 1s infinite;
-        width: 2em;
-        height: 2em;
+        width: 20px;
+        height: 20px;
         fill: var(--sfg-color);
     }
 
@@ -2685,14 +2685,14 @@
         justify-content: center;
         align-items: center;
         max-width: 640px;
-        padding: 2em;
+        padding: 20px;
         background-color: var(--bg-color);
     }
 
     .popup-content-loading-icon {
         animation: fadeInOut 1s infinite linear;
-        width: 3.5em;
-        height: 3.5em;
+        width: 35px;
+        height: 35px;
     }
 
     /* Need to add Globally, trailer Elements are Recreated */
@@ -2758,7 +2758,7 @@
     .popup-info {
         overflow: hidden;
         touch-action: pan-y;
-        padding-bottom: 1em;
+        padding-bottom: 10px;
     }
 
     .popup-info a {
@@ -2775,7 +2775,7 @@
         align-items: center;
         display: flex;
         flex-wrap: nowrap;
-        grid-column-gap: 2em;
+        grid-column-gap: 20px;
         justify-content: space-between;
         -ms-overflow-style: none;
         scrollbar-width: none;
@@ -2789,13 +2789,13 @@
         display: flex;
         justify-content: center;
         align-items: center;
-        gap: 0.2em;
+        gap: 2px;
         white-space: nowrap;
     }
 
     .info-rating-wrapper > svg {
-        height: 1.5em;
-        width: 1.5em;
+        height: 15px;
+        width: 15px;
         fill: rgb(245, 197, 24) !important;
     }
 
@@ -2805,12 +2805,12 @@
     }
 
     .info-rating-wrapper b {
-        font-size: 1.5rem;
+        font-size: 15px;
     }
 
     :global(.general-rating-icon) {
-        height: 1em;
-        width: 1em;
+        height: 10px;
+        width: 10px;
     }
 
     .info-format {
@@ -2818,7 +2818,7 @@
         display: flex;
         flex-wrap: nowrap;
         justify-content: space-between;
-        gap: 1em;
+        gap: 10px;
         overflow-x: auto;
         overflow-y: hidden;
         -ms-overflow-style: none;
@@ -2836,7 +2836,7 @@
         display: flex;
         flex-wrap: nowrap;
         justify-content: space-between;
-        gap: 1em;
+        gap: 10px;
         overflow-x: auto;
         overflow-y: hidden;
         -ms-overflow-style: none;
@@ -2850,8 +2850,8 @@
     }
 
     .info-status svg {
-        height: 1em;
-        width: 1em;
+        height: 11.5125px;
+        width: 11.5125px;
         fill: rgb(245, 197, 24) !important;
     }
 
@@ -2864,11 +2864,11 @@
     }
 
     .info-contents {
-        margin: 1em 0;
+        margin: 10px 0;
         width: 100%;
         display: flex;
         flex-wrap: wrap;
-        gap: 0.5em;
+        gap: 5px;
     }
 
     .info-contents > div {
@@ -2876,7 +2876,7 @@
         display: grid;
         grid-template-columns: 37px auto;
         align-items: center;
-        gap: 0.5em;
+        gap: 5px;
     }
 
     .info-contents > div.tag-info {
@@ -2884,14 +2884,14 @@
         display: flex;
         flex-wrap: wrap;
         align-items: center;
-        gap: 0.5em;
+        gap: 5px;
     }
 
     .info-profile {
         display: flex;
         flex-wrap: wrap;
         justify-content: space-between;
-        gap: 1em;
+        gap: 10px;
         width: 100%;
     }
 
@@ -2914,7 +2914,7 @@
     }
 
     .coverImg {
-        width: min(40% - 1em, 150px);
+        width: min(40% - 10px, 150px);
         user-select: none;
         cursor: pointer;
         background-color: var(--bg-color);
@@ -2929,10 +2929,10 @@
     .anime-description-wrapper {
         border: 1px solid var(--bd-color);
         border-radius: 6px;
-        padding: 1em 1.5em;
+        padding: 10px 15px;
         flex: 1;
-        width: max(60% - 1em, 160px);
-        min-width: max(60% - 1em, 160px);
+        width: max(60% - 10px, 160px);
+        min-width: max(60% - 10px, 160px);
         height: 210px;
         cursor: pointer;
     }
@@ -2942,22 +2942,22 @@
     }
 
     .anime-description {
-        letter-spacing: 0.05rem;
-        line-height: 2.5rem;
+        letter-spacing: 0.5px;
+        line-height: 25px;
         -ms-overflow-style: none;
         scrollbar-width: none;
-        font-size: 1.2rem !important;
-        width: calc(100% - 1em);
+        font-size: 12px !important;
+        width: calc(100% - 10px);
         display: -webkit-box;
-        max-width: calc(100% - 1em);
+        max-width: calc(100% - 10px);
         -webkit-line-clamp: 7;
         -webkit-box-orient: vertical;
         overflow: hidden;
-        margin: 0.25em 0.5em;
+        margin: 2.5px 5px;
     }
 
     :global(.anime-description *) {
-        font-size: 1.2rem !important;
+        font-size: 12px !important;
     }
     :global(.anime-description a) {
         color: hsl(var(--ac-color)) !important;
@@ -2970,7 +2970,7 @@
 
     .anime-title {
         cursor: pointer;
-        font-size: clamp(1.6309rem, 1.76545rem, 1.9rem);
+        font-size: clamp(16.309px, 17.6545px, 19px);
         overflow-x: auto;
         overflow-y: hidden;
         width: min-content;
@@ -2978,7 +2978,7 @@
         white-space: nowrap;
         -ms-overflow-style: none;
         scrollbar-width: none;
-        min-width: 1.2em;
+        min-width: 12px;
     }
 
     .anime-title::-webkit-scrollbar {
@@ -2997,20 +2997,20 @@
         align-items: center;
         user-select: none !important;
         width: 100%;
-        height: 4.8em;
+        height: 48px;
         margin: auto;
-        padding: 0 1em;
+        padding: 0 10px;
         border-top: 1px solid var(--bd-color);
     }
 
     .popup-footer svg {
-        height: 2em;
-        width: 2em;
+        height: 26.6625px;
+        width: 26.6625px;
     }
 
     .popup-footer .hideshow {
-        height: 1.5em;
-        width: 1.5em;
+        height: 20px;
+        width: 20px;
     }
 
     .popup-footer img {
@@ -3036,12 +3036,12 @@
     }
 
     .hideshowbtn {
-        grid-template-columns: 1.5em auto;
+        grid-template-columns: 20px auto;
     }
 
     .openanilist,
     .morevideos {
-        grid-template-columns: 2em auto;
+        grid-template-columns: 26.6625px auto;
     }
 
     @media screen and (max-width: 425px) {
@@ -3049,20 +3049,20 @@
             justify-content: space-between;
         }
         .info-contents {
-            margin: 1em 0;
+            margin: 10px 0;
             width: 100% !important;
             display: flex;
             flex-wrap: wrap;
-            gap: 0.5em;
+            gap: 5px;
         }
     }
 
     @media screen and (min-width: 641px) {
         .fullPopupDescription {
-            font-size: 1.5rem !important;
+            font-size: 15px !important;
         }
         :global(.fullPopupDescription *) {
-            font-size: 1.5rem !important;
+            font-size: 15px !important;
         }
         .fullPopupImage {
             max-width: min(90%, 1000px) !important;
@@ -3122,14 +3122,14 @@
     }
 
     .info-categ {
-        font-size: clamp(1.0631rem, 1.15155rem, 1.24rem);
+        font-size: clamp(12px, 12px, 12.4px);
         user-select: none !important;
     }
 
     .info {
         -ms-overflow-style: none;
         scrollbar-width: none;
-        font-size: clamp(1.018rem, 1.099rem, 1.18rem);
+        font-size: 12px;
         text-transform: capitalize;
         overflow-y: hidden;
         overflow-x: auto;
@@ -3142,13 +3142,13 @@
     .tags-info-content {
         flex-wrap: wrap;
         flex-direction: column;
-        max-height: 6.4em;
+        max-height: 70.8px;
     }
 
     .tags-info-content > span {
         display: flex;
         justify-content: space-between;
-        gap: 2rem;
+        gap: 20px;
         flex: 1;
     }
 
@@ -3179,7 +3179,7 @@
     .popup-body {
         display: grid;
         grid-template-rows: 30px auto;
-        padding: 0 1em;
+        padding: 0 10px;
     }
 
     .popup-controls {
@@ -3187,7 +3187,7 @@
         padding: 8px 0 2px 0;
         user-select: none;
         justify-content: space-between;
-        gap: 1em;
+        gap: 10px;
     }
 
     @media screen and (min-width: 640px) {
@@ -3195,7 +3195,7 @@
             background-color: var(--ol-color);
         }
         .popup-body {
-            padding: 0 2em;
+            padding: 0 20px;
         }
     }
 
@@ -3223,8 +3223,8 @@
     }
     .list-update-icon,
     .banner-image-icon {
-        height: 1.4rem;
-        width: 1.4rem;
+        height: 14px;
+        width: 14px;
         cursor: pointer;
     }
 
@@ -3257,8 +3257,8 @@
     .switch {
         position: relative;
         display: inline-block;
-        width: 4rem;
-        min-width: 4rem;
+        width: 40px;
+        min-width: 40px;
         height: 20px;
     }
 
@@ -3283,8 +3283,8 @@
         content: "";
         height: 14px;
         width: 14px;
-        left: 0.15em;
-        bottom: 0.0772em;
+        left: 1.5px;
+        bottom: 0.772px;
         background-color: var(--sfg-color);
         transition: 0.16s transform ease-out;
     }
@@ -3392,9 +3392,9 @@
     }
     .fullPopupDescription {
         animation: fadeIn 0.2s ease-out;
-        letter-spacing: 0.05rem;
-        line-height: 2.5rem;
-        font-size: 1.3rem;
+        letter-spacing: 0.5px;
+        line-height: 25px;
+        font-size: 13px;
         overflow-y: auto;
         overflow-x: hidden;
         max-width: min(90%, 576px);
@@ -3416,7 +3416,7 @@
         touch-action: none;
     }
     :global(.fullPopupDescription *) {
-        font-size: 1.3rem !important;
+        font-size: 13px !important;
         color: var(--fg-color);
     }
     :global(.fullPopupDescription a) {
@@ -3430,42 +3430,42 @@
     :global(.fullPopupDescription > .is-custom-table) {
         width: min(90vw, 380px) !important;
         background-color: var(--bg-color) !important;
-        padding: 1em 2em !important;
+        padding: 13px 26px !important;
         display: flex;
         flex-wrap: wrap;
-        gap: 0.5em !important;
+        gap: 6.5px !important;
     }
     :global(.fullPopupDescription .custom-header) {
         border-bottom: 1px solid var(--fg-color) !important;
-        padding: 0 0 0.5em 0 !important;
+        padding: 0 0 6.5px 0 !important;
         display: flex;
         flex-wrap: wrap;
-        column-gap: 2em !important;
+        column-gap: 20px !important;
         align-items: center !important;
         justify-content: space-between !important;
         width: 100% !important;
     }
     :global(.fullPopupDescription .custom-h1) {
         text-transform: capitalize !important;
-        font-size: 1.5rem !important;
+        font-size: 15px !important;
         font-weight: 500 !important;
-        min-height: 2.3rem !important;
+        min-height: 23px !important;
         cursor: pointer !important;
     }
     :global(.fullPopupDescription .custom-extra) {
         text-transform: capitalize !important;
-        min-height: 2rem !important;
+        min-height: 20px !important;
         width: fit-content !important;
-        min-width: 4.8em !important;
+        min-width: 62.4px !important;
         cursor: pointer !important;
-        text-indent: 0.5em !important;
+        text-indent: 6.5px !important;
         text-align: end !important;
     }
     :global(.fullPopupDescription .custom-table-list) {
         list-style: none !important;
         display: grid;
-        gap: 1em !important;
-        padding: 0.5em 0 !important;
+        gap: 13px !important;
+        padding: 6.5px 0 !important;
         width: 100% !important;
         min-width: 100% !important;
     }
@@ -3476,8 +3476,31 @@
         cursor: pointer !important;
     }
     :global(.fullPopupDescription .custom-description) {
-        padding: 0.5em !important;
-        text-indent: 2rem !important;
+        padding: 6.5px !important;
+        text-indent: 20px !important;
+    }
+    .disable-interaction {
+        pointer-events: none !important;
+        position: fixed !important;
+        transform: translateY(-99999px) translateZ(0) !important;
+        -webkit-transform: translateY(-99999px) translateZ(0) !important;
+        -ms-transform: translateY(-99999px) translateZ(0) !important;
+        -moz-transform: translateY(-99999px) translateZ(0) !important;
+        -o-transform: translateY(-99999px) translateZ(0) !important;
+        user-select: none !important;
+        touch-action: none !important;
+        cursor: not-allowed !important;
+        -webkit-user-drag: none !important;
+        -moz-user-select: none !important;
+        -ms-user-select: none !important;
+        height: 0 !important;
+        width: 0 !important;
+        max-width: 0 !important;
+        max-height: 0 !important;
+        min-width: 0 !important;
+        min-height: 0 !important;
+        overflow: hidden !important;
+        opacity: 0 !important;
     }
     .display-none {
         display: none !important;

@@ -1482,7 +1482,7 @@
 	let _confirmModalPromise;
 	let isPersistent;
 	$confirmPromise = window.confirmPromise = async (confirmValues) => {
-		if (isPersistent) return;
+		if (isPersistent && !confirmValues?.isPersistent) return;
 		isPersistent = confirmValues?.isPersistent;
 		return new Promise((resolve) => {
 			_isAlert = confirmValues?.isAlert || false;
@@ -1838,7 +1838,7 @@
 		position: fixed;
 		top: 0px;
 		z-index: 1003;
-		height: 0.2em;
+		height: 2px;
 		width: 100%;
 		transform: translateX(var(--progress));
 		-webkit-transform: translateX(var(--progress));
@@ -1857,7 +1857,7 @@
 		}
 		.progress.is-below-absolute-progress {
 			position: fixed;
-			height: 0.2em !important;
+			height: 2px !important;
 			top: 0px !important;
 			z-index: 1003 !important;
 		}
@@ -1876,7 +1876,7 @@
 			z-index: 1000 !important;
 		}
 		.home {
-			padding: 0 1em;
+			padding: 0 10px;
 		}
 	}
 </style>

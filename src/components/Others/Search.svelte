@@ -2471,19 +2471,19 @@
         tabindex={$menuVisible || $popupVisible || selectedCustomFilterElement
             ? ""
             : "0"}
-        style:--editcancel-icon={$showFilterOptions ? "2.5em" : ""}
+        style:--editcancel-icon={$showFilterOptions ? "25px" : ""}
         style:--save-icon={$showFilterOptions &&
         editCustomFilterName &&
         $selectedCustomFilter &&
         customFilterName &&
         $activeTagFilters &&
         !$activeTagFilters?.[customFilterName]
-            ? "2.5em"
+            ? "25px"
             : ""}
         on:keyup={(e) => e.key === "Enter" && handleCustomFilterPopup(e)}
         on:click={handleCustomFilterPopup}
     >
-        <label class="display-none" for="custom-filter-name">
+        <label class="disable-interaction" for="custom-filter-name">
             Search Title
         </label>
         <input
@@ -2663,9 +2663,9 @@
         style:--add-icon-size={customFilterName &&
         $activeTagFilters &&
         !$activeTagFilters?.[customFilterName]
-            ? "2.5em"
+            ? "25px"
             : ""}
-        style:--remove-icon-size={$customFilters?.length > 1 ? "2.5em" : ""}
+        style:--remove-icon-size={$customFilters?.length > 1 ? "25px" : ""}
     >
         {#if $filterOptions && !$loadingFilterOptions}
             <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
@@ -2869,7 +2869,7 @@
                         >
                             <div class="value-wrap">
                                 <label
-                                    class="display-none"
+                                    class="disable-interaction"
                                     for={filterSelection.filterSelectionName +
                                         Dropdown.filName}
                                 >
@@ -2970,7 +2970,7 @@
                                     >
                                 </div>
                                 <label
-                                    class="display-none"
+                                    class="disable-interaction"
                                     for={"Search " +
                                         (filterSelection.filterSelectionName +
                                             Dropdown.filName)}
@@ -3200,7 +3200,7 @@
                                     )}
                             >
                                 <label
-                                    class="display-none"
+                                    class="disable-interaction"
                                     for={"Checkbox: " + Checkbox.filName}
                                 >
                                     {Checkbox.filName}
@@ -3254,7 +3254,7 @@
                             </div>
                             <div class="value-input-number-wrap">
                                 <label
-                                    class="display-none"
+                                    class="disable-interaction"
                                     for={"Number Filter: " + inputNum.filName}
                                 >
                                     {"Number Filter: " + inputNum.filName}
@@ -3462,7 +3462,9 @@
         </span>
     </div>
     <div class="input-search-wrap" id="input-search-wrap">
-        <label class="display-none" for="input-search"> Search Title </label>
+        <label class="disable-interaction" for="input-search">
+            Search Title
+        </label>
         <input
             id="input-search"
             class="input-search"
@@ -3620,7 +3622,7 @@
         grid-template-rows:
             42px var(--custom-filter-settings-space) var(--filters-space)
             var(--active-tag-filter-space) 44px 42px 45px auto;
-        padding-top: 1.5em;
+        padding-top: 15px;
         transition: opacity 0.2s ease-out;
     }
 
@@ -3637,9 +3639,9 @@
         --editcancel-icon: ;
         --save-icon: ;
         display: grid;
-        grid-template-columns: auto var(--save-icon) var(--editcancel-icon) 2.5em;
+        grid-template-columns: auto var(--save-icon) var(--editcancel-icon) 25px;
         align-items: center;
-        column-gap: 2em;
+        column-gap: 20px;
         padding: 8px 15px 8px 0px;
         background-color: var(--bg-color);
         border: 1px solid var(--bd-color);
@@ -3651,7 +3653,7 @@
     .custom-filter-wrap .options-wrap {
         position: absolute;
         left: 0;
-        top: 4.25em;
+        top: 42.5px;
         background-color: var(--bg-color);
         border: 1px solid var(--bd-color);
         overflow-y: auto;
@@ -3693,13 +3695,13 @@
         display: grid;
         grid-template-columns: 1fr;
         align-items: center;
-        column-gap: 2em;
+        column-gap: 20px;
         padding: 8px 15px;
         background-color: var(--bg-color);
         border: 1px solid var(--bd-color);
         border-radius: 6px;
         width: 100%;
-        height: 4em;
+        height: 40px;
         position: relative;
     }
     .custom-filter-selection {
@@ -3708,7 +3710,7 @@
         color: var(--fg-color);
         position: absolute;
         opacity: 0;
-        width: calc(100% - var(--edit-icon-width) - 3.5em);
+        width: calc(100% - var(--edit-icon-width) - 35px);
         height: 100%;
     }
     .input-search,
@@ -3725,31 +3727,31 @@
     }
     .add-custom-category,
     .remove-custom-category {
-        width: 3em;
-        height: 3em;
+        width: 30px;
+        height: 30px;
         display: grid;
         justify-content: center;
         align-items: center;
     }
     .filterType-wrap-icon {
-        height: 2em;
-        width: 2em;
+        height: 20px;
+        width: 20px;
         cursor: pointer;
     }
     .filterType-dropdown {
         display: grid;
-        grid-template-columns: auto 1em;
-        gap: 0.2em;
+        grid-template-columns: auto 15px;
+        gap: 2px;
         align-items: center;
     }
     .filterType-dropdown > svg {
-        width: 1em;
-        height: 1em;
+        width: 15px;
+        height: 15px;
     }
     .filterType .options-wrap {
         position: absolute;
         left: 0;
-        top: 2.75em;
+        top: 27.5px;
         background-color: var(--bg-color);
         border: 1px solid var(--bd-color);
         overflow-y: auto;
@@ -3794,8 +3796,8 @@
     }
 
     .showFilterOptions {
-        height: 2.5em;
-        width: 2.5em;
+        height: 25px;
+        width: 25px;
         cursor: pointer;
     }
 
@@ -3824,7 +3826,7 @@
         column-gap: 15px;
         height: max-content;
         min-height: 30px;
-        margin-top: 1em;
+        margin-top: 10px;
         padding: 0px 2px;
         position: relative;
     }
@@ -3859,7 +3861,7 @@
         width: 100%;
         column-gap: 10px;
         height: 20px;
-        margin-top: 1em;
+        margin-top: 10px;
     }
 
     .home-status .skeleton {
@@ -3868,7 +3870,7 @@
     }
 
     .home-status span {
-        margin: 0 1em;
+        margin: 0 10px;
         overflow-x: auto;
         overflow-y: hidden;
         -ms-overflow-style: none;
@@ -3895,10 +3897,10 @@
         overflow-x: auto;
         overflow-y: hidden;
         display: flex;
-        gap: 1em;
+        gap: 10px;
         flex-wrap: nowrap;
         padding-bottom: var(--maxPaddingHeight);
-        margin-top: 2em;
+        margin-top: 20px;
         user-select: none;
         -ms-overflow-style: none;
         scrollbar-width: none;
@@ -3932,7 +3934,7 @@
     }
     .filter-select .filter-name,
     .filter-input-number .filter-input-number-name {
-        font-size: 1.5rem;
+        font-size: 15px;
         font-weight: 600;
         text-transform: capitalize;
         user-select: none;
@@ -3953,8 +3955,8 @@
     }
     .filter-select .angle-down,
     .filter-select .angle-up {
-        height: 1.4em;
-        width: 1.4em;
+        height: 14px;
+        width: 14px;
         margin: auto;
         cursor: pointer;
     }
@@ -3962,6 +3964,8 @@
         width: max-content;
         max-width: 115px;
         margin-left: 10px;
+        display: grid;
+        align-items: center;
     }
     .filter-select .value-input {
         background: transparent;
@@ -4034,7 +4038,7 @@
         align-items: center;
         padding: 5px;
         width: 100%;
-        grid-template-columns: auto 1.4em;
+        grid-template-columns: auto 14px;
         grid-column-gap: 8px;
         cursor: pointer;
         user-select: none;
@@ -4048,7 +4052,7 @@
     }
 
     .filter-select .option:has(.extra-item-info):has(.item-info) {
-        grid-template-columns: auto 1.4em 1.4em;
+        grid-template-columns: auto 14px 14px;
     }
 
     .filter-select .option h3 {
@@ -4058,8 +4062,8 @@
 
     .filter-select .option svg {
         fill: var(--optionColor);
-        height: 1.4em;
-        width: 1.4em;
+        height: 14px;
+        width: 14px;
     }
     .filter-checkbox {
         display: grid;
@@ -4096,7 +4100,7 @@
         -webkit-user-select: none;
         -ms-user-select: none;
         user-select: none;
-        font-size: 1.4rem;
+        font-size: 14px;
         cursor: pointer;
     }
 
@@ -4114,7 +4118,7 @@
         min-height: 28px;
         width: 100%;
         grid-template-columns: 1fr;
-        margin-top: 2em;
+        margin-top: 20px;
     }
     .activeFilters.seenMore {
         grid-template-columns: calc(100% - 43px) 28px;
@@ -4126,13 +4130,13 @@
         align-items: center;
         border-radius: 6px;
         cursor: pointer;
-        width: 3em;
-        height: 3em;
+        width: 30px;
+        height: 30px;
     }
 
     .empty-tagFilter svg {
-        width: 2em;
-        height: 2em;
+        width: 20px;
+        height: 20px;
     }
 
     .tagFilters {
@@ -4171,9 +4175,9 @@
         background-color: var(--bg-color);
         color: var(--activeTagFilterColor);
         border: 1px solid var(--activeTagFilterColor);
-        padding: 0em 10px;
+        padding: 0 10px;
         display: grid;
-        grid-template-columns: calc(100% - 2em) 2em;
+        grid-template-columns: calc(100% - 20px) 20px;
         flex: 1;
         justify-content: space-between;
         align-items: center;
@@ -4216,12 +4220,12 @@
         background: var(--bg-color);
         border-radius: 6px;
         cursor: pointer;
-        width: 3em;
-        height: 3em;
+        width: 30px;
+        height: 30px;
     }
     .changeGridView svg {
-        height: 1.5em;
-        width: 1.5em;
+        height: 15px;
+        width: 15px;
     }
 
     .showHideActiveFilters {
@@ -4230,13 +4234,13 @@
         align-items: center;
         border-radius: 6px;
         cursor: pointer;
-        width: 3em;
-        height: 3em;
+        width: 30px;
+        height: 30px;
     }
 
     .showHideActiveFilters svg {
-        height: 2.5em;
-        width: 2.5em;
+        height: 25px;
+        width: 25px;
     }
 
     .last-filter-option {
@@ -4244,8 +4248,8 @@
         justify-content: space-between;
         align-items: center;
         gap: 8px;
-        min-height: 3em;
-        margin-top: 1.2em;
+        min-height: 30px;
+        margin-top: 12px;
     }
 
     .sortFilter {
@@ -4272,8 +4276,8 @@
     }
 
     .sortFilter svg {
-        height: 1.5em;
-        width: 1.5em;
+        height: 15px;
+        width: 15px;
     }
 
     .sortFilter .options-wrap {
@@ -4307,7 +4311,7 @@
         align-items: center;
         padding: 5px;
         width: 100%;
-        grid-template-columns: auto 1.5em;
+        grid-template-columns: auto 15px;
         grid-column-gap: 8px;
         cursor: pointer;
         user-select: none;
@@ -4324,8 +4328,8 @@
 
     .sortFilter .option svg {
         margin-left: auto;
-        height: 1.5em;
-        width: 1.5em;
+        height: 15px;
+        width: 15px;
     }
 
     .shimmer {
@@ -4414,7 +4418,7 @@
     }
 
     .close-filters {
-        margin-top: 1.2em;
+        margin-top: 12px;
         display: flex;
         justify-content: center;
         align-items: center;
@@ -4422,12 +4426,12 @@
         border-top: 3px solid var(--bd-color);
         cursor: pointer;
         width: 100%;
-        height: 3em;
+        height: 30px;
     }
 
     .close-filters > svg {
-        width: 2em;
-        height: 2em;
+        width: 20px;
+        height: 20px;
     }
 
     input[type="search"]:not(:hover):not(:focus):not(:disabled):not(
@@ -4489,9 +4493,9 @@
             display: flex;
             flex-direction: column !important;
             z-index: 996 !important;
-            left: -1em !important;
+            left: -10px !important;
             top: 0px;
-            width: calc(100% + 2em) !important;
+            width: calc(100% + 20px) !important;
             height: 100% !important;
             background-color: var(--ol-color) !important;
             justify-content: center !important;
@@ -4533,14 +4537,14 @@
             border-radius: 6px;
             top: 140px;
             max-height: 65vh !important;
-            min-height: 10.71em !important;
+            min-height: 107.1px !important;
             position: absolute;
             opacity: 1 !important;
             transition: opacity 0.2s ease-out !important;
             overflow: hidden !important;
         }
         #filters .options-wrap-filter-info {
-            min-height: 17.07em !important;
+            min-height: 170.7px !important;
         }
         .options-wrap-filter-info.hide {
             opacity: 0 !important;
@@ -4552,7 +4556,7 @@
         }
         .options-wrap-filter-info .filter-title {
             display: initial;
-            font-size: 1.8rem;
+            font-size: 18px;
             font-weight: bold;
             text-transform: capitalize;
             white-space: nowrap;
@@ -4570,7 +4574,7 @@
             border: 2px solid var(--bd-color) !important;
             padding: 14px 12px;
             border-radius: 6px;
-            font-size: 1.6rem;
+            font-size: 16px;
             color: var(--fg-color);
             border: none;
             outline: none;
@@ -4610,20 +4614,20 @@
         }
 
         .option h3 {
-            font-size: 1.6rem !important;
+            font-size: 16px !important;
         }
         .filter-select .option {
-            grid-template-columns: auto 1.8em !important;
+            grid-template-columns: auto 18px !important;
         }
         .filter-select .option:has(.extra-item-info) {
-            grid-template-columns: auto 4em !important;
+            grid-template-columns: auto 40px !important;
         }
         .filter-select .option:has(.extra-item-info):has(.item-info) {
-            grid-template-columns: auto 1.8em 4em !important;
+            grid-template-columns: auto 18px 40px !important;
         }
         .option svg {
-            height: 1.8em !important;
-            width: 1.8em !important;
+            height: 18px !important;
+            width: 18px !important;
         }
         .closing-x {
             width: 24px !important;
@@ -4654,9 +4658,7 @@
         display: none !important;
     }
 
-    /* 
     .disable-interaction {
-        display: none !important;
         pointer-events: none !important;
         position: fixed !important;
         transform: translateY(-99999px) translateZ(0) !important;
@@ -4677,5 +4679,6 @@
         min-width: 0 !important;
         min-height: 0 !important;
         overflow: hidden !important;
-    } */
+        opacity: 0 !important;
+    }
 </style>

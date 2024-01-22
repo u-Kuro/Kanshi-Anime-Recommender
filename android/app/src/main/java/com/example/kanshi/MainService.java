@@ -377,6 +377,7 @@ public class MainService extends Service {
             }
             MainActivity mainActivity = MainActivity.getInstanceActivity();
             if (mainActivity != null) {
+                mainActivity.reloadWeb();
                 mainActivity.showDataEvictionDialog();
             }
         }

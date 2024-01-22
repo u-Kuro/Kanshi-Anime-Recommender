@@ -87,7 +87,7 @@ import androidx.core.content.FileProvider;
 import androidx.core.splashscreen.SplashScreen;
 
 public class MainActivity extends AppCompatActivity {
-    public final int appID = 316;
+    public final int appID = 317;
     public boolean keepAppRunningInBackground = false;
     public boolean webViewIsLoaded = false;
     public boolean permissionIsAsked = false;
@@ -1047,7 +1047,7 @@ public class MainActivity extends AppCompatActivity {
             .setTitle("Possible Data Loss")
             .setMessage("Some of your data may be cleared by chrome, please import your saved data.")
             .setPositiveButton("OK",(dialogInterface, i) -> webView.post(() -> {
-                webView.loadUrl("javascript:window?.importAndroidUserData?.(true)");
+                webView.loadUrl("javascript:window?.importAndroidUserData?.()");
                 String url = webView.getUrl();
                 if (url != null) {
                     if (url.startsWith("file")) {
@@ -1068,6 +1068,9 @@ public class MainActivity extends AppCompatActivity {
                 }
             })))
         ,false);
+    }
+    public void reloadWeb() {
+        webView.post(()->webView.reload());
     }
     public void setBackgroundUpdates() {
         final int UPDATE_DATA_PENDING_INTENT = 994;

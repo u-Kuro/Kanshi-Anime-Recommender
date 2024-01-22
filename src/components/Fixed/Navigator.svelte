@@ -524,13 +524,13 @@
             </svg>
         </div>
         <div class="input-search">
-            <label class="display-none" for="usernameInput">
+            <label class="disable-interaction" for="usernameInput">
                 Anilist Username
             </label>
             <input
                 id="usernameInput"
                 type="search"
-                tabindex={$popupVisible && windowWidth > 750 ? "-1" : "101"}
+                tabindex={$popupVisible && windowWidth > 750 ? "-1" : "0"}
                 enterkeyhint="search"
                 autocomplete="off"
                 placeholder="Your Anilist Username"
@@ -623,7 +623,7 @@
     }
     .nav {
         display: grid;
-        grid-template-columns: calc(100% - 3em - 1.5em) 3em;
+        grid-template-columns: calc(100% - 30px - 15px) 30px;
         height: 100%;
         align-items: center;
         -ms-user-select: none;
@@ -631,17 +631,17 @@
         user-select: none;
         max-width: 1140px;
         margin: auto;
-        gap: 1.5em;
+        gap: 15px;
         padding: 0 50px;
     }
     .nav.hasavailableapp {
-        grid-template-columns: calc(100% - 80px - 3em - calc(1.5em * 2)) 80px 3em;
+        grid-template-columns: calc(100% - 80px - 30px - calc(15px * 2)) 80px 30px;
     }
     .logo-icon {
         cursor: pointer;
         justify-self: start;
-        width: 2.5em;
-        height: 2.5em;
+        width: 25px;
+        height: 25px;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -650,7 +650,7 @@
     }
     .input-search {
         display: flex;
-        gap: 1.5em;
+        gap: 15px;
         height: 57px;
         border-radius: 6px;
         justify-self: left;
@@ -697,9 +697,6 @@
     .nav-container.layout-change
         input[type="search"]::-webkit-search-cancel-button {
         opacity: 0;
-    }
-    #usernameInput::-webkit-search-cancel-button {
-        font-size: 1.5rem;
     }
     .goback path {
         stroke-width: 25px;
@@ -750,7 +747,7 @@
         .go-back-container {
             min-width: 48px;
             min-height: 48px;
-            padding: 0 1em;
+            padding: 0 10px;
             justify-content: center;
             align-items: center;
             cursor: pointer;
@@ -758,7 +755,7 @@
         .logo-icon-container {
             min-width: 48px;
             min-height: 48px;
-            padding: 0 1em;
+            padding: 0 10px;
             justify-content: center;
             align-items: center;
             cursor: pointer;
@@ -772,16 +769,16 @@
     }
     #usernameInput {
         font-family: system-ui;
-        font-size: 1.333rem;
+        font-size: 13.33px;
         font-weight: 400;
     }
     #usernameInput.android {
-        font-size: 1.65rem;
+        font-size: 16.5px;
         font-weight: 500;
     }
     .usernameText {
         font-family: system-ui;
-        font-size: 1.333rem;
+        font-size: 13.33px;
         font-weight: 400;
         white-space: nowrap;
         overflow: hidden;
@@ -850,13 +847,13 @@
         #usernameInput {
             opacity: 0;
             transition: opacity 0.1s ease-out;
-            font-size: 1.5rem;
+            font-size: 15px;
             font-weight: 500;
         }
         .input-search {
             transition: opacity 0.1s ease-out;
             justify-self: start !important;
-            padding-left: 1em !important;
+            padding-left: 10px !important;
         }
         .logo-icon-container {
             display: flex;
@@ -885,7 +882,7 @@
         .nav.inputfocused .input-search {
             max-width: none !important;
             width: 100% !important;
-            padding-right: 1em !important;
+            padding-right: 10px !important;
         }
         .nav.inputfocused #usernameInput {
             max-width: none !important;
@@ -938,7 +935,29 @@
             display: none !important;
         }
     }
-
+    .disable-interaction {
+        pointer-events: none !important;
+        position: fixed !important;
+        transform: translateY(-99999px) translateZ(0) !important;
+        -webkit-transform: translateY(-99999px) translateZ(0) !important;
+        -ms-transform: translateY(-99999px) translateZ(0) !important;
+        -moz-transform: translateY(-99999px) translateZ(0) !important;
+        -o-transform: translateY(-99999px) translateZ(0) !important;
+        user-select: none !important;
+        touch-action: none !important;
+        cursor: not-allowed !important;
+        -webkit-user-drag: none !important;
+        -moz-user-select: none !important;
+        -ms-user-select: none !important;
+        height: 0 !important;
+        width: 0 !important;
+        max-width: 0 !important;
+        max-height: 0 !important;
+        min-width: 0 !important;
+        min-height: 0 !important;
+        overflow: hidden !important;
+        opacity: 0 !important;
+    }
     .display-none {
         display: none !important;
     }

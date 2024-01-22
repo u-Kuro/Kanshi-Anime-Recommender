@@ -207,16 +207,16 @@
     .confirm-container {
         animation: fadeIn 0.2s ease-out;
         display: grid;
-        grid-template-rows: 23px calc(100% - 23px - 20px - 3em) 20px;
+        grid-template-rows: 23px calc(100% - 23px - 20px - 30px) 20px;
         background-color: var(--bg-color);
         border: 1px solid var(--bd-color);
-        width: 35em;
+        width: 350px;
         min-height: 155px;
         max-width: 95%;
         max-height: 95%;
         border-radius: 6px;
-        gap: 1.5em;
-        padding: 2em 1em 2em 2.5em;
+        gap: 15px;
+        padding: 20px 10px 20px 25px;
         cursor: default;
     }
 
@@ -231,8 +231,8 @@
         display: grid;
         grid-template-rows: auto auto;
         align-content: flex-start;
-        padding-right: 1.5em;
-        gap: 1.2em;
+        padding-right: 15px;
+        gap: 12px;
         overflow-x: hidden;
         overflow-y: auto;
         -ms-overflow-style: none;
@@ -246,7 +246,7 @@
 
     .confirm-title-wrapper {
         height: 23px;
-        width: calc(100% - 1.5em);
+        width: calc(100% - 15px);
         overflow-x: auto;
         overflow-y: hidden;
         -ms-overflow-style: none;
@@ -264,14 +264,14 @@
 
     .confirm-title {
         align-self: center;
-        font-size: 2rem;
+        font-size: 20px;
         font-weight: 500;
         color: var(--fg-color);
         white-space: nowrap;
     }
 
     .confirm-text {
-        font-size: 1.6rem;
+        font-size: 16px;
         height: fit-content;
         color: var(--fg-color);
         font-weight: 500;
@@ -279,7 +279,7 @@
 
     .confirm-button-container {
         justify-self: end;
-        column-gap: 0.2em;
+        column-gap: 2px;
         align-items: center;
         display: flex;
         justify-content: center;
@@ -290,10 +290,10 @@
         background-color: transparent;
         outline: none;
         border: none;
-        font-size: 1.41rem;
+        font-size: 12px;
         font-weight: 425;
         letter-spacing: 1px;
-        padding: 0.75em 0.5em;
+        padding: 9px 6px;
         min-width: 65px;
         cursor: pointer;
     }
@@ -308,17 +308,17 @@
 
     @media screen and (min-width: 768px) {
         .confirm-container {
-            width: 40em;
-            min-height: 16.4em;
+            width: 400px;
+            min-height: 164px;
             border-radius: 6px !important;
         }
 
         .confirm-title {
-            font-size: 2rem;
+            font-size: 20px;
         }
 
         .button {
-            font-size: 1.2rem;
+            font-size: 12px;
         }
     }
 </style>

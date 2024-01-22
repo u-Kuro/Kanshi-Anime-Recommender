@@ -855,7 +855,7 @@
     main {
         width: 100%;
         height: 100%;
-        padding: 2em 0px 5em 0px;
+        padding: 20px 0px 50px 0px;
         position: relative;
         overflow-x: hidden;
     }
@@ -874,10 +874,6 @@
         animation: loadingBlink 1.5s ease-in-out infinite;
     }
 
-    .image-grid__card.hidden {
-        content-visibility: auto;
-    }
-
     .image-grid__card.skeleton {
         background-color: transparent !important;
     }
@@ -885,17 +881,17 @@
     .title.skeleton {
         height: 10px;
         width: 75%;
-        margin-bottom: clamp(0.1em, 0.3em, 0.5em);
+        margin-bottom: clamp(1px, 3px, 5px);
     }
 
     .brief-info.skeleton {
         height: 10px;
         width: 50%;
-        margin-bottom: clamp(0.1em, 0.3em, 0.5em);
+        margin-bottom: clamp(1px, 3px, 5px);
     }
 
     .title {
-        margin-bottom: clamp(0.1em, 0.3em, 0.5em);
+        margin-bottom: clamp(1px, 3px, 5px);
         overflow-x: auto;
         overflow-y: hidden;
         white-space: nowrap;
@@ -921,10 +917,10 @@
         display: grid;
         justify-content: space-between;
         align-items: flex-start;
-        grid-gap: 1rem;
+        grid-gap: 10px;
         grid-template-columns: repeat(
             auto-fill,
-            minmax(min(100% / 2 - 1rem, 180px), 180px)
+            minmax(min(100% / 2 - 10px, 180px), 180px)
         );
         overflow-anchor: visible;
         -ms-overflow-style: none;
@@ -933,7 +929,7 @@
 
     @media screen and (max-width: 390px) {
         .image-grid {
-            grid-template-columns: repeat(auto-fill, calc(100% / 2 - 1rem));
+            grid-template-columns: repeat(auto-fill, calc(100% / 2 - 10px));
         }
     }
 
@@ -1042,7 +1038,7 @@
 
     .image-grid__card-title {
         padding: 50% 4px 4px;
-        font-size: clamp(1.1rem, 1.2rem, 1.4rem);
+        font-size: clamp(12px, 12px, 14px);
         position: absolute;
         bottom: 0;
         background: linear-gradient(
@@ -1092,19 +1088,19 @@
         gap: 3px;
     }
     .brief-info .circle {
-        height: 0.75em;
-        width: 0.75em;
+        height: 9px;
+        width: 9px;
     }
     .brief-info .score {
-        height: 1em;
-        width: 1em;
+        height: 12px;
+        width: 12px;
     }
 
     .go-back-grid {
         position: fixed !important;
         top: unset !important;
-        bottom: 4.8em !important;
-        right: 3em !important;
+        bottom: 48px !important;
+        right: 30px !important;
         transform: translateZ(0) !important;
         -webkit-transform: translateZ(0) !important;
         -ms-transform: translateZ(0) !important;
@@ -1148,16 +1144,16 @@
     }
 
     .go-back-grid.fullView svg {
-        width: 2em !important;
-        height: 2em !important;
+        width: 20px !important;
+        height: 20px !important;
     }
     .go-back-grid svg {
-        width: 3em;
-        height: 3em;
+        width: 30px;
+        height: 30px;
     }
 
     .empty {
-        font-size: 2rem;
+        font-size: 20px;
         font-weight: 700;
         opacity: 1;
         padding: 30px;

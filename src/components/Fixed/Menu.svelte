@@ -36,16 +36,12 @@
 
     let menuContainerEl, navContainerEl;
     let importFileInput;
-    let isImportConfirmPersistent;
 
-    async function importData(isPersistent) {
+    async function importData() {
         if (!(importFileInput instanceof Element))
             return ($dataStatus = "Something went wrong");
         if (await $confirmPromise("Do you want to import your data?")) {
-            isImportConfirmPersistent = isPersistent;
             importFileInput.click();
-        } else {
-            isImportConfirmPersistent = false;
         }
     }
     window.importAndroidUserData = importData;
@@ -62,7 +58,7 @@
             if (
                 await $confirmPromise({
                     text: `File ${filenameToShow}has been detected, do you want to import the file?`,
-                    isPersistent: isImportConfirmPersistent,
+                    isPersistent: true,
                 })
             ) {
                 $menuVisible = false;
@@ -96,7 +92,6 @@
             if (importFileInput instanceof Element)
                 importFileInput.value = null;
         }
-        isImportConfirmPersistent = false;
     }
     // Global Function For Android
     function handleExportFolder() {
@@ -743,10 +738,10 @@
         touch-action: none;
     }
     .menu {
-        padding: 1.5em 1em;
+        padding: 15px 10px;
         display: flex;
         flex-wrap: wrap;
-        gap: 1.5em;
+        gap: 15px;
         width: 100%;
         max-width: 1140px;
         max-height: 100%;
@@ -767,16 +762,17 @@
         -moz-box-shadow: 0 3px 20px 0 var(--bd-color);
         -webkit-box-shadow: 0 3px 20px 0 var(--bd-color);
         box-shadow: 0 3px 20px 0 var(--bd-color);
-        font-size: clamp(1.2rem, 1.3rem, 1.4rem);
-        border-radius: 2em;
+        font-size: clamp(12px, 13px, 14px);
+        border-radius: 20px;
         background-color: var(--bg-color);
         border: 1px solid var(--bd-color);
         color: var(--fg-color);
-        padding: 0.8em 1.6em;
+        padding: 10.4px 20.8px;
         cursor: pointer;
         flex: 1 0 auto;
         user-select: none;
         width: fit-content;
+        height: 37.6px;
     }
     .menu:after {
         content: "";
@@ -784,7 +780,7 @@
     }
     @media screen and (max-width: 425px) {
         .menu {
-            padding: 1em;
+            padding: 10px;
         }
         .button {
             flex: none;
@@ -801,7 +797,7 @@
             z-index: 992 !important;
         }
         .menu {
-            padding: 1.5em 50px !important;
+            padding: 15px 50px !important;
         }
     }
     @media screen and (max-width: 207px) {

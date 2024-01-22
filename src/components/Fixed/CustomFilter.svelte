@@ -300,7 +300,7 @@
     };
 
     if ($android) {
-        let touchID, startY, endY;
+        let touchID, startY, endY, startX, endX;
         window.addEventListener(
             "touchstart",
             (event) => {
@@ -318,10 +318,10 @@
                     closestScrollableElement &&
                     closestScrollableElement !== document.body
                 ) {
-                    const isScrollableTop =
+                    const isScrollableY =
                         closestScrollableElement.scrollHeight >
                         closestScrollableElement.clientHeight;
-                    if (isScrollableTop) {
+                    if (isScrollableY) {
                         isMainScrollableElement = false;
                         break;
                     }
@@ -329,8 +329,10 @@
                         closestScrollableElement?.parentElement;
                 }
                 if (!isMainScrollableElement) return;
-                startY = event?.touches?.[0]?.clientY;
-                touchID = event?.touches?.[0]?.identifier;
+                let touch = event?.touches?.[0];
+                startY = touch?.clientY;
+                startX = touch?.clientX;
+                touchID = touch?.identifier;
             },
             { passive: true },
         );
@@ -339,12 +341,15 @@
             "touchmove",
             (event) => {
                 if (touchID == null || startY == null || !$android) return;
-                endY = Array.from(event.changedTouches)?.find(
-                    (touch) => touch.identifier === touchID,
-                )?.clientY;
-                if (typeof endY === "number") {
+                let touch = Array.from(event.changedTouches)?.find(
+                    (t) => t.identifier === touchID,
+                );
+                endY = touch?.clientY;
+                endX = touch?.clientX;
+                if (typeof endY === "number" && typeof endX === "number") {
+                    let deltaX = endX - startX;
                     let deltaY = endY - startY;
-                    if (deltaY !== 0) {
+                    if (deltaY !== 0 && Math.abs(deltaY) > Math.abs(deltaX)) {
                         showCustomFiltersNav = deltaY > 0;
                     }
                 }
@@ -472,7 +477,7 @@
         -webkit-user-select: none;
         user-select: none;
         max-width: 1140px;
-        gap: 2.5em;
+        gap: 25px;
         padding: 0;
         overflow-x: auto !important;
         -ms-overflow-style: none;
@@ -530,12 +535,12 @@
         justify-content: center;
         white-space: nowrap;
         background-color: transparent;
-        font-size: 1.3rem;
+        font-size: 13px;
         font-weight: 500;
         height: 100%;
         scroll-snap-align: start;
         margin-bottom: auto;
-        padding: 1em;
+        padding: 10px;
         z-index: 2 !important;
     }
     .custom-filter.selected {

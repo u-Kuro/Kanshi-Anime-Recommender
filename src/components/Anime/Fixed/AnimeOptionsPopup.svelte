@@ -336,13 +336,13 @@
         grid-template-columns: auto 25px;
         align-items: center;
         justify-content: space-between;
-        gap: 1em;
+        gap: 10px;
     }
 
     .anime-title {
         overflow-x: auto;
         overflow-y: hidden;
-        margin: 1em 0 1em 1em !important;
+        margin: 10px 0 10px 10px !important;
         padding: 0 !important;
         -ms-overflow-style: none;
         scrollbar-width: none;
@@ -357,7 +357,7 @@
     }
 
     span {
-        padding: 1em;
+        padding: 10px;
         user-select: none !important;
         text-decoration: none !important;
     }
