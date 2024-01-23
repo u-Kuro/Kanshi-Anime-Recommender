@@ -19,6 +19,7 @@
         jsonIsEmpty,
         setLocalStorage,
         removeLocalStorage,
+        formatNumber,
     } from "../../js/others/helper.js";
     import {
         android,
@@ -2451,6 +2452,19 @@
 
     let shouldScrollSnap = getLocalStorage("nonScrollSnapFilters") ?? true;
     $: isFullViewed = $gridFullView ?? getLocalStorage("gridFullView") ?? false;
+
+    let meanAverageScore = getLocalStorage("meanAverageScore");
+    let meanPopularity = getLocalStorage("meanPopularity");
+    window.updateMeanNumberInfos = (newMeanAverageScore, newMeanPopularity) => {
+        if (newMeanAverageScore && newMeanAverageScore > 0) {
+            meanAverageScore = newMeanAverageScore;
+            setLocalStorage("meanAverageScore", meanAverageScore);
+        }
+        if (newMeanPopularity && newMeanPopularity > 0) {
+            meanPopularity = newMeanPopularity;
+            setLocalStorage("meanPopularity", meanPopularity);
+        }
+    };
 </script>
 
 <main
@@ -3271,14 +3285,37 @@
                                     placeholder={inputNum.filName ===
                                     "scoring system"
                                         ? "Default: User Scoring"
-                                        : conditionalInputNumberList.includes(
-                                                inputNum.filName,
-                                            )
-                                          ? ">123 or 123"
-                                          : inputNum.defaultValue !== null
-                                            ? "Default: " +
-                                              inputNum.defaultValue
-                                            : "123"}
+                                        : (inputNum.filName ===
+                                                "average score" ||
+                                                inputNum.filName ===
+                                                    "min average score") &&
+                                            typeof meanAverageScore ===
+                                                "number" &&
+                                            meanAverageScore > 0
+                                          ? "Average: " +
+                                            formatNumber(meanAverageScore)
+                                          : (inputNum.filName ===
+                                                  "popularity" ||
+                                                  inputNum.filName ===
+                                                      "min popularity") &&
+                                              typeof meanPopularity ===
+                                                  "number" &&
+                                              meanPopularity > 0
+                                            ? "Average: " +
+                                              formatNumber(
+                                                  meanPopularity,
+                                                  meanPopularity >= 1000
+                                                      ? 1
+                                                      : 0,
+                                              )
+                                            : conditionalInputNumberList.includes(
+                                                    inputNum.filName,
+                                                )
+                                              ? ">123 or 123"
+                                              : inputNum.defaultValue !== null
+                                                ? "Default: " +
+                                                  inputNum.defaultValue
+                                                : "123"}
                                     value={inputNum.numberValue || ""}
                                     on:input={(e) =>
                                         handleInputNumber(

@@ -238,6 +238,8 @@ const processRecommendedAnimeList = (_data = {}) => {
                         ) {
                             neareastAnimeCompletionAiringAt = data?.animeCompletionAiringAt
                         }
+                    } else if (data?.hasOwnProperty("popularityMode") || data?.hasOwnProperty("averageScoreMode")) {
+                        window?.updateMeanNumberInfos?.(data?.averageScoreMode, data?.popularityMode)
                     } else {
                         setLocalStorage("neareastAnimeCompletionAiringAt", neareastAnimeCompletionAiringAt)
                             .catch(() => removeLocalStorage("neareastAnimeCompletionAiringAt"))
