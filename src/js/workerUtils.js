@@ -32,7 +32,7 @@ import {
 } from "./globalValues.js";
 
 
-let windowLocation = JSON.parse(JSON.stringify(window?.location))
+let windowHREF = window?.location?.href
 let terminateDelay = 1000;
 let dataStatusPrio = false
 let isExporting = false;
@@ -331,7 +331,7 @@ const requestAnimeEntries = (_data = {}) => {
                     requestAnimeEntriesWorker = null
                 }
                 requestAnimeEntriesWorker = new Worker(url)
-                _data.windowLocation = windowLocation || JSON.parse(JSON.stringify(window?.location))
+                _data.windowHREF = windowHREF || window?.location?.href
                 requestAnimeEntriesWorker.postMessage(_data)
                 isRequestingAnimeEntries = true
                 requestAnimeEntriesWorker.onmessage = ({ data }) => {
@@ -344,7 +344,7 @@ const requestAnimeEntries = (_data = {}) => {
                             dataStatus.set(data.status)
                         }
                     } else if (data?.error) {
-                        if (!window.alreadyShownNoNetworkAlert) {
+                        if (!window.alreadyShownNoNetworkAlert || data?.showToUser) {
                             window.alreadyShownNoNetworkAlert = true
                             window.confirmPromise?.({
                                 isAlert: true,
@@ -469,7 +469,7 @@ const requestUserEntries = (_data = {}) => {
                 }
                 requestUserEntriesWorker = new Worker(url)
                 userRequestIsRunning.set(true)
-                _data.windowLocation = windowLocation || JSON.parse(JSON.stringify(window?.location))
+                _data.windowHREF = windowHREF || window?.location?.href
                 requestUserEntriesWorker.postMessage(_data)
                 requestUserEntriesWorker.onmessage = ({ data }) => {
                     if (data?.hasOwnProperty("progress")) {

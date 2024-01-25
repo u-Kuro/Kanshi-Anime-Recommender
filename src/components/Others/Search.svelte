@@ -1599,7 +1599,7 @@
         let keyCode = event.which || event.keyCode || 0;
         // 38up 40down 13enter
         if (keyCode == 38 || keyCode == 40) {
-            var element = Array.from(
+            let element = Array.from(
                 document?.getElementsByClassName?.("options-wrap") || [],
             )?.find?.((el) => {
                 return !el?.classList?.contains?.("display-none");
@@ -1693,7 +1693,7 @@
                 highlightedEl.dispatchEvent(keyupEvent);
             }
         } else {
-            var element = Array.from(
+            let element = Array.from(
                 document.getElementsByClassName("options-wrap") || [],
             ).find((el) => !el.classList.contains("display-none"));
             if (
