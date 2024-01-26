@@ -2465,6 +2465,26 @@
             setLocalStorage("meanPopularity", meanPopularity);
         }
     };
+    let recListMAE, recListMAEIncreased;
+    (async () => {
+        recListMAE = await retrieveJSON("recListMAE");
+    })();
+    window.updateRecListMAE = (newRecListMAE) => {
+        if (recListMAE > 0 && recListMAE !== newRecListMAE) {
+            if (newRecListMAE < recListMAE) {
+                recListMAEIncreased = true;
+            } else if (newRecListMAE > recListMAE) {
+                recListMAEIncreased = false;
+            } else {
+                recListMAEIncreased = null;
+            }
+            recListMAE = newRecListMAE;
+        } else if (newRecListMAE > 0) {
+            recListMAE = newRecListMAE;
+        } else {
+            recListMAEIncreased = recListMAE = null;
+        }
+    };
 </script>
 
 <main
@@ -2680,6 +2700,7 @@
             ? "25px"
             : ""}
         style:--remove-icon-size={$customFilters?.length > 1 ? "25px" : ""}
+        style:--mae-size={recListMAE > 0 ? "1fr" : ""}
     >
         {#if $filterOptions && !$loadingFilterOptions}
             <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
@@ -2770,6 +2791,19 @@
             </span>
         {:else}
             <div class="skeleton shimmer" />
+        {/if}
+        {#if recListMAE > 0}
+            <div
+                class={"mean-error" + ($isProcessingList ? " loading" : "")}
+                style:--mean-error-color={recListMAEIncreased === true
+                    ? "hsl(185deg,65%,50%)"
+                    : recListMAEIncreased === false
+                      ? "hsl(345deg,75%,60%)"
+                      : ""}
+            >
+                {(windowWidth > 315 ? "Mean Error: " : "") +
+                    formatNumber(recListMAE)}
+            </div>
         {/if}
         <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
         {#if $showFilterOptions && $customFilters?.length > 1}
@@ -3308,13 +3342,13 @@
                                                       ? 1
                                                       : 0,
                                               )
-                                            : conditionalInputNumberList.includes(
-                                                    inputNum.filName,
-                                                )
-                                              ? ">123 or 123"
-                                              : inputNum.defaultValue !== null
-                                                ? "Default: " +
-                                                  inputNum.defaultValue
+                                            : inputNum.defaultValue !== null
+                                              ? "Default: " +
+                                                inputNum.defaultValue
+                                              : conditionalInputNumberList.includes(
+                                                      inputNum.filName,
+                                                  )
+                                                ? ">123 or 123"
                                                 : "123"}
                                     value={inputNum.numberValue || ""}
                                     on:input={(e) =>
@@ -3780,6 +3814,7 @@
         grid-template-columns: auto 15px;
         gap: 2px;
         align-items: center;
+        width: 125px;
     }
     .filterType-dropdown > svg {
         width: 15px;
@@ -3854,9 +3889,12 @@
 
     .custom-filter-settings-wrap {
         --add-icon-size: ;
+        --mae-size: ;
         --remove-icon-size: ;
         display: grid;
-        grid-template-columns: 1fr var(--remove-icon-size) var(--add-icon-size);
+        grid-template-columns: 125px var(--mae-size) var(--remove-icon-size) var(
+                --add-icon-size
+            );
         justify-content: space-between;
         align-items: center;
         width: 100%;
@@ -3888,6 +3926,22 @@
     .filterType h2 {
         white-space: nowrap;
         user-select: none;
+    }
+
+    .mean-error {
+        overflow-x: auto;
+        overflow-y: hidden;
+        color: var(--mean-error-color);
+        font-size: 15px;
+        user-select: none;
+        white-space: nowrap;
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+        text-align: right;
+    }
+
+    .mean-error::-webkit-scrollbar {
+        display: none;
     }
 
     .home-status {
@@ -3927,6 +3981,9 @@
     }
 
     .data-status h2.loading {
+        animation: loadingBlink 1s ease-in-out infinite;
+    }
+    .mean-error.loading {
         animation: loadingBlink 1s ease-in-out infinite;
     }
 

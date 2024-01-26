@@ -240,6 +240,8 @@ const processRecommendedAnimeList = (_data = {}) => {
                         }
                     } else if (data?.hasOwnProperty("popularityMode") || data?.hasOwnProperty("averageScoreMode")) {
                         window?.updateMeanNumberInfos?.(data?.averageScoreMode, data?.popularityMode)
+                    } else if (data?.hasOwnProperty("recListMAE")) {
+                        window?.updateRecListMAE?.(data?.recListMAE)
                     } else {
                         setLocalStorage("neareastAnimeCompletionAiringAt", neareastAnimeCompletionAiringAt)
                             .catch(() => removeLocalStorage("neareastAnimeCompletionAiringAt"))
