@@ -759,12 +759,12 @@
                 $activeTagFilters?.[$selectedCustomFilter]?.[
                     nameTypeSelected
                 ]?.unshift?.({
-                    optionName: optionName,
-                    optionType: optionType,
-                    optionIdx: optionIdx,
+                    optionName,
+                    optionType,
+                    optionIdx,
                     categIdx: dropdownIdx,
                     selected: "included",
-                    changeType: changeType,
+                    changeType,
                     filterType: "dropdown",
                 });
                 $activeTagFilters[$selectedCustomFilter][nameTypeSelected] =
@@ -938,6 +938,7 @@
         maxValue,
         minValue,
         filterSelectionName,
+        defaultValue,
     ) {
         if (!$filterOptions || !$activeTagFilters || !$selectedCustomFilter)
             return pleaseWaitAlert();
@@ -957,10 +958,6 @@
                 ?.split(/(<=|>=|<|>)/)
                 ?.filter?.((e) => e); // Remove White Space
             if (newValue !== currentValue && newSplitValue.length <= 2) {
-                let currentSplitValue = newValue
-                    .split(/(<=|>=|<|>)/)
-                    .filter((e) => e); // Remove White Space
-                let currentCMPOperator, currentCMPNumber;
                 let newCMPOperator, newCMPNumber;
                 if (
                     newSplitValue[0].includes(">") ||
@@ -971,16 +968,6 @@
                 } else {
                     newCMPOperator = newSplitValue[1];
                     newCMPNumber = newSplitValue[0];
-                }
-                if (
-                    currentSplitValue[0].includes(">") ||
-                    currentSplitValue[0].includes("<")
-                ) {
-                    currentCMPOperator = currentSplitValue[0];
-                    currentCMPNumber = currentSplitValue[1];
-                } else {
-                    currentCMPOperator = currentSplitValue[1];
-                    currentCMPNumber = currentSplitValue[0];
                 }
                 if (
                     newValue !== currentValue &&
@@ -1051,6 +1038,7 @@
                                 filterType: "input number",
                                 selected: "included",
                                 changeType: "read",
+                                defaultValue,
                             });
                             $activeTagFilters = $activeTagFilters;
                         }
@@ -1130,6 +1118,7 @@
                             filterType: "input number",
                             selected: "included",
                             changeType: "read",
+                            defaultValue,
                         });
                         $activeTagFilters = $activeTagFilters;
                     }
@@ -1818,7 +1807,7 @@
                     $activeTagFilters?.[$selectedCustomFilter]?.[
                         "Algorithm Filter"
                     ] || [];
-                if (arraysAreEqual(array1, array2)) {
+                if (filtersAreEqual(array1, array2)) {
                     _loadAnime(false);
                 } else {
                     _processRecommendedAnimeList();
@@ -1827,12 +1816,34 @@
             previousCustomFilterName = $selectedCustomFilter;
         }
     }
-    function arraysAreEqual(arr1, arr2) {
-        if (arr1.length !== arr2.length) return false;
-        let sortedArr1 = arr1.map((obj) => JSON.stringify(obj)).sort();
-        let sortedArr2 = arr2.map((obj) => JSON.stringify(obj)).sort();
-        for (let i = 0; i < sortedArr1.length; i++) {
-            if (sortedArr1[i] !== sortedArr2[i]) return false;
+    function filtersAreEqual(firstFilter, secondFilter) {
+        firstFilter =
+            firstFilter?.filter?.((obj) => {
+                return (
+                    obj?.selected &&
+                    obj?.selected !== "none" &&
+                    (obj?.defaultValue == null ||
+                        obj?.optionValue == null ||
+                        obj?.defaultValue !== parseFloat(obj?.optionValue))
+                );
+            }) || [];
+        secondFilter =
+            secondFilter?.filter?.((obj) => {
+                return (
+                    obj?.selected &&
+                    obj?.selected !== "none" &&
+                    (obj?.defaultValue == null ||
+                        obj?.optionValue == null ||
+                        obj?.defaultValue !== parseFloat(obj?.optionValue))
+                );
+            }) || [];
+        if (firstFilter?.length !== secondFilter?.length) return false;
+        firstFilter =
+            firstFilter?.map?.((obj) => JSON.stringify(obj))?.sort?.() || [];
+        secondFilter =
+            secondFilter?.map?.((obj) => JSON.stringify(obj))?.sort?.() || [];
+        for (let i = 0; i < firstFilter?.length; i++) {
+            if (firstFilter[i] !== secondFilter[i]) return false;
         }
         return true;
     }
@@ -3360,6 +3371,7 @@
                                             inputNum.maxValue,
                                             inputNum.minValue,
                                             filterSelection.filterSelectionName,
+                                            inputNum.defaultValue,
                                         )}
                                     disabled={!$showFilterOptions}
                                     on:focusin={() =>
