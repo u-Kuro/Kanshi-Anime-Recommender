@@ -3142,7 +3142,7 @@
     .tags-info-content {
         flex-wrap: wrap;
         flex-direction: column;
-        max-height: 70.8px;
+        max-height: 72px;
     }
 
     .tags-info-content > span {
