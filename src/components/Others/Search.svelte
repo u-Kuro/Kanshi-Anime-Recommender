@@ -1808,13 +1808,11 @@
                     $activeTagFilters?.[$selectedCustomFilter]?.[
                         "Algorithm Filter"
                     ] || [];
-                console.time("start");
                 if (filtersAreEqual(prevFilter, newFilter)) {
                     _loadAnime(false);
                 } else {
                     _processRecommendedAnimeList();
                 }
-                console.timeEnd("start");
             }
             previousCustomFilterName = $selectedCustomFilter;
         }
@@ -1824,31 +1822,31 @@
         firstFilter =
             firstFilter?.filter?.((obj) => {
                 if (
-                    obj?.selected !== "included" ||
-                    obj?.selected !== "excluded"
+                    obj?.selected === "included" ||
+                    obj?.selected === "excluded"
                 ) {
-                    return false;
-                } else {
                     return (
                         obj?.defaultValue == null ||
                         obj?.optionValue == null ||
                         obj?.defaultValue !== parseFloat(obj?.optionValue)
                     );
+                } else {
+                    return false;
                 }
             }) || [];
         secondFilter =
             secondFilter?.filter?.((obj) => {
                 if (
-                    obj?.selected !== "included" ||
-                    obj?.selected !== "excluded"
+                    obj?.selected === "included" ||
+                    obj?.selected === "excluded"
                 ) {
-                    return false;
-                } else {
                     return (
                         obj?.defaultValue == null ||
                         obj?.optionValue == null ||
                         obj?.defaultValue !== parseFloat(obj?.optionValue)
                     );
+                } else {
+                    return false;
                 }
             }) || [];
         if (firstFilter?.length !== secondFilter?.length) return false;
