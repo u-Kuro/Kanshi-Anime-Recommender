@@ -1823,23 +1823,33 @@
     function filtersAreEqual(firstFilter, secondFilter) {
         firstFilter =
             firstFilter?.filter?.((obj) => {
-                return (
-                    obj?.selected &&
-                    obj?.selected !== "none" &&
-                    (obj?.defaultValue == null ||
+                if (
+                    obj?.selected !== "included" ||
+                    obj?.selected !== "excluded"
+                ) {
+                    return false;
+                } else {
+                    return (
+                        obj?.defaultValue == null ||
                         obj?.optionValue == null ||
-                        obj?.defaultValue !== parseFloat(obj?.optionValue))
-                );
+                        obj?.defaultValue !== parseFloat(obj?.optionValue)
+                    );
+                }
             }) || [];
         secondFilter =
             secondFilter?.filter?.((obj) => {
-                return (
-                    obj?.selected &&
-                    obj?.selected !== "none" &&
-                    (obj?.defaultValue == null ||
+                if (
+                    obj?.selected !== "included" ||
+                    obj?.selected !== "excluded"
+                ) {
+                    return false;
+                } else {
+                    return (
+                        obj?.defaultValue == null ||
                         obj?.optionValue == null ||
-                        obj?.defaultValue !== parseFloat(obj?.optionValue))
-                );
+                        obj?.defaultValue !== parseFloat(obj?.optionValue)
+                    );
+                }
             }) || [];
         if (firstFilter?.length !== secondFilter?.length) return false;
         let largeArray, smallArray;
