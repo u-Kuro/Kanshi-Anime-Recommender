@@ -20,6 +20,7 @@
         setLocalStorage,
         removeLocalStorage,
         formatNumber,
+        objectLength,
     } from "../../js/others/helper.js";
     import {
         android,
@@ -1799,23 +1800,26 @@
                 previousCustomFilterName !== $selectedCustomFilter
             ) {
                 $loadingFilterOptions = true;
-                let array1 =
+                let prevFilter =
                     $activeTagFilters?.[previousCustomFilterName]?.[
                         "Algorithm Filter"
                     ] || [];
-                let array2 =
+                let newFilter =
                     $activeTagFilters?.[$selectedCustomFilter]?.[
                         "Algorithm Filter"
                     ] || [];
-                if (filtersAreEqual(array1, array2)) {
+                console.time("start");
+                if (filtersAreEqual(prevFilter, newFilter)) {
                     _loadAnime(false);
                 } else {
                     _processRecommendedAnimeList();
                 }
+                console.timeEnd("start");
             }
             previousCustomFilterName = $selectedCustomFilter;
         }
     }
+
     function filtersAreEqual(firstFilter, secondFilter) {
         firstFilter =
             firstFilter?.filter?.((obj) => {
@@ -1838,14 +1842,33 @@
                 );
             }) || [];
         if (firstFilter?.length !== secondFilter?.length) return false;
-        firstFilter =
-            firstFilter?.map?.((obj) => JSON.stringify(obj))?.sort?.() || [];
-        secondFilter =
-            secondFilter?.map?.((obj) => JSON.stringify(obj))?.sort?.() || [];
-        for (let i = 0; i < firstFilter?.length; i++) {
-            if (firstFilter[i] !== secondFilter[i]) return false;
+        let largeArray, smallArray;
+        if (firstFilter?.length > secondFilter?.length) {
+            largeArray = firstFilter;
+            smallArray = secondFilter;
+        } else {
+            largeArray = secondFilter;
+            smallArray = firstFilter;
         }
-        return true;
+        let hasOwnProp = Object.prototype.hasOwnProperty;
+        let foundSmallArrayIdxs = {};
+        return largeArray?.every?.((firstObj) => {
+            let firstObjKeys = Object.keys(firstObj);
+            let firstObjLen = firstObjKeys.length;
+            return smallArray?.some?.((secondObj, smallObjIdx) => {
+                if (foundSmallArrayIdxs[smallObjIdx]) return false;
+                for (let i = 0; i < firstObjKeys.length; i++) {
+                    let key = firstObjKeys[i];
+                    if (secondObj[key] !== firstObj[key]) return false;
+                    if (!hasOwnProp.call(secondObj, key)) return false;
+                }
+                let objFound = firstObjLen === objectLength(secondObj);
+                if (objFound) {
+                    foundSmallArrayIdxs[smallObjIdx] = true;
+                }
+                return objFound;
+            });
+        });
     }
 
     function handleCustomFilterPopup(event) {
@@ -2710,7 +2733,11 @@
         !$activeTagFilters?.[customFilterName]
             ? "25px"
             : ""}
-        style:--remove-icon-size={$customFilters?.length > 1 ? "25px" : ""}
+        style:--remove-icon-size={$customFilters?.length > 1
+            ? recListMAE > 0
+                ? "25px"
+                : "1fr"
+            : ""}
         style:--mae-size={recListMAE > 0 ? "1fr" : ""}
     >
         {#if $filterOptions && !$loadingFilterOptions}
@@ -2812,8 +2839,11 @@
                       ? "hsl(345deg,75%,60%)"
                       : ""}
             >
-                {(windowWidth > 315 ? "Mean Error: " : "") +
-                    formatNumber(recListMAE)}
+                {(windowWidth > 345
+                    ? "Mean Error: "
+                    : windowWidth >= 290
+                      ? "ME: "
+                      : "") + formatNumber(recListMAE)}
             </div>
         {/if}
         <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
@@ -3815,6 +3845,7 @@
         display: grid;
         justify-content: center;
         align-items: center;
+        margin-left: auto;
     }
     .filterType-wrap-icon {
         height: 20px;

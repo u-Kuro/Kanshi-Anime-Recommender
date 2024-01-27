@@ -2,10 +2,13 @@ const isJsonObject = (obj) => {
   return Object.prototype.toString.call(obj) === "[object Object]"
 }
 const jsonIsEmpty = (obj) => {
-  for (const key in obj) {
-    return false;
-  }
+  for (const key in obj) return false;
   return true;
+}
+function objectLength(obj) {
+  let i = 0;
+  for (let k in obj) i++
+  return i
 }
 // const requestFrame = (fn = () => { }, delay = 16) => {
 //   let start = performance.now()
@@ -645,6 +648,7 @@ export {
   showToast,
   isJsonObject,
   jsonIsEmpty,
+  objectLength,
   getChildIndex,
   getMostVisibleElement,
   scrollToElement,
