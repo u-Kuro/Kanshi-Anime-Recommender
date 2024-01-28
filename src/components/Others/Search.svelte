@@ -52,6 +52,7 @@
         currentExtraInfo,
         isBackgroundUpdateKey,
         menuVisible,
+        shouldShowLoading,
     } from "../../js/globalValues.js";
 
     let Init = true;
@@ -239,6 +240,7 @@
     }
 
     async function _processRecommendedAnimeList() {
+        $shouldShowLoading = true;
         await saveJSON(true, "shouldProcessRecommendation");
         processRecommendedAnimeList({
             filterOptions: $filterOptions,
@@ -246,6 +248,7 @@
             selectedCustomFilter: $selectedCustomFilter,
         })
             .catch((error) => {
+                $shouldShowLoading = false;
                 console.error(error);
             })
             .finally(() => {

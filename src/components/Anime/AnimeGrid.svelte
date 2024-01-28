@@ -35,6 +35,7 @@
         progress,
         mobile,
         menuVisible,
+        shouldShowLoading,
     } from "../../js/globalValues.js";
 
     const emptyImage =
@@ -654,7 +655,9 @@
             {#each $finalAnimeList || [] as anime, animeIdx (anime?.id ?? {})}
                 <div
                     class={"image-grid__card" +
-                        (anime?.isLoading ? " loading" : "")}
+                        (anime?.isLoading || $shouldShowLoading
+                            ? " loading"
+                            : "")}
                     bind:this={anime.gridElement}
                     title={anime?.briefInfo || ""}
                 >

@@ -29,6 +29,7 @@ const animeLoaderWorker = writable(null)
 const dataStatus = writable(null)
 const loadingDataStatus = writable(null)
 
+const shouldShowLoading = writable(false)
 const isLoadingAnime = writable(false)
 const isProcessingList = writable(false)
 const isImporting = writable(false)
@@ -109,6 +110,7 @@ export {
     dataStatus,
     loadingDataStatus,
     userRequestIsRunning,
+    shouldShowLoading,
     isLoadingAnime,
     isProcessingList,
     isImporting,

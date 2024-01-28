@@ -28,7 +28,8 @@ import {
     isLoadingAnime,
     isProcessingList,
     loadingDataStatus,
-    isBackgroundUpdateKey
+    isBackgroundUpdateKey,
+    shouldShowLoading,
 } from "./globalValues.js";
 
 
@@ -54,6 +55,7 @@ const animeLoader = (_data = {}) => {
             anime.isLoading = true;
             return anime;
         }));
+        shouldShowLoading.set(false)
         dataStatusPrio = true
         progress.set(0)
         cacheRequest("./webapi/worker/animeLoader.js", 53222, "Checking Anime List")
