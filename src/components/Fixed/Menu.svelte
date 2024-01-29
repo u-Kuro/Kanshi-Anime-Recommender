@@ -47,6 +47,7 @@
     window.importAndroidUserData = importData;
 
     async function importJSONFile() {
+        if ($android && window?.[$isBackgroundUpdateKey] === true) return;
         if (!(importFileInput instanceof Element))
             return ($dataStatus = "Something went wrong");
         let importedFile = importFileInput.files?.[0];

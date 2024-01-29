@@ -22,6 +22,7 @@
         android,
         mobile,
         appInstallationAsked,
+        isBackgroundUpdateKey,
     } from "../../js/globalValues.js";
 
     let writableSubscriptions = [];
@@ -73,6 +74,7 @@
         }
     });
     async function updateUsername(event, isReconfirm = false) {
+        if ($android && window?.[$isBackgroundUpdateKey] === true) return;
         if ($initData) {
             pleaseWaitAlert();
             new Promise((resolve) => {

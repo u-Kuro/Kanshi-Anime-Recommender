@@ -94,10 +94,7 @@
 					window[".androidDataIsEvicted"] = true;
 					try {
 						JSBridge?.notifyDataEviction?.();
-						if (
-							$isBackgroundUpdateKey &&
-							window[$isBackgroundUpdateKey] === true
-						) {
+						if (window[$isBackgroundUpdateKey] === true) {
 							JSBridge?.backgroundUpdateIsFinished?.(false);
 						}
 					} catch (e) {}
@@ -124,11 +121,7 @@
 			}
 		}
 
-		if (
-			$android &&
-			$isBackgroundUpdateKey &&
-			window[$isBackgroundUpdateKey] === true
-		) {
+		if ($android && window[$isBackgroundUpdateKey] === true) {
 			resolve();
 		} else {
 			$gridFullView =
@@ -311,8 +304,8 @@
 							$android &&
 							window.shouldUpdateNotifications === true &&
 							!(
-								$isBackgroundUpdateKey &&
-								window[$isBackgroundUpdateKey] === true
+								window[$isBackgroundUpdateKey] === true &&
+								$isBackgroundUpdateKey
 							)
 						) {
 							window.shouldUpdateNotifications = false;
@@ -352,11 +345,7 @@
 			Promise.all(initDataPromises)
 				.then(async () => {
 					$initData = false;
-					if (
-						$android &&
-						$isBackgroundUpdateKey &&
-						window[$isBackgroundUpdateKey] === true
-					) {
+					if ($android && window[$isBackgroundUpdateKey] === true) {
 						try {
 							let dataIsUpdated;
 							requestUserEntries().finally(() => {
@@ -705,6 +694,7 @@
 		initCheck = false,
 		visibilityChange = false,
 	) {
+		if ($android && window?.[$isBackgroundUpdateKey] === true) return;
 		if ($appID == null) {
 			window.kanshiInit?.then?.(() => {
 				checkAutoFunctions(initCheck);
@@ -748,6 +738,7 @@
 		}
 	}
 	async function checkAutoExportOnLoad() {
+		if ($android && window?.[$isBackgroundUpdateKey] === true) return;
 		if ($autoExport) {
 			if (await autoExportIsPastDate()) {
 				exportUserData();
@@ -757,8 +748,8 @@
 
 	let addedBackgroundStatusUpdate = () => {
 		addedBackgroundStatusUpdate = undefined;
-		if (window?.[$isBackgroundUpdateKey] !== true) return;
 		if (!$android) return;
+		if (window?.[$isBackgroundUpdateKey] !== true) return;
 		if (!$isBackgroundUpdateKey) return;
 		let sendBackgroundStatusIsRunning;
 		dataStatus.subscribe((val) => {
@@ -787,12 +778,7 @@
 	// Reactive Functions
 	importantLoad.subscribe(async (val) => {
 		if (typeof val !== "boolean" || $initData) return;
-		if (
-			$android &&
-			$isBackgroundUpdateKey &&
-			window?.[$isBackgroundUpdateKey] === true
-		)
-			return;
+		if ($android && window?.[$isBackgroundUpdateKey] === true) return;
 		$listUpdateAvailable = false;
 		if ($animeLoaderWorker) {
 			$animeLoaderWorker.terminate();
@@ -829,12 +815,7 @@
 	});
 	importantUpdate.subscribe(async (val) => {
 		if (typeof val !== "boolean" || $initData) return;
-		if (
-			$android &&
-			$isBackgroundUpdateKey &&
-			window?.[$isBackgroundUpdateKey] === true
-		)
-			return;
+		if ($android && window?.[$isBackgroundUpdateKey] === true) return;
 		await saveJSON(true, "shouldProcessRecommendation");
 		$listUpdateAvailable = false;
 		processRecommendedAnimeList()
@@ -848,12 +829,7 @@
 	});
 	updateRecommendationList.subscribe(async (val) => {
 		if (typeof val !== "boolean" || $initData) return;
-		if (
-			$android &&
-			$isBackgroundUpdateKey &&
-			window?.[$isBackgroundUpdateKey] === true
-		)
-			return;
+		if ($android && window?.[$isBackgroundUpdateKey] === true) return;
 		await saveJSON(true, "shouldProcessRecommendation");
 		processRecommendedAnimeList()
 			.then(async () => {
@@ -926,12 +902,7 @@
 
 	loadAnime.subscribe(async (val) => {
 		if (typeof val !== "boolean" || $initData) return;
-		if (
-			$android &&
-			$isBackgroundUpdateKey &&
-			window?.[$isBackgroundUpdateKey] === true
-		)
-			return;
+		if ($android && window?.[$isBackgroundUpdateKey] === true) return;
 		runLoadAnime();
 	});
 
@@ -959,12 +930,7 @@
 
 	let hourINMS = 60 * 60 * 1000;
 	autoUpdate.subscribe(async (val) => {
-		if (
-			$android &&
-			$isBackgroundUpdateKey &&
-			window?.[$isBackgroundUpdateKey] === true
-		)
-			return;
+		if ($android && window?.[$isBackgroundUpdateKey] === true) return;
 		if (val === true) {
 			if ($appID != null) {
 				saveJSON(true, "autoUpdate");
@@ -1027,12 +993,7 @@
 	}
 	runUpdate.subscribe((val) => {
 		if (typeof val !== "boolean" || $initData || !navigator.onLine) return;
-		if (
-			$android &&
-			$isBackgroundUpdateKey &&
-			window?.[$isBackgroundUpdateKey] === true
-		)
-			return;
+		if ($android && window?.[$isBackgroundUpdateKey] === true) return;
 		if (!$userRequestIsRunning) {
 			requestUserEntries()
 				.then(() => {
@@ -1047,12 +1008,7 @@
 		}
 	});
 	autoExport.subscribe(async (val) => {
-		if (
-			$android &&
-			$isBackgroundUpdateKey &&
-			window?.[$isBackgroundUpdateKey] === true
-		)
-			return;
+		if ($android && window?.[$isBackgroundUpdateKey] === true) return;
 		if (val === true) {
 			if ($appID != null) {
 				saveJSON(true, "autoExport");
@@ -1115,12 +1071,7 @@
 	}
 	runExport.subscribe((val) => {
 		if (typeof val !== "boolean" || $initData) return;
-		if (
-			$android &&
-			$isBackgroundUpdateKey &&
-			window?.[$isBackgroundUpdateKey] === true
-		)
-			return;
+		if ($android && window?.[$isBackgroundUpdateKey] === true) return;
 		exportUserData();
 	});
 	window.runExport = () => {
@@ -1144,12 +1095,7 @@
 	document.addEventListener("visibilitychange", async () => {
 		if ($initData || $android || document.visibilityState !== "visible")
 			return;
-		if (
-			$android &&
-			$isBackgroundUpdateKey &&
-			window?.[$isBackgroundUpdateKey] === true
-		)
-			return;
+		if ($android && window?.[$isBackgroundUpdateKey] === true) return;
 		if ($autoUpdate == null) {
 			$autoUpdate =
 				$autoUpdate ??
@@ -1195,12 +1141,7 @@
 	window.addEventListener("wheel", windowWheel, { passive: true });
 	window.checkEntries = async () => {
 		if ($initData) return;
-		if (
-			$android &&
-			$isBackgroundUpdateKey &&
-			window[$isBackgroundUpdateKey] === true
-		)
-			return;
+		if ($android && window[$isBackgroundUpdateKey] === true) return;
 		if ($autoUpdate == null) {
 			$autoUpdate =
 				$autoUpdate ??
@@ -1543,12 +1484,7 @@
 	});
 
 	async function updateList() {
-		if (
-			$android &&
-			$isBackgroundUpdateKey &&
-			window?.[$isBackgroundUpdateKey] === true
-		)
-			return;
+		if ($android && window?.[$isBackgroundUpdateKey] === true) return;
 		$listIsUpdating = true;
 		if ($animeLoaderWorker) {
 			$animeLoaderWorker.terminate();
