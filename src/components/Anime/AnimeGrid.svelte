@@ -130,6 +130,7 @@
 
     animeLoaderWorker.subscribe((val) => {
         if (val instanceof Worker) {
+            const hasOwnProp = Object.prototype.hasOwnProperty;
             val.onmessage = async ({ data }) => {
                 if (animeLoaderIsAlivePromise?.resolve) {
                     if (data?.isAlive) {
@@ -138,12 +139,12 @@
                     }
                 }
                 await tick();
-                if (data?.hasOwnProperty?.("progress")) {
+                if (hasOwnProp?.call?.(data, "progress")) {
                     if (data?.progress >= 0 && data?.progress <= 100) {
                         progress.set(data.progress);
                     }
                 }
-                if (data?.hasOwnProperty?.("status")) {
+                if (hasOwnProp?.call?.(data, "status")) {
                     $dataStatus = data.status;
                 } else if (data.getEarlisetReleaseDate === true) {
                     if (

@@ -41,6 +41,7 @@
         if (!(importFileInput instanceof Element))
             return ($dataStatus = "Something went wrong");
         if (await $confirmPromise("Do you want to import your data?")) {
+            importFileInput.value = null;
             importFileInput.click();
         }
     }

@@ -1860,7 +1860,7 @@
             largeArray = secondFilter;
             smallArray = firstFilter;
         }
-        let hasOwnProp = Object.prototype.hasOwnProperty;
+        const hasOwnProp = Object.prototype.hasOwnProperty;
         let foundSmallArrayIdxs = {};
         return largeArray?.every?.((firstObj) => {
             let firstObjKeys = Object.keys(firstObj);
@@ -3580,6 +3580,7 @@
         <span out:fade={{ duration: 200, easing: sineOut }} class="data-status">
             <h2
                 on:click={(e) => {
+                    $dataStatus = null
                     getExtraInfo();
                 }}
                 on:keyup={() => {}}

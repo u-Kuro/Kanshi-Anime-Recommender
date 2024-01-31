@@ -43,15 +43,13 @@ let isGettingNewEntries = false;
 let isRequestingAnimeEntries = false
 
 let passedFilterOptions, passedActiveTagFilters, passedSelectedCustomFilter
-
+const hasOwnProp = Object.prototype.hasOwnProperty
 // Reactinve Functions
 let animeLoaderWorker;
 const animeLoader = (_data = {}) => {
     return new Promise((resolve, reject) => {
-        if (animeLoaderWorker) {
-            animeLoaderWorker?.terminate?.()
-            animeLoaderWorker = null
-        }
+        animeLoaderWorker?.terminate?.()
+        animeLoaderWorker = null
         finalAnimeList.update((e) => e?.map?.((anime) => {
             anime.isLoading = true;
             return anime;
@@ -61,10 +59,8 @@ const animeLoader = (_data = {}) => {
         progress.set(0)
         cacheRequest("./webapi/worker/animeLoader.js", 53222, "Checking Anime List")
             .then(url => {
-                if (animeLoaderWorker) {
-                    animeLoaderWorker?.terminate?.()
-                    animeLoaderWorker = null
-                }
+                animeLoaderWorker?.terminate?.()
+                animeLoaderWorker = null
                 if (_data?.filterOptions && _data?.activeTagFilters && _data?.selectedCustomFilter) {
                     passedFilterOptions = _data?.filterOptions
                     passedSelectedCustomFilter = _data?.selectedCustomFilter
@@ -79,14 +75,14 @@ const animeLoader = (_data = {}) => {
                 _data.reloadedFilterKeyword = get(searchedAnimeKeyword) || ""
                 animeLoaderWorker.postMessage(_data)
                 animeLoaderWorker.onmessage = ({ data }) => {
-                    if (data?.hasOwnProperty("progress")) {
+                    if (hasOwnProp?.call?.(data, "progress")) {
                         if (data?.progress >= 0 && data?.progress <= 100) {
                             progress.set(data.progress)
                         }
-                    } else if (data?.hasOwnProperty("status")) {
+                    } else if (hasOwnProp?.call?.(data, "status")) {
                         dataStatusPrio = true
                         dataStatus.set(data.status)
-                    } else if (data?.error) {
+                    } else if (hasOwnProp?.call?.(data, "error")) {
                         finalAnimeList.update((e) => e?.map?.((anime) => {
                             anime.isLoading = false;
                             return anime;
@@ -96,14 +92,18 @@ const animeLoader = (_data = {}) => {
                         progress.set(100)
                         alertError()
                         reject()
-                    } else if (data?.filterOptions && typeof data?.selectedCustomFilter === "string") {
-                        setLocalStorage("selectedCustomFilter", data?.selectedCustomFilter).catch(() => {
-                            removeLocalStorage("selectedCustomFilter")
-                        })
-                        filterOptions.set(data.filterOptions)
-                        loadingFilterOptions.set(false)
-                    } else if (typeof data?.changedCustomFilter === "string" && data?.changedCustomFilter) {
-                        selectedCustomFilter.set(data.changedCustomFilter)
+                    } else if (hasOwnProp?.call?.(data, "filterOptions") || hasOwnProp?.call?.(data, "selectedCustomFilter")) {
+                        if (data?.filterOptions && typeof data?.selectedCustomFilter === "string") {
+                            setLocalStorage("selectedCustomFilter", data?.selectedCustomFilter).catch(() => {
+                                removeLocalStorage("selectedCustomFilter")
+                            })
+                            filterOptions.set(data.filterOptions)
+                            loadingFilterOptions.set(false)
+                        }
+                    } else if (hasOwnProp?.call?.(data, "changedCustomFilter")) {
+                        if (typeof data?.changedCustomFilter === "string" && data?.changedCustomFilter) {
+                            selectedCustomFilter.set(data.changedCustomFilter)
+                        }
                     } else if (data?.isNew) {
                         if (data?.hasPassedFilters === true) {
                             passedFilterOptions = passedSelectedCustomFilter = passedActiveTagFilters = undefined
@@ -166,10 +166,8 @@ window.setAnimeCompletionUpdateTimeout = (neareastAnimeCompletionAiringAt = 0) =
 const processRecommendedAnimeList = (_data = {}) => {
     return new Promise((resolve, reject) => {
         if (processRecommendedAnimeListTerminateTimeout) clearTimeout(processRecommendedAnimeListTerminateTimeout);
-        if (processRecommendedAnimeListWorker) {
-            processRecommendedAnimeListWorker?.terminate?.();
-            processRecommendedAnimeListWorker = null
-        }
+        processRecommendedAnimeListWorker?.terminate?.();
+        processRecommendedAnimeListWorker = null
         dataStatusPrio = true
         progress.set(0)
         cacheRequest("./webapi/worker/processRecommendedAnimeList.js")
@@ -177,10 +175,8 @@ const processRecommendedAnimeList = (_data = {}) => {
                 const lastProcessRecommendationAiringAt = parseInt((new Date().getTime() / 1000))
                 let neareastAnimeCompletionAiringAt
                 if (processRecommendedAnimeListTerminateTimeout) clearTimeout(processRecommendedAnimeListTerminateTimeout);
-                if (processRecommendedAnimeListWorker) {
-                    processRecommendedAnimeListWorker?.terminate?.();
-                    processRecommendedAnimeListWorker = null
-                }
+                processRecommendedAnimeListWorker?.terminate?.();
+                processRecommendedAnimeListWorker = null
                 if (_data?.filterOptions && _data?.activeTagFilters) {
                     passedFilterOptions = _data?.filterOptions
                     passedActiveTagFilters = _data?.activeTagFilters
@@ -194,20 +190,20 @@ const processRecommendedAnimeList = (_data = {}) => {
                 processRecommendedAnimeListWorker = new Worker(url);
                 processRecommendedAnimeListWorker.postMessage(_data);
                 processRecommendedAnimeListWorker.onmessage = ({ data }) => {
-                    if (data?.hasOwnProperty("progress")) {
+                    if (hasOwnProp?.call?.(data, "progress")) {
                         if (data?.progress >= 0 && data?.progress <= 100) {
                             progress.set(data.progress)
                         }
-                    } else if (data?.hasOwnProperty("status")) {
+                    } else if (hasOwnProp?.call?.(data, "status")) {
                         dataStatusPrio = true
                         dataStatus.set(data.status);
-                    } else if (data.error) {
+                    } else if (hasOwnProp?.call?.(data, "error")) {
                         isProcessingList.set(false)
                         dataStatus.set(null);
                         progress.set(100)
                         alertError()
                         reject();
-                    } else if (data?.animeReleaseNotification) {
+                    } else if (hasOwnProp?.call?.(data, "animeReleaseNotification")) {
                         if (get(android)) {
                             try {
                                 let aniReleaseNotif = data?.animeReleaseNotification
@@ -232,18 +228,20 @@ const processRecommendedAnimeList = (_data = {}) => {
                                 }
                             } catch (e) { }
                         }
-                    } else if (typeof data?.animeCompletionAiringAt === "number" && data?.animeCompletionAiringAt > lastProcessRecommendationAiringAt) {
-                        if (!neareastAnimeCompletionAiringAt
-                            || (
-                                typeof neareastAnimeCompletionAiringAt === "number" &&
-                                neareastAnimeCompletionAiringAt > data?.animeCompletionAiringAt
-                            )
-                        ) {
-                            neareastAnimeCompletionAiringAt = data?.animeCompletionAiringAt
+                    } else if (hasOwnProp?.call?.(data, "animeCompletionAiringAt")) {
+                        if (typeof data?.animeCompletionAiringAt === "number" && data?.animeCompletionAiringAt > lastProcessRecommendationAiringAt) {
+                            if (!neareastAnimeCompletionAiringAt
+                                || (
+                                    typeof neareastAnimeCompletionAiringAt === "number" &&
+                                    neareastAnimeCompletionAiringAt > data?.animeCompletionAiringAt
+                                )
+                            ) {
+                                neareastAnimeCompletionAiringAt = data?.animeCompletionAiringAt
+                            }
                         }
-                    } else if (data?.hasOwnProperty("popularityMode") || data?.hasOwnProperty("averageScoreMode")) {
+                    } else if (hasOwnProp?.call?.(data, "popularityMode") || hasOwnProp?.call?.(data, "averageScoreMode")) {
                         window?.updateMeanNumberInfos?.(data?.averageScoreMode, data?.popularityMode)
-                    } else if (data?.hasOwnProperty("recListMAE")) {
+                    } else if (hasOwnProp?.call?.(data, "recListMAE")) {
                         window?.updateRecListMAE?.(data?.recListMAE)
                     } else {
                         setLocalStorage("neareastAnimeCompletionAiringAt", neareastAnimeCompletionAiringAt)
@@ -293,9 +291,7 @@ const processRecommendedAnimeList = (_data = {}) => {
 };
 let requestAnimeEntriesTerminateTimeout, requestAnimeEntriesWorker;
 function sendAnimeListProcess(minimizeTransaction) {
-    if (requestAnimeEntriesWorker instanceof Worker) {
-        requestAnimeEntriesWorker?.postMessage?.({ minimizeTransaction })
-    }
+    requestAnimeEntriesWorker?.postMessage?.({ minimizeTransaction })
 }
 isLoadingAnime.subscribe((val) => {
     sendAnimeListProcess(val)
@@ -313,10 +309,8 @@ const requestAnimeEntries = (_data = {}) => {
             return
         }
         if (requestAnimeEntriesTerminateTimeout) clearTimeout(requestAnimeEntriesTerminateTimeout)
-        if (requestAnimeEntriesWorker) {
-            requestAnimeEntriesWorker?.terminate?.()
-            requestAnimeEntriesWorker = null
-        }
+        requestAnimeEntriesWorker?.terminate?.()
+        requestAnimeEntriesWorker = null
         if (!get(initData)) {
             if (isGettingNewEntries
                 || isCurrentlyImporting
@@ -331,24 +325,22 @@ const requestAnimeEntries = (_data = {}) => {
         cacheRequest("./webapi/worker/requestAnimeEntries.js")
             .then(url => {
                 if (requestAnimeEntriesTerminateTimeout) clearTimeout(requestAnimeEntriesTerminateTimeout)
-                if (requestAnimeEntriesWorker) {
-                    requestAnimeEntriesWorker?.terminate?.()
-                    requestAnimeEntriesWorker = null
-                }
+                requestAnimeEntriesWorker?.terminate?.()
+                requestAnimeEntriesWorker = null
                 requestAnimeEntriesWorker = new Worker(url)
                 _data.windowHREF = windowHREF || window?.location?.href
                 requestAnimeEntriesWorker.postMessage(_data)
                 isRequestingAnimeEntries = true
                 requestAnimeEntriesWorker.onmessage = ({ data }) => {
-                    if (data?.hasOwnProperty("progress")) {
+                    if (hasOwnProp?.call?.(data, "progress")) {
                         if (!dataStatusPrio && data?.progress >= 0 && data?.progress <= 100) {
                             progress.set(data.progress)
                         }
-                    } else if (data?.hasOwnProperty("status")) {
+                    } else if (hasOwnProp?.call?.(data, "status")) {
                         if (!dataStatusPrio) {
                             dataStatus.set(data.status)
                         }
-                    } else if (data?.error) {
+                    } else if (hasOwnProp?.call?.(data, "error")) {
                         if (!window.alreadyShownNoNetworkAlert || data?.showToUser) {
                             window.alreadyShownNoNetworkAlert = true
                             window.confirmPromise?.({
@@ -357,23 +349,25 @@ const requestAnimeEntries = (_data = {}) => {
                             })
                         }
                         isRequestingAnimeEntries = false
-                        requestUserEntriesTerminateTimeout = setTimeout(() => {
-                            requestUserEntriesWorker?.terminate?.();
+                        requestAnimeEntriesTerminateTimeout = setTimeout(() => {
+                            requestAnimeEntriesWorker?.terminate?.();
                         }, terminateDelay)
                         dataStatus.set(null)
                         progress.set(100)
                         reject(data)
-                    } else if (data?.updateRecommendationList !== undefined) {
+                    } else if (hasOwnProp?.call?.(data, "updateRecommendationList")) {
                         if (get(android)) {
                             window.KanshiBackgroundShouldProcessRecommendation = true
                         }
                         updateRecommendationList.update(e => !e)
-                    } else if (data?.lastRunnedAutoUpdateDate instanceof Date && !isNaN(data?.lastRunnedAutoUpdateDate)) {
-                        lastRunnedAutoUpdateDate.set(data.lastRunnedAutoUpdateDate)
-                    } else if (data?.errorDuringInit !== undefined) {
+                    } else if (hasOwnProp?.call?.(data, "lastRunnedAutoUpdateDate")) {
+                        if (data?.lastRunnedAutoUpdateDate instanceof Date && !isNaN(data?.lastRunnedAutoUpdateDate)) {
+                            lastRunnedAutoUpdateDate.set(data.lastRunnedAutoUpdateDate)
+                        }
+                    } else if (hasOwnProp?.call?.(data, "errorDuringInit")) {
                         isRequestingAnimeEntries = false
                         resolve(data)
-                    } else if (data?.hasOwnProperty("notifyAddedEntries")) {
+                    } else if (hasOwnProp?.call?.(data, "notifyAddedEntries")) {
                         if (get(android) && window?.[".androidDataIsEvicted"] !== true) {
                             try {
                                 let newAddedAnimeCount = data?.notifyAddedEntries
@@ -448,10 +442,8 @@ let requestUserEntriesTerminateTimeout, requestUserEntriesWorker;
 const requestUserEntries = (_data = {}) => {
     return new Promise((resolve, reject) => {
         if (requestUserEntriesTerminateTimeout) clearTimeout(requestUserEntriesTerminateTimeout)
-        if (requestUserEntriesWorker) {
-            requestUserEntriesWorker?.terminate?.()
-            requestUserEntriesWorker = null
-        }
+        requestUserEntriesWorker?.terminate?.()
+        requestUserEntriesWorker = null
         if (!get(initData)) {
             if (isExporting
                 || get(isImporting)
@@ -468,24 +460,22 @@ const requestUserEntries = (_data = {}) => {
         cacheRequest("./webapi/worker/requestUserEntries.js")
             .then(url => {
                 if (requestUserEntriesTerminateTimeout) clearTimeout(requestUserEntriesTerminateTimeout)
-                if (requestUserEntriesWorker) {
-                    requestUserEntriesWorker?.terminate?.()
-                    requestUserEntriesWorker = null
-                }
+                requestUserEntriesWorker?.terminate?.()
+                requestUserEntriesWorker = null
                 requestUserEntriesWorker = new Worker(url)
                 userRequestIsRunning.set(true)
                 _data.windowHREF = windowHREF || window?.location?.href
                 requestUserEntriesWorker.postMessage(_data)
                 requestUserEntriesWorker.onmessage = ({ data }) => {
-                    if (data?.hasOwnProperty("progress")) {
+                    if (hasOwnProp?.call?.(data, "progress")) {
                         if (!dataStatusPrio && data?.progress >= 0 && data?.progress <= 100) {
                             progress.set(data.progress)
                         }
-                    } else if (data?.hasOwnProperty("status")) {
+                    } else if (hasOwnProp?.call?.(data, "status")) {
                         if (!dataStatusPrio) {
                             dataStatus.set(data.status)
                         }
-                    } else if (data?.error) {
+                    } else if (hasOwnProp?.call?.(data, "error")) {
                         if (!window.alreadyShownNoNetworkAlert) {
                             window.alreadyShownNoNetworkAlert = true
                             window.confirmPromise?.({
@@ -501,7 +491,7 @@ const requestUserEntries = (_data = {}) => {
                         dataStatus.set(null)
                         progress.set(100)
                         reject(data)
-                    } else if (data?.updateRecommendationList !== undefined) {
+                    } else if (hasOwnProp?.call?.(data, "updateRecommendationList")) {
                         if (get(android)) {
                             window.KanshiBackgroundShouldProcessRecommendation = window.shouldUpdateNotifications = true
                         }
@@ -548,10 +538,8 @@ window.isExported = (success = true) => {
 }
 const exportUserData = (_data) => {
     return new Promise((resolve, reject) => {
-        if (exportUserDataWorker) {
-            exportUserDataWorker?.terminate?.()
-            exportUserDataWorker = null
-        }
+        exportUserDataWorker?.terminate?.()
+        exportUserDataWorker = null
         if (!get(initData)) {
             if (get(isImporting) || isCurrentlyImporting || isGettingNewEntries) return
             isExporting = true
@@ -564,10 +552,8 @@ const exportUserData = (_data) => {
             .then(url => {
                 waitForExportApproval?.reject?.()
                 waitForExportApproval = null
-                if (exportUserDataWorker) {
-                    exportUserDataWorker?.terminate?.()
-                    exportUserDataWorker = null
-                }
+                exportUserDataWorker?.terminate?.()
+                exportUserDataWorker = null
                 exportUserDataWorker = new Worker(url)
                 if (get(android)) {
                     exportUserDataWorker.postMessage('android')
@@ -575,14 +561,14 @@ const exportUserData = (_data) => {
                     exportUserDataWorker.postMessage('browser')
                 }
                 exportUserDataWorker.onmessage = ({ data }) => {
-                    if (data?.hasOwnProperty("progress")) {
+                    if (hasOwnProp?.call?.(data, "progress")) {
                         if (data?.progress >= 0 && data?.progress <= 100) {
                             progress.set(data.progress)
                         }
-                    } else if (data?.hasOwnProperty("status")) {
+                    } else if (hasOwnProp?.call?.(data, "status")) {
                         dataStatusPrio = true
                         dataStatus.set(data.status)
-                    } else if (data?.missingData) {
+                    } else if (hasOwnProp?.call?.(data, "missingData")) {
                         dataStatusPrio = false
                         dataStatus.set(null)
                         progress.set(100)
@@ -605,8 +591,7 @@ const exportUserData = (_data) => {
                             } else if (state === 1 && typeof chunk === "string") {
                                 JSBridge.exportJSON(chunk, 1, '')
                             } else if (state === 2 && typeof chunk === "string") {
-                                let username = data?.username
-                                JSBridge.exportJSON(chunk, 2, `Kanshi.${username?.toLowerCase?.() || "backup"}.json`)
+                                JSBridge.exportJSON(chunk, 2, `Kanshi.${data?.username?.toLowerCase?.() || "backup"}.json`)
                                 dataStatusPrio = false
                                 isExporting = false
                                 exportUserDataWorker?.terminate?.();
@@ -653,10 +638,9 @@ const exportUserData = (_data) => {
                         }
                     } else if (typeof data?.url === "string" && data?.url !== "") {
                         dataStatusPrio = false
-                        let username = data?.username
                         dataStatus.set(null)
                         progress.set(100)
-                        downloadLink(data.url, `Kanshi.${username?.toLowerCase?.() || "backup"}.json`)
+                        downloadLink(data.url, `Kanshi.${data?.username?.toLowerCase?.() || "backup"}.json`)
                         isExporting = false
                         resolve()
                         // dont terminate, can't oversee blob link lifetime
@@ -702,10 +686,8 @@ let importUserDataTerminateTimeout, importUserDataWorker;
 const importUserData = (_data) => {
     return new Promise((resolve, reject) => {
         if (importUserDataTerminateTimeout) clearTimeout(importUserDataTerminateTimeout)
-        if (importUserDataWorker) {
-            importUserDataWorker?.terminate?.()
-            importUserDataWorker = null
-        }
+        importUserDataWorker?.terminate?.()
+        importUserDataWorker = null
         if (!get(initData)) {
             if (isExporting || isGettingNewEntries) return
             isCurrentlyImporting = true
@@ -716,19 +698,17 @@ const importUserData = (_data) => {
         cacheRequest("./webapi/worker/importUserData.js")
             .then(url => {
                 if (importUserDataTerminateTimeout) clearTimeout(importUserDataTerminateTimeout)
-                if (importUserDataWorker) {
-                    importUserDataWorker?.terminate?.()
-                    importUserDataWorker = null
-                }
+                importUserDataWorker?.terminate?.()
+                importUserDataWorker = null
                 importUserDataWorker = new Worker(url)
                 removeLocalStorage("username");
                 importUserDataWorker.postMessage(_data)
                 importUserDataWorker.onmessage = ({ data }) => {
-                    if (data?.hasOwnProperty("progress")) {
+                    if (hasOwnProp?.call?.(data, "progress")) {
                         if (data?.progress >= 0 && data?.progress <= 100) {
                             progress.set(data.progress)
                         }
-                    } else if (data?.error !== undefined) {
+                    } else if (hasOwnProp?.call?.(data, "error")) {
                         dataStatusPrio = false
                         isImporting.set(false)
                         isCurrentlyImporting = false
@@ -741,24 +721,28 @@ const importUserData = (_data) => {
                         dataStatus.set(null)
                         progress.set(100)
                         reject(data?.error || "Something went wrong")
-                    } else if (data?.hasOwnProperty("status")) {
+                    } else if (hasOwnProp?.call?.(data, "status")) {
                         dataStatusPrio = true
                         dataStatus.set(data.status)
-                    } else if (data?.importedUsername !== undefined) {
+                    } else if (hasOwnProp?.call?.(data, "importedUsername")) {
                         if (typeof data?.importedUsername === "string") {
                             setLocalStorage("username", data.importedUsername).catch(() => {
                                 removeLocalStorage("username");
                             });
                             username.set(data.importedUsername)
-                        } else {
-                            username.set("")
                         }
-                    } else if (isJsonObject(data?.importedHiddenEntries)) {
-                        hiddenEntries.set(data?.importedHiddenEntries)
-                    } else if (data?.importedlastRunnedAutoUpdateDate instanceof Date && !isNaN(data?.importedlastRunnedAutoUpdateDate)) {
-                        lastRunnedAutoUpdateDate.set(data.importedlastRunnedAutoUpdateDate)
-                    } else if (data?.importedlastRunnedAutoExportDate instanceof Date && !isNaN(data?.importedlastRunnedAutoExportDate)) {
-                        lastRunnedAutoExportDate.set(data.importedlastRunnedAutoExportDate)
+                    } else if (hasOwnProp?.call?.(data, "importedHiddenEntries")) {
+                        if (isJsonObject(data?.importedHiddenEntries)) {
+                            hiddenEntries.set(data?.importedHiddenEntries)
+                        }
+                    } else if (hasOwnProp?.call?.(data, "importedlastRunnedAutoUpdateDate")) {
+                        if (data?.importedlastRunnedAutoUpdateDate instanceof Date && !isNaN(data?.importedlastRunnedAutoUpdateDate)) {
+                            lastRunnedAutoUpdateDate.set(data.importedlastRunnedAutoUpdateDate)
+                        }
+                    } else if (hasOwnProp?.call?.(data, "importedlastRunnedAutoExportDate")) {
+                        if (data?.importedlastRunnedAutoExportDate instanceof Date && !isNaN(data?.importedlastRunnedAutoExportDate)) {
+                            lastRunnedAutoExportDate.set(data.importedlastRunnedAutoExportDate)
+                        }
                     } else {
                         window[".androidDataIsEvicted"] = false
                         getFilterOptions()
@@ -878,6 +862,7 @@ const getExtraInfo = () => {
                         extraInfo.set(thisExtraInfo)
                         currentExtraInfo.set(data.key)
                         loadingDataStatus.set(false)
+                        dataStatus.set(null)
                         waitForExtraInfo()
                         getExtraInfoWorker?.terminate?.()
                         resolve()
@@ -936,7 +921,7 @@ window.updateNotifications = async (aniIdsNotificationToBeUpdated = []) => {
                 let worker = new Worker(url)
                 worker.postMessage({ name: "aniIdsNotificationToBeUpdated", aniIdsNotificationToBeUpdated })
                 worker.onmessage = ({ data }) => {
-                    if (data?.hasOwnProperty("status")) {
+                    if (hasOwnProp?.call?.(data, "status")) {
                         dataStatus.set(data.status)
                     } else {
                         worker?.terminate?.()
@@ -970,7 +955,7 @@ const saveIDBdata = (_data, name, isImportant = false) => {
                 .then(url => {
                     let worker = new Worker(url)
                     worker.onmessage = ({ data }) => {
-                        if (data?.hasOwnProperty("status")) {
+                        if (hasOwnProp?.call?.(data, "status")) {
                             dataStatus.set(data.status)
                         } else {
                             setTimeout(() => {
@@ -992,18 +977,16 @@ const saveIDBdata = (_data, name, isImportant = false) => {
 }
 
 // One Time Use
-let getAnimeEntriesTerminateTimeout;
 const getAnimeEntries = (_data) => {
     return new Promise((resolve, reject) => {
         progress.set(0)
         cacheRequest("./webapi/worker/getAnimeEntries.js", 43911307, "Getting Anime Entries")
             .then(url => {
                 progress.set(25)
-                if (getAnimeEntriesTerminateTimeout) clearTimeout(getAnimeEntriesTerminateTimeout)
                 let worker = new Worker(url)
                 worker.postMessage(_data)
                 worker.onmessage = ({ data }) => {
-                    if (data?.hasOwnProperty("status")) {
+                    if (hasOwnProp?.call?.(data, "status")) {
                         dataStatusPrio = true
                         dataStatus.set(data.status)
                     } else {
@@ -1011,7 +994,7 @@ const getAnimeEntries = (_data) => {
                         progress.set(100)
                         dataStatusPrio = false
                         updateRecommendationList.update(e => !e)
-                        getAnimeEntriesTerminateTimeout = setTimeout(() => {
+                        setTimeout(() => {
                             worker?.terminate?.();
                         }, terminateDelay)
                         resolve(data)
@@ -1036,24 +1019,20 @@ let getFilterOptionsTerminateTimeout, getFilterOptionsWorker;
 const getFilterOptions = (_data) => {
     return new Promise((resolve, reject) => {
         if (getFilterOptionsTerminateTimeout) clearTimeout(getFilterOptionsTerminateTimeout)
-        if (getFilterOptionsWorker) {
-            getFilterOptionsWorker?.terminate?.()
-            getFilterOptionsWorker = null
-        }
+        getFilterOptionsWorker?.terminate?.()
+        getFilterOptionsWorker = null
         cacheRequest("./webapi/worker/getFilterOptions.js", 130051, "Initializing Filters")
             .then(url => {
                 if (getFilterOptionsTerminateTimeout) clearTimeout(getFilterOptionsTerminateTimeout)
-                if (getFilterOptionsWorker) {
-                    getFilterOptionsWorker?.terminate?.()
-                    getFilterOptionsWorker = null
-                }
+                getFilterOptionsWorker?.terminate?.()
+                getFilterOptionsWorker = null
                 getFilterOptionsWorker = new Worker(url)
                 getFilterOptionsWorker.postMessage(_data)
                 getFilterOptionsWorker.onmessage = ({ data }) => {
-                    if (data?.hasOwnProperty("status")) {
+                    if (hasOwnProp?.call?.(data, "status")) {
                         dataStatusPrio = true
                         dataStatus.set(data.status)
-                    } else if (data?.hasOwnProperty("tagCategoryInfo")) {
+                    } else if (hasOwnProp?.call?.(data, "tagCategoryInfo")) {
                         if (isJsonObject(data?.tagCategoryInfo) && !jsonIsEmpty(data?.tagCategoryInfo)) {
                             tagCategoryInfo.set(data.tagCategoryInfo)
                         }

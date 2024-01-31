@@ -762,7 +762,7 @@
 				try {
 					JSBridge?.sendBackgroundStatus?.(val);
 				} catch (e) {}
-			}, 984); // 1s with pad
+			}, 750); // 1s with pad
 		});
 		return true;
 	};
