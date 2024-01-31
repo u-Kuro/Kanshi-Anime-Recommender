@@ -53,6 +53,7 @@
         isBackgroundUpdateKey,
         menuVisible,
         shouldShowLoading,
+        tagCategoryInfo,
     } from "../../js/globalValues.js";
 
     let Init = true;
@@ -79,8 +80,6 @@
 
     let filterScrollTimeout;
     let filterIsScrolling;
-
-    let tagCategoryInfo = {};
 
     let nameChangeUpdateProcessedList = ["Algorithm Filter"];
     let nameChangeUpdateFinalList = ["sort", "Anime Filter", "Content Caution"];
@@ -2213,31 +2212,42 @@
                     if (!tag || !category) continue;
                     category = cleanText(category);
                     tag = cleanText(tag);
-                    if (!isJsonObject(tagCategoryInfo?.[category])) {
-                        tagCategoryInfo[category] = {};
+                    if (!isJsonObject($tagCategoryInfo)) {
+                        $tagCategoryInfo = {};
+                        $tagCategoryInfo[category] = {};
+                    } else if (!isJsonObject($tagCategoryInfo?.[category])) {
+                        $tagCategoryInfo[category] = {};
                     }
-                    tagCategoryInfo[category][tag] = description || "";
+                    $tagCategoryInfo[category][tag] = description || "";
                 }
-                setLocalStorage("tagCategoryInfo", tagCategoryInfo);
-                await saveJSON(tagCategoryInfo, "tagCategoryInfo");
-                let lastTagCategoryInfoUpdateAt = parseInt(
-                    new Date().getTime() / 1000,
-                );
-                setLocalStorage(
-                    "lastTagCategoryInfoUpdateAt",
-                    lastTagCategoryInfoUpdateAt,
-                );
-                saveJSON(
-                    lastTagCategoryInfoUpdateAt,
-                    "lastTagCategoryInfoUpdateAt",
-                );
+                if (
+                    isJsonObject($tagCategoryInfo) &&
+                    !jsonIsEmpty($tagCategoryInfo)
+                ) {
+                    await setLocalStorage("tagCategoryInfo", $tagCategoryInfo);
+                    await saveJSON($tagCategoryInfo, "tagCategoryInfo");
+                    let lastTagCategoryInfoUpdateAt = parseInt(
+                        new Date().getTime() / 1000,
+                    );
+                    await setLocalStorage(
+                        "lastTagCategoryInfoUpdateAt",
+                        lastTagCategoryInfoUpdateAt,
+                    );
+                    await saveJSON(
+                        lastTagCategoryInfoUpdateAt,
+                        "lastTagCategoryInfoUpdateAt",
+                    );
+                }
+            })
+            .catch(() => {
+                setTimeout(() => getTagCategoryData(), 60000);
             });
     }
 
     function getTagFilterInfoText({ tag, category }, infoToGet) {
         if (infoToGet === "tag category" && tag != null) {
-            for (let eCategory in tagCategoryInfo) {
-                for (let eTag in tagCategoryInfo[eCategory]) {
+            for (let eCategory in $tagCategoryInfo) {
+                for (let eTag in $tagCategoryInfo[eCategory]) {
                     if (eTag === tag) {
                         return eCategory || "";
                     }
@@ -2247,12 +2257,12 @@
             if (category == null) {
                 category = getTagFilterInfoText({ tag }, "tag category");
             }
-            let description = tagCategoryInfo?.[category]?.[tag];
+            let description = $tagCategoryInfo?.[category]?.[tag];
             if (description) {
                 return `Description: ${description}\nCategory: ${category}`;
             }
         } else if (infoToGet === "all tags" && category != null) {
-            let categoryInfo = tagCategoryInfo?.[category];
+            let categoryInfo = $tagCategoryInfo?.[category];
             let categoryTagsArray = Object.keys(categoryInfo || {});
             if (!jsonIsEmpty(categoryInfo)) {
                 return categoryTagsArray.join(", ");
@@ -2262,7 +2272,7 @@
     }
 
     function getTagCategoryInfoHTML(tagCategory) {
-        let categoryInfo = tagCategoryInfo?.[tagCategory];
+        let categoryInfo = $tagCategoryInfo?.[tagCategory];
         if (
             !tagCategory ||
             !isJsonObject(categoryInfo) ||
@@ -2271,7 +2281,7 @@
             return "";
         let tagCategoryList = "";
         let tagCategoryListArray =
-            Object.keys(tagCategoryInfo?.[tagCategory]) || [];
+            Object.keys($tagCategoryInfo?.[tagCategory]) || [];
         for (let i = 0; i < tagCategoryListArray.length; i++) {
             tagCategoryList += `
                 <li onclick="window?.showTagInfoHTML?.(event,'${tagCategoryListArray[i]}','${tagCategory}')">
@@ -2295,7 +2305,7 @@
         if (tagCategory == null) {
             tagCategory = getTagFilterInfoText({ tag }, "tag category");
         }
-        let description = tagCategoryInfo?.[tagCategory]?.[tag];
+        let description = $tagCategoryInfo?.[tagCategory]?.[tag];
         if (!tagCategory || !description) return "";
         return `
             <div class="is-custom-table">
@@ -2418,9 +2428,9 @@
     });
 
     function hasTagCategoryInfoData() {
-        for (let category in tagCategoryInfo) {
-            for (let tag in tagCategoryInfo[category]) {
-                return typeof tagCategoryInfo[category][tag] === "string";
+        for (let category in $tagCategoryInfo) {
+            for (let tag in $tagCategoryInfo[category]) {
+                return typeof $tagCategoryInfo[category][tag] === "string";
             }
             return false;
         }
@@ -2433,7 +2443,7 @@
                 getLocalStorage("tagCategoryInfo") ||
                 (await retrieveJSON("tagCategoryInfo"));
             if (isJsonObject(tempTagCategoryInfo)) {
-                tagCategoryInfo = tempTagCategoryInfo;
+                $tagCategoryInfo = tempTagCategoryInfo;
             }
             let lastTagCategoryInfoUpdateAt =
                 getLocalStorage("lastTagCategoryInfoUpdateAt") ||
@@ -3194,7 +3204,7 @@
                                                                     />
                                                                 </svg>
                                                             {/if}
-                                                            {#if typeof window?.showFullScreenInfo === "function" && ((Dropdown?.filName === "tag" && getTagFilterInfoText({ tag: option?.optionName }, "category and description")) || (Dropdown.filName === "tag category" && !jsonIsEmpty(tagCategoryInfo?.[option?.optionName])))}
+                                                            {#if typeof window?.showFullScreenInfo === "function" && ((Dropdown?.filName === "tag" && getTagFilterInfoText({ tag: option?.optionName }, "category and description")) || (Dropdown.filName === "tag category" && !jsonIsEmpty($tagCategoryInfo?.[option?.optionName])))}
                                                                 <svg
                                                                     class="extra-item-info"
                                                                     viewBox="0 0 512 512"

@@ -23,6 +23,7 @@ const selectedCustomFilter = writable(null)
 const activeTagFilters = writable(null)
 const customFilters = writable(null)
 const loadingFilterOptions = writable(false)
+const tagCategoryInfo = writable({})
 const finalAnimeList = writable(null)
 const newFinalAnime = writable([])
 const animeLoaderWorker = writable(null)
@@ -104,6 +105,7 @@ export {
     activeTagFilters,
     customFilters,
     loadingFilterOptions,
+    tagCategoryInfo,
     finalAnimeList,
     newFinalAnime,
     animeLoaderWorker,

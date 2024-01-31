@@ -1,6 +1,6 @@
 import { get } from "svelte/store";
 import { cacheRequest } from "./caching.js";
-import { downloadLink, isJsonObject, removeLocalStorage, setLocalStorage, showToast, } from "../js/others/helper.js"
+import { downloadLink, isJsonObject, jsonIsEmpty, removeLocalStorage, setLocalStorage, showToast, } from "../js/others/helper.js"
 import {
     dataStatus,
     updateRecommendationList,
@@ -30,6 +30,7 @@ import {
     loadingDataStatus,
     isBackgroundUpdateKey,
     shouldShowLoading,
+    tagCategoryInfo,
 } from "./globalValues.js";
 
 
@@ -1052,6 +1053,10 @@ const getFilterOptions = (_data) => {
                     if (data?.hasOwnProperty("status")) {
                         dataStatusPrio = true
                         dataStatus.set(data.status)
+                    } else if (data?.hasOwnProperty("tagCategoryInfo")) {
+                        if (isJsonObject(data?.tagCategoryInfo) && !jsonIsEmpty(data?.tagCategoryInfo)) {
+                            tagCategoryInfo.set(data.tagCategoryInfo)
+                        }
                     } else {
                         dataStatusPrio = false
                         getFilterOptionsTerminateTimeout = setTimeout(() => {
