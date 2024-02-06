@@ -1075,6 +1075,7 @@
                                 $newFinalAnime = {
                                     idx: data.lastShownAnimeListIndex + idx,
                                     finalAnimeList: anime,
+                                    category: data?.category,
                                 };
                             });
                         } else {
@@ -1624,95 +1625,96 @@
 <div
     id="popup-wrapper"
     class="popup-wrapper"
-    on:click={handlePopupVisibility}
-    on:keyup={(e) => e.key === "Enter" && handlePopupVisibility(e)}
-    bind:this={popupWrapper}
-    tabindex={!$menuVisible && $popupVisible ? "0" : "-1"}
+    on:click="{handlePopupVisibility}"
+    on:keyup="{(e) => e.key === 'Enter' && handlePopupVisibility(e)}"
+    bind:this="{popupWrapper}"
+    tabindex="{!$menuVisible && $popupVisible ? '0' : '-1'}"
 >
     <div
         id="popup-container"
         class="popup-container hide"
-        bind:this={popupContainer}
-        on:touchstart|passive={handlePopupContainerDown}
-        on:touchmove|passive={handlePopupContainerMove}
-        on:touchend|passive={handlePopupContainerUp}
-        on:touchcancel={handlePopupContainerCancel}
-        on:scroll={popupScroll}
+        bind:this="{popupContainer}"
+        on:touchstart|passive="{handlePopupContainerDown}"
+        on:touchmove|passive="{handlePopupContainerMove}"
+        on:touchend|passive="{handlePopupContainerUp}"
+        on:touchcancel="{handlePopupContainerCancel}"
+        on:scroll="{popupScroll}"
     >
         {#if $finalAnimeList?.length}
             {#each $finalAnimeList || [] as anime, animeIndex (anime?.id || {})}
-                <div class="popup-content" bind:this={anime.popupContent}>
+                <div class="popup-content" bind:this="{anime.popupContent}">
                     {#if animeIndex <= currentHeaderIdx + bottomPopupVisibleCount && animeIndex >= currentHeaderIdx - topPopupVisibleCount}
                         <div class="popup-main" use:popupMainEl>
                             <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                             <div
-                                class={"popup-header " +
-                                    (anime.trailerID ? "loader" : "")}
-                                bind:this={anime.popupHeader}
-                                tabindex={!$menuVisible && $popupVisible
-                                    ? "0"
-                                    : "-1"}
-                                on:click={() => {
+                                class="{'popup-header ' +
+                                    (anime.trailerID ? 'loader' : '')}"
+                                bind:this="{anime.popupHeader}"
+                                tabindex="{!$menuVisible && $popupVisible
+                                    ? '0'
+                                    : '-1'}"
+                                on:click="{() => {
                                     if (!$popupVisible) return;
                                     askToOpenYoutube(anime.title);
-                                }}
-                                on:keyup={(e) => {
+                                }}"
+                                on:keyup="{(e) => {
                                     if (!$popupVisible) return;
-                                    if (e.key === "Enter") {
+                                    if (e.key === 'Enter') {
                                         askToOpenYoutube(anime.title);
                                     }
-                                }}
+                                }}"
                             >
                                 <div class="popup-header-loading">
                                     <!-- k icon -->
                                     <svg viewBox="0 0 320 512">
                                         <path
                                             d="M311 86a32 32 0 1 0-46-44L110 202l-46 47V64a32 32 0 1 0-64 0v384a32 32 0 1 0 64 0V341l65-67 133 192c10 15 30 18 44 8s18-30 8-44L174 227 311 86z"
-                                        />
+                                        ></path>
                                     </svg>
                                 </div>
                                 {#if anime.trailerID}
-                                    <div class="trailer display-none" />
+                                    <div class="trailer display-none"></div>
                                 {/if}
                                 <div class="popup-img">
                                     {#if anime.bannerImageUrl || anime.trailerThumbnailUrl}
                                         {#key anime.bannerImageUrl || anime.trailerThumbnailUrl}
                                             <img
-                                                use:addImage={anime.bannerImageUrl ||
+                                                use:addImage="{anime.bannerImageUrl ||
                                                     anime.trailerThumbnailUrl ||
-                                                    emptyImage}
+                                                    emptyImage}"
                                                 loading="lazy"
                                                 width="640px"
                                                 height="360px"
-                                                alt={(anime?.shownTitle || "") +
+                                                alt="{(anime?.shownTitle ||
+                                                    '') +
                                                     (anime.bannerImageUrl
-                                                        ? " Banner"
-                                                        : " Thumbnail")}
+                                                        ? ' Banner'
+                                                        : ' Thumbnail')}"
                                                 class="bannerImg fade-out"
-                                                on:load={(e) => {
+                                                on:load="{(e) => {
                                                     removeClass(
                                                         e.target,
-                                                        "fade-out",
+                                                        'fade-out',
                                                     );
                                                     addClass(
                                                         e.target,
-                                                        "fade-in",
+                                                        'fade-in',
                                                     );
-                                                }}
-                                                on:error={(e) => {
+                                                }}"
+                                                on:error="{(e) => {
                                                     removeClass(
                                                         e.target,
-                                                        "fade-in",
+                                                        'fade-in',
                                                     );
                                                     addClass(
                                                         e.target,
-                                                        "fade-out",
+                                                        'fade-out',
                                                     );
                                                     addClass(
                                                         e.target,
-                                                        "display-none",
+                                                        'display-none',
                                                     );
-                                                }}
+                                                }}"
                                             />
                                         {/key}
                                     {/if}
@@ -1725,34 +1727,34 @@
                                         <label class="switch">
                                             <label
                                                 class="disable-interaction"
-                                                for={"auto-play-" + anime?.id}
+                                                for="{'auto-play-' + anime?.id}"
                                             >
                                                 Auto Play
                                             </label>
                                             <input
-                                                id={"auto-play-" + anime?.id}
+                                                id="{'auto-play-' + anime?.id}"
                                                 type="checkbox"
                                                 class="autoplayToggle"
-                                                bind:checked={$autoPlay}
+                                                bind:checked="{$autoPlay}"
                                             />
                                             <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                                             <span
                                                 class="slider round"
-                                                tabindex={!$menuVisible &&
+                                                tabindex="{!$menuVisible &&
                                                 $popupVisible
-                                                    ? "0"
-                                                    : "-1"}
-                                                on:keyup={(e) =>
-                                                    e.key === "Enter" &&
-                                                    changeAutoPlay(e)}
-                                            />
+                                                    ? '0'
+                                                    : '-1'}"
+                                                on:keyup="{(e) =>
+                                                    e.key === 'Enter' &&
+                                                    changeAutoPlay(e)}"
+                                            ></span>
                                         </label>
                                         <h3
                                             class="autoplay-label"
-                                            on:click={changeAutoPlay}
-                                            on:keyup={(e) =>
-                                                e.key === "Enter" &&
-                                                changeAutoPlay(e)}
+                                            on:click="{changeAutoPlay}"
+                                            on:keyup="{(e) =>
+                                                e.key === 'Enter' &&
+                                                changeAutoPlay(e)}"
                                         >
                                             {#if windowWidth >= 290}
                                                 Auto Play
@@ -1764,18 +1766,18 @@
                                     {#if $listUpdateAvailable}
                                         <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                                         <div
-                                            class={"list-update-container" +
+                                            class="{'list-update-container' +
                                                 ($listIsUpdating
-                                                    ? " load"
-                                                    : "")}
-                                            tabindex={!$menuVisible &&
+                                                    ? ' load'
+                                                    : '')}"
+                                            tabindex="{!$menuVisible &&
                                             $popupVisible
-                                                ? "0"
-                                                : "-1"}
-                                            on:click={updateList}
-                                            on:keyup={(e) =>
-                                                e.key === "Enter" &&
-                                                updateList(e)}
+                                                ? '0'
+                                                : '-1'}"
+                                            on:click="{updateList}"
+                                            on:keyup="{(e) =>
+                                                e.key === 'Enter' &&
+                                                updateList(e)}"
                                         >
                                             <!-- arrows rotate -->
                                             <svg
@@ -1784,7 +1786,7 @@
                                             >
                                                 <path
                                                     d="M105 203a160 160 0 0 1 264-60l17 17h-50a32 32 0 1 0 0 64h128c18 0 32-14 32-32V64a32 32 0 1 0-64 0v51l-18-17a224 224 0 0 0-369 83 32 32 0 0 0 60 22zm-66 86a32 32 0 0 0-23 31v128a32 32 0 1 0 64 0v-51l18 17a224 224 0 0 0 369-83 32 32 0 0 0-60-22 160 160 0 0 1-264 60l-17-17h50a32 32 0 1 0 0-64H48a39 39 0 0 0-9 1z"
-                                                />
+                                                ></path>
                                             </svg>
                                             <h3 class="list-update-label">
                                                 {windowWidth >= 320
@@ -1801,21 +1803,21 @@
                                         <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                                         <div
                                             class="banner-image-button"
-                                            tabindex={!$menuVisible &&
+                                            tabindex="{!$menuVisible &&
                                             $popupVisible
-                                                ? "0"
-                                                : "-1"}
-                                            on:click={() => {
+                                                ? '0'
+                                                : '-1'}"
+                                            on:click="{() => {
                                                 if (!$popupVisible) return;
                                                 window.setShouldGoBack?.(false);
                                                 fullImagePopup =
                                                     anime.bannerImageUrl ||
                                                     anime.trailerThumbnailUrl;
                                                 fullDescriptionPopup = null;
-                                            }}
-                                            on:keyup={(e) => {
+                                            }}"
+                                            on:keyup="{(e) => {
                                                 if (!$popupVisible) return;
-                                                if (e.key === "Enter") {
+                                                if (e.key === 'Enter') {
                                                     window.setShouldGoBack?.(
                                                         false,
                                                     );
@@ -1833,7 +1835,7 @@
                                                     }
                                                     fullDescriptionPopup = null;
                                                 }
-                                            }}
+                                            }}"
                                         >
                                             <!-- image icon -->
                                             <svg
@@ -1842,7 +1844,7 @@
                                             >
                                                 <path
                                                     d="M0 96c0-35 29-64 64-64h384c35 0 64 29 64 64v320c0 35-29 64-64 64H64c-35 0-64-29-64-64V96zm324 107a24 24 0 0 0-40 0l-87 127-26-33a24 24 0 0 0-37 0l-65 80a24 24 0 0 0 19 39h336c9 0 17-5 21-13s4-17-1-25L324 204zm-212-11a48 48 0 1 0 0-96 48 48 0 1 0 0 96z"
-                                                />
+                                                ></path>
                                             </svg>
                                             <h3 class="banner-image-label">
                                                 {anime.bannerImageUrl
@@ -1855,34 +1857,34 @@
                                 <div class="popup-info">
                                     <div
                                         class="anime-title-container"
-                                        style:overflow={$popupIsGoingBack
+                                        style:overflow="{$popupIsGoingBack
                                             ? "hidden"
-                                            : ""}
-                                        on:scroll={itemScroll}
+                                            : ""}"
+                                        on:scroll="{itemScroll}"
                                     >
                                         <a
-                                            tabindex={!$menuVisible &&
+                                            tabindex="{!$menuVisible &&
                                             $popupVisible
-                                                ? ""
-                                                : "-1"}
-                                            rel={anime.animeUrl
-                                                ? "noopener noreferrer"
-                                                : ""}
-                                            target={anime.animeUrl
-                                                ? "_blank"
-                                                : ""}
-                                            href={anime.animeUrl ||
-                                                "javascript:void(0)"}
-                                            class={anime?.contentCautionColor +
-                                                "-color anime-title copy"}
-                                            copy-value={anime?.copiedTitle ||
-                                                ""}
-                                            copy-value-2={anime?.shownTitle ||
-                                                ""}
-                                            style:overflow={$popupIsGoingBack
+                                                ? ''
+                                                : '-1'}"
+                                            rel="{anime.animeUrl
+                                                ? 'noopener noreferrer'
+                                                : ''}"
+                                            target="{anime.animeUrl
+                                                ? '_blank'
+                                                : ''}"
+                                            href="{anime.animeUrl ||
+                                                'javascript:void(0)'}"
+                                            class="{anime?.contentCautionColor +
+                                                '-color anime-title copy'}"
+                                            copy-value="{anime?.copiedTitle ||
+                                                ''}"
+                                            copy-value-2="{anime?.shownTitle ||
+                                                ''}"
+                                            style:overflow="{$popupIsGoingBack
                                                 ? "hidden"
-                                                : ""}
-                                            on:scroll={itemScroll}
+                                                : ""}"
+                                            on:scroll="{itemScroll}"
                                         >
                                             {anime?.shownTitle || "NA"}
                                         </a>
@@ -1891,20 +1893,20 @@
                                             <svg viewBox="0 0 576 512"
                                                 ><path
                                                     d="M288 0c9 0 17 5 21 14l69 141 153 22c9 2 17 8 20 17s0 18-6 24L434 328l26 156c1 9-2 18-10 24s-17 6-25 1l-137-73-137 73c-8 4-18 4-25-2s-11-14-10-23l26-156L31 218a24 24 0 0 1 14-41l153-22 68-141c4-9 13-14 22-14zm0 79-53 108c-3 7-10 12-18 13L99 219l86 85c5 6 8 13 7 21l-21 120 106-57c7-3 15-3 22 1l105 56-20-120c-1-8 1-15 7-21l86-85-118-17c-8-2-15-7-18-14L288 79z"
-                                                /></svg
+                                                ></path></svg
                                             >
                                             <h4
                                                 class="copy"
-                                                copy-value={(anime.averageScore !=
+                                                copy-value="{(anime.averageScore !=
                                                 null
                                                     ? anime.formattedAverageScore ||
-                                                      "NA"
-                                                    : "NA") +
-                                                    "/10 · " +
+                                                      'NA'
+                                                    : 'NA') +
+                                                    '/10 · ' +
                                                     (anime.popularity != null
                                                         ? anime.formattedPopularity ||
-                                                          "NA"
-                                                        : "NA")}
+                                                          'NA'
+                                                        : 'NA')}"
                                             >
                                                 <b
                                                     >{anime.averageScore != null
@@ -1924,10 +1926,10 @@
                                     </div>
                                     <div
                                         class="info-format"
-                                        style:overflow={$popupIsGoingBack
+                                        style:overflow="{$popupIsGoingBack
                                             ? "hidden"
-                                            : ""}
-                                        on:scroll={itemScroll}
+                                            : ""}"
+                                        on:scroll="{itemScroll}"
                                     >
                                         {#if anime?.nextAiringEpisode?.airingAt}
                                             {@const formattedAnimeFormat =
@@ -1958,13 +1960,13 @@
                                             <h4
                                                 style="text-align: right;"
                                                 class="copy"
-                                                copy-value={`${
-                                                    anime?.season || ""
+                                                copy-value="{`${
+                                                    anime?.season || ''
                                                 }${
                                                     anime?.season && anime?.year
-                                                        ? " " + anime?.year
-                                                        : anime?.year || ""
-                                                }` || ""}
+                                                        ? ' ' + anime?.year
+                                                        : anime?.year || ''
+                                                }` || ''}"
                                             >
                                                 {`${anime?.season || ""}${
                                                     anime?.season && anime?.year
@@ -1980,32 +1982,32 @@
                                     </div>
                                     <div
                                         class="info-status"
-                                        style:overflow={$popupIsGoingBack
+                                        style:overflow="{$popupIsGoingBack
                                             ? "hidden"
-                                            : ""}
-                                        on:scroll={itemScroll}
+                                            : ""}"
+                                        on:scroll="{itemScroll}"
                                     >
                                         <h4
                                             class="copy"
-                                            copy-value={(anime.userStatus ||
-                                                "NA") +
+                                            copy-value="{(anime.userStatus ||
+                                                'NA') +
                                                 (anime.userScore != null
-                                                    ? " · " + anime.userScore
-                                                    : "")}
+                                                    ? ' · ' + anime.userScore
+                                                    : '')}"
                                         >
                                             <a
                                                 tabindex="-1"
-                                                rel={anime.animeUrl
-                                                    ? "noopener noreferrer"
-                                                    : ""}
-                                                target={anime.animeUrl
-                                                    ? "_blank"
-                                                    : ""}
-                                                href={anime.animeUrl ||
-                                                    "javascript:void(0)"}
+                                                rel="{anime.animeUrl
+                                                    ? 'noopener noreferrer'
+                                                    : ''}"
+                                                target="{anime.animeUrl
+                                                    ? '_blank'
+                                                    : ''}"
+                                                href="{anime.animeUrl ||
+                                                    'javascript:void(0)'}"
                                                 ><span
-                                                    class={anime.userStatusColor +
-                                                        "-color"}
+                                                    class="{anime.userStatusColor +
+                                                        '-color'}"
                                                     >{anime.userStatus ||
                                                         "NA"}</span
                                                 >
@@ -2015,19 +2017,30 @@
                                                     <svg viewBox="0 0 576 512"
                                                         ><path
                                                             d="M288 0c9 0 17 5 21 14l69 141 153 22c9 2 17 8 20 17s0 18-6 24L434 328l26 156c1 9-2 18-10 24s-17 6-25 1l-137-73-137 73c-8 4-18 4-25-2s-11-14-10-23l26-156L31 218a24 24 0 0 1 14-41l153-22 68-141c4-9 13-14 22-14zm0 79-53 108c-3 7-10 12-18 13L99 219l86 85c5 6 8 13 7 21l-21 120 106-57c7-3 15-3 22 1l105 56-20-120c-1-8 1-15 7-21l86-85-118-17c-8-2-15-7-18-14L288 79z"
-                                                        /></svg
+                                                        ></path></svg
                                                     >
                                                     {anime.userScore}
                                                 {/if}
                                             </a>
                                         </h4>
-                                        <h4
-                                            style="text-align: right;"
-                                            class="copy year-season"
-                                            copy-value={anime.status || ""}
-                                        >
-                                            {anime.status || "NA"}
-                                        </h4>
+                                        {#if typeof anime?.nextAiringEpisode?.episode === "number" && !isNaN(anime?.nextAiringEpisode?.episode) && anime?.nextAiringEpisode?.episode === anime.episodes && typeof anime?.nextAiringEpisode?.airingAt === "number" && !isNaN(anime?.nextAiringEpisode?.airingAt) && new Date(anime?.nextAiringEpisode?.airingAt * 1000) <= new Date()}
+                                            <h4
+                                                style="text-align: right;"
+                                                class="copy year-season"
+                                                copy-value="FINISHED"
+                                            >
+                                                FINISHED
+                                            </h4>
+                                        {:else}
+                                            <h4
+                                                style="text-align: right;"
+                                                class="copy year-season"
+                                                copy-value="{anime.status ||
+                                                    ''}"
+                                            >
+                                                {anime.status || "NA"}
+                                            </h4>
+                                        {/if}
                                     </div>
                                     <div class="info-contents">
                                         {#if anime?.shownStudios?.length}
@@ -2036,56 +2049,57 @@
                                                     Studios
                                                 </div>
                                                 <div
-                                                    class={"studio-popup info"}
-                                                    style:overflow={$popupIsGoingBack
+                                                    class="{'studio-popup info'}"
+                                                    style:overflow="{$popupIsGoingBack
                                                         ? "hidden"
-                                                        : ""}
-                                                    on:scroll={itemScroll}
-                                                    on:mouseenter={(e) => {
+                                                        : ""}"
+                                                    on:scroll="{itemScroll}"
+                                                    on:mouseenter="{(e) => {
                                                         if (
                                                             !anime?.hasStudioDragScroll
                                                         ) {
                                                             let info =
                                                                 e?.target?.closest?.(
-                                                                    ".info",
+                                                                    '.info',
                                                                 ) || e?.target;
                                                             if (info) {
                                                                 anime.hasStudioDragScroll = true;
                                                                 dragScroll(
                                                                     info,
-                                                                    "x",
+                                                                    'x',
                                                                 );
                                                             }
                                                         }
-                                                    }}
+                                                    }}"
                                                 >
                                                     {#each anime.shownStudios as studios (studios?.studio || {})}
                                                         <a
-                                                            tabindex={!$menuVisible &&
+                                                            tabindex="{!$menuVisible &&
                                                             $popupVisible
-                                                                ? ""
-                                                                : "-1"}
-                                                            class={"copy" +
+                                                                ? ''
+                                                                : '-1'}"
+                                                            class="{'copy' +
                                                                 (studios?.studioColor
                                                                     ? ` ${studios?.studioColor}-color`
-                                                                    : "")}
-                                                            rel={studios?.studio
-                                                                ?.studioUrl
-                                                                ? "noopener noreferrer"
-                                                                : ""}
-                                                            target={studios
+                                                                    : '')}"
+                                                            rel="{studios
                                                                 ?.studio
                                                                 ?.studioUrl
-                                                                ? "_blank"
-                                                                : ""}
-                                                            href={studios
+                                                                ? 'noopener noreferrer'
+                                                                : ''}"
+                                                            target="{studios
+                                                                ?.studio
+                                                                ?.studioUrl
+                                                                ? '_blank'
+                                                                : ''}"
+                                                            href="{studios
                                                                 ?.studio
                                                                 ?.studioUrl ||
-                                                                "javascript:void(0)"}
-                                                            copy-value={studios
+                                                                'javascript:void(0)'}"
+                                                            copy-value="{studios
                                                                 ?.studio
                                                                 ?.studioName ||
-                                                                ""}
+                                                                ''}"
                                                         >
                                                             {studios?.studio
                                                                 ?.studioName ||
@@ -2101,37 +2115,37 @@
                                                     Genres
                                                 </div>
                                                 <div
-                                                    class={"genres-popup info"}
-                                                    style:overflow={$popupIsGoingBack
+                                                    class="{'genres-popup info'}"
+                                                    style:overflow="{$popupIsGoingBack
                                                         ? "hidden"
-                                                        : ""}
-                                                    on:scroll={itemScroll}
-                                                    on:mouseenter={(e) => {
+                                                        : ""}"
+                                                    on:scroll="{itemScroll}"
+                                                    on:mouseenter="{(e) => {
                                                         if (
                                                             !anime?.hasGenreDragScroll
                                                         ) {
                                                             let info =
                                                                 e?.target?.closest?.(
-                                                                    ".info",
+                                                                    '.info',
                                                                 ) || e?.target;
                                                             if (info) {
                                                                 anime.hasGenreDragScroll = true;
                                                                 dragScroll(
                                                                     info,
-                                                                    "x",
+                                                                    'x',
                                                                 );
                                                             }
                                                         }
-                                                    }}
+                                                    }}"
                                                 >
                                                     {#each anime.shownGenres as genres (genres?.genre || {})}
                                                         <span
-                                                            class={"copy " +
+                                                            class="{'copy ' +
                                                                 (genres?.genreColor
                                                                     ? `${genres?.genreColor}-color`
-                                                                    : "")}
-                                                            copy-value={genres?.genre ||
-                                                                ""}
+                                                                    : '')}"
+                                                            copy-value="{genres?.genre ||
+                                                                ''}"
                                                             >{genres?.genre ||
                                                                 "NA"}
                                                         </span>
@@ -2142,36 +2156,36 @@
                                         {#if anime?.shownTags?.length}
                                             <div class="tag-info">
                                                 <div
-                                                    class={"tags-info-content info"}
-                                                    style:overflow={$popupIsGoingBack
+                                                    class="{'tags-info-content info'}"
+                                                    style:overflow="{$popupIsGoingBack
                                                         ? "hidden"
-                                                        : ""}
-                                                    on:scroll={itemScroll}
-                                                    on:mouseenter={(e) => {
+                                                        : ""}"
+                                                    on:scroll="{itemScroll}"
+                                                    on:mouseenter="{(e) => {
                                                         if (
                                                             !anime?.hasTagDragScroll
                                                         ) {
                                                             let info =
                                                                 e?.target?.closest?.(
-                                                                    ".info",
+                                                                    '.info',
                                                                 ) || e?.target;
                                                             if (info) {
                                                                 anime.hasTagDragScroll = true;
                                                                 dragScroll(
                                                                     info,
-                                                                    "x",
+                                                                    'x',
                                                                 );
                                                             }
                                                         }
-                                                    }}
+                                                    }}"
                                                 >
                                                     {#each anime.shownTags as tags (tags?.tag || {})}
                                                         <span
-                                                            tabindex={!$menuVisible &&
+                                                            tabindex="{!$menuVisible &&
                                                             $popupVisible
-                                                                ? "0"
-                                                                : ""}
-                                                            on:click={() => {
+                                                                ? '0'
+                                                                : ''}"
+                                                            on:click="{() => {
                                                                 if (
                                                                     !$popupVisible
                                                                 )
@@ -2187,15 +2201,15 @@
                                                                         ),
                                                                     );
                                                                 }
-                                                            }}
-                                                            on:keyup={(e) => {
+                                                            }}"
+                                                            on:keyup="{(e) => {
                                                                 if (
                                                                     !$popupVisible
                                                                 )
                                                                     return;
                                                                 if (
                                                                     e.key ===
-                                                                        "Enter" &&
+                                                                        'Enter' &&
                                                                     !itemIsScrolling
                                                                 ) {
                                                                     showFullScreenInfo(
@@ -2206,13 +2220,13 @@
                                                                         ),
                                                                     );
                                                                 }
-                                                            }}
-                                                            class={"copy " +
+                                                            }}"
+                                                            class="{'copy ' +
                                                                 (tags?.tagColor
                                                                     ? `${tags?.tagColor}-color`
-                                                                    : "")}
-                                                            copy-value={tags?.copyValue ||
-                                                                ""}
+                                                                    : '')}"
+                                                            copy-value="{tags?.copyValue ||
+                                                                ''}"
                                                             >{@html tags?.tag ||
                                                                 "NA"}
                                                         </span>
@@ -2225,36 +2239,37 @@
                                         <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                                         {#key anime.coverImageUrl || anime.bannerImageUrl || anime.trailerThumbnailUrl || emptyImage}
                                             <img
-                                                use:addImage={anime.coverImageUrl ||
+                                                use:addImage="{anime.coverImageUrl ||
                                                     anime.bannerImageUrl ||
                                                     anime.trailerThumbnailUrl ||
-                                                    emptyImage}
+                                                    emptyImage}"
                                                 loading="lazy"
                                                 width="150px"
                                                 height="210px"
-                                                alt={(anime?.shownTitle || "") +
+                                                alt="{(anime?.shownTitle ||
+                                                    '') +
                                                     (anime.coverImageUrl
-                                                        ? " Cover"
+                                                        ? ' Cover'
                                                         : anime.bannerImageUrl
-                                                          ? " Banner"
-                                                          : " Thumbnail")}
-                                                tabindex={!$menuVisible &&
+                                                          ? ' Banner'
+                                                          : ' Thumbnail')}"
+                                                tabindex="{!$menuVisible &&
                                                 $popupVisible
-                                                    ? "0"
-                                                    : "-1"}
-                                                class={"coverImg" +
+                                                    ? '0'
+                                                    : '-1'}"
+                                                class="{'coverImg' +
                                                     (!anime.coverImageUrl &&
                                                     !anime.bannerImageUrl &&
                                                     !anime.trailerThumbnailUrl
-                                                        ? " display-none"
-                                                        : "")}
-                                                on:error={(e) => {
+                                                        ? ' display-none'
+                                                        : '')}"
+                                                on:error="{(e) => {
                                                     addClass(
                                                         e.target,
-                                                        "display-none",
+                                                        'display-none',
                                                     );
-                                                }}
-                                                on:click={() => {
+                                                }}"
+                                                on:click="{() => {
                                                     if (!$popupVisible) return;
                                                     window.setShouldGoBack?.(
                                                         false,
@@ -2265,13 +2280,13 @@
                                                         anime.trailerThumbnailUrl ||
                                                         emptyImage;
                                                     fullDescriptionPopup = null;
-                                                }}
-                                                on:keyup={(e) => {
+                                                }}"
+                                                on:keyup="{(e) => {
                                                     if (!$popupVisible) return;
                                                     window.setShouldGoBack?.(
                                                         false,
                                                     );
-                                                    if (e.key === "Enter") {
+                                                    if (e.key === 'Enter') {
                                                         let newFullImagePopup =
                                                             anime.coverImageUrl ||
                                                             anime.bannerImageUrl ||
@@ -2290,26 +2305,26 @@
                                                         fullDescriptionPopup =
                                                             null;
                                                     }
-                                                }}
+                                                }}"
                                             />
                                         {/key}
                                         {#if anime?.description}
                                             <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                                             <div
                                                 class="anime-description-wrapper"
-                                                tabindex={!$menuVisible &&
+                                                tabindex="{!$menuVisible &&
                                                 $popupVisible
-                                                    ? "0"
-                                                    : "-1"}
-                                                on:click={() => {
+                                                    ? '0'
+                                                    : '-1'}"
+                                                on:click="{() => {
                                                     if (!$popupVisible) return;
                                                     showFullScreenInfo(
                                                         anime?.description,
                                                     );
-                                                }}
-                                                on:keyup={(e) => {
+                                                }}"
+                                                on:keyup="{(e) => {
                                                     if (!$popupVisible) return;
-                                                    if (e.key === "Enter") {
+                                                    if (e.key === 'Enter') {
                                                         let newFullImagePopup =
                                                             anime.coverImageUrl ||
                                                             anime.bannerImageUrl ||
@@ -2329,7 +2344,7 @@
                                                             anime?.description,
                                                         );
                                                     }
-                                                }}
+                                                }}"
                                             >
                                                 <h3>Description</h3>
                                                 <div class="anime-description">
@@ -2344,23 +2359,23 @@
                             </div>
                             <div class="popup-footer">
                                 <button
-                                    tabindex={!$menuVisible && $popupVisible
-                                        ? ""
-                                        : "-1"}
+                                    tabindex="{!$menuVisible && $popupVisible
+                                        ? ''
+                                        : '-1'}"
                                     class="hideshowbtn"
-                                    style:overflow={$popupIsGoingBack
+                                    style:overflow="{$popupIsGoingBack
                                         ? "hidden"
-                                        : ""}
-                                    on:click={() => {
+                                        : ""}"
+                                    on:click="{() => {
                                         if (!$popupVisible) return;
                                         handleHideShow(
                                             anime.id,
                                             anime?.shownTitle,
                                         );
-                                    }}
-                                    on:keyup={(e) => {
+                                    }}"
+                                    on:keyup="{(e) => {
                                         if (!$popupVisible) return;
-                                        if (e.key === "Enter") {
+                                        if (e.key === 'Enter') {
                                             e.stopImmediatePropagation();
                                             handleHideShow(
                                                 anime.id,
@@ -2368,13 +2383,13 @@
                                             );
                                             e.stopImmediatePropagation();
                                         }
-                                    }}
+                                    }}"
                                 >
                                     <!-- circle minus -->
                                     <svg class="hideshow" viewBox="0 0 512 512"
                                         ><path
                                             d="M256 512a256 256 0 1 0 0-512 256 256 0 1 0 0 512zm-72-280h144a24 24 0 1 1 0 48H184a24 24 0 1 1 0-48z"
-                                        /></svg
+                                        ></path></svg
                                     >
                                     {#if $hiddenEntries}
                                         {" " +
@@ -2386,49 +2401,49 @@
                                     {/if}
                                 </button>
                                 <button
-                                    tabindex={!$menuVisible && $popupVisible
-                                        ? ""
-                                        : "-1"}
+                                    tabindex="{!$menuVisible && $popupVisible
+                                        ? ''
+                                        : '-1'}"
                                     class="morevideos"
-                                    style:overflow={$popupIsGoingBack
+                                    style:overflow="{$popupIsGoingBack
                                         ? "hidden"
-                                        : ""}
-                                    on:click={handleMoreVideos(anime.title)}
-                                    on:keyup={(e) =>
-                                        e.key === "Enter" &&
-                                        handleMoreVideos(anime.title)}
+                                        : ""}"
+                                    on:click="{handleMoreVideos(anime.title)}"
+                                    on:keyup="{(e) =>
+                                        e.key === 'Enter' &&
+                                        handleMoreVideos(anime.title)}"
                                 >
                                     <!-- youtube logo -->
                                     <svg viewBox="0 0 576 512">
                                         <path
                                             d="M550 124c-7-24-25-42-49-49-42-11-213-11-213-11S117 64 75 75c-24 7-42 25-49 49-11 43-11 132-11 132s0 90 11 133c7 23 25 41 49 48 42 11 213 11 213 11s171 0 213-11c24-7 42-25 49-48 11-43 11-133 11-133s0-89-11-132zM232 338V175l143 81-143 82z"
-                                        />
+                                        ></path>
                                     </svg> YouTube</button
                                 >
                                 <button
-                                    tabindex={!$menuVisible && $popupVisible
-                                        ? ""
-                                        : "-1"}
+                                    tabindex="{!$menuVisible && $popupVisible
+                                        ? ''
+                                        : '-1'}"
                                     class="openanilist"
-                                    style:overflow={$popupIsGoingBack
+                                    style:overflow="{$popupIsGoingBack
                                         ? "hidden"
-                                        : ""}
-                                    on:click={() => {
+                                        : ""}"
+                                    on:click="{() => {
                                         openInAnilist(anime.animeUrl);
-                                    }}
-                                    on:keyup={(e) =>
-                                        e.key === "Enter" &&
-                                        openInAnilist(anime.animeUrl)}
+                                    }}"
+                                    on:keyup="{(e) =>
+                                        e.key === 'Enter' &&
+                                        openInAnilist(anime.animeUrl)}"
                                 >
                                     <!-- anilist logo -->
                                     <svg viewBox="0 0 172 172">
                                         <path
                                             fill="#3a5a7e"
                                             d="M111 111V41c0-4-2-6-6-6H91c-4 0-6 2-6 6v5l32 91h31c4 0 6-2 6-6v-14c0-4-2-6-6-6h-37z"
-                                        />
+                                        ></path>
                                         <path
                                             d="M54 35 18 137h28l6-17h31l6 17h28L81 35H54zm5 62 9-29 9 29H59z"
-                                        />
+                                        ></path>
                                     </svg> Anilist
                                 </button>
                             </div>
@@ -2446,7 +2461,7 @@
                         viewBox="0 0 320 512"
                         ><path
                             d="M311 86a32 32 0 1 0-46-44L110 202l-46 47V64a32 32 0 1 0-64 0v384a32 32 0 1 0 64 0V341l65-67 133 192c10 15 30 18 44 8s18-30 8-44L174 227 311 86z"
-                        /></svg
+                        ></path></svg
                     >
                 </div>
             {/if}
@@ -2455,15 +2470,15 @@
 </div>
 {#if $popupVisible && $popupIsGoingBack}
     <div
-        class={"go-back-grid-highlight" + (willGoBack ? " willGoBack" : "")}
-        out:fade={{ duration: 100, easing: sineOut }}
+        class="{'go-back-grid-highlight' + (willGoBack ? ' willGoBack' : '')}"
+        out:fade="{{ duration: 100, easing: sineOut }}"
     >
         <div class="go-back-grid">
             <!-- angle left -->
             <svg viewBox="0 0 320 512"
                 ><path
                     d="M41 233a32 32 0 0 0 0 46l160 160a32 32 0 0 0 46-46L109 256l138-137a32 32 0 0 0-46-46L41 233z"
-                /></svg
+                ></path></svg
             >
         </div>
     </div>
@@ -2471,12 +2486,13 @@
 {#if fullDescriptionPopup || fullImagePopup}
     <div
         class="fullPopupWrapper"
-        on:click={() => (fullDescriptionPopup = fullImagePopup = null)}
-        on:keyup={(e) =>
-            e.key === "Enter" && (fullDescriptionPopup = fullImagePopup = null)}
-        on:touchstart|passive={fullViewTouchStart}
-        on:touchend|passive={fullViewTouchEnd}
-        on:touchcancel={fullViewTouchCancel}
+        on:click="{() => (fullDescriptionPopup = fullImagePopup = null)}"
+        on:keyup="{(e) =>
+            e.key === 'Enter' &&
+            (fullDescriptionPopup = fullImagePopup = null)}"
+        on:touchstart|passive="{fullViewTouchStart}"
+        on:touchend|passive="{fullViewTouchEnd}"
+        on:touchcancel="{fullViewTouchCancel}"
     >
         <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
         <div class="fullPopup" id="fullPopup">
@@ -2484,13 +2500,13 @@
                 <div class="fullPopupDescriptionWrapper">
                     <div
                         use:isDescriptionScrollable
-                        on:keyup={(e) =>
-                            e.key === "Enter" &&
-                            (fullDescriptionPopup = fullImagePopup = null)}
+                        on:keyup="{(e) =>
+                            e.key === 'Enter' &&
+                            (fullDescriptionPopup = fullImagePopup = null)}"
                         tabindex="0"
                         class="fullPopupDescription"
-                        out:fade={{ duration: 200, easing: sineOut }}
-                        on:scroll={fullViewScroll}
+                        out:fade="{{ duration: 200, easing: sineOut }}"
+                        on:scroll="{fullViewScroll}"
                     >
                         {@html fullDescriptionPopup}
                     </div>
@@ -2498,18 +2514,18 @@
             {:else if fullImagePopup}
                 {#key fullImagePopup}
                     <img
-                        use:addImage={fullImagePopup || emptyImage}
+                        use:addImage="{fullImagePopup || emptyImage}"
                         tabindex="0"
                         class="fullPopupImage"
                         loading="lazy"
                         alt="Full View"
-                        on:keyup={(e) =>
-                            e.key === "Enter" &&
-                            (fullDescriptionPopup = fullImagePopup = null)}
-                        out:fade={{ duration: 200, easing: sineOut }}
-                        on:error={(e) => {
-                            addClass(e.target, "display-none");
-                        }}
+                        on:keyup="{(e) =>
+                            e.key === 'Enter' &&
+                            (fullDescriptionPopup = fullImagePopup = null)}"
+                        out:fade="{{ duration: 200, easing: sineOut }}"
+                        on:error="{(e) => {
+                            addClass(e.target, 'display-none');
+                        }}"
                     />
                 {/key}
             {/if}

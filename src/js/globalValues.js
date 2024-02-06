@@ -25,11 +25,12 @@ const customFilters = writable(null)
 const loadingFilterOptions = writable(false)
 const tagCategoryInfo = writable({})
 const finalAnimeList = writable(null)
-const newFinalAnime = writable([])
+const newFinalAnime = writable(null)
 const animeLoaderWorker = writable(null)
 const dataStatus = writable(null)
 const loadingDataStatus = writable(null)
 
+const isChangingCategory = writable(null)
 const shouldShowLoading = writable(false)
 const isLoadingAnime = writable(false)
 const isProcessingList = writable(false)
@@ -112,6 +113,7 @@ export {
     dataStatus,
     loadingDataStatus,
     userRequestIsRunning,
+    isChangingCategory,
     shouldShowLoading,
     isLoadingAnime,
     isProcessingList,

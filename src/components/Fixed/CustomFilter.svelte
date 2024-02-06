@@ -101,6 +101,7 @@
                             $newFinalAnime = {
                                 idx: data.lastShownAnimeListIndex + idx,
                                 finalAnimeList: anime,
+                                category: data?.category,
                             };
                         });
                     } else {
@@ -391,49 +392,49 @@
 
 <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
 <div
-    class={"custom-filters-nav" +
-        (customFiltersNavVisible ? "" : " hide") +
-        (immediateCustomFilNavChange ? " immediate" : "")}
+    class="{'custom-filters-nav' +
+        (customFiltersNavVisible ? '' : ' hide') +
+        (immediateCustomFilNavChange ? ' immediate' : '')}"
 >
     <div
         class="prev-custom-filter"
-        on:click={(e) => goToNextPrevCustomFilter(e, false)}
-        on:keyup={(e) => {
-            e.key === "Enter" && goToNextPrevCustomFilter(e, false);
-        }}
+        on:click="{(e) => goToNextPrevCustomFilter(e, false)}"
+        on:keyup="{(e) => {
+            e.key === 'Enter' && goToNextPrevCustomFilter(e, false);
+        }}"
     ></div>
     <div
         class="next-custom-filter"
-        on:click={(e) => goToNextPrevCustomFilter(e, true)}
-        on:keyup={(e) => {
-            e.key === "Enter" && goToNextPrevCustomFilter(true);
-        }}
+        on:click="{(e) => goToNextPrevCustomFilter(e, true)}"
+        on:keyup="{(e) => {
+            e.key === 'Enter' && goToNextPrevCustomFilter(true);
+        }}"
     ></div>
     <nav
         id="custom-filters-nav"
-        bind:this={customFiltersNav}
-        class={"nav" +
-            ($hasWheel ? " hasWheel" : "") +
-            (shouldScrollSnap && $android ? " android" : "")}
-        on:wheel={(e) => {
-            horizontalWheel(e, "nav");
-        }}
+        bind:this="{customFiltersNav}"
+        class="{'nav' +
+            ($hasWheel ? ' hasWheel' : '') +
+            (shouldScrollSnap && $android ? ' android' : '')}"
+        on:wheel="{(e) => {
+            horizontalWheel(e, 'nav');
+        }}"
     >
         <div
             class="selected-custom-filter-indicator"
-            style:--width={selectedElementIndicatorWidth + "px"}
-            style:--translateY={selectedElementIndicatorOffsetLeft + "px"}
+            style:--width="{selectedElementIndicatorWidth + "px"}"
+            style:--translateY="{selectedElementIndicatorOffsetLeft + "px"}"
         ></div>
         {#each $customFilters as filterName (filterName || {})}
             <span
-                tabindex={$menuVisible || $popupVisible ? "" : "0"}
-                on:click={selectCustomFilter(filterName)}
-                on:keyup={(e) => {
-                    e.key === "Enter" && selectCustomFilter(filterName);
-                }}
-                custom-filter-name={filterName}
-                class={"custom-filter" +
-                    (filterName === $selectedCustomFilter ? " selected" : "")}
+                tabindex="{$menuVisible || $popupVisible ? '' : '0'}"
+                on:click="{selectCustomFilter(filterName)}"
+                on:keyup="{(e) => {
+                    e.key === 'Enter' && selectCustomFilter(filterName);
+                }}"
+                custom-filter-name="{filterName}"
+                class="{'custom-filter' +
+                    (filterName === $selectedCustomFilter ? ' selected' : '')}"
                 >{trimAllEmptyChar(filterName) || ""}
             </span>
         {/each}

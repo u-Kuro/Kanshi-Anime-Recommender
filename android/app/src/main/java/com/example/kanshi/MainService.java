@@ -107,6 +107,14 @@ public class MainService extends Service {
     public void onCreate() {
         weakActivity = new WeakReference<>(MainService.this);
         super.onCreate();
+        MainActivity mainActivity = MainActivity.getInstanceActivity();
+        if (mainActivity!=null) {
+            if (mainActivity.isInApp) {
+                stopForeground(true);
+                stopSelf();
+                return;
+            }
+        }
         // Create a notification channel
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             CharSequence name = "Background Application";
@@ -187,9 +195,9 @@ public class MainService extends Service {
         webView.setWebChromeClient(new WebChromeClient() {
             @Override
             public boolean onConsoleMessage(ConsoleMessage consoleMessage) {
-                String message = consoleMessage.message();
-                Log.d("WebConsole", message);
-                return true;
+            String message = consoleMessage.message();
+            Log.d("WebConsole", message);
+            return true;
             }
         });
 

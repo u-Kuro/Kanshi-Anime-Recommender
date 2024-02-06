@@ -54,6 +54,7 @@
         menuVisible,
         shouldShowLoading,
         tagCategoryInfo,
+        isChangingCategory,
     } from "../../js/globalValues.js";
 
     let Init = true;
@@ -223,6 +224,7 @@
                             $newFinalAnime = {
                                 idx: data.lastShownAnimeListIndex + idx,
                                 finalAnimeList: anime,
+                                category: data?.category,
                             };
                         });
                     } else {
@@ -1794,31 +1796,28 @@
 
     $: customFilterName =
         $selectedCustomFilter || getLocalStorage("selectedCustomFilter");
+
     let previousCustomFilterName;
-    $: {
-        if ($selectedCustomFilter) {
-            if (
-                previousCustomFilterName &&
-                previousCustomFilterName !== $selectedCustomFilter
-            ) {
+    selectedCustomFilter.subscribe((val) => {
+        if (val) {
+            if (previousCustomFilterName && previousCustomFilterName !== val) {
+                $isChangingCategory = val;
                 $loadingFilterOptions = true;
                 let prevFilter =
                     $activeTagFilters?.[previousCustomFilterName]?.[
                         "Algorithm Filter"
                     ] || [];
                 let newFilter =
-                    $activeTagFilters?.[$selectedCustomFilter]?.[
-                        "Algorithm Filter"
-                    ] || [];
+                    $activeTagFilters?.[val]?.["Algorithm Filter"] || [];
                 if (filtersAreEqual(prevFilter, newFilter)) {
                     _loadAnime(false);
                 } else {
                     _processRecommendedAnimeList();
                 }
             }
-            previousCustomFilterName = $selectedCustomFilter;
+            previousCustomFilterName = val;
         }
-    }
+    });
 
     function filtersAreEqual(firstFilter, secondFilter) {
         firstFilter =
@@ -2544,33 +2543,33 @@
 
 <main
     id="main-home"
-    style:--filters-space={$showFilterOptions ? "80px" : ""}
-    style:--active-tag-filter-space={!$loadingFilterOptions &&
+    style:--filters-space="{$showFilterOptions ? "80px" : ""}"
+    style:--active-tag-filter-space="{!$loadingFilterOptions &&
     $showFilterOptions &&
     !$initData
         ? "auto"
-        : ""}
-    style:--custom-filter-settings-space={$showFilterOptions ? "30px" : ""}
-    style:--close-filters-space={$showFilterOptions ? "42px" : ""}
+        : ""}"
+    style:--custom-filter-settings-space="{$showFilterOptions ? "30px" : ""}"
+    style:--close-filters-space="{$showFilterOptions ? "42px" : ""}"
 >
     <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
     <div
         id="custom-filter-wrap"
         class="custom-filter-wrap"
-        tabindex={$menuVisible || $popupVisible || selectedCustomFilterElement
-            ? ""
-            : "0"}
-        style:--editcancel-icon={$showFilterOptions ? "25px" : ""}
-        style:--save-icon={$showFilterOptions &&
+        tabindex="{$menuVisible || $popupVisible || selectedCustomFilterElement
+            ? ''
+            : '0'}"
+        style:--editcancel-icon="{$showFilterOptions ? "25px" : ""}"
+        style:--save-icon="{$showFilterOptions &&
         editCustomFilterName &&
         $selectedCustomFilter &&
         customFilterName &&
         $activeTagFilters &&
         !$activeTagFilters?.[customFilterName]
             ? "25px"
-            : ""}
-        on:keyup={(e) => e.key === "Enter" && handleCustomFilterPopup(e)}
-        on:click={handleCustomFilterPopup}
+            : ""}"
+        on:keyup="{(e) => e.key === 'Enter' && handleCustomFilterPopup(e)}"
+        on:click="{handleCustomFilterPopup}"
     >
         <label class="disable-interaction" for="custom-filter-name">
             Search Title
@@ -2581,22 +2580,22 @@
             type="text"
             autocomplete="off"
             placeholder="Category"
-            style:pointer-events={editCustomFilterName ? "" : "none"}
-            disabled={!editCustomFilterName}
-            bind:value={customFilterName}
-            on:focusin={() => window?.setShouldGoBack?.(false)}
+            style:pointer-events="{editCustomFilterName ? "" : "none"}"
+            disabled="{!editCustomFilterName}"
+            bind:value="{customFilterName}"
+            on:focusin="{() => window?.setShouldGoBack?.(false)}"
         />
         {#if !editCustomFilterName || !$showFilterOptions}
             <div
-                class={"options-wrap " +
-                    (selectedCustomFilterElement ? "" : "display-none hide")}
+                class="{'options-wrap ' +
+                    (selectedCustomFilterElement ? '' : 'display-none hide')}"
                 style:--maxFilterSelectionHeight="{maxFilterSelectionHeight}px"
-                on:touchend|passive={handleTouchCustomFilterPopup}
+                on:touchend|passive="{handleTouchCustomFilterPopup}"
             >
                 {#if $filterOptions}
                     <div
-                        class={"options-wrap-filter-info " +
-                            (selectedCustomFilterElement ? "" : "hide")}
+                        class="{'options-wrap-filter-info ' +
+                            (selectedCustomFilterElement ? '' : 'hide')}"
                     >
                         <div class="header">
                             <div class="filter-title">Category</div>
@@ -2604,37 +2603,37 @@
                             <svg
                                 viewBox="0 0 24 24"
                                 class="closing-x"
-                                tabindex={!$menuVisible &&
+                                tabindex="{!$menuVisible &&
                                 !$popupVisible &&
                                 selectedCustomFilterElement &&
                                 windowWidth <= 425
-                                    ? "0"
-                                    : "-1"}
-                                on:keyup={(e) =>
-                                    e.key === "Enter" &&
-                                    handleCustomFilterPopup(e)}
-                                on:click={handleCustomFilterPopup}
+                                    ? '0'
+                                    : '-1'}"
+                                on:keyup="{(e) =>
+                                    e.key === 'Enter' &&
+                                    handleCustomFilterPopup(e)}"
+                                on:click="{handleCustomFilterPopup}"
                                 ><path
                                     fill="#fff"
                                     d="m19 6-1-1-6 6-6-6-1 1 6 6-6 6 1 1 6-6 6 6 1-1-6-6Z"
-                                /></svg
+                                ></path></svg
                             >
                         </div>
                         <div class="options">
                             {#each $customFilters || [] as filterName (filterName || {})}
                                 <div
                                     class="option"
-                                    on:click={(e) =>
-                                        selectCustomFilter(e, filterName)}
-                                    on:keyup={(e) =>
-                                        e.key === "Enter" &&
-                                        selectCustomFilter(e, filterName)}
+                                    on:click="{(e) =>
+                                        selectCustomFilter(e, filterName)}"
+                                    on:keyup="{(e) =>
+                                        e.key === 'Enter' &&
+                                        selectCustomFilter(e, filterName)}"
                                 >
                                     <h3
-                                        style:color={filterName ===
+                                        style:color="{filterName ===
                                         $selectedCustomFilter
                                             ? "hsl(var(--ac-color))"
-                                            : "inherit"}
+                                            : "inherit"}"
                                     >
                                         {trimAllEmptyChar(filterName) || ""}
                                     </h3>
@@ -2652,13 +2651,13 @@
                     <svg
                         class="save-custom-category-name"
                         title="Save Category Name"
-                        tabindex={!$menuVisible &&
+                        tabindex="{!$menuVisible &&
                         !$popupVisible &&
                         editCustomFilterName
-                            ? "0"
-                            : "-1"}
+                            ? '0'
+                            : '-1'}"
                         viewBox="0 0 448 512"
-                        on:click={() => {
+                        on:click="{() => {
                             if (
                                 !$selectedCustomFilter ||
                                 !customFilterName ||
@@ -2667,9 +2666,9 @@
                             )
                                 return;
                             saveCustomFilterName();
-                        }}
-                        on:keyup={(e) => {
-                            if (e.key !== "Enter") return;
+                        }}"
+                        on:keyup="{(e) => {
+                            if (e.key !== 'Enter') return;
                             if (
                                 !$selectedCustomFilter ||
                                 !customFilterName ||
@@ -2678,54 +2677,54 @@
                             )
                                 return;
                             saveCustomFilterName();
-                        }}
+                        }}"
                     >
                         <!-- xmark and edit -->
                         <path
                             d="M48 96v320c0 9 7 16 16 16h320c9 0 16-7 16-16V171c0-5-2-9-5-12l34-34c12 12 19 29 19 46v245c0 35-29 64-64 64H64c-35 0-64-29-64-64V96c0-35 29-64 64-64h246c17 0 33 7 45 19l74 74-34 34-74-74-1-1v100c0 13-11 24-24 24H104c-13 0-24-11-24-24V80H64c-9 0-16 7-16 16zm80-16v80h144V80H128zm32 240a64 64 0 1 1 128 0 64 64 0 1 1-128 0z"
-                        /></svg
+                        ></path></svg
                     >
                 </div>
             {/if}
             <div class="custom-filter-icon-wrap">
                 <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                 <svg
-                    class={editCustomFilterName
-                        ? "cancel-custom-category-name"
-                        : "edit-custom-category-name"}
-                    tabindex={!$menuVisible &&
+                    class="{editCustomFilterName
+                        ? 'cancel-custom-category-name'
+                        : 'edit-custom-category-name'}"
+                    tabindex="{!$menuVisible &&
                     !$popupVisible &&
                     $showFilterOptions
-                        ? "0"
-                        : "-1"}
-                    viewBox={"0 0" +
-                        (editCustomFilterName ? " 24 24" : " 512 512")}
-                    on:click={async () => {
+                        ? '0'
+                        : '-1'}"
+                    viewBox="{'0 0' +
+                        (editCustomFilterName ? ' 24 24' : ' 512 512')}"
+                    on:click="{async () => {
                         editCustomFilterName = !editCustomFilterName;
                         customFilterName = $selectedCustomFilter;
                         selectedCustomFilterElement = false;
                         await tick();
                         document
-                            ?.getElementById?.("custom-filter-name")
+                            ?.getElementById?.('custom-filter-name')
                             ?.focus?.();
-                    }}
-                    on:keyup={async (e) => {
-                        if (e.key !== "Enter") return;
+                    }}"
+                    on:keyup="{async (e) => {
+                        if (e.key !== 'Enter') return;
                         editCustomFilterName = !editCustomFilterName;
                         customFilterName = $selectedCustomFilter;
                         selectedCustomFilterElement = false;
                         await tick();
                         document
-                            ?.getElementById?.("custom-filter-name")
+                            ?.getElementById?.('custom-filter-name')
                             ?.focus?.();
-                    }}
+                    }}"
                 >
                     <!-- xmark and edit -->
                     <path
-                        d={editCustomFilterName
-                            ? "m19 6-1-1-6 6-6-6-1 1 6 6-6 6 1 1 6-6 6 6 1-1-6-6Z"
-                            : "M472 22a56 56 0 0 0-80 0l-30 30 98 98 30-30c22-22 22-58 0-80l-18-18zM172 242c-6 6-10 13-13 22l-30 88a24 24 0 0 0 31 31l89-30c8-3 15-7 21-13l168-168-98-98-168 168zM96 64c-53 0-96 43-96 96v256c0 53 43 96 96 96h256c53 0 96-43 96-96v-96a32 32 0 1 0-64 0v96c0 18-14 32-32 32H96c-18 0-32-14-32-32V160c0-18 14-32 32-32h96a32 32 0 1 0 0-64H96z"}
-                    /></svg
+                        d="{editCustomFilterName
+                            ? 'm19 6-1-1-6 6-6-6-1 1 6 6-6 6 1 1 6-6 6 6 1-1-6-6Z'
+                            : 'M472 22a56 56 0 0 0-80 0l-30 30 98 98 30-30c22-22 22-58 0-80l-18-18zM172 242c-6 6-10 13-13 22l-30 88a24 24 0 0 0 31 31l89-30c8-3 15-7 21-13l168-168-98-98-168 168zM96 64c-53 0-96 43-96 96v256c0 53 43 96 96 96h256c53 0 96-43 96-96v-96a32 32 0 1 0-64 0v96c0 18-14 32-32 32H96c-18 0-32-14-32-32V160c0-18 14-32 32-32h96a32 32 0 1 0 0-64H96z'}"
+                    ></path></svg
                 >
             </div>
         {/if}
@@ -2733,110 +2732,111 @@
             <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
             <svg
                 class="showFilterOptions"
-                tabindex={$menuVisible || $popupVisible ? "" : "0"}
+                tabindex="{$menuVisible || $popupVisible ? '' : '0'}"
                 viewBox="0 0 512 512"
-                on:click={handleShowFilterOptions}
-                on:keyup={(e) =>
-                    e.key === "Enter" && handleShowFilterOptions(e)}
+                on:click="{handleShowFilterOptions}"
+                on:keyup="{(e) =>
+                    e.key === 'Enter' && handleShowFilterOptions(e)}"
             >
                 <!-- slider -->
                 <path
                     d="M0 416c0 18 14 32 32 32h55a80 80 0 0 0 146 0h247a32 32 0 1 0 0-64H233a80 80 0 0 0-146 0H32c-18 0-32 14-32 32zm128 0a32 32 0 1 1 64 0 32 32 0 1 1-64 0zm192-160a32 32 0 1 1 64 0 32 32 0 1 1-64 0zm32-80c-33 0-61 20-73 48H32a32 32 0 1 0 0 64h247a80 80 0 0 0 146 0h55a32 32 0 1 0 0-64h-55a80 80 0 0 0-73-48zm-160-48a32 32 0 1 1 0-64 32 32 0 1 1 0 64zm73-64a80 80 0 0 0-146 0H32a32 32 0 1 0 0 64h87a80 80 0 0 0 146 0h215a32 32 0 1 0 0-64H265z"
-                /></svg
+                ></path></svg
             >
         </div>
     </div>
     <div
-        class={"custom-filter-settings-wrap" +
-            ($showFilterOptions ? "" : " display-none")}
-        style:--add-icon-size={customFilterName &&
+        class="{'custom-filter-settings-wrap' +
+            ($showFilterOptions ? '' : ' display-none')}"
+        style:--add-icon-size="{customFilterName &&
         $activeTagFilters &&
         !$activeTagFilters?.[customFilterName]
             ? "25px"
-            : ""}
-        style:--remove-icon-size={$customFilters?.length > 1
+            : ""}"
+        style:--remove-icon-size="{$customFilters?.length > 1
             ? recListMAE > 0
                 ? "25px"
                 : "1fr"
-            : ""}
-        style:--mae-size={recListMAE > 0 ? "1fr" : ""}
+            : ""}"
+        style:--mae-size="{recListMAE > 0 ? "1fr" : ""}"
     >
         {#if $filterOptions && !$loadingFilterOptions}
             <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
             <span
                 class="filterType"
-                on:click={handleShowFilterTypes}
-                on:keyup={(e) => e.key === "Enter" && handleShowFilterTypes(e)}
+                on:click="{handleShowFilterTypes}"
+                on:keyup="{(e) =>
+                    e.key === 'Enter' && handleShowFilterTypes(e)}"
             >
                 <h2 class="filterType-dropdown">
                     {selectedFilterSelectionName || ""}
                     <svg
                         viewBox="0 140 320 512"
-                        tabindex={!$menuVisible &&
+                        tabindex="{!$menuVisible &&
                         !$popupVisible &&
                         $showFilterOptions &&
                         !selectedFilterTypeElement
-                            ? "0"
-                            : ""}
+                            ? '0'
+                            : ''}"
                     >
                         <!-- chevron down -->
                         <path
                             d="M183 471a32 32 0 0 1-46 0L9 343c-9-10-12-23-7-35s17-20 30-20h256a32 32 0 0 1 23 55L183 471z"
-                        /></svg
+                        ></path></svg
                     >
                 </h2>
                 <div
-                    class={"options-wrap " +
-                        (selectedFilterTypeElement ? "" : "display-none hide")}
+                    class="{'options-wrap ' +
+                        (selectedFilterTypeElement ? '' : 'display-none hide')}"
                     style:--maxFilterSelectionHeight="{maxFilterSelectionHeight}px"
-                    on:touchend|passive={handleTouchFilterTypes}
+                    on:touchend|passive="{handleTouchFilterTypes}"
                 >
                     {#if $filterOptions}
                         <div
-                            class={"options-wrap-filter-info " +
-                                (selectedFilterTypeElement ? "" : "hide")}
+                            class="{'options-wrap-filter-info ' +
+                                (selectedFilterTypeElement ? '' : 'hide')}"
                         >
                             <div class="header">
                                 <div class="filter-title">Filter</div>
                                 <svg
                                     viewBox="0 0 24 24"
                                     class="closing-x"
-                                    tabindex={!$menuVisible &&
+                                    tabindex="{!$menuVisible &&
                                     !$popupVisible &&
                                     selectedFilterTypeElement &&
                                     windowWidth <= 425
-                                        ? "0"
-                                        : "-1"}
-                                    on:keyup={(e) =>
-                                        e.key === "Enter" &&
-                                        handleShowFilterTypes(e)}
-                                    on:click={handleShowFilterTypes}
+                                        ? '0'
+                                        : '-1'}"
+                                    on:keyup="{(e) =>
+                                        e.key === 'Enter' &&
+                                        handleShowFilterTypes(e)}"
+                                    on:click="{handleShowFilterTypes}"
                                     ><path
                                         fill="#fff"
                                         d="m19 6-1-1-6 6-6-6-1 1 6 6-6 6 1 1 6-6 6 6 1-1-6-6Z"
-                                    /></svg
+                                    ></path></svg
                                 >
                             </div>
                             <div class="options">
                                 {#each $filterOptions?.filterSelection || [] as filterSelection (filterSelection?.filterSelectionName || {})}
                                     <div
                                         class="option"
-                                        on:click={(e) =>
+                                        on:click="{(e) =>
                                             handleFilterTypes(
                                                 e,
                                                 filterSelection?.filterSelectionName,
-                                            )}
-                                        on:keyup={(e) =>
-                                            e.key === "Enter" &&
+                                            )}"
+                                        on:keyup="{(e) =>
+                                            e.key === 'Enter' &&
                                             handleFilterTypes(
                                                 e,
                                                 filterSelection?.filterSelectionName,
-                                            )}
+                                            )}"
                                     >
                                         <h3
-                                            style:color={filterSelection?.isSelected
+                                            style:color="{filterSelection?.isSelected
                                                 ? "hsl(var(--ac-color))"
-                                                : "inherit"}
+                                                : "inherit"}"
                                         >
                                             {filterSelection?.filterSelectionName ||
                                                 ""}
@@ -2849,16 +2849,16 @@
                 </div>
             </span>
         {:else}
-            <div class="skeleton shimmer" />
+            <div class="skeleton shimmer"></div>
         {/if}
         {#if recListMAE > 0}
             <div
-                class={"mean-error" + ($isProcessingList ? " loading" : "")}
-                style:--mean-error-color={recListMAEIncreased === true
+                class="{'mean-error' + ($isProcessingList ? ' loading' : '')}"
+                style:--mean-error-color="{recListMAEIncreased === true
                     ? "hsl(185deg,65%,50%)"
                     : recListMAEIncreased === false
                       ? "hsl(345deg,75%,60%)"
-                      : ""}
+                      : ""}"
             >
                 {(windowWidth > 345
                     ? "Mean Error: "
@@ -2870,32 +2870,32 @@
         <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
         {#if $showFilterOptions && $customFilters?.length > 1}
             <div
-                tabindex={$menuVisible || $popupVisible ? "" : "0"}
+                tabindex="{$menuVisible || $popupVisible ? '' : '0'}"
                 class="remove-custom-category"
                 title="Delete Category"
-                style:visibility={$customFilters?.length > 1 ? "" : "hidden"}
-                on:click={(e) =>
-                    $customFilters?.length > 1 && removeCustomFilter(e)}
-                on:keyup={(e) =>
+                style:visibility="{$customFilters?.length > 1 ? "" : "hidden"}"
+                on:click="{(e) =>
+                    $customFilters?.length > 1 && removeCustomFilter(e)}"
+                on:keyup="{(e) =>
                     $customFilters?.length > 1 &&
-                    e.key === "Enter" &&
-                    removeCustomFilter(e)}
+                    e.key === 'Enter' &&
+                    removeCustomFilter(e)}"
             >
                 <svg class="filterType-wrap-icon" viewBox="0 0 448 512">
                     <!-- minus -->
                     <path
                         d="M432 256c0 18-14 32-32 32H48a32 32 0 1 1 0-64h352c18 0 32 14 32 32z"
-                    />
+                    ></path>
                 </svg>
             </div>
         {/if}
         <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
         {#if $showFilterOptions && customFilterName && $activeTagFilters && !$activeTagFilters?.[customFilterName]}
             <div
-                tabindex={$menuVisible || $popupVisible ? "" : "0"}
+                tabindex="{$menuVisible || $popupVisible ? '' : '0'}"
                 class="add-custom-category"
                 title="Add Custom Category"
-                on:click={(e) => {
+                on:click="{(e) => {
                     if (
                         !customFilterName ||
                         !$activeTagFilters ||
@@ -2903,35 +2903,35 @@
                     )
                         return;
                     addCustomFilter(e);
-                }}
-                on:keyup={(e) => {
+                }}"
+                on:keyup="{(e) => {
                     if (
-                        e.key !== "Enter" ||
+                        e.key !== 'Enter' ||
                         !customFilterName ||
                         !$activeTagFilters ||
                         $activeTagFilters?.[customFilterName]
                     )
                         return;
                     addCustomFilter(e);
-                }}
+                }}"
             >
                 <svg class="filterType-wrap-icon" viewBox="0 0 448 512">
                     <!-- add -->
                     <path
-                        d={"M256 80a32 32 0 1 0-64 0v144H48a32 32 0 1 0 0 64h144v144a32 32 0 1 0 64 0V288h144a32 32 0 1 0 0-64H256V80z"}
-                    />
+                        d="{'M256 80a32 32 0 1 0-64 0v144H48a32 32 0 1 0 0 64h144v144a32 32 0 1 0 64 0V288h144a32 32 0 1 0 0-64H256V80z'}"
+                    ></path>
                 </svg>
             </div>
         {/if}
     </div>
     <div
-        class={"filters" +
-            ($showFilterOptions ? "" : " display-none") +
-            ($hasWheel ? " hasWheel" : "") +
-            (shouldScrollSnap && $android ? " android" : "")}
+        class="{'filters' +
+            ($showFilterOptions ? '' : ' display-none') +
+            ($hasWheel ? ' hasWheel' : '') +
+            (shouldScrollSnap && $android ? ' android' : '')}"
         id="filters"
-        on:wheel={(e) => {
-            horizontalWheel(e, "filters");
+        on:wheel="{(e) => {
+            horizontalWheel(e, 'filters');
             if (isFullViewed) {
                 if (!scrollingToTop && e.deltaY < 0) {
                     scrollingToTop = true;
@@ -2940,20 +2940,20 @@
                     scrollingToTop = false;
                 }
             }
-        }}
-        style:--maxPaddingHeight={selectedFilterElement
+        }}"
+        style:--maxPaddingHeight="{selectedFilterElement
             ? maxFilterSelectionHeight + 65 + "px"
-            : "0"}
+            : "0"}"
     >
         {#if $filterOptions}
             {#each $filterOptions?.filterSelection || [] as filterSelection, filSelIdx (filterSelection.filterSelectionName || {})}
                 {#each filterSelection.filters.Dropdown || [] as Dropdown, dropdownIdx (filterSelection.filterSelectionName + Dropdown.filName || {})}
                     <div
-                        class={"filter-select " +
+                        class="{'filter-select ' +
                             (filterSelection.isSelected &&
                             !$loadingFilterOptions
-                                ? ""
-                                : "display-none")}
+                                ? ''
+                                : 'display-none')}"
                     >
                         <div class="filter-name">
                             <h2>{Dropdown.filName || ""}</h2>
@@ -2961,97 +2961,97 @@
                         <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                         <div
                             class="select"
-                            tabindex={!$menuVisible &&
+                            tabindex="{!$menuVisible &&
                             !$popupVisible &&
                             $showFilterOptions &&
                             windowWidth <= 425 &&
                             filterSelection.isSelected
-                                ? "0"
-                                : "-1"}
-                            on:keyup={(e) =>
-                                (e.key === "Enter" ||
-                                    e.key === "ArrowDown" ||
-                                    e.key === "ArrowUp") &&
-                                filterSelect(e, dropdownIdx)}
-                            on:click={(e) => {
+                                ? '0'
+                                : '-1'}"
+                            on:keyup="{(e) =>
+                                (e.key === 'Enter' ||
+                                    e.key === 'ArrowDown' ||
+                                    e.key === 'ArrowUp') &&
+                                filterSelect(e, dropdownIdx)}"
+                            on:click="{(e) => {
                                 filterSelect(e, dropdownIdx);
-                            }}
+                            }}"
                         >
                             <div class="value-wrap">
                                 <label
                                     class="disable-interaction"
-                                    for={filterSelection.filterSelectionName +
-                                        Dropdown.filName}
+                                    for="{filterSelection.filterSelectionName +
+                                        Dropdown.filName}"
                                 >
                                     {filterSelection.filterSelectionName +
                                         " " +
                                         Dropdown.filName}
                                 </label>
                                 <input
-                                    tabindex={!$menuVisible &&
+                                    tabindex="{!$menuVisible &&
                                     !$popupVisible &&
                                     $showFilterOptions
-                                        ? "0"
-                                        : "-1"}
-                                    id={filterSelection.filterSelectionName +
-                                        Dropdown.filName}
+                                        ? '0'
+                                        : '-1'}"
+                                    id="{filterSelection.filterSelectionName +
+                                        Dropdown.filName}"
                                     placeholder="Any"
                                     type="search"
                                     enterkeyhint="search"
                                     autocomplete="off"
-                                    class={"value-input"}
-                                    bind:value={$filterOptions.filterSelection[
+                                    class="{'value-input'}"
+                                    bind:value="{$filterOptions.filterSelection[
                                         filSelIdx
-                                    ].filters.Dropdown[dropdownIdx].optKeyword}
-                                    disabled={!$showFilterOptions ||
+                                    ].filters.Dropdown[dropdownIdx].optKeyword}"
+                                    disabled="{!$showFilterOptions ||
                                         windowWidth <= 425 ||
-                                        !filterSelection.isSelected}
-                                    on:focusin={() =>
-                                        window?.setShouldGoBack?.(false)}
+                                        !filterSelection.isSelected}"
+                                    on:focusin="{() =>
+                                        window?.setShouldGoBack?.(false)}"
                                 />
                             </div>
                             {#if Dropdown.selected && Dropdown.options.length && !Init}
                                 <svg
                                     class="angle-up"
                                     viewBox="0 0 512 512"
-                                    on:keyup={(e) =>
-                                        e.key === "Enter" &&
-                                        closeFilterSelect(dropdownIdx)}
-                                    on:click={closeFilterSelect(dropdownIdx)}
+                                    on:keyup="{(e) =>
+                                        e.key === 'Enter' &&
+                                        closeFilterSelect(dropdownIdx)}"
+                                    on:click="{closeFilterSelect(dropdownIdx)}"
                                 >
                                     <!-- angle-up -->
                                     <path
                                         d="M201 137c13-12 33-12 46 0l160 160a32 32 0 0 1-46 46L224 205 87 343a32 32 0 0 1-46-46l160-160z"
-                                    />
+                                    ></path>
                                 </svg>
                             {:else}
                                 <svg class="angle-down" viewBox="0 0 512 512">
                                     <!-- angle-down -->
                                     <path
                                         d="M201 343c13 12 33 12 46 0l160-160a32 32 0 0 0-46-46L224 275 87 137a32 32 0 0 0-46 46l160 160z"
-                                    />
+                                    ></path>
                                 </svg>
                             {/if}
                         </div>
                         <div
-                            class={"options-wrap " +
+                            class="{'options-wrap ' +
                                 (Dropdown.options.length &&
                                 Dropdown.selected === true &&
                                 !Init
-                                    ? ""
-                                    : "display-none hide")}
+                                    ? ''
+                                    : 'display-none hide')}"
                             style:--maxFilterSelectionHeight="{maxFilterSelectionHeight}px"
-                            on:wheel|stopPropagation={() => {}}
-                            on:touchend|passive={(e) =>
-                                handleTouchFilterSelect(e, dropdownIdx)}
+                            on:wheel|stopPropagation="{() => {}}"
+                            on:touchend|passive="{(e) =>
+                                handleTouchFilterSelect(e, dropdownIdx)}"
                         >
                             <div
-                                class={"options-wrap-filter-info " +
+                                class="{'options-wrap-filter-info ' +
                                     (Dropdown.options.length &&
                                     Dropdown.selected === true &&
                                     !Init
-                                        ? ""
-                                        : "hide")}
+                                        ? ''
+                                        : 'hide')}"
                             >
                                 <div class="header">
                                     <div class="filter-title">
@@ -3061,29 +3061,29 @@
                                     <svg
                                         viewBox="0 0 24 24"
                                         class="closing-x"
-                                        tabindex={!$menuVisible &&
+                                        tabindex="{!$menuVisible &&
                                         !$popupVisible &&
                                         $showFilterOptions &&
                                         Dropdown.selected
-                                            ? "0"
-                                            : "-1"}
-                                        on:keyup={(e) =>
-                                            e.key === "Enter" &&
-                                            closeFilterSelect(dropdownIdx)}
-                                        on:click={closeFilterSelect(
+                                            ? '0'
+                                            : '-1'}"
+                                        on:keyup="{(e) =>
+                                            e.key === 'Enter' &&
+                                            closeFilterSelect(dropdownIdx)}"
+                                        on:click="{closeFilterSelect(
                                             dropdownIdx,
-                                        )}
+                                        )}"
                                         ><path
                                             fill="#fff"
                                             d="m19 6-1-1-6 6-6-6-1 1 6 6-6 6 1 1 6-6 6 6 1-1-6-6Z"
-                                        /></svg
+                                        ></path></svg
                                     >
                                 </div>
                                 <label
                                     class="disable-interaction"
-                                    for={"Search " +
+                                    for="{'Search ' +
                                         (filterSelection.filterSelectionName +
-                                            Dropdown.filName)}
+                                            Dropdown.filName)}"
                                 >
                                     {"Search " +
                                         filterSelection.filterSelectionName +
@@ -3091,30 +3091,30 @@
                                         Dropdown.filName}
                                 </label>
                                 <input
-                                    tabindex={!$menuVisible &&
+                                    tabindex="{!$menuVisible &&
                                     !$popupVisible &&
                                     $showFilterOptions
-                                        ? "0"
-                                        : "-1"}
-                                    id={"Search " +
+                                        ? '0'
+                                        : '-1'}"
+                                    id="{'Search ' +
                                         (filterSelection.filterSelectionName +
-                                            Dropdown.filName)}
+                                            Dropdown.filName)}"
                                     placeholder="Any"
                                     type="search"
                                     enterkeyhint="search"
                                     autocomplete="off"
-                                    bind:value={$filterOptions.filterSelection[
+                                    bind:value="{$filterOptions.filterSelection[
                                         filSelIdx
-                                    ].filters.Dropdown[dropdownIdx].optKeyword}
-                                    disabled={!$showFilterOptions ||
+                                    ].filters.Dropdown[dropdownIdx].optKeyword}"
+                                    disabled="{!$showFilterOptions ||
                                         !filterSelection.isSelected ||
-                                        !Dropdown.selected}
-                                    on:focusin={() =>
-                                        window?.setShouldGoBack?.(false)}
+                                        !Dropdown.selected}"
+                                    on:focusin="{() =>
+                                        window?.setShouldGoBack?.(false)}"
                                 />
                                 <div
                                     class="options"
-                                    on:wheel|stopPropagation={() => {}}
+                                    on:wheel|stopPropagation="{() => {}}"
                                 >
                                     {#if Dropdown.selected}
                                         {#await filterDropdownOptionsLoaded ? (Dropdown?.optKeyword === "" ? Dropdown?.options?.map?.( (option, idx) => {
@@ -3134,39 +3134,39 @@
                                                 {#each DropdownOptions || [] as option, optionIdx (filterSelection.filterSelectionName + Dropdown.filName + option.optionName || {})}
                                                     {#await filterDropdownOptionsLoaded ? 1 : new Promise( (resolve) => setTimeout(resolve, Math.min(optionIdx * 16, 2000000000)), )}{""}{:then}
                                                         <div
-                                                            title={getTagFilterInfoText(
+                                                            title="{getTagFilterInfoText(
                                                                 Dropdown.filName ===
-                                                                    "tag category"
+                                                                    'tag category'
                                                                     ? {
                                                                           category:
                                                                               option?.optionName,
                                                                       }
                                                                     : Dropdown.filName ===
-                                                                        "tag"
+                                                                        'tag'
                                                                       ? {
                                                                             tag: option?.optionName,
                                                                         }
                                                                       : {},
                                                                 Dropdown.filName ===
-                                                                    "tag category"
-                                                                    ? "all tags"
+                                                                    'tag category'
+                                                                    ? 'all tags'
                                                                     : Dropdown.filName ===
-                                                                        "tag"
-                                                                      ? "category and description"
-                                                                      : "",
-                                                            ) || ""}
+                                                                        'tag'
+                                                                      ? 'category and description'
+                                                                      : '',
+                                                            ) || ''}"
                                                             class="option"
-                                                            on:click={handleFilterSelectOptionChange(
+                                                            on:click="{handleFilterSelectOptionChange(
                                                                 option.optionName,
                                                                 Dropdown.filName,
                                                                 option.filteredOptionIdx,
                                                                 dropdownIdx,
                                                                 Dropdown.changeType,
                                                                 filterSelection.filterSelectionName,
-                                                            )}
-                                                            on:keyup={(e) =>
+                                                            )}"
+                                                            on:keyup="{(e) =>
                                                                 e.key ===
-                                                                    "Enter" &&
+                                                                    'Enter' &&
                                                                 handleFilterSelectOptionChange(
                                                                     option.optionName,
                                                                     Dropdown.filName,
@@ -3174,7 +3174,7 @@
                                                                     dropdownIdx,
                                                                     Dropdown.changeType,
                                                                     filterSelection.filterSelectionName,
-                                                                )}
+                                                                )}"
                                                         >
                                                             <h3>
                                                                 {option.optionName ||
@@ -3184,36 +3184,36 @@
                                                                 <svg
                                                                     class="item-info"
                                                                     viewBox="0 0 512 512"
-                                                                    style:--optionColor={option.selected ===
+                                                                    style:--optionColor="{option.selected ===
                                                                     "included"
                                                                         ? // green
                                                                           "#5f9ea0"
                                                                         : // red
-                                                                          "#e85d75"}
+                                                                          "#e85d75"}"
                                                                 >
                                                                     <path
                                                                         class="item-info-path"
-                                                                        d={option.selected ===
-                                                                            "excluded" ||
+                                                                        d="{option.selected ===
+                                                                            'excluded' ||
                                                                         filterSelection.filterSelectionName ===
-                                                                            "Content Caution"
+                                                                            'Content Caution'
                                                                             ? // circle-xmark
-                                                                              "M256 48a208 208 0 1 1 0 416 208 208 0 1 1 0-416zm0 464a256 256 0 1 0 0-512 256 256 0 1 0 0 512zm-81-337c-9 9-9 25 0 34l47 47-47 47c-9 9-9 24 0 34s25 9 34 0l47-47 47 47c9 9 24 9 34 0s9-25 0-34l-47-47 47-47c9-10 9-25 0-34s-25-9-34 0l-47 47-47-47c-10-9-25-9-34 0z"
+                                                                              'M256 48a208 208 0 1 1 0 416 208 208 0 1 1 0-416zm0 464a256 256 0 1 0 0-512 256 256 0 1 0 0 512zm-81-337c-9 9-9 25 0 34l47 47-47 47c-9 9-9 24 0 34s25 9 34 0l47-47 47 47c9 9 24 9 34 0s9-25 0-34l-47-47 47-47c9-10 9-25 0-34s-25-9-34 0l-47 47-47-47c-10-9-25-9-34 0z'
                                                                             : // circle-check
-                                                                              "M256 48a208 208 0 1 1 0 416 208 208 0 1 1 0-416zm0 464a256 256 0 1 0 0-512 256 256 0 1 0 0 512zm113-303c9-9 9-25 0-34s-25-9-34 0L224 286l-47-47c-9-9-24-9-34 0s-9 25 0 34l64 64c10 9 25 9 34 0l128-128z"}
-                                                                    />
+                                                                              'M256 48a208 208 0 1 1 0 416 208 208 0 1 1 0-416zm0 464a256 256 0 1 0 0-512 256 256 0 1 0 0 512zm113-303c9-9 9-25 0-34s-25-9-34 0L224 286l-47-47c-9-9-24-9-34 0s-9 25 0 34l64 64c10 9 25 9 34 0l128-128z'}"
+                                                                    ></path>
                                                                 </svg>
                                                             {/if}
                                                             {#if typeof window?.showFullScreenInfo === "function" && ((Dropdown?.filName === "tag" && getTagFilterInfoText({ tag: option?.optionName }, "category and description")) || (Dropdown.filName === "tag category" && !jsonIsEmpty($tagCategoryInfo?.[option?.optionName])))}
                                                                 <svg
                                                                     class="extra-item-info"
                                                                     viewBox="0 0 512 512"
-                                                                    on:click|stopPropagation={() => {
+                                                                    on:click|stopPropagation="{() => {
                                                                         let htmlToShow =
-                                                                            "";
+                                                                            '';
                                                                         if (
                                                                             Dropdown.filName ===
-                                                                            "tag"
+                                                                            'tag'
                                                                         ) {
                                                                             htmlToShow =
                                                                                 getTagInfoHTML(
@@ -3221,7 +3221,7 @@
                                                                                 );
                                                                         } else if (
                                                                             Dropdown.filName ===
-                                                                            "tag category"
+                                                                            'tag category'
                                                                         ) {
                                                                             htmlToShow =
                                                                                 getTagCategoryInfoHTML(
@@ -3231,19 +3231,19 @@
                                                                         window?.showFullScreenInfo?.(
                                                                             htmlToShow,
                                                                         );
-                                                                    }}
-                                                                    on:keyup|stopPropagation={(
+                                                                    }}"
+                                                                    on:keyup|stopPropagation="{(
                                                                         e,
                                                                     ) => {
                                                                         if (
                                                                             e.key ===
-                                                                            "Enter"
+                                                                            'Enter'
                                                                         ) {
                                                                             let htmlToShow =
-                                                                                "";
+                                                                                '';
                                                                             if (
                                                                                 Dropdown.filName ===
-                                                                                "tag"
+                                                                                'tag'
                                                                             ) {
                                                                                 htmlToShow =
                                                                                     getTagInfoHTML(
@@ -3251,7 +3251,7 @@
                                                                                     );
                                                                             } else if (
                                                                                 Dropdown.filName ===
-                                                                                "tag category"
+                                                                                'tag category'
                                                                             ) {
                                                                                 htmlToShow =
                                                                                     getTagCategoryInfoHTML(
@@ -3262,11 +3262,12 @@
                                                                                 htmlToShow,
                                                                             );
                                                                         }
-                                                                    }}
+                                                                    }}"
                                                                     ><path
                                                                         class="item-info-path"
                                                                         d="M256 512a256 256 0 1 0 0-512 256 256 0 1 0 0 512zm-40-176h24v-64h-24a24 24 0 1 1 0-48h48c13 0 24 11 24 24v88h8a24 24 0 1 1 0 48h-80a24 24 0 1 1 0-48zm40-208a32 32 0 1 1 0 64 32 32 0 1 1 0-64z"
-                                                                    /></svg
+
+                                                                    ></path></svg
                                                                 >
                                                             {/if}
                                                         </div>
@@ -3287,44 +3288,44 @@
                 {#each filterSelection.filters.Checkbox || [] as Checkbox, checkboxIdx (filterSelection.filterSelectionName + Checkbox.filName || {})}
                     {#if filterSelection.isSelected}
                         <div
-                            class={"filter-checkbox" +
-                                ($loadingFilterOptions ? " display-none" : "")}
+                            class="{'filter-checkbox' +
+                                ($loadingFilterOptions ? ' display-none' : '')}"
                         >
-                            <div style:visibility="none" />
+                            <div style:visibility="none"></div>
                             <div
                                 class="checkbox-wrap"
-                                on:click={(e) =>
+                                on:click="{(e) =>
                                     handleCheckboxChange(
                                         e,
                                         Checkbox.filName,
                                         checkboxIdx,
                                         filterSelection.filterSelectionName,
-                                    )}
-                                on:keyup={(e) =>
-                                    e.key === "Enter" &&
+                                    )}"
+                                on:keyup="{(e) =>
+                                    e.key === 'Enter' &&
                                     handleCheckboxChange(
                                         e,
                                         Checkbox.filName,
                                         checkboxIdx,
                                         filterSelection.filterSelectionName,
-                                    )}
+                                    )}"
                             >
                                 <label
                                     class="disable-interaction"
-                                    for={"Checkbox: " + Checkbox.filName}
+                                    for="{'Checkbox: ' + Checkbox.filName}"
                                 >
                                     {Checkbox.filName}
                                 </label>
                                 <input
-                                    tabindex={!$menuVisible &&
+                                    tabindex="{!$menuVisible &&
                                     !$popupVisible &&
                                     $showFilterOptions
-                                        ? "0"
-                                        : "-1"}
-                                    id={"Checkbox: " + Checkbox.filName}
+                                        ? '0'
+                                        : '-1'}"
+                                    id="{'Checkbox: ' + Checkbox.filName}"
                                     type="checkbox"
                                     class="checkbox"
-                                    on:change={async (e) => {
+                                    on:change="{async (e) => {
                                         if (
                                             !$filterOptions ||
                                             !$activeTagFilters ||
@@ -3339,9 +3340,9 @@
                                                 filterSelection.filterSelectionName,
                                             );
                                         }
-                                    }}
-                                    bind:checked={Checkbox.isSelected}
-                                    disabled={!$showFilterOptions}
+                                    }}"
+                                    bind:checked="{Checkbox.isSelected}"
+                                    disabled="{!$showFilterOptions}"
                                 />
                                 <div class="checkbox-label">
                                     {Checkbox.filName || ""}
@@ -3353,11 +3354,11 @@
                 {#each filterSelection.filters["Input Number"] || [] as inputNum, inputNumIdx (filterSelection.filterSelectionName + inputNum.filName || {})}
                     {#if filterSelection.isSelected}
                         <div
-                            class={"filter-input-number" +
-                                ($loadingFilterOptions ? " display-none" : "")}
-                            style:display={filterSelection.isSelected
+                            class="{'filter-input-number' +
+                                ($loadingFilterOptions ? ' display-none' : '')}"
+                            style:display="{filterSelection.isSelected
                                 ? ""
-                                : "none"}
+                                : "none"}"
                         >
                             <div class="filter-input-number-name">
                                 <h2>{inputNum.filName || ""}</h2>
@@ -3365,39 +3366,39 @@
                             <div class="value-input-number-wrap">
                                 <label
                                     class="disable-interaction"
-                                    for={"Number Filter: " + inputNum.filName}
+                                    for="{'Number Filter: ' + inputNum.filName}"
                                 >
                                     {"Number Filter: " + inputNum.filName}
                                 </label>
                                 <input
-                                    tabindex={!$menuVisible &&
+                                    tabindex="{!$menuVisible &&
                                     !$popupVisible &&
                                     $showFilterOptions
-                                        ? "0"
-                                        : "-1"}
-                                    id={"Number Filter: " + inputNum.filName}
+                                        ? '0'
+                                        : '-1'}"
+                                    id="{'Number Filter: ' + inputNum.filName}"
                                     class="value-input-number"
                                     type="text"
-                                    placeholder={inputNum.filName ===
-                                    "scoring system"
-                                        ? "Default: User Scoring"
+                                    placeholder="{inputNum.filName ===
+                                    'scoring system'
+                                        ? 'Default: User Scoring'
                                         : (inputNum.filName ===
-                                                "average score" ||
+                                                'average score' ||
                                                 inputNum.filName ===
-                                                    "min average score") &&
+                                                    'min average score') &&
                                             typeof meanAverageScore ===
-                                                "number" &&
+                                                'number' &&
                                             meanAverageScore > 0
-                                          ? "Average: " +
+                                          ? 'Average: ' +
                                             formatNumber(meanAverageScore)
                                           : (inputNum.filName ===
-                                                  "popularity" ||
+                                                  'popularity' ||
                                                   inputNum.filName ===
-                                                      "min popularity") &&
+                                                      'min popularity') &&
                                               typeof meanPopularity ===
-                                                  "number" &&
+                                                  'number' &&
                                               meanPopularity > 0
-                                            ? "Average: " +
+                                            ? 'Average: ' +
                                               formatNumber(
                                                   meanPopularity,
                                                   meanPopularity >= 1000
@@ -3405,15 +3406,15 @@
                                                       : 0,
                                               )
                                             : inputNum.defaultValue !== null
-                                              ? "Default: " +
+                                              ? 'Default: ' +
                                                 inputNum.defaultValue
                                               : conditionalInputNumberList.includes(
                                                       inputNum.filName,
                                                   )
-                                                ? ">123 or 123"
-                                                : "123"}
-                                    value={inputNum.numberValue || ""}
-                                    on:input={(e) =>
+                                                ? '>123 or 123'
+                                                : '123'}"
+                                    value="{inputNum.numberValue || ''}"
+                                    on:input="{(e) =>
                                         handleInputNumber(
                                             e,
                                             e.target.value,
@@ -3423,10 +3424,10 @@
                                             inputNum.minValue,
                                             filterSelection.filterSelectionName,
                                             inputNum.defaultValue,
-                                        )}
-                                    disabled={!$showFilterOptions}
-                                    on:focusin={() =>
-                                        window?.setShouldGoBack?.(false)}
+                                        )}"
+                                    disabled="{!$showFilterOptions}"
+                                    on:focusin="{() =>
+                                        window?.setShouldGoBack?.(false)}"
                                 />
                             </div>
                         </div>
@@ -3437,8 +3438,8 @@
         {#if !$filterOptions || $loadingFilterOptions}
             {#each Array(10) as _}
                 <div class="filter-select">
-                    <div class="filter-name skeleton shimmer" />
-                    <div class="select skeleton shimmer" />
+                    <div class="filter-name skeleton shimmer"></div>
+                    <div class="select skeleton shimmer"></div>
                 </div>
             {/each}
         {/if}
@@ -3446,43 +3447,43 @@
     <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
     <div
         id="activeFilters"
-        class={"activeFilters" +
+        class="{'activeFilters' +
             (!$loadingFilterOptions && $showFilterOptions && !$initData
-                ? ""
-                : " display-none")}
+                ? ''
+                : ' display-none')}"
     >
         <div id="tagFilters" class="tagFilters">
             <div
-                tabindex={!$menuVisible && !$popupVisible && $showFilterOptions
-                    ? "0"
-                    : "-1"}
+                tabindex="{!$menuVisible && !$popupVisible && $showFilterOptions
+                    ? '0'
+                    : '-1'}"
                 class="empty-tagFilter"
                 title="Remove Filters"
-                on:click={removeAllActiveTag}
-                on:keyup={(e) => e.key === "Enter" && removeAllActiveTag(e)}
+                on:click="{removeAllActiveTag}"
+                on:keyup="{(e) => e.key === 'Enter' && removeAllActiveTag(e)}"
             >
                 <!-- Ban -->
                 <svg viewBox="0 0 512 512">
                     <path
                         d="M367 413 100 145a192 192 0 0 0 268 268zm45-46A192 192 0 0 0 145 99l269 268zM1 256a256 256 0 1 1 512 0 256 256 0 1 1-512 0z"
-                    />
+                    ></path>
                 </svg>
             </div>
             {#each activeTagFiltersArrays || [] as activeTagFiltersArray (activeTagFiltersArray?.optionName + activeTagFiltersArray?.optionIdx + (activeTagFiltersArray?.optionType ?? "") || {})}
                 <div
                     class="activeTagFilter"
-                    tabindex={!$menuVisible &&
+                    tabindex="{!$menuVisible &&
                     !$popupVisible &&
                     $showFilterOptions
-                        ? "0"
-                        : "-1"}
-                    style:--activeTagFilterColor={activeTagFiltersArray?.selected ===
+                        ? '0'
+                        : '-1'}"
+                    style:--activeTagFilterColor="{activeTagFiltersArray?.selected ===
                     "included"
                         ? "hsl(185deg, 65%, 50%)"
                         : activeTagFiltersArray?.selected === "excluded"
                           ? "hsl(345deg, 75%, 60%)"
-                          : "hsl(0deg, 0%, 50%)"}
-                    on:click={(e) =>
+                          : "hsl(0deg, 0%, 50%)"}"
+                    on:click="{(e) =>
                         changeActiveSelect(
                             e,
                             activeTagFiltersArray?.optionIdx,
@@ -3492,9 +3493,9 @@
                             activeTagFiltersArray?.changeType,
                             activeTagFiltersArray?.optionType,
                             activeTagFiltersArray?.optionValue,
-                        )}
-                    on:keyup={(e) =>
-                        e.key === "Enter" &&
+                        )}"
+                    on:keyup="{(e) =>
+                        e.key === 'Enter' &&
                         changeActiveSelect(
                             e,
                             activeTagFiltersArray?.optionIdx,
@@ -3504,7 +3505,7 @@
                             activeTagFiltersArray?.changeType,
                             activeTagFiltersArray?.optionType,
                             activeTagFiltersArray?.optionValue,
-                        )}
+                        )}"
                 >
                     <div class="activeFilter">
                         {#if activeTagFiltersArray?.filterType === "input number"}
@@ -3527,12 +3528,12 @@
                     <svg
                         class="removeActiveTag"
                         viewBox="0 0 24 24"
-                        tabindex={!$menuVisible &&
+                        tabindex="{!$menuVisible &&
                         !$popupVisible &&
                         $showFilterOptions
-                            ? "0"
-                            : "-1"}
-                        on:click|preventDefault={(e) =>
+                            ? '0'
+                            : '-1'}"
+                        on:click|preventDefault="{(e) =>
                             removeActiveTag(
                                 e,
                                 activeTagFiltersArray?.optionIdx,
@@ -3540,9 +3541,9 @@
                                 activeTagFiltersArray?.filterType,
                                 activeTagFiltersArray?.categIdx,
                                 activeTagFiltersArray?.optionType,
-                            )}
-                        on:keyup={(e) =>
-                            e.key === "Enter" &&
+                            )}"
+                        on:keyup="{(e) =>
+                            e.key === 'Enter' &&
                             removeActiveTag(
                                 e,
                                 activeTagFiltersArray?.optionIdx,
@@ -3550,11 +3551,11 @@
                                 activeTagFiltersArray?.filterType,
                                 activeTagFiltersArray?.categIdx,
                                 activeTagFiltersArray?.optionType,
-                            )}
+                            )}"
                     >
                         <path
                             d="m19 6-1-1-6 6-6-6-1 1 6 6-6 6 1 1 6-6 6 6 1-1-6-6Z"
-                        />
+                        ></path>
                     </svg>
                 </div>
             {/each}
@@ -3562,12 +3563,12 @@
     </div>
     <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
     <div
-        class={"close-filters" + ($showFilterOptions ? "" : " display-none")}
-        on:click={handleShowFilterOptions}
-        on:keyup={(e) => e.key === "Enter" && handleShowFilterOptions(e)}
-        tabindex={!$menuVisible && !$popupVisible && $showFilterOptions
-            ? "0"
-            : "-1"}
+        class="{'close-filters' + ($showFilterOptions ? '' : ' display-none')}"
+        on:click="{handleShowFilterOptions}"
+        on:keyup="{(e) => e.key === 'Enter' && handleShowFilterOptions(e)}"
+        tabindex="{!$menuVisible && !$popupVisible && $showFilterOptions
+            ? '0'
+            : '-1'}"
     >
         <!-- Angle up -->
         <svg viewBox="0 0 512 512"
@@ -3577,16 +3578,19 @@
         >
     </div>
     <div id="home-status" class="home-status">
-        <span out:fade={{ duration: 200, easing: sineOut }} class="data-status">
+        <span
+            out:fade="{{ duration: 200, easing: sineOut }}"
+            class="data-status"
+        >
             <h2
-                on:click={(e) => {
-                    $dataStatus = null
+                on:click="{(e) => {
+                    $dataStatus = null;
                     getExtraInfo();
-                }}
-                on:keyup={() => {}}
-                class={(!$dataStatus || !$showStatus) && $loadingDataStatus
-                    ? " loading"
-                    : ""}
+                }}"
+                on:keyup="{() => {}}"
+                class="{(!$dataStatus || !$showStatus) && $loadingDataStatus
+                    ? ' loading'
+                    : ''}"
             >
                 {#if $dataStatus && $showStatus}
                     {$dataStatus}
@@ -3607,73 +3611,73 @@
             enterkeyhint="search"
             autocomplete="off"
             placeholder="Search"
-            tabindex={$menuVisible || $popupVisible ? "-1" : "0"}
-            bind:value={$searchedAnimeKeyword}
-            on:focusin={() => window?.setShouldGoBack?.(false)}
+            tabindex="{$menuVisible || $popupVisible ? '-1' : '0'}"
+            bind:value="{$searchedAnimeKeyword}"
+            on:focusin="{() => window?.setShouldGoBack?.(false)}"
         />
     </div>
 
     <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
     <div class="last-filter-option">
         <div
-            tabindex={$menuVisible || $popupVisible ? "" : "0"}
+            tabindex="{$menuVisible || $popupVisible ? '' : '0'}"
             class="changeGridView"
-            on:click={handleGridView}
-            on:keyup={(e) => e.key === "Enter" && handleGridView()}
+            on:click="{handleGridView}"
+            on:keyup="{(e) => e.key === 'Enter' && handleGridView()}"
         >
-            <svg viewBox={`0 0 ${isFullViewed ? "312" : "512"} 512`}>
+            <svg viewBox="{`0 0 ${isFullViewed ? '312' : '512'} 512`}">
                 <path
-                    d={isFullViewed
+                    d="{isFullViewed
                         ? // arrows-up-down
-                          "M183 9a32 32 0 0 0-46 0l-96 96a32 32 0 0 0 46 46l41-42v294l-41-42a32 32 0 0 0-46 46l96 96c13 12 33 12 46 0l96-96a32 32 0 0 0-46-46l-41 42V109l41 42a32 32 0 0 0 46-46L183 9z"
+                          'M183 9a32 32 0 0 0-46 0l-96 96a32 32 0 0 0 46 46l41-42v294l-41-42a32 32 0 0 0-46 46l96 96c13 12 33 12 46 0l96-96a32 32 0 0 0-46-46l-41 42V109l41 42a32 32 0 0 0 46-46L183 9z'
                         : // arrows-left-right
-                          "m407 375 96-96c12-13 12-33 0-46l-96-96a32 32 0 0 0-46 46l42 41H109l42-41a32 32 0 0 0-46-46L9 233a32 32 0 0 0 0 46l96 96a32 32 0 0 0 46-46l-42-41h294l-42 41a32 32 0 0 0 46 46z"}
-                />
+                          'm407 375 96-96c12-13 12-33 0-46l-96-96a32 32 0 0 0-46 46l42 41H109l42-41a32 32 0 0 0-46-46L9 233a32 32 0 0 0 0 46l96 96a32 32 0 0 0 46-46l-42-41h294l-42 41a32 32 0 0 0 46 46z'}"
+                ></path>
             </svg>
         </div>
         {#if $filterOptions?.sortFilter}
             <div class="sortFilter">
                 <svg
-                    viewBox={`0 ${
-                        selectedSortType === "asc" ? "-" : ""
-                    }140 320 512`}
-                    on:click={changeSortType}
-                    on:keyup={(e) => e.key === "Enter" && changeSortType(e)}
-                    tabindex={$menuVisible ||
+                    viewBox="{`0 ${
+                        selectedSortType === 'asc' ? '-' : ''
+                    }140 320 512`}"
+                    on:click="{changeSortType}"
+                    on:keyup="{(e) => e.key === 'Enter' && changeSortType(e)}"
+                    tabindex="{$menuVisible ||
                     $popupVisible ||
                     selectedSortElement
-                        ? ""
-                        : "0"}
+                        ? ''
+                        : '0'}"
                 >
                     <path
-                        d={// sortdown
-                        selectedSortType === "asc"
-                            ? "M183 41a32 32 0 0 0-46 0L9 169c-9 10-12 23-7 35s17 20 30 20h256a32 32 0 0 0 23-55L183 41z"
+                        d="{// sortdown
+                        selectedSortType === 'asc'
+                            ? 'M183 41a32 32 0 0 0-46 0L9 169c-9 10-12 23-7 35s17 20 30 20h256a32 32 0 0 0 23-55L183 41z'
                             : // sort up
-                              "M183 471a32 32 0 0 1-46 0L9 343c-9-10-12-23-7-35s17-20 30-20h256a32 32 0 0 1 23 55L183 471z"}
-                    />
+                              'M183 471a32 32 0 0 1-46 0L9 343c-9-10-12-23-7-35s17-20 30-20h256a32 32 0 0 1 23 55L183 471z'}"
+                    ></path>
                 </svg>
                 <h2
-                    tabindex={$menuVisible ||
+                    tabindex="{$menuVisible ||
                     $popupVisible ||
                     selectedSortElement
-                        ? ""
-                        : "0"}
-                    on:click={handleSortFilterPopup}
-                    on:keyup={(e) =>
-                        e.key === "Enter" && handleSortFilterPopup(e)}
+                        ? ''
+                        : '0'}"
+                    on:click="{handleSortFilterPopup}"
+                    on:keyup="{(e) =>
+                        e.key === 'Enter' && handleSortFilterPopup(e)}"
                 >
                     {selectedSortName || ""}
                 </h2>
                 <div
-                    class={"options-wrap " +
-                        (selectedSortElement ? "" : "display-none hide")}
+                    class="{'options-wrap ' +
+                        (selectedSortElement ? '' : 'display-none hide')}"
                     style:--maxFilterSelectionHeight="{maxFilterSelectionHeight}px"
-                    on:touchend|passive={handleTouchSortFilterPopup}
+                    on:touchend|passive="{handleTouchSortFilterPopup}"
                 >
                     <div
-                        class={"options-wrap-filter-info " +
-                            (selectedSortElement ? "" : "hide")}
+                        class="{'options-wrap-filter-info ' +
+                            (selectedSortElement ? '' : 'hide')}"
                     >
                         <div class="header">
                             <div class="filter-title">Sort By</div>
@@ -3681,47 +3685,49 @@
                             <svg
                                 viewBox="0 0 24 24"
                                 class="closing-x"
-                                tabindex={!$menuVisible &&
+                                tabindex="{!$menuVisible &&
                                 !$popupVisible &&
                                 selectedSortElement &&
                                 windowWidth <= 425
-                                    ? "0"
-                                    : ""}
-                                on:keyup={(e) =>
-                                    e.key === "Enter" &&
-                                    handleSortFilterPopup(e)}
-                                on:click={handleSortFilterPopup}
+                                    ? '0'
+                                    : ''}"
+                                on:keyup="{(e) =>
+                                    e.key === 'Enter' &&
+                                    handleSortFilterPopup(e)}"
+                                on:click="{handleSortFilterPopup}"
                                 ><path
                                     fill="#fff"
                                     d="m19 6-1-1-6 6-6-6-1 1 6 6-6 6 1 1 6-6 6 6 1-1-6-6Z"
-                                /></svg
+                                ></path></svg
                             >
                         </div>
                         <div class="options">
                             {#each $filterOptions?.sortFilter?.[$selectedCustomFilter] || sortFilterContents as sortFilter (sortFilter?.sortName || {})}
                                 <div
                                     class="option"
-                                    on:click={changeSort(sortFilter?.sortName)}
-                                    on:keyup={(e) =>
-                                        e.key === "Enter" &&
-                                        changeSort(sortFilter?.sortName)}
+                                    on:click="{changeSort(
+                                        sortFilter?.sortName,
+                                    )}"
+                                    on:keyup="{(e) =>
+                                        e.key === 'Enter' &&
+                                        changeSort(sortFilter?.sortName)}"
                                 >
                                     <h3>{sortFilter?.sortName || ""}</h3>
                                     {#if selectedSortName === sortFilter?.sortName}
                                         <svg
-                                            viewBox={`0 ${
-                                                selectedSortType === "asc"
-                                                    ? "-180"
-                                                    : "100"
-                                            } 320 512`}
+                                            viewBox="{`0 ${
+                                                selectedSortType === 'asc'
+                                                    ? '-180'
+                                                    : '100'
+                                            } 320 512`}"
                                         >
                                             <path
-                                                d={// sortdown
-                                                selectedSortType === "asc"
-                                                    ? "M183 41a32 32 0 0 0-46 0L9 169c-9 10-12 23-7 35s17 20 30 20h256a32 32 0 0 0 23-55L183 41z"
+                                                d="{// sortdown
+                                                selectedSortType === 'asc'
+                                                    ? 'M183 41a32 32 0 0 0-46 0L9 169c-9 10-12 23-7 35s17 20 30 20h256a32 32 0 0 0 23-55L183 41z'
                                                     : // sort up
-                                                      "M183 471a32 32 0 0 1-46 0L9 343c-9-10-12-23-7-35s17-20 30-20h256a32 32 0 0 1 23 55L183 471z"}
-                                            />
+                                                      'M183 471a32 32 0 0 1-46 0L9 343c-9-10-12-23-7-35s17-20 30-20h256a32 32 0 0 1 23 55L183 471z'}"
+                                            ></path>
                                         </svg>
                                     {/if}
                                 </div>
@@ -3731,7 +3737,7 @@
                 </div>
             </div>
         {:else}
-            <div class="sortFilter skeleton shimmer" />
+            <div class="sortFilter skeleton shimmer"></div>
         {/if}
     </div>
 

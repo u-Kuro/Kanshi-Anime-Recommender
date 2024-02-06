@@ -248,6 +248,7 @@
                                 $newFinalAnime = {
                                     idx: data.lastShownAnimeListIndex + idx,
                                     finalAnimeList: anime,
+                                    category: data?.category,
                                 };
                             });
                         } else {
@@ -580,127 +581,128 @@
     type="file"
     style:display="none"
     accept=".json"
-    bind:this={importFileInput}
-    on:change={importJSONFile}
+    bind:this="{importFileInput}"
+    on:change="{importJSONFile}"
 />
 <div
     id="menu-container"
     class="menu-container"
-    on:click={(e) => {
-        if (e.pointerType !== "touch") {
+    on:click="{(e) => {
+        if (e.pointerType !== 'touch') {
             handleMenuVisibility(e);
         }
-    }}
-    on:touchend|passive={handleMenuVisibility}
-    on:keyup={(e) => e.key === "Enter" && handleMenuVisibility(e)}
-    bind:this={menuContainerEl}
+    }}"
+    on:touchend|passive="{handleMenuVisibility}"
+    on:keyup="{(e) => e.key === 'Enter' && handleMenuVisibility(e)}"
+    bind:this="{menuContainerEl}"
 >
     <div class="menu" use:isScrollableMenu>
         <button
             class="button"
-            on:click={updateList}
-            on:keyup={(e) => e.key === "Enter" && updateList(e)}
+            on:click="{updateList}"
+            on:keyup="{(e) => e.key === 'Enter' && updateList(e)}"
             >Update List</button
         >
         <button
             class="button"
-            on:click={showAllHiddenEntries}
-            on:keyup={(e) => e.key === "Enter" && showAllHiddenEntries(e)}
+            on:click="{showAllHiddenEntries}"
+            on:keyup="{(e) => e.key === 'Enter' && showAllHiddenEntries(e)}"
             >Show All Hidden Entries</button
         >
         <button
             class="button"
-            on:click={() => importData()}
-            on:keyup={(e) => e.key === "Enter" && importData()}
+            on:click="{() => importData()}"
+            on:keyup="{(e) => e.key === 'Enter' && importData()}"
             >Import Data</button
         >
         <button
             class="button"
-            on:click={exportData}
-            on:keyup={(e) => e.key === "Enter" && exportData(e)}
+            on:click="{exportData}"
+            on:keyup="{(e) => e.key === 'Enter' && exportData(e)}"
             >Export Data</button
         >
         {#if $android}
             <button
                 class="button"
-                on:click={handleExportFolder}
-                on:keyup={(e) => e.key === "Enter" && handleExportFolder(e)}
+                on:click="{handleExportFolder}"
+                on:keyup="{(e) => e.key === 'Enter' && handleExportFolder(e)}"
             >
                 {($exportPathIsAvailable ? "Change" : "Set") + " Export Folder"}
             </button>
         {/if}
         <button
-            class={"button " + ($showStatus ? "selected" : "")}
-            on:click={showDataStatus}
-            on:keyup={(e) => e.key === "Enter" && showDataStatus(e)}
+            class="{'button ' + ($showStatus ? 'selected' : '')}"
+            on:click="{showDataStatus}"
+            on:keyup="{(e) => e.key === 'Enter' && showDataStatus(e)}"
             >Show Status</button
         >
         <button
-            class={"button " + ($autoUpdate ? "selected" : "")}
-            on:click={handleUpdateEveryHour}
-            on:keyup={(e) => e.key === "Enter" && handleUpdateEveryHour(e)}
+            class="{'button ' + ($autoUpdate ? 'selected' : '')}"
+            on:click="{handleUpdateEveryHour}"
+            on:keyup="{(e) => e.key === 'Enter' && handleUpdateEveryHour(e)}"
             >Auto Update</button
         >
         {#if $android}
             <button
-                class={"button " + ($autoExport ? "selected" : "")}
-                on:click={handleExportEveryHour}
-                on:keyup={(e) => e.key === "Enter" && handleExportEveryHour(e)}
+                class="{'button ' + ($autoExport ? 'selected' : '')}"
+                on:click="{handleExportEveryHour}"
+                on:keyup="{(e) =>
+                    e.key === 'Enter' && handleExportEveryHour(e)}"
                 >Auto Export</button
             >
             {#if typeof keepAppRunningInBackground === "boolean"}
                 <button
-                    class={"button" +
-                        (keepAppRunningInBackground ? " selected" : "")}
-                    on:keyup={(e) =>
-                        e.key === "Enter" && persistentBackgroundUpdates(e)}
-                    on:click={persistentBackgroundUpdates}
+                    class="{'button' +
+                        (keepAppRunningInBackground ? ' selected' : '')}"
+                    on:keyup="{(e) =>
+                        e.key === 'Enter' && persistentBackgroundUpdates(e)}"
+                    on:click="{persistentBackgroundUpdates}"
                     >Persistent Background Updates</button
                 >
             {/if}
             <button
                 class="button"
-                on:keyup={(e) => e.key === "Enter" && switchAppMode(e)}
-                on:click={switchAppMode}>Switch App Mode</button
+                on:keyup="{(e) => e.key === 'Enter' && switchAppMode(e)}"
+                on:click="{switchAppMode}">Switch App Mode</button
             >
             <button
                 class="button"
-                on:keyup={(e) => e.key === "Enter" && showRecentReleases(e)}
-                on:click={showRecentReleases}>Show Recent Releases</button
+                on:keyup="{(e) => e.key === 'Enter' && showRecentReleases(e)}"
+                on:click="{showRecentReleases}">Show Recent Releases</button
             >
             <button
                 class="button"
-                on:keyup={(e) => e.key === "Enter" && clearCache(e)}
-                on:click={clearCache}>Clear Cache</button
+                on:keyup="{(e) => e.key === 'Enter' && clearCache(e)}"
+                on:click="{clearCache}">Clear Cache</button
             >
             <button
                 class="button"
-                on:keyup={(e) => e.key === "Enter" && refresh(e)}
-                on:click={refresh}>Refresh</button
+                on:keyup="{(e) => e.key === 'Enter' && refresh(e)}"
+                on:click="{refresh}">Refresh</button
             >
         {/if}
         <button
             class="button"
-            on:keyup={(e) => e.key === "Enter" && reload(e)}
-            on:click={reload}>Reload</button
+            on:keyup="{(e) => e.key === 'Enter' && reload(e)}"
+            on:click="{reload}">Reload</button
         >
         <button
             class="button"
-            on:click={anilistSignup}
-            on:keyup={(e) => e.key === "Enter" && anilistSignup(e)}
+            on:click="{anilistSignup}"
+            on:keyup="{(e) => e.key === 'Enter' && anilistSignup(e)}"
             >Create an Anilist Account</button
         >
         {#if $appInstallationAsked && $mobile && hasAvailableApp && !$android}
             <button
                 class="button"
-                on:keyup={(e) => e.key === "Enter" && downloadAndroidApp(e)}
-                on:click={downloadAndroidApp}>Install App</button
+                on:keyup="{(e) => e.key === 'Enter' && downloadAndroidApp(e)}"
+                on:click="{downloadAndroidApp}">Install App</button
             >
         {/if}
         <button
             class="button"
-            on:keyup={(e) => e.key === "Enter" && showNotice(e)}
-            on:click={showNotice}>Notice!</button
+            on:keyup="{(e) => e.key === 'Enter' && showNotice(e)}"
+            on:click="{showNotice}">Notice!</button
         >
     </div>
 </div>

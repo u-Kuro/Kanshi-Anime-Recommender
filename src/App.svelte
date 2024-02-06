@@ -156,6 +156,7 @@
 								$newFinalAnime = {
 									idx: data.lastShownAnimeListIndex + idx,
 									finalAnimeList: anime,
+									category: data?.category,
 								};
 							});
 						} else {
@@ -612,6 +613,8 @@
 																idx,
 															finalAnimeList:
 																anime,
+															category:
+																data?.category,
 														};
 													},
 												);
@@ -799,6 +802,7 @@
 							$newFinalAnime = {
 								idx: data.lastShownAnimeListIndex + idx,
 								finalAnimeList: anime,
+								category: data?.category,
 							};
 						});
 					} else {
@@ -879,6 +883,7 @@
 												data.lastShownAnimeListIndex +
 												idx,
 											finalAnimeList: anime,
+											category: data?.category,
 										};
 									},
 								);
@@ -1505,6 +1510,7 @@
 							$newFinalAnime = {
 								idx: data.lastShownAnimeListIndex + idx,
 								finalAnimeList: anime,
+								category: data?.category,
 							};
 						});
 					} else {
@@ -1696,21 +1702,21 @@
 
 <main
 	id="main"
-	class={($android ? " android" : "") +
-		(isMaxWindowHeight ? " maxwindowheight" : "") +
-		($popupVisible ? " popupvisible" : "")}
+	class="{($android ? ' android' : '') +
+		(isMaxWindowHeight ? ' maxwindowheight' : '') +
+		($popupVisible ? ' popupvisible' : '')}"
 >
 	{#if _progress > 0 && _progress < 100}
 		<div
-			out:fade={{ duration: 0, delay: 400 }}
-			on:outrostart={(e) => {
-				e.target.style.setProperty("--progress", "0%");
-			}}
+			out:fade="{{ duration: 0, delay: 400 }}"
+			on:outrostart="{(e) => {
+				e.target.style.setProperty('--progress', '0%');
+			}}"
 			id="progress"
-			class={"progress" +
-				(isBelowNav ? " is-below-absolute-progress" : "")}
-			style:--progress={"-" + (100 - _progress) + "%"}
-		/>
+			class="{'progress' +
+				(isBelowNav ? ' is-below-absolute-progress' : '')}"
+			style:--progress="{"-" + (100 - _progress) + "%"}"
+		></div>
 	{/if}
 	<C.Fixed.Navigator />
 	<C.Fixed.Menu />
@@ -1726,15 +1732,15 @@
 
 	<C.Anime.Fixed.AnimeOptionsPopup />
 	<C.Others.Confirm
-		showConfirm={$confirmIsVisible}
-		on:confirmed={handleConfirmationConfirmed}
-		on:cancelled={handleConfirmationCancelled}
-		isAlert={_isAlert}
-		confirmTitle={_confirmTitle}
-		confirmText={_confirmText}
-		confirmLabel={_confirmLabel}
-		cancelLabel={_cancelLabel}
-		isImportant={_isImportant}
+		showConfirm="{$confirmIsVisible}"
+		on:confirmed="{handleConfirmationConfirmed}"
+		on:cancelled="{handleConfirmationCancelled}"
+		isAlert="{_isAlert}"
+		confirmTitle="{_confirmTitle}"
+		confirmText="{_confirmText}"
+		confirmLabel="{_confirmLabel}"
+		cancelLabel="{_cancelLabel}"
+		isImportant="{_isImportant}"
 	/>
 </main>
 

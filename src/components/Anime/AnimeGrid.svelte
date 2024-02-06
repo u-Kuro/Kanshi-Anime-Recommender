@@ -36,6 +36,9 @@
         mobile,
         menuVisible,
         shouldShowLoading,
+        activeTagFilters,
+        selectedCustomFilter,
+        isChangingCategory,
     } from "../../js/globalValues.js";
 
     const emptyImage =
@@ -188,6 +191,7 @@
                                 $newFinalAnime = {
                                     idx: data.lastShownAnimeListIndex + idx,
                                     finalAnimeList: anime,
+                                    category: data?.category,
                                 };
                             });
                         } else {
@@ -207,28 +211,32 @@
                                 $newFinalAnime = {
                                     idx: data.lastShownAnimeListIndex + idx,
                                     finalAnimeList: anime,
+                                    category: data?.category,
                                 };
                             });
                         } else {
                             $finalAnimeList = [];
                         }
                     } else if (data.isNew === false) {
-                        if ($finalAnimeList instanceof Array) {
-                            if (data?.finalAnimeList?.length > 0) {
-                                data?.finalAnimeList?.forEach?.(
-                                    (anime, idx) => {
-                                        $newFinalAnime = {
-                                            idx:
-                                                data.lastShownAnimeListIndex +
-                                                idx,
-                                            finalAnimeList: anime,
-                                        };
-                                    },
-                                );
+                        if ($isChangingCategory == null) {
+                            if ($finalAnimeList instanceof Array) {
+                                if (data?.finalAnimeList?.length > 0) {
+                                    data?.finalAnimeList?.forEach?.(
+                                        (anime, idx) => {
+                                            $newFinalAnime = {
+                                                idx:
+                                                    data.lastShownAnimeListIndex +
+                                                    idx,
+                                                finalAnimeList: anime,
+                                                category: data?.category,
+                                            };
+                                        },
+                                    );
+                                }
                             }
-                        }
-                        if (data.isLast) {
-                            $shownAllInList = true;
+                            if (data.isLast) {
+                                $shownAllInList = true;
+                            }
                         }
                     }
                     val?.postMessage?.({
@@ -273,11 +281,123 @@
         }
     });
 
+    let loadedFinalAnimeLists = {},
+        clearLoadedFinalAnimeListsTimeout;
+    activeTagFilters.subscribe(async (val) => {
+        clearTimeout(clearLoadedFinalAnimeListsTimeout);
+        clearLoadedFinalAnimeListsTimeout = setTimeout(async () => {
+            if (isJsonObject(val) && !isJsonObject(val)) {
+                let categories = Object.keys(loadedFinalAnimeLists),
+                    categoriesLen = categories.length;
+                for (let i = 0; i < categoriesLen; i++) {
+                    if (val?.[categories[i]] == null) {
+                        delete loadedFinalAnimeLists?.[categories?.[i]];
+                    }
+                }
+            }
+        }, 1000);
+    });
+    let isLoadingPreviousAnimeLists,
+        loadingPreviousAnimeListsTimeout,
+        loadingPreviousAnimeListsIdx,
+        categoryNotChanged = true,
+        cleanPreviousLoadedTimeout;
+    function loadPreviousAnimeList(category, searchKeyword) {
+        if (categoryNotChanged) {
+            if (typeof category === "string") {
+                categoryNotChanged = false;
+            }
+            return;
+        }
+        isLoadingPreviousAnimeLists = true;
+        clearTimeout(loadingPreviousAnimeListsTimeout);
+        loadingPreviousAnimeListsTimeout = setTimeout(() => {
+            if (
+                category != null &&
+                loadedFinalAnimeLists?.[category]?.length > 0
+            ) {
+                let loadedFinalAnimeList = loadedFinalAnimeLists[category];
+                if (searchKeyword) {
+                    loadedFinalAnimeList = loadedFinalAnimeList.filter(
+                        ({ title }) => {
+                            if (isJsonObject(title)) {
+                                let titles = Object.values(title);
+                                return titles.some((_title) =>
+                                    _title
+                                        ?.toLowerCase?.()
+                                        .includes(
+                                            searchKeyword
+                                                ?.trim()
+                                                ?.toLowerCase?.(),
+                                        ),
+                                );
+                            } else {
+                                return title
+                                    ?.toLowerCase?.()
+                                    .includes(
+                                        searchKeyword?.trim()?.toLowerCase?.(),
+                                    );
+                            }
+                        },
+                    );
+                }
+                let loadedFinalAnimeListLen = loadedFinalAnimeList.length;
+                clearTimeout(cleanPreviousLoadedTimeout);
+                cleanPreviousLoadedTimeout = setTimeout(() => {
+                    $finalAnimeList = $finalAnimeList.slice(
+                        0,
+                        loadedFinalAnimeListLen,
+                    );
+                });
+                let loadNextPreviousAnime = (i) => {
+                    if (!isLoadingPreviousAnimeLists) {
+                        isLoadingPreviousAnimeLists = false;
+                        loadNextPreviousAnime = loadingPreviousAnimeListsIdx =
+                            undefined;
+                        return;
+                    }
+                    if (i < loadedFinalAnimeListLen) {
+                        loadingPreviousAnimeListsIdx = i;
+                        let anime = loadedFinalAnimeList[i];
+                        anime.isSemiLoading = true;
+                        $newFinalAnime = {
+                            idx: i,
+                            finalAnimeList: anime,
+                            isPrevious: true,
+                        };
+                        requestAnimationFrame(() => {
+                            loadNextPreviousAnime?.(i + 1);
+                        });
+                    } else {
+                        loadNextPreviousAnime = loadingPreviousAnimeListsIdx =
+                            undefined;
+                    }
+                };
+                loadNextPreviousAnime?.(0);
+            } else {
+                loadingPreviousAnimeListsIdx = undefined;
+            }
+        });
+    }
+    isChangingCategory.subscribe((val) => {
+        if (val != null) {
+            loadPreviousAnimeList(val, $searchedAnimeKeyword);
+        }
+    });
+    let loadedFinalAnimeListsTimeouts = {};
     newFinalAnime.subscribe(async (val) => {
         if (
             typeof val?.finalAnimeList?.id === "number" &&
             typeof val?.idx === "number"
         ) {
+            if (!val?.isPrevious && val.idx === 0) {
+                clearTimeout(cleanPreviousLoadedTimeout);
+                $isChangingCategory = null;
+            }
+            if (loadingPreviousAnimeListsIdx <= val?.idx && !val?.isPrevious) {
+                isLoadingPreviousAnimeLists = false;
+                loadingPreviousAnimeListsIdx = undefined;
+            }
             if ($shownAllInList && val.idx === 0) {
                 $shownAllInList = false;
             }
@@ -316,6 +436,29 @@
                 $finalAnimeList = $finalAnimeList;
             } else {
                 $finalAnimeList = [val.finalAnimeList];
+            }
+            if (val?.isPrevious) return;
+            let category = val?.category;
+            if (typeof category === "string") {
+                clearTimeout(loadedFinalAnimeListsTimeouts?.[category]);
+                loadedFinalAnimeListsTimeouts[category] = setTimeout(() => {
+                    let loadedFinalAnimeListsLen =
+                        loadedFinalAnimeLists[category]?.length;
+                    if (loadedFinalAnimeListsLen == null) {
+                        loadedFinalAnimeLists[category] = [];
+                        loadedFinalAnimeListsLen = 0;
+                    }
+                    for (let i = 0; i < $finalAnimeList.length; i++) {
+                        if (i < loadedFinalAnimeListsLen) {
+                            loadedFinalAnimeLists[category][i] =
+                                $finalAnimeList[i];
+                        } else {
+                            loadedFinalAnimeLists[category].push(
+                                $finalAnimeList[i],
+                            );
+                        }
+                    }
+                });
             }
             if (
                 val?.idx < shownFinalAnimeListCount - 1 ||
@@ -394,9 +537,13 @@
                 setLocalStorage("searchedAnimeKeyword", val).catch(() => {
                     removeLocalStorage("searchedAnimeKeyword");
                 });
-                $animeLoaderWorker.postMessage({
-                    filterKeyword: val,
-                });
+                if ($isChangingCategory != null) {
+                    loadPreviousAnimeList($selectedCustomFilter, val);
+                } else {
+                    $animeLoaderWorker.postMessage({
+                        filterKeyword: val,
+                    });
+                }
             } catch (e) {
                 if (!$initData) {
                     $animeLoaderWorker?.terminate?.();
@@ -618,14 +765,14 @@
     });
 </script>
 
-<main class={isFullViewed ? "fullView" : ""}>
+<main class="{isFullViewed ? 'fullView' : ''}">
     <div
         id="anime-grid"
-        class={"image-grid " +
-            (isFullViewed ? " fullView" : "") +
-            ($finalAnimeList?.length === 0 && !$initData ? " empty" : "")}
-        bind:this={animeGridEl}
-        on:wheel={(e) => {
+        class="{'image-grid ' +
+            (isFullViewed ? ' fullView' : '') +
+            ($finalAnimeList?.length === 0 && !$initData ? ' empty' : '')}"
+        bind:this="{animeGridEl}"
+        on:wheel="{(e) => {
             if (
                 isFullViewed &&
                 animeGridEl.scrollWidth > animeGridEl.clientWidth &&
@@ -635,10 +782,10 @@
                 if (!isWholeGridSeen && e?.deltaY > 0) return;
                 // If its scrolled to very left and see previous
                 if (isOnVeryLeftOfAnimeGrid && e?.deltaY < 0) return;
-                horizontalWheel(e, "image-grid");
+                horizontalWheel(e, 'image-grid');
             }
-        }}
-        on:scroll={(e) => {
+        }}"
+        on:scroll="{(e) => {
             let element = e?.target;
             lastLeftScroll = currentLeftScroll;
             currentLeftScroll = element?.scrollLeft;
@@ -647,85 +794,87 @@
             } else {
                 afterFullGrid = false;
             }
-        }}
-        style:--anime-grid-height={($mobile && !$android
+        }}"
+        style:--anime-grid-height="{($mobile && !$android
             ? originalWindowHeight
-            : windowHeight) + "px"}
+            : windowHeight) + "px"}"
     >
         {#if $finalAnimeList?.length}
             {#each $finalAnimeList || [] as anime, animeIdx (anime?.id ?? {})}
                 <div
-                    class={"image-grid__card" +
-                        (anime?.isLoading || $shouldShowLoading
-                            ? " loading"
-                            : "")}
-                    bind:this={anime.gridElement}
-                    title={anime?.briefInfo || ""}
+                    class="{'image-grid__card' +
+                        (anime?.isSemiLoading
+                            ? ' semi-loading'
+                            : anime?.isLoading || $shouldShowLoading
+                              ? ' loading'
+                              : '')}"
+                    bind:this="{anime.gridElement}"
+                    title="{anime?.briefInfo || ''}"
                 >
                     <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                     <div
                         class="shimmer"
-                        tabindex={$menuVisible || $popupVisible ? "" : "0"}
-                        on:click={handleOpenPopup(animeIdx)}
-                        on:pointerdown={(e) => handleOpenOption(e, animeIdx)}
-                        on:pointerup={cancelOpenOption}
-                        on:pointercancel={cancelOpenOption}
-                        on:keyup={(e) =>
-                            e.key === "Enter" && handleOpenPopup(animeIdx)}
+                        tabindex="{$menuVisible || $popupVisible ? '' : '0'}"
+                        on:click="{handleOpenPopup(animeIdx)}"
+                        on:pointerdown="{(e) => handleOpenOption(e, animeIdx)}"
+                        on:pointerup="{cancelOpenOption}"
+                        on:pointercancel="{cancelOpenOption}"
+                        on:keyup="{(e) =>
+                            e.key === 'Enter' && handleOpenPopup(animeIdx)}"
                     >
                         {#if anime?.coverImageUrl || anime?.bannerImageUrl || anime?.trailerThumbnailUrl}
                             {#key anime?.coverImageUrl || anime?.bannerImageUrl || anime?.trailerThumbnailUrl}
                                 <img
-                                    use:addImage={anime?.coverImageUrl ||
+                                    use:addImage="{anime?.coverImageUrl ||
                                         anime?.bannerImageUrl ||
                                         anime?.trailerThumbnailUrl ||
-                                        emptyImage}
-                                    fetchpriority={animeIdx >
+                                        emptyImage}"
+                                    fetchpriority="{animeIdx >
                                     numberOfPageLoadedGrid
-                                        ? ""
-                                        : "high"}
-                                    loading={animeIdx > numberOfPageLoadedGrid
-                                        ? "lazy"
-                                        : "eager"}
-                                    class={"image-grid__card-thumb  fade-out"}
-                                    alt={(anime?.shownTitle || "") + " Cover"}
+                                        ? ''
+                                        : 'high'}"
+                                    loading="{animeIdx > numberOfPageLoadedGrid
+                                        ? 'lazy'
+                                        : 'eager'}"
+                                    class="{'image-grid__card-thumb  fade-out'}"
+                                    alt="{(anime?.shownTitle || '') + ' Cover'}"
                                     width="180px"
                                     height="254.531px"
-                                    on:load={(e) => {
-                                        removeClass(e.target, "fade-out");
+                                    on:load="{(e) => {
+                                        removeClass(e.target, 'fade-out');
                                         addClass(
-                                            e.target?.closest?.(".shimmer"),
-                                            "loaded",
+                                            e.target?.closest?.('.shimmer'),
+                                            'loaded',
                                         );
-                                    }}
-                                    on:error={(e) => {
-                                        addClass(e.target, "fade-out");
-                                        addClass(e.target, "display-none");
-                                    }}
+                                    }}"
+                                    on:error="{(e) => {
+                                        addClass(e.target, 'fade-out');
+                                        addClass(e.target, 'display-none');
+                                    }}"
                                 />
                             {/key}
                         {/if}
                         <span class="image-grid__card-title">
                             <span
                                 class="title copy"
-                                copy-value={anime?.copiedTitle || ""}
-                                copy-value-2={anime?.shownTitle || ""}
+                                copy-value="{anime?.copiedTitle || ''}"
+                                copy-value-2="{anime?.shownTitle || ''}"
                                 >{anime?.shownTitle || "NA"}</span
                             >
                             <span
                                 class="brief-info-wrapper copy"
-                                copy-value={anime?.copiedTitle || ""}
-                                copy-value-2={anime?.shownTitle || ""}
+                                copy-value="{anime?.copiedTitle || ''}"
+                                copy-value-2="{anime?.shownTitle || ''}"
                             >
                                 <div class="brief-info">
                                     <span>
                                         <!-- circle -->
                                         <svg
                                             viewBox="0 0 512 512"
-                                            class={`${anime?.userStatusColor}-fill circle`}
+                                            class="{`${anime?.userStatusColor}-fill circle`}"
                                             ><path
                                                 d="M256 512a256 256 0 1 0 0-512 256 256 0 1 0 0 512z"
-                                            /></svg
+                                            ></path></svg
                                         >
                                         {#if isJsonObject(anime?.nextAiringEpisode)}
                                             {@const finishedEpisodes =
@@ -762,41 +911,41 @@
                                             <!-- star -->
                                             <svg
                                                 viewBox="0 0 576 512"
-                                                class={`${anime?.contentCautionColor}-fill score`}
+                                                class="{`${anime?.contentCautionColor}-fill score`}"
                                                 ><path
                                                     d="M317 18a32 32 0 0 0-58 0l-64 132-144 22a32 32 0 0 0-17 54l104 103-25 146a32 32 0 0 0 47 33l128-68 129 68a32 32 0 0 0 46-33l-24-146 104-103a32 32 0 0 0-18-54l-144-22-64-132z"
-                                                /></svg
+                                                ></path></svg
                                             >
                                             {anime?.shownScore ?? "NA"}
                                         {:else if anime?.shownCount != null}
                                             <!-- people -->
                                             <svg
                                                 viewBox="0 0 640 512"
-                                                class={`${anime?.contentCautionColor}-fill score`}
+                                                class="{`${anime?.contentCautionColor}-fill score`}"
                                             >
                                                 <path
                                                     d="M96 128a128 128 0 1 1 256 0 128 128 0 1 1-256 0zM0 482c0-98 80-178 178-178h92c98 0 178 80 178 178 0 17-13 30-30 30H30c-17 0-30-13-30-30zm609 30H471c6-9 9-20 9-32v-8c0-61-27-115-70-152h69c89 0 161 72 161 161 0 17-14 31-31 31zM432 256c-31 0-59-13-79-33a159 159 0 0 0 13-169 112 112 0 1 1 66 202z"
-                                                /></svg
+                                                ></path></svg
                                             >
                                             {anime?.shownCount ?? "NA"}
                                         {:else if anime?.shownFavorites != null}
                                             <svg
                                                 viewBox="0 0 512 512"
-                                                class={`${anime?.contentCautionColor}-fill score`}
+                                                class="{`${anime?.contentCautionColor}-fill score`}"
                                             >
                                                 <path
                                                     d="m48 300 180 169a41 41 0 0 0 56 0l180-169c31-28 48-68 48-109v-6A143 143 0 0 0 268 84l-12 12-12-12A143 143 0 0 0 0 185v6c0 41 17 81 48 109z"
-                                                /></svg
+                                                ></path></svg
                                             >
                                             {anime?.shownFavorites ?? "NA"}
                                         {:else if anime?.shownActivity != null}
                                             <svg
                                                 viewBox="0 0 512 512"
-                                                class={`${anime?.contentCautionColor}-fill score`}
+                                                class="{`${anime?.contentCautionColor}-fill score`}"
                                             >
                                                 <path
                                                     d="M64 64a32 32 0 1 0-64 0v336c0 44 36 80 80 80h400a32 32 0 1 0 0-64H80c-9 0-16-7-16-16V64zm407 87a32 32 0 0 0-46-46L320 211l-57-58a32 32 0 0 0-46 0L105 265a32 32 0 0 0 46 46l89-90 57 58c13 12 33 12 46 0l128-128z"
-                                                /></svg
+                                                ></path></svg
                                             >
                                             {anime?.shownActivity ?? "NA"}
                                         {/if}
@@ -809,20 +958,20 @@
             {/each}
             {#each Array($shownAllInList ? 0 : 1) as _}
                 <div class="image-grid__card skeleton dummy">
-                    <div class="shimmer" />
+                    <div class="shimmer"></div>
                 </div>
             {/each}
             {#each Array(isFullViewed ? Math.floor((windowHeight ?? 1100) / 220) : 5) as _}
-                <div class="image-grid__card dummy" />
+                <div class="image-grid__card dummy"></div>
             {/each}
         {:else if !$finalAnimeList || $initData}
             {#each Array(21) as _}
                 <div class="image-grid__card skeleton dummy">
-                    <div class="shimmer" />
+                    <div class="shimmer"></div>
                 </div>
             {/each}
             {#each Array(5) as _}
-                <div class="image-grid__card dummy" />
+                <div class="image-grid__card dummy"></div>
             {/each}
         {:else}
             <div class="empty">No Results</div>
@@ -831,25 +980,25 @@
     {#if !$android && shouldShowGoBackInFullView && $finalAnimeList?.length}
         <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
         <div
-            class={"go-back-grid" +
-                (shouldShowGoBackInFullView ? " fullView" : "")}
-            tabindex={$menuVisible || $popupVisible ? "" : "0"}
-            on:click={goBackGrid}
-            on:keyup={(e) => e.key === "Enter" && goBackGrid(e)}
-            out:fade={{ duration: 200, easing: sineOut }}
+            class="{'go-back-grid' +
+                (shouldShowGoBackInFullView ? ' fullView' : '')}"
+            tabindex="{$menuVisible || $popupVisible ? '' : '0'}"
+            on:click="{goBackGrid}"
+            on:keyup="{(e) => e.key === 'Enter' && goBackGrid(e)}"
+            out:fade="{{ duration: 200, easing: sineOut }}"
         >
             <svg
-                viewBox={`0 0 ${
-                    shouldShowGoBackInFullView ? "320" : "448"
-                } 512`}
+                viewBox="{`0 0 ${
+                    shouldShowGoBackInFullView ? '320' : '448'
+                } 512`}"
             >
                 <path
-                    d={// angle left
+                    d="{// angle left
                     shouldShowGoBackInFullView
-                        ? "M41 233a32 32 0 0 0 0 46l160 160a32 32 0 0 0 46-46L109 256l138-137a32 32 0 0 0-46-46L41 233z"
+                        ? 'M41 233a32 32 0 0 0 0 46l160 160a32 32 0 0 0 46-46L109 256l138-137a32 32 0 0 0-46-46L41 233z'
                         : // angle up
-                          "M201 137c13-12 33-12 46 0l160 160a32 32 0 0 1-46 46L224 205 87 343a32 32 0 0 1-46-46l160-160z"}
-                />
+                          'M201 137c13-12 33-12 46 0l160 160a32 32 0 0 1-46 46L224 205 87 343a32 32 0 0 1-46-46l160-160z'}"
+                ></path>
             </svg>
         </div>
     {/if}
@@ -876,6 +1025,10 @@
 
     .image-grid__card.loading {
         animation: loadingBlink 1.5s ease-in-out infinite;
+    }
+
+    .image-grid__card.semi-loading {
+        animation: semiLoadingBlink 1.5s ease-in-out infinite;
     }
 
     .image-grid__card.skeleton {
@@ -1218,6 +1371,18 @@
         }
         50% {
             opacity: 0.5;
+        }
+        100% {
+            opacity: 1;
+        }
+    }
+
+    @keyframes semiLoadingBlink {
+        0% {
+            opacity: 1;
+        }
+        50% {
+            opacity: 0.8;
         }
         100% {
             opacity: 1;
