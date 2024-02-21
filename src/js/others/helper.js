@@ -161,7 +161,7 @@ const formatWeekday = (date) => date?.toLocaleDateString?.(undefined, { weekday:
 //     if (childElements instanceof NodeList) {
 //       let windowViewHeight = window?.visualViewport?.height || window.innerHeight
 //       childElements = Array.from(childElements)
-//       for (let i = 0; i < childElements.length; i++) {
+//       for (let i = 0, l = childElements.length; i < l; i++) {
 //         let rect = childElements[i]?.getBoundingClientRect?.()
 //         if (rect && rect.top > windowViewHeight) {
 //           return childElements[Math.max(0, i - 1)]
@@ -182,7 +182,7 @@ const getMostVisibleElement = (parent, childSelector, intersectionRatioThreshold
     let highestVisibleRatio = 0;
     let twoElements = []
     let parentScroll = parent.scrollTop
-    for (let i = 0; i < childElements.length; i++) {
+    for (let i = 0, l = childElements.length; i < l; i++) {
       if (childElements[i].offsetTop > parentScroll) {
         if (i > 0) {
           twoElements = [childElements[i - 1], childElements[i]]

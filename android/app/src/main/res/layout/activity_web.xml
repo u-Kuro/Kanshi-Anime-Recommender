@@ -5,10 +5,11 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/black"
     android:fitsSystemWindows="true"
     android:orientation="vertical"
-    android:background="@color/white"
     android:id="@id/constraint"
+    tools:context=".YoutubeViewActivity"
     tools:ignore="Overdraw">
 
         <com.google.android.material.appbar.AppBarLayout
@@ -43,7 +44,7 @@
                         android:layout_height="match_parent">
 
                         <ImageView
-                            android:id="@+id/btnClose"
+                            android:id="@+id/close_youtube"
                             android:layout_centerVertical="true"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
@@ -52,8 +53,7 @@
                             android:padding="12dp"
                             android:clickable="true"
                             android:focusable="true"
-                            android:contentDescription="Go Back"
-                            tools:ignore="HardcodedText" />
+                            android:contentDescription="@string/go_back" />
 
                         <TextView
                             android:id="@+id/site"
@@ -61,7 +61,7 @@
                             android:layout_height="wrap_content"
                             android:layout_centerInParent="true"
                             android:layout_toStartOf="@+id/launchURL"
-                            android:layout_toEndOf="@+id/btnClose"
+                            android:layout_toEndOf="@+id/close_youtube"
                             android:layout_marginStart="30dp"
                             android:layout_marginEnd="30dp"
                             android:textAlignment="center"
@@ -72,8 +72,7 @@
                             android:textSize="19sp"
                             android:paddingBottom="2sp"
                             android:textStyle="bold"
-                            android:text="@string/youtube"
-                            tools:ignore="RelativeOverlap" />
+                            android:text="@string/youtube" />
 
                         <ImageView
                             android:id="@+id/launchURL"
@@ -84,9 +83,8 @@
                             android:padding="12dp"
                             android:clickable="true"
                             android:focusable="true"
-                            android:contentDescription="Launch URL"
-                            android:layout_centerVertical="true"
-                            tools:ignore="HardcodedText" />
+                            android:contentDescription="@string/launch_url"
+                            android:layout_centerVertical="true" />
                     </RelativeLayout>
 
                     <ProgressBar

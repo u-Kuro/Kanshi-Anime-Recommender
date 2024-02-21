@@ -87,7 +87,7 @@ import androidx.core.content.FileProvider;
 import androidx.core.splashscreen.SplashScreen;
 
 public class MainActivity extends AppCompatActivity {
-    public final int appID = 331;
+    public final int appID = 332;
     public boolean keepAppRunningInBackground = false;
     public boolean webViewIsLoaded = false;
     public boolean permissionIsAsked = false;
@@ -1004,13 +1004,9 @@ public class MainActivity extends AppCompatActivity {
         @RequiresApi(api = Build.VERSION_CODES.P)
         @JavascriptInterface
         public void showRecentReleases() {
-            boolean success = AnimeNotificationManager.showRecentReleases(MainActivity.this);
-            if (!success) {
-                showToast(Toast.makeText(getApplicationContext(), "Requires Permission for Notification.", Toast.LENGTH_LONG));
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                    notificationPermission.launch(POST_NOTIFICATIONS);
-                }
-            }
+            Intent intent = new Intent(MainActivity.this, AnimeReleaseActivity.class);
+            startActivity(intent);
+            overridePendingTransition(R.anim.fade_in, R.anim.remove);
         }
         @JavascriptInterface
         public void showNewUpdatedAnimeNotification(long addedAnimeCount, long updatedAnimeCount) {

@@ -12,38 +12,39 @@ const inApp = writable(true)
 const progress = writable(0)
 // const anilistAccessToken = writable(null)
 const hasWheel = writable(false)
-const lastAnimeUpdate = writable(null)
 
 const username = writable(getLocalStorage('username') || '')
-const lastUserAnimeUpdate = writable(null)
+const loadedAnimeLists = writable({})
+const aniLoaderWorker = writable(null)
+const loadNewAnime = writable({})
+const searchedWord = writable("")
+const categories = writable(null)
+const categoriesKeys = writable(null)
+const selectedCategory = writable(null)
+const orderedFilters = writable(null)
+const nonOrderedFilters = writable(null)
+const filterConfig = writable(null)
+const animeCautions = writable(null)
+const algorithmFilters = writable(null)
+const selectedAnimeGridEl = writable(null)
 const hiddenEntries = writable(null)
 
-const filterOptions = writable(null)
-const selectedCustomFilter = writable(null)
-const activeTagFilters = writable(null)
-const customFilters = writable(null)
-const loadingFilterOptions = writable(false)
-const tagCategoryInfo = writable({})
-const finalAnimeList = writable(null)
-const newFinalAnime = writable(null)
-const animeLoaderWorker = writable(null)
+const tagInfo = writable({})
 const dataStatus = writable(null)
 const loadingDataStatus = writable(null)
 
-const isChangingCategory = writable(null)
-const shouldShowLoading = writable(false)
 const isLoadingAnime = writable(false)
 const isProcessingList = writable(false)
 const isImporting = writable(false)
 const userRequestIsRunning = writable(null)
 const autoUpdate = writable(getLocalStorage('autoUpdate') ?? null)
 const autoUpdateInterval = writable(null)
-const lastRunnedAutoUpdateDate = writable(null)
+const runnedAutoUpdateAt = writable(null)
 
 const exportPathIsAvailable = writable(getLocalStorage('exportPathIsAvailable') ?? null)
 const autoExport = writable(getLocalStorage('autoExport') ?? null)
 const autoExportInterval = writable(null)
-const lastRunnedAutoExportDate = writable(null)
+const runnedAutoExportAt = writable(null)
 
 const ytPlayers = writable([])
 const autoPlay = writable(getLocalStorage('autoPlay') ?? null)
@@ -55,12 +56,8 @@ const extraInfo = writable(null)
 const currentExtraInfo = writable(null)
 const mostRecentAiringDateTimeout = writable(null)
 const earlisetReleaseDate = writable(null)
-const checkAnimeLoaderStatus = writable(false)
-const animeObserver = writable(null)
 const animeIdxRemoved = writable(null)
-const shownAllInList = writable(false)
-const searchedAnimeKeyword = writable(getLocalStorage('searchedAnimeKeyword') || '')
-const numberOfNextLoadedGrid = writable(null)
+const shownAllInList = writable({})
 const confirmPromise = writable(null)
 const menuVisible = writable(false)
 const animeOptionVisible = writable(false)
@@ -69,11 +66,9 @@ const popupVisible = writable(false)
 const openedAnimePopupIdx = writable(null)
 const shouldGoBack = writable(true)
 const listUpdateAvailable = writable(false)
-const listIsUpdating = writable(false)
 const popupIsGoingBack = writable(false)
 const isScrolling = writable(null)
 const scrollingTimeout = writable(null)
-const isFullViewed = writable(null)
 const showFilterOptions = writable(getLocalStorage('showFilterOptions') ?? null)
 const dropdownIsVisible = writable(null)
 const confirmIsVisible = writable(null)
@@ -97,34 +92,35 @@ export {
     hasWheel,
     progress,
     // anilistAccessToken,
-    lastAnimeUpdate,
     username,
-    lastUserAnimeUpdate,
+    loadedAnimeLists,
+    aniLoaderWorker,
+    loadNewAnime,
+    searchedWord,
+    categories,
+    categoriesKeys,
+    selectedCategory,
+    orderedFilters,
+    nonOrderedFilters,
+    filterConfig,
+    animeCautions,
+    algorithmFilters,
+    selectedAnimeGridEl,
     hiddenEntries,
-    filterOptions,
-    selectedCustomFilter,
-    activeTagFilters,
-    customFilters,
-    loadingFilterOptions,
-    tagCategoryInfo,
-    finalAnimeList,
-    newFinalAnime,
-    animeLoaderWorker,
+    tagInfo,
     dataStatus,
     loadingDataStatus,
     userRequestIsRunning,
-    isChangingCategory,
-    shouldShowLoading,
     isLoadingAnime,
     isProcessingList,
     isImporting,
     autoUpdate,
     autoUpdateInterval,
-    lastRunnedAutoUpdateDate,
+    runnedAutoUpdateAt,
     exportPathIsAvailable,
     autoExport,
     autoExportInterval,
-    lastRunnedAutoExportDate,
+    runnedAutoExportAt,
     ytPlayers,
     autoPlay,
     initData,
@@ -134,11 +130,7 @@ export {
     currentExtraInfo,
     mostRecentAiringDateTimeout,
     earlisetReleaseDate,
-    checkAnimeLoaderStatus,
-    animeObserver,
     shownAllInList,
-    searchedAnimeKeyword,
-    numberOfNextLoadedGrid,
     animeIdxRemoved,
     confirmPromise,
     menuVisible,
@@ -148,11 +140,9 @@ export {
     openedAnimePopupIdx,
     shouldGoBack,
     listUpdateAvailable,
-    listIsUpdating,
     popupIsGoingBack,
     isScrolling,
     scrollingTimeout,
-    isFullViewed,
     showFilterOptions,
     dropdownIsVisible,
     confirmIsVisible,

@@ -101,6 +101,7 @@
 
     afterUpdate(() => {
         if (showConfirm) {
+            window.setShouldGoBack?.(false);
             confirmButtonEl?.focus?.();
             isRecentlyOpened = true;
             isRecentlyOpenedTimeout = setTimeout(() => {
@@ -116,14 +117,14 @@
 {#if showConfirm}
     <div
         class="confirm"
-        on:click={handleConfirmVisibility}
-        on:touchend|passive={handleConfirmVisibility}
-        on:keydown={(e) => e.key === "Enter" && handleConfirmVisibility(e)}
+        on:click="{handleConfirmVisibility}"
+        on:touchend|passive="{handleConfirmVisibility}"
+        on:keydown="{(e) => e.key === 'Enter' && handleConfirmVisibility(e)}"
     >
         <div class="confirm-wrapper">
             <div
                 class="confirm-container"
-                out:fade={{ duration: 200, easing: sineOut }}
+                out:fade="{{ duration: 200, easing: sineOut }}"
             >
                 <div class="confirm-title-wrapper">
                     <h2 class="confirm-title">
@@ -146,18 +147,18 @@
                     {#if !isAlert && !shouldShowPleaseWait}
                         <button
                             class="button"
-                            on:click={handleCancel}
-                            on:keydown={(e) =>
-                                e.key === "Enter" && handleCancel(e)}
+                            on:click="{handleCancel}"
+                            on:keydown="{(e) =>
+                                e.key === 'Enter' && handleCancel(e)}"
                             >{cancelLabel}</button
                         >
                     {/if}
                     <button
                         class="button"
-                        bind:this={confirmButtonEl}
-                        on:click={handleConfirm}
-                        on:keydown={(e) =>
-                            e.key === "Enter" && handleConfirm(e)}
+                        bind:this="{confirmButtonEl}"
+                        on:click="{handleConfirm}"
+                        on:keydown="{(e) =>
+                            e.key === 'Enter' && handleConfirm(e)}"
                         >{confirmLabel}</button
                     >
                 </div>

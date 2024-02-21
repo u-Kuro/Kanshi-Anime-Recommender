@@ -169,7 +169,12 @@ public class MyWorker extends Worker {
                 .setGroupConversation(true);
         List<AnimeNotification> sortedMyAnimeNotificationsValues = new ArrayList<>(myAnimeNotifications.values());
         Collections.sort(sortedMyAnimeNotificationsValues, Comparator.comparingLong(anime -> anime.releaseDateMillis));
+        int myAnimeNotifCount = 0;
         for (AnimeNotification anime : sortedMyAnimeNotificationsValues) {
+            if (myAnimeNotifCount >= 5) {
+                break;
+            }
+            ++myAnimeNotifCount;
             Person.Builder itemBuilder = new Person.Builder()
                     .setName(anime.title)
                     .setKey(String.valueOf(anime.animeId))
@@ -245,7 +250,13 @@ public class MyWorker extends Worker {
                 .setGroupConversation(true);
         List<AnimeNotification> sortedAnimeNotificationsValues = new ArrayList<>(animeNotifications.values());
         Collections.sort(sortedAnimeNotificationsValues, Comparator.comparingLong(anime -> anime.releaseDateMillis));
+
+        int otherAnimeNotifCount = 0;
         for (AnimeNotification anime : sortedAnimeNotificationsValues) {
+            if (otherAnimeNotifCount >= 5) {
+                break;
+            }
+            ++otherAnimeNotifCount;
             Person.Builder itemBuilder = new Person.Builder()
                     .setName(anime.title)
                     .setKey(String.valueOf(anime.animeId))
@@ -338,6 +349,11 @@ public class MyWorker extends Worker {
                         .setVibrate(new long[]{0L});
             }
 
+            AnimeReleaseActivity animeReleaseActivity = AnimeReleaseActivity.getInstanceActivity();
+            if (animeReleaseActivity!=null) {
+                animeReleaseActivity.updateAnimeRelease();
+            }
+
             Notification notificationMA = notificationMABuilder.build();
             Notification notificationOA = notificationOABuilder.build();
             Notification notificationSummary = notificationSummaryBuilder.build();
@@ -361,11 +377,11 @@ public class MyWorker extends Worker {
         prefsEdit.putLong("lastSentNotificationTime", mostRecentlySentNotificationTime).apply();
 
         HashSet<String> animeNotificationsToBeRemoved = new HashSet<>();
-        long DAY_IN_MILLIS = TimeUnit.DAYS.toMillis(1);
+        long THIRTY_DAY_IN_MILLIS = TimeUnit.DAYS.toMillis(30);
         allAnimeNotificationValues = new ArrayList<>(AnimeNotificationManager.allAnimeNotification.values());
         for (AnimeNotification anime : allAnimeNotificationValues) {
             // If ReleaseDate was Before 1 day ago
-            if (anime.releaseDateMillis < (System.currentTimeMillis() - DAY_IN_MILLIS)) {
+            if (anime.releaseDateMillis < (System.currentTimeMillis() - THIRTY_DAY_IN_MILLIS)) {
                 animeNotificationsToBeRemoved.add(anime.animeId+"-"+anime.releaseEpisode);
             }
         }

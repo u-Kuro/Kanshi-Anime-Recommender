@@ -3,14 +3,13 @@
     import { fade } from "svelte/transition";
     import { sineOut } from "svelte/easing";
     import { cacheImage } from "../../../js/caching.js";
-    import { animeLoader } from "../../../js/workerUtils.js";
+    import { animeLoader, animeManager } from "../../../js/workerUtils.js";
     import { retrieveJSON, saveJSON } from "../../../js/indexedDB.js";
     import {
         isJsonObject,
         scrollToElement,
         getChildIndex,
         msToTime,
-        isElementVisible,
         addClass,
         removeClass,
         getMostVisibleElement,
@@ -24,12 +23,9 @@
         removeLocalStorage,
     } from "../../../js/others/helper.js";
     import {
-        finalAnimeList,
-        animeLoaderWorker,
         hiddenEntries,
         ytPlayers,
         autoPlay,
-        animeObserver,
         popupVisible,
         openedAnimePopupIdx,
         android,
@@ -41,24 +37,24 @@
         initData,
         updateRecommendationList,
         listUpdateAvailable,
-        checkAnimeLoaderStatus,
         popupIsGoingBack,
         earlisetReleaseDate,
-        listIsUpdating,
-        isFullViewed,
-        newFinalAnime,
         appID,
         confirmIsVisible,
         isBackgroundUpdateKey,
         menuVisible,
+        selectedCategory,
+        loadedAnimeLists,
+        searchedWord,
+        selectedAnimeGridEl,
+        gridFullView,
     } from "../../../js/globalValues.js";
 
     const emptyImage =
         "data:image/png;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=";
     let isOnline = window.navigator.onLine;
 
-    let animeGridParentEl,
-        mostVisiblePopupHeader,
+    let mostVisiblePopupHeader,
         currentHeaderIdx,
         currentYtPlayer,
         popupWrapper,
@@ -151,26 +147,12 @@
                     `Do you want to unhide ${title} in your recommendation list?`,
                 )
             ) {
-                $checkAnimeLoaderStatus()
-                    .then(async () => {
-                        if ($finalAnimeList.length) {
-                            if ($animeLoaderWorker instanceof Worker) {
-                                delete $hiddenEntries[animeID];
-                                $hiddenEntries = $hiddenEntries;
-                                $animeLoaderWorker?.postMessage?.({
-                                    removeID: animeID,
-                                    hiddenEntries: $hiddenEntries,
-                                });
-                            }
-                        }
-                    })
-                    .catch(() => {
-                        $confirmPromise({
-                            isAlert: true,
-                            title: "Something went wrong",
-                            text: "Failed to unhide the anime, please try again.",
-                        });
-                    });
+                animeManager({
+                    selectedCategory: $selectedCategory,
+                    removeId: animeID,
+                    isHiding: false,
+                });
+                delete $hiddenEntries?.[animeID];
             }
         } else {
             if (
@@ -178,25 +160,12 @@
                     `Do you want to hide ${title} in your recommendation list?`,
                 )
             ) {
-                $checkAnimeLoaderStatus()
-                    .then(async () => {
-                        if ($finalAnimeList.length) {
-                            if ($animeLoaderWorker instanceof Worker) {
-                                $hiddenEntries[animeID] = true;
-                                $animeLoaderWorker?.postMessage?.({
-                                    removeID: animeID,
-                                    hiddenEntries: $hiddenEntries,
-                                });
-                            }
-                        }
-                    })
-                    .catch(() => {
-                        $confirmPromise({
-                            isAlert: true,
-                            title: "Something went wrong",
-                            text: "Failed to hide the anime, please try again.",
-                        });
-                    });
+                animeManager({
+                    selectedCategory: $selectedCategory,
+                    removeId: animeID,
+                    isHiding: true,
+                });
+                $hiddenEntries[animeID] = 1;
             }
         }
     }
@@ -303,17 +272,15 @@
                 }
                 // Try to Add YT player
                 currentHeaderIdx = $openedAnimePopupIdx;
+                let animeList = $loadedAnimeLists[$selectedCategory].animeList;
                 let openedAnimes = [
+                    [animeList[$openedAnimePopupIdx], $openedAnimePopupIdx],
                     [
-                        $finalAnimeList[$openedAnimePopupIdx],
-                        $openedAnimePopupIdx,
-                    ],
-                    [
-                        $finalAnimeList[$openedAnimePopupIdx + 1],
+                        animeList[$openedAnimePopupIdx + 1],
                         $openedAnimePopupIdx + 1,
                     ],
                     [
-                        $finalAnimeList[$openedAnimePopupIdx - 1],
+                        animeList[$openedAnimePopupIdx - 1],
                         $openedAnimePopupIdx - 1,
                     ],
                 ];
@@ -326,7 +293,7 @@
                 );
                 afterImmediateScrollUponPopupVisible = true;
                 let openedPopupHeader =
-                    $finalAnimeList?.[$openedAnimePopupIdx]?.popupHeader ||
+                    animeList?.[$openedAnimePopupIdx]?.popupHeader ||
                     popupContainer?.children?.[
                         $openedAnimePopupIdx
                     ]?.querySelector?.(".popup-header");
@@ -337,7 +304,7 @@
                         $openedAnimePopupIdx
                     ]?.querySelector?.(".trailer");
                 let haveTrailer;
-                for (let i = 0; i < $ytPlayers?.length; i++) {
+                for (let i = 0, l = $ytPlayers?.length; i < l; i++) {
                     if ($ytPlayers[i]?.ytPlayer?.g === trailerEl) {
                         haveTrailer = true;
                         let ytId = $ytPlayers[i]?.ytPlayer?.g?.id;
@@ -363,6 +330,8 @@
                         createPopupYTPlayer(openedAnime, openedAnimeIdx);
                 });
                 $openedAnimePopupIdx = null;
+
+                window?.setShouldGoBack?.(false);
             } else {
                 afterImmediateScrollUponPopupVisible = false;
                 // Animate Opening
@@ -403,18 +372,43 @@
                 removeClass(navContainerEl, "hide");
                 removeClass(popupWrapper, "visible");
             }, 200);
+
+            let shouldUpdate =
+                $selectedAnimeGridEl?.getBoundingClientRect?.()?.top > 0;
+            if ($listUpdateAvailable && shouldUpdate) {
+                updateList(true);
+            }
         }
     });
 
-    finalAnimeList.subscribe(async (val) => {
-        if (val instanceof Array && val.length) {
+    const newAnimeObserver = new IntersectionObserver(
+        (entries) => {
+            entries.forEach((entry) => {
+                if (entry.isIntersecting) {
+                    animeLoader({
+                        loadMore: true,
+                        selectedCategory: $selectedCategory,
+                        searchedWord: $searchedWord,
+                    });
+                }
+            });
+        },
+        {
+            root: null,
+            rootMargin: "100%",
+            threshold: [0.5, 0],
+        },
+    );
+    async function reloadPopupContentObserver() {
+        let animeList = $loadedAnimeLists?.[$selectedCategory || ""]?.animeList;
+        if (animeList instanceof Array && animeList.length) {
             if (popupAnimeObserver) {
                 popupAnimeObserver?.disconnect?.();
                 popupAnimeObserver = null;
             }
             await tick();
             addPopupObserver();
-            val.forEach(async (anime, animeIdx) => {
+            animeList.forEach(async (anime, animeIdx) => {
                 let popupHeader =
                     anime.popupHeader ||
                     popupContainer.children?.[animeIdx]?.querySelector?.(
@@ -424,29 +418,32 @@
                     popupAnimeObserver?.observe?.(popupHeader);
                 }
             });
-            let observedIdx = $finalAnimeList.length - 1;
-            let lastAnimeContent = $finalAnimeList[observedIdx];
+            let observedIdx = animeList.length - 1;
+            let lastAnimeContent = animeList[observedIdx];
             let lastPopupContent =
                 lastAnimeContent.popupContent ||
                 popupContainer.children?.[observedIdx];
-            if ($animeObserver && lastPopupContent instanceof Element) {
+            if (newAnimeObserver && lastPopupContent instanceof Element) {
                 if (observedIdx > 0) {
-                    let prevAnimeContent = $finalAnimeList[observedIdx - 1];
+                    let prevAnimeContent = animeList[observedIdx - 1];
                     let prevPopupContent =
                         prevAnimeContent.popupContent ||
                         popupContainer.children?.[observedIdx - 1];
                     if (prevPopupContent instanceof Element) {
-                        $animeObserver.observe(prevPopupContent);
+                        newAnimeObserver.observe(prevPopupContent);
                     }
                 }
                 // Popup Observed
-                $animeObserver.observe(lastPopupContent);
+                await tick();
+                newAnimeObserver.observe(lastPopupContent);
             }
             playMostVisibleTrailer();
-        } else if (val instanceof Array && val.length < 1) {
+        } else if (animeList instanceof Array && animeList.length < 1) {
             $popupVisible = false;
         }
-    });
+    }
+    selectedCategory.subscribe(reloadPopupContentObserver);
+    loadedAnimeLists.subscribe(reloadPopupContentObserver);
 
     function changeAutoPlay() {
         $autoPlay = !$autoPlay;
@@ -467,7 +464,7 @@
                 if (!$popupVisible) return;
                 let visibleTrailer =
                     mostVisiblePopupHeader?.querySelector?.(".trailer");
-                for (let i = 0; i < $ytPlayers?.length; i++) {
+                for (let i = 0, l = $ytPlayers?.length; i < l; i++) {
                     let ytId = $ytPlayers[i]?.ytPlayer?.g?.id;
                     if (
                         $ytPlayers[i]?.ytPlayer?.g === visibleTrailer &&
@@ -493,7 +490,6 @@
         popupWrapper = popupWrapper || document.getElementById("popup-wrapper");
         popupContainer =
             popupContainer || popupWrapper.querySelector("#popup-container");
-        animeGridParentEl = document.getElementById("anime-grid");
         navContainerEl = document.getElementById("nav-container");
         const fullScreenExitHandler = () => {
             if (
@@ -633,24 +629,42 @@
             getChildIndex(
                 mostVisiblePopupHeader?.closest?.(".popup-content"),
             ) ?? -1;
-        if (scrollToGridTimeout) clearTimeout(scrollToGridTimeout);
+        let previousCategory = $selectedCategory;
+        clearTimeout(scrollToGridTimeout);
         scrollToGridTimeout = setTimeout(() => {
-            if (!$popupVisible) return;
+            if (!$popupVisible || previousCategory !== $selectedCategory)
+                return;
+            let animeList = $loadedAnimeLists[$selectedCategory].animeList;
             let animeGrid =
-                $finalAnimeList?.[visibleTrailerIdx]?.gridElement ||
-                animeGridParentEl.children?.[visibleTrailerIdx];
-            if (
-                $popupVisible &&
-                animeGrid instanceof Element &&
-                !isElementVisible(animeGridParentEl, animeGrid, 0.5)
-            ) {
-                document.documentElement.style.overflow = "hidden";
-                document.documentElement.style.overflow = "";
-                animeGridParentEl.style.overflow = "hidden";
-                animeGridParentEl.style.overflow = "";
-                animeGrid.scrollIntoView({
-                    behavior: "smooth",
-                });
+                animeList?.[visibleTrailerIdx]?.gridElement ||
+                $selectedAnimeGridEl?.children?.[visibleTrailerIdx];
+            if ($popupVisible && animeGrid instanceof Element) {
+                if ($gridFullView) {
+                    animeGrid.scrollIntoView({
+                        behavior: "smooth",
+                        inline: "nearest",
+                    });
+                } else {
+                    let documentEl = document.documentElement;
+                    let scrollTop = documentEl.scrollTop;
+                    let top = animeGrid.getBoundingClientRect().top;
+                    let clientHeight = animeGrid.clientHeight;
+                    let newScrollTop;
+                    if (top < 0) {
+                        newScrollTop = scrollTop + (top - 5);
+                    } else if (top > windowHeight - 65 - clientHeight) {
+                        newScrollTop =
+                            scrollTop + top - windowHeight + clientHeight + 70;
+                    }
+                    if (newScrollTop) {
+                        documentEl.style.overflow = "hidden";
+                        documentEl.style.overflow = "";
+                        documentEl.scrollTo({
+                            behavior: "smooth",
+                            top: newScrollTop,
+                        });
+                    }
+                }
             }
         }, 300);
         let haveTrailer;
@@ -662,16 +676,11 @@
         if (haveTrailer) {
             // Recheck Trailer
             if (visibleTrailerIdx >= 0) {
+                let animeList = $loadedAnimeLists[$selectedCategory].animeList;
                 currentHeaderIdx = visibleTrailerIdx;
                 let nearAnimes = [
-                    [
-                        $finalAnimeList?.[visibleTrailerIdx + 1],
-                        visibleTrailerIdx + 1,
-                    ],
-                    [
-                        $finalAnimeList?.[visibleTrailerIdx - 1],
-                        visibleTrailerIdx - 1,
-                    ],
+                    [animeList?.[visibleTrailerIdx + 1], visibleTrailerIdx + 1],
+                    [animeList?.[visibleTrailerIdx - 1], visibleTrailerIdx - 1],
                 ];
                 if (createPopupPlayersTimeout)
                     clearTimeout(createPopupPlayersTimeout);
@@ -684,7 +693,7 @@
                 }, 300);
             }
             // Replay Most Visible Trailer
-            for (let i = 0; i < $ytPlayers?.length; i++) {
+            for (let i = 0, l = $ytPlayers?.length; i < l; i++) {
                 if (
                     $ytPlayers[i]?.ytPlayer?.g === visibleTrailer &&
                     $ytPlayers[i]?.ytPlayer?.getPlayerState?.() !== 1
@@ -764,16 +773,11 @@
             // Recheck Trailer
             if (visibleTrailerIdx >= 0) {
                 currentHeaderIdx = visibleTrailerIdx;
+                let animeList = $loadedAnimeLists[$selectedCategory].animeList;
                 let nearAnimes = [
-                    [$finalAnimeList?.[visibleTrailerIdx], visibleTrailerIdx],
-                    [
-                        $finalAnimeList?.[visibleTrailerIdx + 1],
-                        visibleTrailerIdx + 1,
-                    ],
-                    [
-                        $finalAnimeList?.[visibleTrailerIdx - 1],
-                        visibleTrailerIdx - 1,
-                    ],
+                    [animeList?.[visibleTrailerIdx], visibleTrailerIdx],
+                    [animeList?.[visibleTrailerIdx + 1], visibleTrailerIdx + 1],
+                    [animeList?.[visibleTrailerIdx - 1], visibleTrailerIdx - 1],
                 ];
                 if (createPopupPlayersTimeout)
                     clearTimeout(createPopupPlayersTimeout);
@@ -905,8 +909,8 @@
         let popupHeader = trailerEl?.parentElement;
         let popupImg = popupHeader?.querySelector?.(".popup-img");
         let popupContent = popupHeader?.closest?.(".popup-content");
-        let loopedAnimeID =
-            $finalAnimeList?.[getChildIndex(popupContent) ?? -1]?.id;
+        let animeList = $loadedAnimeLists[$selectedCategory].animeList;
+        let loopedAnimeID = animeList?.[getChildIndex(popupContent) ?? -1]?.id;
         let ytId = trailerEl?.id;
         if (
             ytId &&
@@ -981,7 +985,8 @@
         let trailerEl = ytPlayer?.g;
         let popupHeader = trailerEl?.parentElement;
         let popupContent = popupHeader?.closest?.(".popup-content");
-        let anime = $finalAnimeList?.[getChildIndex(popupContent) ?? -1];
+        let animeList = $loadedAnimeLists[$selectedCategory].animeList;
+        let anime = animeList?.[getChildIndex(popupContent) ?? -1];
         if (
             ytPlayer?.getPlayerState?.() === -1 ||
             trailerEl.tagName !== "IFRAME" ||
@@ -1039,7 +1044,7 @@
         }
     }
 
-    async function updateList(event) {
+    async function updateList(skipConfirm) {
         if (
             $android &&
             $isBackgroundUpdateKey &&
@@ -1047,48 +1052,14 @@
         )
             return;
         if (
-            await $confirmPromise({
+            skipConfirm ||
+            (await $confirmPromise({
                 title: "List has an update",
                 text: "Do you want to refresh your list?",
-            })
+            }))
         ) {
-            $listIsUpdating = true;
-            if ($animeLoaderWorker) {
-                $animeLoaderWorker.terminate();
-                $animeLoaderWorker = null;
-            }
-            animeLoader()
-                .then(async (data) => {
-                    $listUpdateAvailable = false;
-                    $animeLoaderWorker = data.animeLoaderWorker;
-                    if (data?.isNew) {
-                        if (
-                            $finalAnimeList?.length > data?.finalAnimeListCount
-                        ) {
-                            $finalAnimeList = $finalAnimeList?.slice?.(
-                                0,
-                                data.finalAnimeListCount,
-                            );
-                        }
-                        if (data?.finalAnimeList?.length > 0) {
-                            data?.finalAnimeList?.forEach?.((anime, idx) => {
-                                $newFinalAnime = {
-                                    idx: data.lastShownAnimeListIndex + idx,
-                                    finalAnimeList: anime,
-                                    category: data?.category,
-                                };
-                            });
-                        } else {
-                            $finalAnimeList = [];
-                        }
-                        $hiddenEntries = data.hiddenEntries || $hiddenEntries;
-                    }
-                    $dataStatus = null;
-                    return;
-                })
-                .catch((error) => {
-                    console.error(error);
-                });
+            $listUpdateAvailable = false;
+            animeManager({ updateRecommendedAnimeList: true });
         }
     }
 
@@ -1169,7 +1140,7 @@
             mostVisiblePopupHeader?.querySelector?.(".trailer");
         if (!visibleTrailer) return;
         if ($inApp) {
-            for (let i = 0; i < $ytPlayers.length; i++) {
+            for (let i = 0, l = $ytPlayers?.length; i < l; i++) {
                 let ytId = $ytPlayers[i]?.ytPlayer?.g?.id;
                 if (
                     $ytPlayers[i]?.ytPlayer?.g === visibleTrailer &&
@@ -1189,7 +1160,7 @@
                 }
             }
         } else {
-            for (let i = 0; i < $ytPlayers.length; i++) {
+            for (let i = 0, l = $ytPlayers?.length; i < l; i++) {
                 let ytId = $ytPlayers[i]?.ytPlayer?.g?.id;
                 if (ytId && !deletingTrailers?.[ytId]) {
                     autoPausedTrailers[ytId] = true;
@@ -1207,7 +1178,7 @@
             mostVisiblePopupHeader?.querySelector?.(".trailer");
         if (!visibleTrailer) return;
         if ($inApp) {
-            for (let i = 0; i < $ytPlayers.length; i++) {
+            for (let i = 0, l = $ytPlayers?.length; i < l; i++) {
                 let ytId = $ytPlayers[i]?.ytPlayer?.g?.id;
                 if (
                     $ytPlayers[i]?.ytPlayer?.g === visibleTrailer &&
@@ -1226,7 +1197,7 @@
                 }
             }
         } else {
-            for (let i = 0; i < $ytPlayers.length; i++) {
+            for (let i = 0, l = $ytPlayers?.length; i < l; i++) {
                 let ytId = $ytPlayers[i]?.ytPlayer?.g?.id;
                 if (ytId && !deletingTrailers?.[ytId]) {
                     autoPausedTrailers[ytId] = true;
@@ -1244,7 +1215,8 @@
             } catch (e) {}
         }
         $dataStatus = "Reconnected Successfully";
-        if (!$finalAnimeList?.length) {
+        let animeList = $loadedAnimeLists[$selectedCategory].animeList;
+        if (!animeList?.length) {
             $updateRecommendationList = !$updateRecommendationList;
         }
         isOnline = true;
@@ -1542,7 +1514,6 @@
 
     function showFullScreenInfo(info) {
         if (!info) return;
-        window.setShouldGoBack?.(false);
         let newFullDescriptionPopup = editHTMLString(info);
         if (fullDescriptionPopup === newFullDescriptionPopup) {
             fullDescriptionPopup = null;
@@ -1554,6 +1525,9 @@
     window.showFullScreenInfo = showFullScreenInfo;
 
     $: fullDescriptionPopup, isDescriptionScrollable();
+    $: if (fullDescriptionPopup || fullImagePopup) {
+        window.setShouldGoBack?.(false);
+    }
 
     window.checkOpenFullScreenItem = () => {
         return fullImagePopup || fullDescriptionPopup;
@@ -1565,8 +1539,6 @@
             fullDescriptionPopup = null;
         }
     };
-
-    $: $isFullViewed = Boolean(fullDescriptionPopup || fullImagePopup);
 
     async function addImage(node, imageUrl) {
         if (imageUrl && imageUrl !== emptyImage) {
@@ -1640,8 +1612,9 @@
         on:touchcancel="{handlePopupContainerCancel}"
         on:scroll="{popupScroll}"
     >
-        {#if $finalAnimeList?.length}
-            {#each $finalAnimeList || [] as anime, animeIndex (anime?.id || {})}
+        {#if $loadedAnimeLists}
+            {@const animeList = $loadedAnimeLists[$selectedCategory]?.animeList}
+            {#each animeList || [] as anime, animeIndex ((anime?.id ? anime.id + " " + animeIndex : {}) ?? {})}
                 <div class="popup-content" bind:this="{anime.popupContent}">
                     {#if animeIndex <= currentHeaderIdx + bottomPopupVisibleCount && animeIndex >= currentHeaderIdx - topPopupVisibleCount}
                         <div class="popup-main" use:popupMainEl>
@@ -1766,18 +1739,15 @@
                                     {#if $listUpdateAvailable}
                                         <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                                         <div
-                                            class="{'list-update-container' +
-                                                ($listIsUpdating
-                                                    ? ' load'
-                                                    : '')}"
+                                            class="list-update-container"
                                             tabindex="{!$menuVisible &&
                                             $popupVisible
                                                 ? '0'
                                                 : '-1'}"
-                                            on:click="{updateList}"
+                                            on:click="{() => updateList()}"
                                             on:keyup="{(e) =>
                                                 e.key === 'Enter' &&
-                                                updateList(e)}"
+                                                updateList()}"
                                         >
                                             <!-- arrows rotate -->
                                             <svg
@@ -1809,7 +1779,6 @@
                                                 : '-1'}"
                                             on:click="{() => {
                                                 if (!$popupVisible) return;
-                                                window.setShouldGoBack?.(false);
                                                 fullImagePopup =
                                                     anime.bannerImageUrl ||
                                                     anime.trailerThumbnailUrl;
@@ -1818,9 +1787,6 @@
                                             on:keyup="{(e) => {
                                                 if (!$popupVisible) return;
                                                 if (e.key === 'Enter') {
-                                                    window.setShouldGoBack?.(
-                                                        false,
-                                                    );
                                                     let newFullImagePopup =
                                                         anime.bannerImageUrl ||
                                                         anime.trailerThumbnailUrl;
@@ -1877,9 +1843,9 @@
                                                 'javascript:void(0)'}"
                                             class="{anime?.contentCautionColor +
                                                 '-color anime-title copy'}"
-                                            copy-value="{anime?.copiedTitle ||
+                                            data-copy="{anime?.copiedTitle ||
                                                 ''}"
-                                            copy-value-2="{anime?.shownTitle ||
+                                            data-secondCopy="{anime?.shownTitle ||
                                                 ''}"
                                             style:overflow="{$popupIsGoingBack
                                                 ? "hidden"
@@ -1895,19 +1861,7 @@
                                                     d="M288 0c9 0 17 5 21 14l69 141 153 22c9 2 17 8 20 17s0 18-6 24L434 328l26 156c1 9-2 18-10 24s-17 6-25 1l-137-73-137 73c-8 4-18 4-25-2s-11-14-10-23l26-156L31 218a24 24 0 0 1 14-41l153-22 68-141c4-9 13-14 22-14zm0 79-53 108c-3 7-10 12-18 13L99 219l86 85c5 6 8 13 7 21l-21 120 106-57c7-3 15-3 22 1l105 56-20-120c-1-8 1-15 7-21l86-85-118-17c-8-2-15-7-18-14L288 79z"
                                                 ></path></svg
                                             >
-                                            <h4
-                                                class="copy"
-                                                copy-value="{(anime.averageScore !=
-                                                null
-                                                    ? anime.formattedAverageScore ||
-                                                      'NA'
-                                                    : 'NA') +
-                                                    '/10 · ' +
-                                                    (anime.popularity != null
-                                                        ? anime.formattedPopularity ||
-                                                          'NA'
-                                                        : 'NA')}"
-                                            >
+                                            <h4>
                                                 <b
                                                     >{anime.averageScore != null
                                                         ? anime.formattedAverageScore ||
@@ -1957,17 +1911,7 @@
                                             </h4>
                                         {/if}
                                         {#if anime?.season || anime?.year}
-                                            <h4
-                                                style="text-align: right;"
-                                                class="copy"
-                                                copy-value="{`${
-                                                    anime?.season || ''
-                                                }${
-                                                    anime?.season && anime?.year
-                                                        ? ' ' + anime?.year
-                                                        : anime?.year || ''
-                                                }` || ''}"
-                                            >
+                                            <h4 style="text-align: right;">
                                                 {`${anime?.season || ""}${
                                                     anime?.season && anime?.year
                                                         ? " " + anime?.year
@@ -1987,14 +1931,7 @@
                                             : ""}"
                                         on:scroll="{itemScroll}"
                                     >
-                                        <h4
-                                            class="copy"
-                                            copy-value="{(anime.userStatus ||
-                                                'NA') +
-                                                (anime.userScore != null
-                                                    ? ' · ' + anime.userScore
-                                                    : '')}"
-                                        >
+                                        <h4>
                                             <a
                                                 tabindex="-1"
                                                 rel="{anime.animeUrl
@@ -2026,17 +1963,14 @@
                                         {#if typeof anime?.nextAiringEpisode?.episode === "number" && !isNaN(anime?.nextAiringEpisode?.episode) && anime?.nextAiringEpisode?.episode === anime.episodes && typeof anime?.nextAiringEpisode?.airingAt === "number" && !isNaN(anime?.nextAiringEpisode?.airingAt) && new Date(anime?.nextAiringEpisode?.airingAt * 1000) <= new Date()}
                                             <h4
                                                 style="text-align: right;"
-                                                class="copy year-season"
-                                                copy-value="FINISHED"
+                                                class="year-season"
                                             >
                                                 FINISHED
                                             </h4>
                                         {:else}
                                             <h4
                                                 style="text-align: right;"
-                                                class="copy year-season"
-                                                copy-value="{anime.status ||
-                                                    ''}"
+                                                class="year-season"
                                             >
                                                 {anime.status || "NA"}
                                             </h4>
@@ -2078,10 +2012,9 @@
                                                             $popupVisible
                                                                 ? ''
                                                                 : '-1'}"
-                                                            class="{'copy' +
-                                                                (studios?.studioColor
-                                                                    ? ` ${studios?.studioColor}-color`
-                                                                    : '')}"
+                                                            class="{studios?.studioColor
+                                                                ? `${studios?.studioColor}-color`
+                                                                : ''}"
                                                             rel="{studios
                                                                 ?.studio
                                                                 ?.studioUrl
@@ -2096,10 +2029,6 @@
                                                                 ?.studio
                                                                 ?.studioUrl ||
                                                                 'javascript:void(0)'}"
-                                                            copy-value="{studios
-                                                                ?.studio
-                                                                ?.studioName ||
-                                                                ''}"
                                                         >
                                                             {studios?.studio
                                                                 ?.studioName ||
@@ -2140,12 +2069,9 @@
                                                 >
                                                     {#each anime.shownGenres as genres (genres?.genre || {})}
                                                         <span
-                                                            class="{'copy ' +
-                                                                (genres?.genreColor
-                                                                    ? `${genres?.genreColor}-color`
-                                                                    : '')}"
-                                                            copy-value="{genres?.genre ||
-                                                                ''}"
+                                                            class="{genres?.genreColor
+                                                                ? `${genres?.genreColor}-color`
+                                                                : ''}"
                                                             >{genres?.genre ||
                                                                 "NA"}
                                                         </span>
@@ -2221,12 +2147,9 @@
                                                                     );
                                                                 }
                                                             }}"
-                                                            class="{'copy ' +
-                                                                (tags?.tagColor
-                                                                    ? `${tags?.tagColor}-color`
-                                                                    : '')}"
-                                                            copy-value="{tags?.copyValue ||
-                                                                ''}"
+                                                            class="{tags?.tagColor
+                                                                ? `${tags?.tagColor}-color`
+                                                                : ''}"
                                                             >{@html tags?.tag ||
                                                                 "NA"}
                                                         </span>
@@ -2271,9 +2194,6 @@
                                                 }}"
                                                 on:click="{() => {
                                                     if (!$popupVisible) return;
-                                                    window.setShouldGoBack?.(
-                                                        false,
-                                                    );
                                                     fullImagePopup =
                                                         anime.coverImageUrl ||
                                                         anime.bannerImageUrl ||
@@ -2283,9 +2203,6 @@
                                                 }}"
                                                 on:keyup="{(e) => {
                                                     if (!$popupVisible) return;
-                                                    window.setShouldGoBack?.(
-                                                        false,
-                                                    );
                                                     if (e.key === 'Enter') {
                                                         let newFullImagePopup =
                                                             anime.coverImageUrl ||
@@ -2453,7 +2370,7 @@
                     {/if}
                 </div>
             {/each}
-            {#if $finalAnimeList?.length && !$shownAllInList}
+            {#if animeList?.length && !$shownAllInList?.[$selectedCategory]}
                 <div class="popup-content-loading">
                     <!-- k icon -->
                     <svg

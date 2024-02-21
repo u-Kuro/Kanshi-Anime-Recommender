@@ -6,7 +6,7 @@ import AnimePopup from "./Anime/Fixed/AnimePopup.svelte";
 import AnimeOptionsPopup from "./Anime/Fixed/AnimeOptionsPopup.svelte";
 
 // Fixed
-import CustomFilter from "./Fixed/CustomFilter.svelte";
+import Categories from "./Fixed/Categories.svelte";
 import Navigator from "./Fixed/Navigator.svelte";
 import Menu from "./Fixed/Menu.svelte";
 
@@ -16,7 +16,7 @@ import Confirm from "./Others/Confirm.svelte";
 
 export default {
     Fixed: {
-        CustomFilter: CustomFilter,
+        Categories: Categories,
         Navigator: Navigator,
         Menu: Menu,
     },

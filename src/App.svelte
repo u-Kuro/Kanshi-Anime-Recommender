@@ -11,9 +11,10 @@
 		requestAnimeEntries,
 		requestUserEntries,
 		processRecommendedAnimeList,
-		animeLoader,
+		animeManager,
 		exportUserData,
 		getExtraInfo,
+		animeLoader,
 	} from "./js/workerUtils.js";
 	import {
 		getLocalStorage,
@@ -23,30 +24,23 @@
 		ncsCompare,
 		removeLocalStorage,
 		setLocalStorage,
-		addClass,
-		removeClass,
 	} from "./js/others/helper.js";
 	import {
 		appID,
 		android,
 		username,
 		hiddenEntries,
-		filterOptions,
-		selectedCustomFilter,
-		activeTagFilters,
-		finalAnimeList,
-		animeLoaderWorker,
 		initData,
 		gridFullView,
 		dataStatus,
 		userRequestIsRunning,
 		autoUpdate,
 		autoUpdateInterval,
-		lastRunnedAutoUpdateDate,
+		runnedAutoUpdateAt,
 		exportPathIsAvailable,
 		autoExport,
 		autoExportInterval,
-		lastRunnedAutoExportDate,
+		runnedAutoExportAt,
 		autoPlay,
 		popupVisible,
 		menuVisible,
@@ -54,7 +48,6 @@
 		isScrolling,
 		scrollingTimeout,
 		listUpdateAvailable,
-		listIsUpdating,
 		confirmIsVisible,
 		animeOptionVisible,
 		runUpdate,
@@ -69,11 +62,21 @@
 		progress,
 		popupIsGoingBack,
 		dropdownIsVisible,
-		newFinalAnime,
 		showStatus,
 		mobile,
 		isBackgroundUpdateKey,
 		visitedKey,
+		orderedFilters,
+		algorithmFilters,
+		nonOrderedFilters,
+		filterConfig,
+		animeCautions,
+		categories,
+		selectedCategory,
+		loadedAnimeLists,
+		categoriesKeys,
+		selectedAnimeGridEl,
+		isLoadingAnime,
 		// anilistAccessToken,
 	} from "./js/globalValues.js";
 
@@ -81,6 +84,7 @@
 	$mobile = isMobile(); // Mobile/
 	// Init Data
 	let initDataPromises = [];
+	let shouldReloadList;
 
 	window.kanshiInit = new Promise(async (resolve) => {
 		// Check App ID
@@ -140,33 +144,8 @@
 			}
 
 			await animeLoader({ loadInit: true })
-				.then(async (data) => {
-					$animeLoaderWorker = data.animeLoaderWorker;
-					if (data?.isNew) {
-						if (
-							$finalAnimeList?.length > data?.finalAnimeListCount
-						) {
-							$finalAnimeList = $finalAnimeList?.slice?.(
-								0,
-								data.finalAnimeListCount,
-							);
-						}
-						if (data.finalAnimeList?.length > 0) {
-							data.finalAnimeList?.forEach?.((anime, idx) => {
-								$newFinalAnime = {
-									idx: data.lastShownAnimeListIndex + idx,
-									finalAnimeList: anime,
-									category: data?.category,
-								};
-							});
-						} else {
-							$finalAnimeList = [];
-						}
-					}
-					return;
-				})
-				.catch(async () => {
-					await saveJSON(true, "shouldLoadAnime");
+				.then((data) => {
+					shouldReloadList = data.shouldReloadList;
 					return;
 				})
 				.finally(resolve);
@@ -201,7 +180,6 @@
 							"animeEntriesIsEmpty",
 						);
 						if (shouldGetAnimeEntries === true) {
-							$finalAnimeList = null;
 							getAnimeEntries()
 								.then(() => {
 									resolve();
@@ -328,10 +306,11 @@
 					try {
 						getFilterOptions()
 							.then((data) => {
-								$selectedCustomFilter =
-									data.selectedCustomFilter;
-								$activeTagFilters = data.activeTagFilters;
-								$filterOptions = data.filterOptions;
+								$orderedFilters = data?.orderedFilters;
+								$nonOrderedFilters = data?.nonOrderedFilters;
+								$filterConfig = data?.filterConfig;
+								$animeCautions = data?.animeCautions;
+								$algorithmFilters = data?.algorithmFilter;
 								resolve();
 							})
 							.catch(() => {
@@ -379,7 +358,9 @@
 									}).then((recommendationListIsProcessed) => {
 										new Promise(async (resolve) => {
 											if (recommendationListIsProcessed) {
-												animeLoader()
+												animeManager({
+													updateRecommendedAnimeList: true,
+												})
 													.then(() => {
 														try {
 															JSBridge?.setShouldLoadAnime?.(
@@ -563,67 +544,31 @@
 						}
 						new Promise(async (resolve) => {
 							if (shouldProcessRecommendation) {
-								processRecommendedAnimeList()
-									.then(async () => {
-										resolve(false);
-									})
-									.catch(() => {
-										resolve(true);
-									});
+								processRecommendedAnimeList().finally(() => {
+									resolve(true);
+								});
 							} else {
 								resolve();
 							}
 						}).then(async (shouldLoadAnime) => {
-							if (!shouldLoadAnime) {
-								shouldLoadAnime =
-									await retrieveJSON("shouldLoadAnime");
-								if (shouldLoadAnime === undefined) {
-									let finalAnimeListLen = await retrieveJSON(
-										"finalAnimeListLength",
-									);
-									if (finalAnimeListLen < 1) {
-										shouldLoadAnime = true;
-									}
-								}
-							}
+							shouldLoadAnime =
+								shouldLoadAnime ||
+								shouldReloadList ||
+								(await retrieveJSON("shouldLoadAnime"));
 							if (shouldLoadAnime) {
-								animeLoader()
-									.then(async (data) => {
-										$animeLoaderWorker =
-											data.animeLoaderWorker;
-										if (data?.isNew) {
-											if (
-												$finalAnimeList?.length >
-												data?.finalAnimeListCount
-											) {
-												$finalAnimeList =
-													$finalAnimeList?.slice?.(
-														0,
-														data.finalAnimeListCount,
-													);
-											}
-											if (
-												data?.finalAnimeList?.length > 0
-											) {
-												data?.finalAnimeList?.forEach?.(
-													(anime, idx) => {
-														$newFinalAnime = {
-															idx:
-																data.lastShownAnimeListIndex +
-																idx,
-															finalAnimeList:
-																anime,
-															category:
-																data?.category,
-														};
-													},
-												);
-											} else {
-												$finalAnimeList = [];
-											}
-											$hiddenEntries =
-												data.hiddenEntries ||
-												$hiddenEntries;
+								animeManager({
+									updateRecommendedAnimeList: true,
+								})
+									.then(async () => {
+										if (shouldReloadList) {
+											animeLoader({
+												loadInit: true,
+											}).then(() => {
+												$dataStatus = null;
+												checkAutoFunctions(true);
+												loadAnalytics();
+											});
+										} else {
 											$dataStatus = null;
 											checkAutoFunctions(true);
 											loadAnalytics();
@@ -680,7 +625,7 @@
 			window.visualViewport?.width || 0,
 			window.innerWidth || 0,
 		) || 0;
-	let animeGridEl;
+	let animeListPagerPad = windowWidth > 660 ? 70 : 0;
 
 	$dataStatus = "Retrieving Some Data";
 	let pleaseWaitStatusInterval = setInterval(() => {
@@ -693,6 +638,7 @@
 	// 	let urlParams = new URLSearchParams(window.location.hash.slice(1));
 	// 	return urlParams.get("access_token");
 	// }
+
 	async function checkAutoFunctions(
 		initCheck = false,
 		visibilityChange = false,
@@ -783,39 +729,7 @@
 		if (typeof val !== "boolean" || $initData) return;
 		if ($android && window?.[$isBackgroundUpdateKey] === true) return;
 		$listUpdateAvailable = false;
-		if ($animeLoaderWorker) {
-			$animeLoaderWorker.terminate();
-			$animeLoaderWorker = null;
-		}
-		animeLoader()
-			.then(async (data) => {
-				$animeLoaderWorker = data.animeLoaderWorker;
-				if (data?.isNew) {
-					if ($finalAnimeList?.length > data?.finalAnimeListCount) {
-						$finalAnimeList = $finalAnimeList?.slice?.(
-							0,
-							data.finalAnimeListCount,
-						);
-					}
-					if (data?.finalAnimeList?.length > 0) {
-						data?.finalAnimeList?.forEach?.((anime, idx) => {
-							$newFinalAnime = {
-								idx: data.lastShownAnimeListIndex + idx,
-								finalAnimeList: anime,
-								category: data?.category,
-							};
-						});
-					} else {
-						$finalAnimeList = [];
-					}
-					$hiddenEntries = data.hiddenEntries || $hiddenEntries;
-				}
-				$dataStatus = null;
-				return;
-			})
-			.catch((error) => {
-				console.error(error);
-			});
+		animeManager({ updateRecommendedAnimeList: true });
 	});
 	importantUpdate.subscribe(async (val) => {
 		if (typeof val !== "boolean" || $initData) return;
@@ -845,62 +759,21 @@
 			});
 	});
 
-	async function runLoadAnime(params = {}) {
+	async function runLoadAnime() {
 		return new Promise(async (resolve) => {
 			if (
 				($popupVisible ||
-					($gridFullView
-						? animeGridEl.scrollLeft > 500
-						: animeGridEl?.getBoundingClientRect?.()?.top < 0)) &&
-				$finalAnimeList?.length
+					($gridFullView && $selectedAnimeGridEl
+						? $selectedAnimeGridEl.scrollLeft > 500
+						: $selectedAnimeGridEl?.getBoundingClientRect?.()?.top <
+							0)) &&
+				$loadedAnimeLists?.[$selectedCategory]?.animeList?.length
 			) {
 				await saveJSON(true, "shouldLoadAnime");
 				$listUpdateAvailable = true;
 				resolve();
 			} else {
-				if ($animeLoaderWorker) {
-					$animeLoaderWorker.terminate();
-					$animeLoaderWorker = null;
-				}
-				animeLoader(params)
-					.then(async (data) => {
-						$animeLoaderWorker = data.animeLoaderWorker;
-						if (data?.isNew) {
-							if (
-								$finalAnimeList?.length >
-								data?.finalAnimeListCount
-							) {
-								$finalAnimeList = $finalAnimeList?.slice?.(
-									0,
-									data.finalAnimeListCount,
-								);
-							}
-							if (data?.finalAnimeList?.length > 0) {
-								data?.finalAnimeList?.forEach?.(
-									(anime, idx) => {
-										$newFinalAnime = {
-											idx:
-												data.lastShownAnimeListIndex +
-												idx,
-											finalAnimeList: anime,
-											category: data?.category,
-										};
-									},
-								);
-							} else {
-								$finalAnimeList = [];
-							}
-							$hiddenEntries =
-								data.hiddenEntries || $hiddenEntries;
-						}
-						$dataStatus = null;
-						return;
-					})
-					.catch((error) => {
-						console.error(error);
-						return;
-					})
-					.finally(resolve);
+				animeManager({ updateRecommendedAnimeList: true });
 			}
 		});
 	}
@@ -927,9 +800,19 @@
 			}
 		}).then((thisShouldLoadAnime) => {
 			let isAlreadyLoaded = !shouldLoadAnime && !thisShouldLoadAnime;
-			runLoadAnime(isAlreadyLoaded ? { loadInit: true } : {}).finally(
-				() => window.checkEntries?.(),
-			);
+			if (isAlreadyLoaded) {
+				animeLoader({ updateRecommendedAnimeList: true }).finally(
+					() => {
+						window.checkEntries?.();
+					},
+				);
+			} else {
+				animeManager({ updateRecommendedAnimeList: true }).finally(
+					() => {
+						window.checkEntries?.();
+					},
+				);
+			}
 		});
 	};
 
@@ -951,9 +834,8 @@
 				}, hourINMS);
 			} else {
 				let timeLeft =
-					hourINMS -
-						(new Date().getTime() -
-							$lastRunnedAutoUpdateDate?.getTime()) || 0;
+					hourINMS - (new Date().getTime() - $runnedAutoUpdateAt) ||
+					0;
 				setTimeout(
 					() => {
 						if ($autoUpdate === false) return;
@@ -979,18 +861,13 @@
 	});
 	async function autoUpdateIsPastDate() {
 		let isPastDate = false;
-		$lastRunnedAutoUpdateDate = await retrieveJSON(
-			"lastRunnedAutoUpdateDate",
-		);
-		if (!$lastRunnedAutoUpdateDate) isPastDate = true;
+		$runnedAutoUpdateAt = await retrieveJSON("runnedAutoUpdateAt");
+		if ($runnedAutoUpdateAt == null) isPastDate = true;
 		else if (
-			$lastRunnedAutoUpdateDate instanceof Date &&
-			!isNaN($lastRunnedAutoUpdateDate)
+			typeof $runnedAutoUpdateAt === "number" &&
+			!isNaN($runnedAutoUpdateAt)
 		) {
-			if (
-				new Date().getTime() - $lastRunnedAutoUpdateDate.getTime() >=
-				hourINMS
-			) {
+			if (new Date().getTime() - $runnedAutoUpdateAt >= hourINMS) {
 				isPastDate = true;
 			}
 		}
@@ -1028,9 +905,8 @@
 				}, hourINMS);
 			} else {
 				let timeLeft =
-					hourINMS -
-						(new Date().getTime() -
-							$lastRunnedAutoExportDate?.getTime()) || 0;
+					hourINMS - (new Date().getTime() - $runnedAutoExportAt) ||
+					0;
 				setTimeout(
 					() => {
 						if ($autoExport === false) return;
@@ -1057,18 +933,13 @@
 	async function autoExportIsPastDate() {
 		// Check Run First
 		let isPastDate = false;
-		$lastRunnedAutoExportDate = await retrieveJSON(
-			"lastRunnedAutoExportDate",
-		);
-		if (!$lastRunnedAutoExportDate) isPastDate = true;
+		$runnedAutoExportAt = await retrieveJSON("runnedAutoExportAt");
+		if ($runnedAutoExportAt == null) isPastDate = true;
 		else if (
-			$lastRunnedAutoExportDate instanceof Date &&
-			!isNaN($lastRunnedAutoExportDate)
+			typeof $runnedAutoExportAt === "number" &&
+			!isNaN($runnedAutoExportAt)
 		) {
-			if (
-				new Date().getTime() - $lastRunnedAutoExportDate.getTime() >=
-				hourINMS
-			) {
+			if (new Date().getTime() - $runnedAutoExportAt >= hourINMS) {
 				isPastDate = true;
 			}
 		}
@@ -1088,14 +959,9 @@
 		clearTimeout($scrollingTimeout);
 		$scrollingTimeout = setTimeout(() => {
 			$isScrolling = false;
-		}, 500);
+		}, 200);
 	});
 
-	listUpdateAvailable.subscribe((val) => {
-		if (!val) {
-			$listIsUpdating = false;
-		}
-	});
 	// Global Function For Android/Browser
 	document.addEventListener("visibilitychange", async () => {
 		if ($initData || $android || document.visibilityState !== "visible")
@@ -1237,12 +1103,15 @@
 				return;
 			} else if (!willExit) {
 				willExit = true;
-				if ($gridFullView) {
-					animeGridEl.style.overflow = "hidden";
-					animeGridEl.style.overflow = "";
-					animeGridEl.scroll({ left: 0, behavior: "smooth" });
+				if ($gridFullView && $selectedAnimeGridEl) {
+					$selectedAnimeGridEl.style.overflow = "hidden";
+					$selectedAnimeGridEl.style.overflow = "";
+					$selectedAnimeGridEl.scroll({
+						left: 0,
+						behavior: "smooth",
+					});
 				} else {
-					window.showCustomFilterNav?.(true);
+					window.showCategoriesNav?.(true);
 					if ($android || !matchMedia("(hover:hover)").matches) {
 						document.documentElement.style.overflow = "hidden";
 						document.documentElement.style.overflow = "";
@@ -1251,15 +1120,15 @@
 				}
 				return;
 			} else {
-				if ($gridFullView) {
-					animeGridEl.style.overflow = "hidden";
-					animeGridEl.scrollLeft = 0;
+				if ($gridFullView && $selectedAnimeGridEl) {
+					$selectedAnimeGridEl.style.overflow = "hidden";
+					$selectedAnimeGridEl.scrollLeft = 0;
 					clearTimeout(exitScrollTimeout);
 					exitScrollTimeout = setTimeout(() => {
-						animeGridEl.style.overflow = "";
+						$selectedAnimeGridEl.style.overflow = "";
 					}, 100);
 				} else {
-					window.showCustomFilterNav?.(true);
+					window.showCategoriesNav?.(true);
 					if ($android || !matchMedia("(hover:hover)").matches) {
 						document.documentElement.style.overflow = "hidden";
 					}
@@ -1281,44 +1150,85 @@
 			}
 		}
 	};
+
+	function setMinHeight(val = $gridFullView) {
+		if (val) {
+			document.documentElement.style.minHeight = "";
+		} else {
+			document.documentElement.style.minHeight =
+				screen.height + 57 + "px";
+		}
+	}
+
 	gridFullView.subscribe(async (val) => {
+		setMinHeight(val);
 		await tick();
 		if (val) {
-			if (animeGridEl?.scrollLeft > 500) {
+			if ($selectedAnimeGridEl?.scrollLeft > 500) {
 				window.setShouldGoBack?.(false);
 			}
 		} else {
-			if (animeGridEl?.getBoundingClientRect?.()?.top < 0) {
+			if ($selectedAnimeGridEl?.getBoundingClientRect?.()?.top < 0) {
 				window.setShouldGoBack?.(false);
 			}
 		}
 	});
-	menuVisible.subscribe((val) => {
-		if (val === true) window.setShouldGoBack?.(false);
-	});
-	popupVisible.subscribe((val) => {
-		if (val === true) {
-			addClass(document?.documentElement, "popup-visible");
-			window?.setShouldGoBack?.(false);
-		} else if (val === false) {
-			removeClass(document?.documentElement, "popup-visible");
-			let shouldUpdate =
-				animeGridEl?.getBoundingClientRect?.()?.top > 0 &&
-				!$popupVisible;
-			if ($listUpdateAvailable && shouldUpdate) {
-				updateList();
+
+	let panningIdx, panningCategory;
+	let isBelowNav = false;
+	let maxWindowHeight = 0;
+	let gridTopPosition, gridMaxHeight;
+	let gridTopScrolls = {};
+
+	window.addEventListener("scroll", async () => {
+		await tick();
+		let scrollTop = document.documentElement.scrollTop;
+		if (!$gridFullView) {
+			let element = animeListPagerEl.querySelector(
+				"main.viewed .image-grid",
+			);
+			if (element) {
+				let category = element?.dataset?.category;
+				if (
+					category &&
+					panningCategory &&
+					panningCategory !== category
+				) {
+					$selectedCategory = panningCategory;
+				} else {
+					let offsetToWindow = element.getBoundingClientRect().top;
+					if (offsetToWindow > 1) {
+						gridTopPosition = 0;
+						Array.from(animeListPagerEl.children).forEach((el) => {
+							el.scrollTop = 0;
+						});
+						for (let category in gridTopScrolls) {
+							gridTopScrolls[category] = null;
+						}
+					} else {
+						gridTopPosition = Math.abs(offsetToWindow);
+						let category = element.dataset.category;
+						let gridOffSetDocument =
+							scrollTop + element.getBoundingClientRect().top;
+						gridTopScrolls[category] =
+							scrollTop - gridOffSetDocument;
+					}
+					gridMaxHeight = element?.clientHeight ?? gridMaxHeight;
+				}
 			}
 		}
-	});
-	let isBelowNav = false;
-	window.addEventListener?.("scroll", () => {
+
 		let shouldUpdate =
-			animeGridEl?.getBoundingClientRect?.()?.top > 0 && !$popupVisible;
+			$selectedAnimeGridEl?.getBoundingClientRect?.()?.top > 0 &&
+			!$popupVisible;
 		if ($listUpdateAvailable && shouldUpdate) {
 			updateList();
 		}
-		isBelowNav = document.documentElement.scrollTop > 54;
-		if (animeGridEl?.getBoundingClientRect?.()?.top < 0 && !willExit) {
+		isBelowNav = scrollTop > 54;
+		if (
+			$selectedAnimeGridEl?.getBoundingClientRect?.()?.top < 0 &&
+			!willExit
+		) {
 			window?.setShouldGoBack?.(false);
 		}
 		runIsScrolling.update((e) => !e);
@@ -1366,9 +1276,9 @@
 		if (!classList.contains("copy")) target = target.closest(".copy");
 		if (target) {
 			copyhold = true;
-			if (copytimeoutId) clearTimeout(copytimeoutId);
+			clearTimeout(copytimeoutId);
 			copytimeoutId = setTimeout(() => {
-				let text = target.getAttribute("copy-value");
+				let text = target.dataset.copy;
 				if (
 					text &&
 					!$isScrolling &&
@@ -1379,7 +1289,7 @@
 					setTimeout(() => {
 						target.style.pointerEvents = "";
 					}, 500);
-					let text2 = target.getAttribute("copy-value-2");
+					let text2 = target.dataset.secondCopytarget;
 					if (text2 && !ncsCompare(text2, text)) {
 						if ($android) {
 							window.copyToClipBoard?.(text2);
@@ -1490,40 +1400,8 @@
 
 	async function updateList() {
 		if ($android && window?.[$isBackgroundUpdateKey] === true) return;
-		$listIsUpdating = true;
-		if ($animeLoaderWorker) {
-			$animeLoaderWorker.terminate();
-			$animeLoaderWorker = null;
-		}
-		animeLoader()
-			.then(async (data) => {
-				$animeLoaderWorker = data.animeLoaderWorker;
-				if (data?.isNew) {
-					if ($finalAnimeList?.length > data?.finalAnimeListCount) {
-						$finalAnimeList = $finalAnimeList?.slice?.(
-							0,
-							data.finalAnimeListCount,
-						);
-					}
-					if (data?.finalAnimeList?.length > 0) {
-						data?.finalAnimeList?.forEach?.((anime, idx) => {
-							$newFinalAnime = {
-								idx: data.lastShownAnimeListIndex + idx,
-								finalAnimeList: anime,
-								category: data?.category,
-							};
-						});
-					} else {
-						$finalAnimeList = [];
-					}
-					$hiddenEntries = data.hiddenEntries || $hiddenEntries;
-				}
-				$dataStatus = null;
-				return;
-			})
-			.catch((error) => {
-				console.error(error);
-			});
+		$listUpdateAvailable = false;
+		animeManager({ updateRecommendedAnimeList: true });
 	}
 
 	window.updateAppAlert = async () => {
@@ -1547,112 +1425,26 @@
 	};
 
 	let _progress = 0,
-		progressTimeout,
-		progressChangeStart = performance.now();
+		progressChangeStart = performance.now(),
+		isChangingProgress;
 	progress.subscribe((val) => {
 		if (
 			val >= 100 ||
 			val <= 0 ||
 			performance.now() - progressChangeStart > 300
 		) {
-			clearTimeout(progressTimeout);
-			progressTimeout = setTimeout(() => {
-				if (_progress < 100 && _progress > 0) {
-					_progress = Math.max(val, _progress);
-				} else {
+			if (_progress < 100 && _progress > 0) {
+				_progress = Math.max(val, _progress);
+			} else {
+				if (isChangingProgress) return;
+				isChangingProgress = true;
+				setTimeout(() => {
 					_progress = val;
-				}
-			}, 16);
+					isChangingProgress = false;
+				}, 17);
+			}
 			progressChangeStart = performance.now();
 		}
-	});
-
-	let isMaxWindowHeight;
-	onMount(() => {
-		animeGridEl = document.getElementById("anime-grid");
-		animeGridEl?.addEventListener("scroll", () => {
-			if (animeGridEl.scrollLeft > 500 && !willExit)
-				window.setShouldGoBack?.(false);
-			if (!$gridFullView) return;
-			runIsScrolling.update((e) => !e);
-		});
-		document
-			.getElementById("popup-container")
-			.addEventListener("scroll", () => {
-				runIsScrolling.update((e) => !e);
-			});
-		windowWidth = Math.max(
-			document?.documentElement?.getBoundingClientRect?.()?.width,
-			window?.visualViewport?.width || 0,
-			window?.innerWidth || 0,
-		);
-		let maxWindowHeight = 0;
-		let lastWindowHeight = 0;
-		if (
-			!(
-				document.fullScreen ||
-				document.mozFullScreen ||
-				document.webkitIsFullScreen ||
-				document.msFullscreenElement
-			)
-		) {
-			lastWindowHeight = maxWindowHeight =
-				Math?.max?.(
-					window.visualViewport?.height || 0,
-					window.innerHeight || 0,
-				) || 0;
-		}
-		window.addEventListener("resize", () => {
-			let newWindowHeight = Math.max(
-				window?.visualViewport?.height || 0,
-				window?.innerHeight || 0,
-			);
-			let possibleVirtualKeyboardChange =
-				Math.abs(lastWindowHeight - newWindowHeight) >
-				Math.max(100, maxWindowHeight * 0.15);
-			if (possibleVirtualKeyboardChange) {
-				let isPossiblyHid = newWindowHeight > lastWindowHeight;
-				window?.showCustomFilterNav?.(isPossiblyHid, !isPossiblyHid);
-				let activeElement = document?.activeElement;
-				if (
-					isPossiblyHid &&
-					["INPUT", "TEXTAREA"].includes(activeElement?.tagName)
-				) {
-					activeElement?.blur?.();
-					if (activeElement?.id === "usernameInput") {
-						window?.onfocusUsernameInput?.();
-					}
-				}
-			}
-			if (
-				!(
-					document.fullScreen ||
-					document.mozFullScreen ||
-					document.webkitIsFullScreen ||
-					document.msFullscreenElement
-				)
-			) {
-				isMaxWindowHeight = newWindowHeight >= maxWindowHeight;
-				lastWindowHeight = newWindowHeight;
-				maxWindowHeight =
-					Math.max(maxWindowHeight, newWindowHeight) || 0;
-			}
-			windowWidth = Math.max(
-				document?.documentElement?.getBoundingClientRect?.()?.width ||
-					0,
-				window?.visualViewport?.width || 0,
-				window?.innerWidth || 0,
-			);
-			if (windowWidth > 750) {
-				Object.assign(
-					document?.getElementById?.("progress")?.style || {},
-					{
-						display: "",
-						zIndex: "",
-					},
-				);
-			}
-		});
 	});
 
 	function loadAnalytics() {
@@ -1698,6 +1490,261 @@
 			document.head.appendChild(GAscript);
 		})();
 	}
+
+	let animeListPagerEl;
+
+	let isScrollingAnimeGrid, animeGridScrollTimeout;
+	window.animeGridListScrolled = () => {
+		clearTimeout(animeGridScrollTimeout);
+		isScrollingAnimeGrid = true;
+		animeGridScrollTimeout = setTimeout(() => {
+			isScrollingAnimeGrid = false;
+		}, 200);
+	};
+
+	let isResizing, isMaxWindowHeight;
+	onMount(() => {
+		window.animeGridScrolled = (scrollLeft) => {
+			if (scrollLeft > 500 && !willExit) {
+				window.setShouldGoBack?.(false);
+			}
+			if (!$gridFullView) return;
+			runIsScrolling.update((e) => !e);
+		};
+		document
+			.getElementById("popup-container")
+			.addEventListener("scroll", () => {
+				runIsScrolling.update((e) => !e);
+			});
+		windowWidth = Math.max(
+			document?.documentElement?.getBoundingClientRect?.()?.width,
+			window?.visualViewport?.width || 0,
+			window?.innerWidth || 0,
+		);
+		animeListPagerPad = windowWidth > 660 ? 70 : 0;
+
+		let lastWindowHeight = 0;
+		if (
+			!(
+				document.fullScreen ||
+				document.mozFullScreen ||
+				document.webkitIsFullScreen ||
+				document.msFullscreenElement
+			)
+		) {
+			lastWindowHeight = maxWindowHeight =
+				Math?.max?.(
+					window.visualViewport?.height || 0,
+					window.innerHeight || 0,
+				) || 0;
+		}
+		let resizeTime;
+		let resizeTimeout = false;
+		let resizeDelta = 200;
+		function resizeEnd() {
+			if (new Date() - resizeTime < resizeDelta) {
+				setTimeout(resizeEnd, resizeDelta);
+			} else {
+				resizeTimeout = false;
+				isResizing = false;
+			}
+		}
+		window.addEventListener("resize", () => {
+			isResizing = true;
+			let newWindowHeight = Math.max(
+				window?.visualViewport?.height || 0,
+				window?.innerHeight || 0,
+			);
+			let possibleVirtualKeyboardChange =
+				Math.abs(lastWindowHeight - newWindowHeight) >
+				Math.max(100, maxWindowHeight * 0.15);
+			if (possibleVirtualKeyboardChange) {
+				let isPossiblyHid = newWindowHeight > lastWindowHeight;
+				window?.showCategoriesNav?.(isPossiblyHid, !isPossiblyHid);
+				let activeElement = document?.activeElement;
+				if (
+					isPossiblyHid &&
+					["INPUT", "TEXTAREA"].includes(activeElement?.tagName)
+				) {
+					activeElement?.blur?.();
+					if (activeElement?.id === "usernameInput") {
+						window?.onfocusUsernameInput?.();
+					}
+				}
+			}
+
+			setMinHeight();
+
+			if (
+				!(
+					document.fullScreen ||
+					document.mozFullScreen ||
+					document.webkitIsFullScreen ||
+					document.msFullscreenElement
+				)
+			) {
+				isMaxWindowHeight = newWindowHeight >= maxWindowHeight;
+				lastWindowHeight = newWindowHeight;
+				maxWindowHeight =
+					Math.max(maxWindowHeight, newWindowHeight) || 0;
+			}
+			windowWidth = Math.max(
+				document?.documentElement?.getBoundingClientRect?.()?.width ||
+					0,
+				window?.visualViewport?.width || 0,
+				window?.innerWidth || 0,
+			);
+
+			animeListPagerPad = windowWidth > 660 ? 70 : 0;
+
+			window?.scrollToSelectedCategory?.();
+
+			resizeTime = new Date();
+			if (resizeTimeout === false) {
+				resizeTimeout = true;
+				setTimeout(resizeEnd, resizeDelta);
+			}
+		});
+
+		let isScrollingCheckForZoom;
+		animeListPagerEl.addEventListener("scroll", async () => {
+			window.showCategoriesNav?.(true, true);
+			isScrollingCheckForZoom = true;
+
+			await tick();
+
+			let originalScrollLeft = Math.round(animeListPagerEl.scrollLeft);
+			let offsetWidth = animeListPagerEl.offsetWidth;
+
+			let idx = Math.round(
+				originalScrollLeft / (offsetWidth + animeListPagerPad),
+			);
+
+			if (idx >= 0 && idx !== panningIdx) {
+				let children = Array.from(animeListPagerEl?.children);
+				let child = children?.[idx];
+				let category = child?.dataset?.category;
+				if (category != null) {
+					window?.scrollToSelectedCategory?.(category);
+					panningCategory = category;
+				}
+				panningIdx = idx;
+			}
+		});
+
+		animeListPagerEl.addEventListener("scrollend", async () => {
+			isScrollingCheckForZoom = false;
+
+			let children = Array.from(animeListPagerEl?.children);
+			let child = children?.[panningIdx];
+			let category = child?.dataset?.category;
+
+			if (category && category !== $selectedCategory) {
+				$selectedCategory = category;
+			}
+		});
+
+		window.visualViewport.addEventListener("resize", async () => {
+			if (isScrollingCheckForZoom) {
+				isScrollingCheckForZoom = false;
+				if ($selectedCategory) {
+					await tick();
+					let categoryIdx =
+						panningIdx ??
+						$categoriesKeys.findIndex(
+							(category) => category === $selectedCategory,
+						);
+					let offsetWidth = animeListPagerEl.offsetWidth;
+					animeListPagerEl.scrollLeft =
+						categoryIdx * offsetWidth +
+						Math.max(0, categoryIdx - 1) * animeListPagerPad;
+				}
+			}
+		});
+	});
+
+	window.resetCategory = async () => {
+		await tick();
+		window?.scrollToSelectedCategory?.($selectedCategory);
+		let categoryIdx = $categoriesKeys.findIndex(
+			(category) => category === $selectedCategory,
+		);
+		let offsetWidth = animeListPagerEl.offsetWidth;
+		animeListPagerEl.scrollLeft =
+			categoryIdx * offsetWidth +
+			Math.max(0, categoryIdx - 1) * animeListPagerPad;
+	};
+
+	let isFirstScroll = true;
+	let scrollingCategories = {},
+		isChangingSelection;
+	window.gridScrolling = (category) => {
+		if (!isChangingSelection) return;
+		if (scrollingCategories == null) {
+			scrollingCategories = {
+				category: 1,
+			};
+		} else {
+			scrollingCategories[category] = 1;
+		}
+	};
+	selectedCategory.subscribe(async (val) => {
+		isChangingSelection = true;
+		if (val) {
+			await tick();
+			window?.scrollToSelectedCategory?.(val);
+			let categoryIdx = $categoriesKeys.findIndex(
+				(category) => category === val,
+			);
+			let offsetWidth = animeListPagerEl.offsetWidth;
+			animeListPagerEl.scrollLeft =
+				categoryIdx * offsetWidth +
+				Math.max(0, categoryIdx - 1) * animeListPagerPad;
+			if ($gridFullView) return;
+			// Scroll To Grid Saved Scroll
+			if (isFirstScroll) {
+				isFirstScroll = false;
+				return;
+			}
+			let documentEL = document.documentElement;
+			let scrollTop = documentEL.scrollTop;
+			let element = Array.from(animeListPagerEl.children).find(
+				(el) => el.dataset.category === val,
+			);
+			if (element) {
+				if (scrollingCategories?.[val] == null) {
+					let gridToWindow = element.getBoundingClientRect().top + 20;
+					let gridOffSetDocument = scrollTop + gridToWindow;
+					let selectedGridTopScroll = gridTopScrolls[val];
+					if (selectedGridTopScroll != null) {
+						documentEL.scrollTop =
+							gridOffSetDocument + selectedGridTopScroll;
+					} else if (gridToWindow < 1) {
+						documentEL.scrollTop = gridOffSetDocument;
+					}
+				}
+				Array.from(animeListPagerEl.children).forEach((el) => {
+					let category = el.dataset.category;
+					if (val === category) return;
+					let gridTopScroll = gridTopScrolls[category];
+					if (gridTopScroll) {
+						el.scrollTop = gridTopScroll;
+					}
+				});
+			}
+		}
+		scrollingCategories = isChangingSelection = null;
+	});
+	categories.subscribe(async (val) => {
+		if (val) {
+			$categoriesKeys = Object.keys(val);
+			for (let i = 0, l = $categoriesKeys.length; i < l; i++) {
+				if (val?.[$categoriesKeys[i]] == null) {
+					delete $loadedAnimeLists?.[$categoriesKeys?.[i]];
+				}
+			}
+		}
+	});
 </script>
 
 <main
@@ -1718,19 +1765,43 @@
 			style:--progress="{"-" + (100 - _progress) + "%"}"
 		></div>
 	{/if}
+
 	<C.Fixed.Navigator />
+
 	<C.Fixed.Menu />
 
 	<div class="home" id="home">
-		<C.Others.Search>
-			<C.Anime.AnimeGrid />
-		</C.Others.Search>
-		<C.Anime.Fixed.AnimePopup />
+		<C.Others.Search />
+		<div
+			bind:this="{animeListPagerEl}"
+			style:--grid-position="{gridTopPosition + "px"}"
+			style:--grid-max-height="{gridMaxHeight + "px"}"
+			id="anime-list-pager"
+			class="{'anime-list-pager' +
+				($gridFullView
+					? ' remove-snap-scroll'
+					: !$isLoadingAnime &&
+						  (isScrollingAnimeGrid || $isScrolling || isResizing)
+						? ' prevent-snap-scroll'
+						: '')}"
+			style:--anime-list-pager-pad="{animeListPagerPad + "px"}"
+		>
+			{#if $categoriesKeys?.length > 0}
+				{#each $categoriesKeys || [] as mainCategory (mainCategory)}
+					<C.Anime.AnimeGrid {mainCategory} />
+				{/each}
+			{:else}
+				<C.Anime.AnimeGrid mainCategory="{''}" />
+			{/if}
+		</div>
 	</div>
 
-	<C.Fixed.CustomFilter />
+	<C.Fixed.Categories />
+
+	<C.Anime.Fixed.AnimePopup />
 
 	<C.Anime.Fixed.AnimeOptionsPopup />
+
 	<C.Others.Confirm
 		showConfirm="{$confirmIsVisible}"
 		on:confirmed="{handleConfirmationConfirmed}"
@@ -1768,8 +1839,6 @@
 		width: 100%;
 		margin: 57px auto 0 !important;
 		max-width: 1140px;
-		padding-left: 50px;
-		padding-right: 50px;
 	}
 	.progress.has-custom-filter-nav,
 	:global(.progress:has(~ #nav-container.delayed-full-screen-popup)) {
@@ -1788,6 +1857,28 @@
 		-moz-transform: translateX(var(--progress));
 		-o-transform: translateX(var(--progress));
 		transition: transform 0.3s linear;
+	}
+
+	.anime-list-pager {
+		--anime-list-pager-pad: 0;
+		display: flex;
+		overflow-x: auto;
+		overflow-y: hidden;
+		scroll-snap-type: x mandatory;
+		column-gap: var(--anime-list-pager-pad);
+		-ms-overflow-style: none;
+		scrollbar-width: none;
+		width: calc(100% - 100px);
+		margin: 0 auto;
+	}
+
+	.anime-list-pager::-webkit-scrollbar {
+		display: none;
+	}
+
+	.anime-list-pager.remove-snap-scroll,
+	.anime-list-pager.prevent-snap-scroll {
+		overflow: hidden !important;
 	}
 
 	@media screen and (max-width: 750px) {
@@ -1817,8 +1908,8 @@
 			top: 55px !important;
 			z-index: 1000 !important;
 		}
-		.home {
-			padding: 0 10px;
+		.anime-list-pager {
+			width: calc(100% - 20px);
 		}
 	}
 </style>

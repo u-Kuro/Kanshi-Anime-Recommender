@@ -81,6 +81,14 @@
             android:exported="true"
             android:alwaysRetainTaskState="true">
         </activity>
+        <activity
+            android:theme="@style/Theme.AnimeReleaseActivity"
+            android:name=".AnimeReleaseActivity"
+            android:hardwareAccelerated="true"
+            android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|uiMode|screenSize|smallestScreenSize"
+            android:exported="true"
+            android:alwaysRetainTaskState="true"
+        />
     </application>
     <queries>
         <intent>

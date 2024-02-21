@@ -1,7 +1,7 @@
 <script>
     import { onMount, tick } from "svelte";
     import { saveJSON } from "../../js/indexedDB.js";
-    import { animeLoader, importUserData } from "../../js/workerUtils.js";
+    import { animeManager, importUserData } from "../../js/workerUtils.js";
     import {
         jsonIsEmpty,
         removeLocalStorage,
@@ -14,8 +14,6 @@
         android,
         menuVisible,
         hiddenEntries,
-        animeLoaderWorker,
-        finalAnimeList,
         dataStatus,
         autoUpdate,
         autoExport,
@@ -27,11 +25,11 @@
         popupVisible,
         listUpdateAvailable,
         showStatus,
-        newFinalAnime,
         username,
         isBackgroundUpdateKey,
         mobile,
         appInstallationAsked,
+        selectedCategory,
     } from "../../js/globalValues.js";
 
     let menuContainerEl, navContainerEl;
@@ -68,7 +66,6 @@
                     document.documentElement.style.overflow = "hidden";
                     document.documentElement.style.overflow = "";
                     window?.scrollTo?.({ top: -9999, behavior: "smooth" });
-                    $finalAnimeList = null;
                 }
                 importUserData({
                     importedFile: importedFile,
@@ -219,49 +216,15 @@
                 "Do you want to show all your hidden anime entries?",
             )
         ) {
-            if ($animeLoaderWorker) {
-                $animeLoaderWorker.terminate();
-                $animeLoaderWorker = null;
-            }
-            if (!$popupVisible) {
-                $finalAnimeList = null;
-            }
             $dataStatus = "Updating List";
             $menuVisible = false;
             $listUpdateAvailable = false;
-            animeLoader({ hiddenEntries: {} })
-                .then(async (data) => {
-                    $animeLoaderWorker = data.animeLoaderWorker;
-                    if (data?.isNew) {
-                        if ($finalAnimeList instanceof Array) {
-                            $finalAnimeList = $finalAnimeList?.slice?.(
-                                0,
-                                Math.min(
-                                    window.getLastShownFinalAnimeLength?.() ||
-                                        0,
-                                    data.finalAnimeListCount,
-                                ),
-                            );
-                        }
-                        if (data?.finalAnimeList?.length > 0) {
-                            data?.finalAnimeList?.forEach?.((anime, idx) => {
-                                $newFinalAnime = {
-                                    idx: data.lastShownAnimeListIndex + idx,
-                                    finalAnimeList: anime,
-                                    category: data?.category,
-                                };
-                            });
-                        } else {
-                            $finalAnimeList = [];
-                        }
-                        $hiddenEntries = data.hiddenEntries || $hiddenEntries;
-                    }
-                    $dataStatus = null;
-                    return;
-                })
-                .catch((error) => {
-                    console.error(error);
-                });
+            animeManager({
+                selectedCategory: $selectedCategory,
+                removeId: "all",
+                isHiding: false,
+            });
+            $hiddenEntries = {};
         }
     }
 
@@ -396,18 +359,6 @@
     } catch (e) {}
     window.refreshKanshiNotice = refreshKanshiNotice;
 
-    async function showRecentReleases() {
-        if (!$android) return;
-        if ("Notification" in window) {
-            if (window?.Notification?.permission !== "denied") {
-                await window?.Notification?.requestPermission?.();
-            }
-        }
-        try {
-            JSBridge?.showRecentReleases?.();
-        } catch (e) {}
-    }
-
     function switchAppMode() {
         if (!$android) return;
         try {
@@ -498,6 +449,7 @@
                     });
                 });
             }
+            window?.setShouldGoBack?.(false);
         } else {
             if (!$popupVisible && document.documentElement.scrollTop > 0) {
                 addClass(navContainerEl, "hide");
@@ -596,27 +548,32 @@
     on:keyup="{(e) => e.key === 'Enter' && handleMenuVisibility(e)}"
     bind:this="{menuContainerEl}"
 >
+    <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
     <div class="menu" use:isScrollableMenu>
         <button
             class="button"
+            tabindex="{$menuVisible ? '0' : '-1'}"
             on:click="{updateList}"
             on:keyup="{(e) => e.key === 'Enter' && updateList(e)}"
             >Update List</button
         >
         <button
             class="button"
+            tabindex="{$menuVisible ? '0' : '-1'}"
             on:click="{showAllHiddenEntries}"
             on:keyup="{(e) => e.key === 'Enter' && showAllHiddenEntries(e)}"
             >Show All Hidden Entries</button
         >
         <button
             class="button"
+            tabindex="{$menuVisible ? '0' : '-1'}"
             on:click="{() => importData()}"
             on:keyup="{(e) => e.key === 'Enter' && importData()}"
             >Import Data</button
         >
         <button
             class="button"
+            tabindex="{$menuVisible ? '0' : '-1'}"
             on:click="{exportData}"
             on:keyup="{(e) => e.key === 'Enter' && exportData(e)}"
             >Export Data</button
@@ -624,6 +581,7 @@
         {#if $android}
             <button
                 class="button"
+                tabindex="{$menuVisible ? '0' : '-1'}"
                 on:click="{handleExportFolder}"
                 on:keyup="{(e) => e.key === 'Enter' && handleExportFolder(e)}"
             >
@@ -632,12 +590,14 @@
         {/if}
         <button
             class="{'button ' + ($showStatus ? 'selected' : '')}"
+            tabindex="{$menuVisible ? '0' : '-1'}"
             on:click="{showDataStatus}"
             on:keyup="{(e) => e.key === 'Enter' && showDataStatus(e)}"
             >Show Status</button
         >
         <button
             class="{'button ' + ($autoUpdate ? 'selected' : '')}"
+            tabindex="{$menuVisible ? '0' : '-1'}"
             on:click="{handleUpdateEveryHour}"
             on:keyup="{(e) => e.key === 'Enter' && handleUpdateEveryHour(e)}"
             >Auto Update</button
@@ -645,6 +605,7 @@
         {#if $android}
             <button
                 class="{'button ' + ($autoExport ? 'selected' : '')}"
+                tabindex="{$menuVisible ? '0' : '-1'}"
                 on:click="{handleExportEveryHour}"
                 on:keyup="{(e) =>
                     e.key === 'Enter' && handleExportEveryHour(e)}"
@@ -654,6 +615,7 @@
                 <button
                     class="{'button' +
                         (keepAppRunningInBackground ? ' selected' : '')}"
+                    tabindex="{$menuVisible ? '0' : '-1'}"
                     on:keyup="{(e) =>
                         e.key === 'Enter' && persistentBackgroundUpdates(e)}"
                     on:click="{persistentBackgroundUpdates}"
@@ -662,32 +624,32 @@
             {/if}
             <button
                 class="button"
+                tabindex="{$menuVisible ? '0' : '-1'}"
                 on:keyup="{(e) => e.key === 'Enter' && switchAppMode(e)}"
                 on:click="{switchAppMode}">Switch App Mode</button
             >
             <button
                 class="button"
-                on:keyup="{(e) => e.key === 'Enter' && showRecentReleases(e)}"
-                on:click="{showRecentReleases}">Show Recent Releases</button
-            >
-            <button
-                class="button"
+                tabindex="{$menuVisible ? '0' : '-1'}"
                 on:keyup="{(e) => e.key === 'Enter' && clearCache(e)}"
                 on:click="{clearCache}">Clear Cache</button
             >
             <button
                 class="button"
+                tabindex="{$menuVisible ? '0' : '-1'}"
                 on:keyup="{(e) => e.key === 'Enter' && refresh(e)}"
                 on:click="{refresh}">Refresh</button
             >
         {/if}
         <button
             class="button"
+            tabindex="{$menuVisible ? '0' : '-1'}"
             on:keyup="{(e) => e.key === 'Enter' && reload(e)}"
             on:click="{reload}">Reload</button
         >
         <button
             class="button"
+            tabindex="{$menuVisible ? '0' : '-1'}"
             on:click="{anilistSignup}"
             on:keyup="{(e) => e.key === 'Enter' && anilistSignup(e)}"
             >Create an Anilist Account</button
@@ -695,12 +657,14 @@
         {#if $appInstallationAsked && $mobile && hasAvailableApp && !$android}
             <button
                 class="button"
+                tabindex="{$menuVisible ? '0' : '-1'}"
                 on:keyup="{(e) => e.key === 'Enter' && downloadAndroidApp(e)}"
                 on:click="{downloadAndroidApp}">Install App</button
             >
         {/if}
         <button
             class="button"
+            tabindex="{$menuVisible ? '0' : '-1'}"
             on:keyup="{(e) => e.key === 'Enter' && showNotice(e)}"
             on:click="{showNotice}">Notice!</button
         >
@@ -776,7 +740,7 @@
         flex: 1 0 auto;
         user-select: none;
         width: fit-content;
-        height: 37.6px;
+        min-height: 37.6px;
     }
     .menu:after {
         content: "";

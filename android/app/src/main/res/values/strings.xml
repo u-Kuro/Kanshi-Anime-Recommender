@@ -1,4 +1,11 @@
 <resources>
     <string name="app_name">Kanshi.</string>
     <string name="youtube">YouTube</string>
+    <string name="na">NA</string>
+    <string name="refresh">Refresh</string>
+    <string name="anime_release">Anime Release</string>
+    <string name="anime_image">Anime Image</string>
+    <string name="is_user_anime_status">Is User Anime Status</string>
+    <string name="go_back">Go Back</string>
+    <string name="launch_url">Launch URL</string>
 </resources>

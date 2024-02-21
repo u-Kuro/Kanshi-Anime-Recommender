@@ -1,5 +1,5 @@
 <script>
-    import { onMount, tick } from "svelte";
+    import { onMount } from "svelte";
     import { fade } from "svelte/transition";
     import { sineOut } from "svelte/easing";
     import { cacheImage } from "../../js/caching.js";
@@ -8,38 +8,32 @@
         isJsonObject,
         removeClass,
         getLocalStorage,
-        setLocalStorage,
-        removeLocalStorage,
     } from "../../js/others/helper.js";
     import {
         android,
-        finalAnimeList,
-        searchedAnimeKeyword,
-        animeLoaderWorker,
-        dataStatus,
-        animeObserver,
         popupVisible,
         openedAnimePopupIdx,
         animeOptionVisible,
         openedAnimeOptionIdx,
         initData,
-        animeIdxRemoved,
-        shownAllInList,
-        importantLoad,
-        checkAnimeLoaderStatus,
         gridFullView,
-        mostRecentAiringDateTimeout,
         earlisetReleaseDate,
         showFilterOptions,
-        newFinalAnime,
         progress,
         mobile,
         menuVisible,
-        shouldShowLoading,
-        activeTagFilters,
-        selectedCustomFilter,
-        isChangingCategory,
+        loadedAnimeLists,
+        loadNewAnime,
+        searchedWord,
+        selectedCategory,
+        selectedAnimeGridEl,
+        shownAllInList,
+        runIsScrolling,
     } from "../../js/globalValues.js";
+    import { animeLoader } from "../../js/workerUtils.js";
+
+    export let mainCategory;
+    let mainEl;
 
     const emptyImage =
         "data:image/png;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=";
@@ -56,518 +50,127 @@
         window.innerWidth,
     );
 
-    let shownFinalAnimeListCount = 0;
     let animeGridEl;
-    let isRunningIntersectEvent;
     let numberOfPageLoadedGrid = Math.max(
         5,
         ((windowHeight - 239) / 250.525) * 5,
     );
 
-    function addLastAnimeObserver() {
-        $animeObserver?.disconnect?.();
-        $animeObserver = null;
-        isRunningIntersectEvent = false;
-        $animeObserver = new IntersectionObserver(
-            (entries) => {
-                entries.forEach((entry) => {
-                    if (entry.isIntersecting) {
-                        if (isRunningIntersectEvent) return;
-                        isRunningIntersectEvent = true;
-                        requestAnimationFrame(() => {
-                            if ($animeLoaderWorker instanceof Worker) {
-                                $checkAnimeLoaderStatus().then(() => {
-                                    $animeLoaderWorker?.postMessage?.({
-                                        loadMore: true,
-                                    });
-                                });
-                            }
-                            isRunningIntersectEvent = false;
-                        });
-                    }
-                });
-            },
-            {
-                root: null,
-                rootMargin: "100%",
-                threshold: [0, 1],
-            },
-        );
-    }
-
-    let errorCountMult = 5;
-    let animeLoaderIsAlivePromise,
-        checkAnimeLoaderStatusTimeout,
-        isAsyncLoad = false;
-
-    window.checkAnimeLoaderStatus = $checkAnimeLoaderStatus = async () => {
-        if (
-            $animeLoaderWorker instanceof Worker &&
-            typeof $animeLoaderWorker.onmessage === "function"
-        ) {
-            return new Promise((resolve, reject) => {
-                animeLoaderIsAlivePromise = { resolve, reject };
-                $animeLoaderWorker?.postMessage?.({ checkStatus: true });
-                clearTimeout(checkAnimeLoaderStatusTimeout);
-                checkAnimeLoaderStatusTimeout = setTimeout(
-                    () => {
-                        reject();
-                    },
-                    Math.min(1000 * errorCountMult, 2000000000),
-                );
-            })
-                .catch(() => {
-                    if (!$initData) {
-                        ++errorCountMult;
-                        $animeLoaderWorker?.terminate?.();
-                        $animeLoaderWorker = null;
-                        importantLoad.update((e) => !e);
-                        animeLoaderIsAlivePromise = null;
-                    }
-                })
-                .finally(() => {
-                    animeLoaderIsAlivePromise = null;
-                });
-        }
-    };
-
-    animeLoaderWorker.subscribe((val) => {
-        if (val instanceof Worker) {
-            const hasOwnProp = Object.prototype.hasOwnProperty;
-            val.onmessage = async ({ data }) => {
-                if (animeLoaderIsAlivePromise?.resolve) {
-                    if (data?.isAlive) {
-                        animeLoaderIsAlivePromise?.resolve?.();
-                        animeLoaderIsAlivePromise = null;
-                    }
-                }
-                await tick();
-                if (hasOwnProp?.call?.(data, "progress")) {
-                    if (data?.progress >= 0 && data?.progress <= 100) {
-                        progress.set(data.progress);
-                    }
-                }
-                if (hasOwnProp?.call?.(data, "status")) {
-                    $dataStatus = data.status;
-                } else if (data.getEarlisetReleaseDate === true) {
-                    if (
-                        data.earliestReleaseDate &&
-                        data?.timeBeforeEarliestReleaseDate > 0 &&
-                        (data.earliestReleaseDate < $earlisetReleaseDate ||
-                            new Date($earlisetReleaseDate) < new Date() ||
-                            !$earlisetReleaseDate)
-                    ) {
-                        $earlisetReleaseDate = data.earliestReleaseDate;
-                        clearTimeout($mostRecentAiringDateTimeout);
-                        $mostRecentAiringDateTimeout = setTimeout(
-                            () => {
-                                if ($animeLoaderWorker instanceof Worker) {
-                                    $checkAnimeLoaderStatus().then(() => {
-                                        $animeLoaderWorker?.postMessage?.({
-                                            getEarlisetReleaseDate: true,
-                                        });
-                                    });
-                                }
-                            },
-                            Math.min(
-                                data.timeBeforeEarliestReleaseDate,
-                                2000000000,
-                            ),
-                        );
-                    }
-                } else if (data.finalAnimeList instanceof Array) {
-                    if (data?.reload === true) {
-                        isAsyncLoad = true;
-                        if (
-                            $finalAnimeList?.length > data?.finalAnimeListCount
-                        ) {
-                            $finalAnimeList = $finalAnimeList?.slice?.(
-                                0,
-                                data.finalAnimeListCount,
-                            );
-                        }
-                        if (data?.finalAnimeList?.length > 0) {
-                            data?.finalAnimeList?.forEach?.((anime, idx) => {
-                                $newFinalAnime = {
-                                    idx: data.lastShownAnimeListIndex + idx,
-                                    finalAnimeList: anime,
-                                    category: data?.category,
-                                };
-                            });
-                        } else {
-                            $finalAnimeList = [];
-                        }
-                    } else if (data.isNew === true) {
-                        if (
-                            $finalAnimeList?.length > data?.finalAnimeListCount
-                        ) {
-                            $finalAnimeList = $finalAnimeList?.slice?.(
-                                0,
-                                data.finalAnimeListCount,
-                            );
-                        }
-                        if (data?.finalAnimeList?.length > 0) {
-                            data?.finalAnimeList?.forEach?.((anime, idx) => {
-                                $newFinalAnime = {
-                                    idx: data.lastShownAnimeListIndex + idx,
-                                    finalAnimeList: anime,
-                                    category: data?.category,
-                                };
-                            });
-                        } else {
-                            $finalAnimeList = [];
-                        }
-                    } else if (data.isNew === false) {
-                        if ($isChangingCategory == null) {
-                            if ($finalAnimeList instanceof Array) {
-                                if (data?.finalAnimeList?.length > 0) {
-                                    data?.finalAnimeList?.forEach?.(
-                                        (anime, idx) => {
-                                            $newFinalAnime = {
-                                                idx:
-                                                    data.lastShownAnimeListIndex +
-                                                    idx,
-                                                finalAnimeList: anime,
-                                                category: data?.category,
-                                            };
-                                        },
-                                    );
-                                }
-                            }
-                            if (data.isLast) {
-                                $shownAllInList = true;
-                            }
-                        }
-                    }
-                    val?.postMessage?.({
-                        getEarlisetReleaseDate: true,
-                    });
-                } else if (
-                    data.isRemoved === true &&
-                    typeof data.removedID === "number"
-                ) {
-                    let maxGridElIdx = Math.max($finalAnimeList.length - 2, 0);
-                    let gridElement =
-                        $finalAnimeList[maxGridElIdx].gridElement ||
-                        animeGridEl.children?.[maxGridElIdx];
-                    if (
-                        $animeObserver instanceof IntersectionObserver &&
-                        gridElement instanceof Element
-                    ) {
-                        $animeObserver.observe(gridElement);
-                    }
-                    let removedIdx = $finalAnimeList.findIndex(
-                        ({ id }) => id === data.removedID,
-                    );
-                    $finalAnimeList = $finalAnimeList.filter(
-                        ({ id }) => id !== data.removedID,
-                    );
-                    if (removedIdx >= 0) {
-                        $animeIdxRemoved = null;
-                        $animeIdxRemoved = removedIdx;
-                    }
-                    val?.postMessage?.({
-                        getEarlisetReleaseDate: true,
+    let shownAnimeListCount;
+    $: shownAnimeListCount =
+        $loadedAnimeLists?.[mainCategory]?.animeList?.length ?? 0;
+    let animeObserver = new IntersectionObserver(
+        (entries) => {
+            entries.forEach((entry) => {
+                if (entry.isIntersecting) {
+                    animeLoader({
+                        loadMore: true,
+                        selectedCategory: mainCategory,
+                        searchedWord: $searchedWord,
                     });
                 }
-            };
-            val.onerror = (error) => {
-                $dataStatus = "Something went wrong";
-                console.error(error);
-            };
-            val?.postMessage?.({
-                getEarlisetReleaseDate: true,
             });
-        }
-    });
+        },
+        {
+            root: null,
+            rootMargin: "100%",
+            threshold: [0, 1],
+        },
+    );
 
-    let loadedFinalAnimeLists = {},
-        clearLoadedFinalAnimeListsTimeout;
-    activeTagFilters.subscribe(async (val) => {
-        clearTimeout(clearLoadedFinalAnimeListsTimeout);
-        clearLoadedFinalAnimeListsTimeout = setTimeout(async () => {
-            if (isJsonObject(val) && !isJsonObject(val)) {
-                let categories = Object.keys(loadedFinalAnimeLists),
-                    categoriesLen = categories.length;
-                for (let i = 0; i < categoriesLen; i++) {
-                    if (val?.[categories[i]] == null) {
-                        delete loadedFinalAnimeLists?.[categories?.[i]];
-                    }
-                }
-            }
-        }, 1000);
-    });
-    let isLoadingPreviousAnimeLists,
-        loadingPreviousAnimeListsTimeout,
-        loadingPreviousAnimeListsIdx,
-        categoryNotChanged = true,
-        cleanPreviousLoadedTimeout;
-    function loadPreviousAnimeList(category, searchKeyword) {
-        if (categoryNotChanged) {
-            if (typeof category === "string") {
-                categoryNotChanged = false;
-            }
-            return;
-        }
-        isLoadingPreviousAnimeLists = true;
-        clearTimeout(loadingPreviousAnimeListsTimeout);
-        loadingPreviousAnimeListsTimeout = setTimeout(() => {
-            if (
-                category != null &&
-                loadedFinalAnimeLists?.[category]?.length > 0
-            ) {
-                let loadedFinalAnimeList = loadedFinalAnimeLists[category];
-                if (searchKeyword) {
-                    loadedFinalAnimeList = loadedFinalAnimeList.filter(
-                        ({ title }) => {
-                            if (isJsonObject(title)) {
-                                let titles = Object.values(title);
-                                return titles.some((_title) =>
-                                    _title
-                                        ?.toLowerCase?.()
-                                        .includes(
-                                            searchKeyword
-                                                ?.trim()
-                                                ?.toLowerCase?.(),
-                                        ),
-                                );
-                            } else {
-                                return title
-                                    ?.toLowerCase?.()
-                                    .includes(
-                                        searchKeyword?.trim()?.toLowerCase?.(),
-                                    );
-                            }
-                        },
-                    );
-                }
-                let loadedFinalAnimeListLen = loadedFinalAnimeList.length;
-                clearTimeout(cleanPreviousLoadedTimeout);
-                cleanPreviousLoadedTimeout = setTimeout(() => {
-                    $finalAnimeList = $finalAnimeList.slice(
-                        0,
-                        loadedFinalAnimeListLen,
-                    );
-                });
-                let loadNextPreviousAnime = (i) => {
-                    if (!isLoadingPreviousAnimeLists) {
-                        isLoadingPreviousAnimeLists = false;
-                        loadNextPreviousAnime = loadingPreviousAnimeListsIdx =
-                            undefined;
-                        return;
-                    }
-                    if (i < loadedFinalAnimeListLen) {
-                        loadingPreviousAnimeListsIdx = i;
-                        let anime = loadedFinalAnimeList[i];
-                        anime.isSemiLoading = true;
-                        $newFinalAnime = {
-                            idx: i,
-                            finalAnimeList: anime,
-                            isPrevious: true,
-                        };
-                        requestAnimationFrame(() => {
-                            loadNextPreviousAnime?.(i + 1);
-                        });
-                    } else {
-                        loadNextPreviousAnime = loadingPreviousAnimeListsIdx =
-                            undefined;
-                    }
-                };
-                loadNextPreviousAnime?.(0);
-            } else {
-                loadingPreviousAnimeListsIdx = undefined;
-            }
-        });
-    }
-    isChangingCategory.subscribe((val) => {
-        if (val != null) {
-            loadPreviousAnimeList(val, $searchedAnimeKeyword);
-        }
-    });
-    let loadedFinalAnimeListsTimeouts = {};
-    newFinalAnime.subscribe(async (val) => {
-        if (
-            typeof val?.finalAnimeList?.id === "number" &&
-            typeof val?.idx === "number"
-        ) {
-            if (!val?.isPrevious && val.idx === 0) {
-                clearTimeout(cleanPreviousLoadedTimeout);
-                $isChangingCategory = null;
-            }
-            if (loadingPreviousAnimeListsIdx <= val?.idx && !val?.isPrevious) {
-                isLoadingPreviousAnimeLists = false;
-                loadingPreviousAnimeListsIdx = undefined;
-            }
-            if ($shownAllInList && val.idx === 0) {
-                $shownAllInList = false;
-            }
-            if ($finalAnimeList instanceof Array) {
-                if (isAsyncLoad) {
-                    lessenShownGrid();
+    $loadNewAnime[mainCategory] = async function newAnime({
+        idx,
+        anime,
+        isLast,
+    }) {
+        if (typeof anime?.id === "number") {
+            $shownAllInList[mainCategory] = isLast;
+            let animeList = $loadedAnimeLists[mainCategory]?.animeList;
+            if (animeList instanceof Array) {
+                let newAnimeList = animeList;
+                if (isLast && typeof idx === "number") {
+                    newAnimeList = newAnimeList.slice(0, idx + 1);
                 }
                 if (
-                    $finalAnimeList?.[val.idx] &&
-                    Math.abs($finalAnimeList?.[val.idx]?.id) ===
-                        val?.finalAnimeList?.id
+                    typeof idx === "number" &&
+                    animeList?.[idx] &&
+                    Math.abs(animeList[idx]?.id) === anime.id
                 ) {
-                    $finalAnimeList = $finalAnimeList?.filter?.(
-                        (anime, idx) => {
-                            if (idx === val.idx) return true;
-                            return anime.id !== val?.finalAnimeList?.id;
-                        },
-                    );
-                    $finalAnimeList[val.idx] = val.finalAnimeList;
+                    newAnimeList[idx] = anime;
+                    $loadedAnimeLists[mainCategory].animeList = newAnimeList;
                 } else {
-                    $finalAnimeList = $finalAnimeList?.map?.((anime) => {
-                        if (Math.abs(anime.id) === val?.finalAnimeList?.id) {
-                            anime.id = -anime.id;
-                        }
-                        return anime;
-                    });
-                    $finalAnimeList = $finalAnimeList?.filter?.((anime) => {
-                        return anime.id !== val?.finalAnimeList?.id;
-                    });
-                    if (val.idx < $finalAnimeList?.length) {
-                        $finalAnimeList[val.idx] = val.finalAnimeList;
+                    if (idx < animeList.length) {
+                        newAnimeList[idx] = anime;
                     } else {
-                        $finalAnimeList.push(val.finalAnimeList);
+                        newAnimeList.push(anime);
                     }
+                    $loadedAnimeLists[mainCategory].animeList = newAnimeList;
                 }
-                $finalAnimeList = $finalAnimeList;
             } else {
-                $finalAnimeList = [val.finalAnimeList];
+                if ($loadedAnimeLists[mainCategory]) {
+                    $loadedAnimeLists[mainCategory].animeList = [anime];
+                }
             }
-            if (val?.isPrevious) return;
-            let category = val?.category;
-            if (typeof category === "string") {
-                clearTimeout(loadedFinalAnimeListsTimeouts?.[category]);
-                loadedFinalAnimeListsTimeouts[category] = setTimeout(() => {
-                    let loadedFinalAnimeListsLen =
-                        loadedFinalAnimeLists[category]?.length;
-                    if (loadedFinalAnimeListsLen == null) {
-                        loadedFinalAnimeLists[category] = [];
-                        loadedFinalAnimeListsLen = 0;
-                    }
-                    for (let i = 0; i < $finalAnimeList.length; i++) {
-                        if (i < loadedFinalAnimeListsLen) {
-                            loadedFinalAnimeLists[category][i] =
-                                $finalAnimeList[i];
-                        } else {
-                            loadedFinalAnimeLists[category].push(
-                                $finalAnimeList[i],
-                            );
-                        }
-                    }
-                });
-            }
-            if (
-                val?.idx < shownFinalAnimeListCount - 1 ||
-                shownFinalAnimeListCount <= 1
-            ) {
-                if (isRunningIntersectEvent) return;
+            if (idx < shownAnimeListCount - 1 || shouldLoadMoreAnime()) {
                 $progress = Math.min(
-                    (val?.idx / (shownFinalAnimeListCount - 1)) * 100,
+                    (idx / (shownAnimeListCount - 1)) * 100,
                     100,
                 );
-                isRunningIntersectEvent = true;
-                requestAnimationFrame(() => {
-                    $checkAnimeLoaderStatus().then(() => {
-                        $animeLoaderWorker?.postMessage?.({
-                            loadMore: true,
-                        });
-                        isRunningIntersectEvent = false;
-                    });
+                animeLoader({
+                    loadMore: true,
+                    selectedCategory: mainCategory,
+                    searchedWord: $searchedWord,
                 });
             } else {
                 $progress = 100;
             }
-        }
-    });
-
-    function lessenShownGrid() {
-        for (let i = 0; i < $finalAnimeList?.length; i++) {
-            let gridElement =
-                $finalAnimeList?.[i]?.gridElement || animeGridEl.children?.[i];
-            if (gridElement?.getBoundingClientRect?.()?.y >= windowHeight) {
-                $finalAnimeList = $finalAnimeList.slice(0, Math.min(i + 5, 36));
-                shownFinalAnimeListCount =
-                    $finalAnimeList?.length ?? shownFinalAnimeListCount;
-                isAsyncLoad = false;
-                break;
+        } else if (isLast) {
+            if ($loadedAnimeLists[mainCategory]) {
+                $loadedAnimeLists[mainCategory].animeList = [];
             }
+        }
+    };
+
+    let observedGrid;
+    $: {
+        if (observedGrid instanceof Element) {
+            animeObserver.observe(observedGrid);
         }
     }
 
-    finalAnimeList.subscribe(async (val) => {
-        if (val instanceof Array && val.length) {
-            shownFinalAnimeListCount = val.length;
-            addLastAnimeObserver();
-            let lastGridElementIdx = $finalAnimeList.length - 1;
-            let lastGridElement =
-                $finalAnimeList[lastGridElementIdx].gridElement ||
-                animeGridEl.children?.[lastGridElementIdx];
-            if ($animeObserver instanceof IntersectionObserver) {
-                if (!$initData && $finalAnimeList.length >= 11) {
-                    let prevGridElementIdx = $finalAnimeList.length - 11;
-                    let prevGridElement =
-                        $finalAnimeList[prevGridElementIdx].gridElement ||
-                        animeGridEl.children?.[prevGridElementIdx];
-                    if (prevGridElement instanceof Element) {
-                        $animeObserver.observe(prevGridElement);
-                    }
-                }
-                if (lastGridElement instanceof Element) {
-                    $animeObserver.observe(lastGridElement);
-                }
-            }
-            if (isAsyncLoad) {
-                isAsyncLoad = false;
-            }
-        } else {
-            shownFinalAnimeListCount = 0;
-            if (isAsyncLoad) {
-                isAsyncLoad = false;
-            }
-        }
+    searchedWord.subscribe((val) => {
+        animeLoader({
+            loadMore: true,
+            selectedCategory: mainCategory,
+            searchedWord: val,
+        });
     });
 
-    searchedAnimeKeyword.subscribe(async (val) => {
-        if (typeof val === "string") {
-            try {
-                setLocalStorage("searchedAnimeKeyword", val).catch(() => {
-                    removeLocalStorage("searchedAnimeKeyword");
-                });
-                if ($isChangingCategory != null) {
-                    loadPreviousAnimeList($selectedCustomFilter, val);
-                } else {
-                    $animeLoaderWorker.postMessage({
-                        filterKeyword: val,
-                    });
-                }
-            } catch (e) {
-                if (!$initData) {
-                    $animeLoaderWorker?.terminate?.();
-                    $animeLoaderWorker = null;
-                    importantLoad.update((e) => !e);
-                }
-            }
+    function shouldLoadMoreAnime() {
+        let rect = observedGrid?.getBoundingClientRect?.();
+        if (isFullViewed) {
+            return rect?.left < windowWidth;
+        } else {
+            return rect?.top < windowHeight;
         }
-    });
+    }
 
     function handleOpenPopup(animeIdx) {
         $openedAnimePopupIdx = animeIdx;
         $popupVisible = true;
     }
 
-    let openOptionTimeout, isOpeningAnimeOption;
+    let openOptionTimeout;
     window.oncontextmenu = () => {
-        if (isOpeningAnimeOption) {
-            isOpeningAnimeOption = false;
+        if (window[".isOpeningAnimeOption"]) {
+            window[".isOpeningAnimeOption"] = false;
             return false;
         }
     };
     function handleOpenOption(event, animeIdx) {
-        isOpeningAnimeOption = true;
+        try {
+            window[".isOpeningAnimeOption"] = true;
+        } catch (e) {}
         let element = event.target;
         let classList = element.classList;
         if (classList.contains("copy") || element.closest(".copy")) return;
@@ -579,7 +182,7 @@
     }
     function cancelOpenOption() {
         if (openOptionTimeout) clearTimeout(openOptionTimeout);
-        isOpeningAnimeOption = false;
+        window[".isOpeningAnimeOption"] = false;
     }
 
     function getFinishedEpisode(episodes, nextAiringEpisode) {
@@ -630,7 +233,6 @@
 
     let isFullViewed;
     let lastLeftScroll, currentLeftScroll;
-    let belowGrid;
     let afterFullGrid;
     let isWholeGridSeen,
         isOnVeryLeftOfAnimeGrid = true;
@@ -654,6 +256,7 @@
             isOnVeryLeftOfAnimeGrid = false;
         }
     }
+    let shouldShowGoBackInFullView;
     $: shouldShowGoBackInFullView =
         isFullViewed &&
         afterFullGrid &&
@@ -664,11 +267,6 @@
             isFullViewed &&
             windowHeight >
                 animeGridEl?.getBoundingClientRect?.()?.bottom + 10 + 57;
-        if (animeGridEl?.getBoundingClientRect?.()?.top < 0) {
-            belowGrid = true;
-        } else {
-            belowGrid = false;
-        }
     });
 
     let filterOptiChangeTimeout;
@@ -679,7 +277,7 @@
                 isFullViewed &&
                 windowHeight >
                     animeGridEl?.getBoundingClientRect?.()?.bottom + 10 + 57;
-        }, 16);
+        }, 17);
     });
 
     function goBackGrid() {
@@ -709,6 +307,11 @@
     }
 
     onMount(() => {
+        selectedCategory.subscribe((val) => {
+            if (val && val === mainCategory) {
+                $selectedAnimeGridEl = animeGridEl;
+            }
+        });
         let newWindowHeight = Math.max(
             window.visualViewport.height,
             window.innerHeight,
@@ -724,7 +327,6 @@
             window.visualViewport.width,
             window.innerWidth,
         );
-        animeGridEl = animeGridEl || document.getElementById("anime-grid");
         window.addEventListener("resize", () => {
             let newWindowHeight = Math.max(
                 window.visualViewport.height,
@@ -744,6 +346,7 @@
         });
         let waitForOnVeryLeft;
         animeGridEl.addEventListener("scroll", () => {
+            window?.animeGridScrolled?.(animeGridEl.scrollLeft);
             if (!waitForOnVeryLeft) {
                 clearTimeout(isOnVeryLeftOfAnimeGridTimeout);
             }
@@ -762,133 +365,156 @@
                 isOnVeryLeftOfAnimeGrid = false;
             }
         });
+        animeGridEl?.addEventListener("scroll", () => {
+            if (!$gridFullView) return;
+            runIsScrolling.update((e) => !e);
+        });
     });
 </script>
 
-<main class="{isFullViewed ? 'fullView' : ''}">
-    <div
-        id="anime-grid"
-        class="{'image-grid ' +
-            (isFullViewed ? ' fullView' : '') +
-            ($finalAnimeList?.length === 0 && !$initData ? ' empty' : '')}"
-        bind:this="{animeGridEl}"
-        on:wheel="{(e) => {
-            if (
-                isFullViewed &&
-                animeGridEl.scrollWidth > animeGridEl.clientWidth &&
-                Math.abs(e?.deltaY) > Math.abs(e?.deltaX)
-            ) {
-                // If its not scrolled at the very bottom of the screen and see next
-                if (!isWholeGridSeen && e?.deltaY > 0) return;
-                // If its scrolled to very left and see previous
-                if (isOnVeryLeftOfAnimeGrid && e?.deltaY < 0) return;
-                horizontalWheel(e, 'image-grid');
-            }
-        }}"
-        on:scroll="{(e) => {
-            let element = e?.target;
-            lastLeftScroll = currentLeftScroll;
-            currentLeftScroll = element?.scrollLeft;
-            if (currentLeftScroll > 500) {
-                afterFullGrid = true;
-            } else {
-                afterFullGrid = false;
-            }
-        }}"
-        style:--anime-grid-height="{($mobile && !$android
-            ? originalWindowHeight
-            : windowHeight) + "px"}"
-    >
-        {#if $finalAnimeList?.length}
-            {#each $finalAnimeList || [] as anime, animeIdx (anime?.id ?? {})}
-                <div
-                    class="{'image-grid__card' +
-                        (anime?.isSemiLoading
-                            ? ' semi-loading'
-                            : anime?.isLoading || $shouldShowLoading
-                              ? ' loading'
-                              : '')}"
-                    bind:this="{anime.gridElement}"
-                    title="{anime?.briefInfo || ''}"
-                >
-                    <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
+<main
+    bind:this="{mainEl}"
+    data-category="{mainCategory}"
+    class="{(mainCategory === $selectedCategory || mainCategory === ''
+        ? 'viewed'
+        : '') + (isFullViewed ? ' fullView' : '')}"
+    style:--anime-grid-height="{($mobile && !$android
+        ? originalWindowHeight
+        : windowHeight) + "px"}"
+>
+    {#if true}
+        {@const animeList = $loadedAnimeLists?.[mainCategory]?.animeList}
+        <div
+            class="{'image-grid ' +
+                (isFullViewed ? ' fullView' : '') +
+                (animeList?.length === 0 && !$initData ? ' empty' : '')}"
+            data-category="{mainCategory}"
+            bind:this="{animeGridEl}"
+            on:wheel="{(e) => {
+                if (
+                    isFullViewed &&
+                    animeGridEl.scrollWidth > animeGridEl.clientWidth &&
+                    Math.abs(e?.deltaY) > Math.abs(e?.deltaX)
+                ) {
+                    // If its not scrolled at the very bottom of the screen and see next
+                    if (!isWholeGridSeen && e?.deltaY > 0) return;
+                    // If its scrolled to very left and see previous
+                    if (isOnVeryLeftOfAnimeGrid && e?.deltaY < 0) return;
+                    horizontalWheel(e, 'image-grid');
+                }
+            }}"
+            on:scroll="{(e) => {
+                let element = e?.target;
+                lastLeftScroll = currentLeftScroll;
+                currentLeftScroll = element?.scrollLeft;
+                if (currentLeftScroll > 500) {
+                    afterFullGrid = true;
+                } else {
+                    afterFullGrid = false;
+                }
+            }}"
+        >
+            {#if animeList?.length > 0}
+                {#each animeList as anime, animeIndex ((anime?.id ? anime.id + " " + animeIndex : {}) ?? {})}
                     <div
-                        class="shimmer"
-                        tabindex="{$menuVisible || $popupVisible ? '' : '0'}"
-                        on:click="{handleOpenPopup(animeIdx)}"
-                        on:pointerdown="{(e) => handleOpenOption(e, animeIdx)}"
-                        on:pointerup="{cancelOpenOption}"
-                        on:pointercancel="{cancelOpenOption}"
-                        on:keyup="{(e) =>
-                            e.key === 'Enter' && handleOpenPopup(animeIdx)}"
+                        class="{'image-card' +
+                            (anime?.isLoading ? ' semi-loading' : '')}"
+                        bind:this="{anime.gridElement}"
+                        title="{anime?.briefInfo || ''}"
                     >
-                        {#if anime?.coverImageUrl || anime?.bannerImageUrl || anime?.trailerThumbnailUrl}
-                            {#key anime?.coverImageUrl || anime?.bannerImageUrl || anime?.trailerThumbnailUrl}
-                                <img
-                                    use:addImage="{anime?.coverImageUrl ||
-                                        anime?.bannerImageUrl ||
-                                        anime?.trailerThumbnailUrl ||
-                                        emptyImage}"
-                                    fetchpriority="{animeIdx >
-                                    numberOfPageLoadedGrid
-                                        ? ''
-                                        : 'high'}"
-                                    loading="{animeIdx > numberOfPageLoadedGrid
-                                        ? 'lazy'
-                                        : 'eager'}"
-                                    class="{'image-grid__card-thumb  fade-out'}"
-                                    alt="{(anime?.shownTitle || '') + ' Cover'}"
-                                    width="180px"
-                                    height="254.531px"
-                                    on:load="{(e) => {
-                                        removeClass(e.target, 'fade-out');
-                                        addClass(
-                                            e.target?.closest?.('.shimmer'),
-                                            'loaded',
-                                        );
-                                    }}"
-                                    on:error="{(e) => {
-                                        addClass(e.target, 'fade-out');
-                                        addClass(e.target, 'display-none');
-                                    }}"
-                                />
-                            {/key}
-                        {/if}
-                        <span class="image-grid__card-title">
-                            <span
-                                class="title copy"
-                                copy-value="{anime?.copiedTitle || ''}"
-                                copy-value-2="{anime?.shownTitle || ''}"
-                                >{anime?.shownTitle || "NA"}</span
-                            >
-                            <span
-                                class="brief-info-wrapper copy"
-                                copy-value="{anime?.copiedTitle || ''}"
-                                copy-value-2="{anime?.shownTitle || ''}"
-                            >
-                                <div class="brief-info">
-                                    <span>
-                                        <!-- circle -->
-                                        <svg
-                                            viewBox="0 0 512 512"
-                                            class="{`${anime?.userStatusColor}-fill circle`}"
-                                            ><path
-                                                d="M256 512a256 256 0 1 0 0-512 256 256 0 1 0 0 512z"
-                                            ></path></svg
-                                        >
-                                        {#if isJsonObject(anime?.nextAiringEpisode)}
-                                            {@const finishedEpisodes =
-                                                getFinishedEpisode(
-                                                    anime.episodes,
-                                                    anime.nextAiringEpisode,
-                                                )}
-                                            {`${anime.format || "NA"}`}
-                                            {#if finishedEpisodes}
-                                                {#key $earlisetReleaseDate || 1}
-                                                    {finishedEpisodes}
-                                                {/key}
+                        <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
+                        <div
+                            class="shimmer"
+                            tabindex="{$menuVisible || $popupVisible
+                                ? ''
+                                : '0'}"
+                            on:click="{handleOpenPopup(animeIndex)}"
+                            on:pointerdown="{(e) =>
+                                handleOpenOption(e, animeIndex)}"
+                            on:pointerup="{cancelOpenOption}"
+                            on:pointercancel="{cancelOpenOption}"
+                            on:keyup="{(e) =>
+                                e.key === 'Enter' &&
+                                handleOpenPopup(animeIndex)}"
+                        >
+                            {#if anime?.coverImageUrl || anime?.bannerImageUrl || anime?.trailerThumbnailUrl}
+                                {#key anime?.coverImageUrl || anime?.bannerImageUrl || anime?.trailerThumbnailUrl}
+                                    <img
+                                        use:addImage="{anime?.coverImageUrl ||
+                                            anime?.bannerImageUrl ||
+                                            anime?.trailerThumbnailUrl ||
+                                            emptyImage}"
+                                        fetchpriority="{animeIndex >
+                                        numberOfPageLoadedGrid
+                                            ? ''
+                                            : 'high'}"
+                                        loading="{animeIndex >
+                                        numberOfPageLoadedGrid
+                                            ? 'lazy'
+                                            : 'eager'}"
+                                        class="{'image-card-thumb  fade-out'}"
+                                        alt="{(anime?.shownTitle || '') +
+                                            ' Cover'}"
+                                        width="180px"
+                                        height="254.531px"
+                                        on:load="{(e) => {
+                                            removeClass(e.target, 'fade-out');
+                                            addClass(
+                                                e.target?.closest?.('.shimmer'),
+                                                'loaded',
+                                            );
+                                        }}"
+                                        on:error="{(e) => {
+                                            addClass(e.target, 'fade-out');
+                                            addClass(e.target, 'display-none');
+                                        }}"
+                                    />
+                                {/key}
+                            {/if}
+                            <span class="image-card-title">
+                                <span
+                                    class="title copy"
+                                    data-copy="{anime?.copiedTitle || ''}"
+                                    data-secondCopy="{anime?.shownTitle || ''}"
+                                    >{anime?.shownTitle || "NA"}</span
+                                >
+                                <span
+                                    class="brief-info-wrapper copy"
+                                    data-copy="{anime?.copiedTitle || ''}"
+                                    data-secondCopy="{anime?.shownTitle || ''}"
+                                >
+                                    <div class="brief-info">
+                                        <span>
+                                            <!-- circle -->
+                                            <svg
+                                                viewBox="0 0 512 512"
+                                                class="{`${anime?.userStatusColor}-fill circle`}"
+                                                ><path
+                                                    d="M256 512a256 256 0 1 0 0-512 256 256 0 1 0 0 512z"
+                                                ></path></svg
+                                            >
+                                            {#if isJsonObject(anime?.nextAiringEpisode)}
+                                                {@const finishedEpisodes =
+                                                    getFinishedEpisode(
+                                                        anime.episodes,
+                                                        anime.nextAiringEpisode,
+                                                    )}
+                                                {`${anime.format || "NA"}`}
+                                                {#if finishedEpisodes}
+                                                    {#key $earlisetReleaseDate || 1}
+                                                        {finishedEpisodes}
+                                                    {/key}
+                                                {:else}
+                                                    {`${
+                                                        anime.episodes
+                                                            ? "(" +
+                                                              anime.episodes +
+                                                              ")"
+                                                            : ""
+                                                    }`}
+                                                {/if}
                                             {:else}
-                                                {`${
+                                                {`${anime.format || "NA"}${
                                                     anime.episodes
                                                         ? "(" +
                                                           anime.episodes +
@@ -896,126 +522,162 @@
                                                         : ""
                                                 }`}
                                             {/if}
-                                        {:else}
-                                            {`${anime.format || "NA"}${
-                                                anime.episodes
-                                                    ? "(" + anime.episodes + ")"
-                                                    : ""
-                                            }`}
-                                        {/if}
-                                    </span>
-                                </div>
-                                <div class="brief-info">
-                                    <span>
-                                        {#if anime?.shownScore != null}
-                                            <!-- star -->
-                                            <svg
-                                                viewBox="0 0 576 512"
-                                                class="{`${anime?.contentCautionColor}-fill score`}"
-                                                ><path
-                                                    d="M317 18a32 32 0 0 0-58 0l-64 132-144 22a32 32 0 0 0-17 54l104 103-25 146a32 32 0 0 0 47 33l128-68 129 68a32 32 0 0 0 46-33l-24-146 104-103a32 32 0 0 0-18-54l-144-22-64-132z"
-                                                ></path></svg
-                                            >
-                                            {anime?.shownScore ?? "NA"}
-                                        {:else if anime?.shownCount != null}
-                                            <!-- people -->
-                                            <svg
-                                                viewBox="0 0 640 512"
-                                                class="{`${anime?.contentCautionColor}-fill score`}"
-                                            >
-                                                <path
-                                                    d="M96 128a128 128 0 1 1 256 0 128 128 0 1 1-256 0zM0 482c0-98 80-178 178-178h92c98 0 178 80 178 178 0 17-13 30-30 30H30c-17 0-30-13-30-30zm609 30H471c6-9 9-20 9-32v-8c0-61-27-115-70-152h69c89 0 161 72 161 161 0 17-14 31-31 31zM432 256c-31 0-59-13-79-33a159 159 0 0 0 13-169 112 112 0 1 1 66 202z"
-                                                ></path></svg
-                                            >
-                                            {anime?.shownCount ?? "NA"}
-                                        {:else if anime?.shownFavorites != null}
-                                            <svg
-                                                viewBox="0 0 512 512"
-                                                class="{`${anime?.contentCautionColor}-fill score`}"
-                                            >
-                                                <path
-                                                    d="m48 300 180 169a41 41 0 0 0 56 0l180-169c31-28 48-68 48-109v-6A143 143 0 0 0 268 84l-12 12-12-12A143 143 0 0 0 0 185v6c0 41 17 81 48 109z"
-                                                ></path></svg
-                                            >
-                                            {anime?.shownFavorites ?? "NA"}
-                                        {:else if anime?.shownActivity != null}
-                                            <svg
-                                                viewBox="0 0 512 512"
-                                                class="{`${anime?.contentCautionColor}-fill score`}"
-                                            >
-                                                <path
-                                                    d="M64 64a32 32 0 1 0-64 0v336c0 44 36 80 80 80h400a32 32 0 1 0 0-64H80c-9 0-16-7-16-16V64zm407 87a32 32 0 0 0-46-46L320 211l-57-58a32 32 0 0 0-46 0L105 265a32 32 0 0 0 46 46l89-90 57 58c13 12 33 12 46 0l128-128z"
-                                                ></path></svg
-                                            >
-                                            {anime?.shownActivity ?? "NA"}
-                                        {/if}
-                                    </span>
-                                </div>
+                                        </span>
+                                    </div>
+                                    <div class="brief-info">
+                                        <span>
+                                            {#if anime?.shownScore != null}
+                                                <!-- star -->
+                                                <svg
+                                                    viewBox="0 0 576 512"
+                                                    class="{`${anime?.contentCautionColor}-fill score`}"
+                                                    ><path
+                                                        d="M317 18a32 32 0 0 0-58 0l-64 132-144 22a32 32 0 0 0-17 54l104 103-25 146a32 32 0 0 0 47 33l128-68 129 68a32 32 0 0 0 46-33l-24-146 104-103a32 32 0 0 0-18-54l-144-22-64-132z"
+                                                    ></path></svg
+                                                >
+                                                {anime?.shownScore ?? "NA"}
+                                            {:else if anime?.shownCount != null}
+                                                <!-- people -->
+                                                <svg
+                                                    viewBox="0 0 640 512"
+                                                    class="{`${anime?.contentCautionColor}-fill score`}"
+                                                >
+                                                    <path
+                                                        d="M96 128a128 128 0 1 1 256 0 128 128 0 1 1-256 0zM0 482c0-98 80-178 178-178h92c98 0 178 80 178 178 0 17-13 30-30 30H30c-17 0-30-13-30-30zm609 30H471c6-9 9-20 9-32v-8c0-61-27-115-70-152h69c89 0 161 72 161 161 0 17-14 31-31 31zM432 256c-31 0-59-13-79-33a159 159 0 0 0 13-169 112 112 0 1 1 66 202z"
+                                                    ></path></svg
+                                                >
+                                                {anime?.shownCount ?? "NA"}
+                                            {:else if anime?.shownFavorites != null}
+                                                <svg
+                                                    viewBox="0 0 512 512"
+                                                    class="{`${anime?.contentCautionColor}-fill score`}"
+                                                >
+                                                    <path
+                                                        d="m48 300 180 169a41 41 0 0 0 56 0l180-169c31-28 48-68 48-109v-6A143 143 0 0 0 268 84l-12 12-12-12A143 143 0 0 0 0 185v6c0 41 17 81 48 109z"
+                                                    ></path></svg
+                                                >
+                                                {anime?.shownFavorites ?? "NA"}
+                                            {:else if anime?.shownActivity != null}
+                                                <svg
+                                                    viewBox="0 0 512 512"
+                                                    class="{`${anime?.contentCautionColor}-fill score`}"
+                                                >
+                                                    <path
+                                                        d="M64 64a32 32 0 1 0-64 0v336c0 44 36 80 80 80h400a32 32 0 1 0 0-64H80c-9 0-16-7-16-16V64zm407 87a32 32 0 0 0-46-46L320 211l-57-58a32 32 0 0 0-46 0L105 265a32 32 0 0 0 46 46l89-90 57 58c13 12 33 12 46 0l128-128z"
+                                                    ></path></svg
+                                                >
+                                                {anime?.shownActivity ?? "NA"}
+                                            {/if}
+                                        </span>
+                                    </div>
+                                </span>
                             </span>
-                        </span>
+                        </div>
+                        {#if animeIndex + 1 === animeList.length}
+                            <div
+                                class="observed-grid"
+                                bind:this="{observedGrid}"
+                            ></div>
+                        {/if}
                     </div>
-                </div>
-            {/each}
-            {#each Array($shownAllInList ? 0 : 1) as _}
-                <div class="image-grid__card skeleton dummy">
-                    <div class="shimmer"></div>
-                </div>
-            {/each}
-            {#each Array(isFullViewed ? Math.floor((windowHeight ?? 1100) / 220) : 5) as _}
-                <div class="image-grid__card dummy"></div>
-            {/each}
-        {:else if !$finalAnimeList || $initData}
-            {#each Array(21) as _}
-                <div class="image-grid__card skeleton dummy">
-                    <div class="shimmer"></div>
-                </div>
-            {/each}
-            {#each Array(5) as _}
-                <div class="image-grid__card dummy"></div>
-            {/each}
-        {:else}
-            <div class="empty">No Results</div>
-        {/if}
-    </div>
-    {#if !$android && shouldShowGoBackInFullView && $finalAnimeList?.length}
-        <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
-        <div
-            class="{'go-back-grid' +
-                (shouldShowGoBackInFullView ? ' fullView' : '')}"
-            tabindex="{$menuVisible || $popupVisible ? '' : '0'}"
-            on:click="{goBackGrid}"
-            on:keyup="{(e) => e.key === 'Enter' && goBackGrid(e)}"
-            out:fade="{{ duration: 200, easing: sineOut }}"
-        >
-            <svg
-                viewBox="{`0 0 ${
-                    shouldShowGoBackInFullView ? '320' : '448'
-                } 512`}"
-            >
-                <path
-                    d="{// angle left
-                    shouldShowGoBackInFullView
-                        ? 'M41 233a32 32 0 0 0 0 46l160 160a32 32 0 0 0 46-46L109 256l138-137a32 32 0 0 0-46-46L41 233z'
-                        : // angle up
-                          'M201 137c13-12 33-12 46 0l160 160a32 32 0 0 1-46 46L224 205 87 343a32 32 0 0 1-46-46l160-160z'}"
-                ></path>
-            </svg>
+                {/each}
+                {#each Array($shownAllInList?.[mainCategory] ? 0 : 1) as _}
+                    <div class="image-card skeleton dummy">
+                        <div class="shimmer"></div>
+                    </div>
+                {/each}
+                {#each Array(isFullViewed ? Math.floor((windowHeight ?? 1100) / 220) : 5) as _}
+                    <div class="image-card dummy"></div>
+                {/each}
+            {:else if animeList?.length === 0}
+                <div class="empty">No Results</div>
+                {#if !$shownAllInList?.[mainCategory]}
+                    <div class="image-card">
+                        <div
+                            class="observed-grid empty"
+                            bind:this="{observedGrid}"
+                        ></div>
+                    </div>
+                {/if}
+            {:else}
+                {#each Array(21) as _}
+                    <div class="image-card skeleton">
+                        <div class="shimmer"></div>
+                    </div>
+                {/each}
+                {#each Array(5) as _}
+                    <div class="image-card"></div>
+                {/each}
+            {/if}
         </div>
+        {#if !$android && shouldShowGoBackInFullView && $loadedAnimeLists?.[mainCategory]?.animeList?.length}
+            <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
+            <div
+                class="{'go-back-grid' +
+                    (shouldShowGoBackInFullView ? ' fullView' : '')}"
+                tabindex="{$menuVisible || $popupVisible ? '' : '0'}"
+                on:click="{goBackGrid}"
+                on:keyup="{(e) => e.key === 'Enter' && goBackGrid(e)}"
+                out:fade="{{ duration: 200, easing: sineOut }}"
+            >
+                <svg
+                    viewBox="{`0 0 ${
+                        shouldShowGoBackInFullView ? '320' : '448'
+                    } 512`}"
+                >
+                    <path
+                        d="{// angle left
+                        shouldShowGoBackInFullView
+                            ? 'M41 233a32 32 0 0 0 0 46l160 160a32 32 0 0 0 46-46L109 256l138-137a32 32 0 0 0-46-46L41 233z'
+                            : // angle up
+                              'M201 137c13-12 33-12 46 0l160 160a32 32 0 0 1-46 46L224 205 87 343a32 32 0 0 1-46-46l160-160z'}"
+                    ></path>
+                </svg>
+            </div>
+        {/if}
     {/if}
 </main>
 
 <style>
     main {
         width: 100%;
-        height: 100%;
-        padding: 20px 0px 50px 0px;
+        min-width: 100%;
+        min-height: 100vh;
+        padding: 20px 0px 20px 0px;
+        margin-bottom: 65px;
         position: relative;
-        overflow-x: hidden;
+        overflow: hidden;
+        scroll-snap-align: center;
+        scroll-snap-stop: always !important;
+        overflow-anchor: visible;
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+        height: min(
+            var(--grid-max-height),
+            calc(100vh + max(20px, calc(var(--grid-position) + 20px)))
+        );
+    }
+
+    main::-webkit-scrollbar {
+        display: none;
+    }
+
+    main.viewed {
+        height: unset !important;
+        overflow-x: hidden !important;
+        overflow-y: auto !important;
+    }
+
+    :global(.anime-list-pager.remove-snap-scroll main) {
+        height: unset !important;
     }
 
     main.fullView {
         padding: 12px 0;
         margin-bottom: 57px;
+        height: max(calc(var(--anime-grid-height) - 260px), 210px);
+        min-height: unset !important;
+        overflow: hidden !important;
     }
 
     .skeleton {
@@ -1023,15 +685,15 @@
         background-color: hsla(0, 0%, 10%, 0.5) !important;
     }
 
-    .image-grid__card.loading {
+    .image-card.loading {
         animation: loadingBlink 1.5s ease-in-out infinite;
     }
 
-    .image-grid__card.semi-loading {
+    .image-card.semi-loading {
         animation: semiLoadingBlink 1.5s ease-in-out infinite;
     }
 
-    .image-grid__card.skeleton {
+    .image-card.skeleton {
         background-color: transparent !important;
     }
 
@@ -1062,10 +724,7 @@
         display: none;
     }
 
-    .image-grid__card.skeleton
-        .brief-info
-        .image-grid__card.skeleton
-        .brief-info-wrapper {
+    .image-card.skeleton .brief-info .image-card.skeleton .brief-info-wrapper {
         height: 10px;
         width: 50%;
     }
@@ -1082,6 +741,17 @@
         overflow-anchor: visible;
         -ms-overflow-style: none;
         scrollbar-width: none;
+        position: absolute;
+        width: 100%;
+        top: max(20px, calc(var(--grid-position) + 20px));
+    }
+
+    main.viewed .image-grid {
+        position: unset !important;
+    }
+
+    :global(.anime-list-pager.remove-snap-scroll .image-grid) {
+        position: unset !important;
     }
 
     @media screen and (max-width: 390px) {
@@ -1106,8 +776,8 @@
         justify-content: space-evenly;
         align-content: flex-start;
         height: max(calc(var(--anime-grid-height) - 260px), 210px);
-        overflow-y: hidden;
-        overflow-x: auto;
+        overflow-y: hidden !important;
+        overflow-x: auto !important;
     }
 
     .image-grid.fullView.empty {
@@ -1119,7 +789,7 @@
         display: none;
     }
 
-    .image-grid__card {
+    .image-card {
         animation: fadeIn 0.2s ease-out;
         width: 100%;
         height: var(--popup-content-height);
@@ -1127,38 +797,38 @@
         grid-template-rows: auto;
         grid-template-columns: 100%;
     }
-    .image-grid__card.fullView:empty {
+    .image-card.fullView:empty {
         height: 0px !important;
     }
-    .image-grid__card:not(.fullView):empty {
+    .image-card:not(.fullView):empty {
         width: 0px !important;
     }
-    :global(.image-grid__card.hidden > .shimmer),
-    :global(.image-grid__card.hidden > .image-grid__card-title) {
+    :global(.image-card.hidden > .shimmer),
+    :global(.image-card.hidden > .image-card-title) {
         display: none;
     }
 
-    .image-grid.fullView .image-grid__card {
+    .image-grid.fullView .image-card {
         width: 150px;
         height: 210px;
     }
-    .image-grid__card > .shimmer {
+    .image-card > .shimmer {
         position: relative;
         padding-bottom: min(calc(181 / 128 * 100%), 209px);
         background-color: hsla(0, 0%, 10%, 0.5);
         border-radius: 6px;
     }
     @media screen and (min-width: 580px) {
-        .image-grid__card > .shimmer {
+        .image-card > .shimmer {
             padding-bottom: calc(181 / 128 * 100%);
         }
     }
 
-    .image-grid.fullView .image-grid__card > .shimmer {
+    .image-grid.fullView .image-card > .shimmer {
         padding-bottom: unset !important;
     }
 
-    .image-grid__card-thumb {
+    .image-card-thumb {
         position: absolute;
         background: hsla(0, 0%, 10%, 0.5);
         border-radius: 6px;
@@ -1180,20 +850,20 @@
         user-select: none;
     }
 
-    .image-grid__card:not(.skeleton):focus-within .image-grid__card-thumb,
-    .image-grid__card:not(.skeleton):focus .image-grid__card-thumb,
-    .image-grid__card:not(.skeleton):hover .image-grid__card-thumb {
+    .image-card:not(.skeleton):focus-within .image-card-thumb,
+    .image-card:not(.skeleton):focus .image-card-thumb,
+    .image-card:not(.skeleton):hover .image-card-thumb {
         opacity: 0.5 !important;
         box-shadow:
             0 14px 28px rgba(0, 0, 0, 0.25),
             0 10px 10px rgba(0, 0, 0, 0.22);
     }
 
-    .image-grid__card-thumb.fade-out {
+    .image-card-thumb.fade-out {
         opacity: 0;
     }
 
-    .image-grid__card-title {
+    .image-card-title {
         padding: 50% 4px 4px;
         font-size: clamp(12px, 12px, 14px);
         position: absolute;
@@ -1212,7 +882,7 @@
         scrollbar-width: none;
         cursor: pointer;
     }
-    .image-grid__card-title::-webkit-scrollbar {
+    .image-card-title::-webkit-scrollbar {
         display: none;
     }
 
@@ -1294,6 +964,12 @@
         height: 44px !important;
     }
 
+    @media screen and (max-width: 750px) {
+        .image-grid {
+            padding-inline: 10px;
+        }
+    }
+
     @media screen and (max-width: 425px) {
         .go-back-grid.fullView {
             left: 0;
@@ -1310,6 +986,7 @@
     }
 
     .empty {
+        width: 100%;
         font-size: 20px;
         font-weight: 700;
         opacity: 1;
@@ -1393,6 +1070,35 @@
         .image-grid {
             justify-content: space-evenly;
         }
+    }
+
+    .observed-grid {
+        position: absolute !important;
+        width: 100vw !important;
+        max-width: 1040px !important;
+        min-height: 100vh !important;
+        left: 0 !important;
+        bottom: 0 !important;
+        top: unset !important;
+        right: unset !important;
+        z-index: -9 !important;
+    }
+
+    .image-grid.fullView .observed-grid:not(.empty) {
+        max-width: 1020px !important;
+        max-height: max(
+            calc(var(--anime-grid-height) - 260px),
+            210px
+        ) !important;
+        right: 0 !important;
+        top: 0 !important;
+        left: unset !important;
+        bottom: unset !important;
+    }
+
+    .image-card {
+        position: relative !important;
+        overflow: hidden !important;
     }
 
     .display-none {

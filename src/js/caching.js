@@ -1,6 +1,7 @@
 import { get } from "svelte/store"
 import { isAndroid } from "./others/helper.js"
 import { appID, dataStatus, progress } from "./globalValues.js"
+import getWebVersion from "../version.js"
 
 let loadedRequestUrlPromises = {}
 let loadedRequestUrls = {}
@@ -12,6 +13,10 @@ const cacheRequest = async (url, totalLength, status) => {
     } else if (!window?.location?.protocol?.includes?.("file")) {
         loadedRequestUrlPromises[url] = new Promise(async (resolve) => {
             let app_id = get(appID)
+            if (!app_id) {
+                app_id = await getWebVersion()
+                appID.set(app_id)
+            }
             if (typeof app_id !== "number") {
                 loadedRequestUrlPromises[url] = null
                 resolve(url)
@@ -33,7 +38,7 @@ const cacheRequest = async (url, totalLength, status) => {
                                             if (typeof (controller?.close) === "function") {
                                                 let receivedLength = 0;
                                                 let chunks = [];
-                                                let streamStatusFrame, isDataStatusShowing;
+                                                let streamStatusTimeout, isDataStatusShowing;
                                                 let push = () => {
                                                     reader.read().then(({ done, value }) => {
                                                         if (value) {
@@ -41,8 +46,7 @@ const cacheRequest = async (url, totalLength, status) => {
                                                             receivedLength += value?.byteLength ?? value?.length;
                                                             if (!isDataStatusShowing) {
                                                                 isDataStatusShowing = true
-                                                                cancelAnimationFrame(streamStatusFrame)
-                                                                streamStatusFrame = requestAnimationFrame(() => {
+                                                                streamStatusTimeout = setTimeout(() => {
                                                                     let percent = (receivedLength / totalLength) * 100
                                                                     let currentProgress = get(progress)
                                                                     if (percent > 0 && percent <= 100
@@ -55,14 +59,14 @@ const cacheRequest = async (url, totalLength, status) => {
                                                                         dataStatus.set(`${percent.toFixed(2)}% ` + status)
                                                                     }
                                                                     isDataStatusShowing = false
-                                                                })
+                                                                }, 17)
                                                             }
                                                         }
                                                         if (done === false) {
                                                             push();
                                                         } else if (done === true) {
                                                             controller.close();
-                                                            cancelAnimationFrame(streamStatusFrame)
+                                                            clearTimeout(streamStatusTimeout)
                                                             dataStatus.set(null)
                                                             progress.set(100)
                                                             resolve(new Blob(chunks))

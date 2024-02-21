@@ -10,6 +10,7 @@ class AnimeNotification implements Serializable {
     final public long releaseDateMillis;
     final byte[] imageByte;
     final boolean isMyAnime;
+    public String message;
     public AnimeNotification(long animeId, String title, long releaseEpisode, long maxEpisode, long releaseDateMillis, byte[] imageByte, boolean isMyAnime) {
         this.animeId = animeId;
         this.title = title;

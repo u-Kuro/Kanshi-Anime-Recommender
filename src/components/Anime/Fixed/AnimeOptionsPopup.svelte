@@ -6,14 +6,14 @@
         android,
         animeOptionVisible,
         openedAnimeOptionIdx,
-        finalAnimeList,
         popupVisible,
         openedAnimePopupIdx,
         hiddenEntries,
-        animeLoaderWorker,
         confirmPromise,
-        checkAnimeLoaderStatus,
+        loadedAnimeLists,
+        selectedCategory,
     } from "../../../js/globalValues.js";
+    import { animeManager } from "../../../js/workerUtils.js";
 
     let shownTitle;
     let youtubeSearchTitle;
@@ -41,6 +41,7 @@
             isRecentlyOpenedTimeout = setTimeout(() => {
                 isRecentlyOpened = false;
             }, 100);
+            window.setShouldGoBack?.(false);
         } else {
             window.removeEventListener("keydown", keyDown);
             if (isRecentlyOpenedTimeout) clearTimeout(isRecentlyOpenedTimeout);
@@ -134,26 +135,12 @@
                     `Do you want to unhide ${title} in your recommendation list?`,
                 )
             ) {
-                $checkAnimeLoaderStatus()
-                    .then(async () => {
-                        if ($finalAnimeList.length) {
-                            if ($animeLoaderWorker instanceof Worker) {
-                                delete $hiddenEntries[animeID];
-                                $hiddenEntries = $hiddenEntries;
-                                $animeLoaderWorker?.postMessage?.({
-                                    removeID: animeID,
-                                    hiddenEntries: $hiddenEntries,
-                                });
-                            }
-                        }
-                    })
-                    .catch(() => {
-                        $confirmPromise({
-                            isAlert: true,
-                            title: "Something went wrong",
-                            text: "Failed to unhide the anime, please try again.",
-                        });
-                    });
+                animeManager({
+                    selectedCategory: $selectedCategory,
+                    removeId: animeID,
+                    isHiding: false,
+                });
+                delete $hiddenEntries?.[animeID];
                 $animeOptionVisible = false;
             }
         } else {
@@ -162,25 +149,12 @@
                     `Do you want to hide ${title} in your recommendation list?`,
                 )
             ) {
-                $checkAnimeLoaderStatus()
-                    .then(async () => {
-                        if ($finalAnimeList.length) {
-                            if ($animeLoaderWorker instanceof Worker) {
-                                $hiddenEntries[animeID] = true;
-                                $animeLoaderWorker?.postMessage?.({
-                                    removeID: animeID,
-                                    hiddenEntries: $hiddenEntries,
-                                });
-                            }
-                        }
-                    })
-                    .catch(() => {
-                        $confirmPromise({
-                            isAlert: true,
-                            title: "Something went wrong",
-                            text: "Failed to hide the anime, please try again.",
-                        });
-                    });
+                animeManager({
+                    selectedCategory: $selectedCategory,
+                    removeId: animeID,
+                    isHiding: true,
+                });
+                $hiddenEntries[animeID] = 1;
                 $animeOptionVisible = false;
             }
         }
@@ -195,7 +169,10 @@
     }
 
     function loadAnimeOption() {
-        let openedAnime = $finalAnimeList?.[$openedAnimeOptionIdx ?? -1];
+        let openedAnime =
+            $loadedAnimeLists?.[$selectedCategory]?.animeList?.[
+                $openedAnimeOptionIdx ?? -1
+            ];
         if (openedAnime) {
             shownTitle = openedAnime?.shownTitle;
             animeCopyTitle = youtubeSearchTitle = openedAnime?.copiedTitle;
@@ -206,77 +183,84 @@
             $animeOptionVisible = false;
         }
     }
-    finalAnimeList.subscribe(() => {
+    loadedAnimeLists.subscribe(() => {
+        if ($animeOptionVisible) {
+            loadAnimeOption();
+        }
+    });
+
+    hiddenEntries.subscribe(() => {
         if ($animeOptionVisible) {
             loadAnimeOption();
         }
     });
 </script>
 
-{#if $animeOptionVisible && !$popupVisible && $finalAnimeList}
+{#if $animeOptionVisible && !$popupVisible && $loadedAnimeLists?.[$selectedCategory]}
     <div
         use:loadAnimeOption
         class="anime-options"
-        on:click={handleAnimeOptionVisibility}
-        on:touchend|passive={handleTouchAnimeOptionVisibility}
-        on:keydown={(e) => e.key === "Enter" && handleAnimeOptionVisibility(e)}
+        on:click="{handleAnimeOptionVisibility}"
+        on:touchend|passive="{handleTouchAnimeOptionVisibility}"
+        on:keydown="{(e) =>
+            e.key === 'Enter' && handleAnimeOptionVisibility(e)}"
     >
         <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
         <div
             class="anime-options-container"
-            out:fade={{ duration: 200, easing: sineOut }}
+            out:fade="{{ duration: 200, easing: sineOut }}"
         >
             <div class="option-header">
                 <span class="anime-title"><h1>{shownTitle}</h1></span>
                 <svg
                     viewBox="0 0 24 24"
                     class="closing-x"
-                    tabindex={$popupVisible ? "" : "0"}
-                    on:click={handleAnimeOptionVisibility}
-                    on:keydown={(e) =>
-                        e.key === "Enter" && handleAnimeOptionVisibility(e)}
+                    tabindex="{$popupVisible ? '' : '0'}"
+                    on:click="{handleAnimeOptionVisibility}"
+                    on:keydown="{(e) =>
+                        e.key === 'Enter' && handleAnimeOptionVisibility(e)}"
                     ><path
                         fill="#fff"
                         d="m19 6-1-1-6 6-6-6-1 1 6 6-6 6 1 1 6-6 6 6 1-1-6-6Z"
-                    /></svg
+                    ></path></svg
                 >
             </div>
             <span
-                tabindex={$popupVisible ? "" : "0"}
+                tabindex="{$popupVisible ? '' : '0'}"
                 class="anime-option"
-                on:click={openAnimePopup}
-                on:keydown={(e) => e.key === "Enter" && openAnimePopup(e)}
-                bind:this={firstActionEl}
+                on:click="{openAnimePopup}"
+                on:keydown="{(e) => e.key === 'Enter' && openAnimePopup(e)}"
+                bind:this="{firstActionEl}"
                 ><h2 class="option-title">Information</h2></span
             >
             <span
-                tabindex={$popupVisible ? "" : "0"}
+                tabindex="{$popupVisible ? '' : '0'}"
                 class="anime-option"
-                on:click={openInAnilist}
-                on:keydown={(e) => e.key === "Enter" && openInAnilist(e)}
+                on:click="{openInAnilist}"
+                on:keydown="{(e) => e.key === 'Enter' && openInAnilist(e)}"
                 ><h2 class="option-title">Open in Anilist</h2></span
             >
             <span
-                tabindex={$popupVisible ? "" : "0"}
+                tabindex="{$popupVisible ? '' : '0'}"
                 class="anime-option"
-                on:click={openInYoutube}
-                on:keydown={(e) => e.key === "Enter" && openInYoutube(e)}
+                on:click="{openInYoutube}"
+                on:keydown="{(e) => e.key === 'Enter' && openInYoutube(e)}"
                 ><h2 class="option-title">Open in YouTube</h2></span
             >
             {#if animeCopyTitle}
                 <span
-                    tabindex={$popupVisible ? "" : "0"}
+                    tabindex="{$popupVisible ? '' : '0'}"
                     class="anime-option"
-                    on:click={copyTitle}
-                    on:keydown={(e) => e.key === "Enter" && copyTitle(e)}
+                    on:click="{copyTitle}"
+                    on:keydown="{(e) => e.key === 'Enter' && copyTitle(e)}"
                     ><h2 class="option-title">Copy Title</h2></span
                 >
             {/if}
             <span
-                tabindex={$popupVisible ? "" : "0"}
+                tabindex="{$popupVisible ? '' : '0'}"
                 class="anime-option"
-                on:click={handleHideShow}
-                on:keydown={(e) => e.key === "Enter" && handleHideShow(e)}
+                on:click="{handleHideShow}"
+                on:keydown="{(e) => e.key === 'Enter' && handleHideShow(e)}"
                 ><h2 class="option-title">
                     {!$hiddenEntries
                         ? "Please Wait..."

@@ -4,6 +4,8 @@ import static com.example.kanshi.Utils.setMargins;
 
 import android.animation.ObjectAnimator;
 import android.annotation.SuppressLint;
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -92,12 +94,12 @@ public class YoutubeViewActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
 
         // Set click listeners for the custom ActionBar buttons
-        View btnClose = findViewById(R.id.btnClose);
-        btnClose.setClickable(true);
-        btnClose.setOnClickListener(v -> {
+        ImageView close = findViewById(R.id.close_youtube);
+        close.setOnClickListener(v -> {
             Intent i = new Intent(this, MainActivity.class);
             i.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
             startActivity(i);
+            overridePendingTransition(R.anim.none, R.anim.fade_out);
         });
 
         ImageView launchUrl = findViewById(R.id.launchURL);
@@ -123,8 +125,19 @@ public class YoutubeViewActivity extends AppCompatActivity {
                     isFinished = true;
                     webView.destroy();
                     finish();
+                    overridePendingTransition(R.anim.none, R.anim.fade_out);
                 }
             }
+        });
+        siteName.setOnLongClickListener(view -> {
+            String text = webView.getUrl();
+            if (text!=null && !text.equals("")) {
+                ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+                ClipData clip = ClipData.newPlainText("Copied Text", text);
+                clipboard.setPrimaryClip(clip);
+                return true;
+            }
+            return false;
         });
         ProgressBar progressbar = findViewById(R.id.progressbar);
         progressbar.setMax((int) Math.pow(10,6));
