@@ -1367,7 +1367,6 @@
                     text: `Do you want to add a custom category named ${categoryNameToShow}?`,
                 })
             ) {
-                await saveJSON(true, "shouldLoadAnime");
                 if (
                     $categories &&
                     customCategoryName &&
@@ -1401,7 +1400,6 @@
                     text: `Do you want to delete the category named ${categoryNameToShow}?`,
                 })
             ) {
-                await saveJSON(true, "shouldLoadAnime");
                 if (
                     $selectedCategory &&
                     $categories &&
