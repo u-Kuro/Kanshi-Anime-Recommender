@@ -339,7 +339,7 @@
         }
     }
 
-    async function handleNotif() {
+    async function handleAnimeRelease() {
         if (!$android) return;
         if ("Notification" in window) {
             if (window?.Notification?.permission !== "denied") {
@@ -599,26 +599,26 @@
         {/if}
         {#if $android}
             <div
-                class="notif-icon-container"
-                on:click="{handleNotif}"
+                class="anime-release-icon-container"
+                on:click="{handleAnimeRelease}"
                 on:pointerdown="{handleGoUp}"
                 on:pointerup="{cancelGoUp}"
                 on:pointercancel="{cancelGoUp}"
             >
                 <svg
-                    viewBox="0 0 448 512"
-                    class="notif-icon"
-                    aria-label="Notification"
+                    viewBox="0 0 512 512"
+                    class="anime-release-icon"
+                    aria-label="Anime Releases"
                     tabindex="{$popupVisible && windowWidth > 750 ? '-1' : '0'}"
                     on:keyup="{(e) => {
                         if (e.key === 'Enter') {
                             e.stopPropagation();
-                            handleNotif();
+                            handleAnimeRelease();
                         }
                     }}"
                 >
                     <path
-                        d="M224 0c-18 0-32 14-32 32v19C119 66 64 131 64 208v19c0 47-17 92-48 127l-8 9a32 32 0 0 0 24 53h384a32 32 0 0 0 24-53l-8-9c-31-35-48-80-48-127v-19c0-77-55-142-128-157V32c0-18-14-32-32-32zm45 493c12-12 19-28 19-45H160a64 64 0 0 0 109 45z"
+                        d="M75 75 41 41C26 26 0 37 0 58v110c0 13 11 24 24 24h110c21 0 32-26 17-41l-31-31a191 191 0 0 1 328 136 192 192 0 0 1-302 158 32 32 0 0 0-36 52A256 256 0 1 0 75 75zm181 53c-13 0-24 11-24 24v104c0 6 3 13 7 17l72 72c9 9 25 9 34 0s9-25 0-34l-65-65v-94c0-13-11-24-24-24z"
                     ></path>
                 </svg>
             </div>
@@ -706,7 +706,7 @@
         grid-template-columns: calc(100% - 80px - 30px - calc(15px * 2)) 80px 30px;
     }
     .logo-icon,
-    .notif-icon {
+    .anime-release-icon {
         cursor: pointer;
         justify-self: start;
         width: 25px;
@@ -717,7 +717,7 @@
         border-radius: 6px;
         fill: var(--fg-color);
     }
-    .notif-icon {
+    .anime-release-icon {
         width: 20px !important;
         height: 20px !important;
     }
@@ -826,7 +826,7 @@
             cursor: pointer;
         }
         .logo-icon-container,
-        .notif-icon-container {
+        .anime-release-icon-container {
             min-width: 48px;
             min-height: 48px;
             padding: 0 10px;
@@ -928,7 +928,7 @@
             padding-left: 15px !important;
         }
         .logo-icon-container,
-        .notif-icon-container {
+        .anime-release-icon-container {
             display: flex;
             justify-content: center;
         }

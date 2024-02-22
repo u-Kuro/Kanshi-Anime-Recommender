@@ -18,8 +18,10 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import java.lang.ref.WeakReference;
 import java.text.SimpleDateFormat;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -126,10 +128,6 @@ public class ReleasedTabFragment extends Fragment {
                 SimpleDateFormat shownTimeFormat = new SimpleDateFormat("h:mm a", Locale.US);
                 SimpleDateFormat shownWeekTimeFormat = new SimpleDateFormat("EEEE h:mm a", Locale.US);
 
-                long nowInMillis = System.currentTimeMillis();
-                long diffInMillis = nowInMillis - anime.releaseDateMillis;
-                long diffInDays = diffInMillis / (24 * 60 * 60 * 1000);
-
                 Date date = new Date(anime.releaseDateMillis);
                 LocalDate localDate = date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
                 LocalDate today = LocalDate.now();
@@ -142,15 +140,31 @@ public class ReleasedTabFragment extends Fragment {
                 } else if (localDate.isAfter(today)) {
                     dateStr = "Tomorrow at " + shownTimeFormat.format(date);
                 } else if (localDate.isEqual(today)) {
-                    if (anime.releaseDateMillis > nowInMillis) {
+                    if (anime.releaseDateMillis > System.currentTimeMillis()) {
                         dateStr = "Airing at " + shownTimeFormat.format(date);
                     } else {
                         dateStr = "Today at " + shownTimeFormat.format(date);
                     }
                 } else if (localDate.isEqual(today.minusDays(1))) {
-                    dateStr = "Yesterday";
+                    Instant dateInstant = date.toInstant();
+                    Instant now = Instant.now();
+                    long minutesDifference = ChronoUnit.MINUTES.between(dateInstant, now);
+                    if (minutesDifference==1) {
+                        dateStr = "1 minute ago";
+                    } else if (minutesDifference < 60) {
+                        dateStr = minutesDifference+" minutes ago";
+                    } else {
+                        dateStr = "Yesterday";
+                    }
                 } else if (localDate.isAfter(today.minusWeeks(1))) {
-                    dateStr = diffInDays + " days ago";
+                    Instant dateInstant = date.toInstant();
+                    Instant now = Instant.now();
+                    long daysDifference = ChronoUnit.DAYS.between(dateInstant, now);
+                    if (daysDifference==1) {
+                        dateStr = "1 day ago";
+                    } else {
+                        dateStr = daysDifference + " days ago";
+                    }
                 } else {
                     dateStr = shownDateFormat.format(date);
                 }
