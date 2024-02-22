@@ -1,5 +1,7 @@
 package com.example.kanshi;
 
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -142,7 +144,19 @@ public class AnimeReleaseGroupAdapter extends ArrayAdapter<AnimeReleaseGroup> {
                             runOnUi(() -> animeImage.setImageBitmap(imageBitmap));
                         }
                         if (anime.title!=null) {
-                            runOnUi(() -> animeName.setText(anime.title));
+                            runOnUi(() -> {
+                                String title = anime.title;
+                                animeName.setText(title);
+                                finalAnimeCard.setOnLongClickListener(view1 -> {
+                                    if (!title.equals("")) {
+                                        ClipboardManager clipboard = (ClipboardManager) mContext.getSystemService(Context.CLIPBOARD_SERVICE);
+                                        ClipData clip = ClipData.newPlainText("Copied Text", title);
+                                        clipboard.setPrimaryClip(clip);
+                                        return true;
+                                    }
+                                    return false;
+                                });
+                            });
                         } else {
                             runOnUi(() -> animeName.setText(R.string.na));
                         }

@@ -98,7 +98,7 @@ public class SchedulesTabFragment extends Fragment {
                 if (anime.maxEpisode < 0) { // No Given Max Episodes
                     anime.message = "Episode " + anime.releaseEpisode;
                 } else if (anime.releaseEpisode >= anime.maxEpisode) {
-                    anime.message = "Finished Airing: Episode " + anime.releaseEpisode;
+                    anime.message = "Final: Episode " + anime.releaseEpisode;
                 } else {
                     anime.message = "Episode " + anime.releaseEpisode + " / " + anime.maxEpisode;
                 }
