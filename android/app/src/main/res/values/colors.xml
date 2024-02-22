@@ -3,6 +3,8 @@
     <color name="white">#FFFFFFFF</color>
     <color name="faded_white">#FFD0D0D0</color>
     <color name="black">#FF000000</color>
-    <color name="dark_grey">#FF262626</color>
-    <color name="dark_blue">#FF0b1622</color>
+    <color name="web_dark_grey">#FF262626</color>
+    <color name="dark_grey">#FF2C2C2C</color>
+    <color name="darker_grey">#FF1B1B1B</color>
+    <color name="dark_blue">#FF0B1622</color>
 </resources>

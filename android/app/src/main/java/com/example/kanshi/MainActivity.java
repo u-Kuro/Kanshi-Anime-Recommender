@@ -65,7 +65,6 @@ import java.lang.ref.WeakReference;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -87,7 +86,7 @@ import androidx.core.content.FileProvider;
 import androidx.core.splashscreen.SplashScreen;
 
 public class MainActivity extends AppCompatActivity {
-    public final int appID = 336;
+    public final int appID = 338;
     public boolean keepAppRunningInBackground = false;
     public boolean webViewIsLoaded = false;
     public boolean permissionIsAsked = false;
@@ -970,7 +969,8 @@ public class MainActivity extends AppCompatActivity {
             updateCurrentNotifications();
         }
         private final ExecutorService updateNotificationsExecutorService = Executors.newFixedThreadPool(1);
-        private final Map<String, Future<?>> updateNotificationsFutures = new HashMap<>();
+        private final Map<String, Future<?>> updateNotificationsFutures = new ConcurrentHashMap<>();
+        @RequiresApi(api = Build.VERSION_CODES.O)
         @JavascriptInterface
         public void updateNotifications(long animeId, boolean isMyAnime) {
             if (updateNotificationsFutures.containsKey(String.valueOf(animeId))) {
@@ -998,6 +998,19 @@ public class MainActivity extends AppCompatActivity {
                 }
                 AnimeNotificationManager.allAnimeNotification.putAll(updatedAnimeNotifications);
                 LocalPersistence.writeObjectToFile(MainActivity.this, AnimeNotificationManager.allAnimeNotification, "allAnimeNotification");
+                updateNotificationsFutures.remove(String.valueOf(animeId));
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+                    if (updateNotificationsFutures.isEmpty()) {
+                        SchedulesTabFragment schedulesTabFragment = SchedulesTabFragment.getInstanceActivity();
+                        if (schedulesTabFragment!=null) {
+                            schedulesTabFragment.updateScheduledAnime();
+                        }
+                        ReleasedTabFragment releasedTabFragment = ReleasedTabFragment.getInstanceActivity();
+                        if (releasedTabFragment!=null) {
+                            releasedTabFragment.updateReleasedAnime();
+                        }
+                    }
+                }
             });
             updateNotificationsFutures.put(String.valueOf(animeId), future);
         }
@@ -1132,7 +1145,6 @@ public class MainActivity extends AppCompatActivity {
             String joinedAnimeIds = String.join(",", animeIdsToBeUpdated);
             webView.post(() -> webView.loadUrl("javascript:window?.updateNotifications?.(["+joinedAnimeIds+"])"));
         });
-
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
@@ -1288,8 +1300,8 @@ public class MainActivity extends AppCompatActivity {
         CompletableFuture.supplyAsync(() -> checkAppConnection(timeout))
                 .thenAccept(callback::onConnectionResult);
     }
+    final ExecutorService executor = Executors.newFixedThreadPool(1);
     private boolean checkAppConnection(int timeout) {
-        ExecutorService executor = Executors.newSingleThreadExecutor();
         Future<Boolean> future = executor.submit(() -> {
             try {
                 URL url = new URL("https://u-kuro.github.io/Kanshi-Anime-Recommender/");

@@ -24,44 +24,68 @@
             android:contentInsetRight="0dp"
             android:contentInsetEnd="0dp"
             app:contentInsetRight="0dp"
-            app:contentInsetEnd="0dp"
-            android:layout_marginStart="16dp">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_centerVertical="true"
-                android:textAlignment="textStart"
-                android:ellipsize="end"
-                android:singleLine="true"
-                android:textColor="@android:color/white"
-                android:textSize="22sp"
-                android:text="@string/anime_release"/>
-            <ImageView
-                android:id="@+id/close_anime_release"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="end"
-                android:src="@drawable/xclose_white"
-                android:padding="12dp"
-                android:clickable="true"
-                android:focusable="true"
-                android:contentDescription="@string/refresh"
-                android:layout_centerVertical="true" />
+            app:contentInsetEnd="0dp">
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginStart="16dp">
+                <Spinner
+                    android:id="@+id/anime_release_spinner"
+                    android:layout_alignParentStart="true"
+                    android:layout_centerVertical="true"
+                    android:layout_width="120dp"
+                    android:layout_height="wrap_content"
+                    android:popupBackground="@drawable/spinner_background"
+                    android:dropDownVerticalOffset="45dp"
+                    android:dropDownWidth="175dp"/>
+                <ImageView
+                    android:layout_alignParentEnd="true"
+                    android:id="@+id/close_anime_release"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="end"
+                    android:src="@drawable/xclose_white"
+                    android:padding="12dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:contentDescription="@string/refresh"
+                    android:layout_centerVertical="true" />
+            </RelativeLayout>
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:progressBackgroundTint="@color/web_dark_grey"
+                    android:layout_alignParentBottom="true"
+                    style="?android:progressBarStyleHorizontal"/>
+            </RelativeLayout>
         </androidx.appcompat.widget.Toolbar>
     </com.google.android.material.appbar.AppBarLayout>
-    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
-        android:id="@+id/swipe_refresh_anime_release"
+    <com.google.android.material.tabs.TabLayout
+        android:id="@+id/tab_layout"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_marginHorizontal="16dp">
-        <ListView
-            android:id="@+id/anime_releases_list"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:listSelector="@android:color/transparent"
-            android:scrollbars="none"
-            android:divider="@null">
-        </ListView>
-    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+        android:layout_height="wrap_content"
+        app:tabPaddingStart="10dp"
+        android:background="@color/black"
+        app:tabSelectedTextColor="@color/white"
+        app:tabTextColor="@color/faded_white"
+        app:tabIndicatorColor="@color/white"
+        app:tabIndicatorFullWidth="false">
+
+        <com.google.android.material.tabs.TabItem
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/released" />
+
+        <com.google.android.material.tabs.TabItem
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/schedules" />
+    </com.google.android.material.tabs.TabLayout>
+    <androidx.viewpager2.widget.ViewPager2
+        android:id="@+id/view_pager"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
 </LinearLayout>

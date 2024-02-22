@@ -8,6 +8,9 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.RectF;
 import android.graphics.Shader;
+import android.os.Build;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -18,15 +21,20 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 
 
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class AnimeReleaseGroupAdapter extends ArrayAdapter<AnimeReleaseGroup> {
     final Context mContext;
@@ -37,7 +45,10 @@ public class AnimeReleaseGroupAdapter extends ArrayAdapter<AnimeReleaseGroup> {
         this.mResource = resource;
     }
 
+    private final ExecutorService getViewExecutorService = Executors.newFixedThreadPool(1);
     final Map<String, Bitmap> imageCache = new HashMap<>();
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
     @NonNull
     @Override
     public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
@@ -51,50 +62,47 @@ public class AnimeReleaseGroupAdapter extends ArrayAdapter<AnimeReleaseGroup> {
 
         AnimeReleaseGroup animeReleaseGroup = getItem(position);
         if (animeReleaseGroup != null) {
-            TextView animeReleaseGroupDate = view.findViewById(R.id.anime_release_group_date);
-            LinearLayout animeReleaseGroupDateLayout = view.findViewById(R.id.anime_release_group_layout);
-            animeReleaseGroupDateLayout.removeAllViews();
 
-            SimpleDateFormat sdtf = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss", Locale.US);
             SimpleDateFormat shownDateFormat = new SimpleDateFormat("MMMM d yyyy", Locale.US);
             SimpleDateFormat shownTimeFormat = new SimpleDateFormat("h:mm a", Locale.US);
             SimpleDateFormat shownWeekTimeFormat = new SimpleDateFormat("EEEE h:mm a", Locale.US);
 
+            TextView animeReleaseGroupDate = view.findViewById(R.id.anime_release_group_date);
             if (animeReleaseGroup.dateString!=null) {
                 try {
-                    Date date = sdtf.parse(animeReleaseGroup.dateString);
+                    Date date = animeReleaseGroup.date;
                     Calendar releaseDate = Calendar.getInstance();
                     if (date != null) {
                         releaseDate.setTime(date);
 
-                        // Calculate the difference in days
-                        long diffInMillis = System.currentTimeMillis() - releaseDate.getTimeInMillis();
+                        long nowInMillis = System.currentTimeMillis();
+                        long diffInMillis = nowInMillis - releaseDate.getTimeInMillis();
                         long diffInDays = diffInMillis / (24 * 60 * 60 * 1000);
-                        long diffInHours = diffInMillis / (60 * 60 * 1000) % 24;
-                        long diffInMinutes = diffInMillis / (60 * 1000) % 60;
-                        long diffInSeconds = diffInMillis / (1000) % 60;
 
-                        String text;
-                        if (diffInDays <= -7) {
-                            text = "Airing in " + shownDateFormat.format(date);
-                        } else if (diffInDays < -1) {
-                            text = "Airing in " + shownWeekTimeFormat.format(date);
-                        } else if (diffInDays == -1) {
-                            text = "Tomorrow at " + shownTimeFormat.format(date);
-                        } else if (diffInDays <= 0) {
-                            if (diffInHours <= -1 || diffInMinutes <= -1 || diffInSeconds < -1) {
-                                text = "Airing at " + shownTimeFormat.format(date);
+                        LocalDate localDate = date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+                        LocalDate today = LocalDate.now();
+
+                        String dateStr;
+                        if (localDate.isAfter(today.plusDays(6))) { // more than a week
+                            dateStr = "Airing in " + shownDateFormat.format(date);
+                        } else if (localDate.isAfter(today.plusDays(1))) { // more than a day
+                            dateStr = "Airing in " + shownWeekTimeFormat.format(date);
+                        } else if (localDate.isAfter(today)) {
+                            dateStr = "Tomorrow at " + shownTimeFormat.format(date);
+                        } else if (localDate.isEqual(today)) {
+                            if (date.getTime() > nowInMillis) {
+                                dateStr = "Airing at " + shownTimeFormat.format(date);
                             } else {
-                                text = "Today";
+                                dateStr = "Today at " + shownTimeFormat.format(date);
                             }
-                        } else if (diffInDays < 2) {
-                            text = "Yesterday";
-                        } else if (diffInDays < 7) {
-                            text = diffInDays + " days ago";
+                        } else if (localDate.isEqual(today.minusDays(1))) {
+                            dateStr = "Yesterday";
+                        } else if (localDate.isAfter(today.minusWeeks(1))) {
+                            dateStr = diffInDays + " days ago";
                         } else {
-                            text = shownDateFormat.format(date);
+                            dateStr = shownDateFormat.format(date);
                         }
-                        animeReleaseGroupDate.setText(text);
+                        animeReleaseGroupDate.setText(dateStr);
                     } else {
                         animeReleaseGroupDate.setText(animeReleaseGroup.dateString);
                     }
@@ -104,45 +112,59 @@ public class AnimeReleaseGroupAdapter extends ArrayAdapter<AnimeReleaseGroup> {
             }
 
             ArrayList<AnimeNotification> animeReleases = animeReleaseGroup.anime;
-            for (AnimeNotification anime : animeReleases) {
-                View animeCard = View.inflate(mContext, R.layout.anime_release_card, null);
-                ImageView animeImage = animeCard.findViewById(R.id.anime_image);
-                TextView animeName = animeCard.findViewById(R.id.anime_name);
-                ImageView isMyAnimeIcon = animeCard.findViewById(R.id.is_my_anime_status);
-                TextView animeReleaseInfo = animeCard.findViewById(R.id.anime_release_info);
-
-                if (anime != null) {
-                    if (anime.imageByte!=null) {
-                        String key = String.valueOf(anime.animeId);
-                        Bitmap imageBitmap;
-                        if (imageCache.containsKey(key)) {
-                            imageBitmap = imageCache.get(key);
-                        } else {
-                            imageBitmap = cropAndRoundCorners(BitmapFactory.decodeByteArray(anime.imageByte, 0, anime.imageByte.length), 24);
-                            imageCache.put(key, imageBitmap);
-                        }
-                        animeImage.setImageBitmap(imageBitmap);
-                    }
-                    if (anime.title!=null) {
-                        animeName.setText(anime.title);
-                    } else {
-                        animeName.setText(R.string.na);
-                    }
-                    if (anime.isMyAnime) {
-                        isMyAnimeIcon.setVisibility(View.VISIBLE);
-                    } else {
-                        isMyAnimeIcon.setVisibility(View.GONE);
-                    }
-                    if (anime.message!=null) {
-                        animeReleaseInfo.setText(anime.message);
-                    } else {
-                        animeReleaseInfo.setText(R.string.na);
-                    }
+            LinearLayout animeReleaseGroupDateLayout = view.findViewById(R.id.anime_release_group_layout);
+            for (int i = animeReleaseGroupDateLayout.getChildCount() - 1; i >= animeReleases.size(); i--) {
+                animeReleaseGroupDateLayout.removeViewAt(i);
+            }
+            for (int i =  0; i < animeReleases.size(); i++) {
+                View animeCard = animeReleaseGroupDateLayout.getChildAt(i);
+                if (animeCard==null) {
+                    animeCard = View.inflate(mContext, R.layout.anime_release_card, null);
                     animeReleaseGroupDateLayout.addView(animeCard);
                 }
+                AnimeNotification anime = animeReleases.get(i);
+                View finalAnimeCard = animeCard;
+                getViewExecutorService.submit(() -> {
+                    ImageView animeImage = finalAnimeCard.findViewById(R.id.anime_image);
+                    TextView animeName = finalAnimeCard.findViewById(R.id.anime_name);
+                    ImageView isMyAnimeIcon = finalAnimeCard.findViewById(R.id.is_my_anime_status);
+                    TextView animeReleaseInfo = finalAnimeCard.findViewById(R.id.anime_release_info);
+                    if (anime != null) {
+                        if (anime.imageByte!=null) {
+                            String key = String.valueOf(anime.animeId);
+                            Bitmap imageBitmap;
+                            if (imageCache.containsKey(key)) {
+                                imageBitmap = imageCache.get(key);
+                            } else {
+                                imageBitmap = cropAndRoundCorners(BitmapFactory.decodeByteArray(anime.imageByte, 0, anime.imageByte.length), 24);
+                                imageCache.put(key, imageBitmap);
+                            }
+                            runOnUi(() -> animeImage.setImageBitmap(imageBitmap));
+                        }
+                        if (anime.title!=null) {
+                            runOnUi(() -> animeName.setText(anime.title));
+                        } else {
+                            runOnUi(() -> animeName.setText(R.string.na));
+                        }
+                        if (anime.isMyAnime) {
+                            runOnUi(() -> isMyAnimeIcon.setVisibility(View.VISIBLE));
+                        } else {
+                            runOnUi(() -> isMyAnimeIcon.setVisibility(View.GONE));
+                        }
+                        if (anime.message!=null) {
+                            runOnUi(() -> animeReleaseInfo.setText(anime.message));
+                        } else {
+                            runOnUi(() -> animeReleaseInfo.setText(R.string.na));
+                        }
+                    }
+                });
             }
         }
         return view;
+    }
+
+    public void runOnUi(Runnable r) {
+        new Handler(Looper.getMainLooper()).post(r);
     }
     public Bitmap cropAndRoundCorners(Bitmap original, int cornerRadius) {
         // Crop the bitmap to a square

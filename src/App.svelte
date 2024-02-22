@@ -860,18 +860,20 @@
 		}
 	});
 	async function autoUpdateIsPastDate() {
-		let isPastDate = false;
-		$runnedAutoUpdateAt = await retrieveJSON("runnedAutoUpdateAt");
-		if ($runnedAutoUpdateAt == null) isPastDate = true;
-		else if (
-			typeof $runnedAutoUpdateAt === "number" &&
-			!isNaN($runnedAutoUpdateAt)
-		) {
-			if (new Date().getTime() - $runnedAutoUpdateAt >= hourINMS) {
-				isPastDate = true;
+		return new Promise(async (resolve) => {
+			let isPastDate = false;
+			$runnedAutoUpdateAt = await retrieveJSON("runnedAutoUpdateAt");
+			if ($runnedAutoUpdateAt == null) isPastDate = true;
+			else if (
+				typeof $runnedAutoUpdateAt === "number" &&
+				!isNaN($runnedAutoUpdateAt)
+			) {
+				if (new Date().getTime() - $runnedAutoUpdateAt >= hourINMS) {
+					isPastDate = true;
+				}
 			}
-		}
-		return isPastDate;
+			return resolve(isPastDate);
+		});
 	}
 	runUpdate.subscribe((val) => {
 		if (typeof val !== "boolean" || $initData || !navigator.onLine) return;
@@ -931,19 +933,21 @@
 		}
 	});
 	async function autoExportIsPastDate() {
-		// Check Run First
-		let isPastDate = false;
-		$runnedAutoExportAt = await retrieveJSON("runnedAutoExportAt");
-		if ($runnedAutoExportAt == null) isPastDate = true;
-		else if (
-			typeof $runnedAutoExportAt === "number" &&
-			!isNaN($runnedAutoExportAt)
-		) {
-			if (new Date().getTime() - $runnedAutoExportAt >= hourINMS) {
-				isPastDate = true;
+		return new Promise(async (resolve) => {
+			// Check Run First
+			let isPastDate = false;
+			$runnedAutoExportAt = await retrieveJSON("runnedAutoExportAt");
+			if ($runnedAutoExportAt == null) isPastDate = true;
+			else if (
+				typeof $runnedAutoExportAt === "number" &&
+				!isNaN($runnedAutoExportAt)
+			) {
+				if (new Date().getTime() - $runnedAutoExportAt >= hourINMS) {
+					isPastDate = true;
+				}
 			}
-		}
-		return isPastDate;
+			return resolve(isPastDate);
+		});
 	}
 	runExport.subscribe((val) => {
 		if (typeof val !== "boolean" || $initData) return;
@@ -1665,6 +1669,7 @@
 
 	window.resetCategory = async () => {
 		await tick();
+		if ($categoriesKeys == null) return;
 		window?.scrollToSelectedCategory?.($selectedCategory);
 		let categoryIdx = $categoriesKeys.findIndex(
 			(category) => category === $selectedCategory,
@@ -1744,6 +1749,10 @@
 				}
 			}
 		}
+	});
+	categoriesKeys.subscribe(async () => {
+		await tick();
+		window.resetCategory($selectedCategory);
 	});
 </script>
 

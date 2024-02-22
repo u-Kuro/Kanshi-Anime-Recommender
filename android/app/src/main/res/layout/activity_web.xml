@@ -91,7 +91,7 @@
                         android:id="@+id/progressbar"
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
-                        android:progressBackgroundTint="@color/dark_grey"
+                        android:progressBackgroundTint="@color/web_dark_grey"
                         android:progressTint="@color/white"
                         android:progressBackgroundTintMode="src_over"
                         android:progressTintMode="src_over"

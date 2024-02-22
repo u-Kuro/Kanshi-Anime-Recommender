@@ -130,10 +130,10 @@
                                     if (newusername) {
                                         typedUsername = $username =
                                             newusername || "";
-                                        importantUpdate.update((e) => !e);
                                     } else {
                                         typedUsername = $username || "";
                                     }
+                                    importantUpdate.update((e) => !e);
                                     return;
                                 })
                                 .catch((error) => {
@@ -223,13 +223,32 @@
         }
         let element = event.target;
         let classList = element.classList;
-        if (
-            !(
-                classList.contains("nav") || classList.contains("nav-container")
-            ) &&
-            !(classList.contains("logo-icon") || element.closest(".logo-icon"))
-        )
-            return;
+        if (!$android) {
+            if (
+                !(
+                    classList.contains("nav") ||
+                    classList.contains("nav-container")
+                ) &&
+                !(
+                    classList.contains("logo-icon") ||
+                    element.closest(".logo-icon")
+                )
+            )
+                return;
+        } else {
+            if (
+                !(
+                    classList.contains("nav") ||
+                    classList.contains("nav-container")
+                ) &&
+                !(
+                    ($popupVisible || $menuVisible) &&
+                    (classList.contains("input-search") ||
+                        element.closest(".input-search"))
+                )
+            )
+                return;
+        }
         if (
             inputUsernameElFocused &&
             !(classList.contains("logo-icon") || element.closest(".logo-icon"))
@@ -556,8 +575,17 @@
             />
             <div
                 class="{'usernameText'}"
-                on:click="{focusInputUsernameEl}"
-                on:keyup="{(e) => e.key === 'Enter' && focusInputUsernameEl(e)}"
+                on:click="{() => {
+                    if (!$android || (!$popupVisible && !$menuVisible)) {
+                        focusInputUsernameEl();
+                    }
+                }}"
+                on:keyup="{(e) => {
+                    if (e.key !== 'Enter') return;
+                    if (!$android || (!$popupVisible && !$menuVisible)) {
+                        focusInputUsernameEl();
+                    }
+                }}"
             >
                 {typedUsername || "Your Anilist Username"}
             </div>
@@ -807,11 +835,8 @@
             cursor: pointer;
         }
     }
-    .usernameText {
-        display: flex;
-    }
     .nav.inputfocused .usernameText {
-        display: none;
+        display: none !important;
     }
     #usernameInput {
         font-family: system-ui;
@@ -831,10 +856,8 @@
         text-overflow: ellipsis;
         text-transform: uppercase;
         cursor: pointer;
-        align-items: center;
-        justify-content: start;
-        height: 57px;
-        max-width: min(100%, 165px);
+        padding-block: 19px;
+        max-width: min(100%, 170px, calc(50vw - 48px));
         min-width: 30px;
     }
     #usernameInput[value=""] + .usernameText,
@@ -933,6 +956,15 @@
             max-width: none !important;
             width: 100% !important;
             padding-right: 10px !important;
+        }
+        .nav.popupvisible .usernameText,
+        .nav-container.menu-visible .usernameText {
+            display: flex;
+            align-items: center;
+            justify-content: start;
+            height: 57px !important;
+            padding-block: unset !important;
+            max-width: min(100%, 165px) !important;
         }
         .nav.inputfocused #usernameInput {
             max-width: none !important;

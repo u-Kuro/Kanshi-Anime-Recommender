@@ -3,9 +3,9 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
+    android:layout_height="53dp"
     android:background="@color/black"
-    android:paddingVertical="8dp"
+    android:paddingVertical="6dp"
     tools:ignore="Overdraw">
     <ImageView
         android:id="@+id/anime_image"
@@ -18,7 +18,7 @@
         android:scaleType="centerCrop" />
 
     <androidx.constraintlayout.widget.ConstraintLayout
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_centerVertical="true"
         android:layout_toEndOf="@id/anime_image"
@@ -53,6 +53,7 @@
                 android:layout_centerVertical="true"
                 android:layout_marginEnd="4dp"
                 android:src="@drawable/circle_orange"
+                android:visibility="gone"
                 android:contentDescription="@string/is_user_anime_status" />
 
             <TextView

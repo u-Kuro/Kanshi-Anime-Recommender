@@ -15,7 +15,9 @@ const cacheRequest = async (url, totalLength, status) => {
             let app_id = get(appID)
             if (!app_id) {
                 app_id = await getWebVersion()
-                appID.set(app_id)
+                if (app_id) {
+                    appID.set(app_id)
+                }
             }
             if (typeof app_id !== "number") {
                 loadedRequestUrlPromises[url] = null

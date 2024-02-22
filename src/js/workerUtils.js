@@ -271,7 +271,12 @@ const animeManager = (_data = {}) => {
                 hasOwnProp.call(data, "updateUserList") ||
                 hasOwnProp.call(data, "updateRecommendedAnimeList")
             ) {
-                animeLoaderWorker.postMessage(data)
+                delete data?.postId
+                if (animeLoaderWorker) {
+                    animeLoaderWorker.postMessage(data || {})
+                } else {
+                    animeLoader(data || {})
+                }
                 animeManagerPromises?.[postId]?.resolve?.()
             } else if (hasOwnProp?.call?.(data, "removedIdx")) {
                 let removedIdx = data?.removedIdx

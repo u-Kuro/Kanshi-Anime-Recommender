@@ -349,9 +349,13 @@ public class MyWorker extends Worker {
                         .setVibrate(new long[]{0L});
             }
 
-            AnimeReleaseActivity animeReleaseActivity = AnimeReleaseActivity.getInstanceActivity();
-            if (animeReleaseActivity!=null) {
-                animeReleaseActivity.updateAnimeRelease();
+            SchedulesTabFragment schedulesTabFragment = SchedulesTabFragment.getInstanceActivity();
+            if (schedulesTabFragment!=null) {
+                schedulesTabFragment.updateScheduledAnime();
+            }
+            ReleasedTabFragment releasedTabFragment = ReleasedTabFragment.getInstanceActivity();
+            if (releasedTabFragment!=null) {
+                releasedTabFragment.updateReleasedAnime();
             }
 
             Notification notificationMA = notificationMABuilder.build();
@@ -512,8 +516,8 @@ public class MyWorker extends Worker {
         CompletableFuture.supplyAsync(() -> postRequest(jsonData))
                 .thenAccept(callback::onResponse);
     }
+    final ExecutorService executor = Executors.newFixedThreadPool(1);
     public JSONObject postRequest(JSONObject jsonData) {
-        ExecutorService executor = Executors.newSingleThreadExecutor();
         Future<JSONObject> future = executor.submit(()->{
             try {
                 String apiUrl = "https://graphql.anilist.co";

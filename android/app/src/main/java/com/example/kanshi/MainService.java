@@ -37,7 +37,6 @@ import java.io.File;
 import java.io.FileWriter;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -588,7 +587,8 @@ public class MainService extends Service {
             updateCurrentNotifications();
         }
         private final ExecutorService updateNotificationsExecutorService = Executors.newFixedThreadPool(1);
-        private final Map<String, Future<?>> updateNotificationsFutures = new HashMap<>();
+        private final Map<String, Future<?>> updateNotificationsFutures = new ConcurrentHashMap<>();
+        @RequiresApi(api = Build.VERSION_CODES.O)
         @JavascriptInterface
         public void updateNotifications(long animeId, boolean isMyAnime) {
             if (updateNotificationsFutures.containsKey(String.valueOf(animeId))) {
@@ -616,6 +616,19 @@ public class MainService extends Service {
                 }
                 AnimeNotificationManager.allAnimeNotification.putAll(updatedAnimeNotifications);
                 LocalPersistence.writeObjectToFile(MainService.this, AnimeNotificationManager.allAnimeNotification, "allAnimeNotification");
+                updateNotificationsFutures.remove(String.valueOf(animeId));
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+                    if (updateNotificationsFutures.isEmpty()) {
+                        SchedulesTabFragment schedulesTabFragment = SchedulesTabFragment.getInstanceActivity();
+                        if (schedulesTabFragment!=null) {
+                            schedulesTabFragment.updateScheduledAnime();
+                        }
+                        ReleasedTabFragment releasedTabFragment = ReleasedTabFragment.getInstanceActivity();
+                        if (releasedTabFragment!=null) {
+                            releasedTabFragment.updateReleasedAnime();
+                        }
+                    }
+                }
             });
             updateNotificationsFutures.put(String.valueOf(animeId), future);
         }
