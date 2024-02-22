@@ -577,8 +577,6 @@ public class MyWorker extends Worker {
         } catch (Exception e) {
             e.printStackTrace();
             return null;
-        } finally {
-            executor.shutdown();
         }
     }
 

@@ -88,7 +88,7 @@ import androidx.core.content.FileProvider;
 import androidx.core.splashscreen.SplashScreen;
 
 public class MainActivity extends AppCompatActivity {
-    public final int appID = 340;
+    public final int appID = 341;
     public boolean keepAppRunningInBackground = false;
     public boolean webViewIsLoaded = false;
     public boolean permissionIsAsked = false;
@@ -1303,6 +1303,7 @@ public class MainActivity extends AppCompatActivity {
         CompletableFuture.supplyAsync(() -> checkAppConnection(timeout))
                 .thenAccept(callback::onConnectionResult);
     }
+
     final ExecutorService executor = Executors.newFixedThreadPool(1);
     private boolean checkAppConnection(int timeout) {
         Future<Boolean> future = executor.submit(() -> {
@@ -1325,8 +1326,6 @@ public class MainActivity extends AppCompatActivity {
         } catch (Exception e) {
             e.printStackTrace();
             return false;
-        } finally {
-            executor.shutdown();
         }
     }
     interface ConnectivityCallback {

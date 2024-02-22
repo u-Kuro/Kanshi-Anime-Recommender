@@ -667,8 +667,6 @@ public class MainService extends Service {
             handler.post(() -> webView.loadUrl("javascript:window?.updateNotifications?.([" + joinedAnimeIds + "])"));
         } catch (Exception e) {
             e.printStackTrace();
-        } finally {
-            updateCurrentNotificationsExecutorService.shutdown();
         }
     }
     public void isExported(boolean success) {
