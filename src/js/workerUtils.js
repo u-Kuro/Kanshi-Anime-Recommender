@@ -27,7 +27,9 @@ import {
     loadNewAnime,
     selectedCategory,
     searchedWord,
-    categories
+    categories,
+    algorithmFilters,
+    animeCautions
 } from "./globalValues.js";
 
 const hasOwnProp = Object.prototype.hasOwnProperty
@@ -349,6 +351,11 @@ window.setAnimeCompletionUpdateTimeout = (neareastAnimeCompletionAiringAt = 0) =
 let passedAlgorithmFilter
 const processRecommendedAnimeList = (_data = {}) => {
     return new Promise((resolve, reject) => {
+        if (isCurrentlyImporting || get(isImporting)) {
+            if (!_data?.isImporting) {
+                return
+            }
+        }
         if (processRecommendedAnimeListTerminateTimeout) clearTimeout(processRecommendedAnimeListTerminateTimeout);
         processRecommendedAnimeListWorker?.terminate?.();
         processRecommendedAnimeListWorker = null
@@ -917,13 +924,21 @@ const importUserData = (_data) => {
                         if (isJsonObject(data?.importedHiddenEntries)) {
                             hiddenEntries.set(data?.importedHiddenEntries)
                         }
+                    } else if (hasOwnProp?.call?.(data, "animeCautions")) {
+                        if (data?.animeCautions instanceof Array && data?.animeCautions?.length > 0) {
+                            animeCautions.set(data?.animeCautions)
+                        }
+                    } else if (hasOwnProp?.call?.(data, "algorithmFilters")) {
+                        if (data?.algorithmFilters instanceof Array && data?.algorithmFilters?.length > 0) {
+                            algorithmFilters.set(data?.algorithmFilters)
+                        }
                     } else {
                         window[".androidDataIsEvicted"] = false
                         if (get(android)) {
                             window.shouldUpdateNotifications = true
                         }
                         dataStatusPrio = false
-                        processRecommendedAnimeList()
+                        processRecommendedAnimeList({ isImporting: true })
                             .finally(() => {
                                 animeLoader({ loadInit: true })
                                     .finally(() => {
@@ -1227,6 +1242,8 @@ function stopConflictingWorkers(blocker) {
     isGettingNewEntries = blocker?.isGettingNewEntries ?? false
     requestUserEntriesWorker?.terminate?.()
     userRequestIsRunning.set(false)
+    processRecommendedAnimeListWorker?.terminate?.()
+    isProcessingList.set(false)
     importUserDataWorker?.terminate?.()
     isImporting.set(blocker?.isImporting ?? false)
     isCurrentlyImporting = blocker?.isImporting ?? false
