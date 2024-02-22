@@ -14,6 +14,7 @@ import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Build;
+import android.os.Handler;
 import android.os.Looper;
 
 import androidx.annotation.NonNull;
@@ -351,11 +352,11 @@ public class MyWorker extends Worker {
 
             SchedulesTabFragment schedulesTabFragment = SchedulesTabFragment.getInstanceActivity();
             if (schedulesTabFragment!=null) {
-                schedulesTabFragment.updateScheduledAnime();
+                new Handler(Looper.getMainLooper()).post(schedulesTabFragment::updateScheduledAnime);
             }
             ReleasedTabFragment releasedTabFragment = ReleasedTabFragment.getInstanceActivity();
             if (releasedTabFragment!=null) {
-                releasedTabFragment.updateReleasedAnime();
+                new Handler(Looper.getMainLooper()).post(releasedTabFragment::updateReleasedAnime);
             }
 
             Notification notificationMA = notificationMABuilder.build();

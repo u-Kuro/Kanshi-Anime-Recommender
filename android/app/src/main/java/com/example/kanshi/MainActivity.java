@@ -37,6 +37,8 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Handler;
+import android.os.Looper;
 import android.os.PowerManager;
 import android.provider.DocumentsContract;
 import android.provider.Settings;
@@ -86,7 +88,7 @@ import androidx.core.content.FileProvider;
 import androidx.core.splashscreen.SplashScreen;
 
 public class MainActivity extends AppCompatActivity {
-    public final int appID = 339;
+    public final int appID = 340;
     public boolean keepAppRunningInBackground = false;
     public boolean webViewIsLoaded = false;
     public boolean permissionIsAsked = false;
@@ -100,6 +102,7 @@ public class MainActivity extends AppCompatActivity {
     private boolean pageLoaded = false;
     final String uniqueKey = "Kanshi.Anime.Recommendations.Anilist.W~uPtWCq=vG$TR:Zl^#t<vdS]I~N70";
     final String visitedKey = uniqueKey+".visited";
+
 
     private PowerManager.WakeLock wakeLock;
     public boolean shouldGoBack;
@@ -1003,11 +1006,11 @@ public class MainActivity extends AppCompatActivity {
                     if (updateNotificationsFutures.isEmpty()) {
                         SchedulesTabFragment schedulesTabFragment = SchedulesTabFragment.getInstanceActivity();
                         if (schedulesTabFragment!=null) {
-                            schedulesTabFragment.updateScheduledAnime();
+                            new Handler(Looper.getMainLooper()).post(schedulesTabFragment::updateScheduledAnime);
                         }
                         ReleasedTabFragment releasedTabFragment = ReleasedTabFragment.getInstanceActivity();
                         if (releasedTabFragment!=null) {
-                            releasedTabFragment.updateReleasedAnime();
+                            new Handler(Looper.getMainLooper()).post(releasedTabFragment::updateReleasedAnime);
                         }
                     }
                 }
@@ -1052,10 +1055,10 @@ public class MainActivity extends AppCompatActivity {
         }
     }
     public void showDataEvictionDialog() {
-        showDialog(new AlertDialog.Builder(MainActivity.this)
+        new Handler(Looper.getMainLooper()).post(()-> showDialog(new AlertDialog.Builder(MainActivity.this)
             .setTitle("Possible Data Loss")
             .setMessage("Some of your data may be cleared by chrome, please import your saved data.")
-            .setPositiveButton("OK",(dialogInterface, i) -> webView.post(() -> {
+            .setPositiveButton("OK", (dialogInterface, i) -> webView.post(() -> {
                 webView.loadUrl("javascript:window?.importAndroidUserData?.()");
                 String url = webView.getUrl();
                 if (url != null) {
@@ -1076,7 +1079,7 @@ public class MainActivity extends AppCompatActivity {
                     }
                 }
             })))
-        ,false);
+        ,false));
     }
     public void reloadWeb() {
         webView.post(()->webView.reload());
