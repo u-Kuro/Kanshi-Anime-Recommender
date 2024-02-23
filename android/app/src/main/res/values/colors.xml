@@ -5,6 +5,12 @@
     <color name="black">#FF000000</color>
     <color name="web_dark_grey">#FF262626</color>
     <color name="dark_grey">#FF2C2C2C</color>
-    <color name="darker_grey">#FF1B1B1B</color>
+    <color name="darker_grey">#FF101010</color>
     <color name="dark_blue">#FF0B1622</color>
+    <color name="web_green">#FF7BD555</color>
+    <color name="web_blue">#FF3DB4F2</color>
+    <color name="web_orange">#FFF79A63</color>
+    <color name="web_peach">#FFFA7A7A</color>
+    <color name="web_red">#FFE85D75</color>
+    <color name="web_light_grey">#FFD3D3D3</color>
 </resources>

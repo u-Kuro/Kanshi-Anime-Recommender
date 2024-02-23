@@ -3,6 +3,7 @@ package com.example.kanshi;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
+import android.content.res.ColorStateList;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.BitmapShader;
@@ -24,6 +25,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
+import androidx.appcompat.content.res.AppCompatResources;
 
 
 import java.text.SimpleDateFormat;
@@ -64,6 +66,7 @@ public class AnimeReleaseGroupAdapter extends ArrayAdapter<AnimeReleaseGroup> {
         }
 
         AnimeReleaseGroup animeReleaseGroup = getItem(position);
+
         if (animeReleaseGroup != null) {
 
             SimpleDateFormat shownDateFormat = new SimpleDateFormat("MMMM d yyyy", Locale.US);
@@ -71,6 +74,7 @@ public class AnimeReleaseGroupAdapter extends ArrayAdapter<AnimeReleaseGroup> {
             SimpleDateFormat shownWeekTimeFormat = new SimpleDateFormat("EEEE h:mm a", Locale.US);
 
             TextView animeReleaseGroupDate = view.findViewById(R.id.anime_release_group_date);
+
             if (animeReleaseGroup.dateString!=null) {
                 try {
                     Date date = animeReleaseGroup.date;
@@ -129,6 +133,7 @@ public class AnimeReleaseGroupAdapter extends ArrayAdapter<AnimeReleaseGroup> {
             for (int i = animeReleaseGroupDateLayout.getChildCount() - 1; i >= animeReleases.size(); i--) {
                 animeReleaseGroupDateLayout.removeViewAt(i);
             }
+
             for (int i =  0; i < animeReleases.size(); i++) {
                 View animeCard = animeReleaseGroupDateLayout.getChildAt(i);
                 if (animeCard==null) {
@@ -136,11 +141,12 @@ public class AnimeReleaseGroupAdapter extends ArrayAdapter<AnimeReleaseGroup> {
                     animeReleaseGroupDateLayout.addView(animeCard);
                 }
                 AnimeNotification anime = animeReleases.get(i);
+
                 View finalAnimeCard = animeCard;
                 getViewExecutorService.submit(() -> {
                     ImageView animeImage = finalAnimeCard.findViewById(R.id.anime_image);
                     TextView animeName = finalAnimeCard.findViewById(R.id.anime_name);
-                    ImageView isMyAnimeIcon = finalAnimeCard.findViewById(R.id.is_my_anime_status);
+                    View userStatusIcon = finalAnimeCard.findViewById(R.id.user_status_icon);
                     TextView animeReleaseInfo = finalAnimeCard.findViewById(R.id.anime_release_info);
                     if (anime != null) {
                         if (anime.imageByte!=null) {
@@ -154,32 +160,59 @@ public class AnimeReleaseGroupAdapter extends ArrayAdapter<AnimeReleaseGroup> {
                             }
                             runOnUi(() -> animeImage.setImageBitmap(imageBitmap));
                         }
-                        if (anime.title!=null) {
+                        final String title = anime.title;
+                        if (title!=null && !title.equals("")) {
                             runOnUi(() -> {
-                                String title = anime.title;
                                 animeName.setText(title);
                                 finalAnimeCard.setOnLongClickListener(view1 -> {
-                                    if (!title.equals("")) {
-                                        ClipboardManager clipboard = (ClipboardManager) mContext.getSystemService(Context.CLIPBOARD_SERVICE);
-                                        ClipData clip = ClipData.newPlainText("Copied Text", title);
-                                        clipboard.setPrimaryClip(clip);
-                                        return true;
-                                    }
-                                    return false;
+                                    ClipboardManager clipboard = (ClipboardManager) mContext.getSystemService(Context.CLIPBOARD_SERVICE);
+                                    ClipData clip = ClipData.newPlainText("Copied Text", title);
+                                    clipboard.setPrimaryClip(clip);
+                                    return true;
                                 });
                             });
                         } else {
                             runOnUi(() -> animeName.setText(R.string.na));
                         }
-                        if (anime.isMyAnime) {
-                            runOnUi(() -> isMyAnimeIcon.setVisibility(View.VISIBLE));
+                        final String userStatus = anime.userStatus;
+                        if (userStatus != null && !userStatus.equals("") && !userStatus.equalsIgnoreCase("UNWATCHED")) {
+                            runOnUi(() -> {
+                                ColorStateList colorStateList;
+                                if (userStatus.equalsIgnoreCase("COMPLETED")) {
+                                    colorStateList = AppCompatResources.getColorStateList(mContext, R.color.web_green);
+                                } else if (
+                                    userStatus.equalsIgnoreCase("CURRENT")
+                                    || userStatus.equalsIgnoreCase("REPEATING")
+                                ) {
+                                    colorStateList = AppCompatResources.getColorStateList(mContext, R.color.web_blue);
+                                } else if (userStatus.equalsIgnoreCase("PLANNING")) {
+                                    colorStateList = AppCompatResources.getColorStateList(mContext, R.color.web_orange);
+                                } else if (userStatus.equalsIgnoreCase("PAUSED")) {
+                                    colorStateList = AppCompatResources.getColorStateList(mContext, R.color.web_peach);
+                                } else if (userStatus.equalsIgnoreCase("DROPPED")) {
+                                    colorStateList = AppCompatResources.getColorStateList(mContext, R.color.web_red);
+                                } else {
+                                    colorStateList = AppCompatResources.getColorStateList(mContext, R.color.web_light_grey);
+                                }
+                                userStatusIcon.setBackgroundTintList(colorStateList);
+                                userStatusIcon.setVisibility(View.VISIBLE);
+                            });
                         } else {
-                            runOnUi(() -> isMyAnimeIcon.setVisibility(View.GONE));
+                            runOnUi(() -> userStatusIcon.setVisibility(View.GONE));
                         }
                         if (anime.message!=null) {
                             runOnUi(() -> animeReleaseInfo.setText(anime.message));
                         } else {
                             runOnUi(() -> animeReleaseInfo.setText(R.string.na));
+                        }
+                        final String animeUrl = anime.animeUrl;
+                        if (animeUrl!=null && !animeUrl.equals("")) {
+                            runOnUi(() -> finalAnimeCard.setOnClickListener(view1 -> {
+                                AnimeReleaseActivity animeReleaseActivity = AnimeReleaseActivity.getInstanceActivity();
+                                if (animeReleaseActivity!=null) {
+                                    animeReleaseActivity.openAnimeInAniList(animeUrl);
+                                }
+                            }));
                         }
                     }
                 });

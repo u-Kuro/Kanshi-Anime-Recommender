@@ -423,6 +423,7 @@ public class YoutubeViewActivity extends AppCompatActivity {
         MainActivity mainActivity = MainActivity.getInstanceActivity();
         if (mainActivity!=null) {
             mainActivity.isInApp = false;
+            mainActivity.setBackgroundUpdates();
         }
         autoPlayVideo(webView);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -435,10 +436,6 @@ public class YoutubeViewActivity extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
-        MainActivity mainActivity = MainActivity.getInstanceActivity();
-        if (mainActivity!=null) {
-            mainActivity.isInApp = false;
-        }
         webView.destroy();
         super.onDestroy();
     }

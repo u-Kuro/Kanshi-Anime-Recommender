@@ -400,8 +400,9 @@ const processRecommendedAnimeList = (_data = {}) => {
                                     && typeof aniReleaseNotif?.maxEpisode === "number"
                                     && typeof aniReleaseNotif?.title === "string"
                                     && typeof aniReleaseNotif?.id === "number"
-                                    && typeof aniReleaseNotif?.isMyAnime === "boolean"
+                                    && typeof aniReleaseNotif?.userStatus === "string"
                                     && typeof aniReleaseNotif?.imageURL === "string"
+                                    && typeof aniReleaseNotif?.animeUrl === "string"
                                 ) {
                                     JSBridge?.addAnimeReleaseNotification?.(
                                         aniReleaseNotif.id,
@@ -409,8 +410,9 @@ const processRecommendedAnimeList = (_data = {}) => {
                                         aniReleaseNotif.releaseEpisodes,
                                         aniReleaseNotif.maxEpisode,
                                         aniReleaseNotif.releaseDateMillis,
-                                        aniReleaseNotif?.imageURL,
-                                        aniReleaseNotif.isMyAnime
+                                        aniReleaseNotif.imageURL,
+                                        aniReleaseNotif.animeUrl,
+                                        aniReleaseNotif.userStatus,
                                     )
                                 }
                             } catch (e) { }
@@ -1115,13 +1117,24 @@ window.updateNotifications = async (aniIdsNotificationToBeUpdated = []) => {
                 alertError()
                 reject(error)
             })
-    }).then((userAnimeAndNot = {}) => {
+    }).then((updatedAniIdsNotification = {}) => {
         try {
-            for (let animeId in userAnimeAndNot) {
-                let isMyAnime = userAnimeAndNot[animeId]
+            for (let animeId in updatedAniIdsNotification) {
+                let anime = updatedAniIdsNotification[animeId]
                 animeId = parseInt(animeId)
-                if (typeof animeId === "number" && !isNaN(animeId) && typeof isMyAnime === "boolean") {
-                    JSBridge?.updateNotifications?.(animeId, isMyAnime)
+                if (typeof animeId === "number"
+                    && typeof anime?.title === "string"
+                    && typeof anime?.maxEpisode === "number"
+                    && typeof anime?.animeUrl === "string"
+                    && typeof anime?.userStatus === "string"
+                ) {
+                    JSBridge?.updateNotifications?.(
+                        animeId,
+                        anime?.title,
+                        anime?.maxEpisode,
+                        anime?.animeUrl,
+                        anime?.userStatus
+                    )
                 }
             }
         } catch (ex) { }

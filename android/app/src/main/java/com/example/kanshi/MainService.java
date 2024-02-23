@@ -576,10 +576,10 @@ public class MainService extends Service {
         }
         final long DAY_IN_MILLIS = TimeUnit.DAYS.toMillis(1);
         @JavascriptInterface
-        public void addAnimeReleaseNotification(long animeId, String title, long releaseEpisode, long maxEpisode, long releaseDateMillis, String imageUrl, boolean isMyAnime) {
+        public void addAnimeReleaseNotification(long animeId, String title, long releaseEpisode, long maxEpisode, long releaseDateMillis, String imageUrl, String animeUrl, String userStatus) {
             if (releaseDateMillis >= (System.currentTimeMillis() - DAY_IN_MILLIS)) {
                 isAddingAnimeReleaseNotification = true;
-                AnimeNotificationManager.scheduleAnimeNotification(MainService.this, animeId, title, releaseEpisode, maxEpisode, releaseDateMillis, imageUrl, isMyAnime);
+                AnimeNotificationManager.scheduleAnimeNotification(MainService.this, animeId, title, releaseEpisode, maxEpisode, releaseDateMillis, imageUrl, animeUrl, userStatus);
             }
         }
         @JavascriptInterface
@@ -590,7 +590,7 @@ public class MainService extends Service {
         private final Map<String, Future<?>> updateNotificationsFutures = new ConcurrentHashMap<>();
         @RequiresApi(api = Build.VERSION_CODES.O)
         @JavascriptInterface
-        public void updateNotifications(long animeId, boolean isMyAnime) {
+        public void updateNotifications(long animeId, String title, long maxEpisode, String animeUrl, String userStatus) {
             if (updateNotificationsFutures.containsKey(String.valueOf(animeId))) {
                 Future<?> future = updateNotificationsFutures.get(String.valueOf(animeId));
                 if (future != null && !future.isDone()) {
@@ -610,7 +610,7 @@ public class MainService extends Service {
                 List<AnimeNotification> allAnimeNotificationValues = new ArrayList<>(AnimeNotificationManager.allAnimeNotification.values());
                 for (AnimeNotification anime : allAnimeNotificationValues) {
                     if (anime.animeId==animeId) {
-                        AnimeNotification newAnime = new AnimeNotification(anime.animeId, anime.title, anime.releaseEpisode, anime.maxEpisode, anime.releaseDateMillis, anime.imageByte, isMyAnime);
+                        AnimeNotification newAnime = new AnimeNotification(anime.animeId, title, anime.releaseEpisode, maxEpisode, anime.releaseDateMillis, anime.imageByte, animeUrl, userStatus);
                         updatedAnimeNotifications.put(anime.animeId+"-"+anime.releaseEpisode, newAnime);
                     }
                 }

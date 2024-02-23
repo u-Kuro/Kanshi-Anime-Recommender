@@ -3,6 +3,7 @@ package com.example.kanshi;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
@@ -11,11 +12,14 @@ import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.browser.customtabs.CustomTabColorSchemeParams;
+import androidx.browser.customtabs.CustomTabsIntent;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
 import androidx.viewpager2.widget.ViewPager2;
 
@@ -29,6 +33,7 @@ public class AnimeReleaseActivity extends AppCompatActivity {
     Spinner animeReleaseSpinner;
     SharedPreferences prefs;
     SharedPreferences.Editor prefsEdit;
+    Toast currentToast;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -127,12 +132,60 @@ public class AnimeReleaseActivity extends AppCompatActivity {
         });
     }
 
+    boolean wasOpened;
     @Override
     protected void onResume() {
-        overridePendingTransition(R.anim.fade_in, R.anim.remove);
+        MainActivity mainActivity = MainActivity.getInstanceActivity();
+        if (mainActivity!=null) {
+            mainActivity.isInApp = true;
+        }
+        if (!wasOpened) {
+            wasOpened = true;
+            overridePendingTransition(R.anim.fade_in, R.anim.remove);
+        } else {
+            overridePendingTransition(R.anim.none, R.anim.fade_out);
+        }
         super.onResume();
     }
 
+    @Override
+    protected void onPause() {
+        MainActivity mainActivity = MainActivity.getInstanceActivity();
+        if (mainActivity!=null) {
+            mainActivity.isInApp = false;
+            mainActivity.setBackgroundUpdates();
+        }
+        super.onPause();
+    }
+
+    public void openAnimeInAniList(String url) {
+        try {
+            CustomTabsIntent customTabsIntent = new CustomTabsIntent.Builder()
+                    .setDefaultColorSchemeParams(new CustomTabColorSchemeParams.Builder().setToolbarColor(getResources().getColor(R.color.dark_blue)).build())
+                    .setStartAnimations(AnimeReleaseActivity.this, R.anim.fade_in, R.anim.remove)
+                    .setExitAnimations(AnimeReleaseActivity.this, R.anim.fade_out, R.anim.remove)
+                    .setShowTitle(true)
+                    .build();
+            customTabsIntent.launchUrl(AnimeReleaseActivity.this, Uri.parse(url));
+            overridePendingTransition(R.anim.remove, R.anim.remove);
+        } catch (Exception ignored) {
+            showToast(Toast.makeText(getApplicationContext(), "Can't open the link.", Toast.LENGTH_LONG));
+        }
+    }
+
+    public void showToast(Toast toast) {
+        if (currentToast != null) {
+            currentToast.cancel();
+        }
+        MainActivity mainActivity = MainActivity.getInstanceActivity();
+        if (mainActivity!=null) {
+            boolean isInApp = mainActivity.isInApp;
+            if (isInApp) {
+                currentToast = toast;
+                currentToast.show();
+            }
+        }
+    }
     public static AnimeReleaseActivity getInstanceActivity() {
         if (weakActivity != null) {
             return weakActivity.get();

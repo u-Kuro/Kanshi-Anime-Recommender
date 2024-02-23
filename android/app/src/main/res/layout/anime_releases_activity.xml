@@ -25,15 +25,17 @@
             android:contentInsetEnd="0dp"
             app:contentInsetRight="0dp"
             app:contentInsetEnd="0dp"
-            android:layout_marginStart="16dp">
+            android:paddingStart="16dp"
+            android:paddingEnd="0dp">
             <Spinner
                 android:id="@+id/anime_release_spinner"
                 android:layout_alignParentStart="true"
                 android:layout_centerVertical="true"
                 android:layout_width="120dp"
-                android:layout_height="match_parent"
+                android:layout_marginTop="5dp"
+                android:layout_height="wrap_content"
                 android:popupBackground="@drawable/spinner_background"
-                android:dropDownVerticalOffset="45dp"
+                android:dropDownVerticalOffset="50dp"
                 android:dropDownWidth="175dp"/>
             <ImageView
                 android:layout_alignParentEnd="true"
@@ -53,7 +55,6 @@
         android:id="@+id/tab_layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:tabPaddingStart="10dp"
         android:background="@color/black"
         app:tabSelectedTextColor="@color/white"
         app:tabTextColor="@color/faded_white"

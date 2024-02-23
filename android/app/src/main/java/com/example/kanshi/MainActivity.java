@@ -88,7 +88,7 @@ import androidx.core.content.FileProvider;
 import androidx.core.splashscreen.SplashScreen;
 
 public class MainActivity extends AppCompatActivity {
-    public final int appID = 342;
+    public final int appID = 343;
     public boolean keepAppRunningInBackground = false;
     public boolean webViewIsLoaded = false;
     public boolean permissionIsAsked = false;
@@ -517,6 +517,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         isInApp = false;
+        setBackgroundUpdates();
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             webView.getSettings().setOffscreenPreRaster(false);
         }
@@ -526,7 +527,6 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onStop() {
-        isInApp = false;
         setBackgroundUpdates();
         super.onStop();
     }
@@ -563,6 +563,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         isInApp = false;
+        setBackgroundUpdates();
         super.onDestroy();
         wakeLock.release();
     }
@@ -962,9 +963,9 @@ public class MainActivity extends AppCompatActivity {
         public void downloadUpdate() { checkUpdate(); }
         final long DAY_IN_MILLIS = TimeUnit.DAYS.toMillis(1);
         @JavascriptInterface
-        public void addAnimeReleaseNotification(long animeId, String title, long releaseEpisode, long maxEpisode, long releaseDateMillis, String imageUrl, boolean isMyAnime) {
+        public void addAnimeReleaseNotification(long animeId, String title, long releaseEpisode, long maxEpisode, long releaseDateMillis, String imageUrl, String animeUrl, String userStatus) {
             if (releaseDateMillis >= (System.currentTimeMillis() - DAY_IN_MILLIS)) {
-                AnimeNotificationManager.scheduleAnimeNotification(MainActivity.this, animeId, title, releaseEpisode, maxEpisode, releaseDateMillis, imageUrl, isMyAnime);
+                AnimeNotificationManager.scheduleAnimeNotification(MainActivity.this, animeId, title, releaseEpisode, maxEpisode, releaseDateMillis, imageUrl, animeUrl, userStatus);
             }
         }
         @JavascriptInterface
@@ -975,7 +976,7 @@ public class MainActivity extends AppCompatActivity {
         private final Map<String, Future<?>> updateNotificationsFutures = new ConcurrentHashMap<>();
         @RequiresApi(api = Build.VERSION_CODES.O)
         @JavascriptInterface
-        public void updateNotifications(long animeId, boolean isMyAnime) {
+        public void updateNotifications(long animeId, String title, long maxEpisode, String animeUrl, String userStatus) {
             if (updateNotificationsFutures.containsKey(String.valueOf(animeId))) {
                 Future<?> future = updateNotificationsFutures.get(String.valueOf(animeId));
                 if (future != null && !future.isDone()) {
@@ -995,7 +996,7 @@ public class MainActivity extends AppCompatActivity {
                 List<AnimeNotification> allAnimeNotificationValues = new ArrayList<>(AnimeNotificationManager.allAnimeNotification.values());
                 for (AnimeNotification anime : allAnimeNotificationValues) {
                     if (anime.animeId==animeId) {
-                        AnimeNotification newAnime = new AnimeNotification(anime.animeId, anime.title, anime.releaseEpisode, anime.maxEpisode, anime.releaseDateMillis, anime.imageByte, isMyAnime);
+                        AnimeNotification newAnime = new AnimeNotification(anime.animeId, title, anime.releaseEpisode, maxEpisode, anime.releaseDateMillis, anime.imageByte, animeUrl, userStatus);
                         updatedAnimeNotifications.put(anime.animeId+"-"+anime.releaseEpisode, newAnime);
                     }
                 }

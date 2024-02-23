@@ -4,7 +4,7 @@
     <string name="na">NA</string>
     <string name="refresh">Refresh</string>
     <string name="anime_image">Anime Image</string>
-    <string name="is_user_anime_status">Is User Anime Status</string>
+    <string name="user_anime_status">User Anime Status</string>
     <string name="go_back">Go Back</string>
     <string name="launch_url">Launch URL</string>
     <string name="released">Released</string>

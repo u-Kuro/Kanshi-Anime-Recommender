@@ -120,7 +120,8 @@ public class MyWorker extends Worker {
                 if (anime.releaseDateMillis > mostRecentlySentNotificationTime) {
                     mostRecentlySentNotificationTime = anime.releaseDateMillis;
                 }
-                if (anime.isMyAnime) {
+                boolean isMyAnime = anime.userStatus != null && !anime.userStatus.equalsIgnoreCase("UNWATCHED");
+                if (isMyAnime) {
                     if (!hasNewMyAnimeNotification) {
                         hasNewMyAnimeNotification = hasNoPreviousNotification || hasNewAnimeInNotification;
                     }
@@ -494,7 +495,7 @@ public class MyWorker extends Worker {
                                 }
                                 AnimeNotification newAnimeRelease;
                                 if (episode > anime.releaseEpisode && releaseDateMillis > anime.releaseDateMillis) {
-                                    newAnimeRelease = new AnimeNotification(anime.animeId, anime.title, episode, episodes, releaseDateMillis, anime.imageByte, anime.isMyAnime);
+                                    newAnimeRelease = new AnimeNotification(anime.animeId, anime.title, episode, episodes, releaseDateMillis, anime.imageByte, anime.animeUrl, anime.userStatus);
                                     AnimeNotificationManager.allAnimeNotification.put(newAnimeRelease.animeId + "-" + newAnimeRelease.releaseEpisode, newAnimeRelease);
                                     isEdited = true;
                                 }

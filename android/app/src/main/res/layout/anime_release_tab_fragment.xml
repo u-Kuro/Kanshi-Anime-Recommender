@@ -14,7 +14,10 @@
             android:layout_height="match_parent"
             android:listSelector="@android:color/transparent"
             android:scrollbars="none"
-            android:divider="@null">
+            android:divider="@null"
+            android:paddingTop="8dp"
+            android:paddingBottom="24dp"
+            android:clipToPadding="false">
         </ListView>
     </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 </LinearLayout>
