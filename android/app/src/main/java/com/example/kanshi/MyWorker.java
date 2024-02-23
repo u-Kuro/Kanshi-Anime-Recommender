@@ -386,7 +386,7 @@ public class MyWorker extends Worker {
         long THIRTY_DAY_IN_MILLIS = TimeUnit.DAYS.toMillis(30);
         allAnimeNotificationValues = new ArrayList<>(AnimeNotificationManager.allAnimeNotification.values());
         for (AnimeNotification anime : allAnimeNotificationValues) {
-            // If ReleaseDate was Before 1 day ago
+            // If ReleaseDate was Before 30 days ago
             if (anime.releaseDateMillis < (System.currentTimeMillis() - THIRTY_DAY_IN_MILLIS)) {
                 animeNotificationsToBeRemoved.add(anime.animeId+"-"+anime.releaseEpisode);
             }
@@ -459,14 +459,7 @@ public class MyWorker extends Worker {
             jsonData.put("query", query);
             makePostRequest(response -> {
                 if (response!=null) {
-                    if (response.has("error")) {
-                        try {
-                            String message = response.getJSONArray("error").getJSONObject(0).getString("message");
-                            if ("Not Found.".equals(message)) {
-                                AnimeNotificationManager.allAnimeToUpdate.remove(String.valueOf(anime.animeId));
-                            }
-                        } catch (JSONException ignored) {}
-                    } else {
+                    if (!response.has("error")) {
                         if (response.has(retryKey) || !response.has("data")) {
                             // Call Another
                             new android.os.Handler(Looper.getMainLooper()).postDelayed(() -> getAiringAnime(anime, lastSentNotificationTime, retries + 1), 60000);
@@ -493,17 +486,15 @@ public class MyWorker extends Worker {
                                 } else {
                                     episodes = anime.maxEpisode;
                                 }
-                                AnimeNotification newAnimeRelease;
-                                if (episode > anime.releaseEpisode && releaseDateMillis > anime.releaseDateMillis) {
-                                    newAnimeRelease = new AnimeNotification(anime.animeId, anime.title, episode, episodes, releaseDateMillis, anime.imageByte, anime.animeUrl, anime.userStatus);
+                                if (episode > anime.releaseEpisode) {
+                                    AnimeNotification newAnimeRelease = new AnimeNotification(anime.animeId, anime.title, episode, episodes, releaseDateMillis, anime.imageByte, anime.animeUrl, anime.userStatus);
                                     AnimeNotificationManager.allAnimeNotification.put(newAnimeRelease.animeId + "-" + newAnimeRelease.releaseEpisode, newAnimeRelease);
+                                    AnimeNotificationManager.addAnimeNotification(this.getApplicationContext(), newAnimeRelease);
                                     isEdited = true;
                                 }
                                 if (isEdited) {
                                     LocalPersistence.writeObjectToFile(this.getApplicationContext(), AnimeNotificationManager.allAnimeNotification, "allAnimeNotification");
                                 }
-                                AnimeNotificationManager.allAnimeToUpdate.remove(String.valueOf(anime.animeId));
-                                LocalPersistence.writeObjectToFile(this.getApplicationContext(), AnimeNotificationManager.allAnimeToUpdate, "allAnimeToUpdate");
                             } catch (JSONException ignored) {
                             }
                         }

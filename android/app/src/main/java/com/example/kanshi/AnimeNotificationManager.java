@@ -156,7 +156,7 @@ public class AnimeNotificationManager {
         }
     }
 
-    private static void writeAnimeNotificationInFile(Context context) {
+    public static void writeAnimeNotificationInFile(Context context) {
         if (addNotificationFuture != null && !addNotificationFuture.isDone()) {
             addNotificationFuture.cancel(false);
         }
