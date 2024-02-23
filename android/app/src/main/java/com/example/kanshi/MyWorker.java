@@ -164,19 +164,21 @@ public class MyWorker extends Worker {
             mostRecentlySentOtherAnimeNotificationTime = currentTimeInMillis;
         }
 
+        final int maxNotificationCount = 6;
         List<AnimeNotification> recentlyAiredAnime = new ArrayList<>();
 
         boolean hasJustAiredMA = false;
-        Notification.MessagingStyle styleMA = new Notification.MessagingStyle("")
-                .setGroupConversation(true);
-        List<AnimeNotification> sortedMyAnimeNotificationsValues = new ArrayList<>(myAnimeNotifications.values());
-        Collections.sort(sortedMyAnimeNotificationsValues, Comparator.comparingLong(anime -> anime.releaseDateMillis));
-        int myAnimeNotifCount = 0;
-        for (AnimeNotification anime : sortedMyAnimeNotificationsValues) {
-            if (myAnimeNotifCount >= 5) {
-                break;
-            }
-            ++myAnimeNotifCount;
+        Notification.MessagingStyle styleMA = new Notification.MessagingStyle("").setGroupConversation(true);
+
+        // Put in Ascending Order for in Adding items for the Message Style Notification
+        List<AnimeNotification> ascendedMyAnimeNotificationsValues = new ArrayList<>(myAnimeNotifications.values());
+        Collections.sort(ascendedMyAnimeNotificationsValues, Comparator.comparingLong(anime -> anime.releaseDateMillis));
+
+        // Get the last 6 items in the list to only show what can be seen
+        int myAnimeNotificationStartIndex = Math.max(0, ascendedMyAnimeNotificationsValues.size() - maxNotificationCount);
+        List<AnimeNotification> finalMyAnimeNotificationsValues = ascendedMyAnimeNotificationsValues.subList(myAnimeNotificationStartIndex, ascendedMyAnimeNotificationsValues.size());
+
+        for (AnimeNotification anime : finalMyAnimeNotificationsValues) {
             Person.Builder itemBuilder = new Person.Builder()
                     .setName(anime.title)
                     .setKey(String.valueOf(anime.animeId))
@@ -248,17 +250,17 @@ public class MyWorker extends Worker {
 
         // Other Anime Released
         boolean hasJustAiredOA = false;
-        Notification.MessagingStyle styleOA = new Notification.MessagingStyle("")
-                .setGroupConversation(true);
-        List<AnimeNotification> sortedAnimeNotificationsValues = new ArrayList<>(animeNotifications.values());
-        Collections.sort(sortedAnimeNotificationsValues, Comparator.comparingLong(anime -> anime.releaseDateMillis));
+        Notification.MessagingStyle styleOA = new Notification.MessagingStyle("").setGroupConversation(true);
 
-        int otherAnimeNotifCount = 0;
-        for (AnimeNotification anime : sortedAnimeNotificationsValues) {
-            if (otherAnimeNotifCount >= 5) {
-                break;
-            }
-            ++otherAnimeNotifCount;
+        // Put in Ascending Order for in Adding items for the Message Style Notification
+        List<AnimeNotification> ascendedAnimeNotificationsValues = new ArrayList<>(animeNotifications.values());
+        Collections.sort(ascendedAnimeNotificationsValues, Comparator.comparingLong(anime -> anime.releaseDateMillis));
+
+        // Get the last 6 items in the list to only show what can be seen
+        int animeNotificationStartIndex = Math.max(0, ascendedAnimeNotificationsValues.size() - maxNotificationCount);
+        List<AnimeNotification> finalAnimeNotificationsValues = ascendedAnimeNotificationsValues.subList(animeNotificationStartIndex, ascendedAnimeNotificationsValues.size());
+
+        for (AnimeNotification anime : finalAnimeNotificationsValues) {
             Person.Builder itemBuilder = new Person.Builder()
                     .setName(anime.title)
                     .setKey(String.valueOf(anime.animeId))
