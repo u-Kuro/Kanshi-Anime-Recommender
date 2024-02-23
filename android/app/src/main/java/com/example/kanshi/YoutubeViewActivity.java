@@ -221,8 +221,6 @@ public class YoutubeViewActivity extends AppCompatActivity {
                 return true;
             }
         });
-        webView.setBackgroundColor(Color.BLACK);
-        webView.setOverScrollMode(View.OVER_SCROLL_NEVER);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             webView.setImportantForAutofill(View.IMPORTANT_FOR_AUTOFILL_YES);
         }

@@ -35,9 +35,9 @@ import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -51,7 +51,7 @@ public class AnimeReleaseGroupAdapter extends ArrayAdapter<AnimeReleaseGroup> {
     }
 
     private final ExecutorService getViewExecutorService = Executors.newFixedThreadPool(1);
-    final Map<String, Bitmap> imageCache = new HashMap<>();
+    final Map<String, Bitmap> imageCache = new ConcurrentHashMap<>();
 
     @RequiresApi(api = Build.VERSION_CODES.O)
     @NonNull
@@ -64,7 +64,6 @@ public class AnimeReleaseGroupAdapter extends ArrayAdapter<AnimeReleaseGroup> {
             LayoutInflater layoutInflater = LayoutInflater.from(mContext);
             view = layoutInflater.inflate(mResource, parent, false);
         }
-
         AnimeReleaseGroup animeReleaseGroup = getItem(position);
 
         if (animeReleaseGroup != null) {
@@ -144,76 +143,75 @@ public class AnimeReleaseGroupAdapter extends ArrayAdapter<AnimeReleaseGroup> {
 
                 View finalAnimeCard = animeCard;
                 getViewExecutorService.submit(() -> {
+                    if (finalAnimeCard==null || anime==null) return;
                     ImageView animeImage = finalAnimeCard.findViewById(R.id.anime_image);
                     TextView animeName = finalAnimeCard.findViewById(R.id.anime_name);
                     View userStatusIcon = finalAnimeCard.findViewById(R.id.user_status_icon);
                     TextView animeReleaseInfo = finalAnimeCard.findViewById(R.id.anime_release_info);
-                    if (anime != null) {
-                        if (anime.imageByte!=null) {
-                            String key = String.valueOf(anime.animeId);
-                            Bitmap imageBitmap;
-                            if (imageCache.containsKey(key)) {
-                                imageBitmap = imageCache.get(key);
+                    if (anime.imageByte!=null) {
+                        String key = String.valueOf(anime.animeId);
+                        Bitmap imageBitmap;
+                        if (imageCache.containsKey(key)) {
+                            imageBitmap = imageCache.get(key);
+                        } else {
+                            imageBitmap = cropAndRoundCorners(BitmapFactory.decodeByteArray(anime.imageByte, 0, anime.imageByte.length), 24);
+                            imageCache.put(key, imageBitmap);
+                        }
+                        runOnUi(() -> animeImage.setImageBitmap(imageBitmap));
+                    }
+                    final String title = anime.title;
+                    if (title!=null && !title.equals("")) {
+                        runOnUi(() -> {
+                            animeName.setText(title);
+                            finalAnimeCard.setOnLongClickListener(view1 -> {
+                                ClipboardManager clipboard = (ClipboardManager) mContext.getSystemService(Context.CLIPBOARD_SERVICE);
+                                ClipData clip = ClipData.newPlainText("Copied Text", title);
+                                clipboard.setPrimaryClip(clip);
+                                return true;
+                            });
+                        });
+                    } else {
+                        runOnUi(() -> animeName.setText(R.string.na));
+                    }
+                    final String userStatus = anime.userStatus;
+                    if (userStatus != null && !userStatus.equals("") && !userStatus.equalsIgnoreCase("UNWATCHED")) {
+                        runOnUi(() -> {
+                            ColorStateList colorStateList;
+                            if (userStatus.equalsIgnoreCase("COMPLETED")) {
+                                colorStateList = AppCompatResources.getColorStateList(mContext, R.color.web_green);
+                            } else if (
+                                userStatus.equalsIgnoreCase("CURRENT")
+                                || userStatus.equalsIgnoreCase("REPEATING")
+                            ) {
+                                colorStateList = AppCompatResources.getColorStateList(mContext, R.color.web_blue);
+                            } else if (userStatus.equalsIgnoreCase("PLANNING")) {
+                                colorStateList = AppCompatResources.getColorStateList(mContext, R.color.web_orange);
+                            } else if (userStatus.equalsIgnoreCase("PAUSED")) {
+                                colorStateList = AppCompatResources.getColorStateList(mContext, R.color.web_peach);
+                            } else if (userStatus.equalsIgnoreCase("DROPPED")) {
+                                colorStateList = AppCompatResources.getColorStateList(mContext, R.color.web_red);
                             } else {
-                                imageBitmap = cropAndRoundCorners(BitmapFactory.decodeByteArray(anime.imageByte, 0, anime.imageByte.length), 24);
-                                imageCache.put(key, imageBitmap);
+                                colorStateList = AppCompatResources.getColorStateList(mContext, R.color.web_light_grey);
                             }
-                            runOnUi(() -> animeImage.setImageBitmap(imageBitmap));
-                        }
-                        final String title = anime.title;
-                        if (title!=null && !title.equals("")) {
-                            runOnUi(() -> {
-                                animeName.setText(title);
-                                finalAnimeCard.setOnLongClickListener(view1 -> {
-                                    ClipboardManager clipboard = (ClipboardManager) mContext.getSystemService(Context.CLIPBOARD_SERVICE);
-                                    ClipData clip = ClipData.newPlainText("Copied Text", title);
-                                    clipboard.setPrimaryClip(clip);
-                                    return true;
-                                });
-                            });
-                        } else {
-                            runOnUi(() -> animeName.setText(R.string.na));
-                        }
-                        final String userStatus = anime.userStatus;
-                        if (userStatus != null && !userStatus.equals("") && !userStatus.equalsIgnoreCase("UNWATCHED")) {
-                            runOnUi(() -> {
-                                ColorStateList colorStateList;
-                                if (userStatus.equalsIgnoreCase("COMPLETED")) {
-                                    colorStateList = AppCompatResources.getColorStateList(mContext, R.color.web_green);
-                                } else if (
-                                    userStatus.equalsIgnoreCase("CURRENT")
-                                    || userStatus.equalsIgnoreCase("REPEATING")
-                                ) {
-                                    colorStateList = AppCompatResources.getColorStateList(mContext, R.color.web_blue);
-                                } else if (userStatus.equalsIgnoreCase("PLANNING")) {
-                                    colorStateList = AppCompatResources.getColorStateList(mContext, R.color.web_orange);
-                                } else if (userStatus.equalsIgnoreCase("PAUSED")) {
-                                    colorStateList = AppCompatResources.getColorStateList(mContext, R.color.web_peach);
-                                } else if (userStatus.equalsIgnoreCase("DROPPED")) {
-                                    colorStateList = AppCompatResources.getColorStateList(mContext, R.color.web_red);
-                                } else {
-                                    colorStateList = AppCompatResources.getColorStateList(mContext, R.color.web_light_grey);
-                                }
-                                userStatusIcon.setBackgroundTintList(colorStateList);
-                                userStatusIcon.setVisibility(View.VISIBLE);
-                            });
-                        } else {
-                            runOnUi(() -> userStatusIcon.setVisibility(View.GONE));
-                        }
-                        if (anime.message!=null) {
-                            runOnUi(() -> animeReleaseInfo.setText(anime.message));
-                        } else {
-                            runOnUi(() -> animeReleaseInfo.setText(R.string.na));
-                        }
-                        final String animeUrl = anime.animeUrl;
-                        if (animeUrl!=null && !animeUrl.equals("")) {
-                            runOnUi(() -> finalAnimeCard.setOnClickListener(view1 -> {
-                                AnimeReleaseActivity animeReleaseActivity = AnimeReleaseActivity.getInstanceActivity();
-                                if (animeReleaseActivity!=null) {
-                                    animeReleaseActivity.openAnimeInAniList(animeUrl);
-                                }
-                            }));
-                        }
+                            userStatusIcon.setBackgroundTintList(colorStateList);
+                            userStatusIcon.setVisibility(View.VISIBLE);
+                        });
+                    } else {
+                        runOnUi(() -> userStatusIcon.setVisibility(View.GONE));
+                    }
+                    if (anime.message!=null) {
+                        runOnUi(() -> animeReleaseInfo.setText(anime.message));
+                    } else {
+                        runOnUi(() -> animeReleaseInfo.setText(R.string.na));
+                    }
+                    final String animeUrl = anime.animeUrl;
+                    if (animeUrl!=null && !animeUrl.equals("")) {
+                        runOnUi(() -> finalAnimeCard.setOnClickListener(view1 -> {
+                            AnimeReleaseActivity animeReleaseActivity = AnimeReleaseActivity.getInstanceActivity();
+                            if (animeReleaseActivity!=null) {
+                                animeReleaseActivity.openAnimeInAniList(animeUrl);
+                            }
+                        }));
                     }
                 });
             }

@@ -201,11 +201,17 @@ public class SchedulesTabFragment extends Fragment {
                     return 0;
                 }
             });
-            SchedulesTabFragment.this.groupedAnimeSchedules = groupedAnimeSchedules;
-            new Handler(Looper.getMainLooper()).post(()-> {
-                SchedulesTabFragment.this.animeReleaseGroupAdapter = new AnimeReleaseGroupAdapter(context, R.layout.anime_release_group_card, SchedulesTabFragment.this.groupedAnimeSchedules);
-                SchedulesTabFragment.this.animeReleasesList.setAdapter(animeReleaseGroupAdapter);
-            });
+            if (SchedulesTabFragment.this.groupedAnimeSchedules==null) {
+                SchedulesTabFragment.this.groupedAnimeSchedules = groupedAnimeSchedules;
+                new Handler(Looper.getMainLooper()).post(() -> {
+                    SchedulesTabFragment.this.animeReleaseGroupAdapter = new AnimeReleaseGroupAdapter(context, R.layout.anime_release_group_card, SchedulesTabFragment.this.groupedAnimeSchedules);
+                    SchedulesTabFragment.this.animeReleasesList.setAdapter(animeReleaseGroupAdapter);
+                });
+            } else {
+                SchedulesTabFragment.this.groupedAnimeSchedules.clear();
+                SchedulesTabFragment.this.groupedAnimeSchedules.addAll(groupedAnimeSchedules);
+                new Handler(Looper.getMainLooper()).post(() -> SchedulesTabFragment.this.animeReleaseGroupAdapter.notifyDataSetChanged());
+            }
         });
     }
 

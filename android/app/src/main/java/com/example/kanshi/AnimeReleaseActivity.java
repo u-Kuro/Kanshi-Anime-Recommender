@@ -85,9 +85,12 @@ public class AnimeReleaseActivity extends AppCompatActivity {
 
         TabLayout tabLayout = findViewById(R.id.tab_layout);
         ViewPager2 viewPager = findViewById(R.id.view_pager);
+
         FragmentStateAdapter adminViewAdapter = new AnimeReleaseViewAdapter(this);
 
         viewPager.setAdapter(adminViewAdapter);
+        viewPager.setOffscreenPageLimit(adminViewAdapter.getItemCount());
+
         tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
             public void onTabSelected(TabLayout.Tab tab) {
@@ -113,8 +116,6 @@ public class AnimeReleaseActivity extends AppCompatActivity {
 
         int selectedAnimeReleasePageIndex = prefs.getInt("selectedAnimeReleasePageIndex", 0);
         viewPager.setCurrentItem(selectedAnimeReleasePageIndex, false);
-
-
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {

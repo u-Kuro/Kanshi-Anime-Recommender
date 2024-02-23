@@ -15,7 +15,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:textColor="@color/faded_white"
-        android:paddingVertical="8dp"/>
+        android:paddingVertical="8dp"
+        android:paddingHorizontal="16dp"/>
     <LinearLayout
         android:id="@+id/anime_release_group_layout"
         android:layout_width="match_parent"

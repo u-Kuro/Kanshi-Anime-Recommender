@@ -6,8 +6,7 @@
     <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
         android:id="@+id/swipe_refresh_anime_release"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_marginHorizontal="16dp">
+        android:layout_height="match_parent">
         <ListView
             android:id="@+id/anime_releases_list"
             android:layout_width="match_parent"
