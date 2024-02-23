@@ -36,7 +36,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -120,7 +119,7 @@ public class MyWorker extends Worker {
                 if (anime.releaseDateMillis > mostRecentlySentNotificationTime) {
                     mostRecentlySentNotificationTime = anime.releaseDateMillis;
                 }
-                boolean isMyAnime = anime.userStatus != null && !anime.userStatus.equalsIgnoreCase("UNWATCHED");
+                boolean isMyAnime = anime.userStatus != null && !anime.userStatus.equals("") && !anime.userStatus.equalsIgnoreCase("UNWATCHED");
                 if (isMyAnime) {
                     if (!hasNewMyAnimeNotification) {
                         hasNewMyAnimeNotification = hasNoPreviousNotification || hasNewAnimeInNotification;
@@ -170,13 +169,12 @@ public class MyWorker extends Worker {
         boolean hasJustAiredMA = false;
         Notification.MessagingStyle styleMA = new Notification.MessagingStyle("").setGroupConversation(true);
 
-        // Put in Ascending Order for in Adding items for the Message Style Notification
-        List<AnimeNotification> ascendedMyAnimeNotificationsValues = new ArrayList<>(myAnimeNotifications.values());
-        Collections.sort(ascendedMyAnimeNotificationsValues, Comparator.comparingLong(anime -> anime.releaseDateMillis));
+        // Put in Descending Order for in Adding items for the Message Style Notification
+        List<AnimeNotification> descendedMyAnimeNotificationsValues = new ArrayList<>(myAnimeNotifications.values());
+        Collections.sort(descendedMyAnimeNotificationsValues, (a1, a2) -> Long.compare(a2.releaseDateMillis, a1.releaseDateMillis));
 
-        // Get the last 6 items in the list to only show what can be seen
-        int myAnimeNotificationStartIndex = Math.max(0, ascendedMyAnimeNotificationsValues.size() - maxNotificationCount);
-        List<AnimeNotification> finalMyAnimeNotificationsValues = ascendedMyAnimeNotificationsValues.subList(myAnimeNotificationStartIndex, ascendedMyAnimeNotificationsValues.size());
+        // Get the first 6 items in the list to only show what can be seen
+        List<AnimeNotification> finalMyAnimeNotificationsValues = descendedMyAnimeNotificationsValues.subList(0, Math.min(maxNotificationCount, descendedMyAnimeNotificationsValues.size()));
 
         for (AnimeNotification anime : finalMyAnimeNotificationsValues) {
             Person.Builder itemBuilder = new Person.Builder()
@@ -253,12 +251,11 @@ public class MyWorker extends Worker {
         Notification.MessagingStyle styleOA = new Notification.MessagingStyle("").setGroupConversation(true);
 
         // Put in Ascending Order for in Adding items for the Message Style Notification
-        List<AnimeNotification> ascendedAnimeNotificationsValues = new ArrayList<>(animeNotifications.values());
-        Collections.sort(ascendedAnimeNotificationsValues, Comparator.comparingLong(anime -> anime.releaseDateMillis));
+        List<AnimeNotification> descendedAnimeNotificationsValues = new ArrayList<>(animeNotifications.values());
+        Collections.sort(descendedAnimeNotificationsValues, (a1, a2) -> Long.compare(a2.releaseDateMillis, a1.releaseDateMillis));
 
         // Get the last 6 items in the list to only show what can be seen
-        int animeNotificationStartIndex = Math.max(0, ascendedAnimeNotificationsValues.size() - maxNotificationCount);
-        List<AnimeNotification> finalAnimeNotificationsValues = ascendedAnimeNotificationsValues.subList(animeNotificationStartIndex, ascendedAnimeNotificationsValues.size());
+        List<AnimeNotification> finalAnimeNotificationsValues = descendedAnimeNotificationsValues.subList(0, Math.min(maxNotificationCount, descendedAnimeNotificationsValues.size()));
 
         for (AnimeNotification anime : finalAnimeNotificationsValues) {
             Person.Builder itemBuilder = new Person.Builder()

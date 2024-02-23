@@ -158,6 +158,8 @@ public class AnimeReleaseGroupAdapter extends ArrayAdapter<AnimeReleaseGroup> {
                             imageCache.put(key, imageBitmap);
                         }
                         runOnUi(() -> animeImage.setImageBitmap(imageBitmap));
+                    } else {
+                        runOnUi(() -> animeImage.setImageResource(R.drawable.image_placeholder));
                     }
                     final String title = anime.title;
                     if (title!=null && !title.equals("")) {

@@ -102,7 +102,7 @@ public class SchedulesTabFragment extends Fragment {
             ArrayList<AnimeNotification> animeSchedules = new ArrayList<>();
 
             for (AnimeNotification anime : allAnimeNotificationValues) {
-                boolean isMyAnime = anime.userStatus != null && !anime.userStatus.equalsIgnoreCase("UNWATCHED");
+                boolean isMyAnime = anime.userStatus != null && !anime.userStatus.equals("") && !anime.userStatus.equalsIgnoreCase("UNWATCHED");
                 if (!selectedAnimeReleaseOption.equals("Updates")) {
                     if (selectedAnimeReleaseOption.equals("My List") && !isMyAnime) {
                         continue;

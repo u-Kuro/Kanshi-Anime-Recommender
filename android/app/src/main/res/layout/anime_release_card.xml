@@ -8,7 +8,7 @@
     android:background="?android:attr/selectableItemBackground">
     <ImageView
         android:id="@+id/anime_image"
-        android:src="@color/cardview_dark_background"
+        android:src="@drawable/image_placeholder"
         android:layout_width="45dp"
         android:layout_height="45dp"
         android:contentDescription="@string/anime_image"

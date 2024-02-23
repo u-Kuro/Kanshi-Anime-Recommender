@@ -103,7 +103,7 @@ public class ReleasedTabFragment extends Fragment {
 
             for (AnimeNotification anime : allAnimeNotificationValues) {
                 if (!selectedAnimeReleaseOption.equals("Updates")) {
-                    boolean isMyAnime = anime.userStatus != null && !anime.userStatus.equalsIgnoreCase("UNWATCHED");
+                    boolean isMyAnime = anime.userStatus != null && !anime.userStatus.equals("") && !anime.userStatus.equalsIgnoreCase("UNWATCHED");
                     if (selectedAnimeReleaseOption.equals("My List") && !isMyAnime) {
                         continue;
                     } else if (selectedAnimeReleaseOption.equals("Others") && isMyAnime) {
