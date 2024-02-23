@@ -264,6 +264,14 @@ const animeManager = (_data = {}) => {
             } else if (hasOwnProp.call(data, "status")) {
                 dataStatus.set(data.status);
                 return
+            } else if (hasOwnProp?.call?.(data, "removedIdx")) {
+                let removedIdx = data?.removedIdx
+                let categoryName = data?.selectedCategory
+                if (categoryName === get(selectedCategory) && removedIdx >= 0) {
+                    animeIdxRemoved.set(null)
+                    animeIdxRemoved.set(removedIdx)
+                }
+                return
             }
 
             let postId = data.postId
@@ -278,14 +286,6 @@ const animeManager = (_data = {}) => {
                     animeLoaderWorker.postMessage(data || {})
                 } else {
                     animeLoader(data || {})
-                }
-                animeManagerPromises?.[postId]?.resolve?.()
-            } else if (hasOwnProp?.call?.(data, "removedIdx")) {
-                let removedIdx = data?.removedIdx
-                let categoryName = data?.selectedCategory
-                if (categoryName === get(selectedCategory) && removedIdx >= 0) {
-                    animeIdxRemoved.set(null)
-                    animeIdxRemoved.set(removedIdx)
                 }
                 animeManagerPromises?.[postId]?.resolve?.()
             } else if (hasOwnProp?.call?.(data, "error")) {

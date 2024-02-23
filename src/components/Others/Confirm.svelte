@@ -208,7 +208,7 @@
     .confirm-container {
         animation: fadeIn 0.2s ease-out;
         display: grid;
-        grid-template-rows: 23px calc(100% - 23px - 20px - 30px) 20px;
+        grid-template-rows: 23px 1fr 20px;
         background-color: var(--bg-color);
         border: 1px solid var(--bd-color);
         width: 350px;

@@ -712,7 +712,7 @@
         gap: 15px;
         width: 100%;
         max-width: 1140px;
-        max-height: 100%;
+        max-height: calc(100% - 57px);
         margin: 0 auto;
         overflow-x: hidden;
         overflow-y: auto;

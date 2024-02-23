@@ -734,10 +734,7 @@
         justify-content: space-between;
         align-items: flex-start;
         grid-gap: 10px;
-        grid-template-columns: repeat(
-            auto-fill,
-            minmax(min(100% / 2 - 10px, 180px), 180px)
-        );
+        grid-template-columns: repeat(auto-fill, minmax(min(100% / 2 - 10px, 170px), 170px));
         overflow-anchor: visible;
         -ms-overflow-style: none;
         scrollbar-width: none;
