@@ -110,6 +110,8 @@ public class MyWorker extends Worker {
         long currentTimeInMillis = System.currentTimeMillis();
         boolean hasNoPreviousNotification = lastSentNotificationTime == 0L;
 
+        long newMyAnimeNotificationCount = 0;
+        long newAnimeNotificationCount = 0;
         for (AnimeNotification anime : allAnimeNotificationValues) {
             if (anime.releaseDateMillis <= currentTimeInMillis) {
                 boolean hasNewAnimeInNotification = anime.releaseDateMillis > lastSentNotificationTime;
@@ -120,6 +122,13 @@ public class MyWorker extends Worker {
                     mostRecentlySentNotificationTime = anime.releaseDateMillis;
                 }
                 boolean isMyAnime = anime.userStatus != null && !anime.userStatus.equals("") && !anime.userStatus.equalsIgnoreCase("UNWATCHED");
+                if (anime.releaseDateMillis >= lastSentNotificationTime) {
+                    if (isMyAnime) {
+                        ++newMyAnimeNotificationCount;
+                    } else {
+                        ++newAnimeNotificationCount;
+                    }
+                }
                 if (isMyAnime) {
                     if (!hasNewMyAnimeNotification) {
                         hasNewMyAnimeNotification = hasNoPreviousNotification || hasNewAnimeInNotification;
@@ -224,8 +233,8 @@ public class MyWorker extends Worker {
         } else {
             notificationTitleMA = "Your Anime Aired";
         }
-        if (myAnimeNotifications.size() > 1) {
-            notificationTitleMA = notificationTitleMA + " +" + myAnimeNotifications.size();
+        if (newMyAnimeNotificationCount > 1) {
+            notificationTitleMA = notificationTitleMA + " +" + newMyAnimeNotificationCount;
         }
         styleMA.setConversationTitle(notificationTitleMA);
 
@@ -305,8 +314,8 @@ public class MyWorker extends Worker {
         } else {
             notificationTitleOA = "Other Anime Aired";
         }
-        if (animeNotifications.size() > 1) {
-            notificationTitleOA = notificationTitleOA + " +" + animeNotifications.size();
+        if (newAnimeNotificationCount > 1) {
+            notificationTitleOA = notificationTitleOA + " +" + newAnimeNotificationCount;
         }
         styleOA.setConversationTitle(notificationTitleOA);
 
@@ -324,7 +333,7 @@ public class MyWorker extends Worker {
 
         if (ActivityCompat.checkSelfPermission(this.getApplicationContext(), Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
             String notificationTitle = "Anime Aired";
-            long animeReleaseNotificationSize = myAnimeNotifications.size() + animeNotifications.size();
+            long animeReleaseNotificationSize = newMyAnimeNotificationCount + newAnimeNotificationCount;
             if (animeReleaseNotificationSize > 1) {
                 notificationTitle = notificationTitle + " +" + animeReleaseNotificationSize;
             }
