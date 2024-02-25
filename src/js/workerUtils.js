@@ -119,6 +119,7 @@ const animeLoader = (_data = {}) => {
                         val[categoryKey].sortBy = category?.sortBy;
                         return val
                     })
+                    selectedCategory.set(categoryKey)
                     if (isNew) {
                         animeLoaderWorker.postMessage({
                             loadMore: true,

@@ -292,41 +292,6 @@
             }
         }
     }
-    function handleTouchFilterCategories(event) {
-        let element = event.target;
-        let classList = element.classList;
-        if (
-            classList?.contains?.("options-wrap-filter-info") ||
-            element?.closest?.(".options-wrap-filter-info")
-        ) {
-            return;
-        }
-        let optionsWrapToClose =
-            selectedFilterCategoryElement?.querySelector?.(".options-wrap");
-        if (optionsWrapToClose) {
-            addClass(optionsWrapToClose, "hide");
-            setTimeout(() => {
-                removeClass(optionsWrapToClose, "hide");
-                if (
-                    highlightedEl instanceof Element &&
-                    highlightedEl.closest(".filterCategory")
-                ) {
-                    removeClass(highlightedEl, "highlight");
-                    highlightedEl = null;
-                }
-                selectedFilterCategoryElement = false;
-            }, 200);
-        } else {
-            if (
-                highlightedEl instanceof Element &&
-                highlightedEl.closest(".filterCategory")
-            ) {
-                removeClass(highlightedEl, "highlight");
-                highlightedEl = null;
-            }
-            selectedFilterCategoryElement = false;
-        }
-    }
     function handleFilterScroll() {
         if (filterScrollTimeout) clearTimeout(filterScrollTimeout);
         filterIsScrolling = true;
@@ -374,41 +339,6 @@
             }, 200);
         } else {
             openedFilterSelectionName = null;
-            if (
-                highlightedEl instanceof Element &&
-                highlightedEl.closest(".filter-select")
-            ) {
-                removeClass(highlightedEl, "highlight");
-                highlightedEl = null;
-            }
-            openedFilterSelectionName = selectedFilterElement = null;
-        }
-    }
-    function handleTouchFilterSelect(event) {
-        let element = event.target;
-        let classList = element.classList;
-        if (
-            classList?.contains?.("options-wrap-filter-info") ||
-            element?.closest?.(".options-wrap-filter-info")
-        ) {
-            return;
-        }
-        let optionsWrapToClose =
-            selectedFilterElement?.querySelector?.(".options-wrap");
-        if (optionsWrapToClose) {
-            addClass(optionsWrapToClose, "hide");
-            setTimeout(() => {
-                removeClass(optionsWrapToClose, "hide");
-                if (
-                    highlightedEl instanceof Element &&
-                    highlightedEl.closest(".filter-select")
-                ) {
-                    removeClass(highlightedEl, "highlight");
-                    highlightedEl = null;
-                }
-                openedFilterSelectionName = selectedFilterElement = null;
-            }, 200);
-        } else {
             if (
                 highlightedEl instanceof Element &&
                 highlightedEl.closest(".filter-select")
@@ -956,7 +886,7 @@
         let hasActiveFilter = activeFilters?.length;
         if ($initData || !hasActiveFilter) return pleaseWaitAlert();
 
-        if (activeFilters?.[activeFilterIdx] != null) return;
+        if (activeFilters?.[activeFilterIdx] == null) return;
 
         activeFilters.splice(activeFilterIdx, 1);
 
@@ -1046,42 +976,6 @@
                 }
                 selectedSortElement = false;
             }
-        }
-    }
-
-    function handleTouchSortFilterPopup(event) {
-        let element = event.target;
-        let classList = element.classList;
-        if (
-            classList?.contains?.("options-wrap-filter-info") ||
-            element?.closest?.(".options-wrap-filter-info")
-        ) {
-            return;
-        }
-        let optionsWrapToClose =
-            selectedSortElement?.querySelector?.(".options-wrap");
-        if (optionsWrapToClose) {
-            addClass(optionsWrapToClose, "hide");
-            setTimeout(() => {
-                removeClass(optionsWrapToClose, "hide");
-                if (
-                    highlightedEl instanceof Element &&
-                    highlightedEl.closest(".category-wrap")
-                ) {
-                    removeClass(highlightedEl, "highlight");
-                    highlightedEl = null;
-                }
-                selectedSortElement = false;
-            }, 200);
-        } else {
-            if (
-                highlightedEl instanceof Element &&
-                highlightedEl.closest(".category-wrap")
-            ) {
-                removeClass(highlightedEl, "highlight");
-                highlightedEl = null;
-            }
-            selectedSortElement = false;
         }
     }
 
@@ -1261,41 +1155,6 @@
                 }
                 selectedCategoryElement = false;
             }
-        }
-    }
-    function handleTouchCategoryPopup(event) {
-        let element = event.target;
-        let classList = element.classList;
-        if (
-            classList?.contains?.("options-wrap-filter-info") ||
-            element?.closest?.(".options-wrap-filter-info")
-        ) {
-            return;
-        }
-        let optionsWrapToClose =
-            selectedCategoryElement?.querySelector?.(".options-wrap");
-        if (optionsWrapToClose) {
-            addClass(optionsWrapToClose, "hide");
-            setTimeout(() => {
-                removeClass(optionsWrapToClose, "hide");
-                if (
-                    highlightedEl instanceof Element &&
-                    highlightedEl.closest(".category-wrap")
-                ) {
-                    removeClass(highlightedEl, "highlight");
-                    highlightedEl = null;
-                }
-                selectedCategoryElement = false;
-            }, 200);
-        } else {
-            if (
-                highlightedEl instanceof Element &&
-                highlightedEl.closest(".category-wrap")
-            ) {
-                removeClass(highlightedEl, "highlight");
-                highlightedEl = null;
-            }
-            selectedCategoryElement = false;
         }
     }
     async function selectCategory(categoryName) {
@@ -1917,7 +1776,6 @@
             <div
                 class="{'options-wrap ' +
                     (selectedCategoryElement ? '' : 'display-none hide')}"
-                on:touchend|passive="{handleTouchCategoryPopup}"
             >
                 {#if $categories}
                     <div
@@ -2113,7 +1971,6 @@
                         (selectedFilterCategoryElement
                             ? ''
                             : ' display-none hide')}"
-                    on:touchend|passive="{handleTouchFilterCategories}"
                 >
                     <div
                         class="{'options-wrap-filter-info' +
@@ -2373,11 +2230,6 @@
                                         ? ''
                                         : ' display-none hide')}"
                                 on:wheel|stopPropagation="{() => {}}"
-                                on:touchend|passive="{(e) =>
-                                    handleTouchFilterSelect(
-                                        e,
-                                        filterSelectionName,
-                                    )}"
                             >
                                 <div
                                     class="{'options-wrap-filter-info' +
@@ -2886,19 +2738,11 @@
                         $showFilterOptions
                             ? '0'
                             : '-1'}"
-                        on:click|preventDefault="{(e) =>
-                            removeActiveFilter(
-                                filterType,
-                                optionName,
-                                activeFilterIdx,
-                            )}"
+                        on:click|preventDefault="{() =>
+                            removeActiveFilter(activeFilterIdx)}"
                         on:keyup="{(e) =>
                             e.key === 'Enter' &&
-                            removeActiveFilter(
-                                filterType,
-                                optionName,
-                                activeFilterIdx,
-                            )}"
+                            removeActiveFilter(activeFilterIdx)}"
                     >
                         <path
                             d="m19 6-1-1-6 6-6-6-1 1 6 6-6 6 1 1 6-6 6 6 1-1-6-6Z"
@@ -3019,7 +2863,6 @@
                 <div
                     class="{'options-wrap ' +
                         (selectedSortElement ? '' : 'display-none hide')}"
-                    on:touchend|passive="{handleTouchSortFilterPopup}"
                 >
                     <div
                         class="{'options-wrap-filter-info ' +
@@ -3084,9 +2927,6 @@
         {:else}
             <div class="sortFilter skeleton shimmer"></div>
         {/if}
-    </div>
-    <div class="anime-lists">
-        <slot />
     </div>
 </main>
 
