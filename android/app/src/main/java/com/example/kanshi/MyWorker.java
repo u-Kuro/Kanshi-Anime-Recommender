@@ -99,24 +99,21 @@ public class MyWorker extends Worker {
         long lastSentNotificationTime = prefs.getLong("lastSentNotificationTime", 0L);
         AnimeNotification nextAnimeNotificationInfo = null;
 
-        long mostRecentlySentNotificationTime = lastSentNotificationTime;
-        long mostRecentlySentMyAnimeNotificationTime = 0L;
-        long mostRecentlySentOtherAnimeNotificationTime = 0L;
+        long currentTimeInMillis = System.currentTimeMillis();
+        long currentSentNotificationTime = lastSentNotificationTime;
+        long mostRecentlySentMyAnimeNotificationTime = currentTimeInMillis;
+        long mostRecentlySentOtherAnimeNotificationTime = currentTimeInMillis;
 
         List<AnimeNotification> allAnimeNotificationValues = new ArrayList<>(AnimeNotificationManager.allAnimeNotification.values());
-        long currentTimeInMillis = System.currentTimeMillis();
 
         for (AnimeNotification anime : allAnimeNotificationValues) {
             if (anime.releaseDateMillis <= currentTimeInMillis) {
-                boolean hasNewAnimeInNotification = anime.releaseDateMillis > lastSentNotificationTime;
-                boolean isMyAnime = anime.userStatus != null && !anime.userStatus.equals("") && !anime.userStatus.equalsIgnoreCase("UNWATCHED");
-                if (hasNewAnimeInNotification) {
-                    if (anime.releaseDateMillis > mostRecentlySentNotificationTime) {
-                        mostRecentlySentNotificationTime = anime.releaseDateMillis;
-                    }
+                if (anime.releaseDateMillis > currentSentNotificationTime) {
+                    currentSentNotificationTime = anime.releaseDateMillis;
                 }
+                boolean isMyAnime = anime.userStatus != null && !anime.userStatus.equals("") && !anime.userStatus.equalsIgnoreCase("UNWATCHED");
                 if (isMyAnime) {
-                    if (mostRecentlySentMyAnimeNotificationTime==0L || anime.releaseDateMillis > mostRecentlySentMyAnimeNotificationTime){
+                    if (anime.releaseDateMillis > mostRecentlySentMyAnimeNotificationTime){
                         mostRecentlySentMyAnimeNotificationTime = anime.releaseDateMillis;
                     }
                     if (myAnimeNotifications.get(String.valueOf(anime.animeId)) == null) {
@@ -128,7 +125,7 @@ public class MyWorker extends Worker {
                         }
                     }
                 } else {
-                    if (mostRecentlySentOtherAnimeNotificationTime==0L || anime.releaseDateMillis > mostRecentlySentOtherAnimeNotificationTime){
+                    if (anime.releaseDateMillis > mostRecentlySentOtherAnimeNotificationTime){
                         mostRecentlySentOtherAnimeNotificationTime = anime.releaseDateMillis;
                     }
                     if (animeNotifications.get(String.valueOf(anime.animeId)) == null) {
@@ -145,14 +142,6 @@ public class MyWorker extends Worker {
                     nextAnimeNotificationInfo = anime;
                 }
             }
-        }
-
-        // This should not be called. But, just in case something unexpected happened it is set in current time.
-        if (mostRecentlySentMyAnimeNotificationTime==0L) {
-            mostRecentlySentMyAnimeNotificationTime = currentTimeInMillis;
-        }
-        if (mostRecentlySentOtherAnimeNotificationTime==0L) {
-            mostRecentlySentOtherAnimeNotificationTime = currentTimeInMillis;
         }
 
         long newMyAnimeNotificationCount = 0;
@@ -334,7 +323,7 @@ public class MyWorker extends Worker {
                     .setContentIntent(pendingIntent)
                     .setGroup(AnimeNotificationManager.ANIME_RELEASE_NOTIFICATION_GROUP)
                     .setGroupSummary(true)
-                    .setWhen(Math.max(mostRecentlySentOtherAnimeNotificationTime, mostRecentlySentMyAnimeNotificationTime))
+                    .setWhen(Math.max(mostRecentlySentMyAnimeNotificationTime, mostRecentlySentOtherAnimeNotificationTime))
                     .setShowWhen(true);
 
             boolean hasNewMyAnimeNotification = newMyAnimeNotificationCount > 0;
@@ -378,7 +367,7 @@ public class MyWorker extends Worker {
         }
 
         SharedPreferences.Editor prefsEdit = prefs.edit();
-        prefsEdit.putLong("lastSentNotificationTime", mostRecentlySentNotificationTime).apply();
+        prefsEdit.putLong("lastSentNotificationTime", currentSentNotificationTime).apply();
 
         HashSet<String> animeNotificationsToBeRemoved = new HashSet<>();
         long THIRTY_DAY_IN_MILLIS = TimeUnit.DAYS.toMillis(30);
