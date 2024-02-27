@@ -1178,6 +1178,7 @@
 		}
 	});
 
+	let animeListPagerEl, animeListPagerIsChanging;
 	let panningIdx, panningCategory;
 	let isBelowNav = false;
 	let maxWindowHeight = 0;
@@ -1495,8 +1496,6 @@
 		})();
 	}
 
-	let animeListPagerEl;
-
 	let isScrollingAnimeGrid, animeGridScrollTimeout;
 	window.animeGridListScrolled = () => {
 		clearTimeout(animeGridScrollTimeout);
@@ -1613,7 +1612,7 @@
 		let isScrollingCheckForZoom;
 		animeListPagerEl.addEventListener("scroll", async () => {
 			window.showCategoriesNav?.(true, true);
-			isScrollingCheckForZoom = true;
+			isScrollingCheckForZoom = animeListPagerIsChanging = true;
 
 			await tick();
 
@@ -1637,7 +1636,7 @@
 		});
 
 		animeListPagerEl.addEventListener("scrollend", async () => {
-			isScrollingCheckForZoom = false;
+			isScrollingCheckForZoom = animeListPagerIsChanging = false;
 
 			let children = Array.from(animeListPagerEl?.children);
 			let child = children?.[panningIdx];
@@ -1705,6 +1704,7 @@
 			animeListPagerEl.scrollLeft =
 				categoryIdx * offsetWidth +
 				Math.max(0, categoryIdx - 1) * animeListPagerPad;
+			animeListPagerIsChanging = false;
 			if ($gridFullView) return;
 			// Scroll To Grid Saved Scroll
 			if (isFirstScroll) {
@@ -1787,6 +1787,7 @@
 			style:--grid-max-height="{gridMaxHeight + "px"}"
 			id="anime-list-pager"
 			class="{'anime-list-pager' +
+				(animeListPagerIsChanging ? ' pager-is-changing' : '') +
 				($gridFullView
 					? ' remove-snap-scroll'
 					: !$isLoadingAnime &&

@@ -639,11 +639,17 @@
 </main>
 
 <style>
+    :global(.anime-list-pager.pager-is-changing > main) {
+        height: min(
+            calc(var(--grid-max-height) + 65px),
+            calc(100vh + max(20px, calc(var(--grid-position) + 20px)))
+        ) !important;
+    }
     main {
         width: 100%;
         min-width: 100%;
         min-height: 100vh;
-        padding: 20px 0px 20px 0px;
+        padding: 20px 0px 0px 0px;
         margin-bottom: 65px;
         position: relative;
         overflow: hidden;
@@ -734,17 +740,22 @@
         justify-content: space-between;
         align-items: flex-start;
         grid-gap: 10px;
-        grid-template-columns: repeat(auto-fill, minmax(min(100% / 2 - 10px, 170px), 170px));
+        grid-template-columns: repeat(
+            auto-fill,
+            minmax(min(100% / 2 - 10px, 170px), 170px)
+        );
         overflow-anchor: visible;
         -ms-overflow-style: none;
         scrollbar-width: none;
         position: absolute;
         width: 100%;
         top: max(20px, calc(var(--grid-position) + 20px));
+        padding-bottom: 65px;
     }
 
     main.viewed .image-grid {
         position: unset !important;
+        padding-bottom: unset !important;
     }
 
     :global(.anime-list-pager.remove-snap-scroll .image-grid) {
@@ -766,6 +777,10 @@
         }
     }
 
+    .image-grid.empty {
+        height: calc(100vh + 85px);
+    }
+
     .image-grid.fullView {
         display: flex;
         flex-wrap: wrap;
@@ -778,6 +793,7 @@
     }
 
     .image-grid.fullView.empty {
+        height: unset !important;
         justify-content: start;
         align-content: center;
     }

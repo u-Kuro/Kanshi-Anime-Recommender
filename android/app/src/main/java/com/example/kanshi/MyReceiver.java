@@ -45,6 +45,8 @@ public class MyReceiver extends BroadcastReceiver {
                     .setInputData(data)
                     .build();
             WorkManager.getInstance(context).enqueueUniqueWork(uniqueWorkName, ExistingWorkPolicy.REPLACE, workRequest);
+        } else if ("SEE_MORE_RELEASED".equals(action)) {
+            AnimeNotificationManager.seeMoreReleasedAnimeNotification(context);
         }
     }
 }
