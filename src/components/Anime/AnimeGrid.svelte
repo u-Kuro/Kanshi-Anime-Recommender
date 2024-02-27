@@ -387,7 +387,7 @@
         <div
             class="{'image-grid ' +
                 (isFullViewed ? ' fullView' : '') +
-                (animeList?.length === 0 && !$initData ? ' empty' : '')}"
+                (animeList?.length === 0 && !$initData ? ' empty-grid' : '')}"
             data-category="{mainCategory}"
             bind:this="{animeGridEl}"
             on:wheel="{(e) => {
@@ -594,7 +594,7 @@
                 {#if !$shownAllInList?.[mainCategory]}
                     <div class="image-card">
                         <div
-                            class="observed-grid empty"
+                            class="observed-grid empty-card"
                             bind:this="{observedGrid}"
                         ></div>
                     </div>
@@ -681,7 +681,7 @@
     main.fullView {
         padding: 12px 0;
         margin-bottom: 57px;
-        height: max(calc(var(--anime-grid-height) - 260px), 210px);
+        height: max(calc(var(--anime-grid-height) - 260px), 210px) !important;
         min-height: unset !important;
         overflow: hidden !important;
     }
@@ -750,7 +750,7 @@
         position: absolute;
         width: 100%;
         top: max(20px, calc(var(--grid-position) + 20px));
-        padding-bottom: 65px;
+        padding-bottom: calc(101vh + 65px);
     }
 
     main.viewed .image-grid {
@@ -777,10 +777,6 @@
         }
     }
 
-    .image-grid.empty {
-        height: calc(100vh + 85px);
-    }
-
     .image-grid.fullView {
         display: flex;
         flex-wrap: wrap;
@@ -792,7 +788,7 @@
         overflow-x: auto !important;
     }
 
-    .image-grid.fullView.empty {
+    .image-grid.fullView.empty-grid {
         height: unset !important;
         justify-content: start;
         align-content: center;
@@ -1003,7 +999,7 @@
         font-size: 20px;
         font-weight: 700;
         opacity: 1;
-        padding: 30px;
+        padding: 15vh 30px;
         text-align: center;
         grid-column: 1 / -1;
         margin: 0 auto;
@@ -1097,7 +1093,7 @@
         z-index: -9 !important;
     }
 
-    .image-grid.fullView .observed-grid:not(.empty) {
+    .image-grid.fullView .observed-grid:not(.empty-card) {
         max-width: 1020px !important;
         max-height: max(
             calc(var(--anime-grid-height) - 260px),
