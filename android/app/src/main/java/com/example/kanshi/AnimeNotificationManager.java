@@ -399,7 +399,6 @@ public class AnimeNotificationManager {
                 .setGroupAlertBehavior(Notification.GROUP_ALERT_SUMMARY)
                 .setNumber(0)
                 .setOnlyAlertOnce(true)
-                .setOngoing(true)
                 .setWhen(mostRecentlySentMyAnimeNotificationTime)
                 .setShowWhen(true);
 
@@ -477,7 +476,6 @@ public class AnimeNotificationManager {
             .setGroupAlertBehavior(Notification.GROUP_ALERT_SUMMARY)
             .setNumber(0)
             .setOnlyAlertOnce(true)
-            .setOngoing(true)
             .setWhen(mostRecentlySentOtherAnimeNotificationTime)
             .setShowWhen(true);
 
@@ -498,7 +496,6 @@ public class AnimeNotificationManager {
             .setGroup(AnimeNotificationManager.ANIME_RELEASE_NOTIFICATION_GROUP)
             .setGroupSummary(true)
             .setOnlyAlertOnce(true)
-            .setOngoing(true)
             .setWhen(mostRecentlySentNotificationTime)
             .setShowWhen(true);
 

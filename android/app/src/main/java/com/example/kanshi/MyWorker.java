@@ -232,7 +232,6 @@ public class MyWorker extends Worker {
                 .setNumber(0)
                 .addAction(R.drawable.more_white_horizontal, "SEE MORE", seeMorePendingIntent)
                 .setOnlyAlertOnce(true)
-                .setOngoing(true)
                 .setWhen(mostRecentlySentMyAnimeNotificationTime)
                 .setShowWhen(true);
 
@@ -301,7 +300,6 @@ public class MyWorker extends Worker {
                 .setNumber(0)
                 .addAction(R.drawable.more_white_horizontal, "SEE MORE", seeMorePendingIntent)
                 .setOnlyAlertOnce(true)
-                .setOngoing(true)
                 .setWhen(mostRecentlySentOtherAnimeNotificationTime)
                 .setShowWhen(true);
 
@@ -323,7 +321,6 @@ public class MyWorker extends Worker {
                     .setGroup(AnimeNotificationManager.ANIME_RELEASE_NOTIFICATION_GROUP)
                     .setGroupSummary(true)
                     .setOnlyAlertOnce(true)
-                    .setOngoing(true)
                     .setWhen(mostRecentlySentNotificationTime)
                     .setShowWhen(true);
 
