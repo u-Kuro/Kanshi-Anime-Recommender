@@ -87,10 +87,6 @@ public class MyWorker extends Worker {
         AnimeNotificationManager.createAnimeReleasesNotificationChannel(this.getApplicationContext());
         NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this.getApplicationContext());
 
-        notificationManager.cancel(AnimeNotificationManager.NOTIFICATION_OTHER_ANIME);
-        notificationManager.cancel(AnimeNotificationManager.NOTIFICATION_MY_ANIME);
-        notificationManager.cancel(AnimeNotificationManager.NOTIFICATION_ANIME_RELEASE);
-
         byte[] dummyImage = null;
         HashMap<String, AnimeNotification> myAnimeNotifications = new HashMap<>();
         HashMap<String, AnimeNotification> animeNotifications = new HashMap<>();
@@ -347,12 +343,15 @@ public class MyWorker extends Worker {
             boolean shouldNotify = lastSentNotificationTime == 0L || mostRecentlySentNotificationTime > lastSentNotificationTime;
             if (!isBooted || shouldNotify) {
                 if (animeReleaseNotificationSize > 0) {
+                    notificationManager.cancel(AnimeNotificationManager.NOTIFICATION_ANIME_RELEASE);
                     if (animeNotifications.size() > 0) {
+                        notificationManager.cancel(AnimeNotificationManager.NOTIFICATION_OTHER_ANIME);
                         int NOTIFICATION_OTHER_ANIME = 998;
                         Notification notificationOA = notificationOABuilder.build();
                         notificationManager.notify(NOTIFICATION_OTHER_ANIME, notificationOA);
                     }
                     if (myAnimeNotifications.size() > 0) {
+                        notificationManager.cancel(AnimeNotificationManager.NOTIFICATION_MY_ANIME);
                         int NOTIFICATION_MY_ANIME = 999;
                         Notification notificationMA = notificationMABuilder.build();
                         notificationManager.notify(NOTIFICATION_MY_ANIME, notificationMA);

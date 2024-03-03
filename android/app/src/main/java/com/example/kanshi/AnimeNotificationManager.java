@@ -254,10 +254,21 @@ public class AnimeNotificationManager {
     }
     @RequiresApi(api = Build.VERSION_CODES.P)
     public static void seeMoreReleasedAnimeNotification(Context context) {
+        context = context.getApplicationContext();
         if (ActivityCompat.checkSelfPermission(context.getApplicationContext(), Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) return;
 
+        if (allAnimeNotification.size() == 0) {
+            try {
+                @SuppressWarnings("unchecked") ConcurrentHashMap<String, AnimeNotification> $allAnimeNotification = (ConcurrentHashMap<String, AnimeNotification>) LocalPersistence.readObjectFromFile(context, "allAnimeNotification");
+                if ($allAnimeNotification != null && $allAnimeNotification.size() > 0) {
+                    allAnimeNotification.putAll($allAnimeNotification);
+                }
+            } catch (Exception ignored) {
+            }
+        }
+
         SharedPreferences prefs = context.getApplicationContext().getSharedPreferences("com.example.kanshi", Context.MODE_PRIVATE);
-        AnimeNotificationManager.createAnimeReleasesNotificationChannel(context.getApplicationContext());
+        createAnimeReleasesNotificationChannel(context.getApplicationContext());
         NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context.getApplicationContext());
 
         byte[] dummyImage = null;
@@ -271,7 +282,7 @@ public class AnimeNotificationManager {
         long mostRecentlySentMyAnimeNotificationTime = 0L;
         long mostRecentlySentOtherAnimeNotificationTime = 0L;
 
-        List<AnimeNotification> allAnimeNotificationValues = new ArrayList<>(AnimeNotificationManager.allAnimeNotification.values());
+        List<AnimeNotification> allAnimeNotificationValues = new ArrayList<>(allAnimeNotification.values());
 
         for (AnimeNotification anime : allAnimeNotificationValues) {
             if (anime.releaseDateMillis <= currentTimeInMillis) {
@@ -390,12 +401,12 @@ public class AnimeNotificationManager {
         pendingIntent.cancel();
         pendingIntent = PendingIntent.getActivity(context.getApplicationContext(), 0, intent, PendingIntent.FLAG_IMMUTABLE);
 
-        Notification.Builder notificationMABuilder = new Notification.Builder(context.getApplicationContext(), AnimeNotificationManager.ANIME_RELEASES_CHANNEL)
+        Notification.Builder notificationMABuilder = new Notification.Builder(context.getApplicationContext(), ANIME_RELEASES_CHANNEL)
                 .setSmallIcon(R.drawable.ic_stat_name)
                 .setContentTitle(notificationTitleMA)
                 .setStyle(styleMA)
                 .setContentIntent(pendingIntent)
-                .setGroup(AnimeNotificationManager.ANIME_RELEASE_NOTIFICATION_GROUP)
+                .setGroup(ANIME_RELEASE_NOTIFICATION_GROUP)
                 .setGroupAlertBehavior(Notification.GROUP_ALERT_SUMMARY)
                 .setNumber(0)
                 .setOnlyAlertOnce(true)
@@ -466,13 +477,13 @@ public class AnimeNotificationManager {
         }
         styleOA.setConversationTitle(notificationTitleOA);
 
-        Notification.Builder notificationOABuilder = new Notification.Builder(context.getApplicationContext(), AnimeNotificationManager.ANIME_RELEASES_CHANNEL)
+        Notification.Builder notificationOABuilder = new Notification.Builder(context.getApplicationContext(), ANIME_RELEASES_CHANNEL)
             .setContentTitle(notificationTitleOA)
             .setSmallIcon(R.drawable.ic_stat_name)
             .setStyle(styleOA)
             .setPriority(Notification.PRIORITY_LOW)
             .setContentIntent(pendingIntent)
-            .setGroup(AnimeNotificationManager.ANIME_RELEASE_NOTIFICATION_GROUP)
+            .setGroup(ANIME_RELEASE_NOTIFICATION_GROUP)
             .setGroupAlertBehavior(Notification.GROUP_ALERT_SUMMARY)
             .setNumber(0)
             .setOnlyAlertOnce(true)
@@ -487,13 +498,13 @@ public class AnimeNotificationManager {
             notificationTitle = notificationTitle + " +" + animeReleaseNotificationSize;
         }
 
-        Notification.Builder notificationSummaryBuilder = new Notification.Builder(context.getApplicationContext(), AnimeNotificationManager.ANIME_RELEASES_CHANNEL)
+        Notification.Builder notificationSummaryBuilder = new Notification.Builder(context.getApplicationContext(), ANIME_RELEASES_CHANNEL)
             .setContentTitle(notificationTitle)
             .setSmallIcon(R.drawable.ic_stat_name)
             .setStyle(styleOA)
             .setPriority(Notification.PRIORITY_DEFAULT)
             .setContentIntent(pendingIntent)
-            .setGroup(AnimeNotificationManager.ANIME_RELEASE_NOTIFICATION_GROUP)
+            .setGroup(ANIME_RELEASE_NOTIFICATION_GROUP)
             .setGroupSummary(true)
             .setOnlyAlertOnce(true)
             .setWhen(mostRecentlySentNotificationTime)
