@@ -308,7 +308,7 @@
 
     onMount(() => {
         selectedCategory.subscribe((val) => {
-            if (val && val === mainCategory) {
+            if (val === mainCategory && val) {
                 $selectedAnimeGridEl = animeGridEl;
             }
         });

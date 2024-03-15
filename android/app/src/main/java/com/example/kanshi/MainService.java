@@ -61,9 +61,9 @@ public class MainService extends Service {
     private final int SERVICE_NOTIFICATION_ID = 995;
     private final String STOP_SERVICE_ACTION = "STOP_MAIN_SERVICE";
     private final String SET_MAIN_SERVICE = "SET_MAIN_SERVICE";
-    final String uniqueKey = "Kanshi.Anime.Recommendations.Anilist.W~uPtWCq=vG$TR:Zl^#t<vdS]I~N70";
-    final String isBackgroundUpdateKey = uniqueKey+".isBackgroundUpdate";
-    final String visitedKey = uniqueKey+".visited";
+    private final String uniqueKey = "Kanshi.Anime.Recommendations.Anilist.W~uPtWCq=vG$TR:Zl^#t<vdS]I~N70";
+    private final String isBackgroundUpdateKey = uniqueKey+".isBackgroundUpdate";
+    private final String visitedKey = uniqueKey+".visited";
     public boolean lastBackgroundUpdateIsFinished = false;
     public boolean lastBackgroundUpdateTimeIsAlreadyUpdated = false;
     public boolean isAddingAnimeReleaseNotification = false;

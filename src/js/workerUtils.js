@@ -119,7 +119,9 @@ const animeLoader = (_data = {}) => {
                         val[categoryKey].sortBy = category?.sortBy;
                         return val
                     })
-                    selectedCategory.set(categoryKey)
+                    if (typeof get(selectedCategory) !== "string") {
+                        selectedCategory.set(categoryKey)
+                    }
                     if (isNew) {
                         animeLoaderWorker.postMessage({
                             loadMore: true,
@@ -172,7 +174,9 @@ const animeLoader = (_data = {}) => {
                         val[categoryKey].sortBy = category?.sortBy || val[categoryKey].sortBy;
                         return val
                     })
-                    selectedCategory.set(categoryKey)
+                    if (typeof get(selectedCategory) !== "string") {
+                        selectedCategory.set(categoryKey)
+                    }
                 }
                 animeLoaderPromises[data?.postId]?.resolve?.(data)
             }

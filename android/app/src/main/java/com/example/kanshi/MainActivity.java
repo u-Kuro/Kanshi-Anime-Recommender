@@ -88,7 +88,8 @@ import androidx.core.content.FileProvider;
 import androidx.core.splashscreen.SplashScreen;
 
 public class MainActivity extends AppCompatActivity {
-    public final int appID = 353;
+    public final int appID = 354;
+    private final boolean isOwner = false;
     public boolean keepAppRunningInBackground = false;
     public boolean webViewIsLoaded = false;
     public boolean permissionIsAsked = false;
@@ -100,9 +101,9 @@ public class MainActivity extends AppCompatActivity {
     public MediaWebView webView;
     private ProgressBar progressbar;
     private boolean pageLoaded = false;
-    final String uniqueKey = "Kanshi.Anime.Recommendations.Anilist.W~uPtWCq=vG$TR:Zl^#t<vdS]I~N70";
-    final String visitedKey = uniqueKey+".visited";
-
+    private final String uniqueKey = "Kanshi.Anime.Recommendations.Anilist.W~uPtWCq=vG$TR:Zl^#t<vdS]I~N70";
+    private final String visitedKey = uniqueKey+".visited";
+    private final String isOwnerKey = uniqueKey+".isOwner";
 
     private PowerManager.WakeLock wakeLock;
     public boolean shouldGoBack;
@@ -288,6 +289,9 @@ public class MainActivity extends AppCompatActivity {
                 }
                 if (visited) {
                     view.loadUrl("javascript:(()=>window['" + visitedKey + "']=true)();");
+                }
+                if (isOwner) {
+                    view.loadUrl("javascript:(()=>window['" + isOwnerKey + "']=true)();");
                 }
                 if (appSwitched) {
                     appSwitched = false;

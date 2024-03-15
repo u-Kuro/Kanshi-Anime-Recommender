@@ -69,7 +69,7 @@
         );
         if (elementToScroll instanceof Element) {
             let selectedElementWidth = getElementWidth(elementToScroll) || 26;
-            selectedElementIndicatorWidth = selectedElementWidth * 0.9;
+            selectedElementIndicatorWidth = selectedElementWidth;
 
             selectedElementIndicatorOffsetLeft =
                 elementToScroll?.offsetLeft +
@@ -318,7 +318,8 @@
 <div
     class="{'categories-nav' +
         (categoriesNavVisible ? '' : ' hide') +
-        (immediateCustomFilNavChange ? ' immediate' : '')}"
+        (immediateCustomFilNavChange ? ' immediate' : '') +
+        ($android ? ' android' : '')}"
 >
     <div
         class="prev-category"
@@ -445,9 +446,8 @@
         position: absolute;
         top: 0;
         left: 0;
-        height: 5px;
+        height: 2px;
         background-color: var(--fg-color);
-        border-radius: 0px 0px 1000px 1000px;
         width: var(--width);
         translate: var(--translateY);
         transition:
@@ -460,13 +460,19 @@
         justify-content: center;
         white-space: nowrap;
         background-color: transparent;
-        font-size: 13px;
+        font-size: 13.5px;
         font-weight: 500;
-        height: 100%;
+        height: 90%;
         scroll-snap-align: center;
         margin-bottom: auto;
         padding: 10px;
         z-index: 2 !important;
+        text-transform: uppercase;
+        letter-spacing: 0.2ch;
+    }
+    .categories-nav .category {
+        font-size: 12px !important;
+        letter-spacing: unset !important;
     }
     .category.selected {
         color: var(--fg-color) !important;

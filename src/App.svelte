@@ -1697,9 +1697,15 @@
 		if (val) {
 			await tick();
 			window?.scrollToSelectedCategory?.(val);
-			let categoryIdx = $categoriesKeys.findIndex(
-				(category) => category === val,
-			);
+			let categoryIdx =
+				$categoriesKeys?.findIndex?.((category) => category === val) ??
+				-1;
+			if (categoryIdx === -1) {
+				animeListPagerIsChanging = false;
+				scrollingCategories = isChangingSelection = null;
+				$selectedCategory = $categoriesKeys?.[0] || $selectedCategory;
+				return;
+			}
 			let offsetWidth = animeListPagerEl.offsetWidth;
 			animeListPagerEl.scrollLeft =
 				categoryIdx * offsetWidth +
