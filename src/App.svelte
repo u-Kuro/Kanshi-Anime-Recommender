@@ -1666,19 +1666,6 @@
 		});
 	});
 
-	window.resetCategory = async () => {
-		await tick();
-		if ($categoriesKeys == null) return;
-		window?.scrollToSelectedCategory?.($selectedCategory);
-		let categoryIdx = $categoriesKeys.findIndex(
-			(category) => category === $selectedCategory,
-		);
-		let offsetWidth = animeListPagerEl.offsetWidth;
-		animeListPagerEl.scrollLeft =
-			categoryIdx * offsetWidth +
-			Math.max(0, categoryIdx - 1) * animeListPagerPad;
-	};
-
 	let isFirstScroll = true;
 	let scrollingCategories = {},
 		isChangingSelection;
@@ -1756,9 +1743,22 @@
 			}
 		}
 	});
-	categoriesKeys.subscribe(async () => {
+	categoriesKeys.subscribe(async (val) => {
 		await tick();
-		window.resetCategory($selectedCategory);
+		if (
+			val instanceof Array &&
+			val.length > 0 &&
+			typeof $selectedCategory === "string"
+		) {
+			if (!val.includes($selectedCategory)) {
+				let newSelectedCategory = val[0];
+				if (typeof newSelectedCategory === "string") {
+					$selectedCategory = newSelectedCategory;
+				}
+			} else {
+				window?.scrollToSelectedCategory?.($selectedCategory);
+			}
+		}
 	});
 </script>
 

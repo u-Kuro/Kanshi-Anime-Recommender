@@ -227,8 +227,8 @@ public class AnimeNotificationManager {
         if (ActivityCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
             if (addedAnimeCount > 0 || updatedAnimeCount > 0) {
                 createRecentlyUpdatedAnimeNotificationChannel(context);
-                PackageManager pm = context.getPackageManager();
-                Intent intent = pm.getLaunchIntentForPackage("com.example.kanshi");
+                Intent intent = new Intent(context, MainActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
                 PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_IMMUTABLE);
                 pendingIntent.cancel();
                 pendingIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_IMMUTABLE);
@@ -395,8 +395,8 @@ public class AnimeNotificationManager {
         }
         styleMA.setConversationTitle(notificationTitleMA);
 
-        PackageManager pm = context.getApplicationContext().getPackageManager();
-        Intent intent = pm.getLaunchIntentForPackage("com.example.kanshi");
+        Intent intent = new Intent(context, AnimeReleaseActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT | Intent.FLAG_ACTIVITY_SINGLE_TOP);
         PendingIntent pendingIntent = PendingIntent.getActivity(context.getApplicationContext(), 0, intent, PendingIntent.FLAG_IMMUTABLE);
         pendingIntent.cancel();
         pendingIntent = PendingIntent.getActivity(context.getApplicationContext(), 0, intent, PendingIntent.FLAG_IMMUTABLE);

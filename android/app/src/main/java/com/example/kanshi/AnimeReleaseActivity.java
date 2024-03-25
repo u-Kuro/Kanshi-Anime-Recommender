@@ -119,7 +119,9 @@ public class AnimeReleaseActivity extends AppCompatActivity {
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
-                finish();
+                Intent i = new Intent(AnimeReleaseActivity.this, MainActivity.class);
+                i.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                startActivity(i);
                 overridePendingTransition(R.anim.none, R.anim.fade_out);
             }
         });

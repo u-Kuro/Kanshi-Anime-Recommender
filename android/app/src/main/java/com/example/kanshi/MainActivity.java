@@ -88,7 +88,7 @@ import androidx.core.content.FileProvider;
 import androidx.core.splashscreen.SplashScreen;
 
 public class MainActivity extends AppCompatActivity {
-    public final int appID = 354;
+    public final int appID = 355;
     private final boolean isOwner = false;
     public boolean keepAppRunningInBackground = false;
     public boolean webViewIsLoaded = false;
@@ -622,8 +622,8 @@ public class MainActivity extends AppCompatActivity {
                     }
                     dataEvictionChannelIsAdded = true;
                 }
-                PackageManager pm = MainActivity.this.getApplicationContext().getPackageManager();
-                Intent intent = pm.getLaunchIntentForPackage("com.example.kanshi");
+                Intent intent = new Intent(MainActivity.this, MainActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
                 PendingIntent pendingIntent = PendingIntent.getActivity(MainActivity.this.getApplicationContext(), 0, intent, PendingIntent.FLAG_IMMUTABLE);
                 pendingIntent.cancel();
                 pendingIntent = PendingIntent.getActivity(MainActivity.this.getApplicationContext(), 0, intent, PendingIntent.FLAG_IMMUTABLE);

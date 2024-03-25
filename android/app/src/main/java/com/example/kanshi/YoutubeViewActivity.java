@@ -96,6 +96,7 @@ public class YoutubeViewActivity extends AppCompatActivity {
         // Set click listeners for the custom ActionBar buttons
         ImageView close = findViewById(R.id.close_youtube);
         close.setOnClickListener(v -> {
+            webView.destroy();
             Intent i = new Intent(this, MainActivity.class);
             i.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
             startActivity(i);
@@ -124,7 +125,9 @@ public class YoutubeViewActivity extends AppCompatActivity {
                 } else {
                     isFinished = true;
                     webView.destroy();
-                    finish();
+                    Intent i = new Intent(YoutubeViewActivity.this, MainActivity.class);
+                    i.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                    startActivity(i);
                     overridePendingTransition(R.anim.none, R.anim.fade_out);
                 }
             }

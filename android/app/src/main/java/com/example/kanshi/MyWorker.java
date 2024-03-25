@@ -208,8 +208,8 @@ public class MyWorker extends Worker {
         }
         styleMA.setConversationTitle(notificationTitleMA);
 
-        PackageManager pm = this.getApplicationContext().getPackageManager();
-        Intent intent = pm.getLaunchIntentForPackage("com.example.kanshi");
+        Intent intent = new Intent(this.getApplicationContext(), AnimeReleaseActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT | Intent.FLAG_ACTIVITY_SINGLE_TOP);
         PendingIntent pendingIntent = PendingIntent.getActivity(this.getApplicationContext(), 0, intent, PendingIntent.FLAG_IMMUTABLE);
         pendingIntent.cancel();
         pendingIntent = PendingIntent.getActivity(this.getApplicationContext(), 0, intent, PendingIntent.FLAG_IMMUTABLE);

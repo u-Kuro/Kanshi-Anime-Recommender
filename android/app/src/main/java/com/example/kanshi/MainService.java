@@ -214,8 +214,8 @@ public class MainService extends Service {
             setIntent.setAction(SET_MAIN_SERVICE);
             PendingIntent setPendingIntent = PendingIntent.getService(context, 0, setIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE);
             // Open App
-            PackageManager pm = context.getPackageManager();
-            Intent intent = pm.getLaunchIntentForPackage("com.example.kanshi");
+            Intent intent = new Intent(context, MainActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
             PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_IMMUTABLE);
             Notification notification = new NotificationCompat.Builder(context, APP_IN_BACKGROUND_CHANNEL)
                     .setContentTitle("Kanshi.")
@@ -275,8 +275,8 @@ public class MainService extends Service {
         setIntent.setAction(SET_MAIN_SERVICE);
         PendingIntent setPendingIntent = PendingIntent.getService(context, 0, setIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE);
         // Open App
-        PackageManager pm = context.getPackageManager();
-        Intent intent = pm.getLaunchIntentForPackage("com.example.kanshi");
+        Intent intent = new Intent(context, MainActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
         PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_IMMUTABLE);
         Notification notification = new NotificationCompat.Builder(context, APP_IN_BACKGROUND_CHANNEL)
                 .setContentTitle(title.equals("") ?"Kanshi.":title)
@@ -365,8 +365,8 @@ public class MainService extends Service {
                     }
                     dataEvictionChannelIsAdded = true;
                 }
-                PackageManager pm = MainService.this.getApplicationContext().getPackageManager();
-                Intent intent = pm.getLaunchIntentForPackage("com.example.kanshi");
+                Intent intent = new Intent(MainService.this, MainActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
                 PendingIntent pendingIntent = PendingIntent.getActivity(MainService.this.getApplicationContext(), 0, intent, PendingIntent.FLAG_IMMUTABLE);
                 pendingIntent.cancel();
                 pendingIntent = PendingIntent.getActivity(MainService.this.getApplicationContext(), 0, intent, PendingIntent.FLAG_IMMUTABLE);
