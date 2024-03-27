@@ -115,7 +115,7 @@ public class SchedulesTabFragment extends Fragment {
                 }
                 if (anime.releaseDateMillis >= System.currentTimeMillis()) {
                     if (showCompleteAnime) {
-                        if (anime.releaseEpisode >= anime.maxEpisode) {
+                        if (anime.releaseEpisode >= anime.maxEpisode && anime.maxEpisode >= 0) {
                             anime.message = "Final: Episode " + anime.releaseEpisode;
                             animeSchedules.add(anime);
                         }
