@@ -78,8 +78,8 @@ public class ReleasedTabFragment extends Fragment {
     @RequiresApi(api = Build.VERSION_CODES.O)
     public void updateReleasedAnime() {
         AnimeReleaseActivity animeReleaseActivity = AnimeReleaseActivity.getInstanceActivity();
-        String selectedAnimeReleaseOption;
-        boolean showCompleteAnime;
+        final String selectedAnimeReleaseOption;
+        final boolean showCompleteAnime;
         if (animeReleaseActivity!=null) {
             showCompleteAnime = animeReleaseActivity.showCompleteAnime;
             selectedAnimeReleaseOption = animeReleaseActivity.animeReleaseSpinner.getSelectedItem().toString();
