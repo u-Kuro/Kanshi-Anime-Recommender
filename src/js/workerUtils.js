@@ -500,6 +500,26 @@ isProcessingList.subscribe((val) => {
     }
 })
 
+let newAddedAnimeCount, newUpdatedAnimeCount
+function notifyUpdatedAnimeNotification() {
+    if (get(android) && window?.[".androidDataIsEvicted"] !== true) {
+        if (typeof newAddedAnimeCount === "number"
+            && !isNaN(newAddedAnimeCount)
+            && typeof newUpdatedAnimeCount === "number"
+            && !isNaN(newUpdatedAnimeCount)
+            && (
+                newAddedAnimeCount > 0 ||
+                newUpdatedAnimeCount > 0
+            )
+        ) {
+            try {
+                JSBridge?.showNewUpdatedAnimeNotification?.(newAddedAnimeCount, newUpdatedAnimeCount)
+            } catch (e) { }
+            newAddedAnimeCount = newUpdatedAnimeCount = undefined
+        }
+    }
+}
+window.notifyUpdatedAnimeNotification = notifyUpdatedAnimeNotification
 const requestAnimeEntries = (_data = {}) => {
     return new Promise((resolve, reject) => {
         if (isRequestingAnimeEntries) {
@@ -509,6 +529,7 @@ const requestAnimeEntries = (_data = {}) => {
         if (requestAnimeEntriesTerminateTimeout) clearTimeout(requestAnimeEntriesTerminateTimeout)
         requestAnimeEntriesWorker?.terminate?.()
         requestAnimeEntriesWorker = null
+        notifyUpdatedAnimeNotification()
         if (!get(initData)) {
             if (isGettingNewEntries
                 || isCurrentlyImporting
@@ -525,6 +546,7 @@ const requestAnimeEntries = (_data = {}) => {
                 if (requestAnimeEntriesTerminateTimeout) clearTimeout(requestAnimeEntriesTerminateTimeout)
                 requestAnimeEntriesWorker?.terminate?.()
                 requestAnimeEntriesWorker = null
+                notifyUpdatedAnimeNotification()
                 requestAnimeEntriesWorker = new Worker(url)
                 _data.windowHREF = windowHREF || window?.location?.href
                 requestAnimeEntriesWorker.postMessage(_data)
@@ -549,6 +571,7 @@ const requestAnimeEntries = (_data = {}) => {
                         isRequestingAnimeEntries = false
                         requestAnimeEntriesTerminateTimeout = setTimeout(() => {
                             requestAnimeEntriesWorker?.terminate?.();
+                            notifyUpdatedAnimeNotification()
                         }, terminateDelay)
                         dataStatus.set(null)
                         progress.set(100)
@@ -564,24 +587,25 @@ const requestAnimeEntries = (_data = {}) => {
                     } else if (hasOwnProp?.call?.(data, "notifyAddedEntries")) {
                         if (get(android) && window?.[".androidDataIsEvicted"] !== true) {
                             try {
-                                let newAddedAnimeCount = data?.notifyAddedEntries
-                                if (typeof newAddedAnimeCount !== "number" || isNaN(newAddedAnimeCount) || newAddedAnimeCount < 0) {
-                                    newAddedAnimeCount = 0
+                                let addedAnimeCount = data?.notifyAddedEntries
+                                if (typeof addedAnimeCount !== "number" || isNaN(addedAnimeCount) || addedAnimeCount < 0) {
+                                    addedAnimeCount = 0
                                 }
-                                let newEditedAnimeCount = data?.notifyEditedEntries
-                                if (typeof newEditedAnimeCount !== "number" || isNaN(newEditedAnimeCount) || newEditedAnimeCount < 0) {
-                                    newEditedAnimeCount = 0
+                                let updatedAnimeCount = data?.notifyEditedEntries
+                                if (typeof updatedAnimeCount !== "number" || isNaN(updatedAnimeCount) || updatedAnimeCount < 0) {
+                                    updatedAnimeCount = 0
                                 }
-                                if (typeof newAddedAnimeCount === "number"
-                                    && !isNaN(newAddedAnimeCount)
-                                    && typeof newEditedAnimeCount === "number"
-                                    && !isNaN(newEditedAnimeCount)
+                                if (typeof addedAnimeCount === "number"
+                                    && !isNaN(addedAnimeCount)
+                                    && typeof updatedAnimeCount === "number"
+                                    && !isNaN(updatedAnimeCount)
                                     && (
-                                        newAddedAnimeCount > 0 ||
-                                        newEditedAnimeCount > 0
+                                        addedAnimeCount > 0 ||
+                                        updatedAnimeCount > 0
                                     )
                                 ) {
-                                    JSBridge?.showNewUpdatedAnimeNotification?.(newAddedAnimeCount, newEditedAnimeCount)
+                                    newAddedAnimeCount = addedAnimeCount
+                                    newUpdatedAnimeCount = updatedAnimeCount
                                 }
                             } catch (e) { }
                         }
@@ -609,6 +633,7 @@ const requestAnimeEntries = (_data = {}) => {
                         isRequestingAnimeEntries = false
                         requestAnimeEntriesTerminateTimeout = setTimeout(() => {
                             requestAnimeEntriesWorker?.terminate?.();
+                            notifyUpdatedAnimeNotification()
                         }, terminateDelay)
                         dataStatus.set(null)
                         progress.set(100)
@@ -1256,6 +1281,7 @@ const getFilterOptions = (_data) => {
 function stopConflictingWorkers(blocker) {
     progress.set(0)
     requestAnimeEntriesWorker?.terminate?.()
+    notifyUpdatedAnimeNotification()
     isRequestingAnimeEntries = false
     isGettingNewEntries = blocker?.isGettingNewEntries ?? false
     requestUserEntriesWorker?.terminate?.()

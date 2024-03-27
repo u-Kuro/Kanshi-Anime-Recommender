@@ -88,7 +88,7 @@ import androidx.core.content.FileProvider;
 import androidx.core.splashscreen.SplashScreen;
 
 public class MainActivity extends AppCompatActivity {
-    public final int appID = 355;
+    public final int appID = 356;
     private final boolean isOwner = false;
     public boolean keepAppRunningInBackground = false;
     public boolean webViewIsLoaded = false;
@@ -354,6 +354,7 @@ public class MainActivity extends AppCompatActivity {
                 ) {
                     Intent intent = new Intent(MainActivity.this, YoutubeViewActivity.class);
                     intent.putExtra("url", url);
+                    intent.putExtra("fromMainActivity", true);
                     startActivity(intent);
                     overridePendingTransition(R.anim.fade_in, R.anim.remove);
                 } else {
@@ -565,6 +566,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         isInApp = false;
+        webView.post(() -> webView.loadUrl("javascript:window?.notifyUpdatedAnimeNotification?.()"));
         setBackgroundUpdates();
         super.onDestroy();
         wakeLock.release();

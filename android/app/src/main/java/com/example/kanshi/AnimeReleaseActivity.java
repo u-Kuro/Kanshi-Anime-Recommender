@@ -30,6 +30,7 @@ import java.lang.ref.WeakReference;
 @RequiresApi(api = Build.VERSION_CODES.N)
 public class AnimeReleaseActivity extends AppCompatActivity {
     public static WeakReference<AnimeReleaseActivity> weakActivity;
+    boolean showCompleteAnime = false;
     Spinner animeReleaseSpinner;
     SharedPreferences prefs;
     SharedPreferences.Editor prefsEdit;
@@ -53,10 +54,10 @@ public class AnimeReleaseActivity extends AppCompatActivity {
                 TextView textView = ((TextView) view);
                 textView.setTextSize(22);
                 textView.setPadding(0,0,0,0);
-                SchedulesTabFragment schedulesTabFragment = SchedulesTabFragment.getInstanceActivity();
                 String selectedAnimeReleaseOption = adapterView.getItemAtPosition(i).toString();
                 prefsEdit.putString("animeReleaseOption", selectedAnimeReleaseOption).apply();
 
+                SchedulesTabFragment schedulesTabFragment = SchedulesTabFragment.getInstanceActivity();
                 if (schedulesTabFragment!=null) {
                     schedulesTabFragment.updateScheduledAnime();
                 }
@@ -67,6 +68,34 @@ public class AnimeReleaseActivity extends AppCompatActivity {
             }
             @Override
             public void onNothingSelected(AdapterView<?> adapterView) {}
+        });
+
+        showCompleteAnime = prefs.getBoolean("showCompleteAnime", false);
+        ImageView completed_anime_switch = findViewById(R.id.completed_anime_switch);
+        if (showCompleteAnime) {
+            completed_anime_switch.setImageResource(R.drawable.done_white);
+        } else {
+            completed_anime_switch.setImageResource(R.drawable.not_done_white);
+        }
+        completed_anime_switch.setOnClickListener(view -> {
+            showCompleteAnime = !showCompleteAnime;
+            if (showCompleteAnime) {
+                completed_anime_switch.setImageResource(R.drawable.done_white);
+            } else {
+                completed_anime_switch.setImageResource(R.drawable.not_done_white);
+            }
+            prefsEdit.putBoolean("showCompleteAnime", showCompleteAnime).apply();
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                SchedulesTabFragment schedulesTabFragment = SchedulesTabFragment.getInstanceActivity();
+                if (schedulesTabFragment != null) {
+                    schedulesTabFragment.updateScheduledAnime();
+                }
+                ReleasedTabFragment releasedTabFragment = ReleasedTabFragment.getInstanceActivity();
+                if (releasedTabFragment != null) {
+                    releasedTabFragment.updateReleasedAnime();
+                }
+            }
         });
 
         String[] animeReleaseOption = {"Updates", "My List", "Others"};

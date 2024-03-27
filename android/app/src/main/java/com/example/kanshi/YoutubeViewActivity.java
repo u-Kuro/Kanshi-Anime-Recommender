@@ -52,6 +52,7 @@ public class YoutubeViewActivity extends AppCompatActivity {
     private boolean webViewIsLoaded = false;
     private ValueCallback<Uri[]> mUploadMessage;
     private boolean isFinished = false;
+    private boolean isInitialYTVActivity = false;
     final ActivityResultLauncher<Intent> chooseImportFile =
             registerForActivityResult(
                     new ActivityResultContracts.StartActivityForResult(),
@@ -84,6 +85,7 @@ public class YoutubeViewActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         String passedUrl = getIntent().getStringExtra("url");
+        isInitialYTVActivity = getIntent().getBooleanExtra("fromMainActivity", false);
         // Show status bar
         getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
         getWindow().getDecorView().setBackgroundColor(Color.BLACK);
@@ -125,9 +127,13 @@ public class YoutubeViewActivity extends AppCompatActivity {
                 } else {
                     isFinished = true;
                     webView.destroy();
-                    Intent i = new Intent(YoutubeViewActivity.this, MainActivity.class);
-                    i.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-                    startActivity(i);
+                    if (isInitialYTVActivity) {
+                        Intent i = new Intent(YoutubeViewActivity.this, MainActivity.class);
+                        i.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                        startActivity(i);
+                    } else {
+                        finish();
+                    }
                     overridePendingTransition(R.anim.none, R.anim.fade_out);
                 }
             }

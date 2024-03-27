@@ -79,9 +79,12 @@ public class ReleasedTabFragment extends Fragment {
     public void updateReleasedAnime() {
         AnimeReleaseActivity animeReleaseActivity = AnimeReleaseActivity.getInstanceActivity();
         String selectedAnimeReleaseOption;
+        boolean showCompleteAnime;
         if (animeReleaseActivity!=null) {
+            showCompleteAnime = animeReleaseActivity.showCompleteAnime;
             selectedAnimeReleaseOption = animeReleaseActivity.animeReleaseSpinner.getSelectedItem().toString();
         } else {
+            showCompleteAnime = false;
             selectedAnimeReleaseOption = "Updates";
         }
 
@@ -111,14 +114,21 @@ public class ReleasedTabFragment extends Fragment {
                     }
                 }
                 if (anime.releaseDateMillis <= System.currentTimeMillis()) {
-                    if (anime.maxEpisode < 0) { // No Given Max Episodes
-                        anime.message = "Episode " + anime.releaseEpisode;
-                    } else if (anime.releaseEpisode >= anime.maxEpisode) {
-                        anime.message = "Finished Airing: Episode " + anime.releaseEpisode;
+                    if (showCompleteAnime) {
+                        if (anime.releaseEpisode >= anime.maxEpisode) {
+                            anime.message = "Finished Airing: Episode " + anime.releaseEpisode;
+                            animeReleased.add(anime);
+                        }
                     } else {
-                        anime.message = "Episode " + anime.releaseEpisode + " / " + anime.maxEpisode;
+                        if (anime.maxEpisode < 0) { // No Given Max Episodes
+                            anime.message = "Episode " + anime.releaseEpisode;
+                        } else if (anime.releaseEpisode >= anime.maxEpisode) {
+                            anime.message = "Finished Airing: Episode " + anime.releaseEpisode;
+                        } else {
+                            anime.message = "Episode " + anime.releaseEpisode + " / " + anime.maxEpisode;
+                        }
+                        animeReleased.add(anime);
                     }
-                    animeReleased.add(anime);
                 }
             }
 

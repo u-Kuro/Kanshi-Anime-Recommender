@@ -80,9 +80,12 @@ public class SchedulesTabFragment extends Fragment {
     public void updateScheduledAnime() {
         AnimeReleaseActivity animeReleaseActivity = AnimeReleaseActivity.getInstanceActivity();
         String selectedAnimeReleaseOption;
+        boolean showCompleteAnime;
         if (animeReleaseActivity!=null) {
+            showCompleteAnime = animeReleaseActivity.showCompleteAnime;
             selectedAnimeReleaseOption = animeReleaseActivity.animeReleaseSpinner.getSelectedItem().toString();
         } else {
+            showCompleteAnime = false;
             selectedAnimeReleaseOption = "Updates";
         }
         if (updateScheduledAnimeFuture != null && !updateScheduledAnimeFuture.isCancelled()) {
@@ -111,14 +114,21 @@ public class SchedulesTabFragment extends Fragment {
                     }
                 }
                 if (anime.releaseDateMillis >= System.currentTimeMillis()) {
-                    if (anime.maxEpisode < 0) { // No Given Max Episodes
-                        anime.message = "Episode " + anime.releaseEpisode;
-                    } else if (anime.releaseEpisode >= anime.maxEpisode) {
-                        anime.message = "Final: Episode " + anime.releaseEpisode;
+                    if (showCompleteAnime) {
+                        if (anime.releaseEpisode >= anime.maxEpisode) {
+                            anime.message = "Final: Episode " + anime.releaseEpisode;
+                            animeSchedules.add(anime);
+                        }
                     } else {
-                        anime.message = "Episode " + anime.releaseEpisode + " / " + anime.maxEpisode;
+                        if (anime.maxEpisode < 0) { // No Given Max Episodes
+                            anime.message = "Episode " + anime.releaseEpisode;
+                        } else if (anime.releaseEpisode >= anime.maxEpisode) {
+                            anime.message = "Final: Episode " + anime.releaseEpisode;
+                        } else {
+                            anime.message = "Episode " + anime.releaseEpisode + " / " + anime.maxEpisode;
+                        }
+                        animeSchedules.add(anime);
                     }
-                    animeSchedules.add(anime);
                 }
             }
 
