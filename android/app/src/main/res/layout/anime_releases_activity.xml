@@ -79,7 +79,9 @@
         app:tabSelectedTextColor="@color/white"
         app:tabTextColor="@color/faded_white"
         app:tabIndicatorColor="@color/white"
-        app:tabIndicatorFullWidth="false">
+        app:tabIndicatorFullWidth="false"
+        app:tabMaxWidth="0dp"
+        app:tabGravity="fill">
 
         <com.google.android.material.tabs.TabItem
             android:layout_width="wrap_content"

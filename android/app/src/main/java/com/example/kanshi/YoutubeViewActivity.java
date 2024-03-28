@@ -1,7 +1,5 @@
 package com.example.kanshi;
 
-import static com.example.kanshi.Utils.setMargins;
-
 import android.animation.ObjectAnimator;
 import android.annotation.SuppressLint;
 import android.content.ClipData;
@@ -40,9 +38,7 @@ import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
 import androidx.browser.customtabs.CustomTabColorSchemeParams;
 import androidx.browser.customtabs.CustomTabsIntent;
 
@@ -91,9 +87,6 @@ public class YoutubeViewActivity extends AppCompatActivity {
         getWindow().getDecorView().setBackgroundColor(Color.BLACK);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_web);
-
-        Toolbar toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
 
         // Set click listeners for the custom ActionBar buttons
         ImageView close = findViewById(R.id.close_youtube);
@@ -151,11 +144,6 @@ public class YoutubeViewActivity extends AppCompatActivity {
         ProgressBar progressbar = findViewById(R.id.progressbar);
         progressbar.setMax((int) Math.pow(10,6));
         if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {
-            ActionBar actionBar = getSupportActionBar();
-            if (actionBar!=null) {
-                actionBar.hide();
-                setMargins(webView, 0, 0, 0, 0);
-            }
             getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
         }
         webView.setWebChromeClient(new WebChromeClient() {
@@ -450,18 +438,9 @@ public class YoutubeViewActivity extends AppCompatActivity {
     @Override
     public void onConfigurationChanged(@NonNull Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
-        ActionBar actionBar = getSupportActionBar();
         if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-            if (actionBar!=null) {
-                actionBar.hide();
-                setMargins(webView, 0, 0, 0, 0);
-            }
             getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
         } else {
-            if (actionBar!=null) {
-                actionBar.show();
-                setMargins(webView, 0, actionBar.getHeight(), 0, 0);
-            }
             getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
         }
     }

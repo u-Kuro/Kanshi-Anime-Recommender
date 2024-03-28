@@ -59,21 +59,21 @@
                             android:id="@+id/site"
                             android:layout_width="wrap_content"
                             android:layout_height="match_parent"
-                            android:gravity="center"
                             android:layout_centerInParent="true"
-                            android:layout_toStartOf="@+id/launchURL"
-                            android:layout_toEndOf="@+id/close_youtube"
                             android:layout_marginStart="30dp"
                             android:layout_marginEnd="30dp"
-                            android:textAlignment="center"
+                            android:layout_toStartOf="@+id/launchURL"
+                            android:layout_toEndOf="@+id/close_youtube"
                             android:ellipsize="end"
+                            android:gravity="center"
                             android:longClickable="true"
+                            android:paddingBottom="2sp"
                             android:singleLine="true"
+                            android:text="@string/youtube"
+                            android:textAlignment="center"
                             android:textColor="@android:color/white"
                             android:textSize="19sp"
-                            android:paddingBottom="2sp"
-                            android:textStyle="bold"
-                            android:text="@string/youtube" />
+                            android:textStyle="bold" />
 
                         <ImageView
                             android:id="@+id/launchURL"

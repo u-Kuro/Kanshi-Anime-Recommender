@@ -3,10 +3,12 @@ package com.example.kanshi;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
@@ -15,6 +17,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.OnBackPressedCallback;
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
@@ -34,6 +37,7 @@ public class AnimeReleaseActivity extends AppCompatActivity {
     Spinner animeReleaseSpinner;
     SharedPreferences prefs;
     SharedPreferences.Editor prefsEdit;
+    ViewPager2 viewPager;
     Toast currentToast;
 
     @Override
@@ -45,6 +49,10 @@ public class AnimeReleaseActivity extends AppCompatActivity {
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.anime_releases_activity);
+
+        if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        }
 
         animeReleaseSpinner = findViewById(R.id.anime_release_spinner);
         animeReleaseSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
@@ -113,7 +121,7 @@ public class AnimeReleaseActivity extends AppCompatActivity {
         }
 
         TabLayout tabLayout = findViewById(R.id.tab_layout);
-        ViewPager2 viewPager = findViewById(R.id.view_pager);
+        viewPager = findViewById(R.id.view_pager);
 
         FragmentStateAdapter adminViewAdapter = new AnimeReleaseViewAdapter(this);
 
@@ -188,6 +196,19 @@ public class AnimeReleaseActivity extends AppCompatActivity {
             mainActivity.setBackgroundUpdates();
         }
         super.onPause();
+    }
+
+    @Override
+    public void onConfigurationChanged(@NonNull Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        } else {
+            getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        }
+        viewPager.beginFakeDrag();
+        viewPager.fakeDragBy(1);
+        viewPager.endFakeDrag();
     }
 
     public void openAnimeInAniList(String url) {
