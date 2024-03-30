@@ -18,6 +18,19 @@ import android.provider.MediaStore;
 
 import androidx.annotation.RequiresApi;
 
+import java.io.File;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+
 public class Utils {
     public static String getPath(Context context, Uri uri) {
         // DocumentProvider
@@ -120,6 +133,93 @@ public class Utils {
      */
     public static boolean isGooglePhotosUri(Uri uri) {
         return "com.google.android.apps.photos.content".equals(uri.getAuthority());
+    }
+
+    // Manual Clean for the following reason:
+    // IndexedDB saves Set of Blob in device storage to be used in origin.
+    // It has a Storage Leak that creates a new Set of Blob,
+    // While leaving previous Sets of Blob unmanaged and not being deleted.
+    private static final ExecutorService cleanIndexedDBFilesExecutorService = Executors.newFixedThreadPool(1);
+    private static Future<?> cleanIndexedDBFilesFuture;
+    private static ConcurrentHashMap<String, List<File>> groupedModifiedDate = new ConcurrentHashMap<>();
+    private static final SimpleDateFormat dateFormat = new SimpleDateFormat("M/d/yyyy", Locale.US);
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    public static void cleanIndexedDBFiles(Context context) {
+        if (cleanIndexedDBFilesFuture != null && !cleanIndexedDBFilesFuture.isCancelled()) {
+            cleanIndexedDBFilesFuture.cancel(true);
+        }
+        cleanIndexedDBFilesFuture = cleanIndexedDBFilesExecutorService.submit(() -> {
+            groupedModifiedDate = new ConcurrentHashMap<>();
+
+            addIndexedDBFiles(new File(context.getApplicationContext().getDataDir(), "app_webview/Default/IndexedDB/https_u-kuro.github.io_0.indexeddb.blob/1").listFiles());
+
+            List<Map.Entry<String, List<File>>> sortedModifiedDateEntries = new ArrayList<>(groupedModifiedDate.entrySet());
+            Collections.sort(sortedModifiedDateEntries, (entry1, entry2) -> {
+                try {
+                    Date date1 = dateFormat.parse(entry1.getKey());
+                    Date date2 = dateFormat.parse(entry2.getKey());
+                    if (date1 == null && date2 == null) return 0;
+                    if (date1 == null) return 1;
+                    if (date2 == null) return -1;
+                    return date1.compareTo(date2);
+                } catch (Exception e) {
+                    return 0;
+                }
+            });
+            // Include a 3 Day Allowance
+            final int allowedDays = 3;
+            // Reason/Example:
+            // Worst Case Scenario (Sets of Blob are saved/separated in 2 different days):
+            // Let: ...Day[...Set of Blob] = Day1[SetA] - 2[A, B] - 3[B, C] - 4[C]
+            // If Set C is still an incomplete Set then Set B should exist as it may still be used by chrome.
+            // In this case Set B is separated into Days 2 and 3.
+            // To save Set B, Days 2 and 3 should exist.
+            // Thus, 3 day Allowance allows Days 4, 3, and 2 to exist.
+            // 1) Days 4 and 3 for incomplete Set C (May be used by Chrome)
+            // 2) Days 3 and 2 for Set B (May be used by Chrome too)
+            // for (int i = 0; i < sortedModifiedDateEntries.size(); i++) {
+            //     Map.Entry<String, List<File>> currentEntry = sortedModifiedDateEntries.get(i);
+            //     List<File> filesToRemove = currentEntry.getValue();
+            //     for (File fileToRemove : filesToRemove) {
+            //         System.out.println("Kuro-Kanshi "+currentEntry.getKey()+" | "+Integer.parseInt(String.valueOf(fileToRemove.length()/(1024*1024)))+"MB | "+fileToRemove.getAbsolutePath());
+            //     }
+            // }
+            for (int i = 0; i < sortedModifiedDateEntries.size() - allowedDays; i++) {
+                Map.Entry<String, List<File>> currentEntry = sortedModifiedDateEntries.get(i);
+                List<File> filesToRemove = currentEntry.getValue();
+                for (File fileToRemove : filesToRemove) {
+                    //noinspection ResultOfMethodCallIgnored
+                    fileToRemove.delete();
+                }
+            }
+            groupedModifiedDate = null;
+        });
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    public static void addIndexedDBFiles(File[] files) {
+        if (files!=null) {
+            for (File file:files) {
+                if (file.isFile()) {
+                    Date modifiedDate = new Date(file.lastModified());
+                    String modifiedDateKey = dateFormat.format(modifiedDate);
+                    if (groupedModifiedDate.containsKey(modifiedDateKey)) {
+                        List<File> modifiedFiles = groupedModifiedDate.get(modifiedDateKey);
+                        if (modifiedFiles == null) {
+                            modifiedFiles = new ArrayList<>();
+                        }
+                        modifiedFiles.add(file);
+                        groupedModifiedDate.put(modifiedDateKey, modifiedFiles);
+                    } else {
+                        List<File> newModifiedFiles = new ArrayList<>();
+                        groupedModifiedDate.put(modifiedDateKey, newModifiedFiles);
+                    }
+                } else if (file.isDirectory()) {
+                    File[] newFiles = file.listFiles();
+                    addIndexedDBFiles(newFiles);
+                }
+            }
+        }
     }
 
     @RequiresApi(api = Build.VERSION_CODES.M)

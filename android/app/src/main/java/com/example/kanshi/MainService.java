@@ -243,6 +243,7 @@ public class MainService extends Service {
         appSwitched = true;
         pageLoaded = false;
         webView.loadUrl("https://u-kuro.github.io/Kanshi-Anime-Recommender/");
+        Utils.cleanIndexedDBFiles(this.getApplicationContext());
     }
 
     @Override

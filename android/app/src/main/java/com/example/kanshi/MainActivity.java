@@ -88,7 +88,7 @@ import androidx.core.content.FileProvider;
 import androidx.core.splashscreen.SplashScreen;
 
 public class MainActivity extends AppCompatActivity {
-    public final int appID = 358;
+    public final int appID = 359;
     private final boolean isOwner = false;
     public boolean keepAppRunningInBackground = false;
     public boolean webViewIsLoaded = false;
@@ -258,7 +258,7 @@ public class MainActivity extends AppCompatActivity {
         webSettings.setJavaScriptCanOpenWindowsAutomatically(true);
         webSettings.setAllowFileAccessFromFileURLs(true);
         webSettings.setBlockNetworkLoads(false);
-        webSettings.setCacheMode(WebSettings.LOAD_DEFAULT);
+        webSettings.setCacheMode(WebSettings.LOAD_CACHE_ELSE_NETWORK);
         webSettings.setAllowUniversalAccessFromFileURLs(true);
         webSettings.setMediaPlaybackRequiresUserGesture(false);
         webSettings.setDefaultFontSize(16);
@@ -491,6 +491,7 @@ public class MainActivity extends AppCompatActivity {
             webSettings.setDisplayZoomControls(false);
             webSettings.setSupportZoom(false);
         }), 3000);
+        Utils.cleanIndexedDBFiles(this.getApplicationContext());
     }
 
     public static MainActivity getInstanceActivity() {
