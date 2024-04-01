@@ -328,6 +328,11 @@
 					if ($android && window[$isBackgroundUpdateKey] === true) {
 						try {
 							let dataIsUpdated;
+							try {
+								JSBridge?.setShouldProcessRecommendation?.(
+									true,
+								);
+							} catch (e) {}
 							requestUserEntries().finally(() => {
 								dataIsUpdated =
 									window.KanshiBackgroundShouldProcessRecommendation;
@@ -337,11 +342,6 @@
 										window.KanshiBackgroundShouldProcessRecommendation;
 									new Promise(async (resolve) => {
 										if (dataIsUpdated) {
-											try {
-												JSBridge?.setShouldProcessRecommendation?.(
-													true,
-												);
-											} catch (e) {}
 											processRecommendedAnimeList()
 												.then(() => {
 													try {
@@ -353,6 +353,11 @@
 												})
 												.catch(resolve);
 										} else {
+											try {
+												JSBridge?.setShouldProcessRecommendation?.(
+													false,
+												);
+											} catch (e) {}
 											resolve();
 										}
 									}).then((recommendationListIsProcessed) => {
@@ -371,6 +376,11 @@
 													})
 													.finally(resolve);
 											} else {
+												try {
+													JSBridge?.setShouldLoadAnime?.(
+														false,
+													);
+												} catch (e) {}
 												resolve();
 											}
 										}).finally(async () => {
@@ -1160,7 +1170,7 @@
 			document.documentElement.style.minHeight = "";
 		} else {
 			document.documentElement.style.minHeight =
-				screen.height + 57 + "px";
+				screen.height + 65 + "px";
 		}
 	}
 

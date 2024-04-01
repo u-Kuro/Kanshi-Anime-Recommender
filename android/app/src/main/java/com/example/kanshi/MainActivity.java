@@ -88,7 +88,7 @@ import androidx.core.content.FileProvider;
 import androidx.core.splashscreen.SplashScreen;
 
 public class MainActivity extends AppCompatActivity {
-    public final int appID = 359;
+    public final int appID = 360;
     private final boolean isOwner = false;
     public boolean keepAppRunningInBackground = false;
     public boolean webViewIsLoaded = false;

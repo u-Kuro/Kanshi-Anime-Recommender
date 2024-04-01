@@ -243,8 +243,11 @@
 
         isWholeGridSeen =
             isFullViewed &&
-            windowHeight >
-                animeGridEl?.getBoundingClientRect?.()?.bottom + 10 + 57;
+            Math.abs(
+                document.documentElement.scrollHeight -
+                    document.documentElement.scrollTop -
+                    document.documentElement.clientHeight,
+            ) <= 3;
 
         clearTimeout(isOnVeryLeftOfAnimeGridTimeout);
         if (isFullViewed && animeGridEl?.scrollLeft < 1) {
@@ -265,8 +268,11 @@
     window.addEventListener("scroll", () => {
         isWholeGridSeen =
             isFullViewed &&
-            windowHeight >
-                animeGridEl?.getBoundingClientRect?.()?.bottom + 10 + 57;
+            Math.abs(
+                document.documentElement.scrollHeight -
+                    document.documentElement.scrollTop -
+                    document.documentElement.clientHeight,
+            ) <= 3;
     });
 
     let filterOptiChangeTimeout;
@@ -275,8 +281,11 @@
         filterOptiChangeTimeout = setTimeout(() => {
             isWholeGridSeen =
                 isFullViewed &&
-                windowHeight >
-                    animeGridEl?.getBoundingClientRect?.()?.bottom + 10 + 57;
+                Math.abs(
+                    document.documentElement.scrollHeight -
+                        document.documentElement.scrollTop -
+                        document.documentElement.clientHeight,
+                ) <= 3;
         }, 17);
     });
 
@@ -680,8 +689,8 @@
 
     main.fullView {
         padding: 12px 0;
-        margin-bottom: 57px;
-        height: max(calc(var(--anime-grid-height) - 260px), 210px) !important;
+        margin-bottom: 65px;
+        height: max(calc(var(--anime-grid-height) - 230px), 248px) !important;
         min-height: unset !important;
         overflow: hidden !important;
     }
@@ -783,7 +792,7 @@
         flex-direction: column;
         justify-content: space-evenly;
         align-content: flex-start;
-        height: max(calc(var(--anime-grid-height) - 260px), 210px);
+        height: max(calc(var(--anime-grid-height) - 250px), 236px) !important;
         overflow-y: hidden !important;
         overflow-x: auto !important;
     }
