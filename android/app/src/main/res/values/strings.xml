@@ -10,4 +10,9 @@
     <string name="released">Released</string>
     <string name="schedules">Schedules</string>
     <string name="completed_anime">Completed Anime</string>
+    <string name="import_released_anime">Import Released Anime</string>
+    <string name="released_anime_auto_export">Released Anime Auto Export</string>
+    <string name="enabled_automatic_back_up">Automatic Back-up: Enabled</string>
+    <string name="disabled_automatic_back_up">Automatic Back-up: Disabled</string>
+    <string name="backup_released_anime">Backup Released Anime</string>
 </resources>

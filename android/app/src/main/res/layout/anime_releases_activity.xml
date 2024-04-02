@@ -46,6 +46,16 @@
                 <ImageView
                     app:layout_constraintTop_toTopOf="parent"
                     app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintRight_toLeftOf="@id/completed_anime_switch"
+                    android:id="@+id/backup_anime_releases"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:padding="12dp"
+                    android:src="@drawable/import_export_white"
+                    android:contentDescription="@string/backup_released_anime" />
+                <ImageView
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintRight_toLeftOf="@id/close_anime_release"
                     android:id="@+id/completed_anime_switch"
                     android:layout_width="wrap_content"

@@ -2,6 +2,7 @@ package com.example.kanshi;
 
 import android.content.ContentUris;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -19,6 +20,9 @@ import android.provider.MediaStore;
 import androidx.annotation.RequiresApi;
 
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -194,6 +198,54 @@ public class Utils {
             }
             groupedModifiedDate = null;
         });
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.R)
+    public static void exportReleasedAnime(Context context) {
+        SharedPreferences prefs = context.getApplicationContext().getSharedPreferences("com.example.kanshi", Context.MODE_PRIVATE);
+        boolean autoExportReleasedAnime = prefs.getBoolean("autoExportReleasedAnime", false);
+        if (!autoExportReleasedAnime) return;
+        String exportPath = prefs.getString("savedExportPath", "");
+        if (!exportPath.equals("") && Environment.isExternalStorageManager()) {
+            File exportDirectory = new File(exportPath);
+            if (exportDirectory.isDirectory()) {
+                String directoryPath = exportPath + File.separator;
+                File directory = new File(directoryPath);
+                boolean dirIsCreated;
+                if (!directory.exists()) {
+                    dirIsCreated = directory.mkdirs();
+                } else {
+                    dirIsCreated = true;
+                }
+                if (directory.isDirectory() && dirIsCreated) {
+                    ObjectOutputStream objectOut = null;
+                    final String filename = "Released Anime.bin";
+                    File finalFile = new File(directory, filename);
+                    try {
+                        FileOutputStream fileOut = new FileOutputStream(finalFile);
+                        objectOut = new ObjectOutputStream(fileOut);
+                        if (AnimeNotificationManager.allAnimeNotification.size() > 0) {
+                            objectOut.writeObject(AnimeNotificationManager.allAnimeNotification);
+                            fileOut.getFD().sync();
+                            fileOut.close();
+                            File tempFile = new File(directory, filename + ".tmp");
+                            finalFile = new File(directory, filename);
+                            if (!tempFile.renameTo(finalFile) && tempFile.exists()) {
+                                //noinspection ResultOfMethodCallIgnored
+                                tempFile.delete();
+                            }
+                        }
+                    } catch (IOException ignored) {
+                    } finally {
+                        if (objectOut != null) {
+                            try {
+                                objectOut.close();
+                            } catch (IOException ignored) {}
+                        }
+                    }
+                }
+            }
+        }
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)

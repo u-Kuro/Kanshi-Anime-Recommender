@@ -88,7 +88,7 @@ import androidx.core.content.FileProvider;
 import androidx.core.splashscreen.SplashScreen;
 
 public class MainActivity extends AppCompatActivity {
-    public final int appID = 360;
+    public final int appID = 361;
     private final boolean isOwner = false;
     public boolean keepAppRunningInBackground = false;
     public boolean webViewIsLoaded = false;
@@ -1006,7 +1006,7 @@ public class MainActivity extends AppCompatActivity {
                     }
                 }
                 AnimeNotificationManager.allAnimeNotification.putAll(updatedAnimeNotifications);
-                AnimeNotificationManager.writeAnimeNotificationInFile(MainActivity.this);
+                AnimeNotificationManager.writeAnimeNotificationInFile(MainActivity.this, true);
                 updateNotificationsFutures.remove(String.valueOf(animeId));
                 if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
                     if (updateNotificationsFutures.isEmpty()) {

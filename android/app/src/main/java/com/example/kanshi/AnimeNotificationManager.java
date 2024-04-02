@@ -139,7 +139,7 @@ public class AnimeNotificationManager {
             nearestNotificationInfo = anime;
             intent.setAction("ANIME_NOTIFICATION");
             allAnimeNotification.put(anime.animeId + "-" + anime.releaseEpisode, anime);
-            writeAnimeNotificationInFile(context);
+            writeAnimeNotificationInFile(context, false);
             // Create New
             AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
             PendingIntent pendingIntent = PendingIntent.getBroadcast(context, ANIME_RELEASE_PENDING_INTENT, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
@@ -162,15 +162,20 @@ public class AnimeNotificationManager {
             }
         } else {
             allAnimeNotification.put(anime.animeId + "-" + anime.releaseEpisode, anime);
-            writeAnimeNotificationInFile(context);
+            writeAnimeNotificationInFile(context, false);
         }
     }
 
-    public static void writeAnimeNotificationInFile(Context context) {
+    public static void writeAnimeNotificationInFile(Context context, boolean isUpdating) {
         if (addNotificationFuture != null && !addNotificationFuture.isDone()) {
             addNotificationFuture.cancel(false);
         }
-        addNotificationFuture = addNotificationFutureExecutor.schedule(() -> LocalPersistence.writeObjectToFile(context, allAnimeNotification, "allAnimeNotification"), 300, TimeUnit.MILLISECONDS);
+        addNotificationFuture = addNotificationFutureExecutor.schedule(() -> {
+            LocalPersistence.writeObjectToFile(context, allAnimeNotification, "allAnimeNotification");
+            if (isUpdating && Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                Utils.exportReleasedAnime(context.getApplicationContext());
+            }
+        }, 300, TimeUnit.MILLISECONDS);
     }
 
     static boolean animeReleasesNotificationChannelIsAdded = false;

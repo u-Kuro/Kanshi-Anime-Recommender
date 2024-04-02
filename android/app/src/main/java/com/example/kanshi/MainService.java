@@ -614,9 +614,9 @@ public class MainService extends Service {
                     }
                 }
                 AnimeNotificationManager.allAnimeNotification.putAll(updatedAnimeNotifications);
-                LocalPersistence.writeObjectToFile(MainService.this, AnimeNotificationManager.allAnimeNotification, "allAnimeNotification");
+                AnimeNotificationManager.writeAnimeNotificationInFile(MainService.this, true);
                 updateNotificationsFutures.remove(String.valueOf(animeId));
-                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                     if (updateNotificationsFutures.isEmpty()) {
                         SchedulesTabFragment schedulesTabFragment = SchedulesTabFragment.getInstanceActivity();
                         if (schedulesTabFragment!=null) {

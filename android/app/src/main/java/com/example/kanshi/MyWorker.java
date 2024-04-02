@@ -376,6 +376,9 @@ public class MyWorker extends Worker {
                 AnimeNotificationManager.allAnimeNotification.remove(animeKey);
             }
             LocalPersistence.writeObjectToFile(this.getApplicationContext(), AnimeNotificationManager.allAnimeNotification, "allAnimeNotification");
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                Utils.exportReleasedAnime(this.getApplicationContext());
+            }
         }
 
         for (AnimeNotification anime : newSentAnimeNotification) {
@@ -475,6 +478,9 @@ public class MyWorker extends Worker {
                                 }
                                 if (isEdited) {
                                     LocalPersistence.writeObjectToFile(this.getApplicationContext(), AnimeNotificationManager.allAnimeNotification, "allAnimeNotification");
+                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                                        Utils.exportReleasedAnime(this.getApplicationContext());
+                                    }
                                 }
                             } catch (JSONException ignored) {
                             }
