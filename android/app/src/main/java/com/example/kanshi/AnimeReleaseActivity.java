@@ -60,6 +60,12 @@ public class AnimeReleaseActivity extends AppCompatActivity {
             registerForActivityResult(
                     new ActivityResultContracts.GetContent(),
                     uri -> {
+                        if (bottomSheetDialog != null && bottomSheetDialog.isShowing()) {
+                            bottomSheetDialog.dismiss();
+                        }
+                        if (uri==null) {
+                            return;
+                        }
                         String filepath = uri.getPath();
                         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O && filepath != null) {
                             try {
@@ -76,7 +82,6 @@ public class AnimeReleaseActivity extends AppCompatActivity {
                                                 FileInputStream fileIn = new FileInputStream(pfd.getFileDescriptor());
                                                 objectIn = new ObjectInputStream(fileIn);
                                                 object = objectIn.readObject();
-
                                                 @SuppressWarnings("unchecked") ConcurrentHashMap<String, AnimeNotification> $importedAllAnimeNotification = (ConcurrentHashMap<String, AnimeNotification>) object;
                                                 if ($importedAllAnimeNotification != null && $importedAllAnimeNotification.size() > 0) {
                                                     if (AnimeNotificationManager.allAnimeNotification.size() == 0) {
@@ -98,18 +103,15 @@ public class AnimeReleaseActivity extends AppCompatActivity {
                                                             Utils.exportReleasedAnime(this.getApplicationContext());
                                                         }
                                                     }
-                                                    if (bottomSheetDialog != null && bottomSheetDialog.isShowing()) {
-                                                        SchedulesTabFragment schedulesTabFragment = SchedulesTabFragment.getInstanceActivity();
-                                                        if (schedulesTabFragment != null) {
-                                                            schedulesTabFragment.updateScheduledAnime();
-                                                        }
-                                                        ReleasedTabFragment releasedTabFragment = ReleasedTabFragment.getInstanceActivity();
-                                                        if (releasedTabFragment != null) {
-                                                            releasedTabFragment.updateReleasedAnime();
-                                                        }
-                                                        bottomSheetDialog.dismiss();
-                                                        showToast(Toast.makeText(this, "Anime Releases has been Imported", Toast.LENGTH_SHORT));
+                                                    SchedulesTabFragment schedulesTabFragment = SchedulesTabFragment.getInstanceActivity();
+                                                    if (schedulesTabFragment != null) {
+                                                        schedulesTabFragment.updateScheduledAnime();
                                                     }
+                                                    ReleasedTabFragment releasedTabFragment = ReleasedTabFragment.getInstanceActivity();
+                                                    if (releasedTabFragment != null) {
+                                                        releasedTabFragment.updateReleasedAnime();
+                                                    }
+                                                    showToast(Toast.makeText(this, "Anime Releases has been Imported", Toast.LENGTH_SHORT));
                                                 } else {
                                                     showToast(Toast.makeText(this, "Something went wrong", Toast.LENGTH_SHORT));
                                                 }
@@ -332,6 +334,7 @@ public class AnimeReleaseActivity extends AppCompatActivity {
         LayoutInflater inflater = getLayoutInflater();
         @SuppressLint("InflateParams") View bottomSheet = inflater.inflate(R.layout.backup_drawer, null);
         bottomSheetDialog.setContentView(bottomSheet);
+
 
         LinearLayout importAnimeReleases = bottomSheetDialog.findViewById(R.id.import_anime_releases);
 

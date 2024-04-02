@@ -11,7 +11,6 @@
         android:layout_width="match_parent"
         android:layout_height="16dp"
         android:paddingTop="24dp"/>
-
     <LinearLayout
         android:id="@+id/import_anime_releases"
         android:layout_width="match_parent"
@@ -66,5 +65,4 @@
             android:textSize="16sp" />
 
     </LinearLayout>
-
 </LinearLayout>

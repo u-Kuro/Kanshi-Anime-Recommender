@@ -181,13 +181,6 @@ public class Utils {
             // Thus, 3 day Allowance allows Days 4, 3, and 2 to exist.
             // 1) Days 4 and 3 for incomplete Set C (May be used by Chrome)
             // 2) Days 3 and 2 for Set B (May be used by Chrome too)
-            // for (int i = 0; i < sortedModifiedDateEntries.size(); i++) {
-            //     Map.Entry<String, List<File>> currentEntry = sortedModifiedDateEntries.get(i);
-            //     List<File> filesToRemove = currentEntry.getValue();
-            //     for (File fileToRemove : filesToRemove) {
-            //         System.out.println("Kuro-Kanshi "+currentEntry.getKey()+" | "+Integer.parseInt(String.valueOf(fileToRemove.length()/(1024*1024)))+"MB | "+fileToRemove.getAbsolutePath());
-            //     }
-            // }
             for (int i = 0; i < sortedModifiedDateEntries.size() - allowedDays; i++) {
                 Map.Entry<String, List<File>> currentEntry = sortedModifiedDateEntries.get(i);
                 List<File> filesToRemove = currentEntry.getValue();
