@@ -88,7 +88,7 @@ import androidx.core.content.FileProvider;
 import androidx.core.splashscreen.SplashScreen;
 
 public class MainActivity extends AppCompatActivity {
-    public final int appID = 361;
+    public final int appID = 362;
     private final boolean isOwner = false;
     public boolean keepAppRunningInBackground = false;
     public boolean webViewIsLoaded = false;
@@ -1243,20 +1243,20 @@ public class MainActivity extends AppCompatActivity {
     @RequiresApi(api = Build.VERSION_CODES.N)
     public void reconnectLonger() {
         showToast(Toast.makeText(getApplicationContext(), "Connecting...", Toast.LENGTH_LONG));
-        isAppConnectionAvailable(isConnected -> {
+        isAppConnectionAvailable(isConnected -> webView.post(() -> {
             hideToast();
             if (isConnected) {
                 showDialog(new AlertDialog.Builder(MainActivity.this)
                         .setTitle("Connected successfully")
                         .setMessage("Connection established, do you want to switch to the web app?")
-                        .setPositiveButton("OK", (dialogInterface, i) -> webView.post(() -> {
+                        .setPositiveButton("OK", (dialogInterface, i) ->  {
                             String previousUrl = webView.getUrl();
                             if (previousUrl == null || previousUrl.startsWith("file:///android_asset/www/index.html")) {
                                 appSwitched = true;
                             }
                             pageLoaded = false;
                             webView.loadUrl("https://u-kuro.github.io/Kanshi-Anime-Recommender/");
-                        }))
+                        })
                         .setNegativeButton("CANCEL", null), true);
             } else {
                 showDialog(new AlertDialog.Builder(MainActivity.this)
@@ -1266,7 +1266,7 @@ public class MainActivity extends AppCompatActivity {
                         .setNegativeButton("CANCEL", null), true
                 );
             }
-        },999999999);
+        }),999999999);
     }
 
     public void showDialog(AlertDialog.Builder alertDialog, boolean canceledOnOutsideTouch) {

@@ -335,7 +335,6 @@ public class AnimeReleaseActivity extends AppCompatActivity {
         @SuppressLint("InflateParams") View bottomSheet = inflater.inflate(R.layout.backup_drawer, null);
         bottomSheetDialog.setContentView(bottomSheet);
 
-
         LinearLayout importAnimeReleases = bottomSheetDialog.findViewById(R.id.import_anime_releases);
 
         if (importAnimeReleases==null) {
@@ -356,7 +355,6 @@ public class AnimeReleaseActivity extends AppCompatActivity {
                 }
             } catch (Exception ignored) {}
         }
-
 
         if (AnimeNotificationManager.allAnimeNotification.size() == 0) return;
 
