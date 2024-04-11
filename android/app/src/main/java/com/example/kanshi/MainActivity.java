@@ -88,8 +88,8 @@ import androidx.core.content.FileProvider;
 import androidx.core.splashscreen.SplashScreen;
 
 public class MainActivity extends AppCompatActivity {
-    public final int appID = 362;
-    private final boolean isOwner = false;
+    public final int appID = 363;
+    private final boolean isOwner = true;
     public boolean keepAppRunningInBackground = false;
     public boolean webViewIsLoaded = false;
     public boolean permissionIsAsked = false;
@@ -968,9 +968,9 @@ public class MainActivity extends AppCompatActivity {
         public void downloadUpdate() { checkUpdate(); }
         final long DAY_IN_MILLIS = TimeUnit.DAYS.toMillis(1);
         @JavascriptInterface
-        public void addAnimeReleaseNotification(long animeId, String title, long releaseEpisode, long maxEpisode, long releaseDateMillis, String imageUrl, String animeUrl, String userStatus) {
+        public void addAnimeReleaseNotification(long animeId, String title, long releaseEpisode, long maxEpisode, long releaseDateMillis, String imageUrl, String animeUrl, String userStatus, long episodeProgress) {
             if (releaseDateMillis >= (System.currentTimeMillis() - DAY_IN_MILLIS)) {
-                AnimeNotificationManager.scheduleAnimeNotification(MainActivity.this, animeId, title, releaseEpisode, maxEpisode, releaseDateMillis, imageUrl, animeUrl, userStatus);
+                AnimeNotificationManager.scheduleAnimeNotification(MainActivity.this, animeId, title, releaseEpisode, maxEpisode, releaseDateMillis, imageUrl, animeUrl, userStatus, episodeProgress);
             }
         }
         @JavascriptInterface
@@ -981,7 +981,7 @@ public class MainActivity extends AppCompatActivity {
         private final Map<String, Future<?>> updateNotificationsFutures = new ConcurrentHashMap<>();
         @RequiresApi(api = Build.VERSION_CODES.O)
         @JavascriptInterface
-        public void updateNotifications(long animeId, String title, long maxEpisode, String animeUrl, String userStatus) {
+        public void updateNotifications(long animeId, String title, long maxEpisode, String animeUrl, String userStatus, long episodeProgress) {
             if (updateNotificationsFutures.containsKey(String.valueOf(animeId))) {
                 Future<?> future = updateNotificationsFutures.get(String.valueOf(animeId));
                 if (future != null && !future.isDone()) {
@@ -1001,7 +1001,7 @@ public class MainActivity extends AppCompatActivity {
                 List<AnimeNotification> allAnimeNotificationValues = new ArrayList<>(AnimeNotificationManager.allAnimeNotification.values());
                 for (AnimeNotification anime : allAnimeNotificationValues) {
                     if (anime.animeId==animeId) {
-                        AnimeNotification newAnime = new AnimeNotification(anime.animeId, title, anime.releaseEpisode, maxEpisode, anime.releaseDateMillis, anime.imageByte, animeUrl, userStatus);
+                        AnimeNotification newAnime = new AnimeNotification(anime.animeId, title, anime.releaseEpisode, maxEpisode, anime.releaseDateMillis, anime.imageByte, animeUrl, userStatus, episodeProgress);
                         updatedAnimeNotifications.put(anime.animeId+"-"+anime.releaseEpisode, newAnime);
                     }
                 }

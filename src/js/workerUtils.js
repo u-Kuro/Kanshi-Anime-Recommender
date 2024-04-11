@@ -56,7 +56,7 @@ function getAnimeLoaderWorker() {
     if (animeLoaderWorker) return animeLoaderWorker
     if (animeLoaderWorkerPromise) return animeLoaderWorkerPromise
     animeLoaderWorkerPromise = new Promise(async (resolve) => {
-        resolve(new Worker(await cacheRequest("./webapi/worker/animeLoader.js", 18811, "Checking Anime List")))
+        resolve(new Worker(await cacheRequest("./webapi/worker/animeLoader.js", 18760, "Checking Anime List")))
         animeLoaderWorkerPromise = null
     })
     return animeLoaderWorkerPromise
@@ -227,7 +227,7 @@ function getAnimeManagerWorker() {
     if (animeManagerWorker) return animeManagerWorker
     if (animeManagerWorkerPromise) return animeManagerWorkerPromise
     animeManagerWorkerPromise = new Promise(async (resolve) => {
-        resolve(new Worker(await cacheRequest("./webapi/worker/animeManager.js", 45789, "Updating Anime List")))
+        resolve(new Worker(await cacheRequest("./webapi/worker/animeManager.js", 46226, "Updating Anime List")))
         animeManagerWorkerPromise = null
     })
     return animeManagerWorkerPromise
@@ -366,7 +366,7 @@ const processRecommendedAnimeList = (_data = {}) => {
         processRecommendedAnimeListWorker = null
         dataStatusPrio = true
         progress.set(0)
-        cacheRequest("./webapi/worker/processRecommendedAnimeList.js", 38502, "Updating Recommendation List")
+        cacheRequest("./webapi/worker/processRecommendedAnimeList.js", 39080, "Updating Recommendation List")
             .then(url => {
                 const lastProcessRecommendationAiringAt = parseInt((new Date().getTime() / 1000))
                 let neareastAnimeCompletionAiringAt
@@ -408,6 +408,7 @@ const processRecommendedAnimeList = (_data = {}) => {
                                     && typeof aniReleaseNotif?.userStatus === "string"
                                     && typeof aniReleaseNotif?.imageURL === "string"
                                     && typeof aniReleaseNotif?.animeUrl === "string"
+                                    && typeof aniReleaseNotif?.episodeProgress === "number"
                                 ) {
                                     JSBridge?.addAnimeReleaseNotification?.(
                                         aniReleaseNotif.id,
@@ -418,6 +419,7 @@ const processRecommendedAnimeList = (_data = {}) => {
                                         aniReleaseNotif.imageURL,
                                         aniReleaseNotif.animeUrl,
                                         aniReleaseNotif.userStatus,
+                                        aniReleaseNotif?.episodeProgress
                                     )
                                 }
                             } catch (e) { }
@@ -1101,7 +1103,7 @@ const getExtraInfo = () => {
 // IndexedDB
 const getIDBdata = (name) => {
     return new Promise((resolve, reject) => {
-        cacheRequest("./webapi/worker/getIDBdata.js", 2100, "Retrieving Some Data")
+        cacheRequest("./webapi/worker/getIDBdata.js", 2601, "Retrieving Some Data")
             .then(url => {
                 let worker = new Worker(url)
                 worker.postMessage({ name })
@@ -1128,7 +1130,7 @@ const getIDBdata = (name) => {
 window.updateNotifications = async (aniIdsNotificationToBeUpdated = []) => {
     if (!get(android)) return
     new Promise((resolve, reject) => {
-        cacheRequest("./webapi/worker/getIDBdata.js", 2100, "Retrieving Some Data")
+        cacheRequest("./webapi/worker/getIDBdata.js", 2601, "Retrieving Some Data")
             .then(url => {
                 let worker = new Worker(url)
                 worker.postMessage({ name: "aniIdsNotificationToBeUpdated", aniIdsNotificationToBeUpdated })
@@ -1157,13 +1159,15 @@ window.updateNotifications = async (aniIdsNotificationToBeUpdated = []) => {
                     && typeof anime?.maxEpisode === "number"
                     && typeof anime?.animeUrl === "string"
                     && typeof anime?.userStatus === "string"
+                    && typeof anime?.episodeProgress === "number"
                 ) {
                     JSBridge?.updateNotifications?.(
                         animeId,
                         anime?.title,
                         anime?.maxEpisode,
                         anime?.animeUrl,
-                        anime?.userStatus
+                        anime?.userStatus,
+                        anime?.episodeProgress
                     )
                 }
             }
@@ -1244,7 +1248,7 @@ const getFilterOptions = (_data) => {
         if (getFilterOptionsTerminateTimeout) clearTimeout(getFilterOptionsTerminateTimeout)
         getFilterOptionsWorker?.terminate?.()
         getFilterOptionsWorker = null
-        cacheRequest("./webapi/worker/getFilterOptions.js", 60682, "Initializing Filters")
+        cacheRequest("./webapi/worker/getFilterOptions.js", 60668, "Initializing Filters")
             .then(url => {
                 if (getFilterOptionsTerminateTimeout) clearTimeout(getFilterOptionsTerminateTimeout)
                 getFilterOptionsWorker?.terminate?.()

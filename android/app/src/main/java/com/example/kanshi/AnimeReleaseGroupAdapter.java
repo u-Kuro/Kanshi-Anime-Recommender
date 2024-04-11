@@ -161,9 +161,16 @@ public class AnimeReleaseGroupAdapter extends ArrayAdapter<AnimeReleaseGroup> {
                     } else {
                         runOnUi(() -> animeImage.setImageResource(R.drawable.image_placeholder));
                     }
+                    final int fontColorId;
+                    if (anime.userStatus.equals("COMPLETED") || (anime.episodeProgress != 0 && anime.releaseEpisode <= anime.episodeProgress)) {
+                        fontColorId = R.color.grey;
+                    } else {
+                        fontColorId = R.color.white;
+                    }
                     final String title = anime.title;
                     if (title!=null && !title.equals("")) {
                         runOnUi(() -> {
+                            animeName.setTextColor(mContext.getResources().getColor(fontColorId));
                             animeName.setText(title);
                             finalAnimeCard.setOnLongClickListener(view1 -> {
                                 ClipboardManager clipboard = (ClipboardManager) mContext.getSystemService(Context.CLIPBOARD_SERVICE);
@@ -173,10 +180,13 @@ public class AnimeReleaseGroupAdapter extends ArrayAdapter<AnimeReleaseGroup> {
                             });
                         });
                     } else {
-                        runOnUi(() -> animeName.setText(R.string.na));
+                        runOnUi(() -> {
+                            animeName.setTextColor(mContext.getResources().getColor(R.color.grey));
+                            animeName.setText(R.string.na);
+                        });
                     }
                     final String userStatus = anime.userStatus;
-                    if (userStatus != null && !userStatus.equals("") && !userStatus.equalsIgnoreCase("UNWATCHED")) {
+                    if (!userStatus.equals("") && !userStatus.equalsIgnoreCase("UNWATCHED")) {
                         runOnUi(() -> {
                             ColorStateList colorStateList;
                             if (userStatus.equalsIgnoreCase("COMPLETED")) {
@@ -202,9 +212,15 @@ public class AnimeReleaseGroupAdapter extends ArrayAdapter<AnimeReleaseGroup> {
                         runOnUi(() -> userStatusIcon.setVisibility(View.GONE));
                     }
                     if (anime.message!=null) {
-                        runOnUi(() -> animeReleaseInfo.setText(anime.message));
+                        runOnUi(() -> {
+                            animeReleaseInfo.setTextColor(mContext.getResources().getColor(fontColorId));
+                            animeReleaseInfo.setText(anime.message);
+                        });
                     } else {
-                        runOnUi(() -> animeReleaseInfo.setText(R.string.na));
+                        runOnUi(() -> {
+                            animeReleaseInfo.setTextColor(mContext.getResources().getColor(R.color.grey));
+                            animeReleaseInfo.setText(R.string.na);
+                        });
                     }
                     final String animeUrl = anime.animeUrl;
                     if (animeUrl!=null && !animeUrl.equals("")) {

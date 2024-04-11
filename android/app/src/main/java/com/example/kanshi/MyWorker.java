@@ -471,7 +471,7 @@ public class MyWorker extends Worker {
                                     episodes = anime.maxEpisode;
                                 }
                                 if (episode > anime.releaseEpisode) {
-                                    AnimeNotification newAnimeRelease = new AnimeNotification(anime.animeId, anime.title, episode, episodes, releaseDateMillis, anime.imageByte, anime.animeUrl, anime.userStatus);
+                                    AnimeNotification newAnimeRelease = new AnimeNotification(anime.animeId, anime.title, episode, episodes, releaseDateMillis, anime.imageByte, anime.animeUrl, anime.userStatus, anime.episodeProgress);
                                     AnimeNotificationManager.allAnimeNotification.put(newAnimeRelease.animeId + "-" + newAnimeRelease.releaseEpisode, newAnimeRelease);
                                     AnimeNotificationManager.addAnimeNotification(this.getApplicationContext(), newAnimeRelease);
                                     isEdited = true;

@@ -92,7 +92,7 @@ public class AnimeReleaseActivity extends AppCompatActivity {
                                                             }
                                                         } catch (Exception ignored) {}
                                                     }
-                                                    ArrayList<Map.Entry<String, AnimeNotification>> allAnimeNotificationEntries = new ArrayList<>(AnimeNotificationManager.allAnimeNotification.entrySet());
+                                                    ArrayList<Map.Entry<String, AnimeNotification>> allAnimeNotificationEntries = new ArrayList<>($importedAllAnimeNotification.entrySet());
                                                     for (int j = 0; j < allAnimeNotificationEntries.size(); j++) {
                                                         Map.Entry<String, AnimeNotification> currentEntry = allAnimeNotificationEntries.get(j);
                                                         AnimeNotificationManager.allAnimeNotification.putIfAbsent(currentEntry.getKey(), currentEntry.getValue());
@@ -356,44 +356,41 @@ public class AnimeReleaseActivity extends AppCompatActivity {
             } catch (Exception ignored) {}
         }
 
-        if (AnimeNotificationManager.allAnimeNotification.size() == 0) return;
-
         LinearLayout autoExportAnimeReleases = bottomSheetDialog.findViewById(R.id.auto_export_anime_releases);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            if (autoExportAnimeReleases == null) {
-                showToast(Toast.makeText(this, "Something went wrong", Toast.LENGTH_SHORT));
-                return;
-            }
+            if (autoExportAnimeReleases != null) {
+                autoExportAnimeReleases.setVisibility(View.VISIBLE);
+                TextView autoExportAnimeReleasesText = autoExportAnimeReleases.findViewById(R.id.auto_export_anime_releases_textview);
+                ImageView autoExportAnimeReleasesImage = autoExportAnimeReleases.findViewById(R.id.auto_export_anime_releases_imageview);
 
-            autoExportAnimeReleases.setVisibility(View.VISIBLE);
-            TextView autoExportAnimeReleasesText = autoExportAnimeReleases.findViewById(R.id.auto_export_anime_releases_textview);
-            ImageView autoExportAnimeReleasesImage = autoExportAnimeReleases.findViewById(R.id.auto_export_anime_releases_imageview);
-
-            if (autoExportAnimeReleasesText == null || autoExportAnimeReleasesImage == null) {
-                showToast(Toast.makeText(this, "Something went wrong", Toast.LENGTH_SHORT));
-                return;
-            }
-
-            boolean autoExportReleasedAnime = prefs.getBoolean("autoExportReleasedAnime", false);
-
-            if (autoExportReleasedAnime) {
-                autoExportAnimeReleasesText.setText(R.string.enabled_automatic_back_up);
-                autoExportAnimeReleasesImage.setImageResource(R.drawable.sync_white);
-            } else {
-                autoExportAnimeReleasesText.setText(R.string.disabled_automatic_back_up);
-                autoExportAnimeReleasesImage.setImageResource(R.drawable.sync_disabled_white);
-            }
-
-            autoExportAnimeReleases.setOnClickListener(view -> {
-                final boolean newAutoExportReleasedAnime = !autoExportReleasedAnime;
-                prefsEdit.putBoolean("autoExportReleasedAnime", newAutoExportReleasedAnime).apply();
-                if (newAutoExportReleasedAnime) {
-                    Utils.exportReleasedAnime(AnimeReleaseActivity.this);
+                if (autoExportAnimeReleasesText == null || autoExportAnimeReleasesImage == null) {
+                    showToast(Toast.makeText(this, "Something went wrong", Toast.LENGTH_SHORT));
+                    return;
                 }
-                bottomSheetDialog.dismiss();
-            });
-        } else if (autoExportAnimeReleases!=null) {
+
+                boolean autoExportReleasedAnime = prefs.getBoolean("autoExportReleasedAnime", false);
+
+                if (autoExportReleasedAnime) {
+                    autoExportAnimeReleasesText.setText(R.string.enabled_automatic_back_up);
+                    autoExportAnimeReleasesImage.setImageResource(R.drawable.sync_white);
+                } else {
+                    autoExportAnimeReleasesText.setText(R.string.disabled_automatic_back_up);
+                    autoExportAnimeReleasesImage.setImageResource(R.drawable.sync_disabled_white);
+                }
+
+                autoExportAnimeReleases.setOnClickListener(view -> {
+                    final boolean newAutoExportReleasedAnime = !autoExportReleasedAnime;
+                    prefsEdit.putBoolean("autoExportReleasedAnime", newAutoExportReleasedAnime).apply();
+                    if (newAutoExportReleasedAnime) {
+                        Utils.exportReleasedAnime(AnimeReleaseActivity.this);
+                    }
+                    bottomSheetDialog.dismiss();
+                });
+            } else {
+                showToast(Toast.makeText(this, "Something went wrong", Toast.LENGTH_SHORT));
+            }
+        } else if (autoExportAnimeReleases != null) {
             autoExportAnimeReleases.setVisibility(View.GONE);
         }
 

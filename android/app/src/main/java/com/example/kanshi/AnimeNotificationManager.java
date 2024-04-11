@@ -58,7 +58,7 @@ public class AnimeNotificationManager {
     public static AnimeNotification nearestNotificationInfo = null;
     public static long nearestNotificationTime = 0L;
 
-    public static void scheduleAnimeNotification(Context context, long animeId, String title, long releaseEpisode, long maxEpisode, long releaseDateMillis, String imageUrl, String animeUrl, String userStatus) {
+    public static void scheduleAnimeNotification(Context context, long animeId, String title, long releaseEpisode, long maxEpisode, long releaseDateMillis, String imageUrl, String animeUrl, String userStatus, long episodeProgress) {
         context = context.getApplicationContext();
         createAnimeReleasesNotificationChannel(context);
         if (allAnimeNotification.size() == 0) {
@@ -100,7 +100,7 @@ public class AnimeNotificationManager {
                             }
                         } catch (Exception ignored) {}
                     }
-                    AnimeNotification anime = new AnimeNotification(animeId, title, releaseEpisode, maxEpisode, releaseDateMillis, imageByte, animeUrl, userStatus);
+                    AnimeNotification anime = new AnimeNotification(animeId, title, releaseEpisode, maxEpisode, releaseDateMillis, imageByte, animeUrl, userStatus, episodeProgress);
                     addAnimeNotification(finalContext, anime);
                     ongoingImageDownloads.remove(animeId + "-" + releaseEpisode);
                     if (ongoingImageDownloads.size()==0) {
@@ -112,7 +112,7 @@ public class AnimeNotificationManager {
                 });
             }
         } else {
-            AnimeNotification anime = new AnimeNotification(animeId, title, releaseEpisode, maxEpisode, releaseDateMillis, checkingAnime.imageByte, animeUrl, userStatus);
+            AnimeNotification anime = new AnimeNotification(animeId, title, releaseEpisode, maxEpisode, releaseDateMillis, checkingAnime.imageByte, animeUrl, userStatus, episodeProgress);
             addAnimeNotification(context, anime);
         }
         if (ongoingImageDownloads.size()==0) {

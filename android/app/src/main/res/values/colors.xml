@@ -2,6 +2,7 @@
 <resources>
     <color name="white">#FFFFFFFF</color>
     <color name="faded_white">#FFD0D0D0</color>
+    <color name="grey">#FF6A6A6A</color>
     <color name="black">#FF000000</color>
     <color name="web_dark_grey">#FF262626</color>
     <color name="dark_grey">#FF2C2C2C</color>
