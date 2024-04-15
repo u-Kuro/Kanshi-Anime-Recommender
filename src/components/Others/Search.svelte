@@ -748,6 +748,11 @@
                 numberFiltersValues[numberFilterKey] = oldValue;
             }
         } else {
+            if (optionValue === "=") {
+                return;
+            } else if (optionValue?.[0] === "=") {
+                optionValue = optionValue.replace("=", "");
+            }
             if (
                 optionValue !== oldValue &&
                 ((!isNaN(optionValue) &&
@@ -813,6 +818,15 @@
 
         updateFilters(filterCategoryName, data);
     }
+
+    function setDefaultInputNumberValue(node, lastOptionValue) {
+        try {
+            if (typeof lastOptionValue === "string") {
+                node.value = lastOptionValue;
+            }
+        } catch (e) {}
+    }
+
     function changeActiveStatus(
         event,
         filterType,
@@ -2558,11 +2572,6 @@
                                   : filterCategoryName === "Content Caution"
                                     ? $animeCautions
                                     : []}
-                        {@const lastOptionValue = filterCategoryArray?.find?.(
-                            (filter) =>
-                                filter?.optionName === name &&
-                                filter?.filterType === "number",
-                        )?.optionValue}
                         <div
                             class="filter-input-number"
                             style:display="{filterCategoryIsSelected
@@ -2580,6 +2589,11 @@
                                     {"Number Filter: " + numberFilterKey}
                                 </label>
                                 <input
+                                    use:setDefaultInputNumberValue="{filterCategoryArray?.find?.(
+                                        (filter) =>
+                                            filter?.optionName === name &&
+                                            filter?.filterType === 'number',
+                                    )?.optionValue}"
                                     tabindex="{!$menuVisible &&
                                     !$popupVisible &&
                                     $showFilterOptions
@@ -2616,7 +2630,6 @@
                                                   )
                                                 ? '>123 or 123'
                                                 : '123'}"
-                                    value="{lastOptionValue || ''}"
                                     on:input="{(e) => {
                                         if ($initData) {
                                             return pleaseWaitAlert();
@@ -2626,7 +2639,13 @@
                                             numberFiltersValues[
                                                 numberFilterKey
                                             ] ??
-                                            lastOptionValue ??
+                                            filterCategoryArray?.find?.(
+                                                (filter) =>
+                                                    filter?.optionName ===
+                                                        name &&
+                                                    filter?.filterType ===
+                                                        'number',
+                                            )?.optionValue ??
                                             '';
                                         numberFiltersValues[numberFilterKey] =
                                             newValue;

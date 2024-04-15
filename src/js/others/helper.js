@@ -392,9 +392,12 @@ const ncsCompare = (str1, str2) => {
 
 const changeInputValue = (inputElement, newValue) => {
   try {
-    let selectionStart = Math.max(inputElement.selectionStart - 1 || 0, 0);
+    let selectionStart = inputElement?.selectionStart
     inputElement.value = newValue;
-    inputElement.setSelectionRange(selectionStart, selectionStart);
+    if (selectionStart > 0 && typeof selectionStart === "number") {
+      --selectionStart
+      inputElement.setSelectionRange(selectionStart, selectionStart);
+    }
   } catch (e) { }
 }
 
