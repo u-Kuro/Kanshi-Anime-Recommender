@@ -227,7 +227,7 @@ function getAnimeManagerWorker() {
     if (animeManagerWorker) return animeManagerWorker
     if (animeManagerWorkerPromise) return animeManagerWorkerPromise
     animeManagerWorkerPromise = new Promise(async (resolve) => {
-        resolve(new Worker(await cacheRequest("./webapi/worker/animeManager.js", 46226, "Updating Anime List")))
+        resolve(new Worker(await cacheRequest("./webapi/worker/animeManager.js", 46351, "Updating Anime List")))
         animeManagerWorkerPromise = null
     })
     return animeManagerWorkerPromise
@@ -621,13 +621,13 @@ const requestAnimeEntries = (_data = {}) => {
                                 .then(() => {
                                     isGettingNewEntries = false
                                     runUpdate.update(e => !e)
-                                    updateRecommendationList.update(e => !e)
                                 })
                                 .catch(() => {
                                     isGettingNewEntries = false
                                     runUpdate.update(e => !e)
                                 }).finally(() => {
                                     isGettingNewEntries = false
+                                    updateRecommendationList.update(e => !e)
                                 })
                         } else {
                             window.alreadyShownNoNetworkAlert = false
@@ -801,6 +801,7 @@ const exportUserData = (_data) => {
                             title: "Export failed",
                             text: "Data was not exported, incomplete data.",
                         })
+                        updateRecommendationList.update(e => !e)
                         reject()
                     } else if (get(android)) {
                         try {
@@ -825,6 +826,7 @@ const exportUserData = (_data) => {
                                     dataStatus.set(null)
                                     progress.set(100)
                                     showToast("Data has been Exported")
+                                    updateRecommendationList.update(e => !e)
                                     resolve()
                                 })
                             } else {
@@ -840,6 +842,7 @@ const exportUserData = (_data) => {
                                 })
                                 dataStatus.set(null)
                                 progress.set(100)
+                                updateRecommendationList.update(e => !e)
                                 reject()
                             }
                         } catch (e) {
@@ -855,6 +858,7 @@ const exportUserData = (_data) => {
                             })
                             dataStatus.set(null)
                             progress.set(100)
+                            updateRecommendationList.update(e => !e)
                             reject()
                         }
                     } else if (typeof data?.url === "string" && data?.url !== "") {
@@ -863,6 +867,7 @@ const exportUserData = (_data) => {
                         progress.set(100)
                         downloadLink(data.url, `Kanshi.${data?.username?.toLowerCase?.() || "backup"}.json`)
                         isExporting = false
+                        updateRecommendationList.update(e => !e)
                         resolve()
                         // dont terminate, can't oversee blob link lifetime
                     } else {
@@ -876,6 +881,7 @@ const exportUserData = (_data) => {
                         dataStatus.set(null)
                         progress.set(100)
                         isExporting = false
+                        updateRecommendationList.update(e => !e)
                         reject()
                     }
                 }
@@ -890,6 +896,7 @@ const exportUserData = (_data) => {
                         title: "Export failed",
                         text: "Data was not exported, please try again.",
                     })
+                    updateRecommendationList.update(e => !e)
                     reject(error)
                 }
             }).catch((error) => {
@@ -899,6 +906,7 @@ const exportUserData = (_data) => {
                 waitForExportApproval?.reject?.()
                 waitForExportApproval = null
                 alertError()
+                updateRecommendationList.update(e => !e)
                 reject(error)
             })
     })
@@ -943,6 +951,7 @@ const importUserData = (_data) => {
                         })
                         dataStatus.set(null)
                         progress.set(100)
+                        updateRecommendationList.update(e => !e)
                         reject(data?.error || "Something went wrong")
                     } else if (hasOwnProp?.call?.(data, "status")) {
                         dataStatusPrio = true
@@ -1004,6 +1013,7 @@ const importUserData = (_data) => {
                     loadAnime.update((e) => !e)
                     dataStatus.set(null)
                     progress.set(100)
+                    updateRecommendationList.update(e => !e)
                     reject(error || "Something went wrong")
                 }
             }).catch((error) => {
@@ -1014,6 +1024,7 @@ const importUserData = (_data) => {
                 dataStatus.set(null)
                 progress.set(100)
                 alertError()
+                updateRecommendationList.update(e => !e)
                 reject(error)
             })
     })
@@ -1230,6 +1241,7 @@ const getAnimeEntries = (_data) => {
                 worker.onerror = (error) => {
                     dataStatus.set(null)
                     progress.set(100)
+                    updateRecommendationList.update(e => !e)
                     reject(error)
                 }
             }).catch((error) => {
@@ -1237,6 +1249,7 @@ const getAnimeEntries = (_data) => {
                 progress.set(100)
                 dataStatus.set(null)
                 alertError()
+                updateRecommendationList.update(e => !e)
                 reject(error)
             })
     })

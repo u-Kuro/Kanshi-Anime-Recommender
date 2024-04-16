@@ -1101,13 +1101,18 @@
     $: customCategoryName =
         $selectedCategory || getLocalStorage("selectedCategory");
 
-    let previousCategoryName;
+    let previousCategoryName, refreshDefaultInputNumberValue;
     selectedCategory.subscribe((val) => {
         if (val) {
             if (previousCategoryName && previousCategoryName !== val) {
                 animeLoader({ selectCategory: val });
             }
             previousCategoryName = val;
+            (async () => {
+                await tick();
+                refreshDefaultInputNumberValue =
+                    !refreshDefaultInputNumberValue;
+            })();
         }
     });
 
@@ -2588,82 +2593,88 @@
                                 >
                                     {"Number Filter: " + numberFilterKey}
                                 </label>
-                                <input
-                                    use:setDefaultInputNumberValue="{filterCategoryArray?.find?.(
-                                        (filter) =>
-                                            filter?.optionName === name &&
-                                            filter?.filterType === 'number',
-                                    )?.optionValue}"
-                                    tabindex="{!$menuVisible &&
-                                    !$popupVisible &&
-                                    $showFilterOptions
-                                        ? '0'
-                                        : '-1'}"
-                                    id="{'Number Filter: ' + numberFilterKey}"
-                                    class="value-input-number"
-                                    type="text"
-                                    placeholder="{name === 'scoring system'
-                                        ? 'Default: User Scoring'
-                                        : (name === 'average score' ||
-                                                name === 'min average score') &&
-                                            typeof meanAverageScore ===
-                                                'number' &&
-                                            meanAverageScore > 0
-                                          ? 'Average: ' +
-                                            formatNumber(meanAverageScore)
-                                          : (name === 'popularity' ||
-                                                  name === 'min popularity') &&
-                                              typeof meanPopularity ===
-                                                  'number' &&
-                                              meanPopularity > 0
-                                            ? 'Average: ' +
-                                              formatNumber(
-                                                  meanPopularity,
-                                                  meanPopularity >= 1000
-                                                      ? 1
-                                                      : 0,
-                                              )
-                                            : defaultValue != null
-                                              ? 'Default: ' + defaultValue
-                                              : conditionalInputNumberList.includes(
-                                                      name,
+                                {#key refreshDefaultInputNumberValue}
+                                    <input
+                                        use:setDefaultInputNumberValue="{filterCategoryArray?.find?.(
+                                            (filter) =>
+                                                filter?.optionName === name &&
+                                                filter?.filterType === 'number',
+                                        )?.optionValue}"
+                                        tabindex="{!$menuVisible &&
+                                        !$popupVisible &&
+                                        $showFilterOptions
+                                            ? '0'
+                                            : '-1'}"
+                                        id="{'Number Filter: ' +
+                                            numberFilterKey}"
+                                        class="value-input-number"
+                                        type="text"
+                                        placeholder="{name === 'scoring system'
+                                            ? 'Default: User Scoring'
+                                            : (name === 'average score' ||
+                                                    name ===
+                                                        'min average score') &&
+                                                typeof meanAverageScore ===
+                                                    'number' &&
+                                                meanAverageScore > 0
+                                              ? 'Average: ' +
+                                                formatNumber(meanAverageScore)
+                                              : (name === 'popularity' ||
+                                                      name ===
+                                                          'min popularity') &&
+                                                  typeof meanPopularity ===
+                                                      'number' &&
+                                                  meanPopularity > 0
+                                                ? 'Average: ' +
+                                                  formatNumber(
+                                                      meanPopularity,
+                                                      meanPopularity >= 1000
+                                                          ? 1
+                                                          : 0,
                                                   )
-                                                ? '>123 or 123'
-                                                : '123'}"
-                                    on:input="{(e) => {
-                                        if ($initData) {
-                                            return pleaseWaitAlert();
-                                        }
-                                        let newValue = e.target.value;
-                                        let oldValue =
+                                                : defaultValue != null
+                                                  ? 'Default: ' + defaultValue
+                                                  : conditionalInputNumberList.includes(
+                                                          name,
+                                                      )
+                                                    ? '>123 or 123'
+                                                    : '123'}"
+                                        on:input="{(e) => {
+                                            if ($initData) {
+                                                return pleaseWaitAlert();
+                                            }
+                                            let newValue = e.target.value;
+                                            let oldValue =
+                                                numberFiltersValues[
+                                                    numberFilterKey
+                                                ] ??
+                                                filterCategoryArray?.find?.(
+                                                    (filter) =>
+                                                        filter?.optionName ===
+                                                            name &&
+                                                        filter?.filterType ===
+                                                            'number',
+                                                )?.optionValue ??
+                                                '';
                                             numberFiltersValues[
                                                 numberFilterKey
-                                            ] ??
-                                            filterCategoryArray?.find?.(
-                                                (filter) =>
-                                                    filter?.optionName ===
-                                                        name &&
-                                                    filter?.filterType ===
-                                                        'number',
-                                            )?.optionValue ??
-                                            '';
-                                        numberFiltersValues[numberFilterKey] =
-                                            newValue;
-                                        handleInputNumber(
-                                            e,
-                                            name,
-                                            oldValue,
-                                            newValue,
-                                            maxValue,
-                                            minValue,
-                                            filterCategoryName,
-                                        );
-                                    }}"
-                                    disabled="{!$showFilterOptions ||
-                                        $initData}"
-                                    on:focusin="{() =>
-                                        window?.setShouldGoBack?.(false)}"
-                                />
+                                            ] = newValue;
+                                            handleInputNumber(
+                                                e,
+                                                name,
+                                                oldValue,
+                                                newValue,
+                                                maxValue,
+                                                minValue,
+                                                filterCategoryName,
+                                            );
+                                        }}"
+                                        disabled="{!$showFilterOptions ||
+                                            $initData}"
+                                        on:focusin="{() =>
+                                            window?.setShouldGoBack?.(false)}"
+                                    />
+                                {/key}
                             </div>
                         </div>
                     {/if}
