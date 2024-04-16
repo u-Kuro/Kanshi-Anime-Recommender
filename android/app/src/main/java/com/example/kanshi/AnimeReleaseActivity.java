@@ -297,6 +297,9 @@ public class AnimeReleaseActivity extends AppCompatActivity {
             wasOpened = true;
             overridePendingTransition(R.anim.fade_in, R.anim.remove);
         } else {
+            if (mainActivity!=null) {
+                mainActivity.checkEntries();
+            }
             overridePendingTransition(R.anim.none, R.anim.fade_out);
         }
         super.onResume();
