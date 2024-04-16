@@ -1115,6 +1115,13 @@
             })();
         }
     });
+    showFilterOptions.subscribe(async(val)=>{
+        if (val) {
+            await tick();
+            refreshDefaultInputNumberValue =
+                !refreshDefaultInputNumberValue;
+        }
+    })
 
     function handleCategoryPopup(event) {
         let element = event.target;
