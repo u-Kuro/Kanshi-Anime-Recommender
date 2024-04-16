@@ -161,8 +161,9 @@ public class AnimeReleaseGroupAdapter extends ArrayAdapter<AnimeReleaseGroup> {
                     } else {
                         runOnUi(() -> animeImage.setImageResource(R.drawable.image_placeholder));
                     }
+                    final boolean isWatched = anime.userStatus.equals("COMPLETED") || (anime.episodeProgress != 0 && anime.releaseEpisode <= anime.episodeProgress);
                     final int fontColorId;
-                    if (anime.userStatus.equals("COMPLETED") || (anime.episodeProgress != 0 && anime.releaseEpisode <= anime.episodeProgress)) {
+                    if (isWatched) {
                         fontColorId = R.color.grey;
                     } else {
                         fontColorId = R.color.white;
@@ -188,7 +189,7 @@ public class AnimeReleaseGroupAdapter extends ArrayAdapter<AnimeReleaseGroup> {
                     final String userStatus = anime.userStatus;
                     if (!userStatus.equals("") && !userStatus.equalsIgnoreCase("UNWATCHED")) {
                         runOnUi(() -> {
-                            ColorStateList colorStateList;
+                            final ColorStateList colorStateList;
                             if (userStatus.equalsIgnoreCase("COMPLETED")) {
                                 colorStateList = AppCompatResources.getColorStateList(mContext, R.color.web_green);
                             } else if (
@@ -206,6 +207,11 @@ public class AnimeReleaseGroupAdapter extends ArrayAdapter<AnimeReleaseGroup> {
                                 colorStateList = AppCompatResources.getColorStateList(mContext, R.color.web_light_grey);
                             }
                             userStatusIcon.setBackgroundTintList(colorStateList);
+                            if (isWatched) {
+                                userStatusIcon.setAlpha(0.5f);
+                            } else {
+                                userStatusIcon.setAlpha(1f);
+                            }
                             userStatusIcon.setVisibility(View.VISIBLE);
                         });
                     } else {

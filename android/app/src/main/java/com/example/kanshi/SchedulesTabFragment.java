@@ -64,6 +64,7 @@ public class SchedulesTabFragment extends Fragment {
             MainActivity mainActivity = MainActivity.getInstanceActivity();
             if (mainActivity!=null) {
                 mainActivity.updateCurrentNotifications();
+                mainActivity.checkEntries();
             }
             updateScheduledAnime();
             swipeRefresh.setRefreshing(false);

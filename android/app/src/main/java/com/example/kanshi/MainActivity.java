@@ -1269,6 +1269,12 @@ public class MainActivity extends AppCompatActivity {
         }),999999999);
     }
 
+    public void checkEntries() {
+        try {
+            webView.post(() -> webView.loadUrl("javascript:window?.checkEntries?.();"));
+        } catch (Exception ignored) {}
+    }
+
     public void showDialog(AlertDialog.Builder alertDialog, boolean canceledOnOutsideTouch) {
         if (currentDialog != null && currentDialog.isShowing()) {
             currentDialog.dismiss();

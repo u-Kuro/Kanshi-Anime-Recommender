@@ -64,6 +64,7 @@ public class ReleasedTabFragment extends Fragment {
             MainActivity mainActivity = MainActivity.getInstanceActivity();
             if (mainActivity!=null) {
                 mainActivity.updateCurrentNotifications();
+                mainActivity.checkEntries();
             }
             updateReleasedAnime();
             swipeRefresh.setRefreshing(false);
