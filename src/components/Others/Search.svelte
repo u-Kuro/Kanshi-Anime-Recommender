@@ -1101,27 +1101,15 @@
     $: customCategoryName =
         $selectedCategory || getLocalStorage("selectedCategory");
 
-    let previousCategoryName, refreshDefaultInputNumberValue;
+    let previousCategoryName;
     selectedCategory.subscribe((val) => {
         if (val) {
             if (previousCategoryName && previousCategoryName !== val) {
                 animeLoader({ selectCategory: val });
             }
             previousCategoryName = val;
-            (async () => {
-                await tick();
-                refreshDefaultInputNumberValue =
-                    !refreshDefaultInputNumberValue;
-            })();
         }
     });
-    showFilterOptions.subscribe(async(val)=>{
-        if (val) {
-            await tick();
-            refreshDefaultInputNumberValue =
-                !refreshDefaultInputNumberValue;
-        }
-    })
 
     function handleCategoryPopup(event) {
         let element = event.target;
@@ -2600,7 +2588,7 @@
                                 >
                                     {"Number Filter: " + numberFilterKey}
                                 </label>
-                                {#key refreshDefaultInputNumberValue}
+                                {#key filterCategoryArray}
                                     <input
                                         use:setDefaultInputNumberValue="{filterCategoryArray?.find?.(
                                             (filter) =>
