@@ -34,6 +34,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.regex.Matcher;
 
 public class Utils {
     public static String getPath(Context context, Uri uri) {
@@ -45,7 +46,7 @@ public class Utils {
                 final String[] split = docId.split(":");
                 final String type = split[0];
                 if ("primary".equalsIgnoreCase(type)) {
-                    return Environment.getExternalStorageDirectory() + "/" + split[1];
+                    return Environment.getExternalStorageDirectory() + File.separator + split[1];
                 }
                 // TODO handle non-primary volumes
             }
@@ -145,7 +146,8 @@ public class Utils {
     // While leaving previous Sets of Blob unmanaged and not being deleted.
     private static final ExecutorService cleanIndexedDBFilesExecutorService = Executors.newFixedThreadPool(1);
     private static Future<?> cleanIndexedDBFilesFuture;
-    private static ConcurrentHashMap<String, List<File>> groupedModifiedDate = new ConcurrentHashMap<>();
+    private static ConcurrentHashMap<String, List<File>> webGroupedModifiedDate = new ConcurrentHashMap<>();
+    private static ConcurrentHashMap<String, List<File>> localGroupedModifiedDate = new ConcurrentHashMap<>();
     private static final SimpleDateFormat dateFormat = new SimpleDateFormat("M/d/yyyy", Locale.US);
     @RequiresApi(api = Build.VERSION_CODES.O)
     public static void cleanIndexedDBFiles(Context context) {
@@ -153,11 +155,17 @@ public class Utils {
             cleanIndexedDBFilesFuture.cancel(true);
         }
         cleanIndexedDBFilesFuture = cleanIndexedDBFilesExecutorService.submit(() -> {
-            groupedModifiedDate = new ConcurrentHashMap<>();
+            // Web App
+            webGroupedModifiedDate = new ConcurrentHashMap<>();
 
-            addIndexedDBFiles(new File(context.getApplicationContext().getDataDir(), "app_webview/Default/IndexedDB/https_u-kuro.github.io_0.indexeddb.blob/1").listFiles());
+            final String mainDir = "app_webview/Default/IndexedDB/";
+            String location = mainDir+"https_u-kuro.github.io_0.indexeddb.blob/1";
+            location = location.replaceAll("/", Matcher.quoteReplacement(File.separator));
 
-            List<Map.Entry<String, List<File>>> sortedModifiedDateEntries = new ArrayList<>(groupedModifiedDate.entrySet());
+            final File dataDir = context.getApplicationContext().getDataDir();
+            addIndexedDBFiles(new File(dataDir, location).listFiles(), true);
+
+            List<Map.Entry<String, List<File>>> sortedModifiedDateEntries = new ArrayList<>(webGroupedModifiedDate.entrySet());
             Collections.sort(sortedModifiedDateEntries, (entry1, entry2) -> {
                 try {
                     Date date1 = dateFormat.parse(entry1.getKey());
@@ -189,7 +197,39 @@ public class Utils {
                     fileToRemove.delete();
                 }
             }
-            groupedModifiedDate = null;
+            webGroupedModifiedDate = null;
+
+            // Also for Local app
+            localGroupedModifiedDate = new ConcurrentHashMap<>();
+
+            location = mainDir+"file__0.indexeddb.blob/1";
+            location = location.replaceAll("/", Matcher.quoteReplacement(File.separator));
+
+            addIndexedDBFiles(new File(dataDir, location).listFiles(), false);
+
+            sortedModifiedDateEntries = new ArrayList<>(localGroupedModifiedDate.entrySet());
+            Collections.sort(sortedModifiedDateEntries, (entry1, entry2) -> {
+                try {
+                    Date date1 = dateFormat.parse(entry1.getKey());
+                    Date date2 = dateFormat.parse(entry2.getKey());
+                    if (date1 == null && date2 == null) return 0;
+                    if (date1 == null) return 1;
+                    if (date2 == null) return -1;
+                    return date1.compareTo(date2);
+                } catch (Exception e) {
+                    return 0;
+                }
+            });
+
+            for (int i = 0; i < sortedModifiedDateEntries.size() - allowedDays; i++) {
+                Map.Entry<String, List<File>> currentEntry = sortedModifiedDateEntries.get(i);
+                List<File> filesToRemove = currentEntry.getValue();
+                for (File fileToRemove : filesToRemove) {
+                    //noinspection ResultOfMethodCallIgnored
+                    fileToRemove.delete();
+                }
+            }
+            localGroupedModifiedDate = null;
         });
     }
 
@@ -242,26 +282,42 @@ public class Utils {
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
-    public static void addIndexedDBFiles(File[] files) {
+    public static void addIndexedDBFiles(File[] files, boolean isWeb) {
         if (files!=null) {
             for (File file:files) {
                 if (file.isFile()) {
                     Date modifiedDate = new Date(file.lastModified());
                     String modifiedDateKey = dateFormat.format(modifiedDate);
-                    if (groupedModifiedDate.containsKey(modifiedDateKey)) {
-                        List<File> modifiedFiles = groupedModifiedDate.get(modifiedDateKey);
-                        if (modifiedFiles == null) {
-                            modifiedFiles = new ArrayList<>();
+                    if (isWeb) {
+                        if (webGroupedModifiedDate.containsKey(modifiedDateKey)) {
+                            List<File> modifiedFiles = webGroupedModifiedDate.get(modifiedDateKey);
+                            if (modifiedFiles == null) {
+                                modifiedFiles = new ArrayList<>();
+                            }
+                            modifiedFiles.add(file);
+                            webGroupedModifiedDate.put(modifiedDateKey, modifiedFiles);
+                        } else {
+                            List<File> newModifiedFiles = new ArrayList<>();
+                            newModifiedFiles.add(file);
+                            webGroupedModifiedDate.put(modifiedDateKey, newModifiedFiles);
                         }
-                        modifiedFiles.add(file);
-                        groupedModifiedDate.put(modifiedDateKey, modifiedFiles);
                     } else {
-                        List<File> newModifiedFiles = new ArrayList<>();
-                        groupedModifiedDate.put(modifiedDateKey, newModifiedFiles);
+                        if (localGroupedModifiedDate.containsKey(modifiedDateKey)) {
+                            List<File> modifiedFiles = localGroupedModifiedDate.get(modifiedDateKey);
+                            if (modifiedFiles == null) {
+                                modifiedFiles = new ArrayList<>();
+                            }
+                            modifiedFiles.add(file);
+                            localGroupedModifiedDate.put(modifiedDateKey, modifiedFiles);
+                        } else {
+                            List<File> newModifiedFiles = new ArrayList<>();
+                            newModifiedFiles.add(file);
+                            localGroupedModifiedDate.put(modifiedDateKey, newModifiedFiles);
+                        }
                     }
                 } else if (file.isDirectory()) {
                     File[] newFiles = file.listFiles();
-                    addIndexedDBFiles(newFiles);
+                    addIndexedDBFiles(newFiles, isWeb);
                 }
             }
         }

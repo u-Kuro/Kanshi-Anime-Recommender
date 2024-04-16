@@ -78,6 +78,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
 
 import androidx.browser.customtabs.CustomTabColorSchemeParams;
 import androidx.browser.customtabs.CustomTabsIntent;
@@ -88,7 +89,7 @@ import androidx.core.content.FileProvider;
 import androidx.core.splashscreen.SplashScreen;
 
 public class MainActivity extends AppCompatActivity {
-    public final int appID = 364;
+    public final int appID = 365;
     private final boolean isOwner = true;
     public boolean keepAppRunningInBackground = false;
     public boolean webViewIsLoaded = false;
@@ -724,9 +725,9 @@ public class MainActivity extends AppCompatActivity {
                             showToast(Toast.makeText(getApplicationContext(), "Error: Folder directory can't be found, please create it first.", Toast.LENGTH_LONG));
                         }
                     } else if (!Objects.equals(exportPath, "") && !new File(exportPath).isDirectory()) {
-                        String[] tempExportPath = exportPath.split("/");
+                        String[] tempExportPath = exportPath.split(Pattern.quote(File.separator));
                         String tempPathName = tempExportPath.length > 1 ?
-                                tempExportPath[tempExportPath.length - 2] + "/" +
+                                tempExportPath[tempExportPath.length - 2] + File.separator +
                                         tempExportPath[tempExportPath.length - 1]
                                 : tempExportPath[tempExportPath.length - 1];
                         showDialog(new AlertDialog.Builder(MainActivity.this)

@@ -136,9 +136,10 @@ public class ReleasedTabFragment extends Fragment {
             Map<String, ArrayList<AnimeNotification>> map = new TreeMap<>();
 
             for (AnimeNotification anime : animeReleased) {
-                SimpleDateFormat shownDateFormat = new SimpleDateFormat("MMMM d yyyy", Locale.US);
+                SimpleDateFormat shownDateFormat = new SimpleDateFormat("MMMM d yyyy, EEEE", Locale.US);
+                SimpleDateFormat shownWeekTimeFormat = new SimpleDateFormat("EEEE, h:mm a", Locale.US);
                 SimpleDateFormat shownTimeFormat = new SimpleDateFormat("h:mm a", Locale.US);
-                SimpleDateFormat shownWeekTimeFormat = new SimpleDateFormat("EEEE h:mm a", Locale.US);
+                SimpleDateFormat shownWeekDay = new SimpleDateFormat("EEEE", Locale.US);
 
                 Date date = new Date(anime.releaseDateMillis);
                 LocalDate localDate = date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
@@ -146,36 +147,32 @@ public class ReleasedTabFragment extends Fragment {
 
                 String dateStr;
                 if (localDate.isAfter(today.plusDays(6))) { // more than a week
-                    dateStr = "Airing in " + shownDateFormat.format(date);
+                    dateStr = shownDateFormat.format(date);
                 } else if (localDate.isAfter(today.plusDays(1))) { // more than a day
-                    dateStr = "Airing in " + shownWeekTimeFormat.format(date);
+                    dateStr = shownWeekTimeFormat.format(date);
                 } else if (localDate.isAfter(today)) {
-                    dateStr = "Tomorrow at " + shownTimeFormat.format(date);
+                    dateStr = "Tomorrow, " + shownTimeFormat.format(date);
                 } else if (localDate.isEqual(today)) {
-                    if (anime.releaseDateMillis > System.currentTimeMillis()) {
-                        dateStr = "Airing at " + shownTimeFormat.format(date);
-                    } else {
-                        dateStr = "Today at " + shownTimeFormat.format(date);
-                    }
+                    dateStr = "Today, " + shownTimeFormat.format(date);
                 } else if (localDate.isEqual(today.minusDays(1))) {
                     Instant dateInstant = date.toInstant();
                     Instant now = Instant.now();
                     long minutesDifference = ChronoUnit.MINUTES.between(dateInstant, now);
                     if (minutesDifference==1) {
-                        dateStr = "1 minute ago";
+                        dateStr = "1 minute ago" + ", " + shownWeekDay.format(date);
                     } else if (minutesDifference < 60) {
-                        dateStr = minutesDifference+" minutes ago";
+                        dateStr = minutesDifference + " minutes ago" + ", " + shownWeekDay.format(date);
                     } else {
-                        dateStr = "Yesterday";
+                        dateStr = "Yesterday" + ", " + shownWeekDay.format(date);
                     }
                 } else if (localDate.isAfter(today.minusWeeks(1))) {
                     Instant dateInstant = date.toInstant();
                     Instant now = Instant.now();
                     long daysDifference = ChronoUnit.DAYS.between(dateInstant, now);
                     if (daysDifference==1) {
-                        dateStr = "1 day ago";
+                        dateStr = "1 day ago" + ", " + shownWeekDay.format(date);
                     } else {
-                        dateStr = daysDifference + " days ago";
+                        dateStr = daysDifference + " days ago" + ", " + shownWeekDay.format(date);
                     }
                 } else {
                     dateStr = shownDateFormat.format(date);
