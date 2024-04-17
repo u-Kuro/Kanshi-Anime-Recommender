@@ -2588,7 +2588,7 @@
                                 >
                                     {"Number Filter: " + numberFilterKey}
                                 </label>
-                                {#key filterCategoryArray}
+                                {#key $selectedCategory + $showFilterOptions + (filterCategoryArray instanceof Array ? 1 : 0)}
                                     <input
                                         use:setDefaultInputNumberValue="{filterCategoryArray?.find?.(
                                             (filter) =>

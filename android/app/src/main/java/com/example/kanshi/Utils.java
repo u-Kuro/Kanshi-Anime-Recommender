@@ -14,6 +14,8 @@ import android.graphics.drawable.Icon;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
+import android.os.storage.StorageManager;
+import android.os.storage.StorageVolume;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 
@@ -46,20 +48,39 @@ public class Utils {
                 final String[] split = docId.split(":");
                 final String type = split[0];
                 if ("primary".equalsIgnoreCase(type)) {
-                    return Environment.getExternalStorageDirectory() + File.separator + split[1];
+                    if (split.length > 1) {
+                        return Environment.getExternalStorageDirectory().toString() + "/" + split[1];
+                    } else {
+                        return Environment.getExternalStorageDirectory().toString() + "/";
+                    }
+                } else if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
+                    // Handle non-primary volumes
+                    StorageManager storageManager = (StorageManager) context.getSystemService(Context.STORAGE_SERVICE);
+                    List<StorageVolume> storageVolumes = storageManager.getStorageVolumes();
+                    for (StorageVolume volume : storageVolumes) {
+                        File volumeDir = volume.getDirectory();
+                        if (volumeDir != null) {
+                            String volumePath = volumeDir.getAbsolutePath();
+                            String[] projection = {MediaStore.Files.FileColumns.DATA};
+                            Cursor cursor = context.getContentResolver().query(uri, projection, null, null, null);
+                            if (cursor != null && cursor.moveToFirst()) {
+                                int columnIndex = cursor.getColumnIndexOrThrow(MediaStore.Files.FileColumns.DATA);
+                                String documentPathFromUri = cursor.getString(columnIndex);
+                                cursor.close();
+                                final boolean isUriInVolume = documentPathFromUri != null && documentPathFromUri.startsWith(volumePath);
+                                if (isUriInVolume) {
+                                    String[] pathSegments = docId.split(":");
+                                    return volumeDir.getAbsolutePath() + "/" + pathSegments[1];
+                                }
+                            }
+                        }
+                    }
                 }
-                // TODO handle non-primary volumes
-            }
-            // DownloadsProvider
-            else if (isDownloadsDocument(uri)) {
-
+            } else if (isDownloadsDocument(uri)) { // DownloadsProvider
                 final String id = DocumentsContract.getDocumentId(uri);
-                final Uri contentUri = ContentUris.withAppendedId(
-                        Uri.parse("content://downloads/public_downloads"), Long.parseLong(id));
+                final Uri contentUri = ContentUris.withAppendedId(Uri.parse("content://downloads/public_downloads"), Long.parseLong(id));
                 return getDataColumn(context, contentUri, null, null);
-            }
-            // MediaProvider
-            else if (isMediaDocument(uri)) {
+            } else if (isMediaDocument(uri)) { // MediaProvider
                 final String docId = DocumentsContract.getDocumentId(uri);
                 final String[] split = docId.split(":");
                 final String type = split[0];
@@ -72,21 +93,16 @@ public class Utils {
                     contentUri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
                 }
                 final String selection = "_id=?";
-                final String[] selectionArgs = new String[] {
-                        split[1]
-                };
+                final String[] selectionArgs = new String[]{split[1]};
                 return getDataColumn(context, contentUri, selection, selectionArgs);
             }
-        }
-        // MediaStore (and general)
-        else if ("content".equalsIgnoreCase(uri.getScheme())) {
+        } else if ("content".equalsIgnoreCase(uri.getScheme())) { // MediaStore (and general)
             // Return the remote address
-            if (isGooglePhotosUri(uri))
+            if (isGooglePhotosUri(uri)) {
                 return uri.getLastPathSegment();
+            }
             return getDataColumn(context, uri, null, null);
-        }
-        // File
-        else if ("file".equalsIgnoreCase(uri.getScheme())) {
+        } else if ("file".equalsIgnoreCase(uri.getScheme())) { // File
             return uri.getPath();
         }
         return null;
@@ -94,19 +110,17 @@ public class Utils {
     public static String getDataColumn(Context context, Uri uri, String selection, String[] selectionArgs) {
         Cursor cursor = null;
         final String column = "_data";
-        final String[] projection = {
-                column
-        };
+        final String[] projection = {column};
         try {
-            cursor = context.getContentResolver().query(uri, projection, selection, selectionArgs,
-                    null);
+            cursor = context.getContentResolver().query(uri, projection, selection, selectionArgs, null);
             if (cursor != null && cursor.moveToFirst()) {
                 final int index = cursor.getColumnIndexOrThrow(column);
                 return cursor.getString(index);
             }
         } finally {
-            if (cursor != null)
+            if (cursor != null) {
                 cursor.close();
+            }
         }
         return null;
     }
