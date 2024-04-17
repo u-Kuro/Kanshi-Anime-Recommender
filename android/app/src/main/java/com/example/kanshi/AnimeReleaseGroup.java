@@ -1,13 +1,13 @@
 package com.example.kanshi;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Date;
 
 public class AnimeReleaseGroup {
     public final String dateString;
-    public final Date date;
+    public final LocalDateTime date;
     public final ArrayList<AnimeNotification> anime;
-    public AnimeReleaseGroup(String dateString, Date date, ArrayList<AnimeNotification> anime) {
+    public AnimeReleaseGroup(String dateString, LocalDateTime date, ArrayList<AnimeNotification> anime) {
         this.dateString = dateString;
         this.date = date;
         this.anime = anime;

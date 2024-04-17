@@ -70,7 +70,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -89,7 +88,7 @@ import androidx.core.content.FileProvider;
 import androidx.core.splashscreen.SplashScreen;
 
 public class MainActivity extends AppCompatActivity {
-    public final int appID = 368;
+    public final int appID = 369;
     private final boolean isOwner = true;
     public boolean keepAppRunningInBackground = false;
     public boolean webViewIsLoaded = false;
@@ -724,7 +723,7 @@ public class MainActivity extends AppCompatActivity {
                         } else if (!dirIsCreated) {
                             showToast(Toast.makeText(getApplicationContext(), "Error: Folder directory can't be found, please create it first.", Toast.LENGTH_LONG));
                         }
-                    } else if (!Objects.equals(exportPath, "") && !new File(exportPath).isDirectory()) {
+                    } else if (exportPath != null && !exportPath.isEmpty() && !new File(exportPath).isDirectory()) {
                         String[] tempExportPath = exportPath.split(Pattern.quote(File.separator));
                         String tempPathName = tempExportPath.length > 1 ?
                                 tempExportPath[tempExportPath.length - 2] + File.separator +

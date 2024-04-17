@@ -17,16 +17,15 @@ import androidx.fragment.app.Fragment;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import java.lang.ref.WeakReference;
-import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Date;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.TreeMap;
@@ -107,7 +106,7 @@ public class ReleasedTabFragment extends Fragment {
 
             for (AnimeNotification anime : allAnimeNotificationValues) {
                 if (!selectedAnimeReleaseOption.equals("Updates")) {
-                    boolean isMyAnime = anime.userStatus != null && !anime.userStatus.equals("") && !anime.userStatus.equalsIgnoreCase("UNWATCHED");
+                    boolean isMyAnime = anime.userStatus != null && !anime.userStatus.isEmpty() && !anime.userStatus.equalsIgnoreCase("UNWATCHED");
                     if (selectedAnimeReleaseOption.equals("My List") && !isMyAnime) {
                         continue;
                     } else if (selectedAnimeReleaseOption.equals("Others") && isMyAnime) {
@@ -134,48 +133,41 @@ public class ReleasedTabFragment extends Fragment {
             }
 
             Map<String, ArrayList<AnimeNotification>> map = new TreeMap<>();
-
             for (AnimeNotification anime : animeReleased) {
-                SimpleDateFormat shownDateFormat = new SimpleDateFormat("MMMM d yyyy, EEEE", Locale.US);
-                SimpleDateFormat shownWeekTimeFormat = new SimpleDateFormat("EEEE, h:mm a", Locale.US);
-                SimpleDateFormat shownTimeFormat = new SimpleDateFormat("h:mm a", Locale.US);
-                SimpleDateFormat shownWeekDay = new SimpleDateFormat("EEEE", Locale.US);
+                DateTimeFormatter shownDateFormat = DateTimeFormatter.ofPattern("MMMM d yyyy, EEEE");
+                DateTimeFormatter shownWeekDayFormat = DateTimeFormatter.ofPattern("EEEE");
 
-                Date date = new Date(anime.releaseDateMillis);
-                LocalDate localDate = date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+                Instant releaseDateInstant = Instant.ofEpochMilli(anime.releaseDateMillis);
+                LocalDate localDate = releaseDateInstant.atZone(ZoneId.systemDefault()).toLocalDate();
                 LocalDate today = LocalDate.now();
 
                 String dateStr;
                 if (localDate.isAfter(today.plusDays(6))) { // more than a week
-                    dateStr = shownDateFormat.format(date);
+                    dateStr = shownDateFormat.format(localDate);
                 } else if (localDate.isAfter(today.plusDays(1))) { // more than a day
-                    dateStr = shownWeekTimeFormat.format(date);
+                    dateStr = shownWeekDayFormat.format(localDate);
                 } else if (localDate.isAfter(today)) {
-                    dateStr = "Tomorrow, " + shownTimeFormat.format(date);
+                    dateStr = "Tomorrow, " + shownWeekDayFormat.format(localDate);
                 } else if (localDate.isEqual(today)) {
-                    dateStr = "Today, " + shownTimeFormat.format(date);
-                } else if (localDate.isEqual(today.minusDays(1))) {
-                    Instant dateInstant = date.toInstant();
-                    Instant now = Instant.now();
-                    long minutesDifference = ChronoUnit.MINUTES.between(dateInstant, now);
-                    if (minutesDifference==1) {
-                        dateStr = "1 minute ago" + ", " + shownWeekDay.format(date);
-                    } else if (minutesDifference < 60) {
-                        dateStr = minutesDifference + " minutes ago" + ", " + shownWeekDay.format(date);
-                    } else {
-                        dateStr = "Yesterday" + ", " + shownWeekDay.format(date);
-                    }
+                    dateStr = "Today, " + shownWeekDayFormat.format(localDate);
                 } else if (localDate.isAfter(today.minusWeeks(1))) {
-                    Instant dateInstant = date.toInstant();
-                    Instant now = Instant.now();
-                    long daysDifference = ChronoUnit.DAYS.between(dateInstant, now);
-                    if (daysDifference==1) {
-                        dateStr = "1 day ago" + ", " + shownWeekDay.format(date);
+                    long daysDifference = ChronoUnit.DAYS.between(localDate, today);
+                    if (daysDifference == 1) {
+                        LocalDateTime localDateTime = LocalDateTime.ofInstant(releaseDateInstant, ZoneId.systemDefault());
+                        LocalDateTime now = LocalDateTime.now();
+                        long minutesDifference = ChronoUnit.MINUTES.between(localDateTime, now);
+                        if (minutesDifference == 1) {
+                            dateStr = "1 minute ago" + ", " + shownWeekDayFormat.format(localDate);
+                        } else if (minutesDifference < 60) {
+                            dateStr = minutesDifference + " minutes ago" + ", " + shownWeekDayFormat.format(localDate);
+                        } else {
+                            dateStr = "Yesterday" + ", " + shownWeekDayFormat.format(localDate);
+                        }
                     } else {
-                        dateStr = daysDifference + " days ago" + ", " + shownWeekDay.format(date);
+                        dateStr = daysDifference + " days ago" + ", " + shownWeekDayFormat.format(localDate);
                     }
                 } else {
-                    dateStr = shownDateFormat.format(date);
+                    dateStr = shownDateFormat.format(localDate);
                 }
 
                 if (!map.containsKey(dateStr)) {
@@ -193,9 +185,9 @@ public class ReleasedTabFragment extends Fragment {
                     Collections.sort(animeList, (a1, a2) -> Long.compare(a2.releaseDateMillis, a1.releaseDateMillis));
 
                     AnimeNotification anime = animeList.get(0);
-                    Date date = new Date(anime.releaseDateMillis);
+                    LocalDateTime localDateTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(anime.releaseDateMillis), ZoneId.systemDefault());
 
-                    groupedReleasedAnime.add(new AnimeReleaseGroup(entry.getKey(), date, animeList));
+                    groupedReleasedAnime.add(new AnimeReleaseGroup(entry.getKey(), localDateTime, animeList));
                 }
             }
 

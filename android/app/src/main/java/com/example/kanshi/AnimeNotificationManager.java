@@ -291,7 +291,7 @@ public class AnimeNotificationManager {
 
         for (AnimeNotification anime : allAnimeNotificationValues) {
             if (anime.releaseDateMillis <= currentTimeInMillis) {
-                boolean isMyAnime = anime.userStatus != null && !anime.userStatus.equals("") && !anime.userStatus.equalsIgnoreCase("UNWATCHED");
+                boolean isMyAnime = anime.userStatus != null && !anime.userStatus.isEmpty() && !anime.userStatus.equalsIgnoreCase("UNWATCHED");
                 if (isMyAnime) {
                     if (anime.releaseDateMillis > mostRecentlySentMyAnimeNotificationTime){
                         mostRecentlySentMyAnimeNotificationTime = anime.releaseDateMillis;

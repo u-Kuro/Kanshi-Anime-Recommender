@@ -133,7 +133,7 @@ public class YoutubeViewActivity extends AppCompatActivity {
         });
         siteName.setOnLongClickListener(view -> {
             String text = webView.getUrl();
-            if (text!=null && !text.equals("")) {
+            if (text != null && !text.isEmpty()) {
                 ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
                 ClipData clip = ClipData.newPlainText("Copied Text", text);
                 clipboard.setPrimaryClip(clip);

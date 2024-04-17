@@ -213,7 +213,7 @@ public class AnimeReleaseActivity extends AppCompatActivity {
 
         String exportPath = prefs.getString("savedExportPath", "");
         ImageView backupAnimeReleases = findViewById(R.id.backup_anime_releases);
-        if (exportPath.equals("")) {
+        if (exportPath.isEmpty()) {
             backupAnimeReleases.setVisibility(View.GONE);
         } else {
             backupAnimeReleases.setVisibility(View.VISIBLE);

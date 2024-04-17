@@ -109,7 +109,7 @@ public class MyWorker extends Worker {
                 if (anime.releaseDateMillis > realLastSentNotificationTime) {
                     newSentAnimeNotification.add(anime);
                 }
-                boolean isMyAnime = anime.userStatus != null && !anime.userStatus.equals("") && !anime.userStatus.equalsIgnoreCase("UNWATCHED");
+                boolean isMyAnime = anime.userStatus != null && !anime.userStatus.isEmpty() && !anime.userStatus.equalsIgnoreCase("UNWATCHED");
                 if (isMyAnime) {
                     if (anime.releaseDateMillis > mostRecentlySentMyAnimeNotificationTime){
                         mostRecentlySentMyAnimeNotificationTime = anime.releaseDateMillis;

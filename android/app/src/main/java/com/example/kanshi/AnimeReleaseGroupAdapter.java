@@ -28,13 +28,13 @@ import androidx.annotation.RequiresApi;
 import androidx.appcompat.content.res.AppCompatResources;
 
 
-import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -69,59 +69,49 @@ public class AnimeReleaseGroupAdapter extends ArrayAdapter<AnimeReleaseGroup> {
         if (animeReleaseGroup != null) {
 
             TextView animeReleaseGroupDate = view.findViewById(R.id.anime_release_group_date);
+            LocalDateTime localDateTime = animeReleaseGroup.date;
 
-            if (animeReleaseGroup.dateString!=null) {
-                try {
-                    Date date = animeReleaseGroup.date;
-                    if (date != null) {
+            if (localDateTime != null) {
+                DateTimeFormatter shownDateFormat = DateTimeFormatter.ofPattern("MMMM d yyyy, EEEE");
+                DateTimeFormatter shownWeekDayFormat = DateTimeFormatter.ofPattern("EEEE");
 
-                        SimpleDateFormat shownDateFormat = new SimpleDateFormat("MMMM d yyyy, EEEE", Locale.US);
-                        SimpleDateFormat shownWeekTimeFormat = new SimpleDateFormat("EEEE, h:mm a", Locale.US);
-                        SimpleDateFormat shownTimeFormat = new SimpleDateFormat("h:mm a", Locale.US);
-                        SimpleDateFormat shownWeekDay = new SimpleDateFormat("EEEE", Locale.US);
+                LocalDate localDate = localDateTime.toLocalDate();
+                LocalDate today = LocalDate.now();
 
-                        LocalDate localDate = date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-                        LocalDate today = LocalDate.now();
-
-                        String dateStr;
-                        if (localDate.isAfter(today.plusDays(6))) { // more than a week
-                            dateStr = shownDateFormat.format(date);
-                        } else if (localDate.isAfter(today.plusDays(1))) { // more than a day
-                            dateStr = shownWeekTimeFormat.format(date);
-                        } else if (localDate.isAfter(today)) {
-                            dateStr = "Tomorrow, " + shownTimeFormat.format(date);
-                        } else if (localDate.isEqual(today)) {
-                            dateStr = "Today, " + shownTimeFormat.format(date);
-                        } else if (localDate.isEqual(today.minusDays(1))) {
-                            Instant dateInstant = date.toInstant();
-                            Instant now = Instant.now();
-                            long minutesDifference = ChronoUnit.MINUTES.between(dateInstant, now);
-                            if (minutesDifference==1) {
-                                dateStr = "1 minute ago" + ", " + shownWeekDay.format(date);
-                            } else if (minutesDifference < 60) {
-                                dateStr = minutesDifference + " minutes ago" + ", " + shownWeekDay.format(date);
-                            } else {
-                                dateStr = "Yesterday" + ", " + shownWeekDay.format(date);
-                            }
-                        } else if (localDate.isAfter(today.minusWeeks(1))) {
-                            Instant dateInstant = date.toInstant();
-                            Instant now = Instant.now();
-                            long daysDifference = ChronoUnit.DAYS.between(dateInstant, now);
-                            if (daysDifference==1) {
-                                dateStr = "1 day ago" + ", " + shownWeekDay.format(date);
-                            } else {
-                                dateStr = daysDifference + " days ago" + ", " + shownWeekDay.format(date);
-                            }
+                String dateStr;
+                if (localDate.isAfter(today.plusDays(6))) { // more than a week
+                    dateStr = shownDateFormat.format(localDate);
+                } else if (localDate.isAfter(today.plusDays(1))) { // more than a day
+                    dateStr = shownWeekDayFormat.format(localDate);
+                } else if (localDate.isAfter(today)) {
+                    dateStr = "Tomorrow, " + shownWeekDayFormat.format(localDate);
+                } else if (localDate.isEqual(today)) {
+                    dateStr = "Today, " + shownWeekDayFormat.format(localDate);
+                } else if (localDate.isAfter(today.minusWeeks(1))) {
+                    long daysDifference = ChronoUnit.DAYS.between(localDate, today);
+                    if (daysDifference == 1) {
+                        LocalDateTime now = LocalDateTime.now();
+                        long minutesDifference = ChronoUnit.MINUTES.between(localDateTime, now);
+                        if (minutesDifference == 1) {
+                            dateStr = "1 minute ago" + ", " + shownWeekDayFormat.format(localDate);
+                        } else if (minutesDifference < 60) {
+                            dateStr = minutesDifference + " minutes ago" + ", " + shownWeekDayFormat.format(localDate);
                         } else {
-                            dateStr = shownDateFormat.format(date);
+                            dateStr = "Yesterday" + ", " + shownWeekDayFormat.format(localDate);
                         }
-                        animeReleaseGroupDate.setText(dateStr);
                     } else {
-                        animeReleaseGroupDate.setText(animeReleaseGroup.dateString);
+                        dateStr = daysDifference + " days ago" + ", " + shownWeekDayFormat.format(localDate);
                     }
-                } catch (Exception ignored) {}
+                } else {
+                    dateStr = shownDateFormat.format(localDate);
+                }
+                animeReleaseGroupDate.setText(dateStr);
             } else {
-                animeReleaseGroupDate.setText(R.string.na);
+                if (animeReleaseGroup.dateString != null) {
+                    animeReleaseGroupDate.setText(animeReleaseGroup.dateString);
+                } else {
+                    animeReleaseGroupDate.setText(R.string.na);
+                }
             }
 
             ArrayList<AnimeNotification> animeReleases = animeReleaseGroup.anime;
@@ -130,9 +120,9 @@ public class AnimeReleaseGroupAdapter extends ArrayAdapter<AnimeReleaseGroup> {
                 animeReleaseGroupDateLayout.removeViewAt(i);
             }
 
-            for (int i =  0; i < animeReleases.size(); i++) {
+            for (int i = 0; i < animeReleases.size(); i++) {
                 View animeCard = animeReleaseGroupDateLayout.getChildAt(i);
-                if (animeCard==null) {
+                if (animeCard == null) {
                     animeCard = View.inflate(mContext, R.layout.anime_release_card, null);
                     animeReleaseGroupDateLayout.addView(animeCard);
                 }
@@ -140,12 +130,13 @@ public class AnimeReleaseGroupAdapter extends ArrayAdapter<AnimeReleaseGroup> {
 
                 View finalAnimeCard = animeCard;
                 getViewExecutorService.submit(() -> {
-                    if (finalAnimeCard==null || anime==null) return;
+                    if (finalAnimeCard == null || anime == null) return;
                     ImageView animeImage = finalAnimeCard.findViewById(R.id.anime_image);
                     TextView animeName = finalAnimeCard.findViewById(R.id.anime_name);
                     View userStatusIcon = finalAnimeCard.findViewById(R.id.user_status_icon);
                     TextView animeReleaseInfo = finalAnimeCard.findViewById(R.id.anime_release_info);
-                    if (anime.imageByte!=null) {
+                    TextView animeReleaseTime = finalAnimeCard.findViewById(R.id.anime_release_time);
+                    if (anime.imageByte != null) {
                         String key = String.valueOf(anime.animeId);
                         Bitmap imageBitmap;
                         if (imageCache.containsKey(key)) {
@@ -158,6 +149,18 @@ public class AnimeReleaseGroupAdapter extends ArrayAdapter<AnimeReleaseGroup> {
                     } else {
                         runOnUi(() -> animeImage.setImageResource(R.drawable.image_placeholder));
                     }
+
+                    DateTimeFormatter shownTimeFormat = DateTimeFormatter.ofPattern("h:mm a", Locale.US);
+                    String releaseTime = shownTimeFormat.format(LocalDateTime.ofInstant(Instant.ofEpochMilli(anime.releaseDateMillis), ZoneId.systemDefault()));
+                    if (releaseTime != null && !releaseTime.isEmpty()) {
+                        runOnUi(() -> {
+                            animeReleaseTime.setText(releaseTime);
+                            animeReleaseTime.setVisibility(View.VISIBLE);
+                        });
+                    } else {
+                        runOnUi(() -> animeReleaseTime.setVisibility(View.GONE));
+                    }
+
                     final boolean isWatched = anime.userStatus.equals("COMPLETED") || (anime.episodeProgress != 0 && anime.releaseEpisode <= anime.episodeProgress);
                     final int fontColorId;
                     if (isWatched) {
@@ -166,7 +169,7 @@ public class AnimeReleaseGroupAdapter extends ArrayAdapter<AnimeReleaseGroup> {
                         fontColorId = R.color.white;
                     }
                     final String title = anime.title;
-                    if (title!=null && !title.equals("")) {
+                    if (title != null && !title.isEmpty()) {
                         runOnUi(() -> {
                             animeName.setTextColor(mContext.getResources().getColor(fontColorId));
                             animeName.setText(title);
@@ -184,14 +187,15 @@ public class AnimeReleaseGroupAdapter extends ArrayAdapter<AnimeReleaseGroup> {
                         });
                     }
                     final String userStatus = anime.userStatus;
-                    if (!userStatus.equals("") && !userStatus.equalsIgnoreCase("UNWATCHED")) {
+                    //noinspection ConstantValue
+                    if (userStatus != null && !userStatus.isEmpty() && !userStatus.equalsIgnoreCase("UNWATCHED")) {
                         runOnUi(() -> {
                             final ColorStateList colorStateList;
                             if (userStatus.equalsIgnoreCase("COMPLETED")) {
                                 colorStateList = AppCompatResources.getColorStateList(mContext, R.color.web_green);
                             } else if (
-                                userStatus.equalsIgnoreCase("CURRENT")
-                                || userStatus.equalsIgnoreCase("REPEATING")
+                                    userStatus.equalsIgnoreCase("CURRENT")
+                                            || userStatus.equalsIgnoreCase("REPEATING")
                             ) {
                                 colorStateList = AppCompatResources.getColorStateList(mContext, R.color.web_blue);
                             } else if (userStatus.equalsIgnoreCase("PLANNING")) {
@@ -214,7 +218,7 @@ public class AnimeReleaseGroupAdapter extends ArrayAdapter<AnimeReleaseGroup> {
                     } else {
                         runOnUi(() -> userStatusIcon.setVisibility(View.GONE));
                     }
-                    if (anime.message!=null) {
+                    if (anime.message != null && !anime.message.isEmpty()) {
                         runOnUi(() -> {
                             animeReleaseInfo.setTextColor(mContext.getResources().getColor(fontColorId));
                             animeReleaseInfo.setText(anime.message);
@@ -226,10 +230,10 @@ public class AnimeReleaseGroupAdapter extends ArrayAdapter<AnimeReleaseGroup> {
                         });
                     }
                     final String animeUrl = anime.animeUrl;
-                    if (animeUrl!=null && !animeUrl.equals("")) {
+                    if (animeUrl != null && !animeUrl.isEmpty()) {
                         runOnUi(() -> finalAnimeCard.setOnClickListener(view1 -> {
                             AnimeReleaseActivity animeReleaseActivity = AnimeReleaseActivity.getInstanceActivity();
-                            if (animeReleaseActivity!=null) {
+                            if (animeReleaseActivity != null) {
                                 animeReleaseActivity.openAnimeInAniList(animeUrl);
                             }
                         }));

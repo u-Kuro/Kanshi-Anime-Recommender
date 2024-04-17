@@ -5,7 +5,7 @@
     android:layout_height="53dp"
     android:paddingVertical="6dp"
     android:paddingHorizontal="16dp"
-    android:background="?android:attr/selectableItemBackground">
+    android:background="@color/black">
     <ImageView
         android:id="@+id/anime_image"
         android:src="@drawable/image_placeholder"
@@ -16,57 +16,76 @@
         android:layout_centerVertical="true"
         android:scaleType="centerCrop" />
 
-    <androidx.constraintlayout.widget.ConstraintLayout
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_centerVertical="true"
         android:layout_toEndOf="@id/anime_image"
         android:paddingStart="16dp"
-        android:paddingEnd="16dp">
+        android:paddingEnd="0dp"
+        android:orientation="horizontal">
 
-        <TextView
-            android:id="@+id/anime_name"
-            style="@style/TextAppearance.AppCompat.Title"
-            android:layout_width="match_parent"
-            android:layout_height="16dp"
-            app:layout_constraintBottom_toTopOf="@id/anime_release_info_wrapper"
-            app:layout_constraintLeft_toLeftOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            android:includeFontPadding="false"
-            android:singleLine="true"
-            android:textColor="@color/white"
-            android:textSize="14sp" />
-
-        <RelativeLayout
-            android:id="@+id/anime_release_info_wrapper"
-            android:layout_width="match_parent"
-            android:layout_height="16dp"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintLeft_toLeftOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/anime_name">
-
-            <View
-                android:id="@+id/user_status_icon"
-                android:layout_width="8dp"
-                android:layout_height="8dp"
-                android:layout_centerVertical="true"
-                android:layout_marginEnd="4dp"
-                android:visibility="gone"
-                android:backgroundTintMode="src_over"
-                android:contentDescription="@string/user_anime_status"
-                android:background="@drawable/circle" />
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:paddingEnd="16dp"
+            android:paddingStart="0dp">
 
             <TextView
-                android:id="@+id/anime_release_info"
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:layout_toEndOf="@id/user_status_icon"
-                android:layout_centerVertical="true"
-                android:gravity="center_vertical"
+                android:id="@+id/anime_name"
+                style="@style/TextAppearance.AppCompat.Title"
+                android:layout_width="match_parent"
+                android:layout_height="16dp"
+                app:layout_constraintBottom_toTopOf="@id/anime_release_info_wrapper"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
                 android:includeFontPadding="false"
                 android:singleLine="true"
                 android:textColor="@color/white"
-                android:textSize="12sp"/>
-        </RelativeLayout>
-    </androidx.constraintlayout.widget.ConstraintLayout>
+                android:textSize="14sp" />
+
+            <RelativeLayout
+                android:id="@+id/anime_release_info_wrapper"
+                android:layout_width="match_parent"
+                android:layout_height="16dp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/anime_name">
+                <View
+                    android:id="@+id/user_status_icon"
+                    android:layout_width="8dp"
+                    android:layout_height="8dp"
+                    android:layout_centerVertical="true"
+                    android:layout_marginEnd="4dp"
+                    android:visibility="visible"
+                    android:backgroundTint="@color/white"
+                    android:backgroundTintMode="src_over"
+                    android:contentDescription="@string/user_anime_status"
+                    android:background="@drawable/circle"/>
+
+                <TextView
+                    android:id="@+id/anime_release_info"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:layout_toEndOf="@id/user_status_icon"
+                    android:layout_centerVertical="true"
+                    android:gravity="center_vertical"
+                    android:includeFontPadding="false"
+                    android:singleLine="true"
+                    android:textColor="@color/white"
+                    android:textSize="12sp"/>
+            </RelativeLayout>
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <TextView
+            android:id="@+id/anime_release_time"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:gravity="bottom"
+            android:includeFontPadding="false"
+            android:singleLine="true"
+            android:textColor="@color/white"
+            android:textSize="12sp"/>
+    </LinearLayout>
 </RelativeLayout>
