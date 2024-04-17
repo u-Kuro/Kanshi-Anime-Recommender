@@ -150,17 +150,6 @@ public class AnimeReleaseGroupAdapter extends ArrayAdapter<AnimeReleaseGroup> {
                         runOnUi(() -> animeImage.setImageResource(R.drawable.image_placeholder));
                     }
 
-                    DateTimeFormatter shownTimeFormat = DateTimeFormatter.ofPattern("h:mm a", Locale.US);
-                    String releaseTime = shownTimeFormat.format(LocalDateTime.ofInstant(Instant.ofEpochMilli(anime.releaseDateMillis), ZoneId.systemDefault()));
-                    if (releaseTime != null && !releaseTime.isEmpty()) {
-                        runOnUi(() -> {
-                            animeReleaseTime.setText(releaseTime);
-                            animeReleaseTime.setVisibility(View.VISIBLE);
-                        });
-                    } else {
-                        runOnUi(() -> animeReleaseTime.setVisibility(View.GONE));
-                    }
-
                     final boolean isWatched = anime.userStatus.equals("COMPLETED") || (anime.episodeProgress != 0 && anime.releaseEpisode <= anime.episodeProgress);
                     final int fontColorId;
                     if (isWatched) {
@@ -168,6 +157,19 @@ public class AnimeReleaseGroupAdapter extends ArrayAdapter<AnimeReleaseGroup> {
                     } else {
                         fontColorId = R.color.white;
                     }
+
+                    DateTimeFormatter shownTimeFormat = DateTimeFormatter.ofPattern("h:mm a", Locale.US);
+                    String releaseTime = shownTimeFormat.format(LocalDateTime.ofInstant(Instant.ofEpochMilli(anime.releaseDateMillis), ZoneId.systemDefault()));
+                    if (releaseTime != null && !releaseTime.isEmpty()) {
+                        runOnUi(() -> {
+                            animeReleaseTime.setTextColor(mContext.getResources().getColor(fontColorId));
+                            animeReleaseTime.setText(releaseTime);
+                            animeReleaseTime.setVisibility(View.VISIBLE);
+                        });
+                    } else {
+                        runOnUi(() -> animeReleaseTime.setText(""));
+                    }
+
                     final String title = anime.title;
                     if (title != null && !title.isEmpty()) {
                         runOnUi(() -> {
