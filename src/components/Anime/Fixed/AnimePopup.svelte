@@ -1958,7 +1958,7 @@
                                                             ?.episode > 0
                                                             ? anime
                                                                   .nextAiringEpisode
-                                                                  ?.episode
+                                                                  ?.episode - 1
                                                             : typeof anime.episodes ===
                                                                     "number" &&
                                                                 anime.episodes >
@@ -1984,7 +1984,6 @@
                                                                   parseInt(
                                                                       releasedEps,
                                                                   ) -
-                                                                      1 -
                                                                       parseInt(
                                                                           epsWatched,
                                                                       ),
