@@ -150,7 +150,7 @@ public class AnimeReleaseGroupAdapter extends ArrayAdapter<AnimeReleaseGroup> {
                         runOnUi(() -> animeImage.setImageResource(R.drawable.image_placeholder));
                     }
 
-                    final boolean isWatched = anime.userStatus.equals("COMPLETED") || (anime.episodeProgress != 0 && anime.releaseEpisode <= anime.episodeProgress);
+                    final boolean isWatched = "COMPLETED".equals(anime.userStatus) || (anime.episodeProgress > 0 && anime.releaseEpisode <= anime.episodeProgress);
                     final int fontColorId;
                     if (isWatched) {
                         fontColorId = R.color.grey;
@@ -167,7 +167,7 @@ public class AnimeReleaseGroupAdapter extends ArrayAdapter<AnimeReleaseGroup> {
                             animeReleaseTime.setVisibility(View.VISIBLE);
                         });
                     } else {
-                        runOnUi(() -> animeReleaseTime.setText(""));
+                        runOnUi(() -> animeReleaseTime.setVisibility(View.GONE));
                     }
 
                     final String title = anime.title;
@@ -189,7 +189,6 @@ public class AnimeReleaseGroupAdapter extends ArrayAdapter<AnimeReleaseGroup> {
                         });
                     }
                     final String userStatus = anime.userStatus;
-                    //noinspection ConstantValue
                     if (userStatus != null && !userStatus.isEmpty() && !userStatus.equalsIgnoreCase("UNWATCHED")) {
                         runOnUi(() -> {
                             final ColorStateList colorStateList;

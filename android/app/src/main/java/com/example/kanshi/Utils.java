@@ -253,7 +253,7 @@ public class Utils {
         boolean autoExportReleasedAnime = prefs.getBoolean("autoExportReleasedAnime", false);
         if (!autoExportReleasedAnime) return;
         String exportPath = prefs.getString("savedExportPath", "");
-        if (!exportPath.isEmpty() && Environment.isExternalStorageManager()) {
+        if (!"".equals(exportPath) && Environment.isExternalStorageManager()) {
             File exportDirectory = new File(exportPath);
             if (exportDirectory.isDirectory()) {
                 String directoryPath = exportPath + File.separator;

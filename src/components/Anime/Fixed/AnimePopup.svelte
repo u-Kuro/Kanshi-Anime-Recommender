@@ -1948,6 +1948,27 @@
                                                     >{anime.userStatus ||
                                                         "NA"}</span
                                                 >
+                                                {#if anime.userStatus?.toLowerCase?.() !== "completed" && typeof anime.episodeProgress === "number" && anime.episodeProgress > 0 && typeof anime.nextAiringEpisode?.episode === "number" && anime.nextAiringEpisode?.episode > 1 && anime.nextAiringEpisode?.episode - 1 > anime.episodeProgress}
+                                                    {@const episodesBehind =
+                                                        parseInt(
+                                                            parseInt(
+                                                                anime
+                                                                    .nextAiringEpisode
+                                                                    ?.episode,
+                                                            ) -
+                                                                1 -
+                                                                parseInt(
+                                                                    anime.episodeProgress,
+                                                                ),
+                                                        )}
+                                                    {#if episodesBehind >= 1}
+                                                        {" · "}
+                                                        <span
+                                                            style:color="{"hsl(var(--ac-color))"}"
+                                                            >{`${episodesBehind} ${episodesBehind > 1 ? "Eps" : "Ep"} Behind`}</span
+                                                        >
+                                                    {/if}
+                                                {/if}
                                                 {#if anime.userScore != null}
                                                     {" · "}
                                                     <!-- star regular -->

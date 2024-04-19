@@ -213,7 +213,7 @@ public class AnimeReleaseActivity extends AppCompatActivity {
 
         String exportPath = prefs.getString("savedExportPath", "");
         ImageView backupAnimeReleases = findViewById(R.id.backup_anime_releases);
-        if (exportPath.isEmpty()) {
+        if ("".equals(exportPath)) {
             backupAnimeReleases.setVisibility(View.GONE);
         } else {
             backupAnimeReleases.setVisibility(View.VISIBLE);
@@ -226,9 +226,9 @@ public class AnimeReleaseActivity extends AppCompatActivity {
 
         String selectedAnimeReleaseOption = prefs.getString("animeReleaseOption", "Updates");
 
-        if (selectedAnimeReleaseOption.equals("My List")) {
+        if ("My List".equals(selectedAnimeReleaseOption)) {
             animeReleaseSpinner.setSelection(1);
-        } else if (selectedAnimeReleaseOption.equals("Others")) {
+        } else if ("Others".equals(selectedAnimeReleaseOption)) {
             animeReleaseSpinner.setSelection(2);
         } else {
             animeReleaseSpinner.setSelection(0);

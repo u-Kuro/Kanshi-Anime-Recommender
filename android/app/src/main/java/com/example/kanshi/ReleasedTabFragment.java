@@ -105,11 +105,11 @@ public class ReleasedTabFragment extends Fragment {
             ArrayList<AnimeNotification> animeReleased = new ArrayList<>();
 
             for (AnimeNotification anime : allAnimeNotificationValues) {
-                if (!selectedAnimeReleaseOption.equals("Updates")) {
+                if (!"Updates".equals(selectedAnimeReleaseOption)) {
                     boolean isMyAnime = anime.userStatus != null && !anime.userStatus.isEmpty() && !anime.userStatus.equalsIgnoreCase("UNWATCHED");
-                    if (selectedAnimeReleaseOption.equals("My List") && !isMyAnime) {
+                    if ("My List".equals(selectedAnimeReleaseOption) && !isMyAnime) {
                         continue;
-                    } else if (selectedAnimeReleaseOption.equals("Others") && isMyAnime) {
+                    } else if ("Others".equals(selectedAnimeReleaseOption) && isMyAnime) {
                         continue;
                     }
                 }
@@ -181,7 +181,7 @@ public class ReleasedTabFragment extends Fragment {
             ArrayList<AnimeReleaseGroup> groupedReleasedAnime = new ArrayList<>();
             for (Map.Entry<String, ArrayList<AnimeNotification>> entry : map.entrySet()) {
                 ArrayList<AnimeNotification> animeList = entry.getValue();
-                if (!animeList.isEmpty()) {
+                if (animeList != null && !animeList.isEmpty()) {
                     Collections.sort(animeList, (a1, a2) -> Long.compare(a2.releaseDateMillis, a1.releaseDateMillis));
 
                     AnimeNotification anime = animeList.get(0);
@@ -201,7 +201,7 @@ public class ReleasedTabFragment extends Fragment {
                     return 0;
                 }
             });
-            if (ReleasedTabFragment.this.groupedReleasedAnime==null) {
+            if (ReleasedTabFragment.this.groupedReleasedAnime == null) {
                 ReleasedTabFragment.this.groupedReleasedAnime = groupedReleasedAnime;
                 new Handler(Looper.getMainLooper()).post(() -> {
                     ReleasedTabFragment.this.animeReleaseGroupAdapter = new AnimeReleaseGroupAdapter(context, R.layout.anime_release_group_card, ReleasedTabFragment.this.groupedReleasedAnime);

@@ -106,10 +106,10 @@ public class SchedulesTabFragment extends Fragment {
 
             for (AnimeNotification anime : allAnimeNotificationValues) {
                 boolean isMyAnime = anime.userStatus != null && !anime.userStatus.isEmpty() && !anime.userStatus.equalsIgnoreCase("UNWATCHED");
-                if (!selectedAnimeReleaseOption.equals("Updates")) {
-                    if (selectedAnimeReleaseOption.equals("My List") && !isMyAnime) {
+                if (!"Updates".equals(selectedAnimeReleaseOption)) {
+                    if ("My List".equals(selectedAnimeReleaseOption) && !isMyAnime) {
                         continue;
-                    } else if (selectedAnimeReleaseOption.equals("Others") && isMyAnime) {
+                    } else if ("Others".equals(selectedAnimeReleaseOption) && isMyAnime) {
                         continue;
                     }
                 }
@@ -182,7 +182,7 @@ public class SchedulesTabFragment extends Fragment {
             ArrayList<AnimeReleaseGroup> groupedAnimeSchedules = new ArrayList<>();
             for (Map.Entry<String, ArrayList<AnimeNotification>> entry : map.entrySet()) {
                 ArrayList<AnimeNotification> animeList = entry.getValue();
-                if (!animeList.isEmpty()) {
+                if (animeList != null && !animeList.isEmpty()) {
                     Collections.sort(animeList, Comparator.comparingLong(a -> a.releaseDateMillis));
 
                     AnimeNotification anime = animeList.get(0);
