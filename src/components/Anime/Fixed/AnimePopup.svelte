@@ -1948,19 +1948,48 @@
                                                     >{anime.userStatus ||
                                                         "NA"}</span
                                                 >
-                                                {#if anime.userStatus?.toLowerCase?.() !== "completed" && typeof anime.episodeProgress === "number" && anime.episodeProgress > 0 && typeof anime.nextAiringEpisode?.episode === "number" && anime.nextAiringEpisode?.episode > 1 && anime.nextAiringEpisode?.episode - 1 > anime.episodeProgress}
+                                                {#if anime.userStatus?.toLowerCase?.() !== "dropped" && ((anime.userStatus?.toLowerCase?.() !== "completed" && typeof anime.episodeProgress === "number" && anime.episodeProgress > 0) || anime.userStatus?.toLowerCase?.() === "current")}
+                                                    {@const releasedEps =
+                                                        typeof anime
+                                                            .nextAiringEpisode
+                                                            ?.episode ===
+                                                            "number" &&
+                                                        anime.nextAiringEpisode
+                                                            ?.episode > 0
+                                                            ? anime
+                                                                  .nextAiringEpisode
+                                                                  ?.episode
+                                                            : typeof anime.episodes ===
+                                                                    "number" &&
+                                                                anime.episodes >
+                                                                    0
+                                                              ? anime.episodes
+                                                              : null}
+                                                    {@const epsWatched =
+                                                        typeof anime.episodeProgress ===
+                                                            "number" &&
+                                                        anime.episodeProgress >
+                                                            0
+                                                            ? anime.episodeProgress
+                                                            : anime.userStatus?.toLowerCase?.() ===
+                                                                "current"
+                                                              ? 0
+                                                              : null}
                                                     {@const episodesBehind =
-                                                        parseInt(
-                                                            parseInt(
-                                                                anime
-                                                                    .nextAiringEpisode
-                                                                    ?.episode,
-                                                            ) -
-                                                                1 -
-                                                                parseInt(
-                                                                    anime.episodeProgress,
-                                                                ),
-                                                        )}
+                                                        typeof releasedEps ===
+                                                            "number" &&
+                                                        typeof epsWatched ===
+                                                            "number"
+                                                            ? parseInt(
+                                                                  parseInt(
+                                                                      releasedEps,
+                                                                  ) -
+                                                                      1 -
+                                                                      parseInt(
+                                                                          epsWatched,
+                                                                      ),
+                                                              )
+                                                            : null}
                                                     {#if episodesBehind >= 1}
                                                         {" · "}
                                                         <span
