@@ -134,7 +134,7 @@ const formatMonth = (date) => date?.toLocaleDateString?.(undefined, { month: "sh
 const formatDay = (date) => date?.toLocaleDateString?.(undefined, { day: "numeric" }) || "";
 const formatTime = (date) => date?.toLocaleTimeString?.(undefined, { hour: "numeric", minute: "2-digit", hour12: true }) || "";
 const formatWeekday = (date) => date?.toLocaleDateString?.(undefined, { weekday: "short" }) || "";
-
+const arraySum = (obj) => obj.reduce((a, b) => a + b, 0)
 // function getScrollbarWidth() {
 //   try {
 //     let outer = document.createElement('div');
@@ -652,6 +652,7 @@ export {
   isJsonObject,
   jsonIsEmpty,
   objectLength,
+  arraySum,
   getChildIndex,
   getMostVisibleElement,
   scrollToElement,

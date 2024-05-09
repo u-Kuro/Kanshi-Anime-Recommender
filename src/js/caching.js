@@ -1,12 +1,42 @@
 import { get } from "svelte/store"
-import { isAndroid } from "./others/helper.js"
+import { isAndroid, arraySum } from "./others/helper.js"
 import { appID, dataStatus, progress } from "./globalValues.js"
 import getWebVersion from "../version.js"
 
 let loadedRequestUrlPromises = {}
 let loadedRequestUrls = {}
-const cacheRequest = async (url, totalLength, status) => {
-    if (loadedRequestUrls[url]) {
+let chunkLoadingLength = {}
+const cacheRequest = async (url, totalLength, status, chunkOptions) => {
+    if (url instanceof Array) {
+        let joinedURL = url.join("KANSHI-SEP")
+        if (loadedRequestUrls[joinedURL]) {
+            return loadedRequestUrls[joinedURL]
+        } else if (loadedRequestUrlPromises[joinedURL]) {
+            return loadedRequestUrlPromises[joinedURL]
+        } else {
+            loadedRequestUrlPromises[joinedURL] = new Promise((resolve, reject) => {
+                chunkLoadingLength[joinedURL] = chunkLoadingLength[joinedURL] ?? []
+                Promise.all(url.map((chunkUrl, idx) => {
+                    if (!chunkLoadingLength[joinedURL]) {
+                        chunkLoadingLength[joinedURL] = []
+                    }
+                    chunkLoadingLength[joinedURL][idx] = 0
+                    return cacheRequest(chunkUrl, totalLength, status, { joinedURL, chunkIdx: idx })
+                }))
+                    .then((chunks) => {
+                        let blobUrl = URL.createObjectURL(new Blob([chunks.join("")], { type: 'application/javascript' }));
+                        loadedRequestUrls[joinedURL] = blobUrl;
+                        chunkLoadingLength[joinedURL] = loadedRequestUrlPromises[joinedURL] = null
+                        resolve(blobUrl)
+                    })
+                    .catch((e) => {
+                        chunkLoadingLength[joinedURL] = loadedRequestUrlPromises[joinedURL] = null
+                        reject(e)
+                    })
+            })
+            return loadedRequestUrlPromises[joinedURL]
+        }
+    } else if (loadedRequestUrls[url]) {
         return loadedRequestUrls[url]
     } else if (loadedRequestUrlPromises[url]) {
         return loadedRequestUrlPromises[url]
@@ -23,6 +53,7 @@ const cacheRequest = async (url, totalLength, status) => {
                 loadedRequestUrlPromises[url] = null
                 resolve(url)
             } else {
+                const isChunk = chunkOptions != null
                 let newUrl = url + "?v=" + app_id
                 fetch(newUrl, {
                     headers: {
@@ -48,8 +79,20 @@ const cacheRequest = async (url, totalLength, status) => {
                                                             receivedLength += value?.byteLength ?? value?.length;
                                                             if (!isDataStatusShowing) {
                                                                 isDataStatusShowing = true
-                                                                streamStatusTimeout = setTimeout(() => {
-                                                                    let percent = (receivedLength / totalLength) * 100
+                                                                streamStatusTimeout = setTimeout(async () => {
+                                                                    let percent
+                                                                    if (chunkOptions) {
+                                                                        let { joinedURL, chunkIdx } = chunkOptions || {}
+                                                                        if (chunkLoadingLength[joinedURL]?.[chunkIdx] != null) {
+                                                                            chunkLoadingLength[joinedURL][chunkIdx] = receivedLength
+                                                                            percent = (arraySum(chunkLoadingLength[joinedURL]) / totalLength) * 100
+                                                                        } else {
+                                                                            dataStatus.set(null)
+                                                                            progress.set(100)
+                                                                        }
+                                                                    } else {
+                                                                        percent = (receivedLength / totalLength) * 100
+                                                                    }
                                                                     let currentProgress = get(progress)
                                                                     if (percent > 0 && percent <= 100
                                                                         && (
@@ -71,7 +114,11 @@ const cacheRequest = async (url, totalLength, status) => {
                                                             clearTimeout(streamStatusTimeout)
                                                             dataStatus.set(null)
                                                             progress.set(100)
-                                                            resolve(new Blob(chunks))
+                                                            if (isChunk) {
+                                                                resolve(new Blob(chunks).text())
+                                                            } else {
+                                                                resolve(new Blob(chunks))
+                                                            }
                                                             push = undefined
                                                             return
                                                         }
@@ -79,36 +126,40 @@ const cacheRequest = async (url, totalLength, status) => {
                                                 }
                                                 push();
                                             } else {
-                                                return resolve(await response.blob())
+                                                return resolve(await (isChunk ? response.text() : response.blob()))
                                             }
                                         }
                                     });
                                 } catch (e) {
-                                    return resolve(await response.blob())
+                                    return resolve(await (isChunk ? response.text() : response.blob()))
                                 }
                             })
                         } else {
-                            resolve(await cacheRequest(url))
+                            resolve(await cacheRequest(url, undefined, undefined, isChunk))
                             return
                         }
                     } else {
-                        return await response.blob()
+                        return await (isChunk ? response.text() : response.blob())
                     }
                 })
-                    .then(blob => {
-                        if (blob) {
-                            try {
-                                let blobUrl = URL.createObjectURL(blob);
-                                loadedRequestUrls[url] = blobUrl;
-                                loadedRequestUrlPromises[url] = null
-                                resolve(blobUrl)
-                            } catch (e) {
-                                loadedRequestUrlPromises[url] = null
-                                resolve(url)
+                    .then(result => {
+                        if (result) {
+                            if (isChunk) {
+                                resolve(result)
+                            } else {
+                                try {
+                                    let blobUrl = URL.createObjectURL(result);
+                                    loadedRequestUrls[url] = blobUrl;
+                                    loadedRequestUrlPromises[url] = null
+                                    resolve(blobUrl)
+                                } catch (e) {
+                                    loadedRequestUrlPromises[url] = null
+                                    resolve(url)
+                                }
                             }
                         }
                     })
-                    .catch((e) => {
+                    .catch(() => {
                         loadedRequestUrlPromises[url] = null
                         resolve(url)
                     })

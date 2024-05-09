@@ -1063,7 +1063,10 @@
         }
     }
 
-    function getFormattedAnimeFormat({ episodes, nextAiringEpisode }) {
+    function getFormattedAnimeFormat(
+        { episodes, chapters, nextAiringEpisode, episodeProgress },
+        isManga,
+    ) {
         let text;
         let timeDifMS;
         let nextEpisode;
@@ -1105,7 +1108,11 @@
         ) {
             text = ` · ${nextEpisode}/${episodes}`;
         } else if (episodes > 0) {
-            text = ` · ${episodes}`;
+            text = ` · ${episodes} Ep${episodes > 1 ? "s" : ""}`;
+        } else if (chapters > 0) {
+            text = ` · ${chapters} Ch${chapters > 1 ? "s" : ""}`;
+        } else if (isManga && episodeProgress > 0) {
+            text = ` · Seen ${episodeProgress} Ch${episodeProgress > 1 ? "s" : ""}`;
         }
         return text;
     }
@@ -1613,10 +1620,20 @@
         on:scroll="{popupScroll}"
     >
         {#if $loadedAnimeLists}
+            {@const COOs = {
+                jp: "Japan",
+                kr: "South Korea",
+                cn: "China",
+                tw: "Taiwan",
+            }}
             {@const animeList = $loadedAnimeLists[$selectedCategory]?.animeList}
             {#each animeList || [] as anime, animeIndex ((anime?.id ? anime.id + " " + animeIndex : {}) ?? {})}
                 <div class="popup-content" bind:this="{anime.popupContent}">
                     {#if animeIndex <= currentHeaderIdx + bottomPopupVisibleCount && animeIndex >= currentHeaderIdx - topPopupVisibleCount}
+                        {@const loweredFormat = anime.format?.toLowerCase?.()}
+                        {@const isManga =
+                            loweredFormat === "manga" ||
+                            loweredFormat === "one shot"}
                         <div class="popup-main" use:popupMainEl>
                             <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                             <div
@@ -1862,19 +1879,21 @@
                                                 ></path></svg
                                             >
                                             <h4>
-                                                <b
-                                                    >{anime.averageScore != null
-                                                        ? anime.formattedAverageScore ||
-                                                          "NA"
-                                                        : "NA"}</b
-                                                >
-                                                {"/10 · " +
-                                                    (anime.popularity != null
-                                                        ? anime.formattedPopularity ||
-                                                          "NA"
-                                                        : "NA")}
-                                                {" · "}{@html anime?.recommendedRatingInfo ||
-                                                    ""}
+                                                {#if anime.formattedAverageScore != null && anime.formattedAverageScore}
+                                                    <b
+                                                        >{anime.formattedAverageScore ||
+                                                            "?"}</b
+                                                    >
+                                                    {"/10"}
+                                                {/if}
+                                                {#if anime.formattedPopularity != null && anime.formattedPopularity}
+                                                    {" · " +
+                                                        anime.formattedPopularity}
+                                                {/if}
+                                                {#if anime?.recommendedRatingInfo}
+                                                    {" · "}{@html anime?.recommendedRatingInfo ||
+                                                        ""}
+                                                {/if}
                                             </h4>
                                         </div>
                                     </div>
@@ -1887,27 +1906,61 @@
                                     >
                                         {#if anime?.nextAiringEpisode?.airingAt}
                                             {@const formattedAnimeFormat =
-                                                getFormattedAnimeFormat(anime)}
+                                                getFormattedAnimeFormat(
+                                                    anime,
+                                                    isManga,
+                                                )}
+                                            {@const volOrDur =
+                                                (isManga
+                                                    ? anime?.volumes
+                                                        ? ` · ${anime?.volumes} Vl${anime?.volumes > 1 ? "s" : ""}`
+                                                        : ""
+                                                    : anime?.formattedDuration) ||
+                                                ""}
+                                            {@const loweredCountryOfOrigin =
+                                                anime?.countryOfOrigin?.toLowerCase?.() ||
+                                                anime?.countryOfOrigin}
                                             <h4>
-                                                {anime?.format || "NA"}
+                                                {(anime?.format || "NA") +
+                                                    (loweredCountryOfOrigin
+                                                        ? ` (${COOs[loweredCountryOfOrigin] && windowWidth >= 377 && (isManga || windowWidth >= 427) ? COOs[loweredCountryOfOrigin] : anime?.countryOfOrigin})`
+                                                        : "")}
                                                 {#if formattedAnimeFormat}
                                                     {#key $earlisetReleaseDate || 1}
                                                         {@html formattedAnimeFormat}
                                                     {/key}
-                                                {:else}
-                                                    {" · NA"}
                                                 {/if}
-                                                {anime?.formattedDuration ||
-                                                    " · NA"}
+                                                {volOrDur || ""}
                                             </h4>
                                         {:else}
+                                            {@const formattedAnimeFormat =
+                                                getFormattedAnimeFormat(
+                                                    anime,
+                                                    isManga,
+                                                )}
+                                            {@const volOrDur =
+                                                (isManga
+                                                    ? anime?.volumes
+                                                        ? ` · ${anime?.volumes} Vl${anime?.volumes > 1 ? "s" : ""}`
+                                                        : ""
+                                                    : anime?.formattedDuration) ||
+                                                ""}
+                                            {@const loweredCountryOfOrigin =
+                                                anime?.countryOfOrigin?.toLowerCase?.() ||
+                                                anime?.countryOfOrigin}
                                             <h4>
-                                                {anime?.format || "NA"}
+                                                {(anime?.format || "NA") +
+                                                    (loweredCountryOfOrigin
+                                                        ? ` (${COOs[loweredCountryOfOrigin] && windowWidth >= 377 && (isManga || windowWidth >= 427) ? COOs[loweredCountryOfOrigin] : anime?.countryOfOrigin})`
+                                                        : "")}
                                                 {@html getFormattedAnimeFormat(
                                                     anime,
-                                                ) || " · NA"}
-                                                {anime?.formattedDuration ||
-                                                    " · NA"}
+                                                    isManga,
+                                                ) || ""}
+                                                {#if formattedAnimeFormat}
+                                                    {@html formattedAnimeFormat}
+                                                {/if}
+                                                {volOrDur || ""}
                                             </h4>
                                         {/if}
                                         {#if anime?.season || anime?.year}
@@ -1964,7 +2017,15 @@
                                                                 anime.episodes >
                                                                     0
                                                               ? anime.episodes
-                                                              : null}
+                                                              : isManga &&
+                                                                  anime.status?.toLowerCase?.() ===
+                                                                      "finished" &&
+                                                                  typeof anime.chapters ===
+                                                                      "number" &&
+                                                                  anime.chapters >
+                                                                      0
+                                                                ? anime.chapters
+                                                                : null}
                                                     {@const epsWatched =
                                                         typeof anime.episodeProgress ===
                                                             "number" &&
@@ -1993,7 +2054,7 @@
                                                         {" · "}
                                                         <span
                                                             style:color="{"hsl(var(--ac-color))"}"
-                                                            >{`${episodesBehind} ${episodesBehind > 1 ? "Eps" : "Ep"} Behind`}</span
+                                                            >{`${episodesBehind} ${isManga ? "Ch" : "Ep"}${episodesBehind > 1 ? "s" : ""} Behind`}</span
                                                         >
                                                     {/if}
                                                 {/if}

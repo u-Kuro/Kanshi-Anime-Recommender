@@ -523,13 +523,35 @@
                                                     }`}
                                                 {/if}
                                             {:else}
-                                                {`${anime.format || "NA"}${
-                                                    anime.episodes
-                                                        ? "(" +
-                                                          anime.episodes +
-                                                          ")"
-                                                        : ""
-                                                }`}
+                                                {@const loweredFormat =
+                                                    anime.format?.toLowerCase?.()}
+                                                {@const isManga =
+                                                    loweredFormat === "manga" ||
+                                                    loweredFormat ===
+                                                        "one shot"}
+                                                {`${anime.format || "NA"}`}
+                                                {#if isManga}
+                                                    {`${
+                                                        anime.chapters
+                                                            ? "(" +
+                                                              anime.chapters +
+                                                              ")"
+                                                            : anime.episodeProgress >
+                                                                0
+                                                              ? "(" +
+                                                                anime.episodeProgress +
+                                                                '")'
+                                                              : ""
+                                                    }`}
+                                                {:else}
+                                                    {`${
+                                                        anime.episodes
+                                                            ? "(" +
+                                                              anime.episodes +
+                                                              ")"
+                                                            : ""
+                                                    }`}
+                                                {/if}
                                             {/if}
                                         </span>
                                     </div>

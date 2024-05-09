@@ -56,7 +56,7 @@ function getAnimeLoaderWorker() {
     if (animeLoaderWorker) return animeLoaderWorker
     if (animeLoaderWorkerPromise) return animeLoaderWorkerPromise
     animeLoaderWorkerPromise = new Promise(async (resolve) => {
-        resolve(new Worker(await cacheRequest("./webapi/worker/animeLoader.js", 18760, "Checking Anime List")))
+        resolve(new Worker(await cacheRequest("./webapi/worker/animeLoader.js", 18760, "Checking existing List")))
         animeLoaderWorkerPromise = null
     })
     return animeLoaderWorkerPromise
@@ -227,7 +227,7 @@ function getAnimeManagerWorker() {
     if (animeManagerWorker) return animeManagerWorker
     if (animeManagerWorkerPromise) return animeManagerWorkerPromise
     animeManagerWorkerPromise = new Promise(async (resolve) => {
-        resolve(new Worker(await cacheRequest("./webapi/worker/animeManager.js", 46351, "Updating Anime List")))
+        resolve(new Worker(await cacheRequest("./webapi/worker/animeManager.js", 49629, "Updating the List")))
         animeManagerWorkerPromise = null
     })
     return animeManagerWorkerPromise
@@ -366,7 +366,7 @@ const processRecommendedAnimeList = (_data = {}) => {
         processRecommendedAnimeListWorker = null
         dataStatusPrio = true
         progress.set(0)
-        cacheRequest("./webapi/worker/processRecommendedAnimeList.js", 39080, "Updating Recommendation List")
+        cacheRequest("./webapi/worker/processRecommendedAnimeList.js", 40012, "Updating Recommendation List")
             .then(url => {
                 const lastProcessRecommendationAiringAt = parseInt((new Date().getTime() / 1000))
                 let neareastAnimeCompletionAiringAt
@@ -1218,9 +1218,15 @@ const saveIDBdata = (_data, name, isImportant = false) => {
 const getAnimeEntries = (_data) => {
     return new Promise((resolve, reject) => {
         progress.set(0)
-        cacheRequest("./webapi/worker/getAnimeEntries.js", 45212867, "Getting Anime Entries")
+        const directory = "./webapi/worker/getAnimeEntries-chunk-",
+            extension = ".txt"
+        cacheRequest([
+            `${directory}1${extension}`,
+            `${directory}2${extension}`,
+        ], 160994216, "Getting Anime and Manga Entries")
             .then(url => {
                 progress.set(25)
+                dataStatus.set("Retaining Anime and Manga Entries")
                 let worker = new Worker(url)
                 worker.postMessage(_data)
                 worker.onmessage = ({ data }) => {
@@ -1261,7 +1267,7 @@ const getFilterOptions = (_data) => {
         if (getFilterOptionsTerminateTimeout) clearTimeout(getFilterOptionsTerminateTimeout)
         getFilterOptionsWorker?.terminate?.()
         getFilterOptionsWorker = null
-        cacheRequest("./webapi/worker/getFilterOptions.js", 60668, "Initializing Filters")
+        cacheRequest("./webapi/worker/getFilterOptions.js", 60880, "Initializing Filters")
             .then(url => {
                 if (getFilterOptionsTerminateTimeout) clearTimeout(getFilterOptionsTerminateTimeout)
                 getFilterOptionsWorker?.terminate?.()

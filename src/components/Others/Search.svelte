@@ -1964,7 +1964,11 @@
                     e.key === 'Enter' && handleShowFilterCategories(e)}"
             >
                 <h2 class="filterCategory-dropdown">
-                    {selectedFilterCategoryName || ""}
+                    {#if selectedFilterCategoryName === "Anime Filter"}
+                        {"Media Filter"}
+                    {:else}
+                        {selectedFilterCategoryName || ""}
+                    {/if}
                     <svg
                         viewBox="0 140 320 512"
                         tabindex="{!$menuVisible &&
@@ -2035,7 +2039,11 @@
                                             ? "hsl(var(--ac-color))"
                                             : "inherit"}"
                                     >
-                                        {filterCategoryName || ""}
+                                        {#if filterCategoryName === "Anime Filter"}
+                                            {"Media Filter"}
+                                        {:else}
+                                            {filterCategoryName || ""}
+                                        {/if}
                                     </h3>
                                 </div>
                             {/each}
@@ -2320,6 +2328,10 @@
                                                             ? $animeCautions
                                                             : []}
                                                 {#if selectionOptions?.length}
+                                                    {@const isCOO =
+                                                        filterSelectionName ===
+                                                        "country of origin"}
+
                                                     {@const isReadOnly =
                                                         filterCategoryName ===
                                                             "Anime Filter" &&
@@ -2382,8 +2394,23 @@
                                                                         )}"
                                                                 >
                                                                     <h3>
-                                                                        {optionName ||
-                                                                            ""}
+                                                                        {#if isCOO}
+                                                                            {@const COOs =
+                                                                                {
+                                                                                    jp: "Japan",
+                                                                                    kr: "South Korea",
+                                                                                    cn: "China",
+                                                                                    tw: "Taiwan",
+                                                                                }}
+                                                                            {COOs[
+                                                                                optionName
+                                                                            ] ||
+                                                                                optionName ||
+                                                                                ""}
+                                                                        {:else}
+                                                                            {optionName ||
+                                                                                ""}
+                                                                        {/if}
                                                                     </h3>
                                                                     {#if status === "included" || (status === "excluded" && !isReadOnly)}
                                                                         <svg
@@ -3452,11 +3479,11 @@
         display: grid;
         grid-template-rows: 18px 30px;
         grid-row-gap: 5px;
-        width: 165px;
+        width: 185px;
     }
     .filter-bool-container .filter-bool-wrap {
-        min-width: 165px;
-        width: 165px;
+        min-width: 185px;
+        width: 185px;
         cursor: pointer;
     }
     .filter-bool-container .filter-bool-wrap,
