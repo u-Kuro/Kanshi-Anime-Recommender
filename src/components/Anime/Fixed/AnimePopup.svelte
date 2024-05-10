@@ -178,7 +178,7 @@
         });
     }
 
-    async function askToOpenYoutube(title) {
+    async function askToOpenYoutube(title, format) {
         let animeTitle;
         if (isJsonObject(title)) {
             animeTitle =
@@ -197,11 +197,11 @@
                 isImportant: true,
             })
         ) {
-            handleMoreVideos(animeTitle);
+            handleMoreVideos(animeTitle, format);
         }
     }
 
-    async function handleMoreVideos(title) {
+    async function handleMoreVideos(title, format) {
         let animeTitle;
         if (isJsonObject(title)) {
             animeTitle =
@@ -212,10 +212,17 @@
         } else if (typeof title === "string") {
             animeTitle = title;
         }
+        let loweredFormat = format?.trim()?.toLowerCase();
+        let animeType =
+            loweredFormat === "manga" || loweredFormat === "one shot"
+                ? "Manga"
+                : loweredFormat === "novel"
+                    ? "Novel"
+                    : "Anime";
         if (typeof animeTitle !== "string" || animeTitle === "") return;
         window.open(
             `https://www.youtube.com/results?search_query=${encodeURIComponent(
-                animeTitle + " Anime",
+                animeTitle + " " + (animeType || "Anime"),
             )}`,
             "_blank",
         );
@@ -1646,12 +1653,12 @@
                                     : '-1'}"
                                 on:click="{() => {
                                     if (!$popupVisible) return;
-                                    askToOpenYoutube(anime.title);
+                                    askToOpenYoutube(anime.title, anime.format);
                                 }}"
                                 on:keyup="{(e) => {
                                     if (!$popupVisible) return;
                                     if (e.key === 'Enter') {
-                                        askToOpenYoutube(anime.title);
+                                        askToOpenYoutube(anime.title, anime.format);
                                     }
                                 }}"
                             >
@@ -2514,10 +2521,10 @@
                                     style:overflow="{$popupIsGoingBack
                                         ? "hidden"
                                         : ""}"
-                                    on:click="{handleMoreVideos(anime.title)}"
+                                    on:click="{handleMoreVideos(anime.title, anime.format)}"
                                     on:keyup="{(e) =>
                                         e.key === 'Enter' &&
-                                        handleMoreVideos(anime.title)}"
+                                        handleMoreVideos(anime.title, anime.format)}"
                                 >
                                     <!-- youtube logo -->
                                     <svg viewBox="0 0 576 512">

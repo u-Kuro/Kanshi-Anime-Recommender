@@ -20,6 +20,7 @@
     let animeCopyTitle;
     let animeID;
     let animeUrl;
+    let animeType;
     let animeIdx;
 
     let firstActionEl;
@@ -95,7 +96,7 @@
             return;
         window.open(
             `https://www.youtube.com/results?search_query=${encodeURIComponent(
-                youtubeSearchTitle + " Anime",
+                youtubeSearchTitle + " " + (animeType || "Anime"),
             )}`,
             "_blank",
         );
@@ -178,6 +179,13 @@
             animeCopyTitle = youtubeSearchTitle = openedAnime?.copiedTitle;
             animeID = openedAnime.id;
             animeUrl = openedAnime.animeUrl;
+            let loweredFormat = openedAnime.format?.trim()?.toLowerCase();
+            animeType =
+                loweredFormat === "manga" || loweredFormat === "one shot"
+                    ? "Manga"
+                    : loweredFormat === "novel"
+                      ? "Novel"
+                      : "Anime";
             animeIdx = $openedAnimeOptionIdx;
         } else {
             $animeOptionVisible = false;

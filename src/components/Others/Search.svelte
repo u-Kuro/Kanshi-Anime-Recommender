@@ -2774,9 +2774,22 @@
                                 {optionName + " : " + optionValue || ""}
                             </h3>
                         {:else if optionCategory}
-                            <h3>
-                                {optionCategory + " : " + optionName || ""}
-                            </h3>
+                            {#if optionCategory==="country of origin"}
+                                {@const COOs = {
+                                    jp: "Japan",
+                                    kr: "South Korea",
+                                    cn: "China",
+                                    tw: "Taiwan",
+                                }}
+                                {@const COOName = COOs[optionName?.trim()?.toLowerCase?.()] ?? optionName?.toUpperCase?.()}
+                                <h3>
+                                    {optionCategory + " : " + (COOName || "")}
+                                </h3>
+                            {:else}
+                                <h3>
+                                    {optionCategory + " : " + (optionName || "")}
+                                </h3>
+                            {/if}
                         {:else}
                             <h3>{optionName || ""}</h3>
                         {/if}
