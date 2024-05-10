@@ -1881,8 +1881,11 @@
                                             <h4>
                                                 {#if anime.formattedAverageScore != null && anime.formattedAverageScore}
                                                     <b
-                                                        >{anime.formattedAverageScore ||
-                                                            "?"}</b
+                                                        >{parseFloat(
+                                                            anime.formattedAverageScore,
+                                                        ) > 0
+                                                            ? anime.formattedAverageScore
+                                                            : "?"}</b
                                                     >
                                                     {"/10"}
                                                 {/if}
@@ -1953,10 +1956,6 @@
                                                     (loweredCountryOfOrigin
                                                         ? ` (${COOs[loweredCountryOfOrigin] && windowWidth >= 377 && (isManga || windowWidth >= 427) ? COOs[loweredCountryOfOrigin] : anime?.countryOfOrigin})`
                                                         : "")}
-                                                {@html getFormattedAnimeFormat(
-                                                    anime,
-                                                    isManga,
-                                                ) || ""}
                                                 {#if formattedAnimeFormat}
                                                     {@html formattedAnimeFormat}
                                                 {/if}
