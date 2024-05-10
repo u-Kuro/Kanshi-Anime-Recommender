@@ -227,7 +227,7 @@ function getAnimeManagerWorker() {
     if (animeManagerWorker) return animeManagerWorker
     if (animeManagerWorkerPromise) return animeManagerWorkerPromise
     animeManagerWorkerPromise = new Promise(async (resolve) => {
-        resolve(new Worker(await cacheRequest("./webapi/worker/animeManager.js", 51216, "Updating the List")))
+        resolve(new Worker(await cacheRequest("./webapi/worker/animeManager.js", 51224, "Updating the List")))
         animeManagerWorkerPromise = null
     })
     return animeManagerWorkerPromise
@@ -366,7 +366,7 @@ const processRecommendedAnimeList = (_data = {}) => {
         processRecommendedAnimeListWorker = null
         dataStatusPrio = true
         progress.set(0)
-        cacheRequest("./webapi/worker/processRecommendedAnimeList.js", 40072, "Updating Recommendation List")
+        cacheRequest("./webapi/worker/processRecommendedAnimeList.js", 40126, "Updating Recommendation List")
             .then(url => {
                 const lastProcessRecommendationAiringAt = parseInt((new Date().getTime() / 1000))
                 let neareastAnimeCompletionAiringAt
