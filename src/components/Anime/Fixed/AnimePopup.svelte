@@ -1634,6 +1634,7 @@
                         {@const isManga =
                             loweredFormat === "manga" ||
                             loweredFormat === "one shot"}
+                        {@const isNovel = loweredFormat === "novel"}
                         <div class="popup-main" use:popupMainEl>
                             <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                             <div
@@ -1914,10 +1915,13 @@
                                                     isManga,
                                                 )}
                                             {@const volOrDur =
-                                                (isManga
-                                                    ? anime?.volumes
-                                                        ? ` · ${anime?.volumes} Vl${anime?.volumes > 1 ? "s" : ""}`
-                                                        : ""
+                                                (isManga || isNovel
+                                                    ? anime?.volumes > 0
+                                                        ? ` · ${anime?.volumes} Vol${anime?.volumes > 1 ? "s" : ""}`
+                                                        : anime?.volumeProgress >
+                                                            0
+                                                          ? ` · Seen ${anime?.volumeProgress} Vol${anime?.volumeProgress > 1 ? "s" : ""}`
+                                                          : ""
                                                     : anime?.formattedDuration) ||
                                                 ""}
                                             {@const loweredCountryOfOrigin =
@@ -1942,10 +1946,13 @@
                                                     isManga,
                                                 )}
                                             {@const volOrDur =
-                                                (isManga
-                                                    ? anime?.volumes
-                                                        ? ` · ${anime?.volumes} Vl${anime?.volumes > 1 ? "s" : ""}`
-                                                        : ""
+                                                (isManga || isNovel
+                                                    ? anime?.volumes > 0
+                                                        ? ` · ${anime?.volumes} Vol${anime?.volumes > 1 ? "s" : ""}`
+                                                        : anime?.volumeProgress >
+                                                            0
+                                                          ? ` · Seen ${anime?.volumeProgress} Vol${anime?.volumeProgress > 1 ? "s" : ""}`
+                                                          : ""
                                                     : anime?.formattedDuration) ||
                                                 ""}
                                             {@const loweredCountryOfOrigin =
@@ -1954,7 +1961,7 @@
                                             <h4>
                                                 {(anime?.format || "NA") +
                                                     (loweredCountryOfOrigin
-                                                        ? ` (${COOs[loweredCountryOfOrigin] && windowWidth >= 377 && (isManga || windowWidth >= 427) ? COOs[loweredCountryOfOrigin] : anime?.countryOfOrigin})`
+                                                        ? ` (${COOs[loweredCountryOfOrigin] && windowWidth >= 377 && (isManga || isNovel || windowWidth >= 427) ? COOs[loweredCountryOfOrigin] : anime?.countryOfOrigin})`
                                                         : "")}
                                                 {#if formattedAnimeFormat}
                                                     {@html formattedAnimeFormat}
@@ -2000,61 +2007,134 @@
                                                     >{anime.userStatus ||
                                                         "NA"}</span
                                                 >
-                                                {#if anime.userStatus?.toLowerCase?.() !== "dropped" && ((anime.userStatus?.toLowerCase?.() !== "completed" && typeof anime.episodeProgress === "number" && anime.episodeProgress > 0) || anime.userStatus?.toLowerCase?.() === "current")}
-                                                    {@const releasedEps =
-                                                        typeof anime
-                                                            .nextAiringEpisode
-                                                            ?.episode ===
-                                                            "number" &&
-                                                        anime.nextAiringEpisode
-                                                            ?.episode > 0
-                                                            ? anime
-                                                                  .nextAiringEpisode
-                                                                  ?.episode - 1
-                                                            : typeof anime.episodes ===
-                                                                    "number" &&
-                                                                anime.episodes >
+                                                {#if true}
+                                                    {@const loweredUserStatus =
+                                                        anime.userStatus?.toLowerCase?.()}
+                                                    {#if loweredUserStatus !== "dropped" && ((loweredUserStatus !== "completed" && (anime.episodeProgress > 0 || anime.volumeProgress > 0)) || loweredUserStatus === "current")}
+                                                        {#if anime.nextAiringEpisode?.episode > 0 || anime.episodes > 0}
+                                                            {@const releasedEps =
+                                                                anime
+                                                                    .nextAiringEpisode
+                                                                    ?.episode >
+                                                                0
+                                                                    ? anime
+                                                                          .nextAiringEpisode
+                                                                          .episode
+                                                                    : anime.episodes}
+                                                            {@const epsWatched =
+                                                                anime.episodeProgress >
+                                                                0
+                                                                    ? anime.episodeProgress
+                                                                    : anime.userStatus?.toLowerCase?.() ===
+                                                                        "current"
+                                                                      ? 0
+                                                                      : null}
+                                                            {@const epsBehind =
+                                                                parseInt(
+                                                                    releasedEps,
+                                                                ) -
+                                                                parseInt(
+                                                                    epsWatched,
+                                                                )}
+                                                            {#if epsBehind >= 1}{" · "}
+                                                                <span
+                                                                    style:color="{"hsl(var(--ac-color))"}"
+                                                                    >{`${epsBehind} Ep${epsBehind > 1 ? "s" : ""} Behind`}</span
+                                                                >
+                                                            {/if}
+                                                        {:else if anime.chapters > 0 || anime.volumes > 0}
+                                                            {#if isNovel}
+                                                                {#if anime.volumes > 0}
+                                                                    {@const volSeen =
+                                                                        anime.volumeProgress >
+                                                                        0
+                                                                            ? anime.volumeProgress
+                                                                            : anime.userStatus?.toLowerCase?.() ===
+                                                                                "current"
+                                                                              ? 0
+                                                                              : null}
+                                                                    {@const volBehind =
+                                                                        parseInt(
+                                                                            anime.volumes,
+                                                                        ) -
+                                                                        parseInt(
+                                                                            volSeen,
+                                                                        )}
+                                                                    {#if volBehind >= 1}{" · "}
+                                                                        <span
+                                                                            style:color="{"hsl(var(--ac-color))"}"
+                                                                            >{`${volBehind} Vol${volBehind > 1 ? "s" : ""} Behind`}</span
+                                                                        >
+                                                                    {/if}
+                                                                {:else}
+                                                                    {@const chapSeen =
+                                                                        anime.episodeProgress >
+                                                                        0
+                                                                            ? anime.episodeProgress
+                                                                            : anime.userStatus?.toLowerCase?.() ===
+                                                                                "current"
+                                                                              ? 0
+                                                                              : null}
+                                                                    {@const chapBehind =
+                                                                        parseInt(
+                                                                            anime.chapters,
+                                                                        ) -
+                                                                        parseInt(
+                                                                            chapSeen,
+                                                                        )}
+                                                                    {#if chapBehind >= 1}{" · "}
+                                                                        <span
+                                                                            style:color="{"hsl(var(--ac-color))"}"
+                                                                            >{`${chapBehind} Ch${chapBehind > 1 ? "s" : ""} Behind`}</span
+                                                                        >
+                                                                    {/if}
+                                                                {/if}
+                                                            {:else if anime.chapters > 0}
+                                                                {@const chapSeen =
+                                                                    anime.episodeProgress >
                                                                     0
-                                                              ? anime.episodes
-                                                              : isManga &&
-                                                                  anime.status?.toLowerCase?.() ===
-                                                                      "finished" &&
-                                                                  typeof anime.chapters ===
-                                                                      "number" &&
-                                                                  anime.chapters >
-                                                                      0
-                                                                ? anime.chapters
-                                                                : null}
-                                                    {@const epsWatched =
-                                                        typeof anime.episodeProgress ===
-                                                            "number" &&
-                                                        anime.episodeProgress >
-                                                            0
-                                                            ? anime.episodeProgress
-                                                            : anime.userStatus?.toLowerCase?.() ===
-                                                                "current"
-                                                              ? 0
-                                                              : null}
-                                                    {@const episodesBehind =
-                                                        typeof releasedEps ===
-                                                            "number" &&
-                                                        typeof epsWatched ===
-                                                            "number"
-                                                            ? parseInt(
-                                                                  parseInt(
-                                                                      releasedEps,
-                                                                  ) -
-                                                                      parseInt(
-                                                                          epsWatched,
-                                                                      ),
-                                                              )
-                                                            : null}
-                                                    {#if episodesBehind >= 1}
-                                                        {" · "}
-                                                        <span
-                                                            style:color="{"hsl(var(--ac-color))"}"
-                                                            >{`${episodesBehind} ${isManga ? "Ch" : "Ep"}${episodesBehind > 1 ? "s" : ""} Behind`}</span
-                                                        >
+                                                                        ? anime.episodeProgress
+                                                                        : anime.userStatus?.toLowerCase?.() ===
+                                                                            "current"
+                                                                          ? 0
+                                                                          : null}
+                                                                {@const chapBehind =
+                                                                    parseInt(
+                                                                        anime.chapters,
+                                                                    ) -
+                                                                    parseInt(
+                                                                        chapSeen,
+                                                                    )}
+                                                                {#if chapBehind >= 1}{" · "}
+                                                                    <span
+                                                                        style:color="{"hsl(var(--ac-color))"}"
+                                                                        >{`${chapBehind} Ch${chapBehind > 1 ? "s" : ""} Behind`}</span
+                                                                    >
+                                                                {/if}
+                                                            {:else}
+                                                                {@const volSeen =
+                                                                    anime.volumeProgress >
+                                                                    0
+                                                                        ? anime.volumeProgress
+                                                                        : anime.userStatus?.toLowerCase?.() ===
+                                                                            "current"
+                                                                          ? 0
+                                                                          : null}
+                                                                {@const volBehind =
+                                                                    parseInt(
+                                                                        anime.volumes,
+                                                                    ) -
+                                                                    parseInt(
+                                                                        volSeen,
+                                                                    )}
+                                                                {#if volBehind >= 1}{" · "}
+                                                                    <span
+                                                                        style:color="{"hsl(var(--ac-color))"}"
+                                                                        >{`${volBehind} Vol${volBehind > 1 ? "s" : ""} Behind`}</span
+                                                                    >
+                                                                {/if}
+                                                            {/if}
+                                                        {/if}
                                                     {/if}
                                                 {/if}
                                                 {#if anime.userScore != null}

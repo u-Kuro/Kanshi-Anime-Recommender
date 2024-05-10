@@ -4,7 +4,7 @@
 </p>
 
 <p>
-This app is tailored to offer <b>anime and manga (manhwa, manhua, one shot) recommendations</b> by analyzing your <b>personal ratings on AniList</b>.
+This app is tailored to offer <b>anime, manga (manhwa, manhua, one shot), and novel (LN, WN) recommendations</b> by analyzing your <b>personal ratings on AniList</b>.
 </p>
 <p>
 By eliminating the need to depend on others' preferences, it can suggest <b>underrated</b> and <b>underwatched</b> anime that align with your taste.  

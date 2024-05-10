@@ -529,19 +529,52 @@
                                                     loweredFormat === "manga" ||
                                                     loweredFormat ===
                                                         "one shot"}
+                                                {@const isNovel =
+                                                    loweredFormat === "novel"}
                                                 {`${anime.format || "NA"}`}
                                                 {#if isManga}
                                                     {`${
                                                         anime.chapters
                                                             ? "(" +
                                                               anime.chapters +
-                                                              ")"
+                                                              " Ch)"
                                                             : anime.episodeProgress >
                                                                 0
                                                               ? "(" +
                                                                 anime.episodeProgress +
-                                                                '")'
-                                                              : ""
+                                                                ' Ch")'
+                                                              : anime.volumes
+                                                                ? "(" +
+                                                                  anime.volumes +
+                                                                  " Vol)"
+                                                                : anime.volumeProgress >
+                                                                    0
+                                                                  ? "(" +
+                                                                    anime.volumeProgress +
+                                                                    ' Vol")'
+                                                                  : ""
+                                                    }`}
+                                                {:else if isNovel}
+                                                    {`${
+                                                        anime.volumes
+                                                            ? "(" +
+                                                              anime.volumes +
+                                                              " Vol)"
+                                                            : anime.volumeProgress >
+                                                                0
+                                                              ? "(" +
+                                                                anime.volumeProgress +
+                                                                ' Vol")'
+                                                              : anime.chapters
+                                                                ? "(" +
+                                                                  anime.chapters +
+                                                                  " Ch)"
+                                                                : anime.episodeProgress >
+                                                                    0
+                                                                  ? "(" +
+                                                                    anime.episodeProgress +
+                                                                    ' Ch")'
+                                                                  : ""
                                                     }`}
                                                 {:else}
                                                     {`${
@@ -549,7 +582,12 @@
                                                             ? "(" +
                                                               anime.episodes +
                                                               ")"
-                                                            : ""
+                                                            : anime.episodeProgress >
+                                                                0
+                                                              ? "(" +
+                                                                anime.episodeProgress +
+                                                                '")'
+                                                              : ""
                                                     }`}
                                                 {/if}
                                             {/if}

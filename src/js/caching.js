@@ -76,19 +76,21 @@ const cacheRequest = async (url, totalLength, status, chunkOptions) => {
                                                     reader.read().then(({ done, value }) => {
                                                         if (value) {
                                                             chunks.push(value);
-                                                            receivedLength += value?.byteLength ?? value?.length;
+                                                            receivedLength += value?.byteLength || value?.length || 0;
+                                                            if (chunkOptions) {
+                                                                let { joinedURL, chunkIdx } = chunkOptions || {}
+                                                                if (chunkLoadingLength[joinedURL]?.[chunkIdx] != null) {
+                                                                    chunkLoadingLength[joinedURL][chunkIdx] = receivedLength
+                                                                }
+                                                            }
                                                             if (!isDataStatusShowing) {
                                                                 isDataStatusShowing = true
                                                                 streamStatusTimeout = setTimeout(async () => {
                                                                     let percent
                                                                     if (chunkOptions) {
-                                                                        let { joinedURL, chunkIdx } = chunkOptions || {}
-                                                                        if (chunkLoadingLength[joinedURL]?.[chunkIdx] != null) {
-                                                                            chunkLoadingLength[joinedURL][chunkIdx] = receivedLength
+                                                                        let { joinedURL } = chunkOptions || {}
+                                                                        if (chunkLoadingLength[joinedURL]) {
                                                                             percent = (arraySum(chunkLoadingLength[joinedURL]) / totalLength) * 100
-                                                                        } else {
-                                                                            dataStatus.set(null)
-                                                                            progress.set(100)
                                                                         }
                                                                     } else {
                                                                         percent = (receivedLength / totalLength) * 100

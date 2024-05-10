@@ -227,7 +227,7 @@ function getAnimeManagerWorker() {
     if (animeManagerWorker) return animeManagerWorker
     if (animeManagerWorkerPromise) return animeManagerWorkerPromise
     animeManagerWorkerPromise = new Promise(async (resolve) => {
-        resolve(new Worker(await cacheRequest("./webapi/worker/animeManager.js", 49629, "Updating the List")))
+        resolve(new Worker(await cacheRequest("./webapi/worker/animeManager.js", 51216, "Updating the List")))
         animeManagerWorkerPromise = null
     })
     return animeManagerWorkerPromise
@@ -366,7 +366,7 @@ const processRecommendedAnimeList = (_data = {}) => {
         processRecommendedAnimeListWorker = null
         dataStatusPrio = true
         progress.set(0)
-        cacheRequest("./webapi/worker/processRecommendedAnimeList.js", 40012, "Updating Recommendation List")
+        cacheRequest("./webapi/worker/processRecommendedAnimeList.js", 40072, "Updating Recommendation List")
             .then(url => {
                 const lastProcessRecommendationAiringAt = parseInt((new Date().getTime() / 1000))
                 let neareastAnimeCompletionAiringAt
@@ -1223,10 +1223,10 @@ const getAnimeEntries = (_data) => {
         cacheRequest([
             `${directory}1${extension}`,
             `${directory}2${extension}`,
-        ], 160994216, "Getting Anime and Manga Entries")
+        ], 172310394, "Getting Anime, Manga, and Novel Entries")
             .then(url => {
                 progress.set(25)
-                dataStatus.set("Retaining Anime and Manga Entries")
+                dataStatus.set("Retaining Anime, Manga, and Novel Entries")
                 let worker = new Worker(url)
                 worker.postMessage(_data)
                 worker.onmessage = ({ data }) => {
@@ -1267,7 +1267,7 @@ const getFilterOptions = (_data) => {
         if (getFilterOptionsTerminateTimeout) clearTimeout(getFilterOptionsTerminateTimeout)
         getFilterOptionsWorker?.terminate?.()
         getFilterOptionsWorker = null
-        cacheRequest("./webapi/worker/getFilterOptions.js", 60880, "Initializing Filters")
+        cacheRequest("./webapi/worker/getFilterOptions.js", 60898, "Initializing Filters")
             .then(url => {
                 if (getFilterOptionsTerminateTimeout) clearTimeout(getFilterOptionsTerminateTimeout)
                 getFilterOptionsWorker?.terminate?.()
