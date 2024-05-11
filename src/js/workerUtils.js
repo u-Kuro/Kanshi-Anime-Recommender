@@ -234,7 +234,7 @@ function getAnimeManagerWorker() {
     if (animeManagerWorker) return animeManagerWorker
     if (animeManagerWorkerPromise) return animeManagerWorkerPromise
     animeManagerWorkerPromise = new Promise(async (resolve) => {
-        resolve(new Worker(await cacheRequest("./webapi/worker/animeManager.js", 51261, "Updating the List")))
+        resolve(new Worker(await cacheRequest("./webapi/worker/animeManager.js", 51507, "Updating the List")))
         animeManagerWorkerPromise = null
     })
     return animeManagerWorkerPromise
@@ -586,8 +586,8 @@ const requestAnimeEntries = (_data = {}) => {
                         isRequestingAnimeEntries = false
                         requestAnimeEntriesTerminateTimeout = setTimeout(() => {
                             requestAnimeEntriesWorker?.terminate?.();
-                            notifyUpdatedAnimeNotification()
                         }, terminateDelay)
+                        notifyUpdatedAnimeNotification()
                         dataStatus.set(null)
                         progress.set(100)
                         reject(data)
@@ -598,6 +598,12 @@ const requestAnimeEntries = (_data = {}) => {
                         updateRecommendationList.update(e => !e)
                     } else if (hasOwnProp?.call?.(data, "errorDuringInit")) {
                         isRequestingAnimeEntries = false
+                        requestAnimeEntriesTerminateTimeout = setTimeout(() => {
+                            requestAnimeEntriesWorker?.terminate?.();
+                        }, terminateDelay)
+                        notifyUpdatedAnimeNotification()
+                        dataStatus.set(null)
+                        progress.set(100)
                         resolve(data)
                     } else if (hasOwnProp?.call?.(data, "notifyAddedEntries")) {
                         if (get(android) && window?.[".androidDataIsEvicted"] !== true) {
@@ -648,8 +654,8 @@ const requestAnimeEntries = (_data = {}) => {
                         isRequestingAnimeEntries = false
                         requestAnimeEntriesTerminateTimeout = setTimeout(() => {
                             requestAnimeEntriesWorker?.terminate?.();
-                            notifyUpdatedAnimeNotification()
                         }, terminateDelay)
+                        notifyUpdatedAnimeNotification()
                         dataStatus.set(null)
                         progress.set(100)
                         resolve(data)
@@ -658,6 +664,7 @@ const requestAnimeEntries = (_data = {}) => {
                 requestAnimeEntriesWorker.onerror = (error) => {
                     isRequestingAnimeEntries = false
                     isGettingNewEntries = false
+                    notifyUpdatedAnimeNotification()
                     dataStatus.set(null)
                     progress.set(100)
                     reject(error)
@@ -665,6 +672,7 @@ const requestAnimeEntries = (_data = {}) => {
             }).catch((error) => {
                 isRequestingAnimeEntries = false
                 isGettingNewEntries = false
+                notifyUpdatedAnimeNotification()
                 dataStatus.set(null)
                 progress.set(100)
                 alertError()
