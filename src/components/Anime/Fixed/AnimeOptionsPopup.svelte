@@ -128,7 +128,7 @@
         if (!$hiddenEntries) return pleaseWaitAlert();
         let title = shownTitle
             ? `<span style="color:hsl(var(--ac-color));">${shownTitle}</span>`
-            : "this anime";
+            : "this entry";
         let isHidden = $hiddenEntries[animeID];
         if (isHidden) {
             if (
@@ -272,9 +272,8 @@
                 ><h2 class="option-title">
                     {!$hiddenEntries
                         ? "Please Wait..."
-                        : $hiddenEntries[animeID]
-                          ? "Show"
-                          : "Hide" + " Anime"}
+                        : ($hiddenEntries[animeID] ? "Show" : "Hide") +
+                          " Entry"}
                 </h2></span
             >
         </div>

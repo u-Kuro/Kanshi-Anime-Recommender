@@ -213,7 +213,7 @@
             return;
         } else if (
             await $confirmPromise(
-                "Do you want to show all your hidden anime entries?",
+                "Do you want to show all your hidden entries?",
             )
         ) {
             $dataStatus = "Updating List";

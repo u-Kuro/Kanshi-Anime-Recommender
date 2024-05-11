@@ -12,7 +12,6 @@ import android.app.PendingIntent;
 import android.app.Person;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -272,7 +271,6 @@ public class AnimeNotificationManager {
             }
         }
 
-        SharedPreferences prefs = context.getApplicationContext().getSharedPreferences("com.example.kanshi", Context.MODE_PRIVATE);
         createAnimeReleasesNotificationChannel(context.getApplicationContext());
         NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context.getApplicationContext());
 
@@ -280,10 +278,11 @@ public class AnimeNotificationManager {
         HashMap<String, AnimeNotification> myAnimeNotifications = new HashMap<>();
         HashMap<String, AnimeNotification> animeNotifications = new HashMap<>();
 
-        long lastSentNotificationTime = prefs.getLong("lastSentNotificationTime", 0L);
         AnimeNotification nextAnimeNotificationInfo = null;
 
         long currentTimeInMillis = System.currentTimeMillis();
+        long sixtySecondsAgoInMillis = currentTimeInMillis-TimeUnit.MINUTES.toMillis(1);
+
         long mostRecentlySentMyAnimeNotificationTime = 0L;
         long mostRecentlySentOtherAnimeNotificationTime = 0L;
 
@@ -337,7 +336,6 @@ public class AnimeNotificationManager {
 
         final int maxNotificationCount = 6;
 
-        boolean hasJustAiredMA = false;
         Notification.MessagingStyle styleMA = new Notification.MessagingStyle(new Person.Builder().setName("").build()).setGroupConversation(true);
 
         // Put in Descending Order for in Adding items for the Message Style Notification
@@ -372,14 +370,11 @@ public class AnimeNotificationManager {
                 }
             }
             Person item = itemBuilder.build();
-            boolean justAired = anime.releaseDateMillis > Math.min(lastSentNotificationTime, currentTimeInMillis-(1000*60));
+            boolean justAired = anime.releaseDateMillis > sixtySecondsAgoInMillis;
             String addedInfo = " aired.";
             if (justAired) {
                 addedInfo = " just aired.";
                 ++newMyAnimeNotificationCount;
-                if (!hasJustAiredMA) {
-                    hasJustAiredMA = true;
-                }
             }
             if (anime.maxEpisode < 0) { // No Given Max Episodes
                 styleMA.addMessage("Episode " + anime.releaseEpisode + addedInfo, anime.releaseDateMillis, item);
@@ -390,13 +385,10 @@ public class AnimeNotificationManager {
             }
         }
         String notificationTitleMA;
-        if (hasJustAiredMA) {
-            notificationTitleMA = "Your Anime Just Aired";
+        if (newMyAnimeNotificationCount > 0) {
+            notificationTitleMA = "Your Anime Just Aired" + " +" + newMyAnimeNotificationCount;
         } else {
             notificationTitleMA = "Your Anime Aired";
-        }
-        if (newMyAnimeNotificationCount > 0) {
-            notificationTitleMA = notificationTitleMA + " +" + newMyAnimeNotificationCount;
         }
         styleMA.setConversationTitle(notificationTitleMA);
 
@@ -419,7 +411,6 @@ public class AnimeNotificationManager {
                 .setShowWhen(true);
 
         // Other Anime Released
-        boolean hasJustAiredOA = false;
         Notification.MessagingStyle styleOA = new Notification.MessagingStyle(new Person.Builder().setName("").build()).setGroupConversation(true);
 
         // Put in Ascending Order for in Adding items for the Message Style Notification
@@ -454,14 +445,11 @@ public class AnimeNotificationManager {
                 }
             }
             Person item = itemBuilder.build();
-            boolean justAired = anime.releaseDateMillis > Math.min(lastSentNotificationTime, currentTimeInMillis-(1000*60));
+            boolean justAired = anime.releaseDateMillis > sixtySecondsAgoInMillis;
             String addedInfo = " aired.";
             if (justAired) {
                 addedInfo = " just aired.";
                 ++newAnimeNotificationCount;
-                if (!hasJustAiredOA) {
-                    hasJustAiredOA = true;
-                }
             }
             if (anime.maxEpisode < 0) { // No Given Max Episodes
                 styleOA.addMessage("Episode " + anime.releaseEpisode + addedInfo, anime.releaseDateMillis, item);
@@ -472,28 +460,25 @@ public class AnimeNotificationManager {
             }
         }
         String notificationTitleOA;
-        if (hasJustAiredOA) {
-            notificationTitleOA = "Other Anime Just Aired";
+        if (newAnimeNotificationCount > 0) {
+            notificationTitleOA = "Other Anime Just Aired" + " +" + newAnimeNotificationCount;
         } else {
             notificationTitleOA = "Other Anime Aired";
-        }
-        if (newAnimeNotificationCount > 0) {
-            notificationTitleOA = notificationTitleOA + " +" + newAnimeNotificationCount;
         }
         styleOA.setConversationTitle(notificationTitleOA);
 
         Notification.Builder notificationOABuilder = new Notification.Builder(context.getApplicationContext(), ANIME_RELEASES_CHANNEL)
-            .setContentTitle(notificationTitleOA)
-            .setSmallIcon(R.drawable.ic_stat_name)
-            .setStyle(styleOA)
-            .setPriority(Notification.PRIORITY_LOW)
-            .setContentIntent(pendingIntent)
-            .setGroup(ANIME_RELEASE_NOTIFICATION_GROUP)
-            .setGroupAlertBehavior(Notification.GROUP_ALERT_SUMMARY)
-            .setNumber(0)
-            .setOnlyAlertOnce(true)
-            .setWhen(mostRecentlySentOtherAnimeNotificationTime)
-            .setShowWhen(true);
+                .setContentTitle(notificationTitleOA)
+                .setSmallIcon(R.drawable.ic_stat_name)
+                .setStyle(styleOA)
+                .setPriority(Notification.PRIORITY_LOW)
+                .setContentIntent(pendingIntent)
+                .setGroup(ANIME_RELEASE_NOTIFICATION_GROUP)
+                .setGroupAlertBehavior(Notification.GROUP_ALERT_SUMMARY)
+                .setNumber(0)
+                .setOnlyAlertOnce(true)
+                .setWhen(mostRecentlySentOtherAnimeNotificationTime)
+                .setShowWhen(true);
 
         long mostRecentlySentNotificationTime = Math.max(mostRecentlySentMyAnimeNotificationTime, mostRecentlySentOtherAnimeNotificationTime);
 
@@ -504,26 +489,26 @@ public class AnimeNotificationManager {
         }
 
         Notification.Builder notificationSummaryBuilder = new Notification.Builder(context.getApplicationContext(), ANIME_RELEASES_CHANNEL)
-            .setContentTitle(notificationTitle)
-            .setSmallIcon(R.drawable.ic_stat_name)
-            .setStyle(styleOA)
-            .setPriority(Notification.PRIORITY_DEFAULT)
-            .setContentIntent(pendingIntent)
-            .setGroup(ANIME_RELEASE_NOTIFICATION_GROUP)
-            .setGroupSummary(true)
-            .setOnlyAlertOnce(true)
-            .setWhen(mostRecentlySentNotificationTime)
-            .setShowWhen(true);
+                .setContentTitle(notificationTitle)
+                .setSmallIcon(R.drawable.ic_stat_name)
+                .setStyle(styleOA)
+                .setPriority(Notification.PRIORITY_DEFAULT)
+                .setContentIntent(pendingIntent)
+                .setGroup(ANIME_RELEASE_NOTIFICATION_GROUP)
+                .setGroupSummary(true)
+                .setOnlyAlertOnce(true)
+                .setWhen(mostRecentlySentNotificationTime)
+                .setShowWhen(true);
 
         boolean hasNewMyAnimeNotification = newMyAnimeNotificationCount > 0;
         if (hasNewMyAnimeNotification) { // Set with vibration
             notificationSummaryBuilder
-                .setGroupAlertBehavior(Notification.GROUP_ALERT_SUMMARY);
+                    .setGroupAlertBehavior(Notification.GROUP_ALERT_SUMMARY);
         } else { // Set with no vibration
             notificationSummaryBuilder
-                .setGroupAlertBehavior(Notification.GROUP_ALERT_CHILDREN)
-                .setDefaults(Notification.DEFAULT_ALL)
-                .setVibrate(new long[]{0L});
+                    .setGroupAlertBehavior(Notification.GROUP_ALERT_CHILDREN)
+                    .setDefaults(Notification.DEFAULT_ALL)
+                    .setVibrate(new long[]{0L});
         }
 
         SchedulesTabFragment schedulesTabFragment = SchedulesTabFragment.getInstanceActivity();
@@ -535,25 +520,24 @@ public class AnimeNotificationManager {
             new Handler(Looper.getMainLooper()).post(releasedTabFragment::updateReleasedAnime);
         }
 
-        boolean shouldNotify = lastSentNotificationTime == 0L || animeNotifications.size() > 0 || myAnimeNotifications.size() > 0;
+        boolean shouldNotify = animeNotifications.size() > 0 || myAnimeNotifications.size() > 0;
         if (shouldNotify) {
-            if (animeNotifications.size() > 0 || myAnimeNotifications.size() > 0) {
-                if (animeNotifications.size() > 0) {
-                    int NOTIFICATION_OTHER_ANIME = 998;
-                    Notification notificationOA = notificationOABuilder.build();
-                    notificationManager.notify(NOTIFICATION_OTHER_ANIME, notificationOA);
-                }
-                if (myAnimeNotifications.size() > 0) {
-                    int NOTIFICATION_MY_ANIME = 999;
-                    Notification notificationMA = notificationMABuilder.build();
-                    notificationManager.notify(NOTIFICATION_MY_ANIME, notificationMA);
-                }
-                int NOTIFICATION_ID_BASE = 1000;
-                Notification notificationSummary = notificationSummaryBuilder.build();
-                notificationManager.notify(NOTIFICATION_ID_BASE, notificationSummary);
+            notificationManager.cancel(AnimeNotificationManager.NOTIFICATION_ANIME_RELEASE);
+            if (animeNotifications.size() > 0) {
+                notificationManager.cancel(AnimeNotificationManager.NOTIFICATION_OTHER_ANIME);
+                int NOTIFICATION_OTHER_ANIME = 998;
+                Notification notificationOA = notificationOABuilder.build();
+                notificationManager.notify(NOTIFICATION_OTHER_ANIME, notificationOA);
             }
+            if (myAnimeNotifications.size() > 0) {
+                notificationManager.cancel(AnimeNotificationManager.NOTIFICATION_MY_ANIME);
+                int NOTIFICATION_MY_ANIME = 999;
+                Notification notificationMA = notificationMABuilder.build();
+                notificationManager.notify(NOTIFICATION_MY_ANIME, notificationMA);
+            }
+            int NOTIFICATION_ID_BASE = 1000;
+            Notification notificationSummary = notificationSummaryBuilder.build();
+            notificationManager.notify(NOTIFICATION_ID_BASE, notificationSummary);
         }
     }
 }
-
-

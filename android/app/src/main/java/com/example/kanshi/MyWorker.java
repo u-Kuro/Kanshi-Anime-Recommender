@@ -91,12 +91,12 @@ public class MyWorker extends Worker {
         HashMap<String, AnimeNotification> myAnimeNotifications = new HashMap<>();
         HashMap<String, AnimeNotification> animeNotifications = new HashMap<>();
 
+        AnimeNotification nextAnimeNotificationInfo = null;
         long lastSentNotificationTime = prefs.getLong("lastSentNotificationTime", 0L);
         long currentTimeInMillis = System.currentTimeMillis();
         long realLastSentNotificationTime = lastSentNotificationTime != 0L ? lastSentNotificationTime : currentTimeInMillis;
-        AnimeNotification nextAnimeNotificationInfo = null;
 
-        long sixtySecondsAgoInMillis = Math.min(realLastSentNotificationTime, System.currentTimeMillis()-TimeUnit.MINUTES.toMillis(1));
+        long timeForNewReleaseInMillis = Math.min(realLastSentNotificationTime, currentTimeInMillis-TimeUnit.MINUTES.toMillis(1));
 
         long mostRecentlySentMyAnimeNotificationTime = 0L;
         long mostRecentlySentOtherAnimeNotificationTime = 0L;
@@ -114,7 +114,7 @@ public class MyWorker extends Worker {
                     if (anime.releaseDateMillis > mostRecentlySentMyAnimeNotificationTime){
                         mostRecentlySentMyAnimeNotificationTime = anime.releaseDateMillis;
                     }
-                    if (sixtySecondsAgoInMillis < anime.releaseDateMillis) {
+                    if (timeForNewReleaseInMillis < anime.releaseDateMillis) {
                         if (myAnimeNotifications.get(String.valueOf(anime.animeId)) == null) {
                             myAnimeNotifications.put(String.valueOf(anime.animeId), anime);
                         } else {
@@ -128,7 +128,7 @@ public class MyWorker extends Worker {
                     if (anime.releaseDateMillis > mostRecentlySentOtherAnimeNotificationTime){
                         mostRecentlySentOtherAnimeNotificationTime = anime.releaseDateMillis;
                     }
-                    if (sixtySecondsAgoInMillis < anime.releaseDateMillis) {
+                    if (timeForNewReleaseInMillis < anime.releaseDateMillis) {
                         if (animeNotifications.get(String.valueOf(anime.animeId)) == null) {
                             animeNotifications.put(String.valueOf(anime.animeId), anime);
                         } else {
@@ -636,4 +636,3 @@ public class MyWorker extends Worker {
         }
     }
 }
-

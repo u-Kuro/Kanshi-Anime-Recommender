@@ -140,7 +140,7 @@
         let isHidden = $hiddenEntries[animeID];
         title = title
             ? `<span style="color:hsl(var(--ac-color));">${title}</span>`
-            : "this anime";
+            : "this entry";
         if (isHidden) {
             if (
                 await $confirmPromise(
@@ -217,8 +217,8 @@
             loweredFormat === "manga" || loweredFormat === "one shot"
                 ? "Manga"
                 : loweredFormat === "novel"
-                    ? "Novel"
-                    : "Anime";
+                  ? "Novel"
+                  : "Anime";
         if (typeof animeTitle !== "string" || animeTitle === "") return;
         window.open(
             `https://www.youtube.com/results?search_query=${encodeURIComponent(
@@ -1658,7 +1658,10 @@
                                 on:keyup="{(e) => {
                                     if (!$popupVisible) return;
                                     if (e.key === 'Enter') {
-                                        askToOpenYoutube(anime.title, anime.format);
+                                        askToOpenYoutube(
+                                            anime.title,
+                                            anime.format,
+                                        );
                                     }
                                 }}"
                             >
@@ -2521,10 +2524,16 @@
                                     style:overflow="{$popupIsGoingBack
                                         ? "hidden"
                                         : ""}"
-                                    on:click="{handleMoreVideos(anime.title, anime.format)}"
+                                    on:click="{handleMoreVideos(
+                                        anime.title,
+                                        anime.format,
+                                    )}"
                                     on:keyup="{(e) =>
                                         e.key === 'Enter' &&
-                                        handleMoreVideos(anime.title, anime.format)}"
+                                        handleMoreVideos(
+                                            anime.title,
+                                            anime.format,
+                                        )}"
                                 >
                                     <!-- youtube logo -->
                                     <svg viewBox="0 0 576 512">
