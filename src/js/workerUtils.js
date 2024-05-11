@@ -87,9 +87,13 @@ const animeLoader = (_data = {}) => {
                 if (data?.progress >= 0 && data?.progress <= 100) {
                     progress.set(data.progress);
                 }
+                return
             } else if (hasOwnProp.call(data, "status")) {
                 dataStatus.set(data.status);
-            } else if (hasOwnProp.call(data, "loadMore")) {
+                return
+            }
+
+            if (hasOwnProp.call(data, "loadMore")) {
                 let anime = data?.anime
                 let isLast = data?.isLast
                 if (anime || isLast) {
@@ -119,7 +123,10 @@ const animeLoader = (_data = {}) => {
                         val[categoryKey].sortBy = category?.sortBy;
                         return val
                     })
-                    if (typeof get(selectedCategory) !== "string") {
+
+                    let currentCategories = get(categories)
+                    let currentSelectedCategory = get(selectedCategory)
+                    if (currentCategories?.[currentSelectedCategory] !== 1 && currentCategories?.[categoryKey] === 1) {
                         selectedCategory.set(categoryKey)
                     }
                     if (isNew) {
@@ -366,7 +373,7 @@ const processRecommendedAnimeList = (_data = {}) => {
         processRecommendedAnimeListWorker = null
         dataStatusPrio = true
         progress.set(0)
-        cacheRequest("./webapi/worker/processRecommendedAnimeList.js", 40126, "Updating Recommendation List")
+        cacheRequest("./webapi/worker/processRecommendedAnimeList.js", 40317, "Updating Recommendation List")
             .then(url => {
                 const lastProcessRecommendationAiringAt = parseInt((new Date().getTime() / 1000))
                 let neareastAnimeCompletionAiringAt
@@ -386,10 +393,13 @@ const processRecommendedAnimeList = (_data = {}) => {
                         if (data?.progress >= 0 && data?.progress <= 100) {
                             progress.set(data.progress)
                         }
+                        return
                     } else if (hasOwnProp?.call?.(data, "status")) {
                         dataStatusPrio = true
                         dataStatus.set(data.status);
-                    } else if (hasOwnProp?.call?.(data, "error")) {
+                        return
+                    }
+                    if (hasOwnProp?.call?.(data, "error")) {
                         isProcessingList.set(false)
                         dataStatus.set(null);
                         progress.set(100)
@@ -558,11 +568,14 @@ const requestAnimeEntries = (_data = {}) => {
                         if (!dataStatusPrio && data?.progress >= 0 && data?.progress <= 100) {
                             progress.set(data.progress)
                         }
+                        return
                     } else if (hasOwnProp?.call?.(data, "status")) {
                         if (!dataStatusPrio) {
                             dataStatus.set(data.status)
                         }
-                    } else if (hasOwnProp?.call?.(data, "error")) {
+                        return
+                    }
+                    if (hasOwnProp?.call?.(data, "error")) {
                         if (!window.alreadyShownNoNetworkAlert || data?.showToUser) {
                             window.alreadyShownNoNetworkAlert = true
                             window.confirmPromise?.({
@@ -692,11 +705,14 @@ const requestUserEntries = (_data = {}) => {
                         if (!dataStatusPrio && data?.progress >= 0 && data?.progress <= 100) {
                             progress.set(data.progress)
                         }
+                        return
                     } else if (hasOwnProp?.call?.(data, "status")) {
                         if (!dataStatusPrio) {
                             dataStatus.set(data.status)
                         }
-                    } else if (hasOwnProp?.call?.(data, "error")) {
+                        return
+                    }
+                    if (hasOwnProp?.call?.(data, "error")) {
                         if (!window.alreadyShownNoNetworkAlert) {
                             window.alreadyShownNoNetworkAlert = true
                             window.confirmPromise?.({
@@ -786,10 +802,13 @@ const exportUserData = (_data) => {
                         if (data?.progress >= 0 && data?.progress <= 100) {
                             progress.set(data.progress)
                         }
+                        return
                     } else if (hasOwnProp?.call?.(data, "status")) {
                         dataStatusPrio = true
                         dataStatus.set(data.status)
-                    } else if (hasOwnProp?.call?.(data, "missingData")) {
+                        return
+                    }
+                    if (hasOwnProp?.call?.(data, "missingData")) {
                         dataStatusPrio = false
                         dataStatus.set(null)
                         progress.set(100)
@@ -939,7 +958,9 @@ const importUserData = (_data) => {
                         if (data?.progress >= 0 && data?.progress <= 100) {
                             progress.set(data.progress)
                         }
-                    } else if (hasOwnProp?.call?.(data, "error")) {
+                        return
+                    }
+                    if (hasOwnProp?.call?.(data, "error")) {
                         dataStatusPrio = false
                         isImporting.set(false)
                         isCurrentlyImporting = false
@@ -1148,10 +1169,10 @@ window.updateNotifications = async (aniIdsNotificationToBeUpdated = []) => {
                 worker.onmessage = ({ data }) => {
                     if (hasOwnProp?.call?.(data, "status")) {
                         dataStatus.set(data.status)
-                    } else {
-                        worker?.terminate?.()
-                        resolve(data)
+                        return
                     }
+                    worker?.terminate?.()
+                    resolve(data)
                 }
                 worker.onerror = (error) => {
                     reject(error)
@@ -1195,12 +1216,12 @@ const saveIDBdata = (_data, name, isImportant = false) => {
                     worker.onmessage = ({ data }) => {
                         if (hasOwnProp?.call?.(data, "status")) {
                             dataStatus.set(data.status)
-                        } else {
-                            setTimeout(() => {
-                                worker?.terminate?.();
-                            }, terminateDelay)
-                            resolve()
+                            return
                         }
+                        setTimeout(() => {
+                            worker?.terminate?.();
+                        }, terminateDelay)
+                        resolve()
                     }
                     worker.onerror = (error) => {
                         reject(error)
@@ -1233,16 +1254,16 @@ const getAnimeEntries = (_data) => {
                     if (hasOwnProp?.call?.(data, "status")) {
                         dataStatusPrio = true
                         dataStatus.set(data.status)
-                    } else {
-                        dataStatus.set(null)
-                        progress.set(100)
-                        dataStatusPrio = false
-                        updateRecommendationList.update(e => !e)
-                        setTimeout(() => {
-                            worker?.terminate?.();
-                        }, terminateDelay)
-                        resolve(data)
+                        return
                     }
+                    dataStatus.set(null)
+                    progress.set(100)
+                    dataStatusPrio = false
+                    updateRecommendationList.update(e => !e)
+                    setTimeout(() => {
+                        worker?.terminate?.();
+                    }, terminateDelay)
+                    resolve(data)
                 }
                 worker.onerror = (error) => {
                     dataStatus.set(null)
@@ -1278,7 +1299,9 @@ const getFilterOptions = (_data) => {
                     if (hasOwnProp?.call?.(data, "status")) {
                         dataStatusPrio = true
                         dataStatus.set(data.status)
-                    } else if (hasOwnProp?.call?.(data, "tagInfo")) {
+                        return
+                    }
+                    if (hasOwnProp?.call?.(data, "tagInfo")) {
                         if (isJsonObject(data?.tagInfo) && !jsonIsEmpty(data?.tagInfo)) {
                             tagInfo.set(data.tagInfo)
                         }

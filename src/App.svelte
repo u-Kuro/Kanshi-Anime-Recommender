@@ -1745,7 +1745,7 @@
 	});
 	categories.subscribe(async (val) => {
 		if (val) {
-			$categoriesKeys = Object.keys(val);
+			$categoriesKeys = Object.keys(val).sort();
 			for (let i = 0, l = $categoriesKeys.length; i < l; i++) {
 				if (val?.[$categoriesKeys[i]] == null) {
 					delete $loadedAnimeLists?.[$categoriesKeys?.[i]];

@@ -89,7 +89,7 @@
 
     let filterSelectionsSearch = {};
     let numberFiltersValues = {};
-    let boolFilterIsChecked;
+    let boolFilterIsChecked = {};
     $: {
         if (isJsonObject($nonOrderedFilters)) {
             let allCategoriesBoolFilter = {
@@ -484,6 +484,14 @@
             return pleaseWaitAlert();
         }
 
+        if ($categories?.[$selectedCategory] === true) {
+            return $confirmPromise({
+                isAlert: true,
+                title: "Updating Selected Category",
+                text: "Please wait a moment...",
+            });
+        }
+
         let array;
         if (filterCategoryName === "Anime Filter") {
             array = $loadedAnimeLists?.[$selectedCategory]?.animeFilters;
@@ -580,6 +588,14 @@
             return;
         }
 
+        if ($categories?.[$selectedCategory] === true) {
+            return $confirmPromise({
+                isAlert: true,
+                title: "Updating Selected Category",
+                text: "Please wait a moment...",
+            });
+        }
+
         let array;
         if (filterCategoryName === "Anime Filter") {
             array = $loadedAnimeLists?.[$selectedCategory]?.animeFilters;
@@ -656,8 +672,24 @@
         minValue,
         filterCategoryName,
     ) {
+        let numberFilterKey = filterCategoryName + optionName;
+
         if (!filterCategories || !$nonOrderedFilters) {
+            changeInputValue(event.target, oldValue);
+            numberFiltersValues[numberFilterKey] = oldValue;
+
             return pleaseWaitAlert();
+        }
+
+        if ($categories?.[$selectedCategory] === true) {
+            changeInputValue(event.target, oldValue);
+            numberFiltersValues[numberFilterKey] = oldValue;
+
+            return $confirmPromise({
+                isAlert: true,
+                title: "Updating Selected Category",
+                text: "Please wait a moment...",
+            });
         }
 
         let array;
@@ -668,7 +700,13 @@
         } else if (filterCategoryName === "Content Caution") {
             array = $animeCautions;
         }
-        if (!(array instanceof Array)) return;
+
+        if (!(array instanceof Array)) {
+            changeInputValue(event.target, oldValue);
+            numberFiltersValues[numberFilterKey] = oldValue;
+
+            return;
+        }
 
         let filterType = "number";
         let idx =
@@ -677,8 +715,6 @@
                     e?.optionName === optionName &&
                     e?.filterType === filterType,
             ) ?? -1;
-
-        let numberFilterKey = filterCategoryName + optionName;
 
         let shouldReload = false;
         if (
@@ -835,10 +871,21 @@
         status,
         readOnly,
     ) {
-        let hasActiveFilter = activeFilters?.length;
-        if ($initData || !hasActiveFilter) return pleaseWaitAlert();
+        if ($initData) return pleaseWaitAlert();
 
-        if (!activeFilters[activeFilterIdx]) return;
+        if ($categories?.[$selectedCategory] === true) {
+            return $confirmPromise({
+                isAlert: true,
+                title: "Updating Selected Category",
+                text: "Please wait a moment...",
+            });
+        }
+
+        if (
+            !(activeFilters instanceof Array) ||
+            !activeFilters[activeFilterIdx]
+        )
+            return;
 
         let element = event?.target;
         let classList = element?.classList;
@@ -848,6 +895,7 @@
         )
             return;
 
+        let currentFilterCategoryName = selectedFilterCategoryName;
         if (filterType === "number") {
             if (activeFilterIdx >= 0) {
                 if (status === "included") {
@@ -858,11 +906,11 @@
             }
         } else if (filterType === "bool") {
             if (status === "included") {
-                boolFilterIsChecked[selectedFilterCategoryName + optionName] =
+                boolFilterIsChecked[currentFilterCategoryName + optionName] =
                     false;
                 activeFilters[activeFilterIdx].status = "none";
             } else if (status != null) {
-                boolFilterIsChecked[selectedFilterCategoryName + optionName] =
+                boolFilterIsChecked[currentFilterCategoryName + optionName] =
                     true;
                 activeFilters[activeFilterIdx].status = "included";
             }
@@ -877,76 +925,108 @@
         }
 
         let data;
-        if (selectedFilterCategoryName === "Anime Filter") {
+        if (currentFilterCategoryName === "Anime Filter") {
             data = {
                 selectedCategory: $selectedCategory,
                 animeFilters: ($loadedAnimeLists[
                     $selectedCategory
                 ].animeFilters = activeFilters),
             };
-        } else if (selectedFilterCategoryName === "Algorithm Filter") {
+        } else if (currentFilterCategoryName === "Algorithm Filter") {
             data = {
                 algorithmFilters: ($algorithmFilters = activeFilters),
             };
-        } else if (selectedFilterCategoryName === "Content Caution") {
+        } else if (currentFilterCategoryName === "Content Caution") {
             data = {
                 animeCautions: ($animeCautions = activeFilters),
             };
         }
 
-        updateFilters(selectedFilterCategoryName, data);
+        updateFilters(currentFilterCategoryName, data);
     }
     function removeActiveFilter(activeFilterIdx) {
-        let hasActiveFilter = activeFilters?.length;
-        if ($initData || !hasActiveFilter) return pleaseWaitAlert();
+        if ($initData) return pleaseWaitAlert();
 
-        if (activeFilters?.[activeFilterIdx] == null) return;
+        if ($categories?.[$selectedCategory] === true) {
+            return $confirmPromise({
+                isAlert: true,
+                title: "Updating Selected Category",
+                text: "Please wait a moment...",
+            });
+        }
+
+        if (
+            !(activeFilters instanceof Array) ||
+            !activeFilters[activeFilterIdx]
+        )
+            return;
 
         activeFilters.splice(activeFilterIdx, 1);
 
+        let currentFilterCategoryName = selectedFilterCategoryName;
         let data;
-        if (selectedFilterCategoryName === "Anime Filter") {
+        if (currentFilterCategoryName === "Anime Filter") {
             data = {
                 selectedCategory: $selectedCategory,
                 animeFilters: ($loadedAnimeLists[
                     $selectedCategory
                 ].animeFilters = activeFilters),
             };
-        } else if (selectedFilterCategoryName === "Algorithm Filter") {
+        } else if (currentFilterCategoryName === "Algorithm Filter") {
             data = {
                 algorithmFilters: ($algorithmFilters = activeFilters),
             };
-        } else if (selectedFilterCategoryName === "Content Caution") {
+        } else if (currentFilterCategoryName === "Content Caution") {
             data = {
                 animeCautions: ($animeCautions = activeFilters),
             };
         }
 
-        updateFilters(selectedFilterCategoryName, data);
+        updateFilters(currentFilterCategoryName, data);
     }
     async function removeAllActiveFilters() {
-        let hasActiveFilter = activeFilters?.length;
-        if ($initData || !hasActiveFilter) return pleaseWaitAlert();
+        if ($initData) {
+            return pleaseWaitAlert();
+        }
+
+        let currentCategory = $selectedCategory;
+        if ($categories?.[currentCategory] === true) {
+            return $confirmPromise({
+                isAlert: true,
+                title: "Updating Selected Category",
+                text: "Please wait a moment...",
+            });
+        }
+
+        let currentFilterCategoryName = selectedFilterCategoryName;
         if (await $confirmPromise("Do you want to remove all filters?")) {
+            if ($categories?.[currentCategory] === true) {
+                return $confirmPromise({
+                    isAlert: true,
+                    title: "Updating Selected Category",
+                    text: "Please wait a moment...",
+                });
+            }
+
             let data;
-            if (selectedFilterCategoryName === "Anime Filter") {
+            if (currentFilterCategoryName === "Anime Filter") {
                 data = {
-                    selectedCategory: $selectedCategory,
+                    selectedCategory: currentCategory,
                     animeFilters: ($loadedAnimeLists[
-                        $selectedCategory
+                        currentCategory
                     ].animeFilters = []),
                 };
-            } else if (selectedFilterCategoryName === "Algorithm Filter") {
+            } else if (currentFilterCategoryName === "Algorithm Filter") {
                 data = {
                     algorithmFilters: ($algorithmFilters = []),
                 };
-            } else if (selectedFilterCategoryName === "Content Caution") {
+            } else if (currentFilterCategoryName === "Content Caution") {
                 data = {
                     animeCautions: ($animeCautions = []),
                 };
             }
 
-            updateFilters(selectedFilterCategoryName, data);
+            updateFilters(currentFilterCategoryName, data);
         }
     }
     function handleSortFilterPopup(event) {
@@ -994,12 +1074,19 @@
     }
 
     function changeSort(newSortName) {
+        if ($initData || !$orderedFilters) {
+            return pleaseWaitAlert();
+        }
+
         if (
-            $initData ||
-            !$orderedFilters ||
+            $categories?.[$selectedCategory] === true ||
             !$loadedAnimeLists?.[$selectedCategory]?.sortBy
         ) {
-            return pleaseWaitAlert();
+            return $confirmPromise({
+                isAlert: true,
+                title: "Updating Selected Category",
+                text: "Please wait a moment...",
+            });
         }
 
         let data;
@@ -1041,12 +1128,19 @@
         selectedSortElement = false;
     }
     function changeSortType() {
+        if ($initData || !$orderedFilters) {
+            return pleaseWaitAlert();
+        }
+
         if (
-            $initData ||
-            !$orderedFilters ||
+            $categories?.[$selectedCategory] === true ||
             !$loadedAnimeLists?.[$selectedCategory]?.sortBy
         ) {
-            return pleaseWaitAlert();
+            return $confirmPromise({
+                isAlert: true,
+                title: "Updating Selected Category",
+                text: "Please wait a moment...",
+            });
         }
 
         let data;
@@ -1196,13 +1290,24 @@
         if (!$categories) {
             return pleaseWaitAlert();
         }
+
+        let previousCategoryName = $selectedCategory;
+        if ($categories?.[previousCategoryName] === true) {
+            return $confirmPromise({
+                isAlert: true,
+                title: "Updating Selected Category",
+                text: "Please wait a moment...",
+            });
+        }
+
+        let newCategoryName = customCategoryName;
         if (
-            customCategoryName &&
-            $selectedCategory !== customCategoryName &&
-            $categories?.[$selectedCategory]
+            newCategoryName &&
+            previousCategoryName !== newCategoryName &&
+            $categories?.[previousCategoryName]
         ) {
             let categoryNameToShow = `<span style="color:hsl(var(--ac-color));">${trimAllEmptyChar(
-                customCategoryName,
+                newCategoryName,
             )}</span>`;
             if (
                 await $confirmPromise({
@@ -1210,17 +1315,29 @@
                     text: `Do you want to change the category name to ${categoryNameToShow}?`,
                 })
             ) {
+                if ($categories?.[previousCategoryName] === true) {
+                    return $confirmPromise({
+                        isAlert: true,
+                        title: "Updating Selected Category",
+                        text: "Please wait a moment...",
+                    });
+                }
+
                 if (
                     $categories &&
-                    customCategoryName &&
-                    $selectedCategory !== customCategoryName &&
-                    $categories?.[$selectedCategory]
+                    newCategoryName &&
+                    previousCategoryName !== newCategoryName &&
+                    $categories?.[previousCategoryName]
                 ) {
+                    delete $categories?.[previousCategoryName];
+                    $categories[newCategoryName] = true;
+                    $selectedCategory = newCategoryName;
+
                     editCategoryName = false;
 
                     loadAnime({
-                        renamedCategoryKey: customCategoryName,
-                        replacedCategoryKey: $selectedCategory,
+                        renamedCategoryKey: newCategoryName,
+                        replacedCategoryKey: previousCategoryName,
                     });
                 }
             }
@@ -1230,9 +1347,20 @@
         if (!$categories) {
             return pleaseWaitAlert();
         }
-        if (customCategoryName && !$categories?.[customCategoryName]) {
+
+        let previousCategoryName = $selectedCategory;
+        if ($categories?.[previousCategoryName] === true) {
+            return $confirmPromise({
+                isAlert: true,
+                title: "Updating Selected Category",
+                text: "Please wait a moment...",
+            });
+        }
+
+        let newCategoryName = customCategoryName;
+        if (newCategoryName && !$categories?.[newCategoryName]) {
             let categoryNameToShow = `<span style="color:hsl(var(--ac-color));">${trimAllEmptyChar(
-                customCategoryName,
+                newCategoryName,
             )}</span>`;
             if (
                 await $confirmPromise({
@@ -1240,16 +1368,26 @@
                     text: `Do you want to add a custom category named ${categoryNameToShow}?`,
                 })
             ) {
+                if ($categories?.[previousCategoryName] === true) {
+                    return $confirmPromise({
+                        isAlert: true,
+                        title: "Updating Selected Category",
+                        text: "Please wait a moment...",
+                    });
+                }
+
                 if (
                     $categories &&
-                    customCategoryName &&
-                    !$categories?.[customCategoryName]
+                    newCategoryName &&
+                    !$categories?.[newCategoryName]
                 ) {
-                    editCategoryName = false;
+                    $categories[newCategoryName] = true;
+                    $selectedCategory = newCategoryName;
 
+                    editCategoryName = false;
                     loadAnime({
-                        addedCategoryKey: customCategoryName,
-                        copiedCategoryKey: $selectedCategory,
+                        addedCategoryKey: newCategoryName,
+                        copiedCategoryKey: previousCategoryName,
                     });
                 }
             }
@@ -1257,15 +1395,25 @@
     }
 
     async function removeCategory() {
-        if (!$categories || !$selectedCategory) {
+        let previousCategoryName = $selectedCategory;
+        if (!$categories || !previousCategoryName) {
             return pleaseWaitAlert();
         }
+
+        if ($categories?.[previousCategoryName] === true) {
+            return $confirmPromise({
+                isAlert: true,
+                title: "Updating Selected Category",
+                text: "Please wait a moment...",
+            });
+        }
+
         if (
-            $categories?.[$selectedCategory] &&
+            $categories?.[previousCategoryName] &&
             Object.values($categories || {}).length > 1
         ) {
             let categoryNameToShow = `<span style="color:hsl(var(--ac-color));">${trimAllEmptyChar(
-                $selectedCategory,
+                previousCategoryName,
             )}</span>`;
             if (
                 await $confirmPromise({
@@ -1273,32 +1421,51 @@
                     text: `Do you want to delete the category named ${categoryNameToShow}?`,
                 })
             ) {
+                if ($categories?.[previousCategoryName] === true) {
+                    return $confirmPromise({
+                        isAlert: true,
+                        title: "Updating Selected Category",
+                        text: "Please wait a moment...",
+                    });
+                }
+
                 if (
-                    $selectedCategory &&
+                    previousCategoryName &&
                     $categories &&
-                    $categories?.[$selectedCategory] &&
+                    $categories?.[previousCategoryName] &&
                     Object.values($categories || {}).length > 1
                 ) {
                     editCategoryName = false;
+                    let previousCategoryIdx = $categoriesKeys?.findIndex?.(
+                        (name) => name === previousCategoryName,
+                    );
                     let newCategoryName;
-                    for (let key in $categories) {
-                        if (key !== $selectedCategory) {
-                            newCategoryName = key;
-                            break;
+                    if (previousCategoryIdx > 0) {
+                        newCategoryName =
+                            $categoriesKeys[previousCategoryIdx - 1];
+                    } else if (
+                        previousCategoryIdx === 0 &&
+                        $categoriesKeys?.length > 1
+                    ) {
+                        newCategoryName = $categoriesKeys[1];
+                    } else {
+                        for (let key in $categories) {
+                            if (key !== previousCategoryName) {
+                                newCategoryName = key;
+                                break;
+                            }
                         }
                     }
 
-                    delete $categories?.[$selectedCategory];
-                    delete $loadedAnimeLists?.[$selectedCategory];
-
-                    loadAnime({
-                        deletedCategoryKey: $selectedCategory,
-                    });
-
+                    delete $categories?.[previousCategoryName];
+                    delete $loadedAnimeLists?.[previousCategoryName];
                     $categories = $categories;
                     $loadedAnimeLists = $loadedAnimeLists;
-
                     $selectedCategory = newCategoryName;
+
+                    loadAnime({
+                        deletedCategoryKey: previousCategoryName,
+                    });
                 }
             }
         } else {
@@ -1844,7 +2011,7 @@
             </div>
         {/if}
         {#if $showFilterOptions}
-            {#if editCategoryName && customCategoryName && $categories && !$categories?.[customCategoryName]}
+            {#if editCategoryName && customCategoryName && $categories && !$categories?.[customCategoryName] && $categories?.[$selectedCategory] !== true}
                 <div class="category-icon-wrap">
                     <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                     <svg
@@ -1945,7 +2112,8 @@
         customCategoryName &&
         $categories &&
         !$categories?.[customCategoryName] &&
-        selectedCategoryAnimeFilters
+        selectedCategoryAnimeFilters &&
+        $categories?.[$selectedCategory] !== true
             ? "25px"
             : ""}"
         style:--remove-icon-size="{$categoriesKeys?.length > 1
@@ -2093,7 +2261,7 @@
             </div>
         {/if}
         <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
-        {#if $showFilterOptions && customCategoryName && $categories && !$categories?.[customCategoryName] && selectedCategoryAnimeFilters}
+        {#if $showFilterOptions && customCategoryName && $categories && !$categories?.[customCategoryName] && selectedCategoryAnimeFilters && $categories?.[$selectedCategory] !== true}
             <div
                 tabindex="{$menuVisible || $popupVisible ? '' : '0'}"
                 class="add-custom-category"
@@ -2774,20 +2942,24 @@
                                 {optionName + " : " + optionValue || ""}
                             </h3>
                         {:else if optionCategory}
-                            {#if optionCategory==="country of origin"}
+                            {#if optionCategory === "country of origin"}
                                 {@const COOs = {
                                     jp: "Japan",
                                     kr: "South Korea",
                                     cn: "China",
                                     tw: "Taiwan",
                                 }}
-                                {@const COOName = COOs[optionName?.trim()?.toLowerCase?.()] ?? optionName?.toUpperCase?.()}
+                                {@const COOName =
+                                    COOs[optionName?.trim()?.toLowerCase?.()] ??
+                                    optionName?.toUpperCase?.()}
                                 <h3>
                                     {optionCategory + " : " + (COOName || "")}
                                 </h3>
                             {:else}
                                 <h3>
-                                    {optionCategory + " : " + (optionName || "")}
+                                    {optionCategory +
+                                        " : " +
+                                        (optionName || "")}
                                 </h3>
                             {/if}
                         {:else}
