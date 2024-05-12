@@ -1252,7 +1252,7 @@ const getAnimeEntries = (_data) => {
         cacheRequest([
             `${directory}1${extension}`,
             `${directory}2${extension}`,
-        ], 172310394, "Getting Anime, Manga, and Novel Entries")
+        ], 172310429, "Getting Anime, Manga, and Novel Entries")
             .then(url => {
                 progress.set(25)
                 dataStatus.set("Retaining Anime, Manga, and Novel Entries")
