@@ -522,6 +522,7 @@ public class AnimeNotificationManager {
 
         boolean shouldNotify = animeNotifications.size() > 0 || myAnimeNotifications.size() > 0;
         if (shouldNotify) {
+            notificationManager.cancel(AnimeNotificationManager.NOTIFICATION_ANIME_RELEASE);
             if (animeNotifications.size() > 0) {
                 notificationManager.cancel(AnimeNotificationManager.NOTIFICATION_OTHER_ANIME);
                 int NOTIFICATION_OTHER_ANIME = 998;
