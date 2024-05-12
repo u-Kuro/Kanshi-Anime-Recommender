@@ -34,7 +34,7 @@ If you're struggling to decide on what to see, this tool can assist you in disco
 <h2 align="center"></h2>
 
 ## Website Preview
-![Website Preview 1](https://i.imgur.com/746pa94.png)
+![Website Preview 1](https://i.imgur.com/x8jrAfk.png)
 ![Website Preview 2](https://i.imgur.com/xYSkGiD.png)
 
 
