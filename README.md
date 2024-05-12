@@ -25,16 +25,16 @@ If you're struggling to decide on what to see, this tool can assist you in disco
 
 ## Android Preview
 <div style="display: flex;flex-wrap:nowrap;">
-  <img src="https://i.imgur.com/Q3yZHHc.png" style="flex:1;width: 24%;">
+  <img src="https://i.imgur.com/QQHODmR.png" style="flex:1;width: 24%;">
   <img src="https://i.imgur.com/iLD1imm.png" style="flex:1;width: 24%;">
-  <img src="https://i.imgur.com/B7fywJK.png" style="flex:1;width: 24%;">
-  <img src="https://i.imgur.com/tN7sM8W.png" style="flex:1;width: 24%;">
+  <img src="https://i.imgur.com/rpOjbWD.png" style="flex:1;width: 24%;">
+  <img src="https://i.imgur.com/Ld1uPDd.png" style="flex:1;width: 24%;">
 </div>
 
 <h2 align="center"></h2>
 
 ## Website Preview
-![Website Preview 1](https://i.imgur.com/5GSxPMy.png)
+![Website Preview 1](https://i.imgur.com/746pa94.png)
 ![Website Preview 2](https://i.imgur.com/xYSkGiD.png)
 
 
