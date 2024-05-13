@@ -328,9 +328,8 @@ public class MainActivity extends AppCompatActivity {
                     showDialog(new AlertDialog.Builder(MainActivity.this)
                         .setTitle("Connection Failed")
                         .setMessage("Do you want to reconnect indefinitely?")
-                        .setPositiveButton("OK", ((dialog, i) -> reconnectLonger()))
-                        .setNegativeButton("CANCEL", null),
-                    true,true
+                        .setPositiveButton("OK", ((dialog, i) -> reconnectLonger())),
+                    false,true
                     );
                 }
                 super.onPageFinished(view, url);
@@ -490,9 +489,8 @@ public class MainActivity extends AppCompatActivity {
                     showDialog(new AlertDialog.Builder(MainActivity.this)
                         .setTitle("Connection Failed")
                         .setMessage("Do you want to reconnect indefinitely?")
-                        .setPositiveButton("OK", ((dialog, i) -> reconnectLonger()))
-                        .setNegativeButton("CANCEL", null),
-                true, true
+                        .setPositiveButton("OK", ((dialog, i) -> reconnectLonger())),
+                        false, true
                     );
                 }
             }
@@ -1222,9 +1220,8 @@ public class MainActivity extends AppCompatActivity {
                 showDialog(new AlertDialog.Builder(MainActivity.this)
                         .setTitle("Connection Failed")
                         .setMessage("Do you want to reconnect indefinitely?")
-                        .setPositiveButton("OK", ((dialog, i) -> reconnectLonger()))
-                        .setNegativeButton("CANCEL", null),
-                        true,true
+                        .setPositiveButton("OK", ((dialog, i) -> reconnectLonger())),
+                        false,true
                 );
             }
         }),3500,0);
@@ -1238,9 +1235,8 @@ public class MainActivity extends AppCompatActivity {
                 showDialog(new AlertDialog.Builder(MainActivity.this)
                         .setTitle("Connection Failed")
                         .setMessage("Do you want to reconnect indefinitely?")
-                        .setPositiveButton("OK", ((dialog, i) -> reconnectLonger()))
-                        .setNegativeButton("CANCEL", null),
-                        true,true
+                        .setPositiveButton("OK", ((dialog, i) -> reconnectLonger())),
+                        false,true
                 );
             }
         }),999999999,0);
