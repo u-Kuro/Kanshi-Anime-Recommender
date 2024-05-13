@@ -30,6 +30,7 @@
         mobile,
         appInstallationAsked,
         selectedCategory,
+        keepAppRunningInBackground,
     } from "../../js/globalValues.js";
 
     let menuContainerEl, navContainerEl;
@@ -248,33 +249,30 @@
         }
     }
 
-    let keepAppRunningInBackground;
     async function persistentBackgroundUpdates() {
         if (!$android) return;
         if (
             await $confirmPromise({
                 text: `Do you want ${
-                    keepAppRunningInBackground ? "prevent" : "allow"
+                    $keepAppRunningInBackground ? "prevent" : "allow"
                 } persistent background updates?${
-                    keepAppRunningInBackground
+                    $keepAppRunningInBackground
                         ? ""
                         : " Note that this will run every hour and use ram/power usage while the update is running."
                 }`,
                 isImportant: true,
             })
         ) {
-            keepAppRunningInBackground = window.keepAppRunningInBackground =
-                !window.keepAppRunningInBackground;
+            $keepAppRunningInBackground = !$keepAppRunningInBackground;
             try {
                 JSBridge?.setKeepAppRunningInBackground?.(
-                    keepAppRunningInBackground,
+                    $keepAppRunningInBackground,
                 );
             } catch (e) {}
         }
     }
     window.setKeepAppRunningInBackground = (enabled) => {
-        keepAppRunningInBackground = window.keepAppRunningInBackground =
-            enabled;
+        $keepAppRunningInBackground = enabled;
     };
 
     async function anilistSignup() {
@@ -604,10 +602,10 @@
                     e.key === 'Enter' && handleExportEveryHour(e)}"
                 >Auto Export</button
             >
-            {#if typeof keepAppRunningInBackground === "boolean"}
+            {#if typeof $keepAppRunningInBackground === "boolean"}
                 <button
                     class="{'button' +
-                        (keepAppRunningInBackground ? ' selected' : '')}"
+                        ($keepAppRunningInBackground ? ' selected' : '')}"
                     tabindex="{$menuVisible ? '0' : '-1'}"
                     on:keyup="{(e) =>
                         e.key === 'Enter' && persistentBackgroundUpdates(e)}"

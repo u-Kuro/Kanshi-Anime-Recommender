@@ -299,7 +299,6 @@ public class MainActivity extends AppCompatActivity {
                     isReloaded = false;
                     view.loadUrl("javascript:(()=>window.shouldUpdateNotifications=true)();");
                 }
-                view.loadUrl("javascript:(()=>window.keepAppRunningInBackground=" + (keepAppRunningInBackground ? "true" : "false") + ")();");
                 super.onPageStarted(view, url, favicon);
             }
 

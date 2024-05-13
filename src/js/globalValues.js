@@ -72,6 +72,7 @@ const scrollingTimeout = writable(null)
 const showFilterOptions = writable(getLocalStorage('showFilterOptions') ?? null)
 const dropdownIsVisible = writable(null)
 const confirmIsVisible = writable(null)
+const keepAppRunningInBackground = writable(null)
 // Reactive Functions
 const runUpdate = writable(null)
 const runExport = writable(null)
@@ -146,6 +147,7 @@ export {
     showFilterOptions,
     dropdownIsVisible,
     confirmIsVisible,
+    keepAppRunningInBackground,
     // Reactive Functions
     runUpdate,
     runExport,
