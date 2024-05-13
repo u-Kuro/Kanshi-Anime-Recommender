@@ -211,14 +211,9 @@ public class AnimeReleaseActivity extends AppCompatActivity {
             }
         });
 
-        String exportPath = prefs.getString("savedExportPath", "");
         ImageView backupAnimeReleases = findViewById(R.id.backup_anime_releases);
-        if ("".equals(exportPath)) {
-            backupAnimeReleases.setVisibility(View.GONE);
-        } else {
-            backupAnimeReleases.setVisibility(View.VISIBLE);
-            backupAnimeReleases.setOnClickListener(view -> backupBottomDialog());
-        }
+        backupAnimeReleases.setVisibility(View.VISIBLE);
+        backupAnimeReleases.setOnClickListener(view -> backupBottomDialog());
 
         String[] animeReleaseOption = {"Updates", "My List", "Others"};
         ArrayAdapter<String> animeReleaseOptionsAdapter = new ArrayAdapter<>(this, R.layout.spinner_item, animeReleaseOption);
