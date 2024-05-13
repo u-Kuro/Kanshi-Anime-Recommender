@@ -1275,6 +1275,7 @@
     }
     window.playMostVisibleTrailer = playMostVisibleTrailer;
     window.reloadYoutube = reloadYoutube;
+    window.isCurrentlyOffline = () => ($dataStatus = "Currently Offline");
     window.addEventListener("offline", () => {
         if ($android) {
             try {

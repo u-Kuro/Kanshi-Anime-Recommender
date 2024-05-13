@@ -106,9 +106,7 @@
 			} else {
 				await saveJSON(true, $visitedKey, true).then(() => {
 					try {
-						let isWebApp =
-							!window.location?.protocol?.includes?.("file");
-						JSBridge?.visited?.(isWebApp);
+						JSBridge?.visited?.(true);
 					} catch (e) {}
 				});
 			}

@@ -57,6 +57,7 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.FrameLayout;
 import android.widget.ProgressBar;
+import android.widget.RelativeLayout;
 import android.widget.Toast;
 
 import java.io.BufferedWriter;
@@ -71,6 +72,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -88,10 +91,11 @@ import androidx.core.content.FileProvider;
 import androidx.core.splashscreen.SplashScreen;
 
 public class MainActivity extends AppCompatActivity {
-    public final int appID = 383;
+    public final int appID = 384;
     private final boolean isOwner = true;
     public boolean keepAppRunningInBackground = false;
-    public boolean webViewIsLoaded = false;
+    public boolean showOriginalSplashScreen = true;
+    public RelativeLayout splashScreenLayout;
     public boolean permissionIsAsked = false;
     public SharedPreferences prefs;
     private SharedPreferences.Editor prefsEdit;
@@ -101,6 +105,7 @@ public class MainActivity extends AppCompatActivity {
     public MediaWebView webView;
     private ProgressBar progressbar;
     private boolean pageLoaded = false;
+    private boolean webViewIsLoaded = false;
     private final String uniqueKey = "Kanshi.Anime.Recommendations.Anilist.W~uPtWCq=vG$TR:Zl^#t<vdS]I~N70";
     private final String visitedKey = uniqueKey+".visited";
     private final String isOwnerKey = uniqueKey+".isOwner";
@@ -110,8 +115,9 @@ public class MainActivity extends AppCompatActivity {
     public Toast persistentToast;
     public Toast currentToast;
     public AlertDialog currentDialog;
+    public AlertDialog reconnectIndefinitelyDialog;
     public boolean isInApp = true;
-    public boolean appSwitched = false;
+    public boolean isReloaded = true;
     public static WeakReference<MainActivity> weakActivity;
     public boolean shouldRefreshList = false;
     public boolean shouldProcessRecommendationList = false;
@@ -200,7 +206,7 @@ public class MainActivity extends AppCompatActivity {
         weakActivity = new WeakReference<>(MainActivity.this);
         // Create WebView App Instance
         SplashScreen splashScreen = SplashScreen.installSplashScreen(this);
-        splashScreen.setKeepOnScreenCondition(() -> !webViewIsLoaded);
+        splashScreen.setKeepOnScreenCondition(() -> showOriginalSplashScreen);
         // Show status bar
         getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
         getWindow().getDecorView().setBackgroundColor(Color.BLACK);
@@ -210,6 +216,7 @@ public class MainActivity extends AppCompatActivity {
         PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
         wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "KeepAwake:");
         wakeLock.acquire(10 * 60 * 1000L);
+        splashScreenLayout = findViewById(R.id.splash_screen);
         webView = findViewById(R.id.webView);
         progressbar = findViewById(R.id.progressbar);
         progressbar.setMax((int) Math.pow(10, 6));
@@ -217,7 +224,7 @@ public class MainActivity extends AppCompatActivity {
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
-                if (webView.getUrl() != null && (webView.getUrl().startsWith("file:///android_asset/www/index.html") || webView.getUrl().startsWith("https://u-kuro.github.io/Kanshi-Anime-Recommender"))) {
+                if (webView.getUrl() != null && (webView.getUrl().startsWith("https://u-kuro.github.io/Kanshi-Anime-Recommender"))) {
                     if (!shouldGoBack) {
                         webView.loadUrl("javascript:window?.backPressed?.();");
                     } else {
@@ -281,46 +288,48 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onPageStarted(WebView view, String url, Bitmap favicon) {
                 shouldRefreshList = shouldProcessRecommendationList = shouldLoadAnime = false;
-                boolean visited;
-                if (url.startsWith("file")) {
-                    visited = prefs.getBoolean("clientVisited", false);
-                } else {
-                    visited = prefs.getBoolean("visited", false);
-                }
+                boolean visited = prefs.getBoolean("visited", false);
                 if (visited) {
                     view.loadUrl("javascript:(()=>window['" + visitedKey + "']=true)();");
                 }
                 if (isOwner) {
                     view.loadUrl("javascript:(()=>window['" + isOwnerKey + "']=true)();");
                 }
-                if (appSwitched) {
-                    appSwitched = false;
+                if (isReloaded) {
+                    isReloaded = false;
                     view.loadUrl("javascript:(()=>window.shouldUpdateNotifications=true)();");
                 }
                 view.loadUrl("javascript:(()=>window.keepAppRunningInBackground=" + (keepAppRunningInBackground ? "true" : "false") + ")();");
                 super.onPageStarted(view, url, favicon);
-                webViewIsLoaded = false;
             }
 
             @Override
             public void onPageFinished(WebView view, String url) {
                 if (pageLoaded) {
+                    if (reconnectIndefinitelyDialog != null && reconnectIndefinitelyDialog.isShowing()) {
+                        reconnectIndefinitelyDialog.dismiss();
+                        reconnectIndefinitelyDialog = null;
+                    }
+                    splashScreenLayout.setVisibility(View.GONE);
+                    showOriginalSplashScreen = false;
+                    ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+                    Network network = connectivityManager.getActiveNetwork();
+                    if (network == null) {
+                        showToast(Toast.makeText(getApplicationContext(), "You are currently offline.", Toast.LENGTH_LONG));
+                        view.loadUrl("javascript:window?.isCurrentlyOffline?.()");
+                    }
                     CookieManager cookieManager = CookieManager.getInstance();
                     cookieManager.setAcceptCookie(true);
                     cookieManager.setAcceptThirdPartyCookies(view, true);
                     CookieManager.getInstance().acceptCookie();
                     CookieManager.getInstance().flush();
-                    webViewIsLoaded = true;
-                } else if (!url.startsWith("file")) {
-                    appSwitched = true;
-                    pageLoaded = true;
-                    view.loadUrl("file:///android_asset/www/index.html");
+                } else {
                     showDialog(new AlertDialog.Builder(MainActivity.this)
-                                    .setTitle("Connection unreachable")
-                                    .setMessage("Connection unreachable, do you want to reconnect indefinitely?")
-                                    .setPositiveButton("OK", ((dialog, i) -> reconnectLonger()))
-                                    .setNegativeButton("CANCEL", null),
-                            true
+                        .setTitle("Connection Failed")
+                        .setMessage("Do you want to reconnect indefinitely?")
+                        .setPositiveButton("OK", ((dialog, i) -> reconnectLonger()))
+                        .setNegativeButton("CANCEL", null),
+                    true,true
                     );
                 }
                 view.loadUrl("javascript:window?.setKeepAppRunningInBackground?.(" + (keepAppRunningInBackground ? "true" : "false") + ")");
@@ -445,11 +454,13 @@ public class MainActivity extends AppCompatActivity {
                     cookieManager.setAcceptThirdPartyCookies(webView, true);
                     CookieManager.getInstance().acceptCookie();
                     CookieManager.getInstance().flush();
-                    webViewIsLoaded = true;
                     ObjectAnimator animator = ObjectAnimator.ofInt(progressbar, "progress", 0);
                     animator.setDuration(0);
                     animator.setStartDelay(300);
                     animator.start();
+                    if (pageLoaded) {
+                        webViewIsLoaded = true;
+                    }
                 }
             }
 
@@ -463,20 +474,21 @@ public class MainActivity extends AppCompatActivity {
         });
         WebView.setWebContentsDebuggingEnabled(BuildConfig.DEBUG);
 
+        isReloaded = true;
+        webView.loadUrl("https://u-kuro.github.io/Kanshi-Anime-Recommender/");
         isAppConnectionAvailable(isConnected -> webView.post(() -> {
-            appSwitched = true;
+            if (pageLoaded) return;
             if (isConnected) {
-                pageLoaded = false;
+                isReloaded = true;
                 webView.loadUrl("https://u-kuro.github.io/Kanshi-Anime-Recommender/");
             } else {
-                pageLoaded = true;
-                webView.loadUrl("file:///android_asset/www/index.html");
+                showOriginalSplashScreen = false;
                 showDialog(new AlertDialog.Builder(MainActivity.this)
-                                .setTitle("Connection unreachable")
-                                .setMessage("Connection unreachable, do you want to reconnect indefinitely?")
-                                .setPositiveButton("OK", ((dialog, i) -> reconnectLonger()))
-                                .setNegativeButton("CANCEL", null),
-                        true
+                        .setTitle("Connection Failed")
+                        .setMessage("Do you want to reconnect indefinitely?")
+                        .setPositiveButton("OK", ((dialog, i) -> reconnectLonger()))
+                        .setNegativeButton("CANCEL", null),
+                true,true
                 );
             }
             if (!permissionIsAsked) {
@@ -490,7 +502,7 @@ public class MainActivity extends AppCompatActivity {
             webSettings.setBuiltInZoomControls(false);
             webSettings.setDisplayZoomControls(false);
             webSettings.setSupportZoom(false);
-        }), 3000);
+        }), 3500, 3500);
         Utils.cleanIndexedDBFiles(this.getApplicationContext());
     }
 
@@ -596,14 +608,30 @@ public class MainActivity extends AppCompatActivity {
         @JavascriptInterface
         public void pageIsFinished() {
             pageLoaded = true;
+            if (reconnectIndefinitelyDialog != null && reconnectIndefinitelyDialog.isShowing()) {
+                reconnectIndefinitelyDialog.dismiss();
+                reconnectIndefinitelyDialog = null;
+            }
+            splashScreenLayout.setVisibility(View.GONE);
+            showOriginalSplashScreen = false;
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+                ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+                Network network = connectivityManager.getActiveNetwork();
+                if (network == null) {
+                    showToast(Toast.makeText(getApplicationContext(), "You are currently offline.", Toast.LENGTH_LONG));
+                    webView.post(() -> webView.loadUrl("javascript:window?.isCurrentlyOffline?.()"));
+                }
+            }
+            CookieManager cookieManager = CookieManager.getInstance();
+            cookieManager.setAcceptCookie(true);
+            cookieManager.setAcceptThirdPartyCookies(webView, true);
+            CookieManager.getInstance().acceptCookie();
+            CookieManager.getInstance().flush();
+            webView.post(()->webView.loadUrl("javascript:window?.setKeepAppRunningInBackground?.(" + (keepAppRunningInBackground ? "true" : "false") + ")"));
         }
         @JavascriptInterface
-        public void visited(boolean isWebApp) {
-            if (isWebApp) {
-                prefsEdit.putBoolean("visited", true).apply();
-            } else {
-                prefsEdit.putBoolean("clientVisited", true).apply();
-            }
+        public void visited() {
+            prefsEdit.putBoolean("visited", true).apply();
         }
         boolean dataEvictionChannelIsAdded = false;
         @JavascriptInterface
@@ -671,7 +699,8 @@ public class MainActivity extends AppCompatActivity {
                                 showToast(Toast.makeText(getApplicationContext(), "Allow permission for Kanshi. in here to use the export feature.", Toast.LENGTH_LONG));
                                 startActivity(new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION, uri));
                             })
-                            .setNegativeButton("CANCEL", null),true);
+                            .setNegativeButton("CANCEL", null),
+                            true,false);
                 } else {
                     if (new File(exportPath).isDirectory()) {
                         directoryPath = exportPath + File.separator;
@@ -739,7 +768,8 @@ public class MainActivity extends AppCompatActivity {
                                     chooseExportFile.launch(i);
                                     showToast(Toast.makeText(getApplicationContext(), "Select or create a directory.", Toast.LENGTH_LONG));
                                 })
-                                .setNegativeButton("CANCEL", null),true);
+                                .setNegativeButton("CANCEL", null),
+                                true,false);
                     } else {
                         Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)
                                 .addCategory(Intent.CATEGORY_DEFAULT);
@@ -851,7 +881,8 @@ public class MainActivity extends AppCompatActivity {
                                 showToast(Toast.makeText(getApplicationContext(), "Allow permission for Kanshi. in here to use the export feature.", Toast.LENGTH_LONG));
                                 startActivity(new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION, uri));
                             })
-                            .setNegativeButton("CANCEL", null),true);
+                            .setNegativeButton("CANCEL", null),
+                            true,false);
                 } else {
                     Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)
                             .addCategory(Intent.CATEGORY_DEFAULT);
@@ -860,79 +891,16 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         }
-        public boolean connectionChecking = false;
-        @RequiresApi(api = Build.VERSION_CODES.N)
-        @JavascriptInterface
-        public void switchApp() {
-            try {
-                webView.post(() -> {
-                    if (webView.getUrl()==null) return;
-                    if (webView.getUrl().startsWith("https://u-kuro.github.io/Kanshi-Anime-Recommender")) {
-                        showDialog(new AlertDialog.Builder(MainActivity.this)
-                                .setTitle("Switch app mode")
-                                .setMessage("Do you want to switch to the client app?")
-                                .setPositiveButton("OK", (dialogInterface, i) -> {
-                                    appSwitched = true;
-                                    pageLoaded = true;
-                                    webView.loadUrl("file:///android_asset/www/index.html");
-                                })
-                                .setNegativeButton("CANCEL", null),true);
-                    } else {
-                        showToast(Toast.makeText(getApplicationContext(), "Connecting...", Toast.LENGTH_LONG));
-                        if (connectionChecking) return;
-                        connectionChecking = true;
-                        isAppConnectionAvailable(isConnected -> webView.post(() -> {
-                            hideToast();
-                            connectionChecking = false;
-                            if (isConnected) {
-                                showDialog(new AlertDialog.Builder(MainActivity.this)
-                                        .setTitle("Switch app mode")
-                                        .setMessage("Do you want to switch to the web app?")
-                                        .setPositiveButton("OK", (dialogInterface, i) -> {
-                                            appSwitched = true;
-                                            pageLoaded = false;
-                                            webView.loadUrl("https://u-kuro.github.io/Kanshi-Anime-Recommender/");
-                                        })
-                                        .setNegativeButton("CANCEL", null),true);
-                            } else {
-                                showDialog(new AlertDialog.Builder(MainActivity.this)
-                                        .setTitle("Switch app mode")
-                                        .setMessage("Connection unreachable, can't switch at this moment.")
-                                        .setPositiveButton("OK", null),true);
-                            }
-                        }), 3000);
-                    }
-                });
-            } catch (Exception exception) {
-                connectionChecking = false;
-                showDialog(new AlertDialog.Builder(MainActivity.this)
-                        .setTitle("Switch app mode")
-                        .setMessage("Something went wrong, app switch is currently not working.")
-                        .setPositiveButton("OK", null),true);
-            }
-        }
-
         @RequiresApi(api = Build.VERSION_CODES.N)
         @JavascriptInterface
         public void isOnline(boolean isOnline) {
             try {
                 if (isOnline) {
                     isAppConnectionAvailable(isConnected -> webView.post(() -> {
-                        if (webView.getUrl() == null) return;
-                        if (isConnected && webView.getUrl().startsWith("file:///android_asset/www/index.html")) {
-                            showDialog(new AlertDialog.Builder(MainActivity.this)
-                                    .setTitle("Reconnected successfully")
-                                    .setMessage("Do you want to switch to the web app?")
-                                    .setPositiveButton("OK", (dialogInterface, i) -> {
-                                        appSwitched = true;
-                                        pageLoaded = false;
-                                        webView.loadUrl("https://u-kuro.github.io/Kanshi-Anime-Recommender/");
-                                    })
-                                    .setNegativeButton("CANCEL", null),true);
-                        } else if (isConnected) {
+                        if (isConnected) {
                             showToast(Toast.makeText(getApplicationContext(), "Your internet has been restored.", Toast.LENGTH_LONG));
                         }
-                    }), 999999999);
+                    }), 999999999,0);
                 } else {
                     showToast(Toast.makeText(getApplicationContext(), "You are currently offline.", Toast.LENGTH_LONG));
                 }
@@ -955,7 +923,7 @@ public class MainActivity extends AppCompatActivity {
             finish();
         }
         @JavascriptInterface
-        public void clearCache(){
+        public void clearCache() {
             prefsEdit.putBoolean("permissionIsAsked", false).apply();
             webView.post(() -> webView.clearCache(true));
             Intent intent = new Intent(getApplicationContext(), MainActivity.class);
@@ -1068,24 +1036,16 @@ public class MainActivity extends AppCompatActivity {
                 webView.loadUrl("javascript:window?.importAndroidUserData?.()");
                 String url = webView.getUrl();
                 if (url != null) {
-                    if (url.startsWith("file")) {
-                        prefsEdit.putBoolean("clientVisited", false).apply();
-                    } else {
-                        prefsEdit.putBoolean("visited", false).apply();
-                    }
+                    prefsEdit.putBoolean("visited", false).apply();
                 }
             }))
             .setNegativeButton("CANCEL", ((dialogInterface, i) -> webView.post(() -> {
                 String url = webView.getUrl();
                 if (url != null) {
-                    if (url.startsWith("file")) {
-                        prefsEdit.putBoolean("clientVisited", false).apply();
-                    } else {
-                        prefsEdit.putBoolean("visited", false).apply();
-                    }
+                    prefsEdit.putBoolean("visited", false).apply();
                 }
             })))
-        ,false));
+        ,false,false));
     }
     public void reloadWeb() {
         webView.post(()->webView.reload());
@@ -1162,7 +1122,8 @@ public class MainActivity extends AppCompatActivity {
             .setTitle("New updates are available")
             .setMessage("You may want to download the new version.")
             .setPositiveButton("DOWNLOAD", (dialogInterface, i) -> checkUpdate())
-            .setNegativeButton("LATER", null),true);
+            .setNegativeButton("LATER", null),
+            true,false);
     }
     @RequiresApi(api = Build.VERSION_CODES.O)
     public void checkUpdate() {
@@ -1178,7 +1139,8 @@ public class MainActivity extends AppCompatActivity {
                         showToast(Toast.makeText(getApplicationContext(), "Allow permission for Kanshi. in here to update within the app.", Toast.LENGTH_LONG));
                         allowApplicationUpdate.launch(intent);
                     })
-                    .setNegativeButton("CANCEL", null),true);
+                    .setNegativeButton("CANCEL", null),
+                    true,false);
         }
     }
     public void _downloadUpdate() {
@@ -1213,7 +1175,8 @@ public class MainActivity extends AppCompatActivity {
                                 showToast(Toast.makeText(MainActivity.this, "File is not found", Toast.LENGTH_LONG));
                             }
                         })
-                        .setNegativeButton("CANCEL", (dialogInterface, i) -> showToast(Toast.makeText(getApplicationContext(), "You may still manually install the update, apk is in your download folder.", Toast.LENGTH_LONG))).setCancelable(false),true);
+                        .setNegativeButton("CANCEL", (dialogInterface, i) -> showToast(Toast.makeText(getApplicationContext(), "You may still manually install the update, apk is in your download folder.", Toast.LENGTH_LONG))).setCancelable(false),
+                        true,false);
                 }
             }
             @Override
@@ -1222,7 +1185,8 @@ public class MainActivity extends AppCompatActivity {
                     .setTitle("Download failed")
                     .setMessage("Do you want to re-download?")
                     .setPositiveButton("OK", (dialogInterface, i) -> _downloadUpdate())
-                    .setNegativeButton("CANCEL", null),true);
+                    .setNegativeButton("CANCEL", null),
+                    true,false);
             }
         });
     }
@@ -1236,37 +1200,47 @@ public class MainActivity extends AppCompatActivity {
                 .setTitle("Export failed")
                 .setMessage("Data was not exported, please try again.")
                 .setPositiveButton("OK", (dialogInterface, i) -> webView.post(() -> webView.loadUrl("javascript:window?.runExport?.()")))
-                .setNegativeButton("CANCEL", null),true);
+                .setNegativeButton("CANCEL", null),
+                true,false);
         }
     }
 
     @RequiresApi(api = Build.VERSION_CODES.N)
     public void reconnectLonger() {
+        if (pageLoaded) return;
         showToast(Toast.makeText(getApplicationContext(), "Connecting...", Toast.LENGTH_LONG));
         isAppConnectionAvailable(isConnected -> webView.post(() -> {
             hideToast();
+            if (pageLoaded) return;
             if (isConnected) {
-                showDialog(new AlertDialog.Builder(MainActivity.this)
-                        .setTitle("Connected successfully")
-                        .setMessage("Connection established, do you want to switch to the web app?")
-                        .setPositiveButton("OK", (dialogInterface, i) ->  {
-                            String previousUrl = webView.getUrl();
-                            if (previousUrl == null || previousUrl.startsWith("file:///android_asset/www/index.html")) {
-                                appSwitched = true;
-                            }
-                            pageLoaded = false;
-                            webView.loadUrl("https://u-kuro.github.io/Kanshi-Anime-Recommender/");
-                        })
-                        .setNegativeButton("CANCEL", null), true);
+                isReloaded = true;
+                webView.loadUrl("https://u-kuro.github.io/Kanshi-Anime-Recommender/");
             } else {
                 showDialog(new AlertDialog.Builder(MainActivity.this)
-                        .setTitle("Connection unreachable")
-                        .setMessage("Connection unreachable, do you want to connect indefinitely?")
+                        .setTitle("Connection Failed")
+                        .setMessage("Do you want to reconnect indefinitely?")
                         .setPositiveButton("OK", ((dialog, i) -> reconnectLonger()))
-                        .setNegativeButton("CANCEL", null), true
+                        .setNegativeButton("CANCEL", null),
+                        true,true
                 );
             }
-        }),999999999);
+        }),3500,0);
+        isAppConnectionAvailable(isConnected -> webView.post(() -> {
+            hideToast();
+            if (pageLoaded) return;
+            if (isConnected) {
+                isReloaded = true;
+                webView.loadUrl("https://u-kuro.github.io/Kanshi-Anime-Recommender/");
+            } else {
+                showDialog(new AlertDialog.Builder(MainActivity.this)
+                        .setTitle("Connection Failed")
+                        .setMessage("Do you want to reconnect indefinitely?")
+                        .setPositiveButton("OK", ((dialog, i) -> reconnectLonger()))
+                        .setNegativeButton("CANCEL", null),
+                        true,true
+                );
+            }
+        }),999999999,0);
     }
 
     public void checkEntries() {
@@ -1275,7 +1249,10 @@ public class MainActivity extends AppCompatActivity {
         } catch (Exception ignored) {}
     }
 
-    public void showDialog(AlertDialog.Builder alertDialog, boolean canceledOnOutsideTouch) {
+    public void showDialog(AlertDialog.Builder alertDialog, boolean canceledOnOutsideTouch, boolean isReconnectIndefinitelyDialog) {
+        if (isReconnectIndefinitelyDialog && reconnectIndefinitelyDialog!=null && reconnectIndefinitelyDialog.isShowing()) {
+            return;
+        }
         if (currentDialog != null && currentDialog.isShowing()) {
             currentDialog.dismiss();
         }
@@ -1284,6 +1261,9 @@ public class MainActivity extends AppCompatActivity {
         Window dialogWindow = currentDialog.getWindow();
         if (dialogWindow!=null) {
             dialogWindow.setBackgroundDrawableResource(R.drawable.dialog);
+        }
+        if (isReconnectIndefinitelyDialog) {
+            reconnectIndefinitelyDialog = currentDialog;
         }
         currentDialog.show();
     }
@@ -1304,12 +1284,23 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @RequiresApi(api = Build.VERSION_CODES.N)
-    private void isAppConnectionAvailable(ConnectivityCallback callback, int timeout) {
+    private void isAppConnectionAvailable(ConnectivityCallback callback, int timeout, int minTimeout) {
         ConnectivityManager connectivityManager =
                 (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
         Network network = connectivityManager.getActiveNetwork();
         if (network == null) {
-            callback.onConnectionResult(false);
+            if (minTimeout>0) {
+                Timer timer = new Timer();
+                timer.schedule(new TimerTask() {
+                    @Override
+                    public void run() {
+                        callback.onConnectionResult(false);
+                        timer.cancel();
+                    }
+                }, minTimeout);
+            } else {
+                callback.onConnectionResult(false);
+            }
             return;
         }
         CompletableFuture.supplyAsync(() -> checkAppConnection(timeout))

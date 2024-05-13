@@ -359,13 +359,6 @@
     } catch (e) {}
     window.refreshKanshiNotice = refreshKanshiNotice;
 
-    function switchAppMode() {
-        if (!$android) return;
-        try {
-            JSBridge?.switchApp?.();
-        } catch (e) {}
-    }
-
     async function reload() {
         if (
             await $confirmPromise({
@@ -622,12 +615,6 @@
                     >Persistent Background Updates</button
                 >
             {/if}
-            <button
-                class="button"
-                tabindex="{$menuVisible ? '0' : '-1'}"
-                on:keyup="{(e) => e.key === 'Enter' && switchAppMode(e)}"
-                on:click="{switchAppMode}">Switch App Mode</button
-            >
             <button
                 class="button"
                 tabindex="{$menuVisible ? '0' : '-1'}"

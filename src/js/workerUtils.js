@@ -1282,7 +1282,6 @@ const getAnimeEntries = (_data) => {
             }).catch((error) => {
                 dataStatus.set(null)
                 progress.set(100)
-                dataStatus.set(null)
                 alertError()
                 updateRecommendationList.update(e => !e)
                 reject(error)
