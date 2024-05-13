@@ -91,7 +91,7 @@ import androidx.core.content.FileProvider;
 import androidx.core.splashscreen.SplashScreen;
 
 public class MainActivity extends AppCompatActivity {
-    public final int appID = 384;
+    public final int appID = 385;
     private final boolean isOwner = true;
     public boolean keepAppRunningInBackground = false;
     public boolean showOriginalSplashScreen = true;
@@ -106,6 +106,7 @@ public class MainActivity extends AppCompatActivity {
     private ProgressBar progressbar;
     private boolean pageLoaded = false;
     private boolean webViewIsLoaded = false;
+    public boolean isReloaded = true;
     private final String uniqueKey = "Kanshi.Anime.Recommendations.Anilist.W~uPtWCq=vG$TR:Zl^#t<vdS]I~N70";
     private final String visitedKey = uniqueKey+".visited";
     private final String isOwnerKey = uniqueKey+".isOwner";
@@ -117,7 +118,6 @@ public class MainActivity extends AppCompatActivity {
     public AlertDialog currentDialog;
     public AlertDialog reconnectIndefinitelyDialog;
     public boolean isInApp = true;
-    public boolean isReloaded = true;
     public static WeakReference<MainActivity> weakActivity;
     public boolean shouldRefreshList = false;
     public boolean shouldProcessRecommendationList = false;
@@ -323,6 +323,7 @@ public class MainActivity extends AppCompatActivity {
                     cookieManager.setAcceptThirdPartyCookies(view, true);
                     CookieManager.getInstance().acceptCookie();
                     CookieManager.getInstance().flush();
+                    view.loadUrl("javascript:window?.setKeepAppRunningInBackground?.(" + (keepAppRunningInBackground ? "true" : "false") + ")");
                 } else {
                     showDialog(new AlertDialog.Builder(MainActivity.this)
                         .setTitle("Connection Failed")
@@ -332,7 +333,6 @@ public class MainActivity extends AppCompatActivity {
                     true,true
                     );
                 }
-                view.loadUrl("javascript:window?.setKeepAppRunningInBackground?.(" + (keepAppRunningInBackground ? "true" : "false") + ")");
                 super.onPageFinished(view, url);
             }
 
@@ -477,19 +477,24 @@ public class MainActivity extends AppCompatActivity {
         isReloaded = true;
         webView.loadUrl("https://u-kuro.github.io/Kanshi-Anime-Recommender/");
         isAppConnectionAvailable(isConnected -> webView.post(() -> {
-            if (pageLoaded) return;
-            if (isConnected) {
-                isReloaded = true;
-                webView.loadUrl("https://u-kuro.github.io/Kanshi-Anime-Recommender/");
-            } else {
-                showOriginalSplashScreen = false;
-                showDialog(new AlertDialog.Builder(MainActivity.this)
+            if (!pageLoaded) {
+                if (isConnected) {
+                    isReloaded = true;
+                    webView.loadUrl("https://u-kuro.github.io/Kanshi-Anime-Recommender/");
+                    // Only works after first page load
+                    webSettings.setBuiltInZoomControls(false);
+                    webSettings.setDisplayZoomControls(false);
+                    webSettings.setSupportZoom(false);
+                } else {
+                    showOriginalSplashScreen = false;
+                    showDialog(new AlertDialog.Builder(MainActivity.this)
                         .setTitle("Connection Failed")
                         .setMessage("Do you want to reconnect indefinitely?")
                         .setPositiveButton("OK", ((dialog, i) -> reconnectLonger()))
                         .setNegativeButton("CANCEL", null),
-                true,true
-                );
+                true, true
+                    );
+                }
             }
             if (!permissionIsAsked) {
                 if (ActivityCompat.checkSelfPermission(this, POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
@@ -498,10 +503,6 @@ public class MainActivity extends AppCompatActivity {
                     }
                 }
             }
-            // Only works after first page load
-            webSettings.setBuiltInZoomControls(false);
-            webSettings.setDisplayZoomControls(false);
-            webSettings.setSupportZoom(false);
         }), 3500, 3500);
         Utils.cleanIndexedDBFiles(this.getApplicationContext());
     }
@@ -607,27 +608,29 @@ public class MainActivity extends AppCompatActivity {
 
         @JavascriptInterface
         public void pageIsFinished() {
-            pageLoaded = true;
-            if (reconnectIndefinitelyDialog != null && reconnectIndefinitelyDialog.isShowing()) {
-                reconnectIndefinitelyDialog.dismiss();
-                reconnectIndefinitelyDialog = null;
-            }
-            splashScreenLayout.setVisibility(View.GONE);
-            showOriginalSplashScreen = false;
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
-                ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-                Network network = connectivityManager.getActiveNetwork();
-                if (network == null) {
-                    showToast(Toast.makeText(getApplicationContext(), "You are currently offline.", Toast.LENGTH_LONG));
-                    webView.post(() -> webView.loadUrl("javascript:window?.isCurrentlyOffline?.()"));
+            webView.post(() -> {
+                pageLoaded = true;
+                if (reconnectIndefinitelyDialog != null && reconnectIndefinitelyDialog.isShowing()) {
+                    reconnectIndefinitelyDialog.dismiss();
+                    reconnectIndefinitelyDialog = null;
                 }
-            }
-            CookieManager cookieManager = CookieManager.getInstance();
-            cookieManager.setAcceptCookie(true);
-            cookieManager.setAcceptThirdPartyCookies(webView, true);
-            CookieManager.getInstance().acceptCookie();
-            CookieManager.getInstance().flush();
-            webView.post(()->webView.loadUrl("javascript:window?.setKeepAppRunningInBackground?.(" + (keepAppRunningInBackground ? "true" : "false") + ")"));
+                splashScreenLayout.setVisibility(View.GONE);
+                showOriginalSplashScreen = false;
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+                    Network network = connectivityManager.getActiveNetwork();
+                    if (network == null) {
+                        showToast(Toast.makeText(getApplicationContext(), "You are currently offline.", Toast.LENGTH_LONG));
+                        webView.loadUrl("javascript:window?.isCurrentlyOffline?.()");
+                    }
+                }
+                CookieManager cookieManager = CookieManager.getInstance();
+                cookieManager.setAcceptCookie(true);
+                cookieManager.setAcceptThirdPartyCookies(webView, true);
+                CookieManager.getInstance().acceptCookie();
+                CookieManager.getInstance().flush();
+                webView.loadUrl("javascript:window?.setKeepAppRunningInBackground?.(" + (keepAppRunningInBackground ? "true" : "false") + ")");
+            });
         }
         @JavascriptInterface
         public void visited() {

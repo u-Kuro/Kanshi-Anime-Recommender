@@ -56,7 +56,7 @@ public class MainService extends Service {
     private SharedPreferences.Editor prefsEdit;
     private boolean keepAppRunningInBackground = false;
     private boolean pageLoaded = false;
-    public boolean appSwitched = false;
+    public boolean isReloaded = true;
     private final String APP_IN_BACKGROUND_CHANNEL = "app_in_background_channel";
     private final int SERVICE_NOTIFICATION_ID = 995;
     private final String STOP_SERVICE_ACTION = "STOP_MAIN_SERVICE";
@@ -161,8 +161,8 @@ public class MainService extends Service {
                     view.loadUrl("javascript:(()=>window['"+visitedKey+"']=true)();");
                 }
                 view.loadUrl("javascript:(()=>window['"+isBackgroundUpdateKey+"']=true)();");
-                if (appSwitched) {
-                    appSwitched = false;
+                if (isReloaded) {
+                    isReloaded = false;
                     view.loadUrl("javascript:(()=>window.shouldUpdateNotifications=true)();");
                 }
                 super.onPageStarted(view, url, favicon);
@@ -176,11 +176,6 @@ public class MainService extends Service {
                     cookieManager.setAcceptThirdPartyCookies(view, true);
                     CookieManager.getInstance().acceptCookie();
                     CookieManager.getInstance().flush();
-                } else if (!url.startsWith("file")) {
-                    MainService.this.stopForeground(true);
-                    MainService.this.stopSelf();
-                    appSwitched = true;
-                    pageLoaded = true;
                 }
                 updateNotificationTitle("");
                 super.onPageFinished(view, url);
@@ -240,8 +235,7 @@ public class MainService extends Service {
         }
 
         // Load Page
-        appSwitched = true;
-        pageLoaded = false;
+        isReloaded = true;
         webView.loadUrl("https://u-kuro.github.io/Kanshi-Anime-Recommender/");
         Utils.cleanIndexedDBFiles(this.getApplicationContext());
     }
@@ -341,6 +335,18 @@ public class MainService extends Service {
         @JavascriptInterface
         public void pageIsFinished() {
             pageLoaded = true;
+            try {
+                new Handler(Looper.getMainLooper()).post(() -> {
+                    CookieManager cookieManager = CookieManager.getInstance();
+                    cookieManager.setAcceptCookie(true);
+                    cookieManager.setAcceptThirdPartyCookies(webView, true);
+                    CookieManager.getInstance().acceptCookie();
+                    CookieManager.getInstance().flush();
+                });
+            } catch (Exception ignored) {}
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                updateNotificationTitle("");
+            }
         }
         @JavascriptInterface
         public void visited() {
@@ -559,18 +565,20 @@ public class MainService extends Service {
         @RequiresApi(api = Build.VERSION_CODES.N)
         @JavascriptInterface
         public void isOnline(boolean isOnline) {
-            try {
-                Handler handler = new Handler(Looper.getMainLooper());
-                handler.post(() -> {
-                    String url = webView.getUrl();
-                    if (isOnline && (url==null || url.startsWith("file"))) {
-                        appSwitched = true;
-                        pageLoaded = false;
-                        webView.loadUrl("https://u-kuro.github.io/Kanshi-Anime-Recommender/");
-                    }
-                });
-            } catch (Exception e) {
-                e.printStackTrace();
+            if (isOnline) {
+                try {
+                    Handler handler = new Handler(Looper.getMainLooper());
+                    handler.post(() -> {
+                        String url = webView.getUrl();
+                        if (url == null) {
+                            isReloaded = true;
+                            webView.loadUrl("https://u-kuro.github.io/Kanshi-Anime-Recommender/");
+                        }
+                    });
+                } catch (Exception ignored) {}
+            } else {
+                MainService.this.stopForeground(true);
+                MainService.this.stopSelf();
             }
         }
         final long DAY_IN_MILLIS = TimeUnit.DAYS.toMillis(1);
@@ -664,9 +672,7 @@ public class MainService extends Service {
             String joinedAnimeIds = updateCurrentNotificationsFuture.get();
             Handler handler = new Handler(Looper.getMainLooper());
             handler.post(() -> webView.loadUrl("javascript:window?.updateNotifications?.([" + joinedAnimeIds + "])"));
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        } catch (Exception ignored) {}
     }
     public void isExported(boolean success) {
         try {
