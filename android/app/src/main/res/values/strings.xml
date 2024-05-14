@@ -15,4 +15,5 @@
     <string name="enabled_automatic_back_up">Automatic Back-up: Enabled</string>
     <string name="disabled_automatic_back_up">Automatic Back-up: Disabled</string>
     <string name="backup_released_anime">Backup Released Anime</string>
+    <string name="splash_logo">splash_logo</string>
 </resources>

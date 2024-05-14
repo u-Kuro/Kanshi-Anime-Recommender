@@ -1,6 +1,8 @@
 package com.example.kanshi;
 
 import static android.Manifest.permission.POST_NOTIFICATIONS;
+import static android.provider.Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION;
+import static android.provider.Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM;
 import static com.example.kanshi.Utils.*;
 
 import androidx.activity.OnBackPressedCallback;
@@ -91,7 +93,7 @@ import androidx.core.content.FileProvider;
 import androidx.core.splashscreen.SplashScreen;
 
 public class MainActivity extends AppCompatActivity {
-    public final int appID = 385;
+    public final int appID = 386;
     private final boolean isOwner = true;
     public boolean keepAppRunningInBackground = false;
     public boolean showOriginalSplashScreen = true;
@@ -177,7 +179,7 @@ public class MainActivity extends AppCompatActivity {
                                 Uri docUri = DocumentsContract.buildDocumentUriUsingTree(uri,
                                         DocumentsContract.getTreeDocumentId(uri));
                                 exportPath = getThisPath(docUri);
-                                showToast(Toast.makeText(getApplicationContext(), "Export folder is selected, you may now use the export feature.", Toast.LENGTH_LONG));
+                                showToast(Toast.makeText(getApplicationContext(), "Backup folder is selected, you may now use the export feature.", Toast.LENGTH_LONG));
                                 prefsEdit.putString("savedExportPath", exportPath).apply();
                                 webView.post(()->webView.loadUrl("javascript:window?.setExportPathAvailability?.(true)"));
                             } catch (Exception e) {
@@ -188,8 +190,12 @@ public class MainActivity extends AppCompatActivity {
             );
     private final ActivityResultLauncher<String> notificationPermission =
             registerForActivityResult(new ActivityResultContracts.RequestPermission(),
-                    isGranted -> prefsEdit.putBoolean("permissionIsAsked", true).apply()
-            );
+                    isGranted -> {
+                prefsEdit.putBoolean("permissionIsAsked", true).apply();
+                if (isGranted) {
+                    askForSchedulePermission();
+                }
+            });
 
     @RequiresApi(api = Build.VERSION_CODES.TIRAMISU)
     @SuppressLint({"SetJavaScriptEnabled", "WrongViewCast"})
@@ -327,7 +333,7 @@ public class MainActivity extends AppCompatActivity {
                     showDialog(new AlertDialog.Builder(MainActivity.this)
                         .setTitle("Connection Failed")
                         .setMessage("Do you want to reconnect indefinitely?")
-                        .setPositiveButton("OK", ((dialog, i) -> reconnectLonger())),
+                        .setPositiveButton("YES", ((dialog, i) -> reconnectLonger())),
                     false,true
                     );
                 }
@@ -488,7 +494,7 @@ public class MainActivity extends AppCompatActivity {
                     showDialog(new AlertDialog.Builder(MainActivity.this)
                         .setTitle("Connection Failed")
                         .setMessage("Do you want to reconnect indefinitely?")
-                        .setPositiveButton("OK", ((dialog, i) -> reconnectLonger())),
+                        .setPositiveButton("YES", ((dialog, i) -> reconnectLonger())),
                         false, true
                     );
                 }
@@ -692,12 +698,11 @@ public class MainActivity extends AppCompatActivity {
                 }
                 if (!Environment.isExternalStorageManager()) {
                     showDialog(new AlertDialog.Builder(MainActivity.this)
-                            .setTitle("Permission for external storage")
-                            .setMessage("Allow permission for Kanshi. to use the export feature.")
+                            .setTitle("Folder Access for Backup")
+                            .setMessage("Allow permission to access folders for backup feature.")
                             .setPositiveButton("OK", (dialogInterface, i) -> {
-                                Uri uri = Uri.parse("package:${BuildConfig.APPLICATION_ID}");
-                                showToast(Toast.makeText(getApplicationContext(), "Allow permission for Kanshi. in here to use the export feature.", Toast.LENGTH_LONG));
-                                startActivity(new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION, uri));
+                                Intent intent = new Intent(ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION, Uri.fromParts("package", getPackageName(), null));
+                                startActivity(intent);
                             })
                             .setNegativeButton("CANCEL", null),
                             true,false);
@@ -759,22 +764,19 @@ public class MainActivity extends AppCompatActivity {
                                         tempExportPath[tempExportPath.length - 1]
                                 : tempExportPath[tempExportPath.length - 1];
                         showDialog(new AlertDialog.Builder(MainActivity.this)
-                                .setTitle("Export folder is missing")
-                                .setMessage("Folder directory [" + tempPathName
-                                        + "] is missing, please choose another folder for exporting.")
-                                .setPositiveButton("Choose a Folder", (dialogInterface, x) -> {
-                                    Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)
-                                            .addCategory(Intent.CATEGORY_DEFAULT);
+                                .setTitle("Backup Folder is Missing")
+                                .setMessage("Folder directory [" + tempPathName + "] is missing, please choose another folder for backup.")
+                                .setPositiveButton("OK", (dialogInterface, x) -> {
+                                    showToast(Toast.makeText(getApplicationContext(), "Select or create a folder.", Toast.LENGTH_LONG));
+                                    Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).addCategory(Intent.CATEGORY_DEFAULT);
                                     chooseExportFile.launch(i);
-                                    showToast(Toast.makeText(getApplicationContext(), "Select or create a directory.", Toast.LENGTH_LONG));
                                 })
                                 .setNegativeButton("CANCEL", null),
                                 true,false);
                     } else {
-                        Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)
-                                .addCategory(Intent.CATEGORY_DEFAULT);
+                        Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).addCategory(Intent.CATEGORY_DEFAULT);
                         chooseExportFile.launch(i);
-                        showToast(Toast.makeText(getApplicationContext(), "Select or create a directory.", Toast.LENGTH_LONG));
+                        showToast(Toast.makeText(getApplicationContext(), "Select or create a folder.", Toast.LENGTH_LONG));
                     }
                 }
             } else if(status==1&&writer!=null) {
@@ -874,20 +876,18 @@ public class MainActivity extends AppCompatActivity {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                 if (!Environment.isExternalStorageManager()) {
                     showDialog(new AlertDialog.Builder(MainActivity.this)
-                            .setTitle("Permission for external storage")
-                            .setMessage("Allow permission for Kanshi. to use the export feature.")
+                            .setTitle("File Access for Backup")
+                            .setMessage("Allow permission to access folders for backup feature.")
                             .setPositiveButton("OK", (dialogInterface, i) -> {
-                                Uri uri = Uri.fromParts("package", getPackageName(), null);
-                                showToast(Toast.makeText(getApplicationContext(), "Allow permission for Kanshi. in here to use the export feature.", Toast.LENGTH_LONG));
-                                startActivity(new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION, uri));
+                                Intent intent = new Intent(ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION, Uri.fromParts("package", getPackageName(), null));
+                                startActivity(intent);
                             })
                             .setNegativeButton("CANCEL", null),
                             true,false);
                 } else {
-                    Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)
-                            .addCategory(Intent.CATEGORY_DEFAULT);
+                    Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).addCategory(Intent.CATEGORY_DEFAULT);
                     chooseExportFile.launch(i);
-                    showToast(Toast.makeText(getApplicationContext(), "Select or create a directory.", Toast.LENGTH_LONG));
+                    showToast(Toast.makeText(getApplicationContext(), "Select or create a folder.", Toast.LENGTH_LONG));
                 }
             }
         }
@@ -912,7 +912,7 @@ public class MainActivity extends AppCompatActivity {
             if (_appID > appID) {
                 showUpdateNotice();
             } else if (manualCheck) {
-                showToast(Toast.makeText(getApplicationContext(), "No recent application updates.", Toast.LENGTH_LONG));
+                showToast(Toast.makeText(getApplicationContext(), "Application is up to date.", Toast.LENGTH_LONG));
             }
         }
         @JavascriptInterface
@@ -1047,6 +1047,22 @@ public class MainActivity extends AppCompatActivity {
             })))
         ,false,false));
     }
+    public void askForSchedulePermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            AlarmManager alarmManager = (AlarmManager) MainActivity.this.getApplicationContext().getSystemService(Context.ALARM_SERVICE);
+            if (!alarmManager.canScheduleExactAlarms()) {
+                showDialog(new AlertDialog.Builder(MainActivity.this)
+                        .setTitle("Permission for Anime Releases")
+                        .setMessage("Do you like to allow permission for notifying anime release schedules at the exact time?")
+                        .setPositiveButton("YES", (dialogInterface, i) -> webView.post(() -> {
+                            Intent intent = new Intent(ACTION_REQUEST_SCHEDULE_EXACT_ALARM, Uri.fromParts("package", getPackageName(), null));
+                            startActivity(intent);
+                        }))
+                        .setNegativeButton("NO", null)
+                ,false,false);
+            }
+        }
+    }
     public void reloadWeb() {
         webView.post(()->webView.reload());
     }
@@ -1119,8 +1135,8 @@ public class MainActivity extends AppCompatActivity {
     @RequiresApi(api = Build.VERSION_CODES.O)
     public void showUpdateNotice() {
         showDialog(new AlertDialog.Builder(MainActivity.this)
-            .setTitle("New updates are available")
-            .setMessage("You may want to download the new version.")
+            .setTitle("New Version is Available")
+            .setMessage("You may want to download the new app version.")
             .setPositiveButton("DOWNLOAD", (dialogInterface, i) -> checkUpdate())
             .setNegativeButton("LATER", null),
             true,false);
@@ -1132,11 +1148,10 @@ public class MainActivity extends AppCompatActivity {
             _downloadUpdate();
         } else {
             showDialog(new AlertDialog.Builder(MainActivity.this)
-                    .setTitle("Permission for in-app installation")
-                    .setMessage("Allow permission for Kanshi. to update within the app.")
+                    .setTitle("Permission for App Installation")
+                    .setMessage("Allow permission to update the application.")
                     .setPositiveButton("OK", (dialogInterface, i) -> {
                         Intent intent = new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.fromParts("package", getPackageName(), null));
-                        showToast(Toast.makeText(getApplicationContext(), "Allow permission for Kanshi. in here to update within the app.", Toast.LENGTH_LONG));
                         allowApplicationUpdate.launch(intent);
                     })
                     .setNegativeButton("CANCEL", null),
@@ -1155,9 +1170,9 @@ public class MainActivity extends AppCompatActivity {
                 boolean hasPermission = getPackageManager().canRequestPackageInstalls();
                 if (hasPermission) {
                     showDialog(new AlertDialog.Builder(MainActivity.this)
-                        .setTitle("Update ready to install")
-                        .setMessage("Do you want to continue the installation?")
-                        .setPositiveButton("OK", (dialogInterface, i) -> {
+                        .setTitle("Install the New Version")
+                        .setMessage("Do you like to continue the installation?")
+                        .setPositiveButton("YES", (dialogInterface, i) -> {
                             File apkFile = new File(apkFilePath);
                             if (apkFile.exists()) {
                                 Uri apkUri = FileProvider.getUriForFile(MainActivity.this, "com.example.kanshi.provider", apkFile);
@@ -1169,23 +1184,23 @@ public class MainActivity extends AppCompatActivity {
                                 if (!resolveInfoList.isEmpty()) {
                                     startActivity(intent);
                                 } else {
-                                    showToast(Toast.makeText(MainActivity.this, "No application available to open the APK file", Toast.LENGTH_LONG));
+                                    showToast(Toast.makeText(MainActivity.this, "No application available to open the APK file.", Toast.LENGTH_LONG));
                                 }
                             } else {
-                                showToast(Toast.makeText(MainActivity.this, "File is not found", Toast.LENGTH_LONG));
+                                showToast(Toast.makeText(MainActivity.this, "File is not found.", Toast.LENGTH_LONG));
                             }
                         })
-                        .setNegativeButton("CANCEL", (dialogInterface, i) -> showToast(Toast.makeText(getApplicationContext(), "You may still manually install the update, apk is in your download folder.", Toast.LENGTH_LONG))).setCancelable(false),
+                        .setNegativeButton("NO", (dialogInterface, i) -> showToast(Toast.makeText(getApplicationContext(), "APK is in your download folder, you may still manually install the new version.", Toast.LENGTH_LONG))).setCancelable(false),
                         true,false);
                 }
             }
             @Override
             public void onDownloadFailed() {
                 showDialog(new AlertDialog.Builder(MainActivity.this)
-                    .setTitle("Download failed")
-                    .setMessage("Do you want to re-download?")
-                    .setPositiveButton("OK", (dialogInterface, i) -> _downloadUpdate())
-                    .setNegativeButton("CANCEL", null),
+                    .setTitle("Download Failed")
+                    .setMessage("Do you want to re-download the new version?")
+                    .setPositiveButton("YES", (dialogInterface, i) -> _downloadUpdate())
+                    .setNegativeButton("NO", null),
                     true,false);
             }
         });
@@ -1197,10 +1212,10 @@ public class MainActivity extends AppCompatActivity {
         } else {
             webView.post(() -> webView.loadUrl("javascript:window?.isExported?.(false)"));
             showDialog(new AlertDialog.Builder(MainActivity.this)
-                .setTitle("Export failed")
-                .setMessage("Data was not exported, please try again.")
-                .setPositiveButton("OK", (dialogInterface, i) -> webView.post(() -> webView.loadUrl("javascript:window?.runExport?.()")))
-                .setNegativeButton("CANCEL", null),
+                .setTitle("Backup Failed")
+                .setMessage("Do you want to try again?")
+                .setPositiveButton("YES", (dialogInterface, i) -> webView.post(() -> webView.loadUrl("javascript:window?.runExport?.()")))
+                .setNegativeButton("NO", null),
                 true,false);
         }
     }
@@ -1219,7 +1234,7 @@ public class MainActivity extends AppCompatActivity {
                 showDialog(new AlertDialog.Builder(MainActivity.this)
                         .setTitle("Connection Failed")
                         .setMessage("Do you want to reconnect indefinitely?")
-                        .setPositiveButton("OK", ((dialog, i) -> reconnectLonger())),
+                        .setPositiveButton("YES", ((dialog, i) -> reconnectLonger())),
                         false,true
                 );
             }
@@ -1234,7 +1249,7 @@ public class MainActivity extends AppCompatActivity {
                 showDialog(new AlertDialog.Builder(MainActivity.this)
                         .setTitle("Connection Failed")
                         .setMessage("Do you want to reconnect indefinitely?")
-                        .setPositiveButton("OK", ((dialog, i) -> reconnectLonger())),
+                        .setPositiveButton("YES", ((dialog, i) -> reconnectLonger())),
                         false,true
                 );
             }
