@@ -93,7 +93,7 @@ import androidx.core.content.FileProvider;
 import androidx.core.splashscreen.SplashScreen;
 
 public class MainActivity extends AppCompatActivity {
-    public final int appID = 387;
+    public final int appID = 388;
     private final boolean isOwner = true;
     public boolean keepAppRunningInBackground = false;
     public boolean showOriginalSplashScreen = true;

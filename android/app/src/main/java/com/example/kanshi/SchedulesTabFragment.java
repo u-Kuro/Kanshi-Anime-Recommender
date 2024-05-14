@@ -70,7 +70,6 @@ public class SchedulesTabFragment extends Fragment {
         });
 
         updateScheduledAnime();
-
         return schedulesView;
     }
 
@@ -80,12 +79,12 @@ public class SchedulesTabFragment extends Fragment {
     public void updateScheduledAnime() {
         AnimeReleaseActivity animeReleaseActivity = AnimeReleaseActivity.getInstanceActivity();
         final String selectedAnimeReleaseOption;
-        final boolean showCompleteAnime;
+        final boolean showUnwatchedAnime;
         if (animeReleaseActivity!=null) {
-            showCompleteAnime = animeReleaseActivity.showCompleteAnime;
+            showUnwatchedAnime = animeReleaseActivity.showUnwatchedAnime;
             selectedAnimeReleaseOption = animeReleaseActivity.animeReleaseSpinner.getSelectedItem().toString();
         } else {
-            showCompleteAnime = false;
+            showUnwatchedAnime = false;
             selectedAnimeReleaseOption = "Updates";
         }
         if (updateScheduledAnimeFuture != null && !updateScheduledAnimeFuture.isCancelled()) {
@@ -105,21 +104,34 @@ public class SchedulesTabFragment extends Fragment {
             ArrayList<AnimeNotification> animeSchedules = new ArrayList<>();
 
             for (AnimeNotification anime : allAnimeNotificationValues) {
-                boolean isMyAnime = anime.userStatus != null && !anime.userStatus.isEmpty() && !anime.userStatus.equalsIgnoreCase("UNWATCHED");
                 if (!"Updates".equals(selectedAnimeReleaseOption)) {
-                    if ("My List".equals(selectedAnimeReleaseOption) && !isMyAnime) {
-                        continue;
-                    } else if ("Others".equals(selectedAnimeReleaseOption) && isMyAnime) {
-                        continue;
+                    boolean isMyAnime = anime.userStatus != null && !anime.userStatus.isEmpty() && !anime.userStatus.equalsIgnoreCase("UNWATCHED");
+                    switch (selectedAnimeReleaseOption) {
+                        case "My List":
+                            if (!isMyAnime) {
+                                continue;
+                            }
+                            break;
+                        case "Watching":
+                            if (!isMyAnime || !("CURRENT".equalsIgnoreCase(anime.userStatus) || "REPEATING".equalsIgnoreCase(anime.userStatus))) {
+                                continue;
+                            }
+                            break;
+                        case "Finished":
+                            if (!isMyAnime || anime.releaseEpisode < anime.maxEpisode || anime.maxEpisode <= 0) {
+                                continue;
+                            }
+                            break;
+                        case "Others":
+                            if (isMyAnime) {
+                                continue;
+                            }
+                            break;
                     }
                 }
                 if (anime.releaseDateMillis >= System.currentTimeMillis()) {
-                    if (showCompleteAnime) {
-                        if (anime.releaseEpisode >= anime.maxEpisode && anime.maxEpisode >= 0) {
-                            anime.message = "Final: Episode " + anime.releaseEpisode;
-                            animeSchedules.add(anime);
-                        }
-                    } else {
+                    final boolean isNotComplete = !("COMPLETED".equalsIgnoreCase(anime.userStatus) || ("My List".equals(selectedAnimeReleaseOption) && "DROPPED".equalsIgnoreCase(anime.userStatus)));
+                    if (!showUnwatchedAnime || isNotComplete) {
                         if (anime.maxEpisode < 0) { // No Given Max Episodes
                             anime.message = "Episode " + anime.releaseEpisode;
                         } else if (anime.releaseEpisode >= anime.maxEpisode) {

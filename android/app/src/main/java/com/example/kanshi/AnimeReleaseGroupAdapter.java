@@ -150,7 +150,7 @@ public class AnimeReleaseGroupAdapter extends ArrayAdapter<AnimeReleaseGroup> {
                         runOnUi(() -> animeImage.setImageResource(R.drawable.image_placeholder));
                     }
 
-                    final boolean isWatched = "COMPLETED".equals(anime.userStatus) || (anime.episodeProgress > 0 && anime.releaseEpisode <= anime.episodeProgress);
+                    final boolean isWatched = "COMPLETED".equalsIgnoreCase(anime.userStatus) || (anime.episodeProgress > 0 && anime.releaseEpisode <= anime.episodeProgress);
                     final int fontColorId;
                     if (isWatched) {
                         fontColorId = R.color.grey;
@@ -195,8 +195,8 @@ public class AnimeReleaseGroupAdapter extends ArrayAdapter<AnimeReleaseGroup> {
                             if (userStatus.equalsIgnoreCase("COMPLETED")) {
                                 colorStateList = AppCompatResources.getColorStateList(mContext, R.color.web_green);
                             } else if (
-                                    userStatus.equalsIgnoreCase("CURRENT")
-                                            || userStatus.equalsIgnoreCase("REPEATING")
+                                userStatus.equalsIgnoreCase("CURRENT")
+                                || userStatus.equalsIgnoreCase("REPEATING")
                             ) {
                                 colorStateList = AppCompatResources.getColorStateList(mContext, R.color.web_blue);
                             } else if (userStatus.equalsIgnoreCase("PLANNING")) {
@@ -208,6 +208,7 @@ public class AnimeReleaseGroupAdapter extends ArrayAdapter<AnimeReleaseGroup> {
                             } else {
                                 colorStateList = AppCompatResources.getColorStateList(mContext, R.color.web_light_grey);
                             }
+                            userStatusIcon.setVisibility(View.INVISIBLE);
                             userStatusIcon.setBackgroundTintList(colorStateList);
                             if (isWatched) {
                                 userStatusIcon.setAlpha(0.5f);

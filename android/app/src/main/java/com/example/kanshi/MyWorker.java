@@ -382,7 +382,7 @@ public class MyWorker extends Worker {
         }
 
         for (AnimeNotification anime : newSentAnimeNotification) {
-            getAiringAnime(anime, lastSentNotificationTime, 0);
+            getAiringAnime(anime, 0);
         }
 
         SharedPreferences.Editor prefsEdit = prefs.edit();
@@ -426,63 +426,52 @@ public class MyWorker extends Worker {
     }
 
     @RequiresApi(api = Build.VERSION_CODES.N)
-    private void getAiringAnime(AnimeNotification anime, long lastSentNotificationTime, int retries) {
+    private void getAiringAnime(AnimeNotification anime, int retries) {
         if (retries>=4) {
             return;
         }
         try {
-            long lastSentNotificationTimeSecLong = lastSentNotificationTime/1000L;
-            int lastSentNotificationTimeSec;
-            if (lastSentNotificationTimeSecLong<Integer.MAX_VALUE) {
-                lastSentNotificationTimeSec = (int) lastSentNotificationTimeSecLong;
-            } else {
-                lastSentNotificationTimeSec = Integer.MAX_VALUE;
-            }
-            String query = "{AiringSchedule(mediaId:"+ anime.animeId +",notYetAired:true,airingAt_greater:"+lastSentNotificationTimeSec+"){media{episodes}airingAt episode}}";
+            String query = "{AiringSchedule(mediaId:"+ anime.animeId +",episode_greater:"+anime.releaseEpisode+"){media{episodes}airingAt episode}}";
             JSONObject jsonData = new JSONObject();
             jsonData.put("query", query);
             makePostRequest(response -> {
-                if (response!=null) {
-                    if (!response.has("error")) {
-                        if (response.has(retryKey) || !response.has("data")) {
-                            // Call Another
-                            new android.os.Handler(Looper.getMainLooper()).postDelayed(() -> getAiringAnime(anime, lastSentNotificationTime, retries + 1), 60000);
-                        } else {
-                            try {
-                                JSONObject airingSchedule = response.getJSONObject("data").getJSONObject("AiringSchedule");
-                                JSONObject media = null;
-                                if (!airingSchedule.isNull("media")) {
-                                    media = airingSchedule.getJSONObject("media");
-                                }
-                                long releaseDateMillis = airingSchedule.getLong("airingAt") * 1000L;
-                                long episode = airingSchedule.getInt("episode");
-                                long episodes;
-                                boolean isEdited = false;
-                                if (media != null && !media.isNull("episodes")) {
-                                    episodes = media.getInt("episodes");
-                                    if (anime.maxEpisode != episodes && episodes >= anime.releaseEpisode) {
-                                        anime.maxEpisode = episodes;
-                                        AnimeNotificationManager.allAnimeNotification.put(anime.animeId + "-" + anime.releaseEpisode, anime);
-                                        isEdited = true;
-                                    } else {
-                                        episodes = anime.maxEpisode;
-                                    }
+                if (response != null) {
+                    JSONObject data = response.optJSONObject("data");
+                    if (response.has(retryKey) || data == null) {
+                        // Call Another
+                        new android.os.Handler(Looper.getMainLooper()).postDelayed(() -> getAiringAnime(anime, retries + 1), 60000);
+                    } else {
+                        JSONObject airingSchedule = data.optJSONObject("AiringSchedule");
+                        if (airingSchedule != null) {
+                            boolean isEdited = false;
+                            long episodes;
+                            JSONObject media = airingSchedule.optJSONObject("media");
+                            if (media != null) {
+                                episodes = media.optLong("episodes", 0);
+                                if (episodes != anime.maxEpisode && episodes > 0) {
+                                    anime.maxEpisode = episodes;
+                                    AnimeNotificationManager.allAnimeNotification.put(anime.animeId + "-" + anime.releaseEpisode, anime);
+                                    isEdited = true;
                                 } else {
                                     episodes = anime.maxEpisode;
                                 }
-                                if (episode > anime.releaseEpisode) {
-                                    AnimeNotification newAnimeRelease = new AnimeNotification(anime.animeId, anime.title, episode, episodes, releaseDateMillis, anime.imageByte, anime.animeUrl, anime.userStatus, anime.episodeProgress);
-                                    AnimeNotificationManager.allAnimeNotification.put(newAnimeRelease.animeId + "-" + newAnimeRelease.releaseEpisode, newAnimeRelease);
-                                    AnimeNotificationManager.addAnimeNotification(this.getApplicationContext(), newAnimeRelease);
-                                    isEdited = true;
+                            } else {
+                                episodes = anime.maxEpisode;
+                            }
+                            long releaseDateMillis = airingSchedule.optLong("airingAt",0);
+                            long episode = airingSchedule.optLong("episode",0);
+                            if (releaseDateMillis > 0 && episode > 0 && episode > anime.releaseEpisode) {
+                                releaseDateMillis = releaseDateMillis * 1000L;
+                                AnimeNotification newAnimeRelease = new AnimeNotification(anime.animeId, anime.title, episode, episodes, releaseDateMillis, anime.imageByte, anime.animeUrl, anime.userStatus, anime.episodeProgress);
+                                AnimeNotificationManager.allAnimeNotification.put(newAnimeRelease.animeId + "-" + newAnimeRelease.releaseEpisode, newAnimeRelease);
+                                AnimeNotificationManager.addAnimeNotification(this.getApplicationContext(), newAnimeRelease);
+                                isEdited = true;
+                            }
+                            if (isEdited) {
+                                LocalPersistence.writeObjectToFile(this.getApplicationContext(), AnimeNotificationManager.allAnimeNotification, "allAnimeNotification");
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                                    Utils.exportReleasedAnime(this.getApplicationContext());
                                 }
-                                if (isEdited) {
-                                    LocalPersistence.writeObjectToFile(this.getApplicationContext(), AnimeNotificationManager.allAnimeNotification, "allAnimeNotification");
-                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                                        Utils.exportReleasedAnime(this.getApplicationContext());
-                                    }
-                                }
-                            } catch (JSONException ignored) {
                             }
                         }
                     }

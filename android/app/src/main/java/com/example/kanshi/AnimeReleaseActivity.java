@@ -48,7 +48,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @RequiresApi(api = Build.VERSION_CODES.N)
 public class AnimeReleaseActivity extends AppCompatActivity {
     public static WeakReference<AnimeReleaseActivity> weakActivity;
-    boolean showCompleteAnime = false;
+    boolean showUnwatchedAnime = false;
     Spinner animeReleaseSpinner;
     SharedPreferences prefs;
     SharedPreferences.Editor prefsEdit;
@@ -183,21 +183,21 @@ public class AnimeReleaseActivity extends AppCompatActivity {
             public void onNothingSelected(AdapterView<?> adapterView) {}
         });
 
-        showCompleteAnime = prefs.getBoolean("showCompleteAnime", false);
+        showUnwatchedAnime = prefs.getBoolean("showUnwatchedAnime", false);
         ImageView completed_anime_switch = findViewById(R.id.completed_anime_switch);
-        if (showCompleteAnime) {
-            completed_anime_switch.setImageResource(R.drawable.done_white);
-        } else {
+        if (showUnwatchedAnime) {
             completed_anime_switch.setImageResource(R.drawable.not_done_white);
+        } else {
+            completed_anime_switch.setImageResource(R.drawable.done_white);
         }
         completed_anime_switch.setOnClickListener(view -> {
-            showCompleteAnime = !showCompleteAnime;
-            if (showCompleteAnime) {
-                completed_anime_switch.setImageResource(R.drawable.done_white);
-            } else {
+            showUnwatchedAnime = !showUnwatchedAnime;
+            if (showUnwatchedAnime) {
                 completed_anime_switch.setImageResource(R.drawable.not_done_white);
+            } else {
+                completed_anime_switch.setImageResource(R.drawable.done_white);
             }
-            prefsEdit.putBoolean("showCompleteAnime", showCompleteAnime).apply();
+            prefsEdit.putBoolean("showUnwatchedAnime", showUnwatchedAnime).apply();
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 SchedulesTabFragment schedulesTabFragment = SchedulesTabFragment.getInstanceActivity();
@@ -215,18 +215,28 @@ public class AnimeReleaseActivity extends AppCompatActivity {
         backupAnimeReleases.setVisibility(View.VISIBLE);
         backupAnimeReleases.setOnClickListener(view -> backupBottomDialog());
 
-        String[] animeReleaseOption = {"Updates", "My List", "Others"};
+        String[] animeReleaseOption = {"Updates", "My List", "Watching", "Finished", "Others"};
         ArrayAdapter<String> animeReleaseOptionsAdapter = new ArrayAdapter<>(this, R.layout.spinner_item, animeReleaseOption);
         animeReleaseSpinner.setAdapter(animeReleaseOptionsAdapter);
 
         String selectedAnimeReleaseOption = prefs.getString("animeReleaseOption", "Updates");
 
-        if ("My List".equals(selectedAnimeReleaseOption)) {
-            animeReleaseSpinner.setSelection(1);
-        } else if ("Others".equals(selectedAnimeReleaseOption)) {
-            animeReleaseSpinner.setSelection(2);
-        } else {
-            animeReleaseSpinner.setSelection(0);
+        switch (selectedAnimeReleaseOption) {
+            case "My List":
+                animeReleaseSpinner.setSelection(1);
+                break;
+            case "Watching":
+                animeReleaseSpinner.setSelection(2);
+                break;
+            case "Finished":
+                animeReleaseSpinner.setSelection(3);
+                break;
+            case "Others":
+                animeReleaseSpinner.setSelection(4);
+                break;
+            default:
+                animeReleaseSpinner.setSelection(0);
+                break;
         }
 
         TabLayout tabLayout = findViewById(R.id.tab_layout);

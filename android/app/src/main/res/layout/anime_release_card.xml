@@ -58,7 +58,7 @@
                     android:layout_height="8dp"
                     android:layout_centerVertical="true"
                     android:layout_marginEnd="4dp"
-                    android:visibility="visible"
+                    android:visibility="invisible"
                     android:backgroundTint="@color/white"
                     android:backgroundTintMode="src_over"
                     android:contentDescription="@string/user_anime_status"
