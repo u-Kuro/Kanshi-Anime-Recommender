@@ -73,6 +73,7 @@ public class MainService extends Service {
     public boolean shouldLoadAnime = false;
     public long addedAnimeCount = 0;
     public long updatedAnimeCount = 0;
+    public BufferedWriter writer;
 
     @Nullable
     @Override
@@ -243,6 +244,14 @@ public class MainService extends Service {
     @Override
     public void onDestroy() {
         webView.destroy();
+        try {
+            if (writer!=null) {
+                writer.close();
+                writer = null;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         AnimeNotificationManager.recentlyUpdatedAnimeNotification(MainService.this, addedAnimeCount, updatedAnimeCount);
         super.onDestroy();
     }
@@ -329,7 +338,6 @@ public class MainService extends Service {
 
     @SuppressWarnings("unused")
     class JSBridge {
-        BufferedWriter writer;
         File tempFile;
         String directoryPath;
         @JavascriptInterface
@@ -482,7 +490,7 @@ public class MainService extends Service {
                                         writer.close();
                                         writer = null;
                                     } catch (Exception e2) {
-                                        e.printStackTrace();
+                                        e2.printStackTrace();
                                     }
                                 }
                                 isExported(false);
@@ -499,7 +507,7 @@ public class MainService extends Service {
                         writer.close();
                         writer = null;
                     } catch (Exception e2) {
-                        e.printStackTrace();
+                        e2.printStackTrace();
                     }
                     isExported(false);
                     e.printStackTrace();
@@ -555,7 +563,7 @@ public class MainService extends Service {
                             writer = null;
                         }
                     } catch (Exception e2) {
-                        e.printStackTrace();
+                        e2.printStackTrace();
                     }
                     isExported(false);
                     e.printStackTrace();

@@ -93,7 +93,7 @@ import androidx.core.content.FileProvider;
 import androidx.core.splashscreen.SplashScreen;
 
 public class MainActivity extends AppCompatActivity {
-    public final int appID = 386;
+    public final int appID = 387;
     private final boolean isOwner = true;
     public boolean keepAppRunningInBackground = false;
     public boolean showOriginalSplashScreen = true;
@@ -124,6 +124,7 @@ public class MainActivity extends AppCompatActivity {
     public boolean shouldRefreshList = false;
     public boolean shouldProcessRecommendationList = false;
     public boolean shouldLoadAnime = false;
+    public BufferedWriter writer;
 
     // Activity Results
     final ActivityResultLauncher<Intent> allowApplicationUpdate =
@@ -584,6 +585,12 @@ public class MainActivity extends AppCompatActivity {
     protected void onDestroy() {
         isInApp = false;
         webView.post(() -> webView.loadUrl("javascript:window?.notifyUpdatedAnimeNotification?.()"));
+        try {
+            writer.close();
+            writer = null;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         setBackgroundUpdates();
         super.onDestroy();
         wakeLock.release();
@@ -605,7 +612,6 @@ public class MainActivity extends AppCompatActivity {
     // Native and Webview Connection
     @SuppressWarnings("unused")
     class JSBridge {
-        BufferedWriter writer;
         File tempFile;
         String directoryPath;
 
@@ -747,7 +753,7 @@ public class MainActivity extends AppCompatActivity {
                                         writer.close();
                                         writer = null;
                                     } catch (Exception e2) {
-                                        e.printStackTrace();
+                                        e2.printStackTrace();
                                     }
                                 }
                                 isExported(false);
@@ -787,7 +793,7 @@ public class MainActivity extends AppCompatActivity {
                         writer.close();
                         writer = null;
                     } catch (Exception e2) {
-                        e.printStackTrace();
+                        e2.printStackTrace();
                     }
                     isExported(false);
                     showToast(Toast.makeText(getApplicationContext(), "Error: An exception occurred while writing to tmp.json file.", Toast.LENGTH_LONG));
@@ -848,7 +854,7 @@ public class MainActivity extends AppCompatActivity {
                             writer = null;
                         }
                     } catch (Exception e2) {
-                        e.printStackTrace();
+                        e2.printStackTrace();
                     }
                     isExported(false);
                     showToast(Toast.makeText(getApplicationContext(), "An exception occurred in finalizing the exported file, your back-up was saved in tmp.json but is not guaranteed to work.", Toast.LENGTH_LONG));
@@ -1258,7 +1264,9 @@ public class MainActivity extends AppCompatActivity {
 
     public void checkEntries() {
         try {
-            webView.post(() -> webView.loadUrl("javascript:window?.checkEntries?.();"));
+            if (webView != null) {
+                webView.post(() -> webView.loadUrl("javascript:window?.checkEntries?.();"));
+            }
         } catch (Exception ignored) {}
     }
 
