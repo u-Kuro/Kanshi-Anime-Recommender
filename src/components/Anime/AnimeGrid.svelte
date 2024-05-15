@@ -425,6 +425,11 @@
         >
             {#if animeList?.length > 0}
                 {#each animeList as anime, animeIndex ((anime?.id ? anime.id + " " + animeIndex : {}) ?? {})}
+                    {@const loweredFormat = anime.format?.toLowerCase?.()}
+                    {@const isManga =
+                        loweredFormat === "manga" ||
+                        loweredFormat === "one shot"}
+                    {@const isNovel = loweredFormat === "novel"}
                     <div
                         class="{'image-card' +
                             (anime?.isLoading ? ' semi-loading' : '')}"
@@ -502,7 +507,7 @@
                                                     d="M256 512a256 256 0 1 0 0-512 256 256 0 1 0 0 512z"
                                                 ></path></svg
                                             >
-                                            {#if isJsonObject(anime?.nextAiringEpisode)}
+                                            {#if !isManga && !isNovel && isJsonObject(anime?.nextAiringEpisode)}
                                                 {@const finishedEpisodes =
                                                     getFinishedEpisode(
                                                         anime.episodes,
@@ -523,18 +528,10 @@
                                                     }`}
                                                 {/if}
                                             {:else}
-                                                {@const loweredFormat =
-                                                    anime.format?.toLowerCase?.()}
-                                                {@const isManga =
-                                                    loweredFormat === "manga" ||
-                                                    loweredFormat ===
-                                                        "one shot"}
-                                                {@const isNovel =
-                                                    loweredFormat === "novel"}
                                                 {`${anime.format || "NA"}`}
                                                 {#if isManga}
                                                     {`${
-                                                        anime.chapters
+                                                        anime.chapters > 0
                                                             ? "(" +
                                                               anime.chapters +
                                                               " Ch)"
@@ -543,7 +540,8 @@
                                                               ? "(" +
                                                                 anime.episodeProgress +
                                                                 ' Ch")'
-                                                              : anime.volumes
+                                                              : anime.volumes >
+                                                                  0
                                                                 ? "(" +
                                                                   anime.volumes +
                                                                   " Vol)"
@@ -556,7 +554,7 @@
                                                     }`}
                                                 {:else if isNovel}
                                                     {`${
-                                                        anime.volumes
+                                                        anime.volumes > 0
                                                             ? "(" +
                                                               anime.volumes +
                                                               " Vol)"
@@ -565,7 +563,8 @@
                                                               ? "(" +
                                                                 anime.volumeProgress +
                                                                 ' Vol")'
-                                                              : anime.chapters
+                                                              : anime.chapters >
+                                                                  0
                                                                 ? "(" +
                                                                   anime.chapters +
                                                                   " Ch)"
@@ -578,7 +577,7 @@
                                                     }`}
                                                 {:else}
                                                     {`${
-                                                        anime.episodes
+                                                        anime.episodes > 0
                                                             ? "(" +
                                                               anime.episodes +
                                                               ")"

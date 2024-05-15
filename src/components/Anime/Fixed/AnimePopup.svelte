@@ -1073,12 +1073,15 @@
     function getFormattedAnimeFormat(
         { episodes, chapters, nextAiringEpisode, episodeProgress },
         isManga,
+        isNovel,
     ) {
         let text;
         let timeDifMS;
         let nextEpisode;
         let nextAiringDate;
         if (
+            !isManga &&
+            !isNovel &&
             typeof nextAiringEpisode?.episode === "number" &&
             typeof nextAiringEpisode?.airingAt === "number"
         ) {
@@ -1114,12 +1117,12 @@
             episodes > nextEpisode
         ) {
             text = ` · ${nextEpisode}/${episodes}`;
-        } else if (episodes > 0) {
+        } else if (episodes > 0 && !isManga && !isNovel) {
             text = ` · ${episodes} Ep${episodes > 1 ? "s" : ""}`;
-        } else if (chapters > 0) {
+        } else if (chapters > 0 && (isManga || isNovel)) {
             text = ` · ${chapters} Ch${chapters > 1 ? "s" : ""}`;
-        } else if (isManga && episodeProgress > 0) {
-            text = ` · Seen ${episodeProgress} Ch${episodeProgress > 1 ? "s" : ""}`;
+        } else if (episodeProgress > 0) {
+            text = ` · Seen ${episodeProgress} ${isManga || isNovel ? "Ch" : "Ep"}${episodeProgress > 1 ? "s" : ""}`;
         }
         return text;
     }
@@ -1926,6 +1929,7 @@
                                                 getFormattedAnimeFormat(
                                                     anime,
                                                     isManga,
+                                                    isNovel,
                                                 )}
                                             {@const volOrDur =
                                                 (isManga || isNovel
@@ -1938,12 +1942,11 @@
                                                     : anime?.formattedDuration) ||
                                                 ""}
                                             {@const loweredCountryOfOrigin =
-                                                anime?.countryOfOrigin?.toLowerCase?.() ||
-                                                anime?.countryOfOrigin}
+                                                anime?.countryOfOrigin?.toLowerCase?.()}
                                             <h4>
                                                 {(anime?.format || "NA") +
                                                     (loweredCountryOfOrigin
-                                                        ? ` (${COOs[loweredCountryOfOrigin] && windowWidth >= 377 && (isManga || windowWidth >= 427) ? COOs[loweredCountryOfOrigin] : anime?.countryOfOrigin})`
+                                                        ? ` (${COOs[loweredCountryOfOrigin] && windowWidth >= 377 && (isManga || isNovel || windowWidth >= 427) ? COOs[loweredCountryOfOrigin] : anime?.countryOfOrigin})`
                                                         : "")}
                                                 {#if formattedAnimeFormat}
                                                     {#key $earlisetReleaseDate || 1}
@@ -1957,6 +1960,7 @@
                                                 getFormattedAnimeFormat(
                                                     anime,
                                                     isManga,
+                                                    isNovel,
                                                 )}
                                             {@const volOrDur =
                                                 (isManga || isNovel
@@ -1969,8 +1973,7 @@
                                                     : anime?.formattedDuration) ||
                                                 ""}
                                             {@const loweredCountryOfOrigin =
-                                                anime?.countryOfOrigin?.toLowerCase?.() ||
-                                                anime?.countryOfOrigin}
+                                                anime?.countryOfOrigin?.toLowerCase?.()}
                                             <h4>
                                                 {(anime?.format || "NA") +
                                                     (loweredCountryOfOrigin
@@ -2024,15 +2027,28 @@
                                                     {@const loweredUserStatus =
                                                         anime.userStatus?.toLowerCase?.()}
                                                     {#if loweredUserStatus !== "dropped" && ((loweredUserStatus !== "completed" && (anime.episodeProgress > 0 || anime.volumeProgress > 0)) || loweredUserStatus === "current")}
-                                                        {#if anime.nextAiringEpisode?.episode > 0 || anime.episodes > 0}
+                                                        {@const nextAiringEpisode =
+                                                            anime.nextAiringEpisode}
+                                                        {@const nextEpisode =
+                                                            nextAiringEpisode?.episode}
+                                                        {@const airingAt =
+                                                            nextAiringEpisode?.airingAt *
+                                                            1000}
+                                                        {#if !isManga && !isNovel && ((airingAt > 0 && nextEpisode > 0) || anime.episodes > 0)}
+                                                            {@const isFinishedAiring =
+                                                                anime.status?.toLowerCase?.() ===
+                                                                "finished"}
+                                                            {@const nextEpisodeIsAired =
+                                                                airingAt <=
+                                                                new Date().getTime()}
                                                             {@const releasedEps =
-                                                                anime
-                                                                    .nextAiringEpisode
-                                                                    ?.episode >
-                                                                0
-                                                                    ? anime
-                                                                          .nextAiringEpisode
-                                                                          .episode
+                                                                nextEpisode >
+                                                                    0 &&
+                                                                !isFinishedAiring
+                                                                    ? nextEpisodeIsAired
+                                                                        ? nextEpisode
+                                                                        : nextEpisode -
+                                                                          1
                                                                     : anime.episodes}
                                                             {@const epsWatched =
                                                                 anime.episodeProgress >
@@ -2162,7 +2178,7 @@
                                                 {/if}
                                             </a>
                                         </h4>
-                                        {#if typeof anime?.nextAiringEpisode?.episode === "number" && !isNaN(anime?.nextAiringEpisode?.episode) && anime?.nextAiringEpisode?.episode === anime.episodes && typeof anime?.nextAiringEpisode?.airingAt === "number" && !isNaN(anime?.nextAiringEpisode?.airingAt) && new Date(anime?.nextAiringEpisode?.airingAt * 1000) <= new Date()}
+                                        {#if !isManga && !isNovel && typeof anime?.nextAiringEpisode?.episode === "number" && !isNaN(anime?.nextAiringEpisode?.episode) && anime?.nextAiringEpisode?.episode === anime.episodes && typeof anime?.nextAiringEpisode?.airingAt === "number" && !isNaN(anime?.nextAiringEpisode?.airingAt) && new Date(anime?.nextAiringEpisode?.airingAt * 1000) <= new Date()}
                                             <h4
                                                 style="text-align: right;"
                                                 class="year-season"
