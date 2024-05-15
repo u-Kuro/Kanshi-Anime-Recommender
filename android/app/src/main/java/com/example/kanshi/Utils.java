@@ -25,6 +25,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -232,29 +234,35 @@ public class Utils {
                     dirIsCreated = true;
                 }
                 if (directory.isDirectory() && dirIsCreated) {
-                    ObjectOutputStream objectOut = null;
-                    final String filename = "Released Anime.bin";
-                    File finalFile = new File(directory, filename);
-                    try {
-                        FileOutputStream fileOut = new FileOutputStream(finalFile);
-                        objectOut = new ObjectOutputStream(fileOut);
-                        if (AnimeNotificationManager.allAnimeNotification.size() > 0) {
+                    if (AnimeNotificationManager.allAnimeNotification.size() > 0) {
+                        ObjectOutputStream objectOut = null;
+                        final String filename = "Released Anime.bin";
+                        File tempFile = new File(directory, filename + ".tmp");
+                        try {
+                            FileOutputStream fileOut = new FileOutputStream(tempFile);
+                            objectOut = new ObjectOutputStream(fileOut);
                             objectOut.writeObject(AnimeNotificationManager.allAnimeNotification);
                             fileOut.getFD().sync();
                             fileOut.close();
-                            File tempFile = new File(directory, filename + ".tmp");
-                            finalFile = new File(directory, filename);
-                            if (!tempFile.renameTo(finalFile) && tempFile.exists()) {
-                                //noinspection ResultOfMethodCallIgnored
-                                tempFile.delete();
-                            }
-                        }
-                    } catch (IOException ignored) {
-                    } finally {
-                        if (objectOut != null) {
+                            File finalFile = new File(directory, filename);
+                            java.nio.file.Path tempFilePath = tempFile.toPath();
+                            java.nio.file.Path finalFilePath = finalFile.toPath();
+                            Files.copy(tempFilePath, finalFilePath, StandardCopyOption.REPLACE_EXISTING);
+                        } catch (IOException ignored) {
+                        } finally {
                             try {
-                                objectOut.close();
-                            } catch (IOException ignored) {}
+                                if (objectOut != null) {
+                                    try {
+                                        objectOut.close();
+                                    } catch (IOException ignored) {
+                                    }
+                                }
+                                if (tempFile.exists()) {
+                                    //noinspection ResultOfMethodCallIgnored
+                                    tempFile.delete();
+                                }
+                            } catch (Exception ignored) {
+                            }
                         }
                     }
                 }

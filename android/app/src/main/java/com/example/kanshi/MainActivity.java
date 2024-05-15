@@ -69,6 +69,9 @@ import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -93,7 +96,7 @@ import androidx.core.content.FileProvider;
 import androidx.core.splashscreen.SplashScreen;
 
 public class MainActivity extends AppCompatActivity {
-    public final int appID = 389;
+    public final int appID = 390;
     private final boolean isOwner = true;
     public boolean keepAppRunningInBackground = false;
     public boolean showOriginalSplashScreen = true;
@@ -585,11 +588,13 @@ public class MainActivity extends AppCompatActivity {
     protected void onDestroy() {
         isInApp = false;
         webView.post(() -> webView.loadUrl("javascript:window?.notifyUpdatedAnimeNotification?.()"));
-        try {
-            writer.close();
-            writer = null;
-        } catch (Exception e) {
-            e.printStackTrace();
+        if (writer!=null) {
+            try {
+                writer.close();
+                writer = null;
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
         setBackgroundUpdates();
         super.onDestroy();
@@ -612,9 +617,6 @@ public class MainActivity extends AppCompatActivity {
     // Native and Webview Connection
     @SuppressWarnings("unused")
     class JSBridge {
-        File tempFile;
-        String directoryPath;
-
         @JavascriptInterface
         public void pageIsFinished() {
             webView.post(() -> {
@@ -692,9 +694,11 @@ public class MainActivity extends AppCompatActivity {
             }
             changeKeepAppRunningInBackground(enable);
         }
+        File tempExportFile;
+        String exportDirectoryPath;
         @RequiresApi(api = Build.VERSION_CODES.R)
         @JavascriptInterface
-        public void exportJSON(String chunk, int status, String fileName){
+        public void exportJSON(String chunk, int status, String fileName) {
             if(status==0) {
                 if (writer!=null) {
                     try {
@@ -714,8 +718,8 @@ public class MainActivity extends AppCompatActivity {
                             true,false);
                 } else {
                     if (new File(exportPath).isDirectory()) {
-                        directoryPath = exportPath + File.separator;
-                        File directory = new File(directoryPath);
+                        exportDirectoryPath = exportPath + File.separator;
+                        File directory = new File(exportDirectoryPath);
                         boolean dirIsCreated;
                         if (!directory.exists()) {
                             dirIsCreated = directory.mkdirs();
@@ -724,19 +728,19 @@ public class MainActivity extends AppCompatActivity {
                         }
                         if (directory.isDirectory() && dirIsCreated) {
                             try {
-                                tempFile = new File(directoryPath + "tmp.json");
+                                tempExportFile = new File(exportDirectoryPath + "tmp.json");
                                 boolean tempFileIsDeleted;
-                                if (tempFile.exists()) {
-                                    tempFileIsDeleted = tempFile.delete();
+                                if (tempExportFile.exists()) {
+                                    tempFileIsDeleted = tempExportFile.delete();
                                     //noinspection ResultOfMethodCallIgnored
-                                    tempFile.createNewFile();
+                                    tempExportFile.createNewFile();
                                 } else {
                                     tempFileIsDeleted = true;
                                     //noinspection ResultOfMethodCallIgnored
-                                    tempFile.createNewFile();
+                                    tempExportFile.createNewFile();
                                 }
                                 if (tempFileIsDeleted) {
-                                    writer = new BufferedWriter(new FileWriter(tempFile, true));
+                                    writer = new BufferedWriter(new FileWriter(tempExportFile, true));
                                 } else {
                                     if (writer!=null) {
                                         try {
@@ -745,10 +749,10 @@ public class MainActivity extends AppCompatActivity {
                                         } catch (Exception ignored) {}
                                     }
                                     isExported(false);
-                                    showToast(Toast.makeText(getApplicationContext(), "Error: Temporary data can't be re-written, please delete tmp.json first in the selected directory.", Toast.LENGTH_LONG));
+                                    showToast(Toast.makeText(getApplicationContext(), "Temporary backup file can't be re-written, please delete tmp.json in the selected directory.", Toast.LENGTH_LONG));
                                 }
                             } catch (Exception e) {
-                                if(writer!=null){
+                                if(writer!=null) {
                                     try {
                                         writer.close();
                                         writer = null;
@@ -757,11 +761,11 @@ public class MainActivity extends AppCompatActivity {
                                     }
                                 }
                                 isExported(false);
-                                showToast(Toast.makeText(getApplicationContext(), "Error: An exception occurred initializing the tmp.json file.", Toast.LENGTH_LONG));
+                                showToast(Toast.makeText(getApplicationContext(), "An exception occurred initializing the temporary backup file.", Toast.LENGTH_LONG));
                                 e.printStackTrace();
                             }
                         } else if (!dirIsCreated) {
-                            showToast(Toast.makeText(getApplicationContext(), "Error: Folder directory can't be found, please create it first.", Toast.LENGTH_LONG));
+                            showToast(Toast.makeText(getApplicationContext(), "Can't find backup folder, please create it first.", Toast.LENGTH_LONG));
                         }
                     } else if (exportPath != null && !exportPath.isEmpty() && !new File(exportPath).isDirectory()) {
                         String[] tempExportPath = exportPath.split(Pattern.quote(File.separator));
@@ -786,7 +790,7 @@ public class MainActivity extends AppCompatActivity {
                     }
                 }
             } else if(status==1&&writer!=null) {
-                try{
+                try {
                     writer.write(chunk);
                 } catch (Exception e) {
                     try {
@@ -796,10 +800,10 @@ public class MainActivity extends AppCompatActivity {
                         e2.printStackTrace();
                     }
                     isExported(false);
-                    showToast(Toast.makeText(getApplicationContext(), "Error: An exception occurred while writing to tmp.json file.", Toast.LENGTH_LONG));
+                    showToast(Toast.makeText(getApplicationContext(), "An exception occurred while writing to temporary backup file.", Toast.LENGTH_LONG));
                     e.printStackTrace();
                 }
-            } else if(status==2&&writer!=null){
+            } else if(status==2&&writer!=null) {
                 try {
                     writer.write(chunk);
                     writer.close();
@@ -807,45 +811,27 @@ public class MainActivity extends AppCompatActivity {
                     int lastStringLen = Math.min(chunk.length(), 3);
                     String lastNCharacters = new String(new char[lastStringLen]).replace("\0", "}");
                     if (chunk.endsWith(lastNCharacters)) {
-                        boolean fileIsDeleted;
-                        File file = new File(directoryPath + fileName);
-                        if (file.exists()) {
-                            fileIsDeleted = file.delete();
+                        File file = new File(exportDirectoryPath + fileName);
+                        if (tempExportFile != null && tempExportFile.exists()) {
+                            Path tempPath = tempExportFile.toPath();
+                            Path backupPath = file.toPath();
+                            Files.copy(tempPath, backupPath, StandardCopyOption.REPLACE_EXISTING);
+                            isExported(true);
+                            // Clean Up
                             //noinspection ResultOfMethodCallIgnored
-                            file.createNewFile();
-                        } else {
-                            //noinspection ResultOfMethodCallIgnored
-                            file.createNewFile();
-                            fileIsDeleted = true;
-                        }
-                        if (fileIsDeleted) {
-                            if (tempFile != null && tempFile.exists()) {
-                                if (tempFile.renameTo(file)) {
-                                    isExported(true);
-                                    File $tempFile = new File(directoryPath + "pb.tmp.json");
-                                    //noinspection ResultOfMethodCallIgnored
-                                    $tempFile.delete();
-                                } else {
-                                    isExported(false);
-                                    showToast(Toast.makeText(getApplicationContext(), "An exception occurred in finalizing the exported file, your back-up was saved in tmp.json but is not guaranteed to work.", Toast.LENGTH_LONG));
-                                    //noinspection ResultOfMethodCallIgnored
-                                    file.delete();
-                                    //noinspection ResultOfMethodCallIgnored
-                                    tempFile.delete();
-                                }
-                            } else {
-                                isExported(false);
-                                showToast(Toast.makeText(getApplicationContext(), "An exception occurred in finalizing the exported file, your back-up was saved in tmp.json but is not guaranteed to work.", Toast.LENGTH_LONG));
+                            tempExportFile.delete();
+                            File $tempFile = new File(exportDirectoryPath + "pb.tmp.json");
+                            if ($tempFile.exists()) {
                                 //noinspection ResultOfMethodCallIgnored
-                                file.delete();
+                                $tempFile.delete();
                             }
                         } else {
                             isExported(false);
-                            showToast(Toast.makeText(getApplicationContext(), "An exception occurred in finalizing the exported file, your back-up was saved in tmp.json but is not guaranteed to work.", Toast.LENGTH_LONG));
+                            showToast(Toast.makeText(getApplicationContext(), "Failed to access the backup file.", Toast.LENGTH_LONG));
                         }
                     } else {
                         isExported(false);
-                        showToast(Toast.makeText(getApplicationContext(), "An exception occurred in finalizing the exported file, your back-up was saved in tmp.json but is not guaranteed to work.", Toast.LENGTH_LONG));
+                        showToast(Toast.makeText(getApplicationContext(), "An exception occurred in finalizing the backup file.", Toast.LENGTH_LONG));
                     }
                 } catch (Exception e) {
                     try {
@@ -857,7 +843,7 @@ public class MainActivity extends AppCompatActivity {
                         e2.printStackTrace();
                     }
                     isExported(false);
-                    showToast(Toast.makeText(getApplicationContext(), "An exception occurred in finalizing the exported file, your back-up was saved in tmp.json but is not guaranteed to work.", Toast.LENGTH_LONG));
+                    showToast(Toast.makeText(getApplicationContext(), "An exception occurred in finalizing the backup file.", Toast.LENGTH_LONG));
                     e.printStackTrace();
                 }
             }
@@ -922,7 +908,7 @@ public class MainActivity extends AppCompatActivity {
             }
         }
         @JavascriptInterface
-        public void refreshWeb(){
+        public void refreshWeb() {
             Intent intent = new Intent(getApplicationContext(), MainActivity.class);
             intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
             startActivity(intent);
@@ -1034,6 +1020,7 @@ public class MainActivity extends AppCompatActivity {
             showToast(Toast.makeText(getApplicationContext(), text, isLongDuration ? Toast.LENGTH_LONG : Toast.LENGTH_SHORT));
         }
     }
+
     public void showDataEvictionDialog() {
         new Handler(Looper.getMainLooper()).post(()-> showDialog(new AlertDialog.Builder(MainActivity.this)
             .setTitle("Possible Data Loss")

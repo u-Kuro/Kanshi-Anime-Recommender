@@ -36,6 +36,9 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.lang.ref.WeakReference;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -243,13 +246,13 @@ public class MainService extends Service {
     @Override
     public void onDestroy() {
         webView.destroy();
-        try {
-            if (writer!=null) {
+        if (writer!=null) {
+            try {
                 writer.close();
                 writer = null;
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-        } catch (Exception e) {
-            e.printStackTrace();
         }
         AnimeNotificationManager.recentlyUpdatedAnimeNotification(MainService.this, addedAnimeCount, updatedAnimeCount);
         super.onDestroy();
@@ -328,8 +331,6 @@ public class MainService extends Service {
 
     @SuppressWarnings("unused")
     class JSBridge {
-        File tempFile;
-        String directoryPath;
         @JavascriptInterface
         public void pageIsFinished() {
             pageLoaded = true;
@@ -430,9 +431,11 @@ public class MainService extends Service {
         public void sendBackgroundStatus(String text) {
             updateNotificationTitle(text);
         }
+        File tempExportFile;
+        String exportDirectoryPath;
         @RequiresApi(api = Build.VERSION_CODES.R)
         @JavascriptInterface
-        public void exportJSON(String chunk, int status, String fileName){
+        public void exportJSON(String chunk, int status, String fileName) {
             if(status==0) {
                 if (writer!=null) {
                     try {
@@ -442,8 +445,8 @@ public class MainService extends Service {
                 }
                 if (Environment.isExternalStorageManager()) {
                     if (new File(exportPath).isDirectory()) {
-                        directoryPath = exportPath + File.separator;
-                        File directory = new File(directoryPath);
+                        exportDirectoryPath = exportPath + File.separator;
+                        File directory = new File(exportDirectoryPath);
                         boolean dirIsCreated;
                         if (!directory.exists()) {
                             dirIsCreated = directory.mkdirs();
@@ -452,19 +455,19 @@ public class MainService extends Service {
                         }
                         if (directory.isDirectory() && dirIsCreated) {
                             try {
-                                tempFile = new File(directoryPath + "pb.tmp.json");
+                                tempExportFile = new File(exportDirectoryPath + "pb.tmp.json");
                                 boolean tempFileIsDeleted;
-                                if (tempFile.exists()) {
-                                    tempFileIsDeleted = tempFile.delete();
+                                if (tempExportFile.exists()) {
+                                    tempFileIsDeleted = tempExportFile.delete();
                                     //noinspection ResultOfMethodCallIgnored
-                                    tempFile.createNewFile();
+                                    tempExportFile.createNewFile();
                                 } else {
                                     tempFileIsDeleted = true;
                                     //noinspection ResultOfMethodCallIgnored
-                                    tempFile.createNewFile();
+                                    tempExportFile.createNewFile();
                                 }
                                 if (tempFileIsDeleted) {
-                                    writer = new BufferedWriter(new FileWriter(tempFile, true));
+                                    writer = new BufferedWriter(new FileWriter(tempExportFile, true));
                                 } else {
                                     if (writer!=null) {
                                         try {
@@ -475,7 +478,7 @@ public class MainService extends Service {
                                     isExported(false);
                                 }
                             } catch (Exception e) {
-                                if(writer!=null){
+                                if(writer!=null) {
                                     try {
                                         writer.close();
                                         writer = null;
@@ -490,7 +493,7 @@ public class MainService extends Service {
                     }
                 }
             } else if(status==1&&writer!=null) {
-                try{
+                try {
                     writer.write(chunk);
                 } catch (Exception e) {
                     try {
@@ -502,7 +505,7 @@ public class MainService extends Service {
                     isExported(false);
                     e.printStackTrace();
                 }
-            } else if(status==2&&writer!=null){
+            } else if(status==2&&writer!=null) {
                 try {
                     writer.write(chunk);
                     writer.close();
@@ -510,35 +513,19 @@ public class MainService extends Service {
                     int lastStringLen = Math.min(chunk.length(), 3);
                     String lastNCharacters = new String(new char[lastStringLen]).replace("\0", "}");
                     if (chunk.endsWith(lastNCharacters)) {
-                        boolean fileIsDeleted;
-                        File file = new File(directoryPath + fileName);
-                        if (file.exists()) {
-                            fileIsDeleted = file.delete();
+                        File file = new File(exportDirectoryPath + fileName);
+                        if (tempExportFile != null && tempExportFile.exists()) {
+                            Path tempPath = tempExportFile.toPath();
+                            Path backupPath = file.toPath();
+                            Files.copy(tempPath, backupPath, StandardCopyOption.REPLACE_EXISTING);
+                            isExported(true);
+                            // Clean Up
                             //noinspection ResultOfMethodCallIgnored
-                            file.createNewFile();
-                        } else {
-                            //noinspection ResultOfMethodCallIgnored
-                            file.createNewFile();
-                            fileIsDeleted = true;
-                        }
-                        if (fileIsDeleted) {
-                            if (tempFile != null && tempFile.exists()) {
-                                if (tempFile.renameTo(file)) {
-                                    isExported(true);
-                                    File $tempFile = new File(directoryPath + "tmp.json");
-                                    //noinspection ResultOfMethodCallIgnored
-                                    $tempFile.delete();
-                                } else {
-                                    isExported(false);
-                                    //noinspection ResultOfMethodCallIgnored
-                                    file.delete();
-                                    //noinspection ResultOfMethodCallIgnored
-                                    tempFile.delete();
-                                }
-                            } else {
-                                isExported(false);
+                            tempExportFile.delete();
+                            File $tempFile = new File(exportDirectoryPath + "tmp.json");
+                            if ($tempFile.exists()) {
                                 //noinspection ResultOfMethodCallIgnored
-                                file.delete();
+                                $tempFile.delete();
                             }
                         } else {
                             isExported(false);
