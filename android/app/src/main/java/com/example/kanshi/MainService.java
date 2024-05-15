@@ -65,7 +65,6 @@ public class MainService extends Service {
     private final String isBackgroundUpdateKey = uniqueKey+".isBackgroundUpdate";
     private final String visitedKey = uniqueKey+".visited";
     public boolean lastBackgroundUpdateIsFinished = false;
-    public boolean lastBackgroundUpdateTimeIsAlreadyUpdated = false;
     public boolean isAddingAnimeReleaseNotification = false;
     public boolean shouldCallStopService = false;
     public boolean shouldRefreshList = false;
@@ -311,22 +310,13 @@ public class MainService extends Service {
 
     public void updateLastBackgroundUpdateTime() {
         if (lastBackgroundUpdateIsFinished) {
+            final long oneHourFromNowInMillis = System.currentTimeMillis() + TimeUnit.HOURS.toMillis(1);
+            prefsEdit.putLong("lastBackgroundUpdateTime", oneHourFromNowInMillis).commit();
             MainActivity mainActivity = MainActivity.getInstanceActivity();
             if (mainActivity != null) {
                 mainActivity.shouldRefreshList = shouldRefreshList;
                 mainActivity.shouldProcessRecommendationList = shouldProcessRecommendationList;
                 mainActivity.shouldLoadAnime = shouldLoadAnime;
-            }
-            if (!lastBackgroundUpdateTimeIsAlreadyUpdated) {
-                lastBackgroundUpdateTimeIsAlreadyUpdated = true;
-                long currentTime = System.currentTimeMillis();
-                long backgroundUpdateTime = prefs.getLong("lastBackgroundUpdateTime", currentTime);
-                if (backgroundUpdateTime <= currentTime) {
-                    SharedPreferences.Editor prefsEdit = prefs.edit();
-                    long ONE_HOUR_IN_MILLIS = TimeUnit.HOURS.toMillis(1);
-                    backgroundUpdateTime = backgroundUpdateTime + ONE_HOUR_IN_MILLIS;
-                    prefsEdit.putLong("lastBackgroundUpdateTime", backgroundUpdateTime).apply();
-                }
             }
         }
     }

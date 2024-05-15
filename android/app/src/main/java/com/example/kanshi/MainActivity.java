@@ -93,7 +93,7 @@ import androidx.core.content.FileProvider;
 import androidx.core.splashscreen.SplashScreen;
 
 public class MainActivity extends AppCompatActivity {
-    public final int appID = 388;
+    public final int appID = 389;
     private final boolean isOwner = true;
     public boolean keepAppRunningInBackground = false;
     public boolean showOriginalSplashScreen = true;
@@ -1074,6 +1074,7 @@ public class MainActivity extends AppCompatActivity {
     }
     public void setBackgroundUpdates() {
         final int UPDATE_DATA_PENDING_INTENT = 994;
+        long backgroundUpdateTime = prefs.getLong("lastBackgroundUpdateTime", System.currentTimeMillis());
         Intent newIntent = new Intent(this.getApplicationContext(), MyReceiver.class);
         newIntent.setAction("UPDATE_DATA_MANUAL");
 
@@ -1083,13 +1084,7 @@ public class MainActivity extends AppCompatActivity {
         newPendingIntent.cancel();
         alarmManager.cancel(newPendingIntent);
         // Create New
-        long currentTime = System.currentTimeMillis();
-        long backgroundUpdateTime = prefs.getLong("lastBackgroundUpdateTime",currentTime+1);
         newPendingIntent = PendingIntent.getBroadcast(this.getApplicationContext(), UPDATE_DATA_PENDING_INTENT, newIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
-        if (backgroundUpdateTime <= currentTime) {
-            long ONE_HOUR_IN_MILLIS = TimeUnit.HOURS.toMillis(1);
-            backgroundUpdateTime = backgroundUpdateTime + ONE_HOUR_IN_MILLIS;
-        }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             if (alarmManager.canScheduleExactAlarms()) {
                 alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, backgroundUpdateTime, newPendingIntent);
@@ -1110,7 +1105,7 @@ public class MainActivity extends AppCompatActivity {
     }
     public void changeKeepAppRunningInBackground(boolean enable) {
         keepAppRunningInBackground = enable;
-        prefsEdit.putBoolean("keepAppRunningInBackground", keepAppRunningInBackground).commit();
+        prefsEdit.putBoolean("keepAppRunningInBackground", keepAppRunningInBackground).apply();
         webView.post(()->webView.loadUrl("javascript:window?.setKeepAppRunningInBackground?.("+(keepAppRunningInBackground?"true":"false")+")"));
     }
     private final ExecutorService updateCurrentNotificationsExecutorService = Executors.newFixedThreadPool(1);

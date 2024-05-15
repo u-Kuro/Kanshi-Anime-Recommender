@@ -367,7 +367,7 @@ public class MyWorker extends Worker {
         long THIRTY_DAY_IN_MILLIS = TimeUnit.DAYS.toMillis(30);
         for (AnimeNotification anime : allAnimeNotificationValues) {
             // If ReleaseDate was Before 30 days ago
-            if (anime.releaseDateMillis < (System.currentTimeMillis() - THIRTY_DAY_IN_MILLIS)) {
+            if (anime.releaseDateMillis < (currentTimeInMillis - THIRTY_DAY_IN_MILLIS)) {
                 animeNotificationsToBeRemoved.add(anime.animeId+"-"+anime.releaseEpisode);
             }
         }
@@ -554,7 +554,8 @@ public class MyWorker extends Worker {
 
     private void updateData(boolean isManual) {
         // Default 1 hour interval
-        long newBackgroundUpdateTime = System.currentTimeMillis() + TimeUnit.HOURS.toMillis(1);
+        long currentTimeMillis = System.currentTimeMillis();
+        long newBackgroundUpdateTime = currentTimeMillis + TimeUnit.HOURS.toMillis(1);
 
         TimeZone tz = TimeZone.getDefault();
         Calendar calendar = Calendar.getInstance(tz);
@@ -574,7 +575,7 @@ public class MyWorker extends Worker {
             calendar.clear(Calendar.SECOND);
             calendar.clear(Calendar.MILLISECOND);
             long sixAmInMillis = calendar.getTimeInMillis();
-            if (sixAmInMillis >= System.currentTimeMillis()) {
+            if (sixAmInMillis >= currentTimeMillis) {
                 newBackgroundUpdateTime = sixAmInMillis;
             }
         }
@@ -605,7 +606,6 @@ public class MyWorker extends Worker {
         alarmManager.cancel(newPendingIntent);
         // Create New
         newPendingIntent = PendingIntent.getBroadcast(this.getApplicationContext(), UPDATE_DATA_PENDING_INTENT, newIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
-
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             if (alarmManager.canScheduleExactAlarms()) {
                 alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, newBackgroundUpdateTime, newPendingIntent);
