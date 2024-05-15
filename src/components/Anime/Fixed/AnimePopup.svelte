@@ -1886,7 +1886,7 @@
                                                 : ""}"
                                             on:scroll="{itemScroll}"
                                         >
-                                            {anime?.shownTitle || "NA"}
+                                            {anime?.shownTitle || "N/A"}
                                         </a>
                                         <div class="info-rating-wrapper">
                                             <!-- star regular -->
@@ -1944,7 +1944,7 @@
                                             {@const loweredCountryOfOrigin =
                                                 anime?.countryOfOrigin?.toLowerCase?.()}
                                             <h4>
-                                                {(anime?.format || "NA") +
+                                                {(anime?.format || "N/A") +
                                                     (loweredCountryOfOrigin
                                                         ? ` (${COOs[loweredCountryOfOrigin] && windowWidth >= 377 && (isManga || isNovel || windowWidth >= 427) ? COOs[loweredCountryOfOrigin] : anime?.countryOfOrigin})`
                                                         : "")}
@@ -1975,7 +1975,7 @@
                                             {@const loweredCountryOfOrigin =
                                                 anime?.countryOfOrigin?.toLowerCase?.()}
                                             <h4>
-                                                {(anime?.format || "NA") +
+                                                {(anime?.format || "N/A") +
                                                     (loweredCountryOfOrigin
                                                         ? ` (${COOs[loweredCountryOfOrigin] && windowWidth >= 377 && (isManga || isNovel || windowWidth >= 427) ? COOs[loweredCountryOfOrigin] : anime?.countryOfOrigin})`
                                                         : "")}
@@ -1991,11 +1991,11 @@
                                                     anime?.season && anime?.year
                                                         ? " " + anime?.year
                                                         : anime?.year || ""
-                                                }` || "NA"}
+                                                }` || "N/A"}
                                             </h4>
                                         {:else}
                                             <h4 style="text-align: right;">
-                                                NA
+                                                N/A
                                             </h4>
                                         {/if}
                                     </div>
@@ -2021,9 +2021,12 @@
                                                     class="{anime.userStatusColor +
                                                         '-color'}"
                                                     >{anime.userStatus ||
-                                                        "NA"}</span
+                                                        "N/A"}</span
                                                 >
                                                 {#if true}
+                                                    {@const isFinishedAiring =
+                                                        anime.status?.toLowerCase?.() ===
+                                                        "finished"}
                                                     {@const loweredUserStatus =
                                                         anime.userStatus?.toLowerCase?.()}
                                                     {#if loweredUserStatus !== "dropped" && ((loweredUserStatus !== "completed" && (anime.episodeProgress > 0 || anime.volumeProgress > 0)) || loweredUserStatus === "current")}
@@ -2035,9 +2038,6 @@
                                                             nextAiringEpisode?.airingAt *
                                                             1000}
                                                         {#if !isManga && !isNovel && ((airingAt > 0 && nextEpisode > 0) || anime.episodes > 0)}
-                                                            {@const isFinishedAiring =
-                                                                anime.status?.toLowerCase?.() ===
-                                                                "finished"}
                                                             {@const nextEpisodeIsAired =
                                                                 airingAt <=
                                                                 new Date().getTime()}
@@ -2049,7 +2049,9 @@
                                                                         ? nextEpisode
                                                                         : nextEpisode -
                                                                           1
-                                                                    : anime.episodes}
+                                                                    : isFinishedAiring
+                                                                      ? anime.episodes
+                                                                      : null}
                                                             {@const epsWatched =
                                                                 anime.episodeProgress >
                                                                 0
@@ -2071,7 +2073,7 @@
                                                                     >{`${epsBehind} Ep${epsBehind > 1 ? "s" : ""} Behind`}</span
                                                                 >
                                                             {/if}
-                                                        {:else if anime.chapters > 0 || anime.volumes > 0}
+                                                        {:else if isFinishedAiring && (anime.chapters > 0 || anime.volumes > 0)}
                                                             {#if isNovel}
                                                                 {#if anime.volumes > 0}
                                                                     {@const volSeen =
@@ -2190,7 +2192,7 @@
                                                 style="text-align: right;"
                                                 class="year-season"
                                             >
-                                                {anime.status || "NA"}
+                                                {anime.status || "N/A"}
                                             </h4>
                                         {/if}
                                     </div>
@@ -2250,7 +2252,7 @@
                                                         >
                                                             {studios?.studio
                                                                 ?.studioName ||
-                                                                "NA"}
+                                                                "N/A"}
                                                         </a>
                                                     {/each}
                                                 </div>
@@ -2291,7 +2293,7 @@
                                                                 ? `${genres?.genreColor}-color`
                                                                 : ''}"
                                                             >{genres?.genre ||
-                                                                "NA"}
+                                                                "N/A"}
                                                         </span>
                                                     {/each}
                                                 </div>
@@ -2369,7 +2371,7 @@
                                                                 ? `${tags?.tagColor}-color`
                                                                 : ''}"
                                                             >{@html tags?.tag ||
-                                                                "NA"}
+                                                                "N/A"}
                                                         </span>
                                                     {/each}
                                                 </div>

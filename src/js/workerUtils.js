@@ -56,7 +56,7 @@ function getAnimeLoaderWorker() {
     if (animeLoaderWorker) return animeLoaderWorker
     if (animeLoaderWorkerPromise) return animeLoaderWorkerPromise
     animeLoaderWorkerPromise = new Promise(async (resolve) => {
-        resolve(new Worker(await cacheRequest("./webapi/worker/animeLoader.js", 18760, "Checking existing List")))
+        resolve(new Worker(await cacheRequest("./webapi/worker/animeLoader.js", 18767, "Checking existing List")))
         animeLoaderWorkerPromise = null
     })
     return animeLoaderWorkerPromise
