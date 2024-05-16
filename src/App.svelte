@@ -77,6 +77,7 @@
 		categoriesKeys,
 		selectedAnimeGridEl,
 		isLoadingAnime,
+		showLoadingAnime,
 		// anilistAccessToken,
 	} from "./js/globalValues.js";
 
@@ -322,8 +323,8 @@
 
 			Promise.all(initDataPromises)
 				.then(async () => {
-					$initData = false;
 					if ($android && window[$isBackgroundUpdateKey] === true) {
+						$initData = false;
 						try {
 							let dataIsUpdated;
 							try {
@@ -491,64 +492,40 @@
 						})();
 						// Get/Show List
 						let shouldProcessRecommendation;
-						if (!shouldProcessRecommendation) {
-							let lastProcessRecommendationAiringAt =
-								getLocalStorage(
-									"lastProcessRecommendationAiringAt",
-								) ??
-								(await retrieveJSON(
-									"lastProcessRecommendationAiringAt",
-								));
+						let neareastAnimeCompletionAiringAt =
+							getLocalStorage(
+								"neareastAnimeCompletionAiringAt",
+							) ??
+							(await retrieveJSON(
+								"neareastAnimeCompletionAiringAt",
+							));
+						if (
+							typeof neareastAnimeCompletionAiringAt ===
+								"number" &&
+							!isNaN(neareastAnimeCompletionAiringAt)
+						) {
+							let neareastAnimeCompletionAiringDate = new Date(
+								neareastAnimeCompletionAiringAt * 1000,
+							);
 							if (
-								typeof lastProcessRecommendationAiringAt ===
-									"number" &&
-								!isNaN(lastProcessRecommendationAiringAt)
+								!isNaN(neareastAnimeCompletionAiringDate) &&
+								neareastAnimeCompletionAiringDate <= new Date()
 							) {
-								let neareastAnimeCompletionAiringAt =
-									getLocalStorage(
-										"neareastAnimeCompletionAiringAt",
-									) ??
-									(await retrieveJSON(
-										"neareastAnimeCompletionAiringAt",
-									));
-								if (
-									typeof neareastAnimeCompletionAiringAt ===
-										"number" &&
-									!isNaN(neareastAnimeCompletionAiringAt)
-								) {
-									window.setAnimeCompletionUpdateTimeout?.(
-										neareastAnimeCompletionAiringAt,
-									);
-									let neareastAnimeCompletionAiringDate =
-										new Date(
-											neareastAnimeCompletionAiringAt *
-												1000,
-										);
-									if (
-										neareastAnimeCompletionAiringDate <=
-											new Date() &&
-										lastProcessRecommendationAiringAt >
-											neareastAnimeCompletionAiringAt
-									) {
-										shouldProcessRecommendation = true;
-									}
-								}
-							} else {
 								shouldProcessRecommendation = true;
+							} else {
+								window.setAnimeCompletionUpdateTimeout?.(
+									neareastAnimeCompletionAiringAt,
+								);
 							}
 						}
 						if (!shouldProcessRecommendation) {
-							shouldProcessRecommendation = await retrieveJSON(
-								"shouldProcessRecommendation",
-							);
-						}
-						if (shouldProcessRecommendation === undefined) {
-							let recommendedAnimeListLen = await retrieveJSON(
-								"recommendedAnimeListLength",
-							);
-							if (recommendedAnimeListLen < 1) {
-								shouldProcessRecommendation = true;
-							}
+							shouldProcessRecommendation =
+								(await retrieveJSON(
+									"shouldProcessRecommendation",
+								)) ||
+								(await retrieveJSON(
+									"recommendedAnimeListIsEmpty",
+								));
 						}
 						new Promise(async (resolve) => {
 							if (shouldProcessRecommendation) {
@@ -568,6 +545,7 @@
 									updateRecommendedAnimeList: true,
 								})
 									.then(async () => {
+										$initData = false;
 										if (shouldReloadList) {
 											animeLoader({
 												loadInit: true,
@@ -585,6 +563,7 @@
 									})
 									.catch(initFailed);
 							} else {
+								$initData = false;
 								$dataStatus = null;
 								checkAutoFunctions(true);
 								loadAnalytics();
@@ -742,7 +721,6 @@
 	importantUpdate.subscribe(async (val) => {
 		if (typeof val !== "boolean" || $initData) return;
 		if ($android && window?.[$isBackgroundUpdateKey] === true) return;
-		await saveJSON(true, "shouldProcessRecommendation");
 		$listUpdateAvailable = false;
 		processRecommendedAnimeList()
 			.then(async () => {
@@ -756,7 +734,6 @@
 	updateRecommendationList.subscribe(async (val) => {
 		if (typeof val !== "boolean" || $initData) return;
 		if ($android && window?.[$isBackgroundUpdateKey] === true) return;
-		await saveJSON(true, "shouldProcessRecommendation");
 		processRecommendedAnimeList()
 			.then(async () => {
 				loadAnime.update((e) => !e);
@@ -777,7 +754,6 @@
 							0)) &&
 				$loadedAnimeLists?.[$selectedCategory]?.animeList?.length
 			) {
-				await saveJSON(true, "shouldLoadAnime");
 				$listUpdateAvailable = true;
 				resolve();
 			} else {
@@ -797,9 +773,9 @@
 		shouldLoadAnime,
 	) => {
 		if ($initData) return;
+		$showLoadingAnime = true;
 		new Promise(async (resolve) => {
 			if (shouldProcessRecommendation) {
-				await saveJSON(true, "shouldProcessRecommendation");
 				processRecommendedAnimeList()
 					.then(() => resolve(true))
 					.catch(() => resolve());
@@ -809,11 +785,13 @@
 		}).then((thisShouldLoadAnime) => {
 			let isAlreadyLoaded = !shouldLoadAnime && !thisShouldLoadAnime;
 			if (isAlreadyLoaded) {
-				animeLoader({ updateRecommendedAnimeList: true }).finally(
-					() => {
-						window.checkEntries?.();
-					},
-				);
+				animeLoader({
+					updateRecommendedAnimeList: true,
+					updateUserList: true,
+				}).finally(() => {
+					$showLoadingAnime = false;
+					window.checkEntries?.();
+				});
 			} else {
 				animeManager({ updateRecommendedAnimeList: true }).finally(
 					() => {

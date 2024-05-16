@@ -2180,13 +2180,47 @@
                                                 {/if}
                                             </a>
                                         </h4>
-                                        {#if !isManga && !isNovel && typeof anime?.nextAiringEpisode?.episode === "number" && !isNaN(anime?.nextAiringEpisode?.episode) && anime?.nextAiringEpisode?.episode === anime.episodes && typeof anime?.nextAiringEpisode?.airingAt === "number" && !isNaN(anime?.nextAiringEpisode?.airingAt) && new Date(anime?.nextAiringEpisode?.airingAt * 1000) <= new Date()}
-                                            <h4
-                                                style="text-align: right;"
-                                                class="year-season"
-                                            >
-                                                FINISHED
-                                            </h4>
+                                        {#if !isManga && !isNovel && anime?.nextAiringEpisode && anime?.status?.toLowerCase?.() !== "finished"}
+                                            {@const nextAiringEpisode =
+                                                anime.nextAiringEpisode}
+                                            {@const airingAt =
+                                                nextAiringEpisode?.airingAt}
+                                            {@const nextEpisode =
+                                                nextAiringEpisode?.episode}
+                                            {@const totalEpisodes =
+                                                anime?.episodes}
+                                            {@const isValid =
+                                                nextEpisode >= totalEpisodes &&
+                                                nextEpisode > 0 &&
+                                                airingAt > 0 &&
+                                                totalEpisodes > 0}
+                                            {#if isValid}
+                                                {#key isValid ? $earlisetReleaseDate || 1 : 1}
+                                                    {#if airingAt * 1000 <= new Date().getTime()}
+                                                        <h4
+                                                            style="text-align: right;"
+                                                            class="year-season"
+                                                        >
+                                                            FINISHED
+                                                        </h4>
+                                                    {:else}
+                                                        <h4
+                                                            style="text-align: right;"
+                                                            class="year-season"
+                                                        >
+                                                            {anime.status ||
+                                                                "N/A"}
+                                                        </h4>
+                                                    {/if}
+                                                {/key}
+                                            {:else}
+                                                <h4
+                                                    style="text-align: right;"
+                                                    class="year-season"
+                                                >
+                                                    {anime.status || "N/A"}
+                                                </h4>
+                                            {/if}
                                         {:else}
                                             <h4
                                                 style="text-align: right;"

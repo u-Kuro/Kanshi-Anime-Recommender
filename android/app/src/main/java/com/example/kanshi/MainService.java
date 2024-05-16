@@ -255,6 +255,10 @@ public class MainService extends Service {
             }
         }
         AnimeNotificationManager.recentlyUpdatedAnimeNotification(MainService.this, addedAnimeCount, updatedAnimeCount);
+        MainActivity mainActivity = MainActivity.getInstanceActivity();
+        if (mainActivity != null) {
+            mainActivity.refreshMediaList();
+        }
         super.onDestroy();
     }
 

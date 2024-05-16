@@ -33,6 +33,7 @@ const tagInfo = writable({})
 const dataStatus = writable(null)
 const loadingDataStatus = writable(null)
 
+const showLoadingAnime = writable(false)
 const isLoadingAnime = writable(false)
 const isProcessingList = writable(false)
 const isImporting = writable(false)
@@ -112,6 +113,7 @@ export {
     dataStatus,
     loadingDataStatus,
     userRequestIsRunning,
+    showLoadingAnime,
     isLoadingAnime,
     isProcessingList,
     isImporting,

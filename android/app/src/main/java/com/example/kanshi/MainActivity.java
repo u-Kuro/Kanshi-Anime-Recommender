@@ -96,7 +96,7 @@ import androidx.core.content.FileProvider;
 import androidx.core.splashscreen.SplashScreen;
 
 public class MainActivity extends AppCompatActivity {
-    public final int appID = 391;
+    public final int appID = 392;
     private final boolean isOwner = true;
     public boolean keepAppRunningInBackground = false;
     public boolean showOriginalSplashScreen = true;
@@ -582,6 +582,17 @@ public class MainActivity extends AppCompatActivity {
                         : "window?.checkEntries?.();")
         );
         shouldRefreshList = shouldProcessRecommendationList = shouldLoadAnime = false;
+    }
+
+    public void refreshMediaList() {
+        if (!shouldRefreshList) return;
+        try {
+            new Handler(Looper.getMainLooper())
+                .post(() -> webView.post(() -> webView.loadUrl("javascript:window?.shouldRefreshAnimeList?.("
+                        + (shouldProcessRecommendationList ? "true" : "false") + ","
+                        + (shouldLoadAnime ? "true" : "false")
+                        + ")")));
+        } catch (Exception ignored) {}
     }
 
     @Override

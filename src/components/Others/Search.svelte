@@ -51,6 +51,7 @@
         searchedWord,
         categoriesKeys,
         selectedAnimeGridEl,
+        showLoadingAnime,
     } from "../../js/globalValues.js";
 
     let selectedCategoryAnimeFilters,
@@ -171,6 +172,11 @@
         }
         if (!isJsonObject(data)) return;
 
+        if (data?.selectedCategory == null) {
+            $showLoadingAnime = true;
+        } else {
+            $showLoadingAnime = data?.selectedCategory;
+        }
         if (name === "Anime Filter" || name === "sortBy") {
             data.updateAnimeFilter = true;
             loadAnime(data);
@@ -187,14 +193,21 @@
             $android &&
             $isBackgroundUpdateKey &&
             window?.[$isBackgroundUpdateKey] === true
-        )
+        ) {
+            $showLoadingAnime = false;
             return;
-        $loadedAnimeLists?.[data?.selectedCategory]?.animeList?.forEach?.(
-            (anime) => {
-                anime.isLoading = true;
-            },
-        );
-        animeManager(data);
+        }
+        if (data?.updateAnimeFilter) {
+            $loadedAnimeLists?.[data?.selectedCategory]?.animeList?.forEach?.(
+                (anime) => {
+                    anime.isLoading = true;
+                },
+            );
+            $loadedAnimeLists = $loadedAnimeLists;
+        }
+        animeManager(data).catch(() => {
+            $showLoadingAnime = false;
+        });
     }
 
     async function processRecAnimeList(data) {
@@ -202,11 +215,13 @@
             $android &&
             $isBackgroundUpdateKey &&
             window?.[$isBackgroundUpdateKey] === true
-        )
+        ) {
+            $showLoadingAnime = false;
             return;
-        await saveJSON(true, "shouldProcessRecommendation");
+        }
         processRecommendedAnimeList(data)
             .catch((error) => {
+                $showLoadingAnime = false;
                 console.error(error);
             })
             .finally(() => {
@@ -674,7 +689,7 @@
     ) {
         let numberFilterKey = filterCategoryName + optionName;
 
-        if (!filterCategories || !$nonOrderedFilters) {
+        if (!filterCategories || !$nonOrderedFilters || $initData) {
             changeInputValue(event.target, oldValue);
             numberFiltersValues[numberFilterKey] = oldValue;
 
@@ -999,7 +1014,10 @@
         }
 
         let currentFilterCategoryName = selectedFilterCategoryName;
-        if (await $confirmPromise("Do you want to remove all filters?")) {
+        if (await $confirmPromise("Do you want to remove all the active tags?")) {
+            if ($initData) {
+                return pleaseWaitAlert();
+            }
             if ($categories?.[currentCategory] === true) {
                 return $confirmPromise({
                     isAlert: true,
@@ -2123,7 +2141,7 @@
             : ""}"
         style:--mae-size="{recListMAE > 0 ? "1fr" : ""}"
     >
-        {#if filterCategories}
+        {#if filterCategories?.length}
             <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
             <span
                 class="filterCategory"

@@ -29,7 +29,8 @@ import {
     searchedWord,
     categories,
     algorithmFilters,
-    animeCautions
+    animeCautions,
+    showLoadingAnime
 } from "./globalValues.js";
 
 const hasOwnProp = Object.prototype.hasOwnProperty
@@ -44,19 +45,32 @@ let isRequestingAnimeEntries = false
 let idCounter = 0
 function getUniqueId() {
     if (idCounter < Number.MAX_SAFE_INTEGER) {
-        return idCounter++
+        return ++idCounter
     } else {
         idCounter = 0
         return idCounter
     }
 }
 
+earlisetReleaseDate.subscribe((val) => {
+    if (typeof val === "number" && !isNaN(val)) {
+        clearTimeout(get(mostRecentAiringDateTimeout));
+        const timeBeforeEarliestReleaseDate = (val * 1000) - new Date().getTime()
+        mostRecentAiringDateTimeout.set(setTimeout(() => {
+            earlisetReleaseDate.set(undefined)
+            animeLoaderWorker?.postMessage?.({
+                getEarlisetReleaseDate: true,
+            });
+        }, Math.min(timeBeforeEarliestReleaseDate, 2000000000)));
+    }
+})
+
 let animeLoaderWorker, animeLoaderWorkerPromise, animeLoaderPromises = {};
 function getAnimeLoaderWorker() {
     if (animeLoaderWorker) return animeLoaderWorker
     if (animeLoaderWorkerPromise) return animeLoaderWorkerPromise
     animeLoaderWorkerPromise = new Promise(async (resolve) => {
-        resolve(new Worker(await cacheRequest("./webapi/worker/animeLoader.js", 18767, "Checking existing List")))
+        resolve(new Worker(await cacheRequest("./webapi/worker/animeLoader.js", 19219, "Checking existing List")))
         animeLoaderWorkerPromise = null
     })
     return animeLoaderWorkerPromise
@@ -71,6 +85,8 @@ const animeLoader = (_data = {}) => {
         try {
             animeLoaderWorker = animeLoaderWorker || await getAnimeLoaderWorker()
         } catch (ex) {
+            showLoadingAnime.set(false)
+
             alertError()
             return reject(ex)
         }
@@ -95,6 +111,11 @@ const animeLoader = (_data = {}) => {
 
             if (hasOwnProp.call(data, "loadMore")) {
                 let anime = data?.anime
+                let airingAt = data?.airingAt
+                let currentEarliestDate = get(earlisetReleaseDate)
+                if (airingAt && (airingAt < currentEarliestDate || currentEarliestDate == null)) {
+                    earlisetReleaseDate.set(airingAt)
+                }
                 let isLast = data?.isLast
                 if (anime || isLast) {
                     get(loadNewAnime)?.[data?.selectedCategory]?.({
@@ -109,10 +130,12 @@ const animeLoader = (_data = {}) => {
                     categories.set(data?.categories);
                 }
 
-                let categoryKey = data?.selectThisCategory;
+                const selectThisCategory = data?.selectedCategory
+                const updatedCategoryKey = data?.updatedCategoryKey
+                const categoryKey = selectThisCategory ?? updatedCategoryKey
 
                 if (categoryKey) {
-                    let category = data?.category;
+                    const category = data?.category;
                     let isNew
                     loadedAnimeLists.update((val) => {
                         if (!val[categoryKey]) {
@@ -124,11 +147,6 @@ const animeLoader = (_data = {}) => {
                         return val
                     })
 
-                    let currentCategories = get(categories)
-                    let currentSelectedCategory = get(selectedCategory)
-                    if (currentCategories?.[currentSelectedCategory] !== 1 && currentCategories?.[categoryKey] === 1) {
-                        selectedCategory.set(categoryKey)
-                    }
                     if (isNew) {
                         animeLoaderWorker.postMessage({
                             loadMore: true,
@@ -137,35 +155,28 @@ const animeLoader = (_data = {}) => {
                             reload: true,
                         })
                     }
-                    animeManager({ selectCategory: categoryKey })
+
+                    if (selectThisCategory != null) {
+                        animeManager({ selectCategory: selectThisCategory })
+                    } else if (get(selectedCategory) !== updatedCategoryKey) {
+                        delete data?.reloadList
+                    }
                 }
                 animeLoaderPromises[data?.postId]?.resolve?.()
             } else if (hasOwnProp.call(data, "getEarlisetReleaseDate")) {
-                let nearestReleastDate = get(earlisetReleaseDate)
-                if (
-                    data.earliestReleaseDate &&
-                    data?.timeBeforeEarliestReleaseDate > 0 &&
-                    (data.earliestReleaseDate < nearestReleastDate ||
-                        new Date(nearestReleastDate) < new Date() ||
-                        !nearestReleastDate)
-                ) {
+                let currentEarliestDate = get(earlisetReleaseDate)
+                let airingAt = data.earliestReleaseDate
+                if (airingAt && (airingAt < currentEarliestDate || currentEarliestDate == null)) {
                     earlisetReleaseDate.set(data.earliestReleaseDate);
-                    clearTimeout(get(mostRecentAiringDateTimeout));
-                    mostRecentAiringDateTimeout.set(setTimeout(
-                        () => {
-                            animeLoaderWorker?.postMessage?.({
-                                getEarlisetReleaseDate: true,
-                            });
-                        },
-                        Math.min(
-                            data.timeBeforeEarliestReleaseDate,
-                            2000000000,
-                        ),
-                    ));
                 }
             } else if (hasOwnProp?.call?.(data, "error")) {
-                animeLoaderPromises[data?.postId]?.reject?.()
+                showLoadingAnime.set(false)
+
+                dataStatus.set(null)
+                progress.set(100)
+
                 alertError()
+                animeLoaderPromises[data?.postId]?.reject?.()
                 return
             } else if (hasOwnProp?.call?.(data, "loadAll")) {
                 categories.set(data?.categories || get(categories));
@@ -217,12 +228,14 @@ const animeLoader = (_data = {}) => {
             }
         };
         animeLoaderWorker.onerror = (error) => {
-            dataStatusPrio = false
+            showLoadingAnime.set(false)
 
-            dataStatus.set("Something went wrong")
+            dataStatus.set(null)
             progress.set(100)
 
             alertError()
+            animeLoaderPromises?.[postId]?.reject?.()
+
             console.error(error);
         };
     })
@@ -234,14 +247,17 @@ function getAnimeManagerWorker() {
     if (animeManagerWorker) return animeManagerWorker
     if (animeManagerWorkerPromise) return animeManagerWorkerPromise
     animeManagerWorkerPromise = new Promise(async (resolve) => {
-        resolve(new Worker(await cacheRequest("./webapi/worker/animeManager.js", 51507, "Updating the List")))
+        resolve(new Worker(await cacheRequest("./webapi/worker/animeManager.js", 51625, "Updating the List")))
         animeManagerWorkerPromise = null
     })
     return animeManagerWorkerPromise
 }
 const animeManager = (_data = {}) => {
     return new Promise(async (resolve, reject) => {
-        if (get(isImporting)) return
+        if (get(isImporting)) {
+            showLoadingAnime.set(false)
+            return
+        }
 
         clearTimeout(animeManagerWorkerTimeout)
         ++workerCount
@@ -257,8 +273,10 @@ const animeManager = (_data = {}) => {
             animeManagerWorker = animeManagerWorker || await getAnimeManagerWorker()
         } catch (ex) {
             workerCount = 0
-            isLoadingAnime.set(false)
             dataStatusPrio = false
+
+            isLoadingAnime.set(false)
+            showLoadingAnime.set(false)
 
             alertError()
             return reject(ex)
@@ -300,9 +318,25 @@ const animeManager = (_data = {}) => {
                     animeLoader(data || {})
                 }
                 animeManagerPromises?.[postId]?.resolve?.()
+                showLoadingAnime.set(false)
             } else if (hasOwnProp?.call?.(data, "error")) {
+                workerCount = 0
+                dataStatusPrio = false
+
+                isLoadingAnime.set(false)
+                showLoadingAnime.set(false)
+
+                dataStatus.set(null)
+                progress.set(100)
+
                 alertError()
                 animeManagerPromises?.[postId]?.reject?.()
+                animeManagerWorkerTimeout = setTimeout(() => {
+                    animeManagerWorker?.terminate?.();
+                    animeManagerWorker = null
+                }, terminateDelay)
+                return
+
             } else if (get(android) && get(isBackgroundUpdateKey) && window?.[get(isBackgroundUpdateKey)] === true) {
                 animeManagerWorker?.terminate?.()
                 animeManagerWorker = null
@@ -323,6 +357,7 @@ const animeManager = (_data = {}) => {
                     animeManagerWorker = null
 
                     isLoadingAnime.set(false)
+                    showLoadingAnime.set(false)
                 }, terminateDelay)
             }
         };
@@ -330,8 +365,9 @@ const animeManager = (_data = {}) => {
             workerCount = 0
             dataStatusPrio = false
 
-            dataStatus.set("Something went wrong")
             isLoadingAnime.set(false)
+            showLoadingAnime.set(false)
+
             dataStatus.set(null)
             progress.set(100)
 
@@ -349,15 +385,16 @@ const animeManager = (_data = {}) => {
 let processRecommendedAnimeListTerminateTimeout;
 let processRecommendedAnimeListWorker;
 let animeCompletionUpdateTimeout
-window.setAnimeCompletionUpdateTimeout = (neareastAnimeCompletionAiringAt = 0) => {
-    if (typeof neareastAnimeCompletionAiringAt !== 'number') {
-        neareastAnimeCompletionAiringAt = 0
+window.setAnimeCompletionUpdateTimeout = (neareastAnimeCompletionAiringAt) => {
+    if (typeof neareastAnimeCompletionAiringAt === 'number' && !isNaN(neareastAnimeCompletionAiringAt)) {
+        clearTimeout(animeCompletionUpdateTimeout)
+        let timeLeftBeforeAnimeCompletionUpdate = (neareastAnimeCompletionAiringAt * 1000) - new Date().getTime()
+        animeCompletionUpdateTimeout = setTimeout(() => {
+            // Only run if data initialization is done
+            // "updateRecommendationList" function call has a checker for it before processing
+            updateRecommendationList.update(e => !e)
+        }, Math.min(timeLeftBeforeAnimeCompletionUpdate, 2000000000))
     }
-    let timeLeftBeforeAnimeCompletionUpdate = (neareastAnimeCompletionAiringAt * 1000) - (new Date).getTime()
-    clearTimeout(animeCompletionUpdateTimeout)
-    animeCompletionUpdateTimeout = setTimeout(() => {
-        updateRecommendationList.update(e => !e)
-    }, Math.min(timeLeftBeforeAnimeCompletionUpdate, 2000000000))
 }
 
 let passedAlgorithmFilter
@@ -365,6 +402,7 @@ const processRecommendedAnimeList = (_data = {}) => {
     return new Promise((resolve, reject) => {
         if (isCurrentlyImporting || get(isImporting)) {
             if (!_data?.isImporting) {
+                showLoadingAnime.set(false)
                 return
             }
         }
@@ -401,6 +439,7 @@ const processRecommendedAnimeList = (_data = {}) => {
                     }
                     if (hasOwnProp?.call?.(data, "error")) {
                         isProcessingList.set(false)
+                        showLoadingAnime.set(false)
                         dataStatus.set(null);
                         progress.set(100)
                         alertError()
@@ -435,14 +474,12 @@ const processRecommendedAnimeList = (_data = {}) => {
                             } catch (e) { }
                         }
                     } else if (hasOwnProp?.call?.(data, "animeCompletionAiringAt")) {
-                        if (typeof data?.animeCompletionAiringAt === "number" && data?.animeCompletionAiringAt > lastProcessRecommendationAiringAt) {
-                            if (!neareastAnimeCompletionAiringAt
-                                || (
-                                    typeof neareastAnimeCompletionAiringAt === "number" &&
-                                    neareastAnimeCompletionAiringAt > data?.animeCompletionAiringAt
-                                )
+                        const animeCompletionAiringAt = data?.animeCompletionAiringAt
+                        if (animeCompletionAiringAt > lastProcessRecommendationAiringAt && typeof animeCompletionAiringAt === "number" && !isNaN(animeCompletionAiringAt)) {
+                            if (
+                                neareastAnimeCompletionAiringAt > animeCompletionAiringAt || neareastAnimeCompletionAiringAt == null
                             ) {
-                                neareastAnimeCompletionAiringAt = data?.animeCompletionAiringAt
+                                neareastAnimeCompletionAiringAt = animeCompletionAiringAt
                             }
                         }
                     } else if (hasOwnProp?.call?.(data, "popularityMode") || hasOwnProp?.call?.(data, "averageScoreMode")) {
@@ -453,9 +490,6 @@ const processRecommendedAnimeList = (_data = {}) => {
                         setLocalStorage("neareastAnimeCompletionAiringAt", neareastAnimeCompletionAiringAt)
                             .catch(() => removeLocalStorage("neareastAnimeCompletionAiringAt"))
                             .finally(() => saveIDBdata(neareastAnimeCompletionAiringAt, "neareastAnimeCompletionAiringAt"));
-                        setLocalStorage("lastProcessRecommendationAiringAt", lastProcessRecommendationAiringAt)
-                            .catch(() => removeLocalStorage("lastProcessRecommendationAiringAt"))
-                            .finally(() => saveIDBdata(lastProcessRecommendationAiringAt, "lastProcessRecommendationAiringAt"));
                         if (window?.shouldUpdateNotifications === true && get(android)) {
                             window.shouldUpdateNotifications = false
                             if (typeof (get(username)) === "string") {
@@ -486,12 +520,14 @@ const processRecommendedAnimeList = (_data = {}) => {
                 };
                 processRecommendedAnimeListWorker.onerror = (error) => {
                     isProcessingList.set(false)
+                    showLoadingAnime.set(false)
                     dataStatus.set(null)
                     progress.set(100)
                     reject(error);
                 };
             }).catch((error) => {
                 isProcessingList.set(false)
+                showLoadingAnime.set(false)
                 dataStatus.set(null)
                 progress.set(100)
                 alertError()
@@ -950,6 +986,7 @@ const importUserData = (_data) => {
             isImporting.set(true)
             animeManagerWorker?.terminate?.()
             animeManagerWorker = null
+            showLoadingAnime.set(false)
             stopConflictingWorkers({ isImporting: true })
         }
         progress.set(0)
@@ -1143,7 +1180,7 @@ const getExtraInfo = () => {
 // IndexedDB
 const getIDBdata = (name) => {
     return new Promise((resolve, reject) => {
-        cacheRequest("./webapi/worker/getIDBdata.js", 2601, "Retrieving Some Data")
+        cacheRequest("./webapi/worker/getIDBdata.js", 2587, "Retrieving Some Data")
             .then(url => {
                 let worker = new Worker(url)
                 worker.postMessage({ name })
@@ -1341,6 +1378,7 @@ function stopConflictingWorkers(blocker) {
     userRequestIsRunning.set(false)
     processRecommendedAnimeListWorker?.terminate?.()
     isProcessingList.set(false)
+    showLoadingAnime.set(false)
     importUserDataWorker?.terminate?.()
     isImporting.set(blocker?.isImporting ?? false)
     isCurrentlyImporting = blocker?.isImporting ?? false

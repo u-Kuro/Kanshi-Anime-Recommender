@@ -29,6 +29,7 @@
         selectedAnimeGridEl,
         shownAllInList,
         runIsScrolling,
+        showLoadingAnime,
     } from "../../js/globalValues.js";
     import { animeLoader } from "../../js/workerUtils.js";
 
@@ -432,7 +433,11 @@
                     {@const isNovel = loweredFormat === "novel"}
                     <div
                         class="{'image-card' +
-                            (anime?.isLoading ? ' semi-loading' : '')}"
+                            ($showLoadingAnime === mainCategory ||
+                            $showLoadingAnime === true ||
+                            anime?.isLoading
+                                ? ' semi-loading'
+                                : '')}"
                         bind:this="{anime.gridElement}"
                         title="{anime?.briefInfo || ''}"
                     >
@@ -757,10 +762,6 @@
     .skeleton {
         border-radius: 6px !important;
         background-color: hsla(0, 0%, 10%, 0.5) !important;
-    }
-
-    .image-card.loading {
-        animation: loadingBlink 1.5s ease-in-out infinite;
     }
 
     .image-card.semi-loading {
@@ -1116,18 +1117,6 @@
             -ms-transform: translateX(100%) translateZ(0);
             -moz-transform: translateX(100%) translateZ(0);
             -o-transform: translateX(100%) translateZ(0);
-        }
-    }
-
-    @keyframes loadingBlink {
-        0% {
-            opacity: 1;
-        }
-        50% {
-            opacity: 0.5;
-        }
-        100% {
-            opacity: 1;
         }
     }
 
