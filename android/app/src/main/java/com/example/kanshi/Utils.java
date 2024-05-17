@@ -14,17 +14,21 @@ import android.graphics.drawable.Icon;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
+import android.os.Looper;
 import android.os.storage.StorageManager;
 import android.os.storage.StorageVolume;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
+import android.util.Log;
 
 import androidx.annotation.RequiresApi;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.text.SimpleDateFormat;
@@ -321,5 +325,78 @@ public class Utils {
 
         return output;
     }
+
+    private static boolean isUIThread() {
+        return Looper.getMainLooper().getThread() == Thread.currentThread();
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.R)
+    public static void handleUncaughtException(Context context, Throwable e, String fileFrom) {
+        if (!Configs.isOwner) { return; }
+        e.printStackTrace(); // not all Android versions will print the stack trace automatically
+        SharedPreferences prefs = context.getApplicationContext().getSharedPreferences("com.example.kanshi", Context.MODE_PRIVATE);
+        String exportPath = prefs.getString("savedExportPath", "");
+        if (!"".equals(exportPath) && Environment.isExternalStorageManager()) {
+            File exportDirectory = new File(exportPath);
+            if (exportDirectory.isDirectory()) {
+                String directoryPath = exportPath + File.separator;
+                File directory = new File(directoryPath);
+                boolean dirIsCreated;
+                if (!directory.exists()) {
+                    dirIsCreated = directory.mkdirs();
+                } else {
+                    dirIsCreated = true;
+                }
+                if (directory.isDirectory() && dirIsCreated) {
+                    final String filename = "error_log.txt";
+                    File file = new File(directory, filename);
+                    String threadType = isUIThread() ? "UI Thread" : "Non-UI Thread";
+                    logErrorToFile(file, e, threadType, fileFrom);
+                }
+            }
+        }
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    private static void logErrorToFile(File logFile, Throwable e, String threadType, String fileFrom) {
+        final SimpleDateFormat dateFormat = new SimpleDateFormat("EEEE, MMMM d, yyyy h:mm:ss a", Locale.US);
+        StringBuilder newLogEntry = new StringBuilder();
+        String timestamp = dateFormat.format(new Date());
+        newLogEntry.append("_________________________________________\n\n");
+        newLogEntry.append("Time: ").append(timestamp).append("\n");
+        newLogEntry.append("File From: ").append(fileFrom).append("\n");
+        newLogEntry.append("Thread: ").append(threadType).append("\n");
+        newLogEntry.append("Exception: ").append(e.toString()).append("\n");
+        if (e.getStackTrace().length > 0) {
+            StackTraceElement firstElement = e.getStackTrace()[0];
+            newLogEntry.append("At: ")
+                    .append(firstElement.getClassName())
+                    .append(".")
+                    .append(firstElement.getMethodName())
+                    .append("(")
+                    .append(firstElement.getFileName())
+                    .append(":")
+                    .append(firstElement.getLineNumber())
+                    .append(")\n");
+        }
+        for (StackTraceElement element : e.getStackTrace()) {
+            newLogEntry.append("\tat ").append(element.toString()).append("\n");
+        }
+        try {
+            String existingContent = "";
+            if (logFile.exists()) {
+                existingContent = new String(Files.readAllBytes(logFile.toPath()), StandardCharsets.UTF_8);
+            }
+            try (FileWriter writer = new FileWriter(logFile)) {
+                writer.write(newLogEntry.toString());
+                writer.write(existingContent);
+            } catch (Exception e1) {
+                Log.e("Kanshi-Kuro 1", "Error writing to log file", e1);
+            }
+        } catch (Exception e2) {
+            Log.e("Kanshi-Kuro 2", "Error writing to log file", e2);
+        }
+    }
+
 }
 

@@ -47,15 +47,17 @@ public class ReleasedTabFragment extends Fragment {
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        weakActivity = new WeakReference<>(ReleasedTabFragment.this);
+        context = requireContext();
+        // Log Errors
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            Thread.setDefaultUncaughtExceptionHandler((thread, e) -> Utils.handleUncaughtException(context.getApplicationContext(), e, "ReleasedTabFragment"));
+        }
 
         View releasedView = inflater.inflate(R.layout.anime_release_tab_fragment, container, false);
-
-        context = requireContext();
-
+        // Init Global Variables
         animeReleasesList = releasedView.findViewById(R.id.anime_releases_list);
-
         swipeRefresh = releasedView.findViewById(R.id.swipe_refresh_anime_release);
+
         swipeRefresh.setProgressBackgroundColorSchemeResource(R.color.darker_grey);
         swipeRefresh.setColorSchemeResources(R.color.faded_white);
 
@@ -70,6 +72,8 @@ public class ReleasedTabFragment extends Fragment {
         });
 
         updateReleasedAnime();
+
+        weakActivity = new WeakReference<>(ReleasedTabFragment.this);
         return releasedView;
     }
 

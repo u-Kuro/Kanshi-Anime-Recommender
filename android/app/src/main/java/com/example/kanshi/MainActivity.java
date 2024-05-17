@@ -96,8 +96,6 @@ import androidx.core.content.FileProvider;
 import androidx.core.splashscreen.SplashScreen;
 
 public class MainActivity extends AppCompatActivity {
-    public final int appID = 393;
-    private final boolean isOwner = true;
     public boolean keepAppRunningInBackground = false;
     public boolean showOriginalSplashScreen = true;
     public RelativeLayout splashScreenLayout;
@@ -205,6 +203,22 @@ public class MainActivity extends AppCompatActivity {
     @SuppressLint({"SetJavaScriptEnabled", "WrongViewCast"})
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
+        // Log Errors
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            Thread.setDefaultUncaughtExceptionHandler((thread, e) -> Utils.handleUncaughtException(MainActivity.this.getApplicationContext(), e, "MainActivity"));
+        }
+
+        // Create WebView App Instance
+        SplashScreen splashScreen = SplashScreen.installSplashScreen(this);
+        splashScreen.setKeepOnScreenCondition(() -> showOriginalSplashScreen);
+
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        // Init Global Variables
+        splashScreenLayout = findViewById(R.id.splash_screen);
+        webView = findViewById(R.id.webView);
+        progressbar = findViewById(R.id.progressbar);
+        progressbar.setMax((int) Math.pow(10, 6));
         // Shared Preference
         prefs = MainActivity.this.getSharedPreferences("com.example.kanshi", Context.MODE_PRIVATE);
         prefsEdit = prefs.edit();
@@ -212,25 +226,16 @@ public class MainActivity extends AppCompatActivity {
         keepAppRunningInBackground = prefs.getBoolean("keepAppRunningInBackground", true);
         exportPath = prefs.getString("savedExportPath", "");
         permissionIsAsked = prefs.getBoolean("permissionIsAsked", false);
-        // Get Activity Reference
-        weakActivity = new WeakReference<>(MainActivity.this);
-        // Create WebView App Instance
-        SplashScreen splashScreen = SplashScreen.installSplashScreen(this);
-        splashScreen.setKeepOnScreenCondition(() -> showOriginalSplashScreen);
+        // Keep Awake on Lock Screen
+        wakeLock = ((PowerManager) getSystemService(Context.POWER_SERVICE)).newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "KeepAwake:");
+        wakeLock.acquire(10 * 60 * 1000L);
+        // Others
+        currentOrientation = getResources().getConfiguration().orientation;
+
         // Show status bar
         getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
         getWindow().getDecorView().setBackgroundColor(Color.BLACK);
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
 
-        // Keep Awake on Lock Screen
-        PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
-        wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "KeepAwake:");
-        wakeLock.acquire(10 * 60 * 1000L);
-        splashScreenLayout = findViewById(R.id.splash_screen);
-        webView = findViewById(R.id.webView);
-        progressbar = findViewById(R.id.progressbar);
-        progressbar.setMax((int) Math.pow(10, 6));
         // Add On Press Back Listener
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override
@@ -252,8 +257,8 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
+
         // Orientation
-        currentOrientation = getResources().getConfiguration().orientation;
         if (currentOrientation == Configuration.ORIENTATION_LANDSCAPE) {
             progressbar.setProgressBackgroundTintList(ColorStateList.valueOf(Color.BLACK));
             getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
@@ -264,6 +269,7 @@ public class MainActivity extends AppCompatActivity {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             webView.setImportantForAutofill(View.IMPORTANT_FOR_AUTOFILL_YES);
         }
+
         // Set WebView Settings
         WebSettings webSettings = webView.getSettings();
         webSettings.setJavaScriptEnabled(true);
@@ -283,6 +289,7 @@ public class MainActivity extends AppCompatActivity {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             webSettings.setOffscreenPreRaster(true);
         }
+
         // Set WebView Configs
         webView.setVerticalScrollBarEnabled(false);
         webView.setHorizontalScrollBarEnabled(false);
@@ -293,6 +300,7 @@ public class MainActivity extends AppCompatActivity {
                 WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
                 WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED);
         webView.setLayerType(View.LAYER_TYPE_NONE, null);
+
         // Add Bridge to WebView
         webView.addJavascriptInterface(new JSBridge(), "JSBridge");
         webView.setWebViewClient(new WebViewClient() {
@@ -303,7 +311,7 @@ public class MainActivity extends AppCompatActivity {
                 if (visited) {
                     view.loadUrl("javascript:(()=>window['" + visitedKey + "']=true)();");
                 }
-                if (isOwner) {
+                if (Configs.isOwner) {
                     view.loadUrl("javascript:(()=>window['" + isOwnerKey + "']=true)();");
                 }
                 if (isReloaded) {
@@ -513,6 +521,9 @@ public class MainActivity extends AppCompatActivity {
             }
         }), 3500, 3500);
         Utils.cleanIndexedDBFiles(this.getApplicationContext());
+
+        // Get Activity Reference
+        weakActivity = new WeakReference<>(MainActivity.this);
     }
 
     public static MainActivity getInstanceActivity() {
@@ -530,11 +541,13 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public void onWindowFocusChanged(boolean hasFocus) {
-        webView.setKeepScreenOn(true);
-        webView.resumeTimers();
-        webView.setVisibility(View.VISIBLE);
-        webView.onWindowSystemUiVisibilityChanged(View.VISIBLE);
-        webView.onWindowVisibilityChanged(View.VISIBLE);
+        if (webView!=null) {
+            webView.setKeepScreenOn(true);
+            webView.resumeTimers();
+            webView.setVisibility(View.VISIBLE);
+            webView.onWindowSystemUiVisibilityChanged(View.VISIBLE);
+            webView.onWindowVisibilityChanged(View.VISIBLE);
+        }
         MainActivity.this.setVisible(true);
         MainActivity.this.requestVisibleBehind(true);
     }
@@ -543,11 +556,13 @@ public class MainActivity extends AppCompatActivity {
     protected void onPause() {
         isInApp = false;
         setBackgroundUpdates();
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            webView.getSettings().setOffscreenPreRaster(false);
+        if (webView!=null) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                webView.getSettings().setOffscreenPreRaster(false);
+            }
+            webView.loadUrl("javascript:window?.returnedAppIsVisible?.(false)");
         }
         super.onPause();
-        webView.loadUrl("javascript:window?.returnedAppIsVisible?.(false)");
     }
 
     @Override
@@ -573,16 +588,18 @@ public class MainActivity extends AppCompatActivity {
             persistentToast = null;
         }
         super.onResume();
-        webView.loadUrl("javascript:" +
-                "window?.returnedAppIsVisible?.(true);" + // Should Be Runned First
-                (shouldRefreshList ?
-                        "window?.shouldRefreshAnimeList?.("
-                                + (shouldProcessRecommendationList ? "true" : "false") + ","
-                                + (shouldLoadAnime ? "true" : "false")
-                                + ");"
-                        : "window?.checkEntries?.();")
-        );
-        shouldRefreshList = shouldProcessRecommendationList = shouldLoadAnime = false;
+        if (webView!=null) {
+            webView.loadUrl("javascript:" +
+                    "window?.returnedAppIsVisible?.(true);" + // Should Be Runned First
+                    (shouldRefreshList ?
+                            "window?.shouldRefreshAnimeList?.("
+                                    + (shouldProcessRecommendationList ? "true" : "false") + ","
+                                    + (shouldLoadAnime ? "true" : "false")
+                                    + ");"
+                            : "window?.checkEntries?.();")
+            );
+            shouldRefreshList = shouldProcessRecommendationList = shouldLoadAnime = false;
+        }
     }
 
     public void refreshMediaList() {
@@ -599,7 +616,9 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         isInApp = false;
-        webView.post(() -> webView.loadUrl("javascript:window?.notifyUpdatedAnimeNotification?.()"));
+        if (webView!=null) {
+            webView.post(() -> webView.loadUrl("javascript:window?.notifyUpdatedAnimeNotification?.()"));
+        }
         if (writer!=null) {
             try {
                 writer.close();
@@ -610,7 +629,9 @@ public class MainActivity extends AppCompatActivity {
         }
         setBackgroundUpdates();
         super.onDestroy();
-        wakeLock.release();
+        if (wakeLock!=null) {
+            wakeLock.release();
+        }
     }
 
     @Override
@@ -623,7 +644,9 @@ public class MainActivity extends AppCompatActivity {
             getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
         }
         getWindow().setStatusBarColor(Color.BLACK);
-        progressbar.setProgressBackgroundTintList(ColorStateList.valueOf(Color.BLACK));
+        if (progressbar!=null) {
+            progressbar.setProgressBackgroundTintList(ColorStateList.valueOf(Color.BLACK));
+        }
     }
 
     // Native and Webview Connection
@@ -913,7 +936,7 @@ public class MainActivity extends AppCompatActivity {
         @RequiresApi(api = Build.VERSION_CODES.O)
         @JavascriptInterface
         public void checkAppID(int _appID, boolean manualCheck) {
-            if (_appID > appID) {
+            if (_appID > Configs.appID) {
                 showUpdateNotice();
             } else if (manualCheck) {
                 showToast(Toast.makeText(getApplicationContext(), "Application is up to date.", Toast.LENGTH_LONG));

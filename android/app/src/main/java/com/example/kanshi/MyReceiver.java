@@ -17,6 +17,9 @@ public class MyReceiver extends BroadcastReceiver {
     @RequiresApi(api = Build.VERSION_CODES.P)
     @Override
     public void onReceive(Context context, Intent intent) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            Thread.setDefaultUncaughtExceptionHandler((thread, e) -> Utils.handleUncaughtException(context.getApplicationContext(), e, "MyReceiver"));
+        }
         String action = intent.getAction();
         if ("ANIME_NOTIFICATION".equals(action) ||
                 "android.intent.action.BOOT_COMPLETED".equals(action) ||

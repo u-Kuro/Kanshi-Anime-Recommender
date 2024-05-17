@@ -147,19 +147,24 @@ public class AnimeReleaseActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
-        weakActivity = new WeakReference<>(AnimeReleaseActivity.this);
-
-        prefs = this.getSharedPreferences("com.example.kanshi", Context.MODE_PRIVATE);
-        prefsEdit = prefs.edit();
+        // Log Errors
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            Thread.setDefaultUncaughtExceptionHandler((thread, e) -> Utils.handleUncaughtException(AnimeReleaseActivity.this.getApplicationContext(), e, "AnimeReleaseActivity"));
+        }
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.anime_releases_activity);
+        // Init Global Variables
+        animeReleaseSpinner = findViewById(R.id.anime_release_spinner);
+        viewPager = findViewById(R.id.view_pager);
+        prefs = this.getSharedPreferences("com.example.kanshi", Context.MODE_PRIVATE);
+        prefsEdit = prefs.edit();
+        showUnwatchedAnime = prefs.getBoolean("showUnwatchedAnime", false);
 
         if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {
             getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
         }
 
-        animeReleaseSpinner = findViewById(R.id.anime_release_spinner);
         animeReleaseSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @RequiresApi(api = Build.VERSION_CODES.O)
             @Override
@@ -183,7 +188,6 @@ public class AnimeReleaseActivity extends AppCompatActivity {
             public void onNothingSelected(AdapterView<?> adapterView) {}
         });
 
-        showUnwatchedAnime = prefs.getBoolean("showUnwatchedAnime", false);
         ImageView completed_anime_switch = findViewById(R.id.completed_anime_switch);
         if (showUnwatchedAnime) {
             completed_anime_switch.setImageResource(R.drawable.not_done_white);
@@ -240,7 +244,6 @@ public class AnimeReleaseActivity extends AppCompatActivity {
         }
 
         TabLayout tabLayout = findViewById(R.id.tab_layout);
-        viewPager = findViewById(R.id.view_pager);
 
         FragmentStateAdapter adminViewAdapter = new AnimeReleaseViewAdapter(this);
 
@@ -289,6 +292,8 @@ public class AnimeReleaseActivity extends AppCompatActivity {
             startActivity(i);
             overridePendingTransition(R.anim.none, R.anim.fade_out);
         });
+
+        weakActivity = new WeakReference<>(AnimeReleaseActivity.this);
     }
 
     boolean wasOpened;
@@ -328,9 +333,11 @@ public class AnimeReleaseActivity extends AppCompatActivity {
         } else {
             getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
         }
-        viewPager.beginFakeDrag();
-        viewPager.fakeDragBy(1);
-        viewPager.endFakeDrag();
+        if (viewPager!=null) {
+            viewPager.beginFakeDrag();
+            viewPager.fakeDragBy(1);
+            viewPager.endFakeDrag();
+        }
     }
 
     public void backupBottomDialog() {

@@ -91,11 +91,12 @@ public class MainService extends Service {
             stopSelf();
         } else if (SET_MAIN_SERVICE.equals(intent.getAction())) {
             if (ActivityCompat.checkSelfPermission(this.getApplicationContext(), android.Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
-                keepAppRunningInBackground = !keepAppRunningInBackground;
                 MainActivity mainActivity = MainActivity.getInstanceActivity();
                 if (mainActivity != null) {
+                    keepAppRunningInBackground = !keepAppRunningInBackground;
                     mainActivity.changeKeepAppRunningInBackground(keepAppRunningInBackground);
-                } else {
+                } else if (prefsEdit!=null) {
+                    keepAppRunningInBackground = !keepAppRunningInBackground;
                     prefsEdit.putBoolean("keepAppRunningInBackground", keepAppRunningInBackground).apply();
                 }
                 updateNotificationTitle("");
@@ -107,17 +108,20 @@ public class MainService extends Service {
     @RequiresApi(api = Build.VERSION_CODES.TIRAMISU)
     @Override
     public void onCreate() {
-        weakActivity = new WeakReference<>(MainService.this);
-        super.onCreate();
-
-        MainActivity mainActivity = MainActivity.getInstanceActivity();
-        if (mainActivity!=null) {
-            if (mainActivity.isInApp) {
-                stopForeground(true);
-                stopSelf();
-                return;
-            }
+        // Log Errors
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            Thread.setDefaultUncaughtExceptionHandler((thread, e) -> Utils.handleUncaughtException(MainService.this.getApplicationContext(), e, "MainService"));
         }
+
+        super.onCreate();
+        // Init Global Variables
+        webView = new MediaWebView(this);
+        prefs = this.getSharedPreferences("com.example.kanshi", Context.MODE_PRIVATE);
+        prefsEdit = prefs.edit();
+        // Saved Data
+        keepAppRunningInBackground = prefs.getBoolean("keepAppRunningInBackground",true);
+        exportPath = prefs.getString("savedExportPath", "");
+
         // Create a notification channel
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             CharSequence name = "Background Application";
@@ -132,13 +136,16 @@ public class MainService extends Service {
             notificationManager.createNotificationChannel(channel);
         }
 
-        prefs = this.getSharedPreferences("com.example.kanshi", Context.MODE_PRIVATE);
-        prefsEdit = prefs.edit();
-        // Saved Data
-        keepAppRunningInBackground = prefs.getBoolean("keepAppRunningInBackground",true);
-        exportPath = prefs.getString("savedExportPath", "");
+        // If is still in app
+        MainActivity mainActivity = MainActivity.getInstanceActivity();
+        if (mainActivity!=null) {
+            if (mainActivity.isInApp) {
+                stopForeground(true);
+                stopSelf();
+                return;
+            }
+        }
 
-        webView = new MediaWebView(this);
         // Set WebView Settings
         WebSettings webSettings = webView.getSettings();
         webSettings.setJavaScriptEnabled(true);
@@ -242,11 +249,15 @@ public class MainService extends Service {
         isReloaded = true;
         webView.loadUrl("https://u-kuro.github.io/Kanshi-Anime-Recommender/");
         Utils.cleanIndexedDBFiles(this.getApplicationContext());
+
+        weakActivity = new WeakReference<>(MainService.this);
     }
 
     @Override
     public void onDestroy() {
-        webView.destroy();
+        if (webView!=null) {
+            webView.destroy();
+        }
         if (writer!=null) {
             try {
                 writer.close();

@@ -205,7 +205,7 @@ public class AnimeNotificationManager {
             int importance = NotificationManager.IMPORTANCE_DEFAULT;
             NotificationChannel channel = new NotificationChannel(RECENTLY_UPDATED_ANIME_CHANNEL, name, importance);
             channel.setDescription(description);
-            channel.enableVibration(true);
+            channel.enableVibration(Configs.isOwner);
 
             NotificationManager notificationManager = context.getSystemService(NotificationManager.class);
             notificationManager.createNotificationChannel(channel);

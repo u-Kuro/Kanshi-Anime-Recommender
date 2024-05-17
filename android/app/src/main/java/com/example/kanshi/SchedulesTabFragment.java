@@ -47,15 +47,17 @@ public class SchedulesTabFragment extends Fragment {
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        weakActivity = new WeakReference<>(SchedulesTabFragment.this);
+        context = requireContext();
+        // Log Errors
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            Thread.setDefaultUncaughtExceptionHandler((thread, e) -> Utils.handleUncaughtException(context.getApplicationContext(), e, "SchedulesTabFragment"));
+        }
 
         View schedulesView = inflater.inflate(R.layout.anime_release_tab_fragment, container, false);
-
-        context = requireContext();
-
+        // Init Global Variables
         animeReleasesList = schedulesView.findViewById(R.id.anime_releases_list);
-
         swipeRefresh = schedulesView.findViewById(R.id.swipe_refresh_anime_release);
+
         swipeRefresh.setProgressBackgroundColorSchemeResource(R.color.darker_grey);
         swipeRefresh.setColorSchemeResources(R.color.faded_white);
 
@@ -70,6 +72,8 @@ public class SchedulesTabFragment extends Fragment {
         });
 
         updateScheduledAnime();
+
+        weakActivity = new WeakReference<>(SchedulesTabFragment.this);
         return schedulesView;
     }
 

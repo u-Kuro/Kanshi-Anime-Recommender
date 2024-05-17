@@ -80,25 +80,27 @@ public class YoutubeViewActivity extends AppCompatActivity {
     @SuppressLint({"SetJavaScriptEnabled", "RestrictedApi", "ClickableViewAccessibility"})
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        String passedUrl = getIntent().getStringExtra("url");
+        // Log Errors
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            Thread.setDefaultUncaughtExceptionHandler((thread, e) -> Utils.handleUncaughtException(YoutubeViewActivity.this.getApplicationContext(), e, "YoutubeViewActivity"));
+        }
+
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_web);
+        // Init Global Variables
+        webView = findViewById(R.id.webView);
+        siteName = findViewById(R.id.site);
         isInitialYTVActivity = getIntent().getBooleanExtra("fromMainActivity", false);
+
+        String passedUrl = getIntent().getStringExtra("url");
+
+        ImageView launchUrl = findViewById(R.id.launchURL);
+        ImageView close = findViewById(R.id.close_youtube);
+        ProgressBar progressbar = findViewById(R.id.progressbar);
+
         // Show status bar
         getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
         getWindow().getDecorView().setBackgroundColor(Color.BLACK);
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_web);
-
-        // Set click listeners for the custom ActionBar buttons
-        ImageView close = findViewById(R.id.close_youtube);
-        close.setOnClickListener(v -> {
-            webView.destroy();
-            Intent i = new Intent(this, MainActivity.class);
-            i.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-            startActivity(i);
-            overridePendingTransition(R.anim.none, R.anim.fade_out);
-        });
-
-        ImageView launchUrl = findViewById(R.id.launchURL);
 
         launchUrl.setOnClickListener(v -> {
             try {
@@ -109,9 +111,15 @@ public class YoutubeViewActivity extends AppCompatActivity {
             }
         });
 
-        // Add WebView on Layout
-        webView = findViewById(R.id.webView);
-        siteName = findViewById(R.id.site);
+        // Set click listeners for the custom ActionBar buttons
+        close.setOnClickListener(v -> {
+            webView.destroy();
+            Intent i = new Intent(this, MainActivity.class);
+            i.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+            startActivity(i);
+            overridePendingTransition(R.anim.none, R.anim.fade_out);
+        });
+
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
@@ -131,6 +139,7 @@ public class YoutubeViewActivity extends AppCompatActivity {
                 }
             }
         });
+
         siteName.setOnLongClickListener(view -> {
             String text = webView.getUrl();
             if (text != null && !text.isEmpty()) {
@@ -141,11 +150,12 @@ public class YoutubeViewActivity extends AppCompatActivity {
             }
             return false;
         });
-        ProgressBar progressbar = findViewById(R.id.progressbar);
+
         progressbar.setMax((int) Math.pow(10,6));
         if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {
             getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
         }
+
         webView.setWebChromeClient(new WebChromeClient() {
             private View mCustomView;
             private CustomViewCallback mCustomViewCallback;
@@ -402,14 +412,16 @@ public class YoutubeViewActivity extends AppCompatActivity {
         if (mainActivity!=null) {
             mainActivity.isInApp = true;
         }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            webView.getSettings().setOffscreenPreRaster(true);
-        }
         if (webViewIsLoaded) {
             overridePendingTransition(R.anim.none, R.anim.fade_out);
         }
-        webView.onResume();
-        webView.resumeTimers();
+        if (webView!=null) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                webView.getSettings().setOffscreenPreRaster(true);
+            }
+            webView.onResume();
+            webView.resumeTimers();
+        }
         super.onResume();
     }
 
@@ -420,18 +432,22 @@ public class YoutubeViewActivity extends AppCompatActivity {
             mainActivity.isInApp = false;
             mainActivity.setBackgroundUpdates();
         }
-        autoPlayVideo(webView);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            webView.getSettings().setOffscreenPreRaster(false);
+        if (webView!=null) {
+            autoPlayVideo(webView);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                webView.getSettings().setOffscreenPreRaster(false);
+            }
+            webView.onPause();
+            webView.pauseTimers();
         }
-        webView.onPause();
-        webView.pauseTimers();
         super.onPause();
     }
 
     @Override
     protected void onDestroy() {
-        webView.destroy();
+        if (webView!=null) {
+            webView.destroy();
+        }
         super.onDestroy();
     }
 

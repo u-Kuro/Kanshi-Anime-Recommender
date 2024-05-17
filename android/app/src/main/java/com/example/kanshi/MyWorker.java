@@ -54,12 +54,20 @@ public class MyWorker extends Worker {
 
     public MyWorker(@NonNull Context context, @NonNull WorkerParameters workerParams) {
         super(context, workerParams);
+        // Log Errors
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            Thread.setDefaultUncaughtExceptionHandler((thread, e) -> Utils.handleUncaughtException(context.getApplicationContext(), e, "MyWorker 1"));
+        }
     }
 
     @RequiresApi(api = Build.VERSION_CODES.P)
     @NonNull
     @Override
     public Result doWork() {
+        // Log Errors
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            Thread.setDefaultUncaughtExceptionHandler((thread, e) -> Utils.handleUncaughtException(MyWorker.this.getApplicationContext(), e, "MyWorker 2"));
+        }
         String action = getInputData().getString("action");
         if ("UPDATE_DATA".equals(action)) {
             boolean isManual = getInputData().getBoolean("isManual",true);
