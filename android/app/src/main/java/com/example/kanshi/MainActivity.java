@@ -323,20 +323,6 @@ public class MainActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onPageFinished(WebView view, String url) {
-                if (!pageLoaded) {
-                    showOriginalSplashScreen = false;
-                    showDialog(new AlertDialog.Builder(MainActivity.this)
-                        .setTitle("Connection Failed")
-                        .setMessage("Do you want to reconnect indefinitely?")
-                        .setPositiveButton("YES", ((dialog, i) -> reconnectLonger())),
-                    false,true
-                    );
-                }
-                super.onPageFinished(view, url);
-            }
-
-            @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 // In App Browsing
                 String url = request.getUrl().toString();

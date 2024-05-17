@@ -179,13 +179,6 @@ public class MainService extends Service {
                 }
                 super.onPageStarted(view, url, favicon);
             }
-
-            @Override
-            public void onPageFinished(WebView view, String url) {
-                updateNotificationTitle("");
-                super.onPageFinished(view, url);
-            }
-
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 return true;
