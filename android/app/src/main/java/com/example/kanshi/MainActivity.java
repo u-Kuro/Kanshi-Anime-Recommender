@@ -3,6 +3,10 @@ package com.example.kanshi;
 import static android.Manifest.permission.POST_NOTIFICATIONS;
 import static android.provider.Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION;
 import static android.provider.Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM;
+import static com.example.kanshi.Configs.DATA_EVICTION_CHANNEL;
+import static com.example.kanshi.Configs.NOTIFICATION_DATA_EVICTION;
+import static com.example.kanshi.Configs.isOwnerKey;
+import static com.example.kanshi.Configs.visitedKey;
 import static com.example.kanshi.Utils.*;
 
 import androidx.activity.OnBackPressedCallback;
@@ -110,10 +114,6 @@ public class MainActivity extends AppCompatActivity {
     private boolean pageLoaded = false;
     private boolean webViewIsLoaded = false;
     public boolean isReloaded = true;
-    private final String uniqueKey = "Kanshi.Anime.Recommendations.Anilist.W~uPtWCq=vG$TR:Zl^#t<vdS]I~N70";
-    private final String visitedKey = uniqueKey+".visited";
-    private final String isOwnerKey = uniqueKey+".isOwner";
-
     private PowerManager.WakeLock wakeLock;
     public boolean shouldGoBack;
     public Toast persistentToast;
@@ -240,7 +240,7 @@ public class MainActivity extends AppCompatActivity {
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
-                if (webView.getUrl() != null && (webView.getUrl().startsWith("https://u-kuro.github.io/Kanshi-Anime-Recommender"))) {
+                if (webView != null && webView.getUrl() != null && webView.getUrl().startsWith("https://u-kuro.github.io/Kanshi-Anime-Recommender")) {
                     if (!shouldGoBack) {
                         webView.loadUrl("javascript:window?.backPressed?.();");
                     } else {
@@ -248,7 +248,7 @@ public class MainActivity extends AppCompatActivity {
                         moveTaskToBack(true);
                     }
                 } else {
-                    if (webView.canGoBack()) {
+                    if (webView != null && webView.canGoBack()) {
                         webView.goBack();
                     } else {
                         hideToast();
@@ -317,32 +317,15 @@ public class MainActivity extends AppCompatActivity {
                 if (isReloaded) {
                     isReloaded = false;
                     view.loadUrl("javascript:(()=>window.shouldUpdateNotifications=true)();");
+                    view.loadUrl("javascript:(()=>window.keepAppRunningInBackground=" + (keepAppRunningInBackground ? "true" : "false") + ")();");
                 }
                 super.onPageStarted(view, url, favicon);
             }
 
             @Override
             public void onPageFinished(WebView view, String url) {
-                if (pageLoaded) {
-                    if (reconnectIndefinitelyDialog != null && reconnectIndefinitelyDialog.isShowing()) {
-                        reconnectIndefinitelyDialog.dismiss();
-                        reconnectIndefinitelyDialog = null;
-                    }
-                    splashScreenLayout.setVisibility(View.GONE);
+                if (!pageLoaded) {
                     showOriginalSplashScreen = false;
-                    ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-                    Network network = connectivityManager.getActiveNetwork();
-                    if (network == null) {
-                        showToast(Toast.makeText(getApplicationContext(), "You are currently offline.", Toast.LENGTH_LONG));
-                        view.loadUrl("javascript:window?.isCurrentlyOffline?.()");
-                    }
-                    CookieManager cookieManager = CookieManager.getInstance();
-                    cookieManager.setAcceptCookie(true);
-                    cookieManager.setAcceptThirdPartyCookies(view, true);
-                    CookieManager.getInstance().acceptCookie();
-                    CookieManager.getInstance().flush();
-                    view.loadUrl("javascript:window?.setKeepAppRunningInBackground?.(" + (keepAppRunningInBackground ? "true" : "false") + ")");
-                } else {
                     showDialog(new AlertDialog.Builder(MainActivity.this)
                         .setTitle("Connection Failed")
                         .setMessage("Do you want to reconnect indefinitely?")
@@ -520,6 +503,7 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         }), 3500, 3500);
+        setReleaseNotification();
         Utils.cleanIndexedDBFiles(this.getApplicationContext());
 
         // Get Activity Reference
@@ -667,7 +651,6 @@ public class MainActivity extends AppCompatActivity {
                     Network network = connectivityManager.getActiveNetwork();
                     if (network == null) {
                         showToast(Toast.makeText(getApplicationContext(), "You are currently offline.", Toast.LENGTH_LONG));
-                        webView.loadUrl("javascript:window?.isCurrentlyOffline?.()");
                     }
                 }
                 CookieManager cookieManager = CookieManager.getInstance();
@@ -675,7 +658,6 @@ public class MainActivity extends AppCompatActivity {
                 cookieManager.setAcceptThirdPartyCookies(webView, true);
                 CookieManager.getInstance().acceptCookie();
                 CookieManager.getInstance().flush();
-                webView.loadUrl("javascript:window?.setKeepAppRunningInBackground?.(" + (keepAppRunningInBackground ? "true" : "false") + ")");
             });
         }
         @JavascriptInterface
@@ -686,8 +668,6 @@ public class MainActivity extends AppCompatActivity {
         @JavascriptInterface
         public void notifyDataEviction() {
             if (ActivityCompat.checkSelfPermission(MainActivity.this.getApplicationContext(), android.Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
-                final String DATA_EVICTION_CHANNEL = "data_eviction_channel";
-                final int NOTIFICATION_DATA_EVICTION = 993;
                 if (!dataEvictionChannelIsAdded) {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                         CharSequence name = "Data Eviction";
@@ -1095,18 +1075,17 @@ public class MainActivity extends AppCompatActivity {
         webView.post(()->webView.reload());
     }
     public void setBackgroundUpdates() {
-        final int UPDATE_DATA_PENDING_INTENT = 994;
         long backgroundUpdateTime = prefs.getLong("lastBackgroundUpdateTime", System.currentTimeMillis());
         Intent newIntent = new Intent(this.getApplicationContext(), MyReceiver.class);
         newIntent.setAction("UPDATE_DATA_MANUAL");
 
-        PendingIntent newPendingIntent = PendingIntent.getBroadcast(this.getApplicationContext(), UPDATE_DATA_PENDING_INTENT, newIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        PendingIntent newPendingIntent = PendingIntent.getBroadcast(this.getApplicationContext(), Configs.UPDATE_DATA_PENDING_INTENT, newIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
         AlarmManager alarmManager = (AlarmManager) this.getApplicationContext().getSystemService(Context.ALARM_SERVICE);
         // Cancel Old
         newPendingIntent.cancel();
         alarmManager.cancel(newPendingIntent);
         // Create New
-        newPendingIntent = PendingIntent.getBroadcast(this.getApplicationContext(), UPDATE_DATA_PENDING_INTENT, newIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        newPendingIntent = PendingIntent.getBroadcast(this.getApplicationContext(), Configs.UPDATE_DATA_PENDING_INTENT, newIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             if (alarmManager.canScheduleExactAlarms()) {
                 alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, backgroundUpdateTime, newPendingIntent);
@@ -1121,6 +1100,38 @@ public class MainActivity extends AppCompatActivity {
                     alarmManager.setExact(AlarmManager.RTC_WAKEUP, backgroundUpdateTime, newPendingIntent);
                 } catch (SecurityException ignored) {
                     alarmManager.set(AlarmManager.RTC_WAKEUP, backgroundUpdateTime, newPendingIntent);
+                }
+            }
+        }
+    }
+    public void setReleaseNotification() {
+        final long lastSentNotificationTime = prefs.getLong("lastSentNotificationTime", 0L);
+        if (lastSentNotificationTime != 0L) {
+            Intent newIntent = new Intent(this.getApplicationContext(), MyReceiver.class);
+            newIntent.setAction("ANIME_NOTIFICATION");
+
+            PendingIntent newPendingIntent = PendingIntent.getBroadcast(this.getApplicationContext(), AnimeNotificationManager.ANIME_RELEASE_PENDING_INTENT, newIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+            AlarmManager alarmManager = (AlarmManager) this.getApplicationContext().getSystemService(Context.ALARM_SERVICE);
+            // Cancel Old
+            newPendingIntent.cancel();
+            alarmManager.cancel(newPendingIntent);
+            // Create New
+            newPendingIntent = PendingIntent.getBroadcast(this.getApplicationContext(), AnimeNotificationManager.ANIME_RELEASE_PENDING_INTENT, newIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                if (alarmManager.canScheduleExactAlarms()) {
+                    alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, lastSentNotificationTime, newPendingIntent);
+                } else {
+                    alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, lastSentNotificationTime, newPendingIntent);
+                }
+            } else {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, lastSentNotificationTime, newPendingIntent);
+                } else {
+                    try {
+                        alarmManager.setExact(AlarmManager.RTC_WAKEUP, lastSentNotificationTime, newPendingIntent);
+                    } catch (SecurityException ignored) {
+                        alarmManager.set(AlarmManager.RTC_WAKEUP, lastSentNotificationTime, newPendingIntent);
+                    }
                 }
             }
         }

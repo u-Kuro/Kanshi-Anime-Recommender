@@ -420,6 +420,12 @@
         menuContainerEl =
             menuContainerEl ?? document.getElementById("menu-container");
         navContainerEl = document.getElementById("nav-container");
+        if (
+            typeof window?.keepAppRunningInBackground === "boolean" &&
+            typeof $keepAppRunningInBackground !== "boolean"
+        ) {
+            $keepAppRunningInBackground = window?.keepAppRunningInBackground;
+        }
     });
 
     menuVisible.subscribe((val) => {
@@ -602,17 +608,15 @@
                     e.key === 'Enter' && handleExportEveryHour(e)}"
                 >Auto Export</button
             >
-            {#if typeof $keepAppRunningInBackground === "boolean"}
-                <button
-                    class="{'button' +
-                        ($keepAppRunningInBackground ? ' selected' : '')}"
-                    tabindex="{$menuVisible ? '0' : '-1'}"
-                    on:keyup="{(e) =>
-                        e.key === 'Enter' && persistentBackgroundUpdates(e)}"
-                    on:click="{persistentBackgroundUpdates}"
-                    >Persistent Background Updates</button
-                >
-            {/if}
+            <button
+                class="{'button' +
+                    ($keepAppRunningInBackground === false ? '' : ' selected')}"
+                tabindex="{$menuVisible ? '0' : '-1'}"
+                on:keyup="{(e) =>
+                    e.key === 'Enter' && persistentBackgroundUpdates(e)}"
+                on:click="{persistentBackgroundUpdates}"
+                >Persistent Background Updates</button
+            >
             <button
                 class="button"
                 tabindex="{$menuVisible ? '0' : '-1'}"

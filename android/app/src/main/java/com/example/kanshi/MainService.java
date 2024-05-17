@@ -1,5 +1,10 @@
 package com.example.kanshi;
 
+import static com.example.kanshi.Configs.DATA_EVICTION_CHANNEL;
+import static com.example.kanshi.Configs.NOTIFICATION_DATA_EVICTION;
+import static com.example.kanshi.Configs.isBackgroundUpdateKey;
+import static com.example.kanshi.Configs.visitedKey;
+
 import android.annotation.SuppressLint;
 import android.app.Notification;
 import android.app.NotificationChannel;
@@ -58,15 +63,11 @@ public class MainService extends Service {
     public SharedPreferences prefs;
     private SharedPreferences.Editor prefsEdit;
     private boolean keepAppRunningInBackground = false;
-    private boolean pageLoaded = false;
     public boolean isReloaded = true;
     private final String APP_IN_BACKGROUND_CHANNEL = "app_in_background_channel";
     private final int SERVICE_NOTIFICATION_ID = 995;
     private final String STOP_SERVICE_ACTION = "STOP_MAIN_SERVICE";
     private final String SET_MAIN_SERVICE = "SET_MAIN_SERVICE";
-    private final String uniqueKey = "Kanshi.Anime.Recommendations.Anilist.W~uPtWCq=vG$TR:Zl^#t<vdS]I~N70";
-    private final String isBackgroundUpdateKey = uniqueKey+".isBackgroundUpdate";
-    private final String visitedKey = uniqueKey+".visited";
     public boolean lastBackgroundUpdateIsFinished = false;
     public boolean isAddingAnimeReleaseNotification = false;
     public boolean shouldCallStopService = false;
@@ -86,23 +87,23 @@ public class MainService extends Service {
     @RequiresApi(api = Build.VERSION_CODES.TIRAMISU)
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        if (STOP_SERVICE_ACTION.equals(intent.getAction())) {
+        if (intent != null && STOP_SERVICE_ACTION.equals(intent.getAction())) {
             stopForeground(true);
             stopSelf();
-        } else if (SET_MAIN_SERVICE.equals(intent.getAction())) {
+        } else if (intent != null && SET_MAIN_SERVICE.equals(intent.getAction())) {
             if (ActivityCompat.checkSelfPermission(this.getApplicationContext(), android.Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
                 MainActivity mainActivity = MainActivity.getInstanceActivity();
                 if (mainActivity != null) {
                     keepAppRunningInBackground = !keepAppRunningInBackground;
                     mainActivity.changeKeepAppRunningInBackground(keepAppRunningInBackground);
-                } else if (prefsEdit!=null) {
+                } else if (prefsEdit != null) {
                     keepAppRunningInBackground = !keepAppRunningInBackground;
                     prefsEdit.putBoolean("keepAppRunningInBackground", keepAppRunningInBackground).apply();
                 }
                 updateNotificationTitle("");
             }
         }
-        return START_REDELIVER_INTENT;
+        return START_STICKY;
     }
 
     @RequiresApi(api = Build.VERSION_CODES.TIRAMISU)
@@ -181,13 +182,6 @@ public class MainService extends Service {
 
             @Override
             public void onPageFinished(WebView view, String url) {
-                if (pageLoaded) {
-                    CookieManager cookieManager = CookieManager.getInstance();
-                    cookieManager.setAcceptCookie(true);
-                    cookieManager.setAcceptThirdPartyCookies(view, true);
-                    CookieManager.getInstance().acceptCookie();
-                    CookieManager.getInstance().flush();
-                }
                 updateNotificationTitle("");
                 super.onPageFinished(view, url);
             }
@@ -349,7 +343,6 @@ public class MainService extends Service {
     class JSBridge {
         @JavascriptInterface
         public void pageIsFinished() {
-            pageLoaded = true;
             try {
                 new Handler(Looper.getMainLooper()).post(() -> {
                     CookieManager cookieManager = CookieManager.getInstance();
@@ -371,8 +364,7 @@ public class MainService extends Service {
         @JavascriptInterface
         public void notifyDataEviction() {
             if (ActivityCompat.checkSelfPermission(MainService.this.getApplicationContext(), android.Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
-                final String DATA_EVICTION_CHANNEL = "data_eviction_channel";
-                final int NOTIFICATION_DATA_EVICTION = 993;
+
                 if (!dataEvictionChannelIsAdded) {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                         CharSequence name = "Data Eviction";

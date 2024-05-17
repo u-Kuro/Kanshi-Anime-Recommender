@@ -20,6 +20,7 @@ public class MyReceiver extends BroadcastReceiver {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             Thread.setDefaultUncaughtExceptionHandler((thread, e) -> Utils.handleUncaughtException(context.getApplicationContext(), e, "MyReceiver"));
         }
+        if (intent==null) { return; }
         String action = intent.getAction();
         if ("ANIME_NOTIFICATION".equals(action) ||
                 "android.intent.action.BOOT_COMPLETED".equals(action) ||

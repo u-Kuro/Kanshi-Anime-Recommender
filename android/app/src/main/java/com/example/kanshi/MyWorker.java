@@ -1,5 +1,8 @@
 package com.example.kanshi;
 
+import static com.example.kanshi.AnimeNotificationManager.NOTIFICATION_ANIME_RELEASE;
+import static com.example.kanshi.AnimeNotificationManager.NOTIFICATION_MY_ANIME;
+import static com.example.kanshi.AnimeNotificationManager.NOTIFICATION_OTHER_ANIME;
 import static com.example.kanshi.Utils.createRoundIcon;
 
 import android.Manifest;
@@ -49,9 +52,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 public class MyWorker extends Worker {
-    private static final int UPDATE_DATA_PENDING_INTENT = 994;
-    public final String retryKey = "Kanshi-Anime-Recommendation.Retry";
-
+    public final String RETRY_KEY = "Kanshi-Anime-Recommendation.Retry";
     public MyWorker(@NonNull Context context, @NonNull WorkerParameters workerParams) {
         super(context, workerParams);
         // Log Errors
@@ -351,22 +352,19 @@ public class MyWorker extends Worker {
             boolean shouldNotify = lastSentNotificationTime == 0L || mostRecentlySentNotificationTime > lastSentNotificationTime;
             if (!isBooted || shouldNotify) {
                 if (animeReleaseNotificationSize > 0) {
-                    notificationManager.cancel(AnimeNotificationManager.NOTIFICATION_ANIME_RELEASE);
+                    notificationManager.cancel(NOTIFICATION_ANIME_RELEASE);
                     if (animeNotifications.size() > 0) {
-                        notificationManager.cancel(AnimeNotificationManager.NOTIFICATION_OTHER_ANIME);
-                        int NOTIFICATION_OTHER_ANIME = 998;
+                        notificationManager.cancel(NOTIFICATION_OTHER_ANIME);
                         Notification notificationOA = notificationOABuilder.build();
                         notificationManager.notify(NOTIFICATION_OTHER_ANIME, notificationOA);
                     }
                     if (myAnimeNotifications.size() > 0) {
-                        notificationManager.cancel(AnimeNotificationManager.NOTIFICATION_MY_ANIME);
-                        int NOTIFICATION_MY_ANIME = 999;
+                        notificationManager.cancel(NOTIFICATION_MY_ANIME);
                         Notification notificationMA = notificationMABuilder.build();
                         notificationManager.notify(NOTIFICATION_MY_ANIME, notificationMA);
                     }
-                    int NOTIFICATION_ID_BASE = 1000;
                     Notification notificationSummary = notificationSummaryBuilder.build();
-                    notificationManager.notify(NOTIFICATION_ID_BASE, notificationSummary);
+                    notificationManager.notify(NOTIFICATION_ANIME_RELEASE, notificationSummary);
                 }
             }
         }
@@ -445,7 +443,7 @@ public class MyWorker extends Worker {
             makePostRequest(response -> {
                 if (response != null) {
                     JSONObject data = response.optJSONObject("data");
-                    if (response.has(retryKey) || data == null) {
+                    if (response.has(RETRY_KEY) || data == null) {
                         // Call Another
                         new android.os.Handler(Looper.getMainLooper()).postDelayed(() -> getAiringAnime(anime, retries + 1), 60000);
                     } else {
@@ -537,7 +535,7 @@ public class MyWorker extends Worker {
                     urlConnection.disconnect();
                     JSONObject jsonObject = new JSONObject();
                     try {
-                        jsonObject.put(retryKey,true);
+                        jsonObject.put(RETRY_KEY,true);
                         return jsonObject;
                     } catch (JSONException ex) {
                         return null;
@@ -607,13 +605,13 @@ public class MyWorker extends Worker {
         Intent newIntent = new Intent(this.getApplicationContext(), MyReceiver.class);
         newIntent.setAction("UPDATE_DATA_AUTO");
 
-        PendingIntent newPendingIntent = PendingIntent.getBroadcast(this.getApplicationContext(), UPDATE_DATA_PENDING_INTENT, newIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        PendingIntent newPendingIntent = PendingIntent.getBroadcast(this.getApplicationContext(), Configs.UPDATE_DATA_PENDING_INTENT, newIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
         AlarmManager alarmManager = (AlarmManager) this.getApplicationContext().getSystemService(Context.ALARM_SERVICE);
         // Cancel Old
         newPendingIntent.cancel();
         alarmManager.cancel(newPendingIntent);
         // Create New
-        newPendingIntent = PendingIntent.getBroadcast(this.getApplicationContext(), UPDATE_DATA_PENDING_INTENT, newIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        newPendingIntent = PendingIntent.getBroadcast(this.getApplicationContext(), Configs.UPDATE_DATA_PENDING_INTENT, newIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             if (alarmManager.canScheduleExactAlarms()) {
                 alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, newBackgroundUpdateTime, newPendingIntent);

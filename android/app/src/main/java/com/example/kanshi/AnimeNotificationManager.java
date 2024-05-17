@@ -48,7 +48,7 @@ public class AnimeNotificationManager {
     public static final int NOTIFICATION_MY_ANIME = 999;
     public static final int NOTIFICATION_OTHER_ANIME = 998;
     public static final int ANIME_RELEASE_PENDING_INTENT = 997;
-    public static final int NOTIFICATION_UPDATED_ANIME = 996;
+    private static final int NOTIFICATION_UPDATED_ANIME = 996;
     private static final ExecutorService notificationImageDownloaderExecutor = Executors.newFixedThreadPool(1);
     private static final ScheduledExecutorService addNotificationFutureExecutor = Executors.newScheduledThreadPool(1);
     private static ScheduledFuture<?> addNotificationFuture;
@@ -522,22 +522,19 @@ public class AnimeNotificationManager {
 
         boolean shouldNotify = animeNotifications.size() > 0 || myAnimeNotifications.size() > 0;
         if (shouldNotify) {
-            notificationManager.cancel(AnimeNotificationManager.NOTIFICATION_ANIME_RELEASE);
+            notificationManager.cancel(NOTIFICATION_ANIME_RELEASE);
             if (animeNotifications.size() > 0) {
-                notificationManager.cancel(AnimeNotificationManager.NOTIFICATION_OTHER_ANIME);
-                int NOTIFICATION_OTHER_ANIME = 998;
+                notificationManager.cancel(NOTIFICATION_OTHER_ANIME);
                 Notification notificationOA = notificationOABuilder.build();
                 notificationManager.notify(NOTIFICATION_OTHER_ANIME, notificationOA);
             }
             if (myAnimeNotifications.size() > 0) {
-                notificationManager.cancel(AnimeNotificationManager.NOTIFICATION_MY_ANIME);
-                int NOTIFICATION_MY_ANIME = 999;
+                notificationManager.cancel(NOTIFICATION_MY_ANIME);
                 Notification notificationMA = notificationMABuilder.build();
                 notificationManager.notify(NOTIFICATION_MY_ANIME, notificationMA);
             }
-            int NOTIFICATION_ID_BASE = 1000;
             Notification notificationSummary = notificationSummaryBuilder.build();
-            notificationManager.notify(NOTIFICATION_ID_BASE, notificationSummary);
+            notificationManager.notify(NOTIFICATION_ANIME_RELEASE, notificationSummary);
         }
     }
 }
