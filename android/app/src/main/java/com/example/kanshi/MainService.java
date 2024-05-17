@@ -109,6 +109,7 @@ public class MainService extends Service {
     public void onCreate() {
         weakActivity = new WeakReference<>(MainService.this);
         super.onCreate();
+
         MainActivity mainActivity = MainActivity.getInstanceActivity();
         if (mainActivity!=null) {
             if (mainActivity.isInApp) {
