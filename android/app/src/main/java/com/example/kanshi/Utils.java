@@ -332,7 +332,7 @@ public class Utils {
 
     @RequiresApi(api = Build.VERSION_CODES.R)
     public static void handleUncaughtException(Context context, Throwable e, String fileFrom) {
-        if (!Configs.isOwner) { return; }
+        if (!Configs.isOwner || !Configs.isDebug) { return; }
         e.printStackTrace(); // not all Android versions will print the stack trace automatically
         SharedPreferences prefs = context.getApplicationContext().getSharedPreferences("com.example.kanshi", Context.MODE_PRIVATE);
         String exportPath = prefs.getString("savedExportPath", "");

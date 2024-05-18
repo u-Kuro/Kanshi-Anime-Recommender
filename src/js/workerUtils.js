@@ -1393,13 +1393,13 @@ function alertError() {
         window.confirmPromise?.({
             isAlert: true,
             title: "Something went wrong",
-            text: "App may not be working properly, you may want to import your saved backup data, restart and make sure you're running the latest version.",
+            text: "App may not be working properly, clear cache and make sure you're running the latest version.",
         })
     } else {
         window.confirmPromise?.({
             isAlert: true,
             title: "Something went wrong",
-            text: "App may not be working properly, you may want to import your saved backup data and refresh the page.",
+            text: "App may not be working properly, clear cache and make sure you're not running in incognito.",
         })
     }
 }

@@ -626,6 +626,17 @@ public class MainActivity extends AppCompatActivity {
         public void pageIsFinished() {
             webView.post(() -> {
                 pageLoaded = true;
+                isReloaded = shouldRefreshList = shouldProcessRecommendationList = shouldLoadAnime = false;
+                boolean visited = prefs.getBoolean("visited", false);
+                if (visited) {
+                    webView.loadUrl("javascript:(()=>window['" + visitedKey + "']=true)();");
+                }
+                if (Configs.isOwner) {
+                    webView.loadUrl("javascript:(()=>window['" + isOwnerKey + "']=true)();");
+                }
+                webView.loadUrl("javascript:(()=>window.shouldUpdateNotifications=true)();");
+                webView.loadUrl("javascript:(()=>window.keepAppRunningInBackground=" + (keepAppRunningInBackground ? "true" : "false") + ")();");
+                webView.loadUrl("javascript:window?.setKeepAppRunningInBackground?.("+(keepAppRunningInBackground?"true":"false")+")");
                 if (reconnectIndefinitelyDialog != null && reconnectIndefinitelyDialog.isShowing()) {
                     reconnectIndefinitelyDialog.dismiss();
                     reconnectIndefinitelyDialog = null;
