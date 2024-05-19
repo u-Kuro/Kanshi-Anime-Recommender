@@ -64,86 +64,72 @@ const cacheRequest = async (url, totalLength, status, chunkOptions) => {
                     if (totalLength && status) {
                         const reader = response?.body?.getReader?.();
                         if (typeof (reader?.read) === "function") {
-                            return await new Promise(async (resolve) => {
-                                try {
-                                    new ReadableStream({
-                                        async start(controller) {
-                                            if (typeof (controller?.close) === "function") {
-                                                let receivedLength = 0;
-                                                let chunks = [];
-                                                let streamStatusTimeout, isDataStatusShowing;
-                                                let push = () => {
-                                                    reader.read().then(({ done, value }) => {
-                                                        if (value) {
-                                                            chunks.push(value);
-                                                            receivedLength += value?.byteLength || value?.length || 0;
-                                                            if (chunkOptions) {
-                                                                let { joinedURL, chunkIdx } = chunkOptions || {}
-                                                                if (chunkLoadingLength[joinedURL]?.[chunkIdx] != null) {
-                                                                    chunkLoadingLength[joinedURL][chunkIdx] = receivedLength
-                                                                }
-                                                            }
-                                                            if (!isDataStatusShowing) {
-                                                                isDataStatusShowing = true
-                                                                streamStatusTimeout = setTimeout(async () => {
-                                                                    let percent
-                                                                    if (chunkOptions) {
-                                                                        let { joinedURL } = chunkOptions || {}
-                                                                        if (chunkLoadingLength[joinedURL]) {
-                                                                            percent = (arraySum(chunkLoadingLength[joinedURL]) / totalLength) * 100
-                                                                        }
-                                                                    } else {
-                                                                        percent = (receivedLength / totalLength) * 100
-                                                                    }
-                                                                    let currentProgress = get(progress)
-                                                                    if (percent > 0 && percent <= 100
-                                                                        && (
-                                                                            !currentProgress
-                                                                            || currentProgress >= 100
-                                                                            || percent > currentProgress)
-                                                                    ) {
-                                                                        progress.set(percent)
-                                                                        dataStatus.set(`${percent.toFixed(2)}% ` + status)
-                                                                    }
-                                                                    isDataStatusShowing = false
-                                                                }, 17)
-                                                            }
-                                                        }
-                                                        if (done === false) {
-                                                            push();
-                                                        } else if (done === true) {
-                                                            controller.close();
-                                                            clearTimeout(streamStatusTimeout)
-                                                            dataStatus.set(null)
-                                                            progress.set(100)
-                                                            if (isChunk) {
-                                                                resolve(new Blob(chunks).text())
-                                                            } else {
-                                                                resolve(new Blob(chunks))
-                                                            }
-                                                            push = undefined
-                                                            return
-                                                        }
-                                                    })
-                                                }
-                                                push();
-                                            } else {
-                                                return resolve(await (isChunk ? response.text() : response.blob()))
+                            try {
+                                return new Response(new ReadableStream({
+                                    async start(controller) {
+                                        let receivedLength = 0;
+                                        let streamStatusTimeout, isDataStatusShowing;
+                                        while (true) {
+                                            const { done, value } = await reader.read()
+                                            if (done) {
+                                                clearTimeout(streamStatusTimeout)
+                                                dataStatus.set(null)
+                                                progress.set(100)
+                                                return controller.close()
                                             }
+                                            receivedLength += value?.byteLength || value?.length || 0;
+                                            if (chunkOptions) {
+                                                let { joinedURL, chunkIdx } = chunkOptions || {}
+                                                if (chunkLoadingLength[joinedURL]?.[chunkIdx] != null) {
+                                                    chunkLoadingLength[joinedURL][chunkIdx] = receivedLength
+                                                }
+                                            }
+                                            if (!isDataStatusShowing) {
+                                                isDataStatusShowing = true
+                                                streamStatusTimeout = setTimeout(() => {
+                                                    let percent
+                                                    if (chunkOptions) {
+                                                        let { joinedURL } = chunkOptions || {}
+                                                        if (chunkLoadingLength[joinedURL]) {
+                                                            percent = (arraySum(chunkLoadingLength[joinedURL]) / totalLength) * 100
+                                                        }
+                                                    } else {
+                                                        percent = (receivedLength / totalLength) * 100
+                                                    }
+                                                    let currentProgress = get(progress)
+                                                    if (percent > 0 && percent <= 100
+                                                        && (
+                                                            !currentProgress
+                                                            || currentProgress >= 100
+                                                            || percent > currentProgress)
+                                                    ) {
+                                                        progress.set(percent)
+                                                        dataStatus.set(`${percent.toFixed(2)}% ` + status)
+                                                    }
+                                                    isDataStatusShowing = false
+                                                }, 17)
+                                            }
+                                            controller.enqueue(value)
                                         }
-                                    });
-                                } catch (e) {
-                                    return resolve(await (isChunk ? response.text() : response.blob()))
-                                }
-                            })
+                                    }
+                                }));
+                            } catch {
+                                resolve(await cacheRequest(url, undefined, undefined, isChunk))
+                                return
+                            }
                         } else {
                             resolve(await cacheRequest(url, undefined, undefined, isChunk))
                             return
                         }
                     } else {
-                        return await (isChunk ? response.text() : response.blob())
+                        return response
                     }
                 })
+                    .then(async response => {
+                        if (response) {
+                            return await (isChunk ? response.text() : response.blob())
+                        }
+                    })
                     .then(result => {
                         if (result) {
                             if (isChunk) {
