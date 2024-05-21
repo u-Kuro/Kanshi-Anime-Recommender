@@ -1692,6 +1692,7 @@
 				-1;
 			if (categoryIdx === -1) {
 				scrollingCategories = isChangingSelection = null;
+				lastSelectedCategory = val;
 				$selectedCategory = $categoriesKeys?.[0] || $selectedCategory;
 				animeListPagerIsChanging = false;
 				return;
@@ -1703,10 +1704,16 @@
 					Math.max(0, categoryIdx - 1) * animeListPagerPad;
 				animeListPagerIsChanging = false;
 			}
-			if ($gridFullView) return;
+			if ($gridFullView) {
+				scrollingCategories = isChangingSelection = null;
+				lastSelectedCategory = val;
+				return;
+			}
 			// Scroll To Grid Saved Scroll
 			if (isFirstScroll) {
 				isFirstScroll = false;
+				scrollingCategories = isChangingSelection = null;
+				lastSelectedCategory = val;
 				return;
 			}
 			let documentEL = document.documentElement;
