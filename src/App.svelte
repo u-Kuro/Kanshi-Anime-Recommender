@@ -1847,11 +1847,11 @@
 		overflow-y: overlay !important;
 		scrollbar-gutter: stable !important;
 	}
-	:global(
+	/* :global(
 			html:has(#anime-list-pager.pager-is-changing:not(.has-scroll-bar))
 		) {
 		overflow: hidden !important;
-	}
+	} */
 	main {
 		width: 100%;
 		min-height: calc(100vh - 57px);
