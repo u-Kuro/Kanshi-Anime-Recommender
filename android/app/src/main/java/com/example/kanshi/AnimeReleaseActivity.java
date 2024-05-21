@@ -169,6 +169,7 @@ public class AnimeReleaseActivity extends AppCompatActivity {
             @RequiresApi(api = Build.VERSION_CODES.O)
             @Override
             public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                if (view == null || adapterView == null) return;
                 TextView textView = ((TextView) view);
                 textView.setTextSize(22);
                 textView.setPadding(0,0,0,0);

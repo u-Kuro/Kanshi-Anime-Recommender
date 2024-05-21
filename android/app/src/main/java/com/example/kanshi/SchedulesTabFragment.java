@@ -86,7 +86,11 @@ public class SchedulesTabFragment extends Fragment {
         final boolean showUnwatchedAnime;
         if (animeReleaseActivity!=null) {
             showUnwatchedAnime = animeReleaseActivity.showUnwatchedAnime;
-            selectedAnimeReleaseOption = animeReleaseActivity.animeReleaseSpinner.getSelectedItem().toString();
+            if (animeReleaseActivity.animeReleaseSpinner!=null && animeReleaseActivity.animeReleaseSpinner.getSelectedItem()!=null) {
+                selectedAnimeReleaseOption = animeReleaseActivity.animeReleaseSpinner.getSelectedItem().toString();
+            } else {
+                selectedAnimeReleaseOption = "Updates";
+            }
         } else {
             showUnwatchedAnime = false;
             selectedAnimeReleaseOption = "Updates";

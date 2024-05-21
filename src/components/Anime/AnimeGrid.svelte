@@ -737,6 +737,10 @@
         );
     }
 
+    :global(.anime-list-pager.is-changing-top-position > main) {
+        visibility: hidden;
+    }
+
     main::-webkit-scrollbar {
         display: none;
     }
@@ -745,6 +749,7 @@
         height: unset !important;
         overflow-x: hidden !important;
         overflow-y: auto !important;
+        visibility: unset !important;
     }
 
     :global(.anime-list-pager.remove-snap-scroll main) {
@@ -757,6 +762,7 @@
         height: max(calc(var(--anime-grid-height) - 230px), 248px) !important;
         min-height: unset !important;
         overflow: hidden !important;
+        visibility: unset !important;
     }
 
     .skeleton {
@@ -818,13 +824,16 @@
         scrollbar-width: none;
         position: absolute;
         width: 100%;
-        top: max(20px, calc(var(--grid-position) + 20px));
+        top: 0;
+        transform: translateY(max(20px, calc(var(--grid-position) + 20px)))
+            translateZ(0);
         padding-bottom: calc(101vh + 65px);
     }
 
     main.viewed .image-grid {
         position: unset !important;
         padding-bottom: unset !important;
+        transform: unset !important;
     }
 
     :global(.anime-list-pager.remove-snap-scroll .image-grid) {
@@ -855,6 +864,8 @@
         height: max(calc(var(--anime-grid-height) - 250px), 236px) !important;
         overflow-y: hidden !important;
         overflow-x: auto !important;
+        top: unset !important;
+        transform: unset !important;
     }
 
     .image-grid.fullView.empty-grid {

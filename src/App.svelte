@@ -18,6 +18,7 @@
 	} from "./js/workerUtils.js";
 	import {
 		getLocalStorage,
+		hasScrollBarWidth,
 		isAndroid,
 		isJsonObject,
 		isMobile,
@@ -76,13 +77,14 @@
 		loadedAnimeLists,
 		categoriesKeys,
 		selectedAnimeGridEl,
-		isLoadingAnime,
 		showLoadingAnime,
+		hasScrollBar,
 		// anilistAccessToken,
 	} from "./js/globalValues.js";
 
 	$android = isAndroid(); // Android/Browser Identifier
 	$mobile = isMobile(); // Mobile/
+	$hasScrollBar = hasScrollBarWidth();
 	// Init Data
 	let initDataPromises = [];
 	let shouldReloadList;
@@ -1168,48 +1170,66 @@
 	let panningIdx, panningCategory;
 	let isBelowNav = false;
 	let maxWindowHeight = 0;
-	let gridTopPosition, gridMaxHeight;
+	let gridTopPosition = 0,
+		gridMaxHeight;
 	let gridTopScrolls = {};
+	let changingTopPosition,
+		topPositionChangeTimeout,
+		lastScrollTop,
+		lastOffTosetWindow;
 
-	window.addEventListener("scroll", async () => {
-		await tick();
-		let scrollTop = document.documentElement.scrollTop;
+	window.addEventListener("scroll", () => {
+		const scrollTop = document.documentElement.scrollTop;
 		if (!$gridFullView) {
-			let element = animeListPagerEl.querySelector(
+			const element = animeListPagerEl.querySelector(
 				"main.viewed .image-grid",
 			);
 			if (element) {
-				let category = element?.dataset?.category;
+				const offsetToWindow = element.getBoundingClientRect().top;
+				if (
+					scrollTop !== lastScrollTop &&
+					(offsetToWindow <= 1 || lastOffTosetWindow <= 1)
+				) {
+					clearTimeout(topPositionChangeTimeout);
+					changingTopPosition = true;
+				}
+				lastScrollTop = scrollTop;
+				lastOffTosetWindow = offsetToWindow;
+				//
+				const category = element?.dataset?.category;
 				if (
 					category &&
 					panningCategory &&
 					panningCategory !== category
 				) {
 					$selectedCategory = panningCategory;
-				} else {
-					let offsetToWindow = element.getBoundingClientRect().top;
-					if (offsetToWindow > 1) {
-						gridTopPosition = 0;
-						Array.from(animeListPagerEl.children).forEach((el) => {
-							el.scrollTop = 0;
-						});
-						for (let category in gridTopScrolls) {
-							gridTopScrolls[category] = null;
-						}
-					} else {
-						gridTopPosition = Math.abs(offsetToWindow);
-						let category = element.dataset.category;
-						let gridOffSetDocument =
-							scrollTop + element.getBoundingClientRect().top;
-						gridTopScrolls[category] =
-							scrollTop - gridOffSetDocument;
-					}
-					gridMaxHeight = element?.clientHeight ?? gridMaxHeight;
+					animeListPagerIsChanging = false;
 				}
+				if (offsetToWindow > 1) {
+					gridTopPosition = 0;
+					Array.from(animeListPagerEl.children).forEach((el) => {
+						el.scrollTop = 0;
+					});
+					for (const category in gridTopScrolls) {
+						gridTopScrolls[category] = null;
+					}
+				} else {
+					const scrollTop = document.documentElement.scrollTop;
+					gridTopPosition = Math.abs(offsetToWindow);
+					const category = element.dataset.category;
+					const gridOffSetDocument =
+						scrollTop + element.getBoundingClientRect().top;
+					gridTopScrolls[category] = scrollTop - gridOffSetDocument;
+				}
+				gridMaxHeight = element?.clientHeight ?? gridMaxHeight;
+				topPositionChangeTimeout = setTimeout(async () => {
+					await tick();
+					changingTopPosition = false;
+				}, 30);
 			}
 		}
 
-		let shouldUpdate =
+		const shouldUpdate =
 			$selectedAnimeGridEl?.getBoundingClientRect?.()?.top > 0 &&
 			!$popupVisible;
 		if ($listUpdateAvailable && shouldUpdate) {
@@ -1482,16 +1502,7 @@
 		})();
 	}
 
-	let isScrollingAnimeGrid, animeGridScrollTimeout;
-	window.animeGridListScrolled = () => {
-		clearTimeout(animeGridScrollTimeout);
-		isScrollingAnimeGrid = true;
-		animeGridScrollTimeout = setTimeout(() => {
-			isScrollingAnimeGrid = false;
-		}, 200);
-	};
-
-	let isResizing, isMaxWindowHeight;
+	let isMaxWindowHeight;
 	onMount(() => {
 		window.animeGridScrolled = (scrollLeft) => {
 			if (scrollLeft > 500 && !willExit) {
@@ -1527,19 +1538,7 @@
 					window.innerHeight || 0,
 				) || 0;
 		}
-		let resizeTime;
-		let resizeTimeout = false;
-		let resizeDelta = 200;
-		function resizeEnd() {
-			if (new Date() - resizeTime < resizeDelta) {
-				setTimeout(resizeEnd, resizeDelta);
-			} else {
-				resizeTimeout = false;
-				isResizing = false;
-			}
-		}
 		window.addEventListener("resize", () => {
-			isResizing = true;
 			let newWindowHeight = Math.max(
 				window?.visualViewport?.height || 0,
 				window?.innerHeight || 0,
@@ -1587,22 +1586,14 @@
 			animeListPagerPad = windowWidth > 660 ? 70 : 0;
 
 			window?.scrollToSelectedCategory?.();
-
-			resizeTime = new Date();
-			if (resizeTimeout === false) {
-				resizeTimeout = true;
-				setTimeout(resizeEnd, resizeDelta);
-			}
 		});
 
-		let isScrollingCheckForZoom;
-		animeListPagerEl.addEventListener("scroll", async () => {
+		animeListPagerEl.addEventListener("scroll", () => {
+			animeListPagerIsChanging = true;
 			window.showCategoriesNav?.(true, true);
-			isScrollingCheckForZoom = animeListPagerIsChanging = true;
-
-			await tick();
 
 			let originalScrollLeft = Math.round(animeListPagerEl.scrollLeft);
+
 			let offsetWidth = animeListPagerEl.offsetWidth;
 
 			let idx = Math.round(
@@ -1619,34 +1610,59 @@
 				}
 				panningIdx = idx;
 			}
-		});
 
-		animeListPagerEl.addEventListener("scrollend", async () => {
-			isScrollingCheckForZoom = animeListPagerIsChanging = false;
+			if (originalScrollLeft % (offsetWidth + animeListPagerPad) === 0) {
+				let children = Array.from(animeListPagerEl?.children);
+				let child = children?.[panningIdx];
+				let category = child?.dataset?.category;
 
-			let children = Array.from(animeListPagerEl?.children);
-			let child = children?.[panningIdx];
-			let category = child?.dataset?.category;
-
-			if (category && category !== $selectedCategory) {
-				$selectedCategory = category;
+				if (category && category !== $selectedCategory) {
+					$selectedCategory = category;
+				}
+				animeListPagerIsChanging = false;
 			}
 		});
 
-		window.visualViewport.addEventListener("resize", async () => {
-			if (isScrollingCheckForZoom) {
-				isScrollingCheckForZoom = false;
-				if ($selectedCategory) {
-					await tick();
+		animeListPagerEl.addEventListener("scrollend", () => {
+			if (animeListPagerIsChanging) {
+				let children = Array.from(animeListPagerEl?.children);
+				let child = children?.[panningIdx];
+				let category = child?.dataset?.category;
+
+				if (category && category !== $selectedCategory) {
+					$selectedCategory = category;
+				}
+				animeListPagerIsChanging = false;
+			}
+		});
+
+		let lastViewWidth = window.visualViewport.width;
+		window.visualViewport.addEventListener("resize", () => {
+			const currentViewWidth = window.visualViewport.width;
+			const hasChangedViewWidth = lastViewWidth !== currentViewWidth;
+			lastViewWidth = currentViewWidth;
+			if (animeListPagerIsChanging) {
+				if ($selectedCategory && hasChangedViewWidth) {
 					let categoryIdx =
 						panningIdx ??
 						$categoriesKeys.findIndex(
 							(category) => category === $selectedCategory,
 						);
 					let offsetWidth = animeListPagerEl.offsetWidth;
-					animeListPagerEl.scrollLeft =
+					let currentScrollLeft = animeListPagerEl.scrollLeft;
+					let newScrollLeft =
 						categoryIdx * offsetWidth +
 						Math.max(0, categoryIdx - 1) * animeListPagerPad;
+					if (newScrollLeft > currentScrollLeft) {
+						animeListPagerEl.scrollBy({
+							left: Number.EPSILON,
+						});
+					} else if (newScrollLeft < currentScrollLeft) {
+						animeListPagerEl.scrollBy({
+							left: -Number.EPSILON,
+						});
+					}
+					animeListPagerIsChanging = false;
 				}
 			}
 		});
@@ -1665,6 +1681,7 @@
 			scrollingCategories[category] = 1;
 		}
 	};
+	let lastSelectedCategory;
 	selectedCategory.subscribe(async (val) => {
 		isChangingSelection = true;
 		if (val) {
@@ -1674,16 +1691,18 @@
 				$categoriesKeys?.findIndex?.((category) => category === val) ??
 				-1;
 			if (categoryIdx === -1) {
-				animeListPagerIsChanging = false;
 				scrollingCategories = isChangingSelection = null;
 				$selectedCategory = $categoriesKeys?.[0] || $selectedCategory;
+				animeListPagerIsChanging = false;
 				return;
 			}
-			let offsetWidth = animeListPagerEl.offsetWidth;
-			animeListPagerEl.scrollLeft =
-				categoryIdx * offsetWidth +
-				Math.max(0, categoryIdx - 1) * animeListPagerPad;
-			animeListPagerIsChanging = false;
+			if (lastSelectedCategory !== val) {
+				let offsetWidth = animeListPagerEl.offsetWidth;
+				animeListPagerEl.scrollLeft =
+					categoryIdx * offsetWidth +
+					Math.max(0, categoryIdx - 1) * animeListPagerPad;
+				animeListPagerIsChanging = false;
+			}
 			if ($gridFullView) return;
 			// Scroll To Grid Saved Scroll
 			if (isFirstScroll) {
@@ -1718,6 +1737,7 @@
 			}
 		}
 		scrollingCategories = isChangingSelection = null;
+		lastSelectedCategory = val;
 	});
 	categories.subscribe(async (val) => {
 		if (val) {
@@ -1780,12 +1800,9 @@
 			id="anime-list-pager"
 			class="{'anime-list-pager' +
 				(animeListPagerIsChanging ? ' pager-is-changing' : '') +
-				($gridFullView
-					? ' remove-snap-scroll'
-					: !$isLoadingAnime &&
-						  (isScrollingAnimeGrid || $isScrolling || isResizing)
-						? ' prevent-snap-scroll'
-						: '')}"
+				($hasScrollBar ? ' has-scroll-bar' : '') +
+				(changingTopPosition ? ' is-changing-top-position' : '') +
+				($gridFullView ? ' remove-snap-scroll' : '')}"
 			style:--anime-list-pager-pad="{animeListPagerPad + "px"}"
 		>
 			{#if $categoriesKeys?.length > 0}
@@ -1822,6 +1839,11 @@
 		color-scheme: dark !important;
 		overflow-y: overlay !important;
 		scrollbar-gutter: stable !important;
+	}
+	:global(
+			html:has(#anime-list-pager.pager-is-changing:not(.has-scroll-bar))
+		) {
+		overflow: hidden !important;
 	}
 	main {
 		width: 100%;
@@ -1878,8 +1900,7 @@
 		display: none;
 	}
 
-	.anime-list-pager.remove-snap-scroll,
-	.anime-list-pager.prevent-snap-scroll {
+	.anime-list-pager.remove-snap-scroll {
 		overflow: hidden !important;
 	}
 

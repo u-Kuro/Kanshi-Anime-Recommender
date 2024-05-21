@@ -633,6 +633,21 @@ const isMobile = () => {
   } catch (e) { }
 };
 
+const hasScrollBarWidth = () => {
+  const scrollDiv = document.createElement("div");
+  scrollDiv.tabIndex = -1
+  Object.assign(scrollDiv?.style || {}, {
+    overflow: "scroll",
+    visibility: "hidden",
+    touchAction: "none",
+    pointerEvents: "none",
+  })
+  document.body.appendChild(scrollDiv);
+  const scrollbarWidth = scrollDiv.offsetWidth - scrollDiv.clientWidth;
+  document.body.removeChild(scrollDiv);
+  return scrollbarWidth > 0
+}
+
 export {
   setLocalStorage,
   getLocalStorage,
@@ -666,6 +681,7 @@ export {
   isElementVisible,
   // hasValidOrigin,
   isMobile,
+  hasScrollBarWidth,
   formatYear,
   formatMonth,
   formatDay,
