@@ -18,7 +18,6 @@
 	} from "./js/workerUtils.js";
 	import {
 		getLocalStorage,
-		hasScrollBarWidth,
 		isAndroid,
 		isJsonObject,
 		isMobile,
@@ -78,13 +77,11 @@
 		categoriesKeys,
 		selectedAnimeGridEl,
 		showLoadingAnime,
-		hasScrollBar,
 		// anilistAccessToken,
 	} from "./js/globalValues.js";
 
 	$android = isAndroid(); // Android/Browser Identifier
 	$mobile = isMobile(); // Mobile/
-	$hasScrollBar = hasScrollBarWidth();
 	// Init Data
 	let initDataPromises = [];
 	let shouldReloadList;
@@ -1592,10 +1589,11 @@
 			animeListPagerIsChanging = true;
 			window.showCategoriesNav?.(true, true);
 
-			let originalScrollLeft = Math.round(animeListPagerEl.scrollLeft);
+			let originalScrollLeft = parseInt(animeListPagerEl.scrollLeft);
 
 			let offsetWidth = animeListPagerEl.offsetWidth;
 
+			let base = offsetWidth + animeListPagerPad;
 			let idx = Math.round(
 				originalScrollLeft / (offsetWidth + animeListPagerPad),
 			);
@@ -1611,7 +1609,8 @@
 				panningIdx = idx;
 			}
 
-			if (originalScrollLeft % (offsetWidth + animeListPagerPad) === 0) {
+			let remainder = originalScrollLeft % base;
+			if (remainder <= 2 || base - remainder <= 2) {
 				let children = Array.from(animeListPagerEl?.children);
 				let child = children?.[panningIdx];
 				let category = child?.dataset?.category;
@@ -1807,7 +1806,6 @@
 			id="anime-list-pager"
 			class="{'anime-list-pager' +
 				(animeListPagerIsChanging ? ' pager-is-changing' : '') +
-				($hasScrollBar ? ' has-scroll-bar' : '') +
 				(changingTopPosition ? ' is-changing-top-position' : '') +
 				($gridFullView ? ' remove-snap-scroll' : '')}"
 			style:--anime-list-pager-pad="{animeListPagerPad + "px"}"
@@ -1847,11 +1845,6 @@
 		overflow-y: overlay !important;
 		scrollbar-gutter: stable !important;
 	}
-	/* :global(
-			html:has(#anime-list-pager.pager-is-changing:not(.has-scroll-bar))
-		) {
-		overflow: hidden !important;
-	} */
 	main {
 		width: 100%;
 		min-height: calc(100vh - 57px);
