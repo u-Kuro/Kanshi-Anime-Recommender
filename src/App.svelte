@@ -1591,7 +1591,7 @@
 
 			let originalScrollLeft = parseInt(animeListPagerEl.scrollLeft);
 
-			let offsetWidth = animeListPagerEl.offsetWidth;
+			let offsetWidth = animeListPagerEl.getBoundingClientRect().width;
 
 			let base = offsetWidth + animeListPagerPad;
 			let idx = Math.round(
@@ -1610,7 +1610,7 @@
 			}
 
 			let remainder = originalScrollLeft % base;
-			if (remainder <= 2 || base - remainder <= 2) {
+			if (remainder < 1 || base - remainder < 1) {
 				let children = Array.from(animeListPagerEl?.children);
 				let child = children?.[panningIdx];
 				let category = child?.dataset?.category;
@@ -1647,11 +1647,13 @@
 						$categoriesKeys.findIndex(
 							(category) => category === $selectedCategory,
 						);
-					let offsetWidth = animeListPagerEl.offsetWidth;
 					let currentScrollLeft = animeListPagerEl.scrollLeft;
-					let newScrollLeft =
-						categoryIdx * offsetWidth +
+					let offsetWidth =
+						animeListPagerEl.getBoundingClientRect().width;
+					let pagerPads = categoryIdx * offsetWidth;
+					let scrollOffset =
 						Math.max(0, categoryIdx - 1) * animeListPagerPad;
+					let newScrollLeft = pagerPads + scrollOffset;
 					if (newScrollLeft > currentScrollLeft) {
 						animeListPagerEl.scrollBy({
 							left: Number.EPSILON,
@@ -1697,10 +1699,13 @@
 				return;
 			}
 			if (lastSelectedCategory !== val) {
-				let offsetWidth = animeListPagerEl.offsetWidth;
-				animeListPagerEl.scrollLeft =
-					categoryIdx * offsetWidth +
+				let offsetWidth =
+					animeListPagerEl.getBoundingClientRect().width;
+				let pagerPads = categoryIdx * offsetWidth;
+				let scrollOffset =
 					Math.max(0, categoryIdx - 1) * animeListPagerPad;
+				let newScrollLeft = pagerPads + scrollOffset;
+				animeListPagerEl.scrollLeft = newScrollLeft;
 				animeListPagerIsChanging = false;
 			}
 			if ($gridFullView) {
