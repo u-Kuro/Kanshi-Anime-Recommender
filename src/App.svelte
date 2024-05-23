@@ -29,7 +29,6 @@
 		appID,
 		android,
 		username,
-		hiddenEntries,
 		initData,
 		gridFullView,
 		dataStatus,
@@ -70,7 +69,6 @@
 		algorithmFilters,
 		nonOrderedFilters,
 		filterConfig,
-		animeCautions,
 		categories,
 		selectedCategory,
 		loadedAnimeLists,
@@ -307,7 +305,6 @@
 								$orderedFilters = data?.orderedFilters;
 								$nonOrderedFilters = data?.nonOrderedFilters;
 								$filterConfig = data?.filterConfig;
-								$animeCautions = data?.animeCautions;
 								$algorithmFilters = data?.algorithmFilter;
 								resolve();
 							})
@@ -427,10 +424,6 @@
 										false,
 									);
 								} catch (e) {}
-							}
-							if (!isJsonObject($hiddenEntries)) {
-								$hiddenEntries =
-									(await retrieveJSON("hiddenEntries")) || {};
 							}
 							$autoPlay =
 								$autoPlay ??

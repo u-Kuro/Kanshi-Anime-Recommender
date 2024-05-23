@@ -181,6 +181,7 @@ const animeLoader = (_data = {}) => {
             } else if (hasOwnProp?.call?.(data, "loadAll")) {
                 categories.set(data?.categories || get(categories));
                 hiddenEntries.set(data?.hiddenEntries || get(hiddenEntries))
+                animeCautions.set(data?.animeCautions || get(animeCautions))
                 let categoryKey = data?.selectedCategory;
                 if (categoryKey) {
                     let category = data?.category
