@@ -515,19 +515,13 @@ public class MainService extends Service {
                     String lastNCharacters = new String(new char[lastStringLen]).replace("\0", "}");
                     if (chunk.endsWith(lastNCharacters)) {
                         File file = new File(exportDirectoryPath + fileName);
-                        if (tempExportFile != null && tempExportFile.exists()) {
+                        if (tempExportFile != null && tempExportFile.exists() && tempExportFile.length() > 0) {
                             Path tempPath = tempExportFile.toPath();
                             Path backupPath = file.toPath();
                             Files.copy(tempPath, backupPath, StandardCopyOption.REPLACE_EXISTING);
                             isExported(true);
-                            // Clean Up
                             //noinspection ResultOfMethodCallIgnored
                             tempExportFile.delete();
-                            File $tempFile = new File(exportDirectoryPath + "tmp.json");
-                            if ($tempFile.exists()) {
-                                //noinspection ResultOfMethodCallIgnored
-                                $tempFile.delete();
-                            }
                         } else {
                             isExported(false);
                         }
