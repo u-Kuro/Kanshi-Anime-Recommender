@@ -1181,7 +1181,7 @@ const getExtraInfo = () => {
 // IndexedDB
 const getIDBdata = (name) => {
     return new Promise((resolve, reject) => {
-        cacheRequest("./webapi/worker/getIDBdata.js", 2587, "Retrieving Some Data")
+        cacheRequest("./webapi/worker/getIDBdata.js", 2668, "Retrieving Some Data")
             .then(url => {
                 let worker = new Worker(url)
                 worker.postMessage({ name })
@@ -1208,7 +1208,7 @@ const getIDBdata = (name) => {
 window.updateNotifications = async (aniIdsNotificationToBeUpdated = []) => {
     if (!get(android)) return
     new Promise((resolve, reject) => {
-        cacheRequest("./webapi/worker/getIDBdata.js", 2587, "Retrieving Some Data")
+        cacheRequest("./webapi/worker/getIDBdata.js", 2668, "Retrieving Some Data")
             .then(url => {
                 let worker = new Worker(url)
                 worker.postMessage({ name: "aniIdsNotificationToBeUpdated", aniIdsNotificationToBeUpdated })
@@ -1290,7 +1290,7 @@ const getAnimeEntries = (_data) => {
         cacheRequest([
             `${directory}1${extension}`,
             `${directory}2${extension}`,
-        ], 172310429, "Getting Anime, Manga, and Novel Entries")
+        ], 172877205, "Getting Anime, Manga, and Novel Entries")
             .then(url => {
                 progress.set(25)
                 dataStatus.set("Retaining Anime, Manga, and Novel Entries")

@@ -104,7 +104,11 @@ const cacheRequest = async (url, totalLength, status, chunkOptions) => {
                                                             || percent > currentProgress)
                                                     ) {
                                                         progress.set(percent)
-                                                        dataStatus.set(`${percent.toFixed(2)}% ` + status)
+                                                        if (percent >= 100) {
+                                                            dataStatus.set(`100% ` + status)
+                                                        } else {
+                                                            dataStatus.set(`${percent.toFixed(2)}% ` + status)
+                                                        }
                                                     }
                                                     isDataStatusShowing = false
                                                 }, 17)
