@@ -19,7 +19,6 @@
 	import {
 		getLocalStorage,
 		isAndroid,
-		isJsonObject,
 		isMobile,
 		ncsCompare,
 		removeLocalStorage,
@@ -142,6 +141,9 @@
 			await animeLoader({ loadInit: true })
 				.then((data) => {
 					shouldReloadList = data.shouldReloadList;
+					if (!shouldReloadList) {
+						loadYoutube();
+					}
 					return;
 				})
 				.finally(resolve);
@@ -542,6 +544,7 @@
 											animeLoader({
 												loadInit: true,
 											}).then(() => {
+												loadYoutube();
 												$dataStatus = null;
 												checkAutoFunctions(true);
 												loadAnalytics();
@@ -594,6 +597,7 @@
 			$initData = false;
 		}
 		console.error(error);
+		loadYoutube();
 		loadAnalytics();
 	}
 
@@ -1448,48 +1452,47 @@
 		}
 	});
 
-	function loadAnalytics() {
-		(async () => {
-			// For Youtube API
-			window.onYouTubeIframeAPIReady = () => {
-				window.playMostVisibleTrailer?.();
-			};
-			let YTscript = document.createElement("script");
-			YTscript.src = "https://www.youtube.com/iframe_api?v=16";
-			YTscript.id = "www-widgetapi-script";
-			YTscript.defer = true;
-			YTscript.onload = () => {
-				window?.onYouTubeIframeAPIReady?.();
-			};
-			document.head.appendChild(YTscript);
+	function loadYoutube() {
+		// For Youtube API
+		window.onYouTubeIframeAPIReady = () => {
+			window.playMostVisibleTrailer?.();
+		};
+		let YTscript = document.createElement("script");
+		YTscript.src = "https://www.youtube.com/iframe_api?v=16";
+		YTscript.id = "www-widgetapi-script";
+		YTscript.defer = true;
+		YTscript.onload = () => {
+			window?.onYouTubeIframeAPIReady?.();
+		};
+		document.head.appendChild(YTscript);
+	}
 
-			let isVercel =
-				window?.location?.origin === "https://kanshi.vercel.app";
-			// Google Analytics
-			let GAscript = document.createElement("script");
-			if (isVercel) {
-				inject?.(); // Vercel Analytics
-				GAscript.src =
-					"https://www.googletagmanager.com/gtag/js?id=G-F5E8XNQS20";
-			} else {
-				GAscript.src =
-					"https://www.googletagmanager.com/gtag/js?id=G-PPMY92TJCE";
+	function loadAnalytics() {
+		let isVercel = window?.location?.origin === "https://kanshi.vercel.app";
+		// Google Analytics
+		let GAscript = document.createElement("script");
+		if (isVercel) {
+			inject?.(); // Vercel Analytics
+			GAscript.src =
+				"https://www.googletagmanager.com/gtag/js?id=G-F5E8XNQS20";
+		} else {
+			GAscript.src =
+				"https://www.googletagmanager.com/gtag/js?id=G-PPMY92TJCE";
+		}
+		GAscript.defer = true;
+		GAscript.onload = () => {
+			window.dataLayer = window.dataLayer || [];
+			function gtag() {
+				dataLayer.push(arguments);
 			}
-			GAscript.defer = true;
-			GAscript.onload = () => {
-				window.dataLayer = window.dataLayer || [];
-				function gtag() {
-					dataLayer.push(arguments);
-				}
-				gtag("js", new Date());
-				if (isVercel) {
-					gtag("config", "G-F5E8XNQS20");
-				} else {
-					gtag("config", "G-PPMY92TJCE");
-				}
-			};
-			document.head.appendChild(GAscript);
-		})();
+			gtag("js", new Date());
+			if (isVercel) {
+				gtag("config", "G-F5E8XNQS20");
+			} else {
+				gtag("config", "G-PPMY92TJCE");
+			}
+		};
+		document.head.appendChild(GAscript);
 	}
 
 	let isMaxWindowHeight;
