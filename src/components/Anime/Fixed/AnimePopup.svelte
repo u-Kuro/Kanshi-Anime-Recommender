@@ -1874,9 +1874,9 @@
                                                 'javascript:void(0)'}"
                                             class="{anime?.contentCautionColor +
                                                 '-color anime-title copy'}"
-                                            data-copy="{anime?.copiedTitle ||
+                                            data-copy="{anime?.shownTitle ||
                                                 ''}"
-                                            data-secondCopy="{anime?.shownTitle ||
+                                            data-secondcopy="{anime?.copiedTitle ||
                                                 ''}"
                                             style:overflow="{$popupIsGoingBack
                                                 ? "hidden"

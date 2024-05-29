@@ -493,14 +493,14 @@
                             <span class="image-card-title">
                                 <span
                                     class="title copy"
-                                    data-copy="{anime?.copiedTitle || ''}"
-                                    data-secondCopy="{anime?.shownTitle || ''}"
+                                    data-copy="{anime?.shownTitle || ''}"
+                                    data-secondcopy="{anime?.copiedTitle || ''}"
                                     >{anime?.shownTitle || "N/A"}</span
                                 >
                                 <span
                                     class="brief-info-wrapper copy"
-                                    data-copy="{anime?.copiedTitle || ''}"
-                                    data-secondCopy="{anime?.shownTitle || ''}"
+                                    data-copy="{anime?.shownTitle || ''}"
+                                    data-secondcopy="{anime?.copiedTitle || ''}"
                                 >
                                     <div class="brief-info">
                                         <span>

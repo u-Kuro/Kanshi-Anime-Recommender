@@ -117,7 +117,7 @@ const cacheRequest = async (url, totalLength, status, chunkOptions) => {
                                         }
                                     }
                                 }));
-                            } catch {
+                            } catch (e) {
                                 resolve(await cacheRequest(url, undefined, undefined, isChunk))
                                 return
                             }

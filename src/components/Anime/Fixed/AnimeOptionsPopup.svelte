@@ -102,23 +102,28 @@
         );
     }
 
+    let copySecondTimout;
     function copyTitle(e) {
-        if ((isRecentlyOpened && e.type !== "keydown") || !animeCopyTitle)
-            return;
-        if ($android) {
-            try {
-                JSBridge?.copyToClipBoard?.(shownTitle);
-                JSBridge?.copyToClipBoard?.(animeCopyTitle);
-            } catch (ex) {}
-        } else {
-            if (shownTitle && !ncsCompare(animeCopyTitle, shownTitle)) {
-                navigator?.clipboard?.writeText?.(shownTitle);
-                setTimeout(() => {
-                    navigator?.clipboard?.writeText?.(animeCopyTitle);
-                }, 300);
+        if ((isRecentlyOpened && e.type !== "keydown") || !shownTitle) return;
+        clearTimeout(copySecondTimout);
+        if (animeCopyTitle && !ncsCompare(animeCopyTitle, shownTitle)) {
+            if ($android) {
+                try {
+                    JSBridge?.copyToClipBoard?.(animeCopyTitle);
+                    JSBridge?.copyToClipBoard?.(shownTitle);
+                } catch (e) {}
             } else {
                 navigator?.clipboard?.writeText?.(animeCopyTitle);
+                copySecondTimout = setTimeout(() => {
+                    navigator?.clipboard?.writeText?.(shownTitle);
+                }, 350);
             }
+        } else if ($android) {
+            try {
+                JSBridge?.copyToClipBoard?.(shownTitle);
+            } catch (e) {}
+        } else {
+            navigator?.clipboard?.writeText?.(shownTitle);
         }
         $animeOptionVisible = false;
     }

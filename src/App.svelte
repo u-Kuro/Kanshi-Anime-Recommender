@@ -1255,6 +1255,7 @@
 	};
 
 	window.copyToClipBoard = (text) => {
+		if (!text) return;
 		if ($android) {
 			try {
 				JSBridge?.copyToClipBoard?.(text);
@@ -1273,6 +1274,7 @@
 		}, 500);
 	});
 	let copytimeoutId;
+	let copySecondTimout;
 	let copyhold = false;
 	document.addEventListener("pointerdown", (e) => {
 		if (e.pointerType === "mouse") return;
@@ -1282,6 +1284,7 @@
 		if (target) {
 			copyhold = true;
 			clearTimeout(copytimeoutId);
+			clearTimeout(copySecondTimout);
 			copytimeoutId = setTimeout(() => {
 				let text = target.dataset.copy;
 				if (
@@ -1294,16 +1297,16 @@
 					setTimeout(() => {
 						target.style.pointerEvents = "";
 					}, 500);
-					let text2 = target.dataset.secondCopytarget;
+					let text2 = target.dataset.secondcopy;
 					if (text2 && !ncsCompare(text2, text)) {
 						if ($android) {
 							window.copyToClipBoard?.(text2);
 							window.copyToClipBoard?.(text);
 						} else {
 							window.copyToClipBoard?.(text2);
-							setTimeout(() => {
+							copySecondTimout = setTimeout(() => {
 								window.copyToClipBoard?.(text);
-							}, 300);
+							}, 350);
 						}
 					} else {
 						window.copyToClipBoard?.(text);
