@@ -59,7 +59,7 @@ const cacheRequest = async (url, totalLength, status, chunkOptions) => {
                     headers: {
                         'Cache-Control': 'public, max-age=31536000, immutable',
                     },
-                    cache: 'force-cache'
+                    cache: 'no-cache'
                 }).then(async response => {
                     if (totalLength && status) {
                         const reader = response?.body?.getReader?.();
