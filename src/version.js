@@ -14,10 +14,14 @@ export default async function getWebVersion() {
             path = path.endsWith('/') ? path : path + '/'
             path = path.includes('/index.html') ? path.replace('/index.html', '') : path
             let response = await fetch(`${path}version.json`, {
-                cache: "no-store"
+                cache: "no-cache"
             })
-            let result = await response.json()
-            resolve(result.version || version)
+            const result = await response.json()
+            if (typeof result === "number" && !isNaN(result) && isFinite(result)) {
+                resolve(result || version)
+            } else {
+                resolve(version)
+            }
             webVersionPromise = null
             return
         } catch (error) {
