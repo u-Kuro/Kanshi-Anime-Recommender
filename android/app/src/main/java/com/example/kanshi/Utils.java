@@ -277,23 +277,26 @@ public class Utils {
     @RequiresApi(api = Build.VERSION_CODES.O)
     public static void addIndexedDBFiles(File[] files) {
         if (files!=null) {
-            for (File file:files) {
-                if (file.isFile()) {
-                    Date modifiedDate = new Date(file.lastModified());
-                    String modifiedDateKey = dateFormat.format(modifiedDate);
-                    if (webGroupedModifiedDate.containsKey(modifiedDateKey)) {
-                        List<File> modifiedFiles = webGroupedModifiedDate.get(modifiedDateKey);
-                        if (modifiedFiles == null) {
-                            modifiedFiles = new ArrayList<>();
+            for (File file : files) {
+                if (file.exists() && file.isFile() && file.length() > 0) {
+                    long lastModified = file.lastModified();
+                    if (lastModified > 0L) {
+                        Date modifiedDate = new Date(file.lastModified());
+                        String modifiedDateKey = dateFormat.format(modifiedDate);
+                        if (webGroupedModifiedDate.containsKey(modifiedDateKey)) {
+                            List<File> modifiedFiles = webGroupedModifiedDate.get(modifiedDateKey);
+                            if (modifiedFiles == null) {
+                                modifiedFiles = new ArrayList<>();
+                            }
+                            modifiedFiles.add(file);
+                            webGroupedModifiedDate.put(modifiedDateKey, modifiedFiles);
+                        } else {
+                            List<File> newModifiedFiles = new ArrayList<>();
+                            newModifiedFiles.add(file);
+                            webGroupedModifiedDate.put(modifiedDateKey, newModifiedFiles);
                         }
-                        modifiedFiles.add(file);
-                        webGroupedModifiedDate.put(modifiedDateKey, modifiedFiles);
-                    } else {
-                        List<File> newModifiedFiles = new ArrayList<>();
-                        newModifiedFiles.add(file);
-                        webGroupedModifiedDate.put(modifiedDateKey, newModifiedFiles);
                     }
-                } else if (file.isDirectory()) {
+                } else if (file.exists() && file.isDirectory()) {
                     File[] newFiles = file.listFiles();
                     addIndexedDBFiles(newFiles);
                 }
