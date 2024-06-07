@@ -60,52 +60,57 @@ public class AnimeNotificationManager {
     public static void scheduleAnimeNotification(Context context, long animeId, String title, long releaseEpisode, long maxEpisode, long releaseDateMillis, String imageUrl, String animeUrl, String userStatus, long episodeProgress) {
         context = context.getApplicationContext();
         createAnimeReleasesNotificationChannel(context);
-        if (allAnimeNotification.size() == 0) {
+        if (allAnimeNotification.isEmpty()) {
             try {
                 @SuppressWarnings("unchecked") ConcurrentHashMap<String, AnimeNotification> $allAnimeNotification = (ConcurrentHashMap<String, AnimeNotification>) LocalPersistence.readObjectFromFile(context, "allAnimeNotification");
-                if ($allAnimeNotification != null && $allAnimeNotification.size() > 0) {
+                if ($allAnimeNotification != null && !$allAnimeNotification.isEmpty()) {
                     allAnimeNotification.putAll($allAnimeNotification);
                 }
-            } catch (Exception ignored) {
-            }
+            } catch (Exception ignored) {}
         }
         AnimeNotification checkingAnime = allAnimeNotification.get(animeId + "-" + releaseEpisode);
         if (checkingAnime == null || checkingAnime.imageByte == null || checkingAnime.imageByte.length == 0) {
             if (ongoingImageDownloads.putIfAbsent(animeId + "-" + releaseEpisode, true) == null) {
                 Context finalContext = context;
                 notificationImageDownloaderExecutor.execute(() -> {
-                    Bitmap imageBitmap = downloadImage(imageUrl);
-                    byte[] imageByte = null;
-                    ByteArrayOutputStream stream = new ByteArrayOutputStream();
-                    if (imageBitmap != null) {
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                            imageBitmap.compress(Bitmap.CompressFormat.WEBP_LOSSY, 25, stream);
-                        } else {
-                            imageBitmap.compress(Bitmap.CompressFormat.WEBP, 25, stream);
-                        }
-                        imageByte = stream.toByteArray();
-                    } else {
-                        try {
-                            byte[] $imageBitmap = (byte[]) LocalPersistence.readObjectFromFile(finalContext, "notificationLogoIcon");
-                            if ($imageBitmap == null || $imageBitmap.length == 0) {
-                                imageBitmap = BitmapFactory.decodeResource(finalContext.getResources(), R.drawable.ic_launcher_round);
-                                imageBitmap = createRoundBitmap(imageBitmap);
-                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                                    imageBitmap.compress(Bitmap.CompressFormat.WEBP_LOSSY, 25, stream);
-                                } else {
-                                    imageBitmap.compress(Bitmap.CompressFormat.WEBP, 25, stream);
-                                }
-                                LocalPersistence.writeObjectToFile(finalContext, stream.toByteArray(), "notificationLogoIcon");
+                    try {
+                        Bitmap imageBitmap = downloadImage(imageUrl);
+                        byte[] imageByte = null;
+                        ByteArrayOutputStream stream = new ByteArrayOutputStream();
+                        if (imageBitmap != null) {
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                                imageBitmap.compress(Bitmap.CompressFormat.WEBP_LOSSY, 25, stream);
+                            } else {
+                                imageBitmap.compress(Bitmap.CompressFormat.WEBP, 25, stream);
                             }
-                        } catch (Exception ignored) {}
-                    }
-                    AnimeNotification anime = new AnimeNotification(animeId, title, releaseEpisode, maxEpisode, releaseDateMillis, imageByte, animeUrl, userStatus, episodeProgress);
-                    addAnimeNotification(finalContext, anime);
-                    ongoingImageDownloads.remove(animeId + "-" + releaseEpisode);
-                    if (ongoingImageDownloads.size()==0) {
-                        MainService mainService = MainService.getInstanceActivity();
-                        if (mainService!=null) {
-                            mainService.finishedAddingAnimeReleaseNotification();
+                            imageByte = stream.toByteArray();
+                        } else {
+                            try {
+                                byte[] $imageBitmap = (byte[]) LocalPersistence.readObjectFromFile(finalContext, "notificationLogoIcon");
+                                if ($imageBitmap == null || $imageBitmap.length == 0) {
+                                    imageBitmap = BitmapFactory.decodeResource(finalContext.getResources(), R.drawable.ic_launcher_round);
+                                    imageBitmap = createRoundBitmap(imageBitmap);
+                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                                        imageBitmap.compress(Bitmap.CompressFormat.WEBP_LOSSY, 25, stream);
+                                    } else {
+                                        imageBitmap.compress(Bitmap.CompressFormat.WEBP, 25, stream);
+                                    }
+                                    LocalPersistence.writeObjectToFile(finalContext, stream.toByteArray(), "notificationLogoIcon");
+                                }
+                            } catch (Exception ignored) {}
+                        }
+                        AnimeNotification anime = new AnimeNotification(animeId, title, releaseEpisode, maxEpisode, releaseDateMillis, imageByte, animeUrl, userStatus, episodeProgress);
+                        addAnimeNotification(finalContext, anime);
+                        ongoingImageDownloads.remove(animeId + "-" + releaseEpisode);
+                        if (ongoingImageDownloads.isEmpty()) {
+                            MainService mainService = MainService.getInstanceActivity();
+                            if (mainService!=null) {
+                                mainService.finishedAddingAnimeReleaseNotification();
+                            }
+                        }
+                    } catch (Exception e) {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                            Utils.handleUncaughtException(finalContext.getApplicationContext(), e, "notificationImageDownloaderExecutor");
                         }
                     }
                 });
@@ -114,7 +119,7 @@ public class AnimeNotificationManager {
             AnimeNotification anime = new AnimeNotification(animeId, title, releaseEpisode, maxEpisode, releaseDateMillis, checkingAnime.imageByte, animeUrl, userStatus, episodeProgress);
             addAnimeNotification(context, anime);
         }
-        if (ongoingImageDownloads.size()==0) {
+        if (ongoingImageDownloads.isEmpty()) {
             MainService mainService = MainService.getInstanceActivity();
             if (mainService!=null) {
                 mainService.finishedAddingAnimeReleaseNotification();
@@ -170,9 +175,15 @@ public class AnimeNotificationManager {
             addNotificationFuture.cancel(false);
         }
         addNotificationFuture = addNotificationFutureExecutor.schedule(() -> {
-            LocalPersistence.writeObjectToFile(context, allAnimeNotification, "allAnimeNotification");
-            if (isUpdating && Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                Utils.exportReleasedAnime(context.getApplicationContext());
+            try {
+                LocalPersistence.writeObjectToFile(context, allAnimeNotification, "allAnimeNotification");
+                if (isUpdating && Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                    Utils.exportReleasedAnime(context.getApplicationContext());
+                }
+            } catch (Exception e) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                    Utils.handleUncaughtException(context.getApplicationContext(), e, "addNotificationFutureExecutor");
+                }
             }
         }, 300, TimeUnit.MILLISECONDS);
     }
@@ -261,14 +272,13 @@ public class AnimeNotificationManager {
         context = context.getApplicationContext();
         if (ActivityCompat.checkSelfPermission(context.getApplicationContext(), Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) return;
 
-        if (allAnimeNotification.size() == 0) {
+        if (allAnimeNotification.isEmpty()) {
             try {
                 @SuppressWarnings("unchecked") ConcurrentHashMap<String, AnimeNotification> $allAnimeNotification = (ConcurrentHashMap<String, AnimeNotification>) LocalPersistence.readObjectFromFile(context, "allAnimeNotification");
-                if ($allAnimeNotification != null && $allAnimeNotification.size() > 0) {
+                if ($allAnimeNotification != null && !$allAnimeNotification.isEmpty()) {
                     allAnimeNotification.putAll($allAnimeNotification);
                 }
-            } catch (Exception ignored) {
-            }
+            } catch (Exception ignored) {}
         }
 
         createAnimeReleasesNotificationChannel(context.getApplicationContext());
@@ -520,15 +530,15 @@ public class AnimeNotificationManager {
             new Handler(Looper.getMainLooper()).post(releasedTabFragment::updateReleasedAnime);
         }
 
-        boolean shouldNotify = animeNotifications.size() > 0 || myAnimeNotifications.size() > 0;
+        boolean shouldNotify = !animeNotifications.isEmpty() || !myAnimeNotifications.isEmpty();
         if (shouldNotify) {
             notificationManager.cancel(NOTIFICATION_ANIME_RELEASE);
-            if (animeNotifications.size() > 0) {
+            if (!animeNotifications.isEmpty()) {
                 notificationManager.cancel(NOTIFICATION_OTHER_ANIME);
                 Notification notificationOA = notificationOABuilder.build();
                 notificationManager.notify(NOTIFICATION_OTHER_ANIME, notificationOA);
             }
-            if (myAnimeNotifications.size() > 0) {
+            if (!myAnimeNotifications.isEmpty()) {
                 notificationManager.cancel(NOTIFICATION_MY_ANIME);
                 Notification notificationMA = notificationMABuilder.build();
                 notificationManager.notify(NOTIFICATION_MY_ANIME, notificationMA);

@@ -174,49 +174,56 @@ public class Utils {
             cleanIndexedDBFilesFuture.cancel(true);
         }
         cleanIndexedDBFilesFuture = cleanIndexedDBFilesExecutorService.submit(() -> {
-            // Web App
-            webGroupedModifiedDate = new ConcurrentHashMap<>();
+            try {
+                // Web App
+                webGroupedModifiedDate = new ConcurrentHashMap<>();
 
-            final String mainDir = "app_webview/Default/IndexedDB/";
-            String location = mainDir+"https_u-kuro.github.io_0.indexeddb.blob/1";
-            location = location.replaceAll("/", Matcher.quoteReplacement(File.separator));
+                final String mainDir = "app_webview/Default/IndexedDB/";
+                String location = mainDir+"https_u-kuro.github.io_0.indexeddb.blob/1";
+                location = location.replaceAll("/", Matcher.quoteReplacement(File.separator));
 
-            final File dataDir = context.getApplicationContext().getDataDir();
-            addIndexedDBFiles(new File(dataDir, location).listFiles());
+                final File dataDir = context.getApplicationContext().getDataDir();
+                addIndexedDBFiles(new File(dataDir, location).listFiles());
 
-            List<Map.Entry<String, List<File>>> sortedModifiedDateEntries = new ArrayList<>(webGroupedModifiedDate.entrySet());
-            Collections.sort(sortedModifiedDateEntries, (entry1, entry2) -> {
-                try {
-                    Date date1 = dateFormat.parse(entry1.getKey());
-                    Date date2 = dateFormat.parse(entry2.getKey());
-                    if (date1 == null && date2 == null) return 0;
-                    if (date1 == null) return 1;
-                    if (date2 == null) return -1;
-                    return date1.compareTo(date2);
-                } catch (Exception e) {
-                    return 0;
+                List<Map.Entry<String, List<File>>> sortedModifiedDateEntries = new ArrayList<>(webGroupedModifiedDate.entrySet());
+                Collections.sort(sortedModifiedDateEntries, (entry1, entry2) -> {
+                    try {
+                        Date date1 = dateFormat.parse(entry1.getKey());
+                        Date date2 = dateFormat.parse(entry2.getKey());
+                        if (date1 == null && date2 == null) return 0;
+                        if (date1 == null) return 1;
+                        if (date2 == null) return -1;
+                        return date1.compareTo(date2);
+                    } catch (Exception e) {
+                        return 0;
+                    }
+                });
+                // Include a 3 Day Allowance
+                final int allowedDays = 3;
+                // Reason/Example:
+                // Worst Case Scenario (Sets of Blob are saved/separated in 2 different days):
+                // Let: ...Day[...Set of Blob] = Day1[SetA] - 2[A, B] - 3[B, C] - 4[C]
+                // If Set C is still an incomplete Set then Set B should exist as it may still be used by chrome.
+                // In this case Set B is separated into Days 2 and 3.
+                // To save Set B, Days 2 and 3 should exist.
+                // Thus, 3 day Allowance allows Days 4, 3, and 2 to exist.
+                // 1) Days 4 and 3 for incomplete Set C (May be used by Chrome)
+                // 2) Days 3 and 2 for Set B (May be used by Chrome too)
+                for (int i = 0; i < sortedModifiedDateEntries.size() - allowedDays; i++) {
+                    Map.Entry<String, List<File>> currentEntry = sortedModifiedDateEntries.get(i);
+                    List<File> filesToRemove = currentEntry.getValue();
+                    for (File fileToRemove : filesToRemove) {
+                        //noinspection ResultOfMethodCallIgnored
+                        fileToRemove.delete();
+                    }
                 }
-            });
-            // Include a 3 Day Allowance
-            final int allowedDays = 3;
-            // Reason/Example:
-            // Worst Case Scenario (Sets of Blob are saved/separated in 2 different days):
-            // Let: ...Day[...Set of Blob] = Day1[SetA] - 2[A, B] - 3[B, C] - 4[C]
-            // If Set C is still an incomplete Set then Set B should exist as it may still be used by chrome.
-            // In this case Set B is separated into Days 2 and 3.
-            // To save Set B, Days 2 and 3 should exist.
-            // Thus, 3 day Allowance allows Days 4, 3, and 2 to exist.
-            // 1) Days 4 and 3 for incomplete Set C (May be used by Chrome)
-            // 2) Days 3 and 2 for Set B (May be used by Chrome too)
-            for (int i = 0; i < sortedModifiedDateEntries.size() - allowedDays; i++) {
-                Map.Entry<String, List<File>> currentEntry = sortedModifiedDateEntries.get(i);
-                List<File> filesToRemove = currentEntry.getValue();
-                for (File fileToRemove : filesToRemove) {
-                    //noinspection ResultOfMethodCallIgnored
-                    fileToRemove.delete();
+                webGroupedModifiedDate = null;
+            } catch (Exception e) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                    Utils.handleUncaughtException(context.getApplicationContext(), e, "cleanIndexedDBFilesExecutorService");
                 }
+                webGroupedModifiedDate = null;
             }
-            webGroupedModifiedDate = null;
         });
     }
 
@@ -238,7 +245,7 @@ public class Utils {
                     dirIsCreated = true;
                 }
                 if (directory.isDirectory() && dirIsCreated) {
-                    if (AnimeNotificationManager.allAnimeNotification.size() > 0) {
+                    if (!AnimeNotificationManager.allAnimeNotification.isEmpty()) {
                         ObjectOutputStream objectOut = null;
                         final String filename = "Released Anime.bin";
                         File tempFile = new File(directory, filename + ".tmp");

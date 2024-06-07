@@ -83,11 +83,11 @@ public class AnimeReleaseActivity extends AppCompatActivity {
                                                 objectIn = new ObjectInputStream(fileIn);
                                                 object = objectIn.readObject();
                                                 @SuppressWarnings("unchecked") ConcurrentHashMap<String, AnimeNotification> $importedAllAnimeNotification = (ConcurrentHashMap<String, AnimeNotification>) object;
-                                                if ($importedAllAnimeNotification != null && $importedAllAnimeNotification.size() > 0) {
-                                                    if (AnimeNotificationManager.allAnimeNotification.size() == 0) {
+                                                if ($importedAllAnimeNotification != null && !$importedAllAnimeNotification.isEmpty()) {
+                                                    if (AnimeNotificationManager.allAnimeNotification.isEmpty()) {
                                                         try {
                                                             @SuppressWarnings("unchecked") ConcurrentHashMap<String, AnimeNotification> $allAnimeNotification = (ConcurrentHashMap<String, AnimeNotification>) LocalPersistence.readObjectFromFile(this, "allAnimeNotification");
-                                                            if ($allAnimeNotification != null && $allAnimeNotification.size() > 0) {
+                                                            if ($allAnimeNotification != null && !$allAnimeNotification.isEmpty()) {
                                                                 AnimeNotificationManager.allAnimeNotification.putAll($allAnimeNotification);
                                                             }
                                                         } catch (Exception ignored) {}
@@ -97,7 +97,7 @@ public class AnimeReleaseActivity extends AppCompatActivity {
                                                         Map.Entry<String, AnimeNotification> currentEntry = allAnimeNotificationEntries.get(j);
                                                         AnimeNotificationManager.allAnimeNotification.putIfAbsent(currentEntry.getKey(), currentEntry.getValue());
                                                     }
-                                                    if (AnimeNotificationManager.allAnimeNotification.size() > 0) {
+                                                    if (!AnimeNotificationManager.allAnimeNotification.isEmpty()) {
                                                         LocalPersistence.writeObjectToFile(this, AnimeNotificationManager.allAnimeNotification, "allAnimeNotification");
                                                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                                                             Utils.exportReleasedAnime(this.getApplicationContext());
@@ -363,10 +363,10 @@ public class AnimeReleaseActivity extends AppCompatActivity {
             showToast(Toast.makeText(getApplicationContext(), "Please select your backup file.", Toast.LENGTH_LONG));
         });
 
-        if (AnimeNotificationManager.allAnimeNotification.size() == 0) {
+        if (AnimeNotificationManager.allAnimeNotification.isEmpty()) {
             try {
                 @SuppressWarnings("unchecked") ConcurrentHashMap<String, AnimeNotification> $allAnimeNotification = (ConcurrentHashMap<String, AnimeNotification>) LocalPersistence.readObjectFromFile(this, "allAnimeNotification");
-                if ($allAnimeNotification != null && $allAnimeNotification.size() > 0) {
+                if ($allAnimeNotification != null && !$allAnimeNotification.isEmpty()) {
                     AnimeNotificationManager.allAnimeNotification.putAll($allAnimeNotification);
                 }
             } catch (Exception ignored) {}

@@ -75,9 +75,9 @@ public class MyWorker extends Worker {
             updateData(isManual);
         } else {
             boolean isBooted = getInputData().getBoolean("isBooted", false);
-            if (AnimeNotificationManager.allAnimeNotification.size()==0) {
+            if (AnimeNotificationManager.allAnimeNotification.isEmpty()) {
                 @SuppressWarnings("unchecked") ConcurrentHashMap<String, AnimeNotification> $allAnimeNotification = (ConcurrentHashMap<String, AnimeNotification>) LocalPersistence.readObjectFromFile(this.getApplicationContext(), "allAnimeNotification");
-                if ($allAnimeNotification != null && $allAnimeNotification.size() > 0) {
+                if ($allAnimeNotification != null && !$allAnimeNotification.isEmpty()) {
                     AnimeNotificationManager.allAnimeNotification.putAll($allAnimeNotification);
                 }
             }
@@ -210,7 +210,7 @@ public class MyWorker extends Worker {
             }
         }
         String notificationTitleMA;
-        if (myAnimeNotifications.size() > 0) {
+        if (!myAnimeNotifications.isEmpty()) {
             notificationTitleMA = "Your Anime Just Aired" + " +" + myAnimeNotifications.size();
         } else {
             notificationTitleMA = "Your Anime Aired";
@@ -287,7 +287,7 @@ public class MyWorker extends Worker {
             }
         }
         String notificationTitleOA;
-        if (animeNotifications.size() > 0) {
+        if (!animeNotifications.isEmpty()) {
             notificationTitleOA = "Other Anime Just Aired" + " +" + animeNotifications.size();
         } else {
             notificationTitleOA = "Other Anime Aired";
@@ -329,7 +329,7 @@ public class MyWorker extends Worker {
                     .setWhen(mostRecentlySentNotificationTime)
                     .setShowWhen(true);
 
-            boolean hasNewMyAnimeNotification = myAnimeNotifications.size() > 0;
+            boolean hasNewMyAnimeNotification = !myAnimeNotifications.isEmpty();
             if (hasNewMyAnimeNotification) { // Set with vibration
                 notificationSummaryBuilder
                         .setGroupAlertBehavior(Notification.GROUP_ALERT_SUMMARY);
@@ -353,12 +353,12 @@ public class MyWorker extends Worker {
             if (!isBooted || shouldNotify) {
                 if (animeReleaseNotificationSize > 0) {
                     notificationManager.cancel(NOTIFICATION_ANIME_RELEASE);
-                    if (animeNotifications.size() > 0) {
+                    if (!animeNotifications.isEmpty()) {
                         notificationManager.cancel(NOTIFICATION_OTHER_ANIME);
                         Notification notificationOA = notificationOABuilder.build();
                         notificationManager.notify(NOTIFICATION_OTHER_ANIME, notificationOA);
                     }
-                    if (myAnimeNotifications.size() > 0) {
+                    if (!myAnimeNotifications.isEmpty()) {
                         notificationManager.cancel(NOTIFICATION_MY_ANIME);
                         Notification notificationMA = notificationMABuilder.build();
                         notificationManager.notify(NOTIFICATION_MY_ANIME, notificationMA);

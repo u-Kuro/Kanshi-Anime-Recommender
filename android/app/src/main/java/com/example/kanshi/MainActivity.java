@@ -955,35 +955,39 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
             Future<?> future = updateNotificationsExecutorService.submit(() -> {
-                if (AnimeNotificationManager.allAnimeNotification.size()==0) {
-                    try {
+                try {
+                    if (AnimeNotificationManager.allAnimeNotification.isEmpty()) {
                         @SuppressWarnings("unchecked") ConcurrentHashMap<String, AnimeNotification> $allAnimeNotification = (ConcurrentHashMap<String, AnimeNotification>) LocalPersistence.readObjectFromFile(MainActivity.this, "allAnimeNotification");
-                        if ($allAnimeNotification != null && $allAnimeNotification.size() > 0) {
+                        if ($allAnimeNotification != null && !$allAnimeNotification.isEmpty()) {
                             AnimeNotificationManager.allAnimeNotification.putAll($allAnimeNotification);
                         }
-                    } catch (Exception ignored) {}
-                }
-                ConcurrentHashMap<String, AnimeNotification> updatedAnimeNotifications = new ConcurrentHashMap<>();
-                List<AnimeNotification> allAnimeNotificationValues = new ArrayList<>(AnimeNotificationManager.allAnimeNotification.values());
-                for (AnimeNotification anime : allAnimeNotificationValues) {
-                    if (anime.animeId==animeId) {
-                        AnimeNotification newAnime = new AnimeNotification(anime.animeId, title, anime.releaseEpisode, maxEpisode, anime.releaseDateMillis, anime.imageByte, animeUrl, userStatus, episodeProgress);
-                        updatedAnimeNotifications.put(anime.animeId+"-"+anime.releaseEpisode, newAnime);
                     }
-                }
-                AnimeNotificationManager.allAnimeNotification.putAll(updatedAnimeNotifications);
-                AnimeNotificationManager.writeAnimeNotificationInFile(MainActivity.this, true);
-                updateNotificationsFutures.remove(String.valueOf(animeId));
-                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
-                    if (updateNotificationsFutures.isEmpty()) {
-                        SchedulesTabFragment schedulesTabFragment = SchedulesTabFragment.getInstanceActivity();
-                        if (schedulesTabFragment!=null) {
-                            new Handler(Looper.getMainLooper()).post(schedulesTabFragment::updateScheduledAnime);
+                    ConcurrentHashMap<String, AnimeNotification> updatedAnimeNotifications = new ConcurrentHashMap<>();
+                    List<AnimeNotification> allAnimeNotificationValues = new ArrayList<>(AnimeNotificationManager.allAnimeNotification.values());
+                    for (AnimeNotification anime : allAnimeNotificationValues) {
+                        if (anime.animeId==animeId) {
+                            AnimeNotification newAnime = new AnimeNotification(anime.animeId, title, anime.releaseEpisode, maxEpisode, anime.releaseDateMillis, anime.imageByte, animeUrl, userStatus, episodeProgress);
+                            updatedAnimeNotifications.put(anime.animeId+"-"+anime.releaseEpisode, newAnime);
                         }
-                        ReleasedTabFragment releasedTabFragment = ReleasedTabFragment.getInstanceActivity();
-                        if (releasedTabFragment!=null) {
-                            new Handler(Looper.getMainLooper()).post(releasedTabFragment::updateReleasedAnime);
+                    }
+                    AnimeNotificationManager.allAnimeNotification.putAll(updatedAnimeNotifications);
+                    AnimeNotificationManager.writeAnimeNotificationInFile(MainActivity.this, true);
+                    updateNotificationsFutures.remove(String.valueOf(animeId));
+                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+                        if (updateNotificationsFutures.isEmpty()) {
+                            SchedulesTabFragment schedulesTabFragment = SchedulesTabFragment.getInstanceActivity();
+                            if (schedulesTabFragment!=null) {
+                                new Handler(Looper.getMainLooper()).post(schedulesTabFragment::updateScheduledAnime);
+                            }
+                            ReleasedTabFragment releasedTabFragment = ReleasedTabFragment.getInstanceActivity();
+                            if (releasedTabFragment!=null) {
+                                new Handler(Looper.getMainLooper()).post(releasedTabFragment::updateReleasedAnime);
+                            }
                         }
+                    }
+                } catch (Exception e) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                        Utils.handleUncaughtException(MainActivity.this.getApplicationContext(), e, "updateNotificationsExecutorService");
                     }
                 }
             });
@@ -1139,21 +1143,25 @@ public class MainActivity extends AppCompatActivity {
             updateCurrentNotificationsFuture.cancel(true);
         }
         updateCurrentNotificationsFuture = updateCurrentNotificationsExecutorService.submit(() -> {
-            if (AnimeNotificationManager.allAnimeNotification.size()==0) {
-                try {
+            try {
+                if (AnimeNotificationManager.allAnimeNotification.isEmpty()) {
                     @SuppressWarnings("unchecked") ConcurrentHashMap<String, AnimeNotification> $allAnimeNotification = (ConcurrentHashMap<String, AnimeNotification>) LocalPersistence.readObjectFromFile(MainActivity.this, "allAnimeNotification");
-                    if ($allAnimeNotification != null && $allAnimeNotification.size() > 0) {
+                    if ($allAnimeNotification != null && !$allAnimeNotification.isEmpty()) {
                         AnimeNotificationManager.allAnimeNotification.putAll($allAnimeNotification);
                     }
-                } catch (Exception ignored) {}
+                }
+                Set<String> animeIdsToBeUpdated = new HashSet<>();
+                List<AnimeNotification> allAnimeNotificationValues = new ArrayList<>(AnimeNotificationManager.allAnimeNotification.values());
+                for (AnimeNotification anime : allAnimeNotificationValues) {
+                    animeIdsToBeUpdated.add(String.valueOf(anime.animeId));
+                }
+                String joinedAnimeIds = String.join(",", animeIdsToBeUpdated);
+                webView.post(() -> webView.loadUrl("javascript:window?.updateNotifications?.([" + joinedAnimeIds + "])"));
+            } catch (Exception e) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                    Utils.handleUncaughtException(MainActivity.this.getApplicationContext(), e, "updateCurrentNotificationsExecutorService");
+                }
             }
-            Set<String> animeIdsToBeUpdated = new HashSet<>();
-            List<AnimeNotification> allAnimeNotificationValues = new ArrayList<>(AnimeNotificationManager.allAnimeNotification.values());
-            for (AnimeNotification anime : allAnimeNotificationValues) {
-                animeIdsToBeUpdated.add(String.valueOf(anime.animeId));
-            }
-            String joinedAnimeIds = String.join(",", animeIdsToBeUpdated);
-            webView.post(() -> webView.loadUrl("javascript:window?.updateNotifications?.(["+joinedAnimeIds+"])"));
         });
     }
 

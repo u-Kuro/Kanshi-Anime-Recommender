@@ -100,139 +100,145 @@ public class ReleasedTabFragment extends Fragment {
             updateReleasedAnimeFuture.cancel(true);
         }
         updateReleasedAnimeFuture = updateReleasedAnimeExecutorService.submit(() -> {
-            if (AnimeNotificationManager.allAnimeNotification.isEmpty()) {
-                @SuppressWarnings("unchecked") ConcurrentHashMap<String, AnimeNotification> $allAnimeNotification = (ConcurrentHashMap<String, AnimeNotification>) LocalPersistence.readObjectFromFile(context, "allAnimeNotification");
-                if ($allAnimeNotification != null && $allAnimeNotification.size() > 0) {
-                    AnimeNotificationManager.allAnimeNotification.putAll($allAnimeNotification);
-                }
-            }
-
-            ArrayList<AnimeNotification> allAnimeNotificationValues = new ArrayList<>(AnimeNotificationManager.allAnimeNotification.values());
-            Collections.sort(allAnimeNotificationValues, Comparator.comparingLong(anime -> anime.releaseDateMillis));
-
-            ArrayList<AnimeNotification> animeReleased = new ArrayList<>();
-
-            for (AnimeNotification anime : allAnimeNotificationValues) {
-                if (!"Updates".equals(selectedAnimeReleaseOption)) {
-                    boolean isMyAnime = anime.userStatus != null && !anime.userStatus.isEmpty() && !anime.userStatus.equalsIgnoreCase("UNWATCHED");
-                    switch (selectedAnimeReleaseOption) {
-                        case "My List":
-                            if (!isMyAnime) {
-                                continue;
-                            }
-                            break;
-                        case "Watching":
-                            if (!isMyAnime || !("CURRENT".equalsIgnoreCase(anime.userStatus) || "REPEATING".equalsIgnoreCase(anime.userStatus))) {
-                                continue;
-                            }
-                            break;
-                        case "Finished":
-                            if (!isMyAnime || anime.releaseEpisode < anime.maxEpisode || anime.maxEpisode <= 0) {
-                                continue;
-                            }
-                            break;
-                        case "Others":
-                            if (isMyAnime) {
-                                continue;
-                            }
-                            break;
+            try {
+                if (AnimeNotificationManager.allAnimeNotification.isEmpty()) {
+                    @SuppressWarnings("unchecked") ConcurrentHashMap<String, AnimeNotification> $allAnimeNotification = (ConcurrentHashMap<String, AnimeNotification>) LocalPersistence.readObjectFromFile(context, "allAnimeNotification");
+                    if ($allAnimeNotification != null && !$allAnimeNotification.isEmpty()) {
+                        AnimeNotificationManager.allAnimeNotification.putAll($allAnimeNotification);
                     }
                 }
-                if (anime.releaseDateMillis <= System.currentTimeMillis()) {
-                    final boolean isNotComplete = !("COMPLETED".equalsIgnoreCase(anime.userStatus) || ("My List".equals(selectedAnimeReleaseOption) && "DROPPED".equalsIgnoreCase(anime.userStatus)));
-                    final boolean isNotWatched = anime.episodeProgress == 0 || anime.episodeProgress < anime.releaseEpisode;
-                    if (!showUnwatchedAnime || (isNotComplete && isNotWatched)) {
-                        if (anime.maxEpisode < 0) { // No Given Max Episodes
-                            anime.message = "Episode " + anime.releaseEpisode;
-                        } else if (anime.releaseEpisode >= anime.maxEpisode) {
-                            anime.message = "Finished Airing: Episode " + anime.releaseEpisode;
-                        } else {
-                            anime.message = "Episode " + anime.releaseEpisode + " / " + anime.maxEpisode;
+
+                ArrayList<AnimeNotification> allAnimeNotificationValues = new ArrayList<>(AnimeNotificationManager.allAnimeNotification.values());
+                Collections.sort(allAnimeNotificationValues, Comparator.comparingLong(anime -> anime.releaseDateMillis));
+
+                ArrayList<AnimeNotification> animeReleased = new ArrayList<>();
+
+                for (AnimeNotification anime : allAnimeNotificationValues) {
+                    if (!"Updates".equals(selectedAnimeReleaseOption)) {
+                        boolean isMyAnime = anime.userStatus != null && !anime.userStatus.isEmpty() && !anime.userStatus.equalsIgnoreCase("UNWATCHED");
+                        switch (selectedAnimeReleaseOption) {
+                            case "My List":
+                                if (!isMyAnime) {
+                                    continue;
+                                }
+                                break;
+                            case "Watching":
+                                if (!isMyAnime || !("CURRENT".equalsIgnoreCase(anime.userStatus) || "REPEATING".equalsIgnoreCase(anime.userStatus))) {
+                                    continue;
+                                }
+                                break;
+                            case "Finished":
+                                if (!isMyAnime || anime.releaseEpisode < anime.maxEpisode || anime.maxEpisode <= 0) {
+                                    continue;
+                                }
+                                break;
+                            case "Others":
+                                if (isMyAnime) {
+                                    continue;
+                                }
+                                break;
                         }
-                        animeReleased.add(anime);
+                    }
+                    if (anime.releaseDateMillis <= System.currentTimeMillis()) {
+                        final boolean isNotComplete = !("COMPLETED".equalsIgnoreCase(anime.userStatus) || ("My List".equals(selectedAnimeReleaseOption) && "DROPPED".equalsIgnoreCase(anime.userStatus)));
+                        final boolean isNotWatched = anime.episodeProgress == 0 || anime.episodeProgress < anime.releaseEpisode;
+                        if (!showUnwatchedAnime || (isNotComplete && isNotWatched)) {
+                            if (anime.maxEpisode < 0) { // No Given Max Episodes
+                                anime.message = "Episode " + anime.releaseEpisode;
+                            } else if (anime.releaseEpisode >= anime.maxEpisode) {
+                                anime.message = "Finished Airing: Episode " + anime.releaseEpisode;
+                            } else {
+                                anime.message = "Episode " + anime.releaseEpisode + " / " + anime.maxEpisode;
+                            }
+                            animeReleased.add(anime);
+                        }
                     }
                 }
-            }
 
-            Map<String, ArrayList<AnimeNotification>> map = new TreeMap<>();
-            for (AnimeNotification anime : animeReleased) {
-                DateTimeFormatter shownDateFormat = DateTimeFormatter.ofPattern("MMMM d yyyy, EEEE");
-                DateTimeFormatter shownWeekDayFormat = DateTimeFormatter.ofPattern("EEEE");
+                Map<String, ArrayList<AnimeNotification>> map = new TreeMap<>();
+                for (AnimeNotification anime : animeReleased) {
+                    DateTimeFormatter shownDateFormat = DateTimeFormatter.ofPattern("MMMM d yyyy, EEEE");
+                    DateTimeFormatter shownWeekDayFormat = DateTimeFormatter.ofPattern("EEEE");
 
-                Instant releaseDateInstant = Instant.ofEpochMilli(anime.releaseDateMillis);
-                LocalDate localDate = releaseDateInstant.atZone(ZoneId.systemDefault()).toLocalDate();
-                LocalDate today = LocalDate.now();
+                    Instant releaseDateInstant = Instant.ofEpochMilli(anime.releaseDateMillis);
+                    LocalDate localDate = releaseDateInstant.atZone(ZoneId.systemDefault()).toLocalDate();
+                    LocalDate today = LocalDate.now();
 
-                String dateStr;
-                if (localDate.isAfter(today.plusDays(6))) { // more than a week
-                    dateStr = shownDateFormat.format(localDate);
-                } else if (localDate.isAfter(today.plusDays(1))) { // more than a day
-                    dateStr = shownWeekDayFormat.format(localDate);
-                } else if (localDate.isAfter(today)) {
-                    dateStr = "Tomorrow, " + shownWeekDayFormat.format(localDate);
-                } else if (localDate.isEqual(today)) {
-                    dateStr = "Today, " + shownWeekDayFormat.format(localDate);
-                } else if (localDate.isAfter(today.minusWeeks(1))) {
-                    long daysDifference = ChronoUnit.DAYS.between(localDate, today);
-                    if (daysDifference == 1) {
-                        LocalDateTime localDateTime = LocalDateTime.ofInstant(releaseDateInstant, ZoneId.systemDefault());
-                        LocalDateTime now = LocalDateTime.now();
-                        long minutesDifference = ChronoUnit.MINUTES.between(localDateTime, now);
-                        if (minutesDifference == 1) {
-                            dateStr = "1 minute ago" + ", " + shownWeekDayFormat.format(localDate);
-                        } else if (minutesDifference < 60) {
-                            dateStr = minutesDifference + " minutes ago" + ", " + shownWeekDayFormat.format(localDate);
+                    String dateStr;
+                    if (localDate.isAfter(today.plusDays(6))) { // more than a week
+                        dateStr = shownDateFormat.format(localDate);
+                    } else if (localDate.isAfter(today.plusDays(1))) { // more than a day
+                        dateStr = shownWeekDayFormat.format(localDate);
+                    } else if (localDate.isAfter(today)) {
+                        dateStr = "Tomorrow, " + shownWeekDayFormat.format(localDate);
+                    } else if (localDate.isEqual(today)) {
+                        dateStr = "Today, " + shownWeekDayFormat.format(localDate);
+                    } else if (localDate.isAfter(today.minusWeeks(1))) {
+                        long daysDifference = ChronoUnit.DAYS.between(localDate, today);
+                        if (daysDifference == 1) {
+                            LocalDateTime localDateTime = LocalDateTime.ofInstant(releaseDateInstant, ZoneId.systemDefault());
+                            LocalDateTime now = LocalDateTime.now();
+                            long minutesDifference = ChronoUnit.MINUTES.between(localDateTime, now);
+                            if (minutesDifference == 1) {
+                                dateStr = "1 minute ago" + ", " + shownWeekDayFormat.format(localDate);
+                            } else if (minutesDifference < 60) {
+                                dateStr = minutesDifference + " minutes ago" + ", " + shownWeekDayFormat.format(localDate);
+                            } else {
+                                dateStr = "Yesterday" + ", " + shownWeekDayFormat.format(localDate);
+                            }
                         } else {
-                            dateStr = "Yesterday" + ", " + shownWeekDayFormat.format(localDate);
+                            dateStr = daysDifference + " days ago" + ", " + shownWeekDayFormat.format(localDate);
                         }
                     } else {
-                        dateStr = daysDifference + " days ago" + ", " + shownWeekDayFormat.format(localDate);
+                        dateStr = shownDateFormat.format(localDate);
                     }
-                } else {
-                    dateStr = shownDateFormat.format(localDate);
+
+                    if (!map.containsKey(dateStr)) {
+                        map.put(dateStr, new ArrayList<>());
+                    }
+                    if (map.containsKey(dateStr)) {
+                        Objects.requireNonNull(map.get(dateStr)).add(anime);
+                    }
                 }
 
-                if (!map.containsKey(dateStr)) {
-                    map.put(dateStr, new ArrayList<>());
-                }
-                if (map.containsKey(dateStr)) {
-                    Objects.requireNonNull(map.get(dateStr)).add(anime);
-                }
-            }
+                ArrayList<AnimeReleaseGroup> groupedReleasedAnime = new ArrayList<>();
+                for (Map.Entry<String, ArrayList<AnimeNotification>> entry : map.entrySet()) {
+                    ArrayList<AnimeNotification> animeList = entry.getValue();
+                    if (animeList != null && !animeList.isEmpty()) {
+                        Collections.sort(animeList, (a1, a2) -> Long.compare(a2.releaseDateMillis, a1.releaseDateMillis));
 
-            ArrayList<AnimeReleaseGroup> groupedReleasedAnime = new ArrayList<>();
-            for (Map.Entry<String, ArrayList<AnimeNotification>> entry : map.entrySet()) {
-                ArrayList<AnimeNotification> animeList = entry.getValue();
-                if (animeList != null && !animeList.isEmpty()) {
-                    Collections.sort(animeList, (a1, a2) -> Long.compare(a2.releaseDateMillis, a1.releaseDateMillis));
+                        AnimeNotification anime = animeList.get(0);
+                        LocalDateTime localDateTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(anime.releaseDateMillis), ZoneId.systemDefault());
 
-                    AnimeNotification anime = animeList.get(0);
-                    LocalDateTime localDateTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(anime.releaseDateMillis), ZoneId.systemDefault());
-
-                    groupedReleasedAnime.add(new AnimeReleaseGroup(entry.getKey(), localDateTime, animeList));
+                        groupedReleasedAnime.add(new AnimeReleaseGroup(entry.getKey(), localDateTime, animeList));
+                    }
                 }
-            }
 
-            Collections.sort(groupedReleasedAnime, (a1, a2) -> {
-                try {
-                    if (a1.date == null && a2.date == null) return 0;
-                    if (a1.date == null) return 1;
-                    if (a2.date == null) return -1;
-                    return a2.date.compareTo(a1.date);
-                } catch (Exception e) {
-                    return 0;
-                }
-            });
-            if (ReleasedTabFragment.this.groupedReleasedAnime == null) {
-                ReleasedTabFragment.this.groupedReleasedAnime = groupedReleasedAnime;
-                new Handler(Looper.getMainLooper()).post(() -> {
-                    ReleasedTabFragment.this.animeReleaseGroupAdapter = new AnimeReleaseGroupAdapter(context, R.layout.anime_release_group_card, ReleasedTabFragment.this.groupedReleasedAnime);
-                    ReleasedTabFragment.this.animeReleasesList.setAdapter(animeReleaseGroupAdapter);
+                Collections.sort(groupedReleasedAnime, (a1, a2) -> {
+                    try {
+                        if (a1.date == null && a2.date == null) return 0;
+                        if (a1.date == null) return 1;
+                        if (a2.date == null) return -1;
+                        return a2.date.compareTo(a1.date);
+                    } catch (Exception e) {
+                        return 0;
+                    }
                 });
-            } else {
-                ReleasedTabFragment.this.groupedReleasedAnime.clear();
-                ReleasedTabFragment.this.groupedReleasedAnime.addAll(groupedReleasedAnime);
-                new Handler(Looper.getMainLooper()).post(() -> ReleasedTabFragment.this.animeReleaseGroupAdapter.notifyDataSetChanged());
+                if (ReleasedTabFragment.this.groupedReleasedAnime == null) {
+                    ReleasedTabFragment.this.groupedReleasedAnime = groupedReleasedAnime;
+                    new Handler(Looper.getMainLooper()).post(() -> {
+                        ReleasedTabFragment.this.animeReleaseGroupAdapter = new AnimeReleaseGroupAdapter(context, R.layout.anime_release_group_card, ReleasedTabFragment.this.groupedReleasedAnime);
+                        ReleasedTabFragment.this.animeReleasesList.setAdapter(animeReleaseGroupAdapter);
+                    });
+                } else {
+                    ReleasedTabFragment.this.groupedReleasedAnime.clear();
+                    ReleasedTabFragment.this.groupedReleasedAnime.addAll(groupedReleasedAnime);
+                    new Handler(Looper.getMainLooper()).post(() -> ReleasedTabFragment.this.animeReleaseGroupAdapter.notifyDataSetChanged());
+                }
+            } catch (Exception e) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                    Utils.handleUncaughtException(context.getApplicationContext(), e, "updateReleasedAnimeExecutorService");
+                }
             }
         });
     }
