@@ -1,5 +1,6 @@
 package com.example.kanshi;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.os.Build;
 import android.os.Bundle;
@@ -43,6 +44,7 @@ public class SchedulesTabFragment extends Fragment {
     ArrayList<AnimeReleaseGroup> groupedAnimeSchedules = null;
     AnimeReleaseGroupAdapter animeReleaseGroupAdapter = null;
 
+    @SuppressLint("ClickableViewAccessibility")
     @RequiresApi(api = Build.VERSION_CODES.O)
     @Nullable
     @Override

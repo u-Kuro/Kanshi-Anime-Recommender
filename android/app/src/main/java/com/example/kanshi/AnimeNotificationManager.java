@@ -16,8 +16,6 @@ import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Build;
-import android.os.Handler;
-import android.os.Looper;
 
 import androidx.annotation.RequiresApi;
 import androidx.core.app.ActivityCompat;
@@ -95,7 +93,10 @@ public class AnimeNotificationManager {
                                     } else {
                                         imageBitmap.compress(Bitmap.CompressFormat.WEBP, 25, stream);
                                     }
-                                    LocalPersistence.writeObjectToFile(finalContext, stream.toByteArray(), "notificationLogoIcon");
+                                    $imageBitmap = stream.toByteArray();
+                                    if ($imageBitmap.length > 0) {
+                                        LocalPersistence.writeObjectToFile(finalContext, $imageBitmap, "notificationLogoIcon");
+                                    }
                                 }
                             } catch (Exception ignored) {}
                         }
@@ -172,13 +173,15 @@ public class AnimeNotificationManager {
 
     public static void writeAnimeNotificationInFile(Context context, boolean isUpdating) {
         if (addNotificationFuture != null && !addNotificationFuture.isDone()) {
-            addNotificationFuture.cancel(false);
+            addNotificationFuture.cancel(true);
         }
         addNotificationFuture = addNotificationFutureExecutor.schedule(() -> {
             try {
-                LocalPersistence.writeObjectToFile(context, allAnimeNotification, "allAnimeNotification");
-                if (isUpdating && Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                    Utils.exportReleasedAnime(context.getApplicationContext());
+                if (!allAnimeNotification.isEmpty()) {
+                    LocalPersistence.writeObjectToFile(context, allAnimeNotification, "allAnimeNotification");
+                    if (isUpdating && Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                        Utils.exportReleasedAnime(context.getApplicationContext());
+                    }
                 }
             } catch (Exception e) {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
@@ -277,6 +280,9 @@ public class AnimeNotificationManager {
                 @SuppressWarnings("unchecked") ConcurrentHashMap<String, AnimeNotification> $allAnimeNotification = (ConcurrentHashMap<String, AnimeNotification>) LocalPersistence.readObjectFromFile(context, "allAnimeNotification");
                 if ($allAnimeNotification != null && !$allAnimeNotification.isEmpty()) {
                     allAnimeNotification.putAll($allAnimeNotification);
+                }
+                if (allAnimeNotification.isEmpty()) {
+                    return;
                 }
             } catch (Exception ignored) {}
         }
@@ -519,15 +525,6 @@ public class AnimeNotificationManager {
                     .setGroupAlertBehavior(Notification.GROUP_ALERT_CHILDREN)
                     .setDefaults(Notification.DEFAULT_ALL)
                     .setVibrate(new long[]{0L});
-        }
-
-        SchedulesTabFragment schedulesTabFragment = SchedulesTabFragment.getInstanceActivity();
-        if (schedulesTabFragment!=null) {
-            new Handler(Looper.getMainLooper()).post(schedulesTabFragment::updateScheduledAnime);
-        }
-        ReleasedTabFragment releasedTabFragment = ReleasedTabFragment.getInstanceActivity();
-        if (releasedTabFragment!=null) {
-            new Handler(Looper.getMainLooper()).post(releasedTabFragment::updateReleasedAnime);
         }
 
         boolean shouldNotify = !animeNotifications.isEmpty() || !myAnimeNotifications.isEmpty();

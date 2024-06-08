@@ -961,6 +961,9 @@ public class MainActivity extends AppCompatActivity {
                         if ($allAnimeNotification != null && !$allAnimeNotification.isEmpty()) {
                             AnimeNotificationManager.allAnimeNotification.putAll($allAnimeNotification);
                         }
+                        if (AnimeNotificationManager.allAnimeNotification.isEmpty()) {
+                            return;
+                        }
                     }
                     ConcurrentHashMap<String, AnimeNotification> updatedAnimeNotifications = new ConcurrentHashMap<>();
                     List<AnimeNotification> allAnimeNotificationValues = new ArrayList<>(AnimeNotificationManager.allAnimeNotification.values());
@@ -1148,6 +1151,8 @@ public class MainActivity extends AppCompatActivity {
                     @SuppressWarnings("unchecked") ConcurrentHashMap<String, AnimeNotification> $allAnimeNotification = (ConcurrentHashMap<String, AnimeNotification>) LocalPersistence.readObjectFromFile(MainActivity.this, "allAnimeNotification");
                     if ($allAnimeNotification != null && !$allAnimeNotification.isEmpty()) {
                         AnimeNotificationManager.allAnimeNotification.putAll($allAnimeNotification);
+                    } else {
+                        return;
                     }
                 }
                 Set<String> animeIdsToBeUpdated = new HashSet<>();

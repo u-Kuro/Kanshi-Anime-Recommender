@@ -1,4 +1,4 @@
-const version = 403;
+const version = 404;
 let webVersionPromise
 export default async function getWebVersion() {
     if (webVersionPromise) return webVersionPromise

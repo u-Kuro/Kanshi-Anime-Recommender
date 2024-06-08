@@ -75,12 +75,6 @@ public class MyWorker extends Worker {
             updateData(isManual);
         } else {
             boolean isBooted = getInputData().getBoolean("isBooted", false);
-            if (AnimeNotificationManager.allAnimeNotification.isEmpty()) {
-                @SuppressWarnings("unchecked") ConcurrentHashMap<String, AnimeNotification> $allAnimeNotification = (ConcurrentHashMap<String, AnimeNotification>) LocalPersistence.readObjectFromFile(this.getApplicationContext(), "allAnimeNotification");
-                if ($allAnimeNotification != null && !$allAnimeNotification.isEmpty()) {
-                    AnimeNotificationManager.allAnimeNotification.putAll($allAnimeNotification);
-                }
-            }
             showNotification(isBooted);
             if (isBooted) {
                 updateData(true);
@@ -109,6 +103,13 @@ public class MyWorker extends Worker {
 
         long mostRecentlySentMyAnimeNotificationTime = 0L;
         long mostRecentlySentOtherAnimeNotificationTime = 0L;
+
+        if (AnimeNotificationManager.allAnimeNotification.isEmpty()) {
+            @SuppressWarnings("unchecked") ConcurrentHashMap<String, AnimeNotification> $allAnimeNotification = (ConcurrentHashMap<String, AnimeNotification>) LocalPersistence.readObjectFromFile(this.getApplicationContext(), "allAnimeNotification");
+            if ($allAnimeNotification != null && !$allAnimeNotification.isEmpty()) {
+                AnimeNotificationManager.allAnimeNotification.putAll($allAnimeNotification);
+            }
+        }
 
         List<AnimeNotification> newSentAnimeNotification = new ArrayList<>();
         List<AnimeNotification> allAnimeNotificationValues = new ArrayList<>(AnimeNotificationManager.allAnimeNotification.values());
@@ -377,7 +378,7 @@ public class MyWorker extends Worker {
                 animeNotificationsToBeRemoved.add(anime.animeId+"-"+anime.releaseEpisode);
             }
         }
-        if (!animeNotificationsToBeRemoved.isEmpty()) {
+        if (!animeNotificationsToBeRemoved.isEmpty() && !AnimeNotificationManager.allAnimeNotification.isEmpty()) {
             for (String animeKey : animeNotificationsToBeRemoved) {
                 AnimeNotificationManager.allAnimeNotification.remove(animeKey);
             }
@@ -449,6 +450,15 @@ public class MyWorker extends Worker {
                     } else {
                         JSONObject airingSchedule = data.optJSONObject("AiringSchedule");
                         if (airingSchedule != null) {
+                            if (AnimeNotificationManager.allAnimeNotification.isEmpty()) {
+                                @SuppressWarnings("unchecked") ConcurrentHashMap<String, AnimeNotification> $allAnimeNotification = (ConcurrentHashMap<String, AnimeNotification>) LocalPersistence.readObjectFromFile(this.getApplicationContext(), "allAnimeNotification");
+                                if ($allAnimeNotification != null && !$allAnimeNotification.isEmpty()) {
+                                    AnimeNotificationManager.allAnimeNotification.putAll($allAnimeNotification);
+                                }
+                                if (AnimeNotificationManager.allAnimeNotification.isEmpty()) {
+                                    return;
+                                }
+                            }
                             boolean isEdited = false;
                             long episodes;
                             JSONObject media = airingSchedule.optJSONObject("media");
@@ -474,9 +484,11 @@ public class MyWorker extends Worker {
                                 isEdited = true;
                             }
                             if (isEdited) {
-                                LocalPersistence.writeObjectToFile(this.getApplicationContext(), AnimeNotificationManager.allAnimeNotification, "allAnimeNotification");
-                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                                    Utils.exportReleasedAnime(this.getApplicationContext());
+                                if (!AnimeNotificationManager.allAnimeNotification.isEmpty()) {
+                                    LocalPersistence.writeObjectToFile(this.getApplicationContext(), AnimeNotificationManager.allAnimeNotification, "allAnimeNotification");
+                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                                        Utils.exportReleasedAnime(this.getApplicationContext());
+                                    }
                                 }
                             }
                         }

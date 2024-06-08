@@ -408,5 +408,6 @@ public class Utils {
         }
     }
 
+    static final Map<String, Bitmap> imageCache = new ConcurrentHashMap<>();
 }
 

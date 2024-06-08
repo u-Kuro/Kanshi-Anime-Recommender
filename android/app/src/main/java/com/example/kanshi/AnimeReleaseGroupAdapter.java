@@ -1,5 +1,7 @@
 package com.example.kanshi;
 
+import static com.example.kanshi.Utils.imageCache;
+
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
@@ -35,9 +37,8 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Locale;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -54,7 +55,13 @@ public class AnimeReleaseGroupAdapter extends ArrayAdapter<AnimeReleaseGroup> {
     }
 
     private final ExecutorService getViewExecutorService = Executors.newFixedThreadPool(1);
-    final Map<String, Bitmap> imageCache = new ConcurrentHashMap<>();
+    private final HashSet<Integer> updatedPosition = new HashSet<>();
+
+    @Override
+    public void notifyDataSetChanged() {
+        updatedPosition.clear();
+        super.notifyDataSetChanged();
+    }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
     @NonNull
@@ -62,7 +69,11 @@ public class AnimeReleaseGroupAdapter extends ArrayAdapter<AnimeReleaseGroup> {
     public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
         View view;
         if (convertView != null) {
-            view = convertView;
+            if (updatedPosition.contains(position)) {
+                return convertView;
+            } else {
+                view = convertView;
+            }
         } else {
             LayoutInflater layoutInflater = LayoutInflater.from(mContext);
             view = layoutInflater.inflate(mResource, parent, false);
@@ -199,8 +210,8 @@ public class AnimeReleaseGroupAdapter extends ArrayAdapter<AnimeReleaseGroup> {
                                 if (userStatus.equalsIgnoreCase("COMPLETED")) {
                                     colorStateList = AppCompatResources.getColorStateList(mContext, R.color.web_green);
                                 } else if (
-                                    userStatus.equalsIgnoreCase("CURRENT")
-                                    || userStatus.equalsIgnoreCase("REPEATING")
+                                        userStatus.equalsIgnoreCase("CURRENT")
+                                                || userStatus.equalsIgnoreCase("REPEATING")
                                 ) {
                                     colorStateList = AppCompatResources.getColorStateList(mContext, R.color.web_blue);
                                 } else if (userStatus.equalsIgnoreCase("PLANNING")) {
@@ -255,8 +266,9 @@ public class AnimeReleaseGroupAdapter extends ArrayAdapter<AnimeReleaseGroup> {
         return view;
     }
 
+    private final Handler handler = new Handler(Looper.getMainLooper());
     public void runOnUi(Runnable r) {
-        new Handler(Looper.getMainLooper()).post(r);
+        handler.post(r);
     }
     public Bitmap cropAndRoundCorners(Bitmap original, int cornerRadius) {
         // Crop the bitmap to a square

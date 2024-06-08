@@ -169,10 +169,7 @@ public class AnimeReleaseActivity extends AppCompatActivity {
             @RequiresApi(api = Build.VERSION_CODES.O)
             @Override
             public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
-                if (view == null || adapterView == null) return;
-                TextView textView = ((TextView) view);
-                textView.setTextSize(22);
-                textView.setPadding(0,0,0,0);
+                if (adapterView == null) return;
                 String selectedAnimeReleaseOption = adapterView.getItemAtPosition(i).toString();
                 prefsEdit.putString("animeReleaseOption", selectedAnimeReleaseOption).apply();
 
@@ -222,6 +219,7 @@ public class AnimeReleaseActivity extends AppCompatActivity {
 
         String[] animeReleaseOption = {"Updates", "My List", "Watching", "Finished", "Others"};
         ArrayAdapter<String> animeReleaseOptionsAdapter = new ArrayAdapter<>(this, R.layout.spinner_item, animeReleaseOption);
+        animeReleaseOptionsAdapter.setDropDownViewResource(R.layout.spinner_dropdown);
         animeReleaseSpinner.setAdapter(animeReleaseOptionsAdapter);
 
         String selectedAnimeReleaseOption = prefs.getString("animeReleaseOption", "Updates");
