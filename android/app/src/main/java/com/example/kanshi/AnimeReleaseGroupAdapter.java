@@ -78,6 +78,8 @@ public class AnimeReleaseGroupAdapter extends ArrayAdapter<AnimeReleaseGroup> {
             LayoutInflater layoutInflater = LayoutInflater.from(mContext);
             view = layoutInflater.inflate(mResource, parent, false);
         }
+
+        updatedPosition.add(position);
         AnimeReleaseGroup animeReleaseGroup = getItem(position);
 
         if (animeReleaseGroup != null) {
