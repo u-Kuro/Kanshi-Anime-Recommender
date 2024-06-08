@@ -9,12 +9,12 @@ import android.os.Looper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ListView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import java.lang.ref.WeakReference;
@@ -39,9 +39,8 @@ import java.util.concurrent.Future;
 public class SchedulesTabFragment extends Fragment {
     public static WeakReference<SchedulesTabFragment> weakActivity;
     Context context;
-    ListView animeReleasesList;
+    RecyclerView animeReleasesList;
     SwipeRefreshLayout swipeRefresh;
-    ArrayList<AnimeReleaseGroup> groupedAnimeSchedules = null;
     AnimeReleaseGroupAdapter animeReleaseGroupAdapter = null;
 
     @SuppressLint("ClickableViewAccessibility")
@@ -81,6 +80,7 @@ public class SchedulesTabFragment extends Fragment {
 
     private final ExecutorService updateScheduledAnimeExecutorService = Executors.newFixedThreadPool(1);
     private Future<?> updateScheduledAnimeFuture;
+    @SuppressLint("NotifyDataSetChanged")
     @RequiresApi(api = Build.VERSION_CODES.O)
     public void updateScheduledAnime() {
         AnimeReleaseActivity animeReleaseActivity = AnimeReleaseActivity.getInstanceActivity();
@@ -225,17 +225,41 @@ public class SchedulesTabFragment extends Fragment {
                         return 0;
                     }
                 });
-                if (SchedulesTabFragment.this.groupedAnimeSchedules==null) {
-                    SchedulesTabFragment.this.groupedAnimeSchedules = groupedAnimeSchedules;
-                    new Handler(Looper.getMainLooper()).post(() -> {
-                        SchedulesTabFragment.this.animeReleaseGroupAdapter = new AnimeReleaseGroupAdapter(context, R.layout.anime_release_group_card, SchedulesTabFragment.this.groupedAnimeSchedules);
-                        SchedulesTabFragment.this.animeReleasesList.setAdapter(animeReleaseGroupAdapter);
-                    });
-                } else {
-                    SchedulesTabFragment.this.groupedAnimeSchedules.clear();
-                    SchedulesTabFragment.this.groupedAnimeSchedules.addAll(groupedAnimeSchedules);
-                    new Handler(Looper.getMainLooper()).post(() -> SchedulesTabFragment.this.animeReleaseGroupAdapter.notifyDataSetChanged());
-                }
+
+                new Handler(Looper.getMainLooper()).post(() -> {
+                    if (SchedulesTabFragment.this.animeReleaseGroupAdapter==null ||
+                        SchedulesTabFragment.this.animeReleaseGroupAdapter.mAnimeGroups==null ||
+                        SchedulesTabFragment.this.animeReleaseGroupAdapter.mAnimeGroups.isEmpty()
+                    ) {
+                        SchedulesTabFragment.this.animeReleaseGroupAdapter = new AnimeReleaseGroupAdapter(context, groupedAnimeSchedules, SchedulesTabFragment.this.animeReleasesList);
+                        SchedulesTabFragment.this.animeReleasesList.setAdapter(SchedulesTabFragment.this.animeReleaseGroupAdapter);
+                        SchedulesTabFragment.this.animeReleaseGroupAdapter.notifyDataSetChanged();
+                    } else {
+                        ArrayList<AnimeReleaseGroup> lastGroupedAnimeSchedules = SchedulesTabFragment.this.animeReleaseGroupAdapter.mAnimeGroups;
+                        int existingSize = lastGroupedAnimeSchedules.size();
+                        int newDataSize = groupedAnimeSchedules.size();
+                        int minSize = Math.min(newDataSize, existingSize);
+                        for (int i = 0; i < minSize; i++) {
+                            // Update existing items
+                            AnimeReleaseGroup animeReleaseGroup = groupedAnimeSchedules.get(i);
+                            if (!animeReleaseGroup.isEqual(lastGroupedAnimeSchedules.get(i), context)) {
+                                SchedulesTabFragment.this.animeReleaseGroupAdapter.mAnimeGroups = groupedAnimeSchedules;
+                                SchedulesTabFragment.this.animeReleaseGroupAdapter.notifyItemChanged(i);
+                            }
+                        }
+                        if (newDataSize > existingSize) {
+                            // Add new items
+                            int itemCount = newDataSize - existingSize;
+                            SchedulesTabFragment.this.animeReleaseGroupAdapter.mAnimeGroups = groupedAnimeSchedules;
+                            animeReleaseGroupAdapter.notifyItemRangeInserted(existingSize, itemCount);
+                        } else if (existingSize > newDataSize) {
+                            // Remove extra items
+                            int removeCount = existingSize - newDataSize;
+                            SchedulesTabFragment.this.animeReleaseGroupAdapter.mAnimeGroups = groupedAnimeSchedules;
+                            SchedulesTabFragment.this.animeReleaseGroupAdapter.notifyItemRangeRemoved(newDataSize, removeCount);
+                        }
+                    }
+                });
             } catch (Exception e) {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                     Utils.handleUncaughtException(context.getApplicationContext(), e, "updateScheduledAnimeExecutorService");
