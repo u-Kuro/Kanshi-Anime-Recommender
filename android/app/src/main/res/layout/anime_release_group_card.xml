@@ -1,21 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@color/black"
     android:orientation="vertical"
-    tools:ignore="Overdraw">
+    android:paddingHorizontal="16dp">
     <TextView
         android:id="@+id/anime_release_group_date"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="16dp"
         android:textColor="@color/faded_white"
-        android:paddingVertical="8dp"
-        android:paddingHorizontal="16dp"/>
+        android:textSize="14sp"
+        android:layout_marginVertical="10dp"/>
     <LinearLayout
         android:id="@+id/anime_release_group_layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical" />
+        android:orientation="vertical"/>
 </LinearLayout>

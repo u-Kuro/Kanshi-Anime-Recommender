@@ -341,6 +341,8 @@ public class MyWorker extends Worker {
                         .setVibrate(new long[]{0L});
             }
 
+
+
             SchedulesTabFragment schedulesTabFragment = SchedulesTabFragment.getInstanceActivity();
             if (schedulesTabFragment!=null) {
                 new Handler(Looper.getMainLooper()).post(schedulesTabFragment::updateScheduledAnime);

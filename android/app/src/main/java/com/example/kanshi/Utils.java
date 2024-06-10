@@ -44,6 +44,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.regex.Matcher;
 
+/** @noinspection CommentedOutCode*/
 public class Utils {
     public static String getPath(Context context, Uri uri) {
         // DocumentProvider
@@ -180,6 +181,7 @@ public class Utils {
 
                 final String mainDir = "app_webview/Default/IndexedDB/";
                 String location = mainDir+"https_u-kuro.github.io_0.indexeddb.blob/1";
+                // /data/user/0/com.example.kanshi/app_webview/Default/IndexedDB/https_u-kuro.github.io_0.indexeddb.blob/
                 location = location.replaceAll("/", Matcher.quoteReplacement(File.separator));
 
                 final File dataDir = context.getApplicationContext().getDataDir();
@@ -408,6 +410,66 @@ public class Utils {
         }
     }
 
-    static final Map<String, Bitmap> imageCache = new ConcurrentHashMap<>();
+    public static final Map<String, Bitmap> imageCache = new ConcurrentHashMap<>();
+    public static ArrayList<AnimeReleaseGroup> loadedGroupedReleasedAnime = new ArrayList<>();
+    public static ArrayList<AnimeReleaseGroup> loadedGroupedAnimeSchedules = new ArrayList<>();
+
+//    private static List<FileData> fileList = new ArrayList<>();
+//    @RequiresApi(api = Build.VERSION_CODES.N)
+//    public void readFiles(Context context) {
+//        fileList = new ArrayList<>();
+//
+//        File file = context.getApplicationContext().getDataDir();
+//        File[] files = file.listFiles();
+//        addIndexedDBFiles(files, file.getPath());
+//
+//        // Sort the list by file size
+//        Collections.sort(fileList, (f1, f2) -> Long.compare(f2.size, f1.size));
+//
+//        // Print each file path and size with appropriate units
+//        for (FileData fileData : fileList) {
+//            System.out.println("kanshi-kuro "+fileData.path + File.separator + fileData.name + " " + formatSize(fileData.size));
+//        }
+//    }
+//
+//    public static void addIndexedDBFiles(File[] files, String path) {
+//        if (files != null) {
+//            for (File file : files) {
+//                if (file.isFile()) {
+//                    // Add file path and size to the global list
+//                    fileList.add(new FileData(path, file.getName(), file.length()));
+//                } else if (file.isDirectory()) {
+//                    File[] newFiles = file.listFiles();
+//                    addIndexedDBFiles(newFiles, path + File.separator + file.getName());
+//                }
+//            }
+//        }
+//    }
+//
+//    // Helper class to store file data
+//    static class FileData {
+//        String path;
+//        String name;
+//        long size;
+//
+//        FileData(String path, String name, long size) {
+//            this.path = path;
+//            this.name = name;
+//            this.size = size;
+//        }
+//    }
+//
+//    // Method to format the size in a readable format
+//    private static String formatSize(long size) {
+//        if (size >= 1024 * 1024 * 1024) {
+//            return String.format("%.2f GB", (double) size / (1024 * 1024 * 1024));
+//        } else if (size >= 1024 * 1024) {
+//            return String.format("%.2f MB", (double) size / (1024 * 1024));
+//        } else if (size >= 1024) {
+//            return String.format("%.2f KB", (double) size / 1024);
+//        } else {
+//            return size + " bytes";
+//        }
+//    }
 }
 

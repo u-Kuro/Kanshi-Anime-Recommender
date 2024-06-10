@@ -48,7 +48,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @RequiresApi(api = Build.VERSION_CODES.N)
 public class AnimeReleaseActivity extends AppCompatActivity {
     public static WeakReference<AnimeReleaseActivity> weakActivity;
-    boolean showUnwatchedAnime = false;
+    public static boolean showUnwatchedAnime = false;
     Spinner animeReleaseSpinner;
     SharedPreferences prefs;
     SharedPreferences.Editor prefsEdit;
@@ -60,192 +60,81 @@ public class AnimeReleaseActivity extends AppCompatActivity {
             registerForActivityResult(
                     new ActivityResultContracts.GetContent(),
                     uri -> {
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                            Utils.handleUncaughtException(AnimeReleaseActivity.this.getApplicationContext(), new Exception("import 1 uri "+uri), "AnimeReleaseActivity");
-                        }
                         if (bottomSheetDialog != null && bottomSheetDialog.isShowing()) {
                             bottomSheetDialog.dismiss();
-                        }
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                            Utils.handleUncaughtException(AnimeReleaseActivity.this.getApplicationContext(), new Exception("import 2"), "AnimeReleaseActivity");
                         }
                         if (uri==null) {
                             return;
                         }
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                            Utils.handleUncaughtException(AnimeReleaseActivity.this.getApplicationContext(), new Exception("import 3"), "AnimeReleaseActivity");
-                        }
                         String filepath = uri.getPath();
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                            Utils.handleUncaughtException(AnimeReleaseActivity.this.getApplicationContext(), new Exception("import 4 filepath "+filepath), "AnimeReleaseActivity");
-                        }
                         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O && filepath != null) {
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                                Utils.handleUncaughtException(AnimeReleaseActivity.this.getApplicationContext(), new Exception("import 5"), "AnimeReleaseActivity");
-                            }
                             try {
                                 String filename = new File(filepath).getName();
-                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                                    Utils.handleUncaughtException(AnimeReleaseActivity.this.getApplicationContext(), new Exception("import 6 filename "+filename), "AnimeReleaseActivity");
-                                }
                                 AlertDialog.Builder alertDialog = new AlertDialog.Builder(AnimeReleaseActivity.this)
                                     .setTitle("Confirmation")
                                     .setMessage("Do you want to import \""+filename+"\"?")
                                     .setPositiveButton("OK", ((dialogInterface, i) -> {
-                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                                            Utils.handleUncaughtException(AnimeReleaseActivity.this.getApplicationContext(), new Exception("import 12"), "AnimeReleaseActivity");
-                                        }
                                         ObjectInputStream objectIn = null;
-                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                                            Utils.handleUncaughtException(AnimeReleaseActivity.this.getApplicationContext(), new Exception("import 13"), "AnimeReleaseActivity");
-                                        }
                                         Object object;
-                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                                            Utils.handleUncaughtException(AnimeReleaseActivity.this.getApplicationContext(), new Exception("import 14"), "AnimeReleaseActivity");
-                                        }
+
                                         try {
-                                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                                                Utils.handleUncaughtException(AnimeReleaseActivity.this.getApplicationContext(), new Exception("import 15"), "AnimeReleaseActivity");
-                                            }
                                             ParcelFileDescriptor pfd = this.getContentResolver().openFileDescriptor(uri, "r");
-                                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                                                Utils.handleUncaughtException(AnimeReleaseActivity.this.getApplicationContext(), new Exception("import 16 pfd "+pfd), "AnimeReleaseActivity");
-                                            }
+
                                             if (pfd != null) {
-                                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                                                    Utils.handleUncaughtException(AnimeReleaseActivity.this.getApplicationContext(), new Exception("import 17"), "AnimeReleaseActivity");
-                                                }
+
                                                 FileInputStream fileIn = new FileInputStream(pfd.getFileDescriptor());
-                                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                                                    Utils.handleUncaughtException(AnimeReleaseActivity.this.getApplicationContext(), new Exception("import 18 fileIn "+fileIn), "AnimeReleaseActivity");
-                                                }
                                                 objectIn = new ObjectInputStream(fileIn);
-                                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                                                    Utils.handleUncaughtException(AnimeReleaseActivity.this.getApplicationContext(), new Exception("import 19 objectIn "+objectIn), "AnimeReleaseActivity");
-                                                }
+
                                                 object = objectIn.readObject();
-                                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                                                    Utils.handleUncaughtException(AnimeReleaseActivity.this.getApplicationContext(), new Exception("import 20 object "+object), "AnimeReleaseActivity");
-                                                }
+
                                                 @SuppressWarnings("unchecked") ConcurrentHashMap<String, AnimeNotification> $importedAllAnimeNotification = (ConcurrentHashMap<String, AnimeNotification>) object;
-                                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                                                    Utils.handleUncaughtException(AnimeReleaseActivity.this.getApplicationContext(), new Exception("import 21 object "+object), "AnimeReleaseActivity");
-                                                    Utils.handleUncaughtException(AnimeReleaseActivity.this.getApplicationContext(), new Exception("import 22 $importedAllAnimeNotification "+$importedAllAnimeNotification), "AnimeReleaseActivity");
-                                                }
+
                                                 if ($importedAllAnimeNotification != null && !$importedAllAnimeNotification.isEmpty()) {
-                                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                                                        Utils.handleUncaughtException(AnimeReleaseActivity.this.getApplicationContext(), new Exception("import 23 AnimeNotificationManager.allAnimeNotification.isEmpty() "+AnimeNotificationManager.allAnimeNotification.isEmpty()), "AnimeReleaseActivity");
-                                                    }
                                                     if (AnimeNotificationManager.allAnimeNotification.isEmpty()) {
-                                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                                                            Utils.handleUncaughtException(AnimeReleaseActivity.this.getApplicationContext(), new Exception("import 24"), "AnimeReleaseActivity");
-                                                        }
                                                         try {
-                                                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                                                                Utils.handleUncaughtException(AnimeReleaseActivity.this.getApplicationContext(), new Exception("import 25"), "AnimeReleaseActivity");
-                                                            }
+
                                                             @SuppressWarnings("unchecked") ConcurrentHashMap<String, AnimeNotification> $allAnimeNotification = (ConcurrentHashMap<String, AnimeNotification>) LocalPersistence.readObjectFromFile(this, "allAnimeNotification");
-                                                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                                                                Utils.handleUncaughtException(AnimeReleaseActivity.this.getApplicationContext(), new Exception("import 26 $allAnimeNotification "+$allAnimeNotification), "AnimeReleaseActivity");
-                                                            }
+
                                                             if ($allAnimeNotification != null && !$allAnimeNotification.isEmpty()) {
-                                                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                                                                    Utils.handleUncaughtException(AnimeReleaseActivity.this.getApplicationContext(), new Exception("import 27"), "AnimeReleaseActivity");
-                                                                }
                                                                 AnimeNotificationManager.allAnimeNotification.putAll($allAnimeNotification);
-                                                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                                                                    Utils.handleUncaughtException(AnimeReleaseActivity.this.getApplicationContext(), new Exception("import 28 AnimeNotificationManager.allAnimeNotification.size() "+AnimeNotificationManager.allAnimeNotification.size()), "AnimeReleaseActivity");
-                                                                }
                                                             }
-                                                        } catch (Exception ignored) {
-                                                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                                                                Utils.handleUncaughtException(AnimeReleaseActivity.this.getApplicationContext(), new Exception("import 24.5"), "AnimeReleaseActivity");
-                                                            }
-                                                        }
+                                                        } catch (Exception ignored) {}
                                                     }
                                                     ArrayList<Map.Entry<String, AnimeNotification>> allAnimeNotificationEntries = new ArrayList<>($importedAllAnimeNotification.entrySet());
-                                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                                                        Utils.handleUncaughtException(AnimeReleaseActivity.this.getApplicationContext(), new Exception("import 29 allAnimeNotificationEntries "+allAnimeNotificationEntries), "AnimeReleaseActivity");
-                                                        Utils.handleUncaughtException(AnimeReleaseActivity.this.getApplicationContext(), new Exception("import 30 allAnimeNotificationEntries.size() "+allAnimeNotificationEntries.size()), "AnimeReleaseActivity");
-                                                    }
+
                                                     for (int j = 0; j < allAnimeNotificationEntries.size(); j++) {
                                                         Map.Entry<String, AnimeNotification> currentEntry = allAnimeNotificationEntries.get(j);
                                                         AnimeNotificationManager.allAnimeNotification.putIfAbsent(currentEntry.getKey(), currentEntry.getValue());
                                                     }
-                                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                                                        Utils.handleUncaughtException(AnimeReleaseActivity.this.getApplicationContext(), new Exception("import 31"), "AnimeReleaseActivity");
-                                                    }
-                                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                                                        Utils.handleUncaughtException(AnimeReleaseActivity.this.getApplicationContext(), new Exception("import 32 AnimeNotificationManager.allAnimeNotification "+AnimeNotificationManager.allAnimeNotification), "AnimeReleaseActivity");
-                                                        Utils.handleUncaughtException(AnimeReleaseActivity.this.getApplicationContext(), new Exception("import 33 AnimeNotificationManager.allAnimeNotification.size() "+AnimeNotificationManager.allAnimeNotification.size()), "AnimeReleaseActivity");
-                                                    }
+
                                                     if (!AnimeNotificationManager.allAnimeNotification.isEmpty()) {
-                                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                                                            Utils.handleUncaughtException(AnimeReleaseActivity.this.getApplicationContext(), new Exception("import 34"), "AnimeReleaseActivity");
-                                                        }
                                                         LocalPersistence.writeObjectToFile(this, AnimeNotificationManager.allAnimeNotification, "allAnimeNotification");
+
                                                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                                                            Utils.handleUncaughtException(AnimeReleaseActivity.this.getApplicationContext(), new Exception("import 35"), "AnimeReleaseActivity");
-                                                        }
-                                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                                                            Utils.handleUncaughtException(AnimeReleaseActivity.this.getApplicationContext(), new Exception("import 36"), "AnimeReleaseActivity");
                                                             Utils.exportReleasedAnime(this.getApplicationContext());
-                                                            Utils.handleUncaughtException(AnimeReleaseActivity.this.getApplicationContext(), new Exception("import 37"), "AnimeReleaseActivity");
-                                                        }
-                                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                                                            Utils.handleUncaughtException(AnimeReleaseActivity.this.getApplicationContext(), new Exception("import 38"), "AnimeReleaseActivity");
                                                         }
                                                     }
                                                     SchedulesTabFragment schedulesTabFragment = SchedulesTabFragment.getInstanceActivity();
-                                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                                                        Utils.handleUncaughtException(AnimeReleaseActivity.this.getApplicationContext(), new Exception("import 40 schedulesTabFragment "+schedulesTabFragment), "AnimeReleaseActivity");
-                                                    }
                                                     if (schedulesTabFragment != null) {
-                                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                                                            Utils.handleUncaughtException(AnimeReleaseActivity.this.getApplicationContext(), new Exception("import 41"), "AnimeReleaseActivity");
-                                                        }
                                                         schedulesTabFragment.updateScheduledAnime();
-                                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                                                            Utils.handleUncaughtException(AnimeReleaseActivity.this.getApplicationContext(), new Exception("import 42"), "AnimeReleaseActivity");
-                                                        }
                                                     }
                                                     ReleasedTabFragment releasedTabFragment = ReleasedTabFragment.getInstanceActivity();
-                                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                                                        Utils.handleUncaughtException(AnimeReleaseActivity.this.getApplicationContext(), new Exception("import 43 releasedTabFragment "+releasedTabFragment), "AnimeReleaseActivity");
-                                                    }
+
                                                     if (releasedTabFragment != null) {
-                                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                                                            Utils.handleUncaughtException(AnimeReleaseActivity.this.getApplicationContext(), new Exception("import 44"), "AnimeReleaseActivity");
-                                                        }
                                                         releasedTabFragment.updateReleasedAnime();
-                                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                                                            Utils.handleUncaughtException(AnimeReleaseActivity.this.getApplicationContext(), new Exception("import 45"), "AnimeReleaseActivity");
-                                                        }
                                                     }
-                                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                                                        Utils.handleUncaughtException(AnimeReleaseActivity.this.getApplicationContext(), new Exception("import 46"), "AnimeReleaseActivity");
-                                                    }
+
                                                     showToast(Toast.makeText(this, "Anime Releases has been Imported", Toast.LENGTH_SHORT));
-                                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                                                        Utils.handleUncaughtException(AnimeReleaseActivity.this.getApplicationContext(), new Exception("import 47"), "AnimeReleaseActivity");
-                                                    }
+
                                                 } else {
-                                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                                                        Utils.handleUncaughtException(AnimeReleaseActivity.this.getApplicationContext(), new Exception("import 22.5"), "AnimeReleaseActivity");
-                                                    }
+
                                                     showToast(Toast.makeText(this, "Something went wrong", Toast.LENGTH_SHORT));
                                                 }
                                                 objectIn.close();
                                             } else {
-                                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                                                    Utils.handleUncaughtException(AnimeReleaseActivity.this.getApplicationContext(), new Exception("import 16.5"), "AnimeReleaseActivity");
-                                                }
                                                 showToast(Toast.makeText(this, "Something went wrong", Toast.LENGTH_SHORT));
                                             }
                                         } catch (Exception ignored) {
-                                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                                                Utils.handleUncaughtException(AnimeReleaseActivity.this.getApplicationContext(), new Exception("import 14.5"), "AnimeReleaseActivity");
-                                            }
                                             showToast(Toast.makeText(this, "Something went wrong", Toast.LENGTH_SHORT));
                                         } finally {
                                             try {
@@ -256,37 +145,20 @@ public class AnimeReleaseActivity extends AppCompatActivity {
                                         }
                                     }))
                                     .setNegativeButton("CANCEL", null);
-                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                                    Utils.handleUncaughtException(AnimeReleaseActivity.this.getApplicationContext(), new Exception("import 7"), "AnimeReleaseActivity");
-                                }
+
                                 AlertDialog dialog = alertDialog.create();
-                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                                    Utils.handleUncaughtException(AnimeReleaseActivity.this.getApplicationContext(), new Exception("import 8 dialog "+dialog), "AnimeReleaseActivity");
-                                }
                                 Window dialogWindow = dialog.getWindow();
-                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                                    Utils.handleUncaughtException(AnimeReleaseActivity.this.getApplicationContext(), new Exception("import 9 dialogWindow "+dialogWindow), "AnimeReleaseActivity");
-                                }
+
                                 if (dialogWindow!=null) {
                                     dialogWindow.setBackgroundDrawableResource(R.drawable.dialog);
                                 }
-                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                                    Utils.handleUncaughtException(AnimeReleaseActivity.this.getApplicationContext(), new Exception("import 10"), "AnimeReleaseActivity");
-                                }
+
                                 dialog.show();
-                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                                    Utils.handleUncaughtException(AnimeReleaseActivity.this.getApplicationContext(), new Exception("import 11"), "AnimeReleaseActivity");
-                                }
+
                             } catch (Exception ignored) {
-                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                                    Utils.handleUncaughtException(AnimeReleaseActivity.this.getApplicationContext(), new Exception("import 5.5"), "AnimeReleaseActivity");
-                                }
                                 showToast(Toast.makeText(this, "Something went wrong", Toast.LENGTH_SHORT));
                             }
                         } else {
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                                Utils.handleUncaughtException(AnimeReleaseActivity.this.getApplicationContext(), new Exception("import 4.5"), "AnimeReleaseActivity");
-                            }
                             showToast(Toast.makeText(this, "Something went wrong", Toast.LENGTH_SHORT));
                         }
                     }
@@ -312,6 +184,78 @@ public class AnimeReleaseActivity extends AppCompatActivity {
             getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
         }
 
+        ImageView completed_anime_switch = findViewById(R.id.completed_anime_switch);
+        if (showUnwatchedAnime) {
+            completed_anime_switch.setImageResource(R.drawable.not_done_white);
+        } else {
+            completed_anime_switch.setImageResource(R.drawable.done_white);
+        }
+
+        ImageView backupAnimeReleases = findViewById(R.id.backup_anime_releases);
+        backupAnimeReleases.setVisibility(View.VISIBLE);
+
+        String[] animeReleaseOption = {"Updates", "My List", "Watching", "Finished", "Others"};
+        ArrayAdapter<String> animeReleaseOptionsAdapter = new ArrayAdapter<>(this, R.layout.spinner_item, animeReleaseOption);
+        animeReleaseOptionsAdapter.setDropDownViewResource(R.layout.spinner_dropdown);
+        animeReleaseSpinner.setAdapter(animeReleaseOptionsAdapter);
+
+        TabLayout tabLayout = findViewById(R.id.tab_layout);
+
+        FragmentStateAdapter adminViewAdapter = new AnimeReleaseViewAdapter(this);
+
+        viewPager.setAdapter(adminViewAdapter);
+        viewPager.setOffscreenPageLimit(adminViewAdapter.getItemCount());
+
+        ImageView close = findViewById(R.id.close_anime_release);
+        close.setOnClickListener(view -> {
+            Intent i = new Intent(this, MainActivity.class);
+            i.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+            startActivity(i);
+            overridePendingTransition(R.anim.none, R.anim.fade_out);
+        });
+
+        viewPager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
+            @Override
+            public void onPageSelected(int position) {
+                super.onPageSelected(position);
+                TabLayout.Tab tab = tabLayout.getTabAt(position);
+                if (tab!=null) {
+                    tab.select();
+                }
+                prefsEdit.putInt("selectedAnimeReleasePageIndex", position).apply();
+            }
+        });
+
+        tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
+            @Override
+            public void onTabSelected(TabLayout.Tab tab) {
+                viewPager.setCurrentItem(tab.getPosition());
+            }
+            @Override
+            public void onTabUnselected(TabLayout.Tab tab) {}
+            @Override
+            public void onTabReselected(TabLayout.Tab tab) {}
+        });
+
+        String selectedAnimeReleaseOption = prefs.getString("animeReleaseOption", "Updates");
+        switch (selectedAnimeReleaseOption) {
+            case "My List":
+                animeReleaseSpinner.setSelection(1);
+                break;
+            case "Watching":
+                animeReleaseSpinner.setSelection(2);
+                break;
+            case "Finished":
+                animeReleaseSpinner.setSelection(3);
+                break;
+            case "Others":
+                animeReleaseSpinner.setSelection(4);
+                break;
+            default:
+                animeReleaseSpinner.setSelection(0);
+                break;
+        }
+
         animeReleaseSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @RequiresApi(api = Build.VERSION_CODES.O)
             @Override
@@ -333,12 +277,8 @@ public class AnimeReleaseActivity extends AppCompatActivity {
             public void onNothingSelected(AdapterView<?> adapterView) {}
         });
 
-        ImageView completed_anime_switch = findViewById(R.id.completed_anime_switch);
-        if (showUnwatchedAnime) {
-            completed_anime_switch.setImageResource(R.drawable.not_done_white);
-        } else {
-            completed_anime_switch.setImageResource(R.drawable.done_white);
-        }
+        backupAnimeReleases.setOnClickListener(view -> backupBottomDialog());
+
         completed_anime_switch.setOnClickListener(view -> {
             showUnwatchedAnime = !showUnwatchedAnime;
             if (showUnwatchedAnime) {
@@ -360,67 +300,9 @@ public class AnimeReleaseActivity extends AppCompatActivity {
             }
         });
 
-        ImageView backupAnimeReleases = findViewById(R.id.backup_anime_releases);
-        backupAnimeReleases.setVisibility(View.VISIBLE);
-        backupAnimeReleases.setOnClickListener(view -> backupBottomDialog());
-
-        String[] animeReleaseOption = {"Updates", "My List", "Watching", "Finished", "Others"};
-        ArrayAdapter<String> animeReleaseOptionsAdapter = new ArrayAdapter<>(this, R.layout.spinner_item, animeReleaseOption);
-        animeReleaseOptionsAdapter.setDropDownViewResource(R.layout.spinner_dropdown);
-        animeReleaseSpinner.setAdapter(animeReleaseOptionsAdapter);
-
-        String selectedAnimeReleaseOption = prefs.getString("animeReleaseOption", "Updates");
-
-        switch (selectedAnimeReleaseOption) {
-            case "My List":
-                animeReleaseSpinner.setSelection(1);
-                break;
-            case "Watching":
-                animeReleaseSpinner.setSelection(2);
-                break;
-            case "Finished":
-                animeReleaseSpinner.setSelection(3);
-                break;
-            case "Others":
-                animeReleaseSpinner.setSelection(4);
-                break;
-            default:
-                animeReleaseSpinner.setSelection(0);
-                break;
-        }
-
-        TabLayout tabLayout = findViewById(R.id.tab_layout);
-
-        FragmentStateAdapter adminViewAdapter = new AnimeReleaseViewAdapter(this);
-
-        viewPager.setAdapter(adminViewAdapter);
-        viewPager.setOffscreenPageLimit(adminViewAdapter.getItemCount());
-
-        tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
-            @Override
-            public void onTabSelected(TabLayout.Tab tab) {
-                viewPager.setCurrentItem(tab.getPosition());
-            }
-            @Override
-            public void onTabUnselected(TabLayout.Tab tab) {}
-            @Override
-            public void onTabReselected(TabLayout.Tab tab) {}
-        });
-
-        viewPager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
-            @Override
-            public void onPageSelected(int position) {
-                super.onPageSelected(position);
-                prefsEdit.putInt("selectedAnimeReleasePageIndex", position).apply();
-                TabLayout.Tab tab = tabLayout.getTabAt(position);
-                if (tab!=null) {
-                    tab.select();
-                }
-            }
-        });
-
         int selectedAnimeReleasePageIndex = prefs.getInt("selectedAnimeReleasePageIndex", 0);
         viewPager.setCurrentItem(selectedAnimeReleasePageIndex, false);
+
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
@@ -429,14 +311,6 @@ public class AnimeReleaseActivity extends AppCompatActivity {
                 startActivity(i);
                 overridePendingTransition(R.anim.none, R.anim.fade_out);
             }
-        });
-
-        ImageView close = findViewById(R.id.close_anime_release);
-        close.setOnClickListener(view -> {
-            Intent i = new Intent(this, MainActivity.class);
-            i.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-            startActivity(i);
-            overridePendingTransition(R.anim.none, R.anim.fade_out);
         });
 
         weakActivity = new WeakReference<>(AnimeReleaseActivity.this);

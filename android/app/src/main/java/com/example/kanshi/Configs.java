@@ -3,7 +3,7 @@ package com.example.kanshi;
 public class Configs {
     public static final boolean isOwner = false;
     public static final boolean isDebug = false;
-    public static final int appID = 404;
+    public static final int appID = 405;
 
     private static final String uniqueKey = "Kanshi.Anime.Recommendations.Anilist.W~uPtWCq=vG$TR:Zl^#t<vdS]I~N70";
     public static final String isBackgroundUpdateKey = uniqueKey+".isBackgroundUpdate";

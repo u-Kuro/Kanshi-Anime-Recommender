@@ -1,14 +1,15 @@
 package com.example.kanshi;
 
+import static com.example.kanshi.Utils.loadedGroupedReleasedAnime;
+
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ProgressBar;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -16,6 +17,9 @@ import androidx.annotation.RequiresApi;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
+
+import com.example.kanshi.utils.BackgroundTaskQueue;
+import com.example.kanshi.utils.UITaskQueue;
 
 import java.lang.ref.WeakReference;
 import java.time.Instant;
@@ -31,16 +35,16 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 
 @RequiresApi(api = Build.VERSION_CODES.N)
 public class ReleasedTabFragment extends Fragment {
+    public final BackgroundTaskQueue backgroundTaskQueue = new BackgroundTaskQueue();
+    public final UITaskQueue uiTaskQueue = new UITaskQueue();
     public static WeakReference<ReleasedTabFragment> weakActivity;
     Context context;
     RecyclerView animeReleasesList;
     SwipeRefreshLayout swipeRefresh;
+    ProgressBar progressCircular;
     AnimeReleaseGroupAdapter animeReleaseGroupAdapter = null;
 
     @SuppressLint("ClickableViewAccessibility")
@@ -49,36 +53,19 @@ public class ReleasedTabFragment extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         context = requireContext();
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            Utils.handleUncaughtException(context, new Exception("releasedTab 1"), "ReleasedTabFragment");
-        }
         // Log Errors
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             Thread.setDefaultUncaughtExceptionHandler((thread, e) -> Utils.handleUncaughtException(context.getApplicationContext(), e, "ReleasedTabFragment"));
         }
 
         View releasedView = inflater.inflate(R.layout.anime_release_tab_fragment, container, false);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            Utils.handleUncaughtException(context, new Exception("releasedTab 2"), "ReleasedTabFragment");
-        }
         // Init Global Variables
         animeReleasesList = releasedView.findViewById(R.id.anime_releases_list);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            Utils.handleUncaughtException(context, new Exception("releasedTab 3"), "ReleasedTabFragment");
-        }
         swipeRefresh = releasedView.findViewById(R.id.swipe_refresh_anime_release);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            Utils.handleUncaughtException(context, new Exception("releasedTab 4"), "ReleasedTabFragment");
-        }
+        progressCircular = releasedView.findViewById(R.id.progress_circular);
 
         swipeRefresh.setProgressBackgroundColorSchemeResource(R.color.darker_grey);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            Utils.handleUncaughtException(context, new Exception("releasedTab 5"), "ReleasedTabFragment");
-        }
         swipeRefresh.setColorSchemeResources(R.color.faded_white);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            Utils.handleUncaughtException(context, new Exception("releasedTab 6"), "ReleasedTabFragment");
-        }
 
         swipeRefresh.setOnRefreshListener(() -> {
             MainActivity mainActivity = MainActivity.getInstanceActivity();
@@ -89,139 +76,76 @@ public class ReleasedTabFragment extends Fragment {
             updateReleasedAnime();
             swipeRefresh.setRefreshing(false);
         });
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            Utils.handleUncaughtException(context, new Exception("releasedTab 7"), "ReleasedTabFragment");
+
+        if (!loadedGroupedReleasedAnime.isEmpty()) {
+            int newDataSize = loadedGroupedReleasedAnime.size();
+            int lastImmediateGroupIndex = 0;
+            final ArrayList<AnimeReleaseGroup> immediateGroupedReleasedAnime = new ArrayList<>();
+            int animeCount = 0;
+            for (int i = 0; i < newDataSize; i++) {
+                lastImmediateGroupIndex = i;
+                AnimeReleaseGroup releaseGroup = loadedGroupedReleasedAnime.get(i);
+                immediateGroupedReleasedAnime.add(releaseGroup);
+                if (releaseGroup.anime!=null) {
+                    animeCount = animeCount + releaseGroup.anime.size();
+                    if (animeCount >= 12) {
+                        break;
+                    }
+                }
+            }
+            animeReleaseGroupAdapter = new AnimeReleaseGroupAdapter(context, immediateGroupedReleasedAnime, animeReleasesList);
+            animeReleasesList.setAdapter(animeReleaseGroupAdapter);
+            progressCircular.setVisibility(View.GONE);
+            String handlerId = "updateReleasedAnime";
+            for (int i = lastImmediateGroupIndex+1; i < newDataSize; i++) {
+                final int finalI = i;
+                AnimeReleaseGroup animeReleaseGroup = loadedGroupedReleasedAnime.get(finalI);
+                uiTaskQueue.replaceTask(handlerId,"add"+finalI, ()-> {
+                    if (animeReleaseGroupAdapter!=null) {
+                        animeReleaseGroupAdapter.add(finalI, animeReleaseGroup);
+                    }
+                });
+            }
         }
 
         updateReleasedAnime();
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            Utils.handleUncaughtException(context, new Exception("releasedTab 8"), "ReleasedTabFragment");
-        }
 
         weakActivity = new WeakReference<>(ReleasedTabFragment.this);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            Utils.handleUncaughtException(context, new Exception("releasedTab 9.1"), "ReleasedTabFragment");
-        }
+
         return releasedView;
     }
 
-    private final ExecutorService updateReleasedAnimeExecutorService = Executors.newFixedThreadPool(1);
-    private Future<?> updateReleasedAnimeFuture;
-    @SuppressLint("NotifyDataSetChanged")
     @RequiresApi(api = Build.VERSION_CODES.O)
     public void updateReleasedAnime() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            Utils.handleUncaughtException(context, new Exception("releasedTab 10"), "ReleasedTabFragment");
-        }
-        AnimeReleaseActivity animeReleaseActivity = AnimeReleaseActivity.getInstanceActivity();
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            Utils.handleUncaughtException(context, new Exception("releasedTab 11 animeReleaseActivity "+animeReleaseActivity), "ReleasedTabFragment");
-        }
-        final String selectedAnimeReleaseOption;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            Utils.handleUncaughtException(context, new Exception("releasedTab 12"), "ReleasedTabFragment");
-        }
-        final boolean showUnwatchedAnime;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            Utils.handleUncaughtException(context, new Exception("releasedTab 13"), "ReleasedTabFragment");
-        }
-        if (animeReleaseActivity!=null) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                Utils.handleUncaughtException(context, new Exception("releasedTab 14"), "ReleasedTabFragment");
-            }
-            showUnwatchedAnime = animeReleaseActivity.showUnwatchedAnime;
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                Utils.handleUncaughtException(context, new Exception("releasedTab 15 showUnwatchedAnime "+showUnwatchedAnime), "ReleasedTabFragment");
-            }
-            if (animeReleaseActivity.animeReleaseSpinner!=null && animeReleaseActivity.animeReleaseSpinner.getSelectedItem()!=null) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                    Utils.handleUncaughtException(context, new Exception("releasedTab 16 animeReleaseActivity.animeReleaseSpinner.getSelectedItem().toString() "+animeReleaseActivity.animeReleaseSpinner.getSelectedItem().toString()), "ReleasedTabFragment");
-                }
-                selectedAnimeReleaseOption = animeReleaseActivity.animeReleaseSpinner.getSelectedItem().toString();
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                    Utils.handleUncaughtException(context, new Exception("releasedTab 17"), "ReleasedTabFragment");
-                }
-            } else {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                    Utils.handleUncaughtException(context, new Exception("releasedTab 18"), "ReleasedTabFragment");
-                }
-                selectedAnimeReleaseOption = "Updates";
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                    Utils.handleUncaughtException(context, new Exception("releasedTab 19"), "ReleasedTabFragment");
-                }
-            }
-        } else {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                Utils.handleUncaughtException(context, new Exception("releasedTab 20"), "ReleasedTabFragment");
-            }
-            showUnwatchedAnime = false;
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                Utils.handleUncaughtException(context, new Exception("releasedTab 21"), "ReleasedTabFragment");
-            }
-            selectedAnimeReleaseOption = "Updates";
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                Utils.handleUncaughtException(context, new Exception("releasedTab 22"), "ReleasedTabFragment");
-            }
-        }
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            Utils.handleUncaughtException(context, new Exception("releasedTab 23 updateReleasedAnimeFuture "+updateReleasedAnimeFuture), "ReleasedTabFragment");
-        }
-        if (updateReleasedAnimeFuture != null && !updateReleasedAnimeFuture.isCancelled()) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                Utils.handleUncaughtException(context, new Exception("releasedTab 24"), "ReleasedTabFragment");
-            }
-            updateReleasedAnimeFuture.cancel(true);
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                Utils.handleUncaughtException(context, new Exception("releasedTab 25"), "ReleasedTabFragment");
-            }
-        }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            Utils.handleUncaughtException(context, new Exception("releasedTab 26"), "ReleasedTabFragment");
-        }
-        updateReleasedAnimeFuture = updateReleasedAnimeExecutorService.submit(() -> {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                Utils.handleUncaughtException(context, new Exception("releasedTab 27"), "ReleasedTabFragment");
-            }
+        String handlerId = "updateReleasedAnime";
+        backgroundTaskQueue.replaceTask(handlerId, () -> {
+            uiTaskQueue.cancelTasks(handlerId);
             try {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                    Utils.handleUncaughtException(context, new Exception("releasedTab 28 AnimeNotificationManager.allAnimeNotification.isEmpty() "+AnimeNotificationManager.allAnimeNotification.isEmpty()), "ReleasedTabFragment");
+                final boolean showUnwatchedAnime = AnimeReleaseActivity.showUnwatchedAnime;
+
+                AnimeReleaseActivity animeReleaseActivity = AnimeReleaseActivity.getInstanceActivity();
+                final String selectedAnimeReleaseOption;
+                if (animeReleaseActivity!=null) {
+                    if (animeReleaseActivity.animeReleaseSpinner!=null && animeReleaseActivity.animeReleaseSpinner.getSelectedItem()!=null) {
+                        selectedAnimeReleaseOption = animeReleaseActivity.animeReleaseSpinner.getSelectedItem().toString();
+                    } else {
+                        selectedAnimeReleaseOption = "Updates";
+                    }
+                } else {
+                    selectedAnimeReleaseOption = "Updates";
                 }
+
                 if (AnimeNotificationManager.allAnimeNotification.isEmpty()) {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                        Utils.handleUncaughtException(context, new Exception("releasedTab 29"), "ReleasedTabFragment");
-                    }
                     @SuppressWarnings("unchecked") ConcurrentHashMap<String, AnimeNotification> $allAnimeNotification = (ConcurrentHashMap<String, AnimeNotification>) LocalPersistence.readObjectFromFile(context, "allAnimeNotification");
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                        Utils.handleUncaughtException(context, new Exception("releasedTab 30 $allAnimeNotification "+$allAnimeNotification), "ReleasedTabFragment");
-                        if ($allAnimeNotification != null) {
-                            Utils.handleUncaughtException(context, new Exception("releasedTab 31 $allAnimeNotification.size() "+$allAnimeNotification.size()), "ReleasedTabFragment");
-                        }
-                    }
                     if ($allAnimeNotification != null && !$allAnimeNotification.isEmpty()) {
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                            Utils.handleUncaughtException(context, new Exception("releasedTab 32 $allAnimeNotification "+$allAnimeNotification), "ReleasedTabFragment");
-                        }
                         AnimeNotificationManager.allAnimeNotification.putAll($allAnimeNotification);
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                            Utils.handleUncaughtException(context, new Exception("releasedTab 33 AnimeNotificationManager.allAnimeNotification.size() "+AnimeNotificationManager.allAnimeNotification.size()), "ReleasedTabFragment");
-                        }
                     }
                 }
 
                 ArrayList<AnimeNotification> allAnimeNotificationValues = new ArrayList<>(AnimeNotificationManager.allAnimeNotification.values());
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                    Utils.handleUncaughtException(context, new Exception("releasedTab 34 allAnimeNotificationValues.size() "+allAnimeNotificationValues.size()), "ReleasedTabFragment");
-                }
                 Collections.sort(allAnimeNotificationValues, Comparator.comparingLong(anime -> anime.releaseDateMillis));
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                    Utils.handleUncaughtException(context, new Exception("releasedTab 35"), "ReleasedTabFragment");
-                }
 
                 ArrayList<AnimeNotification> animeReleased = new ArrayList<>();
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                    Utils.handleUncaughtException(context, new Exception("releasedTab 36"), "ReleasedTabFragment");
-                }
 
                 for (AnimeNotification anime : allAnimeNotificationValues) {
                     if (!"Updates".equals(selectedAnimeReleaseOption)) {
@@ -264,14 +188,9 @@ public class ReleasedTabFragment extends Fragment {
                         }
                     }
                 }
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                    Utils.handleUncaughtException(context, new Exception("releasedTab 37"), "ReleasedTabFragment");
-                }
 
                 Map<String, ArrayList<AnimeNotification>> map = new TreeMap<>();
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                    Utils.handleUncaughtException(context, new Exception("releasedTab 38"), "ReleasedTabFragment");
-                }
+
                 for (AnimeNotification anime : animeReleased) {
                     DateTimeFormatter shownDateFormat = DateTimeFormatter.ofPattern("MMMM d yyyy, EEEE");
                     DateTimeFormatter shownWeekDayFormat = DateTimeFormatter.ofPattern("EEEE");
@@ -317,10 +236,7 @@ public class ReleasedTabFragment extends Fragment {
                     }
                 }
 
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                    Utils.handleUncaughtException(context, new Exception("releasedTab 39"), "ReleasedTabFragment");
-                }
-                ArrayList<AnimeReleaseGroup> groupedReleasedAnime = new ArrayList<>();
+                final ArrayList<AnimeReleaseGroup> groupedReleasedAnime = new ArrayList<>();
                 for (Map.Entry<String, ArrayList<AnimeNotification>> entry : map.entrySet()) {
                     ArrayList<AnimeNotification> animeList = entry.getValue();
                     if (animeList != null && !animeList.isEmpty()) {
@@ -331,10 +247,6 @@ public class ReleasedTabFragment extends Fragment {
 
                         groupedReleasedAnime.add(new AnimeReleaseGroup(entry.getKey(), localDateTime, animeList));
                     }
-                }
-
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                    Utils.handleUncaughtException(context, new Exception("releasedTab 40"), "ReleasedTabFragment");
                 }
 
                 Collections.sort(groupedReleasedAnime, (a1, a2) -> {
@@ -348,111 +260,93 @@ public class ReleasedTabFragment extends Fragment {
                     }
                 });
 
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                    Utils.handleUncaughtException(context, new Exception("releasedTab 41"), "ReleasedTabFragment");
-                }
+                loadedGroupedReleasedAnime = groupedReleasedAnime;
 
-                new Handler(Looper.getMainLooper()).post(() -> {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                        Utils.handleUncaughtException(context, new Exception("releasedTab 42"), "ReleasedTabFragment");
-                    }
-                    if (ReleasedTabFragment.this.animeReleaseGroupAdapter==null ||
-                            ReleasedTabFragment.this.animeReleaseGroupAdapter.mAnimeGroups==null ||
-                            ReleasedTabFragment.this.animeReleaseGroupAdapter.mAnimeGroups.isEmpty()
-                    ) {
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                            Utils.handleUncaughtException(context, new Exception("releasedTab 43"), "ReleasedTabFragment");
-                        }
-                        ReleasedTabFragment.this.animeReleaseGroupAdapter = new AnimeReleaseGroupAdapter(context, groupedReleasedAnime, ReleasedTabFragment.this.animeReleasesList);
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                            Utils.handleUncaughtException(context, new Exception("releasedTab 44"), "ReleasedTabFragment");
-                        }
-                        ReleasedTabFragment.this.animeReleasesList.setAdapter(ReleasedTabFragment.this.animeReleaseGroupAdapter);
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                            Utils.handleUncaughtException(context, new Exception("releasedTab 45"), "ReleasedTabFragment");
-                        }
-                        ReleasedTabFragment.this.animeReleaseGroupAdapter.notifyDataSetChanged();
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                            Utils.handleUncaughtException(context, new Exception("releasedTab 46"), "ReleasedTabFragment");
-                        }
-                    } else {
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                            Utils.handleUncaughtException(context, new Exception("releasedTab 47"), "ReleasedTabFragment");
-                        }
-                        ArrayList<AnimeReleaseGroup> lastGroupedAnimeSchedules = ReleasedTabFragment.this.animeReleaseGroupAdapter.mAnimeGroups;
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                            Utils.handleUncaughtException(context, new Exception("releasedTab 48"), "ReleasedTabFragment");
-                        }
-                        int existingSize = lastGroupedAnimeSchedules.size();
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                            Utils.handleUncaughtException(context, new Exception("releasedTab 49"), "ReleasedTabFragment");
-                        }
-                        int newDataSize = groupedReleasedAnime.size();
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                            Utils.handleUncaughtException(context, new Exception("releasedTab 50"), "ReleasedTabFragment");
-                        }
-                        int minSize = Math.min(newDataSize, existingSize);
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                            Utils.handleUncaughtException(context, new Exception("releasedTab 51"), "ReleasedTabFragment");
-                        }
-                        for (int i = 0; i < minSize; i++) {
-                            // Update existing items
-                            AnimeReleaseGroup animeReleaseGroup = groupedReleasedAnime.get(i);
-                            if (!animeReleaseGroup.isEqual(lastGroupedAnimeSchedules.get(i), context)) {
-                                ReleasedTabFragment.this.animeReleaseGroupAdapter.mAnimeGroups = groupedReleasedAnime;
-                                ReleasedTabFragment.this.animeReleaseGroupAdapter.notifyItemChanged(i);
-                            }
-                        }
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                            Utils.handleUncaughtException(context, new Exception("releasedTab 52"), "ReleasedTabFragment");
-                        }
-                        if (newDataSize > existingSize) {
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                                Utils.handleUncaughtException(context, new Exception("releasedTab 53"), "ReleasedTabFragment");
-                            }
-                            // Add new items
-                            int itemCount = newDataSize - existingSize;
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                                Utils.handleUncaughtException(context, new Exception("releasedTab 54"), "ReleasedTabFragment");
-                            }
-                            ReleasedTabFragment.this.animeReleaseGroupAdapter.mAnimeGroups = groupedReleasedAnime;
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                                Utils.handleUncaughtException(context, new Exception("releasedTab 55"), "ReleasedTabFragment");
-                            }
-                            animeReleaseGroupAdapter.notifyItemRangeInserted(existingSize, itemCount);
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                                Utils.handleUncaughtException(context, new Exception("releasedTab 56"), "ReleasedTabFragment");
-                            }
-                        } else if (existingSize > newDataSize) {
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                                Utils.handleUncaughtException(context, new Exception("releasedTab 57"), "ReleasedTabFragment");
-                            }
-                            // Remove extra items
-                            int removeCount = existingSize - newDataSize;
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                                Utils.handleUncaughtException(context, new Exception("releasedTab 58"), "ReleasedTabFragment");
-                            }
-                            ReleasedTabFragment.this.animeReleaseGroupAdapter.mAnimeGroups = groupedReleasedAnime;
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                                Utils.handleUncaughtException(context, new Exception("releasedTab 59"), "ReleasedTabFragment");
-                            }
-                            ReleasedTabFragment.this.animeReleaseGroupAdapter.notifyItemRangeRemoved(newDataSize, removeCount);
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                                Utils.handleUncaughtException(context, new Exception("releasedTab 60"), "ReleasedTabFragment");
-                            }
-                        }
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                            Utils.handleUncaughtException(context, new Exception("releasedTab 61"), "ReleasedTabFragment");
-                        }
-                    }
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                        Utils.handleUncaughtException(context, new Exception("releasedTab 62"), "ReleasedTabFragment");
-                    }
-                });
-            } catch (Exception e) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                    Utils.handleUncaughtException(context, new Exception("releasedTab 27.5"), "ReleasedTabFragment");
+                final int newDataSize = groupedReleasedAnime.size();
+                final ArrayList<AnimeReleaseGroup> lastGroupedAnimeReleased;
+                if (ReleasedTabFragment.this.animeReleaseGroupAdapter!=null && ReleasedTabFragment.this.animeReleaseGroupAdapter.mAnimeGroups.get()!=null) {
+                    lastGroupedAnimeReleased = ReleasedTabFragment.this.animeReleaseGroupAdapter.mAnimeGroups.get();
+                } else {
+                    lastGroupedAnimeReleased = new ArrayList<>();
                 }
+                final int existingSize = lastGroupedAnimeReleased.size();
+
+                if (ReleasedTabFragment.this.animeReleaseGroupAdapter==null ||
+                    ReleasedTabFragment.this.animeReleaseGroupAdapter.mAnimeGroups.get()==null
+                ) {
+                    int lastImmediateGroupIndex = 0;
+                    final ArrayList<AnimeReleaseGroup> immediateGroupedReleasedAnime = new ArrayList<>();
+                    int animeCount = 0;
+                    for (int i = 0; i < newDataSize; i++) {
+                        lastImmediateGroupIndex = i;
+                        AnimeReleaseGroup releaseGroup = groupedReleasedAnime.get(i);
+                        immediateGroupedReleasedAnime.add(releaseGroup);
+                        if (releaseGroup.anime!=null) {
+                            animeCount = animeCount + releaseGroup.anime.size();
+                            if (animeCount >= 12) {
+                                break;
+                            }
+                        }
+                    }
+                    uiTaskQueue.replaceTask(handlerId,"setAdapter", ()-> {
+                        ReleasedTabFragment.this.animeReleaseGroupAdapter = new AnimeReleaseGroupAdapter(context, immediateGroupedReleasedAnime, ReleasedTabFragment.this.animeReleasesList);
+                        ReleasedTabFragment.this.animeReleasesList.setAdapter(ReleasedTabFragment.this.animeReleaseGroupAdapter);
+                        ReleasedTabFragment.this.progressCircular.setVisibility(View.GONE);
+                    });
+                    for (int i = lastImmediateGroupIndex+1; i < newDataSize; i++) {
+                        final int finalI = i;
+                        AnimeReleaseGroup animeReleaseGroup = groupedReleasedAnime.get(finalI);
+                        if (finalI < existingSize) {
+                            uiTaskQueue.replaceTask(handlerId,"update"+finalI, () -> {
+                                if (ReleasedTabFragment.this.animeReleaseGroupAdapter!=null) {
+                                    ReleasedTabFragment.this.animeReleaseGroupAdapter.set(finalI, animeReleaseGroup);
+                                }
+                            });
+                        } else {
+                            uiTaskQueue.replaceTask(handlerId,"add"+finalI, ()-> {
+                                if (ReleasedTabFragment.this.animeReleaseGroupAdapter!=null) {
+                                    ReleasedTabFragment.this.animeReleaseGroupAdapter.add(finalI, animeReleaseGroup);
+                                }
+                            });
+                        }
+                    }
+                } else {
+                    if (existingSize > newDataSize) {
+                        // remove extra items
+                        final int removeCount = existingSize - newDataSize;
+                        // march backwards since length is being lessened/removed inside loop
+                        for (int i = newDataSize + removeCount - 1; i >= newDataSize; i--) {
+                            final int finalI = i;
+                            uiTaskQueue.replaceTask(handlerId,"remove"+finalI, () -> {
+                                if (ReleasedTabFragment.this.animeReleaseGroupAdapter!=null) {
+                                    ReleasedTabFragment.this.animeReleaseGroupAdapter.remove(finalI);
+                                }
+                            });
+                        }
+                    }
+
+                    for (int i = 0; i < newDataSize; i++) {
+                        // Update existing items
+                        final int finalI = i;
+                        AnimeReleaseGroup animeReleaseGroup = groupedReleasedAnime.get(finalI);
+                        if (finalI < existingSize) {
+                            if (!animeReleaseGroup.isEqual(lastGroupedAnimeReleased.get(finalI), context)) {
+                                uiTaskQueue.replaceTask(handlerId,"update"+finalI, () -> {
+                                    if (ReleasedTabFragment.this.animeReleaseGroupAdapter!=null) {
+                                        ReleasedTabFragment.this.animeReleaseGroupAdapter.set(finalI, animeReleaseGroup);
+                                    }
+                                });
+                            }
+                        } else {
+                            uiTaskQueue.replaceTask(handlerId,"add"+finalI, ()-> {
+                                if (ReleasedTabFragment.this.animeReleaseGroupAdapter!=null) {
+                                    ReleasedTabFragment.this.animeReleaseGroupAdapter.add(finalI, animeReleaseGroup);
+                                }
+                            });
+                        }
+                    }
+                }
+            } catch (Exception e) {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                     Utils.handleUncaughtException(context.getApplicationContext(), e, "updateReleasedAnimeExecutorService");
                 }

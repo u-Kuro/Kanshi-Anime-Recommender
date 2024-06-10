@@ -29,16 +29,8 @@ public class LocalPersistence {
                 Path tempFilePath = tempFile.toPath();
                 Files.copy(tempFilePath, finalFilePath, StandardCopyOption.REPLACE_EXISTING);
             } else {
-                boolean isRenamed = false;
-                try {
-                    isRenamed = tempFile.renameTo(finalFile);
-                } catch (Exception ignored) {}
-                if (!isRenamed) {
-                    if (finalFile.delete()) {
-                        //noinspection ResultOfMethodCallIgnored
-                        tempFile.renameTo(finalFile);
-                    }
-                }
+                //noinspection ResultOfMethodCallIgnored
+                tempFile.renameTo(finalFile);
             }
         } catch (IOException ignored) {
         } finally {
