@@ -115,9 +115,7 @@
 				if ($appID) {
 					JSBridge?.checkAppID?.($appID, false);
 				}
-			} catch (e) {
-				window.updateAppAlert?.();
-			}
+			} catch (e) {}
 		}
 
 		if ($android && window[$isBackgroundUpdateKey] === true) {
@@ -701,6 +699,11 @@
 	initData.subscribe(async (val) => {
 		if (val === false) {
 			clearInterval(pleaseWaitStatusInterval);
+
+			try {
+				JSBridge?.pageFinished?.();
+			} catch (e) {}
+
 			if (!addedBackgroundStatusUpdate?.()) {
 				getExtraInfo();
 			}
@@ -1411,26 +1414,6 @@
 		$listUpdateAvailable = false;
 		animeManager({ updateRecommendedAnimeList: true });
 	}
-
-	window.updateAppAlert = async () => {
-		if (
-			await $confirmPromise?.({
-				title: "New updates are available",
-				text: "You may want to download the new version.",
-				confirmLabel: "DOWNLOAD",
-				isImportant: true,
-			})
-		) {
-			try {
-				JSBridge?.downloadUpdate?.();
-			} catch (e) {
-				window.open?.(
-					"https://github.com/u-Kuro/Kanshi-Anime-Recommender/raw/main/Kanshi.apk",
-					"_blank",
-				);
-			}
-		}
-	};
 
 	let _progress = 0,
 		progressChangeStart = performance.now(),

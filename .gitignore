@@ -1,7 +1,5 @@
 /node_modules/
 /public/build/
-/android/app/src/main/assets/webapi/worker/getAnimeEntries.js
-/public/webapi/worker/getAnimeEntries.js
 /prettified/
 .DS_Store
 .vercel

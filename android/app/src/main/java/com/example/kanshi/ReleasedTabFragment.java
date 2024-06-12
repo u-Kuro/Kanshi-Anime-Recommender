@@ -64,6 +64,7 @@ public class ReleasedTabFragment extends Fragment {
         swipeRefresh = releasedView.findViewById(R.id.swipe_refresh_anime_release);
         progressCircular = releasedView.findViewById(R.id.progress_circular);
 
+        animeReleasesList.setItemAnimator(null);
         swipeRefresh.setProgressBackgroundColorSchemeResource(R.color.darker_grey);
         swipeRefresh.setColorSchemeResources(R.color.faded_white);
 

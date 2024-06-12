@@ -976,13 +976,10 @@ const exportUserData = (_data) => {
     })
 }
 
-let getAnimeEntriesWorker
 let importUserDataTerminateTimeout, importUserDataWorker;
 const importUserData = (_data) => {
     return new Promise((resolve, reject) => {
         if (importUserDataTerminateTimeout) clearTimeout(importUserDataTerminateTimeout)
-        getAnimeEntriesWorker?.terminate?.()
-        getAnimeEntriesWorker = null
         importUserDataWorker?.terminate?.()
         importUserDataWorker = null
         if (!get(initData)) {
@@ -1290,44 +1287,57 @@ const saveIDBdata = (_data, name, isImportant = false) => {
 const getAnimeEntries = (_data) => {
     return new Promise((resolve, reject) => {
         progress.set(0)
-        let url
-        if (get(android)) {
-            url = "./webapi/worker/getAnimeEntries.js"
-        } else {
-            const directory = "./webapi/worker/getAnimeEntries-chunk-",
-                extension = ".txt"
-            url = [
-                `${directory}1${extension}`,
-                `${directory}2${extension}`,
-            ]
-        }
-        cacheRequest(url, 172877205, "Getting Anime, Manga, and Novel Entries")
-            .then(url => {
-                progress.set(25)
-                dataStatus.set("Retaining Anime, Manga, and Novel Entries")
-                getAnimeEntriesWorker = new Worker(url)
-                getAnimeEntriesWorker.postMessage(_data)
-                getAnimeEntriesWorker.onmessage = ({ data }) => {
-                    if (hasOwnProp?.call?.(data, "status")) {
-                        dataStatusPrio = true
-                        dataStatus.set(data.status)
-                        return
-                    }
-                    dataStatus.set(null)
-                    progress.set(100)
-                    dataStatusPrio = false
-                    updateRecommendationList.update(e => !e)
-                    setTimeout(() => {
-                        getAnimeEntriesWorker?.terminate?.();
-                    }, terminateDelay)
-                    resolve(data)
-                }
-                getAnimeEntriesWorker.onerror = (error) => {
-                    dataStatus.set(null)
-                    progress.set(100)
-                    updateRecommendationList.update(e => !e)
-                    reject(error)
-                }
+        const directory = "./webapi/worker/entries-chunk-", extension = ".txt"
+        cacheRequest([
+            `${directory}1${extension}`,
+            `${directory}2${extension}`,
+        ], 172885665, "Getting Anime, Manga, and Novel Entries", true)
+            .then(animeEntriesBlob => {
+                cacheRequest("./webapi/worker/getEntries.js", 271595, "Retaining Anime, Manga, and Novel Entries")
+                    .then(workerUrl => {
+                        progress.set(25)
+                        dataStatus.set("Retaining Anime, Manga, and Novel Entries")
+                        let worker = new Worker(workerUrl)
+                        worker.postMessage({ animeEntriesBlob })
+                        worker.onmessage = ({ data }) => {
+                            if (hasOwnProp?.call?.(data, "progress")) {
+                                if (data?.progress >= 0 && data?.progress <= 100) {
+                                    progress.set(data.progress)
+                                }
+                                return
+                            } else if (hasOwnProp?.call?.(data, "status")) {
+                                dataStatusPrio = true
+                                dataStatus.set(data.status)
+                                return
+                            }
+                            dataStatus.set(null)
+                            progress.set(100)
+                            dataStatusPrio = false
+                            updateRecommendationList.update(e => !e)
+                            setTimeout(() => {
+                                worker?.terminate?.();
+                            }, terminateDelay)
+                            if (hasOwnProp?.call?.(data, "error")) {
+                                console.error(data?.error)
+                                reject(data?.error)
+                            } else {
+                                resolve(data)
+                            }
+                        }
+                        worker.onerror = (error) => {
+                            dataStatus.set(null)
+                            progress.set(100)
+                            alertError()
+                            updateRecommendationList.update(e => !e)
+                            reject(error)
+                        }
+                    }).catch((error) => {
+                        dataStatus.set(null)
+                        progress.set(100)
+                        alertError()
+                        updateRecommendationList.update(e => !e)
+                        reject(error)
+                    })
             }).catch((error) => {
                 dataStatus.set(null)
                 progress.set(100)

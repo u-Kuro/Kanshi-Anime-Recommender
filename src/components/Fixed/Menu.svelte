@@ -31,6 +31,7 @@
         appInstallationAsked,
         selectedCategory,
         keepAppRunningInBackground,
+        initData,
     } from "../../js/globalValues.js";
 
     let menuContainerEl, navContainerEl;
@@ -39,12 +40,7 @@
     async function importData() {
         if (!(importFileInput instanceof Element))
             return ($dataStatus = "Something went wrong");
-        if (
-            await $confirmPromise({
-                text: "Do you want to import your data?",
-                isImportant: true,
-            })
-        ) {
+        if (await $confirmPromise("Do you want to import your data?")) {
             importFileInput.value = null;
             importFileInput.click();
         }
@@ -65,7 +61,6 @@
                 await $confirmPromise({
                     text: `File ${filenameToShow}has been detected, do you want to import the file?`,
                     isPersistent: true,
-                    isImportant: true,
                 })
             ) {
                 $menuVisible = false;
@@ -100,7 +95,14 @@
         }
     }
     // Global Function For Android
-    function handleExportFolder() {
+    async function handleExportFolder() {
+        if ($initData) {
+            return await $confirmPromise({
+                isAlert: true,
+                title: "Initializing resources",
+                text: "Please wait a moment...",
+            });
+        }
         try {
             JSBridge?.chooseExportFolder?.();
         } catch (e) {}

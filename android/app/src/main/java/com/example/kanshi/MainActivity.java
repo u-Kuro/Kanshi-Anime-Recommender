@@ -64,7 +64,6 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.FrameLayout;
 import android.widget.ProgressBar;
-import android.widget.RelativeLayout;
 import android.widget.Toast;
 
 import java.io.BufferedWriter;
@@ -83,8 +82,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -104,8 +101,6 @@ import androidx.webkit.WebViewAssetLoader;
 
 public class MainActivity extends AppCompatActivity {
     public boolean keepAppRunningInBackground = false;
-    public boolean showOriginalSplashScreen = true;
-    public RelativeLayout splashScreenLayout;
     public boolean permissionIsAsked = false;
     public SharedPreferences prefs;
     private SharedPreferences.Editor prefsEdit;
@@ -115,14 +110,13 @@ public class MainActivity extends AppCompatActivity {
     public MediaWebView webView;
     private ProgressBar progressbar;
     private boolean pageLoaded = false;
+    private boolean pageIsFinished = false;
     private boolean webViewIsLoaded = false;
-    public boolean isReloaded = true;
     private PowerManager.WakeLock wakeLock;
     public boolean shouldGoBack;
     public Toast persistentToast;
     public Toast currentToast;
     public AlertDialog currentDialog;
-    public AlertDialog reconnectIndefinitelyDialog;
     public boolean isInApp = true;
     public static WeakReference<MainActivity> weakActivity;
     public boolean shouldRefreshList = false;
@@ -196,11 +190,11 @@ public class MainActivity extends AppCompatActivity {
     private final ActivityResultLauncher<String> notificationPermission =
             registerForActivityResult(new ActivityResultContracts.RequestPermission(),
                     isGranted -> {
-                prefsEdit.putBoolean("permissionIsAsked", true).apply();
-                if (isGranted) {
-                    askForSchedulePermission();
-                }
-            });
+                        prefsEdit.putBoolean("permissionIsAsked", true).apply();
+                        if (isGranted) {
+                            askForSchedulePermission();
+                        }
+                    });
 
     @RequiresApi(api = Build.VERSION_CODES.TIRAMISU)
     @SuppressLint({"SetJavaScriptEnabled", "WrongViewCast"})
@@ -213,12 +207,11 @@ public class MainActivity extends AppCompatActivity {
 
         // Create WebView App Instance
         SplashScreen splashScreen = SplashScreen.installSplashScreen(this);
-        splashScreen.setKeepOnScreenCondition(() -> showOriginalSplashScreen);
+        splashScreen.setKeepOnScreenCondition(() -> !pageLoaded);
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         // Init Global Variables
-        splashScreenLayout = findViewById(R.id.splash_screen);
         webView = findViewById(R.id.webView);
         progressbar = findViewById(R.id.progressbar);
         progressbar.setMax((int) Math.pow(10, 6));
@@ -360,12 +353,44 @@ public class MainActivity extends AppCompatActivity {
                 if (Configs.isOwner) {
                     view.loadUrl("javascript:(()=>window['" + isOwnerKey + "']=true)();");
                 }
-                if (isReloaded) {
-                    isReloaded = false;
+                if (!pageLoaded) {
+                    pageLoaded = true;
                     view.loadUrl("javascript:(()=>window.shouldUpdateNotifications=true)();");
                     view.loadUrl("javascript:(()=>window.keepAppRunningInBackground=" + (keepAppRunningInBackground ? "true" : "false") + ")();");
                 }
                 super.onPageStarted(view, url, favicon);
+            }
+
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                super.onPageFinished(view, url);
+
+                shouldRefreshList = shouldProcessRecommendationList = shouldLoadAnime = false;
+                boolean visited = prefs.getBoolean("visited", false);
+                if (visited) {
+                    webView.loadUrl("javascript:(()=>window['" + visitedKey + "']=true)();");
+                }
+                if (Configs.isOwner) {
+                    webView.loadUrl("javascript:(()=>window['" + isOwnerKey + "']=true)();");
+                }
+                webView.loadUrl("javascript:(()=>window.shouldUpdateNotifications=true)();");
+                webView.loadUrl("javascript:(()=>window.keepAppRunningInBackground=" + (keepAppRunningInBackground ? "true" : "false") + ")();");
+                webView.loadUrl("javascript:window?.setKeepAppRunningInBackground?.("+(keepAppRunningInBackground?"true":"false")+")");
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+                    Network network = connectivityManager.getActiveNetwork();
+                    if (network == null) {
+                        showToast(Toast.makeText(getApplicationContext(), "You are currently offline.", Toast.LENGTH_LONG));
+                    }
+                }
+                CookieManager cookieManager = CookieManager.getInstance();
+                cookieManager.setAcceptCookie(true);
+                cookieManager.setAcceptThirdPartyCookies(webView, true);
+                CookieManager.getInstance().acceptCookie();
+                CookieManager.getInstance().flush();
+                if (!pageLoaded) {
+                    pageLoaded = true;
+                }
             }
 
             @Override
@@ -415,6 +440,7 @@ public class MainActivity extends AppCompatActivity {
                 return true;
             }
         });
+
         webView.setWebChromeClient(new WebChromeClient() {
             private View mCustomView;
             private CustomViewCallback mCustomViewCallback;
@@ -504,39 +530,18 @@ public class MainActivity extends AppCompatActivity {
                 return true;
             }
         });
-        WebView.setWebContentsDebuggingEnabled(BuildConfig.DEBUG);
 
-        isReloaded = true;
         webView.loadUrl("https://appassets.androidplatform.net/assets/index.html");
-        isAppConnectionAvailable(isConnected -> webView.post(() -> {
-            if (!pageLoaded) {
-                if (isConnected) {
-                    isReloaded = true;
-                    webView.loadUrl("https://appassets.androidplatform.net/assets/index.html");
-                    // Only works after first page load
-                    webSettings.setBuiltInZoomControls(false);
-                    webSettings.setDisplayZoomControls(false);
-                    webSettings.setSupportZoom(false);
-                } else {
-                    showOriginalSplashScreen = false;
-                    showDialog(new AlertDialog.Builder(MainActivity.this)
-                        .setTitle("Connection Failed")
-                        .setMessage("Do you want to reconnect indefinitely?")
-                        .setPositiveButton("YES", ((dialog, i) -> reconnectLonger())),
-                        false, true
-                    );
-                }
-            }
-            if (!permissionIsAsked) {
-                if (ActivityCompat.checkSelfPermission(this, POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                        notificationPermission.launch(POST_NOTIFICATIONS);
-                    }
-                }
-            }
-        }), 3500, 3500);
+
+        // Only works after first page load
+        webSettings.setBuiltInZoomControls(false);
+        webSettings.setDisplayZoomControls(false);
+        webSettings.setSupportZoom(false);
+
         setReleaseNotification();
         Utils.cleanIndexedDBFiles(this.getApplicationContext());
+
+        WebView.setWebContentsDebuggingEnabled(BuildConfig.DEBUG);
 
         // Get Activity Reference
         weakActivity = new WeakReference<>(MainActivity.this);
@@ -622,10 +627,10 @@ public class MainActivity extends AppCompatActivity {
         if (!shouldRefreshList) return;
         try {
             new Handler(Looper.getMainLooper())
-                .post(() -> webView.post(() -> webView.loadUrl("javascript:window?.shouldRefreshAnimeList?.("
-                        + (shouldProcessRecommendationList ? "true" : "false") + ","
-                        + (shouldLoadAnime ? "true" : "false")
-                        + ")")));
+                    .post(() -> webView.post(() -> webView.loadUrl("javascript:window?.shouldRefreshAnimeList?.("
+                            + (shouldProcessRecommendationList ? "true" : "false") + ","
+                            + (shouldLoadAnime ? "true" : "false")
+                            + ")")));
         } catch (Exception ignored) {}
     }
 
@@ -669,39 +674,14 @@ public class MainActivity extends AppCompatActivity {
     @SuppressWarnings("unused")
     class JSBridge {
         @JavascriptInterface
-        public void pageIsFinished() {
-            webView.post(() -> {
-                pageLoaded = true;
-                isReloaded = shouldRefreshList = shouldProcessRecommendationList = shouldLoadAnime = false;
-                boolean visited = prefs.getBoolean("visited", false);
-                if (visited) {
-                    webView.loadUrl("javascript:(()=>window['" + visitedKey + "']=true)();");
-                }
-                if (Configs.isOwner) {
-                    webView.loadUrl("javascript:(()=>window['" + isOwnerKey + "']=true)();");
-                }
-                webView.loadUrl("javascript:(()=>window.shouldUpdateNotifications=true)();");
-                webView.loadUrl("javascript:(()=>window.keepAppRunningInBackground=" + (keepAppRunningInBackground ? "true" : "false") + ")();");
-                webView.loadUrl("javascript:window?.setKeepAppRunningInBackground?.("+(keepAppRunningInBackground?"true":"false")+")");
-                if (reconnectIndefinitelyDialog != null && reconnectIndefinitelyDialog.isShowing()) {
-                    reconnectIndefinitelyDialog.dismiss();
-                    reconnectIndefinitelyDialog = null;
-                }
-                splashScreenLayout.setVisibility(View.GONE);
-                showOriginalSplashScreen = false;
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-                    Network network = connectivityManager.getActiveNetwork();
-                    if (network == null) {
-                        showToast(Toast.makeText(getApplicationContext(), "You are currently offline.", Toast.LENGTH_LONG));
-                    }
-                }
-                CookieManager cookieManager = CookieManager.getInstance();
-                cookieManager.setAcceptCookie(true);
-                cookieManager.setAcceptThirdPartyCookies(webView, true);
-                CookieManager.getInstance().acceptCookie();
-                CookieManager.getInstance().flush();
-            });
+        public void pageFinished() {
+            pageIsFinished = true;
+            if (!permissionIsAsked
+                    && ActivityCompat.checkSelfPermission(MainActivity.this, POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+                    && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
+            ) {
+                notificationPermission.launch(POST_NOTIFICATIONS);
+            }
         }
         @JavascriptInterface
         public void visited() {
@@ -744,9 +724,9 @@ public class MainActivity extends AppCompatActivity {
         }
         @JavascriptInterface
         public void setKeepAppRunningInBackground(boolean enable) {
-            if (enable
-                && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
-                && ActivityCompat.checkSelfPermission(MainActivity.this, POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+            if (enable && pageIsFinished
+                    && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
+                    && ActivityCompat.checkSelfPermission(MainActivity.this, POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
             ) {
                 notificationPermission.launch(POST_NOTIFICATIONS);
             }
@@ -766,14 +746,14 @@ public class MainActivity extends AppCompatActivity {
                 }
                 if (!Environment.isExternalStorageManager()) {
                     showDialog(new AlertDialog.Builder(MainActivity.this)
-                            .setTitle("Folder Access for Backup")
-                            .setMessage("Allow permission to access folders for backup feature.")
-                            .setPositiveButton("OK", (dialogInterface, i) -> {
-                                Intent intent = new Intent(ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION, Uri.fromParts("package", getPackageName(), null));
-                                startActivity(intent);
-                            })
-                            .setNegativeButton("CANCEL", null),
-                            true,false);
+                                    .setTitle("Folder Access for Backup")
+                                    .setMessage("Allow permission to access folders for backup feature.")
+                                    .setPositiveButton("OK", (dialogInterface, i) -> {
+                                        Intent intent = new Intent(ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION, Uri.fromParts("package", getPackageName(), null));
+                                        startActivity(intent);
+                                    })
+                                    .setNegativeButton("CANCEL", null),
+                            true);
                 } else {
                     if (new File(exportPath).isDirectory()) {
                         exportDirectoryPath = exportPath + File.separator;
@@ -832,15 +812,15 @@ public class MainActivity extends AppCompatActivity {
                                         tempExportPath[tempExportPath.length - 1]
                                 : tempExportPath[tempExportPath.length - 1];
                         showDialog(new AlertDialog.Builder(MainActivity.this)
-                                .setTitle("Backup Folder is Missing")
-                                .setMessage("Folder directory [" + tempPathName + "] is missing, please choose another folder for backup.")
-                                .setPositiveButton("OK", (dialogInterface, x) -> {
-                                    showToast(Toast.makeText(getApplicationContext(), "Select or create a folder.", Toast.LENGTH_LONG));
-                                    Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).addCategory(Intent.CATEGORY_DEFAULT);
-                                    chooseExportFile.launch(i);
-                                })
-                                .setNegativeButton("CANCEL", null),
-                                true,false);
+                                        .setTitle("Backup Folder is Missing")
+                                        .setMessage("Folder directory [" + tempPathName + "] is missing, please choose another folder for backup.")
+                                        .setPositiveButton("OK", (dialogInterface, x) -> {
+                                            showToast(Toast.makeText(getApplicationContext(), "Select or create a folder.", Toast.LENGTH_LONG));
+                                            Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).addCategory(Intent.CATEGORY_DEFAULT);
+                                            chooseExportFile.launch(i);
+                                        })
+                                        .setNegativeButton("CANCEL", null),
+                                true);
                     } else {
                         Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).addCategory(Intent.CATEGORY_DEFAULT);
                         chooseExportFile.launch(i);
@@ -920,14 +900,14 @@ public class MainActivity extends AppCompatActivity {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                 if (!Environment.isExternalStorageManager()) {
                     showDialog(new AlertDialog.Builder(MainActivity.this)
-                            .setTitle("File Access for Backup")
-                            .setMessage("Allow permission to access folders for backup feature.")
-                            .setPositiveButton("OK", (dialogInterface, i) -> {
-                                Intent intent = new Intent(ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION, Uri.fromParts("package", getPackageName(), null));
-                                startActivity(intent);
-                            })
-                            .setNegativeButton("CANCEL", null),
-                            true,false);
+                                    .setTitle("File Access for Backup")
+                                    .setMessage("Allow permission to access folders for backup feature.")
+                                    .setPositiveButton("OK", (dialogInterface, i) -> {
+                                        Intent intent = new Intent(ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION, Uri.fromParts("package", getPackageName(), null));
+                                        startActivity(intent);
+                                    })
+                                    .setNegativeButton("CANCEL", null),
+                            true);
                 } else {
                     Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).addCategory(Intent.CATEGORY_DEFAULT);
                     chooseExportFile.launch(i);
@@ -944,7 +924,7 @@ public class MainActivity extends AppCompatActivity {
                         if (isConnected) {
                             showToast(Toast.makeText(getApplicationContext(), "Your internet has been restored.", Toast.LENGTH_LONG));
                         }
-                    }), 999999999,0);
+                    }));
                 } else {
                     showToast(Toast.makeText(getApplicationContext(), "You are currently offline.", Toast.LENGTH_LONG));
                 }
@@ -975,9 +955,6 @@ public class MainActivity extends AppCompatActivity {
             startActivity(intent);
             finish();
         }
-        @RequiresApi(api = Build.VERSION_CODES.O)
-        @JavascriptInterface
-        public void downloadUpdate() { checkUpdate(); }
         final long DAY_IN_MILLIS = TimeUnit.DAYS.toMillis(1);
         @JavascriptInterface
         public void addAnimeReleaseNotification(long animeId, String title, long releaseEpisode, long maxEpisode, long releaseDateMillis, String imageUrl, String animeUrl, String userStatus, long episodeProgress) {
@@ -1082,36 +1059,36 @@ public class MainActivity extends AppCompatActivity {
 
     public void showDataEvictionDialog() {
         new Handler(Looper.getMainLooper()).post(()-> showDialog(new AlertDialog.Builder(MainActivity.this)
-            .setTitle("Possible Data Loss")
-            .setMessage("Some of your data may be cleared by chrome, please import your saved data.")
-            .setPositiveButton("OK", (dialogInterface, i) -> webView.post(() -> {
-                webView.loadUrl("javascript:window?.importAndroidUserData?.()");
-                String url = webView.getUrl();
-                if (url != null) {
-                    prefsEdit.putBoolean("visited", false).apply();
-                }
-            }))
-            .setNegativeButton("CANCEL", ((dialogInterface, i) -> webView.post(() -> {
-                String url = webView.getUrl();
-                if (url != null) {
-                    prefsEdit.putBoolean("visited", false).apply();
-                }
-            })))
-        ,false,false));
+                        .setTitle("Possible Data Loss")
+                        .setMessage("Some of your data may be cleared by chrome, please import your saved data.")
+                        .setPositiveButton("OK", (dialogInterface, i) -> webView.post(() -> {
+                            webView.loadUrl("javascript:window?.importAndroidUserData?.()");
+                            String url = webView.getUrl();
+                            if (url != null) {
+                                prefsEdit.putBoolean("visited", false).apply();
+                            }
+                        }))
+                        .setNegativeButton("CANCEL", ((dialogInterface, i) -> webView.post(() -> {
+                            String url = webView.getUrl();
+                            if (url != null) {
+                                prefsEdit.putBoolean("visited", false).apply();
+                            }
+                        })))
+                ,false));
     }
     public void askForSchedulePermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             AlarmManager alarmManager = (AlarmManager) MainActivity.this.getApplicationContext().getSystemService(Context.ALARM_SERVICE);
             if (!alarmManager.canScheduleExactAlarms()) {
                 showDialog(new AlertDialog.Builder(MainActivity.this)
-                        .setTitle("Permission for Anime Releases")
-                        .setMessage("Do you like to allow permission for notifying anime release schedules at the exact time?")
-                        .setPositiveButton("YES", (dialogInterface, i) -> webView.post(() -> {
-                            Intent intent = new Intent(ACTION_REQUEST_SCHEDULE_EXACT_ALARM, Uri.fromParts("package", getPackageName(), null));
-                            startActivity(intent);
-                        }))
-                        .setNegativeButton("NO", null)
-                ,false,false);
+                                .setTitle("Permission for Anime Releases")
+                                .setMessage("Do you like to allow permission for notifying anime release schedules at the exact time?")
+                                .setPositiveButton("YES", (dialogInterface, i) -> webView.post(() -> {
+                                    Intent intent = new Intent(ACTION_REQUEST_SCHEDULE_EXACT_ALARM, Uri.fromParts("package", getPackageName(), null));
+                                    startActivity(intent);
+                                }))
+                                .setNegativeButton("NO", null)
+                        ,false);
             }
         }
     }
@@ -1227,11 +1204,11 @@ public class MainActivity extends AppCompatActivity {
     @RequiresApi(api = Build.VERSION_CODES.O)
     public void showUpdateNotice() {
         showDialog(new AlertDialog.Builder(MainActivity.this)
-            .setTitle("New Version is Available")
-            .setMessage("You may want to download the new app version.")
-            .setPositiveButton("DOWNLOAD", (dialogInterface, i) -> checkUpdate())
-            .setNegativeButton("LATER", null),
-            true,false);
+                        .setTitle("New Version is Available")
+                        .setMessage("You may want to download the new app version.")
+                        .setPositiveButton("DOWNLOAD", (dialogInterface, i) -> checkUpdate())
+                        .setNegativeButton("LATER", null),
+                true);
     }
     @RequiresApi(api = Build.VERSION_CODES.O)
     public void checkUpdate() {
@@ -1240,14 +1217,14 @@ public class MainActivity extends AppCompatActivity {
             _downloadUpdate();
         } else {
             showDialog(new AlertDialog.Builder(MainActivity.this)
-                    .setTitle("Permission for App Installation")
-                    .setMessage("Allow permission to update the application.")
-                    .setPositiveButton("OK", (dialogInterface, i) -> {
-                        Intent intent = new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.fromParts("package", getPackageName(), null));
-                        allowApplicationUpdate.launch(intent);
-                    })
-                    .setNegativeButton("CANCEL", null),
-                    true,false);
+                            .setTitle("Permission for App Installation")
+                            .setMessage("Allow permission to update the application.")
+                            .setPositiveButton("OK", (dialogInterface, i) -> {
+                                Intent intent = new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.fromParts("package", getPackageName(), null));
+                                allowApplicationUpdate.launch(intent);
+                            })
+                            .setNegativeButton("CANCEL", null),
+                    true);
         }
     }
     public void _downloadUpdate() {
@@ -1262,38 +1239,38 @@ public class MainActivity extends AppCompatActivity {
                 boolean hasPermission = getPackageManager().canRequestPackageInstalls();
                 if (hasPermission) {
                     showDialog(new AlertDialog.Builder(MainActivity.this)
-                        .setTitle("Install the New Version")
-                        .setMessage("Do you like to continue the installation?")
-                        .setPositiveButton("YES", (dialogInterface, i) -> {
-                            File apkFile = new File(apkFilePath);
-                            if (apkFile.exists()) {
-                                Uri apkUri = FileProvider.getUriForFile(MainActivity.this, "com.example.kanshi.provider", apkFile);
-                                Intent intent = new Intent(Intent.ACTION_VIEW);
-                                intent.setDataAndType(apkUri, "application/vnd.android.package-archive");
-                                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                                intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                                List<ResolveInfo> resolveInfoList = getPackageManager().queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY);
-                                if (!resolveInfoList.isEmpty()) {
-                                    startActivity(intent);
-                                } else {
-                                    showToast(Toast.makeText(MainActivity.this, "No application available to open the APK file.", Toast.LENGTH_LONG));
-                                }
-                            } else {
-                                showToast(Toast.makeText(MainActivity.this, "File is not found.", Toast.LENGTH_LONG));
-                            }
-                        })
-                        .setNegativeButton("NO", (dialogInterface, i) -> showToast(Toast.makeText(getApplicationContext(), "APK is in your download folder, you may still manually install the new version.", Toast.LENGTH_LONG))).setCancelable(false),
-                        true,false);
+                                    .setTitle("Install the New Version")
+                                    .setMessage("Do you like to continue the installation?")
+                                    .setPositiveButton("YES", (dialogInterface, i) -> {
+                                        File apkFile = new File(apkFilePath);
+                                        if (apkFile.exists()) {
+                                            Uri apkUri = FileProvider.getUriForFile(MainActivity.this, "com.example.kanshi.provider", apkFile);
+                                            Intent intent = new Intent(Intent.ACTION_VIEW);
+                                            intent.setDataAndType(apkUri, "application/vnd.android.package-archive");
+                                            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                                            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                                            List<ResolveInfo> resolveInfoList = getPackageManager().queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY);
+                                            if (!resolveInfoList.isEmpty()) {
+                                                startActivity(intent);
+                                            } else {
+                                                showToast(Toast.makeText(MainActivity.this, "No application available to open the APK file.", Toast.LENGTH_LONG));
+                                            }
+                                        } else {
+                                            showToast(Toast.makeText(MainActivity.this, "File is not found.", Toast.LENGTH_LONG));
+                                        }
+                                    })
+                                    .setNegativeButton("NO", (dialogInterface, i) -> showToast(Toast.makeText(getApplicationContext(), "APK is in your download folder, you may still manually install the new version.", Toast.LENGTH_LONG))).setCancelable(false),
+                            true);
                 }
             }
             @Override
             public void onDownloadFailed() {
                 showDialog(new AlertDialog.Builder(MainActivity.this)
-                    .setTitle("Download Failed")
-                    .setMessage("Do you want to re-download the new version?")
-                    .setPositiveButton("YES", (dialogInterface, i) -> _downloadUpdate())
-                    .setNegativeButton("NO", null),
-                    true,false);
+                                .setTitle("Download Failed")
+                                .setMessage("Do you want to re-download the new version?")
+                                .setPositiveButton("YES", (dialogInterface, i) -> _downloadUpdate())
+                                .setNegativeButton("NO", null),
+                        true);
             }
         });
     }
@@ -1304,48 +1281,12 @@ public class MainActivity extends AppCompatActivity {
         } else {
             webView.post(() -> webView.loadUrl("javascript:window?.isExported?.(false)"));
             showDialog(new AlertDialog.Builder(MainActivity.this)
-                .setTitle("Backup Failed")
-                .setMessage("Do you want to try again?")
-                .setPositiveButton("YES", (dialogInterface, i) -> webView.post(() -> webView.loadUrl("javascript:window?.runExport?.()")))
-                .setNegativeButton("NO", null),
-                true,false);
+                            .setTitle("Backup Failed")
+                            .setMessage("Do you want to try again?")
+                            .setPositiveButton("YES", (dialogInterface, i) -> webView.post(() -> webView.loadUrl("javascript:window?.runExport?.()")))
+                            .setNegativeButton("NO", null),
+                    true);
         }
-    }
-
-    @RequiresApi(api = Build.VERSION_CODES.N)
-    public void reconnectLonger() {
-        if (pageLoaded) return;
-        showToast(Toast.makeText(getApplicationContext(), "Connecting...", Toast.LENGTH_LONG));
-        isAppConnectionAvailable(isConnected -> webView.post(() -> {
-            hideToast();
-            if (pageLoaded) return;
-            if (isConnected) {
-                isReloaded = true;
-                webView.loadUrl("https://appassets.androidplatform.net/assets/index.html");
-            } else {
-                showDialog(new AlertDialog.Builder(MainActivity.this)
-                        .setTitle("Connection Failed")
-                        .setMessage("Do you want to reconnect indefinitely?")
-                        .setPositiveButton("YES", ((dialog, i) -> reconnectLonger())),
-                        false,true
-                );
-            }
-        }),3500,0);
-        isAppConnectionAvailable(isConnected -> webView.post(() -> {
-            hideToast();
-            if (pageLoaded) return;
-            if (isConnected) {
-                isReloaded = true;
-                webView.loadUrl("https://appassets.androidplatform.net/assets/index.html");
-            } else {
-                showDialog(new AlertDialog.Builder(MainActivity.this)
-                        .setTitle("Connection Failed")
-                        .setMessage("Do you want to reconnect indefinitely?")
-                        .setPositiveButton("YES", ((dialog, i) -> reconnectLonger())),
-                        false,true
-                );
-            }
-        }),999999999,0);
     }
 
     public void checkEntries() {
@@ -1356,10 +1297,7 @@ public class MainActivity extends AppCompatActivity {
         } catch (Exception ignored) {}
     }
 
-    public void showDialog(AlertDialog.Builder alertDialog, boolean canceledOnOutsideTouch, boolean isReconnectIndefinitelyDialog) {
-        if (isReconnectIndefinitelyDialog && reconnectIndefinitelyDialog!=null && reconnectIndefinitelyDialog.isShowing()) {
-            return;
-        }
+    public void showDialog(AlertDialog.Builder alertDialog, boolean canceledOnOutsideTouch) {
         if (currentDialog != null && currentDialog.isShowing()) {
             currentDialog.dismiss();
         }
@@ -1368,9 +1306,6 @@ public class MainActivity extends AppCompatActivity {
         Window dialogWindow = currentDialog.getWindow();
         if (dialogWindow!=null) {
             dialogWindow.setBackgroundDrawableResource(R.drawable.dialog);
-        }
-        if (isReconnectIndefinitelyDialog) {
-            reconnectIndefinitelyDialog = currentDialog;
         }
         currentDialog.show();
     }
@@ -1391,38 +1326,27 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @RequiresApi(api = Build.VERSION_CODES.N)
-    private void isAppConnectionAvailable(ConnectivityCallback callback, int timeout, int minTimeout) {
+    private void isAppConnectionAvailable(ConnectivityCallback callback) {
         ConnectivityManager connectivityManager =
                 (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
         Network network = connectivityManager.getActiveNetwork();
         if (network == null) {
-            if (minTimeout>0) {
-                Timer timer = new Timer();
-                timer.schedule(new TimerTask() {
-                    @Override
-                    public void run() {
-                        callback.onConnectionResult(false);
-                        timer.cancel();
-                    }
-                }, minTimeout);
-            } else {
-                callback.onConnectionResult(false);
-            }
+            callback.onConnectionResult(false);
             return;
         }
-        CompletableFuture.supplyAsync(() -> checkAppConnection(timeout))
+        CompletableFuture.supplyAsync(this::checkAppConnection)
                 .thenAccept(callback::onConnectionResult);
     }
 
     final ExecutorService executor = Executors.newFixedThreadPool(1);
-    private boolean checkAppConnection(int timeout) {
+    private boolean checkAppConnection() {
         Future<Boolean> future = executor.submit(() -> {
             try {
                 URL url = new URL("https://raw.githubusercontent.com/u-Kuro/Kanshi-Anime-Recommender/main/public/version.json");
                 HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
                 urlConnection.setRequestMethod("HEAD");
-                urlConnection.setConnectTimeout(timeout);
-                urlConnection.setReadTimeout(timeout);
+                urlConnection.setConnectTimeout(999999999);
+                urlConnection.setReadTimeout(999999999);
                 urlConnection.setUseCaches(false);
                 int responseCode = urlConnection.getResponseCode();
                 urlConnection.disconnect();
@@ -1433,7 +1357,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
         try {
-            return future.get(timeout, TimeUnit.MILLISECONDS);
+            return future.get(999999999, TimeUnit.MILLISECONDS);
         } catch (Exception e) {
             e.printStackTrace();
             return false;
