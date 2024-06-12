@@ -975,10 +975,14 @@ const exportUserData = (_data) => {
             })
     })
 }
+
+let getAnimeEntriesWorker
 let importUserDataTerminateTimeout, importUserDataWorker;
 const importUserData = (_data) => {
     return new Promise((resolve, reject) => {
         if (importUserDataTerminateTimeout) clearTimeout(importUserDataTerminateTimeout)
+        getAnimeEntriesWorker?.terminate?.()
+        getAnimeEntriesWorker = null
         importUserDataWorker?.terminate?.()
         importUserDataWorker = null
         if (!get(initData)) {
@@ -1005,6 +1009,10 @@ const importUserData = (_data) => {
                             progress.set(data.progress)
                         }
                         return
+                    } else if (hasOwnProp?.call?.(data, "status")) {
+                        dataStatusPrio = true
+                        dataStatus.set(data.status)
+                        return
                     }
                     if (hasOwnProp?.call?.(data, "error")) {
                         dataStatusPrio = false
@@ -1020,9 +1028,6 @@ const importUserData = (_data) => {
                         progress.set(100)
                         updateRecommendationList.update(e => !e)
                         reject(data?.error || "Something went wrong")
-                    } else if (hasOwnProp?.call?.(data, "status")) {
-                        dataStatusPrio = true
-                        dataStatus.set(data.status)
                     } else if (hasOwnProp?.call?.(data, "importedUsername")) {
                         if (typeof data?.importedUsername === "string") {
                             setLocalStorage("username", data.importedUsername).catch(() => {
@@ -1285,18 +1290,24 @@ const saveIDBdata = (_data, name, isImportant = false) => {
 const getAnimeEntries = (_data) => {
     return new Promise((resolve, reject) => {
         progress.set(0)
-        const directory = "./webapi/worker/getAnimeEntries-chunk-",
-            extension = ".txt"
-        cacheRequest([
-            `${directory}1${extension}`,
-            `${directory}2${extension}`,
-        ], 172877205, "Getting Anime, Manga, and Novel Entries")
+        let url
+        if (get(android)) {
+            url = "./webapi/worker/getAnimeEntries.js"
+        } else {
+            const directory = "./webapi/worker/getAnimeEntries-chunk-",
+                extension = ".txt"
+            url = [
+                `${directory}1${extension}`,
+                `${directory}2${extension}`,
+            ]
+        }
+        cacheRequest(url, 172877205, "Getting Anime, Manga, and Novel Entries")
             .then(url => {
                 progress.set(25)
                 dataStatus.set("Retaining Anime, Manga, and Novel Entries")
-                let worker = new Worker(url)
-                worker.postMessage(_data)
-                worker.onmessage = ({ data }) => {
+                getAnimeEntriesWorker = new Worker(url)
+                getAnimeEntriesWorker.postMessage(_data)
+                getAnimeEntriesWorker.onmessage = ({ data }) => {
                     if (hasOwnProp?.call?.(data, "status")) {
                         dataStatusPrio = true
                         dataStatus.set(data.status)
@@ -1307,11 +1318,11 @@ const getAnimeEntries = (_data) => {
                     dataStatusPrio = false
                     updateRecommendationList.update(e => !e)
                     setTimeout(() => {
-                        worker?.terminate?.();
+                        getAnimeEntriesWorker?.terminate?.();
                     }, terminateDelay)
                     resolve(data)
                 }
-                worker.onerror = (error) => {
+                getAnimeEntriesWorker.onerror = (error) => {
                     dataStatus.set(null)
                     progress.set(100)
                     updateRecommendationList.update(e => !e)

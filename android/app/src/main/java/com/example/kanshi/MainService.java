@@ -1,5 +1,6 @@
 package com.example.kanshi;
 
+import static android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC;
 import static com.example.kanshi.Configs.DATA_EVICTION_CHANNEL;
 import static com.example.kanshi.Configs.NOTIFICATION_DATA_EVICTION;
 import static com.example.kanshi.Configs.isBackgroundUpdateKey;
@@ -16,6 +17,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
 import android.os.Handler;
@@ -27,6 +29,7 @@ import android.webkit.CookieManager;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
+import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -36,11 +39,15 @@ import androidx.annotation.RequiresApi;
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
+import androidx.webkit.WebViewAssetLoader;
 
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
+import java.io.InputStream;
 import java.lang.ref.WeakReference;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -164,8 +171,49 @@ public class MainService extends Service {
 
         webView.addJavascriptInterface(new JSBridge(), "JSBridge");
 
-        webView.addJavascriptInterface(new JSBridge(), "JSBridge");
+        WebViewAssetLoader assetLoader = new WebViewAssetLoader.Builder()
+                .addPathHandler("/assets/", new WebViewAssetLoader.AssetsPathHandler(this))
+                .build();
+
         webView.setWebViewClient(new WebViewClient() {
+            private WebResourceResponse fetchWebVersion() {
+                try {
+                    HttpURLConnection connection = (HttpURLConnection) new URL("https://raw.githubusercontent.com/u-Kuro/Kanshi-Anime-Recommender/main/public/version.json").openConnection();
+                    connection.setRequestMethod("GET");
+                    connection.setUseCaches(true);
+                    connection.setConnectTimeout(1);
+                    connection.setReadTimeout(1);
+                    connection.connect();
+
+                    InputStream inputStream = connection.getInputStream();
+                    String contentType = connection.getContentType();
+                    String encoding = connection.getContentEncoding() != null ? connection.getContentEncoding() : "UTF-8";
+
+                    return new WebResourceResponse(contentType, encoding, inputStream);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    return null;
+                }
+            }
+            @Override
+            public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
+                Uri uri = request.getUrl();
+                String url = uri.toString();
+                if (url.startsWith("https://appassets.androidplatform.net/assets/version.json")) {
+                    return fetchWebVersion();
+                } else {
+                    return assetLoader.shouldInterceptRequest(uri);
+                }
+            }
+            @Override
+            @SuppressWarnings("deprecation")
+            public WebResourceResponse shouldInterceptRequest(WebView view, String url) {
+                if (url.startsWith("https://appassets.androidplatform.net/assets/version.json")) {
+                    return fetchWebVersion();
+                } else {
+                    return assetLoader.shouldInterceptRequest(Uri.parse(url));
+                }
+            }
             @Override
             public void onPageStarted(WebView view, String url, Bitmap favicon) {
                 boolean visited = prefs.getBoolean("visited", false);
@@ -222,20 +270,27 @@ public class MainService extends Service {
                     .setShowWhen(false)
                     .setNumber(0)
                     .build();
+
             try {
-                startForeground(SERVICE_NOTIFICATION_ID, notification);
-            } catch (Exception ex) {
-                ex.printStackTrace();
-                stopForeground(true);
-                stopSelf();
-                return;
+                startForeground(SERVICE_NOTIFICATION_ID, notification, FOREGROUND_SERVICE_TYPE_DATA_SYNC);
+            } catch (Exception e) {
+                try {
+                    startForeground(SERVICE_NOTIFICATION_ID, notification);
+                } catch (Exception ex) {
+                    e.printStackTrace();
+                    ex.printStackTrace();
+                    stopForeground(true);
+                    stopSelf();
+                    return;
+                }
+                Utils.handleUncaughtException(MainService.this.getApplicationContext(), e, "MainService");
             }
         }
 
         // Load Page
         isReloaded = true;
-        webView.loadUrl("https://u-kuro.github.io/Kanshi-Anime-Recommender/");
-//        Utils.cleanIndexedDBFiles(this.getApplicationContext());
+        webView.loadUrl("https://appassets.androidplatform.net/assets/index.html");
+        Utils.cleanIndexedDBFiles(this.getApplicationContext());
 
         weakActivity = new WeakReference<>(MainService.this);
     }
@@ -552,7 +607,7 @@ public class MainService extends Service {
                         String url = webView.getUrl();
                         if (url == null) {
                             isReloaded = true;
-                            webView.loadUrl("https://u-kuro.github.io/Kanshi-Anime-Recommender/");
+                            webView.loadUrl("https://appassets.androidplatform.net/assets/index.html");
                         }
                     });
                 } catch (Exception ignored) {}

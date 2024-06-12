@@ -39,7 +39,12 @@
     async function importData() {
         if (!(importFileInput instanceof Element))
             return ($dataStatus = "Something went wrong");
-        if (await $confirmPromise("Do you want to import your data?")) {
+        if (
+            await $confirmPromise({
+                text: "Do you want to import your data?",
+                isImportant: true,
+            })
+        ) {
             importFileInput.value = null;
             importFileInput.click();
         }
@@ -60,6 +65,7 @@
                 await $confirmPromise({
                     text: `File ${filenameToShow}has been detected, do you want to import the file?`,
                     isPersistent: true,
+                    isImportant: true,
                 })
             ) {
                 $menuVisible = false;

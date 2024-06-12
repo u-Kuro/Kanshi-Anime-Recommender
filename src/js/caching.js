@@ -172,7 +172,7 @@ const cacheImage = (url, width, height) => {
         return loadedImages[url]
     } else if (loadedImagePromises[url]) {
         return loadedImagePromises[url]
-    } else if (window?.location?.origin?.includes?.('https://u-kuro.github.io') && android && window?.["Kanshi.Anime.Recommendations.Anilist.W~uPtWCq=vG$TR:Zl^#t<vdS]I~N70.isOwner"] === true) {
+    } else if (window?.location?.origin?.includes?.('https://appassets.androidplatform.net') && android && window?.["Kanshi.Anime.Recommendations.Anilist.W~uPtWCq=vG$TR:Zl^#t<vdS]I~N70.isOwner"] === true) {
         loadedImagePromises[url] = new Promise(async (resolve) => {
             let newUrl = "https://cors-anywhere-kuro.vercel.app/api?url=" + url;
             fetch(newUrl, {

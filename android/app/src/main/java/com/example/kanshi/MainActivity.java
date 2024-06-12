@@ -58,6 +58,7 @@ import android.webkit.JavascriptInterface;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
+import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -70,6 +71,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.ref.WeakReference;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -98,6 +100,7 @@ import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 import androidx.core.content.FileProvider;
 import androidx.core.splashscreen.SplashScreen;
+import androidx.webkit.WebViewAssetLoader;
 
 public class MainActivity extends AppCompatActivity {
     public boolean keepAppRunningInBackground = false;
@@ -240,7 +243,7 @@ public class MainActivity extends AppCompatActivity {
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
-                if (webView != null && webView.getUrl() != null && webView.getUrl().startsWith("https://u-kuro.github.io/Kanshi-Anime-Recommender")) {
+                if (webView != null && webView.getUrl() != null && webView.getUrl().startsWith("https://appassets.androidplatform.net/assets/index.html")) {
                     if (!shouldGoBack) {
                         webView.loadUrl("javascript:window?.backPressed?.();");
                     } else {
@@ -303,7 +306,50 @@ public class MainActivity extends AppCompatActivity {
 
         // Add Bridge to WebView
         webView.addJavascriptInterface(new JSBridge(), "JSBridge");
+
+        WebViewAssetLoader assetLoader = new WebViewAssetLoader.Builder()
+                .addPathHandler("/assets/", new WebViewAssetLoader.AssetsPathHandler(this))
+                .build();
+
         webView.setWebViewClient(new WebViewClient() {
+            private WebResourceResponse fetchWebVersion() {
+                try {
+                    HttpURLConnection connection = (HttpURLConnection) new URL("https://raw.githubusercontent.com/u-Kuro/Kanshi-Anime-Recommender/main/public/version.json").openConnection();
+                    connection.setRequestMethod("GET");
+                    connection.setUseCaches(false);
+                    connection.setConnectTimeout(3000);
+                    connection.setReadTimeout(3000);
+                    connection.connect();
+
+                    InputStream inputStream = connection.getInputStream();
+                    String contentType = connection.getContentType();
+                    String encoding = connection.getContentEncoding() != null ? connection.getContentEncoding() : "UTF-8";
+
+                    return new WebResourceResponse(contentType, encoding, inputStream);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    return null;
+                }
+            }
+            @Override
+            public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
+                Uri uri = request.getUrl();
+                String url = uri.toString();
+                if (url.startsWith("https://appassets.androidplatform.net/assets/version.json")) {
+                    return fetchWebVersion();
+                } else {
+                    return assetLoader.shouldInterceptRequest(uri);
+                }
+            }
+            @Override
+            @SuppressWarnings("deprecation")
+            public WebResourceResponse shouldInterceptRequest(WebView view, String url) {
+                if (url.startsWith("https://appassets.androidplatform.net/assets/version.json")) {
+                    return fetchWebVersion();
+                } else {
+                    return assetLoader.shouldInterceptRequest(Uri.parse(url));
+                }
+            }
             @Override
             public void onPageStarted(WebView view, String url, Bitmap favicon) {
                 shouldRefreshList = shouldProcessRecommendationList = shouldLoadAnime = false;
@@ -461,12 +507,12 @@ public class MainActivity extends AppCompatActivity {
         WebView.setWebContentsDebuggingEnabled(BuildConfig.DEBUG);
 
         isReloaded = true;
-        webView.loadUrl("https://u-kuro.github.io/Kanshi-Anime-Recommender/");
+        webView.loadUrl("https://appassets.androidplatform.net/assets/index.html");
         isAppConnectionAvailable(isConnected -> webView.post(() -> {
             if (!pageLoaded) {
                 if (isConnected) {
                     isReloaded = true;
-                    webView.loadUrl("https://u-kuro.github.io/Kanshi-Anime-Recommender/");
+                    webView.loadUrl("https://appassets.androidplatform.net/assets/index.html");
                     // Only works after first page load
                     webSettings.setBuiltInZoomControls(false);
                     webSettings.setDisplayZoomControls(false);
@@ -1007,7 +1053,7 @@ public class MainActivity extends AppCompatActivity {
         public void showNewUpdatedAnimeNotification(long addedAnimeCount, long updatedAnimeCount) {
             webView.post(() -> {
                 String url = webView.getUrl();
-                if (url != null && url.startsWith("https://u-kuro.github.io/Kanshi-Anime-Recommender")) {
+                if (url != null && url.startsWith("https://appassets.androidplatform.net/assets/index.html")) {
                     if (updatedAnimeCount > 0 || addedAnimeCount > 0) {
                         if (updatedAnimeCount > 0 && addedAnimeCount > 0) {
                             persistentToast = Toast.makeText(MainActivity.this, addedAnimeCount + " New Anime / " + updatedAnimeCount + " Modification", Toast.LENGTH_LONG);
@@ -1073,31 +1119,39 @@ public class MainActivity extends AppCompatActivity {
         webView.post(()->webView.reload());
     }
     public void setBackgroundUpdates() {
-        long backgroundUpdateTime = prefs.getLong("lastBackgroundUpdateTime", System.currentTimeMillis());
-        Intent newIntent = new Intent(this.getApplicationContext(), MyReceiver.class);
-        newIntent.setAction("UPDATE_DATA_MANUAL");
+        long currentTimeInMillis = System.currentTimeMillis();
+        long backgroundUpdateTime = prefs.getLong("lastBackgroundUpdateTime", currentTimeInMillis);
 
-        PendingIntent newPendingIntent = PendingIntent.getBroadcast(this.getApplicationContext(), Configs.UPDATE_DATA_PENDING_INTENT, newIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
-        AlarmManager alarmManager = (AlarmManager) this.getApplicationContext().getSystemService(Context.ALARM_SERVICE);
-        // Cancel Old
-        newPendingIntent.cancel();
-        alarmManager.cancel(newPendingIntent);
-        // Create New
-        newPendingIntent = PendingIntent.getBroadcast(this.getApplicationContext(), Configs.UPDATE_DATA_PENDING_INTENT, newIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            if (alarmManager.canScheduleExactAlarms()) {
-                alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, backgroundUpdateTime, newPendingIntent);
-            } else {
-                alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, backgroundUpdateTime, newPendingIntent);
-            }
+        if (backgroundUpdateTime <= currentTimeInMillis && keepAppRunningInBackground && !isInApp) {
+            // Run service if background update is enabled and user is not in app
+            Intent intent = new Intent(this.getApplicationContext(), MainService.class);
+            this.startService(intent);
         } else {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, backgroundUpdateTime, newPendingIntent);
+            Intent newIntent = new Intent(this.getApplicationContext(), MyReceiver.class);
+            newIntent.setAction("UPDATE_DATA_MANUAL");
+
+            PendingIntent newPendingIntent = PendingIntent.getBroadcast(this.getApplicationContext(), Configs.UPDATE_DATA_PENDING_INTENT, newIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+            AlarmManager alarmManager = (AlarmManager) this.getApplicationContext().getSystemService(Context.ALARM_SERVICE);
+            // Cancel Old
+            newPendingIntent.cancel();
+            alarmManager.cancel(newPendingIntent);
+            // Create New
+            newPendingIntent = PendingIntent.getBroadcast(this.getApplicationContext(), Configs.UPDATE_DATA_PENDING_INTENT, newIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                if (alarmManager.canScheduleExactAlarms()) {
+                    alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, backgroundUpdateTime, newPendingIntent);
+                } else {
+                    alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, backgroundUpdateTime, newPendingIntent);
+                }
             } else {
-                try {
-                    alarmManager.setExact(AlarmManager.RTC_WAKEUP, backgroundUpdateTime, newPendingIntent);
-                } catch (SecurityException ignored) {
-                    alarmManager.set(AlarmManager.RTC_WAKEUP, backgroundUpdateTime, newPendingIntent);
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, backgroundUpdateTime, newPendingIntent);
+                } else {
+                    try {
+                        alarmManager.setExact(AlarmManager.RTC_WAKEUP, backgroundUpdateTime, newPendingIntent);
+                    } catch (SecurityException ignored) {
+                        alarmManager.set(AlarmManager.RTC_WAKEUP, backgroundUpdateTime, newPendingIntent);
+                    }
                 }
             }
         }
@@ -1267,7 +1321,7 @@ public class MainActivity extends AppCompatActivity {
             if (pageLoaded) return;
             if (isConnected) {
                 isReloaded = true;
-                webView.loadUrl("https://u-kuro.github.io/Kanshi-Anime-Recommender/");
+                webView.loadUrl("https://appassets.androidplatform.net/assets/index.html");
             } else {
                 showDialog(new AlertDialog.Builder(MainActivity.this)
                         .setTitle("Connection Failed")
@@ -1282,7 +1336,7 @@ public class MainActivity extends AppCompatActivity {
             if (pageLoaded) return;
             if (isConnected) {
                 isReloaded = true;
-                webView.loadUrl("https://u-kuro.github.io/Kanshi-Anime-Recommender/");
+                webView.loadUrl("https://appassets.androidplatform.net/assets/index.html");
             } else {
                 showDialog(new AlertDialog.Builder(MainActivity.this)
                         .setTitle("Connection Failed")
@@ -1364,11 +1418,12 @@ public class MainActivity extends AppCompatActivity {
     private boolean checkAppConnection(int timeout) {
         Future<Boolean> future = executor.submit(() -> {
             try {
-                URL url = new URL("https://u-kuro.github.io/Kanshi-Anime-Recommender/");
+                URL url = new URL("https://raw.githubusercontent.com/u-Kuro/Kanshi-Anime-Recommender/main/public/version.json");
                 HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
                 urlConnection.setRequestMethod("HEAD");
                 urlConnection.setConnectTimeout(timeout);
                 urlConnection.setReadTimeout(timeout);
+                urlConnection.setUseCaches(false);
                 int responseCode = urlConnection.getResponseCode();
                 urlConnection.disconnect();
                 return responseCode == HttpURLConnection.HTTP_OK;
