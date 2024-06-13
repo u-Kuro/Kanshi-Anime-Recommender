@@ -1287,11 +1287,17 @@ const saveIDBdata = (_data, name, isImportant = false) => {
 const getAnimeEntries = (_data) => {
     return new Promise((resolve, reject) => {
         progress.set(0)
-        const directory = "./webapi/worker/entries-chunk-", extension = ".txt"
-        cacheRequest([
-            `${directory}1${extension}`,
-            `${directory}2${extension}`,
-        ], 172885665, "Getting Anime, Manga, and Novel Entries", true)
+        let url
+        if (get(android)) {
+            url = "./webapi/worker/entries.json"
+        } else {
+            const directory = "./webapi/worker/entries-chunk-", extension = ".txt"
+            url = [
+                `${directory}1${extension}`,
+                `${directory}2${extension}`,
+            ]
+        }
+        cacheRequest(url, 172885665, "Getting Anime, Manga, and Novel Entries", true)
             .then(animeEntriesBlob => {
                 cacheRequest("./webapi/worker/getEntries.js", 271595, "Retaining Anime, Manga, and Novel Entries")
                     .then(workerUrl => {

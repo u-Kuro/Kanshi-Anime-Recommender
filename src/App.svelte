@@ -84,8 +84,10 @@
 	let shouldReloadList;
 
 	window.kanshiInit = new Promise(async (resolve) => {
-		// Check App ID
-		$appID = await getWebVersion();
+		// Check App ID (Not for Android allow Fast Start on Slow Network)
+		if (!$android) {
+			$appID = await getWebVersion();
+		}
 
 		// Check Data Loss
 		if ($android) {
@@ -107,15 +109,6 @@
 					} catch (e) {}
 				});
 			}
-		}
-
-		// Check App Version Updates
-		if ($android && navigator.onLine) {
-			try {
-				if ($appID) {
-					JSBridge?.checkAppID?.($appID, false);
-				}
-			} catch (e) {}
 		}
 
 		if ($android && window[$isBackgroundUpdateKey] === true) {
@@ -625,11 +618,7 @@
 		visibilityChange = false,
 	) {
 		if ($android && window?.[$isBackgroundUpdateKey] === true) return;
-		if ($appID == null) {
-			window.kanshiInit?.then?.(() => {
-				checkAutoFunctions(initCheck);
-			});
-		} else if (initCheck) {
+		if (initCheck) {
 			try {
 				await requestUserEntries();
 				await requestAnimeEntries();
@@ -700,12 +689,19 @@
 		if (val === false) {
 			clearInterval(pleaseWaitStatusInterval);
 
-			try {
-				JSBridge?.pageFinished?.();
-			} catch (e) {}
-
 			if (!addedBackgroundStatusUpdate?.()) {
 				getExtraInfo();
+			}
+
+			// Check App ID and Version Updates for Android
+			// After Load has Finished
+			if ($android && navigator.onLine) {
+				$appID = await getWebVersion();
+				try {
+					if ($appID) {
+						JSBridge?.checkAppID?.($appID);
+					}
+				} catch (e) {}
 			}
 		}
 	});
@@ -805,9 +801,7 @@
 	autoUpdate.subscribe(async (val) => {
 		if ($android && window?.[$isBackgroundUpdateKey] === true) return;
 		if (val === true) {
-			if ($appID != null) {
-				saveJSON(true, "autoUpdate");
-			}
+			saveJSON(true, "autoUpdate");
 			// Check Run First
 			if (await autoUpdateIsPastDate()) {
 				checkAutoFunctions();
@@ -839,9 +833,7 @@
 		} else if (val === false) {
 			if ($autoUpdateInterval) clearInterval($autoUpdateInterval);
 			$autoUpdateInterval = null;
-			if ($appID != null) {
-				saveJSON(false, "autoUpdate");
-			}
+			saveJSON(false, "autoUpdate");
 		}
 	});
 	async function autoUpdateIsPastDate() {
@@ -879,9 +871,7 @@
 	autoExport.subscribe(async (val) => {
 		if ($android && window?.[$isBackgroundUpdateKey] === true) return;
 		if (val === true) {
-			if ($appID != null) {
-				saveJSON(true, "autoExport");
-			}
+			saveJSON(true, "autoExport");
 			if (await autoExportIsPastDate()) {
 				checkAutoFunctions();
 				if ($autoExportInterval) clearInterval($autoExportInterval);
@@ -912,9 +902,7 @@
 		} else if (val === false) {
 			if ($autoExportInterval) clearInterval($autoExportInterval);
 			$autoExportInterval = null;
-			if ($appID != null) {
-				saveJSON(false, "autoExport");
-			}
+			saveJSON(false, "autoExport");
 		}
 	});
 	async function autoExportIsPastDate() {

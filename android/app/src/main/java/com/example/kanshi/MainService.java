@@ -25,7 +25,6 @@ import android.os.IBinder;
 import android.os.Looper;
 import android.util.Log;
 import android.webkit.ConsoleMessage;
-import android.webkit.CookieManager;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
@@ -274,11 +273,12 @@ public class MainService extends Service {
             try {
                 startForeground(SERVICE_NOTIFICATION_ID, notification, FOREGROUND_SERVICE_TYPE_DATA_SYNC);
             } catch (Exception e) {
+                e.printStackTrace();
                 try {
                     startForeground(SERVICE_NOTIFICATION_ID, notification);
                 } catch (Exception ex) {
-                    e.printStackTrace();
                     ex.printStackTrace();
+                    Utils.handleUncaughtException(MainService.this.getApplicationContext(), ex, "MainService");
                     stopForeground(true);
                     stopSelf();
                     return;
@@ -389,21 +389,6 @@ public class MainService extends Service {
 
     @SuppressWarnings("unused")
     class JSBridge {
-        @JavascriptInterface
-        public void pageIsFinished() {
-            try {
-                new Handler(Looper.getMainLooper()).post(() -> {
-                    CookieManager cookieManager = CookieManager.getInstance();
-                    cookieManager.setAcceptCookie(true);
-                    cookieManager.setAcceptThirdPartyCookies(webView, true);
-                    CookieManager.getInstance().acceptCookie();
-                    CookieManager.getInstance().flush();
-                });
-            } catch (Exception ignored) {}
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                updateNotificationTitle("");
-            }
-        }
         @JavascriptInterface
         public void visited() {
             prefsEdit.putBoolean("visited", true).apply();

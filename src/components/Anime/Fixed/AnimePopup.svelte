@@ -39,7 +39,6 @@
         listUpdateAvailable,
         popupIsGoingBack,
         earlisetReleaseDate,
-        appID,
         confirmIsVisible,
         isBackgroundUpdateKey,
         menuVisible,
@@ -458,13 +457,11 @@
 
     autoPlay.subscribe(async (val) => {
         if (typeof val === "boolean") {
-            if ($appID != null) {
-                (async () => {
-                    saveJSON(val, "autoPlay");
-                    setLocalStorage("autoPlay", val).catch(() => {
-                        removeLocalStorage("autoPlay");
-                    });
-                })();
+            if ($android != null) {
+                saveJSON(val, "autoPlay");
+                setLocalStorage("autoPlay", val).catch(() => {
+                    removeLocalStorage("autoPlay");
+                });
             }
             if (val === true) {
                 await tick();

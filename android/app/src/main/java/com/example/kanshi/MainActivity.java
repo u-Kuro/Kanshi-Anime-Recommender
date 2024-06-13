@@ -5,6 +5,7 @@ import static android.provider.Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMI
 import static android.provider.Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM;
 import static com.example.kanshi.Configs.DATA_EVICTION_CHANNEL;
 import static com.example.kanshi.Configs.NOTIFICATION_DATA_EVICTION;
+import static com.example.kanshi.Configs.isDebug;
 import static com.example.kanshi.Configs.isOwnerKey;
 import static com.example.kanshi.Configs.visitedKey;
 import static com.example.kanshi.Utils.*;
@@ -110,7 +111,6 @@ public class MainActivity extends AppCompatActivity {
     public MediaWebView webView;
     private ProgressBar progressbar;
     private boolean pageLoaded = false;
-    private boolean pageIsFinished = false;
     private boolean webViewIsLoaded = false;
     private PowerManager.WakeLock wakeLock;
     public boolean shouldGoBack;
@@ -236,7 +236,7 @@ public class MainActivity extends AppCompatActivity {
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
-                if (webView != null && webView.getUrl() != null && webView.getUrl().startsWith("https://appassets.androidplatform.net/assets/index.html")) {
+                if (webView != null && webView.getUrl() != null && webView.getUrl().startsWith("https://appassets.androidplatform.net")) {
                     if (!shouldGoBack) {
                         webView.loadUrl("javascript:window?.backPressed?.();");
                     } else {
@@ -525,11 +525,25 @@ public class MainActivity extends AppCompatActivity {
             // Console Logs for Debugging
             @Override
             public boolean onConsoleMessage(ConsoleMessage consoleMessage) {
-                String message = consoleMessage.message();
-                Log.d("WebConsole", message);
-                return true;
+                if (isDebug) {
+                    String message = consoleMessage.message();
+                    Log.d("WebConsole", message);
+                    return true;
+                }
+                return super.onConsoleMessage(consoleMessage);
             }
         });
+
+        if (!permissionIsAsked
+            && ActivityCompat.checkSelfPermission(MainActivity.this, POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+            && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
+        ) {
+            notificationPermission.launch(POST_NOTIFICATIONS);
+        }
+
+        if (isDebug) {
+            WebView.setWebContentsDebuggingEnabled(BuildConfig.DEBUG);
+        }
 
         webView.loadUrl("https://appassets.androidplatform.net/assets/index.html");
 
@@ -540,8 +554,6 @@ public class MainActivity extends AppCompatActivity {
 
         setReleaseNotification();
         Utils.cleanIndexedDBFiles(this.getApplicationContext());
-
-        WebView.setWebContentsDebuggingEnabled(BuildConfig.DEBUG);
 
         // Get Activity Reference
         weakActivity = new WeakReference<>(MainActivity.this);
@@ -674,16 +686,6 @@ public class MainActivity extends AppCompatActivity {
     @SuppressWarnings("unused")
     class JSBridge {
         @JavascriptInterface
-        public void pageFinished() {
-            pageIsFinished = true;
-            if (!permissionIsAsked
-                    && ActivityCompat.checkSelfPermission(MainActivity.this, POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
-                    && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
-            ) {
-                notificationPermission.launch(POST_NOTIFICATIONS);
-            }
-        }
-        @JavascriptInterface
         public void visited() {
             prefsEdit.putBoolean("visited", true).apply();
         }
@@ -724,9 +726,9 @@ public class MainActivity extends AppCompatActivity {
         }
         @JavascriptInterface
         public void setKeepAppRunningInBackground(boolean enable) {
-            if (enable && pageIsFinished
-                    && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
-                    && ActivityCompat.checkSelfPermission(MainActivity.this, POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+            if (enable
+                && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
+                && ActivityCompat.checkSelfPermission(MainActivity.this, POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
             ) {
                 notificationPermission.launch(POST_NOTIFICATIONS);
             }
@@ -932,11 +934,9 @@ public class MainActivity extends AppCompatActivity {
         }
         @RequiresApi(api = Build.VERSION_CODES.O)
         @JavascriptInterface
-        public void checkAppID(int _appID, boolean manualCheck) {
+        public void checkAppID(int _appID) {
             if (_appID > Configs.appID) {
                 showUpdateNotice();
-            } else if (manualCheck) {
-                showToast(Toast.makeText(getApplicationContext(), "Application is up to date.", Toast.LENGTH_LONG));
             }
         }
         @JavascriptInterface
@@ -1028,28 +1028,23 @@ public class MainActivity extends AppCompatActivity {
         }
         @JavascriptInterface
         public void showNewUpdatedAnimeNotification(long addedAnimeCount, long updatedAnimeCount) {
-            webView.post(() -> {
-                String url = webView.getUrl();
-                if (url != null && url.startsWith("https://appassets.androidplatform.net/assets/index.html")) {
-                    if (updatedAnimeCount > 0 || addedAnimeCount > 0) {
-                        if (updatedAnimeCount > 0 && addedAnimeCount > 0) {
-                            persistentToast = Toast.makeText(MainActivity.this, addedAnimeCount + " New Anime / " + updatedAnimeCount + " Modification", Toast.LENGTH_LONG);
-                        } else if (updatedAnimeCount > 0) {
-                            persistentToast = Toast.makeText(MainActivity.this, "+" + updatedAnimeCount + " New Modified Anime", Toast.LENGTH_LONG);
-                        } else {
-                            persistentToast = Toast.makeText(MainActivity.this, "+" + addedAnimeCount + " New Added Anime", Toast.LENGTH_LONG);
-                        }
-                        if (isInApp) {
-                            if (currentToast != null) {
-                                currentToast.cancel();
-                            }
-                            persistentToast.show();
-                            persistentToast = null;
-                        }
-                        AnimeNotificationManager.recentlyUpdatedAnimeNotification(MainActivity.this, addedAnimeCount, updatedAnimeCount);
-                    }
+            if (updatedAnimeCount > 0 || addedAnimeCount > 0) {
+                if (updatedAnimeCount > 0 && addedAnimeCount > 0) {
+                    persistentToast = Toast.makeText(MainActivity.this, addedAnimeCount + " New Anime / " + updatedAnimeCount + " Modification", Toast.LENGTH_LONG);
+                } else if (updatedAnimeCount > 0) {
+                    persistentToast = Toast.makeText(MainActivity.this, "+" + updatedAnimeCount + " New Modified Anime", Toast.LENGTH_LONG);
+                } else {
+                    persistentToast = Toast.makeText(MainActivity.this, "+" + addedAnimeCount + " New Added Anime", Toast.LENGTH_LONG);
                 }
-            });
+                if (isInApp) {
+                    if (currentToast != null) {
+                        currentToast.cancel();
+                    }
+                    persistentToast.show();
+                    persistentToast = null;
+                }
+                AnimeNotificationManager.recentlyUpdatedAnimeNotification(MainActivity.this, addedAnimeCount, updatedAnimeCount);
+            }
         }
         @JavascriptInterface
         public void openToast(String text, boolean isLongDuration) {
@@ -1204,17 +1199,17 @@ public class MainActivity extends AppCompatActivity {
     @RequiresApi(api = Build.VERSION_CODES.O)
     public void showUpdateNotice() {
         showDialog(new AlertDialog.Builder(MainActivity.this)
-                        .setTitle("New Version is Available")
-                        .setMessage("You may want to download the new app version.")
-                        .setPositiveButton("DOWNLOAD", (dialogInterface, i) -> checkUpdate())
-                        .setNegativeButton("LATER", null),
+            .setTitle("New Version is Available")
+            .setMessage("You may want to download the new app version.")
+            .setPositiveButton("DOWNLOAD", (dialogInterface, i) -> checkUpdate())
+            .setNegativeButton("LATER", null),
                 true);
     }
     @RequiresApi(api = Build.VERSION_CODES.O)
     public void checkUpdate() {
         boolean hasPermission = getPackageManager().canRequestPackageInstalls();
         if (hasPermission) {
-            _downloadUpdate();
+            downloadUpdate();
         } else {
             showDialog(new AlertDialog.Builder(MainActivity.this)
                             .setTitle("Permission for App Installation")
@@ -1227,7 +1222,7 @@ public class MainActivity extends AppCompatActivity {
                     true);
         }
     }
-    public void _downloadUpdate() {
+    public void downloadUpdate() {
         webView.post(() -> webView.clearCache(true));
         prefsEdit.putBoolean("permissionIsAsked", false).apply();
         String fileUrl = "https://github.com/u-Kuro/Kanshi-Anime-Recommender/raw/main/Kanshi.apk";
@@ -1268,7 +1263,7 @@ public class MainActivity extends AppCompatActivity {
                 showDialog(new AlertDialog.Builder(MainActivity.this)
                                 .setTitle("Download Failed")
                                 .setMessage("Do you want to re-download the new version?")
-                                .setPositiveButton("YES", (dialogInterface, i) -> _downloadUpdate())
+                                .setPositiveButton("YES", (dialogInterface, i) -> downloadUpdate())
                                 .setNegativeButton("NO", null),
                         true);
             }

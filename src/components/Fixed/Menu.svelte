@@ -31,7 +31,6 @@
         appInstallationAsked,
         selectedCategory,
         keepAppRunningInBackground,
-        initData,
     } from "../../js/globalValues.js";
 
     let menuContainerEl, navContainerEl;
@@ -95,14 +94,7 @@
         }
     }
     // Global Function For Android
-    async function handleExportFolder() {
-        if ($initData) {
-            return await $confirmPromise({
-                isAlert: true,
-                title: "Initializing resources",
-                text: "Please wait a moment...",
-            });
-        }
+    function handleExportFolder() {
         try {
             JSBridge?.chooseExportFolder?.();
         } catch (e) {}

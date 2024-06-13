@@ -1,8 +1,8 @@
 import { get } from "svelte/store"
 import { isAndroid, arraySum } from "./others/helper.js"
 import { appID, dataStatus, progress } from "./globalValues.js"
-import getWebVersion from "../version.js"
 
+let version, appIDNotChecked = true
 let loadedRequestUrlPromises = {}
 let loadedRequestUrls = {}
 let chunkLoadingLength = {}
@@ -49,11 +49,18 @@ const cacheRequest = async (url, totalLength, status, getBlob, chunkOptions) => 
     } else if (!window?.location?.protocol?.includes?.("file")) {
         loadedRequestUrlPromises[url] = new Promise(async (resolve) => {
             const isChunk = chunkOptions != null
-            const app_id = get(appID)
-            let newUrl
-            if (typeof app_id === "number") {
-                newUrl = url + "?v=" + app_id
+
+            // Check App ID/Version Once for Consistency
+            if (appIDNotChecked) {
+                appIDNotChecked = false
+                version = get(appID)
             }
+
+            let newUrl
+            if (typeof version === "number") {
+                newUrl = url + "?v=" + version
+            }
+
             fetch(newUrl || url, {
                 headers: {
                     'Cache-Control': 'public, max-age=31536000, immutable',

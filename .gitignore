@@ -1,5 +1,8 @@
 /node_modules/
 /public/build/
+/public/webapi/worker/entries.json
+/android/app/src/main/assets/webapi/worker/entries.json
+/docs/webapi/worker/entries.json
 /prettified/
 .DS_Store
 .vercel
