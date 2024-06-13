@@ -180,8 +180,7 @@ public class Utils {
                 webGroupedModifiedDate = new ConcurrentHashMap<>();
 
                 final String mainDir = "app_webview/Default/IndexedDB/";
-                String location = mainDir+"https_u-kuro.github.io_0.indexeddb.blob/1";
-                // /data/user/0/com.example.kanshi/app_webview/Default/IndexedDB/https_u-kuro.github.io_0.indexeddb.blob/
+                String location = mainDir+"https_appassets.androidplatform.net_0.indexeddb.blob";
                 location = location.replaceAll("/", Matcher.quoteReplacement(File.separator));
 
                 final File dataDir = context.getApplicationContext().getDataDir();
@@ -416,7 +415,7 @@ public class Utils {
 
 //    private static List<FileData> fileList = new ArrayList<>();
 //    @RequiresApi(api = Build.VERSION_CODES.N)
-//    public void readFiles(Context context) {
+//    public static void readFiles(Context context) {
 //        fileList = new ArrayList<>();
 //
 //        File file = context.getApplicationContext().getDataDir();
