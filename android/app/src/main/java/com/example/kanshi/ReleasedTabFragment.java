@@ -1,6 +1,6 @@
 package com.example.kanshi;
 
-import static com.example.kanshi.Utils.loadedGroupedReleasedAnime;
+import static com.example.kanshi.Configs.loadedGroupedReleasedAnime;
 
 import android.annotation.SuppressLint;
 import android.content.Context;

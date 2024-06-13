@@ -409,9 +409,7 @@ public class Utils {
         }
     }
 
-    public static final Map<String, Bitmap> imageCache = new ConcurrentHashMap<>();
-    public static ArrayList<AnimeReleaseGroup> loadedGroupedReleasedAnime = new ArrayList<>();
-    public static ArrayList<AnimeReleaseGroup> loadedGroupedAnimeSchedules = new ArrayList<>();
+
 
 //    private static List<FileData> fileList = new ArrayList<>();
 //    @RequiresApi(api = Build.VERSION_CODES.N)

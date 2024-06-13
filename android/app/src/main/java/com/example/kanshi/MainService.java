@@ -5,6 +5,7 @@ import static com.example.kanshi.Configs.DATA_EVICTION_CHANNEL;
 import static com.example.kanshi.Configs.NOTIFICATION_DATA_EVICTION;
 import static com.example.kanshi.Configs.isBackgroundUpdateKey;
 import static com.example.kanshi.Configs.visitedKey;
+import static com.example.kanshi.Configs.getAssetLoader;
 
 import android.annotation.SuppressLint;
 import android.app.Notification;
@@ -170,9 +171,7 @@ public class MainService extends Service {
 
         webView.addJavascriptInterface(new JSBridge(), "JSBridge");
 
-        WebViewAssetLoader assetLoader = new WebViewAssetLoader.Builder()
-                .addPathHandler("/assets/", new WebViewAssetLoader.AssetsPathHandler(this))
-                .build();
+        WebViewAssetLoader assetLoader = getAssetLoader(this);
 
         webView.setWebViewClient(new WebViewClient() {
             private WebResourceResponse fetchWebVersion() {

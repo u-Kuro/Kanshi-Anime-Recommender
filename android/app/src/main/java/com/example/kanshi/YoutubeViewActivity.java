@@ -408,10 +408,6 @@ public class YoutubeViewActivity extends AppCompatActivity {
 
     @Override
     protected void onResume() {
-        MainActivity mainActivity = MainActivity.getInstanceActivity();
-        if (mainActivity!=null) {
-            mainActivity.isInApp = true;
-        }
         if (webViewIsLoaded) {
             overridePendingTransition(R.anim.none, R.anim.fade_out);
         }
@@ -427,11 +423,6 @@ public class YoutubeViewActivity extends AppCompatActivity {
 
     @Override
     protected void onPause() {
-        MainActivity mainActivity = MainActivity.getInstanceActivity();
-        if (mainActivity!=null) {
-            mainActivity.isInApp = false;
-            mainActivity.setBackgroundUpdates();
-        }
         if (webView!=null) {
             autoPlayVideo(webView);
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {

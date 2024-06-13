@@ -1,6 +1,6 @@
 package com.example.kanshi;
 
-import static com.example.kanshi.Utils.imageCache;
+import static com.example.kanshi.Configs.imageCache;
 
 import android.content.ClipData;
 import android.content.ClipboardManager;

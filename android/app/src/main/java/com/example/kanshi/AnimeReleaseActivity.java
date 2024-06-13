@@ -319,30 +319,17 @@ public class AnimeReleaseActivity extends AppCompatActivity {
     boolean wasOpened;
     @Override
     protected void onResume() {
-        MainActivity mainActivity = MainActivity.getInstanceActivity();
-        if (mainActivity!=null) {
-            mainActivity.isInApp = true;
-        }
         if (!wasOpened) {
             wasOpened = true;
             overridePendingTransition(R.anim.fade_in, R.anim.remove);
         } else {
+            MainActivity mainActivity = MainActivity.getInstanceActivity();
             if (mainActivity!=null) {
                 mainActivity.checkEntries();
             }
             overridePendingTransition(R.anim.none, R.anim.fade_out);
         }
         super.onResume();
-    }
-
-    @Override
-    protected void onPause() {
-        MainActivity mainActivity = MainActivity.getInstanceActivity();
-        if (mainActivity!=null) {
-            mainActivity.isInApp = false;
-            mainActivity.setBackgroundUpdates();
-        }
-        super.onPause();
     }
 
     @Override

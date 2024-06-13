@@ -1,6 +1,6 @@
 package com.example.kanshi;
 
-import static com.example.kanshi.Utils.loadedGroupedAnimeSchedules;
+import static com.example.kanshi.Configs.loadedGroupedAnimeSchedules;
 
 import android.annotation.SuppressLint;
 import android.content.Context;

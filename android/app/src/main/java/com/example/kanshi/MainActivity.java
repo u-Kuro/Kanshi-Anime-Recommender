@@ -5,6 +5,7 @@ import static android.provider.Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMI
 import static android.provider.Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM;
 import static com.example.kanshi.Configs.DATA_EVICTION_CHANNEL;
 import static com.example.kanshi.Configs.NOTIFICATION_DATA_EVICTION;
+import static com.example.kanshi.Configs.getAssetLoader;
 import static com.example.kanshi.Configs.isDebug;
 import static com.example.kanshi.Configs.isOwnerKey;
 import static com.example.kanshi.Configs.visitedKey;
@@ -300,9 +301,7 @@ public class MainActivity extends AppCompatActivity {
         // Add Bridge to WebView
         webView.addJavascriptInterface(new JSBridge(), "JSBridge");
 
-        WebViewAssetLoader assetLoader = new WebViewAssetLoader.Builder()
-                .addPathHandler("/assets/", new WebViewAssetLoader.AssetsPathHandler(this))
-                .build();
+        WebViewAssetLoader assetLoader = getAssetLoader(this);
 
         webView.setWebViewClient(new WebViewClient() {
             private WebResourceResponse fetchWebVersion() {
@@ -588,7 +587,6 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         isInApp = false;
-        setBackgroundUpdates();
         if (webView!=null) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 webView.getSettings().setOffscreenPreRaster(false);
@@ -600,7 +598,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onStop() {
-        setBackgroundUpdates();
+        setBackgroundUpdates(true);
         super.onStop();
     }
 
@@ -639,10 +637,10 @@ public class MainActivity extends AppCompatActivity {
         if (!shouldRefreshList) return;
         try {
             new Handler(Looper.getMainLooper())
-                    .post(() -> webView.post(() -> webView.loadUrl("javascript:window?.shouldRefreshAnimeList?.("
-                            + (shouldProcessRecommendationList ? "true" : "false") + ","
-                            + (shouldLoadAnime ? "true" : "false")
-                            + ")")));
+            .post(() -> webView.post(() -> webView.loadUrl("javascript:window?.shouldRefreshAnimeList?.("
+                    + (shouldProcessRecommendationList ? "true" : "false") + ","
+                    + (shouldLoadAnime ? "true" : "false")
+                    + ")")));
         } catch (Exception ignored) {}
     }
 
@@ -660,7 +658,7 @@ public class MainActivity extends AppCompatActivity {
                 e.printStackTrace();
             }
         }
-        setBackgroundUpdates();
+        setBackgroundUpdates(false);
         super.onDestroy();
         if (wakeLock!=null) {
             wakeLock.release();
@@ -1090,10 +1088,19 @@ public class MainActivity extends AppCompatActivity {
     public void reloadWeb() {
         webView.post(()->webView.reload());
     }
-    public void setBackgroundUpdates() {
+    public void setBackgroundUpdates(boolean isStop) {
+        long backgroundUpdateTime = prefs.getLong("lastBackgroundUpdateTime", 0);
         long currentTimeInMillis = System.currentTimeMillis();
-        long backgroundUpdateTime = prefs.getLong("lastBackgroundUpdateTime", currentTimeInMillis);
-
+        if (isStop) {
+            // Set and Apply New Background Update Time if there is none
+            if (backgroundUpdateTime==0) {
+                backgroundUpdateTime = currentTimeInMillis + TimeUnit.HOURS.toMillis(1);
+                prefsEdit.putLong("lastBackgroundUpdateTime", backgroundUpdateTime).apply();
+            } else {
+                // Don't Apply When there is already a time set
+                return;
+            }
+        }
         if (backgroundUpdateTime <= currentTimeInMillis && keepAppRunningInBackground && !isInApp) {
             // Run service if background update is enabled and user is not in app
             Intent intent = new Intent(this.getApplicationContext(), MainService.class);
