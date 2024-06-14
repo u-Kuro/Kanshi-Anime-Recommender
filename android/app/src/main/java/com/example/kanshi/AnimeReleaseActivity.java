@@ -1,5 +1,7 @@
 package com.example.kanshi;
 
+import static com.example.kanshi.LocalPersistence.getLockForFileName;
+
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.Context;
@@ -44,6 +46,7 @@ import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReentrantLock;
 
 
 @RequiresApi(api = Build.VERSION_CODES.O)
@@ -68,18 +71,36 @@ public class AnimeReleaseActivity extends AppCompatActivity {
                             return;
                         }
                         String fileNameHolder = "your file";
+                        String importedFileName;
                         String filepath = uri.getPath();
                         if (filepath!=null) {
-                            fileNameHolder = "\""+(new File(uri.getPath()).getName())+"\"";
+                            importedFileName = new File(filepath).getName();
+                            fileNameHolder = "\""+importedFileName+"\"";
+                        } else {
+                            importedFileName = null;
                         }
                         AlertDialog.Builder alertDialog = new AlertDialog.Builder(AnimeReleaseActivity.this)
                             .setTitle("Confirmation")
                             .setMessage("Do you want to import "+fileNameHolder+"?")
                             .setPositiveButton("OK", ((dialogInterface, i) -> {
+                                if (AnimeNotificationManager.allAnimeNotification.isEmpty()) {
+                                    try {
+                                        @SuppressWarnings("unchecked") ConcurrentHashMap<String, AnimeNotification> $allAnimeNotification = (ConcurrentHashMap<String, AnimeNotification>) LocalPersistence.readObjectFromFile(this, "allAnimeNotification");
+                                        if ($allAnimeNotification != null && !$allAnimeNotification.isEmpty()) {
+                                            AnimeNotificationManager.allAnimeNotification.putAll($allAnimeNotification);
+                                        }
+                                    } catch (Exception ignored) {}
+                                }
+                                ReentrantLock importedFileNameLock = null;
+                                if (importedFileName!=null) {
+                                    importedFileNameLock = getLockForFileName(importedFileName);
+                                    importedFileNameLock.lock();
+                                }
                                 ParcelFileDescriptor pfd = null;
                                 FileInputStream fileIn = null;
                                 ObjectInputStream objectIn = null;
                                 Object object;
+                                boolean hasImportedFile = false;
                                 try {
                                     pfd = getContentResolver().openFileDescriptor(uri, "r");
                                     if (pfd != null) {
@@ -88,32 +109,11 @@ public class AnimeReleaseActivity extends AppCompatActivity {
                                         object = objectIn.readObject();
                                         @SuppressWarnings("unchecked") ConcurrentHashMap<String, AnimeNotification> $importedAllAnimeNotification = (ConcurrentHashMap<String, AnimeNotification>) object;
                                         if ($importedAllAnimeNotification != null && !$importedAllAnimeNotification.isEmpty()) {
-                                            if (AnimeNotificationManager.allAnimeNotification.isEmpty()) {
-                                                try {
-                                                    @SuppressWarnings("unchecked") ConcurrentHashMap<String, AnimeNotification> $allAnimeNotification = (ConcurrentHashMap<String, AnimeNotification>) LocalPersistence.readObjectFromFile(this, "allAnimeNotification");
-                                                    if ($allAnimeNotification != null && !$allAnimeNotification.isEmpty()) {
-                                                        AnimeNotificationManager.allAnimeNotification.putAll($allAnimeNotification);
-                                                    }
-                                                } catch (Exception ignored) {}
-                                            }
                                             ArrayList<Map.Entry<String, AnimeNotification>> allAnimeNotificationEntries = new ArrayList<>($importedAllAnimeNotification.entrySet());
+                                            hasImportedFile = !allAnimeNotificationEntries.isEmpty();
                                             for (int j = 0; j < allAnimeNotificationEntries.size(); j++) {
                                                 Map.Entry<String, AnimeNotification> currentEntry = allAnimeNotificationEntries.get(j);
                                                 AnimeNotificationManager.allAnimeNotification.putIfAbsent(currentEntry.getKey(), currentEntry.getValue());
-                                            }
-                                            if (!AnimeNotificationManager.allAnimeNotification.isEmpty()) {
-                                                LocalPersistence.writeObjectToFile(this, AnimeNotificationManager.allAnimeNotification, "allAnimeNotification");
-                                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                                                    Utils.exportReleasedAnime(this.getApplicationContext());
-                                                }
-                                            }
-                                            SchedulesTabFragment schedulesTabFragment = SchedulesTabFragment.getInstanceActivity();
-                                            if (schedulesTabFragment != null) {
-                                                schedulesTabFragment.updateScheduledAnime();
-                                            }
-                                            ReleasedTabFragment releasedTabFragment = ReleasedTabFragment.getInstanceActivity();
-                                            if (releasedTabFragment != null) {
-                                                releasedTabFragment.updateReleasedAnime();
                                             }
                                             showToast(Toast.makeText(this, "Anime Releases has been Imported", Toast.LENGTH_SHORT));
                                         } else {
@@ -122,8 +122,12 @@ public class AnimeReleaseActivity extends AppCompatActivity {
                                     } else {
                                         showToast(Toast.makeText(this, "Failed to open", Toast.LENGTH_SHORT));
                                     }
-                                } catch (Exception ignored) {
+                                } catch (Exception e) {
                                     showToast(Toast.makeText(this, "Something went wrong", Toast.LENGTH_SHORT));
+                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                                        Utils.handleUncaughtException(AnimeReleaseActivity.this.getApplicationContext(), e, "AnimeReleaseActivity chooseImportFile");
+                                    }
+                                    e.printStackTrace();
                                 } finally {
                                     try {
                                         if (objectIn != null) {
@@ -136,6 +140,25 @@ public class AnimeReleaseActivity extends AppCompatActivity {
                                             pfd.close();
                                         }
                                     } catch (Exception ignored) {}
+                                    if (importedFileNameLock != null) {
+                                        importedFileNameLock.unlock();
+                                    }
+                                    if (hasImportedFile) {
+                                        SchedulesTabFragment schedulesTabFragment = SchedulesTabFragment.getInstanceActivity();
+                                        if (schedulesTabFragment != null) {
+                                            schedulesTabFragment.updateScheduledAnime();
+                                        }
+                                        ReleasedTabFragment releasedTabFragment = ReleasedTabFragment.getInstanceActivity();
+                                        if (releasedTabFragment != null) {
+                                            releasedTabFragment.updateReleasedAnime();
+                                        }
+                                        if (!AnimeNotificationManager.allAnimeNotification.isEmpty()) {
+                                            LocalPersistence.writeObjectToFile(this, AnimeNotificationManager.allAnimeNotification, "allAnimeNotification");
+                                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                                                Utils.exportReleasedAnime(this.getApplicationContext());
+                                            }
+                                        }
+                                    }
                                 }
                             }))
                             .setNegativeButton("CANCEL", null);

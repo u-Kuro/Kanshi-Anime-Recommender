@@ -38,8 +38,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @RequiresApi(api = Build.VERSION_CODES.N)
 public class SchedulesTabFragment extends Fragment {
-    public final BackgroundTaskQueue backgroundTaskQueue = new BackgroundTaskQueue();
-    public final UITaskQueue uiTaskQueue = new UITaskQueue();
+    public BackgroundTaskQueue backgroundTaskQueue;
+    public UITaskQueue uiTaskQueue;
     public static WeakReference<SchedulesTabFragment> weakActivity;
     Context context;
     RecyclerView animeReleasesList;
@@ -57,6 +57,8 @@ public class SchedulesTabFragment extends Fragment {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             Thread.setDefaultUncaughtExceptionHandler((thread, e) -> Utils.handleUncaughtException(context.getApplicationContext(), e, "SchedulesTabFragment"));
         }
+        backgroundTaskQueue = new BackgroundTaskQueue(context);
+        uiTaskQueue = new UITaskQueue(context);
 
         View schedulesView = inflater.inflate(R.layout.anime_release_tab_fragment, container, false);
         // Init Global Variables
@@ -254,7 +256,7 @@ public class SchedulesTabFragment extends Fragment {
                         if (a1.date == null) return 1;
                         if (a2.date == null) return -1;
                         return a1.date.compareTo(a2.date);
-                    } catch (Exception e) {
+                    } catch (Exception ignored) {
                         return 0;
                     }
                 });
@@ -351,6 +353,7 @@ public class SchedulesTabFragment extends Fragment {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                     Utils.handleUncaughtException(context.getApplicationContext(), e, "updateScheduledAnimeExecutorService");
                 }
+                e.printStackTrace();
             }
         });
     }

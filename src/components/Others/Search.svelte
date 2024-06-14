@@ -52,6 +52,7 @@
         categoriesKeys,
         selectedAnimeGridEl,
         showLoadingAnime,
+        resetProgress,
     } from "../../js/globalValues.js";
 
     let selectedCategoryAnimeFilters,
@@ -180,11 +181,14 @@
         if (name === "Anime Filter" || name === "sortBy") {
             data.updateAnimeFilter = true;
             loadAnime(data);
+            resetProgress.update((e) => !e);
         } else if (name === "Algorithm Filter") {
             processRecAnimeList(data);
+            resetProgress.update((e) => !e);
         } else if (name === "Content Caution") {
             data.updateAnimeCautions = true;
             loadAnime(data);
+            resetProgress.update((e) => !e);
         }
     }
 
@@ -1014,7 +1018,9 @@
         }
 
         let currentFilterCategoryName = selectedFilterCategoryName;
-        if (await $confirmPromise("Do you want to remove all the active tags?")) {
+        if (
+            await $confirmPromise("Do you want to remove all the active tags?")
+        ) {
             if ($initData) {
                 return pleaseWaitAlert();
             }

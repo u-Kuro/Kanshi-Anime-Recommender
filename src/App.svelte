@@ -74,6 +74,7 @@
 		categoriesKeys,
 		selectedAnimeGridEl,
 		showLoadingAnime,
+		resetProgress,
 		// anilistAccessToken,
 	} from "./js/globalValues.js";
 
@@ -1432,6 +1433,10 @@
 			}
 			progressChangeStart = performance.now();
 		}
+	});
+	resetProgress.subscribe(() => {
+		_progress = 0.01;
+		$progress = 0;
 	});
 
 	function loadYoutube() {

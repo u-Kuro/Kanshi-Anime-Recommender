@@ -23,7 +23,6 @@ import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -114,6 +113,7 @@ public class AnimeNotificationManager {
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                             Utils.handleUncaughtException(finalContext.getApplicationContext(), e, "notificationImageDownloaderExecutor");
                         }
+                        e.printStackTrace();
                     }
                 });
             }
@@ -162,7 +162,7 @@ public class AnimeNotificationManager {
                 } else {
                     try {
                         alarmManager.setExact(AlarmManager.RTC_WAKEUP, nearestNotificationTime, pendingIntent);
-                    } catch (SecurityException ignored) {
+                    } catch (Exception ignored) {
                         alarmManager.set(AlarmManager.RTC_WAKEUP, nearestNotificationTime, pendingIntent);
                     }
                 }
@@ -190,6 +190,7 @@ public class AnimeNotificationManager {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                     Utils.handleUncaughtException(context.getApplicationContext(), e, "addNotificationFutureExecutor");
                 }
+                e.printStackTrace();
             }
         }, 300, TimeUnit.MILLISECONDS);
     }
@@ -237,8 +238,7 @@ public class AnimeNotificationManager {
             connection.connect();
             InputStream input = connection.getInputStream();
             return BitmapFactory.decodeStream(input);
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (Exception ignored) {
             return null;
         }
     }
@@ -384,8 +384,7 @@ public class AnimeNotificationManager {
                             Bitmap image = BitmapFactory.decodeByteArray(dummyImage, 0, dummyImage.length);
                             itemBuilder.setIcon(createRoundIcon(image));
                         }
-                    } catch (Exception ignored) {
-                    }
+                    } catch (Exception ignored) {}
                 }
             }
             Person item = itemBuilder.build();
@@ -459,8 +458,7 @@ public class AnimeNotificationManager {
                             Bitmap image = BitmapFactory.decodeByteArray(dummyImage, 0, dummyImage.length);
                             itemBuilder.setIcon(createRoundIcon(image));
                         }
-                    } catch (Exception ignored) {
-                    }
+                    } catch (Exception ignored) {}
                 }
             }
             Person item = itemBuilder.build();

@@ -27,7 +27,6 @@ import androidx.core.app.NotificationManagerCompat;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 
-import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
@@ -196,8 +195,7 @@ public class MyWorker extends Worker {
                             Bitmap image = BitmapFactory.decodeByteArray(dummyImage, 0, dummyImage.length);
                             itemBuilder.setIcon(createRoundIcon(image));
                         }
-                    } catch (Exception ignored) {
-                    }
+                    } catch (Exception ignored) {}
                 }
             }
             Person item = itemBuilder.build();
@@ -272,8 +270,7 @@ public class MyWorker extends Worker {
                             Bitmap image = BitmapFactory.decodeByteArray(dummyImage, 0, dummyImage.length);
                             itemBuilder.setIcon(createRoundIcon(image));
                         }
-                    } catch (Exception ignored) {
-                    }
+                    } catch (Exception ignored) {}
                 }
             }
             Person item = itemBuilder.build();
@@ -426,7 +423,7 @@ public class MyWorker extends Worker {
                 } else {
                     try {
                         alarmManager.setExact(AlarmManager.RTC_WAKEUP, nextAnimeNotificationInfo.releaseDateMillis, newPendingIntent);
-                    } catch (SecurityException ignored) {
+                    } catch (Exception ignored) {
                         alarmManager.set(AlarmManager.RTC_WAKEUP, nextAnimeNotificationInfo.releaseDateMillis, newPendingIntent);
                     }
                 }
@@ -497,7 +494,7 @@ public class MyWorker extends Worker {
                     }
                 }
             },jsonData);
-        } catch (JSONException ignored) {}
+        } catch (Exception ignored) {}
     }
 
     @RequiresApi(api = Build.VERSION_CODES.N)
@@ -540,8 +537,7 @@ public class MyWorker extends Worker {
                         try {
                             int rateLimit = Integer.parseInt(rateLimitStr);
                             responseJSON.put("rateLimit", rateLimit);
-                        } catch (NumberFormatException ignored) {
-                        }
+                        } catch (Exception ignored) {}
                         return responseJSON;
                     }
                 } else {
@@ -550,19 +546,17 @@ public class MyWorker extends Worker {
                     try {
                         jsonObject.put(RETRY_KEY,true);
                         return jsonObject;
-                    } catch (JSONException ex) {
+                    } catch (Exception ignored) {
                         return null;
                     }
                 }
-            } catch (Exception e) {
-                e.printStackTrace();
+            } catch (Exception ignored) {
                 return null;
             }
         });
         try {
             return future.get();
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (Exception ignored) {
             return null;
         }
     }
@@ -637,7 +631,7 @@ public class MyWorker extends Worker {
             } else {
                 try {
                     alarmManager.setExact(AlarmManager.RTC_WAKEUP, newBackgroundUpdateTime, newPendingIntent);
-                } catch (SecurityException ignored) {
+                } catch (Exception ignored) {
                     alarmManager.set(AlarmManager.RTC_WAKEUP, newBackgroundUpdateTime, newPendingIntent);
                 }
             }

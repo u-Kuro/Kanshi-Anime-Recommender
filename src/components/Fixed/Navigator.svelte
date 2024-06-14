@@ -23,9 +23,12 @@
         appInstallationAsked,
         isBackgroundUpdateKey,
         selectedAnimeGridEl,
+        resetTypedUsername,
+        resetProgress,
     } from "../../js/globalValues.js";
 
     let writableSubscriptions = [];
+
     let typedUsername = "";
     let popupContainer,
         navContainerEl,
@@ -48,9 +51,15 @@
             popupContainer || document?.getElementById("popup-container");
         writableSubscriptions.push(
             username.subscribe((val) => {
-                typedUsername = val || "";
+                typedUsername = val || typedUsername || "";
             }),
         );
+        resetTypedUsername.subscribe((val) => {
+            if (val == null) return;
+            if (document?.activeElement !== inputUsernameEl) {
+                typedUsername = $username || typedUsername || "";
+            }
+        });
         windowWidth = Math.max(
             document?.documentElement?.getBoundingClientRect?.()?.width,
             window.visualViewport.width,
@@ -93,121 +102,137 @@
             if (!typedUsername) return;
             if (typedUsername !== $username) {
                 if (!navigator.onLine) {
-                    typedUsername = $username || "";
+                    if (document?.activeElement !== inputUsernameEl) {
+                        typedUsername = $username || typedUsername || "";
+                    }
                     return $confirmPromise({
                         isAlert: true,
                         title: "Currently Offline",
                         text: "It seems that you're currently offline and unable to update.",
                     });
                 }
-                (async () => {
-                    let usernameToShow = `<span style="color:hsl(var(--ac-color));">${typedUsername}</span>`;
-                    if ($username) {
-                        if (
-                            await $confirmPromise(
-                                `Do you${
-                                    isReconfirm ? " still" : ""
-                                } want to connect to ${usernameToShow}?`,
-                            )
-                        ) {
-                            $menuVisible = false;
-                            if (!$popupVisible) {
-                                document.documentElement.style.overflow =
-                                    "hidden";
-                                document.documentElement.style.overflow = "";
-                                window?.scrollTo?.({
-                                    top: -9999,
-                                    behavior: "smooth",
-                                });
-                            }
-                            $dataStatus = "Getting User Entries";
-                            $userRequestIsRunning = true;
-                            removeLocalStorage("username");
-                            requestUserEntries({
-                                username: typedUsername,
-                            })
-                                .then(({ newusername }) => {
-                                    if (newusername) {
-                                        typedUsername = $username =
-                                            newusername || "";
-                                    } else {
-                                        typedUsername = $username || "";
-                                    }
-                                    importantUpdate.update((e) => !e);
-                                    return;
-                                })
-                                .catch((error) => {
-                                    typedUsername = $username || "";
-                                    $dataStatus = "Something went wrong";
-                                    console.error(error);
-                                    return;
-                                })
-                                .finally(() => {
-                                    setLocalStorage(
-                                        "username",
-                                        $username,
-                                    ).catch(() => {
-                                        removeLocalStorage("username");
-                                    });
-                                });
-                        } else {
-                            typedUsername = $username || "";
-                            focusInputUsernameEl();
+                let usernameToShow = `<span style="color:hsl(var(--ac-color));">${typedUsername}</span>`;
+                if ($username) {
+                    if (
+                        await $confirmPromise(
+                            `Do you${
+                                isReconfirm ? " still" : ""
+                            } want to connect to ${usernameToShow}?`,
+                        )
+                    ) {
+                        $menuVisible = false;
+                        if (!$popupVisible) {
+                            document.documentElement.style.overflow = "hidden";
+                            document.documentElement.style.overflow = "";
+                            window?.scrollTo?.({
+                                top: -9999,
+                                behavior: "smooth",
+                            });
                         }
+                        $dataStatus = "Getting User Entries";
+                        $userRequestIsRunning = true;
+                        removeLocalStorage("username");
+                        requestUserEntries({
+                            username: typedUsername,
+                        })
+                            .then(({ newusername }) => {
+                                if (newusername) {
+                                    typedUsername = $username =
+                                        newusername ||
+                                        $username ||
+                                        typedUsername ||
+                                        "";
+                                } else {
+                                    typedUsername =
+                                        $username || typedUsername || "";
+                                }
+                                importantUpdate.update((e) => !e);
+                                return;
+                            })
+                            .catch((error) => {
+                                if (
+                                    document.activeElement !== inputUsernameEl
+                                ) {
+                                    typedUsername =
+                                        $username || typedUsername || "";
+                                }
+                                $dataStatus = "Something went wrong";
+                                console.error(error);
+                                return;
+                            })
+                            .finally(() => {
+                                setLocalStorage("username", $username).catch(
+                                    () => {
+                                        removeLocalStorage("username");
+                                    },
+                                );
+                            });
+                        resetProgress.update((e) => !e);
                     } else {
-                        if (
-                            await $confirmPromise(
-                                `Do you${
-                                    isReconfirm ? " still" : ""
-                                } want to connect to ${usernameToShow}?`,
-                            )
-                        ) {
-                            $menuVisible = false;
-                            if (!$popupVisible) {
-                                document.documentElement.style.overflow =
-                                    "hidden";
-                                document.documentElement.style.overflow = "";
-                                window?.scrollTo?.({
-                                    top: -9999,
-                                    behavior: "smooth",
-                                });
-                            }
-                            $dataStatus = "Getting User Entries";
-                            $userRequestIsRunning = true;
-                            removeLocalStorage("username");
-                            requestUserEntries({
-                                username: typedUsername,
-                            })
-                                .then(({ newusername }) => {
-                                    if (newusername) {
-                                        typedUsername = $username =
-                                            newusername || "";
-                                    } else {
-                                        typedUsername = $username || "";
-                                    }
-                                    importantUpdate.update((e) => !e);
-                                    return;
-                                })
-                                .catch((error) => {
-                                    typedUsername = $username || "";
-                                    $dataStatus = "Something went wrong";
-                                    console.error(error);
-                                    return;
-                                })
-                                .finally(() => {
-                                    setLocalStorage(
-                                        "username",
-                                        $username,
-                                    ).catch(() => {
-                                        removeLocalStorage("username");
-                                    });
-                                });
-                        } else {
-                            typedUsername = $username || "";
-                            focusInputUsernameEl();
-                        }
+                        typedUsername = $username || typedUsername || "";
+                        focusInputUsernameEl();
                     }
-                })();
+                } else {
+                    if (
+                        await $confirmPromise(
+                            `Do you${
+                                isReconfirm ? " still" : ""
+                            } want to connect to ${usernameToShow}?`,
+                        )
+                    ) {
+                        $menuVisible = false;
+                        if (!$popupVisible) {
+                            document.documentElement.style.overflow = "hidden";
+                            document.documentElement.style.overflow = "";
+                            window?.scrollTo?.({
+                                top: -9999,
+                                behavior: "smooth",
+                            });
+                        }
+                        $dataStatus = "Getting User Entries";
+                        $userRequestIsRunning = true;
+                        removeLocalStorage("username");
+                        requestUserEntries({
+                            username: typedUsername,
+                        })
+                            .then(({ newusername }) => {
+                                if (newusername) {
+                                    typedUsername = $username =
+                                        newusername ||
+                                        $username ||
+                                        typedUsername ||
+                                        "";
+                                } else {
+                                    typedUsername =
+                                        $username || typedUsername || "";
+                                }
+                                importantUpdate.update((e) => !e);
+                                return;
+                            })
+                            .catch((error) => {
+                                if (
+                                    document.activeElement !== inputUsernameEl
+                                ) {
+                                    typedUsername =
+                                        $username || typedUsername || "";
+                                }
+                                $dataStatus = "Something went wrong";
+                                console.error(error);
+                                return;
+                            })
+                            .finally(() => {
+                                setLocalStorage("username", $username).catch(
+                                    () => {
+                                        removeLocalStorage("username");
+                                    },
+                                );
+                            });
+                        resetProgress.update((e) => !e);
+                    } else {
+                        typedUsername = $username || typedUsername || "";
+                        focusInputUsernameEl();
+                    }
+                }
             } else {
                 inputUsernameEl?.blur?.();
                 inputUsernameElFocused = false;
@@ -413,6 +438,8 @@
         let isFocusIn = eventType === "focusin";
         if (isFocusIn) {
             window?.setShouldGoBack?.(false);
+        } else if (eventType === "focusout" && typedUsername === "") {
+            typedUsername = $username || "";
         }
         if (
             currentUsernameInputFocusStatus != null &&

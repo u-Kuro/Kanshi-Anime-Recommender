@@ -13,8 +13,12 @@ import java.util.concurrent.locks.*;
 @RequiresApi(api = Build.VERSION_CODES.O)
 public class LocalPersistence {
     private static final ConcurrentHashMap<String, ReentrantLock> fileLockMap = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<String, ReentrantLock> fileNameLockMap = new ConcurrentHashMap<>();
     public static ReentrantLock getLockForFile(File file) {
         return fileLockMap.computeIfAbsent(file.toPath().toAbsolutePath().normalize().toString(), k -> new ReentrantLock());
+    }
+    public static ReentrantLock getLockForFileName(String fileName) {
+        return fileNameLockMap.computeIfAbsent(fileName, k -> new ReentrantLock());
     }
     public static void writeObjectToFile(Context context, Object object, String filename) {
         String tempFileName = filename + ".tmp";
@@ -36,20 +40,31 @@ public class LocalPersistence {
 
             File finalFile = new File(context.getFilesDir(), filename);
             if (tempFile.exists() && tempFile.isFile() && tempFile.length() > 0) {
-                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-                    //noinspection ResultOfMethodCallIgnored
-                    finalFile.createNewFile();
-                    Path finalFilePath = finalFile.toPath();
-                    Path tempFilePath = tempFile.toPath();
-                    Files.copy(tempFilePath, finalFilePath, StandardCopyOption.REPLACE_EXISTING);
-                } else {
-                    //noinspection ResultOfMethodCallIgnored
-                    tempFile.renameTo(finalFile);
+                ReentrantLock finalFileNameLock = getLockForFileName(finalFile.getName());
+                finalFileNameLock.lock();
+                try {
+                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                        //noinspection ResultOfMethodCallIgnored
+                        finalFile.createNewFile();
+                        Path finalFilePath = finalFile.toPath();
+                        Path tempFilePath = tempFile.toPath();
+                        Files.copy(tempFilePath, finalFilePath, StandardCopyOption.REPLACE_EXISTING);
+                    } else {
+                        //noinspection ResultOfMethodCallIgnored
+                        tempFile.renameTo(finalFile);
+                    }
+                } catch (Exception e) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                        Utils.handleUncaughtException(context.getApplicationContext(), e, "writeObjectToFile 0");
+                    }
+                    e.printStackTrace(); // Log the exception
+                } finally {
+                    finalFileNameLock.unlock();
                 }
             }
         } catch (Exception e) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                Utils.handleUncaughtException(context.getApplicationContext(), e, "writeObjectToFile");
+                Utils.handleUncaughtException(context.getApplicationContext(), e, "writeObjectToFile 1");
             }
             e.printStackTrace(); // Log the exception
         } finally {
@@ -79,9 +94,11 @@ public class LocalPersistence {
         Object object = null;
 
         try {
-            fileIn = new FileInputStream(file);
-            objectIn = new ObjectInputStream(fileIn);
-            object = objectIn.readObject();
+            if (file.exists() && file.isFile()) {
+                fileIn = new FileInputStream(file);
+                objectIn = new ObjectInputStream(fileIn);
+                object = objectIn.readObject();
+            }
         } catch (Exception e) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                 Utils.handleUncaughtException(context.getApplicationContext(), e, "readObjectFromFile");

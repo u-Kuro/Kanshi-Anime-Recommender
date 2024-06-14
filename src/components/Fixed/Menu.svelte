@@ -31,6 +31,7 @@
         appInstallationAsked,
         selectedCategory,
         keepAppRunningInBackground,
+        resetProgress,
     } from "../../js/globalValues.js";
 
     let menuContainerEl, navContainerEl;
@@ -84,6 +85,7 @@
                             importFileInput.value = null;
                         }
                     });
+                resetProgress.update((e) => !e);
             } else {
                 if (importFileInput instanceof Element)
                     importFileInput.value = null;
@@ -130,6 +132,7 @@
             window.alreadyShownNoNetworkAlert = false;
             $menuVisible = false;
             runUpdate.update((e) => !e);
+            resetProgress.update((e) => !e);
         }
     }
 
@@ -226,6 +229,7 @@
                 isHiding: false,
             });
             $hiddenEntries = {};
+            resetProgress.update((e) => !e);
         }
     }
 

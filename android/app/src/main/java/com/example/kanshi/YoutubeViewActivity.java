@@ -57,21 +57,18 @@ public class YoutubeViewActivity extends AppCompatActivity {
                         public void onActivityResult(ActivityResult activityResult) {
                             int resultCode = activityResult.getResultCode();
                             Intent intent = activityResult.getData();
-                            try {
-                                Uri[] result = null;
-                                if (null == mUploadMessage || resultCode != RESULT_OK) {
-                                    result = new Uri[]{Uri.parse("")};
-                                } else {
-                                    assert intent != null;
-                                    String dataString = intent.getDataString();
-                                    if (dataString != null) {
-                                        result = new Uri[]{Uri.parse(dataString)};
-                                    }
+                            Uri[] result = null;
+                            if (null == mUploadMessage || resultCode != RESULT_OK) {
+                                result = new Uri[]{Uri.parse("")};
+                                mUploadMessage.onReceiveValue(result);
+                                mUploadMessage = null;
+                            } else if (intent != null) {
+                                String dataString = intent.getDataString();
+                                if (dataString != null) {
+                                    result = new Uri[]{Uri.parse(dataString)};
                                 }
                                 mUploadMessage.onReceiveValue(result);
                                 mUploadMessage = null;
-                            } catch (Exception e) {
-                                e.printStackTrace();
                             }
                         }
                     }
@@ -164,19 +161,13 @@ public class YoutubeViewActivity extends AppCompatActivity {
             // Import
             @Override
             public boolean onShowFileChooser(WebView webView, ValueCallback<Uri[]> filePathCallback, FileChooserParams fileChooserParams) {
-                try {
-                    if (mUploadMessage != null) {
-                        mUploadMessage.onReceiveValue(null);
-                    }
-                    mUploadMessage = filePathCallback;
-                    Intent i = new Intent(Intent.ACTION_GET_CONTENT)
-                            .addCategory(Intent.CATEGORY_OPENABLE);// set MIME type to filter
-                    chooseImportFile.launch(i);
-                    return true;
-                } catch (Exception e){
-                    e.printStackTrace();
-                    return true;
+                if (mUploadMessage != null) {
+                    mUploadMessage.onReceiveValue(null);
                 }
+                mUploadMessage = filePathCallback;
+                Intent i = new Intent(Intent.ACTION_GET_CONTENT).addCategory(Intent.CATEGORY_OPENABLE);// set MIME type to filter
+                chooseImportFile.launch(i);
+                return true;
             }
             public void onProgressChanged(WebView view, int progress) {
                 int newProgress = (int) Math.pow(10,4) * progress;
@@ -360,7 +351,7 @@ public class YoutubeViewActivity extends AppCompatActivity {
                                     .build();
                             customTabsIntent.launchUrl(YoutubeViewActivity.this, Uri.parse(url));
                             overridePendingTransition(R.anim.fade_in, R.anim.remove);
-                        } catch (Exception ex) {
+                        } catch (Exception ignored) {
                             Toast.makeText(getApplicationContext(), "Can't open the link.", Toast.LENGTH_LONG).show();
                         }
                         boolean isRedirect = false;

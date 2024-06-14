@@ -1,6 +1,7 @@
 package com.example.kanshi;
 
 import static com.example.kanshi.LocalPersistence.getLockForFile;
+import static com.example.kanshi.LocalPersistence.getLockForFileName;
 
 import android.content.ContentUris;
 import android.content.Context;
@@ -201,7 +202,7 @@ public class Utils {
                         if (date1 == null) return 1;
                         if (date2 == null) return -1;
                         return date1.compareTo(date2);
-                    } catch (Exception e) {
+                    } catch (Exception ignored) {
                         return 0;
                     }
                 });
@@ -226,10 +227,11 @@ public class Utils {
                 }
                 webGroupedModifiedDate = null;
             } catch (Exception e) {
+                webGroupedModifiedDate = null;
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                     Utils.handleUncaughtException(context.getApplicationContext(), e, "cleanIndexedDBFilesExecutorService");
                 }
-                webGroupedModifiedDate = null;
+                e.printStackTrace();
             }
         });
     }
@@ -266,14 +268,23 @@ public class Utils {
                             fileOut.getFD().sync();
                             if (tempFile.exists() && tempFile.isFile() && tempFile.length() > 0) {
                                 File finalFile = new File(directory, filename);
-                                //noinspection ResultOfMethodCallIgnored
-                                finalFile.createNewFile();
-                                Path tempFilePath = tempFile.toPath();
-                                Path finalFilePath = finalFile.toPath();
-                                Files.copy(tempFilePath, finalFilePath, StandardCopyOption.REPLACE_EXISTING);
+                                ReentrantLock finalFileNameLock = getLockForFileName(finalFile.getName());
+                                finalFileNameLock.lock();
+                                try {
+                                    //noinspection ResultOfMethodCallIgnored
+                                    finalFile.createNewFile();
+                                    Path tempFilePath = tempFile.toPath();
+                                    Path finalFilePath = finalFile.toPath();
+                                    Files.copy(tempFilePath, finalFilePath, StandardCopyOption.REPLACE_EXISTING);
+                                } catch (Exception e) {
+                                    handleUncaughtException(context.getApplicationContext(), e, "exportReleasedAnime 0");
+                                    e.printStackTrace();
+                                } finally {
+                                    finalFileNameLock.unlock();
+                                }
                             }
                         } catch (Exception e) {
-                            handleUncaughtException(context.getApplicationContext(), e, "exportReleasedAnime");
+                            handleUncaughtException(context.getApplicationContext(), e, "exportReleasedAnime 1");
                             e.printStackTrace();
                         } finally {
                             try {

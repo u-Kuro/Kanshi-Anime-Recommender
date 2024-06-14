@@ -54,8 +54,8 @@ public class AnimeReleaseGroupAdapter extends RecyclerView.Adapter<AnimeReleaseG
         this.mInflater = LayoutInflater.from(mContext);
         this.mAnimeGroups.set(animeGroups);
         this.recyclerView = recyclerView;
-        this.backgroundTaskQueue = new BackgroundTaskQueue();
-        this.uiTaskQueue = new UITaskQueue();
+        this.backgroundTaskQueue = new BackgroundTaskQueue(context);
+        this.uiTaskQueue = new UITaskQueue(context);
     }
 
     @NonNull
@@ -301,6 +301,7 @@ public class AnimeReleaseGroupAdapter extends RecyclerView.Adapter<AnimeReleaseG
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                     Utils.handleUncaughtException(mContext.getApplicationContext(), e, "AnimeReleaseGroupAdapter");
                 }
+                e.printStackTrace();
             }
         });
     }

@@ -1,9 +1,13 @@
 package com.example.kanshi.utils;
 
+import android.content.Context;
+import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 
 import androidx.annotation.NonNull;
+
+import com.example.kanshi.Utils;
 
 import java.util.Collection;
 import java.util.Deque;
@@ -15,15 +19,17 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class UITaskQueue {
+    private final Context context;
     private final ExecutorService taskExecutor = Executors.newFixedThreadPool(1);
     private final Map<String, UIHandler> handlerMap;
     private final Deque<UITask> queue;
     private final AtomicBoolean isRunning;
 
-    public UITaskQueue() {
+    public UITaskQueue(Context context) {
         this.handlerMap = new ConcurrentHashMap<>();
         this.queue = new ConcurrentLinkedDeque<>();
         this.isRunning = new AtomicBoolean();
+        this.context = context;
     }
 
     public void addTask(String handlerId, Runnable task) {
@@ -67,28 +73,35 @@ public class UITaskQueue {
 
     private void executeTasks() {
         taskExecutor.submit(() -> {
-            UITask task = queue.pollFirst();
-            if (task != null) {
-                String handlerId = task.handlerId;
-                UIHandler uiHandler = handlerMap.get(handlerId);
-                if (uiHandler != null) {
-                    boolean isPosted = uiHandler.mainHandler.post(() -> {
-                        task.run();
-                        if (queue.isEmpty()) {
-                            isRunning.set(false);
-                        } else {
-                            executeTasks();
+            try {
+                UITask task = queue.pollFirst();
+                if (task != null) {
+                    String handlerId = task.handlerId;
+                    UIHandler uiHandler = handlerMap.get(handlerId);
+                    if (uiHandler != null) {
+                        boolean isPosted = uiHandler.mainHandler.post(() -> {
+                            task.run();
+                            if (queue.isEmpty()) {
+                                isRunning.set(false);
+                            } else {
+                                executeTasks();
+                            }
+                        });
+                        if (isPosted) {
+                            return;
                         }
-                    });
-                    if (isPosted) {
-                        return;
                     }
                 }
-            }
-            if (queue.isEmpty()) {
-                isRunning.set(false);
-            } else {
-                executeTasks();
+                if (queue.isEmpty()) {
+                    isRunning.set(false);
+                } else {
+                    executeTasks();
+                }
+            } catch (Exception e) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                    Utils.handleUncaughtException(this.context.getApplicationContext(), e, "UI taskExecutor");
+                }
+                e.printStackTrace();
             }
         });
     }

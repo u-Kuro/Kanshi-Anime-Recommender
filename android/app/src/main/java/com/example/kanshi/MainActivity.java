@@ -10,6 +10,7 @@ import static com.example.kanshi.Configs.isDebug;
 import static com.example.kanshi.Configs.isOwnerKey;
 import static com.example.kanshi.Configs.visitedKey;
 import static com.example.kanshi.LocalPersistence.getLockForFile;
+import static com.example.kanshi.LocalPersistence.getLockForFileName;
 import static com.example.kanshi.Utils.*;
 
 import androidx.activity.OnBackPressedCallback;
@@ -72,7 +73,6 @@ import android.widget.Toast;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
-import java.io.IOException;
 import java.io.InputStream;
 import java.lang.ref.WeakReference;
 import java.net.HttpURLConnection;
@@ -145,21 +145,36 @@ public class MainActivity extends AppCompatActivity {
                         public void onActivityResult(ActivityResult activityResult) {
                             int resultCode = activityResult.getResultCode();
                             Intent intent = activityResult.getData();
+                            Uri[] result = null;
+                            ReentrantLock importedFileNameLock = null;
                             try {
-                                Uri[] result = null;
                                 if (null == mUploadMessage || resultCode != RESULT_OK) {
                                     result = new Uri[]{Uri.parse("")};
-                                } else {
-                                    assert intent != null;
+                                    mUploadMessage.onReceiveValue(result);
+                                    mUploadMessage = null;
+                                } else if (intent != null) {
                                     String dataString = intent.getDataString();
+                                    Uri uri = intent.getData();
+                                    if (uri != null) {
+                                        String importedFilePath = uri.getPath();
+                                        if (importedFilePath != null) {
+                                            String importedFileName = new File(importedFilePath).getName();
+                                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                                importedFileNameLock = getLockForFileName(importedFileName);
+                                                importedFileNameLock.lock();
+                                            }
+                                        }
+                                    }
                                     if (dataString != null) {
                                         result = new Uri[]{Uri.parse(dataString)};
                                     }
+                                    mUploadMessage.onReceiveValue(result);
+                                    mUploadMessage = null;
                                 }
-                                mUploadMessage.onReceiveValue(result);
-                                mUploadMessage = null;
-                            } catch (Exception e) {
-                                e.printStackTrace();
+                            } finally {
+                                if (importedFileNameLock != null) {
+                                    importedFileNameLock.unlock();
+                                }
                             }
                         }
                     }
@@ -172,21 +187,15 @@ public class MainActivity extends AppCompatActivity {
                         public void onActivityResult(ActivityResult activityResult) {
                             int resultCode = activityResult.getResultCode();
                             Intent intent = activityResult.getData();
-                            try {
-                                if (resultCode != RESULT_OK) {
-                                    return;
-                                }
-                                assert intent != null;
-                                Uri uri = intent.getData();
-                                Uri docUri = DocumentsContract.buildDocumentUriUsingTree(uri,
-                                        DocumentsContract.getTreeDocumentId(uri));
-                                exportPath = getThisPath(docUri);
-                                showToast(Toast.makeText(getApplicationContext(), "Backup folder is selected, you may now use the export feature.", Toast.LENGTH_LONG));
-                                prefsEdit.putString("savedExportPath", exportPath).apply();
-                                webView.post(()->webView.loadUrl("javascript:window?.setExportPathAvailability?.(true)"));
-                            } catch (Exception e) {
-                                e.printStackTrace();
+                            if (resultCode != RESULT_OK || intent == null) {
+                                return;
                             }
+                            Uri uri = intent.getData();
+                            Uri docUri = DocumentsContract.buildDocumentUriUsingTree(uri, DocumentsContract.getTreeDocumentId(uri));
+                            exportPath = getThisPath(docUri);
+                            showToast(Toast.makeText(getApplicationContext(), "Backup folder is selected, you may now use the export feature.", Toast.LENGTH_LONG));
+                            prefsEdit.putString("savedExportPath", exportPath).apply();
+                            webView.post(()->webView.loadUrl("javascript:window?.setExportPathAvailability?.(true)"));
                         }
                     }
             );
@@ -320,8 +329,7 @@ public class MainActivity extends AppCompatActivity {
                     String encoding = connection.getContentEncoding() != null ? connection.getContentEncoding() : "UTF-8";
 
                     return new WebResourceResponse(contentType, encoding, inputStream);
-                } catch (Exception e) {
-                    e.printStackTrace();
+                } catch (Exception ignored) {
                     return null;
                 }
             }
@@ -451,21 +459,16 @@ public class MainActivity extends AppCompatActivity {
             // Import
             @Override
             public boolean onShowFileChooser(WebView webView, ValueCallback<Uri[]> filePathCallback, FileChooserParams fileChooserParams) {
-                try {
-                    if (mUploadMessage != null) {
-                        mUploadMessage.onReceiveValue(null);
-                    }
-                    mUploadMessage = filePathCallback;
-                    Intent i = new Intent(Intent.ACTION_GET_CONTENT)
-                            .addCategory(Intent.CATEGORY_OPENABLE)
-                            .setType("application/json");// set MIME type to filter
-                    chooseImportFile.launch(i);
-                    showToast(Toast.makeText(getApplicationContext(), "Please select your backup file.", Toast.LENGTH_LONG));
-                    return true;
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    return true;
+                if (mUploadMessage != null) {
+                    mUploadMessage.onReceiveValue(null);
                 }
+                mUploadMessage = filePathCallback;
+                Intent i = new Intent(Intent.ACTION_GET_CONTENT)
+                        .addCategory(Intent.CATEGORY_OPENABLE)
+                        .setType("application/json");// set MIME type to filter
+                chooseImportFile.launch(i);
+                showToast(Toast.makeText(getApplicationContext(), "Please select your backup file.", Toast.LENGTH_LONG));
+                return true;
             }
 
             // Fullscreen
@@ -798,14 +801,14 @@ public class MainActivity extends AppCompatActivity {
                                         showToast(Toast.makeText(getApplicationContext(), "Temporary backup file can't be re-written, please delete tmp.json in the selected directory.", Toast.LENGTH_LONG));
                                     }
                                 } catch (Exception e) {
+                                    isExported(false);
+                                    showToast(Toast.makeText(getApplicationContext(), "An exception occurred initializing the temporary backup file.", Toast.LENGTH_LONG));
                                     try {
                                         if (writer != null) {
                                             writer.close();
                                             writer = null;
                                         }
                                     } catch (Exception ignored) {}
-                                    isExported(false);
-                                    showToast(Toast.makeText(getApplicationContext(), "An exception occurred initializing the temporary backup file.", Toast.LENGTH_LONG));
                                     Utils.handleUncaughtException(MainActivity.this.getApplicationContext(), e, "exportJSON Status 0");
                                     e.printStackTrace();
                                 }
@@ -838,14 +841,14 @@ public class MainActivity extends AppCompatActivity {
                     try {
                         writer.write(chunk);
                     } catch (Exception e) {
+                        isExported(false);
+                        showToast(Toast.makeText(getApplicationContext(), "An exception occurred while writing to temporary backup file.", Toast.LENGTH_LONG));
                         try {
                             if (writer != null) {
                                 writer.close();
                                 writer = null;
                             }
                         } catch (Exception ignored) {}
-                        isExported(false);
-                        showToast(Toast.makeText(getApplicationContext(), "An exception occurred while writing to temporary backup file.", Toast.LENGTH_LONG));
                         Utils.handleUncaughtException(MainActivity.this.getApplicationContext(), e, "exportJSON Status 1");
                         e.printStackTrace();
                     }
@@ -857,34 +860,45 @@ public class MainActivity extends AppCompatActivity {
                         int lastStringLen = Math.min(chunk.length(), 3);
                         String lastNCharacters = new String(new char[lastStringLen]).replace("\0", "}");
                         if (chunk.endsWith(lastNCharacters)) {
-                            File file = new File(exportDirectoryPath + fileName);
+                            File finalFile = new File(exportDirectoryPath + fileName);
                             if (tempExportFile != null && tempExportFile.exists() && tempExportFile.isFile() && tempExportFile.length() > 0) {
-                                //noinspection ResultOfMethodCallIgnored
-                                file.createNewFile();
-                                Path tempPath = tempExportFile.toPath();
-                                Path backupPath = file.toPath();
-                                Files.copy(tempPath, backupPath, StandardCopyOption.REPLACE_EXISTING);
-                                isExported(true);
-                                //noinspection ResultOfMethodCallIgnored
-                                tempExportFile.delete();
+                                ReentrantLock finalFileNameLock = getLockForFileName(finalFile.getName());
+                                finalFileNameLock.lock();
+                                try {
+                                    //noinspection ResultOfMethodCallIgnored
+                                    finalFile.createNewFile();
+                                    Path tempPath = tempExportFile.toPath();
+                                    Path backupPath = finalFile.toPath();
+                                    Files.copy(tempPath, backupPath, StandardCopyOption.REPLACE_EXISTING);
+                                    isExported(true);
+                                    //noinspection ResultOfMethodCallIgnored
+                                    tempExportFile.delete();
+                                } catch (Exception e) {
+                                    isExported(false);
+                                    showToast(Toast.makeText(getApplicationContext(), "Failed to access the backup file.", Toast.LENGTH_LONG));
+                                    Utils.handleUncaughtException(getApplicationContext(), e, "MainActivity exportJSON Status 2 0");
+                                    e.printStackTrace();
+                                } finally {
+                                    finalFileNameLock.unlock();
+                                }
                             } else {
                                 isExported(false);
-                                showToast(Toast.makeText(getApplicationContext(), "Failed to access the backup file.", Toast.LENGTH_LONG));
+                                showToast(Toast.makeText(getApplicationContext(), "Failed to backup the file.", Toast.LENGTH_LONG));
                             }
                         } else {
                             isExported(false);
                             showToast(Toast.makeText(getApplicationContext(), "An exception occurred in finalizing the backup file.", Toast.LENGTH_LONG));
                         }
                     } catch (Exception e) {
+                        isExported(false);
+                        showToast(Toast.makeText(getApplicationContext(), "An exception occurred in finalizing the backup file.", Toast.LENGTH_LONG));
                         try {
                             if (writer != null) {
                                 writer.close();
                                 writer = null;
                             }
                         } catch (Exception ignored) {}
-                        isExported(false);
-                        showToast(Toast.makeText(getApplicationContext(), "An exception occurred in finalizing the backup file.", Toast.LENGTH_LONG));
-                        Utils.handleUncaughtException(MainActivity.this.getApplicationContext(), e, "MainActivity exportJSON Status 2");
+                        Utils.handleUncaughtException(MainActivity.this.getApplicationContext(), e, "MainActivity exportJSON Status 2 1");
                         e.printStackTrace();
                     }
                 }
@@ -1031,6 +1045,7 @@ public class MainActivity extends AppCompatActivity {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                         Utils.handleUncaughtException(MainActivity.this.getApplicationContext(), e, "updateNotificationsExecutorService");
                     }
+                    e.printStackTrace();
                 }
             });
             updateNotificationsFutures.put(String.valueOf(animeId), future);
@@ -1218,6 +1233,7 @@ public class MainActivity extends AppCompatActivity {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                     Utils.handleUncaughtException(MainActivity.this.getApplicationContext(), e, "updateCurrentNotificationsExecutorService");
                 }
+                e.printStackTrace();
             }
         });
     }
@@ -1372,8 +1388,7 @@ public class MainActivity extends AppCompatActivity {
                 int responseCode = urlConnection.getResponseCode();
                 urlConnection.disconnect();
                 return responseCode == HttpURLConnection.HTTP_OK;
-            } catch (IOException e) {
-                e.printStackTrace();
+            } catch (Exception ignored) {
                 return false;
             }
         });

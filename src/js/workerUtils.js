@@ -29,7 +29,9 @@ import {
     categories,
     algorithmFilters,
     animeCautions,
-    showLoadingAnime
+    showLoadingAnime,
+    resetTypedUsername,
+    resetProgress
 } from "./globalValues.js";
 
 const hasOwnProp = Object.prototype.hasOwnProperty
@@ -245,7 +247,6 @@ const animeManager = (_data = {}) => {
         animeManagerPromises[postId] = { resolve, reject }
 
         isLoadingAnime.set(true)
-        dataStatusPrio = true
 
         try {
             animeManagerWorker = animeManagerWorker || await getAnimeManagerWorker()
@@ -260,6 +261,7 @@ const animeManager = (_data = {}) => {
             return reject(ex)
         }
 
+        progress.set(0)
         animeManagerWorker.postMessage(_data)
 
         if (animeManagerWorker.onmessage) return
@@ -270,6 +272,7 @@ const animeManager = (_data = {}) => {
                 }
                 return
             } else if (hasOwnProp.call(data, "status")) {
+                dataStatusPrio = true
                 dataStatus.set(data.status);
                 return
             } else if (hasOwnProp?.call?.(data, "removedIdx")) {
@@ -325,8 +328,8 @@ const animeManager = (_data = {}) => {
             }
 
             if (workerCount <= 0) {
+                dataStatusPrio = false
                 animeManagerWorkerTimeout = setTimeout(() => {
-                    dataStatusPrio = false
 
                     dataStatus.set(null)
                     progress.set(100)
@@ -387,7 +390,7 @@ const processRecommendedAnimeList = (_data = {}) => {
         if (processRecommendedAnimeListTerminateTimeout) clearTimeout(processRecommendedAnimeListTerminateTimeout);
         processRecommendedAnimeListWorker?.terminate?.();
         processRecommendedAnimeListWorker = null
-        dataStatusPrio = true
+
         progress.set(0)
         cacheRequest("./webapi/worker/processRecommendedAnimeList.js", 40686, "Updating Recommendation List")
             .then(url => {
@@ -416,6 +419,7 @@ const processRecommendedAnimeList = (_data = {}) => {
                         return
                     }
                     if (hasOwnProp?.call?.(data, "error")) {
+                        dataStatusPrio = false
                         isProcessingList.set(false)
                         showLoadingAnime.set(false)
                         dataStatus.set(null);
@@ -497,6 +501,7 @@ const processRecommendedAnimeList = (_data = {}) => {
                     }
                 };
                 processRecommendedAnimeListWorker.onerror = (error) => {
+                    dataStatusPrio = false
                     isProcessingList.set(false)
                     showLoadingAnime.set(false)
                     dataStatus.set(null)
@@ -504,6 +509,7 @@ const processRecommendedAnimeList = (_data = {}) => {
                     reject(error);
                 };
             }).catch((error) => {
+                dataStatusPrio = false
                 isProcessingList.set(false)
                 showLoadingAnime.set(false)
                 dataStatus.set(null)
@@ -693,9 +699,15 @@ const requestAnimeEntries = (_data = {}) => {
             })
     })
 }
+let isRequestingNewUser
 let requestUserEntriesTerminateTimeout, requestUserEntriesWorker;
 const requestUserEntries = (_data = {}) => {
     return new Promise((resolve, reject) => {
+        if (_data?.username) {
+            isRequestingNewUser = true
+        } else if (isRequestingNewUser) {
+            return
+        }
         if (requestUserEntriesTerminateTimeout) clearTimeout(requestUserEntriesTerminateTimeout)
         requestUserEntriesWorker?.terminate?.()
         requestUserEntriesWorker = null
@@ -704,6 +716,7 @@ const requestUserEntries = (_data = {}) => {
                 || isImporting
                 || isGettingNewEntries
             ) {
+                isRequestingNewUser = false
                 userRequestIsRunning.set(false)
                 reject()
                 return
@@ -732,7 +745,9 @@ const requestUserEntries = (_data = {}) => {
                         }
                         return
                     }
+
                     if (hasOwnProp?.call?.(data, "error")) {
+                        isRequestingNewUser = false
                         if (!window.alreadyShownNoNetworkAlert) {
                             window.alreadyShownNoNetworkAlert = true
                             window.confirmPromise?.({
@@ -747,6 +762,7 @@ const requestUserEntries = (_data = {}) => {
                         }, terminateDelay)
                         dataStatus.set(null)
                         progress.set(100)
+                        resetTypedUsername.update(e => !e)
                         reject(data)
                     } else if (hasOwnProp?.call?.(data, "updateRecommendationList")) {
                         if (get(android)) {
@@ -754,6 +770,7 @@ const requestUserEntries = (_data = {}) => {
                         }
                         updateRecommendationList.update(e => !e)
                     } else {
+                        isRequestingNewUser = false
                         window.alreadyShownNoNetworkAlert = false
                         userRequestIsRunning.set(false)
                         requestUserEntriesTerminateTimeout = setTimeout(() => {
@@ -765,6 +782,7 @@ const requestUserEntries = (_data = {}) => {
                     }
                 }
                 requestUserEntriesWorker.onerror = (error) => {
+                    isRequestingNewUser = false
                     userRequestIsRunning.set(false)
                     loadAnime.update((e) => !e)
                     requestUserEntriesTerminateTimeout = setTimeout(() => {
@@ -772,14 +790,17 @@ const requestUserEntries = (_data = {}) => {
                     }, terminateDelay)
                     dataStatus.set(null)
                     progress.set(100)
+                    resetTypedUsername.update(e => !e)
                     reject(error)
                 }
             }).catch((error) => {
+                isRequestingNewUser = false
                 userRequestIsRunning.set(false)
                 dataStatus.set(null)
                 progress.set(100)
                 loadAnime.update((e) => !e)
                 alertError()
+                resetTypedUsername.update(e => !e)
                 reject(error)
             })
     })
@@ -805,6 +826,7 @@ const exportUserData = (_data) => {
         waitForExportApproval?.reject?.()
         waitForExportApproval = null
         progress.set(0)
+        resetProgress.update((e) => !e);
         cacheRequest("./webapi/worker/exportUserData.js")
             .then(url => {
                 waitForExportApproval?.reject?.()
@@ -933,6 +955,7 @@ const exportUserData = (_data) => {
                     }
                 }
                 exportUserDataWorker.onerror = (error) => {
+                    dataStatusPrio = false
                     dataStatus.set(null)
                     progress.set(100)
                     isExporting = false
@@ -947,6 +970,7 @@ const exportUserData = (_data) => {
                     reject(error)
                 }
             }).catch((error) => {
+                dataStatusPrio = false
                 dataStatus.set(null)
                 progress.set(100)
                 isExporting = false
@@ -974,6 +998,7 @@ const importUserData = (_data) => {
             stopConflictingWorkers({ isImporting: true })
         }
         progress.set(0)
+        resetProgress.update((e) => !e);
         cacheRequest("./webapi/worker/importUserData.js")
             .then(url => {
                 if (importUserDataTerminateTimeout) clearTimeout(importUserDataTerminateTimeout)
@@ -1280,9 +1305,9 @@ const getAnimeEntries = (_data) => {
         }
         cacheRequest(url, 172885665, "Getting Anime, Manga, and Novel Entries", true)
             .then(animeEntriesBlob => {
-                cacheRequest("./webapi/worker/getEntries.js", 271696, "Retaining Anime, Manga, and Novel Entries")
+                dataStatus.set("Retaining Anime, Manga, and Novel Entries")
+                cacheRequest("./webapi/worker/getEntries.js")
                     .then(workerUrl => {
-                        progress.set(25)
                         dataStatus.set("Retaining Anime, Manga, and Novel Entries")
                         let worker = new Worker(workerUrl)
                         worker.postMessage({ animeEntriesBlob })
@@ -1312,6 +1337,7 @@ const getAnimeEntries = (_data) => {
                             }
                         }
                         worker.onerror = (error) => {
+                            dataStatusPrio = false
                             dataStatus.set(null)
                             progress.set(100)
                             alertError()
@@ -1319,6 +1345,7 @@ const getAnimeEntries = (_data) => {
                             reject(error)
                         }
                     }).catch((error) => {
+                        dataStatusPrio = false
                         dataStatus.set(null)
                         progress.set(100)
                         alertError()
@@ -1326,6 +1353,7 @@ const getAnimeEntries = (_data) => {
                         reject(error)
                     })
             }).catch((error) => {
+                dataStatusPrio = false
                 dataStatus.set(null)
                 progress.set(100)
                 alertError()
@@ -1355,6 +1383,7 @@ const getFilterOptions = (_data) => {
                         return
                     }
                     if (hasOwnProp?.call?.(data, "error")) {
+                        dataStatusPrio = false
                         dataStatus.set(null)
                         alertError()
                         reject(data.error)
@@ -1371,11 +1400,13 @@ const getFilterOptions = (_data) => {
                     }
                 }
                 getFilterOptionsWorker.onerror = (error) => {
+                    dataStatusPrio = false
                     dataStatus.set(null)
                     alertError()
                     reject(error)
                 }
             }).catch((error) => {
+                dataStatusPrio = false
                 dataStatus.set(null)
                 alertError()
                 reject(error)
@@ -1384,12 +1415,15 @@ const getFilterOptions = (_data) => {
 }
 
 function stopConflictingWorkers(blocker) {
+    dataStatusPrio = false
     progress.set(0)
     requestAnimeEntriesWorker?.terminate?.()
     notifyUpdatedAnimeNotification()
     isRequestingAnimeEntries = false
     isGettingNewEntries = blocker?.isGettingNewEntries ?? false
     requestUserEntriesWorker?.terminate?.()
+    isRequestingNewUser = false
+    resetTypedUsername.update(e => !e)
     userRequestIsRunning.set(false)
     processRecommendedAnimeListWorker?.terminate?.()
     isProcessingList.set(false)

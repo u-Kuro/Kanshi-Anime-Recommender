@@ -52,10 +52,11 @@ public class AnimeReleaseGroup {
                         return false;
                     }
                 }
-            } catch (Exception ex) {
+            } catch (Exception e) {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                    Utils.handleUncaughtException(context.getApplicationContext(),ex, "ssss");
+                    Utils.handleUncaughtException(context.getApplicationContext(), e, "animeNotificationListIsEqual");
                 }
+                e.printStackTrace();
             }
             return true;
         }

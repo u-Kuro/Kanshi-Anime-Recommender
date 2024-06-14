@@ -7,6 +7,7 @@ import static com.example.kanshi.Configs.isBackgroundUpdateKey;
 import static com.example.kanshi.Configs.visitedKey;
 import static com.example.kanshi.Configs.getAssetLoader;
 import static com.example.kanshi.LocalPersistence.getLockForFile;
+import static com.example.kanshi.LocalPersistence.getLockForFileName;
 
 import android.annotation.SuppressLint;
 import android.app.Notification;
@@ -190,8 +191,7 @@ public class MainService extends Service {
                     String encoding = connection.getContentEncoding() != null ? connection.getContentEncoding() : "UTF-8";
 
                     return new WebResourceResponse(contentType, encoding, inputStream);
-                } catch (Exception e) {
-                    e.printStackTrace();
+                } catch (Exception ignored) {
                     return null;
                 }
             }
@@ -274,17 +274,17 @@ public class MainService extends Service {
             try {
                 startForeground(SERVICE_NOTIFICATION_ID, notification, FOREGROUND_SERVICE_TYPE_DATA_SYNC);
             } catch (Exception e) {
+                Utils.handleUncaughtException(MainService.this.getApplicationContext(), e, "MainService");
                 e.printStackTrace();
                 try {
                     startForeground(SERVICE_NOTIFICATION_ID, notification);
                 } catch (Exception ex) {
-                    ex.printStackTrace();
                     Utils.handleUncaughtException(MainService.this.getApplicationContext(), ex, "MainService");
+                    ex.printStackTrace();
                     stopForeground(true);
                     stopSelf();
                     return;
                 }
-                Utils.handleUncaughtException(MainService.this.getApplicationContext(), e, "MainService");
             }
         }
 
@@ -525,13 +525,13 @@ public class MainService extends Service {
                                         isExported(false);
                                     }
                                 } catch (Exception e) {
+                                    isExported(false);
                                     try {
                                         if (writer != null) {
                                             writer.close();
                                             writer = null;
                                         }
                                     } catch (Exception ignored) {}
-                                    isExported(false);
                                     Utils.handleUncaughtException(MainService.this.getApplicationContext(), e, "MainService exportJSON Status 0");
                                     e.printStackTrace();
                                 }
@@ -542,13 +542,13 @@ public class MainService extends Service {
                     try {
                         writer.write(chunk);
                     } catch (Exception e) {
+                        isExported(false);
                         try {
                             if (writer != null) {
                                 writer.close();
                                 writer = null;
                             }
                         } catch (Exception ignored) {}
-                        isExported(false);
                         Utils.handleUncaughtException(MainService.this.getApplicationContext(), e, "MainService exportJSON Status 1");
                         e.printStackTrace();
                     }
@@ -560,16 +560,26 @@ public class MainService extends Service {
                         int lastStringLen = Math.min(chunk.length(), 3);
                         String lastNCharacters = new String(new char[lastStringLen]).replace("\0", "}");
                         if (chunk.endsWith(lastNCharacters)) {
-                            File file = new File(exportDirectoryPath + fileName);
+                            File finalFile = new File(exportDirectoryPath + fileName);
                             if (tempExportFile != null && tempExportFile.exists() && tempExportFile.isFile() && tempExportFile.length() > 0) {
-                                //noinspection ResultOfMethodCallIgnored
-                                file.createNewFile();
-                                Path tempPath = tempExportFile.toPath();
-                                Path backupPath = file.toPath();
-                                Files.copy(tempPath, backupPath, StandardCopyOption.REPLACE_EXISTING);
-                                isExported(true);
-                                //noinspection ResultOfMethodCallIgnored
-                                tempExportFile.delete();
+                                ReentrantLock finalFileNameLock = getLockForFileName(finalFile.getName());
+                                finalFileNameLock.lock();
+                                try {
+                                    //noinspection ResultOfMethodCallIgnored
+                                    finalFile.createNewFile();
+                                    Path tempPath = tempExportFile.toPath();
+                                    Path backupPath = finalFile.toPath();
+                                    Files.copy(tempPath, backupPath, StandardCopyOption.REPLACE_EXISTING);
+                                    isExported(true);
+                                    //noinspection ResultOfMethodCallIgnored
+                                    tempExportFile.delete();
+                                } catch (Exception e) {
+                                    isExported(false);
+                                    Utils.handleUncaughtException(getApplicationContext(), e, "MainService exportJSON Status 2 0");
+                                    e.printStackTrace();
+                                } finally {
+                                    finalFileNameLock.unlock();
+                                }
                             } else {
                                 isExported(false);
                             }
@@ -577,14 +587,14 @@ public class MainService extends Service {
                             isExported(false);
                         }
                     } catch (Exception e) {
+                        isExported(false);
                         try {
                             if (writer != null) {
                                 writer.close();
                                 writer = null;
                             }
                         } catch (Exception ignored) {}
-                        isExported(false);
-                        Utils.handleUncaughtException(MainService.this.getApplicationContext(), e, "MainService exportJSON Status 2");
+                        Utils.handleUncaughtException(MainService.this.getApplicationContext(), e, "MainService exportJSON Status 2 1");
                         e.printStackTrace();
                     }
                 }
@@ -678,6 +688,7 @@ public class MainService extends Service {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                         Utils.handleUncaughtException(MainService.this.getApplicationContext(), e, "updateNotificationsExecutorService");
                     }
+                    e.printStackTrace();
                 }
             });
             updateNotificationsFutures.put(String.valueOf(animeId), future);
@@ -716,8 +727,9 @@ public class MainService extends Service {
                 handler.post(() -> webView.loadUrl("javascript:window?.updateNotifications?.([" + joinedAnimeIds + "])"));
             } catch (Exception e) {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                    Utils.handleUncaughtException(MainService.this.getApplicationContext(), e, "updateCurrentNotificationsExecutorService");
+                    Utils.handleUncaughtException(MainService.this.getApplicationContext(), e, "MainService updateCurrentNotificationsExecutorService");
                 }
+                e.printStackTrace();
             }
         });
     }
@@ -732,6 +744,9 @@ public class MainService extends Service {
                 }
             });
         } catch (Exception e) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                Utils.handleUncaughtException(MainService.this.getApplicationContext(), e, "MainService isExported");
+            }
             e.printStackTrace();
             MainService.this.stopForeground(true);
             MainService.this.stopSelf();

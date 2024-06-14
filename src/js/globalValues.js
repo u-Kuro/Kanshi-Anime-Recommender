@@ -10,10 +10,12 @@ const mobile = writable(null)
 const appInstallationAsked = writable(getLocalStorage('appInstallationAsked') ?? null)
 const inApp = writable(true)
 const progress = writable(0)
+const resetProgress = writable(0)
 // const anilistAccessToken = writable(null)
 const hasWheel = writable(false)
 
 const username = writable(getLocalStorage('username') || '')
+const resetTypedUsername = writable(null)
 const loadedAnimeLists = writable({})
 const aniLoaderWorker = writable(null)
 const loadNewAnime = writable({})
@@ -92,8 +94,10 @@ export {
     appInstallationAsked,
     hasWheel,
     progress,
+    resetProgress,
     // anilistAccessToken,
     username,
+    resetTypedUsername,
     loadedAnimeLists,
     aniLoaderWorker,
     loadNewAnime,
