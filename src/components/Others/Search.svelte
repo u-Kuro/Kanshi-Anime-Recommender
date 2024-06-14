@@ -2348,6 +2348,7 @@
                         {@const filterSelectionKey =
                             filterCategoryName + "_" + filterSelectionName}
                         {@const filterSelectionIsSelected =
+                            filterCategoryIsSelected &&
                             filterSelectionName === openedFilterSelectionName}
                         <div
                             class="{'filter-select' +
