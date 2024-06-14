@@ -9,6 +9,7 @@ import static com.example.kanshi.Configs.getAssetLoader;
 import static com.example.kanshi.Configs.isDebug;
 import static com.example.kanshi.Configs.isOwnerKey;
 import static com.example.kanshi.Configs.visitedKey;
+import static com.example.kanshi.LocalPersistence.getLockForFile;
 import static com.example.kanshi.Utils.*;
 
 import androidx.activity.OnBackPressedCallback;
@@ -90,6 +91,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Pattern;
 
 import androidx.browser.customtabs.CustomTabColorSchemeParams;
@@ -650,14 +652,12 @@ public class MainActivity extends AppCompatActivity {
         if (webView!=null) {
             webView.post(() -> webView.loadUrl("javascript:window?.notifyUpdatedAnimeNotification?.()"));
         }
-        if (writer!=null) {
-            try {
+        try {
+            if (writer != null) {
                 writer.close();
                 writer = null;
-            } catch (Exception e) {
-                e.printStackTrace();
             }
-        }
+        } catch (Exception ignored) {}
         setBackgroundUpdates(false);
         super.onDestroy();
         if (wakeLock!=null) {
@@ -732,151 +732,165 @@ public class MainActivity extends AppCompatActivity {
             }
             changeKeepAppRunningInBackground(enable);
         }
+
         File tempExportFile;
         String exportDirectoryPath;
         @RequiresApi(api = Build.VERSION_CODES.R)
         @JavascriptInterface
         public void exportJSON(String chunk, int status, String fileName) {
-            if(status==0) {
-                if (writer!=null) {
+            ReentrantLock fileLock = null;
+            if (tempExportFile!=null) {
+                fileLock = getLockForFile(tempExportFile);
+                fileLock.lock(); // Lock before critical section
+            }
+            try {
+                if (status == 0) {
                     try {
-                        writer.close();
-                        writer = null;
+                        if (writer != null) {
+                            writer.close();
+                            writer = null;
+                        }
                     } catch (Exception ignored) {}
-                }
-                if (!Environment.isExternalStorageManager()) {
-                    showDialog(new AlertDialog.Builder(MainActivity.this)
-                                    .setTitle("Folder Access for Backup")
-                                    .setMessage("Allow permission to access folders for backup feature.")
-                                    .setPositiveButton("OK", (dialogInterface, i) -> {
-                                        Intent intent = new Intent(ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION, Uri.fromParts("package", getPackageName(), null));
-                                        startActivity(intent);
-                                    })
-                                    .setNegativeButton("CANCEL", null),
-                            true);
-                } else {
-                    if (new File(exportPath).isDirectory()) {
-                        exportDirectoryPath = exportPath + File.separator;
-                        File directory = new File(exportDirectoryPath);
-                        boolean dirIsCreated;
-                        if (!directory.exists()) {
-                            dirIsCreated = directory.mkdirs();
-                        } else {
-                            dirIsCreated = true;
-                        }
-                        if (directory.isDirectory() && dirIsCreated) {
-                            try {
-                                tempExportFile = new File(exportDirectoryPath + "tmp.json");
-                                boolean tempFileIsDeleted;
-                                if (tempExportFile.exists()) {
-                                    tempFileIsDeleted = tempExportFile.delete();
-                                    //noinspection ResultOfMethodCallIgnored
-                                    tempExportFile.createNewFile();
-                                } else {
-                                    tempFileIsDeleted = true;
-                                    //noinspection ResultOfMethodCallIgnored
-                                    tempExportFile.createNewFile();
-                                }
-                                if (tempFileIsDeleted) {
-                                    writer = new BufferedWriter(new FileWriter(tempExportFile, true));
-                                } else {
-                                    if (writer!=null) {
-                                        try {
-                                            writer.close();
-                                            writer = null;
-                                        } catch (Exception ignored) {}
-                                    }
-                                    isExported(false);
-                                    showToast(Toast.makeText(getApplicationContext(), "Temporary backup file can't be re-written, please delete tmp.json in the selected directory.", Toast.LENGTH_LONG));
-                                }
-                            } catch (Exception e) {
-                                if(writer!=null) {
-                                    try {
-                                        writer.close();
-                                        writer = null;
-                                    } catch (Exception e2) {
-                                        e2.printStackTrace();
-                                    }
-                                }
-                                isExported(false);
-                                showToast(Toast.makeText(getApplicationContext(), "An exception occurred initializing the temporary backup file.", Toast.LENGTH_LONG));
-                                e.printStackTrace();
-                            }
-                        } else if (!dirIsCreated) {
-                            showToast(Toast.makeText(getApplicationContext(), "Can't find backup folder, please create it first.", Toast.LENGTH_LONG));
-                        }
-                    } else if (exportPath != null && !exportPath.isEmpty() && !new File(exportPath).isDirectory()) {
-                        String[] tempExportPath = exportPath.split(Pattern.quote(File.separator));
-                        String tempPathName = tempExportPath.length > 1 ?
-                                tempExportPath[tempExportPath.length - 2] + File.separator +
-                                        tempExportPath[tempExportPath.length - 1]
-                                : tempExportPath[tempExportPath.length - 1];
+                    if (!Environment.isExternalStorageManager()) {
                         showDialog(new AlertDialog.Builder(MainActivity.this)
-                                        .setTitle("Backup Folder is Missing")
-                                        .setMessage("Folder directory [" + tempPathName + "] is missing, please choose another folder for backup.")
-                                        .setPositiveButton("OK", (dialogInterface, x) -> {
-                                            showToast(Toast.makeText(getApplicationContext(), "Select or create a folder.", Toast.LENGTH_LONG));
-                                            Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).addCategory(Intent.CATEGORY_DEFAULT);
-                                            chooseExportFile.launch(i);
+                                        .setTitle("Folder Access for Backup")
+                                        .setMessage("Allow permission to access folders for backup feature.")
+                                        .setPositiveButton("OK", (dialogInterface, i) -> {
+                                            Intent intent = new Intent(ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION, Uri.fromParts("package", getPackageName(), null));
+                                            startActivity(intent);
                                         })
                                         .setNegativeButton("CANCEL", null),
                                 true);
                     } else {
-                        Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).addCategory(Intent.CATEGORY_DEFAULT);
-                        chooseExportFile.launch(i);
-                        showToast(Toast.makeText(getApplicationContext(), "Select or create a folder.", Toast.LENGTH_LONG));
+                        File exportDirectory = new File(exportPath);
+                        if (exportDirectory.isDirectory()) {
+                            exportDirectoryPath = exportPath + File.separator;
+                            File directory = new File(exportDirectoryPath);
+                            boolean dirIsCreated;
+                            if (!directory.exists()) {
+                                dirIsCreated = directory.mkdirs();
+                            } else {
+                                dirIsCreated = true;
+                            }
+                            if (directory.isDirectory() && dirIsCreated) {
+                                try {
+                                    tempExportFile = new File(exportDirectoryPath + "tmp.json");
+                                    boolean tempFileIsDeleted;
+                                    if (tempExportFile.exists()) {
+                                        tempFileIsDeleted = tempExportFile.delete();
+                                        //noinspection ResultOfMethodCallIgnored
+                                        tempExportFile.createNewFile();
+                                    } else {
+                                        tempFileIsDeleted = true;
+                                        //noinspection ResultOfMethodCallIgnored
+                                        tempExportFile.createNewFile();
+                                    }
+                                    if (tempFileIsDeleted) {
+                                        writer = new BufferedWriter(new FileWriter(tempExportFile, true));
+                                    } else {
+                                        try {
+                                            if (writer != null) {
+                                                writer.close();
+                                                writer = null;
+                                            }
+                                        } catch (Exception ignored) {}
+                                        isExported(false);
+                                        showToast(Toast.makeText(getApplicationContext(), "Temporary backup file can't be re-written, please delete tmp.json in the selected directory.", Toast.LENGTH_LONG));
+                                    }
+                                } catch (Exception e) {
+                                    try {
+                                        if (writer != null) {
+                                            writer.close();
+                                            writer = null;
+                                        }
+                                    } catch (Exception ignored) {}
+                                    isExported(false);
+                                    showToast(Toast.makeText(getApplicationContext(), "An exception occurred initializing the temporary backup file.", Toast.LENGTH_LONG));
+                                    Utils.handleUncaughtException(MainActivity.this.getApplicationContext(), e, "exportJSON Status 0");
+                                    e.printStackTrace();
+                                }
+                            } else if (!dirIsCreated) {
+                                showToast(Toast.makeText(getApplicationContext(), "Can't find backup folder, please create it first.", Toast.LENGTH_LONG));
+                            }
+                        } else if (exportPath != null && !exportPath.isEmpty() && !exportDirectory.isDirectory()) {
+                            String[] tempExportPath = exportPath.split(Pattern.quote(File.separator));
+                            String tempPathName = tempExportPath.length > 1 ?
+                                    tempExportPath[tempExportPath.length - 2] + File.separator +
+                                            tempExportPath[tempExportPath.length - 1]
+                                    : tempExportPath[tempExportPath.length - 1];
+                            showDialog(new AlertDialog.Builder(MainActivity.this)
+                                            .setTitle("Backup Folder is Missing")
+                                            .setMessage("Folder directory [" + tempPathName + "] is missing, please choose another folder for backup.")
+                                            .setPositiveButton("OK", (dialogInterface, x) -> {
+                                                showToast(Toast.makeText(getApplicationContext(), "Select or create a folder.", Toast.LENGTH_LONG));
+                                                Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).addCategory(Intent.CATEGORY_DEFAULT);
+                                                chooseExportFile.launch(i);
+                                            })
+                                            .setNegativeButton("CANCEL", null),
+                                    true);
+                        } else {
+                            Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).addCategory(Intent.CATEGORY_DEFAULT);
+                            chooseExportFile.launch(i);
+                            showToast(Toast.makeText(getApplicationContext(), "Select or create a folder.", Toast.LENGTH_LONG));
+                        }
                     }
-                }
-            } else if(status==1&&writer!=null) {
-                try {
-                    writer.write(chunk);
-                } catch (Exception e) {
+                } else if (status == 1 && writer != null) {
                     try {
+                        writer.write(chunk);
+                    } catch (Exception e) {
+                        try {
+                            if (writer != null) {
+                                writer.close();
+                                writer = null;
+                            }
+                        } catch (Exception ignored) {}
+                        isExported(false);
+                        showToast(Toast.makeText(getApplicationContext(), "An exception occurred while writing to temporary backup file.", Toast.LENGTH_LONG));
+                        Utils.handleUncaughtException(MainActivity.this.getApplicationContext(), e, "exportJSON Status 1");
+                        e.printStackTrace();
+                    }
+                } else if (status == 2 && writer != null) {
+                    try {
+                        writer.write(chunk);
                         writer.close();
                         writer = null;
-                    } catch (Exception e2) {
-                        e2.printStackTrace();
-                    }
-                    isExported(false);
-                    showToast(Toast.makeText(getApplicationContext(), "An exception occurred while writing to temporary backup file.", Toast.LENGTH_LONG));
-                    e.printStackTrace();
-                }
-            } else if(status==2&&writer!=null) {
-                try {
-                    writer.write(chunk);
-                    writer.close();
-                    writer = null;
-                    int lastStringLen = Math.min(chunk.length(), 3);
-                    String lastNCharacters = new String(new char[lastStringLen]).replace("\0", "}");
-                    if (chunk.endsWith(lastNCharacters)) {
-                        File file = new File(exportDirectoryPath + fileName);
-                        if (tempExportFile != null && tempExportFile.exists() && tempExportFile.length() > 0) {
-                            Path tempPath = tempExportFile.toPath();
-                            Path backupPath = file.toPath();
-                            Files.copy(tempPath, backupPath, StandardCopyOption.REPLACE_EXISTING);
-                            isExported(true);
-                            //noinspection ResultOfMethodCallIgnored
-                            tempExportFile.delete();
+                        int lastStringLen = Math.min(chunk.length(), 3);
+                        String lastNCharacters = new String(new char[lastStringLen]).replace("\0", "}");
+                        if (chunk.endsWith(lastNCharacters)) {
+                            File file = new File(exportDirectoryPath + fileName);
+                            if (tempExportFile != null && tempExportFile.exists() && tempExportFile.isFile() && tempExportFile.length() > 0) {
+                                //noinspection ResultOfMethodCallIgnored
+                                file.createNewFile();
+                                Path tempPath = tempExportFile.toPath();
+                                Path backupPath = file.toPath();
+                                Files.copy(tempPath, backupPath, StandardCopyOption.REPLACE_EXISTING);
+                                isExported(true);
+                                //noinspection ResultOfMethodCallIgnored
+                                tempExportFile.delete();
+                            } else {
+                                isExported(false);
+                                showToast(Toast.makeText(getApplicationContext(), "Failed to access the backup file.", Toast.LENGTH_LONG));
+                            }
                         } else {
                             isExported(false);
-                            showToast(Toast.makeText(getApplicationContext(), "Failed to access the backup file.", Toast.LENGTH_LONG));
+                            showToast(Toast.makeText(getApplicationContext(), "An exception occurred in finalizing the backup file.", Toast.LENGTH_LONG));
                         }
-                    } else {
+                    } catch (Exception e) {
+                        try {
+                            if (writer != null) {
+                                writer.close();
+                                writer = null;
+                            }
+                        } catch (Exception ignored) {}
                         isExported(false);
                         showToast(Toast.makeText(getApplicationContext(), "An exception occurred in finalizing the backup file.", Toast.LENGTH_LONG));
+                        Utils.handleUncaughtException(MainActivity.this.getApplicationContext(), e, "MainActivity exportJSON Status 2");
+                        e.printStackTrace();
                     }
-                } catch (Exception e) {
-                    try {
-                        if (writer!=null) {
-                            writer.close();
-                            writer = null;
-                        }
-                    } catch (Exception e2) {
-                        e2.printStackTrace();
-                    }
-                    isExported(false);
-                    showToast(Toast.makeText(getApplicationContext(), "An exception occurred in finalizing the backup file.", Toast.LENGTH_LONG));
-                    e.printStackTrace();
+                }
+            } finally {
+                if (fileLock!=null) {
+                    fileLock.unlock();
                 }
             }
         }
@@ -954,15 +968,19 @@ public class MainActivity extends AppCompatActivity {
             finish();
         }
         final long DAY_IN_MILLIS = TimeUnit.DAYS.toMillis(1);
+        @RequiresApi(api = Build.VERSION_CODES.O)
         @JavascriptInterface
         public void addAnimeReleaseNotification(long animeId, String title, long releaseEpisode, long maxEpisode, long releaseDateMillis, String imageUrl, String animeUrl, String userStatus, long episodeProgress) {
             if (releaseDateMillis >= (System.currentTimeMillis() - DAY_IN_MILLIS)) {
                 AnimeNotificationManager.scheduleAnimeNotification(MainActivity.this, animeId, title, releaseEpisode, maxEpisode, releaseDateMillis, imageUrl, animeUrl, userStatus, episodeProgress);
             }
         }
+        @RequiresApi(api = Build.VERSION_CODES.O)
         @JavascriptInterface
         public void callUpdateNotifications() {
-            updateCurrentNotifications();
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                updateCurrentNotifications();
+            }
         }
         private final ExecutorService updateNotificationsExecutorService = Executors.newFixedThreadPool(1);
         private final Map<String, Future<?>> updateNotificationsFutures = new ConcurrentHashMap<>();
@@ -1174,6 +1192,7 @@ public class MainActivity extends AppCompatActivity {
     }
     private final ExecutorService updateCurrentNotificationsExecutorService = Executors.newFixedThreadPool(1);
     private Future<?> updateCurrentNotificationsFuture;
+    @RequiresApi(api = Build.VERSION_CODES.O)
     public void updateCurrentNotifications() {
         if (updateCurrentNotificationsFuture != null && !updateCurrentNotificationsFuture.isCancelled()) {
             updateCurrentNotificationsFuture.cancel(true);

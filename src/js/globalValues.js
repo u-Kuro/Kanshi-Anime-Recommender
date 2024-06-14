@@ -36,7 +36,6 @@ const loadingDataStatus = writable(null)
 const showLoadingAnime = writable(false)
 const isLoadingAnime = writable(false)
 const isProcessingList = writable(false)
-const isImporting = writable(false)
 const userRequestIsRunning = writable(null)
 const autoUpdate = writable(getLocalStorage('autoUpdate') ?? null)
 const autoUpdateInterval = writable(null)
@@ -116,7 +115,6 @@ export {
     showLoadingAnime,
     isLoadingAnime,
     isProcessingList,
-    isImporting,
     autoUpdate,
     autoUpdateInterval,
     runnedAutoUpdateAt,

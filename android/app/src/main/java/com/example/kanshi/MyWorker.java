@@ -434,7 +434,7 @@ public class MyWorker extends Worker {
         }
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.N)
+    @RequiresApi(api = Build.VERSION_CODES.O)
     private void getAiringAnime(AnimeNotification anime, int retries) {
         if (retries>=4) {
             return;
@@ -524,27 +524,26 @@ public class MyWorker extends Worker {
                 int responseCode = urlConnection.getResponseCode();
 
                 if (responseCode == HttpURLConnection.HTTP_OK) {
-                    BufferedReader reader = new BufferedReader(new InputStreamReader(urlConnection.getInputStream()));
-                    StringBuilder response = new StringBuilder();
-                    String line;
+                    try (BufferedReader reader = new BufferedReader(new InputStreamReader(urlConnection.getInputStream()))) {
+                        StringBuilder response = new StringBuilder();
+                        String line;
 
-                    while ((line = reader.readLine()) != null) {
-                        response.append(line);
+                        while ((line = reader.readLine()) != null) {
+                            response.append(line);
+                        }
+
+                        urlConnection.disconnect();
+
+                        // Parse the JSON response and return as JSONObject
+                        JSONObject responseJSON = new JSONObject(response.toString());
+                        String rateLimitStr = urlConnection.getHeaderField("x-ratelimit-remaining");
+                        try {
+                            int rateLimit = Integer.parseInt(rateLimitStr);
+                            responseJSON.put("rateLimit", rateLimit);
+                        } catch (NumberFormatException ignored) {
+                        }
+                        return responseJSON;
                     }
-
-                    reader.close();
-
-                    urlConnection.disconnect();
-
-                    // Parse the JSON response and return as JSONObject
-                    JSONObject responseJSON = new JSONObject(response.toString());
-                    String rateLimitStr = urlConnection.getHeaderField("x-ratelimit-remaining");
-                    try {
-                        int rateLimit = Integer.parseInt(rateLimitStr);
-                        responseJSON.put("rateLimit", rateLimit);
-                    } catch (NumberFormatException ignored){
-                    }
-                    return responseJSON;
                 } else {
                     urlConnection.disconnect();
                     JSONObject jsonObject = new JSONObject();

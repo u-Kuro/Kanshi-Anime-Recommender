@@ -238,8 +238,6 @@
 					// 								}
 					// 							})
 					// 							.catch((error) => {
-					// 								$dataStatus =
-					// 									"Something went wrong";
 					// 								console.error(error);
 					// 							});
 					// 					} else {
@@ -618,13 +616,16 @@
 		visibilityChange = false,
 	) {
 		if ($android && window?.[$isBackgroundUpdateKey] === true) return;
-		if (initCheck) {
+		if ($android == null) {
+			window.kanshiInit?.then?.(() => {
+				checkAutoFunctions(initCheck);
+			});
+		} else if (initCheck) {
 			try {
 				await requestUserEntries();
 				await requestAnimeEntries();
 				checkAutoExportOnLoad();
 			} catch (e) {
-				$dataStatus = "Something went wrong";
 				console.error(e);
 				checkAutoExportOnLoad();
 			}
@@ -638,7 +639,6 @@
 					})
 					.catch((error) => {
 						checkAutoExportOnLoad();
-						$dataStatus = "Something went wrong";
 						console.error(error);
 					});
 			} else {
@@ -801,7 +801,9 @@
 	autoUpdate.subscribe(async (val) => {
 		if ($android && window?.[$isBackgroundUpdateKey] === true) return;
 		if (val === true) {
-			saveJSON(true, "autoUpdate");
+			if ($android != null) {
+				saveJSON(true, "autoUpdate");
+			}
 			// Check Run First
 			if (await autoUpdateIsPastDate()) {
 				checkAutoFunctions();
@@ -833,7 +835,9 @@
 		} else if (val === false) {
 			if ($autoUpdateInterval) clearInterval($autoUpdateInterval);
 			$autoUpdateInterval = null;
-			saveJSON(false, "autoUpdate");
+			if ($android != null) {
+				saveJSON(false, "autoUpdate");
+			}
 		}
 	});
 	async function autoUpdateIsPastDate() {
@@ -871,7 +875,9 @@
 	autoExport.subscribe(async (val) => {
 		if ($android && window?.[$isBackgroundUpdateKey] === true) return;
 		if (val === true) {
-			saveJSON(true, "autoExport");
+			if ($android != null) {
+				saveJSON(true, "autoExport");
+			}
 			if (await autoExportIsPastDate()) {
 				checkAutoFunctions();
 				if ($autoExportInterval) clearInterval($autoExportInterval);
@@ -902,7 +908,9 @@
 		} else if (val === false) {
 			if ($autoExportInterval) clearInterval($autoExportInterval);
 			$autoExportInterval = null;
-			saveJSON(false, "autoExport");
+			if ($android != null) {
+				saveJSON(false, "autoExport");
+			}
 		}
 	});
 	async function autoExportIsPastDate() {

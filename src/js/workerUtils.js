@@ -11,7 +11,6 @@ import {
     loadAnime,
     initData,
     userRequestIsRunning,
-    isImporting,
     progress,
     android,
     extraInfo,
@@ -38,7 +37,7 @@ let windowHREF = window?.location?.href
 let terminateDelay = 1000;
 let dataStatusPrio = false
 let isExporting = false;
-let isCurrentlyImporting = false;
+let isImporting = false;
 let isGettingNewEntries = false;
 let isRequestingAnimeEntries = false
 
@@ -70,7 +69,7 @@ function getAnimeLoaderWorker() {
     if (animeLoaderWorker) return animeLoaderWorker
     if (animeLoaderWorkerPromise) return animeLoaderWorkerPromise
     animeLoaderWorkerPromise = new Promise(async (resolve) => {
-        resolve(new Worker(await cacheRequest("./webapi/worker/animeLoader.js", 19167, "Checking existing List")))
+        resolve(new Worker(await cacheRequest("./webapi/worker/animeLoader.js", 19322, "Checking existing List")))
         animeLoaderWorkerPromise = null
     })
     return animeLoaderWorkerPromise
@@ -91,11 +90,7 @@ const animeLoader = (_data = {}) => {
             return reject(ex)
         }
 
-        if (get(isImporting)) {
-            animeLoaderWorker.postMessage({ loadInit: true, postId, })
-        } else {
-            animeLoaderWorker.postMessage(_data)
-        }
+        animeLoaderWorker.postMessage(_data)
 
         if (animeLoaderWorker.onmessage) return
         animeLoaderWorker.onmessage = async ({ data }) => {
@@ -209,24 +204,6 @@ const animeLoader = (_data = {}) => {
                 });
                 animeLoaderPromises[data?.postId]?.resolve?.()
             }
-
-            if (get(isImporting)) {
-                isImporting.set(false)
-                isCurrentlyImporting = false
-
-                if (get(android)) {
-                    showToast("Data has been Imported")
-                }
-
-                runUpdate.update(e => !e)
-
-                animeLoaderWorker.postMessage({
-                    reload: true,
-                    loadMore: true,
-                    selectedCategory: get(selectedCategory),
-                    searchedWord: get(searchedWord),
-                });
-            }
         };
         animeLoaderWorker.onerror = (error) => {
             showLoadingAnime.set(false)
@@ -248,14 +225,14 @@ function getAnimeManagerWorker() {
     if (animeManagerWorker) return animeManagerWorker
     if (animeManagerWorkerPromise) return animeManagerWorkerPromise
     animeManagerWorkerPromise = new Promise(async (resolve) => {
-        resolve(new Worker(await cacheRequest("./webapi/worker/animeManager.js", 56383, "Updating the List")))
+        resolve(new Worker(await cacheRequest("./webapi/worker/animeManager.js", 56538, "Updating the List")))
         animeManagerWorkerPromise = null
     })
     return animeManagerWorkerPromise
 }
 const animeManager = (_data = {}) => {
     return new Promise(async (resolve, reject) => {
-        if (get(isImporting)) {
+        if (isImporting) {
             showLoadingAnime.set(false)
             return
         }
@@ -401,7 +378,7 @@ window.setAnimeCompletionUpdateTimeout = (neareastAnimeCompletionAiringAt) => {
 let passedAlgorithmFilter
 const processRecommendedAnimeList = (_data = {}) => {
     return new Promise((resolve, reject) => {
-        if (isCurrentlyImporting || get(isImporting)) {
+        if (isImporting) {
             if (!_data?.isImporting) {
                 showLoadingAnime.set(false)
                 return
@@ -412,7 +389,7 @@ const processRecommendedAnimeList = (_data = {}) => {
         processRecommendedAnimeListWorker = null
         dataStatusPrio = true
         progress.set(0)
-        cacheRequest("./webapi/worker/processRecommendedAnimeList.js", 40517, "Updating Recommendation List")
+        cacheRequest("./webapi/worker/processRecommendedAnimeList.js", 40686, "Updating Recommendation List")
             .then(url => {
                 const lastProcessRecommendationAiringAt = parseInt((new Date().getTime() / 1000))
                 let neareastAnimeCompletionAiringAt
@@ -513,7 +490,7 @@ const processRecommendedAnimeList = (_data = {}) => {
                             window?.setAnimeCompletionUpdateTimeout?.(neareastAnimeCompletionAiringAt)
                         }
                         resolve()
-                        if (get(isImporting)) {
+                        if (isImporting) {
                             animeLoader({ loadInit: true })
                         }
                         passedAlgorithmFilter = null
@@ -581,9 +558,8 @@ const requestAnimeEntries = (_data = {}) => {
         notifyUpdatedAnimeNotification()
         if (!get(initData)) {
             if (isGettingNewEntries
-                || isCurrentlyImporting
                 || isExporting
-                || get(isImporting)
+                || isImporting
             ) {
                 resolve()
                 return
@@ -725,8 +701,7 @@ const requestUserEntries = (_data = {}) => {
         requestUserEntriesWorker = null
         if (!get(initData)) {
             if (isExporting
-                || get(isImporting)
-                || isCurrentlyImporting
+                || isImporting
                 || isGettingNewEntries
             ) {
                 userRequestIsRunning.set(false)
@@ -823,7 +798,7 @@ const exportUserData = (_data) => {
         exportUserDataWorker?.terminate?.()
         exportUserDataWorker = null
         if (!get(initData)) {
-            if (get(isImporting) || isCurrentlyImporting || isGettingNewEntries) return
+            if (isImporting || isGettingNewEntries) return
             isExporting = true
             stopConflictingWorkers({ isExporting: true })
         }
@@ -853,18 +828,26 @@ const exportUserData = (_data) => {
                         dataStatus.set(data.status)
                         return
                     }
-                    if (hasOwnProp?.call?.(data, "missingData")) {
+                    if (hasOwnProp?.call?.(data, "missingData") || hasOwnProp?.call?.(data, "error")) {
                         dataStatusPrio = false
                         dataStatus.set(null)
                         progress.set(100)
                         isExporting = false
                         waitForExportApproval?.reject?.()
                         waitForExportApproval = null
-                        window.confirmPromise?.({
-                            isAlert: true,
-                            title: "Export failed",
-                            text: "Data was not exported, incomplete data.",
-                        })
+                        if (data?.missingData) {
+                            window.confirmPromise?.({
+                                isAlert: true,
+                                title: "Export failed",
+                                text: "Data was not exported, incomplete data.",
+                            })
+                        } else {
+                            window.confirmPromise?.({
+                                isAlert: true,
+                                title: "Export failed",
+                                text: "Data was not exported, something went wrong.",
+                            })
+                        }
                         updateRecommendationList.update(e => !e)
                         reject()
                     } else if (get(android)) {
@@ -984,8 +967,7 @@ const importUserData = (_data) => {
         importUserDataWorker = null
         if (!get(initData)) {
             if (isExporting || isGettingNewEntries) return
-            isCurrentlyImporting = true
-            isImporting.set(true)
+            isImporting = true
             animeManagerWorker?.terminate?.()
             animeManagerWorker = null
             showLoadingAnime.set(false)
@@ -1013,8 +995,7 @@ const importUserData = (_data) => {
                     }
                     if (hasOwnProp?.call?.(data, "error")) {
                         dataStatusPrio = false
-                        isImporting.set(false)
-                        isCurrentlyImporting = false
+                        isImporting = false
                         animeManager({ updateRecommendedAnimeList: true });
                         window.confirmPromise?.({
                             isAlert: true,
@@ -1054,14 +1035,13 @@ const importUserData = (_data) => {
                             .finally(() => {
                                 animeLoader({ loadInit: true })
                                     .finally(() => {
-                                        runUpdate.update(e => !e)
-                                        isImporting.set(false)
-                                        isCurrentlyImporting = false
+                                        isImporting = false
                                         dataStatus.set(null)
                                         progress.set(100)
                                         if (get(android)) {
                                             showToast("Data has been Imported")
                                         }
+                                        runUpdate.update(e => !e)
                                     })
                             })
                         importUserDataTerminateTimeout = setTimeout(() => {
@@ -1072,8 +1052,7 @@ const importUserData = (_data) => {
                 }
                 importUserDataWorker.onerror = (error) => {
                     dataStatusPrio = false
-                    isImporting.set(false)
-                    isCurrentlyImporting = false
+                    isImporting = false
                     window.confirmPromise?.({
                         isAlert: true,
                         title: "Import failed",
@@ -1087,8 +1066,7 @@ const importUserData = (_data) => {
                 }
             }).catch((error) => {
                 dataStatusPrio = false
-                isImporting.set(false)
-                isCurrentlyImporting = false
+                isImporting = false
                 loadAnime.update((e) => !e)
                 dataStatus.set(null)
                 progress.set(100)
@@ -1183,15 +1161,14 @@ const getExtraInfo = () => {
 // IndexedDB
 const getIDBdata = (name) => {
     return new Promise((resolve, reject) => {
-        cacheRequest("./webapi/worker/getIDBdata.js", 2668, "Retrieving Some Data")
+        cacheRequest("./webapi/worker/getIDBdata.js", 2876, "Retrieving Some Data")
             .then(url => {
                 let worker = new Worker(url)
                 worker.postMessage({ name })
                 worker.onmessage = ({ data }) => {
                     worker?.terminate?.()
-                    if (data === "Failed to initialize database") {
-                        alertError()
-                        reject(data)
+                    if (hasOwnProp?.call?.(data || {}, "Failed to retrieve the data")) {
+                        reject(data?.["Failed to retrieve the data"] || "Failed to retrieve the data")
                     } else {
                         resolve(data)
                     }
@@ -1210,17 +1187,17 @@ const getIDBdata = (name) => {
 window.updateNotifications = async (aniIdsNotificationToBeUpdated = []) => {
     if (!get(android)) return
     new Promise((resolve, reject) => {
-        cacheRequest("./webapi/worker/getIDBdata.js", 2668, "Retrieving Some Data")
+        cacheRequest("./webapi/worker/getIDBdata.js", 2876, "Retrieving Some Data")
             .then(url => {
                 let worker = new Worker(url)
                 worker.postMessage({ name: "aniIdsNotificationToBeUpdated", aniIdsNotificationToBeUpdated })
                 worker.onmessage = ({ data }) => {
-                    if (hasOwnProp?.call?.(data, "status")) {
-                        dataStatus.set(data.status)
-                        return
-                    }
                     worker?.terminate?.()
-                    resolve(data)
+                    if (hasOwnProp?.call?.(data || {}, "Failed to retrieve the data")) {
+                        reject(data?.["Failed to retrieve the data"] || "Failed to retrieve the data")
+                    } else {
+                        resolve(data)
+                    }
                 }
                 worker.onerror = (error) => {
                     reject(error)
@@ -1269,7 +1246,11 @@ const saveIDBdata = (_data, name, isImportant = false) => {
                         setTimeout(() => {
                             worker?.terminate?.();
                         }, terminateDelay)
-                        resolve()
+                        if (hasOwnProp?.call?.(data, "error")) {
+                            reject(data.error)
+                        } else {
+                            resolve()
+                        }
                     }
                     worker.onerror = (error) => {
                         reject(error)
@@ -1299,7 +1280,7 @@ const getAnimeEntries = (_data) => {
         }
         cacheRequest(url, 172885665, "Getting Anime, Manga, and Novel Entries", true)
             .then(animeEntriesBlob => {
-                cacheRequest("./webapi/worker/getEntries.js", 271595, "Retaining Anime, Manga, and Novel Entries")
+                cacheRequest("./webapi/worker/getEntries.js", 271696, "Retaining Anime, Manga, and Novel Entries")
                     .then(workerUrl => {
                         progress.set(25)
                         dataStatus.set("Retaining Anime, Manga, and Novel Entries")
@@ -1360,7 +1341,7 @@ const getFilterOptions = (_data) => {
         if (getFilterOptionsTerminateTimeout) clearTimeout(getFilterOptionsTerminateTimeout)
         getFilterOptionsWorker?.terminate?.()
         getFilterOptionsWorker = null
-        cacheRequest("./webapi/worker/getFilterOptions.js", 60032, "Initializing Filters")
+        cacheRequest("./webapi/worker/getFilterOptions.js", 60178, "Initializing Filters")
             .then(url => {
                 if (getFilterOptionsTerminateTimeout) clearTimeout(getFilterOptionsTerminateTimeout)
                 getFilterOptionsWorker?.terminate?.()
@@ -1373,7 +1354,11 @@ const getFilterOptions = (_data) => {
                         dataStatus.set(data.status)
                         return
                     }
-                    if (hasOwnProp?.call?.(data, "tagInfo")) {
+                    if (hasOwnProp?.call?.(data, "error")) {
+                        dataStatus.set(null)
+                        alertError()
+                        reject(data.error)
+                    } else if (hasOwnProp?.call?.(data, "tagInfo")) {
                         if (isJsonObject(data?.tagInfo) && !jsonIsEmpty(data?.tagInfo)) {
                             tagInfo.set(data.tagInfo)
                         }
@@ -1386,6 +1371,8 @@ const getFilterOptions = (_data) => {
                     }
                 }
                 getFilterOptionsWorker.onerror = (error) => {
+                    dataStatus.set(null)
+                    alertError()
                     reject(error)
                 }
             }).catch((error) => {
@@ -1408,8 +1395,7 @@ function stopConflictingWorkers(blocker) {
     isProcessingList.set(false)
     showLoadingAnime.set(false)
     importUserDataWorker?.terminate?.()
-    isImporting.set(blocker?.isImporting ?? false)
-    isCurrentlyImporting = blocker?.isImporting ?? false
+    isImporting = blocker?.isImporting ?? false
     exportUserDataWorker?.terminate?.()
     isExporting = blocker?.isExporting ?? false
     getFilterOptionsWorker?.terminate?.()

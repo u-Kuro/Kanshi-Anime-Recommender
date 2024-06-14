@@ -45,7 +45,8 @@ import java.util.ArrayList;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-@RequiresApi(api = Build.VERSION_CODES.N)
+
+@RequiresApi(api = Build.VERSION_CODES.O)
 public class AnimeReleaseActivity extends AppCompatActivity {
     public static WeakReference<AnimeReleaseActivity> weakActivity;
     public static boolean showUnwatchedAnime = false;
@@ -66,104 +67,88 @@ public class AnimeReleaseActivity extends AppCompatActivity {
                         if (uri==null) {
                             return;
                         }
+                        String fileNameHolder = "your file";
                         String filepath = uri.getPath();
-                        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O && filepath != null) {
-                            try {
-                                String filename = new File(filepath).getName();
-                                AlertDialog.Builder alertDialog = new AlertDialog.Builder(AnimeReleaseActivity.this)
-                                    .setTitle("Confirmation")
-                                    .setMessage("Do you want to import \""+filename+"\"?")
-                                    .setPositiveButton("OK", ((dialogInterface, i) -> {
-                                        ObjectInputStream objectIn = null;
-                                        Object object;
-
-                                        try {
-                                            ParcelFileDescriptor pfd = this.getContentResolver().openFileDescriptor(uri, "r");
-
-                                            if (pfd != null) {
-
-                                                FileInputStream fileIn = new FileInputStream(pfd.getFileDescriptor());
-                                                objectIn = new ObjectInputStream(fileIn);
-
-                                                object = objectIn.readObject();
-
-                                                @SuppressWarnings("unchecked") ConcurrentHashMap<String, AnimeNotification> $importedAllAnimeNotification = (ConcurrentHashMap<String, AnimeNotification>) object;
-
-                                                if ($importedAllAnimeNotification != null && !$importedAllAnimeNotification.isEmpty()) {
-                                                    if (AnimeNotificationManager.allAnimeNotification.isEmpty()) {
-                                                        try {
-
-                                                            @SuppressWarnings("unchecked") ConcurrentHashMap<String, AnimeNotification> $allAnimeNotification = (ConcurrentHashMap<String, AnimeNotification>) LocalPersistence.readObjectFromFile(this, "allAnimeNotification");
-
-                                                            if ($allAnimeNotification != null && !$allAnimeNotification.isEmpty()) {
-                                                                AnimeNotificationManager.allAnimeNotification.putAll($allAnimeNotification);
-                                                            }
-                                                        } catch (Exception ignored) {}
-                                                    }
-                                                    ArrayList<Map.Entry<String, AnimeNotification>> allAnimeNotificationEntries = new ArrayList<>($importedAllAnimeNotification.entrySet());
-
-                                                    for (int j = 0; j < allAnimeNotificationEntries.size(); j++) {
-                                                        Map.Entry<String, AnimeNotification> currentEntry = allAnimeNotificationEntries.get(j);
-                                                        AnimeNotificationManager.allAnimeNotification.putIfAbsent(currentEntry.getKey(), currentEntry.getValue());
-                                                    }
-
-                                                    if (!AnimeNotificationManager.allAnimeNotification.isEmpty()) {
-                                                        LocalPersistence.writeObjectToFile(this, AnimeNotificationManager.allAnimeNotification, "allAnimeNotification");
-
-                                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                                                            Utils.exportReleasedAnime(this.getApplicationContext());
-                                                        }
-                                                    }
-                                                    SchedulesTabFragment schedulesTabFragment = SchedulesTabFragment.getInstanceActivity();
-                                                    if (schedulesTabFragment != null) {
-                                                        schedulesTabFragment.updateScheduledAnime();
-                                                    }
-                                                    ReleasedTabFragment releasedTabFragment = ReleasedTabFragment.getInstanceActivity();
-
-                                                    if (releasedTabFragment != null) {
-                                                        releasedTabFragment.updateReleasedAnime();
-                                                    }
-
-                                                    showToast(Toast.makeText(this, "Anime Releases has been Imported", Toast.LENGTH_SHORT));
-
-                                                } else {
-
-                                                    showToast(Toast.makeText(this, "Something went wrong", Toast.LENGTH_SHORT));
-                                                }
-                                                objectIn.close();
-                                            } else {
-                                                showToast(Toast.makeText(this, "Something went wrong", Toast.LENGTH_SHORT));
-                                            }
-                                        } catch (Exception ignored) {
-                                            showToast(Toast.makeText(this, "Something went wrong", Toast.LENGTH_SHORT));
-                                        } finally {
-                                            try {
-                                                if (objectIn != null) {
-                                                    objectIn.close();
-                                                }
-                                            } catch (Exception ignored) {}
-                                        }
-                                    }))
-                                    .setNegativeButton("CANCEL", null);
-
-                                AlertDialog dialog = alertDialog.create();
-                                Window dialogWindow = dialog.getWindow();
-
-                                if (dialogWindow!=null) {
-                                    dialogWindow.setBackgroundDrawableResource(R.drawable.dialog);
-                                }
-
-                                dialog.show();
-
-                            } catch (Exception ignored) {
-                                showToast(Toast.makeText(this, "Something went wrong", Toast.LENGTH_SHORT));
-                            }
-                        } else {
-                            showToast(Toast.makeText(this, "Something went wrong", Toast.LENGTH_SHORT));
+                        if (filepath!=null) {
+                            fileNameHolder = "\""+(new File(uri.getPath()).getName())+"\"";
                         }
+                        AlertDialog.Builder alertDialog = new AlertDialog.Builder(AnimeReleaseActivity.this)
+                            .setTitle("Confirmation")
+                            .setMessage("Do you want to import "+fileNameHolder+"?")
+                            .setPositiveButton("OK", ((dialogInterface, i) -> {
+                                ParcelFileDescriptor pfd = null;
+                                FileInputStream fileIn = null;
+                                ObjectInputStream objectIn = null;
+                                Object object;
+                                try {
+                                    pfd = getContentResolver().openFileDescriptor(uri, "r");
+                                    if (pfd != null) {
+                                        fileIn = new FileInputStream(pfd.getFileDescriptor());
+                                        objectIn = new ObjectInputStream(fileIn);
+                                        object = objectIn.readObject();
+                                        @SuppressWarnings("unchecked") ConcurrentHashMap<String, AnimeNotification> $importedAllAnimeNotification = (ConcurrentHashMap<String, AnimeNotification>) object;
+                                        if ($importedAllAnimeNotification != null && !$importedAllAnimeNotification.isEmpty()) {
+                                            if (AnimeNotificationManager.allAnimeNotification.isEmpty()) {
+                                                try {
+                                                    @SuppressWarnings("unchecked") ConcurrentHashMap<String, AnimeNotification> $allAnimeNotification = (ConcurrentHashMap<String, AnimeNotification>) LocalPersistence.readObjectFromFile(this, "allAnimeNotification");
+                                                    if ($allAnimeNotification != null && !$allAnimeNotification.isEmpty()) {
+                                                        AnimeNotificationManager.allAnimeNotification.putAll($allAnimeNotification);
+                                                    }
+                                                } catch (Exception ignored) {}
+                                            }
+                                            ArrayList<Map.Entry<String, AnimeNotification>> allAnimeNotificationEntries = new ArrayList<>($importedAllAnimeNotification.entrySet());
+                                            for (int j = 0; j < allAnimeNotificationEntries.size(); j++) {
+                                                Map.Entry<String, AnimeNotification> currentEntry = allAnimeNotificationEntries.get(j);
+                                                AnimeNotificationManager.allAnimeNotification.putIfAbsent(currentEntry.getKey(), currentEntry.getValue());
+                                            }
+                                            if (!AnimeNotificationManager.allAnimeNotification.isEmpty()) {
+                                                LocalPersistence.writeObjectToFile(this, AnimeNotificationManager.allAnimeNotification, "allAnimeNotification");
+                                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                                                    Utils.exportReleasedAnime(this.getApplicationContext());
+                                                }
+                                            }
+                                            SchedulesTabFragment schedulesTabFragment = SchedulesTabFragment.getInstanceActivity();
+                                            if (schedulesTabFragment != null) {
+                                                schedulesTabFragment.updateScheduledAnime();
+                                            }
+                                            ReleasedTabFragment releasedTabFragment = ReleasedTabFragment.getInstanceActivity();
+                                            if (releasedTabFragment != null) {
+                                                releasedTabFragment.updateReleasedAnime();
+                                            }
+                                            showToast(Toast.makeText(this, "Anime Releases has been Imported", Toast.LENGTH_SHORT));
+                                        } else {
+                                            showToast(Toast.makeText(this, "Invalid File", Toast.LENGTH_SHORT));
+                                        }
+                                    } else {
+                                        showToast(Toast.makeText(this, "Failed to open", Toast.LENGTH_SHORT));
+                                    }
+                                } catch (Exception ignored) {
+                                    showToast(Toast.makeText(this, "Something went wrong", Toast.LENGTH_SHORT));
+                                } finally {
+                                    try {
+                                        if (objectIn != null) {
+                                            objectIn.close();
+                                        }
+                                        if (fileIn != null) {
+                                            fileIn.close();
+                                        }
+                                        if (pfd != null) {
+                                            pfd.close();
+                                        }
+                                    } catch (Exception ignored) {}
+                                }
+                            }))
+                            .setNegativeButton("CANCEL", null);
+                        AlertDialog dialog = alertDialog.create();
+                        Window dialogWindow = dialog.getWindow();
+                        if (dialogWindow!=null) {
+                            dialogWindow.setBackgroundDrawableResource(R.drawable.dialog);
+                        }
+                        dialog.show();
                     }
             );
 
+    @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         // Log Errors
@@ -347,6 +332,7 @@ public class AnimeReleaseActivity extends AppCompatActivity {
         }
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.O)
     public void backupBottomDialog() {
         if (bottomSheetDialog != null && bottomSheetDialog.isShowing()) {
             bottomSheetDialog.dismiss();
@@ -438,14 +424,8 @@ public class AnimeReleaseActivity extends AppCompatActivity {
         if (currentToast != null) {
             currentToast.cancel();
         }
-        MainActivity mainActivity = MainActivity.getInstanceActivity();
-        if (mainActivity!=null) {
-            boolean isInApp = mainActivity.isInApp;
-            if (isInApp) {
-                currentToast = toast;
-                currentToast.show();
-            }
-        }
+        currentToast = toast;
+        currentToast.show();
     }
     public static AnimeReleaseActivity getInstanceActivity() {
         if (weakActivity != null) {

@@ -1,15 +1,20 @@
 package com.example.kanshi;
 
+import static com.example.kanshi.LocalPersistence.getLockForFile;
+
 import android.content.ContentUris;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.graphics.Bitmap;
+import android.graphics.BitmapShader;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
+import android.graphics.RectF;
+import android.graphics.Shader;
 import android.graphics.drawable.Icon;
 import android.net.Uri;
 import android.os.Build;
@@ -19,17 +24,17 @@ import android.os.storage.StorageManager;
 import android.os.storage.StorageVolume;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
-import android.util.Log;
 
 import androidx.annotation.RequiresApi;
 
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
-import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -42,6 +47,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Matcher;
 
 /** @noinspection CommentedOutCode*/
@@ -73,12 +79,12 @@ public class Utils {
                             if (cursor != null && cursor.moveToFirst()) {
                                 int columnIndex = cursor.getColumnIndexOrThrow(MediaStore.Files.FileColumns.DATA);
                                 String documentPathFromUri = cursor.getString(columnIndex);
-                                cursor.close();
                                 final boolean isUriInVolume = documentPathFromUri != null && documentPathFromUri.startsWith(volumePath);
                                 if (isUriInVolume) {
                                     String[] pathSegments = docId.split(":");
                                     return volumeDir.getAbsolutePath() + "/" + pathSegments[1];
                                 }
+                                cursor.close();
                             }
                         }
                     }
@@ -247,34 +253,42 @@ public class Utils {
                 }
                 if (directory.isDirectory() && dirIsCreated) {
                     if (!AnimeNotificationManager.allAnimeNotification.isEmpty()) {
+                        FileOutputStream fileOut = null;
                         ObjectOutputStream objectOut = null;
                         final String filename = "Released Anime.bin";
                         File tempFile = new File(directory, filename + ".tmp");
+                        ReentrantLock fileLock = getLockForFile(tempFile);
+                        fileLock.lock();
                         try {
-                            FileOutputStream fileOut = new FileOutputStream(tempFile);
+                            fileOut = new FileOutputStream(tempFile);
                             objectOut = new ObjectOutputStream(fileOut);
                             objectOut.writeObject(AnimeNotificationManager.allAnimeNotification);
                             fileOut.getFD().sync();
-                            fileOut.close();
-                            File finalFile = new File(directory, filename);
-                            java.nio.file.Path tempFilePath = tempFile.toPath();
-                            java.nio.file.Path finalFilePath = finalFile.toPath();
-                            Files.copy(tempFilePath, finalFilePath, StandardCopyOption.REPLACE_EXISTING);
-                        } catch (IOException ignored) {
+                            if (tempFile.exists() && tempFile.isFile() && tempFile.length() > 0) {
+                                File finalFile = new File(directory, filename);
+                                //noinspection ResultOfMethodCallIgnored
+                                finalFile.createNewFile();
+                                Path tempFilePath = tempFile.toPath();
+                                Path finalFilePath = finalFile.toPath();
+                                Files.copy(tempFilePath, finalFilePath, StandardCopyOption.REPLACE_EXISTING);
+                            }
+                        } catch (Exception e) {
+                            handleUncaughtException(context.getApplicationContext(), e, "exportReleasedAnime");
+                            e.printStackTrace();
                         } finally {
                             try {
                                 if (objectOut != null) {
-                                    try {
-                                        objectOut.close();
-                                    } catch (IOException ignored) {
-                                    }
+                                    objectOut.close();
+                                }
+                                if (fileOut != null) {
+                                    fileOut.close();
                                 }
                                 if (tempFile.exists()) {
                                     //noinspection ResultOfMethodCallIgnored
                                     tempFile.delete();
                                 }
-                            } catch (Exception ignored) {
-                            }
+                            } catch (Exception ignored) {}
+                            fileLock.unlock();
                         }
                     }
                 }
@@ -336,6 +350,30 @@ public class Utils {
 
         return output;
     }
+    public static Bitmap cropAndRoundCorners(Bitmap original, int cornerRadius) {
+        // Crop the bitmap to a square
+        int minDimension = Math.min(original.getWidth(), original.getHeight());
+        int cropX = (original.getWidth() - minDimension) /  2;
+        int cropY = (original.getHeight() - minDimension) /  2;
+        Bitmap cropped = Bitmap.createBitmap(original, cropX, cropY, minDimension, minDimension);
+
+        // Create a new bitmap for the rounded corners
+        Bitmap rounded = Bitmap.createBitmap(minDimension, minDimension, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(rounded);
+
+        // Draw the cropped bitmap with rounded corners
+        Paint paint = new Paint();
+        paint.setAntiAlias(true);
+        paint.setShader(new BitmapShader(cropped, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP));
+        RectF rectF = new RectF(0,  0, minDimension, minDimension);
+        canvas.drawRoundRect(rectF, cornerRadius, cornerRadius, paint);
+
+        // Recycle the original and cropped bitmaps to free up memory
+        original.recycle();
+        cropped.recycle();
+
+        return rounded;
+    }
 
     private static boolean isUIThread() {
         return Looper.getMainLooper().getThread() == Thread.currentThread();
@@ -368,7 +406,7 @@ public class Utils {
         }
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.O)
+    @RequiresApi(api = Build.VERSION_CODES.R)
     private static void logErrorToFile(File logFile, Throwable e, String threadType, String fileFrom) {
         final SimpleDateFormat dateFormat = new SimpleDateFormat("EEEE, MMMM d, yyyy h:mm:ss a", Locale.US);
         StringBuilder newLogEntry = new StringBuilder();
@@ -393,32 +431,35 @@ public class Utils {
         for (StackTraceElement element : e.getStackTrace()) {
             newLogEntry.append("\tat ").append(element.toString()).append("\n");
         }
+
+        ReentrantLock fileLock = getLockForFile(logFile);
+        fileLock.lock();
         try {
             String existingContent = "";
             if (logFile.exists()) {
                 existingContent = new String(Files.readAllBytes(logFile.toPath()), StandardCharsets.UTF_8);
             }
-            try (FileWriter writer = new FileWriter(logFile)) {
+            try (BufferedWriter writer = new BufferedWriter(new FileWriter(logFile))) {
                 writer.write(newLogEntry.toString());
                 writer.write(existingContent);
             } catch (Exception e1) {
-                Log.e("Kanshi-Kuro 1", "Error writing to log file", e1);
+                e1.printStackTrace();
             }
         } catch (Exception e2) {
-            Log.e("Kanshi-Kuro 2", "Error writing to log file", e2);
+            e2.printStackTrace();
+        } finally {
+            fileLock.unlock();
         }
     }
 
-
-
 //    private static List<FileData> fileList = new ArrayList<>();
-//    @RequiresApi(api = Build.VERSION_CODES.N)
+//    @RequiresApi(api = Build.VERSION_CODES.O)
 //    public static void readFiles(Context context) {
 //        fileList = new ArrayList<>();
 //
 //        File file = context.getApplicationContext().getDataDir();
 //        File[] files = file.listFiles();
-//        addIndexedDBFiles(files, file.getPath());
+//        addFiles(files, file.getPath());
 //
 //        // Sort the list by file size
 //        Collections.sort(fileList, (f1, f2) -> Long.compare(f2.size, f1.size));
@@ -429,7 +470,7 @@ public class Utils {
 //        }
 //    }
 //
-//    public static void addIndexedDBFiles(File[] files, String path) {
+//    public static void addFiles(File[] files, String path) {
 //        if (files != null) {
 //            for (File file : files) {
 //                if (file.isFile()) {
@@ -437,7 +478,7 @@ public class Utils {
 //                    fileList.add(new FileData(path, file.getName(), file.length()));
 //                } else if (file.isDirectory()) {
 //                    File[] newFiles = file.listFiles();
-//                    addIndexedDBFiles(newFiles, path + File.separator + file.getName());
+//                    addFiles(newFiles, path + File.separator + file.getName());
 //                }
 //            }
 //        }

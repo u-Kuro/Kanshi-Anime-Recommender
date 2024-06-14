@@ -1,6 +1,7 @@
 package com.example.kanshi;
 
 import static com.example.kanshi.Configs.imageCache;
+import static com.example.kanshi.Utils.cropAndRoundCorners;
 
 import android.content.ClipData;
 import android.content.ClipboardManager;
@@ -8,11 +9,6 @@ import android.content.Context;
 import android.content.res.ColorStateList;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.BitmapShader;
-import android.graphics.Canvas;
-import android.graphics.Paint;
-import android.graphics.RectF;
-import android.graphics.Shader;
 import android.os.Build;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -349,9 +345,9 @@ public class AnimeReleaseGroupAdapter extends RecyclerView.Adapter<AnimeReleaseG
             }
             return animeReleaseGroups;
         });
-//        if (hasChanged.get()) {
+        if (hasChanged.get()) {
             notifyItemRemoved(position);
-//        }
+        }
     }
 
     @Override
@@ -375,30 +371,5 @@ public class AnimeReleaseGroupAdapter extends RecyclerView.Adapter<AnimeReleaseG
             animeReleaseGroupDate = itemView.findViewById(R.id.anime_release_group_date);
             animeReleaseGroupDateLayout = itemView.findViewById(R.id.anime_release_group_layout);
         }
-    }
-
-    public Bitmap cropAndRoundCorners(Bitmap original, int cornerRadius) {
-        // Crop the bitmap to a square
-        int minDimension = Math.min(original.getWidth(), original.getHeight());
-        int cropX = (original.getWidth() - minDimension) /  2;
-        int cropY = (original.getHeight() - minDimension) /  2;
-        Bitmap cropped = Bitmap.createBitmap(original, cropX, cropY, minDimension, minDimension);
-
-        // Create a new bitmap for the rounded corners
-        Bitmap rounded = Bitmap.createBitmap(minDimension, minDimension, Bitmap.Config.ARGB_8888);
-        Canvas canvas = new Canvas(rounded);
-
-        // Draw the cropped bitmap with rounded corners
-        Paint paint = new Paint();
-        paint.setAntiAlias(true);
-        paint.setShader(new BitmapShader(cropped, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP));
-        RectF rectF = new RectF(0,  0, minDimension, minDimension);
-        canvas.drawRoundRect(rectF, cornerRadius, cornerRadius, paint);
-
-        // Recycle the original and cropped bitmaps to free up memory
-        original.recycle();
-        cropped.recycle();
-
-        return rounded;
     }
 }

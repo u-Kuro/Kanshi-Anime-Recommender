@@ -55,6 +55,7 @@ public class AnimeNotificationManager {
     public static AnimeNotification nearestNotificationInfo = null;
     public static long nearestNotificationTime = 0L;
 
+    @RequiresApi(api = Build.VERSION_CODES.O)
     public static void scheduleAnimeNotification(Context context, long animeId, String title, long releaseEpisode, long maxEpisode, long releaseDateMillis, String imageUrl, String animeUrl, String userStatus, long episodeProgress) {
         context = context.getApplicationContext();
         createAnimeReleasesNotificationChannel(context);
@@ -128,6 +129,7 @@ public class AnimeNotificationManager {
         }
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.O)
     public static void addAnimeNotification(Context context, AnimeNotification anime) {
         if ((nearestNotificationTime == 0 || anime.releaseDateMillis < nearestNotificationTime) && anime.releaseDateMillis >= System.currentTimeMillis()) {
             Intent intent = new Intent(context, MyReceiver.class);
@@ -171,6 +173,7 @@ public class AnimeNotificationManager {
         }
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.O)
     public static void writeAnimeNotificationInFile(Context context, boolean isUpdating) {
         if (addNotificationFuture != null && !addNotificationFuture.isDone()) {
             addNotificationFuture.cancel(true);

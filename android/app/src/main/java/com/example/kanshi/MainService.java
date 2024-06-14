@@ -6,6 +6,7 @@ import static com.example.kanshi.Configs.NOTIFICATION_DATA_EVICTION;
 import static com.example.kanshi.Configs.isBackgroundUpdateKey;
 import static com.example.kanshi.Configs.visitedKey;
 import static com.example.kanshi.Configs.getAssetLoader;
+import static com.example.kanshi.LocalPersistence.getLockForFile;
 
 import android.annotation.SuppressLint;
 import android.app.Notification;
@@ -61,6 +62,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantLock;
 
 @SuppressLint("SetJavaScriptEnabled")
 public class MainService extends Service {
@@ -299,14 +301,12 @@ public class MainService extends Service {
         if (webView!=null) {
             webView.destroy();
         }
-        if (writer!=null) {
-            try {
+        try {
+            if (writer != null) {
                 writer.close();
                 writer = null;
-            } catch (Exception e) {
-                e.printStackTrace();
             }
-        }
+        } catch (Exception ignored) {}
         AnimeNotificationManager.recentlyUpdatedAnimeNotification(MainService.this, addedAnimeCount, updatedAnimeCount);
         MainActivity mainActivity = MainActivity.getInstanceActivity();
         if (mainActivity != null) {
@@ -476,108 +476,121 @@ public class MainService extends Service {
         @RequiresApi(api = Build.VERSION_CODES.R)
         @JavascriptInterface
         public void exportJSON(String chunk, int status, String fileName) {
-            if(status==0) {
-                if (writer!=null) {
+            ReentrantLock fileLock = null;
+            if (tempExportFile != null) {
+                fileLock = getLockForFile(tempExportFile);
+                fileLock.lock(); // Lock before critical section
+            }
+            try {
+                if (status == 0) {
                     try {
-                        writer.close();
-                        writer = null;
-                    } catch (Exception ignored) {}
-                }
-                if (Environment.isExternalStorageManager()) {
-                    if (new File(exportPath).isDirectory()) {
-                        exportDirectoryPath = exportPath + File.separator;
-                        File directory = new File(exportDirectoryPath);
-                        boolean dirIsCreated;
-                        if (!directory.exists()) {
-                            dirIsCreated = directory.mkdirs();
-                        } else {
-                            dirIsCreated = true;
-                        }
-                        if (directory.isDirectory() && dirIsCreated) {
-                            try {
-                                tempExportFile = new File(exportDirectoryPath + "pb.tmp.json");
-                                boolean tempFileIsDeleted;
-                                if (tempExportFile.exists()) {
-                                    tempFileIsDeleted = tempExportFile.delete();
-                                    //noinspection ResultOfMethodCallIgnored
-                                    tempExportFile.createNewFile();
-                                } else {
-                                    tempFileIsDeleted = true;
-                                    //noinspection ResultOfMethodCallIgnored
-                                    tempExportFile.createNewFile();
-                                }
-                                if (tempFileIsDeleted) {
-                                    writer = new BufferedWriter(new FileWriter(tempExportFile, true));
-                                } else {
-                                    if (writer!=null) {
-                                        try {
-                                            writer.close();
-                                            writer = null;
-                                        } catch (Exception ignored) {}
-                                    }
-                                    isExported(false);
-                                }
-                            } catch (Exception e) {
-                                if(writer!=null) {
-                                    try {
-                                        writer.close();
-                                        writer = null;
-                                    } catch (Exception e2) {
-                                        e2.printStackTrace();
-                                    }
-                                }
-                                isExported(false);
-                                e.printStackTrace();
-                            }
-                        }
-                    }
-                }
-            } else if(status==1&&writer!=null) {
-                try {
-                    writer.write(chunk);
-                } catch (Exception e) {
-                    try {
-                        writer.close();
-                        writer = null;
-                    } catch (Exception e2) {
-                        e2.printStackTrace();
-                    }
-                    isExported(false);
-                    e.printStackTrace();
-                }
-            } else if(status==2&&writer!=null) {
-                try {
-                    writer.write(chunk);
-                    writer.close();
-                    writer = null;
-                    int lastStringLen = Math.min(chunk.length(), 3);
-                    String lastNCharacters = new String(new char[lastStringLen]).replace("\0", "}");
-                    if (chunk.endsWith(lastNCharacters)) {
-                        File file = new File(exportDirectoryPath + fileName);
-                        if (tempExportFile != null && tempExportFile.exists() && tempExportFile.length() > 0) {
-                            Path tempPath = tempExportFile.toPath();
-                            Path backupPath = file.toPath();
-                            Files.copy(tempPath, backupPath, StandardCopyOption.REPLACE_EXISTING);
-                            isExported(true);
-                            //noinspection ResultOfMethodCallIgnored
-                            tempExportFile.delete();
-                        } else {
-                            isExported(false);
-                        }
-                    } else {
-                        isExported(false);
-                    }
-                } catch (Exception e) {
-                    try {
-                        if (writer!=null) {
+                        if (writer != null) {
                             writer.close();
                             writer = null;
                         }
-                    } catch (Exception e2) {
-                        e2.printStackTrace();
+                    } catch (Exception ignored) {}
+                    if (Environment.isExternalStorageManager()) {
+                        File exportDirectory = new File(exportPath);
+                        if (exportDirectory.isDirectory()) {
+                            exportDirectoryPath = exportPath + File.separator;
+                            File directory = new File(exportDirectoryPath);
+                            boolean dirIsCreated;
+                            if (!directory.exists()) {
+                                dirIsCreated = directory.mkdirs();
+                            } else {
+                                dirIsCreated = true;
+                            }
+                            if (directory.isDirectory() && dirIsCreated) {
+                                try {
+                                    tempExportFile = new File(exportDirectoryPath + "pb.tmp.json");
+                                    boolean tempFileIsDeleted;
+                                    if (tempExportFile.exists()) {
+                                        tempFileIsDeleted = tempExportFile.delete();
+                                        //noinspection ResultOfMethodCallIgnored
+                                        tempExportFile.createNewFile();
+                                    } else {
+                                        tempFileIsDeleted = true;
+                                        //noinspection ResultOfMethodCallIgnored
+                                        tempExportFile.createNewFile();
+                                    }
+                                    if (tempFileIsDeleted) {
+                                        writer = new BufferedWriter(new FileWriter(tempExportFile, true));
+                                    } else {
+                                        try {
+                                            if (writer != null) {
+                                                writer.close();
+                                                writer = null;
+                                            }
+                                        } catch (Exception ignored) {}
+                                        isExported(false);
+                                    }
+                                } catch (Exception e) {
+                                    try {
+                                        if (writer != null) {
+                                            writer.close();
+                                            writer = null;
+                                        }
+                                    } catch (Exception ignored) {}
+                                    isExported(false);
+                                    Utils.handleUncaughtException(MainService.this.getApplicationContext(), e, "MainService exportJSON Status 0");
+                                    e.printStackTrace();
+                                }
+                            }
+                        }
                     }
-                    isExported(false);
-                    e.printStackTrace();
+                } else if (status == 1 && writer != null) {
+                    try {
+                        writer.write(chunk);
+                    } catch (Exception e) {
+                        try {
+                            if (writer != null) {
+                                writer.close();
+                                writer = null;
+                            }
+                        } catch (Exception ignored) {}
+                        isExported(false);
+                        Utils.handleUncaughtException(MainService.this.getApplicationContext(), e, "MainService exportJSON Status 1");
+                        e.printStackTrace();
+                    }
+                } else if (status == 2 && writer != null) {
+                    try {
+                        writer.write(chunk);
+                        writer.close();
+                        writer = null;
+                        int lastStringLen = Math.min(chunk.length(), 3);
+                        String lastNCharacters = new String(new char[lastStringLen]).replace("\0", "}");
+                        if (chunk.endsWith(lastNCharacters)) {
+                            File file = new File(exportDirectoryPath + fileName);
+                            if (tempExportFile != null && tempExportFile.exists() && tempExportFile.isFile() && tempExportFile.length() > 0) {
+                                //noinspection ResultOfMethodCallIgnored
+                                file.createNewFile();
+                                Path tempPath = tempExportFile.toPath();
+                                Path backupPath = file.toPath();
+                                Files.copy(tempPath, backupPath, StandardCopyOption.REPLACE_EXISTING);
+                                isExported(true);
+                                //noinspection ResultOfMethodCallIgnored
+                                tempExportFile.delete();
+                            } else {
+                                isExported(false);
+                            }
+                        } else {
+                            isExported(false);
+                        }
+                    } catch (Exception e) {
+                        try {
+                            if (writer != null) {
+                                writer.close();
+                                writer = null;
+                            }
+                        } catch (Exception ignored) {}
+                        isExported(false);
+                        Utils.handleUncaughtException(MainService.this.getApplicationContext(), e, "MainService exportJSON Status 2");
+                        e.printStackTrace();
+                    }
+                }
+            } finally {
+                if (fileLock != null) {
+                    fileLock.unlock();
                 }
             }
         }
@@ -601,6 +614,7 @@ public class MainService extends Service {
             }
         }
         final long DAY_IN_MILLIS = TimeUnit.DAYS.toMillis(1);
+        @RequiresApi(api = Build.VERSION_CODES.O)
         @JavascriptInterface
         public void addAnimeReleaseNotification(long animeId, String title, long releaseEpisode, long maxEpisode, long releaseDateMillis, String imageUrl, String animeUrl, String userStatus, long episodeProgress) {
             if (releaseDateMillis >= (System.currentTimeMillis() - DAY_IN_MILLIS)) {
@@ -608,9 +622,12 @@ public class MainService extends Service {
                 AnimeNotificationManager.scheduleAnimeNotification(MainService.this, animeId, title, releaseEpisode, maxEpisode, releaseDateMillis, imageUrl, animeUrl, userStatus, episodeProgress);
             }
         }
+        @RequiresApi(api = Build.VERSION_CODES.O)
         @JavascriptInterface
         public void callUpdateNotifications() {
-            updateCurrentNotifications();
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                updateCurrentNotifications();
+            }
         }
         private final ExecutorService updateNotificationsExecutorService = Executors.newFixedThreadPool(1);
         private final Map<String, Future<?>> updateNotificationsFutures = new ConcurrentHashMap<>();
@@ -674,6 +691,7 @@ public class MainService extends Service {
 
     private final ExecutorService updateCurrentNotificationsExecutorService = Executors.newFixedThreadPool(1);
     private Future<?> updateCurrentNotificationsFuture;
+    @RequiresApi(api = Build.VERSION_CODES.O)
     public void updateCurrentNotifications() {
         if (updateCurrentNotificationsFuture != null && !updateCurrentNotificationsFuture.isCancelled()) {
             updateCurrentNotificationsFuture.cancel(true);
