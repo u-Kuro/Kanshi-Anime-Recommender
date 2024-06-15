@@ -1,19 +1,17 @@
-const version = 413;
+const version = 414;
 let webVersionPromise
 export default async function getWebVersion() {
     if (webVersionPromise) return webVersionPromise
     webVersionPromise = new Promise(async (resolve) => {
         try {
-            let location = window.location
+            const location = window.location
             if (location.protocol.includes("file")) {
                 resolve(version)
                 webVersionPromise = null
                 return
             }
-            let path = location.pathname;
-            path = path.endsWith('/') ? path : path + '/'
-            path = path.includes('/index.html') ? path.replace('/index.html', '') : path
-            let response = await fetch(`${path}version.json`, {
+            const url = new URL("version.json", location).href
+            const response = await fetch(url, {
                 cache: "no-cache"
             })
             const result = await response.json()
@@ -24,7 +22,7 @@ export default async function getWebVersion() {
             }
             webVersionPromise = null
             return
-        } catch (error) {
+        } catch {
             resolve(version)
             webVersionPromise = null
             return

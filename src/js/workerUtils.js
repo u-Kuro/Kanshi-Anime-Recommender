@@ -31,7 +31,8 @@ import {
     animeCautions,
     showLoadingAnime,
     resetTypedUsername,
-    resetProgress
+    resetProgress,
+    appID
 } from "./globalValues.js";
 
 const hasOwnProp = Object.prototype.hasOwnProperty
@@ -227,7 +228,7 @@ function getAnimeManagerWorker() {
     if (animeManagerWorker) return animeManagerWorker
     if (animeManagerWorkerPromise) return animeManagerWorkerPromise
     animeManagerWorkerPromise = new Promise(async (resolve) => {
-        resolve(new Worker(await cacheRequest("./webapi/worker/animeManager.js", 56538, "Updating the List")))
+        resolve(new Worker(await cacheRequest("./webapi/worker/animeManager.js", 56571, "Updating the List")))
         animeManagerWorkerPromise = null
     })
     return animeManagerWorkerPromise
@@ -392,7 +393,7 @@ const processRecommendedAnimeList = (_data = {}) => {
         processRecommendedAnimeListWorker = null
 
         progress.set(0)
-        cacheRequest("./webapi/worker/processRecommendedAnimeList.js", 40686, "Updating Recommendation List")
+        cacheRequest("./webapi/worker/processRecommendedAnimeList.js", 40528, "Updating Recommendation List")
             .then(url => {
                 const lastProcessRecommendationAiringAt = parseInt((new Date().getTime() / 1000))
                 let neareastAnimeCompletionAiringAt
@@ -453,7 +454,7 @@ const processRecommendedAnimeList = (_data = {}) => {
                                         aniReleaseNotif?.episodeProgress
                                     )
                                 }
-                            } catch (e) { }
+                            } catch { }
                         }
                     } else if (hasOwnProp?.call?.(data, "animeCompletionAiringAt")) {
                         const animeCompletionAiringAt = data?.animeCompletionAiringAt
@@ -477,7 +478,7 @@ const processRecommendedAnimeList = (_data = {}) => {
                             if (typeof (get(username)) === "string") {
                                 try {
                                     JSBridge?.callUpdateNotifications?.()
-                                } catch (e) { }
+                                } catch { }
                             }
                         }
                         if (data?.hasPassedFilters === true) {
@@ -546,7 +547,7 @@ function notifyUpdatedAnimeNotification() {
         ) {
             try {
                 JSBridge?.showNewUpdatedAnimeNotification?.(newAddedAnimeCount, newUpdatedAnimeCount)
-            } catch (e) { }
+            } catch { }
             newAddedAnimeCount = newUpdatedAnimeCount = undefined
         }
     }
@@ -1293,65 +1294,44 @@ const saveIDBdata = (_data, name, isImportant = false) => {
 const getAnimeEntries = (_data) => {
     return new Promise((resolve, reject) => {
         progress.set(0)
-        let url
-        if (get(android)) {
-            url = "./webapi/worker/entries.json"
-        } else {
-            const directory = "./webapi/worker/entries-chunk-", extension = ".txt"
-            url = [
-                `${directory}1${extension}`,
-                `${directory}2${extension}`,
-            ]
-        }
-        cacheRequest(url, 172885665, "Getting Anime, Manga, and Novel Entries", true)
-            .then(animeEntriesBlob => {
-                dataStatus.set("Retaining Anime, Manga, and Novel Entries")
-                cacheRequest("./webapi/worker/getEntries.js")
-                    .then(workerUrl => {
-                        dataStatus.set("Retaining Anime, Manga, and Novel Entries")
-                        let worker = new Worker(workerUrl)
-                        worker.postMessage({ animeEntriesBlob })
-                        worker.onmessage = ({ data }) => {
-                            if (hasOwnProp?.call?.(data, "progress")) {
-                                if (data?.progress >= 0 && data?.progress <= 100) {
-                                    progress.set(data.progress)
-                                }
-                                return
-                            } else if (hasOwnProp?.call?.(data, "status")) {
-                                dataStatusPrio = true
-                                dataStatus.set(data.status)
-                                return
-                            }
-                            dataStatus.set(null)
-                            progress.set(100)
-                            dataStatusPrio = false
-                            updateRecommendationList.update(e => !e)
-                            setTimeout(() => {
-                                worker?.terminate?.();
-                            }, terminateDelay)
-                            if (hasOwnProp?.call?.(data, "error")) {
-                                console.error(data?.error)
-                                reject(data?.error)
-                            } else {
-                                resolve(data)
-                            }
+        cacheRequest("./webapi/worker/getEntries.js")
+            .then(workerUrl => {
+                let worker = new Worker(workerUrl)
+                windowHREF = windowHREF || window?.location?.href
+                worker.postMessage({ windowHREF, android: get(android), appID: get(appID) })
+                worker.onmessage = ({ data }) => {
+                    if (hasOwnProp?.call?.(data, "progress")) {
+                        if (data?.progress >= 0 && data?.progress <= 100) {
+                            progress.set(data.progress)
                         }
-                        worker.onerror = (error) => {
-                            dataStatusPrio = false
-                            dataStatus.set(null)
-                            progress.set(100)
-                            alertError()
-                            updateRecommendationList.update(e => !e)
-                            reject(error)
-                        }
-                    }).catch((error) => {
-                        dataStatusPrio = false
-                        dataStatus.set(null)
-                        progress.set(100)
-                        alertError()
-                        updateRecommendationList.update(e => !e)
-                        reject(error)
-                    })
+                        return
+                    } else if (hasOwnProp?.call?.(data, "status")) {
+                        dataStatusPrio = true
+                        dataStatus.set(data.status)
+                        return
+                    }
+                    dataStatus.set(null)
+                    progress.set(100)
+                    dataStatusPrio = false
+                    updateRecommendationList.update(e => !e)
+                    setTimeout(() => {
+                        worker?.terminate?.();
+                    }, terminateDelay)
+                    if (hasOwnProp?.call?.(data, "error")) {
+                        console.error(data?.error)
+                        reject(data?.error)
+                    } else {
+                        resolve(data)
+                    }
+                }
+                worker.onerror = (error) => {
+                    dataStatusPrio = false
+                    dataStatus.set(null)
+                    progress.set(100)
+                    alertError()
+                    updateRecommendationList.update(e => !e)
+                    reject(error)
+                }
             }).catch((error) => {
                 dataStatusPrio = false
                 dataStatus.set(null)
