@@ -76,9 +76,10 @@
 		selectedAnimeGridEl,
 		showLoadingAnime,
 		resetProgress,
+        tagInfo,
 		// anilistAccessToken,
 	} from "./js/globalValues.js";
-
+	
 	$android = isAndroid(); // Android/Browser Identifier
 	$mobile = isMobile(); // Mobile/
 	// Init Data
@@ -142,26 +143,7 @@
 				.finally(resolve);
 		}
 	})
-		.then(() => {
-			// Get Export Folder for Android
-			(async () => {
-				if ($android) {
-					$exportPathIsAvailable =
-						$exportPathIsAvailable ??
-						getLocalStorage("exportPathIsAvailable") ??
-						(await retrieveJSON("exportPathIsAvailable"));
-					if ($exportPathIsAvailable == null) {
-						$exportPathIsAvailable = false;
-						setLocalStorage("exportPathIsAvailable", false)
-							.catch(() => {
-								removeLocalStorage("exportPathIsAvailable");
-							})
-							.finally(() => {
-								saveJSON(false, "exportPathIsAvailable");
-							});
-					}
-				}
-			})();
+		.then(async() => {
 
 			// Check/Get/Update/Process Anime Entries
 			initDataPromises.push(
@@ -292,23 +274,29 @@
 			// Check/Get/Update Filter Options Selection
 			initDataPromises.push(
 				new Promise(async (resolve, reject) => {
-					try {
-						getFilterOptions()
-							.then((data) => {
-								$orderedFilters = data?.orderedFilters;
-								$nonOrderedFilters = data?.nonOrderedFilters;
-								$filterConfig = data?.filterConfig;
-								$algorithmFilters = data?.algorithmFilter;
-								try {
-									updateTagInfo();
-								} catch {}
-								resolve();
-							})
-							.catch(() => {
-								reject();
-							});
-					} catch (e) {
-						reject(e);
+					if ($android && window[$isBackgroundUpdateKey] === true) {
+						updateTagInfo();
+						resolve();
+					} else {
+						try {
+							getFilterOptions()
+								.then((data) => {
+									$orderedFilters = data?.orderedFilters;
+									$nonOrderedFilters = data?.nonOrderedFilters;
+									$filterConfig = data?.filterConfig;
+									$algorithmFilters = data?.algorithmFilter;
+									$tagInfo = data?.tagInfo;
+									try {
+										updateTagInfo();
+									} catch {}
+									resolve();
+								})
+								.catch(() => {
+									reject();
+								});
+						} catch (e) {
+							reject(e);
+						}
 					}
 				}),
 			);
@@ -561,6 +549,24 @@
 					}
 				})
 				.catch(initFailed);
+			
+			// Get Export Folder for Android
+			if ($android) {
+				$exportPathIsAvailable =
+					$exportPathIsAvailable ??
+					getLocalStorage("exportPathIsAvailable") ??
+					(await retrieveJSON("exportPathIsAvailable"));
+				if ($exportPathIsAvailable == null) {
+					$exportPathIsAvailable = false;
+					setLocalStorage("exportPathIsAvailable", false)
+						.catch(() => {
+							removeLocalStorage("exportPathIsAvailable");
+						})
+						.finally(() => {
+							saveJSON(false, "exportPathIsAvailable");
+						});
+				}
+			}
 		})
 		.finally(() => {
 			try {
@@ -773,6 +779,7 @@
 		shouldLoadAnime,
 	) => {
 		if ($initData) return;
+		if ($android && window?.[$isBackgroundUpdateKey] === true) return;
 		$showLoadingAnime = true;
 		new Promise(async (resolve) => {
 			if (shouldProcessRecommendation) {

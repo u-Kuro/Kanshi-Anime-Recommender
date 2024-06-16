@@ -199,8 +199,10 @@ public class MainService extends Service {
             public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
                 Uri uri = request.getUrl();
                 String url = uri.toString();
-                if (url.startsWith("https://appassets.androidplatform.net/assets/version.json")) {
-                    return fetchWebVersion();
+                if (url.startsWith("https://appassets.androidplatform.net/assets/build/bundle.css")
+                    || url.startsWith("https://appassets.androidplatform.net/assets/version.json")
+                ) {
+                    return null;
                 } else {
                     return assetLoader.shouldInterceptRequest(uri);
                 }

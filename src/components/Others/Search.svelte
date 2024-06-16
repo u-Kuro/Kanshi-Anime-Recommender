@@ -53,8 +53,6 @@
         selectedAnimeGridEl,
         showLoadingAnime,
         resetProgress,
-        loadedOrderedFilters,
-        hasLoadedAllOrderedFilters,
     } from "../../js/globalValues.js";
 
     let selectedCategoryAnimeFilters,
@@ -2420,31 +2418,33 @@
                                         class="options"
                                         on:wheel|stopPropagation="{() => {}}"
                                     >
-                                        {#if !$hasLoadedAllOrderedFilters && $loadedOrderedFilters[filterSelectionName]!==true}
-                                            {@const progress = $loadedOrderedFilters[filterSelectionName]}
-                                            <div class="option option-loading">
-                                                <h3>Loading...</h3>
-                                                <h3>{typeof progress==="number"? progress.toFixed(2) : "0.00"}%</h3>
-                                            </div>
-                                        {:else if filterSelectionIsSelected}
-                                            {#await filterSelectionOptionsLoaded ? (filterSelectionsSearch[filterSelectionKey] ? $orderedFilters?.[filterSelectionName]?.filter?.( (option) => hasPartialMatch(option, filterSelectionsSearch[filterSelectionKey]), ) : $orderedFilters?.[filterSelectionName]) : new Promise( (resolve) => resolve(filterSelectionsSearch[filterSelectionKey] ? $orderedFilters?.[filterSelectionName]?.filter?.( (option) => hasPartialMatch(option, filterSelectionsSearch[filterSelectionKey]), ) : $orderedFilters?.[filterSelectionName]), )}
-                                                {""}{:then selectionOptions}
+                                        {#if filterSelectionIsSelected}
+                                            {#await filterSelectionOptionsLoaded ? 
+                                                (filterSelectionsSearch[filterSelectionKey] ? 
+                                                    $orderedFilters?.[filterSelectionName]?.filter?.( (option) => hasPartialMatch(option, filterSelectionsSearch[filterSelectionKey]), ) 
+                                                    : $orderedFilters?.[filterSelectionName]) 
+                                                : new Promise( (resolve) => 
+                                                    resolve(filterSelectionsSearch[filterSelectionKey] ? 
+                                                        $orderedFilters?.[filterSelectionName]?.filter?.( (option) => hasPartialMatch(option, filterSelectionsSearch[filterSelectionKey]), ) 
+                                                        : $orderedFilters?.[filterSelectionName]
+                                                    ), 
+                                                )
+                                            }{""}{:then selectionOptions}
                                                 {@const filterCategoryArray =
                                                     filterCategoryName ===
                                                     "Anime Filter"
                                                         ? selectedCategoryAnimeFilters
                                                         : filterCategoryName ===
                                                             "Algorithm Filter"
-                                                          ? $algorithmFilters
-                                                          : filterCategoryName ===
-                                                              "Content Caution"
+                                                        ? $algorithmFilters
+                                                        : filterCategoryName ===
+                                                            "Content Caution"
                                                             ? $animeCautions
                                                             : []}
                                                 {#if selectionOptions?.length}
                                                     {@const isCOO =
                                                         filterSelectionName ===
                                                         "country of origin"}
-
                                                     {@const isReadOnly =
                                                         filterCategoryName ===
                                                             "Anime Filter" &&
@@ -2464,28 +2464,28 @@
                                                                         filter?.filterType ===
                                                                             "selection",
                                                                 )?.status}
-                                                            {#await filterSelectionOptionsLoaded || !$hasLoadedAllOrderedFilters ? 1 : new Promise( (resolve) => setTimeout(resolve, Math.min(optionIdx * 17, 2000000000)), )}{""}{:then}
+                                                            {#await filterSelectionOptionsLoaded ? 1 : new Promise( (resolve) => setTimeout(resolve, Math.min(optionIdx * 17, 2000000000)), )}{""}{:then}
                                                                 <div
                                                                     title="{getTagFilterInfoText(
                                                                         filterSelectionName ===
                                                                             'tag category'
                                                                             ? {
-                                                                                  category:
-                                                                                      optionName,
-                                                                              }
+                                                                                category:
+                                                                                    optionName,
+                                                                            }
                                                                             : filterSelectionName ===
                                                                                 'tag'
-                                                                              ? {
+                                                                            ? {
                                                                                     tag: optionName,
                                                                                 }
-                                                                              : {},
+                                                                            : {},
                                                                         filterSelectionName ===
                                                                             'tag category'
                                                                             ? 'all tags'
                                                                             : filterSelectionName ===
                                                                                 'tag'
-                                                                              ? 'category and description'
-                                                                              : '',
+                                                                            ? 'category and description'
+                                                                            : '',
                                                                     )}"
                                                                     class="option"
                                                                     on:click="{handleFilterSelectionOptionChange(
@@ -2532,9 +2532,9 @@
                                                                             style:--optionColor="{status ===
                                                                             "included"
                                                                                 ? // green
-                                                                                  "#5f9ea0"
+                                                                                "#5f9ea0"
                                                                                 : // red
-                                                                                  "#e85d75"}"
+                                                                                "#e85d75"}"
                                                                         >
                                                                             <path
                                                                                 class="item-info-path"
@@ -2543,9 +2543,9 @@
                                                                                 filterCategoryName ===
                                                                                     'Content Caution'
                                                                                     ? // circle-xmark
-                                                                                      'M256 48a208 208 0 1 1 0 416 208 208 0 1 1 0-416zm0 464a256 256 0 1 0 0-512 256 256 0 1 0 0 512zm-81-337c-9 9-9 25 0 34l47 47-47 47c-9 9-9 24 0 34s25 9 34 0l47-47 47 47c9 9 24 9 34 0s9-25 0-34l-47-47 47-47c9-10 9-25 0-34s-25-9-34 0l-47 47-47-47c-10-9-25-9-34 0z'
+                                                                                    'M256 48a208 208 0 1 1 0 416 208 208 0 1 1 0-416zm0 464a256 256 0 1 0 0-512 256 256 0 1 0 0 512zm-81-337c-9 9-9 25 0 34l47 47-47 47c-9 9-9 24 0 34s25 9 34 0l47-47 47 47c9 9 24 9 34 0s9-25 0-34l-47-47 47-47c9-10 9-25 0-34s-25-9-34 0l-47 47-47-47c-10-9-25-9-34 0z'
                                                                                     : // circle-check
-                                                                                      'M256 48a208 208 0 1 1 0 416 208 208 0 1 1 0-416zm0 464a256 256 0 1 0 0-512 256 256 0 1 0 0 512zm113-303c9-9 9-25 0-34s-25-9-34 0L224 286l-47-47c-9-9-24-9-34 0s-9 25 0 34l64 64c10 9 25 9 34 0l128-128z'}"
+                                                                                    'M256 48a208 208 0 1 1 0 416 208 208 0 1 1 0-416zm0 464a256 256 0 1 0 0-512 256 256 0 1 0 0 512zm113-303c9-9 9-25 0-34s-25-9-34 0L224 286l-47-47c-9-9-24-9-34 0s-9 25 0 34l64 64c10 9 25 9 34 0l128-128z'}"
 
                                                                             ></path>
                                                                         </svg>
@@ -2620,7 +2620,7 @@
                                                             {/await}
                                                         {/if}
                                                     {/each}
-                                                {:else if filterSelectionIsSelected}
+                                                {:else}
                                                     <div class="option">
                                                         <h3>No Results</h3>
                                                     </div>
@@ -3585,12 +3585,6 @@
         border-radius: 6px;
     }
 
-    .filter-select .option-loading {
-        display: flex;
-        width: 150px;
-        justify-content: space-between;
-    }
-
     .extra-item-info {
         fill: #fff !important;
         margin-left: auto !important;
@@ -4173,9 +4167,6 @@
         }
         .filter-select .option {
             grid-template-columns: auto 18px !important;
-        }
-        .filter-select .option-loading {
-            width: 100% !important;
         }
         .filter-select .option:has(.extra-item-info) {
             grid-template-columns: auto 40px !important;

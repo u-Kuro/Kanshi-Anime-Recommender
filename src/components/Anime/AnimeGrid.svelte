@@ -30,6 +30,7 @@
         shownAllInList,
         runIsScrolling,
         showLoadingAnime,
+        categories,
     } from "../../js/globalValues.js";
     import { animeLoader } from "../../js/workerUtils.js";
 
@@ -140,6 +141,7 @@
     }
 
     searchedWord.subscribe((val) => {
+        if ($categories==null) return
         animeLoader({
             loadMore: true,
             selectedCategory: mainCategory,

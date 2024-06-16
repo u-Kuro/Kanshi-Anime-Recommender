@@ -19,7 +19,6 @@ import {
     isProcessingList,
     loadingDataStatus,
     isBackgroundUpdateKey,
-    tagInfo,
     earlisetReleaseDate,
     mostRecentAiringDateTimeout,
     loadedAnimeLists,
@@ -33,9 +32,6 @@ import {
     resetTypedUsername,
     resetProgress,
     appID,
-    orderedFilters,
-    loadedOrderedFilters,
-    hasLoadedAllOrderedFilters
 } from "./globalValues.js";
 
 const hasOwnProp = Object.prototype.hasOwnProperty
@@ -296,11 +292,13 @@ const animeManager = (_data = {}) => {
                 hasOwnProp.call(data, "updateUserList") ||
                 hasOwnProp.call(data, "updateRecommendedAnimeList")
             ) {
-                delete data?.postId
-                if (animeLoaderWorker) {
-                    animeLoaderWorker.postMessage(data || {})
-                } else {
-                    animeLoader(data || {})
+                if (!get(android) || window?.[get(isBackgroundUpdateKey)] !== true || !get(isBackgroundUpdateKey)) {
+                    delete data?.postId
+                    if (animeLoaderWorker) {
+                        animeLoaderWorker.postMessage(data || {})
+                    } else {
+                        animeLoader(data || {})
+                    }
                 }
                 animeManagerPromises?.[postId]?.resolve?.()
                 showLoadingAnime.set(false)
@@ -1352,7 +1350,7 @@ const getFilterOptions = (_data) => {
         if (getFilterOptionsTerminateTimeout) clearTimeout(getFilterOptionsTerminateTimeout)
         getFilterOptionsWorker?.terminate?.()
         getFilterOptionsWorker = null
-        cacheRequest("./webapi/worker/getFilterOptions.js", 61492, "Initializing Filters")
+        cacheRequest("./webapi/worker/getFilterOptions.js", 60515, "Initializing Filters")
             .then(url => {
                 if (getFilterOptionsTerminateTimeout) clearTimeout(getFilterOptionsTerminateTimeout)
                 getFilterOptionsWorker?.terminate?.()
@@ -1370,61 +1368,13 @@ const getFilterOptions = (_data) => {
                         dataStatus.set(null)
                         alertError()
                         reject(data.error)
-                    } else if (hasOwnProp?.call?.(data, "initalFilters")) {
-                        dataStatusPrio = false
-                        dataStatus.set(null)
-                        resolve(data)
-                    } else if (hasOwnProp?.call?.(data, "orderedFilterKey")) {
-                        const {
-                            orderedFilterKey,
-                            orderedFilterOption,
-                            orderedFilterOptionIdx,
-                            loadedProgress,
-                            isLast,
-                        } = data
-                        orderedFilters.update((e)=> {
-                            if (!e) { e = {} }
-                            if (!e[orderedFilterKey]) {
-                                e[orderedFilterKey] = []
-                            }
-                            e[orderedFilterKey][orderedFilterOptionIdx] = orderedFilterOption
-                            return e
-                        })
-                        if (isLast) {
-                            loadedOrderedFilters.update((e)=> {
-                                if (!e) { e = {} }
-                                e[orderedFilterKey] = true
-                                return e
-                            })
-                        } else {
-                            loadedOrderedFilters.update((e)=> {
-                                if (!e) { e = {} }
-                                e[orderedFilterKey] = loadedProgress
-                                return e
-                            })
-                        }
-                    } else if (hasOwnProp?.call?.(data, "tagCategoryKey")) {
-                        const {
-                            tagCategoryKey,
-                            tagKey,
-                            tagDescription,
-                        } = data
-                        tagInfo.update((e)=> {
-                            if (!e) { e = {} }
-                            if (!e[tagCategoryKey]) {
-                                e[tagCategoryKey] = {}
-                            }
-                            e[tagCategoryKey][tagKey] = tagDescription
-                            return e
-                        })
                     } else {
-                        hasLoadedAllOrderedFilters.set(true)
                         dataStatusPrio = false
                         dataStatus.set(null)
                         getFilterOptionsTerminateTimeout = setTimeout(() => {
                             getFilterOptionsWorker?.terminate?.();
                         }, terminateDelay)
-                        resolve?.()
+                        resolve(data)
                     }
                 }
                 getFilterOptionsWorker.onerror = (error) => {
