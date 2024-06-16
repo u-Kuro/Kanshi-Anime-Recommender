@@ -15,6 +15,7 @@
 		exportUserData,
 		getExtraInfo,
 		animeLoader,
+        updateTagInfo,
 	} from "./js/workerUtils.js";
 	import {
 		getLocalStorage,
@@ -298,6 +299,9 @@
 								$nonOrderedFilters = data?.nonOrderedFilters;
 								$filterConfig = data?.filterConfig;
 								$algorithmFilters = data?.algorithmFilter;
+								try {
+									updateTagInfo();
+								} catch {}
 								resolve();
 							})
 							.catch(() => {

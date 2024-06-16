@@ -53,6 +53,8 @@
         selectedAnimeGridEl,
         showLoadingAnime,
         resetProgress,
+        loadedOrderedFilters,
+        hasLoadedAllOrderedFilters,
     } from "../../js/globalValues.js";
 
     let selectedCategoryAnimeFilters,
@@ -1501,51 +1503,6 @@
         }
     }
 
-    function getTagInfoData() {
-        fetch("https://graphql.anilist.co", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                Accept: "application/json",
-            },
-            body: JSON.stringify({
-                query: `{MediaTagCollection{name category description}}`,
-            }),
-        })
-            .then(async (response) => {
-                return await response?.json?.();
-            })
-            .then(async (result) => {
-                let mediaTagCollection = result?.data?.MediaTagCollection || [];
-                for (let i = 0, l = mediaTagCollection?.length; i < l; i++) {
-                    let tagCollected = mediaTagCollection?.[i];
-                    let category = tagCollected?.category;
-                    let tag = tagCollected?.name;
-                    let description = tagCollected?.description;
-                    if (!tag || !category) continue;
-                    category = cleanText(category);
-                    tag = cleanText(tag);
-                    if (!isJsonObject($tagInfo)) {
-                        $tagInfo = {};
-                        $tagInfo[category] = {};
-                    } else if (!isJsonObject($tagInfo?.[category])) {
-                        $tagInfo[category] = {};
-                    }
-                    $tagInfo[category][tag] = description || "";
-                }
-                if (isJsonObject($tagInfo) && !jsonIsEmpty($tagInfo)) {
-                    await setLocalStorage("tagInfo", $tagInfo);
-                    await saveJSON($tagInfo, "tagInfo");
-                    let tagInfoUpdateAt = parseInt(new Date().getTime() / 1000);
-                    await setLocalStorage("tagInfoUpdateAt", tagInfoUpdateAt);
-                    await saveJSON(tagInfoUpdateAt, "tagInfoUpdateAt");
-                }
-            })
-            .catch(() => {
-                setTimeout(() => getTagInfoData(), 60000);
-            });
-    }
-
     function getTagFilterInfoText({ tag, category }, infoToGet) {
         if (infoToGet === "tag category" && tag != null) {
             for (let eCategory in $tagInfo) {
@@ -1636,15 +1593,6 @@
         }
     };
 
-    function cleanText(k) {
-        k = k !== "_" ? k?.replace?.(/\_/g, " ") : k;
-        k = k !== '\\"' ? k?.replace?.(/\\"/g, '"') : k;
-        k = k?.replace?.(/\b(tv|ona|ova)\b/gi, (match) =>
-            match?.toUpperCase?.(),
-        );
-        return k?.toLowerCase?.() || "";
-    }
-
     let editCategoryName = false;
     $: {
         $dropdownIsVisible =
@@ -1699,40 +1647,6 @@
             }
         }
     });
-
-    function hasTagInfoData() {
-        for (let category in $tagInfo) {
-            for (let tag in $tagInfo[category]) {
-                return typeof $tagInfo[category][tag] === "string";
-            }
-            return false;
-        }
-        return false;
-    }
-
-    (async () => {
-        window?.kanshiInit?.then?.(async () => {
-            let tempTagInfo =
-                getLocalStorage("tagInfo") || (await retrieveJSON("tagInfo"));
-            if (isJsonObject(tempTagInfo)) {
-                $tagInfo = tempTagInfo;
-            }
-            let tagInfoUpdateAt =
-                getLocalStorage("tagInfoUpdateAt") ||
-                (await retrieveJSON("tagInfoUpdateAt"));
-            if (tagInfoUpdateAt > 0 && hasTagInfoData()) {
-                let nextSeasonUpdateAt = tagInfoUpdateAt * 1000 + 7884000000;
-                if (
-                    !nextSeasonUpdateAt ||
-                    nextSeasonUpdateAt < new Date().getTime()
-                ) {
-                    getTagInfoData();
-                }
-            } else {
-                getTagInfoData();
-            }
-        });
-    })();
 
     onMount(async () => {
         // Init
@@ -2506,7 +2420,13 @@
                                         class="options"
                                         on:wheel|stopPropagation="{() => {}}"
                                     >
-                                        {#if filterSelectionIsSelected}
+                                        {#if !$hasLoadedAllOrderedFilters && $loadedOrderedFilters[filterSelectionName]!==true}
+                                            {@const progress = $loadedOrderedFilters[filterSelectionName]}
+                                            <div class="option option-loading">
+                                                <h3>Loading...</h3>
+                                                <h3>{typeof progress==="number"? progress.toFixed(2) : "0.00"}%</h3>
+                                            </div>
+                                        {:else if filterSelectionIsSelected}
                                             {#await filterSelectionOptionsLoaded ? (filterSelectionsSearch[filterSelectionKey] ? $orderedFilters?.[filterSelectionName]?.filter?.( (option) => hasPartialMatch(option, filterSelectionsSearch[filterSelectionKey]), ) : $orderedFilters?.[filterSelectionName]) : new Promise( (resolve) => resolve(filterSelectionsSearch[filterSelectionKey] ? $orderedFilters?.[filterSelectionName]?.filter?.( (option) => hasPartialMatch(option, filterSelectionsSearch[filterSelectionKey]), ) : $orderedFilters?.[filterSelectionName]), )}
                                                 {""}{:then selectionOptions}
                                                 {@const filterCategoryArray =
@@ -2544,7 +2464,7 @@
                                                                         filter?.filterType ===
                                                                             "selection",
                                                                 )?.status}
-                                                            {#await filterSelectionOptionsLoaded ? 1 : new Promise( (resolve) => setTimeout(resolve, Math.min(optionIdx * 17, 2000000000)), )}{""}{:then}
+                                                            {#await filterSelectionOptionsLoaded || !$hasLoadedAllOrderedFilters ? 1 : new Promise( (resolve) => setTimeout(resolve, Math.min(optionIdx * 17, 2000000000)), )}{""}{:then}
                                                                 <div
                                                                     title="{getTagFilterInfoText(
                                                                         filterSelectionName ===
@@ -3665,6 +3585,12 @@
         border-radius: 6px;
     }
 
+    .filter-select .option-loading {
+        display: flex;
+        width: 150px;
+        justify-content: space-between;
+    }
+
     .extra-item-info {
         fill: #fff !important;
         margin-left: auto !important;
@@ -4247,6 +4173,9 @@
         }
         .filter-select .option {
             grid-template-columns: auto 18px !important;
+        }
+        .filter-select .option-loading {
+            width: 100% !important;
         }
         .filter-select .option:has(.extra-item-info) {
             grid-template-columns: auto 40px !important;

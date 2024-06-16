@@ -1,6 +1,6 @@
 import { get } from "svelte/store";
 import { cacheRequest } from "./caching.js";
-import { downloadLink, isJsonObject, jsonIsEmpty, removeLocalStorage, setLocalStorage, showToast, } from "../js/others/helper.js"
+import { downloadLink, isJsonObject, removeLocalStorage, setLocalStorage, showToast, } from "../js/others/helper.js"
 import {
     dataStatus,
     updateRecommendationList,
@@ -32,7 +32,10 @@ import {
     showLoadingAnime,
     resetTypedUsername,
     resetProgress,
-    appID
+    appID,
+    orderedFilters,
+    loadedOrderedFilters,
+    hasLoadedAllOrderedFilters
 } from "./globalValues.js";
 
 const hasOwnProp = Object.prototype.hasOwnProperty
@@ -1349,7 +1352,7 @@ const getFilterOptions = (_data) => {
         if (getFilterOptionsTerminateTimeout) clearTimeout(getFilterOptionsTerminateTimeout)
         getFilterOptionsWorker?.terminate?.()
         getFilterOptionsWorker = null
-        cacheRequest("./webapi/worker/getFilterOptions.js", 60178, "Initializing Filters")
+        cacheRequest("./webapi/worker/getFilterOptions.js", 61492, "Initializing Filters")
             .then(url => {
                 if (getFilterOptionsTerminateTimeout) clearTimeout(getFilterOptionsTerminateTimeout)
                 getFilterOptionsWorker?.terminate?.()
@@ -1367,16 +1370,61 @@ const getFilterOptions = (_data) => {
                         dataStatus.set(null)
                         alertError()
                         reject(data.error)
-                    } else if (hasOwnProp?.call?.(data, "tagInfo")) {
-                        if (isJsonObject(data?.tagInfo) && !jsonIsEmpty(data?.tagInfo)) {
-                            tagInfo.set(data.tagInfo)
-                        }
-                    } else {
+                    } else if (hasOwnProp?.call?.(data, "initalFilters")) {
                         dataStatusPrio = false
+                        dataStatus.set(null)
+                        resolve(data)
+                    } else if (hasOwnProp?.call?.(data, "orderedFilterKey")) {
+                        const {
+                            orderedFilterKey,
+                            orderedFilterOption,
+                            orderedFilterOptionIdx,
+                            loadedProgress,
+                            isLast,
+                        } = data
+                        orderedFilters.update((e)=> {
+                            if (!e) { e = {} }
+                            if (!e[orderedFilterKey]) {
+                                e[orderedFilterKey] = []
+                            }
+                            e[orderedFilterKey][orderedFilterOptionIdx] = orderedFilterOption
+                            return e
+                        })
+                        if (isLast) {
+                            loadedOrderedFilters.update((e)=> {
+                                if (!e) { e = {} }
+                                e[orderedFilterKey] = true
+                                return e
+                            })
+                        } else {
+                            loadedOrderedFilters.update((e)=> {
+                                if (!e) { e = {} }
+                                e[orderedFilterKey] = loadedProgress
+                                return e
+                            })
+                        }
+                    } else if (hasOwnProp?.call?.(data, "tagCategoryKey")) {
+                        const {
+                            tagCategoryKey,
+                            tagKey,
+                            tagDescription,
+                        } = data
+                        tagInfo.update((e)=> {
+                            if (!e) { e = {} }
+                            if (!e[tagCategoryKey]) {
+                                e[tagCategoryKey] = {}
+                            }
+                            e[tagCategoryKey][tagKey] = tagDescription
+                            return e
+                        })
+                    } else {
+                        hasLoadedAllOrderedFilters.set(true)
+                        dataStatusPrio = false
+                        dataStatus.set(null)
                         getFilterOptionsTerminateTimeout = setTimeout(() => {
                             getFilterOptionsWorker?.terminate?.();
                         }, terminateDelay)
-                        resolve(data)
+                        resolve?.()
                     }
                 }
                 getFilterOptionsWorker.onerror = (error) => {
@@ -1392,6 +1440,29 @@ const getFilterOptions = (_data) => {
                 reject(error)
             })
     })
+}
+
+let updateTagInfoWorker
+const updateTagInfo = async () => {
+    try {
+        const url = await cacheRequest("./webapi/worker/updateTagInfo.js")
+        updateTagInfoWorker?.terminate?.()
+        updateTagInfoWorker = null
+        updateTagInfoWorker = new Worker(url)
+        windowHREF = windowHREF || window?.location?.href
+        updateTagInfoWorker.postMessage({ windowHREF })
+        updateTagInfoWorker.onmessage = () => {
+            updateTagInfoWorker?.terminate?.()
+            updateTagInfoWorker = null
+        }
+        updateTagInfoWorker.onerror = () => {
+            updateTagInfoWorker?.terminate?.()
+            updateTagInfoWorker = null
+        }
+    } catch {
+        updateTagInfoWorker?.terminate?.()
+        updateTagInfoWorker = null
+    }
 }
 
 function stopConflictingWorkers(blocker) {
@@ -1437,6 +1508,7 @@ export {
     getIDBdata,
     getAnimeEntries,
     getFilterOptions,
+    updateTagInfo,
     requestAnimeEntries,
     requestUserEntries,
     exportUserData,

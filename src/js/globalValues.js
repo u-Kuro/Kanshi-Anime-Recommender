@@ -24,6 +24,8 @@ const categories = writable(null)
 const categoriesKeys = writable(null)
 const selectedCategory = writable(null)
 const orderedFilters = writable(null)
+const loadedOrderedFilters = writable({})
+const hasLoadedAllOrderedFilters = writable(false)
 const nonOrderedFilters = writable(null)
 const filterConfig = writable(null)
 const animeCautions = writable(null)
@@ -106,6 +108,8 @@ export {
     categoriesKeys,
     selectedCategory,
     orderedFilters,
+    loadedOrderedFilters,
+    hasLoadedAllOrderedFilters,
     nonOrderedFilters,
     filterConfig,
     animeCautions,
