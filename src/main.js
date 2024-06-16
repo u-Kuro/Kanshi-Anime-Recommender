@@ -8,18 +8,12 @@ try{
 		channel.postMessage('changed-tab');
 		channel.addEventListener('message', (msg) => {
 			if (msg.data === 'changed-tab') {
-				const url = new URL("changed-tab", window.location)
+				const url = "https://kanshi.changed.tab"
 				try{
 					window.location.href = url
 				}catch{}
 				try{
-					window.location.href = url.href
-				}catch{}
-				try{
 					window.open(url, '_self')
-				}catch{}
-				try{
-					window.open(url.href, '_self')
 				}catch{}
 			}
 		});
