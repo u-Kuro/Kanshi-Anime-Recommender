@@ -33,9 +33,12 @@ public class Configs {
                 try {
                     if (file.exists() && file.isFile() && file.length() > 0) {
                         try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
-                            String line = reader.readLine().trim();
-                            if (!line.isEmpty()) {
-                                return reader.readLine();
+                            String line;
+                            while ((line = reader.readLine()) != null) {
+                                line = line.trim();
+                                if (!line.isEmpty()) {
+                                    return line;
+                                }
                             }
                         } catch (Exception ignored) {}
                     } else {
