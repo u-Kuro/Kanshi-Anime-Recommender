@@ -1,5 +1,6 @@
 package com.example.kanshi;
 
+import static com.example.kanshi.Configs.OWNER;
 import static com.example.kanshi.Utils.createRoundBitmap;
 import static com.example.kanshi.Utils.createRoundIcon;
 
@@ -223,7 +224,7 @@ public class AnimeNotificationManager {
             int importance = NotificationManager.IMPORTANCE_DEFAULT;
             NotificationChannel channel = new NotificationChannel(RECENTLY_UPDATED_ANIME_CHANNEL, name, importance);
             channel.setDescription(description);
-            channel.enableVibration(Configs.isOwner);
+            channel.enableVibration(OWNER);
 
             NotificationManager notificationManager = context.getSystemService(NotificationManager.class);
             notificationManager.createNotificationChannel(channel);

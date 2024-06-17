@@ -3,6 +3,7 @@ package com.example.kanshi;
 import static com.example.kanshi.AnimeNotificationManager.NOTIFICATION_ANIME_RELEASE;
 import static com.example.kanshi.AnimeNotificationManager.NOTIFICATION_MY_ANIME;
 import static com.example.kanshi.AnimeNotificationManager.NOTIFICATION_OTHER_ANIME;
+import static com.example.kanshi.Configs.UPDATE_DATA_PENDING_INTENT;
 import static com.example.kanshi.Utils.createRoundIcon;
 
 import android.Manifest;
@@ -612,13 +613,13 @@ public class MyWorker extends Worker {
         Intent newIntent = new Intent(this.getApplicationContext(), MyReceiver.class);
         newIntent.setAction("UPDATE_DATA_AUTO");
 
-        PendingIntent newPendingIntent = PendingIntent.getBroadcast(this.getApplicationContext(), Configs.UPDATE_DATA_PENDING_INTENT, newIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        PendingIntent newPendingIntent = PendingIntent.getBroadcast(this.getApplicationContext(), UPDATE_DATA_PENDING_INTENT, newIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
         AlarmManager alarmManager = (AlarmManager) this.getApplicationContext().getSystemService(Context.ALARM_SERVICE);
         // Cancel Old
         newPendingIntent.cancel();
         alarmManager.cancel(newPendingIntent);
         // Create New
-        newPendingIntent = PendingIntent.getBroadcast(this.getApplicationContext(), Configs.UPDATE_DATA_PENDING_INTENT, newIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        newPendingIntent = PendingIntent.getBroadcast(this.getApplicationContext(), UPDATE_DATA_PENDING_INTENT, newIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             if (alarmManager.canScheduleExactAlarms()) {
                 alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, newBackgroundUpdateTime, newPendingIntent);

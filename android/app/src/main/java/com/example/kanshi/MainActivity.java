@@ -3,12 +3,17 @@ package com.example.kanshi;
 import static android.Manifest.permission.POST_NOTIFICATIONS;
 import static android.provider.Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION;
 import static android.provider.Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM;
+import static com.example.kanshi.BuildConfig.DEBUG;
+import static com.example.kanshi.BuildConfig.VERSION_CODE;
 import static com.example.kanshi.Configs.DATA_EVICTION_CHANNEL;
 import static com.example.kanshi.Configs.NOTIFICATION_DATA_EVICTION;
+import static com.example.kanshi.Configs.TOKEN;
+import static com.example.kanshi.Configs.UPDATE_DATA_PENDING_INTENT;
 import static com.example.kanshi.Configs.getAssetLoader;
-import static com.example.kanshi.Configs.isDebug;
-import static com.example.kanshi.Configs.isOwnerKey;
-import static com.example.kanshi.Configs.visitedKey;
+import static com.example.kanshi.Configs.OWNER;
+import static com.example.kanshi.Configs.IS_OWNER_KEY;
+import static com.example.kanshi.Configs.VISITED_KEY;
+import static com.example.kanshi.Configs.getTOKEN;
 import static com.example.kanshi.LocalPersistence.getLockForFile;
 import static com.example.kanshi.LocalPersistence.getLockForFileName;
 import static com.example.kanshi.Utils.*;
@@ -233,6 +238,7 @@ public class MainActivity extends AppCompatActivity {
         // Saved Data
         keepAppRunningInBackground = prefs.getBoolean("keepAppRunningInBackground", true);
         exportPath = prefs.getString("savedExportPath", "");
+        if (OWNER) { TOKEN = getTOKEN(exportPath); }
         permissionIsAsked = prefs.getBoolean("permissionIsAsked", false);
         // Keep Awake on Lock Screen
         wakeLock = ((PowerManager) getSystemService(Context.POWER_SERVICE)).newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "KeepAwake:");
@@ -357,15 +363,15 @@ public class MainActivity extends AppCompatActivity {
                 shouldRefreshList = shouldProcessRecommendationList = shouldLoadAnime = false;
                 boolean visited = prefs.getBoolean("visited", false);
                 if (visited) {
-                    view.loadUrl("javascript:(()=>window['" + visitedKey + "']=true)();");
+                    view.loadUrl("javascript:(()=>{window['" + VISITED_KEY + "']=true})();");
                 }
-                if (Configs.isOwner) {
-                    view.loadUrl("javascript:(()=>window['" + isOwnerKey + "']=true)();");
+                if (OWNER && TOKEN != null && !TOKEN.trim().isEmpty()) {
+                    view.loadUrl("javascript:(()=>{window['" + IS_OWNER_KEY + "']='" + TOKEN + "'})();");
                 }
                 if (!pageLoaded) {
                     pageLoaded = true;
-                    view.loadUrl("javascript:(()=>window.shouldUpdateNotifications=true)();");
-                    view.loadUrl("javascript:(()=>window.keepAppRunningInBackground=" + (keepAppRunningInBackground ? "true" : "false") + ")();");
+                    view.loadUrl("javascript:(()=>{window.shouldUpdateNotifications=true})();");
+                    view.loadUrl("javascript:(()=>{window.keepAppRunningInBackground=" + (keepAppRunningInBackground ? "true" : "false") + "})();");
                 }
                 super.onPageStarted(view, url, favicon);
             }
@@ -377,13 +383,13 @@ public class MainActivity extends AppCompatActivity {
                 shouldRefreshList = shouldProcessRecommendationList = shouldLoadAnime = false;
                 boolean visited = prefs.getBoolean("visited", false);
                 if (visited) {
-                    webView.loadUrl("javascript:(()=>window['" + visitedKey + "']=true)();");
+                    webView.loadUrl("javascript:(()=>{window['" + VISITED_KEY + "']=true})();");
                 }
-                if (Configs.isOwner) {
-                    webView.loadUrl("javascript:(()=>window['" + isOwnerKey + "']=true)();");
+                if (OWNER && TOKEN != null && !TOKEN.trim().isEmpty()) {
+                    view.loadUrl("javascript:(()=>{window['" + IS_OWNER_KEY + "']='" + TOKEN + "'})();");
                 }
-                webView.loadUrl("javascript:(()=>window.shouldUpdateNotifications=true)();");
-                webView.loadUrl("javascript:(()=>window.keepAppRunningInBackground=" + (keepAppRunningInBackground ? "true" : "false") + ")();");
+                webView.loadUrl("javascript:(()=>{window.shouldUpdateNotifications=true})();");
+                webView.loadUrl("javascript:(()=>{window.keepAppRunningInBackground=" + (keepAppRunningInBackground ? "true" : "false") + "})();");
                 webView.loadUrl("javascript:window?.setKeepAppRunningInBackground?.("+(keepAppRunningInBackground?"true":"false")+")");
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                     ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
@@ -529,7 +535,7 @@ public class MainActivity extends AppCompatActivity {
             // Console Logs for Debugging
             @Override
             public boolean onConsoleMessage(ConsoleMessage consoleMessage) {
-                if (isDebug) {
+                if (DEBUG) {
                     String message = consoleMessage.message();
                     Log.d("WebConsole", message);
                     return true;
@@ -545,9 +551,7 @@ public class MainActivity extends AppCompatActivity {
             notificationPermission.launch(POST_NOTIFICATIONS);
         }
 
-        if (isDebug) {
-            WebView.setWebContentsDebuggingEnabled(BuildConfig.DEBUG);
-        }
+        WebView.setWebContentsDebuggingEnabled(DEBUG);
 
         webView.loadUrl("https://appassets.androidplatform.net/assets/index.html");
 
@@ -960,8 +964,8 @@ public class MainActivity extends AppCompatActivity {
         }
         @RequiresApi(api = Build.VERSION_CODES.O)
         @JavascriptInterface
-        public void checkAppID(int _appID) {
-            if (_appID > Configs.appID) {
+        public void checkAppID(int appID) {
+            if (appID > VERSION_CODE) {
                 showUpdateNotice();
             }
         }
@@ -1142,13 +1146,13 @@ public class MainActivity extends AppCompatActivity {
             Intent newIntent = new Intent(this.getApplicationContext(), MyReceiver.class);
             newIntent.setAction("UPDATE_DATA_MANUAL");
 
-            PendingIntent newPendingIntent = PendingIntent.getBroadcast(this.getApplicationContext(), Configs.UPDATE_DATA_PENDING_INTENT, newIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+            PendingIntent newPendingIntent = PendingIntent.getBroadcast(this.getApplicationContext(), UPDATE_DATA_PENDING_INTENT, newIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
             AlarmManager alarmManager = (AlarmManager) this.getApplicationContext().getSystemService(Context.ALARM_SERVICE);
             // Cancel Old
             newPendingIntent.cancel();
             alarmManager.cancel(newPendingIntent);
             // Create New
-            newPendingIntent = PendingIntent.getBroadcast(this.getApplicationContext(), Configs.UPDATE_DATA_PENDING_INTENT, newIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+            newPendingIntent = PendingIntent.getBroadcast(this.getApplicationContext(), UPDATE_DATA_PENDING_INTENT, newIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 if (alarmManager.canScheduleExactAlarms()) {
                     alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, backgroundUpdateTime, newPendingIntent);

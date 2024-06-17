@@ -1,5 +1,7 @@
 package com.example.kanshi;
 
+import static com.example.kanshi.BuildConfig.DEBUG;
+import static com.example.kanshi.Configs.OWNER;
 import static com.example.kanshi.LocalPersistence.getLockForFile;
 import static com.example.kanshi.LocalPersistence.getLockForFileName;
 
@@ -242,7 +244,7 @@ public class Utils {
         boolean autoExportReleasedAnime = prefs.getBoolean("autoExportReleasedAnime", false);
         if (!autoExportReleasedAnime) return;
         String exportPath = prefs.getString("savedExportPath", "");
-        if (!"".equals(exportPath) && Environment.isExternalStorageManager()) {
+        if (!exportPath.isEmpty() && Environment.isExternalStorageManager()) {
             File exportDirectory = new File(exportPath);
             if (exportDirectory.isDirectory()) {
                 String directoryPath = exportPath + File.separator;
@@ -392,11 +394,10 @@ public class Utils {
 
     @RequiresApi(api = Build.VERSION_CODES.R)
     public static void handleUncaughtException(Context context, Throwable e, String fileFrom) {
-        if (!Configs.isOwner || !Configs.isDebug) { return; }
-        e.printStackTrace(); // not all Android versions will print the stack trace automatically
+        if (!OWNER || !DEBUG) { return; }
         SharedPreferences prefs = context.getApplicationContext().getSharedPreferences("com.example.kanshi", Context.MODE_PRIVATE);
         String exportPath = prefs.getString("savedExportPath", "");
-        if (!"".equals(exportPath) && Environment.isExternalStorageManager()) {
+        if (!exportPath.isEmpty() && Environment.isExternalStorageManager()) {
             File exportDirectory = new File(exportPath);
             if (exportDirectory.isDirectory()) {
                 String directoryPath = exportPath + File.separator;
@@ -415,6 +416,7 @@ public class Utils {
                 }
             }
         }
+        e.printStackTrace();
     }
 
     @RequiresApi(api = Build.VERSION_CODES.R)

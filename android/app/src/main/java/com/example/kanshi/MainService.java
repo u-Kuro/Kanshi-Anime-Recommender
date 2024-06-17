@@ -1,10 +1,11 @@
 package com.example.kanshi;
 
 import static android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC;
+import static com.example.kanshi.BuildConfig.DEBUG;
 import static com.example.kanshi.Configs.DATA_EVICTION_CHANNEL;
 import static com.example.kanshi.Configs.NOTIFICATION_DATA_EVICTION;
-import static com.example.kanshi.Configs.isBackgroundUpdateKey;
-import static com.example.kanshi.Configs.visitedKey;
+import static com.example.kanshi.Configs.IS_BACKGROUND_UPDATE_KEY;
+import static com.example.kanshi.Configs.VISITED_KEY;
 import static com.example.kanshi.Configs.getAssetLoader;
 import static com.example.kanshi.LocalPersistence.getLockForFile;
 import static com.example.kanshi.LocalPersistence.getLockForFileName;
@@ -220,12 +221,12 @@ public class MainService extends Service {
             public void onPageStarted(WebView view, String url, Bitmap favicon) {
                 boolean visited = prefs.getBoolean("visited", false);
                 if (visited) {
-                    view.loadUrl("javascript:(()=>window['"+visitedKey+"']=true)();");
+                    view.loadUrl("javascript:(()=>{window['"+ VISITED_KEY +"']=true})();");
                 }
-                view.loadUrl("javascript:(()=>window['"+isBackgroundUpdateKey+"']=true)();");
+                view.loadUrl("javascript:(()=>{window['"+ IS_BACKGROUND_UPDATE_KEY +"']=true})();");
                 if (isReloaded) {
                     isReloaded = false;
-                    view.loadUrl("javascript:(()=>window.shouldUpdateNotifications=true)();");
+                    view.loadUrl("javascript:(()=>{window.shouldUpdateNotifications=true})();");
                 }
                 super.onPageStarted(view, url, favicon);
             }
@@ -243,7 +244,7 @@ public class MainService extends Service {
             }
         });
 
-        WebView.setWebContentsDebuggingEnabled(BuildConfig.DEBUG);
+        WebView.setWebContentsDebuggingEnabled(DEBUG);
 
         // Start the service in the foreground
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
