@@ -86,7 +86,11 @@ public class AnimeReleaseGroupAdapter extends RecyclerView.Adapter<AnimeReleaseG
                     });
                 }
 
-                final AnimeReleaseGroup animeReleaseGroup = mAnimeGroups.get().get(position);
+                final ArrayList<AnimeReleaseGroup> animeReleaseGroups = mAnimeGroups.get();
+
+                if (animeReleaseGroups==null || position >= animeReleaseGroups.size()) return;
+
+                final AnimeReleaseGroup animeReleaseGroup = animeReleaseGroups.get(position);
 
                 final LocalDateTime localDateTime = animeReleaseGroup.date;
                 if (localDateTime != null) {
