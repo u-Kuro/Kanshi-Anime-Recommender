@@ -227,7 +227,7 @@ function getAnimeManagerWorker() {
     if (animeManagerWorker) return animeManagerWorker
     if (animeManagerWorkerPromise) return animeManagerWorkerPromise
     animeManagerWorkerPromise = new Promise(async (resolve) => {
-        resolve(new Worker(await cacheRequest("./webapi/worker/animeManager.js", 56571, "Updating the List")))
+        resolve(new Worker(await cacheRequest("./webapi/worker/animeManager.js", 59326, "Updating the List")))
         animeManagerWorkerPromise = null
     })
     return animeManagerWorkerPromise
@@ -1350,7 +1350,7 @@ const getFilterOptions = (_data) => {
         if (getFilterOptionsTerminateTimeout) clearTimeout(getFilterOptionsTerminateTimeout)
         getFilterOptionsWorker?.terminate?.()
         getFilterOptionsWorker = null
-        cacheRequest("./webapi/worker/getFilterOptions.js", 60515, "Initializing Filters")
+        cacheRequest("./webapi/worker/getFilterOptions.js", 60702, "Initializing Filters")
             .then(url => {
                 if (getFilterOptionsTerminateTimeout) clearTimeout(getFilterOptionsTerminateTimeout)
                 getFilterOptionsWorker?.terminate?.()
