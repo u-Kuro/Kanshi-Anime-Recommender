@@ -412,26 +412,18 @@ public class MainActivity extends AppCompatActivity {
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 // In App Browsing
                 String url = request.getUrl().toString();
-                if (url.startsWith("intent://")) {
-                    try {
-                        Context context = view.getContext();
-                        Intent intent = Intent.parseUri(url, Intent.URI_INTENT_SCHEME);
-                        if (intent != null) {
-                            PackageManager packageManager = context.getPackageManager();
-                            ResolveInfo info = packageManager.resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY);
-                            if (info != null) {
-                                context.startActivity(intent);
-                            } else {
-                                showToast(Toast.makeText(getApplicationContext(), "Can't open the link.", Toast.LENGTH_LONG));
-                            }
-                        }
-                    } catch (Exception ignored) {
-                        showToast(Toast.makeText(getApplicationContext(), "Can't open the link.", Toast.LENGTH_LONG));
-                    }
-                } else if (url.startsWith("https://www.youtube.com")
-                        || url.startsWith("https://m.youtube.com")
-                        || url.startsWith("https://youtube.com")
-                        || url.startsWith("https://youtu.be")
+                if (url.startsWith("https://www.youtube.com")
+                    || url.startsWith("https://m.youtube.com")
+                    || url.startsWith("https://youtube.com")
+                    || url.startsWith("https://www.youtu.be")
+                    || url.startsWith("https://m.youtu.be")
+                    || url.startsWith("https://youtu.be")
+                    || url.startsWith("http://www.youtube.com")
+                    || url.startsWith("http://m.youtube.com")
+                    || url.startsWith("http://youtube.com")
+                    || url.startsWith("http://www.youtu.be")
+                    || url.startsWith("http://m.youtu.be")
+                    || url.startsWith("http://youtu.be")
                 ) {
                     Intent intent = new Intent(MainActivity.this, YoutubeViewActivity.class);
                     intent.putExtra("url", url);
@@ -440,14 +432,42 @@ public class MainActivity extends AppCompatActivity {
                     overridePendingTransition(R.anim.fade_in, R.anim.remove);
                 } else {
                     try {
-                        CustomTabsIntent customTabsIntent = new CustomTabsIntent.Builder()
-                                .setDefaultColorSchemeParams(new CustomTabColorSchemeParams.Builder().setToolbarColor(getResources().getColor(R.color.dark_blue)).build())
-                                .setStartAnimations(MainActivity.this, R.anim.fade_in, R.anim.remove)
-                                .setExitAnimations(MainActivity.this, R.anim.fade_out, R.anim.remove)
-                                .setShowTitle(true)
-                                .build();
-                        customTabsIntent.launchUrl(MainActivity.this, Uri.parse(url));
-                        overridePendingTransition(R.anim.remove, R.anim.remove);
+                        boolean isAniList = url.startsWith("https://www.anilist.co")
+                            || url.startsWith("https://m.anilist.co")
+                            || url.startsWith("https://anilist.co")
+                            || url.startsWith("http://www.anilist.co")
+                            || url.startsWith("http://m.anilist.co")
+                            || url.startsWith("http://anilist.co");
+                        int customTabColor = isAniList ? R.color.dark_blue : R.color.black;
+                        CustomTabsIntent customTabsIntent;
+                        if (url.startsWith("intent://")) {
+                            try {
+                                customTabsIntent = new CustomTabsIntent.Builder()
+                                        .setDefaultColorSchemeParams(new CustomTabColorSchemeParams.Builder().setToolbarColor(getResources().getColor(customTabColor)).build())
+                                        .setStartAnimations(MainActivity.this, R.anim.fade_in, R.anim.remove)
+                                        .setExitAnimations(MainActivity.this, R.anim.fade_out, R.anim.remove)
+                                        .setShowTitle(true)
+                                        .build();
+                                customTabsIntent.launchUrl(MainActivity.this, Uri.parse("https://" + url.substring(9)));
+                            } catch (Exception ignored) {
+                                customTabsIntent = new CustomTabsIntent.Builder()
+                                        .setDefaultColorSchemeParams(new CustomTabColorSchemeParams.Builder().setToolbarColor(getResources().getColor(customTabColor)).build())
+                                        .setStartAnimations(MainActivity.this, R.anim.fade_in, R.anim.remove)
+                                        .setExitAnimations(MainActivity.this, R.anim.fade_out, R.anim.remove)
+                                        .setShowTitle(true)
+                                        .build();
+                                customTabsIntent.launchUrl(MainActivity.this, request.getUrl());
+                            }
+                        } else {
+                            customTabsIntent = new CustomTabsIntent.Builder()
+                                    .setDefaultColorSchemeParams(new CustomTabColorSchemeParams.Builder().setToolbarColor(getResources().getColor(customTabColor)).build())
+                                    .setStartAnimations(MainActivity.this, R.anim.fade_in, R.anim.remove)
+                                    .setExitAnimations(MainActivity.this, R.anim.fade_out, R.anim.remove)
+                                    .setShowTitle(true)
+                                    .build();
+                            customTabsIntent.launchUrl(MainActivity.this, request.getUrl());
+                        }
+                        overridePendingTransition(R.anim.fade_in, R.anim.remove);
                     } catch (Exception ignored) {
                         showToast(Toast.makeText(getApplicationContext(), "Can't open the link.", Toast.LENGTH_LONG));
                     }
@@ -469,11 +489,17 @@ public class MainActivity extends AppCompatActivity {
                     mUploadMessage.onReceiveValue(null);
                 }
                 mUploadMessage = filePathCallback;
-                Intent i = new Intent(Intent.ACTION_GET_CONTENT)
-                        .addCategory(Intent.CATEGORY_OPENABLE)
-                        .setType("application/json");// set MIME type to filter
-                chooseImportFile.launch(i);
-                showToast(Toast.makeText(getApplicationContext(), "Please select your backup file.", Toast.LENGTH_LONG));
+                Intent i;
+                try {
+                    i = fileChooserParams.createIntent();
+                    chooseImportFile.launch(i);
+                    showToast(Toast.makeText(getApplicationContext(), "Please select your file.", Toast.LENGTH_LONG));
+                } catch (Exception ignored) {
+                    i = new Intent(Intent.ACTION_GET_CONTENT).addCategory(Intent.CATEGORY_OPENABLE);
+                    i.setType("*/*");
+                    chooseImportFile.launch(i);
+                    showToast(Toast.makeText(getApplicationContext(), "Please select your file.", Toast.LENGTH_LONG));
+                }
                 return true;
             }
 
@@ -614,9 +640,11 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         isInApp = true;
+        overridePendingTransition(R.anim.none, R.anim.fade_out);
         Intent intent = new Intent(this, MainService.class);
         stopService(intent);
-        overridePendingTransition(R.anim.none, R.anim.fade_out);
+        super.onResume();
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             webView.getSettings().setOffscreenPreRaster(true);
         }
@@ -627,7 +655,6 @@ public class MainActivity extends AppCompatActivity {
             persistentToast.show();
             persistentToast = null;
         }
-        super.onResume();
         if (webView!=null) {
             webView.loadUrl("javascript:" +
                     "window?.returnedAppIsVisible?.(true);" + // Should Be Runned First

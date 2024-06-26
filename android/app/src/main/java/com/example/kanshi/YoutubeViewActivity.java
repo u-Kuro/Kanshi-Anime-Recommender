@@ -1,13 +1,13 @@
 package com.example.kanshi;
 
+import static com.example.kanshi.LocalPersistence.getLockForFileName;
+
 import android.animation.ObjectAnimator;
 import android.annotation.SuppressLint;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.content.pm.ResolveInfo;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -42,6 +42,9 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.browser.customtabs.CustomTabColorSchemeParams;
 import androidx.browser.customtabs.CustomTabsIntent;
 
+import java.io.File;
+import java.util.concurrent.locks.ReentrantLock;
+
 public class YoutubeViewActivity extends AppCompatActivity {
     private MediaWebView webView;
     private TextView siteName;
@@ -58,17 +61,35 @@ public class YoutubeViewActivity extends AppCompatActivity {
                             int resultCode = activityResult.getResultCode();
                             Intent intent = activityResult.getData();
                             Uri[] result = null;
-                            if (null == mUploadMessage || resultCode != RESULT_OK) {
-                                result = new Uri[]{Uri.parse("")};
-                                mUploadMessage.onReceiveValue(result);
-                                mUploadMessage = null;
-                            } else if (intent != null) {
-                                String dataString = intent.getDataString();
-                                if (dataString != null) {
-                                    result = new Uri[]{Uri.parse(dataString)};
+                            ReentrantLock importedFileNameLock = null;
+                            try {
+                                if (null == mUploadMessage || resultCode != RESULT_OK) {
+                                    result = new Uri[]{Uri.parse("")};
+                                    mUploadMessage.onReceiveValue(result);
+                                    mUploadMessage = null;
+                                } else if (intent != null) {
+                                    String dataString = intent.getDataString();
+                                    Uri uri = intent.getData();
+                                    if (uri != null) {
+                                        String importedFilePath = uri.getPath();
+                                        if (importedFilePath != null) {
+                                            String importedFileName = new File(importedFilePath).getName();
+                                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                                importedFileNameLock = getLockForFileName(importedFileName);
+                                                importedFileNameLock.lock();
+                                            }
+                                        }
+                                    }
+                                    if (dataString != null) {
+                                        result = new Uri[]{Uri.parse(dataString)};
+                                    }
+                                    mUploadMessage.onReceiveValue(result);
+                                    mUploadMessage = null;
                                 }
-                                mUploadMessage.onReceiveValue(result);
-                                mUploadMessage = null;
+                            } finally {
+                                if (importedFileNameLock != null) {
+                                    importedFileNameLock.unlock();
+                                }
                             }
                         }
                     }
@@ -101,20 +122,23 @@ public class YoutubeViewActivity extends AppCompatActivity {
 
         launchUrl.setOnClickListener(v -> {
             try {
+                pauseWebView();
                 Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(webView.getUrl()));
                 startActivity(intent);
             } catch (Exception ignored) {
+                resumeWebView();
                 Toast.makeText(getApplicationContext(), "Can't open the link.", Toast.LENGTH_LONG).show();
             }
         });
 
         // Set click listeners for the custom ActionBar buttons
         close.setOnClickListener(v -> {
-            webView.destroy();
+            destroyWebView();
             Intent i = new Intent(this, MainActivity.class);
             i.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-            startActivity(i);
+            finish();
             overridePendingTransition(R.anim.none, R.anim.fade_out);
+            startActivity(i);
         });
 
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
@@ -124,15 +148,17 @@ public class YoutubeViewActivity extends AppCompatActivity {
                     webView.goBack();
                 } else {
                     isFinished = true;
-                    webView.destroy();
+                    destroyWebView();
                     if (isInitialYTVActivity) {
                         Intent i = new Intent(YoutubeViewActivity.this, MainActivity.class);
                         i.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                        finish();
+                        overridePendingTransition(R.anim.none, R.anim.fade_out);
                         startActivity(i);
                     } else {
                         finish();
+                        overridePendingTransition(R.anim.none, R.anim.fade_out);
                     }
-                    overridePendingTransition(R.anim.none, R.anim.fade_out);
                 }
             }
         });
@@ -165,8 +191,15 @@ public class YoutubeViewActivity extends AppCompatActivity {
                     mUploadMessage.onReceiveValue(null);
                 }
                 mUploadMessage = filePathCallback;
-                Intent i = new Intent(Intent.ACTION_GET_CONTENT).addCategory(Intent.CATEGORY_OPENABLE);// set MIME type to filter
-                chooseImportFile.launch(i);
+                Intent i;
+                try {
+                    i = fileChooserParams.createIntent();
+                    chooseImportFile.launch(i);
+                } catch (Exception ignored) {
+                    i = new Intent(Intent.ACTION_GET_CONTENT).addCategory(Intent.CATEGORY_OPENABLE);
+                    i.setType("*/*");
+                    chooseImportFile.launch(i);
+                }
                 return true;
             }
             public void onProgressChanged(WebView view, int progress) {
@@ -295,94 +328,139 @@ public class YoutubeViewActivity extends AppCompatActivity {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 String url = request.getUrl().toString();
-                if (url.startsWith("intent://")) {
+                boolean isRedirect = Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && request.isRedirect();
+                boolean shouldLoadInAnotherApp = !url.startsWith("http")
+                    || url.startsWith("https://www.twitter.com")
+                    || url.startsWith("https://m.twitter.com")
+                    || url.startsWith("https://twitter.com")
+                    || url.startsWith("http://www.twitter.com")
+                    || url.startsWith("http://m.twitter.com")
+                    || url.startsWith("http://twitter.com")
+                    || url.startsWith("https://www.reddit.com")
+                    || url.startsWith("https://m.reddit.com")
+                    || url.startsWith("https://reddit.com")
+                    || url.startsWith("http://www.reddit.com")
+                    || url.startsWith("http://m.reddit.com")
+                    || url.startsWith("http://reddit.com")
+                    || url.startsWith("https://www.facebook.com")
+                    || url.startsWith("https://m.facebook.com")
+                    || url.startsWith("https://facebook.com")
+                    || url.startsWith("http://www.facebook.com")
+                    || url.startsWith("http://m.facebook.com")
+                    || url.startsWith("http://facebook.com")
+                    || url.startsWith("https://wa.me");
+                if (shouldLoadInAnotherApp) {
                     try {
-                        if (url.startsWith("intent://www.youtube.com")
-                                || url.startsWith("intent://m.youtube.com")
-                                || url.startsWith("intent://youtube.com")
-                                || url.startsWith("intent://youtu.be")
-                        ) {
-                            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://"+url.substring(9)));
-                            startActivity(intent);
-                        } else {
-                            Context context = view.getContext();
-                            Intent intent = Intent.parseUri(url, Intent.URI_INTENT_SCHEME);
-                            if (intent != null) {
-                                PackageManager packageManager = context.getPackageManager();
-                                ResolveInfo info = packageManager.resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY);
-                                if (info != null) {
-                                    context.startActivity(intent);
-                                } else {
-                                    Toast.makeText(getApplicationContext(), "Can't open the link.", Toast.LENGTH_LONG).show();
-                                }
+                        pauseWebView();
+                        CustomTabsIntent customTabsIntent;
+                        if (url.startsWith("intent://")) {
+                            try {
+                                customTabsIntent = new CustomTabsIntent.Builder()
+                                        .setDefaultColorSchemeParams(new CustomTabColorSchemeParams.Builder().setToolbarColor(Color.BLACK).build())
+                                        .setStartAnimations(YoutubeViewActivity.this, R.anim.fade_in, R.anim.remove)
+                                        .setExitAnimations(YoutubeViewActivity.this, R.anim.fade_out, R.anim.remove)
+                                        .setShowTitle(true)
+                                        .build();
+                                customTabsIntent.launchUrl(YoutubeViewActivity.this, Uri.parse("https://" + url.substring(9)));
+                            } catch (Exception ignored) {
+                                customTabsIntent = new CustomTabsIntent.Builder()
+                                        .setDefaultColorSchemeParams(new CustomTabColorSchemeParams.Builder().setToolbarColor(Color.BLACK).build())
+                                        .setStartAnimations(YoutubeViewActivity.this, R.anim.fade_in, R.anim.remove)
+                                        .setExitAnimations(YoutubeViewActivity.this, R.anim.fade_out, R.anim.remove)
+                                        .setShowTitle(true)
+                                        .build();
+                                customTabsIntent.launchUrl(YoutubeViewActivity.this, request.getUrl());
                             }
+                        } else {
+                            customTabsIntent = new CustomTabsIntent.Builder()
+                                    .setDefaultColorSchemeParams(new CustomTabColorSchemeParams.Builder().setToolbarColor(Color.BLACK).build())
+                                    .setStartAnimations(YoutubeViewActivity.this, R.anim.fade_in, R.anim.remove)
+                                    .setExitAnimations(YoutubeViewActivity.this, R.anim.fade_out, R.anim.remove)
+                                    .setShowTitle(true)
+                                    .build();
+                            customTabsIntent.launchUrl(YoutubeViewActivity.this, request.getUrl());
                         }
+                        overridePendingTransition(R.anim.fade_in, R.anim.remove);
                     } catch (Exception ignored) {
+                        resumeWebView();
                         Toast.makeText(getApplicationContext(), "Can't open the link.", Toast.LENGTH_LONG).show();
                     }
                 } else {
-                    if (
-                        url.startsWith("https://www.youtube.com")
-                        || url.startsWith("https://m.youtube.com")
-                        || url.startsWith("https://youtube.com")
-                        || url.startsWith("https://youtu.be")
-                        || url.startsWith("https://accounts.youtube.com")
-                        || url.startsWith("https://accounts.google.com")
-                        || url.startsWith("https://myaccount.google.com")
-                        || url.startsWith("https://gds.google.com")
-                        || url.startsWith("https://www.gds.google.com")
-                        || url.startsWith("https://www.myaccount.google.com")
-                        || url.startsWith("https://www.accounts.google.com")
-                        || url.startsWith("https://www.accounts.youtube.com")
-                    ) {
-                        if (webViewIsLoaded) {
-                            Intent intent = new Intent(YoutubeViewActivity.this, YoutubeViewActivity.class);
-                            intent.putExtra("url", url);
-                            startActivity(intent);
-                            overridePendingTransition(R.anim.fade_in, R.anim.none);
-                        } else {
-                            return false;
-                        }
+                    boolean shouldLoadInCurrentWebView = !webViewIsLoaded // Initial URL
+                        // Youtube Settings
+                        || url.startsWith("https://www.youtube.com/select_site")
+                        || url.startsWith("https://m.youtube.com/select_site")
+                        || url.startsWith("https://youtube.com/select_site")
+                        || url.startsWith("https://www.youtu.be/select_site")
+                        || url.startsWith("https://m.youtu.be/select_site")
+                        || url.startsWith("https://youtu.be/select_site")
+                        || url.startsWith("http://www.youtube.com/select_site")
+                        || url.startsWith("http://m.youtube.com/select_site")
+                        || url.startsWith("http://youtube.com/select_site")
+                        || url.startsWith("http://www.youtu.be/select_site")
+                        || url.startsWith("http://m.youtu.be/select_site")
+                        || url.startsWith("http://youtu.be/select_site");
+                    if (shouldLoadInCurrentWebView) {
+                        return false;
                     } else {
-                        try {
-                            CustomTabsIntent customTabsIntent = new CustomTabsIntent.Builder()
-                                    .setDefaultColorSchemeParams(new CustomTabColorSchemeParams.Builder().setToolbarColor(Color.BLACK).build())
-                                    .setShowTitle(true)
-                                    .build();
-                            customTabsIntent.launchUrl(YoutubeViewActivity.this, Uri.parse(url));
-                            overridePendingTransition(R.anim.fade_in, R.anim.remove);
-                        } catch (Exception ignored) {
-                            Toast.makeText(getApplicationContext(), "Can't open the link.", Toast.LENGTH_LONG).show();
-                        }
-                        boolean isRedirect = false;
-                        try {
-                            isRedirect = Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && request.isRedirect()
-                                || url.startsWith("https://www.youtube.com/redirect")
-                                || url.startsWith("https://m.youtube.com/redirect")
-                                || url.startsWith("https://youtube.com/redirect")
-                                || url.startsWith("https://youtu.be/redirect");
-                        } catch (Exception ignored) {}
-                        if (!isRedirect) {
-                            String viewUrl = view.getUrl();
-                            isRedirect = viewUrl == null
-                                || viewUrl.startsWith("https://www.youtube.com/redirect")
-                                || viewUrl.startsWith("https://m.youtube.com/redirect")
-                                || viewUrl.startsWith("https://youtube.com/redirect")
-                                || viewUrl.startsWith("https://youtu.be/redirect");
-                        }
-
-                        if (isRedirect) {
-                            if (view.canGoBack()) {
-                                view.goBack();
+                        boolean isYTRedirect = url.startsWith("https://www.youtube.com/redirect")
+                            || url.startsWith("https://m.youtube.com/redirect")
+                            || url.startsWith("https://youtube.com/redirect")
+                            || url.startsWith("https://www.youtu.be/redirect")
+                            || url.startsWith("https://m.youtu.be/redirect")
+                            || url.startsWith("https://youtu.be/redirect")
+                            || url.startsWith("http://www.youtube.com/redirect")
+                            || url.startsWith("http://m.youtube.com/redirect")
+                            || url.startsWith("http://youtube.com/redirect")
+                            || url.startsWith("http://www.youtu.be/redirect")
+                            || url.startsWith("http://m.youtu.be/redirect")
+                            || url.startsWith("http://youtu.be/redirect");
+                        if (isYTRedirect) {
+                            String urlToRedirect = request.getUrl().getQueryParameter("q");
+                            if (urlToRedirect != null && !urlToRedirect.isEmpty()) {
+                                try {
+                                    pauseWebView();
+                                    Uri uri = Uri.parse(urlToRedirect);
+                                    CustomTabsIntent customTabsIntent = new CustomTabsIntent.Builder()
+                                            .setDefaultColorSchemeParams(new CustomTabColorSchemeParams.Builder().setToolbarColor(Color.BLACK).build())
+                                            .setShowTitle(true)
+                                            .build();
+                                    customTabsIntent.launchUrl(YoutubeViewActivity.this, uri);
+                                    overridePendingTransition(R.anim.fade_in, R.anim.remove);
+                                } catch (Exception ignored) {
+                                    resumeWebView();
+                                    Toast.makeText(getApplicationContext(), "Can't open the link.", Toast.LENGTH_LONG).show();
+                                }
                             } else {
-                                isFinished = true;
-                                view.destroy();
-                                finish();
+                                Toast.makeText(getApplicationContext(), "Can't open the link.", Toast.LENGTH_LONG).show();
+                            }
+                        } else {
+                            boolean isYT = url.startsWith("https://www.youtube.com")
+                                || url.startsWith("https://m.youtube.com")
+                                || url.startsWith("https://youtube.com")
+                                || url.startsWith("https://www.youtu.be")
+                                || url.startsWith("https://m.youtu.be")
+                                || url.startsWith("https://youtu.be")
+                                || url.startsWith("http://www.youtube.com")
+                                || url.startsWith("http://m.youtube.com")
+                                || url.startsWith("http://youtube.com")
+                                || url.startsWith("http://www.youtu.be")
+                                || url.startsWith("http://m.youtu.be")
+                                || url.startsWith("http://youtu.be");
+                            if (isYT) {
+                                pauseWebView();
+                                Intent intent = new Intent(YoutubeViewActivity.this, YoutubeViewActivity.class);
+                                intent.putExtra("url", url);
+                                startActivity(intent);
+                                overridePendingTransition(R.anim.fade_in, R.anim.none);
+                            } else {
+                                return false;
                             }
                         }
                     }
                 }
-                return true;
+                // Unknown redirect
+                return !isRedirect;
             }
         });
 
@@ -402,34 +480,19 @@ public class YoutubeViewActivity extends AppCompatActivity {
         if (webViewIsLoaded) {
             overridePendingTransition(R.anim.none, R.anim.fade_out);
         }
-        if (webView!=null) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                webView.getSettings().setOffscreenPreRaster(true);
-            }
-            webView.onResume();
-            webView.resumeTimers();
-        }
         super.onResume();
+        resumeWebView();
     }
 
     @Override
     protected void onPause() {
-        if (webView!=null) {
-            autoPlayVideo(webView);
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                webView.getSettings().setOffscreenPreRaster(false);
-            }
-            webView.onPause();
-            webView.pauseTimers();
-        }
+        pauseWebView();
         super.onPause();
     }
 
     @Override
     protected void onDestroy() {
-        if (webView!=null) {
-            webView.destroy();
-        }
+        destroyWebView();
         super.onDestroy();
     }
 
@@ -442,16 +505,42 @@ public class YoutubeViewActivity extends AppCompatActivity {
             getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
         }
     }
+    public void destroyWebView() {
+        if (webView != null) {
+            webView.onPause();
+            webView.pauseTimers();
+            webView.destroy();
+        }
+    }
+    public void pauseWebView() {
+        if (webView != null) {
+            autoPlayVideo(webView);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                webView.getSettings().setOffscreenPreRaster(false);
+            }
+            webView.onPause();
+            webView.pauseTimers();
+        }
+    }
+    public void resumeWebView() {
+        if (webView!=null) {
+            webView.resumeTimers();
+            webView.onResume();
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                webView.getSettings().setOffscreenPreRaster(true);
+            }
+        }
+    }
     public void initAnchor(WebView view) {
-        String javascript = "javascript:(()=>{for(var e=document.querySelectorAll('a'),n=0;n<e.length;n++)e[n].setAttribute('rel','noopener noreferrer'),e[n].setAttribute('target','_blank');window.KanshiAnimeRecommendationObserver instanceof MutationObserver||(window.KanshiAnimeRecommendationObserver=new MutationObserver(e=>{e.forEach(function(e){if(e.addedNodes)for(var n=0;n<e.addedNodes.length;n++){var o=e.addedNodes[n];'A'===o.nodeName&&(o.setAttribute('rel','noopener noreferrer'),o.setAttribute('target','_blank'))}})})),!window.KanshiAnimeRecommendationObserverObserved&&window.KanshiAnimeRecommendationObserver instanceof MutationObserver&&document.body instanceof Node&&(window.KanshiAnimeRecommendationObserver.observe(document.body,{childList:!0,subtree:!0}),window.KanshiAnimeRecommendationObserverObserved=!0)})()";
+        String javascript = "javascript:(()=>{for(let e=document.querySelectorAll('a'),n=0;n<e.length;n++)e[n].setAttribute('rel','noopener noreferrer'),e[n].setAttribute('target','_blank');window.KanshiAnimeRecommendationObserver instanceof MutationObserver||(window.KanshiAnimeRecommendationObserver=new MutationObserver(e=>{e.forEach((e)=>{if(e.addedNodes)for(let n=0;n<e.addedNodes.length;n++){let o=e.addedNodes[n];'A'===o.nodeName&&(o.setAttribute('rel','noopener noreferrer'),o.setAttribute('target','_blank'))}})})),!window.KanshiAnimeRecommendationObserverObserved&&window.KanshiAnimeRecommendationObserver instanceof MutationObserver&&document.body instanceof Node&&(window.KanshiAnimeRecommendationObserver.observe(document.body,{childList:!0,subtree:!0}),window.KanshiAnimeRecommendationObserverObserved=!0)})()";
         view.post(() -> view.loadUrl(javascript));
     }
     public void autoPlayVideo(WebView view) {
-        String javascript = "javascript:(()=>{const e=document?.querySelector?.('video.html5-main-video');e instanceof Element&&!0!==e.autoplay&&(e.autoplay=!0)})()";
+        String javascript = "javascript:(()=>{const e=document?.getElementById('player')?.querySelector?.('video')||document?.querySelector?.('video.html5-main-video')||document?.querySelector?.('video');e instanceof Element&&!0!==e.autoplay&&(e.autoplay=!0)})()";
         view.post(() -> view.loadUrl(javascript));
     }
     public void unMuteVideo(WebView view) {
-        String javascript = "javascript:(()=>{const e=document?.querySelector?.('video.html5-main-video'),t=e instanceof Element&&!1===e.paused;document?.querySelector?.('button.ytp-unmute')?.click?.();t&&e.paused&&e.play?.()})()";
+        String javascript = "javascript:(()=>{const e=document?.getElementById('player')?.querySelector?.('video')||document?.querySelector?.('video.html5-main-video')||document?.querySelector?.('video');t=e instanceof Element&&!1===e.paused;document?.querySelector?.('button.ytp-unmute')?.click?.();t&&e.paused&&e.play?.()})()";
         view.post(() -> view.loadUrl(javascript));
     }
 }

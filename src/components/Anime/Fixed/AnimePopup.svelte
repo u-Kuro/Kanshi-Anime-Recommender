@@ -177,29 +177,6 @@
         });
     }
 
-    async function askToOpenYoutube(title, format) {
-        let animeTitle;
-        if (isJsonObject(title)) {
-            animeTitle =
-                title?.romaji ||
-                title?.userPreferred ||
-                title?.english ||
-                title?.native;
-        } else if (typeof title === "string") {
-            animeTitle = title;
-        }
-        if (typeof animeTitle !== "string" || animeTitle === "") return;
-        if (
-            await $confirmPromise({
-                title: "See related videos",
-                text: "Do you want to see more related videos in YouTube?",
-                isImportant: true,
-            })
-        ) {
-            handleMoreVideos(animeTitle, format);
-        }
-    }
-
     async function handleMoreVideos(title, format) {
         let animeTitle;
         if (isJsonObject(title)) {
@@ -1048,6 +1025,57 @@
         }
     }
 
+    async function askToOpenTrailer(
+        animeID, 
+        trailerID, 
+        image, 
+        title, 
+        format
+    ) {
+        if (trailerID) {
+            if (
+                failingTrailers[animeID] && 
+                await $confirmPromise({
+                    title: "Check trailer",
+                    text: "Do you check the trailer in YouTube?",
+                    isImportant: true,
+                })
+            ) {
+                window.open(
+                    `https://www.youtube.com/watch?v=${trailerID}`,
+                    "_blank",
+                );
+                return
+            }
+        } else {
+            let animeTitle;
+            if (isJsonObject(title)) {
+                animeTitle =
+                    title?.romaji ||
+                    title?.userPreferred ||
+                    title?.english ||
+                    title?.native;
+            } else if (typeof title === "string") {
+                animeTitle = title;
+            }
+            if (typeof animeTitle !== "string" || animeTitle === "") return;
+            if (
+                await $confirmPromise({
+                    title: "See related videos",
+                    text: "Do you want to see more related videos in YouTube?",
+                    isImportant: true,
+                })
+            ) {
+                handleMoreVideos(animeTitle, format);
+                return
+            }
+        }
+        if (image) {
+            fullImagePopup = image;
+            fullDescriptionPopup = null;
+        }
+    }
+
     async function updateList(skipConfirm) {
         if (
             $android &&
@@ -1653,15 +1681,24 @@
                                     : '-1'}"
                                 on:click="{() => {
                                     if (!$popupVisible) return;
-                                    askToOpenYoutube(anime.title, anime.format);
+                                    askToOpenTrailer(
+                                        anime.id,
+                                        anime.trailerID,
+                                        anime.bannerImageUrl || anime.trailerThumbnailUrl,
+                                        anime.title,
+                                        anime.format,
+                                    )
                                 }}"
                                 on:keyup="{(e) => {
                                     if (!$popupVisible) return;
                                     if (e.key === 'Enter') {
-                                        askToOpenYoutube(
+                                        askToOpenTrailer(
+                                            anime.id,
+                                            anime.trailerID,
+                                            anime.bannerImageUrl || anime.trailerThumbnailUrl,
                                             anime.title,
                                             anime.format,
-                                        );
+                                        )
                                     }
                                 }}"
                             >

@@ -218,8 +218,9 @@ public class AnimeReleaseActivity extends AppCompatActivity {
         close.setOnClickListener(view -> {
             Intent i = new Intent(this, MainActivity.class);
             i.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-            startActivity(i);
+            finish();
             overridePendingTransition(R.anim.none, R.anim.fade_out);
+            startActivity(i);
         });
 
         viewPager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
@@ -316,8 +317,9 @@ public class AnimeReleaseActivity extends AppCompatActivity {
             public void handleOnBackPressed() {
                 Intent i = new Intent(AnimeReleaseActivity.this, MainActivity.class);
                 i.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-                startActivity(i);
+                finish();
                 overridePendingTransition(R.anim.none, R.anim.fade_out);
+                startActivity(i);
             }
         });
 

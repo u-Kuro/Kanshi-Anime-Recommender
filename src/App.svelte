@@ -1604,7 +1604,20 @@
 			}
 
 			let remainder = originalScrollLeft % base;
-			if (remainder < 1 || base - remainder < 1) {
+			let threshold
+			try {
+				const animeListPagerElStyle = getComputedStyle(animeListPagerEl)
+				const { marginLeft, marginRight } = animeListPagerElStyle
+				if (marginLeft && marginLeft === marginRight) {
+					threshold = remainder === 0
+				} else {
+					threshold = remainder < 1 || base - remainder < 1
+				}
+			} catch {
+				threshold = $android ? remainder === 0 : remainder < 1 || base - remainder < 1
+			}
+
+			if (threshold) {
 				let children = Array.from(animeListPagerEl?.children);
 				let child = children?.[panningIdx];
 				let category = child?.dataset?.category;
