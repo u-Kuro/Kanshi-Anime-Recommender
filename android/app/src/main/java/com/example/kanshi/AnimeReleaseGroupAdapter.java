@@ -46,9 +46,9 @@ public class AnimeReleaseGroupAdapter extends RecyclerView.Adapter<AnimeReleaseG
     public final AtomicReference<ArrayList<AnimeReleaseGroup>> mAnimeGroups = new AtomicReference<>();
 
     public AnimeReleaseGroupAdapter(
-        Context context,
-        ArrayList<AnimeReleaseGroup> animeGroups,
-        RecyclerView recyclerView
+            Context context,
+            ArrayList<AnimeReleaseGroup> animeGroups,
+            RecyclerView recyclerView
     ) {
         this.mContext = context;
         this.mInflater = LayoutInflater.from(mContext);
@@ -193,8 +193,8 @@ public class AnimeReleaseGroupAdapter extends RecyclerView.Adapter<AnimeReleaseG
                         if (userStatus.equalsIgnoreCase("COMPLETED")) {
                             colorStateList = AppCompatResources.getColorStateList(mContext, R.color.web_green);
                         } else if (
-                            userStatus.equalsIgnoreCase("CURRENT")
-                            || userStatus.equalsIgnoreCase("REPEATING")
+                                userStatus.equalsIgnoreCase("CURRENT")
+                                        || userStatus.equalsIgnoreCase("REPEATING")
                         ) {
                             colorStateList = AppCompatResources.getColorStateList(mContext, R.color.web_blue);
                         } else if (userStatus.equalsIgnoreCase("PLANNING")) {

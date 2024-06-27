@@ -273,7 +273,7 @@ public class SchedulesTabFragment extends Fragment {
                 final int existingSize = lastGroupedAnimeSchedules.size();
 
                 if (SchedulesTabFragment.this.animeReleaseGroupAdapter==null ||
-                    SchedulesTabFragment.this.animeReleaseGroupAdapter.mAnimeGroups.get()==null
+                        SchedulesTabFragment.this.animeReleaseGroupAdapter.mAnimeGroups.get()==null
                 ) {
                     int lastImmediateGroupIndex = 0;
                     final ArrayList<AnimeReleaseGroup> immediateGroupedReleasedAnime = new ArrayList<>();

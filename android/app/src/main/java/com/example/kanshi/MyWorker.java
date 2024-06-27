@@ -371,10 +371,10 @@ public class MyWorker extends Worker {
         }
 
         HashSet<String> animeNotificationsToBeRemoved = new HashSet<>();
-        long THIRTY_DAY_IN_MILLIS = TimeUnit.DAYS.toMillis(30);
+        long THIRTY_DAY_IN_MILLIS_AGO = currentTimeInMillis - TimeUnit.DAYS.toMillis(30);
         for (AnimeNotification anime : allAnimeNotificationValues) {
             // If ReleaseDate was Before 30 days ago
-            if (anime.releaseDateMillis < (currentTimeInMillis - THIRTY_DAY_IN_MILLIS)) {
+            if (anime.releaseDateMillis < THIRTY_DAY_IN_MILLIS_AGO) {
                 animeNotificationsToBeRemoved.add(anime.animeId+"-"+anime.releaseEpisode);
             }
         }
@@ -482,6 +482,10 @@ public class MyWorker extends Worker {
                                 AnimeNotificationManager.allAnimeNotification.put(newAnimeRelease.animeId + "-" + newAnimeRelease.releaseEpisode, newAnimeRelease);
                                 AnimeNotificationManager.addAnimeNotification(this.getApplicationContext(), newAnimeRelease);
                                 isEdited = true;
+                                // Get next if new anime release is past current time
+                                if (releaseDateMillis <= System.currentTimeMillis()) {
+                                    getAiringAnime(newAnimeRelease, 0);
+                                }
                             }
                             if (isEdited) {
                                 if (!AnimeNotificationManager.allAnimeNotification.isEmpty()) {

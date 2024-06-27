@@ -275,7 +275,7 @@ public class ReleasedTabFragment extends Fragment {
                 final int existingSize = lastGroupedAnimeReleased.size();
 
                 if (ReleasedTabFragment.this.animeReleaseGroupAdapter==null ||
-                    ReleasedTabFragment.this.animeReleaseGroupAdapter.mAnimeGroups.get()==null
+                        ReleasedTabFragment.this.animeReleaseGroupAdapter.mAnimeGroups.get()==null
                 ) {
                     int lastImmediateGroupIndex = 0;
                     final ArrayList<AnimeReleaseGroup> immediateGroupedReleasedAnime = new ArrayList<>();
