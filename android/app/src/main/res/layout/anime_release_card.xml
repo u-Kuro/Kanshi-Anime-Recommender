@@ -4,7 +4,11 @@
     android:layout_width="match_parent"
     android:layout_height="60dp"
     android:paddingVertical="6dp"
-    android:background="@color/black">
+    android:paddingHorizontal="16dp"
+    android:background="@color/black"
+    android:clickable="true"
+    android:focusable="true"
+    android:longClickable="true">
     <ImageView
         android:id="@+id/anime_image"
         android:src="@drawable/image_placeholder"

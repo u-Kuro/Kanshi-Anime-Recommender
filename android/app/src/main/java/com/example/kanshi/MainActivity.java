@@ -766,175 +766,214 @@ public class MainActivity extends AppCompatActivity {
             }
             changeKeepAppRunningInBackground(enable);
         }
-
+        private final Handler exportJSONUIhandler = new Handler(Looper.getMainLooper());
+        private ExecutorService exportJSONExecutor = Executors.newFixedThreadPool(1);
         File tempExportFile;
         String exportDirectoryPath;
         @RequiresApi(api = Build.VERSION_CODES.R)
         @JavascriptInterface
         public void exportJSON(String chunk, int status, String fileName) {
             ReentrantLock fileLock = null;
-            if (tempExportFile!=null) {
+            if (tempExportFile != null) {
                 fileLock = getLockForFile(tempExportFile);
                 fileLock.lock(); // Lock before critical section
             }
             try {
                 if (status == 0) {
                     try {
+                        if (exportJSONExecutor != null) {
+                            exportJSONExecutor.shutdownNow();
+                        }
+                        exportJSONExecutor = Executors.newFixedThreadPool(1);
+                        exportJSONUIhandler.removeCallbacksAndMessages(null);
                         if (writer != null) {
                             writer.close();
                             writer = null;
                         }
                     } catch (Exception ignored) {}
-                    if (!Environment.isExternalStorageManager()) {
-                        showDialog(new AlertDialog.Builder(MainActivity.this)
-                                        .setTitle("Folder Access for Backup")
-                                        .setMessage("Allow permission to access folders for backup feature.")
-                                        .setPositiveButton("OK", (dialogInterface, i) -> {
-                                            Intent intent = new Intent(ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION, Uri.fromParts("package", getPackageName(), null));
-                                            startActivity(intent);
-                                        })
-                                        .setNegativeButton("CANCEL", null),
-                                true);
-                    } else {
-                        File exportDirectory = new File(exportPath);
-                        if (exportDirectory.isDirectory()) {
-                            exportDirectoryPath = exportPath + File.separator;
-                            File directory = new File(exportDirectoryPath);
-                            boolean dirIsCreated;
-                            if (!directory.exists()) {
-                                dirIsCreated = directory.mkdirs();
-                            } else {
-                                dirIsCreated = true;
-                            }
-                            if (directory.isDirectory() && dirIsCreated) {
-                                try {
-                                    tempExportFile = new File(exportDirectoryPath + "tmp.json");
-                                    boolean tempFileIsDeleted;
-                                    if (tempExportFile.exists()) {
-                                        tempFileIsDeleted = tempExportFile.delete();
-                                        //noinspection ResultOfMethodCallIgnored
-                                        tempExportFile.createNewFile();
-                                    } else {
-                                        tempFileIsDeleted = true;
-                                        //noinspection ResultOfMethodCallIgnored
-                                        tempExportFile.createNewFile();
-                                    }
-                                    if (tempFileIsDeleted) {
-                                        writer = new BufferedWriter(new FileWriter(tempExportFile, true));
-                                    } else {
+                    exportJSONExecutor.submit(() -> {
+                        if (!Environment.isExternalStorageManager()) {
+                            exportJSONUIhandler.post(() -> showDialog(new AlertDialog.Builder(MainActivity.this)
+                            .setTitle("Folder Access for Backup")
+                            .setMessage("Allow permission to access folders for backup feature.")
+                            .setPositiveButton("OK", (dialogInterface, i) -> {
+                                Intent intent = new Intent(ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION, Uri.fromParts("package", getPackageName(), null));
+                                startActivity(intent);
+                            })
+                            .setNegativeButton("CANCEL", null), true));
+                        } else {
+                            File exportDirectory = new File(exportPath);
+                            if (exportDirectory.isDirectory()) {
+                                exportDirectoryPath = exportPath + File.separator;
+                                File directory = new File(exportDirectoryPath);
+                                boolean dirIsCreated;
+                                if (!directory.exists()) {
+                                    dirIsCreated = directory.mkdirs();
+                                } else {
+                                    dirIsCreated = true;
+                                }
+                                if (directory.isDirectory() && dirIsCreated) {
+                                    try {
+                                        tempExportFile = new File(exportDirectoryPath + "tmp.json");
+                                        boolean tempFileIsDeleted;
+                                        if (tempExportFile.exists()) {
+                                            tempFileIsDeleted = tempExportFile.delete();
+                                            //noinspection ResultOfMethodCallIgnored
+                                            tempExportFile.createNewFile();
+                                        } else {
+                                            tempFileIsDeleted = true;
+                                            //noinspection ResultOfMethodCallIgnored
+                                            tempExportFile.createNewFile();
+                                        }
+                                        if (tempFileIsDeleted) {
+                                            writer = new BufferedWriter(new FileWriter(tempExportFile, true));
+                                        } else {
+                                            try {
+                                                if (writer != null) {
+                                                    writer.close();
+                                                    writer = null;
+                                                }
+                                            } catch (Exception ignored) {}
+                                            exportJSONUIhandler.post(() -> {
+                                                isExported(false);
+                                                showToast(Toast.makeText(getApplicationContext(), "Temporary backup file can't be re-written, please delete tmp.json in the selected directory.", Toast.LENGTH_LONG));
+                                            });
+                                        }
+                                    } catch (Exception e) {
+                                        exportJSONUIhandler.post(() -> {
+                                            isExported(false);
+                                            showToast(Toast.makeText(getApplicationContext(), "An exception occurred initializing the temporary backup file.", Toast.LENGTH_LONG));
+                                        });
                                         try {
                                             if (writer != null) {
                                                 writer.close();
                                                 writer = null;
                                             }
                                         } catch (Exception ignored) {}
-                                        isExported(false);
-                                        showToast(Toast.makeText(getApplicationContext(), "Temporary backup file can't be re-written, please delete tmp.json in the selected directory.", Toast.LENGTH_LONG));
+                                        Utils.handleUncaughtException(MainActivity.this.getApplicationContext(), e, "exportJSON Status 0");
+                                        e.printStackTrace();
                                     }
-                                } catch (Exception e) {
-                                    isExported(false);
-                                    showToast(Toast.makeText(getApplicationContext(), "An exception occurred initializing the temporary backup file.", Toast.LENGTH_LONG));
-                                    try {
-                                        if (writer != null) {
-                                            writer.close();
-                                            writer = null;
-                                        }
-                                    } catch (Exception ignored) {}
-                                    Utils.handleUncaughtException(MainActivity.this.getApplicationContext(), e, "exportJSON Status 0");
-                                    e.printStackTrace();
+                                } else if (!dirIsCreated) {
+                                    exportJSONUIhandler.post(() -> showToast(Toast.makeText(getApplicationContext(), "Can't find backup folder, please create it first.", Toast.LENGTH_LONG)));
                                 }
-                            } else if (!dirIsCreated) {
-                                showToast(Toast.makeText(getApplicationContext(), "Can't find backup folder, please create it first.", Toast.LENGTH_LONG));
+                            } else if (exportPath != null && !exportPath.isEmpty() && !exportDirectory.isDirectory()) {
+                                String[] tempExportPath = exportPath.split(Pattern.quote(File.separator));
+                                String tempPathName = tempExportPath.length > 1 ?
+                                        tempExportPath[tempExportPath.length - 2] + File.separator +
+                                                tempExportPath[tempExportPath.length - 1]
+                                        : tempExportPath[tempExportPath.length - 1];
+                                exportJSONUIhandler.post(() -> showDialog(new AlertDialog.Builder(MainActivity.this)
+                                .setTitle("Backup Folder is Missing")
+                                .setMessage("Folder directory [" + tempPathName + "] is missing, please choose another folder for backup.")
+                                .setPositiveButton("OK", (dialogInterface, x) -> {
+                                    showToast(Toast.makeText(getApplicationContext(), "Select or create a folder.", Toast.LENGTH_LONG));
+                                    Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).addCategory(Intent.CATEGORY_DEFAULT);
+                                    chooseExportFile.launch(i);
+                                })
+                                .setNegativeButton("CANCEL", null), true));
+                            } else {
+                                Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).addCategory(Intent.CATEGORY_DEFAULT);
+                                chooseExportFile.launch(i);
+                                exportJSONUIhandler.post(() -> showToast(Toast.makeText(getApplicationContext(), "Select or create a folder.", Toast.LENGTH_LONG)));
                             }
-                        } else if (exportPath != null && !exportPath.isEmpty() && !exportDirectory.isDirectory()) {
-                            String[] tempExportPath = exportPath.split(Pattern.quote(File.separator));
-                            String tempPathName = tempExportPath.length > 1 ?
-                                    tempExportPath[tempExportPath.length - 2] + File.separator +
-                                            tempExportPath[tempExportPath.length - 1]
-                                    : tempExportPath[tempExportPath.length - 1];
-                            showDialog(new AlertDialog.Builder(MainActivity.this)
-                                            .setTitle("Backup Folder is Missing")
-                                            .setMessage("Folder directory [" + tempPathName + "] is missing, please choose another folder for backup.")
-                                            .setPositiveButton("OK", (dialogInterface, x) -> {
-                                                showToast(Toast.makeText(getApplicationContext(), "Select or create a folder.", Toast.LENGTH_LONG));
-                                                Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).addCategory(Intent.CATEGORY_DEFAULT);
-                                                chooseExportFile.launch(i);
-                                            })
-                                            .setNegativeButton("CANCEL", null),
-                                    true);
-                        } else {
-                            Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).addCategory(Intent.CATEGORY_DEFAULT);
-                            chooseExportFile.launch(i);
-                            showToast(Toast.makeText(getApplicationContext(), "Select or create a folder.", Toast.LENGTH_LONG));
                         }
-                    }
-                } else if (status == 1 && writer != null) {
-                    try {
-                        writer.write(chunk);
-                    } catch (Exception e) {
-                        isExported(false);
-                        showToast(Toast.makeText(getApplicationContext(), "An exception occurred while writing to temporary backup file.", Toast.LENGTH_LONG));
+                    });
+                } else if (
+                    status == 1
+                    && writer != null
+                    && exportJSONExecutor != null
+                    && !exportJSONExecutor.isShutdown()
+                    && !exportJSONExecutor.isTerminated()
+                ) {
+                    exportJSONExecutor.submit(()-> {
                         try {
-                            if (writer != null) {
-                                writer.close();
-                                writer = null;
-                            }
-                        } catch (Exception ignored) {}
-                        Utils.handleUncaughtException(MainActivity.this.getApplicationContext(), e, "exportJSON Status 1");
-                        e.printStackTrace();
-                    }
-                } else if (status == 2 && writer != null) {
-                    try {
-                        writer.write(chunk);
-                        writer.close();
-                        writer = null;
-                        int lastStringLen = Math.min(chunk.length(), 3);
-                        String lastNCharacters = new String(new char[lastStringLen]).replace("\0", "}");
-                        if (chunk.endsWith(lastNCharacters)) {
-                            File finalFile = new File(exportDirectoryPath + fileName);
-                            if (tempExportFile != null && tempExportFile.exists() && tempExportFile.isFile() && tempExportFile.length() > 0) {
-                                ReentrantLock finalFileNameLock = getLockForFileName(finalFile.getName());
-                                finalFileNameLock.lock();
-                                try {
-                                    //noinspection ResultOfMethodCallIgnored
-                                    finalFile.createNewFile();
-                                    Path tempPath = tempExportFile.toPath();
-                                    Path backupPath = finalFile.toPath();
-                                    Files.copy(tempPath, backupPath, StandardCopyOption.REPLACE_EXISTING);
-                                    isExported(true);
-                                    //noinspection ResultOfMethodCallIgnored
-                                    tempExportFile.delete();
-                                } catch (Exception e) {
-                                    isExported(false);
-                                    showToast(Toast.makeText(getApplicationContext(), "Failed to access the backup file.", Toast.LENGTH_LONG));
-                                    Utils.handleUncaughtException(getApplicationContext(), e, "MainActivity exportJSON Status 2 0");
-                                    e.printStackTrace();
-                                } finally {
-                                    finalFileNameLock.unlock();
+                            writer.write(chunk);
+                        } catch (Exception e) {
+                            exportJSONUIhandler.post(() -> {
+                                isExported(false);
+                                showToast(Toast.makeText(getApplicationContext(), "An exception occurred while writing to temporary backup file.", Toast.LENGTH_LONG));
+                            });
+                            try {
+                                if (writer != null) {
+                                    writer.close();
+                                    writer = null;
+                                }
+                            } catch (Exception ignored) {}
+                            Utils.handleUncaughtException(MainActivity.this.getApplicationContext(), e, "exportJSON Status 1");
+                            e.printStackTrace();
+                        }
+                    });
+                } else if (
+                    status == 2
+                    && writer != null
+                    && exportJSONExecutor != null
+                    && !exportJSONExecutor.isShutdown()
+                    && !exportJSONExecutor.isTerminated()
+                ) {
+                    exportJSONExecutor.submit(() -> {
+                        try {
+                            writer.write(chunk);
+                            writer.close();
+                            writer = null;
+                            int lastStringLen = Math.min(chunk.length(), 3);
+                            String lastNCharacters = new String(new char[lastStringLen]).replace("\0", "}");
+                            if (chunk.endsWith(lastNCharacters)) {
+                                File finalFile = new File(exportDirectoryPath + fileName);
+                                if (tempExportFile != null && tempExportFile.exists() && tempExportFile.isFile() && tempExportFile.length() > 0) {
+                                    ReentrantLock finalFileNameLock = getLockForFileName(finalFile.getName());
+                                    finalFileNameLock.lock();
+                                    try {
+                                        //noinspection ResultOfMethodCallIgnored
+                                        finalFile.createNewFile();
+                                        Path tempPath = tempExportFile.toPath();
+                                        Path backupPath = finalFile.toPath();
+                                        Files.copy(tempPath, backupPath, StandardCopyOption.REPLACE_EXISTING);
+                                        exportJSONUIhandler.post(() -> isExported(true));
+                                        //noinspection ResultOfMethodCallIgnored
+                                        tempExportFile.delete();
+                                    } catch (Exception e) {
+                                        exportJSONUIhandler.post(() -> {
+                                            isExported(false);
+                                            showToast(Toast.makeText(getApplicationContext(), "Failed to access the backup file.", Toast.LENGTH_LONG));
+                                        });
+                                        Utils.handleUncaughtException(getApplicationContext(), e, "MainActivity exportJSON Status 2 0");
+                                        e.printStackTrace();
+                                    } finally {
+                                        finalFileNameLock.unlock();
+                                    }
+                                } else {
+                                    exportJSONUIhandler.post(() -> {
+                                        isExported(false);
+                                        showToast(Toast.makeText(getApplicationContext(), "Failed to backup the file.", Toast.LENGTH_LONG));
+                                    });
                                 }
                             } else {
+                                exportJSONUIhandler.post(() -> {
+                                    isExported(false);
+                                    showToast(Toast.makeText(getApplicationContext(), "An exception occurred in finalizing the backup file.", Toast.LENGTH_LONG));
+                                });
+                            }
+                        } catch (Exception e) {
+                            exportJSONUIhandler.post(() -> {
                                 isExported(false);
-                                showToast(Toast.makeText(getApplicationContext(), "Failed to backup the file.", Toast.LENGTH_LONG));
-                            }
-                        } else {
-                            isExported(false);
-                            showToast(Toast.makeText(getApplicationContext(), "An exception occurred in finalizing the backup file.", Toast.LENGTH_LONG));
+                                showToast(Toast.makeText(getApplicationContext(), "An exception occurred in finalizing the backup file.", Toast.LENGTH_LONG));
+                            });
+                            try {
+                                if (writer != null) {
+                                    writer.close();
+                                    writer = null;
+                                }
+                            } catch (Exception ignored) {}
+                            Utils.handleUncaughtException(MainActivity.this.getApplicationContext(), e, "MainActivity exportJSON Status 2 1");
+                            e.printStackTrace();
                         }
-                    } catch (Exception e) {
-                        isExported(false);
-                        showToast(Toast.makeText(getApplicationContext(), "An exception occurred in finalizing the backup file.", Toast.LENGTH_LONG));
-                        try {
-                            if (writer != null) {
-                                writer.close();
-                                writer = null;
-                            }
-                        } catch (Exception ignored) {}
-                        Utils.handleUncaughtException(MainActivity.this.getApplicationContext(), e, "MainActivity exportJSON Status 2 1");
-                        e.printStackTrace();
-                    }
+                    });
                 }
+            } catch (Exception e) {
+                Utils.handleUncaughtException(MainActivity.this.getApplicationContext(), e, "MainActivity exportJSON Outer-Lock");
+                e.printStackTrace();
             } finally {
-                if (fileLock!=null) {
+                if (fileLock != null) {
                     fileLock.unlock();
                 }
             }
@@ -1060,15 +1099,15 @@ public class MainActivity extends AppCompatActivity {
                     AnimeNotificationManager.allAnimeNotification.putAll(updatedAnimeNotifications);
                     AnimeNotificationManager.writeAnimeNotificationInFile(MainActivity.this, true);
                     updateNotificationsFutures.remove(String.valueOf(animeId));
-                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
                         if (updateNotificationsFutures.isEmpty()) {
                             SchedulesTabFragment schedulesTabFragment = SchedulesTabFragment.getInstanceActivity();
                             if (schedulesTabFragment!=null) {
-                                new Handler(Looper.getMainLooper()).post(schedulesTabFragment::updateScheduledAnime);
+                                new Handler(Looper.getMainLooper()).post(()->schedulesTabFragment.updateScheduledAnime(false));
                             }
                             ReleasedTabFragment releasedTabFragment = ReleasedTabFragment.getInstanceActivity();
                             if (releasedTabFragment!=null) {
-                                new Handler(Looper.getMainLooper()).post(releasedTabFragment::updateReleasedAnime);
+                                new Handler(Looper.getMainLooper()).post(()->releasedTabFragment.updateReleasedAnime(false));
                             }
                         }
                     }

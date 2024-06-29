@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/anime_release_group_date"
+    android:background="@color/black"
+    android:layout_width="match_parent"
+    android:layout_height="36dp"
+    android:textColor="@color/faded_white"
+    android:textSize="14sp"
+    android:paddingHorizontal="16dp"
+    android:gravity="center_vertical"/>

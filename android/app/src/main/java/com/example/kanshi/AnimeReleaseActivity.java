@@ -46,13 +46,16 @@ import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
 
 
 @RequiresApi(api = Build.VERSION_CODES.O)
 public class AnimeReleaseActivity extends AppCompatActivity {
     public static WeakReference<AnimeReleaseActivity> weakActivity;
-    public static boolean showUnwatchedAnime = false;
+    public static final AtomicBoolean showUnwatchedAnime = new AtomicBoolean(false);
+    public static final AtomicReference<String> selectedAnimeReleaseOption = new AtomicReference<>("Updates");
     Spinner animeReleaseSpinner;
     SharedPreferences prefs;
     SharedPreferences.Editor prefsEdit;
@@ -144,13 +147,15 @@ public class AnimeReleaseActivity extends AppCompatActivity {
                                         importedFileNameLock.unlock();
                                     }
                                     if (hasImportedFile) {
-                                        SchedulesTabFragment schedulesTabFragment = SchedulesTabFragment.getInstanceActivity();
-                                        if (schedulesTabFragment != null) {
-                                            schedulesTabFragment.updateScheduledAnime();
-                                        }
-                                        ReleasedTabFragment releasedTabFragment = ReleasedTabFragment.getInstanceActivity();
-                                        if (releasedTabFragment != null) {
-                                            releasedTabFragment.updateReleasedAnime();
+                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                                            SchedulesTabFragment schedulesTabFragment = SchedulesTabFragment.getInstanceActivity();
+                                            if (schedulesTabFragment != null) {
+                                                schedulesTabFragment.updateScheduledAnime(false);
+                                            }
+                                            ReleasedTabFragment releasedTabFragment = ReleasedTabFragment.getInstanceActivity();
+                                            if (releasedTabFragment != null) {
+                                                releasedTabFragment.updateReleasedAnime(false);
+                                            }
                                         }
                                         if (!AnimeNotificationManager.allAnimeNotification.isEmpty()) {
                                             LocalPersistence.writeObjectToFile(this, AnimeNotificationManager.allAnimeNotification, "allAnimeNotification");
@@ -186,14 +191,14 @@ public class AnimeReleaseActivity extends AppCompatActivity {
         viewPager = findViewById(R.id.view_pager);
         prefs = this.getSharedPreferences("com.example.kanshi", Context.MODE_PRIVATE);
         prefsEdit = prefs.edit();
-        showUnwatchedAnime = prefs.getBoolean("showUnwatchedAnime", false);
+        showUnwatchedAnime.set(prefs.getBoolean("showUnwatchedAnime", false));
 
         if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {
             getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
         }
 
         ImageView completed_anime_switch = findViewById(R.id.completed_anime_switch);
-        if (showUnwatchedAnime) {
+        if (showUnwatchedAnime.get()) {
             completed_anime_switch.setImageResource(R.drawable.not_done_white);
         } else {
             completed_anime_switch.setImageResource(R.drawable.done_white);
@@ -246,8 +251,8 @@ public class AnimeReleaseActivity extends AppCompatActivity {
             public void onTabReselected(TabLayout.Tab tab) {}
         });
 
-        String selectedAnimeReleaseOption = prefs.getString("animeReleaseOption", "Updates");
-        switch (selectedAnimeReleaseOption) {
+        selectedAnimeReleaseOption.set(prefs.getString("animeReleaseOption", "Updates"));
+        switch (selectedAnimeReleaseOption.get()) {
             case "My List":
                 animeReleaseSpinner.setSelection(1);
                 break;
@@ -270,16 +275,25 @@ public class AnimeReleaseActivity extends AppCompatActivity {
             @Override
             public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
                 if (adapterView == null) return;
-                String selectedAnimeReleaseOption = adapterView.getItemAtPosition(i).toString();
-                prefsEdit.putString("animeReleaseOption", selectedAnimeReleaseOption).apply();
 
-                SchedulesTabFragment schedulesTabFragment = SchedulesTabFragment.getInstanceActivity();
-                if (schedulesTabFragment!=null) {
-                    schedulesTabFragment.updateScheduledAnime();
-                }
-                ReleasedTabFragment releasedTabFragment = ReleasedTabFragment.getInstanceActivity();
-                if (releasedTabFragment!=null) {
-                    releasedTabFragment.updateReleasedAnime();
+                Object item = adapterView.getItemAtPosition(i);
+                if (item == null) return;
+
+                String newSelectedAnimeReleaseOption = item.toString();
+                if (newSelectedAnimeReleaseOption.isEmpty()) return;
+                selectedAnimeReleaseOption.set(newSelectedAnimeReleaseOption);
+
+                prefsEdit.putString("animeReleaseOption", selectedAnimeReleaseOption.get()).apply();
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                    SchedulesTabFragment schedulesTabFragment = SchedulesTabFragment.getInstanceActivity();
+                    if (schedulesTabFragment != null) {
+                        schedulesTabFragment.updateScheduledAnime(false);
+                    }
+                    ReleasedTabFragment releasedTabFragment = ReleasedTabFragment.getInstanceActivity();
+                    if (releasedTabFragment != null) {
+                        releasedTabFragment.updateReleasedAnime(false);
+                    }
                 }
             }
             @Override
@@ -289,22 +303,22 @@ public class AnimeReleaseActivity extends AppCompatActivity {
         backupAnimeReleases.setOnClickListener(view -> backupBottomDialog());
 
         completed_anime_switch.setOnClickListener(view -> {
-            showUnwatchedAnime = !showUnwatchedAnime;
-            if (showUnwatchedAnime) {
+            showUnwatchedAnime.set(!showUnwatchedAnime.get());
+            if (showUnwatchedAnime.get()) {
                 completed_anime_switch.setImageResource(R.drawable.not_done_white);
             } else {
                 completed_anime_switch.setImageResource(R.drawable.done_white);
             }
-            prefsEdit.putBoolean("showUnwatchedAnime", showUnwatchedAnime).apply();
+            prefsEdit.putBoolean("showUnwatchedAnime", showUnwatchedAnime.get()).apply();
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                 SchedulesTabFragment schedulesTabFragment = SchedulesTabFragment.getInstanceActivity();
                 if (schedulesTabFragment != null) {
-                    schedulesTabFragment.updateScheduledAnime();
+                    schedulesTabFragment.updateScheduledAnime(false);
                 }
                 ReleasedTabFragment releasedTabFragment = ReleasedTabFragment.getInstanceActivity();
                 if (releasedTabFragment != null) {
-                    releasedTabFragment.updateReleasedAnime();
+                    releasedTabFragment.updateReleasedAnime(false);
                 }
             }
         });

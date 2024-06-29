@@ -474,6 +474,7 @@ public class MainService extends Service {
         public void sendBackgroundStatus(String text) {
             updateNotificationTitle(text);
         }
+        private ExecutorService exportJSONExecutor = Executors.newFixedThreadPool(1);
         File tempExportFile;
         String exportDirectoryPath;
         @RequiresApi(api = Build.VERSION_CODES.R)
@@ -487,120 +488,145 @@ public class MainService extends Service {
             try {
                 if (status == 0) {
                     try {
+                        if (exportJSONExecutor != null) {
+                            exportJSONExecutor.shutdownNow();
+                        }
+                        exportJSONExecutor = Executors.newFixedThreadPool(1);
                         if (writer != null) {
                             writer.close();
                             writer = null;
                         }
                     } catch (Exception ignored) {}
-                    if (Environment.isExternalStorageManager()) {
-                        File exportDirectory = new File(exportPath);
-                        if (exportDirectory.isDirectory()) {
-                            exportDirectoryPath = exportPath + File.separator;
-                            File directory = new File(exportDirectoryPath);
-                            boolean dirIsCreated;
-                            if (!directory.exists()) {
-                                dirIsCreated = directory.mkdirs();
-                            } else {
-                                dirIsCreated = true;
-                            }
-                            if (directory.isDirectory() && dirIsCreated) {
-                                try {
-                                    tempExportFile = new File(exportDirectoryPath + "pb.tmp.json");
-                                    boolean tempFileIsDeleted;
-                                    if (tempExportFile.exists()) {
-                                        tempFileIsDeleted = tempExportFile.delete();
-                                        //noinspection ResultOfMethodCallIgnored
-                                        tempExportFile.createNewFile();
-                                    } else {
-                                        tempFileIsDeleted = true;
-                                        //noinspection ResultOfMethodCallIgnored
-                                        tempExportFile.createNewFile();
-                                    }
-                                    if (tempFileIsDeleted) {
-                                        writer = new BufferedWriter(new FileWriter(tempExportFile, true));
-                                    } else {
+                    exportJSONExecutor.submit(() -> {
+                        if (Environment.isExternalStorageManager()) {
+                            File exportDirectory = new File(exportPath);
+                            if (exportDirectory.isDirectory()) {
+                                exportDirectoryPath = exportPath + File.separator;
+                                File directory = new File(exportDirectoryPath);
+                                boolean dirIsCreated;
+                                if (!directory.exists()) {
+                                    dirIsCreated = directory.mkdirs();
+                                } else {
+                                    dirIsCreated = true;
+                                }
+                                if (directory.isDirectory() && dirIsCreated) {
+                                    try {
+                                        tempExportFile = new File(exportDirectoryPath + "pb.tmp.json");
+                                        boolean tempFileIsDeleted;
+                                        if (tempExportFile.exists()) {
+                                            tempFileIsDeleted = tempExportFile.delete();
+                                            //noinspection ResultOfMethodCallIgnored
+                                            tempExportFile.createNewFile();
+                                        } else {
+                                            tempFileIsDeleted = true;
+                                            //noinspection ResultOfMethodCallIgnored
+                                            tempExportFile.createNewFile();
+                                        }
+                                        if (tempFileIsDeleted) {
+                                            writer = new BufferedWriter(new FileWriter(tempExportFile, true));
+                                        } else {
+                                            try {
+                                                if (writer != null) {
+                                                    writer.close();
+                                                    writer = null;
+                                                }
+                                            } catch (Exception ignored) {}
+                                            isExported(false);
+                                        }
+                                    } catch (Exception e) {
+                                        isExported(false);
                                         try {
                                             if (writer != null) {
                                                 writer.close();
                                                 writer = null;
                                             }
                                         } catch (Exception ignored) {}
-                                        isExported(false);
+                                        Utils.handleUncaughtException(MainService.this.getApplicationContext(), e, "MainService exportJSON Status 0");
+                                        e.printStackTrace();
                                     }
-                                } catch (Exception e) {
-                                    isExported(false);
-                                    try {
-                                        if (writer != null) {
-                                            writer.close();
-                                            writer = null;
-                                        }
-                                    } catch (Exception ignored) {}
-                                    Utils.handleUncaughtException(MainService.this.getApplicationContext(), e, "MainService exportJSON Status 0");
-                                    e.printStackTrace();
                                 }
                             }
                         }
-                    }
-                } else if (status == 1 && writer != null) {
-                    try {
-                        writer.write(chunk);
-                    } catch (Exception e) {
-                        isExported(false);
+                    });
+                } else if (
+                    status == 1
+                    && writer != null
+                    && exportJSONExecutor != null
+                    && !exportJSONExecutor.isShutdown()
+                    && !exportJSONExecutor.isTerminated()
+                ) {
+                    exportJSONExecutor.submit(()-> {
                         try {
-                            if (writer != null) {
-                                writer.close();
-                                writer = null;
-                            }
-                        } catch (Exception ignored) {}
-                        Utils.handleUncaughtException(MainService.this.getApplicationContext(), e, "MainService exportJSON Status 1");
-                        e.printStackTrace();
-                    }
-                } else if (status == 2 && writer != null) {
-                    try {
-                        writer.write(chunk);
-                        writer.close();
-                        writer = null;
-                        int lastStringLen = Math.min(chunk.length(), 3);
-                        String lastNCharacters = new String(new char[lastStringLen]).replace("\0", "}");
-                        if (chunk.endsWith(lastNCharacters)) {
-                            File finalFile = new File(exportDirectoryPath + fileName);
-                            if (tempExportFile != null && tempExportFile.exists() && tempExportFile.isFile() && tempExportFile.length() > 0) {
-                                ReentrantLock finalFileNameLock = getLockForFileName(finalFile.getName());
-                                finalFileNameLock.lock();
-                                try {
-                                    //noinspection ResultOfMethodCallIgnored
-                                    finalFile.createNewFile();
-                                    Path tempPath = tempExportFile.toPath();
-                                    Path backupPath = finalFile.toPath();
-                                    Files.copy(tempPath, backupPath, StandardCopyOption.REPLACE_EXISTING);
-                                    isExported(true);
-                                    //noinspection ResultOfMethodCallIgnored
-                                    tempExportFile.delete();
-                                } catch (Exception e) {
+                            writer.write(chunk);
+                        } catch (Exception e) {
+                            isExported(false);
+                            try {
+                                if (writer != null) {
+                                    writer.close();
+                                    writer = null;
+                                }
+                            } catch (Exception ignored) {}
+                            Utils.handleUncaughtException(MainService.this.getApplicationContext(), e, "MainService exportJSON Status 1");
+                            e.printStackTrace();
+                        }
+                    });
+                } else if (
+                    status == 2
+                    && writer != null
+                    && exportJSONExecutor != null
+                    && !exportJSONExecutor.isShutdown()
+                    && !exportJSONExecutor.isTerminated()
+                ) {
+                    exportJSONExecutor.submit(() -> {
+                        try {
+                            writer.write(chunk);
+                            writer.close();
+                            writer = null;
+                            int lastStringLen = Math.min(chunk.length(), 3);
+                            String lastNCharacters = new String(new char[lastStringLen]).replace("\0", "}");
+                            if (chunk.endsWith(lastNCharacters)) {
+                                File finalFile = new File(exportDirectoryPath + fileName);
+                                if (tempExportFile != null && tempExportFile.exists() && tempExportFile.isFile() && tempExportFile.length() > 0) {
+                                    ReentrantLock finalFileNameLock = getLockForFileName(finalFile.getName());
+                                    finalFileNameLock.lock();
+                                    try {
+                                        //noinspection ResultOfMethodCallIgnored
+                                        finalFile.createNewFile();
+                                        Path tempPath = tempExportFile.toPath();
+                                        Path backupPath = finalFile.toPath();
+                                        Files.copy(tempPath, backupPath, StandardCopyOption.REPLACE_EXISTING);
+                                        isExported(true);
+                                        //noinspection ResultOfMethodCallIgnored
+                                        tempExportFile.delete();
+                                    } catch (Exception e) {
+                                        isExported(false);
+                                        Utils.handleUncaughtException(getApplicationContext(), e, "MainService exportJSON Status 2 0");
+                                        e.printStackTrace();
+                                    } finally {
+                                        finalFileNameLock.unlock();
+                                    }
+                                } else {
                                     isExported(false);
-                                    Utils.handleUncaughtException(getApplicationContext(), e, "MainService exportJSON Status 2 0");
-                                    e.printStackTrace();
-                                } finally {
-                                    finalFileNameLock.unlock();
                                 }
                             } else {
                                 isExported(false);
                             }
-                        } else {
+                        } catch (Exception e) {
                             isExported(false);
+                            try {
+                                if (writer != null) {
+                                    writer.close();
+                                    writer = null;
+                                }
+                            } catch (Exception ignored) {}
+                            Utils.handleUncaughtException(MainService.this.getApplicationContext(), e, "MainService exportJSON Status 2 1");
+                            e.printStackTrace();
                         }
-                    } catch (Exception e) {
-                        isExported(false);
-                        try {
-                            if (writer != null) {
-                                writer.close();
-                                writer = null;
-                            }
-                        } catch (Exception ignored) {}
-                        Utils.handleUncaughtException(MainService.this.getApplicationContext(), e, "MainService exportJSON Status 2 1");
-                        e.printStackTrace();
-                    }
+                    });
                 }
+            } catch (Exception e) {
+                Utils.handleUncaughtException(MainService.this.getApplicationContext(), e, "MainService exportJSON Outer-Lock");
+                e.printStackTrace();
             } finally {
                 if (fileLock != null) {
                     fileLock.unlock();
@@ -675,15 +701,15 @@ public class MainService extends Service {
                     AnimeNotificationManager.allAnimeNotification.putAll(updatedAnimeNotifications);
                     AnimeNotificationManager.writeAnimeNotificationInFile(MainService.this, true);
                     updateNotificationsFutures.remove(String.valueOf(animeId));
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                         if (updateNotificationsFutures.isEmpty()) {
                             SchedulesTabFragment schedulesTabFragment = SchedulesTabFragment.getInstanceActivity();
                             if (schedulesTabFragment!=null) {
-                                new Handler(Looper.getMainLooper()).post(schedulesTabFragment::updateScheduledAnime);
+                                new Handler(Looper.getMainLooper()).post(()->schedulesTabFragment.updateScheduledAnime(false));
                             }
                             ReleasedTabFragment releasedTabFragment = ReleasedTabFragment.getInstanceActivity();
                             if (releasedTabFragment!=null) {
-                                new Handler(Looper.getMainLooper()).post(releasedTabFragment::updateReleasedAnime);
+                                new Handler(Looper.getMainLooper()).post(()->releasedTabFragment.updateReleasedAnime(false));
                             }
                         }
                     }

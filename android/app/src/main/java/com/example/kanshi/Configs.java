@@ -62,7 +62,7 @@ public class Configs {
     public static final String DATA_EVICTION_CHANNEL = "data_eviction_channel";
     public static final Map<String, Bitmap> imageCache = new ConcurrentHashMap<>();
     public static ArrayList<AnimeReleaseGroup> loadedGroupedReleasedAnime = new ArrayList<>();
-    public static ArrayList<AnimeReleaseGroup> loadedGroupedAnimeSchedules = new ArrayList<>();
+    public static ArrayList<AnimeReleaseGroup> loadedGroupedScheduledAnime = new ArrayList<>();
     private static WebViewAssetLoader assetLoader;
     public static WebViewAssetLoader getAssetLoader(Context context) {
         if (assetLoader==null) {

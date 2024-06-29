@@ -1,10 +1,10 @@
 package com.example.kanshi;
 
 import static com.example.kanshi.Configs.imageCache;
+import static com.example.kanshi.GroupedListItem.HEADER;
+import static com.example.kanshi.GroupedListItem.ITEM;
 import static com.example.kanshi.Utils.cropAndRoundCorners;
 
-import android.content.ClipData;
-import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.res.ColorStateList;
 import android.graphics.Bitmap;
@@ -13,8 +13,9 @@ import android.os.Build;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.AnimationUtils;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -22,151 +23,91 @@ import androidx.annotation.RequiresApi;
 import androidx.appcompat.content.res.AppCompatResources;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.kanshi.utils.BackgroundTaskQueue;
-import com.example.kanshi.utils.UITaskQueue;
+import com.example.kanshi.utils.BackgroundTask;
+import com.example.kanshi.utils.UITask;
 
 import java.time.Instant;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Locale;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
 
-public class AnimeReleaseGroupAdapter extends RecyclerView.Adapter<AnimeReleaseGroupAdapter.AnimeViewHolder> {
-    private final BackgroundTaskQueue backgroundTaskQueue;
-    private final UITaskQueue uiTaskQueue;
-    private final Context mContext;
-    private final LayoutInflater mInflater;
-    private final RecyclerView recyclerView;
-    public final AtomicReference<ArrayList<AnimeReleaseGroup>> mAnimeGroups = new AtomicReference<>();
-
+public class AnimeReleaseGroupAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
+    private final Context context;
+    private final LayoutInflater inflater;
+    private final ProgressBar progressCircular;
+    @NonNull
+    public final ArrayList<GroupedListItem> items;
+    private final BackgroundTask backgroundTask;
+    private final UITask uiTask;
     public AnimeReleaseGroupAdapter(
-            Context context,
-            ArrayList<AnimeReleaseGroup> animeGroups,
-            RecyclerView recyclerView
+        Context context,
+        @NonNull ArrayList<GroupedListItem> items,
+        ProgressBar progressCircular
     ) {
-        this.mContext = context;
-        this.mInflater = LayoutInflater.from(mContext);
-        this.mAnimeGroups.set(animeGroups);
-        this.recyclerView = recyclerView;
-        this.backgroundTaskQueue = new BackgroundTaskQueue(context);
-        this.uiTaskQueue = new UITaskQueue(context);
+        this.context = context;
+        this.inflater = LayoutInflater.from(context);
+        this.backgroundTask = new BackgroundTask(context);
+        this.uiTask = new UITask(context);
+        this.progressCircular = progressCircular;
+        this.items = items;
     }
 
     @NonNull
     @Override
-    public AnimeViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = mInflater.inflate(R.layout.anime_release_group_card, parent, false);
-        return new AnimeViewHolder(view);
+    public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        switch (viewType) {
+            case HEADER: {
+                View itemView = inflater.inflate(R.layout.anime_release_date, parent, false);
+                return new HeaderViewHolder(itemView);
+            }
+            case ITEM: {
+                View itemView = inflater.inflate(R.layout.anime_release_card, parent, false);
+                return new ItemViewHolder(itemView);
+            }
+            default: {
+                IllegalStateException e = new IllegalStateException("Unsupported item type");
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                    Utils.handleUncaughtException(this.context.getApplicationContext(), e, "onCreateViewHolder");
+                }
+                throw e;
+            }
+        }
     }
 
-    public final AtomicInteger maxShownItem = new AtomicInteger();
-
-    @RequiresApi(api = Build.VERSION_CODES.O)
+    int latestShownPosition = 0;
+    @RequiresApi(api = Build.VERSION_CODES.P)
     @Override
-    public void onBindViewHolder(@NonNull final AnimeViewHolder holder, final int position) {
-        if (backgroundTaskQueue==null || uiTaskQueue==null) return;
-
-        final String handlerId = "updateGroup"+position;
-        backgroundTaskQueue.replaceTask(handlerId, () -> {
-            try {
-                uiTaskQueue.cancelTasks(handlerId);
-
-                final int newItemPosition = position + 1;
-
-                if (newItemPosition > maxShownItem.get()) {
-                    uiTaskQueue.replaceTask(handlerId,"setItemViewCacheSize",()->{
-                        recyclerView.setItemViewCacheSize(maxShownItem.get());
-                        maxShownItem.getAndUpdate(e -> Math.max(e, newItemPosition));
-                    });
-                }
-
-                final ArrayList<AnimeReleaseGroup> animeReleaseGroups = mAnimeGroups.get();
-
-                if (animeReleaseGroups==null || position >= animeReleaseGroups.size()) return;
-
-                final AnimeReleaseGroup animeReleaseGroup = animeReleaseGroups.get(position);
-
-                final LocalDateTime localDateTime = animeReleaseGroup.date;
-                if (localDateTime != null) {
-                    DateTimeFormatter shownDateFormat = DateTimeFormatter.ofPattern("MMMM d yyyy, EEEE");
-                    DateTimeFormatter shownWeekDayFormat = DateTimeFormatter.ofPattern("EEEE");
-
-                    LocalDate localDate = localDateTime.toLocalDate();
-                    LocalDate today = LocalDate.now();
-
-                    String dateStr;
-                    if (localDate.isAfter(today.plusDays(6))) { // more than a week
-                        dateStr = shownDateFormat.format(localDate);
-                    } else if (localDate.isAfter(today.plusDays(1))) { // more than a day
-                        dateStr = shownWeekDayFormat.format(localDate);
-                    } else if (localDate.isAfter(today)) {
-                        dateStr = "Tomorrow, " + shownWeekDayFormat.format(localDate);
-                    } else if (localDate.isEqual(today)) {
-                        dateStr = "Today, " + shownWeekDayFormat.format(localDate);
-                    } else if (localDate.isAfter(today.minusWeeks(1))) {
-                        long daysDifference = ChronoUnit.DAYS.between(localDate, today);
-                        if (daysDifference == 1) {
-                            LocalDateTime now = LocalDateTime.now();
-                            long minutesDifference = ChronoUnit.MINUTES.between(localDateTime, now);
-                            if (minutesDifference == 1) {
-                                dateStr = "1 minute ago" + ", " + shownWeekDayFormat.format(localDate);
-                            } else if (minutesDifference < 60) {
-                                dateStr = minutesDifference + " minutes ago" + ", " + shownWeekDayFormat.format(localDate);
-                            } else {
-                                dateStr = "Yesterday" + ", " + shownWeekDayFormat.format(localDate);
-                            }
-                        } else {
-                            dateStr = daysDifference + " days ago" + ", " + shownWeekDayFormat.format(localDate);
-                        }
+    public void onBindViewHolder(@NonNull RecyclerView.ViewHolder viewHolder, int position) {
+        latestShownPosition = Math.max(position, latestShownPosition);
+        final ArrayList<GroupedListItem> finalItems = items;
+        final String taskId = String.valueOf(position);
+        backgroundTask.cancel(taskId);
+        uiTask.cancel(taskId);
+        backgroundTask.execute(taskId, () -> {
+            int viewType = getItemViewType(position);
+            if (viewType == -1) return;
+            switch (viewType) {
+                case HEADER: {
+                    AnimeReleaseGroup header = (AnimeReleaseGroup) finalItems.get(position);
+                    HeaderViewHolder holder = (HeaderViewHolder) viewHolder;
+                    uiTask.post(() -> holder.animeReleaseGroupDate.setVisibility(View.INVISIBLE), taskId);
+                    if (header.dateString != null) {
+                        uiTask.post(() -> holder.animeReleaseGroupDate.setText(header.dateString), taskId);
                     } else {
-                        dateStr = shownDateFormat.format(localDate);
+                        uiTask.post(() -> holder.animeReleaseGroupDate.setText(R.string.na), taskId);
                     }
-                    uiTaskQueue.replaceTask(handlerId,"setGroupDate", () -> holder.animeReleaseGroupDate.setText(dateStr));
-                } else {
-                    if (animeReleaseGroup.dateString != null) {
-                        uiTaskQueue.replaceTask(handlerId,"setGroupDate", () -> holder.animeReleaseGroupDate.setText(animeReleaseGroup.dateString));
-                    } else {
-                        uiTaskQueue.replaceTask(handlerId,"setGroupDate", () -> holder.animeReleaseGroupDate.setText(R.string.na));
-                    }
+                    uiTask.post(() -> {
+                        setAnimation(holder.animeReleaseGroupDate);
+                        holder.animeReleaseGroupDate.setVisibility(View.VISIBLE);
+                    }, taskId);
+                    break;
                 }
-
-
-                final ArrayList<AnimeNotification> animeReleases = animeReleaseGroup.anime;
-                final int animeReleasesSize = animeReleases.size();
-
-                final int existingLayoutChildCount = holder.animeReleaseGroupDateLayout.getChildCount();
-                for (int i = existingLayoutChildCount - 1; i >= animeReleasesSize; i--) {
-                    int finalI = i;
-                    uiTaskQueue.replaceTask(handlerId,"remove"+finalI, () -> {
-                        if (finalI < holder.animeReleaseGroupDateLayout.getChildCount()) {
-                            holder.animeReleaseGroupDateLayout.removeViewAt(finalI);
-                        }
-                    });
-                }
-
-                for (int i = 0; i < animeReleasesSize; i++) {
-                    final AnimeNotification anime = animeReleases.get(i);
-                    if (anime == null) continue;
-                    View animeCard = holder.animeReleaseGroupDateLayout.getChildAt(i);
-                    if (animeCard == null) {
-                        animeCard = View.inflate(mContext, R.layout.anime_release_card, null);
-                        View finalAnimeCard = animeCard;
-                        uiTaskQueue.replaceTask(handlerId,"add"+i,()-> holder.animeReleaseGroupDateLayout.addView(finalAnimeCard));
-                    }
-
-                    if (animeCard == null) return;
-
-                    ImageView animeImage = animeCard.findViewById(R.id.anime_image);
-                    TextView animeName = animeCard.findViewById(R.id.anime_name);
-                    View userStatusIcon = animeCard.findViewById(R.id.user_status_icon);
-                    TextView animeReleaseInfo = animeCard.findViewById(R.id.anime_release_info);
-                    TextView animeReleaseTime = animeCard.findViewById(R.id.anime_release_time);
+                case ITEM: {
+                    AnimeNotification anime = (AnimeNotification) finalItems.get(position);
+                    ItemViewHolder holder = (ItemViewHolder) viewHolder;
+                    holder.itemView.setVisibility(View.INVISIBLE);
 
                     // Load Text Color Fade
                     final boolean isWatched = "COMPLETED".equalsIgnoreCase(anime.userStatus) || (anime.episodeProgress > 0 && anime.releaseEpisode <= anime.episodeProgress);
@@ -191,20 +132,20 @@ public class AnimeReleaseGroupAdapter extends RecyclerView.Adapter<AnimeReleaseG
                     final ColorStateList colorStateList;
                     if (userStatus != null && !userStatus.isEmpty() && !userStatus.equalsIgnoreCase("UNWATCHED")) {
                         if (userStatus.equalsIgnoreCase("COMPLETED")) {
-                            colorStateList = AppCompatResources.getColorStateList(mContext, R.color.web_green);
+                            colorStateList = AppCompatResources.getColorStateList(context, R.color.web_green);
                         } else if (
-                                userStatus.equalsIgnoreCase("CURRENT")
-                                        || userStatus.equalsIgnoreCase("REPEATING")
+                            userStatus.equalsIgnoreCase("CURRENT")
+                            || userStatus.equalsIgnoreCase("REPEATING")
                         ) {
-                            colorStateList = AppCompatResources.getColorStateList(mContext, R.color.web_blue);
+                            colorStateList = AppCompatResources.getColorStateList(context, R.color.web_blue);
                         } else if (userStatus.equalsIgnoreCase("PLANNING")) {
-                            colorStateList = AppCompatResources.getColorStateList(mContext, R.color.web_orange);
+                            colorStateList = AppCompatResources.getColorStateList(context, R.color.web_orange);
                         } else if (userStatus.equalsIgnoreCase("PAUSED")) {
-                            colorStateList = AppCompatResources.getColorStateList(mContext, R.color.web_peach);
+                            colorStateList = AppCompatResources.getColorStateList(context, R.color.web_peach);
                         } else if (userStatus.equalsIgnoreCase("DROPPED")) {
-                            colorStateList = AppCompatResources.getColorStateList(mContext, R.color.web_red);
+                            colorStateList = AppCompatResources.getColorStateList(context, R.color.web_red);
                         } else {
-                            colorStateList = AppCompatResources.getColorStateList(mContext, R.color.web_light_grey);
+                            colorStateList = AppCompatResources.getColorStateList(context, R.color.web_light_grey);
                         }
                     } else {
                         colorStateList = null;
@@ -212,10 +153,6 @@ public class AnimeReleaseGroupAdapter extends RecyclerView.Adapter<AnimeReleaseG
 
                     // Load Release Info
                     final boolean hasMessage = anime.message != null && !anime.message.isEmpty();
-
-                    // Load URL Opener
-                    final String animeUrl = anime.animeUrl;
-                    final boolean hasAnimeUrl = animeUrl != null && !animeUrl.isEmpty();
 
                     // Load Image
                     Bitmap imageBitmap = null;
@@ -227,154 +164,144 @@ public class AnimeReleaseGroupAdapter extends RecyclerView.Adapter<AnimeReleaseG
                     }
 
                     final Bitmap finalImageBitmap = imageBitmap;
-                    final View finalAnimeCard = animeCard;
-                    uiTaskQueue.replaceTask(handlerId,"add-info"+i,() -> {
+                    uiTask.post(() -> {
                         // Set Time
                         if (hasReleaseTime) {
-                            animeReleaseTime.setTextColor(mContext.getResources().getColor(fontColorId));
-                            animeReleaseTime.setText(releaseTime);
-                            animeReleaseTime.setVisibility(View.VISIBLE);
+                            holder.animeReleaseTime.setTextColor(context.getResources().getColor(fontColorId));
+                            holder.animeReleaseTime.setText(releaseTime);
+                            holder.animeReleaseTime.setVisibility(View.VISIBLE);
                         } else {
-                            animeReleaseTime.setVisibility(View.GONE);
+                            holder.animeReleaseTime.setVisibility(View.GONE);
                         }
 
                         // Set Title
                         if (hasTitle) {
-                            animeName.setTextColor(mContext.getResources().getColor(fontColorId));
-                            animeName.setText(title);
-                            finalAnimeCard.setOnLongClickListener(e -> {
-                                ClipboardManager clipboard = (ClipboardManager) mContext.getSystemService(Context.CLIPBOARD_SERVICE);
-                                ClipData clip = ClipData.newPlainText("Copied Text", title);
-                                clipboard.setPrimaryClip(clip);
-                                return true;
-                            });
+                            holder.animeName.setTextColor(context.getResources().getColor(fontColorId));
+                            holder.animeName.setText(title);
                         } else {
-                            animeName.setTextColor(mContext.getResources().getColor(R.color.grey));
-                            animeName.setText(R.string.na);
+                            holder.animeName.setTextColor(context.getResources().getColor(R.color.grey));
+                            holder.animeName.setText(R.string.na);
                         }
 
                         // Set User Status Icon
                         if (colorStateList != null) {
-                            userStatusIcon.setVisibility(View.INVISIBLE);
-                            userStatusIcon.setBackgroundTintList(colorStateList);
+                            holder.userStatusIcon.setVisibility(View.INVISIBLE);
+                            holder.userStatusIcon.setBackgroundTintList(colorStateList);
                             if (isWatched) {
-                                userStatusIcon.setAlpha(0.5f);
+                                holder.userStatusIcon.setAlpha(0.5f);
                             } else {
-                                userStatusIcon.setAlpha(1f);
+                                holder.userStatusIcon.setAlpha(1f);
                             }
-                            userStatusIcon.setVisibility(View.VISIBLE);
+                            holder.userStatusIcon.setVisibility(View.VISIBLE);
                         } else {
-                            userStatusIcon.setVisibility(View.GONE);
+                            holder.userStatusIcon.setVisibility(View.GONE);
                         }
 
                         // Set Release Info
                         if (hasMessage) {
-                            animeReleaseInfo.setTextColor(mContext.getResources().getColor(fontColorId));
-                            animeReleaseInfo.setText(anime.message);
+                            holder.animeReleaseInfo.setTextColor(context.getResources().getColor(fontColorId));
+                            holder.animeReleaseInfo.setText(anime.message);
                         } else {
-                            animeReleaseInfo.setTextColor(mContext.getResources().getColor(R.color.grey));
-                            animeReleaseInfo.setText(R.string.na);
+                            holder.animeReleaseInfo.setTextColor(context.getResources().getColor(R.color.grey));
+                            holder.animeReleaseInfo.setText(R.string.na);
                         }
+                    }, taskId);
 
-                        // Set Anime URL Opener
-                        if (hasAnimeUrl) {
-                            finalAnimeCard.setOnClickListener(e -> {
-                                AnimeReleaseActivity animeReleaseActivity = AnimeReleaseActivity.getInstanceActivity();
-                                if (animeReleaseActivity != null) {
-                                    animeReleaseActivity.openAnimeInAniList(animeUrl);
-                                }
-                            });
-                        }
-
-                        if (finalImageBitmap != null) {
-                            animeImage.setImageBitmap(finalImageBitmap);
-                        } else {
-                            animeImage.setImageResource(R.drawable.image_placeholder);
-                        }
-                    });
-
-                    // Generate and Set Image
-                    if (finalImageBitmap==null) {
+                    if (finalImageBitmap != null) {
+                        uiTask.post(() -> holder.animeImage.setImageBitmap(finalImageBitmap), taskId);
+                    } else {
+                        // Generate and Set Image
                         imageBitmap = cropAndRoundCorners(BitmapFactory.decodeByteArray(anime.imageByte, 0, anime.imageByte.length), 24);
                         imageCache.put(animeKey, imageBitmap);
                         final Bitmap generatedImageBitmap = imageBitmap;
-                        uiTaskQueue.replaceTask(handlerId,"add-image"+i,()-> animeImage.setImageBitmap(generatedImageBitmap));
+                        uiTask.post(() -> holder.animeImage.setImageBitmap(generatedImageBitmap), taskId);
+                    }
+                    if (progressCircular.getVisibility() == View.VISIBLE) {
+                        uiTask.post(() -> progressCircular.setVisibility(View.GONE), taskId);
+                    }
+                    uiTask.post(() -> {
+                        System.out.println("kanshi-kuro position "+position);
+                        setAnimation(holder.itemView);
+                        holder.itemView.setVisibility(View.VISIBLE);
+                    }, taskId);
+                    break;
+                }
+                default: {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                        Utils.handleUncaughtException(this.context.getApplicationContext(), new IllegalStateException("Unsupported item type"), "onBindViewHolder");
                     }
                 }
-            } catch (Exception e) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                    Utils.handleUncaughtException(mContext.getApplicationContext(), e, "AnimeReleaseGroupAdapter");
-                }
-                e.printStackTrace();
             }
         });
     }
 
     @RequiresApi(api = Build.VERSION_CODES.N)
-    public void add(int position, AnimeReleaseGroup animeReleaseGroup) {
-        AtomicBoolean hasChanged = new AtomicBoolean();
-        mAnimeGroups.getAndUpdate(animeReleaseGroups -> {
-            if (position == animeReleaseGroups.size()) {
-                animeReleaseGroups.add(position, animeReleaseGroup);
-                hasChanged.set(true);
-            }
-            return animeReleaseGroups;
-        });
-        if (hasChanged.get()) {
+    public void add(int position, GroupedListItem item) {
+        if (position == items.size()) {
+            items.add(position, item);
             notifyItemInserted(position);
         }
     }
-
     @RequiresApi(api = Build.VERSION_CODES.N)
-    public void set(int position, AnimeReleaseGroup animeReleaseGroup) {
-        AtomicBoolean hasChanged = new AtomicBoolean();
-        mAnimeGroups.getAndUpdate(animeReleaseGroups -> {
-            if (position < animeReleaseGroups.size()) {
-                animeReleaseGroups.set(position, animeReleaseGroup);
-                hasChanged.set(true);
-            }
-            return animeReleaseGroups;
-        });
-        if (hasChanged.get()) {
+    public void set(int position, GroupedListItem item) {
+        if (position < items.size()) {
+            items.set(position, item);
             notifyItemChanged(position);
         }
     }
-
     @RequiresApi(api = Build.VERSION_CODES.N)
     public void remove(int position) {
-        AtomicBoolean hasChanged = new AtomicBoolean();
-        mAnimeGroups.getAndUpdate(animeReleaseGroups -> {
-            if (position < animeReleaseGroups.size()) {
-                animeReleaseGroups.remove(position);
-                hasChanged.set(true);
-            }
-            return animeReleaseGroups;
-        });
-        if (hasChanged.get()) {
+        if (position < items.size()) {
+            items.remove(position);
             notifyItemRemoved(position);
         }
     }
-
+    @RequiresApi(api = Build.VERSION_CODES.N)
     @Override
     public int getItemCount() {
-        int itemCount;
-        ArrayList<AnimeReleaseGroup> animeGroups = mAnimeGroups.get();
-        if (animeGroups != null) {
-            itemCount = animeGroups.size();
-        } else {
-            itemCount = 0;
-        }
-        return itemCount;
+        return items.size();
     }
-
-    public static class AnimeViewHolder extends RecyclerView.ViewHolder {
-        private final TextView animeReleaseGroupDate;
-        private final LinearLayout animeReleaseGroupDateLayout;
-
-        public AnimeViewHolder(@NonNull View itemView) {
-            super(itemView);
-            animeReleaseGroupDate = itemView.findViewById(R.id.anime_release_group_date);
-            animeReleaseGroupDateLayout = itemView.findViewById(R.id.anime_release_group_layout);
+    @Override
+    public int getItemViewType(int position) {
+        if (position < items.size()) {
+            return items.get(position).getType();
         }
+        return -1;
+    }
+    private void setAnimation(View view) {
+        view.startAnimation(AnimationUtils.loadAnimation(context, R.anim.fade_in));
+    }
+    @Override
+    public void onViewDetachedFromWindow(@NonNull final RecyclerView.ViewHolder holder) {
+        holder.itemView.clearAnimation();
+    }
+    private static class HeaderViewHolder extends RecyclerView.ViewHolder {
+        @NonNull final TextView animeReleaseGroupDate;
+        HeaderViewHolder(@NonNull View view) {
+            super(view);
+            this.animeReleaseGroupDate = (TextView) view;
+        }
+    }
+    private static class ItemViewHolder extends RecyclerView.ViewHolder {
+        @NonNull final ImageView animeImage;
+        @NonNull final TextView animeName;
+        @NonNull final View userStatusIcon;
+        @NonNull final TextView animeReleaseInfo;
+        @NonNull final TextView animeReleaseTime;
+        ItemViewHolder(@NonNull View view) {
+            super(view);
+            this.animeImage = view.findViewById(R.id.anime_image);
+            this.animeName = view.findViewById(R.id.anime_name);
+            this.userStatusIcon = view.findViewById(R.id.user_status_icon);
+            this.animeReleaseInfo = view.findViewById(R.id.anime_release_info);
+            this.animeReleaseTime = view.findViewById(R.id.anime_release_time);
+        }
+    }
+    @RequiresApi(api = Build.VERSION_CODES.N)
+    @Override
+    public void onDetachedFromRecyclerView(@NonNull RecyclerView recyclerView) {
+        backgroundTask.shutDownNow();
+        uiTask.shutDownNow();
+        super.onDetachedFromRecyclerView(recyclerView);
     }
 }

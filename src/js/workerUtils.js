@@ -87,8 +87,12 @@ const animeLoader = (_data = {}) => {
             animeLoaderWorker = animeLoaderWorker || await getAnimeLoaderWorker()
         } catch (ex) {
             showLoadingAnime.set(false)
-
+            
             alertError()
+
+            animeLoaderWorker?.terminate?.()
+            animeLoaderWorker = null
+
             return reject(ex)
         }
 
@@ -173,6 +177,10 @@ const animeLoader = (_data = {}) => {
                 progress.set(100)
 
                 alertError()
+
+                animeLoaderWorker?.terminate?.()
+                animeLoaderWorker = null
+
                 animeLoaderPromises[data?.postId]?.reject?.()
                 return
             } else if (hasOwnProp?.call?.(data, "loadAll")) {
@@ -190,7 +198,11 @@ const animeLoader = (_data = {}) => {
                         val[categoryKey].sortBy = category?.sortBy || val[categoryKey].sortBy;
                         return val
                     })
-                    if (typeof get(selectedCategory) !== "string") {
+                    const currentSelectedCategory = get(selectedCategory)
+                    if (
+                        typeof currentSelectedCategory !== "string" 
+                        || (isImporting && currentSelectedCategory !== categoryKey)
+                    ) {
                         selectedCategory.set(categoryKey)
                     }
                 }
@@ -214,6 +226,10 @@ const animeLoader = (_data = {}) => {
             progress.set(100)
 
             alertError()
+
+            animeLoaderWorker?.terminate?.()
+            animeLoaderWorker = null
+
             animeLoaderPromises?.[postId]?.reject?.()
 
             console.error(error);
@@ -258,6 +274,10 @@ const animeManager = (_data = {}) => {
             showLoadingAnime.set(false)
 
             alertError()
+
+            animeManagerWorker?.terminate?.()
+            animeManagerWorker = null
+
             return reject(ex)
         }
 
@@ -313,13 +333,12 @@ const animeManager = (_data = {}) => {
                 progress.set(100)
 
                 alertError()
-                animeManagerPromises?.[postId]?.reject?.()
-                animeManagerWorkerTimeout = setTimeout(() => {
-                    animeManagerWorker?.terminate?.();
-                    animeManagerWorker = null
-                }, terminateDelay)
-                return
+                
+                animeManagerWorker?.terminate?.();
+                animeManagerWorker = null
 
+                animeManagerPromises?.[postId]?.reject?.()
+                return
             } else if (get(android) && get(isBackgroundUpdateKey) && window?.[get(isBackgroundUpdateKey)] === true) {
                 animeManagerWorker?.terminate?.()
                 animeManagerWorker = null
@@ -355,12 +374,13 @@ const animeManager = (_data = {}) => {
             progress.set(100)
 
             alertError()
+
+            animeManagerWorker?.terminate?.();
+            animeManagerWorker = null
+
             animeManagerPromises?.[postId]?.reject?.(error)
+
             console.error(error);
-            animeManagerWorkerTimeout = setTimeout(() => {
-                animeManagerWorker?.terminate?.();
-                animeManagerWorker = null
-            }, terminateDelay)
         };
     })
 }
@@ -391,7 +411,6 @@ const processRecommendedAnimeList = (_data = {}) => {
         }
         if (processRecommendedAnimeListTerminateTimeout) clearTimeout(processRecommendedAnimeListTerminateTimeout);
         processRecommendedAnimeListWorker?.terminate?.();
-        processRecommendedAnimeListWorker = null
 
         progress.set(0)
         cacheRequest("./webapi/worker/processRecommendedAnimeList.js", 40528, "Updating Recommendation List")
@@ -400,7 +419,6 @@ const processRecommendedAnimeList = (_data = {}) => {
                 let neareastAnimeCompletionAiringAt
                 if (processRecommendedAnimeListTerminateTimeout) clearTimeout(processRecommendedAnimeListTerminateTimeout);
                 processRecommendedAnimeListWorker?.terminate?.();
-                processRecommendedAnimeListWorker = null
                 if (_data?.algorithmFilters) {
                     passedAlgorithmFilter = _data?.algorithmFilters
                 } else if (passedAlgorithmFilter) {
@@ -427,6 +445,7 @@ const processRecommendedAnimeList = (_data = {}) => {
                         dataStatus.set(null);
                         progress.set(100)
                         alertError()
+                        processRecommendedAnimeListWorker?.terminate?.();
                         reject();
                     } else if (hasOwnProp?.call?.(data, "animeReleaseNotification")) {
                         if (get(android)) {
@@ -508,6 +527,7 @@ const processRecommendedAnimeList = (_data = {}) => {
                     showLoadingAnime.set(false)
                     dataStatus.set(null)
                     progress.set(100)
+                    processRecommendedAnimeListWorker?.terminate?.();
                     reject(error);
                 };
             }).catch((error) => {
@@ -517,6 +537,7 @@ const processRecommendedAnimeList = (_data = {}) => {
                 dataStatus.set(null)
                 progress.set(100)
                 alertError()
+                processRecommendedAnimeListWorker?.terminate?.();
                 reject(error)
             })
     });
@@ -562,7 +583,6 @@ const requestAnimeEntries = (_data = {}) => {
         }
         if (requestAnimeEntriesTerminateTimeout) clearTimeout(requestAnimeEntriesTerminateTimeout)
         requestAnimeEntriesWorker?.terminate?.()
-        requestAnimeEntriesWorker = null
         notifyUpdatedAnimeNotification()
         if (!get(initData)) {
             if (isGettingNewEntries
@@ -578,7 +598,6 @@ const requestAnimeEntries = (_data = {}) => {
             .then(url => {
                 if (requestAnimeEntriesTerminateTimeout) clearTimeout(requestAnimeEntriesTerminateTimeout)
                 requestAnimeEntriesWorker?.terminate?.()
-                requestAnimeEntriesWorker = null
                 notifyUpdatedAnimeNotification()
                 requestAnimeEntriesWorker = new Worker(url)
                 _data.windowHREF = windowHREF || window?.location?.href
@@ -605,9 +624,9 @@ const requestAnimeEntries = (_data = {}) => {
                             })
                         }
                         isRequestingAnimeEntries = false
-                        requestAnimeEntriesTerminateTimeout = setTimeout(() => {
-                            requestAnimeEntriesWorker?.terminate?.();
-                        }, terminateDelay)
+
+                        requestAnimeEntriesWorker?.terminate?.();
+
                         notifyUpdatedAnimeNotification()
                         dataStatus.set(null)
                         progress.set(100)
@@ -619,9 +638,7 @@ const requestAnimeEntries = (_data = {}) => {
                         updateRecommendationList.update(e => !e)
                     } else if (hasOwnProp?.call?.(data, "errorDuringInit")) {
                         isRequestingAnimeEntries = false
-                        requestAnimeEntriesTerminateTimeout = setTimeout(() => {
-                            requestAnimeEntriesWorker?.terminate?.();
-                        }, terminateDelay)
+                        requestAnimeEntriesWorker?.terminate?.();
                         notifyUpdatedAnimeNotification()
                         dataStatus.set(null)
                         progress.set(100)
@@ -685,6 +702,7 @@ const requestAnimeEntries = (_data = {}) => {
                 requestAnimeEntriesWorker.onerror = (error) => {
                     isRequestingAnimeEntries = false
                     isGettingNewEntries = false
+                    requestAnimeEntriesWorker?.terminate?.();
                     notifyUpdatedAnimeNotification()
                     dataStatus.set(null)
                     progress.set(100)
@@ -693,6 +711,7 @@ const requestAnimeEntries = (_data = {}) => {
             }).catch((error) => {
                 isRequestingAnimeEntries = false
                 isGettingNewEntries = false
+                requestAnimeEntriesWorker?.terminate?.();
                 notifyUpdatedAnimeNotification()
                 dataStatus.set(null)
                 progress.set(100)
@@ -712,7 +731,6 @@ const requestUserEntries = (_data = {}) => {
         }
         if (requestUserEntriesTerminateTimeout) clearTimeout(requestUserEntriesTerminateTimeout)
         requestUserEntriesWorker?.terminate?.()
-        requestUserEntriesWorker = null
         if (!get(initData)) {
             if (isExporting
                 || isImporting
@@ -730,7 +748,6 @@ const requestUserEntries = (_data = {}) => {
             .then(url => {
                 if (requestUserEntriesTerminateTimeout) clearTimeout(requestUserEntriesTerminateTimeout)
                 requestUserEntriesWorker?.terminate?.()
-                requestUserEntriesWorker = null
                 requestUserEntriesWorker = new Worker(url)
                 userRequestIsRunning.set(true)
                 _data.windowHREF = windowHREF || window?.location?.href
@@ -759,9 +776,7 @@ const requestUserEntries = (_data = {}) => {
                         }
                         userRequestIsRunning.set(false)
                         loadAnime.update((e) => !e)
-                        requestUserEntriesTerminateTimeout = setTimeout(() => {
-                            requestUserEntriesWorker?.terminate?.();
-                        }, terminateDelay)
+                        requestUserEntriesWorker?.terminate?.();
                         dataStatus.set(null)
                         progress.set(100)
                         resetTypedUsername.update(e => !e)
@@ -787,9 +802,7 @@ const requestUserEntries = (_data = {}) => {
                     isRequestingNewUser = false
                     userRequestIsRunning.set(false)
                     loadAnime.update((e) => !e)
-                    requestUserEntriesTerminateTimeout = setTimeout(() => {
-                        requestUserEntriesWorker?.terminate?.();
-                    }, terminateDelay)
+                    requestUserEntriesWorker?.terminate?.();
                     dataStatus.set(null)
                     progress.set(100)
                     resetTypedUsername.update(e => !e)
@@ -801,6 +814,7 @@ const requestUserEntries = (_data = {}) => {
                 dataStatus.set(null)
                 progress.set(100)
                 loadAnime.update((e) => !e)
+                requestUserEntriesWorker?.terminate?.();
                 alertError()
                 resetTypedUsername.update(e => !e)
                 reject(error)
@@ -819,7 +833,6 @@ window.isExported = (success = true) => {
 const exportUserData = (_data) => {
     return new Promise((resolve, reject) => {
         exportUserDataWorker?.terminate?.()
-        exportUserDataWorker = null
         if (!get(initData)) {
             if (isImporting || isGettingNewEntries) return
             isExporting = true
@@ -834,7 +847,6 @@ const exportUserData = (_data) => {
                 waitForExportApproval?.reject?.()
                 waitForExportApproval = null
                 exportUserDataWorker?.terminate?.()
-                exportUserDataWorker = null
                 exportUserDataWorker = new Worker(url)
                 if (get(android)) {
                     exportUserDataWorker.postMessage('android')
@@ -872,6 +884,7 @@ const exportUserData = (_data) => {
                                 text: "Data was not exported, something went wrong.",
                             })
                         }
+                        exportUserDataWorker?.terminate?.();
                         updateRecommendationList.update(e => !e)
                         reject()
                     } else if (get(android)) {
@@ -890,13 +903,14 @@ const exportUserData = (_data) => {
                                 exportUserDataWorker?.terminate?.();
                                 new Promise((resolve, reject) => {
                                     waitForExportApproval = { resolve, reject }
+                                }).then(() => {
+                                    showToast("Data has been Exported")
                                 }).catch(() => {
-                                    waitForExportApproval?.reject?.()
+                                    reject()
                                 }).finally(() => {
                                     waitForExportApproval = null
                                     dataStatus.set(null)
                                     progress.set(100)
-                                    showToast("Data has been Exported")
                                     updateRecommendationList.update(e => !e)
                                     resolve()
                                 })
@@ -968,6 +982,7 @@ const exportUserData = (_data) => {
                         title: "Export failed",
                         text: "Data was not exported, please try again.",
                     })
+                    exportUserDataWorker?.terminate?.();
                     updateRecommendationList.update(e => !e)
                     reject(error)
                 }
@@ -979,6 +994,7 @@ const exportUserData = (_data) => {
                 waitForExportApproval?.reject?.()
                 waitForExportApproval = null
                 alertError()
+                exportUserDataWorker?.terminate?.();
                 updateRecommendationList.update(e => !e)
                 reject(error)
             })
@@ -990,7 +1006,6 @@ const importUserData = (_data) => {
     return new Promise((resolve, reject) => {
         if (importUserDataTerminateTimeout) clearTimeout(importUserDataTerminateTimeout)
         importUserDataWorker?.terminate?.()
-        importUserDataWorker = null
         if (!get(initData)) {
             if (isExporting || isGettingNewEntries) return
             isImporting = true
@@ -1005,7 +1020,6 @@ const importUserData = (_data) => {
             .then(url => {
                 if (importUserDataTerminateTimeout) clearTimeout(importUserDataTerminateTimeout)
                 importUserDataWorker?.terminate?.()
-                importUserDataWorker = null
                 importUserDataWorker = new Worker(url)
                 removeLocalStorage("username");
                 importUserDataWorker.postMessage(_data)
@@ -1032,6 +1046,7 @@ const importUserData = (_data) => {
                         dataStatus.set(null)
                         progress.set(100)
                         updateRecommendationList.update(e => !e)
+                        importUserDataWorker?.terminate?.();
                         reject(data?.error || "Something went wrong")
                     } else if (hasOwnProp?.call?.(data, "importedUsername")) {
                         if (typeof data?.importedUsername === "string") {
@@ -1089,6 +1104,7 @@ const importUserData = (_data) => {
                     dataStatus.set(null)
                     progress.set(100)
                     updateRecommendationList.update(e => !e)
+                    importUserDataWorker?.terminate?.();
                     reject(error || "Something went wrong")
                 }
             }).catch((error) => {
@@ -1099,6 +1115,7 @@ const importUserData = (_data) => {
                 progress.set(100)
                 alertError()
                 updateRecommendationList.update(e => !e)
+                importUserDataWorker?.terminate?.();
                 reject(error)
             })
     })
@@ -1121,12 +1138,10 @@ const getExtraInfo = () => {
         loadingDataStatus.set(true)
         clearTimeout(getExtraInfoTimeout)
         getExtraInfoWorker?.terminate?.()
-        getExtraInfoWorker = null
         cacheRequest("./webapi/worker/getExtraInfo.js")
             .then(url => {
                 clearTimeout(getExtraInfoTimeout)
                 getExtraInfoWorker?.terminate?.()
-                getExtraInfoWorker = null
                 let thisExtraInfo, extraInfoIndex
                 if (!gotAround) {
                     extraInfoIndex = parseInt(get(currentExtraInfo))
@@ -1176,10 +1191,12 @@ const getExtraInfo = () => {
                     }
                 }
                 getExtraInfoWorker.onerror = (error) => {
+                    getExtraInfoWorker?.terminate?.()
                     reject(error)
                 }
             }).catch((error) => {
                 alertError()
+                getExtraInfoWorker?.terminate?.()
                 reject(error)
             })
     })
@@ -1227,6 +1244,7 @@ window.updateNotifications = async (aniIdsNotificationToBeUpdated = []) => {
                     }
                 }
                 worker.onerror = (error) => {
+                    worker?.terminate?.()
                     reject(error)
                 }
             }).catch((error) => {
@@ -1280,6 +1298,9 @@ const saveIDBdata = (_data, name, isImportant = false) => {
                         }
                     }
                     worker.onerror = (error) => {
+                        setTimeout(() => {
+                            worker?.terminate?.();
+                        }, terminateDelay)
                         reject(error)
                     }
                     worker.postMessage({ data: _data, name: name })
@@ -1331,6 +1352,9 @@ const getAnimeEntries = (_data) => {
                     progress.set(100)
                     alertError()
                     updateRecommendationList.update(e => !e)
+                    setTimeout(() => {
+                        worker?.terminate?.();
+                    }, terminateDelay)
                     reject(error)
                 }
             }).catch((error) => {
@@ -1349,12 +1373,10 @@ const getFilterOptions = (_data) => {
     return new Promise((resolve, reject) => {
         if (getFilterOptionsTerminateTimeout) clearTimeout(getFilterOptionsTerminateTimeout)
         getFilterOptionsWorker?.terminate?.()
-        getFilterOptionsWorker = null
         cacheRequest("./webapi/worker/getFilterOptions.js", 60702, "Initializing Filters")
             .then(url => {
                 if (getFilterOptionsTerminateTimeout) clearTimeout(getFilterOptionsTerminateTimeout)
                 getFilterOptionsWorker?.terminate?.()
-                getFilterOptionsWorker = null
                 getFilterOptionsWorker = new Worker(url)
                 getFilterOptionsWorker.postMessage(_data)
                 getFilterOptionsWorker.onmessage = ({ data }) => {
@@ -1367,6 +1389,7 @@ const getFilterOptions = (_data) => {
                         dataStatusPrio = false
                         dataStatus.set(null)
                         alertError()
+                        getFilterOptionsWorker?.terminate?.()
                         reject(data.error)
                     } else {
                         dataStatusPrio = false
@@ -1381,12 +1404,14 @@ const getFilterOptions = (_data) => {
                     dataStatusPrio = false
                     dataStatus.set(null)
                     alertError()
+                    getFilterOptionsWorker?.terminate?.()
                     reject(error)
                 }
             }).catch((error) => {
                 dataStatusPrio = false
                 dataStatus.set(null)
                 alertError()
+                getFilterOptionsWorker?.terminate?.()
                 reject(error)
             })
     })
@@ -1397,21 +1422,17 @@ const updateTagInfo = async () => {
     try {
         const url = await cacheRequest("./webapi/worker/updateTagInfo.js")
         updateTagInfoWorker?.terminate?.()
-        updateTagInfoWorker = null
         updateTagInfoWorker = new Worker(url)
         windowHREF = windowHREF || window?.location?.href
         updateTagInfoWorker.postMessage({ windowHREF })
         updateTagInfoWorker.onmessage = () => {
             updateTagInfoWorker?.terminate?.()
-            updateTagInfoWorker = null
         }
         updateTagInfoWorker.onerror = () => {
             updateTagInfoWorker?.terminate?.()
-            updateTagInfoWorker = null
         }
     } catch {
         updateTagInfoWorker?.terminate?.()
-        updateTagInfoWorker = null
     }
 }
 

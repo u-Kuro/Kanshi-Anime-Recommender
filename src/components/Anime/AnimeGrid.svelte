@@ -19,7 +19,6 @@
         gridFullView,
         earlisetReleaseDate,
         showFilterOptions,
-        progress,
         mobile,
         menuVisible,
         loadedAnimeLists,
@@ -114,17 +113,11 @@
                 }
             }
             if (idx < shownAnimeListCount - 1 || shouldLoadMoreAnime()) {
-                $progress = Math.min(
-                    (idx / (shownAnimeListCount - 1)) * 100,
-                    100,
-                );
                 animeLoader({
                     loadMore: true,
                     selectedCategory: mainCategory,
                     searchedWord: $searchedWord,
                 });
-            } else {
-                $progress = 100;
             }
         } else if (isLast) {
             if ($loadedAnimeLists[mainCategory]) {

@@ -339,15 +339,13 @@ public class MyWorker extends Worker {
                         .setVibrate(new long[]{0L});
             }
 
-
-
             SchedulesTabFragment schedulesTabFragment = SchedulesTabFragment.getInstanceActivity();
             if (schedulesTabFragment!=null) {
-                new Handler(Looper.getMainLooper()).post(schedulesTabFragment::updateScheduledAnime);
+                new Handler(Looper.getMainLooper()).post(()->schedulesTabFragment.updateScheduledAnime(false));
             }
             ReleasedTabFragment releasedTabFragment = ReleasedTabFragment.getInstanceActivity();
             if (releasedTabFragment!=null) {
-                new Handler(Looper.getMainLooper()).post(releasedTabFragment::updateReleasedAnime);
+                new Handler(Looper.getMainLooper()).post(()->releasedTabFragment.updateReleasedAnime(false));
             }
 
             boolean shouldNotify = lastSentNotificationTime == 0L || mostRecentlySentNotificationTime > lastSentNotificationTime;
