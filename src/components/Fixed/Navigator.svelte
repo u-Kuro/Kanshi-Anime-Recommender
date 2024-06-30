@@ -709,6 +709,7 @@
         color: var(--fg-color);
         opacity: 1;
         transition: opacity 0.2s ease-out;
+        cursor: pointer;
     }
     .nav-container.stop-transition {
         transition: unset !important;
@@ -734,7 +735,6 @@
     }
     .logo-icon,
     .anime-release-icon {
-        cursor: pointer;
         justify-self: start;
         width: 25px;
         height: 25px;

@@ -76,9 +76,6 @@ public class SchedulesTabFragment extends Fragment {
         progressCircular = schedulesView.findViewById(R.id.progress_circular);
 
         animeReleasesList.setItemAnimator(null);
-        PrefetchLayoutManager layoutManager = new PrefetchLayoutManager(context);
-        layoutManager.setItemPrefetchEnabled(true);
-        animeReleasesList.setLayoutManager(layoutManager);
         animeReleasesList.setHasFixedSize(true);
 
         swipeRefresh.setProgressBackgroundColorSchemeResource(R.color.darker_grey);
@@ -147,11 +144,11 @@ public class SchedulesTabFragment extends Fragment {
                 mainActivity.updateCurrentNotifications();
                 mainActivity.checkEntries();
             }
-            updateScheduledAnime(true);
+            updateScheduledAnime(true, false);
             swipeRefresh.setRefreshing(false);
         });
 
-        updateScheduledAnime(false);
+        updateScheduledAnime(false, false);
 
         weakActivity = new WeakReference<>(SchedulesTabFragment.this);
 
@@ -159,7 +156,10 @@ public class SchedulesTabFragment extends Fragment {
     }
 
     @RequiresApi(api = Build.VERSION_CODES.P)
-    public void updateScheduledAnime(boolean shouldSetAdapter) {
+    public void updateScheduledAnime(boolean shouldSetAdapter, boolean shouldScrollToTop) {
+        if (shouldScrollToTop) {
+            animeReleasesList.scrollToPosition(0);
+        }
         backgroundTask.cancel(UPDATE_SCHEDULED_ANIME);
         uiTask.cancel(UPDATE_SCHEDULED_ANIME);
 
@@ -322,7 +322,7 @@ public class SchedulesTabFragment extends Fragment {
                         if (animeReleaseGroupAdapter != null) {
                             animeReleaseGroupAdapter.add(finalItemPosition, item);
                         } else {
-                            updateScheduledAnime(shouldSetAdapter);
+                            updateScheduledAnime(shouldSetAdapter, false);
                         }
                     }, UPDATE_SCHEDULED_ANIME);
                 }

@@ -12,7 +12,6 @@
     import {
         addClass,
         changeInputValue,
-        dragScroll,
         removeClass,
         getLocalStorage,
         trimAllEmptyChar,
@@ -152,9 +151,6 @@
     let selectedFilterElement;
     let selectedSortElement;
     let highlightedEl;
-
-    let filterScrollTimeout;
-    let filterIsScrolling;
 
     let conditionalInputNumberList = [
         "weighted score",
@@ -311,17 +307,9 @@
             }
         }
     }
-    function handleFilterScroll() {
-        if (filterScrollTimeout) clearTimeout(filterScrollTimeout);
-        filterIsScrolling = true;
-        filterScrollTimeout = setTimeout(() => {
-            filterIsScrolling = false;
-        }, 300);
-    }
 
     let openedFilterSelectionName;
     function filterCategorySelect(event, filterSelectionName) {
-        if (filterIsScrolling && event.pointerType === "mouse") return;
         let element = event.target;
         let filSelectEl = element?.closest?.(".filter-select");
         if (filSelectEl === selectedFilterElement) return;
@@ -595,8 +583,7 @@
             (classList.contains("filter-bool") && event.type === "click") ||
             (classList.contains("filter-bool") &&
                 key !== "Enter" &&
-                event.type === "keyup") ||
-            (filterIsScrolling && event.pointerType === "mouse")
+                event.type === "keyup")
         ) {
             return;
         }
@@ -1652,17 +1639,7 @@
             selectedFilterCategoryName ||
             (await retrieveJSON("selectedFilterCategoryName")) ||
             "Anime Filter";
-        let filterEl = document.getElementById("filters");
-        filterEl.addEventListener("scroll", handleFilterScroll);
         popupContainer = document?.getElementById("popup-container");
-        dragScroll(filterEl, "x", (event) => {
-            let element = event?.target;
-            return (
-                selectedFilterElement &&
-                (element?.classList?.contains?.("options-wrap") ||
-                    element?.closest?.(".options-wrap"))
-            );
-        });
 
         window.addEventListener("resize", windowResized);
         window.addEventListener("click", clickOutsideListener);
@@ -1860,8 +1837,8 @@
     <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
     <div
         id="category-wrap"
-        class="category-wrap"
-        tabindex="{$menuVisible || $popupVisible || selectedCategoryElement
+        class={"category-wrap" + (editCategoryName ? ' editing' : '')}
+        tabindex="{editCategoryName || $menuVisible || $popupVisible || selectedCategoryElement
             ? ''
             : '0'}"
         style:--editcancel-icon="{$showFilterOptions ? "25px" : ""}"
@@ -3165,6 +3142,10 @@
         width: 100%;
         height: max-content;
         position: relative;
+        cursor: pointer;
+    }
+    .category-wrap.editing {
+        cursor: unset !important;
     }
     .category-wrap .options-wrap {
         position: absolute;
@@ -3261,6 +3242,7 @@
         gap: 2px;
         align-items: center;
         width: 125px;
+        cursor: pointer;
     }
     .filterCategory-dropdown > svg {
         width: 15px;
@@ -3424,6 +3406,7 @@
 
     .data-status h2 {
         margin: auto;
+        cursor: pointer;
     }
 
     .data-status h2.loading {

@@ -433,6 +433,7 @@
         top: 0;
         opacity: 0 !important;
         z-index: 1 !important;
+        cursor: pointer !important;
     }
     .prev-category {
         left: 0;
@@ -469,6 +470,7 @@
         z-index: 2 !important;
         text-transform: uppercase;
         letter-spacing: 0.2ch;
+        cursor: pointer;
     }
     .categories-nav .category {
         font-size: 12px !important;

@@ -9,20 +9,19 @@
         android:id="@+id/swipe_refresh_anime_release"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/anime_releases_list"
-                android:nestedScrollingEnabled="false"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:listSelector="@android:color/transparent"
-                android:scrollbars="none"
-                android:divider="@null"
-                android:paddingTop="8dp"
-                android:paddingBottom="24dp"
-                android:clipToPadding="false"
-                android:animateLayoutChanges="false"
-                app:layoutManager="androidx.recyclerview.widget.StaggeredGridLayoutManager">
-            </androidx.recyclerview.widget.RecyclerView>
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/anime_releases_list"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:listSelector="@android:color/transparent"
+            android:scrollbars="none"
+            android:divider="@null"
+            android:paddingTop="8dp"
+            android:paddingBottom="24dp"
+            android:clipToPadding="false"
+            android:animateLayoutChanges="false"
+            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager">
+        </androidx.recyclerview.widget.RecyclerView>
     </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
     <ProgressBar

@@ -341,11 +341,11 @@ public class MyWorker extends Worker {
 
             SchedulesTabFragment schedulesTabFragment = SchedulesTabFragment.getInstanceActivity();
             if (schedulesTabFragment!=null) {
-                new Handler(Looper.getMainLooper()).post(()->schedulesTabFragment.updateScheduledAnime(false));
+                new Handler(Looper.getMainLooper()).post(()->schedulesTabFragment.updateScheduledAnime(false, false));
             }
             ReleasedTabFragment releasedTabFragment = ReleasedTabFragment.getInstanceActivity();
             if (releasedTabFragment!=null) {
-                new Handler(Looper.getMainLooper()).post(()->releasedTabFragment.updateReleasedAnime(false));
+                new Handler(Looper.getMainLooper()).post(()->releasedTabFragment.updateReleasedAnime(false, false));
             }
 
             boolean shouldNotify = lastSentNotificationTime == 0L || mostRecentlySentNotificationTime > lastSentNotificationTime;

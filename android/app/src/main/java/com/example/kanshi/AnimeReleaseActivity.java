@@ -150,11 +150,11 @@ public class AnimeReleaseActivity extends AppCompatActivity {
                                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                                             SchedulesTabFragment schedulesTabFragment = SchedulesTabFragment.getInstanceActivity();
                                             if (schedulesTabFragment != null) {
-                                                schedulesTabFragment.updateScheduledAnime(false);
+                                                schedulesTabFragment.updateScheduledAnime(false, false);
                                             }
                                             ReleasedTabFragment releasedTabFragment = ReleasedTabFragment.getInstanceActivity();
                                             if (releasedTabFragment != null) {
-                                                releasedTabFragment.updateReleasedAnime(false);
+                                                releasedTabFragment.updateReleasedAnime(false, false);
                                             }
                                         }
                                         if (!AnimeNotificationManager.allAnimeNotification.isEmpty()) {
@@ -288,11 +288,11 @@ public class AnimeReleaseActivity extends AppCompatActivity {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                     SchedulesTabFragment schedulesTabFragment = SchedulesTabFragment.getInstanceActivity();
                     if (schedulesTabFragment != null) {
-                        schedulesTabFragment.updateScheduledAnime(false);
+                        schedulesTabFragment.updateScheduledAnime(false, true);
                     }
                     ReleasedTabFragment releasedTabFragment = ReleasedTabFragment.getInstanceActivity();
                     if (releasedTabFragment != null) {
-                        releasedTabFragment.updateReleasedAnime(false);
+                        releasedTabFragment.updateReleasedAnime(false, true);
                     }
                 }
             }
@@ -314,11 +314,11 @@ public class AnimeReleaseActivity extends AppCompatActivity {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                 SchedulesTabFragment schedulesTabFragment = SchedulesTabFragment.getInstanceActivity();
                 if (schedulesTabFragment != null) {
-                    schedulesTabFragment.updateScheduledAnime(false);
+                    schedulesTabFragment.updateScheduledAnime(false, true);
                 }
                 ReleasedTabFragment releasedTabFragment = ReleasedTabFragment.getInstanceActivity();
                 if (releasedTabFragment != null) {
-                    releasedTabFragment.updateReleasedAnime(false);
+                    releasedTabFragment.updateReleasedAnime(false, true);
                 }
             }
         });

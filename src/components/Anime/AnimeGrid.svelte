@@ -434,7 +434,7 @@
                                 ? ' semi-loading'
                                 : '')}"
                         bind:this="{anime.gridElement}"
-                        title="{anime?.briefInfo || ''}"
+                        title="{(anime?.shownTitle ? anime?.shownTitle+'\n\n' : '') + (anime?.briefInfo || '')}"
                     >
                         <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                         <div

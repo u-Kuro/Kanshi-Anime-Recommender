@@ -76,9 +76,6 @@ public class ReleasedTabFragment extends Fragment {
         progressCircular = releasedView.findViewById(R.id.progress_circular);
 
         animeReleasesList.setItemAnimator(null);
-        PrefetchLayoutManager layoutManager = new PrefetchLayoutManager(context);
-        layoutManager.setItemPrefetchEnabled(true);
-        animeReleasesList.setLayoutManager(layoutManager);
         animeReleasesList.setHasFixedSize(true);
 
         swipeRefresh.setProgressBackgroundColorSchemeResource(R.color.darker_grey);
@@ -147,11 +144,11 @@ public class ReleasedTabFragment extends Fragment {
                 mainActivity.updateCurrentNotifications();
                 mainActivity.checkEntries();
             }
-            updateReleasedAnime(true);
+            updateReleasedAnime(true, false);
             swipeRefresh.setRefreshing(false);
         });
 
-        updateReleasedAnime(false);
+        updateReleasedAnime(false, false);
 
         weakActivity = new WeakReference<>(ReleasedTabFragment.this);
 
@@ -159,7 +156,10 @@ public class ReleasedTabFragment extends Fragment {
     }
 
     @RequiresApi(api = Build.VERSION_CODES.P)
-    public void updateReleasedAnime(boolean shouldSetAdapter) {
+    public void updateReleasedAnime(boolean shouldSetAdapter, boolean shouldScrollToTop) {
+        if (shouldScrollToTop) {
+            animeReleasesList.scrollToPosition(0);
+        }
         backgroundTask.cancel(UPDATE_RELEASED_ANIME);
         uiTask.cancel(UPDATE_RELEASED_ANIME);
 
@@ -323,7 +323,7 @@ public class ReleasedTabFragment extends Fragment {
                         if (animeReleaseGroupAdapter != null) {
                             animeReleaseGroupAdapter.add(finalItemPosition, item);
                         } else {
-                            updateReleasedAnime(shouldSetAdapter);
+                            updateReleasedAnime(shouldSetAdapter, false);
                         }
                     }, UPDATE_RELEASED_ANIME);
                 }

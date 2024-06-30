@@ -24,6 +24,7 @@ public class UITask {
     private final Deque<String> queue;
     private final Map<String, Deque<UITaskRunnable>> taskListMap;
     private final AtomicBoolean isRunning;
+    private final long defaultDelay;
 
     private final Handler handler;
     public UITask(Context context) {
@@ -34,13 +35,14 @@ public class UITask {
         this.isRunning = new AtomicBoolean();
 
         this.handler = new Handler(Looper.getMainLooper());
+        this.defaultDelay = 32;
     }
 
     @RequiresApi(api = Build.VERSION_CODES.P)
     public void post(Runnable task, String taskId) {
         if (UITaskExecutor.isShutdown() || UITaskExecutor.isTerminated()) return;
         UITaskExecutor.submit(() -> {
-            UITaskRunnable uiTaskRunnable = new UITaskRunnable(task, 32);
+            UITaskRunnable uiTaskRunnable = new UITaskRunnable(task, defaultDelay);
             Deque<UITaskRunnable> taskList = taskListMap.get(taskId);
             if (taskList == null) {
                 taskList = new ConcurrentLinkedDeque<>();

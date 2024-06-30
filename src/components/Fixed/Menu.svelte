@@ -292,8 +292,7 @@
 
     async function showNotice() {
         let persistent = await navigator?.storage?.persisted?.();
-        let notificationGranted =
-            window?.Notification?.permission === "granted";
+        let notificationGranted = window?.Notification?.permission === "granted";
         if ($android) {
             await $confirmPromise({
                 isAlert: true,
@@ -301,7 +300,7 @@
                 text: `<div id="kanshi-show-notice"><span style='color:hsl(345deg, 75%, 60%);'>NOTICE!</span> You may want to regularly <span style='color:hsl(345deg, 75%, 60%);'>Back Up</span> your data or use auto-export to prevent future data loss.\n\nCurrently, the storage might be <span style='color:hsl(345deg, 75%, 60%);'>Automatically Cleared by Chrome</span> when your <span style='color:hsl(345deg, 75%, 60%);'>Disk is Nearly Full.</span>\n\n<span ${
                     persistent
                         ? ""
-                        : "onclick='(async()=>{await window?.navigator?.storage?.persisted?.();await window?.navigator?.storage?.persist?.();window?.refreshKanshiNotice?.()})()'"
+                        : "style='cursor:pointer;' onclick='(async()=>{await window?.navigator?.storage?.persisted?.();await window?.navigator?.storage?.persist?.();window?.refreshKanshiNotice?.()})()'"
                 }>Persistent Storage Status: ${
                     persistent
                         ? "<span style='color:hsl(185deg, 65%, 50%);'>Enabled</span>"
@@ -319,7 +318,7 @@
                 }\n\nTo enable persistent storage:\n\n<span ${
                     persistent
                         ? ""
-                        : "onclick='(async()=>{await window?.navigator?.storage?.persisted?.();await window?.navigator?.storage?.persist?.();window?.refreshKanshiNotice?.()})()'"
+                        : "style='cursor:pointer;' onclick='(async()=>{await window?.navigator?.storage?.persisted?.();await window?.navigator?.storage?.persist?.();window?.refreshKanshiNotice?.()})()'"
                 }>1) Grant permission for <span style="${
                     persistent ? "" : "text-decoration: underline;"
                 }${
@@ -329,7 +328,7 @@
                 };">Persistent Storage</span></span>.\n2) OR Grant permission for <span ${
                     notificationGranted
                         ? ""
-                        : "onclick='(async()=>{await window?.Notification?.requestPermission?.();window?.refreshKanshiNotice?.()})()'"
+                        : "style='cursor:pointer;' onclick='(async()=>{await window?.Notification?.requestPermission?.();window?.refreshKanshiNotice?.()})()'"
                 }><span style="${
                     notificationGranted ? "" : "text-decoration: underline;"
                 }${

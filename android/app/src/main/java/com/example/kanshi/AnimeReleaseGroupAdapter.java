@@ -220,7 +220,6 @@ public class AnimeReleaseGroupAdapter extends RecyclerView.Adapter<RecyclerView.
                         uiTask.post(() -> progressCircular.setVisibility(View.GONE), taskId);
                     }
                     uiTask.post(() -> {
-                        System.out.println("kanshi-kuro position "+position);
                         setAnimation(holder.itemView);
                         holder.itemView.setVisibility(View.VISIBLE);
                     }, taskId);

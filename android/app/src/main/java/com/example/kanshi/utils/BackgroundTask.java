@@ -33,6 +33,7 @@ public class BackgroundTask {
         this.executor = Executors.newFixedThreadPool(1);
         this.futureMap = new ConcurrentHashMap<>();
     }
+
     public void execute(String taskId, Runnable task) {
         if (backgroundTaskExecutor.isShutdown() || backgroundTaskExecutor.isTerminated()) return;
         backgroundTaskExecutor.submit(() -> {

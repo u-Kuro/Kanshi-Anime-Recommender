@@ -1001,6 +1001,7 @@
             playMostVisibleTrailer();
             if (anime?.id) {
                 delete failingTrailers[anime.id];
+                failingTrailers = failingTrailers
             }
         }
     }
@@ -1025,27 +1026,25 @@
         }
     }
 
-    async function askToOpenTrailer(
+    async function openMoreInfo(
         animeID, 
         trailerID, 
         image, 
         title, 
         format
     ) {
-        if (trailerID) {
+        if (image) {
+            fullImagePopup = image;
+            fullDescriptionPopup = null;
+        } else if (trailerID && !failingTrailers[animeID]) {
             if (
-                failingTrailers[animeID] && 
                 await $confirmPromise({
-                    title: "Check trailer",
-                    text: "Do you check the trailer in YouTube?",
+                    title: "Open trailer",
+                    text: "Do you want to open the trailer in YouTube?",
                     isImportant: true,
                 })
             ) {
-                window.open(
-                    `https://www.youtube.com/watch?v=${trailerID}`,
-                    "_blank",
-                );
-                return
+                openTrailer(trailerID)
             }
         } else {
             let animeTitle;
@@ -1070,9 +1069,14 @@
                 return
             }
         }
-        if (image) {
-            fullImagePopup = image;
-            fullDescriptionPopup = null;
+    }
+
+    function openTrailer(trailerID) {
+        if (trailerID) {
+            window.open(
+                `https://www.youtube.com/watch?v=${trailerID}`,
+                "_blank",
+            );
         }
     }
 
@@ -1086,8 +1090,8 @@
         if (
             skipConfirm ||
             (await $confirmPromise({
-                title: "List has an update",
-                text: "Do you want to refresh your list?",
+                title: "Reload List",
+                text: "Do you want to refresh your list to sync changes?",
             }))
         ) {
             $listUpdateAvailable = false;
@@ -1554,9 +1558,19 @@
                 false;
     }
 
+    function showFullScreenEditedHTMLInfo(editedHTMLString) {
+        if (!editedHTMLString) return;
+        let newFullDescriptionPopup = editedHTMLString || '';
+        if (fullDescriptionPopup === newFullDescriptionPopup) {
+            fullDescriptionPopup = null;
+        } else {
+            fullDescriptionPopup = newFullDescriptionPopup;
+        }
+        fullImagePopup = null;
+    }
     function showFullScreenInfo(info) {
         if (!info) return;
-        let newFullDescriptionPopup = editHTMLString(info);
+        let newFullDescriptionPopup = editHTMLString(info) || '';
         if (fullDescriptionPopup === newFullDescriptionPopup) {
             fullDescriptionPopup = null;
         } else {
@@ -1633,6 +1647,16 @@
             },
         };
     }
+
+    const addInfoDragScroll = (e) => {
+        try {
+            let info = e.target;
+            info.removeEventListener(e.type, addInfoDragScroll);
+            if (info.addedCustomDragScroll) return;
+            info.addedCustomDragScroll = true;
+            dragScroll(info, 'x');
+        } catch {}
+    }
 </script>
 
 <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
@@ -1681,7 +1705,7 @@
                                     : '-1'}"
                                 on:click="{() => {
                                     if (!$popupVisible) return;
-                                    askToOpenTrailer(
+                                    openMoreInfo(
                                         anime.id,
                                         anime.trailerID,
                                         anime.bannerImageUrl || anime.trailerThumbnailUrl,
@@ -1692,7 +1716,7 @@
                                 on:keyup="{(e) => {
                                     if (!$popupVisible) return;
                                     if (e.key === 'Enter') {
-                                        askToOpenTrailer(
+                                        openMoreInfo(
                                             anime.id,
                                             anime.trailerID,
                                             anime.bannerImageUrl || anime.trailerThumbnailUrl,
@@ -1817,27 +1841,52 @@
                                             <!-- arrows rotate -->
                                             <svg
                                                 viewBox="0 0 512 512"
-                                                class="list-update-icon"
+                                                class="small-icon"
                                             >
                                                 <path
                                                     d="M105 203a160 160 0 0 1 264-60l17 17h-50a32 32 0 1 0 0 64h128c18 0 32-14 32-32V64a32 32 0 1 0-64 0v51l-18-17a224 224 0 0 0-369 83 32 32 0 0 0 60 22zm-66 86a32 32 0 0 0-23 31v128a32 32 0 1 0 64 0v-51l18 17a224 224 0 0 0 369-83 32 32 0 0 0-60-22 160 160 0 0 1-264 60l-17-17h50a32 32 0 1 0 0-64H48a39 39 0 0 0-9 1z"
                                                 ></path>
                                             </svg>
-                                            <h3 class="list-update-label">
+                                            <h3 class="small-icon-label">
                                                 {windowWidth >= 320
-                                                    ? "List Update"
+                                                    ? "Reload List"
                                                     : windowWidth >= 205
-                                                      ? "Update"
-                                                      : windowWidth >= 180
-                                                        ? "List"
-                                                        : ""}
+                                                      ? "Reload"
+                                                      : ""}
                                             </h3>
                                         </div>
                                     {/if}
-                                    {#if anime.bannerImageUrl || anime.trailerThumbnailUrl}
+                                    {#if anime.trailerID && failingTrailers[anime.id]}
                                         <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                                         <div
-                                            class="banner-image-button"
+                                            class="icon-button"
+                                            tabindex="{!$menuVisible &&
+                                            $popupVisible
+                                                ? '0'
+                                                : '-1'}"
+                                            on:click="{() => {
+                                                if (!$popupVisible) return;
+                                                openTrailer(anime.trailerID)
+                                            }}"
+                                            on:keyup="{(e) => {
+                                                if (!$popupVisible) return;
+                                                if (e.key === 'Enter') {
+                                                    openTrailer(anime.trailerID)
+                                                }
+                                            }}"
+                                        >
+                                            <!-- youtube logo -->
+                                            <svg viewBox="0 0 576 512" class="yt-small-icon">
+                                                <path
+                                                    d="M550 124c-7-24-25-42-49-49-42-11-213-11-213-11S117 64 75 75c-24 7-42 25-49 49-11 43-11 132-11 132s0 90 11 133c7 23 25 41 49 48 42 11 213 11 213 11s171 0 213-11c24-7 42-25 49-48 11-43 11-133 11-133s0-89-11-132zM232 338V175l143 81-143 82z"
+                                                ></path>
+                                            </svg>
+                                            <h3 class="small-icon-label">Trailer</h3>
+                                        </div>
+                                    {:else if anime.bannerImageUrl || anime.trailerThumbnailUrl}
+                                        <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
+                                        <div
+                                            class="icon-button"
                                             tabindex="{!$menuVisible &&
                                             $popupVisible
                                                 ? '0'
@@ -1871,13 +1920,13 @@
                                             <!-- image icon -->
                                             <svg
                                                 viewBox="0 0 512 512"
-                                                class="banner-image-icon"
+                                                class="small-icon"
                                             >
                                                 <path
                                                     d="M0 96c0-35 29-64 64-64h384c35 0 64 29 64 64v320c0 35-29 64-64 64H64c-35 0-64-29-64-64V96zm324 107a24 24 0 0 0-40 0l-87 127-26-33a24 24 0 0 0-37 0l-65 80a24 24 0 0 0 19 39h336c9 0 17-5 21-13s4-17-1-25L324 204zm-212-11a48 48 0 1 0 0-96 48 48 0 1 0 0 96z"
                                                 ></path>
                                             </svg>
-                                            <h3 class="banner-image-label">
+                                            <h3 class="small-icon-label">
                                                 {anime.bannerImageUrl
                                                     ? "Banner"
                                                     : "Thumbnail"}
@@ -1908,6 +1957,7 @@
                                                 'javascript:void(0)'}"
                                             class="{anime?.contentCautionColor +
                                                 '-color anime-title copy'}"
+                                            title="{anime?.shownTitle || ''}"
                                             data-copy="{anime?.shownTitle ||
                                                 ''}"
                                             data-secondcopy="{anime?.copiedTitle ||
@@ -2265,7 +2315,7 @@
                                         {#if anime?.shownStudios?.length}
                                             <div>
                                                 <div class="info-categ">
-                                                    Studios
+                                                    Studio
                                                 </div>
                                                 <div
                                                     class="{'studio-popup info'}"
@@ -2273,23 +2323,7 @@
                                                         ? "hidden"
                                                         : ""}"
                                                     on:scroll="{itemScroll}"
-                                                    on:mouseenter="{(e) => {
-                                                        if (
-                                                            !anime?.hasStudioDragScroll
-                                                        ) {
-                                                            let info =
-                                                                e?.target?.closest?.(
-                                                                    '.info',
-                                                                ) || e?.target;
-                                                            if (info) {
-                                                                anime.hasStudioDragScroll = true;
-                                                                dragScroll(
-                                                                    info,
-                                                                    'x',
-                                                                );
-                                                            }
-                                                        }
-                                                    }}"
+                                                    on:mouseenter="{addInfoDragScroll}"
                                                 >
                                                     {#each anime.shownStudios as studios (studios?.studio || {})}
                                                         <a
@@ -2326,7 +2360,7 @@
                                         {#if anime?.shownGenres?.length}
                                             <div>
                                                 <div class="info-categ">
-                                                    Genres
+                                                    Genre
                                                 </div>
                                                 <div
                                                     class="{'genres-popup info'}"
@@ -2334,23 +2368,7 @@
                                                         ? "hidden"
                                                         : ""}"
                                                     on:scroll="{itemScroll}"
-                                                    on:mouseenter="{(e) => {
-                                                        if (
-                                                            !anime?.hasGenreDragScroll
-                                                        ) {
-                                                            let info =
-                                                                e?.target?.closest?.(
-                                                                    '.info',
-                                                                ) || e?.target;
-                                                            if (info) {
-                                                                anime.hasGenreDragScroll = true;
-                                                                dragScroll(
-                                                                    info,
-                                                                    'x',
-                                                                );
-                                                            }
-                                                        }
-                                                    }}"
+                                                    on:mouseenter="{addInfoDragScroll}"
                                                 >
                                                     {#each anime.shownGenres as genres (genres?.genre || {})}
                                                         <span
@@ -2372,23 +2390,7 @@
                                                         ? "hidden"
                                                         : ""}"
                                                     on:scroll="{itemScroll}"
-                                                    on:mouseenter="{(e) => {
-                                                        if (
-                                                            !anime?.hasTagDragScroll
-                                                        ) {
-                                                            let info =
-                                                                e?.target?.closest?.(
-                                                                    '.info',
-                                                                ) || e?.target;
-                                                            if (info) {
-                                                                anime.hasTagDragScroll = true;
-                                                                dragScroll(
-                                                                    info,
-                                                                    'x',
-                                                                );
-                                                            }
-                                                        }
-                                                    }}"
+                                                    on:mouseenter="{addInfoDragScroll}"
                                                 >
                                                     {#each anime.shownTags as tags (tags?.tag || {})}
                                                         <span
@@ -2511,6 +2513,7 @@
                                             />
                                         {/key}
                                         {#if anime?.description}
+                                            {@const editedHTMLString = editHTMLString(anime?.description) || ''}
                                             <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                                             <div
                                                 class="anime-description-wrapper"
@@ -2520,8 +2523,8 @@
                                                     : '-1'}"
                                                 on:click="{() => {
                                                     if (!$popupVisible) return;
-                                                    showFullScreenInfo(
-                                                        anime?.description,
+                                                    showFullScreenEditedHTMLInfo(
+                                                        editedHTMLString,
                                                     );
                                                 }}"
                                                 on:keyup="{(e) => {
@@ -2542,17 +2545,16 @@
                                                             fullImagePopup =
                                                                 newFullImagePopup;
                                                         }
-                                                        showFullScreenInfo(
-                                                            anime?.description,
+                                                        showFullScreenEditedHTMLInfo(
+                                                            editedHTMLString,
                                                         );
                                                     }
                                                 }}"
                                             >
-                                                <h3>Description</h3>
-                                                <div class="anime-description">
-                                                    {@html editHTMLString(
-                                                        anime?.description,
-                                                    )}
+                                                <div
+                                                    class="anime-description"
+                                                >
+                                                    {@html editedHTMLString || ''}
                                                 </div>
                                             </div>
                                         {/if}
@@ -3015,6 +3017,7 @@
         align-items: center;
         gap: 2px;
         white-space: nowrap;
+        user-select: none !important;
     }
 
     .info-rating-wrapper > svg {
@@ -3025,7 +3028,6 @@
 
     .info-rating-wrapper > h4 {
         white-space: nowrap;
-        cursor: text;
     }
 
     .info-rating-wrapper b {
@@ -3047,13 +3049,13 @@
         overflow-y: hidden;
         -ms-overflow-style: none;
         scrollbar-width: none;
+        user-select: none !important;
     }
     .info-format::-webkit-scrollbar {
         display: none;
     }
     .info-format > h4 {
         white-space: nowrap;
-        cursor: text;
     }
 
     .info-status {
@@ -3065,6 +3067,7 @@
         overflow-y: hidden;
         -ms-overflow-style: none;
         scrollbar-width: none;
+        user-select: none !important;
     }
     .info-status::-webkit-scrollbar {
         display: none;
@@ -3081,10 +3084,6 @@
 
     .info-status a {
         color: unset;
-    }
-
-    .info-status > .year-season {
-        cursor: text;
     }
 
     .info-contents {
@@ -3159,10 +3158,7 @@
         min-width: max(60% - 10px, 160px);
         height: 210px;
         cursor: pointer;
-    }
-
-    .anime-description-wrapper > h3 {
-        cursor: pointer;
+        user-select: none !important;
     }
 
     .anime-description {
@@ -3280,23 +3276,9 @@
             gap: 5px;
         }
     }
-
-    @media screen and (min-width: 641px) {
-        .fullPopupDescription {
-            font-size: 15px !important;
-        }
-        :global(.fullPopupDescription *) {
-            font-size: 15px !important;
-        }
-        .fullPopupImage {
-            max-width: min(90%, 1000px) !important;
-        }
-    }
-
     @media screen and (max-width: 225px) {
         .autoplay-label,
-        .list-update-label,
-        .banner-image-label {
+        .small-icon-label {
             display: none;
         }
     }
@@ -3374,6 +3356,7 @@
         justify-content: space-between;
         gap: 20px;
         flex: 1;
+        cursor: pointer;
     }
 
     .info::-webkit-scrollbar {
@@ -3424,7 +3407,7 @@
     }
 
     .list-update-container,
-    .banner-image-button {
+    .icon-button {
         display: flex;
         align-items: center;
         gap: 6px;
@@ -3445,15 +3428,20 @@
     .list-update-container.load {
         animation: softFadeInOut 1s infinite;
     }
-    .list-update-icon,
-    .banner-image-icon {
+
+    .yt-small-icon {
+        height: 20px;
+        width: 20px;
+        cursor: pointer;
+    }
+
+    .small-icon {
         height: 14px;
         width: 14px;
         cursor: pointer;
     }
 
-    .list-update-label,
-    .banner-image-label {
+    .small-icon-label {
         height: 14px;
         line-height: 14px;
         font-weight: 500;
@@ -3563,7 +3551,6 @@
         user-select: none;
         -ms-overflow-style: none;
         scrollbar-width: none;
-        cursor: pointer;
     }
     .fullPopupWrapper::-webkit-scrollbar {
         display: none;
@@ -3579,7 +3566,6 @@
         display: flex;
         -ms-overflow-style: none;
         scrollbar-width: none;
-        cursor: pointer;
     }
 
     .fullPopup::-webkit-scrollbar {
@@ -3602,7 +3588,6 @@
             0 14px 28px rgba(0, 0, 0, 0.25),
             0 10px 10px rgba(0, 0, 0, 0.2);
         user-select: none;
-        cursor: pointer;
         background-color: var(--bg-color) !important;
     }
     .fullPopupDescriptionWrapper {
@@ -3612,13 +3597,12 @@
         width: 100%;
         height: 100%;
         background-color: var(--ol-color);
-        cursor: pointer;
     }
     .fullPopupDescription {
         animation: fadeIn 0.2s ease-out;
         letter-spacing: 0.5px;
         line-height: 25px;
-        font-size: 13px;
+        font-size: 13px !important;
         overflow-y: auto;
         overflow-x: hidden;
         max-width: min(90%, 576px);
@@ -3627,7 +3611,6 @@
         scrollbar-width: none;
         overscroll-behavior: contain;
         user-select: none;
-        cursor: pointer;
         color: var(--fg-color);
     }
     .fullPopupDescription::-webkit-scrollbar {
@@ -3643,6 +3626,17 @@
         font-size: 13px !important;
         color: var(--fg-color);
     }
+    @media screen and (min-width: 641px) {
+        .fullPopupDescription {
+            font-size: 15px !important;
+        }
+        :global(.fullPopupDescription *) {
+            font-size: 15px !important;
+        }
+        .fullPopupImage {
+            max-width: min(90%, 1000px) !important;
+        }
+    }
     :global(.fullPopupDescription a) {
         color: hsl(var(--ac-color)) !important;
         text-decoration: none !important;
@@ -3650,6 +3644,9 @@
     :global(.fullPopupDescription:has(.is-custom-table)) {
         border: 1px solid var(--bd-color) !important;
         border-radius: 6px !important;
+    }
+    :global(.fullPopupDescription:has(.is-custom-table) *) {
+        font-size: 13px !important;
     }
     :global(.fullPopupDescription > .is-custom-table) {
         width: min(90vw, 380px) !important;
@@ -3674,7 +3671,6 @@
         font-size: 15px !important;
         font-weight: 500 !important;
         min-height: 23px !important;
-        cursor: pointer !important;
     }
     :global(.fullPopupDescription .custom-extra) {
         text-transform: capitalize !important;
