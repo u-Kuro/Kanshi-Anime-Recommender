@@ -233,53 +233,53 @@ const getMostVisibleElement = (parent, childSelector, intersectionRatioThreshold
 //     return mostVisibleElement;
 //   } catch (e) { }
 // }
-const isElementVisible = (parent, element, intersectionRatioThreshold = 0) => {
-  try {
-    let boundingRect = element.getBoundingClientRect();
-    let parentRect = parent.getBoundingClientRect();
-    let overflowX = getComputedStyle(parent).overflowX;
-    let overflowY = getComputedStyle(parent).overflowY;
-    let isParentScrollable = overflowX === 'auto' || overflowX === 'scroll' || overflowY === 'auto' || overflowY === 'scroll';
-    if (isParentScrollable) {
-      let scrollLeft = parent.scrollLeft;
-      let scrollTop = parent.scrollTop;
-      let isVisible = (
-        boundingRect.top >= parentRect.top &&
-        boundingRect.left >= parentRect.left &&
-        boundingRect.bottom <= parentRect.bottom &&
-        boundingRect.right <= parentRect.right
-      );
-      if (!isVisible) {
-        let intersectionTop = Math.max(boundingRect.top, parentRect.top) - Math.min(boundingRect.bottom, parentRect.bottom);
-        let intersectionLeft = Math.max(boundingRect.left, parentRect.left) - Math.min(boundingRect.right, parentRect.right);
-        let intersectionArea = intersectionTop * intersectionLeft;
-        let elementArea = Math.min(boundingRect.height, window.innerHeight) * Math.min(boundingRect.width, window.innerWidth);
-        let intersectionRatio = intersectionArea / elementArea;
-        isVisible = intersectionRatio >= intersectionRatioThreshold;
-      }
-      if (!isVisible) {
-        return false;
-      }
-      boundingRect = {
-        top: boundingRect.top - parentRect.top + scrollTop,
-        left: boundingRect.left - parentRect.left + scrollLeft,
-        bottom: boundingRect.bottom - parentRect.top + scrollTop,
-        right: boundingRect.right - parentRect.left + scrollLeft,
-        height: boundingRect.height,
-        width: boundingRect.width
-      };
-    }
-    let windowHeight = window.innerHeight || document.documentElement.clientHeight;
-    let windowWidth = window.innerWidth || document.documentElement.clientWidth;
-    let isVisibleInWindow = (
-      boundingRect.top >= 0 &&
-      boundingRect.left >= 0 &&
-      boundingRect.bottom <= windowHeight &&
-      boundingRect.right <= windowWidth
-    );
-    return isVisibleInWindow;
-  } catch { }
-}
+// const isElementVisible = (parent, element, intersectionRatioThreshold = 0) => {
+//   try {
+//     let boundingRect = element.getBoundingClientRect();
+//     let parentRect = parent.getBoundingClientRect();
+//     let overflowX = getComputedStyle(parent).overflowX;
+//     let overflowY = getComputedStyle(parent).overflowY;
+//     let isParentScrollable = overflowX === 'auto' || overflowX === 'scroll' || overflowY === 'auto' || overflowY === 'scroll';
+//     if (isParentScrollable) {
+//       let scrollLeft = parent.scrollLeft;
+//       let scrollTop = parent.scrollTop;
+//       let isVisible = (
+//         boundingRect.top >= parentRect.top &&
+//         boundingRect.left >= parentRect.left &&
+//         boundingRect.bottom <= parentRect.bottom &&
+//         boundingRect.right <= parentRect.right
+//       );
+//       if (!isVisible) {
+//         let intersectionTop = Math.max(boundingRect.top, parentRect.top) - Math.min(boundingRect.bottom, parentRect.bottom);
+//         let intersectionLeft = Math.max(boundingRect.left, parentRect.left) - Math.min(boundingRect.right, parentRect.right);
+//         let intersectionArea = intersectionTop * intersectionLeft;
+//         let elementArea = Math.min(boundingRect.height, window.innerHeight) * Math.min(boundingRect.width, window.innerWidth);
+//         let intersectionRatio = intersectionArea / elementArea;
+//         isVisible = intersectionRatio >= intersectionRatioThreshold;
+//       }
+//       if (!isVisible) {
+//         return false;
+//       }
+//       boundingRect = {
+//         top: boundingRect.top - parentRect.top + scrollTop,
+//         left: boundingRect.left - parentRect.left + scrollLeft,
+//         bottom: boundingRect.bottom - parentRect.top + scrollTop,
+//         right: boundingRect.right - parentRect.left + scrollLeft,
+//         height: boundingRect.height,
+//         width: boundingRect.width
+//       };
+//     }
+//     let windowHeight = window.innerHeight || document.documentElement.clientHeight;
+//     let windowWidth = window.innerWidth || document.documentElement.clientWidth;
+//     let isVisibleInWindow = (
+//       boundingRect.top >= 0 &&
+//       boundingRect.left >= 0 &&
+//       boundingRect.bottom <= windowHeight &&
+//       boundingRect.right <= windowWidth
+//     );
+//     return isVisibleInWindow;
+//   } catch { }
+// }
 
 const getChildIndex = (childElement) => {
   try {
@@ -523,9 +523,14 @@ const isAndroid = () => {
 }
 
 const showToast = (str, isLongDuration = true) => {
-  if (typeof str !== "string" || !str?.length || typeof isLongDuration !== "boolean") return
   try {
-    JSBridge?.openToast?.(str, isLongDuration)
+    if (
+      typeof str === "string"
+      && str?.length > 0 
+      && typeof isLongDuration === "boolean"
+    ) {
+      JSBridge?.openToast?.(str, isLongDuration)
+    }
   } catch { }
 }
 
@@ -663,7 +668,7 @@ export {
   msToTime,
   changeInputValue,
   dragScroll,
-  isElementVisible,
+  // isElementVisible,
   // hasValidOrigin,
   isMobile,
   formatYear,

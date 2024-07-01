@@ -452,26 +452,26 @@ const processRecommendedAnimeList = (_data = {}) => {
                             try {
                                 let aniReleaseNotif = data?.animeReleaseNotification
                                 if (
-                                    typeof aniReleaseNotif?.releaseEpisodes === "number"
-                                    && typeof aniReleaseNotif?.releaseDateMillis === "number"
-                                    && typeof aniReleaseNotif?.maxEpisode === "number"
+                                    typeof aniReleaseNotif?.releaseEpisodes === "number" && !isNaN(aniReleaseNotif?.releaseEpisodes)
+                                    && typeof aniReleaseNotif?.releaseDateMillis === "number" && !isNaN(aniReleaseNotif?.releaseDateMillis)
+                                    && typeof aniReleaseNotif?.maxEpisode === "number" && !isNaN(aniReleaseNotif?.maxEpisode)
                                     && typeof aniReleaseNotif?.title === "string"
-                                    && typeof aniReleaseNotif?.id === "number"
+                                    && typeof aniReleaseNotif?.id === "number" && !isNaN(aniReleaseNotif?.id)
                                     && typeof aniReleaseNotif?.userStatus === "string"
                                     && typeof aniReleaseNotif?.imageURL === "string"
                                     && typeof aniReleaseNotif?.animeUrl === "string"
-                                    && typeof aniReleaseNotif?.episodeProgress === "number"
+                                    && typeof aniReleaseNotif?.episodeProgress === "number" && !isNaN(aniReleaseNotif?.episodeProgress)
                                 ) {
                                     JSBridge?.addAnimeReleaseNotification?.(
-                                        aniReleaseNotif.id,
+                                        Math.floor(aniReleaseNotif.id),
                                         aniReleaseNotif.title,
-                                        aniReleaseNotif.releaseEpisodes,
-                                        aniReleaseNotif.maxEpisode,
-                                        aniReleaseNotif.releaseDateMillis,
+                                        Math.floor(aniReleaseNotif.releaseEpisodes),
+                                        Math.floor(aniReleaseNotif.maxEpisode),
+                                        Math.floor(aniReleaseNotif.releaseDateMillis),
                                         aniReleaseNotif.imageURL,
                                         aniReleaseNotif.animeUrl,
                                         aniReleaseNotif.userStatus,
-                                        aniReleaseNotif?.episodeProgress
+                                        Math.floor(aniReleaseNotif?.episodeProgress)
                                     )
                                 }
                             } catch { }
@@ -558,18 +558,23 @@ isProcessingList.subscribe((val) => {
 let newAddedAnimeCount, newUpdatedAnimeCount
 function notifyUpdatedAnimeNotification() {
     if (get(android) && window?.[".androidDataIsEvicted"] !== true) {
-        if (typeof newAddedAnimeCount === "number"
-            && !isNaN(newAddedAnimeCount)
-            && typeof newUpdatedAnimeCount === "number"
-            && !isNaN(newUpdatedAnimeCount)
-            && (
-                newAddedAnimeCount > 0 ||
-                newUpdatedAnimeCount > 0
-            )
-        ) {
-            try {
-                JSBridge?.showNewUpdatedAnimeNotification?.(newAddedAnimeCount, newUpdatedAnimeCount)
-            } catch { }
+        try {
+            if (typeof newAddedAnimeCount === "number"
+                && !isNaN(newAddedAnimeCount)
+                && typeof newUpdatedAnimeCount === "number"
+                && !isNaN(newUpdatedAnimeCount)
+                && (
+                    newAddedAnimeCount > 0 ||
+                    newUpdatedAnimeCount > 0
+                )
+            ) {
+                JSBridge?.showNewUpdatedAnimeNotification?.(
+                    Math.floor(newAddedAnimeCount), 
+                    Math.floor(newUpdatedAnimeCount)
+                )
+                newAddedAnimeCount = newUpdatedAnimeCount = undefined
+            }
+        } catch { 
             newAddedAnimeCount = newUpdatedAnimeCount = undefined
         }
     }
@@ -1256,20 +1261,20 @@ window.updateNotifications = async (aniIdsNotificationToBeUpdated = []) => {
             for (let animeId in updatedAniIdsNotification) {
                 let anime = updatedAniIdsNotification[animeId]
                 animeId = parseInt(animeId)
-                if (typeof animeId === "number"
+                if (typeof animeId === "number" && !isNaN(animeId)
                     && typeof anime?.title === "string"
-                    && typeof anime?.maxEpisode === "number"
+                    && typeof anime?.maxEpisode === "number" && !isNaN(anime?.maxEpisode)
                     && typeof anime?.animeUrl === "string"
                     && typeof anime?.userStatus === "string"
-                    && typeof anime?.episodeProgress === "number"
+                    && typeof anime?.episodeProgress === "number" && !isNaN(anime?.episodeProgress)
                 ) {
                     JSBridge?.updateNotifications?.(
-                        animeId,
-                        anime?.title,
-                        anime?.maxEpisode,
-                        anime?.animeUrl,
-                        anime?.userStatus,
-                        anime?.episodeProgress
+                        Math.floor(animeId),
+                        anime.title,
+                        Math.floor(anime?.maxEpisode),
+                        anime.animeUrl,
+                        anime.userStatus,
+                        Math.floor(anime.episodeProgress)
                     )
                 }
             }

@@ -109,8 +109,12 @@
         if (animeCopyTitle && !ncsCompare(animeCopyTitle, shownTitle)) {
             if ($android) {
                 try {
-                    JSBridge?.copyToClipBoard?.(animeCopyTitle);
-                    JSBridge?.copyToClipBoard?.(shownTitle);
+                    if (typeof animeCopyTitle==="string") {
+                        JSBridge?.copyToClipBoard?.(animeCopyTitle);
+                    }
+                    if (typeof shownTitle==="string") {
+                        JSBridge?.copyToClipBoard?.(shownTitle);
+                    }
                 } catch (e) {}
             } else {
                 navigator?.clipboard?.writeText?.(animeCopyTitle);
@@ -120,7 +124,9 @@
             }
         } else if ($android) {
             try {
-                JSBridge?.copyToClipBoard?.(shownTitle);
+                if (typeof shownTitle == "string") {
+                    JSBridge?.copyToClipBoard?.(shownTitle);
+                }
             } catch (e) {}
         } else {
             navigator?.clipboard?.writeText?.(shownTitle);
@@ -213,6 +219,8 @@
     <div
         use:loadAnimeOption
         class="anime-options"
+        in:fade="{{ duration: 200, easing: sineOut }}"
+        out:fade="{{ duration: 200, easing: sineOut }}"
         on:click="{handleAnimeOptionVisibility}"
         on:touchend|passive="{handleTouchAnimeOptionVisibility}"
         on:keydown="{(e) =>
@@ -221,7 +229,6 @@
         <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
         <div
             class="anime-options-container"
-            out:fade="{{ duration: 200, easing: sineOut }}"
         >
             <div class="option-header">
                 <span class="anime-title"><h1>{shownTitle}</h1></span>
@@ -313,7 +320,6 @@
     }
 
     .anime-options-container {
-        animation: fadeIn 0.2s ease-out;
         display: flex;
         flex-direction: column;
         background-color: var(--bg-color) !important;

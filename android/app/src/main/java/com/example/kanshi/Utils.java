@@ -193,6 +193,15 @@ public class Utils {
                 location = location.replaceAll("/", Matcher.quoteReplacement(File.separator));
 
                 final File dataDir = context.getApplicationContext().getDataDir();
+
+                try {
+                    if (!dataDir.exists() || !dataDir.isDirectory()) {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                            executeHandleUncaughtException(context, new Throwable("Data Directory NOT FOUND at: " + location), "cleanIndexedDBFiles");
+                        }
+                    }
+                } catch (Exception ignored) {}
+
                 addIndexedDBFiles(new File(dataDir, location).listFiles());
 
                 List<Map.Entry<String, List<File>>> sortedModifiedDateEntries = new ArrayList<>(webGroupedModifiedDate.entrySet());
@@ -395,6 +404,11 @@ public class Utils {
     @RequiresApi(api = Build.VERSION_CODES.R)
     public static void handleUncaughtException(Context context, Throwable e, String fileFrom) {
         if (!OWNER || !DEBUG) { return; }
+        executeHandleUncaughtException(context, e, fileFrom);
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.R)
+    public static void executeHandleUncaughtException(Context context, Throwable e, String fileFrom) {
         SharedPreferences prefs = context.getApplicationContext().getSharedPreferences("com.example.kanshi", Context.MODE_PRIVATE);
         String exportPath = prefs.getString("savedExportPath", "");
         if (!exportPath.isEmpty() && Environment.isExternalStorageManager()) {

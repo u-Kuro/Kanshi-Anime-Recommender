@@ -120,12 +120,11 @@
         on:click="{handleConfirmVisibility}"
         on:touchend|passive="{handleConfirmVisibility}"
         on:keydown="{(e) => e.key === 'Enter' && handleConfirmVisibility(e)}"
+        in:fade="{{ duration: 200, easing: sineOut }}"
+        out:fade="{{ duration: 200, easing: sineOut }}"
     >
         <div class="confirm-wrapper">
-            <div
-                class="confirm-container"
-                out:fade="{{ duration: 200, easing: sineOut }}"
-            >
+            <div class="confirm-container">
                 <div class="confirm-title-wrapper">
                     <h2 class="confirm-title">
                         {shouldShowPleaseWait
@@ -206,7 +205,6 @@
     }
 
     .confirm-container {
-        animation: fadeIn 0.2s ease-out;
         display: grid;
         grid-template-rows: 23px 1fr 20px;
         background-color: var(--bg-color);
@@ -221,10 +219,7 @@
         cursor: default;
     }
 
-    :global(
-            #main.maxwindowheight.popupvisible
-                .confirm-info-container:not(.scrollable)
-        ) {
+    :global(#main.maxwindowheight.popupvisible .confirm-info-container:not(.scrollable)) {
         touch-action: none;
     }
 

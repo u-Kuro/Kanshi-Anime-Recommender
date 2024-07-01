@@ -21,25 +21,23 @@
         selectedCategory,
         categoriesKeys,
         selectedAnimeGridEl,
+        documentScrollTop,
     } from "../../js/globalValues.js";
 
     let categoriesNav;
     let showCategoriesNav = true;
     let popupContainer;
-    let lastScrollTop = 0,
-        isScrolledYMax,
+    let isScrolledYMax,
         isFullViewed;
 
-    $: {
-        isScrolledYMax =
-            lastScrollTop >=
-                document?.documentElement?.scrollHeight -
-                    window?.innerHeight -
-                    1 && $shownAllInList?.[$selectedCategory];
+    documentScrollTop.subscribe((val) => {
+        isScrolledYMax = val >= document?.documentElement?.scrollHeight - window?.innerHeight - 1 
+            && $shownAllInList?.[$selectedCategory];
         if (isScrolledYMax) {
             showCategoriesNav = true;
         }
-    }
+    })
+
     $: {
         isFullViewed =
             $gridFullView ?? getLocalStorage("gridFullView") ?? false;
@@ -160,9 +158,10 @@
                 scrollTop = 57;
             }
         }
+        const documentEl = document.documentElement
         if ($android || !matchMedia("(hover:hover)").matches) {
-            document.documentElement.style.overflow = "hidden";
-            document.documentElement.style.overflow = "";
+            documentEl.style.overflow = "hidden";
+            documentEl.style.overflow = "";
         }
         if (isDoubleClicked) {
             if ($gridFullView) {
@@ -170,7 +169,7 @@
                     $selectedAnimeGridEl.scrollLeft = 0;
                 }
             } else {
-                window.scrollY = document.documentElement.scrollTop = scrollTop;
+                window.scrollY = documentEl.scrollTop = scrollTop;
             }
         } else if (clickedOnce) {
             if ($gridFullView) {
@@ -302,14 +301,8 @@
         window.addEventListener("touchcancel", touchedUp, { passive: true });
     }
 
-    window.addEventListener("scroll", () => {
-        lastScrollTop = document.documentElement.scrollTop;
-    });
-
     onMount(() => {
-        categoriesNav =
-            categoriesNav || document.getElementById("categories-nav");
-        lastScrollTop = document.documentElement.scrollTop;
+        categoriesNav = categoriesNav || document.getElementById("categories-nav");
         popupContainer = document?.getElementById("popup-container");
     });
 </script>
@@ -451,9 +444,7 @@
         background-color: var(--fg-color);
         width: var(--width);
         translate: var(--translateY);
-        transition:
-            translate 0.15s ease-out,
-            width 0.075s ease-out 0.075s;
+        transition: translate 0.15s ease-out, width 0.075s ease-out 0.075s;
     }
     .category {
         display: flex;

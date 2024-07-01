@@ -25,6 +25,7 @@
         selectedAnimeGridEl,
         resetTypedUsername,
         resetProgress,
+        windowWidth,
     } from "../../js/globalValues.js";
 
     let writableSubscriptions = [];
@@ -34,12 +35,7 @@
         navContainerEl,
         navEl,
         inputUsernameEl,
-        inputUsernameElFocused = false,
-        windowWidth = Math.max(
-            document?.documentElement?.getBoundingClientRect?.()?.width,
-            window.visualViewport.width,
-            window.innerWidth,
-        );
+        inputUsernameElFocused = false;
 
     onMount(() => {
         navContainerEl =
@@ -59,18 +55,6 @@
             if (document?.activeElement !== inputUsernameEl) {
                 typedUsername = $username || typedUsername || "";
             }
-        });
-        windowWidth = Math.max(
-            document?.documentElement?.getBoundingClientRect?.()?.width,
-            window.visualViewport.width,
-            window.innerWidth,
-        );
-        window.addEventListener("resize", () => {
-            windowWidth = Math.max(
-                document?.documentElement?.getBoundingClientRect?.()?.width,
-                window.visualViewport.width,
-                window.innerWidth,
-            );
         });
     });
 
@@ -589,7 +573,7 @@
             <input
                 id="usernameInput"
                 type="search"
-                tabindex="{$popupVisible && windowWidth > 750 ? '-1' : '0'}"
+                tabindex="{$popupVisible && $windowWidth > 750 ? '-1' : '0'}"
                 enterkeyhint="search"
                 autocomplete="off"
                 placeholder="Your Anilist Username"
@@ -636,7 +620,7 @@
                     viewBox="0 0 512 512"
                     class="anime-release-icon"
                     aria-label="Anime Releases"
-                    tabindex="{$popupVisible && windowWidth > 750 ? '-1' : '0'}"
+                    tabindex="{$popupVisible && $windowWidth > 750 ? '-1' : '0'}"
                     on:keyup="{(e) => {
                         if (e.key === 'Enter') {
                             e.stopPropagation();
@@ -661,7 +645,7 @@
                     viewBox="0 0 500 500"
                     class="logo-icon"
                     aria-label="Kanshi Logo"
-                    tabindex="{$popupVisible && windowWidth > 750 ? '-1' : '0'}"
+                    tabindex="{$popupVisible && $windowWidth > 750 ? '-1' : '0'}"
                     on:keyup="{(e) => {
                         if (e.key === 'Enter') {
                             e.stopPropagation();
@@ -794,8 +778,7 @@
         transition: opacity 0.1s ease-out;
         animation: fadeIn 0.1s ease-out;
     }
-    .nav-container.layout-change
-        input[type="search"]::-webkit-search-cancel-button {
+    .nav-container.layout-change input[type="search"]::-webkit-search-cancel-button {
         opacity: 0;
     }
     .goback path {
@@ -902,7 +885,7 @@
             appearance: none;
             height: 17px;
             width: 17px;
-            background-image: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgaWQ9IjEyMzEyMyI+PHBhdGggZmlsbD0iI2ZmZiIgZD0ibTE5IDYtMS0xLTYgNi02LTYtMSAxIDYgNi02IDYgMSAxIDYtNiA2IDYgMS0xLTYtNloiLz48L3N2Zz4=);
+            background-image: var(--x-close-icon);
             background-size: 17px;
             translate: 0 1px;
         }
@@ -975,8 +958,7 @@
             justify-self: center !important;
             padding-left: 0 !important;
         }
-        .nav.inputfocused
-            input[type="search"]::-webkit-textfield-decoration-container {
+        .nav.inputfocused input[type="search"]::-webkit-textfield-decoration-container {
             gap: 15px;
         }
         .nav.inputfocused .input-search {
@@ -1005,7 +987,7 @@
                 appearance: none;
                 height: 24px;
                 width: 24px;
-                background-image: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgaWQ9IjEyMzEyMyI+PHBhdGggZmlsbD0iI2ZmZiIgZD0ibTE5IDYtMS0xLTYgNi02LTYtMSAxIDYgNi02IDYgMSAxIDYtNiA2IDYgMS0xLTYtNloiLz48L3N2Zz4=);
+                background-image: var(--x-close-icon);
                 background-size: 24px;
             }
         }
@@ -1032,8 +1014,7 @@
         .app-installer {
             display: none !important;
         }
-        .nav-container:not(.menu-visible)
-            .nav:not(.nav.popupvisible):not(.inputfocused) {
+        .nav-container:not(.menu-visible) .nav:not(.nav.popupvisible):not(.inputfocused) {
             grid-template-columns: calc(100% - 48px) 48px;
             gap: 0 !important;
         }

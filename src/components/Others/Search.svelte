@@ -1,7 +1,5 @@
 <script>
     import { onMount, tick } from "svelte";
-    import { fade } from "svelte/transition";
-    import { sineOut } from "svelte/easing";
     import { retrieveJSON, saveJSON } from "../../js/indexedDB.js";
     import {
         animeLoader,
@@ -52,6 +50,9 @@
         selectedAnimeGridEl,
         showLoadingAnime,
         resetProgress,
+        windowHeight,
+        windowWidth,
+        documentScrollTop,
     } from "../../js/globalValues.js";
 
     let selectedCategoryAnimeFilters,
@@ -133,16 +134,7 @@
         }
     }
 
-    let windowWidth = Math.max(
-        document?.documentElement?.getBoundingClientRect?.()?.width,
-        window.visualViewport.width,
-        window.innerWidth,
-    );
-    let windowHeight = Math.max(
-        window.visualViewport.height,
-        window.innerHeight,
-    );
-    let maxFilterSelectionHeight = windowHeight * 0.3;
+    let maxFilterSelectionHeight = $windowHeight * 0.3;
 
     let popupContainer;
 
@@ -229,18 +221,9 @@
             });
     }
 
-    function windowResized() {
-        windowHeight = Math.max(
-            window.visualViewport.height,
-            window.innerHeight,
-        );
-        maxFilterSelectionHeight = windowHeight * 0.3;
-        windowWidth = Math.max(
-            document?.documentElement?.getBoundingClientRect?.()?.width,
-            window.visualViewport.width,
-            window.innerWidth,
-        );
-    }
+    windowHeight.subscribe((val) => {
+        maxFilterSelectionHeight = val * 0.3;
+    })
 
     function handleFilterCategory(event, newFilterCategoryName) {
         if (!filterCategories) return pleaseWaitAlert();
@@ -1282,7 +1265,7 @@
         }
         if (
             (!$showFilterOptions || !isFullViewed) &&
-            document.documentElement.scrollTop > 57
+            $documentScrollTop > 57
         ) {
             window.scrollY = document.documentElement.scrollTop = 57;
         }
@@ -1590,7 +1573,7 @@
     dropdownIsVisible.subscribe((val) => {
         if (val) {
             window.setShouldGoBack?.(false);
-        } else if (val === false && windowWidth <= 425) {
+        } else if (val === false && $windowWidth <= 425) {
             // Small Screen Width
             let openedDropdown =
                 selectedCategoryElement ||
@@ -1641,7 +1624,6 @@
             "Anime Filter";
         popupContainer = document?.getElementById("popup-container");
 
-        window.addEventListener("resize", windowResized);
         window.addEventListener("click", clickOutsideListener);
 
         document.addEventListener("keydown", async (event) => {
@@ -1885,7 +1867,7 @@
                                 tabindex="{!$menuVisible &&
                                 !$popupVisible &&
                                 selectedCategoryElement &&
-                                windowWidth <= 425
+                                $windowWidth <= 425
                                     ? '0'
                                     : '-1'}"
                                 on:keyup="{(e) =>
@@ -2083,7 +2065,7 @@
                                 tabindex="{!$menuVisible &&
                                 !$popupVisible &&
                                 selectedFilterCategoryElement &&
-                                windowWidth <= 425
+                                $windowWidth <= 425
                                     ? '0'
                                     : '-1'}"
                                 on:keyup="{(e) =>
@@ -2144,9 +2126,9 @@
                       ? "hsl(345deg,75%,60%)"
                       : ""}"
             >
-                {(windowWidth > 345
+                {($windowWidth > 345
                     ? "Mean Error: "
-                    : windowWidth >= 290
+                    : $windowWidth >= 290
                       ? "ME: "
                       : "") + formatNumber(recListMAE)}
             </div>
@@ -2254,7 +2236,7 @@
                                 tabindex="{!$menuVisible &&
                                 !$popupVisible &&
                                 $showFilterOptions &&
-                                windowWidth <= 425 &&
+                                $windowWidth <= 425 &&
                                 filterCategoryIsSelected
                                     ? '0'
                                     : '-1'}"
@@ -2296,7 +2278,7 @@
                                             filterSelectionKey
                                         ]}"
                                         disabled="{!$showFilterOptions ||
-                                            windowWidth <= 425 ||
+                                            $windowWidth <= 425 ||
                                             !filterCategoryIsSelected}"
                                         on:focusin="{() =>
                                             window?.setShouldGoBack?.(false)}"
@@ -2929,11 +2911,10 @@
     </div>
     <div id="home-status" class="home-status">
         <span
-            out:fade="{{ duration: 200, easing: sineOut }}"
             class="data-status"
         >
             <h2
-                on:click="{(e) => {
+                on:click="{() => {
                     $dataStatus = null;
                     getExtraInfo();
                 }}"
@@ -3036,7 +3017,7 @@
                                 tabindex="{!$menuVisible &&
                                 !$popupVisible &&
                                 selectedSortElement &&
-                                windowWidth <= 425
+                                $windowWidth <= 425
                                     ? '0'
                                     : ''}"
                                 on:keyup="{(e) =>
@@ -3111,9 +3092,7 @@
         --active-tag-filter-space: ;
         --category-settings-space: ;
         display: grid;
-        grid-template-rows:
-            42px var(--category-settings-space) var(--filters-space)
-            var(--active-tag-filter-space) 44px 42px 45px auto;
+        grid-template-rows: 42px var(--category-settings-space) var(--filters-space) var(--active-tag-filter-space) 44px 42px 45px auto;
         padding-top: 15px;
         padding-inline: 50px;
         transition: opacity 0.2s ease-out;
@@ -3124,9 +3103,7 @@
         background-color: hsla(0, 0%, 10%, 0.5) !important;
     }
     .options-wrap {
-        box-shadow:
-            0 14px 28px rgba(0, 0, 0, 0.25),
-            0 10px 10px rgba(0, 0, 0, 0.2) !important;
+        box-shadow: 0 14px 28px rgba(0, 0, 0, 0.25), 0 10px 10px rgba(0, 0, 0, 0.2) !important;
     }
     .category-wrap {
         --editcancel-icon: ;
@@ -3320,9 +3297,7 @@
         --mae-size: ;
         --remove-icon-size: ;
         display: grid;
-        grid-template-columns: 125px var(--mae-size) var(--remove-icon-size) var(
-                --add-icon-size
-            );
+        grid-template-columns: 125px var(--mae-size) var(--remove-icon-size) var(--add-icon-size);
         justify-content: space-between;
         align-items: center;
         width: 100%;
@@ -3863,13 +3838,7 @@
     .shimmer::before {
         animation: loadingShimmer 2s linear infinite;
         position: absolute;
-        background: linear-gradient(
-            90deg,
-            hsla(0, 0%, 10%, 0) 0,
-            hsla(0, 0%, 100%, 0.06) 40%,
-            hsla(0, 0%, 100%, 0.06) 60%,
-            hsla(0, 0%, 10%, 0)
-        );
+        background: linear-gradient(90deg,hsla(0, 0%, 10%, 0) 0,hsla(0, 0%, 100%, 0.06) 40%,hsla(0, 0%, 100%, 0.06) 60%,hsla(0, 0%, 10%, 0));
         content: "";
         display: block;
         height: 100%;
@@ -3957,9 +3926,7 @@
         height: 20px;
     }
 
-    input[type="search"]:not(:hover):not(:focus):not(:disabled):not(
-            :placeholder-shown
-        )::-webkit-search-cancel-button {
+    input[type="search"]:not(:hover):not(:focus):not(:disabled):not(:placeholder-shown)::-webkit-search-cancel-button {
         opacity: 1 !important;
     }
 
@@ -3968,15 +3935,12 @@
     }
 
     @supports (-webkit-appearance: none) and (appearance: none) {
-        input[type="search"] {
-            --close-icon: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgaWQ9IjEyMzEyMyI+PHBhdGggZmlsbD0iI2ZmZiIgZD0ibTE5IDYtMS0xLTYgNi02LTYtMSAxIDYgNi02IDYgMSAxIDYtNiA2IDYgMS0xLTYtNloiLz48L3N2Zz4=);
-        }
         input[type="search"]::-webkit-search-cancel-button {
             -webkit-appearance: none;
             appearance: none;
             height: 15px;
             width: 15px;
-            background-image: var(--close-icon);
+            background-image: var(--x-close-icon);
             background-size: 15px;
         }
         #input-search[type="search"]::-webkit-search-cancel-button {
@@ -3984,7 +3948,7 @@
             appearance: none;
             height: 20px;
             width: 20px;
-            background-image: var(--close-icon);
+            background-image: var(--x-close-icon);
             background-size: 20px;
         }
     }
@@ -4180,7 +4144,7 @@
                 appearance: none;
                 height: 20px;
                 width: 20px;
-                background-image: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgaWQ9IjEyMzEyMyI+PHBhdGggZmlsbD0iI2ZmZiIgZD0ibTE5IDYtMS0xLTYgNi02LTYtMSAxIDYgNi02IDYgMSAxIDYtNiA2IDYgMS0xLTYtNloiLz48L3N2Zz4=);
+                background-image: var(--x-close-icon);
                 background-size: 20px;
             }
         }

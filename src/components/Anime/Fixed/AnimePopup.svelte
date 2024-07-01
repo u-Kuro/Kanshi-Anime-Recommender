@@ -47,6 +47,9 @@
         searchedWord,
         selectedAnimeGridEl,
         gridFullView,
+        windowHeight,
+        windowWidth,
+        documentScrollTop,
     } from "../../../js/globalValues.js";
 
     const emptyImage =
@@ -62,15 +65,6 @@
         popupAnimeObserver,
         fullImagePopup,
         fullDescriptionPopup,
-        windowWidth = Math.max(
-            document?.documentElement?.getBoundingClientRect?.()?.width,
-            window.visualViewport.width,
-            window.innerWidth,
-        ),
-        windowHeight = Math.max(
-            window.visualViewport.height,
-            window.innerHeight,
-        ),
         videoLoops = {},
         manuallyPausedTrailers = {},
         autoPausedTrailers = {},
@@ -96,7 +90,7 @@
                 getMostVisibleElement(
                     popupContainer,
                     ".popup-header",
-                    windowHeight > 360 ? 0.5 : 0,
+                    $windowHeight > 360 ? 0.5 : 0,
                 ) ||
                 getMostVisibleElement(
                     popupContainer,
@@ -237,7 +231,7 @@
                 ];
             if (openedAnimePopupEl instanceof Element) {
                 // Animate Opening
-                if (document?.documentElement?.scrollTop <= 0 || $menuVisible) {
+                if ($documentScrollTop <= 0 || $menuVisible) {
                     removeClass(navContainerEl, "hide");
                     addClass(popupWrapper, "visible");
                     addClass(popupContainer, "show");
@@ -318,7 +312,7 @@
             } else {
                 afterImmediateScrollUponPopupVisible = false;
                 // Animate Opening
-                if (document?.documentElement?.scrollTop <= 0) {
+                if ($documentScrollTop <= 0) {
                     removeClass(navContainerEl, "hide");
                     addClass(popupWrapper, "visible");
                     addClass(popupContainer, "show");
@@ -339,7 +333,7 @@
             window?.closeFullScreenItem?.();
             window?.handleConfirmationCancelled?.();
             $confirmIsVisible = false;
-            if (!$menuVisible && document.documentElement.scrollTop > 0) {
+            if (!$menuVisible && $documentScrollTop > 0) {
                 addClass(navContainerEl, "hide");
             }
             removeClass(popupContainer, "show");
@@ -504,25 +498,6 @@
             fullScreenExitHandler,
             false,
         );
-        window.addEventListener("resize", () => {
-            if (
-                document.fullScreen ||
-                document.mozFullScreen ||
-                document.webkitIsFullScreen ||
-                document.msFullscreenElement
-            ) {
-                return;
-            }
-            windowWidth = Math.max(
-                document?.documentElement?.getBoundingClientRect?.()?.width,
-                window.visualViewport.width,
-                window.innerWidth,
-            );
-            windowHeight = Math.max(
-                window.visualViewport.height,
-                window.innerHeight,
-            );
-        });
         document.addEventListener("keydown", async (e) => {
             if (
                 (e.key === "Escape" && !document.fullscreenElement) ||
@@ -626,18 +601,16 @@
                         inline: "nearest",
                     });
                 } else {
-                    let documentEl = document.documentElement;
-                    let scrollTop = documentEl.scrollTop;
                     let top = animeGrid.getBoundingClientRect().top;
                     let clientHeight = animeGrid.clientHeight;
                     let newScrollTop;
                     if (top < 0) {
-                        newScrollTop = scrollTop + (top - 5);
-                    } else if (top > windowHeight - 65 - clientHeight) {
-                        newScrollTop =
-                            scrollTop + top - windowHeight + clientHeight + 70;
+                        newScrollTop = $documentScrollTop + (top - 5);
+                    } else if (top > $windowHeight - 65 - clientHeight) {
+                        newScrollTop = $documentScrollTop + top - $windowHeight + clientHeight + 70;
                     }
                     if (newScrollTop) {
+                        const documentEl = document.documentElement;
                         documentEl.style.overflow = "hidden";
                         documentEl.style.overflow = "";
                         documentEl.scrollTo({
@@ -1364,10 +1337,9 @@
         itemIsScrolling,
         itemIsScrollingTimeout;
 
-    function popupScroll(e) {
+    function popupScroll() {
         if (afterImmediateScrollUponPopupVisible) {
-            let isScrolledDownMax =
-                this.scrollHeight >= this.scrollTop + this.clientHeight - 50;
+            let isScrolledDownMax = this.scrollHeight >= this.scrollTop + this.clientHeight - 50;
             let isScrolledUpMax = this.scrollTop <= 50;
             if (isScrolledUpMax || isScrolledDownMax) {
                 checkMostVisiblePopupAnime();
@@ -1579,6 +1551,15 @@
         fullImagePopup = null;
     }
     window.showFullScreenInfo = showFullScreenInfo;
+    function showFullScreenImage(image) {
+        if (!image) return;
+        if (fullImagePopup === image) {
+            fullImagePopup = null;
+        } else {
+            fullImagePopup = image;
+        }
+        fullDescriptionPopup = null;
+    }
 
     $: fullDescriptionPopup, isDescriptionScrollable();
     $: if (fullDescriptionPopup || fullImagePopup) {
@@ -1589,11 +1570,7 @@
         return fullImagePopup || fullDescriptionPopup;
     };
     window.closeFullScreenItem = () => {
-        if (fullImagePopup) {
-            fullImagePopup = null;
-        } else {
-            fullDescriptionPopup = null;
-        }
+        fullDescriptionPopup = fullImagePopup = null;
     };
 
     async function addImage(node, imageUrl) {
@@ -1617,9 +1594,12 @@
         return k?.toLowerCase?.() || "";
     }
 
-    $: topPopupVisibleCount = windowHeight >= 1000 ? 2 : 1;
-    $: bottomPopupVisibleCount =
-        Math.floor(Math.max(1, windowHeight / 640)) || 1;
+    let topPopupVisibleCount = $windowHeight >= 1000 ? 2 : 1,
+        bottomPopupVisibleCount = Math.floor(Math.max(1, $windowHeight / 640)) || 1
+    windowHeight.subscribe((val) => {
+        topPopupVisibleCount = val >= 1000 ? 2 : 1
+        bottomPopupVisibleCount = Math.floor(Math.max(1, val / 640)) || 1
+    })
 
     function popupMainEl(node) {
         return {
@@ -1818,9 +1798,9 @@
                                                 e.key === 'Enter' &&
                                                 changeAutoPlay(e)}"
                                         >
-                                            {#if windowWidth >= 290}
+                                            {#if $windowWidth >= 290}
                                                 Auto Play
-                                            {:else if windowWidth >= 260}
+                                            {:else if $windowWidth >= 260}
                                                 Auto
                                             {/if}
                                         </h3>
@@ -1848,9 +1828,9 @@
                                                 ></path>
                                             </svg>
                                             <h3 class="small-icon-label">
-                                                {windowWidth >= 320
+                                                {$windowWidth >= 320
                                                     ? "Reload List"
-                                                    : windowWidth >= 205
+                                                    : $windowWidth >= 205
                                                       ? "Reload"
                                                       : ""}
                                             </h3>
@@ -1893,27 +1873,12 @@
                                                 : '-1'}"
                                             on:click="{() => {
                                                 if (!$popupVisible) return;
-                                                fullImagePopup =
-                                                    anime.bannerImageUrl ||
-                                                    anime.trailerThumbnailUrl;
-                                                fullDescriptionPopup = null;
+                                                showFullScreenImage(anime.bannerImageUrl || anime.trailerThumbnailUrl)
                                             }}"
                                             on:keyup="{(e) => {
                                                 if (!$popupVisible) return;
                                                 if (e.key === 'Enter') {
-                                                    let newFullImagePopup =
-                                                        anime.bannerImageUrl ||
-                                                        anime.trailerThumbnailUrl;
-                                                    if (
-                                                        newFullImagePopup ===
-                                                        fullImagePopup
-                                                    ) {
-                                                        fullImagePopup = null;
-                                                    } else {
-                                                        fullImagePopup =
-                                                            newFullImagePopup;
-                                                    }
-                                                    fullDescriptionPopup = null;
+                                                    showFullScreenImage(anime.bannerImageUrl || anime.trailerThumbnailUrl)
                                                 }
                                             }}"
                                         >
@@ -2027,7 +1992,7 @@
                                             <h4>
                                                 {(anime?.format || "N/A") +
                                                     (loweredCountryOfOrigin
-                                                        ? ` (${COOs[loweredCountryOfOrigin] && windowWidth >= 377 && (isManga || isNovel || windowWidth >= 427) ? COOs[loweredCountryOfOrigin] : anime?.countryOfOrigin})`
+                                                        ? ` (${COOs[loweredCountryOfOrigin] && $windowWidth >= 377 && (isManga || isNovel || $windowWidth >= 427) ? COOs[loweredCountryOfOrigin] : anime?.countryOfOrigin})`
                                                         : "")}
                                                 {#if formattedAnimeFormat}
                                                     {#key $earlisetReleaseDate || 1}
@@ -2058,7 +2023,7 @@
                                             <h4>
                                                 {(anime?.format || "N/A") +
                                                     (loweredCountryOfOrigin
-                                                        ? ` (${COOs[loweredCountryOfOrigin] && windowWidth >= 377 && (isManga || isNovel || windowWidth >= 427) ? COOs[loweredCountryOfOrigin] : anime?.countryOfOrigin})`
+                                                        ? ` (${COOs[loweredCountryOfOrigin] && $windowWidth >= 377 && (isManga || isNovel || $windowWidth >= 427) ? COOs[loweredCountryOfOrigin] : anime?.countryOfOrigin})`
                                                         : "")}
                                                 {#if formattedAnimeFormat}
                                                     {@html formattedAnimeFormat}
@@ -2319,9 +2284,6 @@
                                                 </div>
                                                 <div
                                                     class="{'studio-popup info'}"
-                                                    style:overflow="{$popupIsGoingBack
-                                                        ? "hidden"
-                                                        : ""}"
                                                     on:scroll="{itemScroll}"
                                                     on:mouseenter="{addInfoDragScroll}"
                                                 >
@@ -2364,9 +2326,6 @@
                                                 </div>
                                                 <div
                                                     class="{'genres-popup info'}"
-                                                    style:overflow="{$popupIsGoingBack
-                                                        ? "hidden"
-                                                        : ""}"
                                                     on:scroll="{itemScroll}"
                                                     on:mouseenter="{addInfoDragScroll}"
                                                 >
@@ -2386,9 +2345,6 @@
                                             <div class="tag-info">
                                                 <div
                                                     class="{'tags-info-content info'}"
-                                                    style:overflow="{$popupIsGoingBack
-                                                        ? "hidden"
-                                                        : ""}"
                                                     on:scroll="{itemScroll}"
                                                     on:mouseenter="{addInfoDragScroll}"
                                                 >
@@ -2481,33 +2437,22 @@
                                                 }}"
                                                 on:click="{() => {
                                                     if (!$popupVisible) return;
-                                                    fullImagePopup =
+                                                    showFullScreenImage(
                                                         anime.coverImageUrl ||
                                                         anime.bannerImageUrl ||
                                                         anime.trailerThumbnailUrl ||
-                                                        emptyImage;
-                                                    fullDescriptionPopup = null;
+                                                        emptyImage
+                                                    )
                                                 }}"
                                                 on:keyup="{(e) => {
                                                     if (!$popupVisible) return;
                                                     if (e.key === 'Enter') {
-                                                        let newFullImagePopup =
+                                                        showFullScreenImage(
                                                             anime.coverImageUrl ||
                                                             anime.bannerImageUrl ||
                                                             anime.trailerThumbnailUrl ||
-                                                            emptyImage;
-                                                        if (
-                                                            newFullImagePopup ===
-                                                            fullImagePopup
-                                                        ) {
-                                                            fullImagePopup =
-                                                                null;
-                                                        } else {
-                                                            fullImagePopup =
-                                                                newFullImagePopup;
-                                                        }
-                                                        fullDescriptionPopup =
-                                                            null;
+                                                            emptyImage
+                                                        )
                                                     }
                                                 }}"
                                             />
@@ -2523,31 +2468,12 @@
                                                     : '-1'}"
                                                 on:click="{() => {
                                                     if (!$popupVisible) return;
-                                                    showFullScreenEditedHTMLInfo(
-                                                        editedHTMLString,
-                                                    );
+                                                    showFullScreenEditedHTMLInfo(editedHTMLString);
                                                 }}"
                                                 on:keyup="{(e) => {
                                                     if (!$popupVisible) return;
                                                     if (e.key === 'Enter') {
-                                                        let newFullImagePopup =
-                                                            anime.coverImageUrl ||
-                                                            anime.bannerImageUrl ||
-                                                            anime.trailerThumbnailUrl ||
-                                                            emptyImage;
-                                                        if (
-                                                            newFullImagePopup ===
-                                                            fullImagePopup
-                                                        ) {
-                                                            fullImagePopup =
-                                                                null;
-                                                        } else {
-                                                            fullImagePopup =
-                                                                newFullImagePopup;
-                                                        }
-                                                        showFullScreenEditedHTMLInfo(
-                                                            editedHTMLString,
-                                                        );
+                                                        showFullScreenEditedHTMLInfo(editedHTMLString);
                                                     }
                                                 }}"
                                             >
@@ -2681,7 +2607,8 @@
 {#if $popupVisible && $popupIsGoingBack}
     <div
         class="{'go-back-grid-highlight' + (willGoBack ? ' willGoBack' : '')}"
-        out:fade="{{ duration: 100, easing: sineOut }}"
+        in:fade="{{ duration: 200, easing: sineOut }}"
+        out:fade="{{ duration: 200, easing: sineOut }}"
     >
         <div class="go-back-grid">
             <!-- angle left -->
@@ -2693,7 +2620,37 @@
         </div>
     </div>
 {/if}
-{#if fullDescriptionPopup || fullImagePopup}
+{#if fullDescriptionPopup}
+    <div
+        class="fullPopupWrapper"
+        on:click="{() => (fullImagePopup = fullDescriptionPopup = null)}"
+        on:keyup="{(e) =>
+            e.key === 'Enter' &&
+            (fullImagePopup = fullDescriptionPopup = null)}"
+        on:touchstart|passive="{fullViewTouchStart}"
+        on:touchend|passive="{fullViewTouchEnd}"
+        on:touchcancel="{fullViewTouchCancel}"
+        in:fade="{{ duration: 200, easing: sineOut }}"
+        out:fade="{{ duration: 200, easing: sineOut }}"
+    >
+        <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
+        <div class="fullPopup">
+            <div class="fullPopupDescriptionWrapper">
+                <div
+                    use:isDescriptionScrollable
+                    on:keyup="{(e) =>
+                        e.key === 'Enter' &&
+                        (fullImagePopup = fullDescriptionPopup = null)}"
+                    tabindex="0"
+                    class="fullPopupDescription"
+                    on:scroll="{fullViewScroll}"
+                >
+                    {@html fullDescriptionPopup}
+                </div>
+            </div>
+        </div>
+    </div>
+{:else if fullImagePopup}
     <div
         class="fullPopupWrapper"
         on:click="{() => (fullDescriptionPopup = fullImagePopup = null)}"
@@ -2703,45 +2660,28 @@
         on:touchstart|passive="{fullViewTouchStart}"
         on:touchend|passive="{fullViewTouchEnd}"
         on:touchcancel="{fullViewTouchCancel}"
+        in:fade="{{ duration: 200, easing: sineOut }}"
+        out:fade="{{ duration: 200, easing: sineOut }}"
     >
         <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
-        <div class="fullPopup" id="fullPopup">
-            {#if fullDescriptionPopup}
-                <div class="fullPopupDescriptionWrapper">
-                    <div
-                        use:isDescriptionScrollable
-                        on:keyup="{(e) =>
-                            e.key === 'Enter' &&
-                            (fullDescriptionPopup = fullImagePopup = null)}"
-                        tabindex="0"
-                        class="fullPopupDescription"
-                        out:fade="{{ duration: 200, easing: sineOut }}"
-                        on:scroll="{fullViewScroll}"
-                    >
-                        {@html fullDescriptionPopup}
-                    </div>
-                </div>
-            {:else if fullImagePopup}
-                {#key fullImagePopup}
-                    <img
-                        use:addImage="{fullImagePopup || emptyImage}"
-                        tabindex="0"
-                        class="fullPopupImage"
-                        loading="lazy"
-                        alt="Full View"
-                        on:keyup="{(e) =>
-                            e.key === 'Enter' &&
-                            (fullDescriptionPopup = fullImagePopup = null)}"
-                        out:fade="{{ duration: 200, easing: sineOut }}"
-                        on:error="{(e) => {
-                            addClass(e.target, 'display-none');
-                        }}"
-                    />
-                {/key}
-            {/if}
+        <div class="fullPopup">
+            {#key fullImagePopup}
+                <img
+                    use:addImage="{fullImagePopup}"
+                    tabindex="0"
+                    class="fullPopupImage"
+                    loading="lazy"
+                    alt="Full View"
+                    on:keyup="{(e) => e.key === 'Enter' && (fullDescriptionPopup = fullImagePopup = null)}"
+                    on:error="{(e) => {
+                        addClass(e.target, 'display-none');
+                    }}"
+                />
+            {/key}
         </div>
     </div>
 {/if}
+
 
 <style>
     .popup-wrapper {
@@ -2788,9 +2728,7 @@
         scrollbar-width: none;
         opacity: 0;
         scroll-behavior: auto;
-        box-shadow:
-            0 14px 28px rgba(0, 0, 0, 0.25),
-            0 10px 10px rgba(0, 0, 0, 0.22);
+        box-shadow: 0 14px 28px rgba(0, 0, 0, 0.25), 0 10px 10px rgba(0, 0, 0, 0.22);
     }
 
     .popup-container.show {
@@ -3095,6 +3033,7 @@
     }
 
     .info-contents > div {
+        height: 32px;
         width: 100%;
         display: grid;
         grid-template-columns: 37px auto;
@@ -3103,7 +3042,7 @@
     }
 
     .info-contents > div.tag-info {
-        width: 100%;
+        height: unset !important;
         display: flex;
         flex-wrap: wrap;
         align-items: center;
@@ -3152,28 +3091,29 @@
     .anime-description-wrapper {
         border: 1px solid var(--bd-color);
         border-radius: 6px;
-        padding: 10px 15px;
+        padding: 8px 16px;
         flex: 1;
         width: max(60% - 10px, 160px);
         min-width: max(60% - 10px, 160px);
         height: 210px;
         cursor: pointer;
+        -ms-overflow-style: none !important;
         user-select: none !important;
+        overflow: hidden !important;
     }
 
     .anime-description {
         letter-spacing: 0.5px;
-        line-height: 25px;
+        line-height: 24px;
         -ms-overflow-style: none;
         scrollbar-width: none;
         font-size: 12px !important;
         width: calc(100% - 10px);
         display: -webkit-box;
         max-width: calc(100% - 10px);
-        -webkit-line-clamp: 7;
+        -webkit-line-clamp: 8;
         -webkit-box-orient: vertical;
         overflow: hidden;
-        margin: 2.5px 5px;
     }
 
     :global(.anime-description *) {
@@ -3301,12 +3241,6 @@
     }
 
     @media (pointer: fine) {
-        .popup-main {
-            display: grid;
-            grid-template-rows:
-                calc(calc(min(100vw, 640px) - 7px) / 16 * 9)
-                auto;
-        }
         .popup-container {
             overflow-y: overlay !important;
             scrollbar-gutter: stable !important;
@@ -3325,6 +3259,10 @@
             background-clip: content-box;
             background-color: hsl(0, 0%, 50%);
         }
+    }
+
+    .popup-container.should-hide-address-bar {
+        overflow-y: clip;
     }
 
     .info-categ {
@@ -3348,7 +3286,7 @@
     .tags-info-content {
         flex-wrap: wrap;
         flex-direction: column;
-        max-height: 72px;
+        height: 72px !important;
     }
 
     .tags-info-content > span {
@@ -3372,6 +3310,8 @@
         white-space: nowrap;
         -ms-overflow-style: none;
         scrollbar-width: none;
+        height: 32px !important;
+        max-height: 32px !important;
     }
 
     .info > a {
@@ -3552,6 +3492,9 @@
         -ms-overflow-style: none;
         scrollbar-width: none;
     }
+    .fullPopupWrapper:has(.fullPopupDescription > :not(.is-custom-table)) {
+        background-color: hsla(0,0%,0%,.75);
+    }
     .fullPopupWrapper::-webkit-scrollbar {
         display: none;
     }
@@ -3573,7 +3516,6 @@
     }
 
     .fullPopupImage {
-        animation: fadeIn 0.2s ease-out;
         max-width: min(100%, 1000px);
         max-height: 90%;
         object-fit: cover;
@@ -3584,9 +3526,7 @@
         -moz-transform: translateZ(0);
         -o-transform: translateZ(0);
         border-radius: 6px;
-        box-shadow:
-            0 14px 28px rgba(0, 0, 0, 0.25),
-            0 10px 10px rgba(0, 0, 0, 0.2);
+        box-shadow: 0 14px 28px rgba(0, 0, 0, 0.25), 0 10px 10px rgba(0, 0, 0, 0.2);
         user-select: none;
         background-color: var(--bg-color) !important;
     }
@@ -3596,10 +3536,9 @@
         align-items: center;
         width: 100%;
         height: 100%;
-        background-color: var(--ol-color);
+        /* background-color: var(--ol-color); */
     }
     .fullPopupDescription {
-        animation: fadeIn 0.2s ease-out;
         letter-spacing: 0.5px;
         line-height: 25px;
         font-size: 13px !important;
@@ -3616,10 +3555,7 @@
     .fullPopupDescription::-webkit-scrollbar {
         display: none;
     }
-    :global(
-            #main.maxwindowheight.popupvisible
-                .fullPopupDescription:not(.scrollable)
-        ) {
+    :global(#main.maxwindowheight.popupvisible .fullPopupDescription:not(.scrollable)) {
         touch-action: none;
     }
     :global(.fullPopupDescription *) {

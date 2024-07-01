@@ -30,32 +30,34 @@
         runIsScrolling,
         showLoadingAnime,
         categories,
+        windowHeight,
+        windowWidth,
+        trueWindowHeight,
+        documentScrollTop,
     } from "../../js/globalValues.js";
     import { animeLoader } from "../../js/workerUtils.js";
 
     export let mainCategory;
     let mainEl;
 
-    const emptyImage =
-        "data:image/png;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=";
-    let windowHeight = Math.max(
-        window.visualViewport.height,
-        window.innerHeight,
-    );
-    let originalWindowHeight = screen?.height
-        ? Math.min(screen.height, windowHeight)
-        : windowHeight;
-    let windowWidth = Math.max(
-        document?.documentElement?.getBoundingClientRect?.()?.width,
-        window.visualViewport.width,
-        window.innerWidth,
-    );
+    const emptyImage = "data:image/png;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=";
+    let originalWindowHeight = screen?.height ? Math.min(screen.height, $trueWindowHeight) : $trueWindowHeight;
+    let numberOfPageLoadedGrid = Math.max(5, (($windowHeight - 239) / 250.525) * 5);
+
+    windowHeight.subscribe((val) => {
+        numberOfPageLoadedGrid = Math.max(5, ((val - 239) / 250.525) * 5);
+    })
+    let lastTrueWindowHeight = $trueWindowHeight
+    trueWindowHeight.subscribe((val) => {
+        if (val==null) return
+        if (val > lastTrueWindowHeight) {
+            originalWindowHeight = screen?.height ? Math.min(screen.height, val) : val;
+            lastTrueWindowHeight = val
+        }
+    })
 
     let animeGridEl;
-    let numberOfPageLoadedGrid = Math.max(
-        5,
-        ((windowHeight - 239) / 250.525) * 5,
-    );
+    
 
     let shownAnimeListCount;
     $: shownAnimeListCount =
@@ -145,9 +147,9 @@
     function shouldLoadMoreAnime() {
         let rect = observedGrid?.getBoundingClientRect?.();
         if (isFullViewed) {
-            return rect?.left < windowWidth;
+            return rect?.left < $windowWidth;
         } else {
-            return rect?.top < windowHeight;
+            return rect?.top < $windowHeight;
         }
     }
 
@@ -241,7 +243,7 @@
             isFullViewed &&
             Math.abs(
                 document.documentElement.scrollHeight -
-                    document.documentElement.scrollTop -
+                    $documentScrollTop -
                     document.documentElement.clientHeight,
             ) <= 3;
 
@@ -259,28 +261,24 @@
     $: shouldShowGoBackInFullView =
         isFullViewed &&
         afterFullGrid &&
-        (currentLeftScroll < lastLeftScroll || windowWidth > 596.5);
+        (currentLeftScroll < lastLeftScroll || $windowWidth > 596.5);
 
-    window.addEventListener("scroll", () => {
-        isWholeGridSeen =
-            isFullViewed &&
-            Math.abs(
-                document.documentElement.scrollHeight -
-                    document.documentElement.scrollTop -
-                    document.documentElement.clientHeight,
-            ) <= 3;
-    });
+    documentScrollTop.subscribe((val) => {
+        const documentEl = document.documentElement
+        isWholeGridSeen = isFullViewed && Math.abs(documentEl.scrollHeight - val - documentEl.clientHeight) <= 3;
+    })
 
     let filterOptiChangeTimeout;
     showFilterOptions.subscribe(() => {
         clearTimeout(filterOptiChangeTimeout);
         filterOptiChangeTimeout = setTimeout(() => {
+            const documentEl = document.documentElement
             isWholeGridSeen =
                 isFullViewed &&
                 Math.abs(
-                    document.documentElement.scrollHeight -
-                        document.documentElement.scrollTop -
-                        document.documentElement.clientHeight,
+                    documentEl.scrollHeight -
+                        $documentScrollTop -
+                        documentEl.clientHeight,
                 ) <= 3;
         }, 17);
     });
@@ -317,38 +315,6 @@
                 $selectedAnimeGridEl = animeGridEl;
             }
         });
-        let newWindowHeight = Math.max(
-            window.visualViewport.height,
-            window.innerHeight,
-        );
-        if (newWindowHeight > windowHeight) {
-            originalWindowHeight = screen?.height
-                ? Math.min(screen.height, newWindowHeight)
-                : newWindowHeight;
-        }
-        windowHeight = newWindowHeight;
-        windowWidth = Math.max(
-            document?.documentElement?.getBoundingClientRect?.()?.width,
-            window.visualViewport.width,
-            window.innerWidth,
-        );
-        window.addEventListener("resize", () => {
-            let newWindowHeight = Math.max(
-                window.visualViewport.height,
-                window.innerHeight,
-            );
-            if (newWindowHeight > windowHeight) {
-                originalWindowHeight = screen?.height
-                    ? Math.min(screen.height, newWindowHeight)
-                    : newWindowHeight;
-            }
-            windowHeight = newWindowHeight;
-            windowWidth = Math.max(
-                document?.documentElement?.getBoundingClientRect?.()?.width,
-                window.visualViewport.width,
-                window.innerWidth,
-            );
-        });
         let waitForOnVeryLeft;
         animeGridEl.addEventListener("scroll", () => {
             window?.animeGridScrolled?.(animeGridEl.scrollLeft);
@@ -369,8 +335,6 @@
                 waitForOnVeryLeft = false;
                 isOnVeryLeftOfAnimeGrid = false;
             }
-        });
-        animeGridEl?.addEventListener("scroll", () => {
             if (!$gridFullView) return;
             runIsScrolling.update((e) => !e);
         });
@@ -385,7 +349,7 @@
         : '') + (isFullViewed ? ' fullView' : '')}"
     style:--anime-grid-height="{($mobile && !$android
         ? originalWindowHeight
-        : windowHeight) + "px"}"
+        : $windowHeight) + "px"}"
 >
     {#if true}
         {@const animeList = $loadedAnimeLists?.[mainCategory]?.animeList}
@@ -654,7 +618,7 @@
                         <div class="shimmer"></div>
                     </div>
                 {/each}
-                {#each Array(isFullViewed ? Math.floor((windowHeight ?? 1100) / 220) : 5) as _}
+                {#each Array(isFullViewed ? Math.floor(($windowHeight ?? 1100) / 220) : 5) as _}
                     <div class="image-card dummy"></div>
                 {/each}
             {:else if animeList?.length === 0}
@@ -686,6 +650,7 @@
                 tabindex="{$menuVisible || $popupVisible ? '' : '0'}"
                 on:click="{goBackGrid}"
                 on:keyup="{(e) => e.key === 'Enter' && goBackGrid(e)}"
+                in:fade="{{ duration: 200, easing: sineOut }}"
                 out:fade="{{ duration: 200, easing: sineOut }}"
             >
                 <svg
@@ -708,10 +673,7 @@
 
 <style>
     :global(.anime-list-pager.pager-is-changing > main) {
-        height: min(
-            calc(var(--grid-max-height) + 65px),
-            calc(100vh + max(20px, calc(var(--grid-position) + 20px)))
-        ) !important;
+        height: min(calc(var(--grid-max-height) + 65px),calc(100vh + max(20px, calc(var(--grid-position) + 20px)))) !important;
     }
     main {
         width: 100%;
@@ -726,10 +688,7 @@
         overflow-anchor: visible;
         -ms-overflow-style: none;
         scrollbar-width: none;
-        height: min(
-            var(--grid-max-height),
-            calc(100vh + max(20px, calc(var(--grid-position) + 20px)))
-        );
+        height: min(var(--grid-max-height), calc(100vh + max(20px, calc(var(--grid-position) + 20px))));
     }
 
     :global(.anime-list-pager.is-changing-top-position > main) {
@@ -810,18 +769,14 @@
         justify-content: space-between;
         align-items: flex-start;
         grid-gap: 10px;
-        grid-template-columns: repeat(
-            auto-fill,
-            minmax(min(100% / 2 - 10px, 170px), 170px)
-        );
+        grid-template-columns: repeat(auto-fill,minmax(min(100% / 2 - 10px, 170px), 170px));
         overflow-anchor: visible;
         -ms-overflow-style: none;
         scrollbar-width: none;
         position: absolute;
         width: 100%;
         top: 0;
-        transform: translateY(max(20px, calc(var(--grid-position) + 20px)))
-            translateZ(0);
+        transform: translateY(max(20px, calc(var(--grid-position) + 20px))) translateZ(0);
         padding-bottom: calc(101vh + 65px);
     }
 
@@ -843,10 +798,7 @@
 
     @media screen and (max-width: 250px) {
         .image-grid {
-            grid-template-columns: repeat(
-                auto-fill,
-                minmax(min(100%, 180px), 180px)
-            );
+            grid-template-columns: repeat(auto-fill,minmax(min(100%, 180px), 180px));
         }
     }
 
@@ -918,9 +870,7 @@
         border-radius: 6px;
         display: block;
         cursor: pointer;
-        box-shadow:
-            0 1px 3px rgba(0, 0, 0, 0.15),
-            0 1px 2px rgba(0, 0, 0, 0.25);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15), 0 1px 2px rgba(0, 0, 0, 0.25);
         transition: opacity 0.2s ease-out;
         object-fit: cover;
         -o-object-fit: cover;
@@ -938,9 +888,7 @@
     .image-card:not(.skeleton):focus .image-card-thumb,
     .image-card:not(.skeleton):hover .image-card-thumb {
         opacity: 0.5 !important;
-        box-shadow:
-            0 14px 28px rgba(0, 0, 0, 0.25),
-            0 10px 10px rgba(0, 0, 0, 0.22);
+        box-shadow: 0 14px 28px rgba(0, 0, 0, 0.25), 0 10px 10px rgba(0, 0, 0, 0.22);
     }
 
     .image-card-thumb.fade-out {
@@ -952,11 +900,7 @@
         font-size: clamp(12px, 12px, 14px);
         position: absolute;
         bottom: 0;
-        background: linear-gradient(
-            to top,
-            rgba(0, 0, 0, 0.75),
-            rgba(0, 0, 0, 0)
-        );
+        background: linear-gradient(to top,rgba(0, 0, 0, 0.75),rgba(0, 0, 0, 0));
         color: var(--fg-color);
         width: 100%;
         max-height: 100%;
@@ -1017,7 +961,6 @@
         -ms-transform: translateZ(0) !important;
         -moz-transform: translateZ(0) !important;
         -o-transform: translateZ(0) !important;
-        animation: fadeIn 0.2s ease-out;
         display: flex;
         justify-content: center;
         align-items: center;
@@ -1028,9 +971,7 @@
         border-radius: 50%;
         width: 60px;
         height: 60px;
-        box-shadow:
-            0 14px 28px rgba(0, 0, 0, 0.25),
-            0 10px 10px rgba(0, 0, 0, 0.22);
+        box-shadow: 0 14px 28px rgba(0, 0, 0, 0.25), 0 10px 10px rgba(0, 0, 0, 0.22);
     }
 
     .go-back-grid.fullView {
@@ -1092,13 +1033,7 @@
     .shimmer::before {
         animation: loadingShimmer 2s linear infinite;
         position: absolute;
-        background: linear-gradient(
-            90deg,
-            hsla(0, 0%, 10%, 0) 0,
-            hsla(0, 0%, 100%, 0.06) 40%,
-            hsla(0, 0%, 100%, 0.06) 60%,
-            hsla(0, 0%, 10%, 0)
-        );
+        background: linear-gradient(90deg,hsla(0, 0%, 10%, 0) 0,hsla(0, 0%, 100%, 0.06) 40%,hsla(0, 0%, 100%, 0.06) 60%,hsla(0, 0%, 10%, 0));
         content: "";
         display: block;
         height: 100%;
@@ -1158,10 +1093,7 @@
 
     .image-grid.fullView .observed-grid:not(.empty-card) {
         max-width: 1020px !important;
-        max-height: max(
-            calc(var(--anime-grid-height) - 260px),
-            210px
-        ) !important;
+        max-height: max(calc(var(--anime-grid-height) - 260px),210px) !important;
         right: 0 !important;
         top: 0 !important;
         left: unset !important;

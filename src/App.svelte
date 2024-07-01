@@ -43,7 +43,6 @@
 		autoPlay,
 		popupVisible,
 		menuVisible,
-		shouldGoBack,
 		isScrolling,
 		scrollingTimeout,
 		listUpdateAvailable,
@@ -77,6 +76,11 @@
 		showLoadingAnime,
 		resetProgress,
         tagInfo,
+        windowWidth,
+        windowHeight,
+        // trueWindowWidth,
+        trueWindowHeight,
+        documentScrollTop,
 		// anilistAccessToken,
 	} from "./js/globalValues.js";
 	
@@ -601,14 +605,62 @@
 		loadAnalytics();
 	}
 
-	let windowWidth =
-		Math.max(
-			window.document?.documentElement?.getBoundingClientRect?.()
-				?.width || 0,
-			window.visualViewport?.width || 0,
-			window.innerWidth || 0,
-		) || 0;
-	let animeListPagerPad = windowWidth > 660 ? 70 : 0;
+	let animeListPagerEl, animeListPagerIsChanging;
+	let panningIdx, panningCategory;
+	let isBelowNav = false;
+	let gridTopPosition = 0,
+		gridMaxHeight;
+	let gridTopScrolls = {};
+	let changingTopPosition,
+		topPositionChangeTimeout,
+		lastScrollTop,
+		lastOffTosetWindow;
+	
+	let animeListPagerPad = $windowWidth > 660 ? 70 : 0
+	
+	windowWidth.subscribe((val) => {
+		animeListPagerPad = val > 660 ? 70 : 0
+	})
+
+	let lastWindowHeight = $windowHeight;
+	let maxWindowHeight = {}
+	let isMaxWindowHeight
+	windowHeight.subscribe((val) => {
+		const orientation = window?.screen?.orientation?.type
+		const currentMaxWindowHeight = maxWindowHeight[orientation]
+		if (currentMaxWindowHeight > 0) {
+			let possibleVirtualKeyboardChange = Math.abs(lastWindowHeight - val) > Math.max(100, currentMaxWindowHeight * 0.15);
+			if (possibleVirtualKeyboardChange) {
+				let isPossiblyHid = val > lastWindowHeight;
+				window?.showCategoriesNav?.(isPossiblyHid, !isPossiblyHid);
+				let activeElement = document?.activeElement;
+				if (
+					isPossiblyHid &&
+					["INPUT", "TEXTAREA"].includes(activeElement?.tagName)
+				) {
+					activeElement?.blur?.();
+					if (activeElement?.id === "usernameInput") {
+						window?.onfocusUsernameInput?.();
+					}
+				}
+			}
+		}
+		setMinHeight();
+		lastWindowHeight = $windowHeight
+	})
+	
+	trueWindowHeight.subscribe((val) => {
+		if (!val) return
+		const orientation = window?.screen?.orientation?.type
+		if (orientation) {
+			const currentMaxWindowHeight = maxWindowHeight[orientation]
+			isMaxWindowHeight = val >= (currentMaxWindowHeight || 0)
+			if (currentMaxWindowHeight == null || val > currentMaxWindowHeight) {
+				maxWindowHeight[orientation] = val
+			}
+		}
+	})	
+		
 
 	$dataStatus = "Retrieving Some Data";
 	let pleaseWaitStatusInterval = setInterval(() => {
@@ -690,8 +742,10 @@
 			setTimeout(() => {
 				sendBackgroundStatusIsRunning = false;
 				try {
-					JSBridge?.sendBackgroundStatus?.(val);
-				} catch (e) {}
+					if (typeof val === "string") {
+						JSBridge?.sendBackgroundStatus?.(val);
+					}
+				} catch {}
 			}, 750); // 1s with pad
 		});
 		return true;
@@ -709,8 +763,8 @@
 			if ($android && navigator.onLine) {
 				$appID = await getWebVersion();
 				try {
-					if ($appID) {
-						JSBridge?.checkAppID?.($appID);
+					if (typeof $appID === "number" && !isNaN($appID)) {
+						JSBridge?.checkAppID?.(Math.floor($appID));
 					}
 				} catch (e) {}
 			}
@@ -1048,10 +1102,9 @@
 		window.backPressed?.();
 	});
 
-	let willExit = false,
-		exitScrollTimeout;
+	let shouldGoBack = false, willExit = false, exitScrollTimeout;
 	window.backPressed = () => {
-		if ($shouldGoBack && !$android) {
+		if (shouldGoBack && !$android) {
 			window.history?.go?.(-1); // Only in Browser
 		} else {
 			if (!$android) {
@@ -1110,8 +1163,9 @@
 				} else {
 					window.showCategoriesNav?.(true);
 					if ($android || !matchMedia("(hover:hover)").matches) {
-						document.documentElement.style.overflow = "hidden";
-						document.documentElement.style.overflow = "";
+						const documentEl = document.documentElement
+						documentEl.style.overflow = "hidden";
+						documentEl.style.overflow = "";
 					}
 					window.scrollTo?.({ top: -9999, behavior: "smooth" });
 				}
@@ -1126,16 +1180,17 @@
 					}, 100);
 				} else {
 					window.showCategoriesNav?.(true);
+					const documentEl = document.documentElement
 					if ($android || !matchMedia("(hover:hover)").matches) {
-						document.documentElement.style.overflow = "hidden";
+						documentEl.style.overflow = "hidden";
 					}
-					document.documentElement.scrollTop = 0;
+					documentEl.scrollTop = 0;
 					document.body.scrollTop = 0;
 					window.scrollY = 0;
 					if ($android || !matchMedia("(hover:hover)").matches) {
 						clearTimeout(exitScrollTimeout);
 						exitScrollTimeout = setTimeout(() => {
-							document.documentElement.style.overflow = "";
+							documentEl.style.overflow = "";
 						}, 100);
 					}
 				}
@@ -1152,8 +1207,7 @@
 		if (val) {
 			document.documentElement.style.minHeight = "";
 		} else {
-			document.documentElement.style.minHeight =
-				screen.height + 65 + "px";
+			document.documentElement.style.minHeight = screen.height + 65 + "px";
 		}
 	}
 
@@ -1171,97 +1225,24 @@
 		}
 	});
 
-	let animeListPagerEl, animeListPagerIsChanging;
-	let panningIdx, panningCategory;
-	let isBelowNav = false;
-	let maxWindowHeight = 0;
-	let gridTopPosition = 0,
-		gridMaxHeight;
-	let gridTopScrolls = {};
-	let changingTopPosition,
-		topPositionChangeTimeout,
-		lastScrollTop,
-		lastOffTosetWindow;
-
 	window.addEventListener("scroll", () => {
-		const scrollTop = document.documentElement.scrollTop;
-		if (!$gridFullView) {
-			const element = animeListPagerEl.querySelector(
-				"main.viewed .image-grid",
-			);
-			if (element) {
-				const offsetToWindow = element.getBoundingClientRect().top;
-				if (
-					scrollTop !== lastScrollTop &&
-					(offsetToWindow <= 1 || lastOffTosetWindow <= 1)
-				) {
-					clearTimeout(topPositionChangeTimeout);
-					changingTopPosition = true;
-				}
-				lastScrollTop = scrollTop;
-				lastOffTosetWindow = offsetToWindow;
-				//
-				const category = element?.dataset?.category;
-				if (
-					category &&
-					panningCategory &&
-					panningCategory !== category
-				) {
-					$selectedCategory = panningCategory;
-					animeListPagerIsChanging = false;
-				}
-				if (offsetToWindow > 1) {
-					gridTopPosition = 0;
-					Array.from(animeListPagerEl.children).forEach((el) => {
-						el.scrollTop = 0;
-					});
-					for (const category in gridTopScrolls) {
-						gridTopScrolls[category] = null;
-					}
-				} else {
-					const scrollTop = document.documentElement.scrollTop;
-					gridTopPosition = Math.abs(offsetToWindow);
-					const category = element.dataset.category;
-					const gridOffSetDocument =
-						scrollTop + element.getBoundingClientRect().top;
-					gridTopScrolls[category] = scrollTop - gridOffSetDocument;
-				}
-				gridMaxHeight = element?.clientHeight ?? gridMaxHeight;
-				topPositionChangeTimeout = setTimeout(async () => {
-					await tick();
-					changingTopPosition = false;
-				}, 30);
-			}
-		}
-
-		const shouldUpdate =
-			$selectedAnimeGridEl?.getBoundingClientRect?.()?.top > 0 &&
-			!$popupVisible;
-		if ($listUpdateAvailable && shouldUpdate) {
-			updateList();
-		}
-		isBelowNav = scrollTop > 54;
-		if (
-			$selectedAnimeGridEl?.getBoundingClientRect?.()?.top < 0 &&
-			!willExit
-		) {
-			window?.setShouldGoBack?.(false);
-		}
-		runIsScrolling.update((e) => !e);
+		$documentScrollTop = window?.document?.documentElement?.scrollTop || 0
 	});
 
 	window.setShouldGoBack = (_shouldGoBack) => {
 		if (!_shouldGoBack) willExit = false;
 		if ($android) {
 			try {
-				JSBridge?.setShouldGoBack?.(_shouldGoBack);
-			} catch (e) {}
+				if (typeof _shouldGoBack === "boolean") {
+					JSBridge?.setShouldGoBack?.(_shouldGoBack);
+				}
+			} catch {}
 		} else {
 			if (window.history?.state !== "visited") {
 				// Only Add 1 state
-				window.history?.pushState?.("visited", "");
+				window.history?.pushState?.("visited", ""); // Push Popped State
 			}
-			$shouldGoBack = _shouldGoBack;
+			shouldGoBack = _shouldGoBack;
 		}
 	};
 
@@ -1269,7 +1250,9 @@
 		if (!text) return;
 		if ($android) {
 			try {
-				JSBridge?.copyToClipBoard?.(text);
+				if (typeof text === "string") {
+					JSBridge?.copyToClipBoard?.(text);
+				}
 			} catch (e) {}
 		} else {
 			navigator?.clipboard?.writeText?.(text);
@@ -1493,7 +1476,6 @@
 		document.head.appendChild(GAscript);
 	}
 
-	let isMaxWindowHeight;
 	onMount(() => {
 		window.animeGridScrolled = (scrollLeft) => {
 			if (scrollLeft > 500 && !willExit) {
@@ -1502,82 +1484,97 @@
 			if (!$gridFullView) return;
 			runIsScrolling.update((e) => !e);
 		};
-		document
-			.getElementById("popup-container")
-			.addEventListener("scroll", () => {
-				runIsScrolling.update((e) => !e);
-			});
-		windowWidth = Math.max(
-			document?.documentElement?.getBoundingClientRect?.()?.width,
-			window?.visualViewport?.width || 0,
-			window?.innerWidth || 0,
-		);
-		animeListPagerPad = windowWidth > 660 ? 70 : 0;
+		document?.getElementById?.("popup-container")?.addEventListener?.("scroll", () => {
+			runIsScrolling.update((e) => !e);
+		});
 
-		let lastWindowHeight = 0;
-		if (
-			!(
-				document.fullScreen ||
-				document.mozFullScreen ||
-				document.webkitIsFullScreen ||
-				document.msFullscreenElement
-			)
-		) {
-			lastWindowHeight = maxWindowHeight =
-				Math?.max?.(
-					window.visualViewport?.height || 0,
-					window.innerHeight || 0,
-				) || 0;
-		}
 		window.addEventListener("resize", () => {
-			let newWindowHeight = Math.max(
+			$windowHeight = Math.max(
 				window?.visualViewport?.height || 0,
 				window?.innerHeight || 0,
 			);
-			let possibleVirtualKeyboardChange =
-				Math.abs(lastWindowHeight - newWindowHeight) >
-				Math.max(100, maxWindowHeight * 0.15);
-			if (possibleVirtualKeyboardChange) {
-				let isPossiblyHid = newWindowHeight > lastWindowHeight;
-				window?.showCategoriesNav?.(isPossiblyHid, !isPossiblyHid);
-				let activeElement = document?.activeElement;
-				if (
-					isPossiblyHid &&
-					["INPUT", "TEXTAREA"].includes(activeElement?.tagName)
-				) {
-					activeElement?.blur?.();
-					if (activeElement?.id === "usernameInput") {
-						window?.onfocusUsernameInput?.();
-					}
-				}
-			}
-
-			setMinHeight();
-
-			if (
-				!(
-					document.fullScreen ||
-					document.mozFullScreen ||
-					document.webkitIsFullScreen ||
-					document.msFullscreenElement
-				)
-			) {
-				isMaxWindowHeight = newWindowHeight >= maxWindowHeight;
-				lastWindowHeight = newWindowHeight;
-				maxWindowHeight =
-					Math.max(maxWindowHeight, newWindowHeight) || 0;
-			}
-			windowWidth = Math.max(
-				document?.documentElement?.getBoundingClientRect?.()?.width ||
-					0,
+			$windowWidth = Math.max(
+				window?.document?.documentElement?.getBoundingClientRect?.()?.width || 0,
 				window?.visualViewport?.width || 0,
 				window?.innerWidth || 0,
 			);
-
-			animeListPagerPad = windowWidth > 660 ? 70 : 0;
-
 			window?.scrollToSelectedCategory?.();
+			if (
+                document.fullScreen ||
+                document.mozFullScreen ||
+                document.webkitIsFullScreen ||
+                document.msFullscreenElement
+            ) {
+                return;
+            }
+            $trueWindowHeight = $windowHeight
+            // $trueWindowWidth = $windowWidth
 		});
+
+		documentScrollTop.subscribe((scrollTop) => {
+			if (!$gridFullView) {
+				const element = animeListPagerEl.querySelector(
+					"main.viewed .image-grid",
+				);
+				if (element) {
+					const offsetToWindow = element.getBoundingClientRect().top;
+					if (
+						scrollTop !== lastScrollTop &&
+						(offsetToWindow <= 1 || lastOffTosetWindow <= 1)
+					) {
+						clearTimeout(topPositionChangeTimeout);
+						changingTopPosition = true;
+					}
+					lastScrollTop = scrollTop;
+					lastOffTosetWindow = offsetToWindow;
+					//
+					const category = element?.dataset?.category;
+					if (
+						category &&
+						panningCategory &&
+						panningCategory !== category
+					) {
+						$selectedCategory = panningCategory;
+						animeListPagerIsChanging = false;
+					}
+					if (offsetToWindow > 1) {
+						gridTopPosition = 0;
+						Array.from(animeListPagerEl.children).forEach((el) => {
+							el.scrollTop = 0;
+						});
+						for (const category in gridTopScrolls) {
+							gridTopScrolls[category] = null;
+						}
+					} else {
+						gridTopPosition = Math.abs(offsetToWindow);
+						const category = element.dataset.category;
+						const gridOffSetDocument =
+							$documentScrollTop + element.getBoundingClientRect().top;
+						gridTopScrolls[category] = $documentScrollTop - gridOffSetDocument;
+					}
+					gridMaxHeight = element?.clientHeight ?? gridMaxHeight;
+					topPositionChangeTimeout = setTimeout(async () => {
+						await tick();
+						changingTopPosition = false;
+					}, 30);
+				}
+			}
+
+			const shouldUpdate =
+				$selectedAnimeGridEl?.getBoundingClientRect?.()?.top > 0 &&
+				!$popupVisible;
+			if ($listUpdateAvailable && shouldUpdate) {
+				updateList();
+			}
+			isBelowNav = scrollTop > 54;
+			if (
+				$selectedAnimeGridEl?.getBoundingClientRect?.()?.top < 0 &&
+				!willExit
+			) {
+				window?.setShouldGoBack?.(false);
+			}
+			runIsScrolling.update((e) => !e);
+		})
 
 		animeListPagerEl.addEventListener("scroll", () => {
 			animeListPagerIsChanging = true;
@@ -1629,37 +1626,20 @@
 			}
 		});
 
-		animeListPagerEl.addEventListener("scrollend", () => {
-			if (animeListPagerIsChanging) {
-				let children = Array.from(animeListPagerEl?.children);
-				let child = children?.[panningIdx];
-				let category = child?.dataset?.category;
-
-				if (category && category !== $selectedCategory) {
-					$selectedCategory = category;
-				}
-				animeListPagerIsChanging = false;
-			}
-		});
-
-		let lastViewWidth = window.visualViewport.width;
+		let lastVisualViewportWidth = window.visualViewport.width;
 		window.visualViewport.addEventListener("resize", () => {
-			const currentViewWidth = window.visualViewport.width;
-			const hasChangedViewWidth = lastViewWidth !== currentViewWidth;
-			lastViewWidth = currentViewWidth;
+			const newVisualViewportWidth = window.visualViewport.width
 			if (animeListPagerIsChanging) {
-				if ($selectedCategory && hasChangedViewWidth) {
+				if ($selectedCategory && lastVisualViewportWidth !== newVisualViewportWidth) {
 					let categoryIdx =
 						panningIdx ??
 						$categoriesKeys.findIndex(
 							(category) => category === $selectedCategory,
 						);
 					let currentScrollLeft = animeListPagerEl.scrollLeft;
-					let offsetWidth =
-						animeListPagerEl.getBoundingClientRect().width;
+					let offsetWidth = animeListPagerEl.getBoundingClientRect().width;
 					let pagerPads = categoryIdx * offsetWidth;
-					let scrollOffset =
-						Math.max(0, categoryIdx - 1) * animeListPagerPad;
+					let scrollOffset = Math.max(0, categoryIdx - 1) * animeListPagerPad;
 					let newScrollLeft = pagerPads + scrollOffset;
 					if (newScrollLeft > currentScrollLeft) {
 						animeListPagerEl.scrollBy({
@@ -1672,6 +1652,20 @@
 					}
 					animeListPagerIsChanging = false;
 				}
+			}
+			lastVisualViewportWidth = newVisualViewportWidth;
+		})
+
+		animeListPagerEl.addEventListener("scrollend", () => {
+			if (animeListPagerIsChanging) {
+				let children = Array.from(animeListPagerEl?.children);
+				let child = children?.[panningIdx];
+				let category = child?.dataset?.category;
+
+				if (category && category !== $selectedCategory) {
+					$selectedCategory = category;
+				}
+				animeListPagerIsChanging = false;
 			}
 		});
 	});
@@ -1727,16 +1721,16 @@
 				lastSelectedCategory = val;
 				return;
 			}
-			let documentEL = document.documentElement;
-			let scrollTop = documentEL.scrollTop;
+			
 			let element = Array.from(animeListPagerEl.children).find(
 				(el) => el.dataset.category === val,
 			);
 			if (element) {
 				if (scrollingCategories?.[val] == null) {
 					let gridToWindow = element.getBoundingClientRect().top + 20;
-					let gridOffSetDocument = scrollTop + gridToWindow;
+					let gridOffSetDocument = $documentScrollTop + gridToWindow;
 					let selectedGridTopScroll = gridTopScrolls[val];
+					const documentEL = document.documentElement;
 					if (selectedGridTopScroll != null) {
 						documentEL.scrollTop =
 							gridOffSetDocument + selectedGridTopScroll;
@@ -1784,6 +1778,28 @@
 			}
 		}
 	});
+
+	// let startY = 0;
+	// let scrollY = 0;
+
+	// window.addEventListener('touchstart', function(event) {
+	// 	if (!$popupVisible) return
+	// 	// Get the initial touch position
+	// 	startY = event.touches[0].clientY;
+	// 	scrollY = window.scrollY;
+	// });
+
+	// window.addEventListener('touchmove', function(event) {
+	// 	if (!$popupVisible) return
+	// 	// Prevent the default behavior (optional, for better control)
+	// 	event.preventDefault();
+
+	// 	// Calculate the distance moved
+	// 	let distanceY = startY - event.touches[0].clientY;
+
+	// 	// Scroll the document by the distance moved
+	// 	window.scrollTo(0, scrollY + distanceY);
+	// });
 </script>
 
 <main
@@ -1865,7 +1881,7 @@
 	main.android {
 		user-select: none !important;
 	}
-	@media screen and not (pointer: fine) {
+	@media screen and not (pointer:fine) {
 		main {
 			user-select: none !important;
 		}
@@ -1877,7 +1893,7 @@
 		max-width: 1140px;
 	}
 	.progress.has-custom-filter-nav,
-	:global(.progress:has(~ #nav-container.delayed-full-screen-popup)) {
+	:global(.progress:has(~#nav-container.delayed-full-screen-popup)) {
 		position: fixed !important;
 	}
 	.progress {
@@ -1932,13 +1948,7 @@
 		#main.android > #progress.is-below-absolute-progress {
 			height: 1px !important;
 		}
-		:global(
-				.progress:has(
-						~ #nav-container.delayed-full-screen-popup:not(
-								.layout-change
-							):not(.hide)
-					)
-			) {
+		:global(.progress:has(~ #nav-container.delayed-full-screen-popup:not(.layout-change):not(.hide))) {
 			height: 1px !important;
 			top: 55px !important;
 			z-index: 1000 !important;

@@ -32,9 +32,12 @@
         selectedCategory,
         keepAppRunningInBackground,
         resetProgress,
+        documentScrollTop,
     } from "../../js/globalValues.js";
+    import { fade } from "svelte/transition";
+    import { sineOut } from "svelte/easing";
 
-    let menuContainerEl, navContainerEl;
+    let navContainerEl;
     let importFileInput;
 
     async function importData() {
@@ -269,9 +272,11 @@
         ) {
             $keepAppRunningInBackground = !$keepAppRunningInBackground;
             try {
-                JSBridge?.setKeepAppRunningInBackground?.(
-                    $keepAppRunningInBackground,
-                );
+                if (typeof $keepAppRunningInBackground === "boolean") {
+                    JSBridge?.setKeepAppRunningInBackground?.(
+                        $keepAppRunningInBackground,
+                    );
+                }
             } catch (e) {}
         }
     }
@@ -300,7 +305,7 @@
                 text: `<div id="kanshi-show-notice"><span style='color:hsl(345deg, 75%, 60%);'>NOTICE!</span> You may want to regularly <span style='color:hsl(345deg, 75%, 60%);'>Back Up</span> your data or use auto-export to prevent future data loss.\n\nCurrently, the storage might be <span style='color:hsl(345deg, 75%, 60%);'>Automatically Cleared by Chrome</span> when your <span style='color:hsl(345deg, 75%, 60%);'>Disk is Nearly Full.</span>\n\n<span ${
                     persistent
                         ? ""
-                        : "style='cursor:pointer;' onclick='(async()=>{await window?.navigator?.storage?.persisted?.();await window?.navigator?.storage?.persist?.();window?.refreshKanshiNotice?.()})()'"
+                        : "tabindex='0' style='cursor:pointer;' onclick='(async()=>{await window?.navigator?.storage?.persisted?.();await window?.navigator?.storage?.persist?.();window?.refreshKanshiNotice?.()})()'"
                 }>Persistent Storage Status: ${
                     persistent
                         ? "<span style='color:hsl(185deg, 65%, 50%);'>Enabled</span>"
@@ -318,7 +323,7 @@
                 }\n\nTo enable persistent storage:\n\n<span ${
                     persistent
                         ? ""
-                        : "style='cursor:pointer;' onclick='(async()=>{await window?.navigator?.storage?.persisted?.();await window?.navigator?.storage?.persist?.();window?.refreshKanshiNotice?.()})()'"
+                        : "tabindex='0' style='cursor:pointer;' onclick='(async()=>{await window?.navigator?.storage?.persisted?.();await window?.navigator?.storage?.persist?.();window?.refreshKanshiNotice?.()})()'"
                 }>1) Grant permission for <span style="${
                     persistent ? "" : "text-decoration: underline;"
                 }${
@@ -328,7 +333,7 @@
                 };">Persistent Storage</span></span>.\n2) OR Grant permission for <span ${
                     notificationGranted
                         ? ""
-                        : "style='cursor:pointer;' onclick='(async()=>{await window?.Notification?.requestPermission?.();window?.refreshKanshiNotice?.()})()'"
+                        : "tabindex='0' style='cursor:pointer;' onclick='(async()=>{await window?.Notification?.requestPermission?.();window?.refreshKanshiNotice?.()})()'"
                 }><span style="${
                     notificationGranted ? "" : "text-decoration: underline;"
                 }${
@@ -420,8 +425,6 @@
     }
 
     onMount(() => {
-        menuContainerEl =
-            menuContainerEl ?? document.getElementById("menu-container");
         navContainerEl = document.getElementById("nav-container");
         if (
             typeof window?.keepAppRunningInBackground === "boolean" &&
@@ -433,10 +436,8 @@
 
     menuVisible.subscribe((val) => {
         if (val) {
-            if (document?.documentElement?.scrollTop <= 0 || $popupVisible) {
+            if ($documentScrollTop <= 0 || $popupVisible) {
                 removeClass(navContainerEl, "hide");
-                addClass(menuContainerEl, "visible");
-                removeClass(menuContainerEl, "hide");
             } else {
                 requestAnimationFrame(() => {
                     addClass(navContainerEl, "stop-transition");
@@ -444,19 +445,15 @@
                     requestAnimationFrame(() => {
                         removeClass(navContainerEl, "stop-transition");
                         removeClass(navContainerEl, "hide");
-                        addClass(menuContainerEl, "visible");
-                        removeClass(menuContainerEl, "hide");
                     });
                 });
             }
             window?.setShouldGoBack?.(false);
         } else {
-            if (!$popupVisible && document.documentElement.scrollTop > 0) {
+            if (!$popupVisible && $documentScrollTop > 0) {
                 addClass(navContainerEl, "hide");
             }
-            addClass(menuContainerEl, "hide");
             setTimeout(() => {
-                removeClass(menuContainerEl, "visible");
                 removeClass(navContainerEl, "hide");
             }, 200);
         }
@@ -536,132 +533,134 @@
     bind:this="{importFileInput}"
     on:change="{importJSONFile}"
 />
-<div
-    id="menu-container"
-    class="menu-container"
-    on:click="{(e) => {
-        if (e.pointerType !== 'touch') {
-            handleMenuVisibility(e);
-        }
-    }}"
-    on:touchend|passive="{handleMenuVisibility}"
-    on:keyup="{(e) => e.key === 'Enter' && handleMenuVisibility(e)}"
-    bind:this="{menuContainerEl}"
->
-    <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
-    <div class="menu" use:isScrollableMenu>
-        <button
-            class="button"
-            tabindex="{$menuVisible ? '0' : '-1'}"
-            on:click="{updateList}"
-            on:keyup="{(e) => e.key === 'Enter' && updateList(e)}"
-            >Update List</button
-        >
-        <button
-            class="button"
-            tabindex="{$menuVisible ? '0' : '-1'}"
-            on:click="{showAllHiddenEntries}"
-            on:keyup="{(e) => e.key === 'Enter' && showAllHiddenEntries(e)}"
-            >Show All Hidden Entries</button
-        >
-        <button
-            class="button"
-            tabindex="{$menuVisible ? '0' : '-1'}"
-            on:click="{() => importData()}"
-            on:keyup="{(e) => e.key === 'Enter' && importData()}"
-            >Import Data</button
-        >
-        <button
-            class="button"
-            tabindex="{$menuVisible ? '0' : '-1'}"
-            on:click="{exportData}"
-            on:keyup="{(e) => e.key === 'Enter' && exportData(e)}"
-            >Export Data</button
-        >
-        {#if $android}
+{#if $menuVisible}
+    <div
+        class="menu-container"
+        on:click="{(e) => {
+            if (e.pointerType !== 'touch') {
+                handleMenuVisibility(e);
+            }
+        }}"
+        on:touchend|passive="{handleMenuVisibility}"
+        on:keyup="{(e) => e.key === 'Enter' && handleMenuVisibility(e)}"
+        in:fade="{{ duration: 200, easing: sineOut }}"
+        out:fade="{{ duration: 200, easing: sineOut }}"
+    >
+        <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
+        <div class="menu" use:isScrollableMenu>
             <button
                 class="button"
                 tabindex="{$menuVisible ? '0' : '-1'}"
-                on:click="{handleExportFolder}"
-                on:keyup="{(e) => e.key === 'Enter' && handleExportFolder(e)}"
-            >
-                {($exportPathIsAvailable ? "Change" : "Set") + " Export Folder"}
-            </button>
-        {/if}
-        <button
-            class="{'button ' + ($showStatus ? 'selected' : '')}"
-            tabindex="{$menuVisible ? '0' : '-1'}"
-            on:click="{showDataStatus}"
-            on:keyup="{(e) => e.key === 'Enter' && showDataStatus(e)}"
-            >Show Status</button
-        >
-        <button
-            class="{'button ' + ($autoUpdate ? 'selected' : '')}"
-            tabindex="{$menuVisible ? '0' : '-1'}"
-            on:click="{handleUpdateEveryHour}"
-            on:keyup="{(e) => e.key === 'Enter' && handleUpdateEveryHour(e)}"
-            >Auto Update</button
-        >
-        {#if $android}
-            <button
-                class="{'button ' + ($autoExport ? 'selected' : '')}"
-                tabindex="{$menuVisible ? '0' : '-1'}"
-                on:click="{handleExportEveryHour}"
-                on:keyup="{(e) =>
-                    e.key === 'Enter' && handleExportEveryHour(e)}"
-                >Auto Export</button
-            >
-            <button
-                class="{'button' +
-                    ($keepAppRunningInBackground === false ? '' : ' selected')}"
-                tabindex="{$menuVisible ? '0' : '-1'}"
-                on:keyup="{(e) =>
-                    e.key === 'Enter' && persistentBackgroundUpdates(e)}"
-                on:click="{persistentBackgroundUpdates}"
-                >Persistent Background Updates</button
+                on:click="{updateList}"
+                on:keyup="{(e) => e.key === 'Enter' && updateList(e)}"
+                >Update List</button
             >
             <button
                 class="button"
                 tabindex="{$menuVisible ? '0' : '-1'}"
-                on:keyup="{(e) => e.key === 'Enter' && clearCache(e)}"
-                on:click="{clearCache}">Clear Cache</button
+                on:click="{showAllHiddenEntries}"
+                on:keyup="{(e) => e.key === 'Enter' && showAllHiddenEntries(e)}"
+                >Show All Hidden Entries</button
             >
             <button
                 class="button"
                 tabindex="{$menuVisible ? '0' : '-1'}"
-                on:keyup="{(e) => e.key === 'Enter' && refresh(e)}"
-                on:click="{refresh}">Refresh</button
+                on:click="{() => importData()}"
+                on:keyup="{(e) => e.key === 'Enter' && importData()}"
+                >Import Data</button
             >
-        {/if}
-        <button
-            class="button"
-            tabindex="{$menuVisible ? '0' : '-1'}"
-            on:keyup="{(e) => e.key === 'Enter' && reload(e)}"
-            on:click="{reload}">Reload</button
-        >
-        <button
-            class="button"
-            tabindex="{$menuVisible ? '0' : '-1'}"
-            on:click="{anilistSignup}"
-            on:keyup="{(e) => e.key === 'Enter' && anilistSignup(e)}"
-            >Create an Anilist Account</button
-        >
-        {#if $appInstallationAsked && $mobile && hasAvailableApp && !$android}
             <button
                 class="button"
                 tabindex="{$menuVisible ? '0' : '-1'}"
-                on:keyup="{(e) => e.key === 'Enter' && downloadAndroidApp(e)}"
-                on:click="{downloadAndroidApp}">Install App</button
+                on:click="{exportData}"
+                on:keyup="{(e) => e.key === 'Enter' && exportData(e)}"
+                >Export Data</button
             >
-        {/if}
-        <button
-            class="button"
-            tabindex="{$menuVisible ? '0' : '-1'}"
-            on:keyup="{(e) => e.key === 'Enter' && showNotice(e)}"
-            on:click="{showNotice}">Notice!</button
-        >
+            {#if $android}
+                <button
+                    class="button"
+                    tabindex="{$menuVisible ? '0' : '-1'}"
+                    on:click="{handleExportFolder}"
+                    on:keyup="{(e) => e.key === 'Enter' && handleExportFolder(e)}"
+                >
+                    {($exportPathIsAvailable ? "Change" : "Set") + " Export Folder"}
+                </button>
+            {/if}
+            <button
+                class="{'button ' + ($showStatus ? 'selected' : '')}"
+                tabindex="{$menuVisible ? '0' : '-1'}"
+                on:click="{showDataStatus}"
+                on:keyup="{(e) => e.key === 'Enter' && showDataStatus(e)}"
+                >Show Status</button
+            >
+            <button
+                class="{'button ' + ($autoUpdate ? 'selected' : '')}"
+                tabindex="{$menuVisible ? '0' : '-1'}"
+                on:click="{handleUpdateEveryHour}"
+                on:keyup="{(e) => e.key === 'Enter' && handleUpdateEveryHour(e)}"
+                >Auto Update</button
+            >
+            {#if $android}
+                <button
+                    class="{'button ' + ($autoExport ? 'selected' : '')}"
+                    tabindex="{$menuVisible ? '0' : '-1'}"
+                    on:click="{handleExportEveryHour}"
+                    on:keyup="{(e) =>
+                        e.key === 'Enter' && handleExportEveryHour(e)}"
+                    >Auto Export</button
+                >
+                <button
+                    class="{'button' +
+                        ($keepAppRunningInBackground === false ? '' : ' selected')}"
+                    tabindex="{$menuVisible ? '0' : '-1'}"
+                    on:keyup="{(e) =>
+                        e.key === 'Enter' && persistentBackgroundUpdates(e)}"
+                    on:click="{persistentBackgroundUpdates}"
+                    >Persistent Background Updates</button
+                >
+                <button
+                    class="button"
+                    tabindex="{$menuVisible ? '0' : '-1'}"
+                    on:keyup="{(e) => e.key === 'Enter' && clearCache(e)}"
+                    on:click="{clearCache}">Clear Cache</button
+                >
+                <button
+                    class="button"
+                    tabindex="{$menuVisible ? '0' : '-1'}"
+                    on:keyup="{(e) => e.key === 'Enter' && refresh(e)}"
+                    on:click="{refresh}">Refresh</button
+                >
+            {/if}
+            <button
+                class="button"
+                tabindex="{$menuVisible ? '0' : '-1'}"
+                on:keyup="{(e) => e.key === 'Enter' && reload(e)}"
+                on:click="{reload}">Reload</button
+            >
+            <button
+                class="button"
+                tabindex="{$menuVisible ? '0' : '-1'}"
+                on:click="{anilistSignup}"
+                on:keyup="{(e) => e.key === 'Enter' && anilistSignup(e)}"
+                >Create an Anilist Account</button
+            >
+            {#if $appInstallationAsked && $mobile && hasAvailableApp && !$android}
+                <button
+                    class="button"
+                    tabindex="{$menuVisible ? '0' : '-1'}"
+                    on:keyup="{(e) => e.key === 'Enter' && downloadAndroidApp(e)}"
+                    on:click="{downloadAndroidApp}">Install App</button
+                >
+            {/if}
+            <button
+                class="button"
+                tabindex="{$menuVisible ? '0' : '-1'}"
+                on:keyup="{(e) => e.key === 'Enter' && showNotice(e)}"
+                on:click="{showNotice}">Notice!</button
+            >
+        </div>
     </div>
-</div>
+{/if}
 
 <style>
     .menu-container {
@@ -676,23 +675,6 @@
         height: 100%;
         background-color: var(--ol-color);
         z-index: 998;
-        opacity: 1;
-        transform: translateY(-99999px) translateZ(0);
-        -webkit-transform: translateY(-99999px) translateZ(0);
-        -ms-transform: translateY(-99999px) translateZ(0);
-        -moz-transform: translateY(-99999px) translateZ(0);
-        -o-transform: translateY(-99999px) translateZ(0);
-        transition: opacity 0.2s ease-out;
-    }
-    .menu-container.visible {
-        transform: translateY(0) translateZ(0);
-        -webkit-transform: translateY(0) translateZ(0);
-        -ms-transform: translateY(0) translateZ(0);
-        -moz-transform: translateY(0) translateZ(0);
-        -o-transform: translateY(0) translateZ(0);
-    }
-    .menu-container.hide {
-        opacity: 0;
     }
     :global(#main.maxwindowheight.popupvisible .menu-container) {
         touch-action: none;

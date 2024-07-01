@@ -14,6 +14,24 @@ const resetProgress = writable(0)
 // const anilistAccessToken = writable(null)
 const hasWheel = writable(false)
 
+const currentWindowHeight = Math.max(
+    window?.visualViewport?.height || 0,
+    window?.innerHeight || 0
+)
+const currentWindowWidth = Math.max(
+    window?.document?.documentElement?.getBoundingClientRect?.()?.width || 0,
+    window?.visualViewport?.width || 0,
+    window?.innerWidth || 0,
+)
+const windowHeight = writable(currentWindowHeight)
+const windowWidth = writable(currentWindowWidth)
+
+const isFullScreen = window?.document?.fullScreen || window?.document?.mozFullScreen || window?.document?.webkitIsFullScreen || window?.document?.msFullscreenElement
+const trueWindowHeight = writable(isFullScreen ? null : currentWindowHeight)
+// const trueWindowWidth = writable(isFullScreen ? null : currentWindowWidth)
+
+const documentScrollTop = writable(window?.document?.documentElement?.scrollTop || 0)
+
 const username = writable(getLocalStorage('username') || '')
 const resetTypedUsername = writable(null)
 const loadedAnimeLists = writable({})
@@ -66,7 +84,6 @@ const animeOptionVisible = writable(false)
 const openedAnimeOptionIdx = writable(null)
 const popupVisible = writable(false)
 const openedAnimePopupIdx = writable(null)
-const shouldGoBack = writable(true)
 const listUpdateAvailable = writable(false)
 const popupIsGoingBack = writable(false)
 const isScrolling = writable(null)
@@ -93,6 +110,11 @@ export {
     inApp,
     appInstallationAsked,
     hasWheel,
+    windowHeight,
+    windowWidth,
+    trueWindowHeight,
+    // trueWindowWidth,
+    documentScrollTop,
     progress,
     resetProgress,
     // anilistAccessToken,
@@ -143,7 +165,6 @@ export {
     openedAnimeOptionIdx,
     popupVisible,
     openedAnimePopupIdx,
-    shouldGoBack,
     listUpdateAvailable,
     popupIsGoingBack,
     isScrolling,
