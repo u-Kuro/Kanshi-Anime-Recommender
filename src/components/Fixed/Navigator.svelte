@@ -6,6 +6,7 @@
         downloadLink,
         removeClass,
         removeLocalStorage,
+        requestImmediate,
         setLocalStorage,
     } from "../../js/others/helper.js";
     import {
@@ -380,7 +381,7 @@
             if (!inputUsernameElFocused) {
                 addClass(navContainerEl, "layout-change");
             }
-            setTimeout(() => {
+            requestImmediate(() => {
                 delayedPopupVis = val;
                 removeClass(navContainerEl, "layout-change");
             }, 100);
@@ -388,7 +389,7 @@
             delayedPopupVis = val;
             if (navHasNoBackOption && (val || $menuVisible)) {
                 addClass(navContainerEl, "layout-change");
-                setTimeout(() => {
+                requestImmediate(() => {
                     delayedPopupVis = val;
                     removeClass(navContainerEl, "layout-change");
                 }, 100);
@@ -401,7 +402,7 @@
             if (!inputUsernameElFocused) {
                 addClass(navContainerEl, "layout-change");
             }
-            setTimeout(() => {
+            requestImmediate(() => {
                 delayedMenuVis = val;
                 removeClass(navContainerEl, "layout-change");
             }, 100);
@@ -409,7 +410,7 @@
             delayedMenuVis = val;
             if (navHasNoBackOption && (val || $popupVisible)) {
                 addClass(navContainerEl, "layout-change");
-                setTimeout(() => {
+                requestImmediate(() => {
                     removeClass(navContainerEl, "layout-change");
                 }, 100);
             }
@@ -432,13 +433,13 @@
             return;
         }
         currentUsernameInputFocusStatus = eventType ?? "focusout";
-        clearTimeout(onFocusTimeout);
+        onFocusTimeout?.();
         if (isFocusIn) {
             inputUsernameElFocused = true;
             if (!$menuVisible && !$popupVisible) {
                 addClass(navContainerEl, "layout-change");
             }
-            onFocusTimeout = setTimeout(() => {
+            onFocusTimeout = requestImmediate(() => {
                 addClass(navEl, "inputfocused");
                 removeClass(navContainerEl, "layout-change");
                 currentUsernameInputFocusStatus = null;
@@ -447,7 +448,7 @@
             if (!$menuVisible && !$popupVisible && navHasNoBackOption) {
                 addClass(navContainerEl, "layout-change");
             }
-            onFocusTimeout = setTimeout(() => {
+            onFocusTimeout = requestImmediate(() => {
                 removeClass(navEl, "inputfocused");
                 inputUsernameElFocused = false;
                 removeClass(navContainerEl, "layout-change");

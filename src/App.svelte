@@ -23,6 +23,7 @@
 		isMobile,
 		ncsCompare,
 		removeLocalStorage,
+		requestImmediate,
 		setLocalStorage,
 	} from "./js/others/helper.js";
 	import {
@@ -43,8 +44,6 @@
 		autoPlay,
 		popupVisible,
 		menuVisible,
-		isScrolling,
-		scrollingTimeout,
 		listUpdateAvailable,
 		confirmIsVisible,
 		animeOptionVisible,
@@ -1004,12 +1003,13 @@
 	window.runExport = () => {
 		$runExport = !$runExport;
 	};
+	let isScrolling, scrollingTimeout
 	runIsScrolling.subscribe((val) => {
 		if (typeof val !== "boolean") return;
-		$isScrolling = true;
-		clearTimeout($scrollingTimeout);
-		$scrollingTimeout = setTimeout(() => {
-			$isScrolling = false;
+		isScrolling = true;
+		clearTimeout(scrollingTimeout);
+		scrollingTimeout = setTimeout(() => {
+			isScrolling = false;
 		}, 200);
 	});
 
@@ -1174,8 +1174,8 @@
 				if ($gridFullView && $selectedAnimeGridEl) {
 					$selectedAnimeGridEl.style.overflow = "hidden";
 					$selectedAnimeGridEl.scrollLeft = 0;
-					clearTimeout(exitScrollTimeout);
-					exitScrollTimeout = setTimeout(() => {
+					exitScrollTimeout?.();
+					exitScrollTimeout = requestImmediate(() => {
 						$selectedAnimeGridEl.style.overflow = "";
 					}, 100);
 				} else {
@@ -1188,8 +1188,8 @@
 					document.body.scrollTop = 0;
 					window.scrollY = 0;
 					if ($android || !matchMedia("(hover:hover)").matches) {
-						clearTimeout(exitScrollTimeout);
-						exitScrollTimeout = setTimeout(() => {
+						exitScrollTimeout?.()
+						exitScrollTimeout = requestImmediate(() => {
 							documentEl.style.overflow = "";
 						}, 100);
 					}
@@ -1261,7 +1261,7 @@
 
 	let isChangingPopupVisible, isChangingPopupVisibleTimeout;
 	popupIsGoingBack.subscribe(() => {
-		clearTimeout(isChangingPopupVisibleTimeout);
+		clearTimeout(isChangingPopupVisibleTimeout)
 		isChangingPopupVisible = true;
 		isChangingPopupVisibleTimeout = setTimeout(() => {
 			isChangingPopupVisible = false;
@@ -1283,12 +1283,12 @@
 				let text = target.dataset.copy;
 				if (
 					text &&
-					!$isScrolling &&
+					!isScrolling &&
 					copyhold &&
 					!isChangingPopupVisible
 				) {
 					target.style.pointerEvents = "none";
-					setTimeout(() => {
+					requestImmediate(() => {
 						target.style.pointerEvents = "";
 					}, 500);
 					let text2 = target.dataset.secondcopy;
@@ -1522,7 +1522,7 @@
 						scrollTop !== lastScrollTop &&
 						(offsetToWindow <= 1 || lastOffTosetWindow <= 1)
 					) {
-						clearTimeout(topPositionChangeTimeout);
+						topPositionChangeTimeout?.();
 						changingTopPosition = true;
 					}
 					lastScrollTop = scrollTop;
@@ -1553,7 +1553,7 @@
 						gridTopScrolls[category] = $documentScrollTop - gridOffSetDocument;
 					}
 					gridMaxHeight = element?.clientHeight ?? gridMaxHeight;
-					topPositionChangeTimeout = setTimeout(async () => {
+					topPositionChangeTimeout = requestImmediate(async () => {
 						await tick();
 						changingTopPosition = false;
 					}, 30);

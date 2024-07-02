@@ -8,6 +8,7 @@
         isJsonObject,
         removeClass,
         getLocalStorage,
+        requestImmediate,
     } from "../../js/others/helper.js";
     import {
         android,
@@ -172,14 +173,14 @@
         let element = event.target;
         let classList = element.classList;
         if (classList.contains("copy") || element.closest(".copy")) return;
-        if (openOptionTimeout) clearTimeout(openOptionTimeout);
-        openOptionTimeout = setTimeout(() => {
+        openOptionTimeout?.();
+        openOptionTimeout = requestImmediate(() => {
             $openedAnimeOptionIdx = animeIdx;
             $animeOptionVisible = true;
         }, 500);
     }
     function cancelOpenOption() {
-        if (openOptionTimeout) clearTimeout(openOptionTimeout);
+        openOptionTimeout?.();
         window[".isOpeningAnimeOption"] = false;
     }
 
@@ -247,9 +248,9 @@
                     document.documentElement.clientHeight,
             ) <= 3;
 
-        clearTimeout(isOnVeryLeftOfAnimeGridTimeout);
+        isOnVeryLeftOfAnimeGridTimeout?.();
         if (isFullViewed && animeGridEl?.scrollLeft < 1) {
-            isOnVeryLeftOfAnimeGridTimeout = setTimeout(() => {
+            isOnVeryLeftOfAnimeGridTimeout = requestImmediate(() => {
                 isOnVeryLeftOfAnimeGrid =
                     isFullViewed && animeGridEl?.scrollLeft < 1;
             }, 1000);
@@ -270,8 +271,8 @@
 
     let filterOptiChangeTimeout;
     showFilterOptions.subscribe(() => {
-        clearTimeout(filterOptiChangeTimeout);
-        filterOptiChangeTimeout = setTimeout(() => {
+        filterOptiChangeTimeout?.();
+        filterOptiChangeTimeout = requestImmediate(() => {
             const documentEl = document.documentElement
             isWholeGridSeen =
                 isFullViewed &&
@@ -319,19 +320,19 @@
         animeGridEl.addEventListener("scroll", () => {
             window?.animeGridScrolled?.(animeGridEl.scrollLeft);
             if (!waitForOnVeryLeft) {
-                clearTimeout(isOnVeryLeftOfAnimeGridTimeout);
+                isOnVeryLeftOfAnimeGridTimeout?.();
             }
             if (isFullViewed && animeGridEl?.scrollLeft < 1) {
                 if (!waitForOnVeryLeft) {
                     waitForOnVeryLeft = true;
-                    isOnVeryLeftOfAnimeGridTimeout = setTimeout(() => {
+                    isOnVeryLeftOfAnimeGridTimeout = requestImmediate(() => {
                         isOnVeryLeftOfAnimeGrid =
                             isFullViewed && animeGridEl?.scrollLeft < 1;
                         waitForOnVeryLeft = false;
                     }, 8);
                 }
             } else {
-                clearTimeout(isOnVeryLeftOfAnimeGridTimeout);
+                isOnVeryLeftOfAnimeGridTimeout?.();
                 waitForOnVeryLeft = false;
                 isOnVeryLeftOfAnimeGrid = false;
             }

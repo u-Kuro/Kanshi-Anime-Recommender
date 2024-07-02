@@ -1,7 +1,7 @@
 <script>
     import { fade } from "svelte/transition";
     import { sineOut } from "svelte/easing";
-    import { ncsCompare } from "../../../js/others/helper.js";
+    import { ncsCompare, requestImmediate } from "../../../js/others/helper.js";
     import {
         android,
         animeOptionVisible,
@@ -39,13 +39,13 @@
         if (val === true) {
             window.addEventListener("keydown", keyDown);
             isRecentlyOpened = true;
-            isRecentlyOpenedTimeout = setTimeout(() => {
+            isRecentlyOpenedTimeout = requestImmediate(() => {
                 isRecentlyOpened = false;
             }, 100);
             window.setShouldGoBack?.(false);
         } else {
             window.removeEventListener("keydown", keyDown);
-            if (isRecentlyOpenedTimeout) clearTimeout(isRecentlyOpenedTimeout);
+            isRecentlyOpenedTimeout?.();
             isRecentlyOpened = false;
         }
     });

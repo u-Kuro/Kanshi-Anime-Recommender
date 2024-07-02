@@ -254,19 +254,19 @@ public class AnimeReleaseActivity extends AppCompatActivity {
         selectedAnimeReleaseOption.set(prefs.getString("animeReleaseOption", "Updates"));
         switch (selectedAnimeReleaseOption.get()) {
             case "My List":
-                animeReleaseSpinner.setSelection(1);
+                animeReleaseSpinner.setSelection(1, false);
                 break;
             case "Watching":
-                animeReleaseSpinner.setSelection(2);
+                animeReleaseSpinner.setSelection(2, false);
                 break;
             case "Finished":
-                animeReleaseSpinner.setSelection(3);
+                animeReleaseSpinner.setSelection(3, false);
                 break;
             case "Others":
-                animeReleaseSpinner.setSelection(4);
+                animeReleaseSpinner.setSelection(4, false);
                 break;
             default:
-                animeReleaseSpinner.setSelection(0);
+                animeReleaseSpinner.setSelection(0, false);
                 break;
         }
 

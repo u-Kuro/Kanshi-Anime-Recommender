@@ -571,6 +571,38 @@ const getElementWidth = (element) => {
   } catch { }
 }
 
+const requestImmediate = (fn, timeout = 0) => {
+  let frame, start, timeoutFn
+  const thisRequestImmediate = (timeStamp) => {
+      let elapsed = 0
+      if (!timeStamp) {
+          elapsed = 16
+      } else if (start !== undefined) {
+          elapsed = timeStamp - start
+      }
+      start = timeStamp;
+      timeout -= elapsed
+      if (timeout > 0) {
+        frame = requestAnimationFrame(thisRequestImmediate)
+      } else {
+        clearTimeout(timeoutFn)
+        frame = requestAnimationFrame(()=>fn?.())
+      }
+  }
+  if (timeout > 0) {
+    timeoutFn = setTimeout(()=>{
+        cancelAnimationFrame(frame)
+        fn?.()
+    }, timeout)
+    frame = requestAnimationFrame(thisRequestImmediate)
+  } else {
+     fn?.()
+  }
+  return () => {
+    cancelAnimationFrame(frame)
+    clearTimeout(timeoutFn)
+  }
+}
 // const makeArrayUnique = (arr) => {
 //   const uniqueArray = [];
 //   try {
@@ -651,6 +683,7 @@ export {
   addClass,
   removeClass,
   getElementWidth,
+  requestImmediate,
   downloadLink,
   isAndroid,
   showToast,

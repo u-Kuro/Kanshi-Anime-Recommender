@@ -74,7 +74,6 @@ const gridFullView = writable(getLocalStorage('gridFullView') ?? null)
 const showStatus = writable(getLocalStorage('showStatus') ?? true)
 const extraInfo = writable(null)
 const currentExtraInfo = writable(null)
-const mostRecentAiringDateTimeout = writable(null)
 const earlisetReleaseDate = writable(null)
 const animeIdxRemoved = writable(null)
 const shownAllInList = writable({})
@@ -86,8 +85,6 @@ const popupVisible = writable(false)
 const openedAnimePopupIdx = writable(null)
 const listUpdateAvailable = writable(false)
 const popupIsGoingBack = writable(false)
-const isScrolling = writable(null)
-const scrollingTimeout = writable(null)
 const showFilterOptions = writable(getLocalStorage('showFilterOptions') ?? null)
 const dropdownIsVisible = writable(null)
 const confirmIsVisible = writable(null)
@@ -155,7 +152,6 @@ export {
     showStatus,
     extraInfo,
     currentExtraInfo,
-    mostRecentAiringDateTimeout,
     earlisetReleaseDate,
     shownAllInList,
     animeIdxRemoved,
@@ -167,8 +163,6 @@ export {
     openedAnimePopupIdx,
     listUpdateAvailable,
     popupIsGoingBack,
-    isScrolling,
-    scrollingTimeout,
     showFilterOptions,
     dropdownIsVisible,
     confirmIsVisible,

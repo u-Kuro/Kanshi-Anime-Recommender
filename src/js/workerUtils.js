@@ -20,7 +20,6 @@ import {
     loadingDataStatus,
     isBackgroundUpdateKey,
     earlisetReleaseDate,
-    mostRecentAiringDateTimeout,
     loadedAnimeLists,
     loadNewAnime,
     selectedCategory,
@@ -53,16 +52,17 @@ function getUniqueId() {
     }
 }
 
+let mostRecentAiringDateTimeout
 earlisetReleaseDate.subscribe((val) => {
     if (typeof val === "number" && !isNaN(val)) {
-        clearTimeout(get(mostRecentAiringDateTimeout));
+        clearTimeout(mostRecentAiringDateTimeout);
         const timeBeforeEarliestReleaseDate = (val * 1000) - new Date().getTime()
-        mostRecentAiringDateTimeout.set(setTimeout(() => {
+        mostRecentAiringDateTimeout = setTimeout(() => {
             earlisetReleaseDate.set(undefined)
             animeLoaderWorker?.postMessage?.({
                 getEarlisetReleaseDate: true,
             });
-        }, Math.min(timeBeforeEarliestReleaseDate, 2000000000)));
+        }, Math.min(timeBeforeEarliestReleaseDate, 2000000000));
     }
 })
 

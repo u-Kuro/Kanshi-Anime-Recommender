@@ -3,7 +3,7 @@
     import { fade } from "svelte/transition";
     import { sineOut } from "svelte/easing";
     import { initData } from "../../js/globalValues.js";
-    import { addClass, removeClass } from "../../js/others/helper.js";
+    import { addClass, removeClass, requestImmediate } from "../../js/others/helper.js";
 
     const dispatch = createEventDispatcher();
 
@@ -104,11 +104,11 @@
             window.setShouldGoBack?.(false);
             confirmButtonEl?.focus?.();
             isRecentlyOpened = true;
-            isRecentlyOpenedTimeout = setTimeout(() => {
+            isRecentlyOpenedTimeout = requestImmediate(() => {
                 isRecentlyOpened = false;
             }, 200);
         } else {
-            if (isRecentlyOpenedTimeout) clearTimeout(isRecentlyOpenedTimeout);
+            isRecentlyOpenedTimeout?.();
             isRecentlyOpened = false;
         }
     });

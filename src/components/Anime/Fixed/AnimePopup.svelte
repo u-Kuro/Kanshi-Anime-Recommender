@@ -21,6 +21,7 @@
         formatWeekday,
         setLocalStorage,
         removeLocalStorage,
+        requestImmediate,
     } from "../../../js/others/helper.js";
     import {
         hiddenEntries,
@@ -337,7 +338,7 @@
                 addClass(navContainerEl, "hide");
             }
             removeClass(popupContainer, "show");
-            setTimeout(() => {
+            requestImmediate(() => {
                 // Stop All Player
                 $ytPlayers.forEach(({ ytPlayer }) => {
                     let ytId = ytPlayer?.g?.id;
@@ -636,9 +637,8 @@
                     [animeList?.[visibleTrailerIdx + 1], visibleTrailerIdx + 1],
                     [animeList?.[visibleTrailerIdx - 1], visibleTrailerIdx - 1],
                 ];
-                if (createPopupPlayersTimeout)
-                    clearTimeout(createPopupPlayersTimeout);
-                createPopupPlayersTimeout = setTimeout(async () => {
+                createPopupPlayersTimeout?.();
+                createPopupPlayersTimeout = requestImmediate(async () => {
                     if (!$popupVisible) return;
                     nearAnimes.forEach(([nearAnime, nearAnimeIdx]) => {
                         if (nearAnime)
@@ -680,7 +680,7 @@
                                 addClass(popupImg, "fade-out");
                                 removeClass(popupHeader, "loader");
                                 removeClass(trailerEl, "display-none");
-                                setTimeout(() => {
+                                requestImmediate(() => {
                                     addClass(popupImg, "display-none");
                                     removeClass(popupImg, "fade-out");
                                 }, 200);
@@ -702,7 +702,7 @@
                             addClass(popupImg, "fade-out");
                             removeClass(popupHeader, "loader");
                             removeClass(trailerEl, "display-none");
-                            setTimeout(() => {
+                            requestImmediate(() => {
                                 addClass(popupImg, "display-none");
                                 removeClass(popupImg, "fade-out");
                             }, 200);
@@ -733,9 +733,8 @@
                     [animeList?.[visibleTrailerIdx + 1], visibleTrailerIdx + 1],
                     [animeList?.[visibleTrailerIdx - 1], visibleTrailerIdx - 1],
                 ];
-                if (createPopupPlayersTimeout)
-                    clearTimeout(createPopupPlayersTimeout);
-                createPopupPlayersTimeout = setTimeout(async () => {
+                createPopupPlayersTimeout?.();
+                createPopupPlayersTimeout = requestImmediate(async () => {
                     if (!$popupVisible) return;
                     nearAnimes.forEach(([nearAnime, nearAnimeIdx]) => {
                         if (nearAnime)
@@ -926,7 +925,7 @@
                 addClass(popupImg, "fade-out");
                 removeClass(popupHeader, "loader");
                 removeClass(trailerEl, "display-none");
-                setTimeout(() => {
+                requestImmediate(() => {
                     addClass(popupImg, "display-none");
                     removeClass(popupImg, "fade-out");
                 }, 200);
@@ -966,7 +965,7 @@
                 addClass(popupImg, "fade-out");
                 removeClass(popupHeader, "loader");
                 removeClass(trailerEl, "display-none");
-                setTimeout(() => {
+                requestImmediate(() => {
                     addClass(popupImg, "display-none");
                     removeClass(popupImg, "fade-out");
                 }, 200);
@@ -1338,9 +1337,13 @@
         itemIsScrollingTimeout;
 
     function popupScroll() {
+        let element = this 
+        if (!(element instanceof Element)) {
+            element = popupContainer
+        }
         if (afterImmediateScrollUponPopupVisible) {
-            let isScrolledDownMax = this.scrollHeight >= this.scrollTop + this.clientHeight - 50;
-            let isScrolledUpMax = this.scrollTop <= 50;
+            let isScrolledDownMax = element.scrollHeight >= element.scrollTop + element.clientHeight - 50;
+            let isScrolledUpMax = element.scrollTop <= 50;
             if (isScrolledUpMax || isScrolledDownMax) {
                 checkMostVisiblePopupAnime();
             }

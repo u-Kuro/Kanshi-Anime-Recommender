@@ -18,6 +18,7 @@
         setLocalStorage,
         removeLocalStorage,
         formatNumber,
+        requestImmediate,
     } from "../../js/others/helper.js";
     import {
         android,
@@ -267,7 +268,7 @@
                 selectedFilterCategoryElement?.querySelector?.(".options-wrap");
             if (optionsWrapToClose) {
                 addClass(optionsWrapToClose, "hide");
-                setTimeout(() => {
+                requestImmediate(() => {
                     removeClass(optionsWrapToClose, "hide");
                     if (
                         highlightedEl instanceof Element &&
@@ -293,6 +294,10 @@
 
     let openedFilterSelectionName;
     function filterCategorySelect(event, filterSelectionName) {
+        if ($initData || !filterCategories || !$orderedFilters) {
+            return pleaseWaitAlert();
+        }
+
         let element = event.target;
         let filSelectEl = element?.closest?.(".filter-select");
         if (filSelectEl === selectedFilterElement) return;
@@ -315,7 +320,7 @@
             selectedFilterElement?.querySelector?.(".options-wrap");
         if (optionsWrapToClose) {
             addClass(optionsWrapToClose, "hide");
-            setTimeout(() => {
+            requestImmediate(() => {
                 removeClass(optionsWrapToClose, "hide");
                 openedFilterSelectionName = null;
                 if (
@@ -356,7 +361,7 @@
                 openedDropdown?.querySelector?.(".options-wrap");
             if (optionsWrapToClose) {
                 addClass(optionsWrapToClose, "hide");
-                setTimeout(() => {
+                requestImmediate(() => {
                     removeClass(optionsWrapToClose, "hide");
                     if (highlightedEl instanceof Element) {
                         removeClass(highlightedEl, "highlight");
@@ -454,6 +459,47 @@
                 }
                 openedFilterSelectionName = selectedFilterElement = null;
             }
+        }
+    }
+
+    function handleOptionsWrapVisibility(event) {
+        if ($windowWidth > 425) return;
+        let target = event.target;
+        let classList = target.classList;
+        if (
+            target.closest(".options-wrap-filter-info") ||
+            classList.contains("options-wrap-filter-info")
+        )
+            return;
+        let optionsWrapToClose = this
+        if (!(optionsWrapToClose instanceof Element)) {
+            let openedDropdown =
+                selectedCategoryElement ||
+                selectedFilterCategoryElement ||
+                selectedSortElement ||
+                selectedFilterElement;
+            optionsWrapToClose = openedDropdown?.querySelector?.(".options-wrap");
+        }
+        if (
+            optionsWrapToClose instanceof Element
+            && getComputedStyle(optionsWrapToClose).position === "fixed"
+        ) {
+            addClass(optionsWrapToClose, "hide");
+            requestImmediate(() => {
+                removeClass(optionsWrapToClose, "hide");
+                if (highlightedEl instanceof Element) {
+                    removeClass(highlightedEl, "highlight");
+                    highlightedEl = null;
+                }
+                // Close Category Dropdown
+                selectedCategoryElement = false;
+                // Close Filter Category Dropdown
+                selectedFilterCategoryElement = false;
+                // Close Sort Filter Dropdown
+                selectedSortElement = false;
+                // Close Filter Selection Dropdown
+                openedFilterSelectionName = selectedFilterElement = null;
+            }, 200);
         }
     }
 
@@ -1024,6 +1070,10 @@
         }
     }
     function handleSortFilterPopup(event) {
+        if ($initData || !$orderedFilters) {
+            return pleaseWaitAlert();
+        }
+
         let element = event.target;
         let classList = element.classList;
         let sortSelectEl = element.closest(".sortFilter");
@@ -1043,7 +1093,7 @@
                 selectedSortElement?.querySelector?.(".options-wrap");
             if (optionsWrapToClose) {
                 addClass(optionsWrapToClose, "hide");
-                setTimeout(() => {
+                requestImmediate(() => {
                     removeClass(optionsWrapToClose, "hide");
                     if (
                         highlightedEl instanceof Element &&
@@ -1236,7 +1286,7 @@
                 selectedCategoryElement?.querySelector?.(".options-wrap");
             if (optionsWrapToClose) {
                 addClass(optionsWrapToClose, "hide");
-                setTimeout(() => {
+                requestImmediate(() => {
                     removeClass(optionsWrapToClose, "hide");
                     if (
                         highlightedEl instanceof Element &&
@@ -1584,7 +1634,7 @@
                 openedDropdown?.querySelector?.(".options-wrap");
             if (optionsWrapToClose) {
                 addClass(optionsWrapToClose, "hide");
-                setTimeout(() => {
+                requestImmediate(() => {
                     removeClass(optionsWrapToClose, "hide");
                     if (highlightedEl instanceof Element) {
                         removeClass(highlightedEl, "highlight");
@@ -1852,6 +1902,7 @@
             <div
                 class="{'options-wrap ' +
                     (selectedCategoryElement ? '' : 'display-none hide')}"
+                on:touchend|passive="{handleOptionsWrapVisibility}"
             >
                 {#if $categories}
                     <div
@@ -2052,6 +2103,7 @@
                         (selectedFilterCategoryElement
                             ? ''
                             : ' display-none hide')}"
+                    on:touchend|passive="{handleOptionsWrapVisibility}"
                 >
                     <div
                         class="{'options-wrap-filter-info' +
@@ -2316,6 +2368,7 @@
                                         ? ''
                                         : ' display-none hide')}"
                                 on:wheel|stopPropagation="{() => {}}"
+                                on:touchend|passive="{handleOptionsWrapVisibility}"
                             >
                                 <div
                                     class="{'options-wrap-filter-info' +
@@ -3003,6 +3056,7 @@
                 <div
                     class="{'options-wrap ' +
                         (selectedSortElement ? '' : 'display-none hide')}"
+                    on:touchend|passive="{handleOptionsWrapVisibility}"
                 >
                     <div
                         class="{'options-wrap-filter-info ' +

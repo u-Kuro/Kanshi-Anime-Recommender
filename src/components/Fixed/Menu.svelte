@@ -9,6 +9,7 @@
         removeClass,
         addClass,
         downloadLink,
+        requestImmediate,
     } from "../../js/others/helper.js";
     import {
         android,
@@ -453,7 +454,7 @@
             if (!$popupVisible && $documentScrollTop > 0) {
                 addClass(navContainerEl, "hide");
             }
-            setTimeout(() => {
+            requestImmediate(() => {
                 removeClass(navContainerEl, "hide");
             }, 200);
         }

@@ -4,6 +4,7 @@
     import {
         getElementWidth,
         getLocalStorage,
+        requestImmediate,
         trimAllEmptyChar,
     } from "../../js/others/helper.js";
     import {
@@ -216,12 +217,12 @@
         if (immediate) {
             immediateCustomFilNavChange = true;
             showCategoriesNav = show;
-            clearTimeout(immediateShowTimeout);
-            immediateShowTimeout = setTimeout(() => {
+            immediateShowTimeout?.();
+            immediateShowTimeout = requestImmediate(() => {
                 immediateCustomFilNavChange = false;
             }, 200);
         } else {
-            clearTimeout(immediateShowTimeout);
+            immediateShowTimeout?.();
             immediateCustomFilNavChange = false;
             showCategoriesNav = show;
         }
