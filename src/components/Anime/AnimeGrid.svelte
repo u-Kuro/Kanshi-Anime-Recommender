@@ -309,6 +309,19 @@
             node.src = emptyImage;
         }
     }
+    function reloadImage(e) {
+        try {
+            let element = e?.target
+            if (element?.tagName!=="IMG") {
+                const classList = element?.classList
+                const parent = classList?.contains?.("shimmer") ? element : element?.closest?.(".shimmer")
+                element = parent?.querySelector?.("img")
+            }
+            const src = element?.src;
+            if (src && src !== emptyImage)
+            element.src = src
+        } catch {}
+    }
 
     onMount(() => {
         selectedCategory.subscribe((val) => {
@@ -408,8 +421,10 @@
                                 ? ''
                                 : '0'}"
                             on:click="{handleOpenPopup(animeIndex)}"
-                            on:pointerdown="{(e) =>
-                                handleOpenOption(e, animeIndex)}"
+                            on:pointerdown="{(e) => {
+                                reloadImage(e)
+                                handleOpenOption(e, animeIndex)
+                            }}"
                             on:pointerup="{cancelOpenOption}"
                             on:pointercancel="{cancelOpenOption}"
                             on:keyup="{(e) =>

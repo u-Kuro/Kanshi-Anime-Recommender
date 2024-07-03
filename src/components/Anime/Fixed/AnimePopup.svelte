@@ -1587,6 +1587,17 @@
             node.src = emptyImage;
         }
     }
+    function reloadImage(e) {
+        try {
+            let element = this
+            if (element?.tagName!=="IMG") {
+                element = e?.target
+            }
+            const src = element?.src;
+            if (src && src !== emptyImage)
+            element.src = src
+        } catch {}
+    }
 
     function cleanText(k) {
         k = k !== "_" ? k?.replace?.(/\_/g, " ") : k;
@@ -1727,6 +1738,7 @@
                                                 use:addImage="{anime.bannerImageUrl ||
                                                     anime.trailerThumbnailUrl ||
                                                     emptyImage}"
+                                                on:pointerdown="{reloadImage}"
                                                 loading="lazy"
                                                 width="640px"
                                                 height="360px"
@@ -2412,6 +2424,7 @@
                                                     anime.bannerImageUrl ||
                                                     anime.trailerThumbnailUrl ||
                                                     emptyImage}"
+                                                on:pointerdown="{reloadImage}"
                                                 loading="lazy"
                                                 width="150px"
                                                 height="210px"
@@ -3289,7 +3302,7 @@
     .tags-info-content {
         flex-wrap: wrap;
         flex-direction: column;
-        height: 72px !important;
+        max-height: 72px !important;
     }
 
     .tags-info-content > span {
