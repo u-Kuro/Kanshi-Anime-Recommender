@@ -59,7 +59,7 @@
 
     let mostVisiblePopupHeader,
         currentHeaderIdx,
-        currentYtPlayer,
+        lastYTPlayer,
         popupWrapper,
         popupContainer,
         navContainerEl,
@@ -217,6 +217,12 @@
         }
     });
 
+    function getYTPlayerState(state) {
+        try {
+            return YT.PlayerState[state]
+        } catch {}
+    }
+
     let afterImmediateScrollUponPopupVisible;
     popupVisible.subscribe(async (val) => {
         if (
@@ -289,11 +295,8 @@
                         if (
                             $inApp &&
                             !manuallyPausedTrailers?.[ytId] &&
-                            (($autoPlay &&
-                                $ytPlayers[i]?.ytPlayer?.getPlayerState?.() !==
-                                    0) ||
-                                $ytPlayers[i]?.ytPlayer?.getPlayerState?.() ===
-                                    2)
+                            ($ytPlayers[i]?.ytPlayer?.getPlayerState?.() !== (getYTPlayerState("ENDED")??0) ||
+                                $ytPlayers[i]?.ytPlayer?.getPlayerState?.() === (getYTPlayerState("PAUSED")??2))
                         ) {
                             await tick();
                             prePlayYtPlayer($ytPlayers[i]?.ytPlayer);
@@ -340,11 +343,15 @@
             removeClass(popupContainer, "show");
             requestImmediate(() => {
                 // Stop All Player
+                let visibleTrailer = mostVisiblePopupHeader?.querySelector?.(".trailer");
                 $ytPlayers.forEach(({ ytPlayer }) => {
                     let ytId = ytPlayer?.g?.id;
                     if (ytId && !deletingTrailers?.[ytId]) {
                         autoPausedTrailers[ytId] = true;
                         ytPlayer?.pauseVideo?.();
+                    }
+                    if (visibleTrailer === ytPlayer?.g) {
+                        getCurrentAutoPlay(ytPlayer)
                     }
                 });
                 removeClass(navContainerEl, "hide");
@@ -435,27 +442,37 @@
                     removeLocalStorage("autoPlay");
                 });
             }
-            if (val === true) {
-                await tick();
-                if (!$popupVisible) return;
-                let visibleTrailer =
-                    mostVisiblePopupHeader?.querySelector?.(".trailer");
-                for (let i = 0, l = $ytPlayers?.length; i < l; i++) {
-                    let ytId = $ytPlayers[i]?.ytPlayer?.g?.id;
-                    if (
-                        $ytPlayers[i]?.ytPlayer?.g === visibleTrailer &&
-                        $inApp &&
-                        !manuallyPausedTrailers?.[ytId] &&
-                        $ytPlayers[i]?.ytPlayer?.getPlayerState?.() !== 0
-                    ) {
-                        prePlayYtPlayer($ytPlayers[i]?.ytPlayer);
+            await tick();
+            if (!$popupVisible) return;
+            let visibleTrailer = mostVisiblePopupHeader?.querySelector?.(".trailer");
+            for (let i = 0, l = $ytPlayers?.length; i < l; i++) {
+                let ytId = $ytPlayers[i]?.ytPlayer?.g?.id;
+                if (
+                    $ytPlayers[i]?.ytPlayer?.g === visibleTrailer &&
+                    $inApp &&
+                    !manuallyPausedTrailers?.[ytId] &&
+                    $ytPlayers[i]?.ytPlayer?.getPlayerState?.() !== (getYTPlayerState("ENDED")??0)
+                ) {
+                    if (val === true) {
+                        const isMuted = $ytPlayers[i]?.ytPlayer?.isMuted?.()
+                        if (isMuted === true) {
+                            $ytPlayers[i]?.ytPlayer?.seekTo?.(0, true)
+                        }
+                        prePlayYtPlayer($ytPlayers[i]?.ytPlayer, false);
                         $ytPlayers[i]?.ytPlayer?.playVideo?.();
                     } else {
-                        let ytId = $ytPlayers[i]?.ytPlayer?.g?.id;
-                        if (ytId && !deletingTrailers?.[ytId]) {
-                            autoPausedTrailers[ytId] = true;
-                            $ytPlayers[i]?.ytPlayer?.pauseVideo?.();
-                        }
+                        $ytPlayers[i]?.ytPlayer?.mute()
+                    }
+                } else {
+                    let ytId = $ytPlayers[i]?.ytPlayer?.g?.id;
+                    if (ytId && !deletingTrailers?.[ytId]) {
+                        autoPausedTrailers[ytId] = true;
+                        $ytPlayers[i]?.ytPlayer?.pauseVideo?.();
+                    }
+                    if (val === true) {
+                        $ytPlayers[i]?.ytPlayer?.unMute?.();
+                    } else {
+                        $ytPlayers[i]?.ytPlayer?.mute()
                     }
                 }
             }
@@ -521,10 +538,11 @@
                     let ytId = trailerEl?.id;
                     if (ytId && !deletingTrailers?.[ytId]) {
                         if (visibleTrailer === trailerEl) {
-                            if (ytPlayer?.getPlayerState?.() === 1) {
+                            if (ytPlayer?.getPlayerState?.() === (getYTPlayerState("PLAYING")??1)) {
                                 delete autoPausedTrailers?.[ytId];
                                 manuallyPausedTrailers[ytId] = true;
                                 ytPlayer?.pauseVideo?.();
+                                getCurrentAutoPlay(ytPlayer)
                             } else if ($inApp) {
                                 prePlayYtPlayer(ytPlayer);
                                 ytPlayer?.playVideo?.();
@@ -648,66 +666,22 @@
             }
             // Replay Most Visible Trailer
             for (let i = 0, l = $ytPlayers?.length; i < l; i++) {
-                if (
-                    $ytPlayers[i]?.ytPlayer?.g === visibleTrailer &&
-                    $ytPlayers[i]?.ytPlayer?.getPlayerState?.() !== 1
-                ) {
-                    await tick();
-                    let ytId = $ytPlayers[i]?.ytPlayer?.g?.id;
-                    if (
-                        $popupVisible &&
-                        $inApp &&
-                        !manuallyPausedTrailers?.[ytId] &&
-                        (($autoPlay &&
-                            $ytPlayers[i]?.ytPlayer?.getPlayerState?.() !==
-                                0) ||
-                            $ytPlayers[i]?.ytPlayer?.getPlayerState?.() === 2)
-                    ) {
-                        prePlayYtPlayer($ytPlayers[i]?.ytPlayer);
-                        $ytPlayers[i]?.ytPlayer?.playVideo?.();
-                    } else {
-                        if (!$autoPlay) {
-                            let ytPlayer = $ytPlayers?.[i]?.ytPlayer;
-                            let trailerEl = ytPlayer?.g;
-                            if (
-                                trailerEl &&
-                                ytPlayer?.getPlayerState?.() != null &&
-                                ytPlayer?.getPlayerState?.() !== -1
-                            ) {
-                                let popupHeader = trailerEl?.parentElement;
-                                let popupImg =
-                                    popupHeader?.querySelector?.(".popup-img");
-                                addClass(popupImg, "fade-out");
-                                removeClass(popupHeader, "loader");
-                                removeClass(trailerEl, "display-none");
-                                requestImmediate(() => {
-                                    addClass(popupImg, "display-none");
-                                    removeClass(popupImg, "fade-out");
-                                }, 200);
-                            }
-                        }
-                    }
-                } else if ($ytPlayers[i]?.ytPlayer?.g !== visibleTrailer) {
-                    if (!$autoPlay) {
-                        let ytPlayer = $ytPlayers?.[i]?.ytPlayer;
-                        let trailerEl = ytPlayer?.g;
+                if ($ytPlayers[i]?.ytPlayer?.g === visibleTrailer) {
+                    if ($ytPlayers[i]?.ytPlayer?.getPlayerState?.() !== (getYTPlayerState("PLAYING")??1)) {
+                        await tick();
+                        let ytId = $ytPlayers[i]?.ytPlayer?.g?.id;
                         if (
-                            trailerEl &&
-                            ytPlayer?.getPlayerState?.() != null &&
-                            ytPlayer?.getPlayerState?.() !== -1
+                            $popupVisible &&
+                            $inApp &&
+                            !manuallyPausedTrailers?.[ytId] &&
+                            (($ytPlayers[i]?.ytPlayer?.getPlayerState?.() !== (getYTPlayerState("ENDED")??0)) ||
+                                $ytPlayers[i]?.ytPlayer?.getPlayerState?.() === (getYTPlayerState("PAUSED")??2))
                         ) {
-                            let popupHeader = trailerEl?.parentElement;
-                            let popupImg =
-                                popupHeader?.querySelector?.(".popup-img");
-                            addClass(popupImg, "fade-out");
-                            removeClass(popupHeader, "loader");
-                            removeClass(trailerEl, "display-none");
-                            requestImmediate(() => {
-                                addClass(popupImg, "display-none");
-                                removeClass(popupImg, "fade-out");
-                            }, 200);
+                            prePlayYtPlayer($ytPlayers[i]?.ytPlayer);
+                            $ytPlayers[i]?.ytPlayer?.playVideo?.();
                         }
                     }
+                } else {
                     let ytId = $ytPlayers[i]?.ytPlayer?.g?.id;
                     if (ytId && !deletingTrailers?.[ytId]) {
                         autoPausedTrailers[ytId] = true;
@@ -868,7 +842,7 @@
         if (
             ytId &&
             !deletingTrailers?.[ytId] &&
-            _ytPlayer?.getPlayerState?.() === 2
+            _ytPlayer?.getPlayerState?.() === (getYTPlayerState("PAUSED")??2)
         ) {
             if (!autoPausedTrailers?.[ytId]) {
                 manuallyPausedTrailers[ytId] = true;
@@ -879,27 +853,26 @@
             delete manuallyPausedTrailers?.[ytId];
             delete autoPausedTrailers?.[ytId];
         }
-        if (_ytPlayer?.getPlayerState?.() === 0) {
+        if (_ytPlayer?.getPlayerState?.() === (getYTPlayerState("ENDED")??0)) {
             if (loopedAnimeID != null) {
                 if (videoLoops[loopedAnimeID]) {
                     clearTimeout(videoLoops[loopedAnimeID]);
                     videoLoops[loopedAnimeID] = null;
                 }
+                getCurrentAutoPlay(_ytPlayer)
                 videoLoops[loopedAnimeID] = setTimeout(() => {
                     _ytPlayer?.stopVideo?.();
                     let state = _ytPlayer?.getPlayerState?.();
-                    let canReplay = state === 5 || state === 0;
+                    let canReplay = state === (getYTPlayerState("CUED")??5) || state === (getYTPlayerState("ENDED")??0);
                     if (
                         mostVisiblePopupHeader === popupHeader &&
                         canReplay &&
                         _ytPlayer?.g &&
                         $inApp &&
-                        $popupVisible &&
-                        $autoPlay
+                        $popupVisible
                     ) {
+                        prePlayYtPlayer(_ytPlayer);
                         _ytPlayer?.playVideo?.();
-                    } else {
-                        _ytPlayer?.stopVideo?.();
                     }
                 }, 30000); // Play Again after 30 seconds
             }
@@ -907,7 +880,7 @@
             clearTimeout(videoLoops[loopedAnimeID]);
             videoLoops[loopedAnimeID] = null;
         }
-        if (_ytPlayer?.getPlayerState?.() === 1) {
+        if (_ytPlayer?.getPlayerState?.() === (getYTPlayerState("PLAYING")??1)) {
             if (
                 trailerEl?.classList?.contains?.("display-none") ||
                 !popupImg?.classList?.contains?.("display-none")
@@ -921,7 +894,6 @@
                         }
                     }
                 });
-                currentYtPlayer = _ytPlayer;
                 addClass(popupImg, "fade-out");
                 removeClass(popupHeader, "loader");
                 removeClass(trailerEl, "display-none");
@@ -941,7 +913,7 @@
         let animeList = $loadedAnimeLists[$selectedCategory].animeList;
         let anime = animeList?.[getChildIndex(popupContent) ?? -1];
         if (
-            ytPlayer?.getPlayerState?.() === -1 ||
+            ytPlayer?.getPlayerState?.() === (getYTPlayerState("UNSTARTED")??-1) ||
             trailerEl.tagName !== "IFRAME" ||
             !isOnline
         ) {
@@ -960,16 +932,6 @@
         } else {
             // Play Most Visible when 1 Succeed
             trailerEl?.setAttribute?.("loading", "lazy");
-            if (!$autoPlay) {
-                let popupImg = popupHeader?.querySelector?.(".popup-img");
-                addClass(popupImg, "fade-out");
-                removeClass(popupHeader, "loader");
-                removeClass(trailerEl, "display-none");
-                requestImmediate(() => {
-                    addClass(popupImg, "display-none");
-                    removeClass(popupImg, "fade-out");
-                }, 200);
-            }
             playMostVisibleTrailer();
             if (anime?.id) {
                 delete failingTrailers[anime.id];
@@ -977,17 +939,10 @@
             }
         }
     }
-    function prePlayYtPlayer(ytPlayer) {
-        if (currentYtPlayer?.isMuted && currentYtPlayer?.getVolume) {
-            let isMuted = currentYtPlayer?.isMuted?.();
-            let ytVolume = currentYtPlayer?.getVolume?.();
-            if (typeof isMuted == "boolean") {
-                if (isMuted) {
-                    ytPlayer?.mute?.();
-                } else {
-                    ytPlayer?.unMute?.();
-                }
-            }
+
+    function prePlayYtPlayer(ytPlayer, recheckLastAutoPlay = true) {
+        if (lastYTPlayer?.getVolume) {
+            let ytVolume = lastYTPlayer?.getVolume?.();            
             if (typeof ytVolume === "number") {
                 if (savedYtVolume !== ytVolume) {
                     savedYtVolume = ytVolume;
@@ -995,6 +950,39 @@
                 }
                 ytPlayer?.setVolume?.(savedYtVolume);
             }
+        }
+   
+        if (recheckLastAutoPlay) {
+            if (!lastYTPlayer) {
+                lastYTPlayer = ytPlayer
+            } else if (
+                lastYTPlayer !== ytPlayer
+            ) {
+                getCurrentAutoPlay(lastYTPlayer)
+                lastYTPlayer = ytPlayer
+            }
+        }
+        if ($autoPlay) {
+            ytPlayer?.unMute?.();
+        } else {
+            ytPlayer?.mute?.();
+        }
+    }
+
+    function getCurrentAutoPlay(ytPlayer) {
+        const isMuted = ytPlayer?.isMuted?.();
+        const state = ytPlayer?.getPlayerState?.()
+        if (
+            ytPlayer?.g && 
+            (
+                state === (getYTPlayerState("PAUSED")??2) ||
+                state === (getYTPlayerState("PLAYING")??1) ||
+                state === (getYTPlayerState("ENDED")??0) ||
+                state === (getYTPlayerState("BUFFERING")??3)
+            ) &&
+            typeof isMuted === "boolean"
+        ) {
+            $autoPlay = !isMuted
         }
     }
 
@@ -1163,9 +1151,8 @@
                 if (
                     $ytPlayers[i]?.ytPlayer?.g === visibleTrailer &&
                     !manuallyPausedTrailers?.[ytId] &&
-                    (($autoPlay &&
-                        $ytPlayers[i]?.ytPlayer?.getPlayerState?.() !== 0) ||
-                        $ytPlayers[i]?.ytPlayer?.getPlayerState?.() === 2)
+                    ($ytPlayers[i]?.ytPlayer?.getPlayerState?.() !== (getYTPlayerState("ENDED")??0) ||
+                        $ytPlayers[i]?.ytPlayer?.getPlayerState?.() === (getYTPlayerState("PAUSED")??2))
                 ) {
                     prePlayYtPlayer($ytPlayers[i]?.ytPlayer);
                     $ytPlayers[i]?.ytPlayer?.playVideo?.();
@@ -1183,6 +1170,9 @@
                 if (ytId && !deletingTrailers?.[ytId]) {
                     autoPausedTrailers[ytId] = true;
                     $ytPlayers[i]?.ytPlayer?.pauseVideo?.();
+                }
+                if (visibleTrailer === $ytPlayers[i]?.ytPlayer?.g) {
+                    getCurrentAutoPlay($ytPlayers[i]?.ytPlayer)
                 }
             }
         }
@@ -1201,8 +1191,8 @@
                 if (
                     $ytPlayers[i]?.ytPlayer?.g === visibleTrailer &&
                     !manuallyPausedTrailers?.[ytId] &&
-                    ($autoPlay ||
-                        $ytPlayers[i]?.ytPlayer?.getPlayerState?.() === 2)
+                    ($ytPlayers[i]?.ytPlayer?.getPlayerState?.() !== (getYTPlayerState("ENDED")??0) ||
+                        $ytPlayers[i]?.ytPlayer?.getPlayerState?.() === (getYTPlayerState("PAUSED")??2))
                 ) {
                     prePlayYtPlayer($ytPlayers[i]?.ytPlayer);
                     $ytPlayers[i]?.ytPlayer?.playVideo?.();
@@ -1220,6 +1210,9 @@
                 if (ytId && !deletingTrailers?.[ytId]) {
                     autoPausedTrailers[ytId] = true;
                     $ytPlayers[i]?.ytPlayer?.pauseVideo?.();
+                }
+                if (visibleTrailer === $ytPlayers[i]?.ytPlayer?.g) {
+                    getCurrentAutoPlay($ytPlayers[i]?.ytPlayer)
                 }
             }
         }
@@ -1259,7 +1252,7 @@
                 $ytPlayers?.filter?.(({ ytPlayer }) => {
                     if (
                         typeof ytPlayer?.playVideo === "function" &&
-                        ytPlayer?.getPlayerState?.() !== -1 &&
+                        ytPlayer?.getPlayerState?.() !== (getYTPlayerState("UNSTARTED")??-1) &&
                         !isNaN(ytPlayer?.getPlayerState?.())
                     ) {
                         return true;
@@ -3130,6 +3123,9 @@
         -webkit-line-clamp: 8;
         -webkit-box-orient: vertical;
         overflow: hidden;
+        position: relative;
+        transform: translateY(-50%);
+        top: 50%;
     }
 
     :global(.anime-description *) {
