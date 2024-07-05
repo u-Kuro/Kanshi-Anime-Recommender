@@ -44,7 +44,6 @@ import android.content.pm.ResolveInfo;
 import android.content.res.ColorStateList;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.net.ConnectivityManager;
 import android.net.Network;
@@ -60,6 +59,8 @@ import android.provider.Settings;
 import android.util.Log;
 import android.view.View;
 import android.view.Window;
+import android.view.WindowInsets;
+import android.view.WindowInsetsController;
 import android.view.WindowManager;
 import android.webkit.ConsoleMessage;
 import android.webkit.CookieManager;
@@ -113,7 +114,6 @@ public class MainActivity extends AppCompatActivity {
     public boolean permissionIsAsked = false;
     public SharedPreferences prefs;
     private SharedPreferences.Editor prefsEdit;
-    private int currentOrientation;
     private ValueCallback<Uri[]> mUploadMessage;
     private String exportPath;
     public MediaWebView webView;
@@ -244,9 +244,17 @@ public class MainActivity extends AppCompatActivity {
         wakeLock = ((PowerManager) getSystemService(Context.POWER_SERVICE)).newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "KeepAwake:");
         wakeLock.acquire(10 * 60 * 1000L);
         // Others
-        currentOrientation = getResources().getConfiguration().orientation;
-
         // Show status bar
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            getWindow().getAttributes().layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            final WindowInsetsController insetsController = getWindow().getInsetsController();
+            if (insetsController != null) {
+                insetsController.setSystemBarsBehavior(WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
+            }
+        }
+        getWindow().clearFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
         getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
         getWindow().getDecorView().setBackgroundColor(Color.BLACK);
 
@@ -273,11 +281,7 @@ public class MainActivity extends AppCompatActivity {
         });
 
         // Orientation
-        if (currentOrientation == Configuration.ORIENTATION_LANDSCAPE) {
-            progressbar.setProgressBackgroundTintList(ColorStateList.valueOf(Color.BLACK));
-            getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
-            getWindow().setStatusBarColor(Color.BLACK);
-        }
+        recheckStatusBar();
 
         // Add WebView on Layout
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -477,11 +481,6 @@ public class MainActivity extends AppCompatActivity {
         });
 
         webView.setWebChromeClient(new WebChromeClient() {
-            private View mCustomView;
-            private CustomViewCallback mCustomViewCallback;
-            private int mOriginalOrientation;
-            private int mOriginalSystemUiVisibility;
-
             // Import
             @Override
             public boolean onShowFileChooser(WebView webView, ValueCallback<Uri[]> filePathCallback, FileChooserParams fileChooserParams) {
@@ -502,40 +501,31 @@ public class MainActivity extends AppCompatActivity {
                 }
                 return true;
             }
-
             // Fullscreen
-            @Override
-            public Bitmap getDefaultVideoPoster() {
-                if (mCustomView == null) {
-                    return null;
-                }
-                return BitmapFactory.decodeResource(getApplicationContext().getResources(), 2130837573);
-            }
-
+            View fullscreen = null;
             @Override
             public void onHideCustomView() {
-                ((FrameLayout) getWindow().getDecorView()).removeView(this.mCustomView);
-                this.mCustomView = null;
-                getWindow().getDecorView().setSystemUiVisibility(this.mOriginalSystemUiVisibility);
-                setRequestedOrientation(this.mOriginalOrientation);
-                this.mCustomViewCallback.onCustomViewHidden();
-                this.mCustomViewCallback = null;
-            }
-
-            @Override
-            public void onShowCustomView(View paramView, CustomViewCallback paramCustomViewCallback) {
-                if (this.mCustomView != null) {
-                    onHideCustomView();
-                    return;
+                if (fullscreen != null) {
+                    fullscreen.setVisibility(View.GONE);
                 }
-                this.mCustomView = paramView;
-                this.mOriginalSystemUiVisibility = getWindow().getDecorView().getSystemUiVisibility();
-                this.mOriginalOrientation = getRequestedOrientation();
-                this.mCustomViewCallback = paramCustomViewCallback;
-                ((FrameLayout) getWindow().getDecorView()).addView(this.mCustomView, new FrameLayout.LayoutParams(-1, -1));
-                getWindow().getDecorView().setSystemUiVisibility(3846 | View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
+                recheckStatusBar();
+                if (webView != null) {
+                    webView.setVisibility(View.VISIBLE);
+                }
             }
-
+            @Override
+            public void onShowCustomView(View view, CustomViewCallback callback) {
+                if (webView == null) return;
+                FrameLayout decorView = (FrameLayout) getWindow().getDecorView();
+                if (fullscreen != null) {
+                    decorView.removeView(fullscreen);
+                }
+                fullscreen = view;
+                decorView.addView(fullscreen, new FrameLayout.LayoutParams(-1, -1));
+                webView.setVisibility(View.GONE);
+                hideStatusBar();
+                fullscreen.setVisibility(View.VISIBLE);
+            }
             public void onProgressChanged(WebView view, int progress) {
                 if (webViewIsLoaded) return;
                 int newProgress = (int) Math.pow(10, 4) * progress;
@@ -702,12 +692,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onConfigurationChanged(@NonNull Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
-        currentOrientation = newConfig.orientation;
-        if (currentOrientation == Configuration.ORIENTATION_LANDSCAPE) {
-            getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
-        } else {
-            getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
-        }
+        recheckStatusBar();
         getWindow().setStatusBarColor(Color.BLACK);
         if (progressbar!=null) {
             progressbar.setProgressBackgroundTintList(ColorStateList.valueOf(Color.BLACK));
@@ -1423,6 +1408,37 @@ public class MainActivity extends AppCompatActivity {
             currentToast.cancel();
         }
         currentToast = null;
+    }
+    public void recheckStatusBar() {
+        if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            hideStatusBar();
+        } else {
+            showStatusBar();
+        }
+    }
+    public void showStatusBar() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            final WindowInsetsController insetsController = getWindow().getInsetsController();
+            if (insetsController != null) {
+                insetsController.show(WindowInsets.Type.statusBars());
+            }
+        }
+        getWindow().clearFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
+        getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+    }
+    public void hideStatusBar() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            final WindowInsetsController insetsController = getWindow().getInsetsController();
+            if (insetsController != null) {
+                insetsController.hide(WindowInsets.Type.statusBars());
+            }
+            getWindow().setFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS, WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
+        } else {
+            getWindow().setFlags(
+                WindowManager.LayoutParams.FLAG_FULLSCREEN,
+                WindowManager.LayoutParams.FLAG_FULLSCREEN
+            );
+        }
     }
 
     @RequiresApi(api = Build.VERSION_CODES.N)

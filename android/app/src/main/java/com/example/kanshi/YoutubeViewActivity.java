@@ -10,13 +10,14 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.view.WindowInsets;
+import android.view.WindowInsetsController;
 import android.view.WindowManager;
 import android.webkit.ConsoleMessage;
 import android.webkit.CookieManager;
@@ -117,6 +118,16 @@ public class YoutubeViewActivity extends AppCompatActivity {
         ProgressBar progressbar = findViewById(R.id.progressbar);
 
         // Show status bar
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            getWindow().getAttributes().layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            final WindowInsetsController insetsController = getWindow().getInsetsController();
+            if (insetsController != null) {
+                insetsController.setSystemBarsBehavior(WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
+            }
+        }
+        getWindow().clearFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
         getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
         getWindow().getDecorView().setBackgroundColor(Color.BLACK);
 
@@ -175,15 +186,10 @@ public class YoutubeViewActivity extends AppCompatActivity {
         });
 
         progressbar.setMax((int) Math.pow(10,6));
-        if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {
-            getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
-        }
+        // Orientation
+        recheckStatusBar();
 
         webView.setWebChromeClient(new WebChromeClient() {
-            private View mCustomView;
-            private CustomViewCallback mCustomViewCallback;
-            private int mOriginalOrientation;
-            private int mOriginalSystemUiVisibility;
             // Import
             @Override
             public boolean onShowFileChooser(WebView webView, ValueCallback<Uri[]> filePathCallback, FileChooserParams fileChooserParams) {
@@ -216,34 +222,29 @@ public class YoutubeViewActivity extends AppCompatActivity {
                 }
             }
             // Fullscreen
-            @Override
-            public Bitmap getDefaultVideoPoster(){
-                if (mCustomView == null) {
-                    return null;
-                }
-                return BitmapFactory.decodeResource(getApplicationContext().getResources(), 2130837573);
-            }
+            View fullscreen = null;
             @Override
             public void onHideCustomView() {
-                ((FrameLayout)getWindow().getDecorView()).removeView(this.mCustomView);
-                this.mCustomView = null;
-                getWindow().getDecorView().setSystemUiVisibility(this.mOriginalSystemUiVisibility);
-                setRequestedOrientation(this.mOriginalOrientation);
-                this.mCustomViewCallback.onCustomViewHidden();
-                this.mCustomViewCallback = null;
+                if (fullscreen != null) {
+                    fullscreen.setVisibility(View.GONE);
+                }
+                recheckStatusBar();
+                if (webView != null) {
+                    webView.setVisibility(View.VISIBLE);
+                }
             }
             @Override
-            public void onShowCustomView(View paramView, CustomViewCallback paramCustomViewCallback) {
-                if (this.mCustomView != null) {
-                    onHideCustomView();
-                    return;
+            public void onShowCustomView(View view, CustomViewCallback callback) {
+                if (webView == null) return;
+                FrameLayout decorView = (FrameLayout) getWindow().getDecorView();
+                if (fullscreen != null) {
+                    decorView.removeView(fullscreen);
                 }
-                this.mCustomView = paramView;
-                this.mOriginalSystemUiVisibility = getWindow().getDecorView().getSystemUiVisibility();
-                this.mOriginalOrientation = getRequestedOrientation();
-                this.mCustomViewCallback = paramCustomViewCallback;
-                ((FrameLayout)getWindow().getDecorView()).addView(this.mCustomView, new FrameLayout.LayoutParams(-1, -1));
-                getWindow().getDecorView().setSystemUiVisibility(3846 | View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
+                fullscreen = view;
+                decorView.addView(fullscreen, new FrameLayout.LayoutParams(-1, -1));
+                webView.setVisibility(View.GONE);
+                hideStatusBar();
+                fullscreen.setVisibility(View.VISIBLE);
             }
             @Override
             public boolean onConsoleMessage(ConsoleMessage consoleMessage) {
@@ -499,11 +500,7 @@ public class YoutubeViewActivity extends AppCompatActivity {
     @Override
     public void onConfigurationChanged(@NonNull Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
-        if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-            getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
-        } else {
-            getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
-        }
+        recheckStatusBar();
     }
     public void destroyWebView() {
         if (webView != null) {
@@ -529,6 +526,37 @@ public class YoutubeViewActivity extends AppCompatActivity {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 webView.getSettings().setOffscreenPreRaster(true);
             }
+        }
+    }
+    public void recheckStatusBar() {
+        if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            hideStatusBar();
+        } else {
+            showStatusBar();
+        }
+    }
+    public void showStatusBar() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            final WindowInsetsController insetsController = getWindow().getInsetsController();
+            if (insetsController != null) {
+                insetsController.show(WindowInsets.Type.statusBars());
+            }
+        }
+        getWindow().clearFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
+        getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+    }
+    public void hideStatusBar() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            final WindowInsetsController insetsController = getWindow().getInsetsController();
+            if (insetsController != null) {
+                insetsController.hide(WindowInsets.Type.statusBars());
+            }
+            getWindow().setFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS, WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
+        } else {
+            getWindow().setFlags(
+                WindowManager.LayoutParams.FLAG_FULLSCREEN,
+                WindowManager.LayoutParams.FLAG_FULLSCREEN
+            );
         }
     }
     public void initAnchor(WebView view) {
