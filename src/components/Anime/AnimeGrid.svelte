@@ -39,7 +39,6 @@
     import { animeLoader } from "../../js/workerUtils.js";
 
     export let mainCategory;
-    let mainEl;
 
     const emptyImage = "data:image/png;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=";
     let originalWindowHeight = screen?.height ? Math.min(screen.height, $trueWindowHeight) : $trueWindowHeight;
@@ -356,7 +355,6 @@
 </script>
 
 <main
-    bind:this="{mainEl}"
     data-category="{mainCategory}"
     class="{(mainCategory === $selectedCategory || mainCategory === ''
         ? 'viewed'
@@ -398,7 +396,7 @@
             }}"
         >
             {#if animeList?.length > 0}
-                {#each animeList as anime, animeIndex ((anime?.id ? anime.id + " " + animeIndex : {}) ?? {})}
+                {#each animeList as anime, animeIndex ((anime?.id != null ? anime.id + " " + animeIndex : {}) ?? {})}
                     {@const loweredFormat = anime.format?.toLowerCase?.()}
                     {@const isManga =
                         loweredFormat === "manga" ||

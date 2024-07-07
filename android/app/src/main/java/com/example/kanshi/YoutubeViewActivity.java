@@ -47,7 +47,7 @@ import java.io.File;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class YoutubeViewActivity extends AppCompatActivity {
-    private MediaWebView webView;
+    private WebView webView;
     private TextView siteName;
     private boolean webViewIsLoaded = false;
     private ValueCallback<Uri[]> mUploadMessage;
@@ -211,8 +211,8 @@ public class YoutubeViewActivity extends AppCompatActivity {
             public void onProgressChanged(WebView view, int progress) {
                 int newProgress = (int) Math.pow(10,4) * progress;
                 ObjectAnimator.ofInt(progressbar, "progress", newProgress)
-                    .setDuration(300)
-                    .start();
+                        .setDuration(300)
+                        .start();
                 if (progress==100) {
                     initAnchor(view);
                     ObjectAnimator animator = ObjectAnimator.ofInt(progressbar, "progress", 0);
@@ -272,9 +272,6 @@ public class YoutubeViewActivity extends AppCompatActivity {
         webSettings.setAllowUniversalAccessFromFileURLs(true);
         webSettings.setMediaPlaybackRequiresUserGesture(true);
         webSettings.setDefaultFontSize(16);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            webSettings.setOffscreenPreRaster(true);
-        }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             webSettings.setAlgorithmicDarkeningAllowed(true);
         }
@@ -330,7 +327,9 @@ public class YoutubeViewActivity extends AppCompatActivity {
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 String url = request.getUrl().toString();
                 boolean isRedirect = Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && request.isRedirect();
-                boolean shouldLoadInAnotherApp = !url.startsWith("http")
+                if (
+                    // Should Load In Another App
+                    !url.startsWith("http")
                     || url.startsWith("https://www.twitter.com")
                     || url.startsWith("https://m.twitter.com")
                     || url.startsWith("https://twitter.com")
@@ -349,8 +348,8 @@ public class YoutubeViewActivity extends AppCompatActivity {
                     || url.startsWith("http://www.facebook.com")
                     || url.startsWith("http://m.facebook.com")
                     || url.startsWith("http://facebook.com")
-                    || url.startsWith("https://wa.me");
-                if (shouldLoadInAnotherApp) {
+                    || url.startsWith("https://wa.me")
+                ) {
                     try {
                         pauseWebView();
                         CustomTabsIntent customTabsIntent;
@@ -386,79 +385,79 @@ public class YoutubeViewActivity extends AppCompatActivity {
                         resumeWebView();
                         Toast.makeText(getApplicationContext(), "Can't open the link.", Toast.LENGTH_LONG).show();
                     }
-                } else {
-                    boolean shouldLoadInCurrentWebView = !webViewIsLoaded // Initial URL
-                        // Youtube Settings
-                        || url.startsWith("https://www.youtube.com/select_site")
-                        || url.startsWith("https://m.youtube.com/select_site")
-                        || url.startsWith("https://youtube.com/select_site")
-                        || url.startsWith("https://www.youtu.be/select_site")
-                        || url.startsWith("https://m.youtu.be/select_site")
-                        || url.startsWith("https://youtu.be/select_site")
-                        || url.startsWith("http://www.youtube.com/select_site")
-                        || url.startsWith("http://m.youtube.com/select_site")
-                        || url.startsWith("http://youtube.com/select_site")
-                        || url.startsWith("http://www.youtu.be/select_site")
-                        || url.startsWith("http://m.youtu.be/select_site")
-                        || url.startsWith("http://youtu.be/select_site");
-                    if (shouldLoadInCurrentWebView) {
-                        return false;
-                    } else {
-                        boolean isYTRedirect = url.startsWith("https://www.youtube.com/redirect")
-                            || url.startsWith("https://m.youtube.com/redirect")
-                            || url.startsWith("https://youtube.com/redirect")
-                            || url.startsWith("https://www.youtu.be/redirect")
-                            || url.startsWith("https://m.youtu.be/redirect")
-                            || url.startsWith("https://youtu.be/redirect")
-                            || url.startsWith("http://www.youtube.com/redirect")
-                            || url.startsWith("http://m.youtube.com/redirect")
-                            || url.startsWith("http://youtube.com/redirect")
-                            || url.startsWith("http://www.youtu.be/redirect")
-                            || url.startsWith("http://m.youtu.be/redirect")
-                            || url.startsWith("http://youtu.be/redirect");
-                        if (isYTRedirect) {
-                            String urlToRedirect = request.getUrl().getQueryParameter("q");
-                            if (urlToRedirect != null && !urlToRedirect.isEmpty()) {
-                                try {
-                                    pauseWebView();
-                                    Uri uri = Uri.parse(urlToRedirect);
-                                    CustomTabsIntent customTabsIntent = new CustomTabsIntent.Builder()
-                                            .setDefaultColorSchemeParams(new CustomTabColorSchemeParams.Builder().setToolbarColor(Color.BLACK).build())
-                                            .setShowTitle(true)
-                                            .build();
-                                    customTabsIntent.launchUrl(YoutubeViewActivity.this, uri);
-                                    overridePendingTransition(R.anim.fade_in, R.anim.remove);
-                                } catch (Exception ignored) {
-                                    resumeWebView();
-                                    Toast.makeText(getApplicationContext(), "Can't open the link.", Toast.LENGTH_LONG).show();
-                                }
-                            } else {
-                                Toast.makeText(getApplicationContext(), "Can't open the link.", Toast.LENGTH_LONG).show();
-                            }
-                        } else {
-                            boolean isYT = url.startsWith("https://www.youtube.com")
-                                || url.startsWith("https://m.youtube.com")
-                                || url.startsWith("https://youtube.com")
-                                || url.startsWith("https://www.youtu.be")
-                                || url.startsWith("https://m.youtu.be")
-                                || url.startsWith("https://youtu.be")
-                                || url.startsWith("http://www.youtube.com")
-                                || url.startsWith("http://m.youtube.com")
-                                || url.startsWith("http://youtube.com")
-                                || url.startsWith("http://www.youtu.be")
-                                || url.startsWith("http://m.youtu.be")
-                                || url.startsWith("http://youtu.be");
-                            if (isYT) {
-                                pauseWebView();
-                                Intent intent = new Intent(YoutubeViewActivity.this, YoutubeViewActivity.class);
-                                intent.putExtra("url", url);
-                                startActivity(intent);
-                                overridePendingTransition(R.anim.fade_in, R.anim.none);
-                            } else {
-                                return false;
-                            }
+                } else if (
+                    // Should Load In Current WebView
+                    !webViewIsLoaded // Initial URL
+                    // Youtube Settings
+                    || url.startsWith("https://www.youtube.com/select_site")
+                    || url.startsWith("https://m.youtube.com/select_site")
+                    || url.startsWith("https://youtube.com/select_site")
+                    || url.startsWith("https://www.youtu.be/select_site")
+                    || url.startsWith("https://m.youtu.be/select_site")
+                    || url.startsWith("https://youtu.be/select_site")
+                    || url.startsWith("http://www.youtube.com/select_site")
+                    || url.startsWith("http://m.youtube.com/select_site")
+                    || url.startsWith("http://youtube.com/select_site")
+                    || url.startsWith("http://www.youtu.be/select_site")
+                    || url.startsWith("http://m.youtu.be/select_site")
+                    || url.startsWith("http://youtu.be/select_site")
+                ) {
+                    return false;
+                } else if (
+                    // Is YouTube Redirect
+                    url.startsWith("https://www.youtube.com/redirect")
+                    || url.startsWith("https://m.youtube.com/redirect")
+                    || url.startsWith("https://youtube.com/redirect")
+                    || url.startsWith("https://www.youtu.be/redirect")
+                    || url.startsWith("https://m.youtu.be/redirect")
+                    || url.startsWith("https://youtu.be/redirect")
+                    || url.startsWith("http://www.youtube.com/redirect")
+                    || url.startsWith("http://m.youtube.com/redirect")
+                    || url.startsWith("http://youtube.com/redirect")
+                    || url.startsWith("http://www.youtu.be/redirect")
+                    || url.startsWith("http://m.youtu.be/redirect")
+                    || url.startsWith("http://youtu.be/redirect")
+                ) {
+                    String urlToRedirect = request.getUrl().getQueryParameter("q");
+                    if (urlToRedirect != null && !urlToRedirect.isEmpty()) {
+                        try {
+                            pauseWebView();
+                            Uri uri = Uri.parse(urlToRedirect);
+                            CustomTabsIntent customTabsIntent = new CustomTabsIntent.Builder()
+                                    .setDefaultColorSchemeParams(new CustomTabColorSchemeParams.Builder().setToolbarColor(Color.BLACK).build())
+                                    .setShowTitle(true)
+                                    .build();
+                            customTabsIntent.launchUrl(YoutubeViewActivity.this, uri);
+                            overridePendingTransition(R.anim.fade_in, R.anim.remove);
+                        } catch (Exception ignored) {
+                            resumeWebView();
+                            Toast.makeText(getApplicationContext(), "Can't open the link.", Toast.LENGTH_LONG).show();
                         }
+                    } else {
+                        Toast.makeText(getApplicationContext(), "Can't open the link.", Toast.LENGTH_LONG).show();
                     }
+                } else if (
+                    // Is Another YouTube Link
+                    url.startsWith("https://www.youtube.com")
+                    || url.startsWith("https://m.youtube.com")
+                    || url.startsWith("https://youtube.com")
+                    || url.startsWith("https://www.youtu.be")
+                    || url.startsWith("https://m.youtu.be")
+                    || url.startsWith("https://youtu.be")
+                    || url.startsWith("http://www.youtube.com")
+                    || url.startsWith("http://m.youtube.com")
+                    || url.startsWith("http://youtube.com")
+                    || url.startsWith("http://www.youtu.be")
+                    || url.startsWith("http://m.youtu.be")
+                    || url.startsWith("http://youtu.be")
+                ) {
+                    pauseWebView();
+                    Intent intent = new Intent(YoutubeViewActivity.this, YoutubeViewActivity.class);
+                    intent.putExtra("url", url);
+                    startActivity(intent);
+                    overridePendingTransition(R.anim.fade_in, R.anim.none);
+                } else {
+                    return false;
                 }
                 // Unknown redirect
                 return !isRedirect;
@@ -512,9 +511,6 @@ public class YoutubeViewActivity extends AppCompatActivity {
     public void pauseWebView() {
         if (webView != null) {
             autoPlayVideo(webView);
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                webView.getSettings().setOffscreenPreRaster(false);
-            }
             webView.onPause();
             webView.pauseTimers();
         }
@@ -523,9 +519,6 @@ public class YoutubeViewActivity extends AppCompatActivity {
         if (webView!=null) {
             webView.resumeTimers();
             webView.onResume();
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                webView.getSettings().setOffscreenPreRaster(true);
-            }
         }
     }
     public void recheckStatusBar() {
@@ -554,8 +547,8 @@ public class YoutubeViewActivity extends AppCompatActivity {
             getWindow().setFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS, WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
         } else {
             getWindow().setFlags(
-                WindowManager.LayoutParams.FLAG_FULLSCREEN,
-                WindowManager.LayoutParams.FLAG_FULLSCREEN
+                    WindowManager.LayoutParams.FLAG_FULLSCREEN,
+                    WindowManager.LayoutParams.FLAG_FULLSCREEN
             );
         }
     }

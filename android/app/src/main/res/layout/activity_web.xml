@@ -104,7 +104,7 @@
             </androidx.appcompat.widget.Toolbar>
         </com.google.android.material.appbar.AppBarLayout>
 
-        <com.example.kanshi.MediaWebView
+        <WebView
             android:id="@+id/webView"
             android:layout_width="match_parent"
             android:layout_height="match_parent"

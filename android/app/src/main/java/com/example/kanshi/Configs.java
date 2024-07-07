@@ -20,7 +20,6 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class Configs {
     public static final boolean OWNER = false;
-
     public static String TOKEN = null;
     @RequiresApi(api = Build.VERSION_CODES.R)
     public static String getTOKEN(String directory) {

@@ -35,7 +35,6 @@
         animeIdxRemoved,
         shownAllInList,
         dataStatus,
-        initData,
         updateRecommendationList,
         listUpdateAvailable,
         popupIsGoingBack,
@@ -343,15 +342,11 @@
             removeClass(popupContainer, "show");
             requestImmediate(() => {
                 // Stop All Player
-                let visibleTrailer = mostVisiblePopupHeader?.querySelector?.(".trailer");
                 $ytPlayers.forEach(({ ytPlayer }) => {
                     let ytId = ytPlayer?.g?.id;
                     if (ytId && !deletingTrailers?.[ytId]) {
                         autoPausedTrailers[ytId] = true;
                         ytPlayer?.pauseVideo?.();
-                    }
-                    if (visibleTrailer === ytPlayer?.g) {
-                        getCurrentAutoPlay(ytPlayer)
                     }
                 });
                 removeClass(navContainerEl, "hide");
@@ -446,6 +441,7 @@
             if (!$popupVisible) return;
             let visibleTrailer = mostVisiblePopupHeader?.querySelector?.(".trailer");
             for (let i = 0, l = $ytPlayers?.length; i < l; i++) {
+                delete $ytPlayers?.[i]?.ytPlayer?.KanshiIsMuteApplied
                 let ytId = $ytPlayers[i]?.ytPlayer?.g?.id;
                 if (
                     $ytPlayers[i]?.ytPlayer?.g === visibleTrailer &&
@@ -458,10 +454,10 @@
                         if (isMuted === true) {
                             $ytPlayers[i]?.ytPlayer?.seekTo?.(0, true)
                         }
-                        prePlayYtPlayer($ytPlayers[i]?.ytPlayer, false);
+                        prePlayYtPlayer($ytPlayers[i]?.ytPlayer);
                         $ytPlayers[i]?.ytPlayer?.playVideo?.();
                     } else {
-                        $ytPlayers[i]?.ytPlayer?.mute()
+                        $ytPlayers[i]?.ytPlayer?.mute?.()
                     }
                 } else {
                     let ytId = $ytPlayers[i]?.ytPlayer?.g?.id;
@@ -472,7 +468,7 @@
                     if (val === true) {
                         $ytPlayers[i]?.ytPlayer?.unMute?.();
                     } else {
-                        $ytPlayers[i]?.ytPlayer?.mute()
+                        $ytPlayers[i]?.ytPlayer?.mute?.()
                     }
                 }
             }
@@ -539,10 +535,8 @@
                     if (ytId && !deletingTrailers?.[ytId]) {
                         if (visibleTrailer === trailerEl) {
                             if (ytPlayer?.getPlayerState?.() === (getYTPlayerState("PLAYING")??1)) {
-                                delete autoPausedTrailers?.[ytId];
                                 manuallyPausedTrailers[ytId] = true;
                                 ytPlayer?.pauseVideo?.();
-                                getCurrentAutoPlay(ytPlayer)
                             } else if ($inApp) {
                                 prePlayYtPlayer(ytPlayer);
                                 ytPlayer?.playVideo?.();
@@ -563,20 +557,21 @@
                             let ytId = node?.id;
                             if (ytId && !deletingTrailers?.[ytId]) {
                                 deletingTrailers[ytId] = true;
-                                delete manuallyPausedTrailers?.[ytId];
-                                delete autoPausedTrailers?.[ytId];
                                 $ytPlayers =
-                                    $ytPlayers?.reduce?.((acc, e) => {
+                                    $ytPlayers?.filter?.((e) => {
+                                        const recTrailerEl = e?.ytPlayer?.g;
                                         if (
-                                            e?.ytPlayer?.g === node ||
-                                            e?.ytPlayer?.g?.id === ytId
+                                            recTrailerEl === node ||
+                                            recTrailerEl?.id === ytId
                                         ) {
                                             e?.ytPlayer?.destroy?.();
+                                            return false
                                         } else {
-                                            acc.push(e);
+                                            return true
                                         }
-                                        return acc;
-                                    }, []) || [];
+                                    }) || [];
+                                delete manuallyPausedTrailers?.[ytId];
+                                delete autoPausedTrailers?.[ytId];
                                 delete deletingTrailers?.[ytId];
                             }
                         }
@@ -782,13 +777,13 @@
                 "yt-player" + Date.now() + Math.random(),
             );
             let ytPlayer = new YT.Player(ytPlayerEl, {
+                videoId: youtubeID,
                 playerVars: {
                     cc_lang_pref: "en", // Set preferred caption language to English
                     cc_load_policy: 1, // Set on by default
                     enablejsapi: 1, // Enable the JavaScript API
                     modestbranding: 1, // Enable modest branding (hide the YouTube logo)
                     playsinline: 1, // Enable inline video playback
-                    playlist: youtubeID,
                     rel: 0,
                 },
                 events: {
@@ -839,31 +834,32 @@
         let animeList = $loadedAnimeLists[$selectedCategory].animeList;
         let loopedAnimeID = animeList?.[getChildIndex(popupContent) ?? -1]?.id;
         let ytId = trailerEl?.id;
+        const playerState = _ytPlayer?.getPlayerState?.()
         if (
             ytId &&
             !deletingTrailers?.[ytId] &&
-            _ytPlayer?.getPlayerState?.() === (getYTPlayerState("PAUSED")??2)
+            playerState === (getYTPlayerState("PAUSED")??2)
         ) {
-            if (!autoPausedTrailers?.[ytId]) {
-                manuallyPausedTrailers[ytId] = true;
-            } else {
-                delete manuallyPausedTrailers?.[ytId];
+            // android webview's auto pause
+            // on players can't be known/handled
+            if (!$android && !autoPausedTrailers?.[ytId]) {
+                manuallyPausedTrailers[ytId] = true
             }
         } else {
             delete manuallyPausedTrailers?.[ytId];
             delete autoPausedTrailers?.[ytId];
         }
-        if (_ytPlayer?.getPlayerState?.() === (getYTPlayerState("ENDED")??0)) {
+        
+        if (playerState === (getYTPlayerState("ENDED")??0)) {
             if (loopedAnimeID != null) {
                 if (videoLoops[loopedAnimeID]) {
                     clearTimeout(videoLoops[loopedAnimeID]);
                     videoLoops[loopedAnimeID] = null;
                 }
-                getCurrentAutoPlay(_ytPlayer)
                 videoLoops[loopedAnimeID] = setTimeout(() => {
                     _ytPlayer?.stopVideo?.();
-                    let state = _ytPlayer?.getPlayerState?.();
-                    let canReplay = state === (getYTPlayerState("CUED")??5) || state === (getYTPlayerState("ENDED")??0);
+                    let currentPlayerState = _ytPlayer?.getPlayerState?.();
+                    let canReplay = currentPlayerState === (getYTPlayerState("CUED")??5) || currentPlayerState === (getYTPlayerState("ENDED")??0);
                     if (
                         mostVisiblePopupHeader === popupHeader &&
                         canReplay &&
@@ -880,7 +876,7 @@
             clearTimeout(videoLoops[loopedAnimeID]);
             videoLoops[loopedAnimeID] = null;
         }
-        if (_ytPlayer?.getPlayerState?.() === (getYTPlayerState("PLAYING")??1)) {
+        if (playerState === (getYTPlayerState("PLAYING")??1)) {
             if (
                 trailerEl?.classList?.contains?.("display-none") ||
                 !popupImg?.classList?.contains?.("display-none")
@@ -917,7 +913,7 @@
             trailerEl.tagName !== "IFRAME" ||
             !isOnline
         ) {
-            if (anime?.id) {
+            if (anime?.id != null) {
                 failingTrailers[anime.id] = true;
             }
             $ytPlayers =
@@ -930,59 +926,56 @@
             let popupImg = popupHeader?.querySelector?.(".popup-img");
             removeClass(popupImg, "display-none");
         } else {
-            // Play Most Visible when 1 Succeed
-            trailerEl?.setAttribute?.("loading", "lazy");
-            playMostVisibleTrailer();
-            if (anime?.id) {
+            if (anime?.id != null) {
                 delete failingTrailers[anime.id];
                 failingTrailers = failingTrailers
             }
+            // Play Most Visible when 1 Succeed
+            // then Mute/Buffer other players
+            let mostVisibleTrailerEl = mostVisiblePopupHeader?.querySelector?.(".trailer")
+            let ytId = trailerEl?.id;
+            if (ytId && mostVisibleTrailerEl && mostVisibleTrailerEl !== trailerEl) {
+                trailerEl?.setAttribute?.("loading", "lazy");
+                ytPlayer?.mute?.()
+                ytPlayer?.playVideo?.()
+                autoPausedTrailers[ytId] = true;
+                ytPlayer?.pauseVideo?.()
+            }
+            playMostVisibleTrailer();
         }
     }
 
-    function prePlayYtPlayer(ytPlayer, recheckLastAutoPlay = true) {
-        if (lastYTPlayer?.getVolume) {
-            let ytVolume = lastYTPlayer?.getVolume?.();            
-            if (typeof ytVolume === "number") {
-                if (savedYtVolume !== ytVolume) {
-                    savedYtVolume = ytVolume;
-                    saveJSON(savedYtVolume, "savedYtVolume");
-                }
-                ytPlayer?.setVolume?.(savedYtVolume);
+    function prePlayYtPlayer(ytPlayer) {
+        const ytVolume = lastYTPlayer?.getVolume?.();
+        if (typeof ytVolume === "number") {
+            if (savedYtVolume !== ytVolume) {
+                savedYtVolume = ytVolume;
+                saveJSON(savedYtVolume, "savedYtVolume");
             }
+            ytPlayer?.setVolume?.(savedYtVolume);
         }
-   
-        if (recheckLastAutoPlay) {
-            if (!lastYTPlayer) {
-                lastYTPlayer = ytPlayer
-            } else if (
-                lastYTPlayer !== ytPlayer
-            ) {
-                getCurrentAutoPlay(lastYTPlayer)
-                lastYTPlayer = ytPlayer
-            }
-        }
-        if ($autoPlay) {
-            ytPlayer?.unMute?.();
-        } else {
-            ytPlayer?.mute?.();
-        }
-    }
-
-    function getCurrentAutoPlay(ytPlayer) {
-        const isMuted = ytPlayer?.isMuted?.();
-        const state = ytPlayer?.getPlayerState?.()
-        if (
-            ytPlayer?.g && 
-            (
-                state === (getYTPlayerState("PAUSED")??2) ||
-                state === (getYTPlayerState("PLAYING")??1) ||
-                state === (getYTPlayerState("ENDED")??0) ||
-                state === (getYTPlayerState("BUFFERING")??3)
-            ) &&
-            typeof isMuted === "boolean"
+        
+        const isMuted = ytPlayer?.isMuted?.()
+        if (typeof isMuted==="boolean" 
+            && ytPlayer?.KanshiIsMuteApplied !== true
         ) {
-            $autoPlay = !isMuted
+            if ($autoPlay) {
+                if (isMuted) {
+                    ytPlayer?.unMute?.();
+                } else {
+                    try {
+                        ytPlayer.KanshiIsMuteApplied = true
+                    } catch {}
+                }
+            } else {
+                if (isMuted) {
+                    try {
+                        ytPlayer.KanshiIsMuteApplied = true
+                    } catch {}
+                } else {
+                    ytPlayer?.mute?.();
+                }
+            }
         }
     }
 
@@ -1140,10 +1133,10 @@
     window.returnedAppIsVisible = (inAndroidApp) => {
         // Only For Android, and workaround for Alert visibility
         if (!$android) return;
+        if (!$popupVisible) return;
+        if ($inApp === inAndroidApp) return;
         $inApp = inAndroidApp;
-        if (!$popupVisible || $initData) return;
-        let visibleTrailer =
-            mostVisiblePopupHeader?.querySelector?.(".trailer");
+        let visibleTrailer = mostVisiblePopupHeader?.querySelector?.(".trailer");
         if (!visibleTrailer) return;
         if ($inApp) {
             for (let i = 0, l = $ytPlayers?.length; i < l; i++) {
@@ -1170,9 +1163,6 @@
                 if (ytId && !deletingTrailers?.[ytId]) {
                     autoPausedTrailers[ytId] = true;
                     $ytPlayers[i]?.ytPlayer?.pauseVideo?.();
-                }
-                if (visibleTrailer === $ytPlayers[i]?.ytPlayer?.g) {
-                    getCurrentAutoPlay($ytPlayers[i]?.ytPlayer)
                 }
             }
         }
@@ -1181,9 +1171,8 @@
         // Only for Browsers
         if ($android) return;
         $inApp = document.visibilityState === "visible";
-        if (!$popupVisible || $initData) return;
-        let visibleTrailer =
-            mostVisiblePopupHeader?.querySelector?.(".trailer");
+        if (!$popupVisible) return;
+        let visibleTrailer = mostVisiblePopupHeader?.querySelector?.(".trailer");
         if (!visibleTrailer) return;
         if ($inApp) {
             for (let i = 0, l = $ytPlayers?.length; i < l; i++) {
@@ -1210,9 +1199,6 @@
                 if (ytId && !deletingTrailers?.[ytId]) {
                     autoPausedTrailers[ytId] = true;
                     $ytPlayers[i]?.ytPlayer?.pauseVideo?.();
-                }
-                if (visibleTrailer === $ytPlayers[i]?.ytPlayer?.g) {
-                    getCurrentAutoPlay($ytPlayers[i]?.ytPlayer)
                 }
             }
         }
@@ -1615,20 +1601,21 @@
                 let ytId = trailerEl?.id;
                 if (ytId && !deletingTrailers?.[ytId]) {
                     deletingTrailers[ytId] = true;
-                    delete manuallyPausedTrailers?.[ytId];
-                    delete autoPausedTrailers?.[ytId];
                     $ytPlayers =
-                        $ytPlayers?.reduce?.((acc, e) => {
+                        $ytPlayers?.filter?.((e) => {
+                            let recTrailerEl = e?.ytPlayer?.g
                             if (
-                                e?.ytPlayer?.g === trailerEl ||
-                                e?.ytPlayer?.g?.id === ytId
+                                recTrailerEl === trailerEl ||
+                                recTrailerEl?.id === ytId
                             ) {
                                 e?.ytPlayer?.destroy?.();
+                                return false
                             } else {
-                                acc.push(e);
+                                return true;
                             }
-                            return acc;
-                        }, []) || [];
+                        }) || [];
+                    delete manuallyPausedTrailers?.[ytId];
+                    delete autoPausedTrailers?.[ytId];
                     delete deletingTrailers?.[ytId];
                 }
             },
@@ -1673,7 +1660,7 @@
                 tw: "Taiwan",
             }}
             {@const animeList = $loadedAnimeLists[$selectedCategory]?.animeList}
-            {#each animeList || [] as anime, animeIndex ((anime?.id ? anime.id + " " + animeIndex : {}) ?? {})}
+            {#each animeList || [] as anime, animeIndex ((anime?.id != null ? anime.id + " " + animeIndex : {}) ?? {})}
                 <div class="popup-content" bind:this="{anime.popupContent}">
                     {#if animeIndex <= currentHeaderIdx + bottomPopupVisibleCount && animeIndex >= currentHeaderIdx - topPopupVisibleCount}
                         {@const loweredFormat = anime.format?.toLowerCase?.()}
@@ -2083,7 +2070,11 @@
                                                         "finished"}
                                                     {@const loweredUserStatus =
                                                         anime.userStatus?.toLowerCase?.()}
-                                                    {#if loweredUserStatus !== "dropped" && ((loweredUserStatus !== "completed" && (anime.episodeProgress > 0 || anime.volumeProgress > 0)) || loweredUserStatus === "current")}
+                                                    {#if loweredUserStatus === "current"
+                                                      || loweredUserStatus === "planning"
+                                                      || loweredUserStatus === "paused"
+                                                      || loweredUserStatus === "repeating"
+                                                    }
                                                         {@const nextAiringEpisode =
                                                             anime.nextAiringEpisode}
                                                         {@const nextEpisode =
@@ -2110,10 +2101,7 @@
                                                                 anime.episodeProgress >
                                                                 0
                                                                     ? anime.episodeProgress
-                                                                    : anime.userStatus?.toLowerCase?.() ===
-                                                                        "current"
-                                                                      ? 0
-                                                                      : null}
+                                                                    : 0}
                                                             {@const epsBehind =
                                                                 parseInt(
                                                                     releasedEps,
@@ -2134,10 +2122,7 @@
                                                                         anime.volumeProgress >
                                                                         0
                                                                             ? anime.volumeProgress
-                                                                            : anime.userStatus?.toLowerCase?.() ===
-                                                                                "current"
-                                                                              ? 0
-                                                                              : null}
+                                                                            : 0}
                                                                     {@const volBehind =
                                                                         parseInt(
                                                                             anime.volumes,
@@ -2156,10 +2141,7 @@
                                                                         anime.episodeProgress >
                                                                         0
                                                                             ? anime.episodeProgress
-                                                                            : anime.userStatus?.toLowerCase?.() ===
-                                                                                "current"
-                                                                              ? 0
-                                                                              : null}
+                                                                            : 0}
                                                                     {@const chapBehind =
                                                                         parseInt(
                                                                             anime.chapters,
@@ -2179,10 +2161,7 @@
                                                                     anime.episodeProgress >
                                                                     0
                                                                         ? anime.episodeProgress
-                                                                        : anime.userStatus?.toLowerCase?.() ===
-                                                                            "current"
-                                                                          ? 0
-                                                                          : null}
+                                                                        : 0}
                                                                 {@const chapBehind =
                                                                     parseInt(
                                                                         anime.chapters,
@@ -2201,10 +2180,7 @@
                                                                     anime.volumeProgress >
                                                                     0
                                                                         ? anime.volumeProgress
-                                                                        : anime.userStatus?.toLowerCase?.() ===
-                                                                            "current"
-                                                                          ? 0
-                                                                          : null}
+                                                                        : 0}
                                                                 {@const volBehind =
                                                                     parseInt(
                                                                         anime.volumes,

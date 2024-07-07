@@ -29,22 +29,8 @@ public class MediaWebView extends WebView {
         }
     }
     @Override
-    public void onWindowSystemUiVisibilityChanged(int visibility) {
-        if(visibility != View.GONE) {
-            super.resumeTimers();
-            super.setVisibility(View.VISIBLE);
-            super.setKeepScreenOn(true);
-            super.onWindowSystemUiVisibilityChanged(View.VISIBLE);
-            super.onWindowVisibilityChanged(View.VISIBLE);
-        }
-    }
-    @Override
     protected void onWindowVisibilityChanged(int visibility) {
         if(visibility != View.GONE) {
-            super.resumeTimers();
-            super.setVisibility(View.VISIBLE);
-            super.setKeepScreenOn(true);
-            super.onWindowSystemUiVisibilityChanged(View.VISIBLE);
             super.onWindowVisibilityChanged(View.VISIBLE);
         }
     }

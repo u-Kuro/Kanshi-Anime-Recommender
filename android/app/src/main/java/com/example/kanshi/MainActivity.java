@@ -304,9 +304,6 @@ public class MainActivity extends AppCompatActivity {
         webSettings.setAllowUniversalAccessFromFileURLs(true);
         webSettings.setMediaPlaybackRequiresUserGesture(false);
         webSettings.setDefaultFontSize(16);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            webSettings.setOffscreenPreRaster(true);
-        }
 
         // Set WebView Configs
         webView.setVerticalScrollBarEnabled(false);
@@ -419,21 +416,28 @@ public class MainActivity extends AppCompatActivity {
                 if (url.startsWith("https://www.youtube.com")
                     || url.startsWith("https://m.youtube.com")
                     || url.startsWith("https://youtube.com")
-                    || url.startsWith("https://www.youtu.be")
-                    || url.startsWith("https://m.youtu.be")
-                    || url.startsWith("https://youtu.be")
                     || url.startsWith("http://www.youtube.com")
                     || url.startsWith("http://m.youtube.com")
                     || url.startsWith("http://youtube.com")
-                    || url.startsWith("http://www.youtu.be")
-                    || url.startsWith("http://m.youtu.be")
-                    || url.startsWith("http://youtu.be")
                 ) {
                     Intent intent = new Intent(MainActivity.this, YoutubeViewActivity.class);
                     intent.putExtra("url", url);
                     intent.putExtra("fromMainActivity", true);
                     startActivity(intent);
                     overridePendingTransition(R.anim.fade_in, R.anim.remove);
+                } else if (
+                    url.startsWith("https://www.youtu.be")
+                    || url.startsWith("https://m.youtu.be")
+                    || url.startsWith("https://youtu.be")
+                    || url.startsWith("http://www.youtu.be")
+                    || url.startsWith("http://m.youtu.be")
+                    || url.startsWith("http://youtu.be")
+                ) {
+                    Intent i = new Intent(Intent.ACTION_SEND);
+                    i.setType("text/plain");
+                    i.putExtra(Intent.EXTRA_SUBJECT, "Sharing URL");
+                    i.putExtra(Intent.EXTRA_TEXT, url);
+                    startActivity(Intent.createChooser(i, "Share URL"));
                 } else {
                     try {
                         boolean isAniList = url.startsWith("https://www.anilist.co")
@@ -597,25 +601,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
-    public void onWindowFocusChanged(boolean hasFocus) {
-        if (webView!=null) {
-            webView.setKeepScreenOn(true);
-            webView.resumeTimers();
-            webView.setVisibility(View.VISIBLE);
-            webView.onWindowSystemUiVisibilityChanged(View.VISIBLE);
-            webView.onWindowVisibilityChanged(View.VISIBLE);
-        }
-        MainActivity.this.setVisible(true);
-        MainActivity.this.requestVisibleBehind(true);
-    }
-
-    @Override
     protected void onPause() {
         isInApp = false;
         if (webView!=null) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                webView.getSettings().setOffscreenPreRaster(false);
-            }
             webView.loadUrl("javascript:window?.returnedAppIsVisible?.(false)");
         }
         super.onPause();
@@ -634,10 +622,8 @@ public class MainActivity extends AppCompatActivity {
         Intent intent = new Intent(this, MainService.class);
         stopService(intent);
         super.onResume();
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            webView.getSettings().setOffscreenPreRaster(true);
-        }
+        webView.resumeTimers();
+        webView.onResume();
         if (persistentToast != null) {
             if (currentToast != null) {
                 currentToast.cancel();

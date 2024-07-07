@@ -69,7 +69,7 @@ import java.util.concurrent.locks.ReentrantLock;
 @SuppressLint("SetJavaScriptEnabled")
 public class MainService extends Service {
     public static WeakReference<MainService> weakActivity;
-    MediaWebView webView;
+    WebView webView;
     private String exportPath;
     public SharedPreferences prefs;
     private SharedPreferences.Editor prefsEdit;
@@ -127,7 +127,7 @@ public class MainService extends Service {
 
         super.onCreate();
         // Init Global Variables
-        webView = new MediaWebView(this);
+        webView = new WebView(this);
         prefs = this.getSharedPreferences("com.example.kanshi", Context.MODE_PRIVATE);
         prefsEdit = prefs.edit();
         // Saved Data
