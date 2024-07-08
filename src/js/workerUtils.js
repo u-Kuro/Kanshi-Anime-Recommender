@@ -252,7 +252,9 @@ const animeManager = (_data = {}) => {
     return new Promise(async (resolve, reject) => {
         if (isImporting) {
             showLoadingAnime.set(false)
-            return
+            if (!_data?.isImporting) {
+                return
+            }
         }
 
         clearTimeout(animeManagerWorkerTimeout)
@@ -393,8 +395,6 @@ window.setAnimeCompletionUpdateTimeout = (neareastAnimeCompletionAiringAt) => {
         clearTimeout(animeCompletionUpdateTimeout)
         let timeLeftBeforeAnimeCompletionUpdate = (neareastAnimeCompletionAiringAt * 1000) - new Date().getTime()
         animeCompletionUpdateTimeout = setTimeout(() => {
-            // Only run if data initialization is done
-            // "updateRecommendationList" function call has a checker for it before processing
             updateRecommendationList.update(e => !e)
         }, Math.min(timeLeftBeforeAnimeCompletionUpdate, 2000000000))
     }
@@ -413,7 +413,7 @@ const processRecommendedAnimeList = (_data = {}) => {
         processRecommendedAnimeListWorker?.terminate?.();
 
         progress.set(0)
-        cacheRequest("./webapi/worker/processRecommendedAnimeList.js", 39432, "Updating Recommendation List")
+        cacheRequest("./webapi/worker/processRecommendedAnimeList.js", 40881, "Updating Recommendation List")
             .then(url => {
                 const lastProcessRecommendationAiringAt = parseInt((new Date().getTime() / 1000))
                 let neareastAnimeCompletionAiringAt
@@ -621,13 +621,6 @@ const requestAnimeEntries = (_data = {}) => {
                         return
                     }
                     if (hasOwnProp?.call?.(data, "error")) {
-                        if (!window.alreadyShownNoNetworkAlert || data?.showToUser) {
-                            window.alreadyShownNoNetworkAlert = true
-                            window.confirmPromise?.({
-                                isAlert: true,
-                                text: "Failed retrieval, " + (data?.error?.toLowerCase?.() || "please try again") + ".",
-                            })
-                        }
                         isRequestingAnimeEntries = false
 
                         requestAnimeEntriesWorker?.terminate?.();
@@ -680,19 +673,10 @@ const requestAnimeEntries = (_data = {}) => {
                             isGettingNewEntries = true
                             stopConflictingWorkers({ isGettingNewEntries: true })
                             getAnimeEntries()
-                                .then(() => {
+                                .finally(() => {
                                     isGettingNewEntries = false
-                                    runUpdate.update(e => !e)
+                                    rerunImportantWork()
                                 })
-                                .catch(() => {
-                                    isGettingNewEntries = false
-                                    runUpdate.update(e => !e)
-                                }).finally(() => {
-                                    isGettingNewEntries = false
-                                    updateRecommendationList.update(e => !e)
-                                })
-                        } else {
-                            window.alreadyShownNoNetworkAlert = false
                         }
                         isRequestingAnimeEntries = false
                         requestAnimeEntriesTerminateTimeout = setTimeout(() => {
@@ -771,13 +755,13 @@ const requestUserEntries = (_data = {}) => {
                     }
 
                     if (hasOwnProp?.call?.(data, "error")) {
-                        isRequestingNewUser = false
-                        if (!window.alreadyShownNoNetworkAlert) {
-                            window.alreadyShownNoNetworkAlert = true
+                        if (isRequestingNewUser) {
                             window.confirmPromise?.({
                                 isAlert: true,
-                                text: "Failed retrieval, " + (data?.error?.toLowerCase?.() || "please try again") + ".",
+                                title: "Failed to Request User Data",
+                                text: "Request for user data has failed, please try again.",
                             })
+                            isRequestingNewUser = false
                         }
                         userRequestIsRunning.set(false)
                         loadAnime.update((e) => !e)
@@ -793,7 +777,6 @@ const requestUserEntries = (_data = {}) => {
                         updateRecommendationList.update(e => !e)
                     } else {
                         isRequestingNewUser = false
-                        window.alreadyShownNoNetworkAlert = false
                         userRequestIsRunning.set(false)
                         requestUserEntriesTerminateTimeout = setTimeout(() => {
                             requestUserEntriesWorker?.terminate?.();
@@ -804,7 +787,14 @@ const requestUserEntries = (_data = {}) => {
                     }
                 }
                 requestUserEntriesWorker.onerror = (error) => {
-                    isRequestingNewUser = false
+                    if (isRequestingNewUser) {
+                        window.confirmPromise?.({
+                            isAlert: true,
+                            title: "Failed to Request User Data",
+                            text: "Request for user data has failed, please try again.",
+                        })
+                        isRequestingNewUser = false
+                    }
                     userRequestIsRunning.set(false)
                     loadAnime.update((e) => !e)
                     requestUserEntriesWorker?.terminate?.();
@@ -814,7 +804,14 @@ const requestUserEntries = (_data = {}) => {
                     reject(error)
                 }
             }).catch((error) => {
-                isRequestingNewUser = false
+                if (isRequestingNewUser) {
+                    window.confirmPromise?.({
+                        isAlert: true,
+                        title: "Failed to Request User Data",
+                        text: "Request for user data has failed, please try again.",
+                    })
+                    isRequestingNewUser = false
+                }
                 userRequestIsRunning.set(false)
                 dataStatus.set(null)
                 progress.set(100)
@@ -890,7 +887,7 @@ const exportUserData = (_data) => {
                             })
                         }
                         exportUserDataWorker?.terminate?.();
-                        updateRecommendationList.update(e => !e)
+                        rerunImportantWork()
                         reject()
                     } else if (get(android)) {
                         try {
@@ -916,7 +913,7 @@ const exportUserData = (_data) => {
                                     waitForExportApproval = null
                                     dataStatus.set(null)
                                     progress.set(100)
-                                    updateRecommendationList.update(e => !e)
+                                    rerunImportantWork()
                                     resolve()
                                 })
                             } else {
@@ -932,7 +929,7 @@ const exportUserData = (_data) => {
                                 })
                                 dataStatus.set(null)
                                 progress.set(100)
-                                updateRecommendationList.update(e => !e)
+                                rerunImportantWork()
                                 reject()
                             }
                         } catch (e) {
@@ -948,7 +945,7 @@ const exportUserData = (_data) => {
                             })
                             dataStatus.set(null)
                             progress.set(100)
-                            updateRecommendationList.update(e => !e)
+                            rerunImportantWork()
                             reject()
                         }
                     } else if (typeof data?.url === "string" && data?.url !== "") {
@@ -957,7 +954,7 @@ const exportUserData = (_data) => {
                         progress.set(100)
                         downloadLink(data.url, `Kanshi.${data?.username?.toLowerCase?.() || "backup"}.json`)
                         isExporting = false
-                        updateRecommendationList.update(e => !e)
+                        rerunImportantWork()
                         resolve()
                         // dont terminate, can't oversee blob link lifetime
                     } else {
@@ -971,7 +968,7 @@ const exportUserData = (_data) => {
                         dataStatus.set(null)
                         progress.set(100)
                         isExporting = false
-                        updateRecommendationList.update(e => !e)
+                        rerunImportantWork()
                         reject()
                     }
                 }
@@ -988,7 +985,7 @@ const exportUserData = (_data) => {
                         text: "Data was not exported, please try again.",
                     })
                     exportUserDataWorker?.terminate?.();
-                    updateRecommendationList.update(e => !e)
+                    rerunImportantWork()
                     reject(error)
                 }
             }).catch((error) => {
@@ -1000,7 +997,7 @@ const exportUserData = (_data) => {
                 waitForExportApproval = null
                 alertError()
                 exportUserDataWorker?.terminate?.();
-                updateRecommendationList.update(e => !e)
+                rerunImportantWork()
                 reject(error)
             })
     })
@@ -1050,8 +1047,8 @@ const importUserData = (_data) => {
                         })
                         dataStatus.set(null)
                         progress.set(100)
-                        updateRecommendationList.update(e => !e)
                         importUserDataWorker?.terminate?.();
+                        rerunImportantWork()
                         reject(data?.error || "Something went wrong")
                     } else if (hasOwnProp?.call?.(data, "importedUsername")) {
                         if (typeof data?.importedUsername === "string") {
@@ -1080,16 +1077,22 @@ const importUserData = (_data) => {
                         dataStatusPrio = false
                         processRecommendedAnimeList({ isImporting: true })
                             .finally(() => {
-                                animeLoader({ loadInit: true })
-                                    .finally(() => {
-                                        isImporting = false
-                                        dataStatus.set(null)
-                                        progress.set(100)
-                                        if (get(android)) {
-                                            showToast("Data has been Imported")
-                                        }
-                                        runUpdate.update(e => !e)
-                                    })
+                                animeManager({ 
+                                    updateRecommendedAnimeList: true,
+                                    isImporting: true,
+                                })
+                                .finally(() => {
+                                    animeLoader({ loadInit: true })
+                                        .finally(() => {
+                                            isImporting = false
+                                            dataStatus.set(null)
+                                            progress.set(100)
+                                            if (get(android)) {
+                                                showToast("Data has been Imported")
+                                            }
+                                            runUpdate.update(e => !e)
+                                        })
+                                });
                             })
                         importUserDataTerminateTimeout = setTimeout(() => {
                             importUserDataWorker?.terminate?.();
@@ -1108,19 +1111,24 @@ const importUserData = (_data) => {
                     loadAnime.update((e) => !e)
                     dataStatus.set(null)
                     progress.set(100)
-                    updateRecommendationList.update(e => !e)
                     importUserDataWorker?.terminate?.();
+                    rerunImportantWork()
                     reject(error || "Something went wrong")
                 }
             }).catch((error) => {
                 dataStatusPrio = false
                 isImporting = false
+                window.confirmPromise?.({
+                    isAlert: true,
+                    title: "Import failed",
+                    text: "File was not imported, please try again.",
+                })
                 loadAnime.update((e) => !e)
                 dataStatus.set(null)
                 progress.set(100)
                 alertError()
-                updateRecommendationList.update(e => !e)
                 importUserDataWorker?.terminate?.();
+                rerunImportantWork()
                 reject(error)
             })
     })
@@ -1378,7 +1386,7 @@ const getFilterOptions = (_data) => {
     return new Promise((resolve, reject) => {
         if (getFilterOptionsTerminateTimeout) clearTimeout(getFilterOptionsTerminateTimeout)
         getFilterOptionsWorker?.terminate?.()
-        cacheRequest("./webapi/worker/getFilterOptions.js", 60702, "Initializing Filters")
+        cacheRequest("./webapi/worker/getFilterOptions.js", 60874, "Initializing Filters")
             .then(url => {
                 if (getFilterOptionsTerminateTimeout) clearTimeout(getFilterOptionsTerminateTimeout)
                 getFilterOptionsWorker?.terminate?.()
@@ -1449,8 +1457,15 @@ function stopConflictingWorkers(blocker) {
     isRequestingAnimeEntries = false
     isGettingNewEntries = blocker?.isGettingNewEntries ?? false
     requestUserEntriesWorker?.terminate?.()
-    isRequestingNewUser = false
     resetTypedUsername.update(e => !e)
+    if (isRequestingNewUser) {
+        window.confirmPromise?.({
+            isAlert: true,
+            title: "User Data Request Terminated",
+            text: "Request for user data was suddenly terminated, please try again.",
+        })
+        isRequestingNewUser = false
+    }
     userRequestIsRunning.set(false)
     processRecommendedAnimeListWorker?.terminate?.()
     isProcessingList.set(false)
@@ -1459,8 +1474,12 @@ function stopConflictingWorkers(blocker) {
     isImporting = blocker?.isImporting ?? false
     exportUserDataWorker?.terminate?.()
     isExporting = blocker?.isExporting ?? false
-    getFilterOptionsWorker?.terminate?.()
     dataStatus.set(null)
+}
+
+function rerunImportantWork() {
+    updateRecommendationList.update((e)=>!e)
+    runUpdate.update((e)=>!e)
 }
 
 function alertError() {

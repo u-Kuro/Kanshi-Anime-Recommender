@@ -22,7 +22,6 @@
         runUpdate,
         runExport,
         confirmPromise,
-        importantUpdate,
         popupVisible,
         listUpdateAvailable,
         showStatus,
@@ -76,11 +75,6 @@
                 importUserData({
                     importedFile: importedFile,
                 })
-                    .catch((error) => {
-                        $dataStatus = error || "Something went wrong";
-                        importantUpdate.update((e) => !e);
-                        return;
-                    })
                     .finally(() => {
                         setLocalStorage("username", $username).catch(() => {
                             removeLocalStorage("username");
@@ -133,7 +127,6 @@
             });
         }
         if (await $confirmPromise("Do you want to update your list?")) {
-            window.alreadyShownNoNetworkAlert = false;
             $menuVisible = false;
             runUpdate.update((e) => !e);
             resetProgress.update((e) => !e);
@@ -149,9 +142,6 @@
             )
         ) {
             $autoUpdate = !$autoUpdate;
-            if ($autoUpdate) {
-                window.alreadyShownNoNetworkAlert = false;
-            }
             setLocalStorage("autoUpdate", $autoUpdate)
                 .catch(() => {
                     removeLocalStorage("autoUpdate");

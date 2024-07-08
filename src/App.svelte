@@ -306,8 +306,8 @@
 
 			Promise.all(initDataPromises)
 				.then(async () => {
+					$initData = false;
 					if ($android && window[$isBackgroundUpdateKey] === true) {
-						$initData = false;
 						try {
 							let dataIsUpdated;
 							try {
@@ -524,7 +524,6 @@
 									updateRecommendedAnimeList: true,
 								})
 									.then(async () => {
-										$initData = false;
 										if (shouldReloadList) {
 											animeLoader({
 												loadInit: true,
@@ -543,7 +542,6 @@
 									})
 									.catch(initFailed);
 							} else {
-								$initData = false;
 								$dataStatus = null;
 								checkAutoFunctions(true);
 								loadAnalytics();
@@ -578,6 +576,9 @@
 		});
 
 	async function initFailed(error) {
+		if ($initData) {
+			$initData = false;
+		}
 		checkAutoFunctions(true);
 		$dataStatus = "Something went wrong";
 		if ($android) {
@@ -595,9 +596,6 @@
 				title: "Something went wrong",
 				text: "App may not be working properly, you may want to refresh the page, or if not clear your cookies but backup your data first.",
 			});
-		}
-		if ($initData) {
-			$initData = false;
 		}
 		console.error(error);
 		loadYoutube();
@@ -678,10 +676,18 @@
 		visibilityChange = false,
 	) {
 		if ($android && window?.[$isBackgroundUpdateKey] === true) return;
-		if ($android == null) {
-			window.kanshiInit?.then?.(() => {
-				checkAutoFunctions(initCheck);
-			});
+		if ($initData) {
+			try {
+				if (!window?.KanshiCheckAutoFunctions?.promise) {
+					window.KanshiCheckAutoFunctions = {}
+					window.KanshiCheckAutoFunctions.promise = new Promise((resolve) => {
+						window.KanshiCheckAutoFunctions.resolve = resolve
+					})
+				}
+				window.KanshiCheckAutoFunctions?.promise?.then?.(() => {
+					checkAutoFunctions(initCheck, visibilityChange)
+				})
+			} catch {}
 		} else if (initCheck) {
 			try {
 				await requestUserEntries();
@@ -756,6 +762,8 @@
 			if (!addedBackgroundStatusUpdate?.()) {
 				getExtraInfo();
 			}
+
+			window?.KanshiCheckAutoFunctions?.resolve?.()
 
 			// Check App ID and Version Updates for Android
 			// After Load has Finished
