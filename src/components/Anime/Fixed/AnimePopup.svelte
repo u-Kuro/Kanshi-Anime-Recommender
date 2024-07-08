@@ -840,9 +840,10 @@
             !deletingTrailers?.[ytId] &&
             playerState === (getYTPlayerState("PAUSED")??2)
         ) {
-            // android webview's auto pause
-            // on players can't be known/handled
-            if (!$android && !autoPausedTrailers?.[ytId]) {
+            if (
+                mostVisiblePopupHeader === popupHeader
+                && !autoPausedTrailers?.[ytId]
+            ) {
                 manuallyPausedTrailers[ytId] = true
             }
         } else {
