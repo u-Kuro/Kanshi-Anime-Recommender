@@ -413,7 +413,7 @@ const processRecommendedAnimeList = (_data = {}) => {
         processRecommendedAnimeListWorker?.terminate?.();
 
         progress.set(0)
-        cacheRequest("./webapi/worker/processRecommendedAnimeList.js", 40881, "Updating Recommendation List")
+        cacheRequest("./webapi/worker/processRecommendedAnimeList.js", 41441, "Updating Recommendation List")
             .then(url => {
                 const lastProcessRecommendationAiringAt = parseInt((new Date().getTime() / 1000))
                 let neareastAnimeCompletionAiringAt
@@ -487,8 +487,8 @@ const processRecommendedAnimeList = (_data = {}) => {
                         }
                     } else if (hasOwnProp?.call?.(data, "popularityMode") || hasOwnProp?.call?.(data, "averageScoreMode")) {
                         window?.updateMeanNumberInfos?.(data?.averageScoreMode, data?.popularityMode)
-                    } else if (hasOwnProp?.call?.(data, "recListMAE")) {
-                        window?.updateRecListMAE?.(data?.recListMAE)
+                    } else if (hasOwnProp?.call?.(data, "recListMAPE")) {
+                        window?.updateRecListMAPE?.(data?.recListMAPE)
                     } else {
                         setLocalStorage("neareastAnimeCompletionAiringAt", neareastAnimeCompletionAiringAt)
                             .catch(() => removeLocalStorage("neareastAnimeCompletionAiringAt"))

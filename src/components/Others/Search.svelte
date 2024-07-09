@@ -1836,24 +1836,24 @@
             setLocalStorage("meanPopularity", meanPopularity);
         }
     };
-    let recListMAE, recListMAEIncreased;
+    let recListMAPE, recListMAPEIncreased;
     (async () => {
-        recListMAE = await retrieveJSON("recListMAE");
+        recListMAPE = await retrieveJSON("recListMAPE");
     })();
-    window.updateRecListMAE = (newRecListMAE) => {
-        if (recListMAE > 0 && recListMAE !== newRecListMAE) {
-            if (newRecListMAE < recListMAE) {
-                recListMAEIncreased = true;
-            } else if (newRecListMAE > recListMAE) {
-                recListMAEIncreased = false;
+    window.updateRecListMAPE = (newRecListMAPE) => {
+        if (recListMAPE > 0 && recListMAPE !== newRecListMAPE) {
+            if (newRecListMAPE < recListMAPE) {
+                recListMAPEIncreased = true;
+            } else if (newRecListMAPE > recListMAPE) {
+                recListMAPEIncreased = false;
             } else {
-                recListMAEIncreased = null;
+                recListMAPEIncreased = null;
             }
-            recListMAE = newRecListMAE;
-        } else if (newRecListMAE > 0) {
-            recListMAE = newRecListMAE;
+            recListMAPE = newRecListMAPE;
+        } else if (newRecListMAPE > 0) {
+            recListMAPE = newRecListMAPE;
         } else {
-            recListMAEIncreased = recListMAE = null;
+            recListMAPEIncreased = recListMAPE = null;
         }
     };
 </script>
@@ -2063,11 +2063,11 @@
             ? "25px"
             : ""}"
         style:--remove-icon-size="{$categoriesKeys?.length > 1
-            ? recListMAE > 0
+            ? recListMAPE > 0
                 ? "25px"
                 : "1fr"
             : ""}"
-        style:--mae-size="{recListMAE > 0 ? "1fr" : ""}"
+        style:--mape-size="{recListMAPE > 0 ? "1fr" : ""}"
     >
         {#if filterCategories?.length}
             <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
@@ -2169,20 +2169,20 @@
         {:else}
             <div class="skeleton shimmer"></div>
         {/if}
-        {#if recListMAE > 0}
+        {#if recListMAPE > 0}
             <div
                 class="{'mean-error' + ($isProcessingList ? ' loading' : '')}"
-                style:--mean-error-color="{recListMAEIncreased === true
+                style:--mean-error-color="{recListMAPEIncreased === true
                     ? "hsl(185deg,65%,50%)"
-                    : recListMAEIncreased === false
+                    : recListMAPEIncreased === false
                       ? "hsl(345deg,75%,60%)"
                       : ""}"
             >
-                {($windowWidth > 345
-                    ? "Mean Error: "
-                    : $windowWidth >= 290
-                      ? "ME: "
-                      : "") + formatNumber(recListMAE)}
+                {($windowWidth >= 300
+                    ? "Error: "
+                    : $windowWidth >= 275
+                      ? "E: "
+                      : "") + formatNumber(recListMAPE) + "%"}
             </div>
         {/if}
         <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
@@ -3348,10 +3348,10 @@
 
     .category-settings-wrap {
         --add-icon-size: ;
-        --mae-size: ;
+        --mape-size: ;
         --remove-icon-size: ;
         display: grid;
-        grid-template-columns: 125px var(--mae-size) var(--remove-icon-size) var(--add-icon-size);
+        grid-template-columns: 125px var(--mape-size) var(--remove-icon-size) var(--add-icon-size);
         justify-content: space-between;
         align-items: center;
         width: 100%;
