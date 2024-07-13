@@ -366,10 +366,12 @@ const formatNumber = (number, dec = 2) => {
     } else if (Math.abs(number) < 0.01 && Math.abs(number) > 0) {
       return number.toExponential(0);
     } else {
-      return (
-        number.toFixed(dec) ||
-        number.toLocaleString("en-US", { maximumFractionDigits: dec })
-      );
+      let formattedNumber = number.toFixed(dec);
+      // Remove trailing zeros and decimal point if not needed
+      if (formattedNumber.indexOf('.') !== -1) {
+        formattedNumber = formattedNumber.replace(/\.?0+$/, '');
+      }
+      return formattedNumber || number.toLocaleString("en-US", { maximumFractionDigits: dec });
     }
   } else {
     return null;
