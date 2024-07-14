@@ -1653,12 +1653,6 @@
         on:scroll="{popupScroll}"
     >
         {#if $loadedAnimeLists}
-            {@const COOs = {
-                jp: "Japan",
-                kr: "South Korea",
-                cn: "China",
-                tw: "Taiwan",
-            }}
             {@const animeList = $loadedAnimeLists[$selectedCategory]?.animeList}
             {#each animeList || [] as anime, animeIndex ((anime?.id != null ? anime.id + " " + animeIndex : {}) ?? {})}
                 <div class="popup-content" bind:this="{anime.popupContent}">
@@ -1944,8 +1938,7 @@
                                                         ) > 0
                                                             ? anime.formattedAverageScore
                                                             : "?"}</b
-                                                    >
-                                                    {"/10"}
+                                                    >{"/10"}
                                                 {/if}
                                                 {#if anime.formattedPopularity != null && anime.formattedPopularity}
                                                     {" · " +
@@ -1982,12 +1975,10 @@
                                                           : ""
                                                     : anime?.formattedDuration) ||
                                                 ""}
-                                            {@const loweredCountryOfOrigin =
-                                                anime?.countryOfOrigin?.toLowerCase?.()}
                                             <h4>
                                                 {(anime?.format || "N/A") +
-                                                    (loweredCountryOfOrigin
-                                                        ? ` (${COOs[loweredCountryOfOrigin] && $windowWidth >= 377 && (isManga || isNovel || $windowWidth >= 427) ? COOs[loweredCountryOfOrigin] : anime?.countryOfOrigin})`
+                                                    (anime?.countryOfOrigin
+                                                        ? ` (${anime.countryOfOrigin})`
                                                         : "")}
                                                 {#if formattedAnimeFormat}
                                                     {#key $earlisetReleaseDate || 1}
@@ -2013,12 +2004,10 @@
                                                           : ""
                                                     : anime?.formattedDuration) ||
                                                 ""}
-                                            {@const loweredCountryOfOrigin =
-                                                anime?.countryOfOrigin?.toLowerCase?.()}
                                             <h4>
                                                 {(anime?.format || "N/A") +
-                                                    (loweredCountryOfOrigin
-                                                        ? ` (${COOs[loweredCountryOfOrigin] && $windowWidth >= 377 && (isManga || isNovel || $windowWidth >= 427) ? COOs[loweredCountryOfOrigin] : anime?.countryOfOrigin})`
+                                                    (anime?.countryOfOrigin
+                                                        ? ` (${anime.countryOfOrigin})`
                                                         : "")}
                                                 {#if formattedAnimeFormat}
                                                     {@html formattedAnimeFormat}
@@ -2059,8 +2048,9 @@
                                                 href="{anime.animeUrl ||
                                                     'javascript:void(0)'}"
                                                 ><span
-                                                    class="{anime.userStatusColor +
-                                                        '-color'}"
+                                                    class="{
+                                                        anime?.userStatusColor
+                                                        ? anime.userStatusColor+'-color' : ''}"
                                                     >{anime.userStatus ||
                                                         "N/A"}</span
                                                 >
@@ -2955,6 +2945,7 @@
 
     .info-rating-wrapper b {
         font-size: 15px;
+        padding-right: 2px;
     }
 
     :global(.general-rating-icon) {
@@ -3300,10 +3291,6 @@
         scrollbar-width: none;
         height: 32px !important;
         max-height: 32px !important;
-    }
-
-    .info > a {
-        color: hsl(var(--ac-color));
     }
 
     .info a::-webkit-scrollbar,

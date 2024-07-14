@@ -56,6 +56,12 @@
         documentScrollTop,
     } from "../../js/globalValues.js";
 
+    const COOs = {
+        JP: "Japan",
+        KR: "South Korea",
+        CN: "China",
+        TW: "Taiwan",
+    }
     let selectedCategoryAnimeFilters,
         selectedSortName,
         selectedSortType,
@@ -2280,7 +2286,15 @@
                                     : ' display-none')}"
                         >
                             <div class="filter-name">
-                                <h2>{filterSelectionName || ""}</h2>
+                                <h2>
+                                    {#if filterSelectionName==="airing status"}
+                                        {"Release Status"}
+                                    {:else if filterSelectionName==="shown score"}
+                                        {"Shown Metric"}
+                                    {:else}
+                                        {filterSelectionName || ""}
+                                    {/if}
+                                </h2>
                             </div>
                             <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                             <div
@@ -2378,7 +2392,13 @@
                                 >
                                     <div class="header">
                                         <div class="filter-title">
-                                            {filterSelectionName}
+                                            {#if filterSelectionName==="airing status"}
+                                                {"Release Status"}
+                                            {:else if filterSelectionName==="shown score"}
+                                                {"Shown Metric"}
+                                            {:else}
+                                                {filterSelectionName || ""}
+                                            {/if}
                                         </div>
                                         <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                                         <svg
@@ -2431,14 +2451,25 @@
                                         on:wheel|stopPropagation="{() => {}}"
                                     >
                                         {#if filterSelectionIsSelected}
+                                            {@const isCOO = filterSelectionName === "country of origin"}
                                             {#await filterSelectionOptionsLoaded ? 
                                                 (filterSelectionsSearch[filterSelectionKey] ? 
-                                                    $orderedFilters?.[filterSelectionName]?.filter?.( (option) => hasPartialMatch(option, filterSelectionsSearch[filterSelectionKey]), ) 
-                                                    : $orderedFilters?.[filterSelectionName]) 
+                                                    $orderedFilters?.[filterSelectionName]?.filter?.((option) => {
+                                                        let hasMatch
+                                                        if (isCOO) {
+                                                            hasMatch = hasPartialMatch(COOs[option?.toUpperCase?.()], filterSelectionsSearch[filterSelectionKey])
+                                                        }
+                                                        return hasMatch || hasPartialMatch(option, filterSelectionsSearch[filterSelectionKey])
+                                                    }) : $orderedFilters?.[filterSelectionName]) 
                                                 : new Promise( (resolve) => 
                                                     resolve(filterSelectionsSearch[filterSelectionKey] ? 
-                                                        $orderedFilters?.[filterSelectionName]?.filter?.( (option) => hasPartialMatch(option, filterSelectionsSearch[filterSelectionKey]), ) 
-                                                        : $orderedFilters?.[filterSelectionName]
+                                                        $orderedFilters?.[filterSelectionName]?.filter?.((option) => {
+                                                            let hasMatch
+                                                            if (isCOO) {
+                                                                hasMatch = hasPartialMatch(COOs[option?.toUpperCase?.()], filterSelectionsSearch[filterSelectionKey])
+                                                            }
+                                                            return hasMatch || hasPartialMatch(option, filterSelectionsSearch[filterSelectionKey])
+                                                        }) : $orderedFilters?.[filterSelectionName]
                                                     ), 
                                                 )
                                             }{""}{:then selectionOptions}
@@ -2454,9 +2485,6 @@
                                                             ? $animeCautions
                                                             : []}
                                                 {#if selectionOptions?.length}
-                                                    {@const isCOO =
-                                                        filterSelectionName ===
-                                                        "country of origin"}
                                                     {@const isReadOnly =
                                                         filterCategoryName ===
                                                             "Anime Filter" &&
@@ -2520,21 +2548,15 @@
                                                                 >
                                                                     <h3>
                                                                         {#if isCOO}
-                                                                            {@const COOs =
-                                                                                {
-                                                                                    jp: "Japan",
-                                                                                    kr: "South Korea",
-                                                                                    cn: "China",
-                                                                                    tw: "Taiwan",
-                                                                                }}
-                                                                            {COOs[
-                                                                                optionName
-                                                                            ] ||
-                                                                                optionName ||
-                                                                                ""}
+                                                                            {@const upperCaseCC = optionName?.toUpperCase?.()}
+                                                                            {@const fullCountryName = COOs[upperCaseCC]}
+                                                                            {#if fullCountryName}
+                                                                                {`${fullCountryName} (${upperCaseCC})`}
+                                                                            {:else}
+                                                                                {upperCaseCC || optionName || ""}
+                                                                            {/if}
                                                                         {:else}
-                                                                            {optionName ||
-                                                                                ""}
+                                                                            {optionName || ""}
                                                                         {/if}
                                                                     </h3>
                                                                     {#if status === "included" || (status === "excluded" && !isReadOnly)}
@@ -2900,23 +2922,21 @@
                             </h3>
                         {:else if optionCategory}
                             {#if optionCategory === "country of origin"}
-                                {@const COOs = {
-                                    jp: "Japan",
-                                    kr: "South Korea",
-                                    cn: "China",
-                                    tw: "Taiwan",
-                                }}
-                                {@const COOName =
-                                    COOs[optionName?.trim()?.toLowerCase?.()] ??
-                                    optionName?.toUpperCase?.()}
+                                {@const upperCaseCC = optionName?.toUpperCase?.()}
+                                {@const fullCountryName = COOs[upperCaseCC]}
                                 <h3>
-                                    {optionCategory + " : " + (COOName || "")}
+                                    {`${optionCategory} : ${fullCountryName || upperCaseCC || ''}`}
                                 </h3>
                             {:else}
+                                {@const categoryName = 
+                                    optionCategory==="airing status"
+                                    ? "Release Status"
+                                    : optionCategory==="shown score"
+                                    ? "Shown Metric"
+                                    : optionCategory
+                                }
                                 <h3>
-                                    {optionCategory +
-                                        " : " +
-                                        (optionName || "")}
+                                    {`${categoryName} : ${optionName || ''}`}
                                 </h3>
                             {/if}
                         {:else}

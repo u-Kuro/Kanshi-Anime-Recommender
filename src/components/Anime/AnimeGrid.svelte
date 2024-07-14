@@ -994,11 +994,11 @@
         bottom: unset !important;
         top: 50% !important;
         left: 8px !important;
-        transform: translateY(-100%) translateZ(0) !important;
-        -webkit-transform: translateY(-100%) translateZ(0) !important;
-        -ms-transform: translateY(-100%) translateZ(0) !important;
-        -moz-transform: translateY(-100%) translateZ(0) !important;
-        -o-transform: translateY(-100%) translateZ(0) !important;
+        transform: translateY(-50%) translateZ(0) !important;
+        -webkit-transform: translateY(-50%) translateZ(0) !important;
+        -ms-transform: translateY(-50%) translateZ(0) !important;
+        -moz-transform: translateY(-50%) translateZ(0) !important;
+        -o-transform: translateY(-50%) translateZ(0) !important;
         width: 44px !important;
         height: 44px !important;
     }
