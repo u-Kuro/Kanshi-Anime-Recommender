@@ -834,6 +834,10 @@ window.isExported = (success = true) => {
 }
 const exportUserData = (_data) => {
     return new Promise((resolve, reject) => {
+        if (isExporting && _data?.visibilityChange) {
+            resolve()
+            return
+        }
         exportUserDataWorker?.terminate?.()
         if (!get(initData)) {
             if (isImporting || isGettingNewEntries) return

@@ -702,20 +702,20 @@
 				requestUserEntries()
 					.then(() => {
 						requestAnimeEntries().finally(() => {
-							checkAutoExportOnLoad();
+							checkAutoExportOnLoad(visibilityChange);
 						});
 					})
 					.catch((error) => {
-						checkAutoExportOnLoad();
+						checkAutoExportOnLoad(visibilityChange);
 						console.error(error);
 					});
 			} else {
 				requestAnimeEntries().finally(() => {
-					checkAutoExportOnLoad();
+					checkAutoExportOnLoad(visibilityChange);
 				});
 			}
 		} else if ($autoExport && (await autoExportIsPastDate())) {
-			exportUserData().finally(() => {
+			exportUserData({ visibilityChange }).finally(() => {
 				if (visibilityChange && !$userRequestIsRunning) {
 					requestUserEntries({ visibilityChange: true });
 				}
@@ -724,11 +724,11 @@
 			requestUserEntries({ visibilityChange: true });
 		}
 	}
-	async function checkAutoExportOnLoad() {
+	async function checkAutoExportOnLoad(visibilityChange) {
 		if ($android && window?.[$isBackgroundUpdateKey] === true) return;
 		if ($autoExport) {
 			if (await autoExportIsPastDate()) {
-				exportUserData();
+				exportUserData({ visibilityChange });
 			}
 		}
 	}
