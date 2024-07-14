@@ -795,7 +795,7 @@
                         let hasActiveFilter = idx >= 0;
                         if (hasActiveFilter) {
                             array[idx].optionValue = optionValue;
-                            array[idx].CMPoperator = CMPOperator;
+                            array[idx].CMPOperator = CMPOperator;
                             array[idx].CMPNumber = CMPNumber;
                             array[idx].status = "included";
                         } else {
@@ -847,7 +847,7 @@
                 } else {
                     let hasActiveFilter = idx >= 0;
                     if (hasActiveFilter) {
-                        delete array[idx].CMPoperator;
+                        delete array[idx].CMPOperator;
                         delete array[idx].CMPNumber;
                         array[idx].optionValue = optionValue;
                         array[idx].status = "included";

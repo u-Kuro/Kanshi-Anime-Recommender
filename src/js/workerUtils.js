@@ -71,7 +71,7 @@ function getAnimeLoaderWorker() {
     if (animeLoaderWorker) return animeLoaderWorker
     if (animeLoaderWorkerPromise) return animeLoaderWorkerPromise
     animeLoaderWorkerPromise = new Promise(async (resolve) => {
-        resolve(new Worker(await cacheRequest("./webapi/worker/animeLoader.js", 19860, "Checking existing List")))
+        resolve(new Worker(await cacheRequest("./webapi/worker/animeLoader.js", 19947, "Checking existing List")))
         animeLoaderWorkerPromise = null
     })
     return animeLoaderWorkerPromise
@@ -243,7 +243,7 @@ function getAnimeManagerWorker() {
     if (animeManagerWorker) return animeManagerWorker
     if (animeManagerWorkerPromise) return animeManagerWorkerPromise
     animeManagerWorkerPromise = new Promise(async (resolve) => {
-        resolve(new Worker(await cacheRequest("./webapi/worker/animeManager.js", 60115, "Updating the List")))
+        resolve(new Worker(await cacheRequest("./webapi/worker/animeManager.js", 60605, "Updating the List")))
         animeManagerWorkerPromise = null
     })
     return animeManagerWorkerPromise
