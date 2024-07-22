@@ -659,8 +659,7 @@
         {#if !$android && shouldShowGoBackInFullView && $loadedAnimeLists?.[mainCategory]?.animeList?.length}
             <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
             <div
-                class="{'go-back-grid' +
-                    (shouldShowGoBackInFullView ? ' fullView' : '')}"
+                class="go-back-grid fullView"
                 tabindex="{$menuVisible || $popupVisible ? '' : '0'}"
                 on:click="{goBackGrid}"
                 on:keyup="{(e) => e.key === 'Enter' && goBackGrid(e)}"
@@ -668,16 +667,9 @@
                 out:fade="{{ duration: 200, easing: sineOut }}"
             >
                 <svg
-                    viewBox="{`0 0 ${
-                        shouldShowGoBackInFullView ? '320' : '448'
-                    } 512`}"
+                    viewBox="0 0 320 512"
                 >
-                    <path
-                        d="{// angle left
-                        shouldShowGoBackInFullView
-                            ? 'M41 233a32 32 0 0 0 0 46l160 160a32 32 0 0 0 46-46L109 256l138-137a32 32 0 0 0-46-46L41 233z'
-                            : // angle up
-                              'M201 137c13-12 33-12 46 0l160 160a32 32 0 0 1-46 46L224 205 87 343a32 32 0 0 1-46-46l160-160z'}"
+                    <path d="M41 233a32 32 0 0 0 0 46l160 160a32 32 0 0 0 46-46L109 256l138-137a32 32 0 0 0-46-46L41 233z"
                     ></path>
                 </svg>
             </div>
@@ -968,7 +960,7 @@
     .go-back-grid {
         position: fixed !important;
         top: unset !important;
-        bottom: 48px !important;
+        bottom: 80px !important;
         right: 30px !important;
         transform: translateZ(0) !important;
         -webkit-transform: translateZ(0) !important;

@@ -71,7 +71,7 @@ function getAnimeLoaderWorker() {
     if (animeLoaderWorker) return animeLoaderWorker
     if (animeLoaderWorkerPromise) return animeLoaderWorkerPromise
     animeLoaderWorkerPromise = new Promise(async (resolve) => {
-        resolve(new Worker(await cacheRequest("./webapi/worker/animeLoader.js", 19947, "Checking existing List")))
+        resolve(new Worker(await cacheRequest("./webapi/worker/animeLoader.js", 20298, "Checking existing List")))
         animeLoaderWorkerPromise = null
     })
     return animeLoaderWorkerPromise
@@ -243,7 +243,7 @@ function getAnimeManagerWorker() {
     if (animeManagerWorker) return animeManagerWorker
     if (animeManagerWorkerPromise) return animeManagerWorkerPromise
     animeManagerWorkerPromise = new Promise(async (resolve) => {
-        resolve(new Worker(await cacheRequest("./webapi/worker/animeManager.js", 60605, "Updating the List")))
+        resolve(new Worker(await cacheRequest("./webapi/worker/animeManager.js", 61028, "Updating the List")))
         animeManagerWorkerPromise = null
     })
     return animeManagerWorkerPromise
@@ -305,10 +305,14 @@ const animeManager = (_data = {}) => {
                     animeIdxRemoved.set(removedIdx)
                 }
                 return
+            } else if (hasOwnProp.call(data, "removedPostWork")) {
+                --workerCount
+                return
             }
 
             let postId = data.postId
             --workerCount
+            if (workerCount < 0) workerCount = 0
 
             if (
                 hasOwnProp.call(data, "updateUserList") ||
@@ -1390,7 +1394,7 @@ const getFilterOptions = (_data) => {
     return new Promise((resolve, reject) => {
         if (getFilterOptionsTerminateTimeout) clearTimeout(getFilterOptionsTerminateTimeout)
         getFilterOptionsWorker?.terminate?.()
-        cacheRequest("./webapi/worker/getFilterOptions.js", 60874, "Initializing Filters")
+        cacheRequest("./webapi/worker/getFilterOptions.js", 60341, "Initializing Filters")
             .then(url => {
                 if (getFilterOptionsTerminateTimeout) clearTimeout(getFilterOptionsTerminateTimeout)
                 getFilterOptionsWorker?.terminate?.()
