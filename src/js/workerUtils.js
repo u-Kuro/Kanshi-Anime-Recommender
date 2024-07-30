@@ -71,7 +71,7 @@ function getAnimeLoaderWorker() {
     if (animeLoaderWorker) return animeLoaderWorker
     if (animeLoaderWorkerPromise) return animeLoaderWorkerPromise
     animeLoaderWorkerPromise = new Promise(async (resolve) => {
-        resolve(new Worker(await cacheRequest("./webapi/worker/animeLoader.js", 20298, "Checking existing List")))
+        resolve(new Worker(await cacheRequest("./webapi/worker/animeLoader.js", 20561, "Checking existing List")))
         animeLoaderWorkerPromise = null
     })
     return animeLoaderWorkerPromise
@@ -243,7 +243,7 @@ function getAnimeManagerWorker() {
     if (animeManagerWorker) return animeManagerWorker
     if (animeManagerWorkerPromise) return animeManagerWorkerPromise
     animeManagerWorkerPromise = new Promise(async (resolve) => {
-        resolve(new Worker(await cacheRequest("./webapi/worker/animeManager.js", 61028, "Updating the List")))
+        resolve(new Worker(await cacheRequest("./webapi/worker/animeManager.js", 61024, "Updating the List")))
         animeManagerWorkerPromise = null
     })
     return animeManagerWorkerPromise
@@ -417,7 +417,7 @@ const processRecommendedAnimeList = (_data = {}) => {
         processRecommendedAnimeListWorker?.terminate?.();
 
         progress.set(0)
-        cacheRequest("./webapi/worker/processRecommendedAnimeList.js", 41853, "Updating Recommendation List")
+        cacheRequest("./webapi/worker/processRecommendedAnimeList.js", 41795, "Updating Recommendation List")
             .then(url => {
                 const lastProcessRecommendationAiringAt = parseInt((new Date().getTime() / 1000))
                 let neareastAnimeCompletionAiringAt
@@ -609,7 +609,9 @@ const requestAnimeEntries = (_data = {}) => {
                 requestAnimeEntriesWorker?.terminate?.()
                 notifyUpdatedAnimeNotification()
                 requestAnimeEntriesWorker = new Worker(url)
-                _data.windowHREF = windowHREF || window?.location?.href
+                if (windowHREF==null && !get(android)) {
+                    _data.windowHREF = windowHREF || window?.location?.href
+                }
                 requestAnimeEntriesWorker.postMessage(_data)
                 isRequestingAnimeEntries = true
                 requestAnimeEntriesWorker.onmessage = ({ data }) => {
@@ -743,7 +745,9 @@ const requestUserEntries = (_data = {}) => {
                 requestUserEntriesWorker?.terminate?.()
                 requestUserEntriesWorker = new Worker(url)
                 userRequestIsRunning.set(true)
-                _data.windowHREF = windowHREF || window?.location?.href
+                if (windowHREF==null && !get(android)) {
+                    _data.windowHREF = windowHREF || window?.location?.href
+                }
                 requestUserEntriesWorker.postMessage(_data)
                 requestUserEntriesWorker.onmessage = ({ data }) => {
                     if (hasOwnProp?.call?.(data, "progress")) {
@@ -1226,7 +1230,7 @@ const getExtraInfo = () => {
 // IndexedDB
 const getIDBdata = (name) => {
     return new Promise((resolve, reject) => {
-        cacheRequest("./webapi/worker/getIDBdata.js", 2876, "Retrieving Some Data")
+        cacheRequest("./webapi/worker/getIDBdata.js", 2847, "Retrieving Some Data")
             .then(url => {
                 let worker = new Worker(url)
                 worker.postMessage({ name })
@@ -1252,7 +1256,7 @@ const getIDBdata = (name) => {
 window.updateNotifications = async (aniIdsNotificationToBeUpdated = []) => {
     if (!get(android)) return
     new Promise((resolve, reject) => {
-        cacheRequest("./webapi/worker/getIDBdata.js", 2876, "Retrieving Some Data")
+        cacheRequest("./webapi/worker/getIDBdata.js", 2847, "Retrieving Some Data")
             .then(url => {
                 let worker = new Worker(url)
                 worker.postMessage({ name: "aniIdsNotificationToBeUpdated", aniIdsNotificationToBeUpdated })
@@ -1337,11 +1341,18 @@ const saveIDBdata = (_data, name, isImportant = false) => {
 const getAnimeEntries = (_data) => {
     return new Promise((resolve, reject) => {
         progress.set(0)
-        cacheRequest("./webapi/worker/getEntries.js")
-            .then(workerUrl => {
+        cacheRequest("./webapi/worker/getEntries.js", 282164, "Checking Anime, Manga, and Novel Entries")
+            .then(async workerUrl => {
                 let worker = new Worker(workerUrl)
-                windowHREF = windowHREF || window?.location?.href
-                worker.postMessage({ windowHREF, android: get(android), appID: get(appID) })
+                if (get(android)) {
+                    let entriesBlob = await cacheRequest("./webapi/worker/entries.json", 174425636, "Getting Anime, Manga, and Novel Entries", true)
+                    worker.postMessage({ entriesBlob })
+                } else {
+                    if (windowHREF==null) {
+                        _data.windowHREF = windowHREF || window?.location?.href
+                    }
+                    worker.postMessage({ windowHREF, appID: get(appID) })
+                }
                 worker.onmessage = ({ data }) => {
                     if (hasOwnProp?.call?.(data, "progress")) {
                         if (data?.progress >= 0 && data?.progress <= 100) {
@@ -1379,6 +1390,7 @@ const getAnimeEntries = (_data) => {
                     reject(error)
                 }
             }).catch((error) => {
+                console.error(error)
                 dataStatusPrio = false
                 dataStatus.set(null)
                 progress.set(100)
@@ -1444,7 +1456,9 @@ const updateTagInfo = async () => {
         const url = await cacheRequest("./webapi/worker/updateTagInfo.js")
         updateTagInfoWorker?.terminate?.()
         updateTagInfoWorker = new Worker(url)
-        windowHREF = windowHREF || window?.location?.href
+        if (windowHREF==null && !get(android)) {
+            _data.windowHREF = windowHREF || window?.location?.href
+        }
         updateTagInfoWorker.postMessage({ windowHREF })
         updateTagInfoWorker.onmessage = () => {
             updateTagInfoWorker?.terminate?.()

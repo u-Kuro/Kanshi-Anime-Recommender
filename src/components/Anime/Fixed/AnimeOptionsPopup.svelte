@@ -92,11 +92,12 @@
 
     async function openInYoutube(e) {
         if (isRecentlyOpened && e.type !== "keydown") return;
-        if (typeof youtubeSearchTitle !== "string" || youtubeSearchTitle === "")
+        if (typeof youtubeSearchTitle !== "string" || youtubeSearchTitle === "" || typeof animeType !== "string" || animeType === "") {
             return;
+        }
         window.open(
             `https://www.youtube.com/results?search_query=${encodeURIComponent(
-                youtubeSearchTitle + " " + (animeType || "Anime"),
+                youtubeSearchTitle + " " + animeType,
             )}`,
             "_blank",
         );
@@ -115,7 +116,7 @@
                     if (typeof shownTitle==="string") {
                         JSBridge?.copyToClipBoard?.(shownTitle);
                     }
-                } catch (e) {}
+                } catch {}
             } else {
                 navigator?.clipboard?.writeText?.(animeCopyTitle);
                 copySecondTimout = setTimeout(() => {
@@ -127,7 +128,7 @@
                 if (typeof shownTitle == "string") {
                     JSBridge?.copyToClipBoard?.(shownTitle);
                 }
-            } catch (e) {}
+            } catch {}
         } else {
             navigator?.clipboard?.writeText?.(shownTitle);
         }
@@ -187,16 +188,35 @@
             ];
         if (openedAnime) {
             shownTitle = openedAnime?.shownTitle;
-            animeCopyTitle = youtubeSearchTitle = openedAnime?.copiedTitle;
+            animeCopyTitle = openedAnime?.copiedTitle;
+            let hasMoreThanOne, ytTitles = {}
+            youtubeSearchTitle = null
+            try {
+                for (let key of ["english", "romaji", "native"]) {
+                    let title = openedAnime?.title?.[key]?.trim?.(), loweredTitle
+                    if (typeof title !== "string" || title === "" || ytTitles[loweredTitle = title.toLowerCase()]) continue
+                    ytTitles[loweredTitle] = true
+                    if (youtubeSearchTitle) {
+                        hasMoreThanOne = true
+                        youtubeSearchTitle += " | " + title
+                    } else {
+                        youtubeSearchTitle = title
+                    }
+                }
+            } catch {}
+            if (hasMoreThanOne && typeof youtubeSearchTitle==="string" && youtubeSearchTitle !== "") {
+                youtubeSearchTitle = `(${youtubeSearchTitle})`
+            }
             animeID = openedAnime.id;
             animeUrl = openedAnime.animeUrl;
-            let loweredFormat = openedAnime.format?.trim()?.toLowerCase();
-            animeType =
-                loweredFormat === "manga" || loweredFormat === "one shot"
-                    ? "Manga"
-                    : loweredFormat === "novel"
-                      ? "Novel"
-                      : "Anime";
+            let loweredFormat = openedAnime?.format?.trim()?.toLowerCase?.()
+            animeType = loweredFormat === "manga" 
+                ? "Manga" 
+                : loweredFormat === "one shot"
+                ? "One Shot"
+                : loweredFormat === "novel"
+                ? "Novel"
+                : "Anime"
             animeIdx = $openedAnimeOptionIdx;
         } else {
             $animeOptionVisible = false;

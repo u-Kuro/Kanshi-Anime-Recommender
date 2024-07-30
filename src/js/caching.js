@@ -1,55 +1,18 @@
 import { get } from "svelte/store"
-import { isAndroid, arraySum } from "./others/helper.js"
+import { isAndroid } from "./others/helper.js"
 import { appID, dataStatus, progress } from "./globalValues.js"
 
 let version, appIDNotChecked = true
 let loadedRequestUrlPromises = {}
 let loadedRequestUrls = {}
-let chunkLoadingLength = {}
-const cacheRequest = async (url, totalLength, status, getBlob, chunkOptions) => {
-    if (url instanceof Array) {
-        let joinedURL = url.join("KANSHI-SEP")
-        if (loadedRequestUrls[joinedURL]) {
-            return loadedRequestUrls[joinedURL]
-        } else if (loadedRequestUrlPromises[joinedURL]) {
-            return loadedRequestUrlPromises[joinedURL]
-        } else {
-            loadedRequestUrlPromises[joinedURL] = new Promise((resolve, reject) => {
-                chunkLoadingLength[joinedURL] = chunkLoadingLength[joinedURL] ?? []
-                Promise.all(url.map((chunkUrl, idx) => {
-                    if (!chunkLoadingLength[joinedURL]) {
-                        chunkLoadingLength[joinedURL] = []
-                    }
-                    chunkLoadingLength[joinedURL][idx] = 0
-                    return cacheRequest(chunkUrl, totalLength, status, false, { joinedURL, chunkIdx: idx })
-                }))
-                    .then((chunks) => {
-                        const blob = new Blob([chunks.join("")])
-                        if (getBlob) {
-                            chunkLoadingLength[joinedURL] = loadedRequestUrlPromises[joinedURL] = null
-                            resolve(blob)
-                        } else {
-                            let blobUrl = URL.createObjectURL(blob);
-                            loadedRequestUrls[joinedURL] = blobUrl;
-                            chunkLoadingLength[joinedURL] = loadedRequestUrlPromises[joinedURL] = null
-                            resolve(blobUrl)
-                        }
-                    })
-                    .catch((e) => {
-                        chunkLoadingLength[joinedURL] = loadedRequestUrlPromises[joinedURL] = null
-                        reject(e)
-                    })
-            })
-            return loadedRequestUrlPromises[joinedURL]
-        }
-    } else if (loadedRequestUrls[url]) {
+
+const cacheRequest = async (url, totalLength, status, getBlob) => {
+    if (loadedRequestUrls[url]) {
         return loadedRequestUrls[url]
     } else if (loadedRequestUrlPromises[url]) {
         return loadedRequestUrlPromises[url]
     } else if (!window?.location?.protocol?.includes?.("file")) {
         loadedRequestUrlPromises[url] = new Promise(async (resolve) => {
-            const isChunk = chunkOptions != null
-
             // Check App ID/Version Once for Consistency
             if (appIDNotChecked) {
                 appIDNotChecked = false
@@ -84,24 +47,10 @@ const cacheRequest = async (url, totalLength, status, getBlob, chunkOptions) => 
                                             return controller.close()
                                         }
                                         receivedLength += value?.byteLength || value?.length || 0;
-                                        if (chunkOptions) {
-                                            let { joinedURL, chunkIdx } = chunkOptions || {}
-                                            if (chunkLoadingLength[joinedURL]?.[chunkIdx] != null) {
-                                                chunkLoadingLength[joinedURL][chunkIdx] = receivedLength
-                                            }
-                                        }
                                         if (!isDataStatusShowing) {
                                             isDataStatusShowing = true
                                             streamStatusTimeout = setTimeout(() => {
-                                                let percent
-                                                if (chunkOptions) {
-                                                    let { joinedURL } = chunkOptions || {}
-                                                    if (chunkLoadingLength[joinedURL]) {
-                                                        percent = (arraySum(chunkLoadingLength[joinedURL]) / totalLength) * 100
-                                                    }
-                                                } else {
-                                                    percent = (receivedLength / totalLength) * 100
-                                                }
+                                                let percent = (receivedLength / totalLength) * 100
                                                 let currentProgress = get(progress)
                                                 if (percent > 0 && percent <= 100
                                                     && (
@@ -124,45 +73,33 @@ const cacheRequest = async (url, totalLength, status, getBlob, chunkOptions) => 
                                 }
                             }));
                         } catch (e) {
-                            resolve(await cacheRequest(url, undefined, undefined, getBlob, isChunk))
+                            resolve(await cacheRequest(url))
                             return
                         }
                     } else {
-                        resolve(await cacheRequest(url, undefined, undefined, getBlob, isChunk))
+                        resolve(await cacheRequest(url))
                         return
                     }
                 } else {
                     return response
                 }
             })
-                .then(async response => {
-                    if (isChunk) {
-                        return await response.text()
-                    } else {
-
-                        return await response.blob()
-                    }
-                })
+                .then(response => response.blob())
                 .then(result => {
-                    if (result) {
-                        if (isChunk || getBlob) {
-                            resolve(result)
-                        } else {
-                            try {
-                                let blobUrl = URL.createObjectURL(result);
-                                loadedRequestUrls[url] = blobUrl;
-                                loadedRequestUrlPromises[url] = null
-                                resolve(blobUrl)
-                            } catch (e) {
-                                loadedRequestUrlPromises[url] = null
-                                resolve(url)
-                            }
-                        }
+                    if (getBlob && result) resolve(result)
+                    try {
+                        let blobUrl = URL.createObjectURL(result);
+                        loadedRequestUrls[url] = blobUrl;
+                        loadedRequestUrlPromises[url] = null
+                        resolve(blobUrl)
+                    } catch (e) {
+                        loadedRequestUrlPromises[url] = null
+                        resolve(url)
                     }
                 })
                 .catch(async () => {
                     loadedRequestUrlPromises[url] = null
-                    resolve(await cacheRequest(url, undefined, undefined, getBlob, isChunk))
+                    resolve(await cacheRequest(url))
                 })
 
         })

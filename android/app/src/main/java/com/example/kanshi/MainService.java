@@ -47,10 +47,7 @@ import androidx.webkit.WebViewAssetLoader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
-import java.io.InputStream;
 import java.lang.ref.WeakReference;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -178,24 +175,6 @@ public class MainService extends Service {
         WebViewAssetLoader assetLoader = getAssetLoader(this);
 
         webView.setWebViewClient(new WebViewClient() {
-            private WebResourceResponse fetchWebVersion() {
-                try {
-                    HttpURLConnection connection = (HttpURLConnection) new URL("https://raw.githubusercontent.com/u-Kuro/Kanshi-Anime-Recommender/main/public/version.json").openConnection();
-                    connection.setRequestMethod("GET");
-                    connection.setUseCaches(true);
-                    connection.setConnectTimeout(1);
-                    connection.setReadTimeout(1);
-                    connection.connect();
-
-                    InputStream inputStream = connection.getInputStream();
-                    String contentType = connection.getContentType();
-                    String encoding = connection.getContentEncoding() != null ? connection.getContentEncoding() : "UTF-8";
-
-                    return new WebResourceResponse(contentType, encoding, inputStream);
-                } catch (Exception ignored) {
-                    return null;
-                }
-            }
             @Override
             public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
                 Uri uri = request.getUrl();
@@ -211,8 +190,10 @@ public class MainService extends Service {
             @Override
             @SuppressWarnings("deprecation")
             public WebResourceResponse shouldInterceptRequest(WebView view, String url) {
-                if (url.startsWith("https://appassets.androidplatform.net/assets/version.json")) {
-                    return fetchWebVersion();
+                if (url.startsWith("https://appassets.androidplatform.net/assets/build/bundle.css")
+                    || url.startsWith("https://appassets.androidplatform.net/assets/version.json")
+                ) {
+                    return null;
                 } else {
                     return assetLoader.shouldInterceptRequest(Uri.parse(url));
                 }

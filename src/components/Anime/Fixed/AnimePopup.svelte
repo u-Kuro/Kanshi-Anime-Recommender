@@ -171,28 +171,46 @@
         });
     }
 
-    async function handleMoreVideos(title, format) {
-        let animeTitle;
-        if (isJsonObject(title)) {
-            animeTitle =
-                title?.romaji ||
-                title?.userPreferred ||
-                title?.english ||
-                title?.native;
-        } else if (typeof title === "string") {
-            animeTitle = title;
+    async function handleMoreVideos(titles, format, askFirst) {
+        let youtubeSearchTitle, hasMoreThanOne, ytTitles = {}
+        try {
+            for (let key of ["english", "romaji", "native"]) {
+                let title = titles?.[key]?.trim?.(), loweredTitle
+                if (typeof title !== "string" || title === "" || ytTitles[loweredTitle = title.toLowerCase()]) continue
+                ytTitles[loweredTitle] = true
+                if (youtubeSearchTitle) {
+                    hasMoreThanOne = true
+                    youtubeSearchTitle += " | " + title
+                } else {
+                    youtubeSearchTitle = title
+                }
+            }
+        } catch {}
+        if (typeof youtubeSearchTitle !== "string" || youtubeSearchTitle === "") return
+        if (hasMoreThanOne) {
+            youtubeSearchTitle = `(${youtubeSearchTitle})`
         }
-        let loweredFormat = format?.trim()?.toLowerCase();
-        let animeType =
-            loweredFormat === "manga" || loweredFormat === "one shot"
-                ? "Manga"
-                : loweredFormat === "novel"
-                  ? "Novel"
-                  : "Anime";
-        if (typeof animeTitle !== "string" || animeTitle === "") return;
+        if (
+            askFirst
+            && !(await $confirmPromise({
+                title: "See related videos",
+                text: "Do you want to see more related videos in YouTube?",
+                isImportant: true,
+            }))
+        ) {
+            return
+        }
+        let loweredFormat = format?.trim()?.toLowerCase?.()
+        let animeType = loweredFormat === "manga" 
+            ? "Manga" 
+            : loweredFormat === "one shot"
+            ? "One Shot"
+            : loweredFormat === "novel"
+            ? "Novel"
+            : "Anime"
         window.open(
             `https://www.youtube.com/results?search_query=${encodeURIComponent(
-                animeTitle + " " + (animeType || "Anime"),
+                youtubeSearchTitle + " " + animeType,
             )}`,
             "_blank",
         );
@@ -1001,27 +1019,7 @@
                 openTrailer(trailerID)
             }
         } else {
-            let animeTitle;
-            if (isJsonObject(title)) {
-                animeTitle =
-                    title?.romaji ||
-                    title?.userPreferred ||
-                    title?.english ||
-                    title?.native;
-            } else if (typeof title === "string") {
-                animeTitle = title;
-            }
-            if (typeof animeTitle !== "string" || animeTitle === "") return;
-            if (
-                await $confirmPromise({
-                    title: "See related videos",
-                    text: "Do you want to see more related videos in YouTube?",
-                    isImportant: true,
-                })
-            ) {
-                handleMoreVideos(animeTitle, format);
-                return
-            }
+            handleMoreVideos(title, format, true);
         }
     }
 
@@ -3087,6 +3085,7 @@
         width: calc(100% - 10px);
         display: -webkit-box;
         max-width: calc(100% - 10px);
+        line-clamp: 8;
         -webkit-line-clamp: 8;
         -webkit-box-orient: vertical;
         overflow: hidden;
