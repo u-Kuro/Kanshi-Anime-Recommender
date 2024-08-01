@@ -1,6 +1,5 @@
 import { get } from "svelte/store"
-import { isAndroid } from "./others/helper.js"
-import { appID, dataStatus, progress } from "./globalValues.js"
+import { android, appID, dataStatus, progress } from "./globalValues.js"
 
 let version, appIDNotChecked = true
 let loadedRequestUrlPromises = {}
@@ -109,8 +108,6 @@ const cacheRequest = async (url, totalLength, status, getBlob) => {
     }
 }
 
-const emptyImage = "data:image/png;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=";
-const android = isAndroid()
 let loadedImagePromises = {}
 let loadedImages = {}
 const cacheImage = (url, width, height) => {
@@ -120,7 +117,7 @@ const cacheImage = (url, width, height) => {
         return loadedImagePromises[url]
     } else {
         const TOKEN = window?.["Kanshi.Anime.Recommendations.Anilist.W~uPtWCq=vG$TR:Zl^#t<vdS]I~N70.isOwner"]
-        if (typeof TOKEN === "string" && android) {
+        if (typeof TOKEN === "string" && get(android)) {
             loadedImagePromises[url] = new Promise(async (resolve) => {
                 let newUrl = `https://cors-anywhere-kuro.vercel.app/api/${TOKEN}?url=${url}`;
                 fetch(newUrl, {
@@ -177,7 +174,8 @@ const cacheImage = (url, width, height) => {
         } else if (url) {
             return url
         } else {
-            return emptyImage
+            // Empty Image
+            return "data:image/png;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs="
         }
     }
 }

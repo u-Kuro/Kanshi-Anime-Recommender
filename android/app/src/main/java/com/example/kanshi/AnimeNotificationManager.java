@@ -132,7 +132,11 @@ public class AnimeNotificationManager {
 
     @RequiresApi(api = Build.VERSION_CODES.O)
     public static void addAnimeNotification(Context context, AnimeNotification anime) {
-        if ((nearestNotificationTime == 0 || anime.releaseDateMillis < nearestNotificationTime) && anime.releaseDateMillis >= System.currentTimeMillis()) {
+        if (
+            (nearestNotificationTime == 0 || anime.releaseDateMillis < nearestNotificationTime)
+            && anime.releaseDateMillis >= System.currentTimeMillis()
+            && !"DROPPED".equalsIgnoreCase(anime.userStatus)
+        ) {
             Intent intent = new Intent(context, MyReceiver.class);
             if (nearestNotificationInfo != null) {
                 Intent oldIntent = new Intent(context, MyReceiver.class);
@@ -309,6 +313,7 @@ public class AnimeNotificationManager {
         List<AnimeNotification> allAnimeNotificationValues = new ArrayList<>(allAnimeNotification.values());
 
         for (AnimeNotification anime : allAnimeNotificationValues) {
+            if ("DROPPED".equalsIgnoreCase(anime.userStatus)) continue;
             if (anime.releaseDateMillis <= currentTimeInMillis) {
                 boolean isMyAnime = anime.userStatus != null && !anime.userStatus.isEmpty() && !anime.userStatus.equalsIgnoreCase("UNWATCHED");
                 if (isMyAnime) {

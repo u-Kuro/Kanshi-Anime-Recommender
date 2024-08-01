@@ -646,13 +646,16 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void refreshMediaList() {
-        if (!shouldRefreshList) return;
+        if (!shouldRefreshList || webView==null) return;
         try {
-            new Handler(Looper.getMainLooper())
-            .post(() -> webView.post(() -> webView.loadUrl("javascript:window?.shouldRefreshAnimeList?.("
-                    + (shouldProcessRecommendationList ? "true" : "false") + ","
-                    + (shouldLoadAnime ? "true" : "false")
-                    + ")")));
+            new Handler(Looper.getMainLooper()).post(() -> webView.post(() -> {
+                webView.loadUrl("javascript:window?.shouldRefreshAnimeList?.("
+                        + (shouldProcessRecommendationList ? "true" : "false") + ","
+                        + (shouldLoadAnime ? "true" : "false")
+                        + ")"
+                );
+                shouldRefreshList = shouldProcessRecommendationList = shouldLoadAnime = false;
+            }));
         } catch (Exception ignored) {}
     }
 

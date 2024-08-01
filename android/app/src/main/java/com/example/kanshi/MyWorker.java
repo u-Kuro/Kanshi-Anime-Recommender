@@ -111,13 +111,22 @@ public class MyWorker extends Worker {
             }
         }
 
-        List<AnimeNotification> newSentAnimeNotification = new ArrayList<>();
+        List<AnimeNotification> newSentAnime = new ArrayList<>();
         List<AnimeNotification> allAnimeNotificationValues = new ArrayList<>(AnimeNotificationManager.allAnimeNotification.values());
 
         for (AnimeNotification anime : allAnimeNotificationValues) {
+            if ("DROPPED".equalsIgnoreCase(anime.userStatus)) {
+                if (
+                    anime.releaseDateMillis <= currentTimeInMillis
+                    && anime.releaseDateMillis > realLastSentNotificationTime
+                ) {
+                    newSentAnime.add(anime);
+                }
+                continue;
+            }
             if (anime.releaseDateMillis <= currentTimeInMillis) {
                 if (anime.releaseDateMillis > realLastSentNotificationTime) {
-                    newSentAnimeNotification.add(anime);
+                    newSentAnime.add(anime);
                 }
                 boolean isMyAnime = anime.userStatus != null && !anime.userStatus.isEmpty() && !anime.userStatus.equalsIgnoreCase("UNWATCHED");
                 if (isMyAnime) {
@@ -276,7 +285,6 @@ public class MyWorker extends Worker {
             }
             Person item = itemBuilder.build();
             String addedInfo = " just aired.";
-            newSentAnimeNotification.add(anime);
             if (anime.maxEpisode < 0) { // No Given Max Episodes
                 styleOA.addMessage("Episode " + anime.releaseEpisode + addedInfo, anime.releaseDateMillis, item);
             } else if (anime.releaseEpisode >= anime.maxEpisode) {
@@ -386,7 +394,7 @@ public class MyWorker extends Worker {
             }
         }
 
-        for (AnimeNotification anime : newSentAnimeNotification) {
+        for (AnimeNotification anime : newSentAnime) {
             getAiringAnime(anime, 0);
         }
 

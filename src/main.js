@@ -1,9 +1,10 @@
 import './css/global.css';
 import App from './App.svelte';
-import { isAndroid } from './js/others/helper';
+import { get } from 'svelte/store';
+import { android } from './js/globalValues';
 
 try{
-	if (!isAndroid()) {
+	if (get(android)) {
 		const channel = new BroadcastChannel('tab');
 		channel.postMessage('changed-tab');
 		channel.addEventListener('message', (msg) => {

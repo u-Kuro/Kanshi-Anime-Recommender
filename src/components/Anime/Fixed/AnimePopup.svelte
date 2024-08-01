@@ -3,10 +3,8 @@
     import { fade } from "svelte/transition";
     import { sineOut } from "svelte/easing";
     import { cacheImage } from "../../../js/caching.js";
-    import { animeLoader, animeManager } from "../../../js/workerUtils.js";
-    import { retrieveJSON, saveJSON } from "../../../js/indexedDB.js";
+    import { animeLoader, animeManager, saveIDBdata, getIDBdata } from "../../../js/workerUtils.js";
     import {
-        isJsonObject,
         scrollToElement,
         getChildIndex,
         msToTime,
@@ -76,7 +74,7 @@
     (async () => {
         window?.kanshiInit?.then?.(async () => {
             savedYtVolume =
-                (await retrieveJSON("savedYtVolume")) || savedYtVolume;
+                (await getIDBdata("savedYtVolume")) || savedYtVolume;
         });
     })();
 
@@ -449,12 +447,10 @@
 
     autoPlay.subscribe(async (val) => {
         if (typeof val === "boolean") {
-            if ($android != null) {
-                saveJSON(val, "autoPlay");
-                setLocalStorage("autoPlay", val).catch(() => {
-                    removeLocalStorage("autoPlay");
-                });
-            }
+            saveIDBdata(val, "autoPlay");
+            setLocalStorage("autoPlay", val).catch(() => {
+                removeLocalStorage("autoPlay");
+            });
             await tick();
             if (!$popupVisible) return;
             let visibleTrailer = mostVisiblePopupHeader?.querySelector?.(".trailer");
@@ -969,7 +965,7 @@
         if (typeof ytVolume === "number") {
             if (savedYtVolume !== ytVolume) {
                 savedYtVolume = ytVolume;
-                saveJSON(savedYtVolume, "savedYtVolume");
+                saveIDBdata(savedYtVolume, "savedYtVolume");
             }
             ytPlayer?.setVolume?.(savedYtVolume);
         }
@@ -1033,12 +1029,7 @@
     }
 
     async function updateList(skipConfirm) {
-        if (
-            $android &&
-            $isBackgroundUpdateKey &&
-            window?.[$isBackgroundUpdateKey] === true
-        )
-            return;
+        if ($android && window?.[$isBackgroundUpdateKey] === true) return;
         if (
             skipConfirm ||
             (await $confirmPromise({

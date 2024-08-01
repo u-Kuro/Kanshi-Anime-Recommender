@@ -1,11 +1,12 @@
 <script>
     import { onMount, tick } from "svelte";
-    import { retrieveJSON, saveJSON } from "../../js/indexedDB.js";
     import {
         animeLoader,
         animeManager,
         getExtraInfo,
         processRecommendedAnimeList,
+        saveIDBdata,
+        getIDBdata
     } from "../../js/workerUtils.js";
     import {
         addClass,
@@ -188,11 +189,7 @@
     }
 
     async function loadAnime(data) {
-        if (
-            $android &&
-            $isBackgroundUpdateKey &&
-            window?.[$isBackgroundUpdateKey] === true
-        ) {
+        if ($android && window?.[$isBackgroundUpdateKey] === true) {
             $showLoadingAnime = false;
             return;
         }
@@ -210,11 +207,7 @@
     }
 
     async function processRecAnimeList(data) {
-        if (
-            $android &&
-            $isBackgroundUpdateKey &&
-            window?.[$isBackgroundUpdateKey] === true
-        ) {
+        if ($android && window?.[$isBackgroundUpdateKey] === true) {
             $showLoadingAnime = false;
             return;
         }
@@ -240,7 +233,7 @@
             "selectedFilterCategoryName",
             selectedFilterCategoryName,
         ).catch(() => {
-            saveJSON(selectedFilterCategoryName, "selectedFilterCategoryName");
+            saveIDBdata(selectedFilterCategoryName, "selectedFilterCategoryName");
         });
         if (
             highlightedEl instanceof Element &&
@@ -1218,7 +1211,7 @@
                 removeLocalStorage("gridFullView");
             })
             .finally(() => {
-                saveJSON($gridFullView, "gridFullView");
+                saveIDBdata($gridFullView, "gridFullView");
             });
     }
 
@@ -1676,7 +1669,7 @@
         // Init
         selectedFilterCategoryName =
             selectedFilterCategoryName ||
-            (await retrieveJSON("selectedFilterCategoryName")) ||
+            (await getIDBdata("selectedFilterCategoryName")) ||
             "Anime Filter";
         popupContainer = document?.getElementById("popup-container");
 
@@ -1844,7 +1837,7 @@
     };
     let recListMAPE, recListMAPEIncreased;
     (async () => {
-        recListMAPE = await retrieveJSON("recListMAPE");
+        recListMAPE = await getIDBdata("recListMAPE");
     })();
     window.updateRecListMAPE = (newRecListMAPE) => {
         if (recListMAPE > 0 && recListMAPE !== newRecListMAPE) {

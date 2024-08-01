@@ -4,7 +4,6 @@
 	import { inject } from "@vercel/analytics";
 	import C from "./components/index.js";
 	import getWebVersion from "./version.js";
-	import { retrieveJSON, saveJSON } from "./js/indexedDB.js";
 	import {
 		getAnimeEntries,
 		getFilterOptions,
@@ -16,11 +15,11 @@
 		getExtraInfo,
 		animeLoader,
         updateTagInfo,
+		saveIDBdata,
+		getIDBdata
 	} from "./js/workerUtils.js";
 	import {
 		getLocalStorage,
-		isAndroid,
-		isMobile,
 		ncsCompare,
 		removeLocalStorage,
 		requestImmediate,
@@ -60,7 +59,6 @@
 		popupIsGoingBack,
 		dropdownIsVisible,
 		showStatus,
-		mobile,
 		isBackgroundUpdateKey,
 		visitedKey,
 		orderedFilters,
@@ -82,9 +80,7 @@
         documentScrollTop,
 		// anilistAccessToken,
 	} from "./js/globalValues.js";
-	
-	$android = isAndroid(); // Android/Browser Identifier
-	$mobile = isMobile(); // Mobile/
+
 	// Init Data
 	let initDataPromises = [];
 	let shouldReloadList;
@@ -98,7 +94,7 @@
 		// Check Data Loss
 		if ($android) {
 			if ($visitedKey && window[$visitedKey] === true) {
-				let isAlreadyVisited = await retrieveJSON($visitedKey);
+				let isAlreadyVisited = await getIDBdata($visitedKey);
 				if (!isAlreadyVisited) {
 					window[".androidDataIsEvicted"] = true;
 					try {
@@ -109,7 +105,7 @@
 					} catch (e) {}
 				}
 			} else {
-				await saveJSON(true, $visitedKey, true).then(() => {
+				await saveIDBdata(true, $visitedKey, true).then(() => {
 					try {
 						JSBridge?.visited?.(true);
 					} catch (e) {}
@@ -123,7 +119,7 @@
 			$gridFullView =
 				$gridFullView ??
 				getLocalStorage("gridFullView") ??
-				(await retrieveJSON("gridFullView"));
+				(await getIDBdata("gridFullView"));
 			if ($gridFullView == null) {
 				$gridFullView = false;
 				setLocalStorage("gridFullView", false)
@@ -131,7 +127,7 @@
 						removeLocalStorage("gridFullView");
 					})
 					.finally(() => {
-						saveJSON(false, "gridFullView");
+						saveIDBdata(false, "gridFullView");
 					});
 			}
 
@@ -152,7 +148,7 @@
 			initDataPromises.push(
 				new Promise(async (resolve, reject) => {
 					try {
-						let shouldGetAnimeEntries = await retrieveJSON(
+						let shouldGetAnimeEntries = await getIDBdata(
 							"animeEntriesIsEmpty",
 						);
 						if (shouldGetAnimeEntries === true) {
@@ -179,10 +175,10 @@
 				new Promise(async (resolve, reject) => {
 					// let accessToken = getAnilistAccessTokenFromURL();
 					// if (accessToken) {
-					// 	await saveJSON(accessToken, "access_token");
+					// 	await saveIDBdata(accessToken, "access_token");
 					// 	$anilistAccessToken = accessToken;
 					// } else {
-					// 	$anilistAccessToken = await retrieveJSON("access_token");
+					// 	$anilistAccessToken = await getIDBdata("access_token");
 					// }
 					// if ($anilistAccessToken) {
 					// 	let getUsername = () => {
@@ -208,7 +204,7 @@
 					// 						return getUsername();
 					// 					}, 60000);
 					// 				} else {
-					// 					let savedUsername = await retrieveJSON(
+					// 					let savedUsername = await getIDBdata(
 					// 						"username"
 					// 					);
 					// 					let _username = result.data.Viewer.name;
@@ -244,7 +240,7 @@
 					// 	getUsername();
 					// } else {
 					try {
-						let _username = await retrieveJSON("username");
+						let _username = await getIDBdata("username");
 						if (_username !== $username) {
 							setLocalStorage("username", _username || "").catch(
 								() => {
@@ -256,10 +252,7 @@
 						if (
 							$android &&
 							window.shouldUpdateNotifications === true &&
-							!(
-								window[$isBackgroundUpdateKey] === true &&
-								$isBackgroundUpdateKey
-							)
+							window[$isBackgroundUpdateKey] !== true
 						) {
 							window.shouldUpdateNotifications = false;
 							try {
@@ -372,13 +365,13 @@
 											if (shouldExport) {
 												$exportPathIsAvailable =
 													$exportPathIsAvailable ??
-													(await retrieveJSON(
+													(await getIDBdata(
 														"exportPathIsAvailable",
 													));
 												if ($exportPathIsAvailable) {
 													$autoExport =
 														$autoExport ??
-														(await retrieveJSON(
+														(await getIDBdata(
 															"autoExport",
 														));
 													if ($autoExport) {
@@ -415,7 +408,7 @@
 							$autoPlay =
 								$autoPlay ??
 								getLocalStorage("autoPlay") ??
-								(await retrieveJSON("autoPlay"));
+								(await getIDBdata("autoPlay"));
 							if ($autoPlay == null) {
 								$autoPlay = false;
 								setLocalStorage("autoPlay", false)
@@ -423,13 +416,13 @@
 										removeLocalStorage("autoPlay");
 									})
 									.finally(() => {
-										saveJSON(false, "autoPlay");
+										saveIDBdata(false, "autoPlay");
 									});
 							}
 							$autoUpdate =
 								$autoUpdate ??
 								getLocalStorage("autoUpdate") ??
-								(await retrieveJSON("autoUpdate"));
+								(await getIDBdata("autoUpdate"));
 							if ($autoUpdate == null) {
 								$autoUpdate = false;
 								setLocalStorage("autoUpdate", false)
@@ -437,13 +430,13 @@
 										removeLocalStorage("autoUpdate");
 									})
 									.finally(() => {
-										saveJSON(false, "autoUpdate");
+										saveIDBdata(false, "autoUpdate");
 									});
 							}
 							$autoExport =
 								$autoExport ??
 								getLocalStorage("autoExport") ??
-								(await retrieveJSON("autoExport"));
+								(await getIDBdata("autoExport"));
 							if ($autoExport == null) {
 								$autoExport = false;
 								setLocalStorage("autoExport", false)
@@ -451,13 +444,13 @@
 										removeLocalStorage("autoExport");
 									})
 									.finally(() => {
-										saveJSON(false, "autoExport");
+										saveIDBdata(false, "autoExport");
 									});
 							}
 							$showStatus =
 								$showStatus ??
 								getLocalStorage("showStatus") ??
-								(await retrieveJSON("showStatus"));
+								(await getIDBdata("showStatus"));
 							if ($showStatus == null) {
 								$showStatus = true;
 								setLocalStorage("showStatus", true)
@@ -465,7 +458,7 @@
 										removeLocalStorage("showStatus");
 									})
 									.finally(() => {
-										saveJSON(true, "showStatus");
+										saveIDBdata(true, "showStatus");
 									});
 							}
 						})();
@@ -475,7 +468,7 @@
 							getLocalStorage(
 								"neareastAnimeCompletionAiringAt",
 							) ??
-							(await retrieveJSON(
+							(await getIDBdata(
 								"neareastAnimeCompletionAiringAt",
 							));
 						if (
@@ -499,10 +492,10 @@
 						}
 						if (!shouldProcessRecommendation) {
 							shouldProcessRecommendation =
-								(await retrieveJSON(
+								(await getIDBdata(
 									"shouldProcessRecommendation",
 								)) ||
-								(await retrieveJSON(
+								(await getIDBdata(
 									"recommendedAnimeListIsEmpty",
 								));
 						}
@@ -518,7 +511,7 @@
 							shouldLoadAnime =
 								shouldLoadAnime ||
 								shouldReloadList ||
-								(await retrieveJSON("shouldLoadAnime"));
+								(await getIDBdata("shouldLoadAnime"));
 							if (shouldLoadAnime) {
 								animeManager({
 									updateRecommendedAnimeList: true,
@@ -556,7 +549,7 @@
 				$exportPathIsAvailable =
 					$exportPathIsAvailable ??
 					getLocalStorage("exportPathIsAvailable") ??
-					(await retrieveJSON("exportPathIsAvailable"));
+					(await getIDBdata("exportPathIsAvailable"));
 				if ($exportPathIsAvailable == null) {
 					$exportPathIsAvailable = false;
 					setLocalStorage("exportPathIsAvailable", false)
@@ -564,7 +557,7 @@
 							removeLocalStorage("exportPathIsAvailable");
 						})
 						.finally(() => {
-							saveJSON(false, "exportPathIsAvailable");
+							saveIDBdata(false, "exportPathIsAvailable");
 						});
 				}
 			}
@@ -737,7 +730,6 @@
 		addedBackgroundStatusUpdate = undefined;
 		if (!$android) return;
 		if (window?.[$isBackgroundUpdateKey] !== true) return;
-		if (!$isBackgroundUpdateKey) return;
 		let sendBackgroundStatusIsRunning;
 		dataStatus.subscribe((val) => {
 			if (sendBackgroundStatusIsRunning) return;
@@ -874,9 +866,7 @@
 	autoUpdate.subscribe(async (val) => {
 		if ($android && window?.[$isBackgroundUpdateKey] === true) return;
 		if (val === true) {
-			if ($android != null) {
-				saveJSON(true, "autoUpdate");
-			}
+			saveIDBdata(true, "autoUpdate");
 			// Check Run First
 			if (await autoUpdateIsPastDate()) {
 				checkAutoFunctions();
@@ -908,15 +898,13 @@
 		} else if (val === false) {
 			if ($autoUpdateInterval) clearInterval($autoUpdateInterval);
 			$autoUpdateInterval = null;
-			if ($android != null) {
-				saveJSON(false, "autoUpdate");
-			}
+			saveIDBdata(false, "autoUpdate");
 		}
 	});
 	async function autoUpdateIsPastDate() {
 		return new Promise(async (resolve) => {
 			let isPastDate = false;
-			$runnedAutoUpdateAt = await retrieveJSON("runnedAutoUpdateAt");
+			$runnedAutoUpdateAt = await getIDBdata("runnedAutoUpdateAt");
 			if ($runnedAutoUpdateAt == null) isPastDate = true;
 			else if (
 				typeof $runnedAutoUpdateAt === "number" &&
@@ -948,9 +936,7 @@
 	autoExport.subscribe(async (val) => {
 		if ($android && window?.[$isBackgroundUpdateKey] === true) return;
 		if (val === true) {
-			if ($android != null) {
-				saveJSON(true, "autoExport");
-			}
+			saveIDBdata(true, "autoExport");
 			if (await autoExportIsPastDate()) {
 				checkAutoFunctions();
 				if ($autoExportInterval) clearInterval($autoExportInterval);
@@ -981,16 +967,14 @@
 		} else if (val === false) {
 			if ($autoExportInterval) clearInterval($autoExportInterval);
 			$autoExportInterval = null;
-			if ($android != null) {
-				saveJSON(false, "autoExport");
-			}
+			saveIDBdata(false, "autoExport");
 		}
 	});
 	async function autoExportIsPastDate() {
 		return new Promise(async (resolve) => {
 			// Check Run First
 			let isPastDate = false;
-			$runnedAutoExportAt = await retrieveJSON("runnedAutoExportAt");
+			$runnedAutoExportAt = await getIDBdata("runnedAutoExportAt");
 			if ($runnedAutoExportAt == null) isPastDate = true;
 			else if (
 				typeof $runnedAutoExportAt === "number" &&
@@ -1030,7 +1014,7 @@
 			$autoUpdate =
 				$autoUpdate ??
 				getLocalStorage("autoUpdate") ??
-				(await retrieveJSON("autoUpdate"));
+				(await getIDBdata("autoUpdate"));
 			if ($autoUpdate == null) {
 				$autoUpdate = false;
 				setLocalStorage("autoUpdate", false)
@@ -1038,7 +1022,7 @@
 						removeLocalStorage("autoUpdate");
 					})
 					.finally(() => {
-						saveJSON(false, "autoUpdate");
+						saveIDBdata(false, "autoUpdate");
 					});
 			}
 		}
@@ -1046,7 +1030,7 @@
 			$autoExport =
 				$autoExport ??
 				getLocalStorage("autoExport") ??
-				(await retrieveJSON("autoExport"));
+				(await getIDBdata("autoExport"));
 			if ($autoExport == null) {
 				$autoExport = false;
 				setLocalStorage("autoExport", false)
@@ -1054,7 +1038,7 @@
 						removeLocalStorage("autoExport");
 					})
 					.finally(() => {
-						saveJSON(false, "autoExport");
+						saveIDBdata(false, "autoExport");
 					});
 			}
 		}
@@ -1076,7 +1060,7 @@
 			$autoUpdate =
 				$autoUpdate ??
 				getLocalStorage("autoUpdate") ??
-				(await retrieveJSON("autoUpdate"));
+				(await getIDBdata("autoUpdate"));
 			if ($autoUpdate == null) {
 				$autoUpdate = false;
 				setLocalStorage("autoUpdate", false)
@@ -1084,7 +1068,7 @@
 						removeLocalStorage("autoUpdate");
 					})
 					.finally(() => {
-						saveJSON(false, "autoUpdate");
+						saveIDBdata(false, "autoUpdate");
 					});
 			}
 		}
@@ -1092,7 +1076,7 @@
 			$autoExport =
 				$autoExport ??
 				getLocalStorage("autoExport") ??
-				(await retrieveJSON("autoExport"));
+				(await getIDBdata("autoExport"));
 			if ($autoExport == null) {
 				$autoExport = false;
 				setLocalStorage("autoExport", false)
@@ -1100,7 +1084,7 @@
 						removeLocalStorage("autoExport");
 					})
 					.finally(() => {
-						saveJSON(false, "autoExport");
+						saveIDBdata(false, "autoExport");
 					});
 			}
 		}

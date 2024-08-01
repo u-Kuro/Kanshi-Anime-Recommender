@@ -1,12 +1,13 @@
-import { writable } from "svelte/store";
-import { getLocalStorage } from "../js/others/helper.js"
+import { readable, writable } from "svelte/store";
+import { getLocalStorage, isAndroid, isMobile } from "../js/others/helper.js"
+
+const android = readable(isAndroid())
+const mobile = readable(isMobile())
+const uniqueKey = "Kanshi.Anime.Recommendations.Anilist.W~uPtWCq=vG$TR:Zl^#t<vdS]I~N70"
+const isBackgroundUpdateKey = readable(uniqueKey + ".isBackgroundUpdate")
+const visitedKey = readable(uniqueKey + ".visited")
 
 const appID = writable(null)
-const android = writable(null)
-const uniqueKey = "Kanshi.Anime.Recommendations.Anilist.W~uPtWCq=vG$TR:Zl^#t<vdS]I~N70"
-const isBackgroundUpdateKey = writable(uniqueKey + ".isBackgroundUpdate")
-const visitedKey = writable(uniqueKey + ".visited")
-const mobile = writable(null)
 const appInstallationAsked = writable(getLocalStorage('appInstallationAsked') ?? null)
 const inApp = writable(true)
 const progress = writable(0)

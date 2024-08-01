@@ -318,7 +318,7 @@ const animeManager = (_data = {}) => {
                 hasOwnProp.call(data, "updateUserList") ||
                 hasOwnProp.call(data, "updateRecommendedAnimeList")
             ) {
-                if (!get(android) || window?.[get(isBackgroundUpdateKey)] !== true || !get(isBackgroundUpdateKey)) {
+                if (!get(android) || window?.[get(isBackgroundUpdateKey)] !== true) {
                     delete data?.postId
                     if (animeLoaderWorker) {
                         animeLoaderWorker.postMessage(data || {})
@@ -345,7 +345,7 @@ const animeManager = (_data = {}) => {
 
                 animeManagerPromises?.[postId]?.reject?.()
                 return
-            } else if (get(android) && get(isBackgroundUpdateKey) && window?.[get(isBackgroundUpdateKey)] === true) {
+            } else if (get(android) && window?.[get(isBackgroundUpdateKey)] === true) {
                 animeManagerWorker?.terminate?.()
                 animeManagerWorker = null
                 animeManagerPromises?.[postId]?.resolve?.()
@@ -572,13 +572,14 @@ function notifyUpdatedAnimeNotification() {
                     newUpdatedAnimeCount > 0
                 )
             ) {
+                updateRecommendationList.update(e => !e)
                 JSBridge?.showNewUpdatedAnimeNotification?.(
                     Math.floor(newAddedAnimeCount), 
                     Math.floor(newUpdatedAnimeCount)
                 )
                 newAddedAnimeCount = newUpdatedAnimeCount = undefined
             }
-        } catch { 
+        } catch {
             newAddedAnimeCount = newUpdatedAnimeCount = undefined
         }
     }
@@ -630,8 +631,8 @@ const requestAnimeEntries = (_data = {}) => {
                         isRequestingAnimeEntries = false
 
                         requestAnimeEntriesWorker?.terminate?.();
-
                         notifyUpdatedAnimeNotification()
+
                         dataStatus.set(null)
                         progress.set(100)
                         reject(data)
@@ -667,8 +668,15 @@ const requestAnimeEntries = (_data = {}) => {
                                         updatedAnimeCount > 0
                                     )
                                 ) {
-                                    newAddedAnimeCount = addedAnimeCount
-                                    newUpdatedAnimeCount = updatedAnimeCount
+                                    if (window?.[get(isBackgroundUpdateKey)] === true) {
+                                        JSBridge?.showNewUpdatedAnimeNotification?.(
+                                            Math.floor(addedAnimeCount), 
+                                            Math.floor(updatedAnimeCount)
+                                        )
+                                    } else {
+                                        newAddedAnimeCount = addedAnimeCount
+                                        newUpdatedAnimeCount = updatedAnimeCount
+                                    }
                                 }
                             } catch (e) { }
                         }
@@ -1304,7 +1312,7 @@ window.updateNotifications = async (aniIdsNotificationToBeUpdated = []) => {
 
 const saveIDBdata = (_data, name, isImportant = false) => {
     return new Promise((resolve, reject) => {
-        if (!get(android) || isImportant || !get(isBackgroundUpdateKey) || window?.[get(isBackgroundUpdateKey)] !== true) {
+        if (!get(android) || isImportant || window?.[get(isBackgroundUpdateKey)] !== true) {
             cacheRequest("./webapi/worker/saveIDBdata.js")
                 .then(url => {
                     let worker = new Worker(url)

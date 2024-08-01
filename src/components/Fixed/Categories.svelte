@@ -48,12 +48,7 @@
     }
 
     async function updateList() {
-        if (
-            $android &&
-            $isBackgroundUpdateKey &&
-            window?.[$isBackgroundUpdateKey] === true
-        )
-            return;
+        if ($android && window?.[$isBackgroundUpdateKey] === true) return;
         $listUpdateAvailable = false;
         animeManager({ updateRecommendedAnimeList: true });
     }

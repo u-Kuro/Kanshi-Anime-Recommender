@@ -1,7 +1,6 @@
 <script>
     import { onMount, tick } from "svelte";
-    import { saveJSON } from "../../js/indexedDB.js";
-    import { animeManager, importUserData } from "../../js/workerUtils.js";
+    import { animeManager, importUserData, saveIDBdata } from "../../js/workerUtils.js";
     import {
         jsonIsEmpty,
         removeLocalStorage,
@@ -106,7 +105,7 @@
                 removeLocalStorage("exportPathIsAvailable");
             })
             .finally(() => {
-                saveJSON(value, "exportPathIsAvailable");
+                saveIDBdata(value, "exportPathIsAvailable");
             });
     };
 
@@ -147,7 +146,7 @@
                     removeLocalStorage("autoUpdate");
                 })
                 .finally(() => {
-                    saveJSON($autoUpdate, "autoUpdate");
+                    saveIDBdata($autoUpdate, "autoUpdate");
                 });
         }
     }
@@ -168,7 +167,7 @@
                     removeLocalStorage("autoExport");
                 })
                 .finally(() => {
-                    saveJSON($autoExport, "autoExport");
+                    saveIDBdata($autoExport, "autoExport");
                 });
         }
     }
@@ -196,12 +195,7 @@
     }
 
     async function showAllHiddenEntries() {
-        if (
-            $android &&
-            $isBackgroundUpdateKey &&
-            window?.[$isBackgroundUpdateKey] === true
-        )
-            return;
+        if ($android && window?.[$isBackgroundUpdateKey] === true) return;
         if (jsonIsEmpty($hiddenEntries)) {
             // Alert No Hidden Entries
             $confirmPromise({
@@ -242,7 +236,7 @@
                     removeLocalStorage("showStatus");
                 })
                 .finally(() => {
-                    saveJSON($showStatus, "showStatus");
+                    saveIDBdata($showStatus, "showStatus");
                 });
         }
     }
