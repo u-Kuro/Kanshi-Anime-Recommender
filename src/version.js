@@ -1,4 +1,4 @@
-const version = 442;
+const version = 443;
 let webVersionPromise
 export default async function getWebVersion() {
     if (webVersionPromise) return webVersionPromise

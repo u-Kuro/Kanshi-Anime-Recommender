@@ -4,7 +4,7 @@ import { get } from 'svelte/store';
 import { android } from './js/globalValues';
 
 try{
-	if (get(android)) {
+	if (!get(android)) {
 		const channel = new BroadcastChannel('tab');
 		channel.postMessage('changed-tab');
 		channel.addEventListener('message', (msg) => {
