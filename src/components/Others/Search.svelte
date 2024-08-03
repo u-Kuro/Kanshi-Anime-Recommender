@@ -4231,7 +4231,6 @@
         -o-transform: translateY(-99999px) translateZ(0) !important;
         user-select: none !important;
         touch-action: none !important;
-        cursor: not-allowed !important;
         -webkit-user-drag: none !important;
         -moz-user-select: none !important;
         -ms-user-select: none !important;

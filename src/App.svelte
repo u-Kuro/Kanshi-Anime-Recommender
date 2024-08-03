@@ -1260,7 +1260,6 @@
 		}, 500);
 	});
 	let copytimeoutId;
-	let copySecondTimout;
 	let copyhold = false;
 	document.addEventListener("pointerdown", (e) => {
 		if (e.pointerType === "mouse") return;
@@ -1269,9 +1268,8 @@
 		if (!classList.contains("copy")) target = target.closest(".copy");
 		if (target) {
 			copyhold = true;
-			clearTimeout(copytimeoutId);
-			clearTimeout(copySecondTimout);
-			copytimeoutId = setTimeout(() => {
+			copytimeoutId?.()
+			copytimeoutId = requestImmediate(() => {
 				let text = target.dataset.copy;
 				if (
 					text &&
@@ -1285,15 +1283,10 @@
 					}, 500);
 					let text2 = target.dataset.secondcopy;
 					if (text2 && !ncsCompare(text2, text)) {
-						if ($android) {
-							window.copyToClipBoard?.(text2);
+						window.copyToClipBoard?.(text2);
+						requestImmediate(() => {
 							window.copyToClipBoard?.(text);
-						} else {
-							window.copyToClipBoard?.(text2);
-							copySecondTimout = setTimeout(() => {
-								window.copyToClipBoard?.(text);
-							}, 350);
-						}
+						}, 350);
 					} else {
 						window.copyToClipBoard?.(text);
 					}
@@ -1308,7 +1301,7 @@
 		if (!classList.contains("copy")) target = target.closest(".copy");
 		if (target) {
 			copyhold = false;
-			if (copytimeoutId) clearTimeout(copytimeoutId);
+			copytimeoutId?.()
 		}
 	});
 	document.addEventListener("pointercancel", (e) => {
@@ -1318,7 +1311,7 @@
 		if (!classList.contains("copy")) target = target.closest(".copy");
 		if (target) {
 			copyhold = false;
-			if (copytimeoutId) clearTimeout(copytimeoutId);
+			copytimeoutId?.()
 		}
 	});
 

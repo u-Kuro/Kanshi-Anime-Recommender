@@ -103,23 +103,23 @@
         );
     }
 
-    let copySecondTimout;
     function copyTitle(e) {
         if ((isRecentlyOpened && e.type !== "keydown") || !shownTitle) return;
-        clearTimeout(copySecondTimout);
         if (animeCopyTitle && !ncsCompare(animeCopyTitle, shownTitle)) {
             if ($android) {
                 try {
                     if (typeof animeCopyTitle==="string") {
                         JSBridge?.copyToClipBoard?.(animeCopyTitle);
                     }
-                    if (typeof shownTitle==="string") {
-                        JSBridge?.copyToClipBoard?.(shownTitle);
-                    }
+                    requestImmediate(() => {
+                        if (typeof shownTitle==="string") {
+                            JSBridge?.copyToClipBoard?.(shownTitle);
+                        }
+                    }, 350);
                 } catch {}
             } else {
                 navigator?.clipboard?.writeText?.(animeCopyTitle);
-                copySecondTimout = setTimeout(() => {
+                requestImmediate(() => {
                     navigator?.clipboard?.writeText?.(shownTitle);
                 }, 350);
             }

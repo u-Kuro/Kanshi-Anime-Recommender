@@ -1089,12 +1089,18 @@
         position: absolute !important;
         width: 100vw !important;
         max-width: 1040px !important;
-        min-height: 100vh !important;
+        min-height: 200vh !important;
         left: 0 !important;
         bottom: 0 !important;
         top: unset !important;
         right: unset !important;
         z-index: -9 !important;
+        pointer-events: none !important;
+        touch-action: none !important;
+        -webkit-user-drag: none !important;
+        user-select: none !important;
+        -moz-user-select: none !important;
+        -ms-user-select: none !important;
     }
 
     .image-grid.fullView .observed-grid:not(.empty-card) {

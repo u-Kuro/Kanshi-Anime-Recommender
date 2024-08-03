@@ -377,7 +377,7 @@
         }
     });
 
-    const newAnimeObserver = new IntersectionObserver(
+    const newPopupAnimeObserver = new IntersectionObserver(
         (entries) => {
             entries.forEach((entry) => {
                 if (entry.isIntersecting) {
@@ -395,6 +395,14 @@
             threshold: [0.5, 0],
         },
     );
+
+    let observedGrid;
+    $: {
+        if (observedGrid instanceof Element) {
+            newPopupAnimeObserver.observe(observedGrid);
+        }
+    }
+
     async function reloadPopupContentObserver() {
         let animeList = $loadedAnimeLists?.[$selectedCategory || ""]?.animeList;
         if (animeList instanceof Array && animeList.length) {
@@ -414,25 +422,6 @@
                     popupAnimeObserver?.observe?.(popupHeader);
                 }
             });
-            let observedIdx = animeList.length - 1;
-            let lastAnimeContent = animeList[observedIdx];
-            let lastPopupContent =
-                lastAnimeContent.popupContent ||
-                popupContainer.children?.[observedIdx];
-            if (newAnimeObserver && lastPopupContent instanceof Element) {
-                if (observedIdx > 0) {
-                    let prevAnimeContent = animeList[observedIdx - 1];
-                    let prevPopupContent =
-                        prevAnimeContent.popupContent ||
-                        popupContainer.children?.[observedIdx - 1];
-                    if (prevPopupContent instanceof Element) {
-                        newAnimeObserver.observe(prevPopupContent);
-                    }
-                }
-                // Popup Observed
-                await tick();
-                newAnimeObserver.observe(lastPopupContent);
-            }
             playMostVisibleTrailer();
         } else if (animeList instanceof Array && animeList.length < 1) {
             $popupVisible = false;
@@ -1644,7 +1633,7 @@
         {#if $loadedAnimeLists}
             {@const animeList = $loadedAnimeLists[$selectedCategory]?.animeList}
             {#each animeList || [] as anime, animeIndex ((anime?.id != null ? anime.id + " " + animeIndex : {}) ?? {})}
-                <div class="popup-content" bind:this="{anime.popupContent}">
+                <div class="popup-content">
                     {#if animeIndex <= currentHeaderIdx + bottomPopupVisibleCount && animeIndex >= currentHeaderIdx - topPopupVisibleCount}
                         {@const loweredFormat = anime.format?.toLowerCase?.()}
                         {@const isManga =
@@ -2563,6 +2552,12 @@
                             d="M311 86a32 32 0 1 0-46-44L110 202l-46 47V64a32 32 0 1 0-64 0v384a32 32 0 1 0 64 0V341l65-67 133 192c10 15 30 18 44 8s18-30 8-44L174 227 311 86z"
                         ></path></svg
                     >
+                    {#key animeList}
+                        <div
+                            class="observed-grid"
+                            bind:this="{observedGrid}"
+                        ></div>
+                    {/key}
                 </div>
             {/if}
         {/if}
@@ -2809,6 +2804,7 @@
     }
 
     .popup-content-loading {
+        position: relative;
         display: flex;
         justify-content: center;
         align-items: center;
@@ -2821,6 +2817,24 @@
         animation: fadeInOut 1s infinite linear;
         width: 35px;
         height: 35px;
+    }
+
+    .observed-grid {
+        position: absolute !important;
+        width: 100vw !important;
+        min-width: 100vw !important;
+        min-height: 200vh !important;
+        left: 0 !important;
+        bottom: 0 !important;
+        top: unset !important;
+        right: unset !important;
+        z-index: -9 !important;
+        pointer-events: none !important;
+        touch-action: none !important;
+        -webkit-user-drag: none !important;
+        user-select: none !important;
+        -moz-user-select: none !important;
+        -ms-user-select: none !important;
     }
 
     /* Need to add Globally, trailer Elements are Recreated */
@@ -3610,7 +3624,6 @@
         -o-transform: translateY(-99999px) translateZ(0) !important;
         user-select: none !important;
         touch-action: none !important;
-        cursor: not-allowed !important;
         -webkit-user-drag: none !important;
         -moz-user-select: none !important;
         -ms-user-select: none !important;
