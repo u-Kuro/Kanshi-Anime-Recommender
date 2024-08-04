@@ -3,7 +3,6 @@ package com.example.kanshi;
 import static com.example.kanshi.LocalPersistence.getLockForFile;
 
 import android.content.Context;
-import android.graphics.Bitmap;
 import android.os.Build;
 import android.os.Environment;
 
@@ -14,8 +13,6 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.util.ArrayList;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class Configs {
@@ -59,7 +56,6 @@ public class Configs {
     public static final int UPDATE_DATA_PENDING_INTENT = 994;
     public static final int NOTIFICATION_DATA_EVICTION = 993;
     public static final String DATA_EVICTION_CHANNEL = "data_eviction_channel";
-    public static final Map<String, Bitmap> imageCache = new ConcurrentHashMap<>();
     public static ArrayList<AnimeReleaseGroup> loadedGroupedReleasedAnime = new ArrayList<>();
     public static ArrayList<AnimeReleaseGroup> loadedGroupedScheduledAnime = new ArrayList<>();
     private static WebViewAssetLoader assetLoader;

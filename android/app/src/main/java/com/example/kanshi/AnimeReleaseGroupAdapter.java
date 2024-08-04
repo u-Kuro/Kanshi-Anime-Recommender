@@ -1,6 +1,5 @@
 package com.example.kanshi;
 
-import static com.example.kanshi.Configs.imageCache;
 import static com.example.kanshi.GroupedListItem.HEADER;
 import static com.example.kanshi.GroupedListItem.ITEM;
 import static com.example.kanshi.Utils.cropAndRoundCorners;
@@ -154,16 +153,6 @@ public class AnimeReleaseGroupAdapter extends RecyclerView.Adapter<RecyclerView.
                     // Load Release Info
                     final boolean hasMessage = anime.message != null && !anime.message.isEmpty();
 
-                    // Load Image
-                    Bitmap imageBitmap = null;
-                    final String animeKey = String.valueOf(anime.animeId);
-                    if (anime.imageByte != null) {
-                        if (imageCache.containsKey(animeKey)) {
-                            imageBitmap = imageCache.get(animeKey);
-                        }
-                    }
-
-                    final Bitmap finalImageBitmap = imageBitmap;
                     uiTask.post(() -> {
                         // Set Time
                         if (hasReleaseTime) {
@@ -207,15 +196,10 @@ public class AnimeReleaseGroupAdapter extends RecyclerView.Adapter<RecyclerView.
                         }
                     }, taskId);
 
-                    if (finalImageBitmap != null) {
-                        uiTask.post(() -> holder.animeImage.setImageBitmap(finalImageBitmap), taskId);
-                    } else {
-                        // Generate and Set Image
-                        imageBitmap = cropAndRoundCorners(BitmapFactory.decodeByteArray(anime.imageByte, 0, anime.imageByte.length), 24);
-                        imageCache.put(animeKey, imageBitmap);
-                        final Bitmap generatedImageBitmap = imageBitmap;
-                        uiTask.post(() -> holder.animeImage.setImageBitmap(generatedImageBitmap), taskId);
-                    }
+                    // Generate and Set Image
+                    final Bitmap generatedImageBitmap = cropAndRoundCorners(BitmapFactory.decodeByteArray(anime.imageByte, 0, anime.imageByte.length), 24);
+                    uiTask.post(() -> holder.animeImage.setImageBitmap(generatedImageBitmap), taskId);
+
                     if (progressCircular.getVisibility() == View.VISIBLE) {
                         uiTask.post(() -> progressCircular.setVisibility(View.GONE), taskId);
                     }

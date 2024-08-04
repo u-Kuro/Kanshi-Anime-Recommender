@@ -83,15 +83,26 @@ const cacheRequest = async (url, totalLength, status, getBlob) => {
                     return response
                 }
             })
-                .then(response => response.blob())
-                .then(result => {
-                    if (getBlob && result) resolve(result)
-                    try {
-                        let blobUrl = URL.createObjectURL(result);
-                        loadedRequestUrls[url] = blobUrl;
+                .then(async response => {
+                    if (getBlob) {
                         loadedRequestUrlPromises[url] = null
-                        resolve(blobUrl)
-                    } catch (e) {
+                        resolve(await response.blob())
+                    } else {
+                        return await response.blob()
+                    }
+                })
+                .then(result => {
+                    if (result instanceof Blob) {
+                        try {
+                            let blobUrl = URL.createObjectURL(result);
+                            loadedRequestUrls[url] = blobUrl;
+                            loadedRequestUrlPromises[url] = null
+                            resolve(blobUrl)
+                        } catch (e) {
+                            loadedRequestUrlPromises[url] = null
+                            resolve(url)
+                        }
+                    } else {
                         loadedRequestUrlPromises[url] = null
                         resolve(url)
                     }
