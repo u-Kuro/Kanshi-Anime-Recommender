@@ -71,7 +71,7 @@ function getAnimeLoaderWorker() {
     if (animeLoaderWorker) return animeLoaderWorker
     if (animeLoaderWorkerPromise) return animeLoaderWorkerPromise
     animeLoaderWorkerPromise = new Promise(async (resolve) => {
-        resolve(new Worker(await cacheRequest("./webapi/worker/animeLoader.js", 21444, "Checking existing List")))
+        resolve(new Worker(await cacheRequest("./webapi/worker/animeLoader.js", 21642, "Checking existing List")))
         animeLoaderWorkerPromise = null
     })
     return animeLoaderWorkerPromise
@@ -243,7 +243,7 @@ function getAnimeManagerWorker() {
     if (animeManagerWorker) return animeManagerWorker
     if (animeManagerWorkerPromise) return animeManagerWorkerPromise
     animeManagerWorkerPromise = new Promise(async (resolve) => {
-        resolve(new Worker(await cacheRequest("./webapi/worker/animeManager.js", 62830, "Updating the List")))
+        resolve(new Worker(await cacheRequest("./webapi/worker/animeManager.js", 63050, "Updating the List")))
         animeManagerWorkerPromise = null
     })
     return animeManagerWorkerPromise
@@ -417,7 +417,7 @@ const processRecommendedAnimeList = (_data = {}) => {
         processRecommendedAnimeListWorker?.terminate?.();
 
         progress.set(0)
-        cacheRequest("./webapi/worker/processRecommendedAnimeList.js", 43513, "Updating Recommendation List")
+        cacheRequest("./webapi/worker/processRecommendedAnimeList.js", 43712, "Updating Recommendation List")
             .then(url => {
                 const lastProcessRecommendationAiringAt = parseInt((new Date().getTime() / 1000))
                 let neareastAnimeCompletionAiringAt
@@ -610,8 +610,11 @@ const requestAnimeEntries = (_data = {}) => {
                 requestAnimeEntriesWorker?.terminate?.()
                 notifyUpdatedAnimeNotification()
                 requestAnimeEntriesWorker = new Worker(url)
-                if (windowHREF==null && !get(android)) {
-                    _data.windowHREF = windowHREF || window?.location?.href
+                if (typeof windowHREF !== "string" && !get(android)) {
+                    const currentWindowHREF = window?.location?.href
+                    if (typeof currentWindowHREF === "string") {
+                        _data.windowHREF = currentWindowHREF
+                    }
                 }
                 requestAnimeEntriesWorker.postMessage(_data)
                 isRequestingAnimeEntries = true
@@ -753,8 +756,11 @@ const requestUserEntries = (_data = {}) => {
                 requestUserEntriesWorker?.terminate?.()
                 requestUserEntriesWorker = new Worker(url)
                 userRequestIsRunning.set(true)
-                if (windowHREF==null && !get(android)) {
-                    _data.windowHREF = windowHREF || window?.location?.href
+                if (typeof windowHREF !== "string" && !get(android)) {
+                    const currentWindowHREF = window?.location?.href
+                    if (typeof currentWindowHREF === "string") {
+                        _data.windowHREF = currentWindowHREF
+                    }
                 }
                 requestUserEntriesWorker.postMessage(_data)
                 requestUserEntriesWorker.onmessage = ({ data }) => {
@@ -1238,7 +1244,7 @@ const getExtraInfo = () => {
 // IndexedDB
 const getIDBdata = (name) => {
     return new Promise((resolve, reject) => {
-        cacheRequest("./webapi/worker/getIDBdata.js", 2909, "Retrieving Some Data")
+        cacheRequest("./webapi/worker/getIDBdata.js", 3025, "Retrieving Some Data")
             .then(url => {
                 let worker = new Worker(url)
                 worker.postMessage({ name })
@@ -1264,7 +1270,7 @@ const getIDBdata = (name) => {
 window.updateNotifications = async (aniIdsNotificationToBeUpdated = []) => {
     if (!get(android)) return
     new Promise((resolve, reject) => {
-        cacheRequest("./webapi/worker/getIDBdata.js", 2909, "Retrieving Some Data")
+        cacheRequest("./webapi/worker/getIDBdata.js", 3025, "Retrieving Some Data")
             .then(url => {
                 let worker = new Worker(url)
                 worker.postMessage({ name: "aniIdsNotificationToBeUpdated", aniIdsNotificationToBeUpdated })
@@ -1349,16 +1355,22 @@ const saveIDBdata = (_data, name, isImportant = false) => {
 const getAnimeEntries = (_data) => {
     return new Promise((resolve, reject) => {
         progress.set(0)
-        cacheRequest("./webapi/worker/getEntries.js", 282095, "Checking Anime, Manga, and Novel Entries")
+        cacheRequest("./webapi/worker/getEntries.js", 282276, "Checking Anime, Manga, and Novel Entries")
             .then(async workerUrl => {
                 let worker = new Worker(workerUrl)
                 if (get(android)) {
                     worker.postMessage({ entriesBlob: await cacheRequest("./webapi/worker/entries.json", 174425636, "Getting Anime, Manga, and Novel Entries", true) })
                 } else {
-                    if (windowHREF==null) {
-                        _data.windowHREF = windowHREF || window?.location?.href
+                    let passedWindowHREF
+                    if (typeof windowHREF === "string") {
+                        passedWindowHREF = windowHREF
+                    } else {
+                        const currentWindowHREF = window?.location?.href
+                        if (typeof currentWindowHREF === "string") {
+                            passedWindowHREF = windowHREF = currentWindowHREF
+                        }
                     }
-                    worker.postMessage({ windowHREF, appID: get(appID) })
+                    worker.postMessage({ windowHREF: passedWindowHREF, appID: get(appID) })
                 }
                 worker.onmessage = ({ data }) => {
                     if (hasOwnProp?.call?.(data, "progress")) {
@@ -1413,7 +1425,7 @@ const getFilterOptions = (_data) => {
     return new Promise((resolve, reject) => {
         if (getFilterOptionsTerminateTimeout) clearTimeout(getFilterOptionsTerminateTimeout)
         getFilterOptionsWorker?.terminate?.()
-        cacheRequest("./webapi/worker/getFilterOptions.js", 60858, "Initializing Filters")
+        cacheRequest("./webapi/worker/getFilterOptions.js", 60967, "Initializing Filters")
             .then(url => {
                 if (getFilterOptionsTerminateTimeout) clearTimeout(getFilterOptionsTerminateTimeout)
                 getFilterOptionsWorker?.terminate?.()
@@ -1463,10 +1475,18 @@ const updateTagInfo = async () => {
         const url = await cacheRequest("./webapi/worker/updateTagInfo.js")
         updateTagInfoWorker?.terminate?.()
         updateTagInfoWorker = new Worker(url)
-        if (windowHREF==null && !get(android)) {
-            _data.windowHREF = windowHREF || window?.location?.href
+        let passedWindowHREF
+        if (!get(android)) {
+            if (typeof windowHREF === "string") {
+                passedWindowHREF = windowHREF
+            } else {
+                const currentWindowHREF = window?.location?.href
+                if (typeof currentWindowHREF === "string") {
+                    passedWindowHREF = windowHREF = currentWindowHREF
+                }
+            }
         }
-        updateTagInfoWorker.postMessage({ windowHREF })
+        updateTagInfoWorker.postMessage({ windowHREF: passedWindowHREF })
         updateTagInfoWorker.onmessage = () => {
             updateTagInfoWorker?.terminate?.()
         }
