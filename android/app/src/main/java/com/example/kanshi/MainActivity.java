@@ -581,7 +581,6 @@ public class MainActivity extends AppCompatActivity {
         webSettings.setSupportZoom(false);
 
         setReleaseNotification();
-        Utils.cleanIndexedDBFiles(this.getApplicationContext());
 
         // Get Activity Reference
         weakActivity = new WeakReference<>(MainActivity.this);

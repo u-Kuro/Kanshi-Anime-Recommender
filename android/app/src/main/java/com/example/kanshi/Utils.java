@@ -40,18 +40,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.regex.Matcher;
 
 /** @noinspection CommentedOutCode*/
 public class Utils {
@@ -174,78 +166,78 @@ public class Utils {
     // IndexedDB saves Set of Blob in device storage to be used in origin.
     // It has a Storage Leak that creates a new Set of Blob,
     // While leaving previous Sets of Blob unmanaged and not being deleted.
-    private static final ExecutorService cleanIndexedDBFilesExecutorService = Executors.newFixedThreadPool(1);
-    private static Future<?> cleanIndexedDBFilesFuture;
-    private static ConcurrentHashMap<String, List<File>> webGroupedModifiedDate = new ConcurrentHashMap<>();
-    private static final SimpleDateFormat dateFormat = new SimpleDateFormat("M/d/yyyy", Locale.US);
-    @RequiresApi(api = Build.VERSION_CODES.O)
-    public static void cleanIndexedDBFiles(Context context) {
-        if (cleanIndexedDBFilesFuture != null && !cleanIndexedDBFilesFuture.isCancelled()) {
-            cleanIndexedDBFilesFuture.cancel(true);
-        }
-        cleanIndexedDBFilesFuture = cleanIndexedDBFilesExecutorService.submit(() -> {
-            try {
-                // Web App
-                webGroupedModifiedDate = new ConcurrentHashMap<>();
-
-                final String mainDir = "app_webview/Default/IndexedDB/";
-                String location = mainDir+"https_appassets.androidplatform.net_0.indexeddb.blob";
-                location = location.replaceAll("/", Matcher.quoteReplacement(File.separator));
-
-                final File dataDir = context.getApplicationContext().getDataDir();
-
-                try {
-                    if (!dataDir.exists() || !dataDir.isDirectory()) {
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                            executeHandleUncaughtException(context, new Throwable("Data Directory NOT FOUND at: " + location), "cleanIndexedDBFiles");
-                        }
-                    }
-                } catch (Exception ignored) {}
-
-                addIndexedDBFiles(new File(dataDir, location).listFiles());
-
-                List<Map.Entry<String, List<File>>> sortedModifiedDateEntries = new ArrayList<>(webGroupedModifiedDate.entrySet());
-                Collections.sort(sortedModifiedDateEntries, (entry1, entry2) -> {
-                    try {
-                        Date date1 = dateFormat.parse(entry1.getKey());
-                        Date date2 = dateFormat.parse(entry2.getKey());
-                        if (date1 == null && date2 == null) return 0;
-                        if (date1 == null) return 1;
-                        if (date2 == null) return -1;
-                        return date1.compareTo(date2);
-                    } catch (Exception ignored) {
-                        return 0;
-                    }
-                });
-                // Include a 3 Day Allowance
-                final int allowedDays = 3;
-                // Reason/Example:
-                // Worst Case Scenario (Sets of Blob are saved/separated in 2 different days):
-                // Let: ...Day[...Set of Blob] = Day1[SetA] - 2[A, B] - 3[B, C] - 4[C]
-                // If Set C is still an incomplete Set then Set B should exist as it may still be used by chrome.
-                // In this case Set B is separated into Days 2 and 3.
-                // To save Set B, Days 2 and 3 should exist.
-                // Thus, 3 day Allowance allows Days 4, 3, and 2 to exist.
-                // 1) Days 4 and 3 for incomplete Set C (May be used by Chrome)
-                // 2) Days 3 and 2 for Set B (May be used by Chrome too)
-                for (int i = 0; i < sortedModifiedDateEntries.size() - allowedDays; i++) {
-                    Map.Entry<String, List<File>> currentEntry = sortedModifiedDateEntries.get(i);
-                    List<File> filesToRemove = currentEntry.getValue();
-                    for (File fileToRemove : filesToRemove) {
-                        //noinspection ResultOfMethodCallIgnored
-                        fileToRemove.delete();
-                    }
-                }
-                webGroupedModifiedDate = null;
-            } catch (Exception e) {
-                webGroupedModifiedDate = null;
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                    Utils.handleUncaughtException(context.getApplicationContext(), e, "cleanIndexedDBFilesExecutorService");
-                }
-                e.printStackTrace();
-            }
-        });
-    }
+//    private static final ExecutorService cleanIndexedDBFilesExecutorService = Executors.newFixedThreadPool(1);
+//    private static Future<?> cleanIndexedDBFilesFuture;
+//    private static ConcurrentHashMap<String, List<File>> webGroupedModifiedDate = new ConcurrentHashMap<>();
+//    private static final SimpleDateFormat dateFormat = new SimpleDateFormat("M/d/yyyy", Locale.US);
+//    @RequiresApi(api = Build.VERSION_CODES.O)
+//    public static void cleanIndexedDBFiles(Context context) {
+//        if (cleanIndexedDBFilesFuture != null && !cleanIndexedDBFilesFuture.isCancelled()) {
+//            cleanIndexedDBFilesFuture.cancel(true);
+//        }
+//        cleanIndexedDBFilesFuture = cleanIndexedDBFilesExecutorService.submit(() -> {
+//            try {
+//                // Web App
+//                webGroupedModifiedDate = new ConcurrentHashMap<>();
+//
+//                final String mainDir = "app_webview/Default/IndexedDB/";
+//                String location = mainDir+"https_appassets.androidplatform.net_0.indexeddb.blob";
+//                location = location.replaceAll("/", Matcher.quoteReplacement(File.separator));
+//
+//                final File dataDir = context.getApplicationContext().getDataDir();
+//
+//                try {
+//                    if (!dataDir.exists() || !dataDir.isDirectory()) {
+//                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+//                            executeHandleUncaughtException(context, new Throwable("Data Directory NOT FOUND at: " + location), "cleanIndexedDBFiles");
+//                        }
+//                    }
+//                } catch (Exception ignored) {}
+//
+//                addIndexedDBFiles(new File(dataDir, location).listFiles());
+//
+//                List<Map.Entry<String, List<File>>> sortedModifiedDateEntries = new ArrayList<>(webGroupedModifiedDate.entrySet());
+//                Collections.sort(sortedModifiedDateEntries, (entry1, entry2) -> {
+//                    try {
+//                        Date date1 = dateFormat.parse(entry1.getKey());
+//                        Date date2 = dateFormat.parse(entry2.getKey());
+//                        if (date1 == null && date2 == null) return 0;
+//                        if (date1 == null) return 1;
+//                        if (date2 == null) return -1;
+//                        return date1.compareTo(date2);
+//                    } catch (Exception ignored) {
+//                        return 0;
+//                    }
+//                });
+//                // Include a 3 Day Allowance
+//                final int allowedDays = 3;
+//                // Reason/Example:
+//                // Worst Case Scenario (Sets of Blob are saved/separated in 2 different days):
+//                // Let: ...Day[...Set of Blob] = Day1[SetA] - 2[A, B] - 3[B, C] - 4[C]
+//                // If Set C is still an incomplete Set then Set B should exist as it may still be used by chrome.
+//                // In this case Set B is separated into Days 2 and 3.
+//                // To save Set B, Days 2 and 3 should exist.
+//                // Thus, 3 day Allowance allows Days 4, 3, and 2 to exist.
+//                // 1) Days 4 and 3 for incomplete Set C (May be used by Chrome)
+//                // 2) Days 3 and 2 for Set B (May be used by Chrome too)
+//                for (int i = 0; i < sortedModifiedDateEntries.size() - allowedDays; i++) {
+//                    Map.Entry<String, List<File>> currentEntry = sortedModifiedDateEntries.get(i);
+//                    List<File> filesToRemove = currentEntry.getValue();
+//                    for (File fileToRemove : filesToRemove) {
+//                        //noinspection ResultOfMethodCallIgnored
+//                        fileToRemove.delete();
+//                    }
+//                }
+//                webGroupedModifiedDate = null;
+//            } catch (Exception e) {
+//                webGroupedModifiedDate = null;
+//                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+//                    Utils.handleUncaughtException(context.getApplicationContext(), e, "cleanIndexedDBFilesExecutorService");
+//                }
+//                e.printStackTrace();
+//            }
+//        });
+//    }
 
     @RequiresApi(api = Build.VERSION_CODES.R)
     public static void exportReleasedAnime(Context context) {
@@ -318,35 +310,35 @@ public class Utils {
         }
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.O)
-    public static void addIndexedDBFiles(File[] files) {
-        if (files!=null) {
-            for (File file : files) {
-                if (file.exists() && file.isFile() && file.length() > 0) {
-                    long lastModified = file.lastModified();
-                    if (lastModified > 0L) {
-                        Date modifiedDate = new Date(file.lastModified());
-                        String modifiedDateKey = dateFormat.format(modifiedDate);
-                        if (webGroupedModifiedDate.containsKey(modifiedDateKey)) {
-                            List<File> modifiedFiles = webGroupedModifiedDate.get(modifiedDateKey);
-                            if (modifiedFiles == null) {
-                                modifiedFiles = new ArrayList<>();
-                            }
-                            modifiedFiles.add(file);
-                            webGroupedModifiedDate.put(modifiedDateKey, modifiedFiles);
-                        } else {
-                            List<File> newModifiedFiles = new ArrayList<>();
-                            newModifiedFiles.add(file);
-                            webGroupedModifiedDate.put(modifiedDateKey, newModifiedFiles);
-                        }
-                    }
-                } else if (file.exists() && file.isDirectory()) {
-                    File[] newFiles = file.listFiles();
-                    addIndexedDBFiles(newFiles);
-                }
-            }
-        }
-    }
+//    @RequiresApi(api = Build.VERSION_CODES.O)
+//    public static void addIndexedDBFiles(File[] files) {
+//        if (files!=null) {
+//            for (File file : files) {
+//                if (file.exists() && file.isFile() && file.length() > 0) {
+//                    long lastModified = file.lastModified();
+//                    if (lastModified > 0L) {
+//                        Date modifiedDate = new Date(file.lastModified());
+//                        String modifiedDateKey = dateFormat.format(modifiedDate);
+//                        if (webGroupedModifiedDate.containsKey(modifiedDateKey)) {
+//                            List<File> modifiedFiles = webGroupedModifiedDate.get(modifiedDateKey);
+//                            if (modifiedFiles == null) {
+//                                modifiedFiles = new ArrayList<>();
+//                            }
+//                            modifiedFiles.add(file);
+//                            webGroupedModifiedDate.put(modifiedDateKey, modifiedFiles);
+//                        } else {
+//                            List<File> newModifiedFiles = new ArrayList<>();
+//                            newModifiedFiles.add(file);
+//                            webGroupedModifiedDate.put(modifiedDateKey, newModifiedFiles);
+//                        }
+//                    }
+//                } else if (file.exists() && file.isDirectory()) {
+//                    File[] newFiles = file.listFiles();
+//                    addIndexedDBFiles(newFiles);
+//                }
+//            }
+//        }
+//    }
 
     @RequiresApi(api = Build.VERSION_CODES.M)
     public static Icon createRoundIcon(Bitmap bitmap) {

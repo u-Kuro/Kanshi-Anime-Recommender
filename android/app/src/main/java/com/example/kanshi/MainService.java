@@ -275,7 +275,6 @@ public class MainService extends Service {
         // Load Page
         isReloaded = true;
         webView.loadUrl("https://appassets.androidplatform.net/assets/index.html");
-        Utils.cleanIndexedDBFiles(this.getApplicationContext());
 
         weakActivity = new WeakReference<>(MainService.this);
     }
