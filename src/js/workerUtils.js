@@ -243,7 +243,7 @@ function getAnimeManagerWorker() {
     if (animeManagerWorker) return animeManagerWorker
     if (animeManagerWorkerPromise) return animeManagerWorkerPromise
     animeManagerWorkerPromise = new Promise(async (resolve) => {
-        resolve(new Worker(await cacheRequest("./webapi/worker/animeManager.js", 63050, "Updating the List")))
+        resolve(new Worker(await cacheRequest("./webapi/worker/animeManager.js", 63052, "Updating the List")))
         animeManagerWorkerPromise = null
     })
     return animeManagerWorkerPromise
