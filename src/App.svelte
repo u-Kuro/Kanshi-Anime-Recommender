@@ -1286,7 +1286,7 @@
 						window.copyToClipBoard?.(text2);
 						requestImmediate(() => {
 							window.copyToClipBoard?.(text);
-						}, 350);
+						}, 1000);
 					} else {
 						window.copyToClipBoard?.(text);
 					}

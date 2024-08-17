@@ -115,13 +115,13 @@
                         if (typeof shownTitle==="string") {
                             JSBridge?.copyToClipBoard?.(shownTitle);
                         }
-                    }, 350);
+                    }, 1000);
                 } catch {}
             } else {
                 navigator?.clipboard?.writeText?.(animeCopyTitle);
                 requestImmediate(() => {
                     navigator?.clipboard?.writeText?.(shownTitle);
-                }, 350);
+                }, 1000);
             }
         } else if ($android) {
             try {

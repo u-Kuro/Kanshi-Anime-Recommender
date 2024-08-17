@@ -1310,8 +1310,8 @@
         itemIsScrollingTimeout = setTimeout(() => {
             itemIsScrolling = false;
         }, 50);
-        $popupIsGoingBack = false;
-        willGoBack = false;
+        touchID = null;
+        willGoBack = checkPointer = $popupIsGoingBack = false;
     }
     function itemScroll() {
         itemIsScrolling = true;
@@ -1382,19 +1382,16 @@
                 }
             }
             touchID = null;
-            $popupIsGoingBack = false;
-            willGoBack = false;
+            willGoBack = checkPointer = $popupIsGoingBack = false;
         } else {
             touchID = null;
-            $popupIsGoingBack = false;
-            willGoBack = false;
+            willGoBack = checkPointer = $popupIsGoingBack = false;
         }
     }
 
     function handlePopupContainerCancel() {
         touchID = null;
-        $popupIsGoingBack = false;
-        willGoBack = false;
+        willGoBack = checkPointer = $popupIsGoingBack = false;
     }
 
     let fvTouchId,
