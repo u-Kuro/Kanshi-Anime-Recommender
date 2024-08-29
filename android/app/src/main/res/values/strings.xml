@@ -3,16 +3,16 @@
     <string name="youtube">YouTube</string>
     <string name="na">NA</string>
     <string name="refresh">Refresh</string>
-    <string name="anime_image">Anime Image</string>
-    <string name="user_anime_status">User Anime Status</string>
+    <string name="media_image">Media Image</string>
+    <string name="user_media_status">User Media Status</string>
     <string name="go_back">Go Back</string>
     <string name="launch_url">Launch URL</string>
     <string name="released">Released</string>
     <string name="schedules">Schedules</string>
-    <string name="completed_anime">Completed Anime</string>
-    <string name="import_released_anime">Import Released Anime</string>
-    <string name="released_anime_auto_export">Released Anime Auto Export</string>
+    <string name="completed_media">Completed Media</string>
+    <string name="import_released_media">Import Released Media</string>
+    <string name="released_media_auto_export">Released Media Auto Export</string>
     <string name="enabled_automatic_back_up">Automatic Back-up: Enabled</string>
     <string name="disabled_automatic_back_up">Automatic Back-up: Disabled</string>
-    <string name="backup_released_anime">Backup Released Anime</string>
+    <string name="backup_released_media">Backup Released Media</string>
 </resources>

@@ -240,10 +240,10 @@ public class Utils {
 //    }
 
     @RequiresApi(api = Build.VERSION_CODES.R)
-    public static void exportReleasedAnime(Context context) {
+    public static void exportReleasedMedia(Context context) {
         SharedPreferences prefs = context.getApplicationContext().getSharedPreferences("com.example.kanshi", Context.MODE_PRIVATE);
-        boolean autoExportReleasedAnime = prefs.getBoolean("autoExportReleasedAnime", false);
-        if (!autoExportReleasedAnime) return;
+        boolean autoExportReleasedMedia = prefs.getBoolean("autoExportReleasedMedia", false);
+        if (!autoExportReleasedMedia) return;
         String exportPath = prefs.getString("savedExportPath", "");
         if (!exportPath.isEmpty() && Environment.isExternalStorageManager()) {
             File exportDirectory = new File(exportPath);
@@ -257,17 +257,17 @@ public class Utils {
                     dirIsCreated = true;
                 }
                 if (directory.isDirectory() && dirIsCreated) {
-                    if (!AnimeNotificationManager.allAnimeNotification.isEmpty()) {
+                    if (!MediaNotificationManager.allMediaNotification.isEmpty()) {
                         FileOutputStream fileOut = null;
                         ObjectOutputStream objectOut = null;
-                        final String filename = "Released Anime.bin";
+                        final String filename = "Released Media.bin";
                         File tempFile = new File(directory, filename + ".tmp");
                         ReentrantLock fileLock = getLockForFile(tempFile);
                         fileLock.lock();
                         try {
                             fileOut = new FileOutputStream(tempFile);
                             objectOut = new ObjectOutputStream(fileOut);
-                            objectOut.writeObject(AnimeNotificationManager.allAnimeNotification);
+                            objectOut.writeObject(MediaNotificationManager.allMediaNotification);
                             fileOut.getFD().sync();
                             if (tempFile.exists() && tempFile.isFile() && tempFile.length() > 0) {
                                 File finalFile = new File(directory, filename);
@@ -280,14 +280,14 @@ public class Utils {
                                     Path finalFilePath = finalFile.toPath();
                                     Files.copy(tempFilePath, finalFilePath, StandardCopyOption.REPLACE_EXISTING);
                                 } catch (Exception e) {
-                                    handleUncaughtException(context.getApplicationContext(), e, "exportReleasedAnime 0");
+                                    handleUncaughtException(context.getApplicationContext(), e, "exportReleasedMedia 0");
                                     e.printStackTrace();
                                 } finally {
                                     finalFileNameLock.unlock();
                                 }
                             }
                         } catch (Exception e) {
-                            handleUncaughtException(context.getApplicationContext(), e, "exportReleasedAnime 1");
+                            handleUncaughtException(context.getApplicationContext(), e, "exportReleasedMedia 1");
                             e.printStackTrace();
                         } finally {
                             try {

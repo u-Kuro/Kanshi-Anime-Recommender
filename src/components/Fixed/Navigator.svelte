@@ -14,7 +14,7 @@
         dataStatus,
         menuVisible,
         initData,
-        importantUpdate,
+        shouldUpdateRecommendationList,
         confirmPromise,
         popupVisible,
         gridFullView,
@@ -23,7 +23,7 @@
         mobile,
         appInstallationAsked,
         isBackgroundUpdateKey,
-        selectedAnimeGridEl,
+        selectedMediaGridEl,
         resetTypedUsername,
         resetProgress,
         windowWidth,
@@ -131,7 +131,7 @@
                                     typedUsername =
                                         $username || typedUsername || "";
                                 }
-                                importantUpdate.update((e) => !e);
+                                shouldUpdateRecommendationList.update((e) => !e);
                                 return;
                             })
                             .catch((error) => {
@@ -191,7 +191,7 @@
                                     typedUsername =
                                         $username || typedUsername || "";
                                 }
-                                importantUpdate.update((e) => !e);
+                                shouldUpdateRecommendationList.update((e) => !e);
                                 return;
                             })
                             .catch((error) => {
@@ -324,10 +324,10 @@
                 popupContainer.style.overflow = "";
                 popupContainer.scroll({ top: 0, behavior: "smooth" });
             } else {
-                if ($gridFullView && $selectedAnimeGridEl) {
-                    $selectedAnimeGridEl.style.overflow = "hidden";
-                    $selectedAnimeGridEl.style.overflow = "";
-                    $selectedAnimeGridEl.scroll({
+                if ($gridFullView && $selectedMediaGridEl) {
+                    $selectedMediaGridEl.style.overflow = "hidden";
+                    $selectedMediaGridEl.style.overflow = "";
+                    $selectedMediaGridEl.scroll({
                         left: 0,
                         behavior: "smooth",
                     });
@@ -349,7 +349,7 @@
         }
     }
 
-    async function handleAnimeRelease() {
+    async function handleMediaRelease() {
         if (!$android) return;
         if ("Notification" in window) {
             if (window?.Notification?.permission !== "denied") {
@@ -357,8 +357,8 @@
             }
         }
         try {
-            JSBridge?.showRecentReleases?.();
-        } catch (e) {}
+            JSBridge.showRecentReleases();
+        } catch (ex) { console.error(ex) }
     }
 
     onDestroy(() => {
@@ -422,7 +422,7 @@
         let eventType = event?.type;
         let isFocusIn = eventType === "focusin";
         if (isFocusIn) {
-            window?.setShouldGoBack?.(false);
+            window?.addHistory?.();
         } else if (eventType === "focusout" && typedUsername === "") {
             typedUsername = $username || "";
         }
@@ -611,21 +611,21 @@
         {/if}
         {#if $android}
             <div
-                class="anime-release-icon-container"
-                on:click="{handleAnimeRelease}"
+                class="media-release-icon-container"
+                on:click="{handleMediaRelease}"
                 on:pointerdown="{handleGoUp}"
                 on:pointerup="{cancelGoUp}"
                 on:pointercancel="{cancelGoUp}"
             >
                 <svg
                     viewBox="0 0 512 512"
-                    class="anime-release-icon"
-                    aria-label="Anime Releases"
+                    class="media-release-icon"
+                    aria-label="Media Releases"
                     tabindex="{$popupVisible && $windowWidth > 750 ? '-1' : '0'}"
                     on:keyup="{(e) => {
                         if (e.key === 'Enter') {
                             e.stopPropagation();
-                            handleAnimeRelease();
+                            handleMediaRelease();
                         }
                     }}"
                 >
@@ -719,7 +719,7 @@
         grid-template-columns: calc(100% - 80px - 30px - calc(15px * 2)) 80px 30px;
     }
     .logo-icon,
-    .anime-release-icon {
+    .media-release-icon {
         justify-self: start;
         width: 25px;
         height: 25px;
@@ -729,7 +729,7 @@
         border-radius: 6px;
         fill: var(--fg-color);
     }
-    .anime-release-icon {
+    .media-release-icon {
         width: 20px !important;
         height: 20px !important;
     }
@@ -777,7 +777,7 @@
     input[type="search"]::-webkit-search-cancel-button {
         opacity: 1;
         transition: opacity 0.1s ease-out;
-        animation: fadeIn 0.1s ease-out;
+        animation: fade-in 0.1s ease-out;
     }
     .nav-container.layout-change input[type="search"]::-webkit-search-cancel-button {
         opacity: 0;
@@ -795,7 +795,7 @@
         align-items: center;
         color: var(--fg-color);
         cursor: pointer;
-        animation: fadeIn 0.1s ease-out;
+        animation: fade-in 0.1s ease-out;
     }
     .nav.popupvisible .closing-x,
     .nav-container.menu-visible .closing-x {
@@ -824,7 +824,7 @@
         border-radius: 30px;
         border: 1px solid var(--bd-color);
         cursor: pointer;
-        animation: fadeIn 0.1s ease-out;
+        animation: fade-in 0.1s ease-out;
         display: block;
     }
     @media screen and (max-width: 425px) {
@@ -837,7 +837,7 @@
             cursor: pointer;
         }
         .logo-icon-container,
-        .anime-release-icon-container {
+        .media-release-icon-container {
             min-width: 48px;
             min-height: 48px;
             padding: 0 10px;
@@ -894,7 +894,7 @@
 
     @media screen and (max-width: 750px) {
         .usernameText {
-            animation: fadeIn 0.1s ease-out;
+            animation: fade-in 0.1s ease-out;
             font-size: 15px;
             font-weight: 1000;
         }
@@ -939,7 +939,7 @@
             padding-left: 15px !important;
         }
         .logo-icon-container,
-        .anime-release-icon-container {
+        .media-release-icon-container {
             display: flex;
             justify-content: center;
         }

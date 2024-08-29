@@ -1,8 +1,8 @@
 package com.example.kanshi;
 
-import static com.example.kanshi.AnimeReleaseActivity.selectedAnimeReleaseOption;
-import static com.example.kanshi.AnimeReleaseActivity.showUnwatchedAnime;
-import static com.example.kanshi.Configs.loadedGroupedScheduledAnime;
+import static com.example.kanshi.MediaReleaseActivity.selectedMediaReleaseOption;
+import static com.example.kanshi.MediaReleaseActivity.showUnseenMedia;
+import static com.example.kanshi.Configs.loadedGroupedScheduledMedia;
 
 import android.annotation.SuppressLint;
 import android.content.ClipData;
@@ -45,15 +45,15 @@ import java.util.stream.Stream;
 
 @RequiresApi(api = Build.VERSION_CODES.N)
 public class SchedulesTabFragment extends Fragment {
-    public static final String UPDATE_SCHEDULED_ANIME = "UPDATE_SCHEDULED_ANIME";
+    public static final String UPDATE_SCHEDULED_MEDIA = "UPDATE_SCHEDULED_MEDIA";
     public static WeakReference<SchedulesTabFragment> weakActivity;
     public BackgroundTask backgroundTask;
     public UITask uiTask;
     Context context;
-    RecyclerView animeReleasesList;
+    RecyclerView mediaReleasesList;
     SwipeRefreshLayout swipeRefresh;
     ProgressBar progressCircular;
-    AnimeReleaseGroupAdapter animeReleaseGroupAdapter = null;
+    MediaReleaseGroupAdapter mediaReleaseGroupAdapter = null;
     final AtomicInteger maxReleasesList = new AtomicInteger();
 
     @SuppressLint("ClickableViewAccessibility")
@@ -69,30 +69,30 @@ public class SchedulesTabFragment extends Fragment {
         backgroundTask = new BackgroundTask(context);
         uiTask = new UITask(context);
 
-        View schedulesView = inflater.inflate(R.layout.anime_release_tab_fragment, container, false);
+        View schedulesView = inflater.inflate(R.layout.media_release_tab_fragment, container, false);
         // Init Global Variables
-        animeReleasesList = schedulesView.findViewById(R.id.anime_releases_list);
-        swipeRefresh = schedulesView.findViewById(R.id.swipe_refresh_anime_release);
+        mediaReleasesList = schedulesView.findViewById(R.id.media_releases_list);
+        swipeRefresh = schedulesView.findViewById(R.id.swipe_refresh_media_release);
         progressCircular = schedulesView.findViewById(R.id.progress_circular);
 
-        animeReleasesList.setItemAnimator(null);
-        animeReleasesList.setHasFixedSize(true);
+        mediaReleasesList.setItemAnimator(null);
+        mediaReleasesList.setHasFixedSize(true);
 
         swipeRefresh.setProgressBackgroundColorSchemeResource(R.color.darker_grey);
         swipeRefresh.setColorSchemeResources(R.color.faded_white);
 
-        animeReleasesList.addOnItemTouchListener(new RecyclerItemTouchListener(context, animeReleasesList, new RecyclerItemTouchListener.OnItemClickListener() {
+        mediaReleasesList.addOnItemTouchListener(new RecyclerItemTouchListener(context, mediaReleasesList, new RecyclerItemTouchListener.OnItemClickListener() {
             @Override
             public boolean onItemClick(int position) {
-                if (animeReleaseGroupAdapter == null) return false;
+                if (mediaReleaseGroupAdapter == null) return false;
                 try {
-                    final AnimeNotification anime = (AnimeNotification) animeReleaseGroupAdapter.items.get(position);
-                    final String animeUrl = anime.animeUrl;
-                    if (animeUrl == null || animeUrl.isEmpty()) return false;
+                    final MediaNotification media = (MediaNotification) mediaReleaseGroupAdapter.items.get(position);
+                    final String mediaUrl = media.mediaUrl;
+                    if (mediaUrl == null || mediaUrl.isEmpty()) return false;
 
-                    AnimeReleaseActivity animeReleaseActivity = AnimeReleaseActivity.getInstanceActivity();
-                    if (animeReleaseActivity != null) {
-                        animeReleaseActivity.openAnimeInAniList(animeUrl);
+                    MediaReleaseActivity mediaReleaseActivity = MediaReleaseActivity.getInstanceActivity();
+                    if (mediaReleaseActivity != null) {
+                        mediaReleaseActivity.openMediaInAniList(mediaUrl);
                     }
                     return true;
                 } catch (Exception ignored) {}
@@ -100,10 +100,10 @@ public class SchedulesTabFragment extends Fragment {
             }
             @Override
             public void onItemLongPress(int position) {
-                if (animeReleaseGroupAdapter == null) return;
+                if (mediaReleaseGroupAdapter == null) return;
                 try {
-                    final AnimeNotification anime = (AnimeNotification) animeReleaseGroupAdapter.items.get(position);
-                    final String title = anime.title;
+                    final MediaNotification media = (MediaNotification) mediaReleaseGroupAdapter.items.get(position);
+                    final String title = media.title;
                     if (title == null || title.isEmpty()) return;
 
                     ClipboardManager clipboard = (ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE);
@@ -113,26 +113,26 @@ public class SchedulesTabFragment extends Fragment {
             }
         }));
 
-        if (!loadedGroupedScheduledAnime.isEmpty()) {
-            backgroundTask.execute(UPDATE_SCHEDULED_ANIME, () -> {
-                final int newGroupedAnimeCount = loadedGroupedScheduledAnime.size();
-                final int newItemListCount = newGroupedAnimeCount + loadedGroupedScheduledAnime.stream().mapToInt(group -> group.anime.size()).sum();
+        if (!loadedGroupedScheduledMedia.isEmpty()) {
+            backgroundTask.execute(UPDATE_SCHEDULED_MEDIA, () -> {
+                final int newGroupedMediaCount = loadedGroupedScheduledMedia.size();
+                final int newItemListCount = newGroupedMediaCount + loadedGroupedScheduledMedia.stream().mapToInt(group -> group.media.size()).sum();
 
                 maxReleasesList.updateAndGet(count -> Math.max(count, newItemListCount));
                 uiTask.post(() -> {
-                    animeReleasesList.setItemViewCacheSize(maxReleasesList.get());
-                    animeReleaseGroupAdapter = new AnimeReleaseGroupAdapter(context, new ArrayList<>(), progressCircular);
-                    animeReleasesList.setAdapter(animeReleaseGroupAdapter);
-                }, UPDATE_SCHEDULED_ANIME);
+                    mediaReleasesList.setItemViewCacheSize(maxReleasesList.get());
+                    mediaReleaseGroupAdapter = new MediaReleaseGroupAdapter(context, new ArrayList<>(), progressCircular);
+                    mediaReleasesList.setAdapter(mediaReleaseGroupAdapter);
+                }, UPDATE_SCHEDULED_MEDIA);
 
                 int itemPosition = 0;
-                for (int i = 0; i < newGroupedAnimeCount; i++) {
-                    AnimeReleaseGroup animeReleaseGroup = loadedGroupedScheduledAnime.get(i);
+                for (int i = 0; i < newGroupedMediaCount; i++) {
+                    MediaReleaseGroup mediaReleaseGroup = loadedGroupedScheduledMedia.get(i);
                     int finalHeaderPosition = itemPosition++;
-                    uiTask.post(() -> animeReleaseGroupAdapter.add(finalHeaderPosition, animeReleaseGroup), UPDATE_SCHEDULED_ANIME);
-                    for (AnimeNotification anime : animeReleaseGroup.anime) {
-                        int finalAnimePosition = itemPosition++;
-                        uiTask.post(() -> animeReleaseGroupAdapter.add(finalAnimePosition, anime), UPDATE_SCHEDULED_ANIME);
+                    uiTask.post(() -> mediaReleaseGroupAdapter.add(finalHeaderPosition, mediaReleaseGroup), UPDATE_SCHEDULED_MEDIA);
+                    for (MediaNotification media : mediaReleaseGroup.media) {
+                        int finalMediaPosition = itemPosition++;
+                        uiTask.post(() -> mediaReleaseGroupAdapter.add(finalMediaPosition, media), UPDATE_SCHEDULED_MEDIA);
                     }
                 }
             });
@@ -144,11 +144,11 @@ public class SchedulesTabFragment extends Fragment {
                 mainActivity.updateCurrentNotifications();
                 mainActivity.checkEntries();
             }
-            updateScheduledAnime(true, false);
+            updateScheduledMedia(true, false);
             swipeRefresh.setRefreshing(false);
         });
 
-        updateScheduledAnime(false, false);
+        updateScheduledMedia(false, false);
 
         weakActivity = new WeakReference<>(SchedulesTabFragment.this);
 
@@ -156,76 +156,76 @@ public class SchedulesTabFragment extends Fragment {
     }
 
     @RequiresApi(api = Build.VERSION_CODES.P)
-    public void updateScheduledAnime(boolean shouldSetAdapter, boolean shouldScrollToTop) {
+    public void updateScheduledMedia(boolean shouldSetAdapter, boolean shouldScrollToTop) {
         if (shouldScrollToTop) {
-            animeReleasesList.scrollToPosition(0);
+            mediaReleasesList.scrollToPosition(0);
         }
-        backgroundTask.cancel(UPDATE_SCHEDULED_ANIME);
-        uiTask.cancel(UPDATE_SCHEDULED_ANIME);
+        backgroundTask.cancel(UPDATE_SCHEDULED_MEDIA);
+        uiTask.cancel(UPDATE_SCHEDULED_MEDIA);
 
-        backgroundTask.execute(UPDATE_SCHEDULED_ANIME, () -> {
-            if (AnimeNotificationManager.allAnimeNotification.isEmpty()) {
-                @SuppressWarnings("unchecked") ConcurrentHashMap<String, AnimeNotification> $allAnimeNotification = (ConcurrentHashMap<String, AnimeNotification>) LocalPersistence.readObjectFromFile(context, "allAnimeNotification");
-                if ($allAnimeNotification != null && !$allAnimeNotification.isEmpty()) {
-                    AnimeNotificationManager.allAnimeNotification.putAll($allAnimeNotification);
+        backgroundTask.execute(UPDATE_SCHEDULED_MEDIA, () -> {
+            if (MediaNotificationManager.allMediaNotification.isEmpty()) {
+                @SuppressWarnings("unchecked") ConcurrentHashMap<String, MediaNotification> $allMediaNotification = (ConcurrentHashMap<String, MediaNotification>) LocalPersistence.readObjectFromFile(context, "allMediaNotification");
+                if ($allMediaNotification != null && !$allMediaNotification.isEmpty()) {
+                    MediaNotificationManager.allMediaNotification.putAll($allMediaNotification);
                 }
             }
 
-            ArrayList<AnimeNotification> allAnimeNotificationValues = new ArrayList<>(AnimeNotificationManager.allAnimeNotification.values());
-            Collections.sort(allAnimeNotificationValues, (anime1, anime2) -> Long.compare(anime2.releaseDateMillis, anime1.releaseDateMillis));
+            ArrayList<MediaNotification> allMediaNotificationValues = new ArrayList<>(MediaNotificationManager.allMediaNotification.values());
+            Collections.sort(allMediaNotificationValues, (media1, media2) -> Long.compare(media2.releaseDateMillis, media1.releaseDateMillis));
 
-            ArrayList<AnimeNotification> animeSchedules = new ArrayList<>();
+            ArrayList<MediaNotification> mediaSchedules = new ArrayList<>();
 
-            String currentSelectedAnimeReleaseOption = selectedAnimeReleaseOption.get();
-            boolean currentShowUnwatchedAnime = showUnwatchedAnime.get();
-            for (AnimeNotification anime : allAnimeNotificationValues) {
-                if (!"Updates".equals(currentSelectedAnimeReleaseOption)) {
-                    boolean isMyAnime = anime.userStatus != null && !anime.userStatus.isEmpty() && !anime.userStatus.equalsIgnoreCase("UNWATCHED");
-                    switch (currentSelectedAnimeReleaseOption) {
+            String currentSelectedMediaReleaseOption = selectedMediaReleaseOption.get();
+            boolean currentShowUnseenMedia = showUnseenMedia.get();
+            for (MediaNotification media : allMediaNotificationValues) {
+                if (!"Updates".equals(currentSelectedMediaReleaseOption)) {
+                    boolean isMyMedia = media.userStatus != null && !media.userStatus.isEmpty() && !media.userStatus.equalsIgnoreCase("UNSEEN");
+                    switch (currentSelectedMediaReleaseOption) {
                         case "My List":
-                            if (!isMyAnime) {
+                            if (!isMyMedia) {
                                 continue;
                             }
                             break;
                         case "Watching":
-                            if (!isMyAnime || !("CURRENT".equalsIgnoreCase(anime.userStatus) || "REPEATING".equalsIgnoreCase(anime.userStatus))) {
+                            if (!isMyMedia || !("CURRENT".equalsIgnoreCase(media.userStatus) || "REPEATING".equalsIgnoreCase(media.userStatus))) {
                                 continue;
                             }
                             break;
                         case "Finished":
-                            if (!isMyAnime || anime.releaseEpisode < anime.maxEpisode || anime.maxEpisode <= 0) {
+                            if (!isMyMedia || media.releaseEpisode < media.maxEpisode || media.maxEpisode <= 0) {
                                 continue;
                             }
                             break;
                         case "Others":
-                            if (isMyAnime) {
+                            if (isMyMedia) {
                                 continue;
                             }
                             break;
                     }
                 }
-                if (anime.releaseDateMillis >= System.currentTimeMillis()) {
-                    final boolean isNotComplete = !("COMPLETED".equalsIgnoreCase(anime.userStatus) || ("My List".equals(currentSelectedAnimeReleaseOption) && "DROPPED".equalsIgnoreCase(anime.userStatus)));
-                    if (!currentShowUnwatchedAnime || isNotComplete) {
-                        if (anime.maxEpisode < 0) { // No Given Max Episodes
-                            anime.message = "Episode " + anime.releaseEpisode;
-                        } else if (anime.releaseEpisode >= anime.maxEpisode) {
-                            anime.message = "Final: Episode " + anime.releaseEpisode;
+                if (media.releaseDateMillis >= System.currentTimeMillis()) {
+                    final boolean isNotComplete = !("COMPLETED".equalsIgnoreCase(media.userStatus) || ("My List".equals(currentSelectedMediaReleaseOption) && "DROPPED".equalsIgnoreCase(media.userStatus)));
+                    if (!currentShowUnseenMedia || isNotComplete) {
+                        if (media.maxEpisode < 0) { // No Given Max Episodes
+                            media.message = "Episode " + media.releaseEpisode;
+                        } else if (media.releaseEpisode >= media.maxEpisode) {
+                            media.message = "Final: Episode " + media.releaseEpisode;
                         } else {
-                            anime.message = "Episode " + anime.releaseEpisode + " / " + anime.maxEpisode;
+                            media.message = "Episode " + media.releaseEpisode + " / " + media.maxEpisode;
                         }
-                        animeSchedules.add(anime);
+                        mediaSchedules.add(media);
                     }
                 }
             }
 
-            Map<String, ArrayList<AnimeNotification>> map = new TreeMap<>();
+            Map<String, ArrayList<MediaNotification>> map = new TreeMap<>();
 
-            for (AnimeNotification anime : animeSchedules) {
+            for (MediaNotification media : mediaSchedules) {
                 DateTimeFormatter shownDateFormat = DateTimeFormatter.ofPattern("MMMM d yyyy, EEEE");
                 DateTimeFormatter shownWeekDayFormat = DateTimeFormatter.ofPattern("EEEE");
 
-                Instant releaseDateInstant = Instant.ofEpochMilli(anime.releaseDateMillis);
+                Instant releaseDateInstant = Instant.ofEpochMilli(media.releaseDateMillis);
                 LocalDate localDate = releaseDateInstant.atZone(ZoneId.systemDefault()).toLocalDate();
                 LocalDate today = LocalDate.now();
 
@@ -262,24 +262,24 @@ public class SchedulesTabFragment extends Fragment {
                     map.put(dateStr, new ArrayList<>());
                 }
                 if (map.containsKey(dateStr)) {
-                    Objects.requireNonNull(map.get(dateStr)).add(anime);
+                    Objects.requireNonNull(map.get(dateStr)).add(media);
                 }
             }
 
-            final ArrayList<AnimeReleaseGroup> groupedScheduledAnime = new ArrayList<>();
-            for (Map.Entry<String, ArrayList<AnimeNotification>> entry : map.entrySet()) {
-                ArrayList<AnimeNotification> animeList = entry.getValue();
-                if (animeList != null && !animeList.isEmpty()) {
-                    Collections.sort(animeList, Comparator.comparingLong(a -> a.releaseDateMillis));
+            final ArrayList<MediaReleaseGroup> groupedScheduledMedia = new ArrayList<>();
+            for (Map.Entry<String, ArrayList<MediaNotification>> entry : map.entrySet()) {
+                ArrayList<MediaNotification> mediaList = entry.getValue();
+                if (mediaList != null && !mediaList.isEmpty()) {
+                    Collections.sort(mediaList, Comparator.comparingLong(a -> a.releaseDateMillis));
 
-                    AnimeNotification anime = animeList.get(0);
-                    LocalDateTime localDateTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(anime.releaseDateMillis), ZoneId.systemDefault());
+                    MediaNotification media = mediaList.get(0);
+                    LocalDateTime localDateTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(media.releaseDateMillis), ZoneId.systemDefault());
 
-                    groupedScheduledAnime.add(new AnimeReleaseGroup(entry.getKey(), localDateTime, animeList));
+                    groupedScheduledMedia.add(new MediaReleaseGroup(entry.getKey(), localDateTime, mediaList));
                 }
             }
 
-            Collections.sort(groupedScheduledAnime, (a1, a2) -> {
+            Collections.sort(groupedScheduledMedia, (a1, a2) -> {
                 try {
                     if (a1.date == null && a2.date == null) return 0;
                     if (a1.date == null) return 1;
@@ -290,45 +290,45 @@ public class SchedulesTabFragment extends Fragment {
                 }
             });
 
-            loadedGroupedScheduledAnime = groupedScheduledAnime;
+            loadedGroupedScheduledMedia = groupedScheduledMedia;
 
-            final ArrayList<GroupedListItem> newItemList = groupedScheduledAnime.stream()
+            final ArrayList<GroupedListItem> newItemList = groupedScheduledMedia.stream()
                     .flatMap(item -> Stream.concat(
                             Stream.of(item),
-                            item.anime.stream()
+                            item.media.stream()
                     ))
                     .collect(Collectors.toCollection(ArrayList::new));
             final int newItemListCount = newItemList.size();
             final ArrayList<GroupedListItem> lastItemList;
-            if (animeReleaseGroupAdapter != null) {
-                lastItemList = animeReleaseGroupAdapter.items;
+            if (mediaReleaseGroupAdapter != null) {
+                lastItemList = mediaReleaseGroupAdapter.items;
             } else {
                 lastItemList = new ArrayList<>();
             }
             final int lastItemListCount = lastItemList.size();
 
-            if (animeReleaseGroupAdapter == null || shouldSetAdapter) {
+            if (mediaReleaseGroupAdapter == null || shouldSetAdapter) {
                 maxReleasesList.updateAndGet(count -> Math.max(count, newItemListCount));
                 uiTask.post(() -> {
-                    animeReleasesList.setItemViewCacheSize(maxReleasesList.get());
-                    animeReleaseGroupAdapter = new AnimeReleaseGroupAdapter(context, new ArrayList<>(), progressCircular);
-                    animeReleasesList.setAdapter(animeReleaseGroupAdapter);
-                }, UPDATE_SCHEDULED_ANIME);
+                    mediaReleasesList.setItemViewCacheSize(maxReleasesList.get());
+                    mediaReleaseGroupAdapter = new MediaReleaseGroupAdapter(context, new ArrayList<>(), progressCircular);
+                    mediaReleasesList.setAdapter(mediaReleaseGroupAdapter);
+                }, UPDATE_SCHEDULED_MEDIA);
 
                 int itemPosition = 0;
                 for (GroupedListItem item : newItemList) {
                     int finalItemPosition = itemPosition++;
                     uiTask.post(() -> {
-                        if (animeReleaseGroupAdapter != null) {
-                            animeReleaseGroupAdapter.add(finalItemPosition, item);
+                        if (mediaReleaseGroupAdapter != null) {
+                            mediaReleaseGroupAdapter.add(finalItemPosition, item);
                         } else {
-                            updateScheduledAnime(shouldSetAdapter, false);
+                            updateScheduledMedia(shouldSetAdapter, false);
                         }
-                    }, UPDATE_SCHEDULED_ANIME);
+                    }, UPDATE_SCHEDULED_MEDIA);
                 }
             } else {
                 maxReleasesList.updateAndGet(count -> Math.max(count, newItemListCount));
-                uiTask.post(() -> animeReleasesList.setItemViewCacheSize(maxReleasesList.get()), UPDATE_SCHEDULED_ANIME);
+                uiTask.post(() -> mediaReleasesList.setItemViewCacheSize(maxReleasesList.get()), UPDATE_SCHEDULED_MEDIA);
 
                 int itemPosition = 0;
                 for (int i = 0; i < newItemListCount; i++) {
@@ -336,22 +336,22 @@ public class SchedulesTabFragment extends Fragment {
                     int finalItemPosition = itemPosition++;
                     if (finalItemPosition < lastItemListCount) {
                         if (item.isNotEqual(lastItemList.get(finalItemPosition))) {
-                            uiTask.post(() -> animeReleaseGroupAdapter.set(finalItemPosition, item), UPDATE_SCHEDULED_ANIME);
+                            uiTask.post(() -> mediaReleaseGroupAdapter.set(finalItemPosition, item), UPDATE_SCHEDULED_MEDIA);
                         }
                     } else {
-                        uiTask.post(() -> animeReleaseGroupAdapter.add(finalItemPosition, item), UPDATE_SCHEDULED_ANIME);
+                        uiTask.post(() -> mediaReleaseGroupAdapter.add(finalItemPosition, item), UPDATE_SCHEDULED_MEDIA);
                     }
                 }
 
                 if (lastItemListCount > newItemListCount) {
                     for (int i = lastItemListCount - 1; i >= newItemListCount; i--) {
                         int finalItemPosition = i;
-                        uiTask.post(() -> animeReleaseGroupAdapter.remove(finalItemPosition), UPDATE_SCHEDULED_ANIME);
+                        uiTask.post(() -> mediaReleaseGroupAdapter.remove(finalItemPosition), UPDATE_SCHEDULED_MEDIA);
                     }
                 }
             }
             if (newItemListCount == 0) {
-                uiTask.post(()-> progressCircular.setVisibility(View.GONE), UPDATE_SCHEDULED_ANIME);
+                uiTask.post(()-> progressCircular.setVisibility(View.GONE), UPDATE_SCHEDULED_MEDIA);
             }
         });
     }

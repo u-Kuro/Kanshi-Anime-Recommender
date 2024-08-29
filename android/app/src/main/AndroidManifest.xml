@@ -47,7 +47,7 @@
             android:exported="false"
             android:enabled="true">
             <intent-filter>
-                <action android:name="ANIME_NOTIFICATION"/>
+                <action android:name="MEDIA_NOTIFICATION"/>
                 <action android:name="UPDATE_DATA_MANUAL"/>
                 <action android:name="UPDATE_DATA_AUTO"/>
                 <action android:name="SEE_MORE_RELEASED"/>
@@ -85,8 +85,8 @@
             android:alwaysRetainTaskState="true">
         </activity>
         <activity
-            android:theme="@style/Theme.AnimeReleaseActivity"
-            android:name=".AnimeReleaseActivity"
+            android:theme="@style/Theme.MediaReleaseActivity"
+            android:name=".MediaReleaseActivity"
             android:hardwareAccelerated="true"
             android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|uiMode|screenSize|smallestScreenSize"
             android:exported="true"

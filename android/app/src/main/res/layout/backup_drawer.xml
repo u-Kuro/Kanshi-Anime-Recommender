@@ -12,7 +12,7 @@
         android:layout_height="16dp"
         android:paddingTop="24dp"/>
     <LinearLayout
-        android:id="@+id/import_anime_releases"
+        android:id="@+id/import_media_releases"
         android:layout_width="match_parent"
         android:layout_height="48dp"
         android:layout_marginTop="10dp"
@@ -25,20 +25,20 @@
         <ImageView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:contentDescription="@string/import_released_anime"
+            android:contentDescription="@string/import_released_media"
             android:src="@drawable/import_white" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="30dp"
-            android:text="@string/import_released_anime"
+            android:text="@string/import_released_media"
             android:textColor="@color/white"
             android:textSize="16sp" />
 
     </LinearLayout>
     <LinearLayout
-        android:id="@+id/auto_export_anime_releases"
+        android:id="@+id/auto_export_media_releases"
         android:orientation="horizontal"
         android:layout_width="match_parent"
         android:layout_height="48dp"
@@ -49,14 +49,14 @@
         tools:ignore="UseCompoundDrawables">
 
         <ImageView
-            android:id="@+id/auto_export_anime_releases_imageview"
+            android:id="@+id/auto_export_media_releases_imageview"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:src="@drawable/sync_white"
-            android:contentDescription="@string/released_anime_auto_export"/>
+            android:contentDescription="@string/released_media_auto_export"/>
 
         <TextView
-            android:id="@+id/auto_export_anime_releases_textview"
+            android:id="@+id/auto_export_media_releases_textview"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/enabled_automatic_back_up"

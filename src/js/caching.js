@@ -11,7 +11,7 @@ const cacheRequest = async (url, totalLength, status, getBlob) => {
     } else if (loadedRequestUrlPromises[url]) {
         return loadedRequestUrlPromises[url]
     } else if (!window?.location?.protocol?.includes?.("file")) {
-        loadedRequestUrlPromises[url] = new Promise(async (resolve) => {
+        loadedRequestUrlPromises[url] = (async () => {
             // Check App ID/Version Once for Consistency
             if (appIDNotChecked) {
                 appIDNotChecked = false
@@ -23,17 +23,19 @@ const cacheRequest = async (url, totalLength, status, getBlob) => {
                 newUrl = url + "?v=" + version
             }
 
-            fetch(newUrl || url, {
-                headers: {
-                    'Cache-Control': 'public, max-age=31536000, immutable',
-                },
-                cache: 'no-cache'
-            }).then(async response => {
+            try {
+                let response = await fetch(newUrl || url, {
+                    headers: {
+                        'Cache-Control': 'public, max-age=31536000, immutable',
+                    },
+                    cache: 'no-cache'
+                })
+
                 if (totalLength && status) {
                     const reader = response?.body?.getReader?.();
                     if (typeof (reader?.read) === "function") {
                         try {
-                            return new Response(new ReadableStream({
+                            response = new Response(new ReadableStream({
                                 async start(controller) {
                                     let receivedLength = 0;
                                     let streamStatusTimeout, isDataStatusShowing;
@@ -71,48 +73,36 @@ const cacheRequest = async (url, totalLength, status, getBlob) => {
                                     }
                                 }
                             }));
-                        } catch (e) {
-                            resolve(await cacheRequest(url))
-                            return
+                        } catch (ex) {
+                            console.error(ex)
+                            return await cacheRequest(url)
                         }
                     } else {
-                        resolve(await cacheRequest(url))
-                        return
+                        return await cacheRequest(url)
                     }
-                } else {
-                    return response
                 }
-            })
-                .then(async response => {
-                    if (getBlob) {
-                        loadedRequestUrlPromises[url] = null
-                        resolve(await response.blob())
-                    } else {
-                        return await response.blob()
-                    }
-                })
-                .then(result => {
-                    if (result instanceof Blob) {
-                        try {
-                            let blobUrl = URL.createObjectURL(result);
-                            loadedRequestUrls[url] = blobUrl;
-                            loadedRequestUrlPromises[url] = null
-                            resolve(blobUrl)
-                        } catch (e) {
-                            loadedRequestUrlPromises[url] = null
-                            resolve(url)
-                        }
-                    } else {
-                        loadedRequestUrlPromises[url] = null
-                        resolve(url)
-                    }
-                })
-                .catch(async () => {
-                    loadedRequestUrlPromises[url] = null
-                    resolve(await cacheRequest(url))
-                })
 
-        })
+                if (getBlob) {
+                    loadedRequestUrlPromises[url] = null
+                    return await response.blob()
+                } else {
+                    const result = await response.blob()
+                    try {
+                        const blobUrl = URL.createObjectURL(result);
+                        loadedRequestUrls[url] = blobUrl;
+                        loadedRequestUrlPromises[url] = null
+                        return blobUrl
+                    } catch (ex) {
+                        console.error(ex)
+                        loadedRequestUrlPromises[url] = null
+                        return url
+                    }
+                }
+            } catch (ex) {
+                loadedRequestUrlPromises[url] = null
+                return await cacheRequest(url)
+            }
+        })();
         return loadedRequestUrlPromises[url]
     } else {
         return url
@@ -127,7 +117,7 @@ const cacheImage = (url, width, height) => {
     } else if (loadedImagePromises[url]) {
         return loadedImagePromises[url]
     } else {
-        const TOKEN = window?.["Kanshi.Anime.Recommendations.Anilist.W~uPtWCq=vG$TR:Zl^#t<vdS]I~N70.isOwner"]
+        const TOKEN = window?.["Kanshi.Media.Recommendations.Anilist.W~uPtWCq=vG$TR:Zl^#t<vdS]I~N70.isOwner"]
         if (typeof TOKEN === "string" && get(android)) {
             loadedImagePromises[url] = new Promise(async (resolve) => {
                 let newUrl = `https://cors-anywhere-kuro.vercel.app/api/${TOKEN}?url=${url}`;

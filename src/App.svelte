@@ -5,22 +5,21 @@
 	import C from "./components/index.js";
 	import getWebVersion from "./version.js";
 	import {
-		getAnimeEntries,
+		getMediaEntries,
 		getFilterOptions,
-		requestAnimeEntries,
+		requestMediaEntries,
 		requestUserEntries,
-		processRecommendedAnimeList,
-		animeManager,
+		processRecommendedMediaList,
+		mediaManager,
 		exportUserData,
 		getExtraInfo,
-		animeLoader,
+		mediaLoader,
         updateTagInfo,
 		saveIDBdata,
 		getIDBdata
 	} from "./js/workerUtils.js";
 	import {
 		getLocalStorage,
-		ncsCompare,
 		removeLocalStorage,
 		requestImmediate,
 		setLocalStorage,
@@ -40,25 +39,21 @@
 		autoExport,
 		autoExportInterval,
 		runnedAutoExportAt,
-		autoPlay,
 		popupVisible,
 		menuVisible,
 		listUpdateAvailable,
 		confirmIsVisible,
-		animeOptionVisible,
+		mediaOptionVisible,
 		runUpdate,
 		runExport,
-		importantLoad,
-		importantUpdate,
+		shouldUpdateList,
+		shouldUpdateRecommendationList,
 		updateRecommendationList,
-		loadAnime,
-		runIsScrolling,
+		updateList,
 		confirmPromise,
 		hasWheel,
 		progress,
-		popupIsGoingBack,
 		dropdownIsVisible,
-		showStatus,
 		isBackgroundUpdateKey,
 		visitedKey,
 		orderedFilters,
@@ -67,581 +62,382 @@
 		filterConfig,
 		categories,
 		selectedCategory,
-		loadedAnimeLists,
+		loadedMediaLists,
 		categoriesKeys,
-		selectedAnimeGridEl,
-		showLoadingAnime,
+		selectedMediaGridEl,
 		resetProgress,
         tagInfo,
         windowWidth,
         windowHeight,
-        // trueWindowWidth,
         trueWindowHeight,
         documentScrollTop,
-		// anilistAccessToken,
+        loadingCategory,
 	} from "./js/globalValues.js";
 
-	// Init Data
-	let initDataPromises = [];
-	let shouldReloadList;
 
-	window.kanshiInit = new Promise(async (resolve) => {
-		// Check App ID (Not for Android allow Fast Start on Slow Network)
-		if (!$android) {
-			$appID = await getWebVersion();
-		}
-
-		// Check Data Loss
-		if ($android) {
-			if ($visitedKey && window[$visitedKey] === true) {
-				let isAlreadyVisited = await getIDBdata($visitedKey);
-				if (!isAlreadyVisited) {
-					window[".androidDataIsEvicted"] = true;
-					try {
-						JSBridge?.notifyDataEviction?.();
-						if (window[$isBackgroundUpdateKey] === true) {
-							JSBridge?.backgroundUpdateIsFinished?.(false);
-						}
-					} catch (e) {}
-				}
-			} else {
-				await saveIDBdata(true, $visitedKey, true).then(() => {
-					try {
-						JSBridge?.visited?.(true);
-					} catch (e) {}
-				});
+	(async () => {
+		try {			
+			// Check App ID (Not for Android allow Fast Start on Slow Network)
+			if (!$android) {
+				$appID = await getWebVersion();
 			}
-		}
 
-		if ($android && window[$isBackgroundUpdateKey] === true) {
-			resolve();
-		} else {
-			$gridFullView =
-				$gridFullView ??
-				getLocalStorage("gridFullView") ??
-				(await getIDBdata("gridFullView"));
-			if ($gridFullView == null) {
-				$gridFullView = false;
-				setLocalStorage("gridFullView", false)
-					.catch(() => {
-						removeLocalStorage("gridFullView");
+			// Check Data Loss
+			if ($android) {
+				if (window[$visitedKey] === true) {
+					const isAlreadyVisited = await getIDBdata($visitedKey);
+					if (!isAlreadyVisited) {
+						window[".androidDataIsEvicted"] = true;
+						try {
+							JSBridge.notifyDataEviction();
+							if (window[$isBackgroundUpdateKey] === true) {
+								JSBridge.backgroundUpdateIsFinished(false);
+							}
+						} catch (ex) { console.error(ex) }
+					}
+				} else if (window[$visitedKey] === false) {
+					saveIDBdata(true, $visitedKey, true)
+					.then(() => {
+						try {
+							JSBridge.pageVisited()
+						} catch (ex) { console.error(ex) }
 					})
-					.finally(() => {
-						saveIDBdata(false, "gridFullView");
-					});
+					.catch((ex) => console.error(ex))
+				}
 			}
 
-			await animeLoader({ loadInit: true })
-				.then((data) => {
-					shouldReloadList = data.shouldReloadList;
+			let shouldReloadList;
+			if (!$android || window[$isBackgroundUpdateKey] !== true) {
+				try {
+					shouldReloadList = (await mediaLoader({ 
+						loadAll: true, 
+						selectedCategory: ($selectedCategory ?? getLocalStorage("selectedCategory") ?? await getIDBdata("selectedCategory"))
+					}))?.shouldReloadList
 					if (!shouldReloadList) {
 						loadYoutube();
 					}
-					return;
-				})
-				.finally(resolve);
-		}
-	})
-		.then(async() => {
+				} catch (ex) { console.error(ex) }
+			}
 
-			// Check/Get/Update/Process Anime Entries
-			initDataPromises.push(
-				new Promise(async (resolve, reject) => {
-					try {
-						let shouldGetAnimeEntries = await getIDBdata(
-							"animeEntriesIsEmpty",
-						);
-						if (shouldGetAnimeEntries === true) {
-							getAnimeEntries()
-								.then(() => {
-									resolve();
-								})
-								.catch(async () => {
-									reject();
-								});
-						} else if (shouldGetAnimeEntries === false) {
-							resolve();
-						} else {
-							reject();
-						}
-					} catch (e) {
-						reject(e);
+			await Promise.all([
+				// Check/Get/Update/Process Media Entries
+				(async () => {
+					const shouldGetMediaEntries = await getIDBdata("mediaEntriesIsEmpty");
+					if (shouldGetMediaEntries === true) {
+						await getMediaEntries()
+					} else if (shouldGetMediaEntries !== false) {
+						throw "Unexpected Error"
 					}
-				}),
-			);
-
-			// Check/Update/Process User Anime Entries
-			initDataPromises.push(
-				new Promise(async (resolve, reject) => {
-					// let accessToken = getAnilistAccessTokenFromURL();
-					// if (accessToken) {
-					// 	await saveIDBdata(accessToken, "access_token");
-					// 	$anilistAccessToken = accessToken;
-					// } else {
-					// 	$anilistAccessToken = await getIDBdata("access_token");
-					// }
-					// if ($anilistAccessToken) {
-					// 	let getUsername = () => {
-					// 		fetch("https://graphql.anilist.co", {
-					// 			method: "POST",
-					// 			headers: {
-					// 				Authorization: "Bearer " + $anilistAccessToken,
-					// 				"Content-Type": "application/json",
-					// 				Accept: "application/json",
-					// 			},
-					// 			body: JSON.stringify({
-					// 				query: `{Viewer{name}}`,
-					// 			}),
-					// 		})
-					// 			.then(async (response) => {
-					// 				return await response.json();
-					// 			})
-					// 			.then(async (result) => {
-					// 				if (
-					// 					typeof result?.errors?.[0]?.message === "string"
-					// 				) {
-					// 					setTimeout(() => {
-					// 						return getUsername();
-					// 					}, 60000);
-					// 				} else {
-					// 					let savedUsername = await getIDBdata(
-					// 						"username"
-					// 					);
-					// 					let _username = result.data.Viewer.name;
-					// 					if (_username && savedUsername !== _username) {
-					// 						requestUserEntries({
-					// 							username: _username,
-					// 						})
-					// 							.then(({ newusername }) => {
-					// 								if (newusername) {
-					// 									$username = newusername || "";
-					// 									importantUpdate.update(
-					// 										(e) => !e
-					// 									);
-					// 								}
-					// 							})
-					// 							.catch((error) => {
-					// 								console.error(error);
-					// 							});
-					// 					} else {
-					// 						$username =
-					// 							_username || savedUsername || "";
-					// 					}
-					// 					resolve();
-					// 				}
-					// 			})
-					// 			.catch(() => {
-					// 				setTimeout(() => {
-					// 					return getUsername();
-					// 				}, 60000);
-					// 				resolve();
-					// 			});
-					// 	};
-					// 	getUsername();
-					// } else {
-					try {
-						let _username = await getIDBdata("username");
-						if (_username !== $username) {
-							setLocalStorage("username", _username || "").catch(
-								() => {
-									removeLocalStorage("username");
-								},
-							);
-							$username = _username;
-						}
-						if (
-							$android &&
-							window.shouldUpdateNotifications === true &&
-							window[$isBackgroundUpdateKey] !== true
-						) {
-							window.shouldUpdateNotifications = false;
-							try {
-								JSBridge?.callUpdateNotifications?.();
-							} catch (e) {}
-						}
-						resolve();
-					} catch (e) {
-						reject(e);
+				})(),
+				// Check/Update/Process User Media Entries
+				(async () => {
+					const savedUsername = await getIDBdata("username");
+					if (savedUsername !== $username) {
+						setLocalStorage("username", savedUsername || "")
+						.catch((ex) => {
+							removeLocalStorage("username");
+							console.error(ex)
+						})
+						$username = savedUsername;
 					}
-					// }
-				}),
-			);
-
-			// Check/Get/Update Filter Options Selection
-			initDataPromises.push(
-				new Promise(async (resolve, reject) => {
+					if (
+						$android &&
+						window.shouldUpdateNotifications === true &&
+						window[$isBackgroundUpdateKey] !== true
+					) {
+						window.shouldUpdateNotifications = false;
+						try {
+							JSBridge.callUpdateNotifications();
+						} catch (ex) { console.error(ex) }
+					}
+				})(),
+				// Check/Get/Update Filter Options Selection
+				(async () => {
 					if ($android && window[$isBackgroundUpdateKey] === true) {
 						updateTagInfo();
-						resolve();
 					} else {
+						const response = await getFilterOptions()
+						if (response) {
+							$orderedFilters = response.orderedFilters;
+							$nonOrderedFilters = response.nonOrderedFilters;
+							$filterConfig = response.filterConfig;
+							$algorithmFilters = response.algorithmFilters;
+							$tagInfo = response.tagInfo;
+						}
 						try {
-							getFilterOptions()
-								.then((data) => {
-									$orderedFilters = data?.orderedFilters;
-									$nonOrderedFilters = data?.nonOrderedFilters;
-									$filterConfig = data?.filterConfig;
-									$algorithmFilters = data?.algorithmFilter;
-									$tagInfo = data?.tagInfo;
-									try {
-										updateTagInfo();
-									} catch {}
-									resolve();
-								})
-								.catch(() => {
-									reject();
-								});
-						} catch (e) {
-							reject(e);
-						}
+							updateTagInfo();
+						} catch (ex) { console.error(ex) }
 					}
-				}),
-			);
+				})()
+			])
 
-			Promise.all(initDataPromises)
-				.then(async () => {
-					$initData = false;
-					if ($android && window[$isBackgroundUpdateKey] === true) {
-						try {
-							let dataIsUpdated;
-							try {
-								JSBridge?.setShouldProcessRecommendation?.(
-									true,
-								);
-							} catch (e) {}
-							requestUserEntries().finally(() => {
-								dataIsUpdated =
-									window.KanshiBackgroundShouldProcessRecommendation;
-								requestAnimeEntries().finally(() => {
-									dataIsUpdated =
-										dataIsUpdated ||
-										window.KanshiBackgroundShouldProcessRecommendation;
-									new Promise(async (resolve) => {
-										if (dataIsUpdated) {
-											processRecommendedAnimeList()
-												.then(() => {
-													try {
-														JSBridge?.setShouldProcessRecommendation?.(
-															false,
-														);
-													} catch (e) {}
-													resolve(true);
-												})
-												.catch(resolve);
-										} else {
-											try {
-												JSBridge?.setShouldProcessRecommendation?.(
-													false,
-												);
-											} catch (e) {}
-											resolve();
-										}
-									}).then((recommendationListIsProcessed) => {
-										new Promise(async (resolve) => {
-											if (recommendationListIsProcessed) {
-												animeManager({
-													updateRecommendedAnimeList: true,
-												})
-													.then(() => {
-														try {
-															JSBridge?.setShouldLoadAnime?.(
-																false,
-															);
-														} catch (e) {}
-														resolve();
-													})
-													.finally(resolve);
-											} else {
-												try {
-													JSBridge?.setShouldLoadAnime?.(
-														false,
-													);
-												} catch (e) {}
-												resolve();
-											}
-										}).finally(async () => {
-											let shouldExport =
-												dataIsUpdated ||
-												(await autoExportIsPastDate());
-											if (shouldExport) {
-												$exportPathIsAvailable =
-													$exportPathIsAvailable ??
-													(await getIDBdata(
-														"exportPathIsAvailable",
-													));
-												if ($exportPathIsAvailable) {
-													$autoExport =
-														$autoExport ??
-														(await getIDBdata(
-															"autoExport",
-														));
-													if ($autoExport) {
-														await new Promise(
-															(resolve) =>
-																exportUserData().finally(
-																	resolve,
-																),
-														);
-													}
-												}
-											}
-											JSBridge?.backgroundUpdateIsFinished?.(
-												true,
-											);
-										});
-									});
-								});
-							});
-						} catch (e) {
-							try {
-								JSBridge?.backgroundUpdateIsFinished?.(false);
-							} catch (e) {}
-						}
-					} else {
-						(async () => {
-							if ($android) {
-								try {
-									JSBridge?.backgroundUpdateIsFinished?.(
-										false,
-									);
-								} catch (e) {}
-							}
-							$autoPlay =
-								$autoPlay ??
-								getLocalStorage("autoPlay") ??
-								(await getIDBdata("autoPlay"));
-							if ($autoPlay == null) {
-								$autoPlay = false;
-								setLocalStorage("autoPlay", false)
-									.catch(() => {
-										removeLocalStorage("autoPlay");
-									})
-									.finally(() => {
-										saveIDBdata(false, "autoPlay");
-									});
-							}
-							$autoUpdate =
-								$autoUpdate ??
-								getLocalStorage("autoUpdate") ??
-								(await getIDBdata("autoUpdate"));
-							if ($autoUpdate == null) {
-								$autoUpdate = false;
-								setLocalStorage("autoUpdate", false)
-									.catch(() => {
-										removeLocalStorage("autoUpdate");
-									})
-									.finally(() => {
-										saveIDBdata(false, "autoUpdate");
-									});
-							}
-							$autoExport =
-								$autoExport ??
-								getLocalStorage("autoExport") ??
-								(await getIDBdata("autoExport"));
-							if ($autoExport == null) {
-								$autoExport = false;
-								setLocalStorage("autoExport", false)
-									.catch(() => {
-										removeLocalStorage("autoExport");
-									})
-									.finally(() => {
-										saveIDBdata(false, "autoExport");
-									});
-							}
-							$showStatus =
-								$showStatus ??
-								getLocalStorage("showStatus") ??
-								(await getIDBdata("showStatus"));
-							if ($showStatus == null) {
-								$showStatus = true;
-								setLocalStorage("showStatus", true)
-									.catch(() => {
-										removeLocalStorage("showStatus");
-									})
-									.finally(() => {
-										saveIDBdata(true, "showStatus");
-									});
-							}
-						})();
-						// Get/Show List
-						let shouldProcessRecommendation;
-						let neareastAnimeCompletionAiringAt =
-							getLocalStorage(
-								"neareastAnimeCompletionAiringAt",
-							) ??
-							(await getIDBdata(
-								"neareastAnimeCompletionAiringAt",
-							));
-						if (
-							typeof neareastAnimeCompletionAiringAt ===
-								"number" &&
-							!isNaN(neareastAnimeCompletionAiringAt)
-						) {
-							let neareastAnimeCompletionAiringDate = new Date(
-								neareastAnimeCompletionAiringAt * 1000,
-							);
-							if (
-								!isNaN(neareastAnimeCompletionAiringDate) &&
-								neareastAnimeCompletionAiringDate <= new Date()
-							) {
-								shouldProcessRecommendation = true;
-							} else {
-								window.setAnimeCompletionUpdateTimeout?.(
-									neareastAnimeCompletionAiringAt,
-								);
-							}
-						}
-						if (!shouldProcessRecommendation) {
-							shouldProcessRecommendation =
-								(await getIDBdata(
-									"shouldProcessRecommendation",
-								)) ||
-								(await getIDBdata(
-									"recommendedAnimeListIsEmpty",
-								));
-						}
-						new Promise(async (resolve) => {
-							if (shouldProcessRecommendation) {
-								processRecommendedAnimeList().finally(() => {
-									resolve(true);
-								});
-							} else {
-								resolve();
-							}
-						}).then(async (shouldLoadAnime) => {
-							shouldLoadAnime =
-								shouldLoadAnime ||
-								shouldReloadList ||
-								(await getIDBdata("shouldLoadAnime"));
-							if (shouldLoadAnime) {
-								animeManager({
-									updateRecommendedAnimeList: true,
-								})
-									.then(async () => {
-										if (shouldReloadList) {
-											animeLoader({
-												loadInit: true,
-											}).then(() => {
-												loadYoutube();
-												$dataStatus = null;
-												checkAutoFunctions(true);
-												loadAnalytics();
-											});
-										} else {
-											$dataStatus = null;
-											checkAutoFunctions(true);
-											loadAnalytics();
-										}
-										return;
-									})
-									.catch(initFailed);
-							} else {
-								$dataStatus = null;
-								checkAutoFunctions(true);
-								loadAnalytics();
-							}
-						});
-					}
-				})
-				.catch(initFailed);
-			
-			// Get Export Folder for Android
-			if ($android) {
-				$exportPathIsAvailable =
-					$exportPathIsAvailable ??
-					getLocalStorage("exportPathIsAvailable") ??
-					(await getIDBdata("exportPathIsAvailable"));
-				if ($exportPathIsAvailable == null) {
-					$exportPathIsAvailable = false;
-					setLocalStorage("exportPathIsAvailable", false)
-						.catch(() => {
-							removeLocalStorage("exportPathIsAvailable");
-						})
-						.finally(() => {
-							saveIDBdata(false, "exportPathIsAvailable");
-						});
-				}
-			}
-		})
-		.finally(() => {
-			try {
-				delete window?.kanshiInit;
-			} catch (e) {}
-		});
-
-	async function initFailed(error) {
-		if ($initData) {
 			$initData = false;
-		}
-		checkAutoFunctions(true);
-		$dataStatus = "Something went wrong";
-		if ($android) {
-			try {
-				JSBridge?.backgroundUpdateIsFinished?.(false);
-			} catch (e) {}
-			$confirmPromise?.({
-				isAlert: true,
-				title: "Something went wrong",
-				text: "App may not be working properly, you may want to restart and make sure you're running the latest version.",
-			});
-		} else {
-			$confirmPromise?.({
-				isAlert: true,
-				title: "Something went wrong",
-				text: "App may not be working properly, you may want to refresh the page, or if not clear your cookies but backup your data first.",
-			});
-		}
-		console.error(error);
-		loadYoutube();
-		loadAnalytics();
-	}
+						
+			if ($android && window[$isBackgroundUpdateKey] === true) {
+				try {
+					let sendBackgroundStatusIsRunning;
+					dataStatus.subscribe((val) => {
+						if (sendBackgroundStatusIsRunning || typeof val !== "string") return;
+						sendBackgroundStatusIsRunning = true;
+						setTimeout(() => {
+							try {
+								JSBridge.sendBackgroundStatus(val);
+							} catch (ex) { console.error(ex) }
+							sendBackgroundStatusIsRunning = false;
+						}, 750);
+					});
 
-	let animeListPagerEl, animeListPagerIsChanging;
-	let panningIdx, panningCategory;
-	let isBelowNav = false;
-	let gridTopPosition = 0,
-		gridMaxHeight;
-	let gridTopScrolls = {};
-	let changingTopPosition,
-		topPositionChangeTimeout,
-		lastScrollTop,
-		lastOffTosetWindow;
-	
-	let animeListPagerPad = $windowWidth > 660 ? 70 : 0
-	
-	windowWidth.subscribe((val) => {
-		animeListPagerPad = val > 660 ? 70 : 0
-	})
+					let shouldExport = await autoExportIsPastDate();
+					$exportPathIsAvailable = $exportPathIsAvailable ?? (await getIDBdata("exportPathIsAvailable"));
+					$autoExport = $autoExport ?? (await getIDBdata("autoExport"));
+					if (shouldExport && $exportPathIsAvailable && $autoExport) {
+						try {
+							await exportUserData()
+							shouldExport = false
+						} catch (ex) { console.error(ex) }
+					}
 
-	let lastWindowHeight = $windowHeight;
-	let maxWindowHeight = {}
-	let isMaxWindowHeight
+					let dataIsUpdated;
+					try {
+						JSBridge.setShouldProcessRecommendation(true);
+					} catch (ex) { console.error (ex) }
+
+					try {
+						await requestUserEntries()
+						dataIsUpdated = window.KanshiBackgroundShouldProcessRecommendation;
+					} catch (ex) { console.error (ex) }
+
+					try {
+						await requestMediaEntries()
+						dataIsUpdated = dataIsUpdated || window.KanshiBackgroundShouldProcessRecommendation;
+					} catch (ex) { console.error(ex) }
+
+					let recommendationListIsProcessed
+					if (dataIsUpdated) {
+						try {
+							await processRecommendedMediaList()
+							try {
+								JSBridge.setShouldProcessRecommendation(false)
+							} catch (ex) { console.error(ex) }
+							recommendationListIsProcessed = true
+						} catch (ex) { console.error(ex) }
+					} else {
+						try {
+							JSBridge.setShouldProcessRecommendation(false)
+						} catch (ex) { console.error(ex) }
+					}
+					
+					try {
+						if (recommendationListIsProcessed) {
+							try {
+								await mediaManager({ updateRecommendedMediaList: true })
+								try {
+									JSBridge.setShouldLoadMedia(false);
+								} catch (ex) { console.error(ex) }
+							} catch (ex) { console.error(ex) }
+						} else {
+							try {
+								JSBridge.setShouldLoadMedia(false);
+							} catch (ex) { console.error(ex) }
+						}
+					} catch (ex) { console.error(ex) }
+
+					shouldExport = shouldExport || dataIsUpdated;
+					if (shouldExport && $exportPathIsAvailable && $autoExport) {
+						try {
+							await exportUserData()
+							shouldExport = false
+						} catch (ex) { console.error(ex) }
+					}
+					JSBridge.backgroundUpdateIsFinished(true);
+				} catch (ex) {
+					try {
+						JSBridge.backgroundUpdateIsFinished(false);
+					} catch (ex) { console.error(ex) }
+					console.error(ex)
+				}
+			} else {
+				// Get/Show List
+				let shouldProcessRecommendation;
+				const neareastMediaReleaseAiringAt = getLocalStorage("neareastMediaReleaseAiringAt") ?? (await getIDBdata("neareastMediaReleaseAiringAt"));
+				if (
+					typeof neareastMediaReleaseAiringAt === "number" &&
+					!isNaN(neareastMediaReleaseAiringAt)
+				) {
+					const neareastMediaReleaseAiringDate = new Date(neareastMediaReleaseAiringAt * 1000);
+					if (
+						!isNaN(neareastMediaReleaseAiringDate) &&
+						neareastMediaReleaseAiringDate <= new Date()
+					) {
+						shouldProcessRecommendation = true;
+					} else {
+						window.setMediaReleaseUpdateTimeout?.(neareastMediaReleaseAiringAt);
+					}
+				}
+				if (!shouldProcessRecommendation) {
+					shouldProcessRecommendation = (await getIDBdata("shouldProcessRecommendation")) || (await getIDBdata("recommendedMediaListIsEmpty"));
+				}
+
+				let shouldLoadMedia
+				if (shouldProcessRecommendation) {
+					await processRecommendedMediaList()
+					shouldLoadMedia = true
+				}
+
+				shouldLoadMedia = shouldLoadMedia || shouldReloadList || (await getIDBdata("shouldLoadMedia"));
+				if (shouldLoadMedia) {
+					await mediaManager({ updateRecommendedMediaList: true })
+					if (shouldReloadList) {
+						await mediaLoader({ 
+							loadAll: true, 
+							selectedCategory: ($selectedCategory ?? getLocalStorage("selectedCategory") ?? await getIDBdata("selectedCategory"))
+						})
+						loadYoutube();
+
+						$dataStatus = null;
+						checkAutoFunctions(true);
+						loadAnalytics();
+					} else {
+						$dataStatus = null;
+						checkAutoFunctions(true);
+						loadAnalytics();
+					}
+				} else {
+					$dataStatus = null;
+					checkAutoFunctions(true);
+					loadAnalytics();
+				}
+				getExtraInfo();
+			}
+		} catch (ex) {
+			if ($android) {
+				try {
+					JSBridge.backgroundUpdateIsFinished(false);
+				} catch (ex) { console.error(ex) }
+				$confirmPromise?.({
+					isAlert: true,
+					title: "Something went wrong",
+					text: "App may not be working properly, you may want to restart and make sure you're running the latest version.",
+				});
+			} else {
+				$confirmPromise?.({
+					isAlert: true,
+					title: "Something went wrong",
+					text: "App may not be working properly, you may want to refresh the page, or if not clear your cookies but backup your data first.",
+				});
+			}
+			if ($initData) {
+				$initData = false;
+			}
+			
+			loadYoutube();
+
+			$dataStatus = "Something went wrong";
+			checkAutoFunctions(true);
+			loadAnalytics();
+			console.error(ex);
+		}
+
+		function loadYoutube() {
+			// For Youtube API
+			window.onYouTubeIframeAPIReady = () => {
+				window.playMostVisibleTrailer?.();
+			};
+			const YTscript = document.createElement("script");
+			YTscript.onload = () => {
+				window.onYouTubeIframeAPIReady();
+			};
+			YTscript.src = "https://www.youtube.com/iframe_api?v=16";
+			YTscript.id = "www-widgetapi-script";
+			YTscript.defer = true;
+			document.head.appendChild(YTscript);
+		}
+
+		function loadAnalytics() {
+			let isVercel = window.location?.origin === "https://kanshi.vercel.app";
+			// Google Analytics
+			let GAscript = document.createElement("script");
+			GAscript.onload = () => {
+				window.dataLayer = window.dataLayer || [];
+				function gtag() {
+					dataLayer.push(arguments);
+				}
+				gtag("js", new Date());
+				if (isVercel) {
+					gtag("config", "G-F5E8XNQS20");
+				} else {
+					gtag("config", "G-PPMY92TJCE");
+				}
+			};
+			if (isVercel) {
+				inject?.(); // Vercel Analytics
+				GAscript.src = "https://www.googletagmanager.com/gtag/js?id=G-F5E8XNQS20";
+			} else {
+				GAscript.src = "https://www.googletagmanager.com/gtag/js?id=G-PPMY92TJCE";
+			}
+			GAscript.defer = true;
+			document.head.appendChild(GAscript);
+		}
+	})();
+	
+	let mediaListPagerEl, mediaListPagerPad
+		
+	// WINDOW SIZE EVENT LISTENERS
+	const maxWindowHeight = {}
+	let lastWindowHeight = $windowHeight,
+		isMaxWindowHeight
+	window.addEventListener("resize", () => {
+		$windowHeight = Math.max(
+			window.visualViewport?.height || 0,
+			window.innerHeight || 0,
+		);
+		$windowWidth = Math.max(
+			window.document?.documentElement?.getBoundingClientRect?.()?.width || 0,
+			window.visualViewport?.width || 0,
+			window.innerWidth || 0,
+		);
+
+		// To Show the Selected Category in center
+		window.scrollToSelectedCategory?.();
+
+		// Set True Window Size if its not in full screen
+		if (
+			!(document.fullScreen ||
+			document.mozFullScreen ||
+			document.webkitIsFullScreen ||
+			document.msFullscreenElement)
+		) {
+			$trueWindowHeight = $windowHeight
+			// $trueWindowWidth = $windowWidth
+		}
+	});	
 	windowHeight.subscribe((val) => {
-		const orientation = window?.screen?.orientation?.type
-		const currentMaxWindowHeight = maxWindowHeight[orientation]
+		// Virtual Keyboard Listener
+		const currentMaxWindowHeight = maxWindowHeight[window.screen?.orientation?.type]
 		if (currentMaxWindowHeight > 0) {
-			let possibleVirtualKeyboardChange = Math.abs(lastWindowHeight - val) > Math.max(100, currentMaxWindowHeight * 0.15);
-			if (possibleVirtualKeyboardChange) {
-				let isPossiblyHid = val > lastWindowHeight;
-				window?.showCategoriesNav?.(isPossiblyHid, !isPossiblyHid);
-				let activeElement = document?.activeElement;
+			// Possibly a virtual keyboard change
+			if (Math.abs(lastWindowHeight - val) > Math.max(100, currentMaxWindowHeight * 0.15)) {
+				const isPossiblyHid = val > lastWindowHeight;
+				window.showCategoriesNav(isPossiblyHid, !isPossiblyHid);
+				const activeElement = document.activeElement;
+				const activeElementTagName = activeElement?.tagName
 				if (
 					isPossiblyHid &&
-					["INPUT", "TEXTAREA"].includes(activeElement?.tagName)
+					activeElement &&
+					(activeElementTagName === "INPUT" || activeElementTagName === "TEXTAREA")
 				) {
-					activeElement?.blur?.();
-					if (activeElement?.id === "usernameInput") {
-						window?.onfocusUsernameInput?.();
+					activeElement.blur?.();
+					if (activeElement.id === "usernameInput") {
+						window.onfocusUsernameInput();
 					}
 				}
 			}
 		}
-		setMinHeight();
 		lastWindowHeight = $windowHeight
-	})
-	
+	})	
 	trueWindowHeight.subscribe((val) => {
-		if (!val) return
-		const orientation = window?.screen?.orientation?.type
+		if (val == null) return
+		const orientation = window.screen?.orientation?.type
 		if (orientation) {
 			const currentMaxWindowHeight = maxWindowHeight[orientation]
 			isMaxWindowHeight = val >= (currentMaxWindowHeight || 0)
@@ -649,70 +445,121 @@
 				maxWindowHeight[orientation] = val
 			}
 		}
-	})	
-		
+	})
+	windowWidth.subscribe((val) => {
+		mediaListPagerPad = val > 660 ? 70 : 0
+	})
 
-	$dataStatus = "Retrieving Some Data";
-	let pleaseWaitStatusInterval = setInterval(() => {
-		if (!$dataStatus) {
-			$dataStatus = "Please Wait";
+	// DOCUMENT SCROLL
+	let panningIdx, panningCategory,
+		changingTopPosition,
+		topPositionChangeTimeout,
+		lastScrollTop,
+		lastOffTosetWindow,
+		gridTopScrolls = {},
+		isBelowNav = false,
+		gridTopPosition = 0,
+		gridMaxHeight;
+	window.addEventListener("scroll", () => {
+		$documentScrollTop = window.document?.documentElement?.scrollTop || 0
+	});
+	documentScrollTop.subscribe((scrollTop) => {
+		if (!$gridFullView && mediaListPagerEl) {
+			const element = mediaListPagerEl.querySelector("main.viewed .image-grid");
+			if (element) {
+				const offsetToWindow = element.getBoundingClientRect().top;
+				if (
+					scrollTop !== lastScrollTop &&
+					(offsetToWindow <= 1 || lastOffTosetWindow <= 1)
+				) {
+					topPositionChangeTimeout?.();
+					changingTopPosition = true;
+				}
+				lastScrollTop = scrollTop;
+				lastOffTosetWindow = offsetToWindow;
+				const category = element?.dataset?.category;
+				if (
+					category &&
+					panningCategory &&
+					panningCategory !== category
+				) {
+					$selectedCategory = panningCategory;
+				}
+				if (offsetToWindow > 1) {
+					gridTopPosition = 0;
+					Array.from(mediaListPagerEl.children).forEach((el) => {
+						el.scrollTop = 0;
+					});
+					for (const category in gridTopScrolls) {
+						gridTopScrolls[category] = null;
+					}
+				} else {
+					gridTopPosition = Math.abs(offsetToWindow);
+					const category = element.dataset.category;
+					const gridOffSetDocument =
+						$documentScrollTop + element.getBoundingClientRect().top;
+					gridTopScrolls[category] = $documentScrollTop - gridOffSetDocument;
+				}
+				gridMaxHeight = element?.clientHeight ?? gridMaxHeight;
+				topPositionChangeTimeout = requestImmediate(async () => {
+					await tick();
+					changingTopPosition = false;
+				}, 30);
+			}
 		}
-	}, 200);
 
-	// function getAnilistAccessTokenFromURL() {
-	// 	let urlParams = new URLSearchParams(window.location.hash.slice(1));
-	// 	return urlParams.get("access_token");
-	// }
+		const shouldUpdate =
+			$selectedMediaGridEl?.getBoundingClientRect?.()?.top > 0 &&
+			!$popupVisible;
+		if ($listUpdateAvailable && shouldUpdate) {
+			shouldUpdateList.update(e => !e)
+		}
+		isBelowNav = scrollTop > 54;
+		if (
+			$selectedMediaGridEl?.getBoundingClientRect?.()?.top < 0 &&
+			!appShouldExit
+		) {
+			window?.addHistory?.();
+		}
+	})
 
+	// AUTO UPDATE/EXPORT FUNCTIONS
 	async function checkAutoFunctions(
 		initCheck = false,
 		visibilityChange = false,
 	) {
-		if ($android && window?.[$isBackgroundUpdateKey] === true) return;
-		if ($initData) {
-			try {
-				if (!window?.KanshiCheckAutoFunctions?.promise) {
-					window.KanshiCheckAutoFunctions = {}
-					window.KanshiCheckAutoFunctions.promise = new Promise((resolve) => {
-						window.KanshiCheckAutoFunctions.resolve = resolve
-					})
-				}
-				window.KanshiCheckAutoFunctions?.promise?.then?.(() => {
-					checkAutoFunctions(initCheck, visibilityChange)
-				})
-			} catch {}
-		} else if (initCheck) {
+		if ($android && window[$isBackgroundUpdateKey] === true) return;
+
+		if (initCheck) {
 			try {
 				await requestUserEntries();
-				await requestAnimeEntries();
+				await requestMediaEntries();
 				checkAutoExportOnLoad();
-			} catch (e) {
-				console.error(e);
+			} catch (ex) {
 				checkAutoExportOnLoad();
+				console.error(ex);
 			}
 		} else if ($autoUpdate && (await autoUpdateIsPastDate())) {
-			if (!$userRequestIsRunning) {
-				requestUserEntries()
-					.then(() => {
-						requestAnimeEntries().finally(() => {
-							checkAutoExportOnLoad(visibilityChange);
-						});
-					})
-					.catch((error) => {
-						checkAutoExportOnLoad(visibilityChange);
-						console.error(error);
-					});
-			} else {
-				requestAnimeEntries().finally(() => {
-					checkAutoExportOnLoad(visibilityChange);
-				});
-			}
-		} else if ($autoExport && (await autoExportIsPastDate())) {
-			exportUserData({ visibilityChange }).finally(() => {
-				if (visibilityChange && !$userRequestIsRunning) {
-					requestUserEntries({ visibilityChange: true });
+			try {
+				if (!$userRequestIsRunning) {
+					await requestUserEntries()
+					await requestMediaEntries()
+				} else {
+					await requestMediaEntries()
 				}
-			});
+			} catch (ex) {
+				console.error(ex)
+			}
+			checkAutoExportOnLoad(visibilityChange);
+		} else if ($autoExport && (await autoExportIsPastDate())) {
+			try {
+				await exportUserData({ visibilityChange })
+			} catch (ex) {
+				console.error(ex)
+			}
+			if (visibilityChange && !$userRequestIsRunning) {
+				requestUserEntries({ visibilityChange: true });
+			}
 		} else if (visibilityChange && !$userRequestIsRunning) {
 			requestUserEntries({ visibilityChange: true });
 		}
@@ -725,149 +572,118 @@
 			}
 		}
 	}
-
-	let addedBackgroundStatusUpdate = () => {
-		addedBackgroundStatusUpdate = undefined;
-		if (!$android) return;
-		if (window?.[$isBackgroundUpdateKey] !== true) return;
-		let sendBackgroundStatusIsRunning;
-		dataStatus.subscribe((val) => {
-			if (sendBackgroundStatusIsRunning) return;
-			if (!val) return;
-			if (typeof val !== "string") return;
-			sendBackgroundStatusIsRunning = true;
-			setTimeout(() => {
-				sendBackgroundStatusIsRunning = false;
-				try {
-					if (typeof val === "string") {
-						JSBridge?.sendBackgroundStatus?.(val);
-					}
-				} catch {}
-			}, 750); // 1s with pad
-		});
-		return true;
+	document.addEventListener("visibilitychange", () => {
+		if ($initData || $android || document.visibilityState !== "visible") return;
+		checkAutoFunctions(false, true);
+	});
+	// Android Callable
+	window.checkEntries = () => {
+		if ($initData) return;
+		checkAutoFunctions(false, true);
 	};
+
+	// REACTIVE FUNCTIONS
 	initData.subscribe(async (val) => {
+		// After the initial lLoad has Finished
 		if (val === false) {
-			clearInterval(pleaseWaitStatusInterval);
-
-			if (!addedBackgroundStatusUpdate?.()) {
-				getExtraInfo();
-			}
-
-			window?.KanshiCheckAutoFunctions?.resolve?.()
-
 			// Check App ID and Version Updates for Android
-			// After Load has Finished
-			if ($android && navigator.onLine) {
-				$appID = await getWebVersion();
+			if ($android && navigator?.onLine) {
 				try {
-					if (typeof $appID === "number" && !isNaN($appID)) {
-						JSBridge?.checkAppID?.(Math.floor($appID));
+					$appID = await getWebVersion();
+					if (window[$isBackgroundUpdateKey] !== true && typeof $appID === "number" && !isNaN($appID) && isFinite($appID)) {
+						JSBridge.checkAppID(Math.floor($appID));
 					}
-				} catch (e) {}
+				} catch (ex) {
+					console.error(ex)
+				}
 			}
 		}
 	});
+	shouldUpdateList.subscribe((val) => {
+		if (typeof val !== "boolean" || $initData) return;
+		if ($android && window?.[$isBackgroundUpdateKey] === true) return;
 
-	// Reactive Functions
-	importantLoad.subscribe(async (val) => {
-		if (typeof val !== "boolean" || $initData) return;
-		if ($android && window?.[$isBackgroundUpdateKey] === true) return;
 		$listUpdateAvailable = false;
-		animeManager({ updateRecommendedAnimeList: true });
+		mediaManager({ updateRecommendedMediaList: true });
 	});
-	importantUpdate.subscribe(async (val) => {
+	shouldUpdateRecommendationList.subscribe(async (val) => {
 		if (typeof val !== "boolean" || $initData) return;
 		if ($android && window?.[$isBackgroundUpdateKey] === true) return;
+
 		$listUpdateAvailable = false;
-		processRecommendedAnimeList()
-			.then(async () => {
-				importantLoad.update((e) => !e);
-			})
-			.catch((error) => {
-				importantLoad.update((e) => !e);
-				console.error(error);
-			});
+		try {
+			await processRecommendedMediaList()
+		} catch (ex) {
+			console.error(ex)
+		}
+		shouldUpdateList.update((e) => !e);
 	});
 	updateRecommendationList.subscribe(async (val) => {
 		if (typeof val !== "boolean" || $initData) return;
 		if ($android && window?.[$isBackgroundUpdateKey] === true) return;
-		processRecommendedAnimeList()
-			.then(async () => {
-				loadAnime.update((e) => !e);
-			})
-			.catch((error) => {
-				loadAnime.update((e) => !e);
-				console.error(error);
-			});
+
+		try {
+			await processRecommendedMediaList()
+		} catch (ex) {
+			console.error(ex)
+		}
+		updateList.update((e) => !e);
 	});
-
-	async function runLoadAnime() {
-		return new Promise(async (resolve) => {
-			if (
-				($popupVisible ||
-					($gridFullView && $selectedAnimeGridEl
-						? $selectedAnimeGridEl.scrollLeft > 500
-						: $selectedAnimeGridEl?.getBoundingClientRect?.()?.top <
-							0)) &&
-				$loadedAnimeLists?.[$selectedCategory]?.animeList?.length
-			) {
-				$listUpdateAvailable = true;
-				resolve();
-			} else {
-				animeManager({ updateRecommendedAnimeList: true });
-			}
-		});
+	window.loadlang = () => {
+		updateList.update((e) => !e);
 	}
-
-	loadAnime.subscribe(async (val) => {
+	window.processlang = () => {
+		updateRecommendationList.update((e) => !e);
+	}
+	updateList.subscribe(async (val) => {
 		if (typeof val !== "boolean" || $initData) return;
 		if ($android && window?.[$isBackgroundUpdateKey] === true) return;
-		runLoadAnime();
+		
+		if (
+			($popupVisible ||
+				($gridFullView && $selectedMediaGridEl
+					? $selectedMediaGridEl.scrollLeft > 500
+					: $selectedMediaGridEl?.getBoundingClientRect?.()?.top <
+						0)) &&
+			$loadedMediaLists?.[$selectedCategory]?.mediaList?.length
+		) {
+			$listUpdateAvailable = true;
+		} else {
+			mediaManager({ updateRecommendedMediaList: true });
+		}
 	});
-
-	window.shouldRefreshAnimeList = async (
-		shouldProcessRecommendation,
-		shouldLoadAnime,
-	) => {
-		if ($initData) return;
+	runUpdate.subscribe(async (val) => {
+		if (typeof val !== "boolean" || $initData || !navigator.onLine) return;
 		if ($android && window?.[$isBackgroundUpdateKey] === true) return;
-		$showLoadingAnime = true;
-		new Promise(async (resolve) => {
-			if (shouldProcessRecommendation) {
-				processRecommendedAnimeList()
-					.then(() => resolve(true))
-					.catch(() => resolve());
-			} else {
-				resolve(false);
+		
+		if (!$userRequestIsRunning) {
+			try {
+				await requestUserEntries()
+				requestMediaEntries()
+			} catch (ex) {
+				console.error(ex)
 			}
-		}).then((thisShouldLoadAnime) => {
-			let isAlreadyLoaded = !shouldLoadAnime && !thisShouldLoadAnime;
-			if (isAlreadyLoaded) {
-				animeLoader({
-					updateRecommendedAnimeList: true,
-					updateUserList: true,
-				}).finally(() => {
-					$showLoadingAnime = false;
-					window.checkEntries?.();
-				});
-			} else {
-				animeManager({ updateRecommendedAnimeList: true }).finally(
-					() => {
-						window.checkEntries?.();
-					},
-				);
-			}
-		});
+		} else {
+			requestMediaEntries();
+		}
+	});
+	runExport.subscribe((val) => {
+		if (typeof val !== "boolean" || $initData) return;
+		if ($android && window?.[$isBackgroundUpdateKey] === true) return;
+
+		exportUserData();
+	});
+	// Android Callable
+	window.runExport = () => {
+		runExport.update(e => !e)
 	};
 
-	let hourINMS = 60 * 60 * 1000;
+	// CONFIG CHANGES
 	autoUpdate.subscribe(async (val) => {
 		if ($android && window?.[$isBackgroundUpdateKey] === true) return;
 		if (val === true) {
+			const hourINMS = 60 * 60 * 1000;
 			saveIDBdata(true, "autoUpdate");
-			// Check Run First
 			if (await autoUpdateIsPastDate()) {
 				checkAutoFunctions();
 				if ($autoUpdateInterval) clearInterval($autoUpdateInterval);
@@ -877,23 +693,17 @@
 					}
 				}, hourINMS);
 			} else {
-				let timeLeft =
-					hourINMS - (new Date().getTime() - $runnedAutoUpdateAt) ||
-					0;
-				setTimeout(
-					() => {
-						if ($autoUpdate === false) return;
-						checkAutoFunctions();
-						if ($autoUpdateInterval)
-							clearInterval($autoUpdateInterval);
-						$autoUpdateInterval = setInterval(() => {
-							if ($autoUpdate) {
-								checkAutoFunctions();
-							}
-						}, hourINMS);
-					},
-					Math.min(timeLeft, 2000000000),
-				);
+				const timeLeft = hourINMS - (new Date().getTime() - $runnedAutoUpdateAt) || 0;
+				setTimeout(() => {
+					if ($autoUpdate === false) return;
+					checkAutoFunctions();
+					if ($autoUpdateInterval) clearInterval($autoUpdateInterval);
+					$autoUpdateInterval = setInterval(() => {
+						if ($autoUpdate) {
+							checkAutoFunctions();
+						}
+					}, hourINMS);
+				}, Math.min(timeLeft, 2000000000));
 			}
 		} else if (val === false) {
 			if ($autoUpdateInterval) clearInterval($autoUpdateInterval);
@@ -901,41 +711,10 @@
 			saveIDBdata(false, "autoUpdate");
 		}
 	});
-	async function autoUpdateIsPastDate() {
-		return new Promise(async (resolve) => {
-			let isPastDate = false;
-			$runnedAutoUpdateAt = await getIDBdata("runnedAutoUpdateAt");
-			if ($runnedAutoUpdateAt == null) isPastDate = true;
-			else if (
-				typeof $runnedAutoUpdateAt === "number" &&
-				!isNaN($runnedAutoUpdateAt)
-			) {
-				if (new Date().getTime() - $runnedAutoUpdateAt >= hourINMS) {
-					isPastDate = true;
-				}
-			}
-			return resolve(isPastDate);
-		});
-	}
-	runUpdate.subscribe((val) => {
-		if (typeof val !== "boolean" || $initData || !navigator.onLine) return;
-		if ($android && window?.[$isBackgroundUpdateKey] === true) return;
-		if (!$userRequestIsRunning) {
-			requestUserEntries()
-				.then(() => {
-					requestAnimeEntries();
-				})
-				.catch((error) => {
-					$dataStatus = "Something went wrong";
-					console.error(error);
-				});
-		} else {
-			requestAnimeEntries();
-		}
-	});
 	autoExport.subscribe(async (val) => {
 		if ($android && window?.[$isBackgroundUpdateKey] === true) return;
 		if (val === true) {
+			const hourINMS = 60 * 60 * 1000;
 			saveIDBdata(true, "autoExport");
 			if (await autoExportIsPastDate()) {
 				checkAutoFunctions();
@@ -946,23 +725,18 @@
 					}
 				}, hourINMS);
 			} else {
-				let timeLeft =
-					hourINMS - (new Date().getTime() - $runnedAutoExportAt) ||
-					0;
-				setTimeout(
-					() => {
-						if ($autoExport === false) return;
-						checkAutoFunctions();
-						if ($autoExportInterval)
-							clearInterval($autoExportInterval);
-						$autoExportInterval = setInterval(() => {
-							if ($autoExport) {
-								checkAutoFunctions();
-							}
-						}, hourINMS);
-					},
-					Math.min(timeLeft, 2000000000),
-				);
+				const timeLeft = hourINMS - (new Date().getTime() - $runnedAutoExportAt) || 0;
+				setTimeout(() => {
+					if ($autoExport === false) return;
+					checkAutoFunctions();
+					if ($autoExportInterval)
+						clearInterval($autoExportInterval);
+					$autoExportInterval = setInterval(() => {
+						if ($autoExport) {
+							checkAutoFunctions();
+						}
+					}, hourINMS);
+				}, Math.min(timeLeft, 2000000000));
 			}
 		} else if (val === false) {
 			if ($autoExportInterval) clearInterval($autoExportInterval);
@@ -970,205 +744,107 @@
 			saveIDBdata(false, "autoExport");
 		}
 	});
-	async function autoExportIsPastDate() {
-		return new Promise(async (resolve) => {
-			// Check Run First
-			let isPastDate = false;
-			$runnedAutoExportAt = await getIDBdata("runnedAutoExportAt");
-			if ($runnedAutoExportAt == null) isPastDate = true;
-			else if (
-				typeof $runnedAutoExportAt === "number" &&
-				!isNaN($runnedAutoExportAt)
-			) {
-				if (new Date().getTime() - $runnedAutoExportAt >= hourINMS) {
-					isPastDate = true;
-				}
+	async function autoUpdateIsPastDate() {
+		let isPastDate = false;
+		$runnedAutoUpdateAt = await getIDBdata("runnedAutoUpdateAt");
+		if ($runnedAutoUpdateAt == null) {
+			isPastDate = true;
+		} else if (
+			typeof $runnedAutoUpdateAt === "number" &&
+			!isNaN($runnedAutoUpdateAt)
+		) {
+			const hourINMS = 60 * 60 * 1000;
+			if (new Date().getTime() - $runnedAutoUpdateAt >= hourINMS) {
+				isPastDate = true;
 			}
-			return resolve(isPastDate);
-		});
+		}
+		return isPastDate;
 	}
-	runExport.subscribe((val) => {
-		if (typeof val !== "boolean" || $initData) return;
-		if ($android && window?.[$isBackgroundUpdateKey] === true) return;
-		exportUserData();
-	});
-	window.runExport = () => {
-		$runExport = !$runExport;
-	};
-	let isScrolling, scrollingTimeout
-	runIsScrolling.subscribe((val) => {
-		if (typeof val !== "boolean") return;
-		isScrolling = true;
-		clearTimeout(scrollingTimeout);
-		scrollingTimeout = setTimeout(() => {
-			isScrolling = false;
-		}, 200);
-	});
-
-	// Global Function For Android/Browser
-	document.addEventListener("visibilitychange", async () => {
-		if ($initData || $android || document.visibilityState !== "visible")
-			return;
-		if ($android && window?.[$isBackgroundUpdateKey] === true) return;
-		if ($autoUpdate == null) {
-			$autoUpdate =
-				$autoUpdate ??
-				getLocalStorage("autoUpdate") ??
-				(await getIDBdata("autoUpdate"));
-			if ($autoUpdate == null) {
-				$autoUpdate = false;
-				setLocalStorage("autoUpdate", false)
-					.catch(() => {
-						removeLocalStorage("autoUpdate");
-					})
-					.finally(() => {
-						saveIDBdata(false, "autoUpdate");
-					});
+	async function autoExportIsPastDate() {
+		// Check Run First
+		let isPastDate = false;
+		$runnedAutoExportAt = await getIDBdata("runnedAutoExportAt");
+		if ($runnedAutoExportAt == null) {
+			isPastDate = true;
+		} else if (
+			typeof $runnedAutoExportAt === "number" &&
+			!isNaN($runnedAutoExportAt)
+		) {
+			const hourINMS = 60 * 60 * 1000;
+			if (new Date().getTime() - $runnedAutoExportAt >= hourINMS) {
+				isPastDate = true;
 			}
 		}
-		if ($autoExport == null) {
-			$autoExport =
-				$autoExport ??
-				getLocalStorage("autoExport") ??
-				(await getIDBdata("autoExport"));
-			if ($autoExport == null) {
-				$autoExport = false;
-				setLocalStorage("autoExport", false)
-					.catch(() => {
-						removeLocalStorage("autoExport");
-					})
-					.finally(() => {
-						saveIDBdata(false, "autoExport");
-					});
-			}
-		}
-		checkAutoFunctions(false, true);
-	});
+		return isPastDate;
+	}
 
-	if (window?.history) {
+	// SPA History
+	let shouldGoBackInHistory = false, 
+		appShouldExit = false, 
+		exitScrollTimeout;
+	if ("history" in window) {
 		window.history.scrollRestoration = "manual"; // Disable scrolling to top when navigating back
 	}
-	let windowWheel = () => {
-		$hasWheel = true;
-		window.removeEventListener?.("wheel", windowWheel, { passive: true });
-	};
-	window.addEventListener("wheel", windowWheel, { passive: true });
-	window.checkEntries = async () => {
-		if ($initData) return;
-		if ($android && window[$isBackgroundUpdateKey] === true) return;
-		if ($autoUpdate == null) {
-			$autoUpdate =
-				$autoUpdate ??
-				getLocalStorage("autoUpdate") ??
-				(await getIDBdata("autoUpdate"));
-			if ($autoUpdate == null) {
-				$autoUpdate = false;
-				setLocalStorage("autoUpdate", false)
-					.catch(() => {
-						removeLocalStorage("autoUpdate");
-					})
-					.finally(() => {
-						saveIDBdata(false, "autoUpdate");
-					});
+	window.addHistory = () => {
+		appShouldExit = shouldGoBackInHistory = false;
+		if ($android) {
+			if (window[$isBackgroundUpdateKey] !== true) {
+				try {
+					JSBridge.setShouldGoBack(false);
+				} catch (ex) {
+					console.error(ex)
+				}
 			}
+		} else if (window.history?.state !== "visited") {
+			// Only Add 1 state
+			window.history?.pushState?.("visited", ""); // Push Popped State
 		}
-		if ($autoExport == null) {
-			$autoExport =
-				$autoExport ??
-				getLocalStorage("autoExport") ??
-				(await getIDBdata("autoExport"));
-			if ($autoExport == null) {
-				$autoExport = false;
-				setLocalStorage("autoExport", false)
-					.catch(() => {
-						removeLocalStorage("autoExport");
-					})
-					.finally(() => {
-						saveIDBdata(false, "autoExport");
-					});
-			}
-		}
-		checkAutoFunctions(false, true);
 	};
-	window?.addEventListener?.("popstate", () => {
-		window.backPressed?.();
-	});
-
-	let shouldGoBack = false, willExit = false, exitScrollTimeout;
 	window.backPressed = () => {
-		if (shouldGoBack && !$android) {
-			window.history?.go?.(-1); // Only in Browser
+		if (shouldGoBackInHistory && !$android) {
+			// In Browser
+			window.history?.go?.(-1); 
 		} else {
 			if (!$android) {
 				window.history?.pushState?.("visited", ""); // Push Popped State
 			}
-			let activeElement = document?.activeElement;
+			const activeElement = document?.activeElement;
+			const activeElementTagName = activeElement?.tagName
 			if ($confirmIsVisible) {
 				handleConfirmationCancelled();
 				$confirmIsVisible = false;
-				willExit = false;
-				return;
+				appShouldExit = false;
 			} else if (
-				["INPUT", "TEXTAREA"].includes(activeElement?.tagName) &&
-				Math.max(
-					document?.documentElement?.getBoundingClientRect?.()
-						?.width || 0,
-					window.visualViewport?.width || 0,
-					window.innerWidth || 0,
-				) <= 750
+				(activeElementTagName === "INPUT" || activeElementTagName === "TEXTAREA") &&
+				$windowWidth <= 750
 			) {
-				activeElement?.blur?.();
-				if (activeElement?.id === "usernameInput") {
+				activeElement.blur?.();
+				if (activeElement.id === "usernameInput") {
 					window.onfocusUsernameInput?.();
 				}
-				willExit = false;
-				return;
+				appShouldExit = false;
 			} else if ($menuVisible) {
 				$menuVisible = false;
-				willExit = false;
-				return;
+				appShouldExit = false;
 			} else if (window.checkOpenFullScreenItem?.()) {
 				window.closeFullScreenItem?.();
-				willExit = false;
-				return;
+				appShouldExit = false;
 			} else if ($popupVisible) {
 				$popupVisible = false;
-				willExit = false;
-				return;
-			} else if ($animeOptionVisible) {
-				$animeOptionVisible = false;
-				willExit = false;
-				return;
+				appShouldExit = false;
+			} else if ($mediaOptionVisible) {
+				$mediaOptionVisible = false;
+				appShouldExit = false;
 			} else if ($dropdownIsVisible) {
 				$dropdownIsVisible = false;
-				willExit = false;
-				return;
-			} else if (!willExit) {
-				willExit = true;
-				if ($gridFullView && $selectedAnimeGridEl) {
-					$selectedAnimeGridEl.style.overflow = "hidden";
-					$selectedAnimeGridEl.style.overflow = "";
-					$selectedAnimeGridEl.scroll({
-						left: 0,
-						behavior: "smooth",
-					});
-				} else {
-					window.showCategoriesNav?.(true);
-					if ($android || !matchMedia("(hover:hover)").matches) {
-						const documentEl = document.documentElement
-						documentEl.style.overflow = "hidden";
-						documentEl.style.overflow = "";
-					}
-					window.scrollTo?.({ top: -9999, behavior: "smooth" });
-				}
-				return;
+				appShouldExit = false;
 			} else {
-				if ($gridFullView && $selectedAnimeGridEl) {
-					$selectedAnimeGridEl.style.overflow = "hidden";
-					$selectedAnimeGridEl.scrollLeft = 0;
+				if ($gridFullView && $selectedMediaGridEl) {
+					$selectedMediaGridEl.style.overflow = "hidden";
+					$selectedMediaGridEl.scrollLeft = 0;
 					exitScrollTimeout?.();
 					exitScrollTimeout = requestImmediate(() => {
-						$selectedAnimeGridEl.style.overflow = "";
+						$selectedMediaGridEl.style.overflow = "";
 					}, 100);
 				} else {
 					window.showCategoriesNav?.(true);
@@ -1186,212 +862,41 @@
 						}, 100);
 					}
 				}
-				try {
-					JSBridge?.willExit?.();
-				} catch (e) {}
-				window.setShouldGoBack?.(true);
-				willExit = false;
+				if (appShouldExit) {
+					appShouldExit = false
+					try {
+						JSBridge.willExit();
+						JSBridge.setShouldGoBack(true);
+					} catch (ex) {
+						console.error(ex)
+					}
+				} else {
+					appShouldExit = true
+				}
 			}
 		}
 	};
-
-	function setMinHeight(val = $gridFullView) {
-		if (val) {
-			document.documentElement.style.minHeight = "";
-		} else {
-			document.documentElement.style.minHeight = screen.height + 65 + "px";
-		}
-	}
-
+	window.addEventListener("popstate", () => window.backPressed());
 	gridFullView.subscribe(async (val) => {
-		setMinHeight(val);
 		await tick();
 		if (val) {
-			if ($selectedAnimeGridEl?.scrollLeft > 500) {
-				window.setShouldGoBack?.(false);
+			if ($selectedMediaGridEl?.scrollLeft > 500) {
+				window.addHistory?.();
 			}
 		} else {
-			if ($selectedAnimeGridEl?.getBoundingClientRect?.()?.top < 0) {
-				window.setShouldGoBack?.(false);
+			if ($selectedMediaGridEl?.getBoundingClientRect?.()?.top < 0) {
+				window.addHistory?.();
 			}
 		}
 	});
-
-	window.addEventListener("scroll", () => {
-		$documentScrollTop = window?.document?.documentElement?.scrollTop || 0
-	});
-
-	window.setShouldGoBack = (_shouldGoBack) => {
-		if (!_shouldGoBack) willExit = false;
-		if ($android) {
-			try {
-				if (typeof _shouldGoBack === "boolean") {
-					JSBridge?.setShouldGoBack?.(_shouldGoBack);
-				}
-			} catch {}
-		} else {
-			if (window.history?.state !== "visited") {
-				// Only Add 1 state
-				window.history?.pushState?.("visited", ""); // Push Popped State
-			}
-			shouldGoBack = _shouldGoBack;
+	window.mediaGridScrolled = (scrollLeft) => {
+		if (scrollLeft > 500 && !appShouldExit) {
+			window.addHistory?.();
 		}
 	};
 
-	window.copyToClipBoard = (text) => {
-		if (!text) return;
-		if ($android) {
-			try {
-				if (typeof text === "string") {
-					JSBridge?.copyToClipBoard?.(text);
-				}
-			} catch (e) {}
-		} else {
-			navigator?.clipboard?.writeText?.(text);
-		}
-	};
-
-	let isChangingPopupVisible, isChangingPopupVisibleTimeout;
-	popupIsGoingBack.subscribe(() => {
-		clearTimeout(isChangingPopupVisibleTimeout)
-		isChangingPopupVisible = true;
-		isChangingPopupVisibleTimeout = setTimeout(() => {
-			isChangingPopupVisible = false;
-		}, 500);
-	});
-	let copytimeoutId;
-	let copyhold = false;
-	document.addEventListener("pointerdown", (e) => {
-		if (e.pointerType === "mouse") return;
-		let target = e.target;
-		let classList = target.classList;
-		if (!classList.contains("copy")) target = target.closest(".copy");
-		if (target) {
-			copyhold = true;
-			copytimeoutId?.()
-			copytimeoutId = requestImmediate(() => {
-				let text = target.dataset.copy;
-				if (
-					text &&
-					!isScrolling &&
-					copyhold &&
-					!isChangingPopupVisible
-				) {
-					target.style.pointerEvents = "none";
-					requestImmediate(() => {
-						target.style.pointerEvents = "";
-					}, 500);
-					let text2 = target.dataset.secondcopy;
-					if (text2 && !ncsCompare(text2, text)) {
-						window.copyToClipBoard?.(text2);
-						requestImmediate(() => {
-							window.copyToClipBoard?.(text);
-						}, 1000);
-					} else {
-						window.copyToClipBoard?.(text);
-					}
-				}
-			}, 500);
-		}
-	});
-	document.addEventListener("pointerup", (e) => {
-		if (e.pointerType === "mouse") return;
-		let target = e.target;
-		let classList = target.classList;
-		if (!classList.contains("copy")) target = target.closest(".copy");
-		if (target) {
-			copyhold = false;
-			copytimeoutId?.()
-		}
-	});
-	document.addEventListener("pointercancel", (e) => {
-		if (e.pointerType === "mouse") return;
-		let target = e.target;
-		let classList = target.classList;
-		if (!classList.contains("copy")) target = target.closest(".copy");
-		if (target) {
-			copyhold = false;
-			copytimeoutId?.()
-		}
-	});
-
-	let _isAlert,
-		_confirmTitle,
-		_confirmText,
-		_confirmLabel,
-		_cancelLabel,
-		_isImportant;
-
-	let _confirmModalPromise;
-	let isPersistent;
-	$confirmPromise = window.confirmPromise = async (confirmValues) => {
-		if (isPersistent && !confirmValues?.isPersistent) return;
-		isPersistent = confirmValues?.isPersistent;
-		return new Promise((resolve) => {
-			_isAlert = confirmValues?.isAlert || false;
-			_confirmTitle =
-				confirmValues?.title ||
-				(_isAlert ? "Heads Up" : "Confirmation");
-			_confirmText =
-				(typeof confirmValues === "string"
-					? confirmValues
-					: confirmValues?.text) || "Do you want to continue?";
-			_confirmLabel = confirmValues?.confirmLabel || "OK";
-			_cancelLabel = confirmValues?.cancelLabel || "CANCEL";
-			_isImportant = confirmValues?.isImportant ?? false;
-			$confirmIsVisible = true;
-			_confirmModalPromise = { resolve };
-		});
-	};
-	function handleConfirmationConfirmed() {
-		isPersistent = false;
-		_confirmModalPromise?.resolve?.(true);
-		_confirmModalPromise =
-			_isAlert =
-			_confirmTitle =
-			_confirmText =
-			_confirmLabel =
-			_cancelLabel =
-			_isImportant =
-				undefined;
-		$confirmIsVisible = false;
-	}
-	function handleConfirmationCancelled() {
-		isPersistent = false;
-		_confirmModalPromise?.resolve?.(false);
-		_confirmModalPromise =
-			_isAlert =
-			_confirmTitle =
-			_confirmText =
-			_confirmLabel =
-			_cancelLabel =
-			_isImportant =
-				undefined;
-		$confirmIsVisible = false;
-	}
-	window.handleConfirmationCancelled = handleConfirmationCancelled;
-	confirmIsVisible.subscribe((val) => {
-		if (val === false) {
-			isPersistent = false;
-			_confirmModalPromise?.resolve?.(false);
-			_confirmModalPromise =
-				_isAlert =
-				_confirmTitle =
-				_confirmText =
-				_confirmLabel =
-				_cancelLabel =
-				_isImportant =
-					undefined;
-		}
-	});
-
-	async function updateList() {
-		if ($android && window?.[$isBackgroundUpdateKey] === true) return;
-		$listUpdateAvailable = false;
-		animeManager({ updateRecommendedAnimeList: true });
-	}
-
-	let _progress = 0,
+	// PROGRESS INDICATOR
+	let shownProgress = 0,
 		progressChangeStart = performance.now(),
 		isChangingProgress;
 	progress.subscribe((val) => {
@@ -1400,13 +905,13 @@
 			val <= 0 ||
 			performance.now() - progressChangeStart > 300
 		) {
-			if (_progress < 100 && _progress > 0) {
-				_progress = Math.max(val, _progress);
+			if (shownProgress < 100 && shownProgress > 0) {
+				shownProgress = Math.max(val, shownProgress);
 			} else {
 				if (isChangingProgress) return;
 				isChangingProgress = true;
 				setTimeout(() => {
-					_progress = val;
+					shownProgress = val;
 					isChangingProgress = false;
 				}, 17);
 			}
@@ -1414,334 +919,107 @@
 		}
 	});
 	resetProgress.subscribe(() => {
-		_progress = 0.01;
+		shownProgress = 0.01;
 		$progress = 0;
 	});
 
-	function loadYoutube() {
-		// For Youtube API
-		window.onYouTubeIframeAPIReady = () => {
-			window.playMostVisibleTrailer?.();
-		};
-		let YTscript = document.createElement("script");
-		YTscript.src = "https://www.youtube.com/iframe_api?v=16";
-		YTscript.id = "www-widgetapi-script";
-		YTscript.defer = true;
-		YTscript.onload = () => {
-			window?.onYouTubeIframeAPIReady?.();
-		};
-		document.head.appendChild(YTscript);
-	}
-
-	function loadAnalytics() {
-		let isVercel = window?.location?.origin === "https://kanshi.vercel.app";
-		// Google Analytics
-		let GAscript = document.createElement("script");
-		if (isVercel) {
-			inject?.(); // Vercel Analytics
-			GAscript.src =
-				"https://www.googletagmanager.com/gtag/js?id=G-F5E8XNQS20";
-		} else {
-			GAscript.src =
-				"https://www.googletagmanager.com/gtag/js?id=G-PPMY92TJCE";
-		}
-		GAscript.defer = true;
-		GAscript.onload = () => {
-			window.dataLayer = window.dataLayer || [];
-			function gtag() {
-				dataLayer.push(arguments);
-			}
-			gtag("js", new Date());
-			if (isVercel) {
-				gtag("config", "G-F5E8XNQS20");
-			} else {
-				gtag("config", "G-PPMY92TJCE");
-			}
-		};
-		document.head.appendChild(GAscript);
-	}
-
-	onMount(() => {
-		window.animeGridScrolled = (scrollLeft) => {
-			if (scrollLeft > 500 && !willExit) {
-				window.setShouldGoBack?.(false);
-			}
-			if (!$gridFullView) return;
-			runIsScrolling.update((e) => !e);
-		};
-		document?.getElementById?.("popup-container")?.addEventListener?.("scroll", () => {
-			runIsScrolling.update((e) => !e);
-		});
-
-		window.addEventListener("resize", () => {
-			$windowHeight = Math.max(
-				window?.visualViewport?.height || 0,
-				window?.innerHeight || 0,
-			);
-			$windowWidth = Math.max(
-				window?.document?.documentElement?.getBoundingClientRect?.()?.width || 0,
-				window?.visualViewport?.width || 0,
-				window?.innerWidth || 0,
-			);
-			window?.scrollToSelectedCategory?.();
-			if (
-                document.fullScreen ||
-                document.mozFullScreen ||
-                document.webkitIsFullScreen ||
-                document.msFullscreenElement
-            ) {
-                return;
-            }
-            $trueWindowHeight = $windowHeight
-            // $trueWindowWidth = $windowWidth
-		});
-
-		documentScrollTop.subscribe((scrollTop) => {
-			if (!$gridFullView) {
-				const element = animeListPagerEl.querySelector(
-					"main.viewed .image-grid",
-				);
-				if (element) {
-					const offsetToWindow = element.getBoundingClientRect().top;
-					if (
-						scrollTop !== lastScrollTop &&
-						(offsetToWindow <= 1 || lastOffTosetWindow <= 1)
-					) {
-						topPositionChangeTimeout?.();
-						changingTopPosition = true;
-					}
-					lastScrollTop = scrollTop;
-					lastOffTosetWindow = offsetToWindow;
-					//
-					const category = element?.dataset?.category;
-					if (
-						category &&
-						panningCategory &&
-						panningCategory !== category
-					) {
-						$selectedCategory = panningCategory;
-						animeListPagerIsChanging = false;
-					}
-					if (offsetToWindow > 1) {
-						gridTopPosition = 0;
-						Array.from(animeListPagerEl.children).forEach((el) => {
-							el.scrollTop = 0;
-						});
-						for (const category in gridTopScrolls) {
-							gridTopScrolls[category] = null;
-						}
-					} else {
-						gridTopPosition = Math.abs(offsetToWindow);
-						const category = element.dataset.category;
-						const gridOffSetDocument =
-							$documentScrollTop + element.getBoundingClientRect().top;
-						gridTopScrolls[category] = $documentScrollTop - gridOffSetDocument;
-					}
-					gridMaxHeight = element?.clientHeight ?? gridMaxHeight;
-					topPositionChangeTimeout = requestImmediate(async () => {
-						await tick();
-						changingTopPosition = false;
-					}, 30);
-				}
-			}
-
-			const shouldUpdate =
-				$selectedAnimeGridEl?.getBoundingClientRect?.()?.top > 0 &&
-				!$popupVisible;
-			if ($listUpdateAvailable && shouldUpdate) {
-				updateList();
-			}
-			isBelowNav = scrollTop > 54;
-			if (
-				$selectedAnimeGridEl?.getBoundingClientRect?.()?.top < 0 &&
-				!willExit
-			) {
-				window?.setShouldGoBack?.(false);
-			}
-			runIsScrolling.update((e) => !e);
-		})
-
-		animeListPagerEl.addEventListener("scroll", () => {
-			animeListPagerIsChanging = true;
-			window.showCategoriesNav?.(true, true);
-
-			let originalScrollLeft = parseInt(animeListPagerEl.scrollLeft);
-
-			let offsetWidth = animeListPagerEl.getBoundingClientRect().width;
-
-			let base = offsetWidth + animeListPagerPad;
-			let idx = Math.round(
-				originalScrollLeft / (offsetWidth + animeListPagerPad),
-			);
-
-			if (idx >= 0 && idx !== panningIdx) {
-				let children = Array.from(animeListPagerEl?.children);
-				let child = children?.[idx];
-				let category = child?.dataset?.category;
-				if (category != null) {
-					window?.scrollToSelectedCategory?.(category);
-					panningCategory = category;
-				}
-				panningIdx = idx;
-			}
-
-			let remainder = originalScrollLeft % base;
-			let threshold
-			try {
-				const animeListPagerElStyle = getComputedStyle(animeListPagerEl)
-				const { marginLeft, marginRight } = animeListPagerElStyle
-				if (marginLeft && marginLeft === marginRight) {
-					threshold = remainder === 0
-				} else {
-					threshold = remainder < 1 || base - remainder < 1
-				}
-			} catch {
-				threshold = $android ? remainder === 0 : remainder < 1 || base - remainder < 1
-			}
-
-			if (threshold) {
-				let children = Array.from(animeListPagerEl?.children);
-				let child = children?.[panningIdx];
-				let category = child?.dataset?.category;
-
-				if (category && category !== $selectedCategory) {
-					$selectedCategory = category;
-				}
-				animeListPagerIsChanging = false;
-			}
-		});
-
-		let lastVisualViewportWidth = window.visualViewport.width;
-		window.visualViewport.addEventListener("resize", () => {
-			const newVisualViewportWidth = window.visualViewport.width
-			if (animeListPagerIsChanging) {
-				if ($selectedCategory && lastVisualViewportWidth !== newVisualViewportWidth) {
-					let categoryIdx =
-						panningIdx ??
-						$categoriesKeys.findIndex(
-							(category) => category === $selectedCategory,
-						);
-					let currentScrollLeft = animeListPagerEl.scrollLeft;
-					let offsetWidth = animeListPagerEl.getBoundingClientRect().width;
-					let pagerPads = categoryIdx * offsetWidth;
-					let scrollOffset = Math.max(0, categoryIdx - 1) * animeListPagerPad;
-					let newScrollLeft = pagerPads + scrollOffset;
-					if (newScrollLeft > currentScrollLeft) {
-						animeListPagerEl.scrollBy({
-							left: Number.EPSILON,
-						});
-					} else if (newScrollLeft < currentScrollLeft) {
-						animeListPagerEl.scrollBy({
-							left: -Number.EPSILON,
-						});
-					}
-					animeListPagerIsChanging = false;
-				}
-			}
-			lastVisualViewportWidth = newVisualViewportWidth;
-		})
-
-		animeListPagerEl.addEventListener("scrollend", () => {
-			if (animeListPagerIsChanging) {
-				let children = Array.from(animeListPagerEl?.children);
-				let child = children?.[panningIdx];
-				let category = child?.dataset?.category;
-
-				if (category && category !== $selectedCategory) {
-					$selectedCategory = category;
-				}
-				animeListPagerIsChanging = false;
-			}
-		});
-	});
-
-	let isFirstScroll = true;
-	let scrollingCategories = {},
-		isChangingSelection;
-	window.gridScrolling = (category) => {
-		if (!isChangingSelection) return;
-		if (scrollingCategories == null) {
-			scrollingCategories = {
-				category: 1,
-			};
-		} else {
-			scrollingCategories[category] = 1;
-		}
+	// DEVICE WHEEL CHECKER
+	let windowWheel = () => {
+		$hasWheel = true;
+		window.removeEventListener("wheel", windowWheel, { passive: true });
+		windowWheel = undefined
 	};
-	let lastSelectedCategory;
-	selectedCategory.subscribe(async (val) => {
-		isChangingSelection = true;
-		if (val) {
-			await tick();
-			window?.scrollToSelectedCategory?.(val);
-			let categoryIdx =
-				$categoriesKeys?.findIndex?.((category) => category === val) ??
-				-1;
-			if (categoryIdx === -1) {
-				scrollingCategories = isChangingSelection = null;
-				lastSelectedCategory = val;
-				$selectedCategory = $categoriesKeys?.[0] || $selectedCategory;
-				animeListPagerIsChanging = false;
-				return;
-			}
-			if (lastSelectedCategory !== val) {
-				let offsetWidth =
-					animeListPagerEl.getBoundingClientRect().width;
-				let pagerPads = categoryIdx * offsetWidth;
-				let scrollOffset =
-					Math.max(0, categoryIdx - 1) * animeListPagerPad;
-				let newScrollLeft = pagerPads + scrollOffset;
-				animeListPagerEl.scrollLeft = newScrollLeft;
-				animeListPagerIsChanging = false;
-			}
-			if ($gridFullView) {
-				scrollingCategories = isChangingSelection = null;
-				lastSelectedCategory = val;
-				return;
-			}
-			// Scroll To Grid Saved Scroll
-			if (isFirstScroll) {
-				isFirstScroll = false;
-				scrollingCategories = isChangingSelection = null;
-				lastSelectedCategory = val;
-				return;
-			}
-			
-			let element = Array.from(animeListPagerEl.children).find(
-				(el) => el.dataset.category === val,
-			);
-			if (element) {
-				if (scrollingCategories?.[val] == null) {
-					let gridToWindow = element.getBoundingClientRect().top + 20;
-					let gridOffSetDocument = $documentScrollTop + gridToWindow;
-					let selectedGridTopScroll = gridTopScrolls[val];
-					const documentEL = document.documentElement;
-					if (selectedGridTopScroll != null) {
-						documentEL.scrollTop =
-							gridOffSetDocument + selectedGridTopScroll;
-					} else if (gridToWindow < 1) {
-						documentEL.scrollTop = gridOffSetDocument;
-					}
-				}
-				Array.from(animeListPagerEl.children).forEach((el) => {
-					let category = el.dataset.category;
-					if (val === category) return;
-					let gridTopScroll = gridTopScrolls[category];
-					if (gridTopScroll) {
-						el.scrollTop = gridTopScroll;
-					}
-				});
-			}
+	window.addEventListener("wheel", windowWheel, { passive: true });
+
+	// CONFIRM POPUP ABSTRACTION
+	let isAlert,
+		confirmTitle,
+		confirmText,
+		confirmLabel,
+		cancelLabel,
+		isImportant,
+		confirmModalPromise,
+		isPersistent;
+
+	$confirmPromise = window.confirmPromise = (confirmValues) => {
+		return new Promise((resolve) => {
+			if (isPersistent && !confirmValues?.isPersistent) return;
+			isPersistent = confirmValues?.isPersistent;
+			isAlert = confirmValues?.isAlert || false;
+			confirmTitle =
+				confirmValues?.title ||
+				(isAlert ? "Heads Up" : "Confirmation");
+			confirmText =
+				(typeof confirmValues === "string"
+					? confirmValues
+					: confirmValues?.text) || "Do you want to continue?";
+			confirmLabel = confirmValues?.confirmLabel || "OK";
+			cancelLabel = confirmValues?.cancelLabel || "CANCEL";
+			isImportant = confirmValues?.isImportant ?? false;
+			$confirmIsVisible = true;
+			confirmModalPromise = { resolve };
+		});
+	};
+	function handleConfirmationConfirmed() {
+		isPersistent = false;
+		confirmModalPromise?.resolve?.(true);
+		confirmModalPromise =
+		isAlert =
+		confirmTitle =
+		confirmText =
+		confirmLabel =
+		cancelLabel =
+		isImportant =
+			undefined;
+		$confirmIsVisible = false;
+	}
+	function handleConfirmationCancelled() {
+		isPersistent = false;
+		confirmModalPromise?.resolve?.(false);
+		confirmModalPromise =
+		isAlert =
+		confirmTitle =
+		confirmText =
+		confirmLabel =
+		cancelLabel =
+		isImportant =
+			undefined;
+		$confirmIsVisible = false;
+	}
+	window.handleConfirmationCancelled = handleConfirmationCancelled;
+	confirmIsVisible.subscribe((val) => {
+		if (val === false) {
+			isPersistent = false;
+			confirmModalPromise?.resolve?.(false);
+			confirmModalPromise =
+			isAlert =
+			confirmTitle =
+			confirmText =
+			confirmLabel =
+			cancelLabel =
+			isImportant =
+				undefined;
 		}
-		scrollingCategories = isChangingSelection = null;
-		lastSelectedCategory = val;
 	});
-	categories.subscribe(async (val) => {
+
+	// CATEGORY CHANGES
+	window.deletedCategory = (categoryKey) => {
+		delete gridTopScrolls?.[categoryKey]
+		if (panningCategory === categoryKey) {
+			panningCategory = undefined
+		}
+	}
+	categories.subscribe((val) => {
 		if (val) {
 			$categoriesKeys = Object.keys(val).sort();
 			for (let i = 0, l = $categoriesKeys.length; i < l; i++) {
-				if (val?.[$categoriesKeys[i]] == null) {
-					delete $loadedAnimeLists?.[$categoriesKeys?.[i]];
+				const categoryKey = $categoriesKeys[i]
+				if (val?.[categoryKey] == null) {
+					delete $loadedMediaLists?.[categoryKey];
+					delete gridTopScrolls?.[categoryKey]
+					if (panningCategory === categoryKey) {
+						panningCategory = undefined
+					}
 				}
 			}
 		}
@@ -1759,41 +1037,222 @@
 					$selectedCategory = newSelectedCategory;
 				}
 			} else {
-				window?.scrollToSelectedCategory?.($selectedCategory);
+				window.scrollToSelectedCategory?.($selectedCategory);
 			}
 		}
 	});
 
-	// let startY = 0;
-	// let scrollY = 0;
+	// OTHER ANDROID APP CALLABLES
+	window.shouldRefreshMediaList = async (
+		shouldProcessRecommendation,
+		shouldLoadMedia,
+	) => {
+		if ($initData) return;
+		if ($android && window?.[$isBackgroundUpdateKey] === true) return;
+		
+		let thisShouldLoadMedia
+		if (shouldProcessRecommendation) {
+			try {
+				$loadingCategory[""] = new Date()
+				await processRecommendedMediaList()
+				thisShouldLoadMedia = true
+			} catch (ex) { console.error(ex) }
+		} else {
+			thisShouldLoadMedia = false
+		}		
 
-	// window.addEventListener('touchstart', function(event) {
-	// 	if (!$popupVisible) return
-	// 	// Get the initial touch position
-	// 	startY = event.touches[0].clientY;
-	// 	scrollY = window.scrollY;
-	// });
+		let isAlreadyLoaded = !shouldLoadMedia && !thisShouldLoadMedia;
+		if (isAlreadyLoaded) {
+			try {
+				$loadingCategory[""] = new Date()
+				await mediaLoader({
+					updateRecommendedMediaList: true,
+					updateUserList: true,
+				})
+			} catch (ex) { console.error(ex) }
+			window.checkEntries?.();
+		} else {
+			try {
+				$loadingCategory[""] = new Date()
+				await mediaManager({ updateRecommendedMediaList: true })
+			} catch (ex) { console.error(ex) }
+			window.checkEntries?.();
+		}
+	};
+	window.copyToClipBoard = (text) => {
+		if (typeof text !== "string" && !text) return;
+		if ($android) {
+			try {
+				JSBridge.copyToClipBoard(text);
+			} catch (ex) {
+				console.error(ex)
+			}
+		} else {
+			navigator?.clipboard?.writeText?.(text);
+		}
+	}
 
-	// window.addEventListener('touchmove', function(event) {
-	// 	if (!$popupVisible) return
-	// 	// Prevent the default behavior (optional, for better control)
-	// 	event.preventDefault();
+	// LIST PAGER
+	let mediaListPagerIsChanging,
+		isFirstScroll = true,
+		lastSelectedCategory;
 
-	// 	// Calculate the distance moved
-	// 	let distanceY = startY - event.touches[0].clientY;
+	selectedCategory.subscribe(async (val) => {
+		if (val) {
+			window.scrollToSelectedCategory?.(val);
 
-	// 	// Scroll the document by the distance moved
-	// 	window.scrollTo(0, scrollY + distanceY);
-	// });
+			await tick();
+
+			if (!($categoriesKeys instanceof Array)) {
+				return;
+			}
+
+			const categoryIdx = $categoriesKeys.findIndex((category) => category === val) ?? -1;
+			
+			if (categoryIdx === -1) {
+				$selectedCategory = $categoriesKeys[0] || $selectedCategory;
+				lastSelectedCategory = val;
+				return;
+			} else if (lastSelectedCategory !== val) {
+				const offsetWidth = mediaListPagerEl.getBoundingClientRect().width;
+				const pagerPads = categoryIdx * offsetWidth;
+				const scrollOffset = Math.max(0, categoryIdx - 1) * mediaListPagerPad;
+				const newScrollLeft = pagerPads + scrollOffset;
+				mediaListPagerEl.scrollLeft = newScrollLeft;
+				mediaListPagerIsChanging = false;
+			}
+
+			if ($gridFullView) {
+				lastSelectedCategory = val;
+				return;
+			} else if (isFirstScroll) {
+				isFirstScroll = false;
+				lastSelectedCategory = val;
+				return;
+			}
+			
+			const element = Array.from(mediaListPagerEl.children).find((el) => el.dataset.category === val);
+			if (element) {
+				const gridToWindow = element.getBoundingClientRect().top + 20;
+				const gridOffSetDocument = $documentScrollTop + gridToWindow;
+				const selectedGridTopScroll = gridTopScrolls[val];
+				const documentEL = document.documentElement;
+				if (selectedGridTopScroll != null) {
+					documentEL.scrollTop = gridOffSetDocument + selectedGridTopScroll;
+				} else if (gridToWindow < 1) {
+					documentEL.scrollTop = gridOffSetDocument;
+				}
+				Array.from(mediaListPagerEl.children).forEach((el) => {
+					const category = el.dataset.category;
+					if (val === category) return;
+					const gridTopScroll = gridTopScrolls[category];
+					if (gridTopScroll) {
+						el.scrollTop = gridTopScroll;
+					}
+				});
+			}
+		}
+		lastSelectedCategory = val;
+	});
+
+	let lastVisualViewportWidth = window.visualViewport?.width;
+	window.visualViewport?.addEventListener?.("resize", () => {
+		const newVisualViewportWidth = window.visualViewport?.width
+		if (mediaListPagerIsChanging) {
+			if ($selectedCategory && lastVisualViewportWidth !== newVisualViewportWidth) {
+				const categoryIdx = panningIdx ?? $categoriesKeys.findIndex((category) => category === $selectedCategory);
+				const currentScrollLeft = mediaListPagerEl.scrollLeft;
+				const offsetWidth = mediaListPagerEl.getBoundingClientRect().width;
+				const pagerPads = categoryIdx * offsetWidth;
+				const scrollOffset = Math.max(0, categoryIdx - 1) * mediaListPagerPad;
+				const newScrollLeft = pagerPads + scrollOffset;
+				if (newScrollLeft > currentScrollLeft) {
+					mediaListPagerEl.scrollBy({
+						left: Number.EPSILON,
+					});
+				} else if (newScrollLeft < currentScrollLeft) {
+					mediaListPagerEl.scrollBy({
+						left: -Number.EPSILON,
+					});
+				}
+			}
+		}
+		lastVisualViewportWidth = newVisualViewportWidth;
+	})
+
+	onMount(async () => {
+		mediaListPagerEl.addEventListener("scroll", () => {
+			mediaListPagerIsChanging = true;
+
+			window.showCategoriesNav?.(true, true);
+
+			const originalScrollLeft = parseInt(mediaListPagerEl.scrollLeft);
+
+			const offsetWidth = mediaListPagerEl.getBoundingClientRect().width;
+
+			const base = offsetWidth + mediaListPagerPad;
+			const idx = Math.round(originalScrollLeft / (offsetWidth + mediaListPagerPad));
+
+			if (idx >= 0 && idx !== panningIdx) {
+				const children = Array.from(mediaListPagerEl?.children);
+				const child = children?.[idx];
+				const category = child?.dataset?.category;
+				if (category != null) {
+					window?.scrollToSelectedCategory?.(category);
+					panningCategory = category;
+				}
+				panningIdx = idx;
+			}
+
+			const remainder = originalScrollLeft % base;
+			let pageChanged
+			try {
+				const mediaListPagerElStyle = getComputedStyle(mediaListPagerEl)
+				const { marginLeft, marginRight } = mediaListPagerElStyle
+				if (marginLeft && marginLeft === marginRight) {
+					pageChanged = remainder === 0
+				} else {
+					pageChanged = remainder < 1 || base - remainder < 1
+				}
+			} catch {
+				pageChanged = $android ? remainder === 0 : remainder < 1 || base - remainder < 1
+			}
+
+			if (pageChanged) {
+				const children = Array.from(mediaListPagerEl?.children);
+				const child = children?.[panningIdx];
+				const category = child?.dataset?.category;
+
+				if (category && category !== $selectedCategory) {
+					$selectedCategory = category;
+				}
+				mediaListPagerIsChanging = false;
+			}
+		});		
+
+		mediaListPagerEl.addEventListener("scrollend", () => {
+			if (mediaListPagerIsChanging) {
+				const children = Array.from(mediaListPagerEl?.children);
+				const child = children?.[panningIdx];
+				const category = child?.dataset?.category;
+
+				if (category && category !== $selectedCategory) {
+					$selectedCategory = category;
+				}
+				mediaListPagerIsChanging = false;
+			}
+		});
+	});
+
 </script>
 
 <main
 	id="main"
 	class="{($android ? ' android' : '') +
-		(isMaxWindowHeight ? ' maxwindowheight' : '') +
-		($popupVisible ? ' popupvisible' : '')}"
+		(isMaxWindowHeight ? ' max-window-height' : '') +
+		($popupVisible ? ' popup-visible' : '')}"
 >
-	{#if _progress > 0 && _progress < 100}
+	{#if shownProgress > 0 && shownProgress < 100}
 		<div
 			out:fade="{{ duration: 0, delay: 400 }}"
 			on:outrostart="{(e) => {
@@ -1802,7 +1261,7 @@
 			id="progress"
 			class="{'progress' +
 				(isBelowNav ? ' is-below-absolute-progress' : '')}"
-			style:--progress="{"-" + (100 - _progress) + "%"}"
+			style:--progress="{"-" + (100 - shownProgress) + "%"}"
 		></div>
 	{/if}
 
@@ -1813,42 +1272,42 @@
 	<div class="home" id="home">
 		<C.Others.Search />
 		<div
-			bind:this="{animeListPagerEl}"
+			bind:this="{mediaListPagerEl}"
 			style:--grid-position="{gridTopPosition + "px"}"
 			style:--grid-max-height="{gridMaxHeight + "px"}"
-			id="anime-list-pager"
-			class="{'anime-list-pager' +
-				(animeListPagerIsChanging ? ' pager-is-changing' : '') +
+			id="media-list-pager"
+			class="{'media-list-pager' +
+				(mediaListPagerIsChanging ? ' pager-is-changing' : '') +
 				(changingTopPosition ? ' is-changing-top-position' : '') +
 				($gridFullView ? ' remove-snap-scroll' : '')}"
-			style:--anime-list-pager-pad="{animeListPagerPad + "px"}"
+			style:--media-list-pager-pad="{mediaListPagerPad + "px"}"
 		>
 			{#if $categoriesKeys?.length > 0}
 				{#each $categoriesKeys || [] as mainCategory (mainCategory)}
-					<C.Anime.AnimeGrid {mainCategory} />
+					<C.Media.MediaGrid {mainCategory} />
 				{/each}
 			{:else}
-				<C.Anime.AnimeGrid mainCategory="{''}" />
+				<C.Media.MediaGrid mainCategory="{''}" />
 			{/if}
 		</div>
 	</div>
 
 	<C.Fixed.Categories />
 
-	<C.Anime.Fixed.AnimePopup />
+	<C.Media.Fixed.MediaPopup />
 
-	<C.Anime.Fixed.AnimeOptionsPopup />
+	<C.Media.Fixed.MediaOptionsPopup />
 
 	<C.Others.Confirm
 		showConfirm="{$confirmIsVisible}"
 		on:confirmed="{handleConfirmationConfirmed}"
 		on:cancelled="{handleConfirmationCancelled}"
-		isAlert="{_isAlert}"
-		confirmTitle="{_confirmTitle}"
-		confirmText="{_confirmText}"
-		confirmLabel="{_confirmLabel}"
-		cancelLabel="{_cancelLabel}"
-		isImportant="{_isImportant}"
+		{isAlert}
+		{confirmTitle}
+		{confirmText}
+		{confirmLabel}
+		{cancelLabel}
+		{isImportant}
 	/>
 </main>
 
@@ -1896,24 +1355,24 @@
 		transition: transform 0.3s linear;
 	}
 
-	.anime-list-pager {
-		--anime-list-pager-pad: 0;
+	.media-list-pager {
+		--media-list-pager-pad: 0;
 		display: flex;
 		overflow-x: auto;
 		overflow-y: hidden;
 		scroll-snap-type: x mandatory;
-		column-gap: var(--anime-list-pager-pad);
+		column-gap: var(--media-list-pager-pad);
 		-ms-overflow-style: none;
 		scrollbar-width: none;
 		width: calc(100% - 100px);
 		margin: 0 auto;
 	}
 
-	.anime-list-pager::-webkit-scrollbar {
+	.media-list-pager::-webkit-scrollbar {
 		display: none;
 	}
 
-	.anime-list-pager.remove-snap-scroll {
+	.media-list-pager.remove-snap-scroll {
 		overflow: hidden !important;
 	}
 
@@ -1938,7 +1397,7 @@
 			top: 55px !important;
 			z-index: 1000 !important;
 		}
-		.anime-list-pager {
+		.media-list-pager {
 			width: calc(100% - 20px);
 		}
 	}

@@ -1,10 +1,10 @@
 <script>
     import { onMount, tick } from "svelte";
     import {
-        animeLoader,
-        animeManager,
+        mediaLoader,
+        mediaManager,
         getExtraInfo,
-        processRecommendedAnimeList,
+        processRecommendedMediaList,
         saveIDBdata,
         getIDBdata
     } from "../../js/workerUtils.js";
@@ -43,18 +43,24 @@
         orderedFilters,
         categories,
         selectedCategory,
-        loadedAnimeLists,
+        loadedMediaLists,
         algorithmFilters,
         nonOrderedFilters,
-        animeCautions,
+        mediaCautions,
         searchedWord,
         categoriesKeys,
-        selectedAnimeGridEl,
-        showLoadingAnime,
+        selectedMediaGridEl,
         resetProgress,
         windowHeight,
         windowWidth,
         documentScrollTop,
+        loadingCategory,
+        currentMediaFilters,
+        currentMediaSortBy,
+        currentAlgorithmFilters,
+        currentMediaCautions,
+        isImporting,
+        isExporting,
     } from "../../js/globalValues.js";
 
     const COOs = {
@@ -63,7 +69,7 @@
         CN: "China",
         TW: "Taiwan",
     }
-    let selectedCategoryAnimeFilters,
+    let selectedCategoryMediaFilters,
         selectedSortName,
         selectedSortType,
         filterCategoriesSelections,
@@ -74,20 +80,42 @@
     );
 
     $: {
-        let category = $loadedAnimeLists?.[$selectedCategory];
-        selectedCategoryAnimeFilters = category?.animeFilters;
+        let category = $loadedMediaLists?.[$selectedCategory];
+        selectedCategoryMediaFilters = category?.mediaFilters;
+        if ($currentMediaFilters[$selectedCategory] == null) {
+            $currentMediaFilters[$selectedCategory] = selectedCategoryMediaFilters
+        }
         let sortBy = category?.sortBy;
+        if ($currentMediaSortBy[$selectedCategory] == null) {
+            $currentMediaSortBy[$selectedCategory] = sortBy
+        }
         selectedSortName = sortBy?.sortName;
         selectedSortType = sortBy?.sortType;
     }
 
+    let currentAlgorithmFiltersListener = algorithmFilters.subscribe((val) => {
+        if (val) {
+            $currentAlgorithmFilters = val
+            currentAlgorithmFiltersListener?.()
+            currentAlgorithmFiltersListener = null
+        }
+    })
+
+    let currentMediaCautionsListener = mediaCautions.subscribe((val) => {
+        if (val) {
+            $currentMediaCautions = val 
+            currentMediaCautionsListener?.()
+            currentMediaCautionsListener = null
+        }
+    })
+
     let activeFilters;
-    $: if (selectedFilterCategoryName === "Anime Filter") {
-        activeFilters = selectedCategoryAnimeFilters;
+    $: if (selectedFilterCategoryName === "Media Filter") {
+        activeFilters = selectedCategoryMediaFilters;
     } else if (selectedFilterCategoryName === "Algorithm Filter") {
         activeFilters = $algorithmFilters;
     } else if (selectedFilterCategoryName === "Content Caution") {
-        activeFilters = $animeCautions;
+        activeFilters = $mediaCautions;
     } else {
         activeFilters = null;
     }
@@ -103,12 +131,12 @@
     $: {
         if (isJsonObject($nonOrderedFilters)) {
             let allCategoriesBoolFilter = {
-                "Anime Filter": $nonOrderedFilters?.["Anime Filter"]?.bool,
+                "Media Filter": $nonOrderedFilters?.["Media Filter"]?.bool,
                 "Algorithm Filter":
                     $nonOrderedFilters?.["Algorithm Filter"]?.bool,
             };
-            let activeAnimeBoolFilters =
-                selectedCategoryAnimeFilters?.filter?.(
+            let activeMediaBoolFilters =
+                selectedCategoryMediaFilters?.filter?.(
                     (filter) => filter?.filterType === "bool",
                 ) || [];
             let activeAlgorithmBoolFilters =
@@ -119,8 +147,8 @@
                 allCategoriesBoolFilter,
             ).reduce((acc, [filterCategoryName, boolFilterCategoryArray]) => {
                 let activeBoolFilters =
-                    filterCategoryName === "Anime Filter"
-                        ? activeAnimeBoolFilters
+                    filterCategoryName === "Media Filter"
+                        ? activeMediaBoolFilters
                         : activeAlgorithmBoolFilters;
                 for (
                     let i = 0, l = boolFilterCategoryArray?.length;
@@ -162,63 +190,74 @@
     ];
 
     let scrollingToTop;
-
+    
     async function updateFilters(name, data) {
         if (!filterCategories || !($orderedFilters || $nonOrderedFilters)) {
             return pleaseWaitAlert();
         }
         if (!isJsonObject(data)) return;
 
-        if (data?.selectedCategory == null) {
-            $showLoadingAnime = true;
-        } else {
-            $showLoadingAnime = data?.selectedCategory;
+        const categoryToUpdate = data?.selectedCategory
+        if (categoryToUpdate) {
+            $loadingCategory[categoryToUpdate] = new Date()
         }
-        if (name === "Anime Filter" || name === "sortBy") {
-            data.updateAnimeFilter = true;
-            loadAnime(data);
-            resetProgress.update((e) => !e);
+        resetProgress.update((e) => !e);
+        if (name === "Media Filter") {
+            try {
+                data.updateMediaFilter = true;
+                await loadMedia(data);
+            } catch {
+                if ($loadedMediaLists?.[categoryToUpdate] && $currentMediaFilters[categoryToUpdate]) {
+                    $loadedMediaLists[categoryToUpdate].mediaFilters = $currentMediaFilters[categoryToUpdate]
+                }
+            }
+        } else if (name === "sortBy") {
+            try {
+                data.updateMediaFilter = true;
+                await loadMedia(data);
+            } catch {
+                if ($loadedMediaLists?.[categoryToUpdate] && $currentMediaSortBy[categoryToUpdate]) {
+                    $loadedMediaLists[categoryToUpdate].sortBy = $currentMediaSortBy[categoryToUpdate]
+                }
+            }
         } else if (name === "Algorithm Filter") {
-            processRecAnimeList(data);
-            resetProgress.update((e) => !e);
+            try {
+                $loadingCategory[""] = new Date()
+                await processRecMediaList(data);
+                $currentAlgorithmFilters = data.algorithmFilters
+                try {
+                    await loadMedia({ updateRecommendedMediaList: true });
+                } catch {}
+            } catch {
+                if ($currentAlgorithmFilters) {
+                    $algorithmFilters = $currentAlgorithmFilters
+                }
+            }
         } else if (name === "Content Caution") {
-            data.updateAnimeCautions = true;
-            loadAnime(data);
-            resetProgress.update((e) => !e);
+            try {
+                $loadingCategory[""] = new Date()
+                await loadMedia(data);
+                $currentMediaCautions = data.mediaCautions
+            } catch {
+                if ($currentMediaCautions) {
+                    $mediaCautions = $currentMediaCautions
+                }
+            }
         }
     }
 
-    async function loadAnime(data) {
+    async function loadMedia(data) {
         if ($android && window?.[$isBackgroundUpdateKey] === true) {
-            $showLoadingAnime = false;
-            return;
+            throw new Error("Something went wrong...");
         }
-        if (data?.updateAnimeFilter) {
-            $loadedAnimeLists?.[data?.selectedCategory]?.animeList?.forEach?.(
-                (anime) => {
-                    anime.isLoading = true;
-                },
-            );
-            $loadedAnimeLists = $loadedAnimeLists;
-        }
-        animeManager(data).catch(() => {
-            $showLoadingAnime = false;
-        });
+        await mediaManager(data)
     }
 
-    async function processRecAnimeList(data) {
+    async function processRecMediaList(data) {
         if ($android && window?.[$isBackgroundUpdateKey] === true) {
-            $showLoadingAnime = false;
-            return;
+            throw new Error("Something went wrong...");
         }
-        processRecommendedAnimeList(data)
-            .catch((error) => {
-                $showLoadingAnime = false;
-                console.error(error);
-            })
-            .finally(() => {
-                loadAnime({ updateRecommendedAnimeList: true });
-            });
+        await processRecommendedMediaList(data)
     }
 
     windowHeight.subscribe((val) => {
@@ -237,7 +276,7 @@
         });
         if (
             highlightedEl instanceof Element &&
-            highlightedEl.closest(".filterCategory")
+            highlightedEl.closest(".filter-category")
         ) {
             removeClass(highlightedEl, "highlight");
             highlightedEl = null;
@@ -248,10 +287,10 @@
         if (!filterCategories) return pleaseWaitAlert();
         let element = event.target;
         let classList = element?.classList || [];
-        let filterCategoriesEl = element?.closest?.(".filterCategory");
+        let filterCategoriesEl = element?.closest?.(".filter-category");
         let optionsWrap = element?.closest?.(".options-wrap");
         if (
-            (classList.contains("filterCategory") || filterCategoriesEl) &&
+            (classList.contains("filter-category") || filterCategoriesEl) &&
             !selectedFilterCategoryElement &&
             !(classList.contains("closing-x") || element.closest(".closing-x"))
         ) {
@@ -271,7 +310,7 @@
                     removeClass(optionsWrapToClose, "hide");
                     if (
                         highlightedEl instanceof Element &&
-                        highlightedEl.closest(".filterCategory")
+                        highlightedEl.closest(".filter-category")
                     ) {
                         removeClass(highlightedEl, "highlight");
                         highlightedEl = null;
@@ -281,7 +320,7 @@
             } else {
                 if (
                     highlightedEl instanceof Element &&
-                    highlightedEl.closest(".filterCategory")
+                    highlightedEl.closest(".filter-category")
                 ) {
                     removeClass(highlightedEl, "highlight");
                     highlightedEl = null;
@@ -392,8 +431,8 @@
         } else if (
             !classList.contains("options-wrap") &&
             !element?.closest?.(".options-wrap") &&
-            !classList.contains("fullPopupWrapper") &&
-            !element?.closest?.(".fullPopupWrapper") &&
+            !classList.contains("full-popup-wrapper") &&
+            !element?.closest?.(".full-popup-wrapper") &&
             !classList.contains("item-info") &&
             !classList.contains("extra-item-info") &&
             !classList.contains("item-info-path") &&
@@ -415,11 +454,11 @@
             }
 
             // Filter Category Dropdown
-            let filterCategoryEl = element?.closest(".filterCategory");
-            if (!classList.contains("filterCategory") && !filterCategoryEl) {
+            let filterCategoryEl = element?.closest(".filter-category");
+            if (!classList.contains("filter-category") && !filterCategoryEl) {
                 if (
                     highlightedEl instanceof Element &&
-                    highlightedEl.closest(".filterCategory")
+                    highlightedEl.closest(".filter-category")
                 ) {
                     removeClass(highlightedEl, "highlight");
                     highlightedEl = null;
@@ -428,11 +467,11 @@
             }
 
             // Sort Filter Dropdown
-            let sortSelectEl = element?.closest(".sortFilter");
-            if (!classList.contains("sortFilter") && !sortSelectEl) {
+            let sortSelectEl = element?.closest(".sort-filter");
+            if (!classList.contains("sort-filter") && !sortSelectEl) {
                 if (
                     highlightedEl instanceof Element &&
-                    highlightedEl.closest(".sortFilter")
+                    highlightedEl.closest(".sort-filter")
                 ) {
                     removeClass(highlightedEl, "highlight");
                     highlightedEl = null;
@@ -528,12 +567,12 @@
         }
 
         let array;
-        if (filterCategoryName === "Anime Filter") {
-            array = $loadedAnimeLists?.[$selectedCategory]?.animeFilters;
+        if (filterCategoryName === "Media Filter") {
+            array = $loadedMediaLists?.[$selectedCategory]?.mediaFilters;
         } else if (filterCategoryName === "Algorithm Filter") {
             array = $algorithmFilters;
         } else if (filterCategoryName === "Content Caution") {
-            array = $animeCautions;
+            array = $mediaCautions;
         }
         if (!(array instanceof Array)) return;
 
@@ -581,12 +620,12 @@
         filterSelectionOptionsLoaded = true;
 
         let data;
-        if (filterCategoryName === "Anime Filter") {
+        if (filterCategoryName === "Media Filter") {
             data = {
                 selectedCategory: $selectedCategory,
-                animeFilters: ($loadedAnimeLists[
+                mediaFilters: ($loadedMediaLists[
                     $selectedCategory
-                ].animeFilters = array),
+                ].mediaFilters = array),
             };
         } else if (filterCategoryName === "Algorithm Filter") {
             data = {
@@ -594,7 +633,7 @@
             };
         } else if (filterCategoryName === "Content Caution") {
             data = {
-                animeCautions: ($animeCautions = array),
+                mediaCautions: ($mediaCautions = array),
             };
         }
 
@@ -631,12 +670,12 @@
         }
 
         let array;
-        if (filterCategoryName === "Anime Filter") {
-            array = $loadedAnimeLists?.[$selectedCategory]?.animeFilters;
+        if (filterCategoryName === "Media Filter") {
+            array = $loadedMediaLists?.[$selectedCategory]?.mediaFilters;
         } else if (filterCategoryName === "Algorithm Filter") {
             array = $algorithmFilters;
         } else if (filterCategoryName === "Content Caution") {
-            array = $animeCautions;
+            array = $mediaCautions;
         }
         if (!(array instanceof Array)) return;
 
@@ -677,12 +716,12 @@
         }
 
         let data;
-        if (filterCategoryName === "Anime Filter") {
+        if (filterCategoryName === "Media Filter") {
             data = {
                 selectedCategory: $selectedCategory,
-                animeFilters: ($loadedAnimeLists[
+                mediaFilters: ($loadedMediaLists[
                     $selectedCategory
-                ].animeFilters = array),
+                ].mediaFilters = array),
             };
         } else if (filterCategoryName === "Algorithm Filter") {
             data = {
@@ -690,7 +729,7 @@
             };
         } else if (filterCategoryName === "Content Caution") {
             data = {
-                animeCautions: ($animeCautions = array),
+                mediaCautions: ($mediaCautions = array),
             };
         }
 
@@ -727,12 +766,12 @@
         }
 
         let array;
-        if (filterCategoryName === "Anime Filter") {
-            array = $loadedAnimeLists?.[$selectedCategory]?.animeFilters;
+        if (filterCategoryName === "Media Filter") {
+            array = $loadedMediaLists?.[$selectedCategory]?.mediaFilters;
         } else if (filterCategoryName === "Algorithm Filter") {
             array = $algorithmFilters;
         } else if (filterCategoryName === "Content Caution") {
-            array = $animeCautions;
+            array = $mediaCautions;
         }
 
         if (!(array instanceof Array)) {
@@ -755,21 +794,12 @@
             conditionalInputNumberList.includes(optionName) &&
             /^(>=|<=|<|>).*($)/.test(optionValue) // Check if it starts or ends with comparison operators
         ) {
-            let newSplitValue = optionValue
+            const newSplitValue = optionValue
                 ?.split(/(<=|>=|<|>)/)
                 ?.filter?.((e) => e); // Remove White Space
             if (optionValue !== oldValue && newSplitValue.length <= 2) {
-                let CMPOperator, CMPNumber;
-                if (
-                    newSplitValue[0].includes(">") ||
-                    newSplitValue[0].includes("<")
-                ) {
-                    CMPOperator = newSplitValue[0];
+                const CMPOperator = newSplitValue[0].trim(), 
                     CMPNumber = newSplitValue[1];
-                } else {
-                    CMPOperator = newSplitValue[1];
-                    CMPNumber = newSplitValue[0];
-                }
                 if (
                     optionValue !== oldValue &&
                     ((!isNaN(CMPNumber) &&
@@ -869,12 +899,12 @@
         if (!shouldReload) return;
 
         let data;
-        if (filterCategoryName === "Anime Filter") {
+        if (filterCategoryName === "Media Filter") {
             data = {
                 selectedCategory: $selectedCategory,
-                animeFilters: ($loadedAnimeLists[
+                mediaFilters: ($loadedMediaLists[
                     $selectedCategory
-                ].animeFilters = array),
+                ].mediaFilters = array),
             };
         } else if (filterCategoryName === "Algorithm Filter") {
             data = {
@@ -882,7 +912,7 @@
             };
         } else if (filterCategoryName === "Content Caution") {
             data = {
-                animeCautions: ($animeCautions = array),
+                mediaCautions: ($mediaCautions = array),
             };
         }
 
@@ -924,8 +954,8 @@
         let element = event?.target;
         let classList = element?.classList;
         if (
-            classList?.contains?.("removeActiveFilter") ||
-            element?.closest?.(".removeActiveFilter")
+            classList?.contains?.("remove-active-filter") ||
+            element?.closest?.(".remove-active-filter")
         )
             return;
 
@@ -959,12 +989,12 @@
         }
 
         let data;
-        if (currentFilterCategoryName === "Anime Filter") {
+        if (currentFilterCategoryName === "Media Filter") {
             data = {
                 selectedCategory: $selectedCategory,
-                animeFilters: ($loadedAnimeLists[
+                mediaFilters: ($loadedMediaLists[
                     $selectedCategory
-                ].animeFilters = activeFilters),
+                ].mediaFilters = activeFilters),
             };
         } else if (currentFilterCategoryName === "Algorithm Filter") {
             data = {
@@ -972,7 +1002,7 @@
             };
         } else if (currentFilterCategoryName === "Content Caution") {
             data = {
-                animeCautions: ($animeCautions = activeFilters),
+                mediaCautions: ($mediaCautions = activeFilters),
             };
         }
 
@@ -999,12 +1029,12 @@
 
         let currentFilterCategoryName = selectedFilterCategoryName;
         let data;
-        if (currentFilterCategoryName === "Anime Filter") {
+        if (currentFilterCategoryName === "Media Filter") {
             data = {
                 selectedCategory: $selectedCategory,
-                animeFilters: ($loadedAnimeLists[
+                mediaFilters: ($loadedMediaLists[
                     $selectedCategory
-                ].animeFilters = activeFilters),
+                ].mediaFilters = activeFilters),
             };
         } else if (currentFilterCategoryName === "Algorithm Filter") {
             data = {
@@ -1012,7 +1042,7 @@
             };
         } else if (currentFilterCategoryName === "Content Caution") {
             data = {
-                animeCautions: ($animeCautions = activeFilters),
+                mediaCautions: ($mediaCautions = activeFilters),
             };
         }
 
@@ -1048,12 +1078,12 @@
             }
 
             let data;
-            if (currentFilterCategoryName === "Anime Filter") {
+            if (currentFilterCategoryName === "Media Filter") {
                 data = {
                     selectedCategory: currentCategory,
-                    animeFilters: ($loadedAnimeLists[
+                    mediaFilters: ($loadedMediaLists[
                         currentCategory
-                    ].animeFilters = []),
+                    ].mediaFilters = []),
                 };
             } else if (currentFilterCategoryName === "Algorithm Filter") {
                 data = {
@@ -1061,7 +1091,7 @@
                 };
             } else if (currentFilterCategoryName === "Content Caution") {
                 data = {
-                    animeCautions: ($animeCautions = []),
+                    mediaCautions: ($mediaCautions = []),
                 };
             }
 
@@ -1075,10 +1105,10 @@
 
         let element = event.target;
         let classList = element.classList;
-        let sortSelectEl = element.closest(".sortFilter");
+        let sortSelectEl = element.closest(".sort-filter");
         let optionsWrap = element.closest(".options-wrap");
         if (
-            (classList.contains("sortFilter") || sortSelectEl) &&
+            (classList.contains("sort-filter") || sortSelectEl) &&
             !selectedSortElement
         ) {
             selectedSortElement = sortSelectEl || element || true;
@@ -1096,7 +1126,7 @@
                     removeClass(optionsWrapToClose, "hide");
                     if (
                         highlightedEl instanceof Element &&
-                        highlightedEl.closest(".sortFilter")
+                        highlightedEl.closest(".sort-filter")
                     ) {
                         removeClass(highlightedEl, "highlight");
                         highlightedEl = null;
@@ -1106,7 +1136,7 @@
             } else {
                 if (
                     highlightedEl instanceof Element &&
-                    highlightedEl.closest(".sortFilter")
+                    highlightedEl.closest(".sort-filter")
                 ) {
                     removeClass(highlightedEl, "highlight");
                     highlightedEl = null;
@@ -1123,7 +1153,7 @@
 
         if (
             $categories?.[$selectedCategory] === true ||
-            !$loadedAnimeLists?.[$selectedCategory]?.sortBy
+            !$loadedMediaLists?.[$selectedCategory]?.sortBy
         ) {
             return $confirmPromise({
                 isAlert: true,
@@ -1134,35 +1164,35 @@
 
         let data;
         if (selectedSortName !== newSortName) {
-            $loadedAnimeLists[$selectedCategory].sortBy = {
+            $loadedMediaLists[$selectedCategory].sortBy = {
                 sortName: newSortName,
                 sortType: "desc",
             };
             data = {
                 selectedCategory: $selectedCategory,
-                sortBy: $loadedAnimeLists[$selectedCategory].sortBy,
+                sortBy: $loadedMediaLists[$selectedCategory].sortBy,
             };
         } else {
             if (selectedSortType === "desc") {
-                $loadedAnimeLists[$selectedCategory].sortBy.sortType = "asc";
+                $loadedMediaLists[$selectedCategory].sortBy.sortType = "asc";
                 data = {
                     selectedCategory: $selectedCategory,
-                    sortBy: $loadedAnimeLists[$selectedCategory].sortBy,
+                    sortBy: $loadedMediaLists[$selectedCategory].sortBy,
                 };
             } else if (selectedSortType === "asc") {
-                $loadedAnimeLists[$selectedCategory].sortBy.sortType = "desc";
+                $loadedMediaLists[$selectedCategory].sortBy.sortType = "desc";
                 data = {
                     selectedCategory: $selectedCategory,
-                    sortBy: $loadedAnimeLists[$selectedCategory].sortBy,
+                    sortBy: $loadedMediaLists[$selectedCategory].sortBy,
                 };
             }
         }
 
-        updateFilters("Anime Filter", data);
+        updateFilters("Media Filter", data);
 
         if (
             highlightedEl instanceof Element &&
-            highlightedEl.closest(".sortFilter")
+            highlightedEl.closest(".sort-filter")
         ) {
             removeClass(highlightedEl, "highlight");
             highlightedEl = null;
@@ -1177,7 +1207,7 @@
 
         if (
             $categories?.[$selectedCategory] === true ||
-            !$loadedAnimeLists?.[$selectedCategory]?.sortBy
+            !$loadedMediaLists?.[$selectedCategory]?.sortBy
         ) {
             return $confirmPromise({
                 isAlert: true,
@@ -1188,33 +1218,23 @@
 
         let data;
         if (selectedSortType === "desc") {
-            $loadedAnimeLists[$selectedCategory].sortBy.sortType = "asc";
+            $loadedMediaLists[$selectedCategory].sortBy.sortType = "asc";
             data = {
                 selectedCategory: $selectedCategory,
-                sortBy: $loadedAnimeLists[$selectedCategory].sortBy,
+                sortBy: $loadedMediaLists[$selectedCategory].sortBy,
             };
         } else if (selectedSortType === "asc") {
-            $loadedAnimeLists[$selectedCategory].sortBy.sortType = "desc";
+            $loadedMediaLists[$selectedCategory].sortBy.sortType = "desc";
             data = {
                 selectedCategory: $selectedCategory,
-                sortBy: $loadedAnimeLists[$selectedCategory].sortBy,
+                sortBy: $loadedMediaLists[$selectedCategory].sortBy,
             };
         }
 
-        updateFilters("Anime Filter", data);
+        updateFilters("Media Filter", data);
     }
 
-    async function handleGridView() {
-        $gridFullView = !$gridFullView;
-        setLocalStorage("gridFullView", $gridFullView)
-            .catch(() => {
-                removeLocalStorage("gridFullView");
-            })
-            .finally(() => {
-                saveIDBdata($gridFullView, "gridFullView");
-            });
-    }
-
+    let customCategoryName
     async function handleShowFilterOptions() {
         selectedCategoryElement = false;
 
@@ -1227,22 +1247,23 @@
         });
     }
 
-    function hasPartialMatch(strings, searchString) {
-        if (typeof strings === "string" && typeof searchString === "string") {
-            return strings
-                .toLowerCase()
-                .includes(searchString.trim().toLowerCase());
-        }
+    function hasPartialMatch(strings, query) {
+        if (typeof strings !== "string" || typeof query !== "string") return
+        return strings.trim().replace(/[\uFF01-\uFF60\uFFE0-\uFFE6\u3000]/g, (ch) => {
+            if (ch === '\u3000') return '';
+            return String.fromCharCode(ch.charCodeAt(0) - 0xFEE0);
+        }).normalize('NFD').replace(/[^a-zA-Z0-9\p{Lo}]/gu, '').toLowerCase().includes(query)
     }
-
-    $: customCategoryName =
-        $selectedCategory || getLocalStorage("selectedCategory");
 
     let previousCategoryName;
     selectedCategory.subscribe((val) => {
         if (val) {
             if (previousCategoryName && previousCategoryName !== val) {
-                animeLoader({ selectCategory: val });
+                mediaLoader({ categorySelected: val });
+                customCategoryName = val
+                setLocalStorage("selectedCategory", val)
+                .catch(() => removeLocalStorage("selectedCategory"))
+                .finally(() => saveIDBdata(val, "selectedCategory"));
             }
             previousCategoryName = val;
         }
@@ -1313,15 +1334,15 @@
             return pleaseWaitAlert();
         }
         if (
-            (!$showFilterOptions || !isFullViewed) &&
+            (!$showFilterOptions || !$gridFullView) &&
             $documentScrollTop > 57
         ) {
             window.scrollY = document.documentElement.scrollTop = 57;
         }
-        if (isFullViewed && $selectedAnimeGridEl) {
-            $selectedAnimeGridEl.style.overflow = "hidden";
-            $selectedAnimeGridEl.style.overflow = "";
-            $selectedAnimeGridEl.scroll({ left: 0, behavior: "smooth" });
+        if ($gridFullView && $selectedMediaGridEl) {
+            $selectedMediaGridEl.style.overflow = "hidden";
+            $selectedMediaGridEl.style.overflow = "";
+            $selectedMediaGridEl.scroll({ left: 0, behavior: "smooth" });
         }
         if ($popupVisible) {
             popupContainer.scrollTop = 0;
@@ -1372,13 +1393,16 @@
                     previousCategoryName !== newCategoryName &&
                     $categories?.[previousCategoryName]
                 ) {
+                    window?.deletedCategory?.(previousCategoryName)
+
                     delete $categories?.[previousCategoryName];
                     $categories[newCategoryName] = true;
+                    
                     $selectedCategory = newCategoryName;
 
                     editCategoryName = false;
 
-                    loadAnime({
+                    loadMedia({
                         renamedCategoryKey: newCategoryName,
                         replacedCategoryKey: previousCategoryName,
                     });
@@ -1426,9 +1450,9 @@
                 ) {
                     $categories[newCategoryName] = true;
                     $selectedCategory = newCategoryName;
-
+                    
                     editCategoryName = false;
-                    loadAnime({
+                    loadMedia({
                         addedCategoryKey: newCategoryName,
                         copiedCategoryKey: previousCategoryName,
                     });
@@ -1500,13 +1524,15 @@
                         }
                     }
 
-                    delete $categories?.[previousCategoryName];
-                    delete $loadedAnimeLists?.[previousCategoryName];
-                    $categories = $categories;
-                    $loadedAnimeLists = $loadedAnimeLists;
-                    $selectedCategory = newCategoryName;
+                    window?.deletedCategory?.(previousCategoryName)
 
-                    loadAnime({
+                    delete $categories?.[previousCategoryName];
+                    delete $loadedMediaLists?.[previousCategoryName];
+                    
+                    $categories = $categories;
+                    $loadedMediaLists = $loadedMediaLists;
+                    $selectedCategory = newCategoryName;
+                    loadMedia({
                         deletedCategoryKey: previousCategoryName,
                     });
                 }
@@ -1535,7 +1561,7 @@
             }
             let description = $tagInfo?.[category]?.[tag];
             if (description) {
-                return `Description: ${description}\nCategory: ${category}`;
+                return `Description: ${description}\n\nCategory: ${category}`;
             }
         } else if (infoToGet === "all tags" && category != null) {
             let categoryInfo = $tagInfo?.[category];
@@ -1621,7 +1647,7 @@
 
     dropdownIsVisible.subscribe((val) => {
         if (val) {
-            window.setShouldGoBack?.(false);
+            window.addHistory?.();
         } else if (val === false && $windowWidth <= 425) {
             // Small Screen Width
             let openedDropdown =
@@ -1665,12 +1691,76 @@
         }
     });
 
+    function pleaseWaitAlert() {
+        $confirmPromise({
+            isAlert: true,
+            title: "Initializing resources",
+            text: "Please wait a moment...",
+        });
+    }
+
+    function horizontalWheel(event, parentClass) {
+        let element = event.target;
+        let classList = element.classList;
+        if (!classList.contains(parentClass)) {
+            element = element.closest("." + parentClass);
+        }
+        if (element.scrollWidth <= element.clientWidth) return;
+        if (event.deltaY !== 0 && event.deltaX === 0) {
+            event.preventDefault();
+            event.stopPropagation();
+            element.scrollLeft = Math.max(0, element.scrollLeft + event.deltaY);
+        }
+    }
+
+    let shouldScrollSnap = getLocalStorage("nonScrollSnapFilters") ?? true;
+
+    let meanAverageScore = getLocalStorage("meanAverageScore");
+    let meanPopularity = getLocalStorage("meanPopularity");
+    window.updateMeanNumberInfos = (newMeanAverageScore, newMeanPopularity) => {
+        if (newMeanAverageScore && newMeanAverageScore > 0) {
+            meanAverageScore = newMeanAverageScore;
+            setLocalStorage("meanAverageScore", meanAverageScore);
+        }
+        if (newMeanPopularity && newMeanPopularity > 0) {
+            meanPopularity = newMeanPopularity;
+            setLocalStorage("meanPopularity", meanPopularity);
+        }
+    };
+    let recListMAPE, recListMAPEIncreased;
+    (async () => {
+        recListMAPE = await getIDBdata("recListMAPE");
+    })();
+    window.updateRecListMAPE = (newRecListMAPE) => {
+        if (recListMAPE > 0 && recListMAPE !== newRecListMAPE) {
+            if (newRecListMAPE < recListMAPE) {
+                recListMAPEIncreased = true;
+            } else if (newRecListMAPE > recListMAPE) {
+                recListMAPEIncreased = false;
+            } else {
+                recListMAPEIncreased = null;
+            }
+            recListMAPE = newRecListMAPE;
+        } else if (newRecListMAPE > 0) {
+            recListMAPE = newRecListMAPE;
+        } else {
+            recListMAPEIncreased = recListMAPE = null;
+        }
+    };
+
+    async function handleGridView() {
+        $gridFullView = !$gridFullView;
+        setLocalStorage("gridFullView", $gridFullView)
+            .catch(() => {
+                removeLocalStorage("gridFullView");
+            })
+            .finally(() => {
+                saveIDBdata($gridFullView, "gridFullView");
+            });
+    }
+
     onMount(async () => {
-        // Init
-        selectedFilterCategoryName =
-            selectedFilterCategoryName ||
-            (await getIDBdata("selectedFilterCategoryName")) ||
-            "Anime Filter";
+        selectedFilterCategoryName = selectedFilterCategoryName || (await getIDBdata("selectedFilterCategoryName")) || "Media Filter";
         popupContainer = document?.getElementById("popup-container");
 
         window.addEventListener("click", clickOutsideListener);
@@ -1685,8 +1775,8 @@
                     return !el?.classList?.contains?.("display-none");
                 });
                 if (
-                    element?.closest?.(".filterCategory") ||
-                    element?.closest?.(".sortFilter") ||
+                    element?.closest?.(".filter-category") ||
+                    element?.closest?.(".sort-filter") ||
                     element?.closest?.(".filter-select") ||
                     element?.closest?.(".category-wrap")
                 ) {
@@ -1796,65 +1886,16 @@
                 }
             }
         });
+
+        $gridFullView = $gridFullView ?? (await getIDBdata("gridFullView"));
+        if ($gridFullView == null) {
+            setLocalStorage("gridFullView", $gridFullView = false)
+            .catch((ex) => {
+                removeLocalStorage("gridFullView")
+                console.error(ex)
+            }).finally(() => saveIDBdata(false, "gridFullView"))
+        }
     });
-
-    function pleaseWaitAlert() {
-        $confirmPromise({
-            isAlert: true,
-            title: "Initializing resources",
-            text: "Please wait a moment...",
-        });
-    }
-
-    function horizontalWheel(event, parentClass) {
-        let element = event.target;
-        let classList = element.classList;
-        if (!classList.contains(parentClass)) {
-            element = element.closest("." + parentClass);
-        }
-        if (element.scrollWidth <= element.clientWidth) return;
-        if (event.deltaY !== 0 && event.deltaX === 0) {
-            event.preventDefault();
-            event.stopPropagation();
-            element.scrollLeft = Math.max(0, element.scrollLeft + event.deltaY);
-        }
-    }
-
-    let shouldScrollSnap = getLocalStorage("nonScrollSnapFilters") ?? true;
-    $: isFullViewed = $gridFullView ?? getLocalStorage("gridFullView") ?? false;
-
-    let meanAverageScore = getLocalStorage("meanAverageScore");
-    let meanPopularity = getLocalStorage("meanPopularity");
-    window.updateMeanNumberInfos = (newMeanAverageScore, newMeanPopularity) => {
-        if (newMeanAverageScore && newMeanAverageScore > 0) {
-            meanAverageScore = newMeanAverageScore;
-            setLocalStorage("meanAverageScore", meanAverageScore);
-        }
-        if (newMeanPopularity && newMeanPopularity > 0) {
-            meanPopularity = newMeanPopularity;
-            setLocalStorage("meanPopularity", meanPopularity);
-        }
-    };
-    let recListMAPE, recListMAPEIncreased;
-    (async () => {
-        recListMAPE = await getIDBdata("recListMAPE");
-    })();
-    window.updateRecListMAPE = (newRecListMAPE) => {
-        if (recListMAPE > 0 && recListMAPE !== newRecListMAPE) {
-            if (newRecListMAPE < recListMAPE) {
-                recListMAPEIncreased = true;
-            } else if (newRecListMAPE > recListMAPE) {
-                recListMAPEIncreased = false;
-            } else {
-                recListMAPEIncreased = null;
-            }
-            recListMAPE = newRecListMAPE;
-        } else if (newRecListMAPE > 0) {
-            recListMAPE = newRecListMAPE;
-        } else {
-            recListMAPEIncreased = recListMAPE = null;
-        }
-    };
 </script>
 
 <main
@@ -1863,7 +1904,7 @@
     style:--active-tag-filter-space="{$showFilterOptions ? "auto" : ""}"
     style:--category-settings-space="{$showFilterOptions ? "30px" : ""}"
     style:--close-filters-space="{$showFilterOptions ? "42px" : ""}"
-    style:--maxFilterSelectionHeight="{maxFilterSelectionHeight}px"
+    style:--max-filter-selection-height="{maxFilterSelectionHeight}px"
 >
     <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
     <div
@@ -1872,12 +1913,12 @@
         tabindex="{editCategoryName || $menuVisible || $popupVisible || selectedCategoryElement
             ? ''
             : '0'}"
-        style:--editcancel-icon="{$showFilterOptions ? "25px" : ""}"
+        style:--edit-cancel-icon="{$showFilterOptions ? "25px" : ""}"
         style:--save-icon="{editCategoryName &&
         customCategoryName &&
         $categories &&
         !$categories?.[customCategoryName] &&
-        selectedCategoryAnimeFilters
+        selectedCategoryMediaFilters
             ? "25px"
             : ""}"
         on:keyup="{(e) => e.key === 'Enter' && handleCategoryPopup(e)}"
@@ -1895,7 +1936,7 @@
             style:pointer-events="{editCategoryName ? "" : "none"}"
             disabled="{!editCategoryName}"
             bind:value="{customCategoryName}"
-            on:focusin="{() => window?.setShouldGoBack?.(false)}"
+            on:focusin="{() => window?.addHistory?.()}"
         />
         {#if !editCategoryName || !$showFilterOptions}
             <div
@@ -1934,7 +1975,7 @@
                             {#each $categoriesKeys || [] as categoryName (categoryName || {})}
                                 <div
                                     class="option"
-                                    on:click="{(e) =>
+                                    on:click="{() =>
                                         selectCategory(categoryName)}"
                                     on:keyup="{(e) =>
                                         e.key === 'Enter' &&
@@ -1972,7 +2013,7 @@
                             if (
                                 !$selectedCategory ||
                                 !customCategoryName ||
-                                !selectedCategoryAnimeFilters
+                                !selectedCategoryMediaFilters
                             )
                                 return;
                             saveCategoryName();
@@ -1982,7 +2023,7 @@
                             if (
                                 !$selectedCategory ||
                                 !customCategoryName ||
-                                !selectedCategoryAnimeFilters
+                                !selectedCategoryMediaFilters
                             )
                                 return;
                             saveCategoryName();
@@ -2036,7 +2077,7 @@
         <div class="category-icon-wrap">
             <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
             <svg
-                class="showFilterOptions"
+                class="show-filter-options"
                 tabindex="{$menuVisible || $popupVisible ? '' : '0'}"
                 viewBox="0 0 512 512"
                 on:click="{() => handleShowFilterOptions()}"
@@ -2057,7 +2098,7 @@
         customCategoryName &&
         $categories &&
         !$categories?.[customCategoryName] &&
-        selectedCategoryAnimeFilters &&
+        selectedCategoryMediaFilters &&
         $categories?.[$selectedCategory] !== true
             ? "25px"
             : ""}"
@@ -2071,17 +2112,13 @@
         {#if filterCategories?.length}
             <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
             <span
-                class="filterCategory"
+                class="filter-category"
                 on:click="{handleShowFilterCategories}"
                 on:keyup="{(e) =>
                     e.key === 'Enter' && handleShowFilterCategories(e)}"
             >
-                <h2 class="filterCategory-dropdown">
-                    {#if selectedFilterCategoryName === "Anime Filter"}
-                        {"Media Filter"}
-                    {:else}
-                        {selectedFilterCategoryName || ""}
-                    {/if}
+                <h2 class="filter-category-dropdown">
+                    {selectedFilterCategoryName || ""}
                     <svg
                         viewBox="0 140 320 512"
                         tabindex="{!$menuVisible &&
@@ -2131,9 +2168,7 @@
                         </div>
                         <div class="options">
                             {#each filterCategories || [] as filterCategoryName (filterCategoryName || {})}
-                                {@const filterCategoryIsSelected =
-                                    filterCategoryName ===
-                                    selectedFilterCategoryName}
+                                {@const filterCategoryIsSelected = filterCategoryName === selectedFilterCategoryName}
                                 <div
                                     class="option"
                                     on:click="{(e) =>
@@ -2153,11 +2188,7 @@
                                             ? "hsl(var(--ac-color))"
                                             : "inherit"}"
                                     >
-                                        {#if filterCategoryName === "Anime Filter"}
-                                            {"Media Filter"}
-                                        {:else}
-                                            {filterCategoryName || ""}
-                                        {/if}
+                                        {filterCategoryName || ""}
                                     </h3>
                                 </div>
                             {/each}
@@ -2198,7 +2229,7 @@
                     e.key === 'Enter' &&
                     removeCategory(e)}"
             >
-                <svg class="filterCategory-wrap-icon" viewBox="0 0 448 512">
+                <svg class="filter-category-wrap-icon" viewBox="0 0 448 512">
                     <!-- minus -->
                     <path
                         d="M432 256c0 18-14 32-32 32H48a32 32 0 1 1 0-64h352c18 0 32 14 32 32z"
@@ -2207,13 +2238,13 @@
             </div>
         {/if}
         <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
-        {#if $showFilterOptions && customCategoryName && $categories && !$categories?.[customCategoryName] && selectedCategoryAnimeFilters && $categories?.[$selectedCategory] !== true}
+        {#if $showFilterOptions && customCategoryName && $categories && !$categories?.[customCategoryName] && selectedCategoryMediaFilters && $categories?.[$selectedCategory] !== true}
             <div
                 tabindex="{$menuVisible || $popupVisible ? '' : '0'}"
                 class="add-custom-category"
                 title="Add Custom Category"
                 on:click="{(e) => {
-                    if (!customCategoryName || !selectedCategoryAnimeFilters)
+                    if (!customCategoryName || !selectedCategoryMediaFilters)
                         return;
                     addCategory(e);
                 }}"
@@ -2221,13 +2252,13 @@
                     if (
                         e.key !== 'Enter' ||
                         !customCategoryName ||
-                        !selectedCategoryAnimeFilters
+                        !selectedCategoryMediaFilters
                     )
                         return;
                     addCategory(e);
                 }}"
             >
-                <svg class="filterCategory-wrap-icon" viewBox="0 0 448 512">
+                <svg class="filter-category-wrap-icon" viewBox="0 0 448 512">
                     <!-- add -->
                     <path
                         d="{'M256 80a32 32 0 1 0-64 0v144H48a32 32 0 1 0 0 64h144v144a32 32 0 1 0 64 0V288h144a32 32 0 1 0 0-64H256V80z'}"
@@ -2239,12 +2270,12 @@
     <div
         class="{'filters' +
             ($showFilterOptions ? '' : ' display-none') +
-            ($hasWheel ? ' hasWheel' : '') +
+            ($hasWheel ? ' has-wheel' : '') +
             (shouldScrollSnap && $android ? ' android' : '')}"
         id="filters"
         on:wheel="{(e) => {
             horizontalWheel(e, 'filters');
-            if (isFullViewed) {
+            if ($gridFullView) {
                 if (!scrollingToTop && e.deltaY < 0) {
                     scrollingToTop = true;
                     let newScrollPosition = 0;
@@ -2253,25 +2284,19 @@
                 }
             }
         }}"
-        style:--maxPaddingHeight="{selectedFilterElement
+        style:--max-padding-height="{selectedFilterElement
             ? maxFilterSelectionHeight + 65 + "px"
             : "0"}"
     >
         {#if filterCategories && ($orderedFilters || $nonOrderedFilters)}
             {#each filterCategories || [] as filterCategoryName (filterCategoryName || {})}
-                {@const filterCategoryIsSelected =
-                    filterCategoryName === selectedFilterCategoryName}
+                {@const filterCategoryIsSelected = filterCategoryName === selectedFilterCategoryName}
                 {#if $orderedFilters && filterCategoriesSelections}
-                    {@const categoryIsAlgorithmFilter =
-                        filterCategoryName === "Algorithm Filter"}
-                    {@const filterSelections =
-                        filterCategoriesSelections?.[filterCategoryName] || []}
+                    {@const categoryIsAlgorithmFilter = filterCategoryName === "Algorithm Filter"}
+                    {@const filterSelections = filterCategoriesSelections?.[filterCategoryName] || []}
                     {#each filterSelections || [] as filterSelectionName (filterCategoryName + filterSelectionName || {})}
-                        {@const filterSelectionKey =
-                            filterCategoryName + "_" + filterSelectionName}
-                        {@const filterSelectionIsSelected =
-                            filterCategoryIsSelected &&
-                            filterSelectionName === openedFilterSelectionName}
+                        {@const filterSelectionKey = filterCategoryName + "_" + filterSelectionName}
+                        {@const filterSelectionIsSelected = filterCategoryIsSelected && filterSelectionName === openedFilterSelectionName}
                         <div
                             class="{'filter-select' +
                                 (filterCategoryIsSelected
@@ -2280,13 +2305,7 @@
                         >
                             <div class="filter-name">
                                 <h2>
-                                    {#if filterSelectionName==="airing status"}
-                                        {"Release Status"}
-                                    {:else if filterSelectionName==="shown score"}
-                                        {"Shown Metric"}
-                                    {:else}
-                                        {filterSelectionName || ""}
-                                    {/if}
+                                    {filterSelectionName || ""}
                                 </h2>
                             </div>
                             <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
@@ -2340,7 +2359,7 @@
                                             $windowWidth <= 425 ||
                                             !filterCategoryIsSelected}"
                                         on:focusin="{() =>
-                                            window?.setShouldGoBack?.(false)}"
+                                            window?.addHistory?.()}"
                                     />
                                 </div>
                                 {#if filterSelectionIsSelected}
@@ -2385,13 +2404,7 @@
                                 >
                                     <div class="header">
                                         <div class="filter-title">
-                                            {#if filterSelectionName==="airing status"}
-                                                {"Release Status"}
-                                            {:else if filterSelectionName==="shown score"}
-                                                {"Shown Metric"}
-                                            {:else}
-                                                {filterSelectionName || ""}
-                                            {/if}
+                                            {filterSelectionName || ""}
                                         </div>
                                         <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                                         <svg
@@ -2437,7 +2450,7 @@
                                             !filterCategoryIsSelected ||
                                             !filterSelectionIsSelected}"
                                         on:focusin="{() =>
-                                            window?.setShouldGoBack?.(false)}"
+                                            window?.addHistory?.()}"
                                     />
                                     <div
                                         class="options"
@@ -2445,143 +2458,155 @@
                                     >
                                         {#if filterSelectionIsSelected}
                                             {@const isCOO = filterSelectionName === "country of origin"}
-                                            {#await filterSelectionOptionsLoaded ? 
-                                                (filterSelectionsSearch[filterSelectionKey] ? 
-                                                    $orderedFilters?.[filterSelectionName]?.filter?.((option) => {
-                                                        let hasMatch
-                                                        if (isCOO) {
-                                                            hasMatch = hasPartialMatch(COOs[option?.toUpperCase?.()], filterSelectionsSearch[filterSelectionKey])
-                                                        }
-                                                        return hasMatch || hasPartialMatch(option, filterSelectionsSearch[filterSelectionKey])
-                                                    }) : $orderedFilters?.[filterSelectionName]) 
-                                                : new Promise( (resolve) => 
-                                                    resolve(filterSelectionsSearch[filterSelectionKey] ? 
-                                                        $orderedFilters?.[filterSelectionName]?.filter?.((option) => {
-                                                            let hasMatch
-                                                            if (isCOO) {
-                                                                hasMatch = hasPartialMatch(COOs[option?.toUpperCase?.()], filterSelectionsSearch[filterSelectionKey])
-                                                            }
-                                                            return hasMatch || hasPartialMatch(option, filterSelectionsSearch[filterSelectionKey])
-                                                        }) : $orderedFilters?.[filterSelectionName]
-                                                    ), 
-                                                )
-                                            }{""}{:then selectionOptions}
+                                            {@const filterSelectionSearchWord = filterSelectionsSearch[filterSelectionKey]?.trim?.().replace(/[\uFF01-\uFF60\uFFE0-\uFFE6\u3000]/g, (ch) => {
+                                                if (ch === '\u3000') return '';
+                                                return String.fromCharCode(ch.charCodeAt(0) - 0xFEE0);
+                                            }).normalize('NFD').replace(/[^a-zA-Z0-9\p{Lo}]/gu, '').toLowerCase()}
+                                            {@const selectionOptions = filterSelectionSearchWord ? 
+                                                $orderedFilters?.[filterSelectionName]?.filter?.((option) => hasPartialMatch(option, filterSelectionSearchWord))
+                                                : $orderedFilters?.[filterSelectionName]
+                                            }
+                                            {#if selectionOptions?.length}
+                                                {@const isReadOnly =
+                                                    filterCategoryName ===
+                                                        "Media Filter" &&
+                                                    $filterConfig
+                                                        ?.readOnly?.[
+                                                        filterSelectionName
+                                                    ]}
                                                 {@const filterCategoryArray =
                                                     filterCategoryName ===
-                                                    "Anime Filter"
-                                                        ? selectedCategoryAnimeFilters
+                                                    "Media Filter"
+                                                        ? selectedCategoryMediaFilters
                                                         : filterCategoryName ===
                                                             "Algorithm Filter"
                                                         ? $algorithmFilters
                                                         : filterCategoryName ===
                                                             "Content Caution"
-                                                            ? $animeCautions
+                                                            ? $mediaCautions
                                                             : []}
-                                                {#if selectionOptions?.length}
-                                                    {@const isReadOnly =
-                                                        filterCategoryName ===
-                                                            "Anime Filter" &&
-                                                        $filterConfig
-                                                            ?.readOnly?.[
-                                                            filterSelectionName
-                                                        ]}
-                                                    {#each selectionOptions || [] as optionName, optionIdx (optionName || {})}
-                                                        {#if categoryIsAlgorithmFilter || optionName !== "all"}
-                                                            {@const status =
-                                                                filterCategoryArray?.find?.(
-                                                                    (filter) =>
-                                                                        filter?.optionName ===
-                                                                            optionName &&
-                                                                        filter?.optionCategory ===
-                                                                            filterSelectionName &&
-                                                                        filter?.filterType ===
-                                                                            "selection",
-                                                                )?.status}
-                                                            {#await filterSelectionOptionsLoaded ? 1 : new Promise( (resolve) => setTimeout(resolve, Math.min(optionIdx * 17, 2000000000)), )}{""}{:then}
-                                                                <div
-                                                                    title="{getTagFilterInfoText(
-                                                                        filterSelectionName ===
-                                                                            'tag category'
-                                                                            ? {
-                                                                                category:
-                                                                                    optionName,
+                                                {#each selectionOptions || [] as optionName, optionIdx (optionName || {})}
+                                                    {#if categoryIsAlgorithmFilter || optionName !== "all"}
+                                                        {@const status = filterCategoryArray?.find?.((filter) =>
+                                                            filter?.optionName === optionName &&
+                                                            filter?.optionCategory === filterSelectionName &&
+                                                            filter?.filterType === "selection"
+                                                        )?.status}
+                                                        {#await filterSelectionOptionsLoaded ? 1 : new Promise((resolve) => setTimeout(resolve, Math.min(optionIdx * 17, 2000000000)))}{""}{:then}
+                                                            <div
+                                                                title="{getTagFilterInfoText(
+                                                                    filterSelectionName ===
+                                                                        'tag category'
+                                                                        ? {
+                                                                            category:
+                                                                                optionName,
+                                                                        }
+                                                                        : filterSelectionName ===
+                                                                            'tag'
+                                                                        ? {
+                                                                                tag: optionName,
                                                                             }
-                                                                            : filterSelectionName ===
-                                                                                'tag'
-                                                                            ? {
-                                                                                    tag: optionName,
-                                                                                }
-                                                                            : {},
-                                                                        filterSelectionName ===
-                                                                            'tag category'
-                                                                            ? 'all tags'
-                                                                            : filterSelectionName ===
-                                                                                'tag'
-                                                                            ? 'category and description'
-                                                                            : '',
-                                                                    )}"
-                                                                    class="option"
-                                                                    on:click="{handleFilterSelectionOptionChange(
+                                                                        : {},
+                                                                    filterSelectionName ===
+                                                                        'tag category'
+                                                                        ? 'all tags'
+                                                                        : filterSelectionName ===
+                                                                            'tag'
+                                                                        ? 'category and description'
+                                                                        : '',
+                                                                )}"
+                                                                class="option"
+                                                                on:click="{handleFilterSelectionOptionChange(
+                                                                    optionName,
+                                                                    filterSelectionName,
+                                                                    filterCategoryName,
+                                                                    isReadOnly,
+                                                                )}"
+                                                                on:keyup="{(
+                                                                    e,
+                                                                ) =>
+                                                                    e.key ===
+                                                                        'Enter' &&
+                                                                    handleFilterSelectionOptionChange(
                                                                         optionName,
                                                                         filterSelectionName,
                                                                         filterCategoryName,
                                                                         isReadOnly,
                                                                     )}"
-                                                                    on:keyup="{(
-                                                                        e,
-                                                                    ) =>
-                                                                        e.key ===
-                                                                            'Enter' &&
-                                                                        handleFilterSelectionOptionChange(
-                                                                            optionName,
-                                                                            filterSelectionName,
-                                                                            filterCategoryName,
-                                                                            isReadOnly,
-                                                                        )}"
-                                                                >
-                                                                    <h3>
-                                                                        {#if isCOO}
-                                                                            {@const upperCaseCC = optionName?.toUpperCase?.()}
-                                                                            {@const fullCountryName = COOs[upperCaseCC]}
-                                                                            {#if fullCountryName}
-                                                                                {`${fullCountryName} (${upperCaseCC})`}
-                                                                            {:else}
-                                                                                {upperCaseCC || optionName || ""}
-                                                                            {/if}
+                                                            >
+                                                                <h3>
+                                                                    {#if isCOO}
+                                                                        {@const upperCaseCC = optionName?.toUpperCase?.()}
+                                                                        {@const fullCountryName = COOs[upperCaseCC]}
+                                                                        {#if fullCountryName}
+                                                                            {`${fullCountryName} (${upperCaseCC})`}
                                                                         {:else}
-                                                                            {optionName || ""}
+                                                                            {upperCaseCC || optionName || ""}
                                                                         {/if}
-                                                                    </h3>
-                                                                    {#if status === "included" || (status === "excluded" && !isReadOnly)}
-                                                                        <svg
-                                                                            class="item-info"
-                                                                            viewBox="0 0 512 512"
-                                                                            style:--optionColor="{status ===
-                                                                            "included"
-                                                                                ? // green
-                                                                                "#5f9ea0"
-                                                                                : // red
-                                                                                "#e85d75"}"
-                                                                        >
-                                                                            <path
-                                                                                class="item-info-path"
-                                                                                d="{status ===
-                                                                                    'excluded' ||
-                                                                                filterCategoryName ===
-                                                                                    'Content Caution'
-                                                                                    ? // circle-xmark
-                                                                                    'M256 48a208 208 0 1 1 0 416 208 208 0 1 1 0-416zm0 464a256 256 0 1 0 0-512 256 256 0 1 0 0 512zm-81-337c-9 9-9 25 0 34l47 47-47 47c-9 9-9 24 0 34s25 9 34 0l47-47 47 47c9 9 24 9 34 0s9-25 0-34l-47-47 47-47c9-10 9-25 0-34s-25-9-34 0l-47 47-47-47c-10-9-25-9-34 0z'
-                                                                                    : // circle-check
-                                                                                    'M256 48a208 208 0 1 1 0 416 208 208 0 1 1 0-416zm0 464a256 256 0 1 0 0-512 256 256 0 1 0 0 512zm113-303c9-9 9-25 0-34s-25-9-34 0L224 286l-47-47c-9-9-24-9-34 0s-9 25 0 34l64 64c10 9 25 9 34 0l128-128z'}"
-
-                                                                            ></path>
-                                                                        </svg>
+                                                                    {:else}
+                                                                        {optionName || ""}
                                                                     {/if}
-                                                                    {#if typeof window?.showFullScreenInfo === "function" && ((filterSelectionName === "tag" && getTagFilterInfoText({ tag: optionName }, "category and description")) || (filterSelectionName === "tag category" && !jsonIsEmpty($tagInfo?.[optionName])))}
-                                                                        <svg
-                                                                            class="extra-item-info"
-                                                                            viewBox="0 0 512 512"
-                                                                            on:click|stopPropagation="{() => {
+                                                                </h3>
+                                                                {#if status === "included" || (status === "excluded" && !isReadOnly)}
+                                                                    <svg
+                                                                        class="item-info"
+                                                                        viewBox="0 0 512 512"
+                                                                        style:--option-color="{status ===
+                                                                        "included"
+                                                                            ? // green
+                                                                            "#5f9ea0"
+                                                                            : // red
+                                                                            "#e85d75"}"
+                                                                    >
+                                                                        <path
+                                                                            class="item-info-path"
+                                                                            d="{status ===
+                                                                                'excluded' ||
+                                                                            filterCategoryName ===
+                                                                                'Content Caution'
+                                                                                ? // circle-xmark
+                                                                                'M256 48a208 208 0 1 1 0 416 208 208 0 1 1 0-416zm0 464a256 256 0 1 0 0-512 256 256 0 1 0 0 512zm-81-337c-9 9-9 25 0 34l47 47-47 47c-9 9-9 24 0 34s25 9 34 0l47-47 47 47c9 9 24 9 34 0s9-25 0-34l-47-47 47-47c9-10 9-25 0-34s-25-9-34 0l-47 47-47-47c-10-9-25-9-34 0z'
+                                                                                : // circle-check
+                                                                                'M256 48a208 208 0 1 1 0 416 208 208 0 1 1 0-416zm0 464a256 256 0 1 0 0-512 256 256 0 1 0 0 512zm113-303c9-9 9-25 0-34s-25-9-34 0L224 286l-47-47c-9-9-24-9-34 0s-9 25 0 34l64 64c10 9 25 9 34 0l128-128z'}"
+
+                                                                        ></path>
+                                                                    </svg>
+                                                                {/if}
+                                                                {#if typeof window?.showFullScreenInfo === "function" && ((filterSelectionName === "tag" && getTagFilterInfoText({ tag: optionName }, "category and description")) || (filterSelectionName === "tag category" && !jsonIsEmpty($tagInfo?.[optionName])))}
+                                                                    <svg
+                                                                        class="extra-item-info"
+                                                                        viewBox="0 0 512 512"
+                                                                        on:click|stopPropagation="{() => {
+                                                                            let htmlToShow =
+                                                                                '';
+                                                                            if (
+                                                                                filterSelectionName ===
+                                                                                'tag'
+                                                                            ) {
+                                                                                htmlToShow =
+                                                                                    getTagInfoHTML(
+                                                                                        optionName,
+                                                                                    );
+                                                                            } else if (
+                                                                                filterSelectionName ===
+                                                                                'tag category'
+                                                                            ) {
+                                                                                htmlToShow =
+                                                                                    getTagCategoryInfoHTML(
+                                                                                        optionName,
+                                                                                    );
+                                                                            }
+                                                                            window?.showFullScreenInfo?.(
+                                                                                htmlToShow,
+                                                                            );
+                                                                        }}"
+                                                                        on:keyup|stopPropagation="{(
+                                                                            e,
+                                                                        ) => {
+                                                                            if (
+                                                                                e.key ===
+                                                                                'Enter'
+                                                                            ) {
                                                                                 let htmlToShow =
                                                                                     '';
                                                                                 if (
@@ -2604,55 +2629,24 @@
                                                                                 window?.showFullScreenInfo?.(
                                                                                     htmlToShow,
                                                                                 );
-                                                                            }}"
-                                                                            on:keyup|stopPropagation="{(
-                                                                                e,
-                                                                            ) => {
-                                                                                if (
-                                                                                    e.key ===
-                                                                                    'Enter'
-                                                                                ) {
-                                                                                    let htmlToShow =
-                                                                                        '';
-                                                                                    if (
-                                                                                        filterSelectionName ===
-                                                                                        'tag'
-                                                                                    ) {
-                                                                                        htmlToShow =
-                                                                                            getTagInfoHTML(
-                                                                                                optionName,
-                                                                                            );
-                                                                                    } else if (
-                                                                                        filterSelectionName ===
-                                                                                        'tag category'
-                                                                                    ) {
-                                                                                        htmlToShow =
-                                                                                            getTagCategoryInfoHTML(
-                                                                                                optionName,
-                                                                                            );
-                                                                                    }
-                                                                                    window?.showFullScreenInfo?.(
-                                                                                        htmlToShow,
-                                                                                    );
-                                                                                }
-                                                                            }}"
-                                                                            ><path
-                                                                                class="item-info-path"
-                                                                                d="M256 512a256 256 0 1 0 0-512 256 256 0 1 0 0 512zm-40-176h24v-64h-24a24 24 0 1 1 0-48h48c13 0 24 11 24 24v88h8a24 24 0 1 1 0 48h-80a24 24 0 1 1 0-48zm40-208a32 32 0 1 1 0 64 32 32 0 1 1 0-64z"
+                                                                            }
+                                                                        }}"
+                                                                        ><path
+                                                                            class="item-info-path"
+                                                                            d="M256 512a256 256 0 1 0 0-512 256 256 0 1 0 0 512zm-40-176h24v-64h-24a24 24 0 1 1 0-48h48c13 0 24 11 24 24v88h8a24 24 0 1 1 0 48h-80a24 24 0 1 1 0-48zm40-208a32 32 0 1 1 0 64 32 32 0 1 1 0-64z"
 
-                                                                            ></path></svg
-                                                                        >
-                                                                    {/if}
-                                                                </div>
-                                                            {/await}
-                                                        {/if}
-                                                    {/each}
-                                                {:else}
-                                                    <div class="option">
-                                                        <h3>No Results</h3>
-                                                    </div>
-                                                {/if}
-                                            {/await}
+                                                                        ></path></svg
+                                                                    >
+                                                                {/if}
+                                                            </div>
+                                                        {/await}
+                                                    {/if}
+                                                {/each}
+                                            {:else}
+                                                <div class="option">
+                                                    <h3>No Results</h3>
+                                                </div>
+                                            {/if}
                                         {/if}
                                     </div>
                                 </div>
@@ -2726,18 +2720,17 @@
                         </div>
                     {/if}
                 {/each}
-                {@const numberFilters =
-                    $nonOrderedFilters?.[filterCategoryName]?.number}
+                {@const numberFilters = $nonOrderedFilters?.[filterCategoryName]?.number}
                 {#each numberFilters || [] as { name, defaultValue, maxValue, minValue } (filterCategoryName + name || {})}
                     {#if filterCategoryIsSelected}
                         {@const numberFilterKey = filterCategoryName + name}
                         {@const filterCategoryArray =
-                            filterCategoryName === "Anime Filter"
-                                ? selectedCategoryAnimeFilters
+                            filterCategoryName === "Media Filter"
+                                ? selectedCategoryMediaFilters
                                 : filterCategoryName === "Algorithm Filter"
                                   ? $algorithmFilters
                                   : filterCategoryName === "Content Caution"
-                                    ? $animeCautions
+                                    ? $mediaCautions
                                     : []}
                         <div
                             class="filter-input-number"
@@ -2834,7 +2827,7 @@
                                         disabled="{!$showFilterOptions ||
                                             $initData}"
                                         on:focusin="{() =>
-                                            window?.setShouldGoBack?.(false)}"
+                                            window?.addHistory?.()}"
                                     />
                                 {/key}
                             </div>
@@ -2854,15 +2847,15 @@
     </div>
     <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
     <div
-        id="activeFilters"
-        class="{'activeFilters' + ($showFilterOptions ? '' : ' display-none')}"
+        id="active-filters"
+        class="{'active-filters' + ($showFilterOptions ? '' : ' display-none')}"
     >
-        <div id="tagFilters" class="tagFilters">
+        <div id="tag-filters" class="tag-filters">
             <div
                 tabindex="{!$menuVisible && !$popupVisible && $showFilterOptions
                     ? '0'
                     : '-1'}"
-                class="empty-tagFilter"
+                class="empty-tag-filter"
                 title="Remove Filters"
                 on:click="{removeAllActiveFilters}"
                 on:keyup="{(e) =>
@@ -2876,18 +2869,25 @@
                 </svg>
             </div>
             {#each activeFilters || [] as { filterType, optionName, optionCategory, status, optionValue }, activeFilterIdx (filterType + optionName + (optionCategory ?? "") || {})}
+                {@const addTagInfo = optionCategory === "tag" && optionName !== "all"}
+                {@const addTagCategoryInfo = optionCategory === "tag category" && optionName !== "all"}
                 <div
-                    class="activeTagFilter"
+                    class="active-tag-filter"
+                    title={(
+                        addTagInfo ? (getTagFilterInfoText({ tag: optionName }, "category and description") || "") :
+                        addTagCategoryInfo ? (getTagFilterInfoText({ category: optionName }, "all tags") || "")
+                        : ""
+                    )}
                     tabindex="{!$menuVisible &&
                     !$popupVisible &&
                     $showFilterOptions
                         ? '0'
                         : '-1'}"
-                    style:--activeTagFilterColor="{status === "included"
+                    style:--active-tag-filter-color="{status === "included"
                         ? "hsl(185deg, 65%, 50%)"
                         : status === "excluded"
-                          ? "hsl(345deg, 75%, 60%)"
-                          : "hsl(0deg, 0%, 50%)"}"
+                        ? "hsl(345deg, 75%, 60%)"
+                        : "hsl(0deg, 0%, 50%)"}"
                     on:click="{(e) =>
                         changeActiveStatus(
                             e,
@@ -2908,7 +2908,7 @@
                             $filterConfig?.readOnly?.[optionCategory],
                         )}"
                 >
-                    <div class="activeFilter">
+                    <div class="active-filter">
                         {#if filterType === "number"}
                             <h3>
                                 {optionName + " : " + optionValue || ""}
@@ -2921,15 +2921,8 @@
                                     {`${optionCategory} : ${fullCountryName || upperCaseCC || ''}`}
                                 </h3>
                             {:else}
-                                {@const categoryName = 
-                                    optionCategory==="airing status"
-                                    ? "Release Status"
-                                    : optionCategory==="shown score"
-                                    ? "Shown Metric"
-                                    : optionCategory
-                                }
                                 <h3>
-                                    {`${categoryName} : ${optionName || ''}`}
+                                    {`${optionCategory} : ${optionName || ''}`}
                                 </h3>
                             {/if}
                         {:else}
@@ -2938,7 +2931,7 @@
                     </div>
                     <!-- xmark -->
                     <svg
-                        class="removeActiveFilter"
+                        class="remove-active-filter"
                         viewBox="0 0 24 24"
                         tabindex="{!$menuVisible &&
                         !$popupVisible &&
@@ -2981,7 +2974,6 @@
         >
             <h2
                 on:click="{() => {
-                    $dataStatus = null;
                     getExtraInfo();
                 }}"
                 on:keyup="{() => {}}"
@@ -2989,8 +2981,14 @@
                     ? ' loading'
                     : ''}"
             >
-                {#if $dataStatus && $showStatus}
-                    {$dataStatus}
+                {#if $showStatus && (
+                    $dataStatus 
+                    || $isImporting 
+                    || $isExporting
+                    || $loadingCategory[""] 
+                    || $loadingCategory[$selectedCategory]
+                )}
+                    {$dataStatus || "Please Wait"}
                 {:else}
                     {$extraInfo?.[$currentExtraInfo] || "Please Wait"}
                 {/if}
@@ -3010,7 +3008,7 @@
             placeholder="Search"
             tabindex="{$menuVisible || $popupVisible ? '-1' : '0'}"
             bind:value="{$searchedWord}"
-            on:focusin="{() => window?.setShouldGoBack?.(false)}"
+            on:focusin="{() => window?.addHistory?.()}"
         />
     </div>
 
@@ -3018,13 +3016,13 @@
     <div class="last-filter-option">
         <div
             tabindex="{$menuVisible || $popupVisible ? '' : '0'}"
-            class="changeGridView"
+            class="change-grid-view"
             on:click="{handleGridView}"
             on:keyup="{(e) => e.key === 'Enter' && handleGridView()}"
         >
-            <svg viewBox="{`0 0 ${isFullViewed ? '312' : '512'} 512`}">
+            <svg viewBox="{`0 0 ${$gridFullView ? '312' : '512'} 512`}">
                 <path
-                    d="{isFullViewed
+                    d="{$gridFullView
                         ? // arrows-up-down
                           'M183 9a32 32 0 0 0-46 0l-96 96a32 32 0 0 0 46 46l41-42v294l-41-42a32 32 0 0 0-46 46l96 96c13 12 33 12 46 0l96-96a32 32 0 0 0-46-46l-41 42V109l41 42a32 32 0 0 0 46-46L183 9z'
                         : // arrows-left-right
@@ -3033,7 +3031,7 @@
             </svg>
         </div>
         {#if $orderedFilters?.sortFilter}
-            <div class="sortFilter">
+            <div class="sort-filter">
                 <svg
                     viewBox="{`0 ${
                         selectedSortType === 'asc' ? '-' : ''
@@ -3132,7 +3130,7 @@
                 </div>
             </div>
         {:else}
-            <div class="sortFilter skeleton shimmer"></div>
+            <div class="sort-filter skeleton shimmer"></div>
         {/if}
     </div>
 </main>
@@ -3148,7 +3146,7 @@
         color: var(--fg-color) !important;
     }
 
-    .anime-lists {
+    .media-lists {
         display: flex;
         gap: 50px;
         overflow-x: hidden;
@@ -3173,10 +3171,10 @@
         box-shadow: 0 14px 28px rgba(0, 0, 0, 0.25), 0 10px 10px rgba(0, 0, 0, 0.2) !important;
     }
     .category-wrap {
-        --editcancel-icon: ;
+        --edit-cancel-icon: ;
         --save-icon: ;
         display: grid;
-        grid-template-columns: auto var(--save-icon) var(--editcancel-icon) 25px;
+        grid-template-columns: auto var(--save-icon) var(--edit-cancel-icon) 25px;
         align-items: center;
         column-gap: 20px;
         padding: 8px 15px 8px 0px;
@@ -3200,7 +3198,7 @@
         overflow-y: auto;
         overflow-x: hidden;
         overscroll-behavior: contain;
-        max-height: var(--maxFilterSelectionHeight);
+        max-height: var(--max-filter-selection-height);
         margin-top: 1px;
         border-radius: 6px;
         padding: 6px;
@@ -3275,12 +3273,12 @@
         align-items: center;
         margin-left: auto;
     }
-    .filterCategory-wrap-icon {
+    .filter-category-wrap-icon {
         height: 20px;
         width: 20px;
         cursor: pointer;
     }
-    .filterCategory-dropdown {
+    .filter-category-dropdown {
         display: grid;
         grid-template-columns: auto 15px;
         gap: 2px;
@@ -3288,11 +3286,11 @@
         width: 125px;
         cursor: pointer;
     }
-    .filterCategory-dropdown > svg {
+    .filter-category-dropdown > svg {
         width: 15px;
         height: 15px;
     }
-    .filterCategory .options-wrap {
+    .filter-category .options-wrap {
         position: absolute;
         left: 0;
         top: 27.5px;
@@ -3301,14 +3299,14 @@
         overflow-y: auto;
         overflow-x: hidden;
         overscroll-behavior: contain;
-        max-height: var(--maxFilterSelectionHeight);
+        max-height: var(--max-filter-selection-height);
         margin-top: 1px;
         border-radius: 6px;
         padding: 6px;
         z-index: 1;
         cursor: default;
     }
-    .filterCategory .options {
+    .filter-category .options {
         display: flex;
         align-items: start;
         flex-direction: column;
@@ -3316,7 +3314,7 @@
         gap: 5px;
         width: max-content;
     }
-    .filterCategory .option {
+    .filter-category .option {
         color: var(--fg-color);
         display: grid;
         align-items: center;
@@ -3328,7 +3326,7 @@
         user-select: none;
         border-radius: 6px;
     }
-    .filterCategory .option h3 {
+    .filter-category .option h3 {
         cursor: pointer;
         text-transform: capitalize;
     }
@@ -3339,7 +3337,7 @@
         align-items: center;
     }
 
-    .showFilterOptions {
+    .show-filter-options {
         height: 25px;
         width: 25px;
         cursor: pointer;
@@ -3381,7 +3379,7 @@
         width: 100px;
     }
 
-    .filterCategory {
+    .filter-category {
         overflow-x: auto;
         overflow-y: hidden;
         width: fit-content;
@@ -3389,11 +3387,11 @@
         scrollbar-width: none;
     }
 
-    .filterCategory::-webkit-scrollbar {
+    .filter-category::-webkit-scrollbar {
         display: none;
     }
 
-    .filterCategory h2 {
+    .filter-category h2 {
         white-space: nowrap;
         user-select: none;
     }
@@ -3452,10 +3450,10 @@
     }
 
     .data-status h2.loading {
-        animation: loadingBlink 1s ease-in-out infinite;
+        animation: loading-blink 1s ease-in-out infinite;
     }
     .mean-error.loading {
-        animation: loadingBlink 1s ease-in-out infinite;
+        animation: loading-blink 1s ease-in-out infinite;
     }
 
     .filters {
@@ -3464,7 +3462,7 @@
         display: flex;
         gap: 10px;
         flex-wrap: nowrap;
-        padding-bottom: var(--maxPaddingHeight);
+        padding-bottom: var(--max-padding-height);
         margin-top: 20px;
         user-select: none;
         -ms-overflow-style: none;
@@ -3550,7 +3548,7 @@
         width: 165px;
         overflow-y: auto;
         overscroll-behavior: contain;
-        max-height: var(--maxFilterSelectionHeight);
+        max-height: var(--max-filter-selection-height);
         margin-top: 1px;
         border-radius: 6px;
         padding: 6px;
@@ -3626,7 +3624,7 @@
     }
 
     .filter-select .option svg {
-        fill: var(--optionColor);
+        fill: var(--option-color);
         height: 14px;
         width: 14px;
     }
@@ -3675,7 +3673,7 @@
         }
     }
 
-    .activeFilters {
+    .active-filters {
         display: grid;
         align-items: start;
         justify-content: space-between;
@@ -3685,11 +3683,11 @@
         grid-template-columns: 1fr;
         margin-top: 20px;
     }
-    .activeFilters.seenMore {
+    .active-filters.seen-more {
         grid-template-columns: calc(100% - 43px) 28px;
     }
 
-    .activeFilters .empty-tagFilter {
+    .active-filters .empty-tag-filter {
         display: flex;
         justify-content: center;
         align-items: center;
@@ -3699,12 +3697,12 @@
         height: 30px;
     }
 
-    .empty-tagFilter svg {
+    .empty-tag-filter svg {
         width: 20px;
         height: 20px;
     }
 
-    .tagFilters {
+    .tag-filters {
         display: flex;
         flex-wrap: wrap;
         align-items: center;
@@ -3717,29 +3715,29 @@
         -ms-overflow-style: none;
         scrollbar-width: none;
     }
-    .tagFilters::-webkit-scrollbar {
+    .tag-filters::-webkit-scrollbar {
         display: none;
     }
 
-    .tagFilters > * {
+    .tag-filters > * {
         scroll-snap-align: start;
     }
 
-    .tagFilters.skeleton {
+    .tag-filters.skeleton {
         height: 28px;
         width: 90px;
     }
 
-    .tagFilters:after {
+    .tag-filters:after {
         content: "";
         flex: 1000 0 auto;
     }
 
-    .activeFilters .activeTagFilter {
-        animation: fadeIn 0.2s ease-out;
+    .active-filters .active-tag-filter {
+        animation: fade-in 0.2s ease-out;
         background-color: var(--bg-color);
-        color: var(--activeTagFilterColor);
-        border: 1px solid var(--activeTagFilterColor);
+        color: var(--active-tag-filter-color);
+        border: 1px solid var(--active-tag-filter-color);
         padding: 0 10px;
         display: grid;
         grid-template-columns: calc(100% - 20px) 20px;
@@ -3752,7 +3750,7 @@
         height: 30px;
         max-width: 100%;
     }
-    .activeFilter {
+    .active-filter {
         height: 100%;
         display: grid;
         align-items: center;
@@ -3763,22 +3761,22 @@
         -ms-overflow-style: none;
         scrollbar-width: none;
     }
-    .activeFilter::-webkit-scrollbar {
+    .active-filter::-webkit-scrollbar {
         display: none;
     }
-    .activeFilter > h3 {
+    .active-filter > h3 {
         line-height: 1px;
         min-width: max-content;
         text-transform: capitalize;
         cursor: pointer;
     }
-    .activeTagFilter svg {
+    .active-tag-filter svg {
         width: 20px;
         height: 20px;
-        fill: var(--activeTagFilterColor) !important;
+        fill: var(--active-tag-filter-color) !important;
     }
 
-    .changeGridView {
+    .change-grid-view {
         display: flex;
         justify-content: center;
         align-items: center;
@@ -3788,24 +3786,9 @@
         width: 30px;
         height: 30px;
     }
-    .changeGridView svg {
+    .change-grid-view svg {
         height: 15px;
         width: 15px;
-    }
-
-    .showHideActiveFilters {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        border-radius: 6px;
-        cursor: pointer;
-        width: 30px;
-        height: 30px;
-    }
-
-    .showHideActiveFilters svg {
-        height: 25px;
-        width: 25px;
     }
 
     .last-filter-option {
@@ -3817,7 +3800,7 @@
         margin-top: 12px;
     }
 
-    .sortFilter {
+    .sort-filter {
         display: flex;
         justify-content: end;
         align-items: center;
@@ -3825,27 +3808,27 @@
         margin-left: auto;
         position: relative;
     }
-    .sortFilter.skeleton {
+    .sort-filter.skeleton {
         min-height: 17px;
         min-width: 109px;
     }
-    .sortFilter > h2 {
+    .sort-filter > h2 {
         text-align: end;
     }
-    .sortFilter h2,
-    .sortFilter h3,
-    .sortFilter svg {
+    .sort-filter h2,
+    .sort-filter h3,
+    .sort-filter svg {
         user-select: none;
         cursor: pointer;
         text-transform: capitalize;
     }
 
-    .sortFilter svg {
+    .sort-filter svg {
         height: 15px;
         width: 15px;
     }
 
-    .sortFilter .options-wrap {
+    .sort-filter .options-wrap {
         position: absolute;
         display: flex;
         right: 0;
@@ -3855,14 +3838,14 @@
         overflow-y: auto;
         overflow-x: hidden;
         overscroll-behavior: contain;
-        max-height: var(--maxFilterSelectionHeight);
+        max-height: var(--max-filter-selection-height);
         margin-top: 1px;
         border-radius: 6px;
         padding: 6px;
         z-index: 1;
         cursor: default;
     }
-    .sortFilter .options {
+    .sort-filter .options {
         display: flex;
         align-items: start;
         flex-direction: column;
@@ -3870,7 +3853,7 @@
         gap: 5px;
         width: max-content;
     }
-    .sortFilter .option {
+    .sort-filter .option {
         color: var(--fg-color);
         display: grid;
         align-items: center;
@@ -3887,11 +3870,11 @@
         padding-bottom: 8px;
     }
 
-    .sortFilter .options .option:last-child {
+    .sort-filter .options .option:last-child {
         padding-bottom: 15px;
     }
 
-    .sortFilter .option svg {
+    .sort-filter .option svg {
         margin-left: auto;
         height: 15px;
         width: 15px;
@@ -3903,7 +3886,7 @@
     }
 
     .shimmer::before {
-        animation: loadingShimmer 2s linear infinite;
+        animation: loading-shimmer 2s linear infinite;
         position: absolute;
         background: linear-gradient(90deg,hsla(0, 0%, 10%, 0) 0,hsla(0, 0%, 100%, 0.06) 40%,hsla(0, 0%, 100%, 0.06) 60%,hsla(0, 0%, 10%, 0));
         content: "";
@@ -3916,7 +3899,7 @@
         -o-transform: translateX(0) translateZ(0);
         width: 200%;
     }
-    @keyframes loadingShimmer {
+    @keyframes loading-shimmer {
         0% {
             transform: translateX(-100%) translateZ(0);
             -webkit-transform: translateX(-100%) translateZ(0);
@@ -3933,7 +3916,7 @@
         }
     }
 
-    @keyframes loadingBlink {
+    @keyframes loading-blink {
         0% {
             opacity: 1;
         }
@@ -3969,10 +3952,10 @@
     .filters > * {
         scroll-snap-align: start;
     }
-    .filters.hasWheel {
+    .filters.has-wheel {
         scroll-snap-type: none !important;
     }
-    .filters.hasWheel > * {
+    .filters.has-wheel > * {
         scroll-snap-align: none !important;
     }
 
@@ -4048,9 +4031,9 @@
         .filter-select .value-input[disabled] {
             pointer-events: none;
         }
-        .filterCategory .options-wrap,
+        .filter-category .options-wrap,
         .filter-select .options-wrap,
-        .sortFilter .options-wrap,
+        .sort-filter .options-wrap,
         .category-wrap .options-wrap {
             position: fixed !important;
             display: flex;
@@ -4068,6 +4051,7 @@
             max-height: initial !important;
             margin: 0 !important;
             border-radius: 0 !important;
+            border: none !important;
             padding: 0 !important;
             transform: translateZ(0);
             -webkit-transform: translateZ(0);
@@ -4078,7 +4062,7 @@
         .options-wrap {
             opacity: 1;
             transition: opacity 0.2s ease-out;
-            animation: fadeIn 0.2s ease-out;
+            animation: fade-in 0.2s ease-out;
             -ms-overflow-style: none;
             scrollbar-width: none;
         }
@@ -4162,8 +4146,8 @@
             overscroll-behavior: contain !important;
         }
 
-        .filterCategory .options,
-        .sortFilter .options,
+        .filter-category .options,
+        .sort-filter .options,
         .category-wrap .options {
             height: unset !important;
             max-height: calc(65vh - 112px) !important;

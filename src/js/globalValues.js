@@ -3,7 +3,7 @@ import { getLocalStorage, isAndroid, isMobile } from "../js/others/helper.js"
 
 const android = readable(isAndroid())
 const mobile = readable(isMobile())
-const uniqueKey = "Kanshi.Anime.Recommendations.Anilist.W~uPtWCq=vG$TR:Zl^#t<vdS]I~N70"
+const uniqueKey = "Kanshi.Media.Recommendations.Anilist.W~uPtWCq=vG$TR:Zl^#t<vdS]I~N70"
 const isBackgroundUpdateKey = readable(uniqueKey + ".isBackgroundUpdate")
 const visitedKey = readable(uniqueKey + ".visited")
 
@@ -33,11 +33,15 @@ const trueWindowHeight = writable(isFullScreen ? null : currentWindowHeight)
 
 const documentScrollTop = writable(window?.document?.documentElement?.scrollTop || 0)
 
+const isImporting = writable(false)
+const isExporting = writable(false)
+const isReloading = writable(false)
+
 const username = writable(getLocalStorage('username') || '')
 const resetTypedUsername = writable(null)
-const loadedAnimeLists = writable({})
+const loadedMediaLists = writable({})
 const aniLoaderWorker = writable(null)
-const loadNewAnime = writable({})
+const loadNewMedia = writable({})
 const searchedWord = writable("")
 const categories = writable(null)
 const categoriesKeys = writable(null)
@@ -45,17 +49,22 @@ const selectedCategory = writable(null)
 const orderedFilters = writable(null)
 const nonOrderedFilters = writable(null)
 const filterConfig = writable(null)
-const animeCautions = writable(null)
+const mediaCautions = writable(null)
 const algorithmFilters = writable(null)
-const selectedAnimeGridEl = writable(null)
+const selectedMediaGridEl = writable(null)
 const hiddenEntries = writable(null)
+
+const currentMediaFilters = writable({})
+const currentMediaSortBy = writable({})
+const currentMediaCautions = writable(null)
+const currentAlgorithmFilters = writable(null)
 
 const tagInfo = writable({})
 const dataStatus = writable(null)
 const loadingDataStatus = writable(null)
 
-const showLoadingAnime = writable(false)
-const isLoadingAnime = writable(false)
+const loadingCategory = writable({})
+const isLoadingMedia = writable(false)
 const isProcessingList = writable(false)
 const userRequestIsRunning = writable(null)
 const autoUpdate = writable(getLocalStorage('autoUpdate') ?? null)
@@ -76,14 +85,13 @@ const showStatus = writable(getLocalStorage('showStatus') ?? true)
 const extraInfo = writable(null)
 const currentExtraInfo = writable(null)
 const earlisetReleaseDate = writable(null)
-const animeIdxRemoved = writable(null)
 const shownAllInList = writable({})
 const confirmPromise = writable(null)
 const menuVisible = writable(false)
-const animeOptionVisible = writable(false)
-const openedAnimeOptionIdx = writable(null)
+const mediaOptionVisible = writable(false)
+const openedMediaOptionIdx = writable(null)
 const popupVisible = writable(false)
-const openedAnimePopupIdx = writable(null)
+const openedMediaPopupIdx = writable(null)
 const listUpdateAvailable = writable(false)
 const popupIsGoingBack = writable(false)
 const showFilterOptions = writable(getLocalStorage('showFilterOptions') ?? null)
@@ -93,11 +101,11 @@ const keepAppRunningInBackground = writable(null)
 // Reactive Functions
 const runUpdate = writable(null)
 const runExport = writable(null)
-const importantUpdate = writable(null)
-const importantLoad = writable(null)
+const shouldUpdateRecommendationList = writable(null)
+const shouldUpdateList = writable(null)
 const updateRecommendationList = writable(null)
-const loadAnime = writable(null)
-const runIsScrolling = writable(null)
+const updateList = writable(null)
+const cancelTextCopy = writable(null)
 
 export {
     appID,
@@ -116,11 +124,14 @@ export {
     progress,
     resetProgress,
     // anilistAccessToken,
+    isImporting,
+    isExporting,
+    isReloading,
     username,
     resetTypedUsername,
-    loadedAnimeLists,
+    loadedMediaLists,
     aniLoaderWorker,
-    loadNewAnime,
+    loadNewMedia,
     searchedWord,
     categories,
     categoriesKeys,
@@ -128,16 +139,20 @@ export {
     orderedFilters,
     nonOrderedFilters,
     filterConfig,
-    animeCautions,
+    mediaCautions,
     algorithmFilters,
-    selectedAnimeGridEl,
+    selectedMediaGridEl,
+    currentMediaFilters,
+    currentMediaSortBy,
+    currentMediaCautions,
+    currentAlgorithmFilters,
     hiddenEntries,
     tagInfo,
     dataStatus,
     loadingDataStatus,
     userRequestIsRunning,
-    showLoadingAnime,
-    isLoadingAnime,
+    loadingCategory,
+    isLoadingMedia,
     isProcessingList,
     autoUpdate,
     autoUpdateInterval,
@@ -155,13 +170,12 @@ export {
     currentExtraInfo,
     earlisetReleaseDate,
     shownAllInList,
-    animeIdxRemoved,
     confirmPromise,
     menuVisible,
-    animeOptionVisible,
-    openedAnimeOptionIdx,
+    mediaOptionVisible,
+    openedMediaOptionIdx,
     popupVisible,
-    openedAnimePopupIdx,
+    openedMediaPopupIdx,
     listUpdateAvailable,
     popupIsGoingBack,
     showFilterOptions,
@@ -171,9 +185,9 @@ export {
     // Reactive Functions
     runUpdate,
     runExport,
-    importantLoad,
-    importantUpdate,
+    shouldUpdateList,
+    shouldUpdateRecommendationList,
     updateRecommendationList,
-    loadAnime,
-    runIsScrolling
+    updateList,
+    cancelTextCopy
 }

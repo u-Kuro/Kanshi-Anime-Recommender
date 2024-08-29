@@ -49,15 +49,15 @@ public class Configs {
         }
         return null;
     }
-    private static final String UNIQUE_KEY = "Kanshi.Anime.Recommendations.Anilist.W~uPtWCq=vG$TR:Zl^#t<vdS]I~N70";
+    private static final String UNIQUE_KEY = "Kanshi.Media.Recommendations.Anilist.W~uPtWCq=vG$TR:Zl^#t<vdS]I~N70";
     public static final String IS_BACKGROUND_UPDATE_KEY = UNIQUE_KEY +".isBackgroundUpdate";
     public static final String VISITED_KEY = UNIQUE_KEY +".visited";
     public static final String IS_OWNER_KEY = UNIQUE_KEY +".isOwner";
     public static final int UPDATE_DATA_PENDING_INTENT = 994;
     public static final int NOTIFICATION_DATA_EVICTION = 993;
     public static final String DATA_EVICTION_CHANNEL = "data_eviction_channel";
-    public static ArrayList<AnimeReleaseGroup> loadedGroupedReleasedAnime = new ArrayList<>();
-    public static ArrayList<AnimeReleaseGroup> loadedGroupedScheduledAnime = new ArrayList<>();
+    public static ArrayList<MediaReleaseGroup> loadedGroupedReleasedMedia = new ArrayList<>();
+    public static ArrayList<MediaReleaseGroup> loadedGroupedScheduledMedia = new ArrayList<>();
     private static WebViewAssetLoader assetLoader;
     public static WebViewAssetLoader getAssetLoader(Context context) {
         if (assetLoader==null) {

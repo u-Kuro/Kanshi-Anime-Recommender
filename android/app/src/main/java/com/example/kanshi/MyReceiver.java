@@ -22,11 +22,11 @@ public class MyReceiver extends BroadcastReceiver {
         }
         if (intent==null) { return; }
         String action = intent.getAction();
-        if ("ANIME_NOTIFICATION".equals(action) ||
+        if ("MEDIA_NOTIFICATION".equals(action) ||
                 "android.intent.action.BOOT_COMPLETED".equals(action) ||
                 "android.intent.action.QUICKBOOT_POWERON".equals(action)
         ) {
-            String uniqueWorkName = "ANIME_NOTIFICATION";
+            String uniqueWorkName = "MEDIA_NOTIFICATION";
             Data data = new Data.Builder()
                     .putBoolean("isBooted", !(uniqueWorkName.equals(action)))
                     .putString("action", uniqueWorkName)
@@ -50,7 +50,7 @@ public class MyReceiver extends BroadcastReceiver {
                     .build();
             WorkManager.getInstance(context).enqueueUniqueWork(uniqueWorkName, ExistingWorkPolicy.REPLACE, workRequest);
         } else if ("SEE_MORE_RELEASED".equals(action)) {
-            AnimeNotificationManager.seeMoreReleasedAnimeNotification(context);
+            MediaNotificationManager.seeMoreReleasedMediaNotification(context);
         }
     }
 }

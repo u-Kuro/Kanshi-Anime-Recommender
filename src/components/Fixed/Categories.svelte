@@ -1,6 +1,6 @@
 <script>
     import { onMount, tick } from "svelte";
-    import { animeManager } from "../../js/workerUtils.js";
+    import { mediaManager } from "../../js/workerUtils.js";
     import {
         getElementWidth,
         getLocalStorage,
@@ -21,15 +21,14 @@
         menuVisible,
         selectedCategory,
         categoriesKeys,
-        selectedAnimeGridEl,
+        selectedMediaGridEl,
         documentScrollTop,
     } from "../../js/globalValues.js";
 
     let categoriesNav;
     let showCategoriesNav = true;
     let popupContainer;
-    let isScrolledYMax,
-        isFullViewed;
+    let isScrolledYMax;
 
     documentScrollTop.subscribe((val) => {
         isScrolledYMax = val >= document?.documentElement?.scrollHeight - window?.innerHeight - 1 
@@ -40,9 +39,7 @@
     })
 
     $: {
-        isFullViewed =
-            $gridFullView ?? getLocalStorage("gridFullView") ?? false;
-        if (isFullViewed) {
+        if ($gridFullView) {
             showCategoriesNav = true;
         }
     }
@@ -50,7 +47,7 @@
     async function updateList() {
         if ($android && window?.[$isBackgroundUpdateKey] === true) return;
         $listUpdateAvailable = false;
-        animeManager({ updateRecommendedAnimeList: true });
+        mediaManager({ updateRecommendedMediaList: true });
     }
 
     let selectedElementIndicatorWidth, selectedElementIndicatorOffsetLeft;
@@ -145,10 +142,10 @@
             lastClicked = selectedCategoryName;
         }
         let scrollTop;
-        if ($showFilterOptions && isFullViewed) {
+        if ($showFilterOptions && $gridFullView) {
             scrollTop = -9999;
         } else {
-            if (isFullViewed) {
+            if ($gridFullView) {
                 scrollTop = 74;
             } else {
                 scrollTop = 57;
@@ -161,16 +158,16 @@
         }
         if (isDoubleClicked) {
             if ($gridFullView) {
-                if ($selectedAnimeGridEl) {
-                    $selectedAnimeGridEl.scrollLeft = 0;
+                if ($selectedMediaGridEl) {
+                    $selectedMediaGridEl.scrollLeft = 0;
                 }
             } else {
                 window.scrollY = documentEl.scrollTop = scrollTop;
             }
         } else if (clickedOnce) {
             if ($gridFullView) {
-                if ($selectedAnimeGridEl) {
-                    $selectedAnimeGridEl.scrollTo({
+                if ($selectedMediaGridEl) {
+                    $selectedMediaGridEl.scrollTo({
                         behavior: "smooth",
                         left: 0,
                     });

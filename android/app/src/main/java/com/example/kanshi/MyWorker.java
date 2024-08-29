@@ -1,8 +1,8 @@
 package com.example.kanshi;
 
-import static com.example.kanshi.AnimeNotificationManager.NOTIFICATION_ANIME_RELEASE;
-import static com.example.kanshi.AnimeNotificationManager.NOTIFICATION_MY_ANIME;
-import static com.example.kanshi.AnimeNotificationManager.NOTIFICATION_OTHER_ANIME;
+import static com.example.kanshi.MediaNotificationManager.NOTIFICATION_MEDIA_RELEASE;
+import static com.example.kanshi.MediaNotificationManager.NOTIFICATION_MY_MEDIA;
+import static com.example.kanshi.MediaNotificationManager.NOTIFICATION_OTHER_MEDIA;
 import static com.example.kanshi.Configs.UPDATE_DATA_PENDING_INTENT;
 import static com.example.kanshi.Utils.createRoundIcon;
 
@@ -52,7 +52,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 public class MyWorker extends Worker {
-    public final String RETRY_KEY = "Kanshi-Anime-Recommendation.Retry";
+    public final String RETRY_KEY = "Kanshi-Media-Recommendation.Retry";
     public MyWorker(@NonNull Context context, @NonNull WorkerParameters workerParams) {
         super(context, workerParams);
         // Log Errors
@@ -87,90 +87,90 @@ public class MyWorker extends Worker {
     private void showNotification(boolean isBooted) {
 
         SharedPreferences prefs = this.getApplicationContext().getSharedPreferences("com.example.kanshi", Context.MODE_PRIVATE);
-        AnimeNotificationManager.createAnimeReleasesNotificationChannel(this.getApplicationContext());
+        MediaNotificationManager.createMediaReleasesNotificationChannel(this.getApplicationContext());
         NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this.getApplicationContext());
 
         byte[] dummyImage = null;
-        HashMap<String, AnimeNotification> myAnimeNotifications = new HashMap<>();
-        HashMap<String, AnimeNotification> animeNotifications = new HashMap<>();
+        HashMap<String, MediaNotification> myMediaNotifications = new HashMap<>();
+        HashMap<String, MediaNotification> mediaNotifications = new HashMap<>();
 
-        AnimeNotification nextAnimeNotificationInfo = null;
+        MediaNotification nextMediaNotificationInfo = null;
         long lastSentNotificationTime = prefs.getLong("lastSentNotificationTime", 0L);
         long currentTimeInMillis = System.currentTimeMillis();
         long realLastSentNotificationTime = lastSentNotificationTime != 0L ? lastSentNotificationTime : currentTimeInMillis;
 
         long timeForNewReleaseInMillis = Math.min(realLastSentNotificationTime, currentTimeInMillis-TimeUnit.MINUTES.toMillis(1));
 
-        long mostRecentlySentMyAnimeNotificationTime = 0L;
-        long mostRecentlySentOtherAnimeNotificationTime = 0L;
+        long mostRecentlySentMyMediaNotificationTime = 0L;
+        long mostRecentlySentOtherMediaNotificationTime = 0L;
 
-        if (AnimeNotificationManager.allAnimeNotification.isEmpty()) {
-            @SuppressWarnings("unchecked") ConcurrentHashMap<String, AnimeNotification> $allAnimeNotification = (ConcurrentHashMap<String, AnimeNotification>) LocalPersistence.readObjectFromFile(this.getApplicationContext(), "allAnimeNotification");
-            if ($allAnimeNotification != null && !$allAnimeNotification.isEmpty()) {
-                AnimeNotificationManager.allAnimeNotification.putAll($allAnimeNotification);
+        if (MediaNotificationManager.allMediaNotification.isEmpty()) {
+            @SuppressWarnings("unchecked") ConcurrentHashMap<String, MediaNotification> $allMediaNotification = (ConcurrentHashMap<String, MediaNotification>) LocalPersistence.readObjectFromFile(this.getApplicationContext(), "allMediaNotification");
+            if ($allMediaNotification != null && !$allMediaNotification.isEmpty()) {
+                MediaNotificationManager.allMediaNotification.putAll($allMediaNotification);
             }
         }
 
-        List<AnimeNotification> newSentAnime = new ArrayList<>();
-        List<AnimeNotification> allAnimeNotificationValues = new ArrayList<>(AnimeNotificationManager.allAnimeNotification.values());
+        List<MediaNotification> newSentMedia = new ArrayList<>();
+        List<MediaNotification> allMediaNotificationValues = new ArrayList<>(MediaNotificationManager.allMediaNotification.values());
 
-        for (AnimeNotification anime : allAnimeNotificationValues) {
-            if ("DROPPED".equalsIgnoreCase(anime.userStatus)) {
+        for (MediaNotification media : allMediaNotificationValues) {
+            if ("DROPPED".equalsIgnoreCase(media.userStatus)) {
                 if (
-                    anime.releaseDateMillis <= currentTimeInMillis
-                    && anime.releaseDateMillis > realLastSentNotificationTime
+                    media.releaseDateMillis <= currentTimeInMillis
+                    && media.releaseDateMillis > realLastSentNotificationTime
                 ) {
-                    newSentAnime.add(anime);
+                    newSentMedia.add(media);
                 }
                 continue;
             }
-            if (anime.releaseDateMillis <= currentTimeInMillis) {
-                if (anime.releaseDateMillis > realLastSentNotificationTime) {
-                    newSentAnime.add(anime);
+            if (media.releaseDateMillis <= currentTimeInMillis) {
+                if (media.releaseDateMillis > realLastSentNotificationTime) {
+                    newSentMedia.add(media);
                 }
-                boolean isMyAnime = anime.userStatus != null && !anime.userStatus.isEmpty() && !anime.userStatus.equalsIgnoreCase("UNWATCHED");
-                if (isMyAnime) {
-                    if (anime.releaseDateMillis > mostRecentlySentMyAnimeNotificationTime){
-                        mostRecentlySentMyAnimeNotificationTime = anime.releaseDateMillis;
+                boolean isMyMedia = media.userStatus != null && !media.userStatus.isEmpty() && !media.userStatus.equalsIgnoreCase("UNSEEN");
+                if (isMyMedia) {
+                    if (media.releaseDateMillis > mostRecentlySentMyMediaNotificationTime){
+                        mostRecentlySentMyMediaNotificationTime = media.releaseDateMillis;
                     }
-                    if (timeForNewReleaseInMillis < anime.releaseDateMillis) {
-                        if (myAnimeNotifications.get(String.valueOf(anime.animeId)) == null) {
-                            myAnimeNotifications.put(String.valueOf(anime.animeId), anime);
+                    if (timeForNewReleaseInMillis < media.releaseDateMillis) {
+                        if (myMediaNotifications.get(String.valueOf(media.mediaId)) == null) {
+                            myMediaNotifications.put(String.valueOf(media.mediaId), media);
                         } else {
-                            AnimeNotification $anime = myAnimeNotifications.get(String.valueOf(anime.animeId));
-                            if ($anime != null && $anime.releaseDateMillis < anime.releaseDateMillis) {
-                                myAnimeNotifications.put(String.valueOf(anime.animeId), anime);
+                            MediaNotification $media = myMediaNotifications.get(String.valueOf(media.mediaId));
+                            if ($media != null && $media.releaseDateMillis < media.releaseDateMillis) {
+                                myMediaNotifications.put(String.valueOf(media.mediaId), media);
                             }
                         }
                     }
                 } else {
-                    if (anime.releaseDateMillis > mostRecentlySentOtherAnimeNotificationTime){
-                        mostRecentlySentOtherAnimeNotificationTime = anime.releaseDateMillis;
+                    if (media.releaseDateMillis > mostRecentlySentOtherMediaNotificationTime){
+                        mostRecentlySentOtherMediaNotificationTime = media.releaseDateMillis;
                     }
-                    if (timeForNewReleaseInMillis < anime.releaseDateMillis) {
-                        if (animeNotifications.get(String.valueOf(anime.animeId)) == null) {
-                            animeNotifications.put(String.valueOf(anime.animeId), anime);
+                    if (timeForNewReleaseInMillis < media.releaseDateMillis) {
+                        if (mediaNotifications.get(String.valueOf(media.mediaId)) == null) {
+                            mediaNotifications.put(String.valueOf(media.mediaId), media);
                         } else {
-                            AnimeNotification $anime = animeNotifications.get(String.valueOf(anime.animeId));
-                            if ($anime != null && $anime.releaseDateMillis < anime.releaseDateMillis) {
-                                animeNotifications.put(String.valueOf(anime.animeId), anime);
+                            MediaNotification $media = mediaNotifications.get(String.valueOf(media.mediaId));
+                            if ($media != null && $media.releaseDateMillis < media.releaseDateMillis) {
+                                mediaNotifications.put(String.valueOf(media.mediaId), media);
                             }
                         }
                     }
                 }
             } else {
-                if (nextAnimeNotificationInfo==null || nextAnimeNotificationInfo.releaseDateMillis > anime.releaseDateMillis) {
-                    nextAnimeNotificationInfo = anime;
+                if (nextMediaNotificationInfo ==null || nextMediaNotificationInfo.releaseDateMillis > media.releaseDateMillis) {
+                    nextMediaNotificationInfo = media;
                 }
             }
         }
 
-        if (mostRecentlySentMyAnimeNotificationTime==0L) {
-            mostRecentlySentMyAnimeNotificationTime = currentTimeInMillis;
+        if (mostRecentlySentMyMediaNotificationTime==0L) {
+            mostRecentlySentMyMediaNotificationTime = currentTimeInMillis;
         }
 
-        if (mostRecentlySentOtherAnimeNotificationTime==0L) {
-            mostRecentlySentOtherAnimeNotificationTime = currentTimeInMillis;
+        if (mostRecentlySentOtherMediaNotificationTime==0L) {
+            mostRecentlySentOtherMediaNotificationTime = currentTimeInMillis;
         }
 
         final int maxNotificationCount = 6;
@@ -178,20 +178,20 @@ public class MyWorker extends Worker {
         Notification.MessagingStyle styleMA = new Notification.MessagingStyle(new Person.Builder().setName("").build()).setGroupConversation(true);
 
         // Put in Descending Order for in Adding items for the Message Style Notification
-        List<AnimeNotification> ascendedMyAnimeNotificationsValues = new ArrayList<>(myAnimeNotifications.values());
-        Collections.sort(ascendedMyAnimeNotificationsValues, Comparator.comparingLong(a -> a.releaseDateMillis));
+        List<MediaNotification> ascendedMyMediaNotificationsValues = new ArrayList<>(myMediaNotifications.values());
+        Collections.sort(ascendedMyMediaNotificationsValues, Comparator.comparingLong(a -> a.releaseDateMillis));
 
         // Get the last 6 items in the list to only show what can be seen
-        int startIndexMA = Math.max(0, ascendedMyAnimeNotificationsValues.size() - maxNotificationCount);
-        List<AnimeNotification> finalMyAnimeNotificationsValues = ascendedMyAnimeNotificationsValues.subList(startIndexMA, ascendedMyAnimeNotificationsValues.size());
+        int startIndexMA = Math.max(0, ascendedMyMediaNotificationsValues.size() - maxNotificationCount);
+        List<MediaNotification> finalMyMediaNotificationsValues = ascendedMyMediaNotificationsValues.subList(startIndexMA, ascendedMyMediaNotificationsValues.size());
 
-        for (AnimeNotification anime : finalMyAnimeNotificationsValues) {
+        for (MediaNotification media : finalMyMediaNotificationsValues) {
             Person.Builder itemBuilder = new Person.Builder()
-                    .setName(anime.title)
-                    .setKey(String.valueOf(anime.animeId))
+                    .setName(media.title)
+                    .setKey(String.valueOf(media.mediaId))
                     .setBot(true);
-            if (anime.imageByte != null) {
-                Bitmap image = BitmapFactory.decodeByteArray(anime.imageByte, 0, anime.imageByte.length);
+            if (media.imageByte != null) {
+                Bitmap image = BitmapFactory.decodeByteArray(media.imageByte, 0, media.imageByte.length);
                 itemBuilder.setIcon(createRoundIcon(image));
             } else {
                 if (dummyImage != null) {
@@ -210,23 +210,23 @@ public class MyWorker extends Worker {
             }
             Person item = itemBuilder.build();
             String addedInfo = " just aired.";
-            if (anime.maxEpisode < 0) { // No Given Max Episodes
-                styleMA.addMessage("Episode " + anime.releaseEpisode + addedInfo, anime.releaseDateMillis, item);
-            } else if (anime.releaseEpisode >= anime.maxEpisode) {
-                styleMA.addMessage("Finished Airing: Episode " + anime.releaseEpisode + addedInfo, anime.releaseDateMillis, item);
+            if (media.maxEpisode < 0) { // No Given Max Episodes
+                styleMA.addMessage("Episode " + media.releaseEpisode + addedInfo, media.releaseDateMillis, item);
+            } else if (media.releaseEpisode >= media.maxEpisode) {
+                styleMA.addMessage("Finished Airing: Episode " + media.releaseEpisode + addedInfo, media.releaseDateMillis, item);
             } else {
-                styleMA.addMessage("Episode " + anime.releaseEpisode + " / " + anime.maxEpisode + addedInfo, anime.releaseDateMillis, item);
+                styleMA.addMessage("Episode " + media.releaseEpisode + " / " + media.maxEpisode + addedInfo, media.releaseDateMillis, item);
             }
         }
         String notificationTitleMA;
-        if (!myAnimeNotifications.isEmpty()) {
-            notificationTitleMA = "Your Anime Just Aired" + " +" + myAnimeNotifications.size();
+        if (!myMediaNotifications.isEmpty()) {
+            notificationTitleMA = "Your Anime Just Aired" + " +" + myMediaNotifications.size();
         } else {
             notificationTitleMA = "Your Anime Aired";
         }
         styleMA.setConversationTitle(notificationTitleMA);
 
-        Intent intent = new Intent(this.getApplicationContext(), AnimeReleaseActivity.class);
+        Intent intent = new Intent(this.getApplicationContext(), MediaReleaseActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT | Intent.FLAG_ACTIVITY_SINGLE_TOP);
         PendingIntent pendingIntent = PendingIntent.getActivity(this.getApplicationContext(), 0, intent, PendingIntent.FLAG_IMMUTABLE);
         pendingIntent.cancel();
@@ -236,37 +236,37 @@ public class MyWorker extends Worker {
         seeMoreIntent.setAction("SEE_MORE_RELEASED");
         PendingIntent seeMorePendingIntent = PendingIntent.getBroadcast(this.getApplicationContext(), 0, seeMoreIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE);
 
-        Notification.Builder notificationMABuilder = new Notification.Builder(this.getApplicationContext(), AnimeNotificationManager.ANIME_RELEASES_CHANNEL)
+        Notification.Builder notificationMABuilder = new Notification.Builder(this.getApplicationContext(), MediaNotificationManager.MEDIA_RELEASES_CHANNEL)
                 .setSmallIcon(R.drawable.ic_stat_name)
                 .setContentTitle(notificationTitleMA)
                 .setStyle(styleMA)
                 .setContentIntent(pendingIntent)
-                .setGroup(AnimeNotificationManager.ANIME_RELEASE_NOTIFICATION_GROUP)
+                .setGroup(MediaNotificationManager.MEDIA_RELEASE_NOTIFICATION_GROUP)
                 .setGroupAlertBehavior(Notification.GROUP_ALERT_SUMMARY)
                 .setNumber(0)
                 .addAction(R.drawable.more_white_horizontal, "SEE MORE", seeMorePendingIntent)
                 .setOnlyAlertOnce(true)
-                .setWhen(mostRecentlySentMyAnimeNotificationTime)
+                .setWhen(mostRecentlySentMyMediaNotificationTime)
                 .setShowWhen(true);
 
-        // Other Anime Released
+        // Other Media Released
         Notification.MessagingStyle styleOA = new Notification.MessagingStyle(new Person.Builder().setName("").build()).setGroupConversation(true);
 
         // Put in Ascending Order for in Adding items for the Message Style Notification
-        List<AnimeNotification> ascendedAnimeNotificationsValues = new ArrayList<>(animeNotifications.values());
-        Collections.sort(ascendedAnimeNotificationsValues, Comparator.comparingLong(a -> a.releaseDateMillis));
+        List<MediaNotification> ascendedMediaNotificationsValues = new ArrayList<>(mediaNotifications.values());
+        Collections.sort(ascendedMediaNotificationsValues, Comparator.comparingLong(a -> a.releaseDateMillis));
 
         // Get the last 6 items in the list to only show what can be seen
-        int startIndexOA = Math.max(0, ascendedAnimeNotificationsValues.size() - maxNotificationCount);
-        List<AnimeNotification> finalAnimeNotificationsValues = ascendedAnimeNotificationsValues.subList(startIndexOA, ascendedAnimeNotificationsValues.size());
+        int startIndexOA = Math.max(0, ascendedMediaNotificationsValues.size() - maxNotificationCount);
+        List<MediaNotification> finalMediaNotificationsValues = ascendedMediaNotificationsValues.subList(startIndexOA, ascendedMediaNotificationsValues.size());
 
-        for (AnimeNotification anime : finalAnimeNotificationsValues) {
+        for (MediaNotification media : finalMediaNotificationsValues) {
             Person.Builder itemBuilder = new Person.Builder()
-                    .setName(anime.title)
-                    .setKey(String.valueOf(anime.animeId))
+                    .setName(media.title)
+                    .setKey(String.valueOf(media.mediaId))
                     .setBot(true);
-            if (anime.imageByte != null) {
-                Bitmap image = BitmapFactory.decodeByteArray(anime.imageByte, 0, anime.imageByte.length);
+            if (media.imageByte != null) {
+                Bitmap image = BitmapFactory.decodeByteArray(media.imageByte, 0, media.imageByte.length);
                 itemBuilder.setIcon(createRoundIcon(image));
             } else {
                 if (dummyImage != null) {
@@ -285,59 +285,59 @@ public class MyWorker extends Worker {
             }
             Person item = itemBuilder.build();
             String addedInfo = " just aired.";
-            if (anime.maxEpisode < 0) { // No Given Max Episodes
-                styleOA.addMessage("Episode " + anime.releaseEpisode + addedInfo, anime.releaseDateMillis, item);
-            } else if (anime.releaseEpisode >= anime.maxEpisode) {
-                styleOA.addMessage("Finished Airing: Episode " + anime.releaseEpisode + addedInfo, anime.releaseDateMillis, item);
+            if (media.maxEpisode < 0) { // No Given Max Episodes
+                styleOA.addMessage("Episode " + media.releaseEpisode + addedInfo, media.releaseDateMillis, item);
+            } else if (media.releaseEpisode >= media.maxEpisode) {
+                styleOA.addMessage("Finished Airing: Episode " + media.releaseEpisode + addedInfo, media.releaseDateMillis, item);
             } else {
-                styleOA.addMessage("Episode " + anime.releaseEpisode + " / " + anime.maxEpisode + addedInfo, anime.releaseDateMillis, item);
+                styleOA.addMessage("Episode " + media.releaseEpisode + " / " + media.maxEpisode + addedInfo, media.releaseDateMillis, item);
             }
         }
         String notificationTitleOA;
-        if (!animeNotifications.isEmpty()) {
-            notificationTitleOA = "Other Anime Just Aired" + " +" + animeNotifications.size();
+        if (!mediaNotifications.isEmpty()) {
+            notificationTitleOA = "Other Anime Just Aired" + " +" + mediaNotifications.size();
         } else {
             notificationTitleOA = "Other Anime Aired";
         }
         styleOA.setConversationTitle(notificationTitleOA);
 
-        Notification.Builder notificationOABuilder = new Notification.Builder(this.getApplicationContext(), AnimeNotificationManager.ANIME_RELEASES_CHANNEL)
+        Notification.Builder notificationOABuilder = new Notification.Builder(this.getApplicationContext(), MediaNotificationManager.MEDIA_RELEASES_CHANNEL)
                 .setContentTitle(notificationTitleOA)
                 .setSmallIcon(R.drawable.ic_stat_name)
                 .setStyle(styleOA)
                 .setPriority(Notification.PRIORITY_LOW)
                 .setContentIntent(pendingIntent)
-                .setGroup(AnimeNotificationManager.ANIME_RELEASE_NOTIFICATION_GROUP)
+                .setGroup(MediaNotificationManager.MEDIA_RELEASE_NOTIFICATION_GROUP)
                 .setGroupAlertBehavior(Notification.GROUP_ALERT_SUMMARY)
                 .setNumber(0)
                 .addAction(R.drawable.more_white_horizontal, "SEE MORE", seeMorePendingIntent)
                 .setOnlyAlertOnce(true)
-                .setWhen(mostRecentlySentOtherAnimeNotificationTime)
+                .setWhen(mostRecentlySentOtherMediaNotificationTime)
                 .setShowWhen(true);
 
-        long mostRecentlySentNotificationTime = Math.max(mostRecentlySentMyAnimeNotificationTime, mostRecentlySentOtherAnimeNotificationTime);
+        long mostRecentlySentNotificationTime = Math.max(mostRecentlySentMyMediaNotificationTime, mostRecentlySentOtherMediaNotificationTime);
 
         if (ActivityCompat.checkSelfPermission(this.getApplicationContext(), Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
             String notificationTitle = "Anime Aired";
-            long animeReleaseNotificationSize = myAnimeNotifications.size() + animeNotifications.size();
-            if (animeReleaseNotificationSize > 0) {
-                notificationTitle = notificationTitle + " +" + animeReleaseNotificationSize;
+            long mediaReleaseNotificationSize = myMediaNotifications.size() + mediaNotifications.size();
+            if (mediaReleaseNotificationSize > 0) {
+                notificationTitle = notificationTitle + " +" + mediaReleaseNotificationSize;
             }
 
-            Notification.Builder notificationSummaryBuilder = new Notification.Builder(this.getApplicationContext(), AnimeNotificationManager.ANIME_RELEASES_CHANNEL)
+            Notification.Builder notificationSummaryBuilder = new Notification.Builder(this.getApplicationContext(), MediaNotificationManager.MEDIA_RELEASES_CHANNEL)
                     .setContentTitle(notificationTitle)
                     .setSmallIcon(R.drawable.ic_stat_name)
                     .setStyle(styleOA)
                     .setPriority(Notification.PRIORITY_DEFAULT)
                     .setContentIntent(pendingIntent)
-                    .setGroup(AnimeNotificationManager.ANIME_RELEASE_NOTIFICATION_GROUP)
+                    .setGroup(MediaNotificationManager.MEDIA_RELEASE_NOTIFICATION_GROUP)
                     .setGroupSummary(true)
                     .setOnlyAlertOnce(true)
                     .setWhen(mostRecentlySentNotificationTime)
                     .setShowWhen(true);
 
-            boolean hasNewMyAnimeNotification = !myAnimeNotifications.isEmpty();
-            if (hasNewMyAnimeNotification) { // Set with vibration
+            boolean hasNewMyMediaNotification = !myMediaNotifications.isEmpty();
+            if (hasNewMyMediaNotification) { // Set with vibration
                 notificationSummaryBuilder
                         .setGroupAlertBehavior(Notification.GROUP_ALERT_SUMMARY);
             } else { // Set with no vibration
@@ -349,89 +349,89 @@ public class MyWorker extends Worker {
 
             SchedulesTabFragment schedulesTabFragment = SchedulesTabFragment.getInstanceActivity();
             if (schedulesTabFragment!=null) {
-                new Handler(Looper.getMainLooper()).post(()->schedulesTabFragment.updateScheduledAnime(false, false));
+                new Handler(Looper.getMainLooper()).post(()->schedulesTabFragment.updateScheduledMedia(false, false));
             }
             ReleasedTabFragment releasedTabFragment = ReleasedTabFragment.getInstanceActivity();
             if (releasedTabFragment!=null) {
-                new Handler(Looper.getMainLooper()).post(()->releasedTabFragment.updateReleasedAnime(false, false));
+                new Handler(Looper.getMainLooper()).post(()->releasedTabFragment.updateReleasedMedia(false, false));
             }
 
             boolean shouldNotify = lastSentNotificationTime == 0L || mostRecentlySentNotificationTime > lastSentNotificationTime;
             if (!isBooted || shouldNotify) {
-                if (animeReleaseNotificationSize > 0) {
-                    notificationManager.cancel(NOTIFICATION_ANIME_RELEASE);
-                    if (!animeNotifications.isEmpty()) {
-                        notificationManager.cancel(NOTIFICATION_OTHER_ANIME);
+                if (mediaReleaseNotificationSize > 0) {
+                    notificationManager.cancel(NOTIFICATION_MEDIA_RELEASE);
+                    if (!mediaNotifications.isEmpty()) {
+                        notificationManager.cancel(NOTIFICATION_OTHER_MEDIA);
                         Notification notificationOA = notificationOABuilder.build();
-                        notificationManager.notify(NOTIFICATION_OTHER_ANIME, notificationOA);
+                        notificationManager.notify(NOTIFICATION_OTHER_MEDIA, notificationOA);
                     }
-                    if (!myAnimeNotifications.isEmpty()) {
-                        notificationManager.cancel(NOTIFICATION_MY_ANIME);
+                    if (!myMediaNotifications.isEmpty()) {
+                        notificationManager.cancel(NOTIFICATION_MY_MEDIA);
                         Notification notificationMA = notificationMABuilder.build();
-                        notificationManager.notify(NOTIFICATION_MY_ANIME, notificationMA);
+                        notificationManager.notify(NOTIFICATION_MY_MEDIA, notificationMA);
                     }
                     Notification notificationSummary = notificationSummaryBuilder.build();
-                    notificationManager.notify(NOTIFICATION_ANIME_RELEASE, notificationSummary);
+                    notificationManager.notify(NOTIFICATION_MEDIA_RELEASE, notificationSummary);
                 }
             }
         }
 
-        HashSet<String> animeNotificationsToBeRemoved = new HashSet<>();
+        HashSet<String> mediaNotificationsToBeRemoved = new HashSet<>();
         long THIRTY_DAY_IN_MILLIS_AGO = currentTimeInMillis - TimeUnit.DAYS.toMillis(30);
-        for (AnimeNotification anime : allAnimeNotificationValues) {
+        for (MediaNotification media : allMediaNotificationValues) {
             // If ReleaseDate was Before 30 days ago
-            if (anime.releaseDateMillis < THIRTY_DAY_IN_MILLIS_AGO) {
-                animeNotificationsToBeRemoved.add(anime.animeId+"-"+anime.releaseEpisode);
+            if (media.releaseDateMillis < THIRTY_DAY_IN_MILLIS_AGO) {
+                mediaNotificationsToBeRemoved.add(media.mediaId +"-"+media.releaseEpisode);
             }
         }
-        if (!animeNotificationsToBeRemoved.isEmpty() && !AnimeNotificationManager.allAnimeNotification.isEmpty()) {
-            for (String animeKey : animeNotificationsToBeRemoved) {
-                AnimeNotificationManager.allAnimeNotification.remove(animeKey);
+        if (!mediaNotificationsToBeRemoved.isEmpty() && !MediaNotificationManager.allMediaNotification.isEmpty()) {
+            for (String mediaKey : mediaNotificationsToBeRemoved) {
+                MediaNotificationManager.allMediaNotification.remove(mediaKey);
             }
-            LocalPersistence.writeObjectToFile(this.getApplicationContext(), AnimeNotificationManager.allAnimeNotification, "allAnimeNotification");
+            LocalPersistence.writeObjectToFile(this.getApplicationContext(), MediaNotificationManager.allMediaNotification, "allMediaNotification");
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                Utils.exportReleasedAnime(this.getApplicationContext());
+                Utils.exportReleasedMedia(this.getApplicationContext());
             }
         }
 
-        for (AnimeNotification anime : newSentAnime) {
-            getAiringAnime(anime, 0);
+        for (MediaNotification media : newSentMedia) {
+            getAiringMedia(media, 0);
         }
 
         SharedPreferences.Editor prefsEdit = prefs.edit();
         prefsEdit.putLong("lastSentNotificationTime", mostRecentlySentNotificationTime).apply();
-        getNewNotification(nextAnimeNotificationInfo);
+        getNewNotification(nextMediaNotificationInfo);
     }
 
-    public void getNewNotification(AnimeNotification nextAnimeNotificationInfo) {
-        if (nextAnimeNotificationInfo!=null) {
-            AnimeNotificationManager.nearestNotificationInfo = nextAnimeNotificationInfo;
-            AnimeNotificationManager.nearestNotificationTime = nextAnimeNotificationInfo.releaseDateMillis;
+    public void getNewNotification(MediaNotification nextMediaNotificationInfo) {
+        if (nextMediaNotificationInfo !=null) {
+            MediaNotificationManager.nearestNotificationInfo = nextMediaNotificationInfo;
+            MediaNotificationManager.nearestNotificationTime = nextMediaNotificationInfo.releaseDateMillis;
 
             Intent newIntent = new Intent(this.getApplicationContext(), MyReceiver.class);
-            newIntent.setAction("ANIME_NOTIFICATION");
+            newIntent.setAction("MEDIA_NOTIFICATION");
 
-            PendingIntent newPendingIntent = PendingIntent.getBroadcast(this.getApplicationContext(), AnimeNotificationManager.ANIME_RELEASE_PENDING_INTENT, newIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+            PendingIntent newPendingIntent = PendingIntent.getBroadcast(this.getApplicationContext(), MediaNotificationManager.MEDIA_RELEASE_PENDING_INTENT, newIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
             AlarmManager alarmManager = (AlarmManager) this.getApplicationContext().getSystemService(Context.ALARM_SERVICE);
             // Cancel Old
             newPendingIntent.cancel();
             alarmManager.cancel(newPendingIntent);
             // Create New
-            newPendingIntent = PendingIntent.getBroadcast(this.getApplicationContext(), AnimeNotificationManager.ANIME_RELEASE_PENDING_INTENT, newIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+            newPendingIntent = PendingIntent.getBroadcast(this.getApplicationContext(), MediaNotificationManager.MEDIA_RELEASE_PENDING_INTENT, newIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 if (alarmManager.canScheduleExactAlarms()) {
-                    alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, nextAnimeNotificationInfo.releaseDateMillis, newPendingIntent);
+                    alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, nextMediaNotificationInfo.releaseDateMillis, newPendingIntent);
                 } else {
-                    alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, nextAnimeNotificationInfo.releaseDateMillis, newPendingIntent);
+                    alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, nextMediaNotificationInfo.releaseDateMillis, newPendingIntent);
                 }
             } else {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, nextAnimeNotificationInfo.releaseDateMillis, newPendingIntent);
+                    alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, nextMediaNotificationInfo.releaseDateMillis, newPendingIntent);
                 } else {
                     try {
-                        alarmManager.setExact(AlarmManager.RTC_WAKEUP, nextAnimeNotificationInfo.releaseDateMillis, newPendingIntent);
+                        alarmManager.setExact(AlarmManager.RTC_WAKEUP, nextMediaNotificationInfo.releaseDateMillis, newPendingIntent);
                     } catch (Exception ignored) {
-                        alarmManager.set(AlarmManager.RTC_WAKEUP, nextAnimeNotificationInfo.releaseDateMillis, newPendingIntent);
+                        alarmManager.set(AlarmManager.RTC_WAKEUP, nextMediaNotificationInfo.releaseDateMillis, newPendingIntent);
                     }
                 }
             }
@@ -439,12 +439,12 @@ public class MyWorker extends Worker {
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
-    private void getAiringAnime(AnimeNotification anime, int retries) {
+    private void getAiringMedia(MediaNotification media, int retries) {
         if (retries>=4) {
             return;
         }
         try {
-            String query = "{AiringSchedule(mediaId:"+ anime.animeId +",episode_greater:"+anime.releaseEpisode+"){media{episodes}airingAt episode}}";
+            String query = "{AiringSchedule(mediaId:"+ media.mediaId +",episode_greater:"+media.releaseEpisode+"){media{episodes}airingAt episode}}";
             JSONObject jsonData = new JSONObject();
             jsonData.put("query", query);
             makePostRequest(response -> {
@@ -452,52 +452,52 @@ public class MyWorker extends Worker {
                     JSONObject data = response.optJSONObject("data");
                     if (response.has(RETRY_KEY) || data == null) {
                         // Call Another
-                        new android.os.Handler(Looper.getMainLooper()).postDelayed(() -> getAiringAnime(anime, retries + 1), 60000);
+                        new android.os.Handler(Looper.getMainLooper()).postDelayed(() -> getAiringMedia(media, retries + 1), 60000);
                     } else {
                         JSONObject airingSchedule = data.optJSONObject("AiringSchedule");
                         if (airingSchedule != null) {
-                            if (AnimeNotificationManager.allAnimeNotification.isEmpty()) {
-                                @SuppressWarnings("unchecked") ConcurrentHashMap<String, AnimeNotification> $allAnimeNotification = (ConcurrentHashMap<String, AnimeNotification>) LocalPersistence.readObjectFromFile(this.getApplicationContext(), "allAnimeNotification");
-                                if ($allAnimeNotification != null && !$allAnimeNotification.isEmpty()) {
-                                    AnimeNotificationManager.allAnimeNotification.putAll($allAnimeNotification);
+                            if (MediaNotificationManager.allMediaNotification.isEmpty()) {
+                                @SuppressWarnings("unchecked") ConcurrentHashMap<String, MediaNotification> $allMediaNotification = (ConcurrentHashMap<String, MediaNotification>) LocalPersistence.readObjectFromFile(this.getApplicationContext(), "allMediaNotification");
+                                if ($allMediaNotification != null && !$allMediaNotification.isEmpty()) {
+                                    MediaNotificationManager.allMediaNotification.putAll($allMediaNotification);
                                 }
-                                if (AnimeNotificationManager.allAnimeNotification.isEmpty()) {
+                                if (MediaNotificationManager.allMediaNotification.isEmpty()) {
                                     return;
                                 }
                             }
                             boolean isEdited = false;
                             long episodes;
-                            JSONObject media = airingSchedule.optJSONObject("media");
-                            if (media != null) {
-                                episodes = media.optLong("episodes", 0);
-                                if (episodes != anime.maxEpisode && episodes > 0) {
-                                    anime.maxEpisode = episodes;
-                                    AnimeNotificationManager.allAnimeNotification.put(anime.animeId + "-" + anime.releaseEpisode, anime);
+                            JSONObject mediaObj = airingSchedule.optJSONObject("media");
+                            if (mediaObj != null) {
+                                episodes = mediaObj.optLong("episodes", 0);
+                                if (episodes != media.maxEpisode && episodes > 0) {
+                                    media.maxEpisode = episodes;
+                                    MediaNotificationManager.allMediaNotification.put(media.mediaId + "-" + media.releaseEpisode, media);
                                     isEdited = true;
                                 } else {
-                                    episodes = anime.maxEpisode;
+                                    episodes = media.maxEpisode;
                                 }
                             } else {
-                                episodes = anime.maxEpisode;
+                                episodes = media.maxEpisode;
                             }
                             long releaseDateMillis = airingSchedule.optLong("airingAt",0);
                             long episode = airingSchedule.optLong("episode",0);
-                            if (releaseDateMillis > 0 && episode > 0 && episode > anime.releaseEpisode) {
+                            if (releaseDateMillis > 0 && episode > 0 && episode > media.releaseEpisode) {
                                 releaseDateMillis = releaseDateMillis * 1000L;
-                                AnimeNotification newAnimeRelease = new AnimeNotification(anime.animeId, anime.title, episode, episodes, releaseDateMillis, anime.imageByte, anime.animeUrl, anime.userStatus, anime.episodeProgress);
-                                AnimeNotificationManager.allAnimeNotification.put(newAnimeRelease.animeId + "-" + newAnimeRelease.releaseEpisode, newAnimeRelease);
-                                AnimeNotificationManager.addAnimeNotification(this.getApplicationContext(), newAnimeRelease);
+                                MediaNotification newMediaRelease = new MediaNotification(media.mediaId, media.title, episode, episodes, releaseDateMillis, media.imageByte, media.mediaUrl, media.userStatus, media.episodeProgress);
+                                MediaNotificationManager.allMediaNotification.put(newMediaRelease.mediaId + "-" + newMediaRelease.releaseEpisode, newMediaRelease);
+                                MediaNotificationManager.addMediaNotification(this.getApplicationContext(), newMediaRelease);
                                 isEdited = true;
-                                // Get next if new anime release is past current time
+                                // Get next if new media release is past current time
                                 if (releaseDateMillis <= System.currentTimeMillis()) {
-                                    getAiringAnime(newAnimeRelease, 0);
+                                    getAiringMedia(newMediaRelease, 0);
                                 }
                             }
                             if (isEdited) {
-                                if (!AnimeNotificationManager.allAnimeNotification.isEmpty()) {
-                                    LocalPersistence.writeObjectToFile(this.getApplicationContext(), AnimeNotificationManager.allAnimeNotification, "allAnimeNotification");
+                                if (!MediaNotificationManager.allMediaNotification.isEmpty()) {
+                                    LocalPersistence.writeObjectToFile(this.getApplicationContext(), MediaNotificationManager.allMediaNotification, "allMediaNotification");
                                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                                        Utils.exportReleasedAnime(this.getApplicationContext());
+                                        Utils.exportReleasedMedia(this.getApplicationContext());
                                     }
                                 }
                             }

@@ -101,7 +101,7 @@
 
     afterUpdate(() => {
         if (showConfirm) {
-            window.setShouldGoBack?.(false);
+            window.addHistory?.();
             confirmButtonEl?.focus?.();
             isRecentlyOpened = true;
             isRecentlyOpenedTimeout = requestImmediate(() => {
@@ -192,7 +192,7 @@
         display: none;
     }
 
-    :global(#main.maxwindowheight.popupvisible .confirm) {
+    :global(#main.max-window-height.popup-visible .confirm) {
         touch-action: none;
     }
 
@@ -219,7 +219,7 @@
         cursor: default;
     }
 
-    :global(#main.maxwindowheight.popupvisible .confirm-info-container:not(.scrollable)) {
+    :global(#main.max-window-height.popup-visible .confirm-info-container:not(.scrollable)) {
         touch-action: none;
     }
 
@@ -249,7 +249,7 @@
         scrollbar-width: none;
     }
 
-    :global(#main.maxwindowheight.popupvisible .confirm-title-wrapper) {
+    :global(#main.max-window-height.popup-visible .confirm-title-wrapper) {
         touch-action: pan-x;
         overscroll-behavior: contain;
     }

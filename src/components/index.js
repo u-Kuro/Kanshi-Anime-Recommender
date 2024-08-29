@@ -1,9 +1,9 @@
 // Component
-// Anime
-import AnimeGrid from "./Anime/AnimeGrid.svelte";
-// Anime/Fixed
-import AnimePopup from "./Anime/Fixed/AnimePopup.svelte";
-import AnimeOptionsPopup from "./Anime/Fixed/AnimeOptionsPopup.svelte";
+// Media
+import MediaGrid from "./Media/MediaGrid.svelte";
+// Media/Fixed
+import MediaPopup from "./Media/Fixed/MediaPopup.svelte";
+import MediaOptionsPopup from "./Media/Fixed/MediaOptionsPopup.svelte";
 
 // Fixed
 import Categories from "./Fixed/Categories.svelte";
@@ -20,11 +20,11 @@ export default {
         Navigator: Navigator,
         Menu: Menu,
     },
-    Anime: {
-        AnimeGrid: AnimeGrid,
+    Media: {
+        MediaGrid: MediaGrid,
         Fixed: {
-            AnimePopup: AnimePopup,
-            AnimeOptionsPopup: AnimeOptionsPopup
+            MediaPopup: MediaPopup,
+            MediaOptionsPopup: MediaOptionsPopup
         }
     },
     Others: {

@@ -531,9 +531,9 @@ const showToast = (str, isLongDuration = true) => {
       && str?.length > 0 
       && typeof isLongDuration === "boolean"
     ) {
-      JSBridge?.openToast?.(str, isLongDuration)
+      JSBridge.openToast(str, isLongDuration)
     }
-  } catch { }
+  } catch (ex) { console.error(ex) }
 }
 
 let $_pastExportUrl;
@@ -628,7 +628,7 @@ const requestImmediate = (fn, timeout = 0) => {
 //   }
 // }
 
-const LocalStorageID = "Kanshi.Anime.Recommendations.Anilist.W~uPtWCq=vG$TR:Zl^#t<vdS]I~N70"
+const LocalStorageID = "Kanshi.Media.Recommendations.Anilist.W~uPtWCq=vG$TR:Zl^#t<vdS]I~N70"
 const getLocalStorage = (key) => {
   try {
     let data;
@@ -639,15 +639,8 @@ const getLocalStorage = (key) => {
   } catch { }
 }
 
-const setLocalStorage = (key, data) => {
-  return new Promise((resolve, reject) => {
-    try {
-      localStorage.setItem(LocalStorageID + key, JSON.stringify(data))
-      resolve()
-    } catch {
-      reject()
-    }
-  })
+const setLocalStorage = async (key, data) => {
+  localStorage.setItem(LocalStorageID + key, JSON.stringify(data))
 }
 
 const removeLocalStorage = (key) => {

@@ -77,13 +77,13 @@ public class MainService extends Service {
     private final String STOP_SERVICE_ACTION = "STOP_MAIN_SERVICE";
     private final String SET_MAIN_SERVICE = "SET_MAIN_SERVICE";
     public boolean lastBackgroundUpdateIsFinished = false;
-    public boolean isAddingAnimeReleaseNotification = false;
+    public boolean isAddingMediaReleaseNotification = false;
     public boolean shouldCallStopService = false;
     public boolean shouldRefreshList = false;
     public boolean shouldProcessRecommendationList = false;
-    public boolean shouldLoadAnime = false;
-    public long addedAnimeCount = 0;
-    public long updatedAnimeCount = 0;
+    public boolean shouldLoadMedia = false;
+    public long addedMediaCount = 0;
+    public long updatedMediaCount = 0;
     public BufferedWriter writer;
 
     @Nullable
@@ -203,6 +203,8 @@ public class MainService extends Service {
                 boolean visited = prefs.getBoolean("visited", false);
                 if (visited) {
                     view.loadUrl("javascript:(()=>{window['"+ VISITED_KEY +"']=true})();");
+                } else {
+                    view.loadUrl("javascript:(()=>{window['"+ VISITED_KEY +"']=false})();");
                 }
                 view.loadUrl("javascript:(()=>{window['"+ IS_BACKGROUND_UPDATE_KEY +"']=true})();");
                 if (isReloaded) {
@@ -290,7 +292,7 @@ public class MainService extends Service {
                 writer = null;
             }
         } catch (Exception ignored) {}
-        AnimeNotificationManager.recentlyUpdatedAnimeNotification(MainService.this, addedAnimeCount, updatedAnimeCount);
+        MediaNotificationManager.recentlyUpdatedMediaNotification(MainService.this, addedMediaCount, updatedMediaCount);
         MainActivity mainActivity = MainActivity.getInstanceActivity();
         if (mainActivity != null) {
             mainActivity.refreshMediaList();
@@ -342,8 +344,8 @@ public class MainService extends Service {
     public void stopService() {
         if (
             shouldCallStopService
-            && !isAddingAnimeReleaseNotification
-            && AnimeNotificationManager.ongoingImageDownloads.isEmpty()
+            && !isAddingMediaReleaseNotification
+            && MediaNotificationManager.ongoingImageDownloads.isEmpty()
         ) {
             updateLastBackgroundUpdateTime();
             stopForeground(true);
@@ -359,41 +361,38 @@ public class MainService extends Service {
             if (mainActivity != null) {
                 mainActivity.shouldRefreshList = shouldRefreshList;
                 mainActivity.shouldProcessRecommendationList = shouldProcessRecommendationList;
-                mainActivity.shouldLoadAnime = shouldLoadAnime;
+                mainActivity.shouldLoadMedia = shouldLoadMedia;
             }
         }
     }
 
-    public void finishedAddingAnimeReleaseNotification() {
-        isAddingAnimeReleaseNotification = false;
+    public void finishedAddingMediaReleaseNotification() {
+        isAddingMediaReleaseNotification = false;
         stopService();
     }
 
     @SuppressWarnings("unused")
     class JSBridge {
         @JavascriptInterface
-        public void visited() {
+        public void pageVisited() {
             prefsEdit.putBoolean("visited", true).apply();
         }
-        boolean dataEvictionChannelIsAdded = false;
         @JavascriptInterface
         public void notifyDataEviction() {
             if (ActivityCompat.checkSelfPermission(MainService.this.getApplicationContext(), android.Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
 
-                if (!dataEvictionChannelIsAdded) {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                        CharSequence name = "Data Eviction";
-                        String description = "Notifications for data loss from chrome eviction.";
-                        int importance = NotificationManager.IMPORTANCE_DEFAULT;
-                        NotificationChannel channel = new NotificationChannel(DATA_EVICTION_CHANNEL, name, importance);
-                        channel.setDescription(description);
-                        channel.enableVibration(true);
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    CharSequence name = "Data Eviction";
+                    String description = "Notifications for data loss from chrome eviction.";
+                    int importance = NotificationManager.IMPORTANCE_DEFAULT;
+                    NotificationChannel channel = new NotificationChannel(DATA_EVICTION_CHANNEL, name, importance);
+                    channel.setDescription(description);
+                    channel.enableVibration(true);
 
-                        NotificationManager notificationManager = MainService.this.getApplicationContext().getSystemService(NotificationManager.class);
-                        notificationManager.createNotificationChannel(channel);
-                    }
-                    dataEvictionChannelIsAdded = true;
+                    NotificationManager notificationManager = MainService.this.getApplicationContext().getSystemService(NotificationManager.class);
+                    notificationManager.createNotificationChannel(channel);
                 }
+
                 Intent intent = new Intent(MainService.this, MainActivity.class);
                 intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
                 PendingIntent pendingIntent = PendingIntent.getActivity(MainService.this.getApplicationContext(), 0, intent, PendingIntent.FLAG_IMMUTABLE);
@@ -418,12 +417,12 @@ public class MainService extends Service {
         @JavascriptInterface
         public void setShouldProcessRecommendation(boolean shouldProcess) {
             if (shouldProcess && !shouldRefreshList) {
-                shouldLoadAnime = shouldProcessRecommendationList = shouldRefreshList = true;
+                shouldLoadMedia = shouldProcessRecommendationList = shouldRefreshList = true;
                 MainActivity mainActivity = MainActivity.getInstanceActivity();
                 if (mainActivity != null) {
                     mainActivity.shouldRefreshList = shouldRefreshList;
                     mainActivity.shouldProcessRecommendationList = shouldProcessRecommendationList;
-                    mainActivity.shouldLoadAnime = shouldLoadAnime;
+                    mainActivity.shouldLoadMedia = shouldLoadMedia;
                 }
             } else {
                 shouldProcessRecommendationList = shouldProcess;
@@ -434,11 +433,11 @@ public class MainService extends Service {
             }
         }
         @JavascriptInterface
-        public void setShouldLoadAnime(boolean shouldLoad) {
-            shouldLoadAnime = shouldLoad;
+        public void setShouldLoadMedia(boolean shouldLoad) {
+            shouldLoadMedia = shouldLoad;
             MainActivity mainActivity = MainActivity.getInstanceActivity();
             if (mainActivity != null) {
-                mainActivity.shouldLoadAnime = shouldLoadAnime;
+                mainActivity.shouldLoadMedia = shouldLoadMedia;
             }
         }
         @JavascriptInterface
@@ -632,14 +631,11 @@ public class MainService extends Service {
                 MainService.this.stopSelf();
             }
         }
-        final long DAY_IN_MILLIS = TimeUnit.DAYS.toMillis(1);
         @RequiresApi(api = Build.VERSION_CODES.O)
         @JavascriptInterface
-        public void addAnimeReleaseNotification(long animeId, String title, long releaseEpisode, long maxEpisode, long releaseDateMillis, String imageUrl, String animeUrl, String userStatus, long episodeProgress) {
-            if (releaseDateMillis >= (System.currentTimeMillis() - DAY_IN_MILLIS)) {
-                isAddingAnimeReleaseNotification = true;
-                AnimeNotificationManager.scheduleAnimeNotification(MainService.this, animeId, title, releaseEpisode, maxEpisode, releaseDateMillis, imageUrl, animeUrl, userStatus, episodeProgress);
-            }
+        public void addMediaReleaseNotification(long mediaId, String title, long releaseEpisode, long maxEpisode, long releaseDateMillis, String imageUrl, String mediaUrl, String userStatus, long episodeProgress) {
+            isAddingMediaReleaseNotification = true;
+            MediaNotificationManager.scheduleMediaNotification(MainService.this, mediaId, title, releaseEpisode, maxEpisode, releaseDateMillis, imageUrl, mediaUrl, userStatus, episodeProgress);
         }
         @RequiresApi(api = Build.VERSION_CODES.O)
         @JavascriptInterface
@@ -652,44 +648,44 @@ public class MainService extends Service {
         private final Map<String, Future<?>> updateNotificationsFutures = new ConcurrentHashMap<>();
         @RequiresApi(api = Build.VERSION_CODES.O)
         @JavascriptInterface
-        public void updateNotifications(long animeId, String title, long maxEpisode, String animeUrl, String userStatus, long episodeProgress) {
-            if (updateNotificationsFutures.containsKey(String.valueOf(animeId))) {
-                Future<?> future = updateNotificationsFutures.get(String.valueOf(animeId));
+        public void updateNotifications(long mediaId, String title, long maxEpisode, String mediaUrl, String userStatus, long episodeProgress) {
+            if (updateNotificationsFutures.containsKey(String.valueOf(mediaId))) {
+                Future<?> future = updateNotificationsFutures.get(String.valueOf(mediaId));
                 if (future != null && !future.isDone()) {
                     future.cancel(true);
                 }
             }
             Future<?> future = updateNotificationsExecutorService.submit(() -> {
                 try {
-                    if (AnimeNotificationManager.allAnimeNotification.isEmpty()) {
-                        @SuppressWarnings("unchecked") ConcurrentHashMap<String, AnimeNotification> $allAnimeNotification = (ConcurrentHashMap<String, AnimeNotification>) LocalPersistence.readObjectFromFile(MainService.this, "allAnimeNotification");
-                        if ($allAnimeNotification != null && !$allAnimeNotification.isEmpty()) {
-                            AnimeNotificationManager.allAnimeNotification.putAll($allAnimeNotification);
+                    if (MediaNotificationManager.allMediaNotification.isEmpty()) {
+                        @SuppressWarnings("unchecked") ConcurrentHashMap<String, MediaNotification> $allMediaNotification = (ConcurrentHashMap<String, MediaNotification>) LocalPersistence.readObjectFromFile(MainService.this, "allMediaNotification");
+                        if ($allMediaNotification != null && !$allMediaNotification.isEmpty()) {
+                            MediaNotificationManager.allMediaNotification.putAll($allMediaNotification);
                         }
-                        if (AnimeNotificationManager.allAnimeNotification.isEmpty()) {
+                        if (MediaNotificationManager.allMediaNotification.isEmpty()) {
                             return;
                         }
                     }
-                    ConcurrentHashMap<String, AnimeNotification> updatedAnimeNotifications = new ConcurrentHashMap<>();
-                    List<AnimeNotification> allAnimeNotificationValues = new ArrayList<>(AnimeNotificationManager.allAnimeNotification.values());
-                    for (AnimeNotification anime : allAnimeNotificationValues) {
-                        if (anime.animeId==animeId) {
-                            AnimeNotification newAnime = new AnimeNotification(anime.animeId, title, anime.releaseEpisode, maxEpisode, anime.releaseDateMillis, anime.imageByte, animeUrl, userStatus, episodeProgress);
-                            updatedAnimeNotifications.put(anime.animeId+"-"+anime.releaseEpisode, newAnime);
+                    ConcurrentHashMap<String, MediaNotification> updatedMediaNotifications = new ConcurrentHashMap<>();
+                    List<MediaNotification> allMediaNotificationValues = new ArrayList<>(MediaNotificationManager.allMediaNotification.values());
+                    for (MediaNotification media : allMediaNotificationValues) {
+                        if (media.mediaId ==mediaId) {
+                            MediaNotification newMedia = new MediaNotification(media.mediaId, title, media.releaseEpisode, maxEpisode, media.releaseDateMillis, media.imageByte, mediaUrl, userStatus, episodeProgress);
+                            updatedMediaNotifications.put(media.mediaId +"-"+media.releaseEpisode, newMedia);
                         }
                     }
-                    AnimeNotificationManager.allAnimeNotification.putAll(updatedAnimeNotifications);
-                    AnimeNotificationManager.writeAnimeNotificationInFile(MainService.this, true);
-                    updateNotificationsFutures.remove(String.valueOf(animeId));
+                    MediaNotificationManager.allMediaNotification.putAll(updatedMediaNotifications);
+                    MediaNotificationManager.writeMediaNotificationInFile(MainService.this, true);
+                    updateNotificationsFutures.remove(String.valueOf(mediaId));
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                         if (updateNotificationsFutures.isEmpty()) {
                             SchedulesTabFragment schedulesTabFragment = SchedulesTabFragment.getInstanceActivity();
                             if (schedulesTabFragment!=null) {
-                                new Handler(Looper.getMainLooper()).post(()->schedulesTabFragment.updateScheduledAnime(false, false));
+                                new Handler(Looper.getMainLooper()).post(()->schedulesTabFragment.updateScheduledMedia(false, false));
                             }
                             ReleasedTabFragment releasedTabFragment = ReleasedTabFragment.getInstanceActivity();
                             if (releasedTabFragment!=null) {
-                                new Handler(Looper.getMainLooper()).post(()->releasedTabFragment.updateReleasedAnime(false, false));
+                                new Handler(Looper.getMainLooper()).post(()->releasedTabFragment.updateReleasedMedia(false, false));
                             }
                         }
                     }
@@ -700,12 +696,12 @@ public class MainService extends Service {
                     e.printStackTrace();
                 }
             });
-            updateNotificationsFutures.put(String.valueOf(animeId), future);
+            updateNotificationsFutures.put(String.valueOf(mediaId), future);
         }
         @JavascriptInterface
-        public void showNewUpdatedAnimeNotification(long addedAnimeCount, long updatedAnimeCount) {
-            MainService.this.addedAnimeCount = addedAnimeCount;
-            MainService.this.updatedAnimeCount = updatedAnimeCount;
+        public void showNewUpdatedMediaNotification(long addedMediaCount, long updatedMediaCount) {
+            MainService.this.addedMediaCount = addedMediaCount;
+            MainService.this.updatedMediaCount = updatedMediaCount;
         }
     }
 
@@ -718,22 +714,22 @@ public class MainService extends Service {
         }
         updateCurrentNotificationsFuture = updateCurrentNotificationsExecutorService.submit(() -> {
             try {
-                if (AnimeNotificationManager.allAnimeNotification.isEmpty()) {
-                    @SuppressWarnings("unchecked") ConcurrentHashMap<String, AnimeNotification> $allAnimeNotification = (ConcurrentHashMap<String, AnimeNotification>) LocalPersistence.readObjectFromFile(MainService.this, "allAnimeNotification");
-                    if ($allAnimeNotification != null && !$allAnimeNotification.isEmpty()) {
-                        AnimeNotificationManager.allAnimeNotification.putAll($allAnimeNotification);
+                if (MediaNotificationManager.allMediaNotification.isEmpty()) {
+                    @SuppressWarnings("unchecked") ConcurrentHashMap<String, MediaNotification> $allMediaNotification = (ConcurrentHashMap<String, MediaNotification>) LocalPersistence.readObjectFromFile(MainService.this, "allMediaNotification");
+                    if ($allMediaNotification != null && !$allMediaNotification.isEmpty()) {
+                        MediaNotificationManager.allMediaNotification.putAll($allMediaNotification);
                     } else {
                         return;
                     }
                 }
-                Set<String> animeIdsToBeUpdated = new HashSet<>();
-                List<AnimeNotification> allAnimeNotificationValues = new ArrayList<>(AnimeNotificationManager.allAnimeNotification.values());
-                for (AnimeNotification anime : allAnimeNotificationValues) {
-                    animeIdsToBeUpdated.add(String.valueOf(anime.animeId));
+                Set<String> mediaIdsToBeUpdated = new HashSet<>();
+                List<MediaNotification> allMediaNotificationValues = new ArrayList<>(MediaNotificationManager.allMediaNotification.values());
+                for (MediaNotification media : allMediaNotificationValues) {
+                    mediaIdsToBeUpdated.add(String.valueOf(media.mediaId));
                 }
-                String joinedAnimeIds = String.join(",", animeIdsToBeUpdated);
+                String joinedMediaIds = String.join(",", mediaIdsToBeUpdated);
                 Handler handler = new Handler(Looper.getMainLooper());
-                handler.post(() -> webView.loadUrl("javascript:window?.updateNotifications?.([" + joinedAnimeIds + "])"));
+                handler.post(() -> webView.loadUrl("javascript:window?.updateNotifications?.([" + joinedMediaIds + "])"));
             } catch (Exception e) {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                     Utils.handleUncaughtException(MainService.this.getApplicationContext(), e, "MainService updateCurrentNotificationsExecutorService");

@@ -1,6 +1,6 @@
 <script>
     import { onMount, tick } from "svelte";
-    import { animeManager, importUserData, saveIDBdata } from "../../js/workerUtils.js";
+    import { mediaManager, getIDBdata, importUserData, saveIDBdata } from "../../js/workerUtils.js";
     import {
         jsonIsEmpty,
         removeLocalStorage,
@@ -28,7 +28,6 @@
         isBackgroundUpdateKey,
         mobile,
         appInstallationAsked,
-        selectedCategory,
         keepAppRunningInBackground,
         resetProgress,
         documentScrollTop,
@@ -95,8 +94,8 @@
     // Global Function For Android
     function handleExportFolder() {
         try {
-            JSBridge?.chooseExportFolder?.();
-        } catch (e) {}
+            JSBridge.chooseExportFolder();
+        } catch (ex) { console.error(ex); }
     }
     window.setExportPathAvailability = async (value = true) => {
         $exportPathIsAvailable = value;
@@ -211,10 +210,8 @@
             $dataStatus = "Updating List";
             $menuVisible = false;
             $listUpdateAvailable = false;
-            animeManager({
-                selectedCategory: $selectedCategory,
-                removeId: "all",
-                isHiding: false,
+            mediaManager({
+                showId: "all",
             });
             $hiddenEntries = {};
             resetProgress.update((e) => !e);
@@ -258,11 +255,11 @@
             $keepAppRunningInBackground = !$keepAppRunningInBackground;
             try {
                 if (typeof $keepAppRunningInBackground === "boolean") {
-                    JSBridge?.setKeepAppRunningInBackground?.(
+                    JSBridge.setKeepAppRunningInBackground(
                         $keepAppRunningInBackground,
                     );
                 }
-            } catch (e) {}
+            } catch (ex) { console.error(ex) }
         }
     }
     window.setKeepAppRunningInBackground = (enabled) => {
@@ -360,8 +357,8 @@
             if ($android) {
                 if ($username) {
                     try {
-                        JSBridge?.callUpdateNotifications?.();
-                    } catch (e) {}
+                        JSBridge.callUpdateNotifications();
+                    } catch (ex) { console.error(ex) }
                 }
             }
             document.querySelectorAll("script")?.forEach((script) => {
@@ -390,8 +387,8 @@
             })
         ) {
             try {
-                JSBridge?.refreshWeb?.();
-            } catch (e) {}
+                JSBridge.refreshWeb();
+            } catch (ex) { console.error(ex) }
         }
     }
 
@@ -404,20 +401,10 @@
             })
         ) {
             try {
-                JSBridge?.clearCache?.();
-            } catch (e) {}
+                JSBridge.clearCache();
+            } catch (ex) { console.error(ex) }
         }
     }
-
-    onMount(() => {
-        navContainerEl = document.getElementById("nav-container");
-        if (
-            typeof window?.keepAppRunningInBackground === "boolean" &&
-            typeof $keepAppRunningInBackground !== "boolean"
-        ) {
-            $keepAppRunningInBackground = window?.keepAppRunningInBackground;
-        }
-    });
 
     menuVisible.subscribe((val) => {
         if (val) {
@@ -433,7 +420,7 @@
                     });
                 });
             }
-            window?.setShouldGoBack?.(false);
+            window?.addHistory?.();
         } else {
             if (!$popupVisible && $documentScrollTop > 0) {
                 addClass(navContainerEl, "hide");
@@ -506,6 +493,44 @@
                     }
                 };
             }
+        }
+    });
+
+    onMount(async () => {
+        navContainerEl = document.getElementById("nav-container");
+        if (
+            typeof window?.keepAppRunningInBackground === "boolean" &&
+            typeof $keepAppRunningInBackground !== "boolean"
+        ) {
+            $keepAppRunningInBackground = window?.keepAppRunningInBackground;
+        }
+        
+        // Get Export Folder for Android
+        if ($android) {
+            $exportPathIsAvailable = $exportPathIsAvailable ?? (await getIDBdata("exportPathIsAvailable"));
+            if ($exportPathIsAvailable == null) {
+                setLocalStorage("exportPathIsAvailable", $exportPathIsAvailable = false)
+                .catch(() => removeLocalStorage("exportPathIsAvailable"))
+                .finally(() => saveIDBdata(false, "exportPathIsAvailable"));
+            }
+        }
+        $autoExport = $autoExport ?? (await getIDBdata("autoExport"));
+        if ($autoExport == null) {
+            setLocalStorage("autoExport", $autoExport = false)
+            .catch(() => removeLocalStorage("autoExport"))
+            .finally(() => saveIDBdata(false, "autoExport"));
+        }
+        $showStatus = $showStatus ?? (await getIDBdata("showStatus"));
+        if ($showStatus == null) {
+            setLocalStorage("showStatus", $showStatus = true)
+            .catch(() => removeLocalStorage("showStatus"))
+            .finally(() => saveIDBdata(true, "showStatus"));
+        }
+        $autoUpdate = $autoUpdate ?? (await getIDBdata("autoUpdate"));
+        if ($autoUpdate == null) {
+            setLocalStorage("autoUpdate", $autoUpdate = false)
+            .catch(() => removeLocalStorage("autoUpdate"))
+            .finally(() => saveIDBdata(false, "autoUpdate"));
         }
     });
 </script>
@@ -661,7 +686,7 @@
         background-color: var(--ol-color);
         z-index: 998;
     }
-    :global(#main.maxwindowheight.popupvisible .menu-container) {
+    :global(#main.max-window-height.popup-visible .menu-container) {
         touch-action: none;
     }
     .menu {
@@ -682,7 +707,7 @@
     .menu::-webkit-scrollbar {
         display: none;
     }
-    :global(#main.maxwindowheight.popupvisible .menu:not(.scrollable)) {
+    :global(#main.max-window-height.popup-visible .menu:not(.scrollable)) {
         touch-action: none;
     }
     .button {
