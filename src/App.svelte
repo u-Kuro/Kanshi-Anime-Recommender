@@ -74,7 +74,6 @@
         loadingCategory,
 	} from "./js/globalValues.js";
 
-
 	(async () => {
 		try {			
 			// Check App ID (Not for Android allow Fast Start on Slow Network)
@@ -508,11 +507,12 @@
 			}
 		}
 
-		const shouldUpdate =
-			$selectedMediaGridEl?.getBoundingClientRect?.()?.top > 0 &&
-			!$popupVisible;
+		const shouldUpdate = !$popupVisible;
 		if ($listUpdateAvailable && shouldUpdate) {
-			shouldUpdateList.update(e => !e)
+			if (!$initData && (!$android || window?.[$isBackgroundUpdateKey] !== true)) {
+				$listUpdateAvailable = false;
+				mediaManager({ updateRecommendedMediaList: true });
+			}
 		}
 		isBelowNav = scrollTop > 54;
 		if (
@@ -639,14 +639,7 @@
 		if (typeof val !== "boolean" || $initData) return;
 		if ($android && window?.[$isBackgroundUpdateKey] === true) return;
 		
-		if (
-			($popupVisible ||
-				($gridFullView && $selectedMediaGridEl
-					? $selectedMediaGridEl.scrollLeft > 500
-					: $selectedMediaGridEl?.getBoundingClientRect?.()?.top <
-						0)) &&
-			$loadedMediaLists?.[$selectedCategory]?.mediaList?.length
-		) {
+		if ($popupVisible && $loadedMediaLists?.[$selectedCategory]?.mediaList?.length) {
 			$listUpdateAvailable = true;
 		} else {
 			mediaManager({ updateRecommendedMediaList: true });

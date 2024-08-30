@@ -27,6 +27,8 @@
         resetTypedUsername,
         resetProgress,
         windowWidth,
+        loadingCategory,
+        listUpdateAvailable,
     } from "../../js/globalValues.js";
 
     let writableSubscriptions = [];
@@ -117,6 +119,7 @@
                         $dataStatus = "Getting User Entries";
                         $userRequestIsRunning = true;
                         removeLocalStorage("username");
+                        $loadingCategory[""] = new Date()
                         requestUserEntries({
                             username: typedUsername,
                         })
@@ -132,7 +135,6 @@
                                         $username || typedUsername || "";
                                 }
                                 shouldUpdateRecommendationList.update((e) => !e);
-                                return;
                             })
                             .catch((error) => {
                                 if (
@@ -142,8 +144,8 @@
                                         $username || typedUsername || "";
                                 }
                                 $dataStatus = "Something went wrong";
+                                $listUpdateAvailable = true;
                                 console.error(error);
-                                return;
                             })
                             .finally(() => {
                                 setLocalStorage("username", $username).catch(
@@ -177,6 +179,7 @@
                         $dataStatus = "Getting User Entries";
                         $userRequestIsRunning = true;
                         removeLocalStorage("username");
+                        $loadingCategory[""] = new Date()
                         requestUserEntries({
                             username: typedUsername,
                         })
@@ -192,7 +195,6 @@
                                         $username || typedUsername || "";
                                 }
                                 shouldUpdateRecommendationList.update((e) => !e);
-                                return;
                             })
                             .catch((error) => {
                                 if (
@@ -202,8 +204,8 @@
                                         $username || typedUsername || "";
                                 }
                                 $dataStatus = "Something went wrong";
+                                $listUpdateAvailable = true;
                                 console.error(error);
-                                return;
                             })
                             .finally(() => {
                                 setLocalStorage("username", $username).catch(

@@ -31,6 +31,7 @@
         keepAppRunningInBackground,
         resetProgress,
         documentScrollTop,
+        loadingCategory,
     } from "../../js/globalValues.js";
     import { fade } from "svelte/transition";
     import { sineOut } from "svelte/easing";
@@ -39,8 +40,10 @@
     let importFileInput;
 
     async function importData() {
-        if (!(importFileInput instanceof Element))
-            return ($dataStatus = "Something went wrong");
+        if (!(importFileInput instanceof Element)) {
+            $dataStatus = "Something went wrong"
+            return;
+        }
         if (await $confirmPromise("Do you want to import your data?")) {
             importFileInput.value = null;
             importFileInput.click();
@@ -50,8 +53,10 @@
 
     async function importJSONFile() {
         if ($android && window?.[$isBackgroundUpdateKey] === true) return;
-        if (!(importFileInput instanceof Element))
-            return ($dataStatus = "Something went wrong");
+        if (!(importFileInput instanceof Element)) {
+            $dataStatus = "Something went wrong"
+            return
+        }
         let importedFile = importFileInput.files?.[0];
         if (importedFile) {
             let filename = importedFile.name;
@@ -70,9 +75,13 @@
                     document.documentElement.style.overflow = "";
                     window?.scrollTo?.({ top: -9999, behavior: "smooth" });
                 }
+                $loadingCategory[""] = new Date()
                 importUserData({
                     importedFile: importedFile,
                 })
+                    .catch(() => {
+                        $listUpdateAvailable = true;
+                    })
                     .finally(() => {
                         setLocalStorage("username", $username).catch(() => {
                             removeLocalStorage("username");
@@ -207,9 +216,8 @@
                 "Do you want to show all your hidden entries?",
             )
         ) {
-            $dataStatus = "Updating List";
+            $loadingCategory[""] = new Date()
             $menuVisible = false;
-            $listUpdateAvailable = false;
             mediaManager({
                 showId: "all",
             });

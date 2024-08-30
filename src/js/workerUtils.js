@@ -36,6 +36,8 @@ import {
     currentMediaCautions,
     isImporting,
     isExporting,
+    listUpdateAvailable,
+    popupVisible,
 } from "./globalValues.js";
 
 const hasOwnProp = Object.prototype.hasOwnProperty
@@ -72,7 +74,7 @@ earlisetReleaseDate.subscribe((val) => {
 let mediaLoaderWorker, mediaLoaderWorkerPromise, mediaLoaderPromises = {};
 function getMediaLoaderWorker() {
     mediaLoaderWorkerPromise = new Promise(async (resolve) => {
-        resolve(new Worker(await cacheRequest("./webapi/worker/mediaLoader.js", 21401, "Checking existing List")))
+        resolve(new Worker(await cacheRequest("./webapi/worker/mediaLoader.js", 21405, "Checking existing List")))
         mediaLoaderWorkerPromise = null
     })
     return mediaLoaderWorkerPromise
@@ -138,7 +140,7 @@ const mediaLoader = (_data = {}) => {
                         }
                         if (
                             val[categorySelected].mediaFilters == null
-                            && category?.mediaFilters
+                            && category?.mediaFilters != null
                         ) {
                             val[categorySelected].mediaFilters = category.mediaFilters;
                             currentMediaFilters.update((e) => {
@@ -149,7 +151,7 @@ const mediaLoader = (_data = {}) => {
 
                         if (
                             val[categorySelected].sortBy == null
-                            && category?.sortBy
+                            && category?.sortBy != null
                         ) {
                             val[categorySelected].sortBy = category.sortBy;
                             currentMediaSortBy.update((e) => {
@@ -272,7 +274,7 @@ const mediaLoader = (_data = {}) => {
             mediaLoaderWorker?.terminate?.()
             mediaLoaderWorker = null
 
-            mediaLoaderPromises?.[postId]?.reject?.()
+            mediaLoaderPromises?.[postId]?.reject?.(error)
 
             console.error(error);
         };
@@ -328,6 +330,11 @@ const mediaManager = (_data = {}) => {
                 e[""] = new Date()
                 return e
             })
+
+            if (get(popupVisible) && get(loadedMediaLists)?.[get(selectedCategory)]?.mediaList?.length) {
+                listUpdateAvailable.set(true)
+                return
+            }
         } else if (hasOwnProp.call(_data, "showId")) {
             const showId = _data.showId
             if (showId === "all") {
@@ -342,6 +349,11 @@ const mediaManager = (_data = {}) => {
                 e[""] = new Date()
                 return e
             })
+
+            if (get(popupVisible) && get(loadedMediaLists)?.[get(selectedCategory)]?.mediaList?.length) {
+                listUpdateAvailable.set(true)
+                return
+            }
         } else if (hasOwnProp.call(_data, "addedCategoryKey")) {
             const categoryToAdd = _data.addedCategoryKey
             const categoryToAddFrom = _data.copiedCategoryKey
@@ -406,6 +418,7 @@ const mediaManager = (_data = {}) => {
                     if (hasOwnProp?.call?.(data, "error")) {
                         dataStatusPrio = false
 
+                        listUpdateAvailable.set(true)
                         isLoadingMedia.set(false)
                         dataStatus.set(null);
                         progress.set(100)
@@ -415,7 +428,7 @@ const mediaManager = (_data = {}) => {
                         mediaManagerWorker?.terminate?.();
                         mediaManagerWorker = null
 
-                        console.error(error);
+                        console.error(data.error);
 
                         reject(data.error)
                     } else {
@@ -453,6 +466,7 @@ const mediaManager = (_data = {}) => {
                 mediaManagerWorker.onerror = (error) => {
                     dataStatusPrio = false
         
+                    listUpdateAvailable.set(true)
                     isLoadingMedia.set(false)
                     dataStatus.set(null)
                     progress.set(100)
@@ -464,12 +478,13 @@ const mediaManager = (_data = {}) => {
                     
                     console.error(error);
 
-                    reject(ex)
+                    reject(error)
                 };
             })
             .catch((error) => {
                 dataStatusPrio = false
     
+                listUpdateAvailable.set(true)
                 isLoadingMedia.set(false)
                 dataStatus.set(null)
                 progress.set(100)
@@ -481,7 +496,7 @@ const mediaManager = (_data = {}) => {
     
                 console.error(error);
 
-                reject(ex)
+                reject(error)
             })
     })
 }
@@ -546,7 +561,8 @@ const processRecommendedMediaList = (_data = {}) => {
                         progress.set(100)
                         alertError()
                         processRecommendedMediaListWorker?.terminate?.();
-                        reject();
+                        console.error(data.error)
+                        reject(data.error);
                     } else if (hasOwnProp?.call?.(data, "mediaReleaseNotification")) {
                         if (get(android)) {
                             try {
@@ -626,6 +642,7 @@ const processRecommendedMediaList = (_data = {}) => {
                     dataStatus.set(null)
                     progress.set(100)
                     processRecommendedMediaListWorker?.terminate?.();
+                    console.error(error)
                     reject(error);
                 };
             }).catch((error) => {
@@ -635,6 +652,7 @@ const processRecommendedMediaList = (_data = {}) => {
                 progress.set(100)
                 alertError()
                 processRecommendedMediaListWorker?.terminate?.();
+                console.error(error)
                 reject(error)
             })
     });
@@ -731,7 +749,9 @@ const requestMediaEntries = (_data = {}) => {
 
                         dataStatus.set(null)
                         progress.set(100)
-                        reject(data)
+
+                        console.error(data.error)
+                        reject(data.error)
                     } else if (hasOwnProp?.call?.(data, "updateRecommendationList")) {
                         if (get(android)) {
                             window.KanshiBackgroundShouldProcessRecommendation = true
@@ -804,6 +824,7 @@ const requestMediaEntries = (_data = {}) => {
                     notifyUpdatedMediaNotification()
                     dataStatus.set(null)
                     progress.set(100)
+                    console.error(error)
                     reject(error)
                 }
             }).catch((error) => {
@@ -814,6 +835,7 @@ const requestMediaEntries = (_data = {}) => {
                 dataStatus.set(null)
                 progress.set(100)
                 alertError()
+                console.error(error)
                 reject(error)
             })
     })
@@ -883,7 +905,8 @@ const requestUserEntries = (_data = {}) => {
                         dataStatus.set(null)
                         progress.set(100)
                         resetTypedUsername.update(e => !e)
-                        reject(data)
+                        console.error(data.error)
+                        reject(data.error)
                     } else if (hasOwnProp?.call?.(data, "updateRecommendationList")) {
                         if (get(android)) {
                             window.KanshiBackgroundShouldProcessRecommendation = window.shouldUpdateNotifications = true
@@ -915,6 +938,7 @@ const requestUserEntries = (_data = {}) => {
                     dataStatus.set(null)
                     progress.set(100)
                     resetTypedUsername.update(e => !e)
+                    console.error(error)
                     reject(error)
                 }
             }).catch((error) => {
@@ -933,6 +957,7 @@ const requestUserEntries = (_data = {}) => {
                 requestUserEntriesWorker?.terminate?.();
                 alertError()
                 resetTypedUsername.update(e => !e)
+                console.error(error)
                 reject(error)
             })
     })
@@ -989,7 +1014,7 @@ const exportUserData = (_data) => {
                         dataStatus.set(null)
                         progress.set(100)
                         isExporting.set(false)
-                        waitForExportApproval?.reject?.()
+                        waitForExportApproval?.reject?.(data?.error)
                         waitForExportApproval = null
                         if (data?.missingData) {
                             window.confirmPromise?.({
@@ -998,6 +1023,7 @@ const exportUserData = (_data) => {
                                 text: "Data was not exported, incomplete data.",
                             })
                         } else {
+                            console.error(data?.error)
                             window.confirmPromise?.({
                                 isAlert: true,
                                 title: "Export failed",
@@ -1006,7 +1032,7 @@ const exportUserData = (_data) => {
                         }
                         exportUserDataWorker?.terminate?.();
                         rerunImportantWork()
-                        reject()
+                        reject(data?.error)
                     } else if (get(android)) {
                         try {
                             let chunk = data?.chunk || ""
@@ -1025,8 +1051,8 @@ const exportUserData = (_data) => {
                                     waitForExportApproval = { resolve, reject }
                                 }).then(() => {
                                     showToast("Data has been Exported")
-                                }).catch(() => {
-                                    reject()
+                                }).catch((error) => {
+                                    reject(error)
                                 }).finally(() => {
                                     waitForExportApproval = null
                                     dataStatus.set(null)
@@ -1054,7 +1080,7 @@ const exportUserData = (_data) => {
                             dataStatusPrio = false
                             isExporting.set(false)
                             exportUserDataWorker?.terminate?.();
-                            waitForExportApproval?.reject?.()
+                            waitForExportApproval?.reject?.(ex)
                             waitForExportApproval = null
                             window.confirmPromise?.({
                                 isAlert: true,
@@ -1064,8 +1090,8 @@ const exportUserData = (_data) => {
                             dataStatus.set(null)
                             progress.set(100)
                             rerunImportantWork()
-                            reject()
                             console.error(ex)
+                            reject(ex)
                         }
                     } else if (typeof data?.url === "string" && data?.url !== "") {
                         dataStatusPrio = false
@@ -1096,7 +1122,7 @@ const exportUserData = (_data) => {
                     dataStatus.set(null)
                     progress.set(100)
                     isExporting.set(false)
-                    waitForExportApproval?.reject?.()
+                    waitForExportApproval?.reject?.(error)
                     waitForExportApproval = null
                     window.confirmPromise?.({
                         isAlert: true,
@@ -1105,6 +1131,7 @@ const exportUserData = (_data) => {
                     })
                     exportUserDataWorker?.terminate?.();
                     rerunImportantWork()
+                    console.error(error)
                     reject(error)
                 }
             }).catch((error) => {
@@ -1112,11 +1139,12 @@ const exportUserData = (_data) => {
                 dataStatus.set(null)
                 progress.set(100)
                 isExporting.set(false)
-                waitForExportApproval?.reject?.()
+                waitForExportApproval?.reject?.(error)
                 waitForExportApproval = null
                 alertError()
                 exportUserDataWorker?.terminate?.();
                 rerunImportantWork()
+                console.error(error)
                 reject(error)
             })
     })
@@ -1168,7 +1196,8 @@ const importUserData = (_data) => {
                         progress.set(100)
                         importUserDataWorker?.terminate?.();
                         rerunImportantWork()
-                        reject(data?.error || "Something went wrong")
+                        console.error(data.error)
+                        reject(data.error || "Something went wrong")
                     } else if (hasOwnProp?.call?.(data, "importedUsername")) {
                         if (typeof data?.importedUsername === "string") {
                             setLocalStorage("username", data.importedUsername).catch(() => {
@@ -1234,6 +1263,7 @@ const importUserData = (_data) => {
                     progress.set(100)
                     importUserDataWorker?.terminate?.();
                     rerunImportantWork()
+                    console.error(error)
                     reject(error || "Something went wrong")
                 }
             }).catch((error) => {
@@ -1250,6 +1280,7 @@ const importUserData = (_data) => {
                 alertError()
                 importUserDataWorker?.terminate?.();
                 rerunImportantWork()
+                console.error(error)
                 reject(error)
             })
     })
@@ -1326,11 +1357,13 @@ const getExtraInfo = () => {
                 }
                 getExtraInfoWorker.onerror = (error) => {
                     getExtraInfoWorker?.terminate?.()
+                    console.error(error)
                     reject(error)
                 }
             }).catch((error) => {
                 alertError()
                 getExtraInfoWorker?.terminate?.()
+                console.error(error)
                 reject(error)
             })
     })
@@ -1346,6 +1379,7 @@ const getIDBdata = (name) => {
                 worker.onmessage = ({ data }) => {
                     worker?.terminate?.()
                     if (hasOwnProp?.call?.(data || {}, "Failed to retrieve the data")) {
+                        console.error(data?.["Failed to retrieve the data"])
                         reject(data?.["Failed to retrieve the data"] || "Failed to retrieve the data")
                     } else {
                         resolve(data)
@@ -1354,10 +1388,12 @@ const getIDBdata = (name) => {
                 worker.onerror = (error) => {
                     worker?.terminate?.()
                     alertError()
+                    console.error(error)
                     reject(error)
                 }
             }).catch((error) => {
                 alertError()
+                console.error(error)
                 reject(error)
             })
     })
@@ -1372,6 +1408,7 @@ window.updateNotifications = async (aniIdsNotificationToBeUpdated = []) => {
                 worker.onmessage = ({ data }) => {
                     worker?.terminate?.()
                     if (hasOwnProp?.call?.(data || {}, "Failed to retrieve the data")) {
+                        console.error(data?.["Failed to retrieve the data"])
                         reject(data?.["Failed to retrieve the data"] || "Failed to retrieve the data")
                     } else {
                         resolve(data)
@@ -1379,10 +1416,12 @@ window.updateNotifications = async (aniIdsNotificationToBeUpdated = []) => {
                 }
                 worker.onerror = (error) => {
                     worker?.terminate?.()
+                    console.error(error)
                     reject(error)
                 }
             }).catch((error) => {
                 alertError()
+                console.error(error)
                 reject(error)
             })
     }).then((updatedAniIdsNotification = {}) => {
@@ -1426,6 +1465,7 @@ const saveIDBdata = (_data, name, isImportant = false) => {
                             worker?.terminate?.();
                         }, terminateDelay)
                         if (hasOwnProp?.call?.(data, "error")) {
+                            console.error(data.error)
                             reject(data.error)
                         } else {
                             resolve()
@@ -1435,11 +1475,13 @@ const saveIDBdata = (_data, name, isImportant = false) => {
                         setTimeout(() => {
                             worker?.terminate?.();
                         }, terminateDelay)
+                        console.error(error)
                         reject(error)
                     }
                     worker.postMessage({ data: _data, name: name })
                 }).catch((error) => {
                     alertError()
+                    console.error(error)
                     reject(error)
                 })
         }
@@ -1486,8 +1528,8 @@ const getMediaEntries = (_data) => {
                         worker?.terminate?.();
                     }, terminateDelay)
                     if (hasOwnProp?.call?.(data, "error")) {
-                        console.error(data?.error)
-                        reject(data?.error)
+                        console.error(data.error)
+                        reject(data.error)
                     } else {
                         resolve(data)
                     }
@@ -1498,18 +1540,17 @@ const getMediaEntries = (_data) => {
                     progress.set(100)
                     alertError()
                     updateRecommendationList.update(e => !e)
-                    setTimeout(() => {
-                        worker?.terminate?.();
-                    }, terminateDelay)
+                    worker?.terminate?.();
+                    console.error(error)
                     reject(error)
                 }
             }).catch((error) => {
-                console.error(error)
                 dataStatusPrio = false
                 dataStatus.set(null)
                 progress.set(100)
                 alertError()
                 updateRecommendationList.update(e => !e)
+                console.error(error)
                 reject(error)
             })
     })
@@ -1537,6 +1578,7 @@ const getFilterOptions = (_data) => {
                         dataStatus.set(null)
                         alertError()
                         getFilterOptionsWorker?.terminate?.()
+                        console.error(data.error)
                         reject(data.error)
                     } else {
                         dataStatusPrio = false
@@ -1552,6 +1594,7 @@ const getFilterOptions = (_data) => {
                     dataStatus.set(null)
                     alertError()
                     getFilterOptionsWorker?.terminate?.()
+                    console.error(error)
                     reject(error)
                 }
             }).catch((error) => {
@@ -1559,6 +1602,7 @@ const getFilterOptions = (_data) => {
                 dataStatus.set(null)
                 alertError()
                 getFilterOptionsWorker?.terminate?.()
+                console.error(error)
                 reject(error)
             })
     })

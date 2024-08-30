@@ -132,6 +132,7 @@
                     showId: mediaID,
                 });
                 delete $hiddenEntries?.[mediaID];
+                $hiddenEntries = $hiddenEntries
             }
         } else {
             if (
@@ -335,9 +336,7 @@
                 removeClass(popupWrapper, "visible");
             }, 200);
 
-            let shouldUpdate =
-                $selectedMediaGridEl?.getBoundingClientRect?.()?.top > 0;
-            if ($listUpdateAvailable && shouldUpdate) {
+            if ($listUpdateAvailable) {
                 updateList(true);
             }
         }

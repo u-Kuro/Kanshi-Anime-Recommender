@@ -152,6 +152,7 @@
                     showId: mediaID,
                 });
                 delete $hiddenEntries?.[mediaID];
+                $hiddenEntries = $hiddenEntries
                 $mediaOptionVisible = false;
             }
         } else {

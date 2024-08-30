@@ -1,6 +1,5 @@
 <script>
     import { onMount, tick } from "svelte";
-    import { mediaManager } from "../../js/workerUtils.js";
     import {
         getElementWidth,
         getLocalStorage,
@@ -15,9 +14,7 @@
         showFilterOptions,
         dropdownIsVisible,
         popupVisible,
-        listUpdateAvailable,
         shownAllInList,
-        isBackgroundUpdateKey,
         menuVisible,
         selectedCategory,
         categoriesKeys,
@@ -42,12 +39,6 @@
         if ($gridFullView) {
             showCategoriesNav = true;
         }
-    }
-
-    async function updateList() {
-        if ($android && window?.[$isBackgroundUpdateKey] === true) return;
-        $listUpdateAvailable = false;
-        mediaManager({ updateRecommendedMediaList: true });
     }
 
     let selectedElementIndicatorWidth, selectedElementIndicatorOffsetLeft;
@@ -96,21 +87,19 @@
             let idxToSelect = selectedCategoryIdx + (next ? 1 : -1);
             if (idxToSelect >= 0 && $categoriesKeys?.length > idxToSelect) {
                 let selectingCategoryName = $categoriesKeys?.[idxToSelect];
-                if (selectingCategoryName)
+                if (selectingCategoryName) {
                     selectCategory(selectingCategoryName);
+                }
             }
         }, 8);
     }
 
     let scrollFullGridTimeout;
-    async function selectCategory(selectedCategoryName) {
+    function selectCategory(selectedCategoryName) {
         if (!$categoriesKeys?.length) return pleaseWaitAlert();
         clearTimeout(scrollFullGridTimeout);
         goBackGrid(selectedCategoryName);
         if (selectedCategoryName === $selectedCategory) {
-            if ($listUpdateAvailable) {
-                updateList();
-            }
             return;
         }
         $selectedCategory = selectedCategoryName;
