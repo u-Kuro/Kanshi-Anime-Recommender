@@ -88,7 +88,7 @@
         ) {
             if (!typedUsername) return;
             if (typedUsername !== $username) {
-                if (!navigator.onLine) {
+                if (window.navigator?.onLine === false) {
                     if (document?.activeElement !== inputUsernameEl) {
                         typedUsername = $username || typedUsername || "";
                     }

@@ -665,7 +665,44 @@ const isMobile = () => {
   } catch { }
 };
 
+const checkConnection = async () => {
+  try {
+      if (window.navigator?.onLine !== false) {
+          const origin = window.location?.origin
+          const url = isAndroid() ? new URL("assets/check-connection", origin) : origin
+          const response = await fetch(url, {
+              method: "HEAD",
+              cache: "no-store"
+          });
+          return response?.ok
+      }
+  } catch {}
+  return false
+}
+
+let isConnectedPromise
+const isConnected = async () => {
+  if (isConnectedPromise) return isConnectedPromise
+  isConnectedPromise = new Promise(async (resolve) => {
+    if (await checkConnection()) {
+      isConnectedPromise = null
+      return resolve(true)
+    } else {
+      await new Promise((r) => setTimeout(r, 5000))
+      if (await checkConnection()) {
+        isConnectedPromise = null
+        resolve(true)
+      } else {
+        isConnectedPromise = null
+        resolve(false)
+      }
+    }
+  })
+  return isConnectedPromise
+}
+
 export {
+  isConnected,
   setLocalStorage,
   getLocalStorage,
   removeLocalStorage,

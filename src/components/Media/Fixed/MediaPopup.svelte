@@ -33,7 +33,6 @@
         confirmPromise,
         shownAllInList,
         dataStatus,
-        updateRecommendationList,
         listUpdateAvailable,
         popupIsGoingBack,
         earlisetReleaseDate,
@@ -50,9 +49,7 @@
         documentScrollTop,
     } from "../../../js/globalValues.js";
 
-    const emptyImage =
-        "data:image/png;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=";
-    let isOnline = window.navigator.onLine;
+    const emptyImage = "data:image/png;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=";
 
     let mostVisiblePopupHeader,
         currentHeaderIdx,
@@ -774,7 +771,7 @@
         if (
             ytPlayer?.getPlayerState?.() === (getYTPlayerState("UNSTARTED")??-1) ||
             trailerEl.tagName !== "IFRAME" ||
-            !isOnline
+            window.navigator?.onLine === false
         ) {
             if (media?.id != null) {
                 failingTrailers[media.id] = true;
@@ -1057,20 +1054,15 @@
         }
     });
 
-    let changingConnectionTimeout
     window.addEventListener("online", () => {
+        if (window[$isBackgroundUpdateKey] === true) return
         if ($android) {
-            clearTimeout(changingConnectionTimeout)
             try {
                 JSBridge.isOnline(true);
             } catch (ex) { console.error(ex) }
+        } else {
+            $dataStatus = "Reconnected Successfully";
         }
-        $dataStatus = "Reconnected Successfully";
-        let mediaList = $loadedMediaLists[$selectedCategory].mediaList;
-        if (!mediaList?.length) {
-            $updateRecommendationList = !$updateRecommendationList;
-        }
-        isOnline = true;
         document.querySelectorAll("script")?.forEach((script) => {
             if (
                 script.src &&
@@ -1113,22 +1105,14 @@
     window.playMostVisibleTrailer = playMostVisibleTrailer;
     window.reloadYoutube = reloadYoutube;
     window.addEventListener("offline", () => {
+        if (window[$isBackgroundUpdateKey] === true) return
         if ($android) {
-            clearTimeout(changingConnectionTimeout)
-            if (window[$isBackgroundUpdateKey] === true) {
-                changingConnectionTimeout = setTimeout(()=>{
-                    try {
-                        JSBridge.isOnline(false);
-                    } catch (ex) { console.error(ex) }
-                }, 5000)
-            } else {
-                try {
-                    JSBridge.isOnline(false);
-                } catch (ex) { console.error(ex) }
-            }
+            try {
+                JSBridge.isOnline(false);
+            } catch (ex) { console.error(ex) }
+        } else {
+            $dataStatus = "Currently Offline";
         }
-        $dataStatus = "Currently Offline";
-        isOnline = false;
     });
     function loadYouTubeAPI() {
         return new Promise((resolve) => {

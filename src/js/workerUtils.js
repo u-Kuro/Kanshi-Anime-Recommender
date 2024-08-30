@@ -1,6 +1,6 @@
 import { get } from "svelte/store";
 import { cacheRequest } from "./caching.js";
-import { downloadLink, isJsonObject, removeLocalStorage, setLocalStorage, showToast, } from "../js/others/helper.js"
+import { downloadLink, isConnected, isJsonObject, removeLocalStorage, setLocalStorage, showToast, } from "../js/others/helper.js"
 import {
     dataStatus,
     updateRecommendationList,
@@ -740,7 +740,13 @@ const requestMediaEntries = (_data = {}) => {
                             dataStatus.set(data.status)
                         }
                         return
+                    } else if (hasOwnProp.call(data, "getConnectionState")) {
+                        (async () => {
+                            requestMediaEntriesWorker?.postMessage?.({ hasConnection: await isConnected() })
+                        })();
+                        return
                     }
+                    
                     if (hasOwnProp?.call?.(data, "error")) {
                         isRequestingMediaEntries = false
 
@@ -887,6 +893,11 @@ const requestUserEntries = (_data = {}) => {
                         if (!dataStatusPrio) {
                             dataStatus.set(data.status)
                         }
+                        return
+                    } else if (hasOwnProp.call(data, "getConnectionState")) {
+                        (async () => {
+                            requestUserEntriesWorker?.postMessage?.({ hasConnection: await isConnected() })
+                        })();
                         return
                     }
 
@@ -1626,7 +1637,13 @@ const updateTagInfo = async () => {
             }
         }
         updateTagInfoWorker.postMessage({ windowHREF: passedWindowHREF })
-        updateTagInfoWorker.onmessage = () => {
+        updateTagInfoWorker.onmessage = ({ data }) => {
+            if (hasOwnProp.call(data, "getConnectionState")) {
+                (async () => {
+                    updateTagInfoWorker?.postMessage?.({ hasConnection: await isConnected() })
+                })();
+                return
+            }
             updateTagInfoWorker?.terminate?.()
         }
         updateTagInfoWorker.onerror = () => {

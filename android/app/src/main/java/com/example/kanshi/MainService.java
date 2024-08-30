@@ -7,6 +7,7 @@ import static com.example.kanshi.Configs.NOTIFICATION_DATA_EVICTION;
 import static com.example.kanshi.Configs.IS_BACKGROUND_UPDATE_KEY;
 import static com.example.kanshi.Configs.VISITED_KEY;
 import static com.example.kanshi.Configs.getAssetLoader;
+import static com.example.kanshi.Utils.fetchWebConnection;
 import static com.example.kanshi.LocalPersistence.getLockForFile;
 import static com.example.kanshi.LocalPersistence.getLockForFileName;
 
@@ -179,7 +180,10 @@ public class MainService extends Service {
             public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
                 Uri uri = request.getUrl();
                 String url = uri.toString();
-                if (url.startsWith("https://appassets.androidplatform.net/assets/build/bundle.css")
+                if (url.startsWith("https://appassets.androidplatform.net/assets/check-connection")) {
+                    return fetchWebConnection();
+                } else if (
+                    url.startsWith("https://appassets.androidplatform.net/assets/build/bundle.css")
                     || url.startsWith("https://appassets.androidplatform.net/assets/version.json")
                 ) {
                     return null;
@@ -190,7 +194,10 @@ public class MainService extends Service {
             @Override
             @SuppressWarnings("deprecation")
             public WebResourceResponse shouldInterceptRequest(WebView view, String url) {
-                if (url.startsWith("https://appassets.androidplatform.net/assets/build/bundle.css")
+                if (url.startsWith("https://appassets.androidplatform.net/assets/check-connection")) {
+                    return fetchWebConnection();
+                } else if (
+                    url.startsWith("https://appassets.androidplatform.net/assets/build/bundle.css")
                     || url.startsWith("https://appassets.androidplatform.net/assets/version.json")
                 ) {
                     return null;
@@ -610,25 +617,6 @@ public class MainService extends Service {
                 if (fileLock != null) {
                     fileLock.unlock();
                 }
-            }
-        }
-        @RequiresApi(api = Build.VERSION_CODES.N)
-        @JavascriptInterface
-        public void isOnline(boolean isOnline) {
-            if (isOnline) {
-                try {
-                    Handler handler = new Handler(Looper.getMainLooper());
-                    handler.post(() -> {
-                        String url = webView.getUrl();
-                        if (url == null) {
-                            isReloaded = true;
-                            webView.loadUrl("https://appassets.androidplatform.net/assets/index.html");
-                        }
-                    });
-                } catch (Exception ignored) {}
-            } else {
-                MainService.this.stopForeground(true);
-                MainService.this.stopSelf();
             }
         }
         @RequiresApi(api = Build.VERSION_CODES.O)

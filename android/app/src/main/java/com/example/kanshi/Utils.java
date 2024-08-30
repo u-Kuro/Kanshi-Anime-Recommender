@@ -27,14 +27,19 @@ import android.os.storage.StorageManager;
 import android.os.storage.StorageVolume;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
+import android.webkit.WebResourceResponse;
 
 import androidx.annotation.RequiresApi;
 
 import java.io.BufferedWriter;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
+import java.io.InputStream;
 import java.io.ObjectOutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -238,6 +243,43 @@ public class Utils {
 //            }
 //        });
 //    }
+
+    public static WebResourceResponse fetchWebVersion() {
+        try {
+            HttpURLConnection connection = (HttpURLConnection) new URL("https://raw.githubusercontent.com/u-Kuro/Kanshi-Anime-Recommender/main/public/version.json").openConnection();
+            connection.setRequestMethod("GET");
+            connection.setUseCaches(false);
+            connection.setConnectTimeout(15000);
+            connection.setReadTimeout(15000);
+            connection.connect();
+
+            InputStream inputStream = connection.getInputStream();
+            String contentType = connection.getContentType();
+            String encoding = connection.getContentEncoding() != null ? connection.getContentEncoding() : "UTF-8";
+
+            return new WebResourceResponse(contentType, encoding, inputStream);
+        } catch (Exception ignored) {
+            return null;
+        }
+    }
+
+    public static WebResourceResponse fetchWebConnection() {
+        try {
+            HttpURLConnection connection = (HttpURLConnection) new URL("https://raw.githubusercontent.com/u-Kuro/Kanshi-Anime-Recommender/main/public/version.json").openConnection();
+            connection.setRequestMethod("HEAD");
+            connection.setUseCaches(false);
+            connection.setConnectTimeout(15000);
+            connection.setReadTimeout(15000);
+            connection.connect();
+
+            String contentType = connection.getContentType();
+            String encoding = connection.getContentEncoding() != null ? connection.getContentEncoding() : "UTF-8";
+
+            return new WebResourceResponse(contentType, encoding, new ByteArrayInputStream(new byte[0]));
+        } catch (Exception ignored) {
+            return null;
+        }
+    }
 
     @RequiresApi(api = Build.VERSION_CODES.R)
     public static void exportReleasedMedia(Context context) {

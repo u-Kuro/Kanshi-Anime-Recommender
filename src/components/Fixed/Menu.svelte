@@ -126,7 +126,7 @@
     }
 
     async function updateList() {
-        if (!navigator.onLine) {
+        if (window.navigator?.onLine === false) {
             return $confirmPromise({
                 isAlert: true,
                 title: "Currently offline",

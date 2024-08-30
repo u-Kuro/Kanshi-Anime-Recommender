@@ -16,7 +16,9 @@ import static com.example.kanshi.Configs.VISITED_KEY;
 import static com.example.kanshi.Configs.getTOKEN;
 import static com.example.kanshi.LocalPersistence.getLockForFile;
 import static com.example.kanshi.LocalPersistence.getLockForFileName;
-import static com.example.kanshi.Utils.*;
+import static com.example.kanshi.Utils.fetchWebVersion;
+import static com.example.kanshi.Utils.fetchWebConnection;
+import static com.example.kanshi.Utils.getPath;
 
 import androidx.activity.OnBackPressedCallback;
 import androidx.activity.result.ActivityResult;
@@ -79,7 +81,6 @@ import android.widget.Toast;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
-import java.io.InputStream;
 import java.lang.ref.WeakReference;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -322,29 +323,13 @@ public class MainActivity extends AppCompatActivity {
         WebViewAssetLoader assetLoader = getAssetLoader(this);
 
         webView.setWebViewClient(new WebViewClient() {
-            private WebResourceResponse fetchWebVersion() {
-                try {
-                    HttpURLConnection connection = (HttpURLConnection) new URL("https://raw.githubusercontent.com/u-Kuro/Kanshi-Anime-Recommender/main/public/version.json").openConnection();
-                    connection.setRequestMethod("GET");
-                    connection.setUseCaches(false);
-                    connection.setConnectTimeout(3000);
-                    connection.setReadTimeout(3000);
-                    connection.connect();
-
-                    InputStream inputStream = connection.getInputStream();
-                    String contentType = connection.getContentType();
-                    String encoding = connection.getContentEncoding() != null ? connection.getContentEncoding() : "UTF-8";
-
-                    return new WebResourceResponse(contentType, encoding, inputStream);
-                } catch (Exception ignored) {
-                    return null;
-                }
-            }
             @Override
             public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
                 Uri uri = request.getUrl();
                 String url = uri.toString();
-                if (url.startsWith("https://appassets.androidplatform.net/assets/version.json")) {
+                if (url.startsWith("https://appassets.androidplatform.net/assets/check-connection")) {
+                    return fetchWebConnection();
+                } else if (url.startsWith("https://appassets.androidplatform.net/assets/version.json")) {
                     return fetchWebVersion();
                 } else {
                     return assetLoader.shouldInterceptRequest(uri);
@@ -353,7 +338,9 @@ public class MainActivity extends AppCompatActivity {
             @Override
             @SuppressWarnings("deprecation")
             public WebResourceResponse shouldInterceptRequest(WebView view, String url) {
-                if (url.startsWith("https://appassets.androidplatform.net/assets/version.json")) {
+                if (url.startsWith("https://appassets.androidplatform.net/assets/check-connection")) {
+                    return fetchWebConnection();
+                } else if (url.startsWith("https://appassets.androidplatform.net/assets/version.json")) {
                     return fetchWebVersion();
                 } else {
                     return assetLoader.shouldInterceptRequest(Uri.parse(url));
@@ -1430,8 +1417,7 @@ public class MainActivity extends AppCompatActivity {
 
     @RequiresApi(api = Build.VERSION_CODES.N)
     private void isAppConnectionAvailable(ConnectivityCallback callback) {
-        ConnectivityManager connectivityManager =
-                (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
         Network network = connectivityManager.getActiveNetwork();
         if (network == null) {
             callback.onConnectionResult(false);
@@ -1445,14 +1431,13 @@ public class MainActivity extends AppCompatActivity {
     private boolean checkAppConnection() {
         Future<Boolean> future = executor.submit(() -> {
             try {
-                URL url = new URL("https://raw.githubusercontent.com/u-Kuro/Kanshi-Anime-Recommender/main/public/version.json");
-                HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
-                urlConnection.setRequestMethod("HEAD");
-                urlConnection.setConnectTimeout(999999999);
-                urlConnection.setReadTimeout(999999999);
-                urlConnection.setUseCaches(false);
-                int responseCode = urlConnection.getResponseCode();
-                urlConnection.disconnect();
+                HttpURLConnection connection = (HttpURLConnection) new URL("https://raw.githubusercontent.com/u-Kuro/Kanshi-Anime-Recommender/main/public/version.json").openConnection();
+                connection.setRequestMethod("HEAD");
+                connection.setConnectTimeout(999999999);
+                connection.setReadTimeout(999999999);
+                connection.setUseCaches(false);
+                int responseCode = connection.getResponseCode();
+                connection.disconnect();
                 return responseCode == HttpURLConnection.HTTP_OK;
             } catch (Exception ignored) {
                 return false;

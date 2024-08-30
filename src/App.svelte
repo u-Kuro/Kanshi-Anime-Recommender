@@ -203,13 +203,13 @@
 
 					try {
 						await requestUserEntries()
-						dataIsUpdated = window.KanshiBackgroundShouldProcessRecommendation;
 					} catch (ex) { console.error (ex) }
+					dataIsUpdated = window.KanshiBackgroundShouldProcessRecommendation;
 
 					try {
 						await requestMediaEntries()
-						dataIsUpdated = dataIsUpdated || window.KanshiBackgroundShouldProcessRecommendation;
 					} catch (ex) { console.error(ex) }
+					dataIsUpdated = dataIsUpdated || window.KanshiBackgroundShouldProcessRecommendation;
 
 					let recommendationListIsProcessed
 					if (dataIsUpdated) {
@@ -587,7 +587,7 @@
 		// After the initial lLoad has Finished
 		if (val === false) {
 			// Check App ID and Version Updates for Android
-			if ($android && navigator?.onLine) {
+			if ($android && window.navigator?.onLine) {
 				try {
 					$appID = await getWebVersion();
 					if (window[$isBackgroundUpdateKey] !== true && typeof $appID === "number" && !isNaN($appID) && isFinite($appID)) {
@@ -646,7 +646,7 @@
 		}
 	});
 	runUpdate.subscribe(async (val) => {
-		if (typeof val !== "boolean" || $initData || !navigator.onLine) return;
+		if (typeof val !== "boolean" || $initData || window.navigator?.onLine === false) return;
 		if ($android && window?.[$isBackgroundUpdateKey] === true) return;
 		
 		if (!$userRequestIsRunning) {
