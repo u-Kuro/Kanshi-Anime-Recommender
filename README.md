@@ -7,13 +7,16 @@
 This app is tailored to offer <b>anime, manga (manhwa, manhua, one shot), and light novel (LN) recommendations</b> by analyzing your <b>personal ratings on AniList</b>.
 </p>
 <p>
-By eliminating the need to depend on others' preferences, it can suggest <b>underrated</b> and <b>underwatched</b> anime that align with your taste.  
+By eliminating the need to depend on others' preferences, it can suggest <b>underrated</b> and <b>underwatched</b> anime that aligns with your taste.  
 </p>
 <p>
-That said, the app allows you to <b>customize your recommendation algorithm</b>, including the option to <b>choose your own features (genres, tags, etc.)</b> and to <b>assign weights</b>.  
+The app also allows you to <b>customize the recommendation algorithm</b>, including the option to <b>choose your own features (genres, tags, etc.)</b> and to <b>change its thresholds</b>.  
 </p>
 <p>
-If you're struggling to decide on what to see, this tool can assist you in discovering something new that precisely match your preferences. it's also <b>free</b> and <b>runs locally</b> for your convenience.  
+If you're struggling to decide on what to see next, this tool can assist you by giving reasonable recommendations based on the contents you liked. 
+</p>
+<p>
+It's <b>free</b> and <b>runs locally</b> for your convenience.  
 </p>
 <h2 align="center"></h2>
 
