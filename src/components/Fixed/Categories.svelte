@@ -28,8 +28,7 @@
     let isScrolledYMax;
 
     documentScrollTop.subscribe((val) => {
-        isScrolledYMax = val >= document?.documentElement?.scrollHeight - window?.innerHeight - 1 
-            && $shownAllInList?.[$selectedCategory];
+        isScrolledYMax = val >= (document?.documentElement?.scrollHeight - window.innerHeight - 1) && $shownAllInList?.[$selectedCategory];
         if (isScrolledYMax) {
             showCategoriesNav = true;
         }
@@ -55,10 +54,7 @@
 
             selectedElementIndicatorOffsetLeft =
                 elementToScroll?.offsetLeft +
-                parseFloat(
-                    window?.getComputedStyle?.(elementToScroll, null)
-                        ?.paddingLeft,
-                ) +
+                parseFloat(window.getComputedStyle?.(elementToScroll, null)?.paddingLeft) +
                 (selectedElementWidth - selectedElementIndicatorWidth) / 2;
             let scrollPosition =
                 elementToScroll?.offsetLeft -

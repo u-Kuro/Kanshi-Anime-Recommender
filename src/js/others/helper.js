@@ -159,7 +159,7 @@ const arraySum = (obj) => obj.reduce((a, b) => a + b, 0)
 //       childElements = document?.querySelectorAll?.(childSelector)
 //     }
 //     if (childElements instanceof NodeList) {
-//       let windowViewHeight = window?.visualViewport?.height || window.innerHeight
+//       let windowViewHeight = window.visualViewport?.height || window.innerHeight
 //       childElements = Array.from(childElements)
 //       for (let i = 0, l = childElements.length; i < l; i++) {
 //         let rect = childElements[i]?.getBoundingClientRect?.()
@@ -564,7 +564,7 @@ const removeClass = (element, className) => {
 
 const getElementWidth = (element) => {
   try {
-    const elementComputedStyle = window?.getComputedStyle?.(element, null)
+    const elementComputedStyle = window.getComputedStyle?.(element, null)
     let elementWidth = element?.getBoundingClientRect?.()?.width
     elementWidth -=
       parseFloat(elementComputedStyle?.paddingLeft) +
@@ -665,16 +665,27 @@ const isMobile = () => {
   } catch { }
 };
 
+const android = isAndroid()
 const checkConnection = async () => {
   try {
       if (window.navigator?.onLine !== false) {
-          const origin = window.location?.origin
-          const url = isAndroid() ? new URL("assets/check-connection", origin) : origin
-          const response = await fetch(url, {
-              method: "HEAD",
-              cache: "no-store"
-          });
-          return response?.ok
+          const location = window.location
+          if (location == null) return true
+          if (android) {
+            const origin = location.origin
+            if (origin == null) return true
+            const response = await fetch(new URL("assets/check-connection", origin), {
+                method: "HEAD",
+                cache: "no-store"
+            });
+            return response?.ok
+          } else {
+            const response = await fetch(location, {
+                method: "HEAD",
+                cache: "no-store"
+            });
+            return response?.ok
+          }
       }
   } catch {}
   return false

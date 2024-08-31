@@ -291,7 +291,7 @@
                 });
                 $openedMediaPopupIdx = null;
 
-                window?.addHistory?.();
+                window.addHistory?.();
             } else {
                 afterImmediateScrollUponPopupVisible = false;
                 // Animate Opening
@@ -313,8 +313,8 @@
                 }
             }
         } else if (val === false) {
-            window?.closeFullScreenItem?.();
-            window?.handleConfirmationCancelled?.();
+            window.closeFullScreenItem?.();
+            window.handleConfirmationCancelled?.();
             $confirmIsVisible = false;
             if (!$menuVisible && $documentScrollTop > 0) {
                 addClass(navContainerEl, "hide");
@@ -889,7 +889,7 @@
     }
 
     async function updateList(skipConfirm) {
-        if ($android && window?.[$isBackgroundUpdateKey] === true) return;
+        if ($android && window[$isBackgroundUpdateKey] === true) return;
         if (
             skipConfirm ||
             (await $confirmPromise({
@@ -1133,7 +1133,7 @@
                 resolve();
             };
             tag.onload = () => {
-                window?.onYouTubeIframeAPIReady?.();
+                window.onYouTubeIframeAPIReady?.();
                 resolve();
             };
             let firstScriptTag = document.getElementsByTagName("script")[0];
@@ -2324,7 +2324,7 @@
                                                                     !itemIsScrolling
                                                                 ) {
                                                                     showFullScreenInfo(
-                                                                        window?.getTagInfoHTML?.(
+                                                                        window.getTagInfoHTML?.(
                                                                             tags?.tagName,
                                                                         ),
                                                                     );
@@ -2341,7 +2341,7 @@
                                                                     !itemIsScrolling
                                                                 ) {
                                                                     showFullScreenInfo(
-                                                                        window?.getTagInfoHTML?.(
+                                                                        window.getTagInfoHTML?.(
                                                                             tags?.tagName,
                                                                         ),
                                                                     );

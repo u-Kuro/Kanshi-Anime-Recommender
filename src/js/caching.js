@@ -10,7 +10,7 @@ const cacheRequest = async (url, totalLength, status, getBlob) => {
         return loadedRequestUrls[url]
     } else if (loadedRequestUrlPromises[url]) {
         return loadedRequestUrlPromises[url]
-    } else if (!window?.location?.protocol?.includes?.("file")) {
+    } else if (!window.location?.protocol?.includes?.("file")) {
         loadedRequestUrlPromises[url] = (async () => {
             // Check App ID/Version Once for Consistency
             if (appIDNotChecked) {
@@ -117,7 +117,7 @@ const cacheImage = (url, width, height) => {
     } else if (loadedImagePromises[url]) {
         return loadedImagePromises[url]
     } else {
-        const TOKEN = window?.["Kanshi.Media.Recommendations.Anilist.W~uPtWCq=vG$TR:Zl^#t<vdS]I~N70.isOwner"]
+        const TOKEN = window["Kanshi.Media.Recommendations.Anilist.W~uPtWCq=vG$TR:Zl^#t<vdS]I~N70.isOwner"]
         if (typeof TOKEN === "string" && get(android)) {
             loadedImagePromises[url] = new Promise(async (resolve) => {
                 let newUrl = `https://cors-anywhere-kuro.vercel.app/api/${TOKEN}?url=${url}`;

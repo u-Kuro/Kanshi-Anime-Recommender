@@ -361,7 +361,7 @@
         });
         let waitForOnVeryLeft;
         mediaGridEl.addEventListener("scroll", () => {
-            window?.mediaGridScrolled?.(mediaGridEl.scrollLeft);
+            window.mediaGridScrolled?.(mediaGridEl.scrollLeft);
             if (!waitForOnVeryLeft) {
                 isOnVeryLeftOfMediaGridTimeout?.();
             }

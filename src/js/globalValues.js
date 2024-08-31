@@ -16,22 +16,22 @@ const resetProgress = writable(0)
 const hasWheel = writable(false)
 
 const currentWindowHeight = Math.max(
-    window?.visualViewport?.height || 0,
-    window?.innerHeight || 0
+    window.visualViewport?.height || 0,
+    window.innerHeight || 0
 )
 const currentWindowWidth = Math.max(
-    window?.document?.documentElement?.getBoundingClientRect?.()?.width || 0,
-    window?.visualViewport?.width || 0,
-    window?.innerWidth || 0,
+    window.document?.documentElement?.getBoundingClientRect?.()?.width || 0,
+    window.visualViewport?.width || 0,
+    window.innerWidth || 0,
 )
 const windowHeight = writable(currentWindowHeight)
 const windowWidth = writable(currentWindowWidth)
 
-const isFullScreen = window?.document?.fullScreen || window?.document?.mozFullScreen || window?.document?.webkitIsFullScreen || window?.document?.msFullscreenElement
+const isFullScreen = window.document?.fullScreen || window.document?.mozFullScreen || window.document?.webkitIsFullScreen || window.document?.msFullscreenElement
 const trueWindowHeight = writable(isFullScreen ? null : currentWindowHeight)
 // const trueWindowWidth = writable(isFullScreen ? null : currentWindowWidth)
 
-const documentScrollTop = writable(window?.document?.documentElement?.scrollTop || 0)
+const documentScrollTop = writable(window.document?.documentElement?.scrollTop || 0)
 
 const isImporting = writable(false)
 const isExporting = writable(false)

@@ -41,7 +41,6 @@ import {
 } from "./globalValues.js";
 
 const hasOwnProp = Object.prototype.hasOwnProperty
-let windowHREF = window?.location?.href
 let terminateDelay = 1000;
 let dataStatusPrio = false
 let isGettingNewEntries = false;
@@ -432,7 +431,7 @@ const mediaManager = (_data = {}) => {
 
                         reject(data.error)
                     } else {
-                        if (!get(android) || window?.[get(isBackgroundUpdateKey)] !== true) {
+                        if (!get(android) || window[get(isBackgroundUpdateKey)] !== true) {
                             if (data.postId === mediaManagerWorkerPostId) {
                                 mediaManagerWorkerPostId = updateRecommendedMediaList = passedMediaCautions = undefined
                                 mediaFilters = {}
@@ -602,14 +601,14 @@ const processRecommendedMediaList = (_data = {}) => {
                             }
                         }
                     } else if (hasOwnProp?.call?.(data, "popularityMode") || hasOwnProp?.call?.(data, "averageScoreMode")) {
-                        window?.updateMeanNumberInfos?.(data?.averageScoreMode, data?.popularityMode)
+                        window.updateMeanNumberInfos?.(data?.averageScoreMode, data?.popularityMode)
                     } else if (hasOwnProp?.call?.(data, "recListMAPE")) {
-                        window?.updateRecListMAPE?.(data?.recListMAPE)
+                        window.updateRecListMAPE?.(data?.recListMAPE)
                     } else {
                         setLocalStorage("neareastMediaReleaseAiringAt", neareastMediaReleaseAiringAt)
                             .catch(() => removeLocalStorage("neareastMediaReleaseAiringAt"))
                             .finally(() => saveIDBdata(neareastMediaReleaseAiringAt, "neareastMediaReleaseAiringAt"));
-                        if (window?.shouldUpdateNotifications === true && get(android)) {
+                        if (window.shouldUpdateNotifications === true && get(android)) {
                             window.shouldUpdateNotifications = false
                             if (typeof (get(username)) === "string") {
                                 try {
@@ -628,7 +627,7 @@ const processRecommendedMediaList = (_data = {}) => {
                         dataStatus.set(null)
                         progress.set(100)
                         if (neareastMediaReleaseAiringAt) {
-                            window?.setMediaReleaseUpdateTimeout?.(neareastMediaReleaseAiringAt)
+                            window.setMediaReleaseUpdateTimeout?.(neareastMediaReleaseAiringAt)
                         }
                         resolve()
                         if (get(isImporting)) {
@@ -672,7 +671,7 @@ isProcessingList.subscribe((val) => {
 
 let newAddedMediaCount, newUpdatedMediaCount
 function notifyUpdatedMediaNotification() {
-    if (get(android) && window?.[".androidDataIsEvicted"] !== true) {
+    if (get(android) && window[".androidDataIsEvicted"] !== true) {
         try {
             if (
                 typeof newAddedMediaCount === "number" && !isNaN(newAddedMediaCount) && isFinite(newAddedMediaCount)
@@ -721,11 +720,13 @@ const requestMediaEntries = (_data = {}) => {
                 requestMediaEntriesWorker?.terminate?.()
                 notifyUpdatedMediaNotification()
                 requestMediaEntriesWorker = new Worker(url)
-                if (typeof windowHREF !== "string" && !get(android)) {
-                    const currentWindowHREF = window?.location?.href
-                    if (typeof currentWindowHREF === "string") {
-                        _data.windowHREF = currentWindowHREF
-                    }
+                if (!get(android) && window.location != null) {
+                    try {
+                        const server = new URL(window.location).toString()
+                        if (typeof server === "string" && server !== "") {
+                            _data.server = server
+                        }
+                    } catch {}
                 }
                 requestMediaEntriesWorker.postMessage(_data)
                 isRequestingMediaEntries = true
@@ -742,7 +743,7 @@ const requestMediaEntries = (_data = {}) => {
                         return
                     } else if (hasOwnProp.call(data, "getConnectionState")) {
                         (async () => {
-                            requestMediaEntriesWorker?.postMessage?.({ hasConnection: await isConnected() })
+                            requestMediaEntriesWorker?.postMessage?.({ connected: await isConnected() })
                         })();
                         return
                     }
@@ -771,7 +772,7 @@ const requestMediaEntries = (_data = {}) => {
                         progress.set(100)
                         resolve(data)
                     } else if (hasOwnProp?.call?.(data, "notifyAddedEntries")) {
-                        if (get(android) && window?.[".androidDataIsEvicted"] !== true) {
+                        if (get(android) && window[".androidDataIsEvicted"] !== true) {
                             try {
                                 let addedMediaCount = data?.notifyAddedEntries
                                 if (typeof addedMediaCount !== "number" || isNaN(addedMediaCount) || !isFinite(addedMediaCount) || addedMediaCount < 0) {
@@ -789,7 +790,7 @@ const requestMediaEntries = (_data = {}) => {
                                         updatedMediaCount > 0
                                     )
                                 ) {
-                                    if (window?.[get(isBackgroundUpdateKey)] === true) {
+                                    if (window[get(isBackgroundUpdateKey)] === true) {
                                         JSBridge.showNewUpdatedMediaNotification(
                                             Math.floor(addedMediaCount), 
                                             Math.floor(updatedMediaCount)
@@ -876,11 +877,13 @@ const requestUserEntries = (_data = {}) => {
                 requestUserEntriesWorker?.terminate?.()
                 requestUserEntriesWorker = new Worker(url)
                 userRequestIsRunning.set(true)
-                if (typeof windowHREF !== "string" && !get(android)) {
-                    const currentWindowHREF = window?.location?.href
-                    if (typeof currentWindowHREF === "string") {
-                        _data.windowHREF = currentWindowHREF
-                    }
+                if (!get(android) && window.location != null) {
+                    try {
+                        const server = new URL(window.location).toString()
+                        if (typeof server === "string" && server !== "") {
+                            _data.server = server
+                        }
+                    } catch {}
                 }
                 requestUserEntriesWorker.postMessage(_data)
                 requestUserEntriesWorker.onmessage = ({ data }) => {
@@ -896,7 +899,7 @@ const requestUserEntries = (_data = {}) => {
                         return
                     } else if (hasOwnProp.call(data, "getConnectionState")) {
                         (async () => {
-                            requestUserEntriesWorker?.postMessage?.({ hasConnection: await isConnected() })
+                            requestUserEntriesWorker?.postMessage?.({ connected: await isConnected() })
                         })();
                         return
                     }
@@ -1463,7 +1466,7 @@ window.updateNotifications = async (aniIdsNotificationToBeUpdated = []) => {
 
 const saveIDBdata = (_data, name, isImportant = false) => {
     return new Promise((resolve, reject) => {
-        if (!get(android) || isImportant || window?.[get(isBackgroundUpdateKey)] !== true) {
+        if (!get(android) || isImportant || window[get(isBackgroundUpdateKey)] !== true) {
             cacheRequest("./webapi/worker/saveIDBdata.js")
                 .then(url => {
                     let worker = new Worker(url)
@@ -1503,22 +1506,22 @@ const saveIDBdata = (_data, name, isImportant = false) => {
 const getMediaEntries = (_data) => {
     return new Promise((resolve, reject) => {
         progress.set(0)
-        cacheRequest("./webapi/worker/getEntries.js", 282282, "Checking Media, Manga, and Novel Entries")
+        cacheRequest("./webapi/worker/getEntries.js", 282273, "Checking Media, Manga, and Novel Entries")
             .then(async workerUrl => {
                 let worker = new Worker(workerUrl)
                 if (get(android)) {
                     worker.postMessage({ entriesBlob: await cacheRequest("./webapi/worker/entries.json", 174425636, "Getting Media, Manga, and Novel Entries", true) })
                 } else {
-                    let passedWindowHREF
-                    if (typeof windowHREF === "string") {
-                        passedWindowHREF = windowHREF
-                    } else {
-                        const currentWindowHREF = window?.location?.href
-                        if (typeof currentWindowHREF === "string") {
-                            passedWindowHREF = windowHREF = currentWindowHREF
-                        }
+                    let server
+                    if (window.location != null) {
+                        try {
+                            const $server = new URL(window.location).toString()
+                            if (typeof $server === "string" && server !== "") {
+                                server = $server
+                            }
+                        } catch {}
                     }
-                    worker.postMessage({ windowHREF: passedWindowHREF, appID: get(appID) })
+                    worker.postMessage({ server, appID: get(appID) })
                 }
                 worker.onmessage = ({ data }) => {
                     if (hasOwnProp?.call?.(data, "progress")) {
@@ -1625,22 +1628,20 @@ const updateTagInfo = async () => {
         const url = await cacheRequest("./webapi/worker/updateTagInfo.js")
         updateTagInfoWorker?.terminate?.()
         updateTagInfoWorker = new Worker(url)
-        let passedWindowHREF
-        if (!get(android)) {
-            if (typeof windowHREF === "string") {
-                passedWindowHREF = windowHREF
-            } else {
-                const currentWindowHREF = window?.location?.href
-                if (typeof currentWindowHREF === "string") {
-                    passedWindowHREF = windowHREF = currentWindowHREF
+        let server
+        if (!get(android) && window.location != null) {
+            try {
+                const $server = new URL(window.location).toString()
+                if (typeof $server === "string" && $server !== "") {
+                    server = $server
                 }
-            }
+            } catch {}
         }
-        updateTagInfoWorker.postMessage({ windowHREF: passedWindowHREF })
+        updateTagInfoWorker.postMessage({ server })
         updateTagInfoWorker.onmessage = ({ data }) => {
             if (hasOwnProp.call(data, "getConnectionState")) {
                 (async () => {
-                    updateTagInfoWorker?.postMessage?.({ hasConnection: await isConnected() })
+                    updateTagInfoWorker?.postMessage?.({ connected: await isConnected() })
                 })();
                 return
             }

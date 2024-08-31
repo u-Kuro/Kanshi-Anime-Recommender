@@ -353,9 +353,9 @@
 		}
 
 		function loadAnalytics() {
-			let isVercel = window.location?.origin === "https://kanshi.vercel.app";
+			const isVercel = window.location?.origin === "https://kanshi.vercel.app";
 			// Google Analytics
-			let GAscript = document.createElement("script");
+			const GAscript = document.createElement("script");
 			GAscript.onload = () => {
 				window.dataLayer = window.dataLayer || [];
 				function gtag() {
@@ -509,7 +509,7 @@
 
 		const shouldUpdate = !$popupVisible;
 		if ($listUpdateAvailable && shouldUpdate) {
-			if (!$initData && (!$android || window?.[$isBackgroundUpdateKey] !== true)) {
+			if (!$initData && (!$android || window[$isBackgroundUpdateKey] !== true)) {
 				$listUpdateAvailable = false;
 				mediaManager({ updateRecommendedMediaList: true });
 			}
@@ -519,7 +519,7 @@
 			$selectedMediaGridEl?.getBoundingClientRect?.()?.top < 0 &&
 			!appShouldExit
 		) {
-			window?.addHistory?.();
+			window.addHistory?.();
 		}
 	})
 
@@ -565,7 +565,7 @@
 		}
 	}
 	async function checkAutoExportOnLoad(visibilityChange) {
-		if ($android && window?.[$isBackgroundUpdateKey] === true) return;
+		if ($android && window[$isBackgroundUpdateKey] === true) return;
 		if ($autoExport) {
 			if (await autoExportIsPastDate()) {
 				exportUserData({ visibilityChange });
@@ -601,14 +601,14 @@
 	});
 	shouldUpdateList.subscribe((val) => {
 		if (typeof val !== "boolean" || $initData) return;
-		if ($android && window?.[$isBackgroundUpdateKey] === true) return;
+		if ($android && window[$isBackgroundUpdateKey] === true) return;
 
 		$listUpdateAvailable = false;
 		mediaManager({ updateRecommendedMediaList: true });
 	});
 	shouldUpdateRecommendationList.subscribe(async (val) => {
 		if (typeof val !== "boolean" || $initData) return;
-		if ($android && window?.[$isBackgroundUpdateKey] === true) return;
+		if ($android && window[$isBackgroundUpdateKey] === true) return;
 
 		$listUpdateAvailable = false;
 		try {
@@ -620,7 +620,7 @@
 	});
 	updateRecommendationList.subscribe(async (val) => {
 		if (typeof val !== "boolean" || $initData) return;
-		if ($android && window?.[$isBackgroundUpdateKey] === true) return;
+		if ($android && window[$isBackgroundUpdateKey] === true) return;
 
 		try {
 			await processRecommendedMediaList()
@@ -637,7 +637,7 @@
 	}
 	updateList.subscribe(async (val) => {
 		if (typeof val !== "boolean" || $initData) return;
-		if ($android && window?.[$isBackgroundUpdateKey] === true) return;
+		if ($android && window[$isBackgroundUpdateKey] === true) return;
 		
 		if ($popupVisible && $loadedMediaLists?.[$selectedCategory]?.mediaList?.length) {
 			$listUpdateAvailable = true;
@@ -647,7 +647,7 @@
 	});
 	runUpdate.subscribe(async (val) => {
 		if (typeof val !== "boolean" || $initData || window.navigator?.onLine === false) return;
-		if ($android && window?.[$isBackgroundUpdateKey] === true) return;
+		if ($android && window[$isBackgroundUpdateKey] === true) return;
 		
 		if (!$userRequestIsRunning) {
 			try {
@@ -662,7 +662,7 @@
 	});
 	runExport.subscribe((val) => {
 		if (typeof val !== "boolean" || $initData) return;
-		if ($android && window?.[$isBackgroundUpdateKey] === true) return;
+		if ($android && window[$isBackgroundUpdateKey] === true) return;
 
 		exportUserData();
 	});
@@ -673,7 +673,7 @@
 
 	// CONFIG CHANGES
 	autoUpdate.subscribe(async (val) => {
-		if ($android && window?.[$isBackgroundUpdateKey] === true) return;
+		if ($android && window[$isBackgroundUpdateKey] === true) return;
 		if (val === true) {
 			const hourINMS = 60 * 60 * 1000;
 			saveIDBdata(true, "autoUpdate");
@@ -705,7 +705,7 @@
 		}
 	});
 	autoExport.subscribe(async (val) => {
-		if ($android && window?.[$isBackgroundUpdateKey] === true) return;
+		if ($android && window[$isBackgroundUpdateKey] === true) return;
 		if (val === true) {
 			const hourINMS = 60 * 60 * 1000;
 			saveIDBdata(true, "autoExport");
@@ -1041,7 +1041,7 @@
 		shouldLoadMedia,
 	) => {
 		if ($initData) return;
-		if ($android && window?.[$isBackgroundUpdateKey] === true) return;
+		if ($android && window[$isBackgroundUpdateKey] === true) return;
 		
 		let thisShouldLoadMedia
 		if (shouldProcessRecommendation) {
@@ -1191,7 +1191,7 @@
 				const child = children?.[idx];
 				const category = child?.dataset?.category;
 				if (category != null) {
-					window?.scrollToSelectedCategory?.(category);
+					window.scrollToSelectedCategory?.(category);
 					panningCategory = category;
 				}
 				panningIdx = idx;

@@ -1,17 +1,16 @@
-const version = 453;
+const version = 454;
 let webVersionPromise
 export default async function getWebVersion() {
     if (webVersionPromise) return webVersionPromise
     webVersionPromise = new Promise(async (resolve) => {
         try {
             const location = window.location
-            if (location.protocol.includes("file")) {
+            if (location.protocol?.includes?.("file")) {
                 resolve(version)
                 webVersionPromise = null
                 return
             }
-            const url = new URL("version.json", location).href
-            const response = await fetch(url, {
+            const response = await fetch(new URL("version.json", location), {
                 cache: "no-cache"
             })
             const result = await response.json()

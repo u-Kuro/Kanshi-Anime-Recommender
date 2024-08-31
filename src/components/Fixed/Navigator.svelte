@@ -68,7 +68,7 @@
         }
     });
     async function updateUsername(event, isReconfirm = false) {
-        if ($android && window?.[$isBackgroundUpdateKey] === true) return;
+        if ($android && window[$isBackgroundUpdateKey] === true) return;
         if ($initData) {
             pleaseWaitAlert();
             new Promise((resolve) => {
@@ -111,7 +111,7 @@
                         if (!$popupVisible) {
                             document.documentElement.style.overflow = "hidden";
                             document.documentElement.style.overflow = "";
-                            window?.scrollTo?.({
+                            window.scrollTo?.({
                                 top: -9999,
                                 behavior: "smooth",
                             });
@@ -171,7 +171,7 @@
                         if (!$popupVisible) {
                             document.documentElement.style.overflow = "hidden";
                             document.documentElement.style.overflow = "";
-                            window?.scrollTo?.({
+                            window.scrollTo?.({
                                 top: -9999,
                                 behavior: "smooth",
                             });
@@ -273,34 +273,7 @@
     }
 
     async function focusInputUsernameEl() {
-        // if (
-        //     await $confirmPromise(
-        //         `Do you want to connect to your account in Anilist?`
-        //     )
-        // ) {
-        //     let webURL = window.location.href;
-        //     let clientID;
-        //     if (
-        //         webURL.startsWith(
-        //             "https://u-kuro.github.io/Kanshi-Anime-Recommender"
-        //         )
-        //     ) {
-        //         clientID = "13583";
-        //     } else if (webURL.startsWith("file:///")) {
-        //         clientID = "13584";
-        //     } else if (webURL.startsWith("http://localhost:")) {
-        //         clientID = "12476";
-        //     } else if (webURL.startsWith("https://kanshi.vercel.app")) {
-        //         clientID = "13582";
-        //     }
-        //     if (clientID) {
-        //         window.location.href = `https://anilist.co/api/v2/oauth/authorize?client_id=${clientID}&response_type=token`;
-        //     } else {
-        //         inputUsernameEl?.focus?.();
-        //     }
-        // } else {
         inputUsernameEl?.focus?.();
-        // }
     }
 
     function handleGoBack() {
@@ -334,7 +307,7 @@
                         behavior: "smooth",
                     });
                 } else {
-                    window?.showCategoriesNav?.(true);
+                    window.showCategoriesNav?.(true);
                     document.documentElement.style.overflow = "hidden";
                     document.documentElement.style.overflow = "";
                     window.scrollTo({ top: -9999, behavior: "smooth" });
@@ -354,8 +327,8 @@
     async function handleMediaRelease() {
         if (!$android) return;
         if ("Notification" in window) {
-            if (window?.Notification?.permission !== "denied") {
-                await window?.Notification?.requestPermission?.();
+            if (window.Notification?.permission !== "denied") {
+                await window.Notification?.requestPermission?.();
             }
         }
         try {
@@ -424,7 +397,7 @@
         let eventType = event?.type;
         let isFocusIn = eventType === "focusin";
         if (isFocusIn) {
-            window?.addHistory?.();
+            window.addHistory?.();
         } else if (eventType === "focusout" && typedUsername === "") {
             typedUsername = $username || "";
         }
@@ -463,9 +436,9 @@
     let hasAvailableApp, downloadAndroidApp;
     if (!$android && $mobile && !$appInstallationAsked) {
         const isAndroidWeb = /android/i.test(
-            window?.navigator?.userAgent ||
-                window?.navigator?.vendor ||
-                window?.opera,
+            window.navigator?.userAgent ||
+            window.navigator?.vendor ||
+            window.opera,
         );
         hasAvailableApp = isAndroidWeb;
         let deferredPrompt;

@@ -14,6 +14,9 @@ try{
 					window.location.href = url
 				}catch{}
 				try{
+					window.location.assign("https://kanshi.changed.tab")
+				}catch{}
+				try{
 					window.open(url, '_self')
 				}catch{}
 			}

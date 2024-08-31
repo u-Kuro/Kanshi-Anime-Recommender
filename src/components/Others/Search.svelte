@@ -247,14 +247,14 @@
     }
 
     async function loadMedia(data) {
-        if ($android && window?.[$isBackgroundUpdateKey] === true) {
+        if ($android && window[$isBackgroundUpdateKey] === true) {
             throw new Error("Something went wrong...");
         }
         await mediaManager(data)
     }
 
     async function processRecMediaList(data) {
-        if ($android && window?.[$isBackgroundUpdateKey] === true) {
+        if ($android && window[$isBackgroundUpdateKey] === true) {
             throw new Error("Something went wrong...");
         }
         await processRecommendedMediaList(data)
@@ -1393,7 +1393,7 @@
                     previousCategoryName !== newCategoryName &&
                     $categories?.[previousCategoryName]
                 ) {
-                    window?.deletedCategory?.(previousCategoryName)
+                    window.deletedCategory?.(previousCategoryName)
 
                     delete $categories?.[previousCategoryName];
                     $categories[newCategoryName] = true;
@@ -1524,7 +1524,7 @@
                         }
                     }
 
-                    window?.deletedCategory?.(previousCategoryName)
+                    window.deletedCategory?.(previousCategoryName)
 
                     delete $categories?.[previousCategoryName];
                     delete $loadedMediaLists?.[previousCategoryName];
@@ -1585,7 +1585,7 @@
         let tagCategoryListArray = Object.keys($tagInfo?.[tagCategory]) || [];
         for (let i = 0, l = tagCategoryListArray.length; i < l; i++) {
             tagCategoryList += `
-                <li onclick="window?.showTagInfoHTML?.(event,'${tagCategoryListArray[i]}','${tagCategory}')">
+                <li onclick="window.showTagInfoHTML?.(event,'${tagCategoryListArray[i]}','${tagCategory}')">
                     ${tagCategoryListArray[i]}
                 </li>
             `;
@@ -1612,7 +1612,7 @@
             <div class="is-custom-table">
                 <header class="custom-header">
                     <h1 class="custom-h1">${tag}</h1>
-                    <h4 class="custom-extra" onclick="window?.showTagCategoryInfoHTML?.(event,'${tagCategory}')">${tagCategory}</h4>
+                    <h4 class="custom-extra" onclick="window.showTagCategoryInfoHTML?.(event,'${tagCategory}')">${tagCategory}</h4>
                 </header>
                 <div class="custom-description">${description}</div>
             </div>
@@ -1624,7 +1624,7 @@
         event.stopPropagation();
         let tagInfoHTML = getTagInfoHTML(tag, tagCategory);
         if (tagInfoHTML) {
-            window?.showFullScreenInfo?.(tagInfoHTML);
+            window.showFullScreenInfo?.(tagInfoHTML);
         }
     };
 
@@ -1632,7 +1632,7 @@
         event.stopPropagation();
         let tagCategoryInfoHTML = getTagCategoryInfoHTML(tagCategory);
         if (tagCategoryInfoHTML) {
-            window?.showFullScreenInfo?.(tagCategoryInfoHTML);
+            window.showFullScreenInfo?.(tagCategoryInfoHTML);
         }
     };
 
@@ -1936,7 +1936,7 @@
             style:pointer-events="{editCategoryName ? "" : "none"}"
             disabled="{!editCategoryName}"
             bind:value="{customCategoryName}"
-            on:focusin="{() => window?.addHistory?.()}"
+            on:focusin="{() => window.addHistory?.()}"
         />
         {#if !editCategoryName || !$showFilterOptions}
             <div
@@ -2359,7 +2359,7 @@
                                             $windowWidth <= 425 ||
                                             !filterCategoryIsSelected}"
                                         on:focusin="{() =>
-                                            window?.addHistory?.()}"
+                                            window.addHistory?.()}"
                                     />
                                 </div>
                                 {#if filterSelectionIsSelected}
@@ -2450,7 +2450,7 @@
                                             !filterCategoryIsSelected ||
                                             !filterSelectionIsSelected}"
                                         on:focusin="{() =>
-                                            window?.addHistory?.()}"
+                                            window.addHistory?.()}"
                                     />
                                     <div
                                         class="options"
@@ -2572,7 +2572,7 @@
                                                                         ></path>
                                                                     </svg>
                                                                 {/if}
-                                                                {#if typeof window?.showFullScreenInfo === "function" && ((filterSelectionName === "tag" && getTagFilterInfoText({ tag: optionName }, "category and description")) || (filterSelectionName === "tag category" && !jsonIsEmpty($tagInfo?.[optionName])))}
+                                                                {#if typeof window.showFullScreenInfo === "function" && ((filterSelectionName === "tag" && getTagFilterInfoText({ tag: optionName }, "category and description")) || (filterSelectionName === "tag category" && !jsonIsEmpty($tagInfo?.[optionName])))}
                                                                     <svg
                                                                         class="extra-item-info"
                                                                         viewBox="0 0 512 512"
@@ -2596,7 +2596,7 @@
                                                                                         optionName,
                                                                                     );
                                                                             }
-                                                                            window?.showFullScreenInfo?.(
+                                                                            window.showFullScreenInfo?.(
                                                                                 htmlToShow,
                                                                             );
                                                                         }}"
@@ -2626,7 +2626,7 @@
                                                                                             optionName,
                                                                                         );
                                                                                 }
-                                                                                window?.showFullScreenInfo?.(
+                                                                                window.showFullScreenInfo?.(
                                                                                     htmlToShow,
                                                                                 );
                                                                             }
@@ -2827,7 +2827,7 @@
                                         disabled="{!$showFilterOptions ||
                                             $initData}"
                                         on:focusin="{() =>
-                                            window?.addHistory?.()}"
+                                            window.addHistory?.()}"
                                     />
                                 {/key}
                             </div>
@@ -3008,7 +3008,7 @@
             placeholder="Search"
             tabindex="{$menuVisible || $popupVisible ? '-1' : '0'}"
             bind:value="{$searchedWord}"
-            on:focusin="{() => window?.addHistory?.()}"
+            on:focusin="{() => window.addHistory?.()}"
         />
     </div>
 

@@ -52,7 +52,7 @@
     window.importAndroidUserData = importData;
 
     async function importJSONFile() {
-        if ($android && window?.[$isBackgroundUpdateKey] === true) return;
+        if ($android && window[$isBackgroundUpdateKey] === true) return;
         if (!(importFileInput instanceof Element)) {
             $dataStatus = "Something went wrong"
             return
@@ -73,7 +73,7 @@
                 if (!$popupVisible) {
                     document.documentElement.style.overflow = "hidden";
                     document.documentElement.style.overflow = "";
-                    window?.scrollTo?.({ top: -9999, behavior: "smooth" });
+                    window.scrollTo?.({ top: -9999, behavior: "smooth" });
                 }
                 $loadingCategory[""] = new Date()
                 importUserData({
@@ -203,7 +203,7 @@
     }
 
     async function showAllHiddenEntries() {
-        if ($android && window?.[$isBackgroundUpdateKey] === true) return;
+        if ($android && window[$isBackgroundUpdateKey] === true) return;
         if (jsonIsEmpty($hiddenEntries)) {
             // Alert No Hidden Entries
             $confirmPromise({
@@ -287,7 +287,7 @@
 
     async function showNotice() {
         let persistent = await navigator?.storage?.persisted?.();
-        let notificationGranted = window?.Notification?.permission === "granted";
+        let notificationGranted = window.Notification?.permission === "granted";
         if ($android) {
             await $confirmPromise({
                 isAlert: true,
@@ -295,7 +295,7 @@
                 text: `<div id="kanshi-show-notice"><span style='color:hsl(345deg, 75%, 60%);'>NOTICE!</span> You may want to regularly <span style='color:hsl(345deg, 75%, 60%);'>Back Up</span> your data or use auto-export to prevent future data loss.\n\nCurrently, the storage might be <span style='color:hsl(345deg, 75%, 60%);'>Automatically Cleared by Chrome</span> when your <span style='color:hsl(345deg, 75%, 60%);'>Disk is Nearly Full.</span>\n\n<span ${
                     persistent
                         ? ""
-                        : "tabindex='0' style='cursor:pointer;' onclick='(async()=>{await window?.navigator?.storage?.persisted?.();await window?.navigator?.storage?.persist?.();window?.refreshKanshiNotice?.()})()'"
+                        : "tabindex='0' style='cursor:pointer;' onclick='(async()=>{await window.navigator?.storage?.persisted?.();await window.navigator?.storage?.persist?.();window.refreshKanshiNotice?.()})()'"
                 }>Persistent Storage Status: ${
                     persistent
                         ? "<span style='color:hsl(185deg, 65%, 50%);'>Enabled</span>"
@@ -313,7 +313,7 @@
                 }\n\nTo enable persistent storage:\n\n<span ${
                     persistent
                         ? ""
-                        : "tabindex='0' style='cursor:pointer;' onclick='(async()=>{await window?.navigator?.storage?.persisted?.();await window?.navigator?.storage?.persist?.();window?.refreshKanshiNotice?.()})()'"
+                        : "tabindex='0' style='cursor:pointer;' onclick='(async()=>{await window.navigator?.storage?.persisted?.();await window.navigator?.storage?.persist?.();window.refreshKanshiNotice?.()})()'"
                 }>1) Grant permission for <span style="${
                     persistent ? "" : "text-decoration: underline;"
                 }${
@@ -323,7 +323,7 @@
                 };">Persistent Storage</span></span>.\n2) OR Grant permission for <span ${
                     notificationGranted
                         ? ""
-                        : "tabindex='0' style='cursor:pointer;' onclick='(async()=>{await window?.Notification?.requestPermission?.();window?.refreshKanshiNotice?.()})()'"
+                        : "tabindex='0' style='cursor:pointer;' onclick='(async()=>{await window.Notification?.requestPermission?.();window.refreshKanshiNotice?.()})()'"
                 }><span style="${
                     notificationGranted ? "" : "text-decoration: underline;"
                 }${
@@ -334,10 +334,10 @@
             });
         }
         if (!notificationGranted) {
-            await window?.Notification?.requestPermission?.();
+            await window.Notification?.requestPermission?.();
         }
         if (!persistent) {
-            await window?.navigator?.storage?.persist?.();
+            await window.navigator?.storage?.persist?.();
         }
     }
     function refreshKanshiNotice() {
@@ -346,10 +346,10 @@
         }
     }
     try {
-        window?.navigator?.permissions
+        window.navigator?.permissions
             ?.query?.({ name: "notifications" })
             ?.then?.((result) => (result.onchange = refreshKanshiNotice));
-        window?.navigator?.permissions
+        window.navigator?.permissions
             ?.query?.({ name: "persistent-storage" })
             ?.then?.((result) => (result.onchange = refreshKanshiNotice));
     } catch (e) {}
@@ -428,7 +428,7 @@
                     });
                 });
             }
-            window?.addHistory?.();
+            window.addHistory?.();
         } else {
             if (!$popupVisible && $documentScrollTop > 0) {
                 addClass(navContainerEl, "hide");
@@ -444,9 +444,9 @@
         if (val === true) {
             if (!$android && $mobile) {
                 const isAndroidWeb = /android/i.test(
-                    window?.navigator?.userAgent ||
-                        window?.navigator?.vendor ||
-                        window?.opera,
+                    window.navigator?.userAgent ||
+                    window.navigator?.vendor ||
+                    window.opera,
                 );
                 hasAvailableApp = isAndroidWeb;
                 let deferredPrompt;
@@ -507,10 +507,10 @@
     onMount(async () => {
         navContainerEl = document.getElementById("nav-container");
         if (
-            typeof window?.keepAppRunningInBackground === "boolean" &&
+            typeof window.keepAppRunningInBackground === "boolean" &&
             typeof $keepAppRunningInBackground !== "boolean"
         ) {
-            $keepAppRunningInBackground = window?.keepAppRunningInBackground;
+            $keepAppRunningInBackground = window.keepAppRunningInBackground;
         }
         
         // Get Export Folder for Android
