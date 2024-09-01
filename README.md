@@ -13,7 +13,7 @@ By eliminating the need to depend on others' preferences, it can suggest <b>unde
 The app also allows you to <b>customize the recommendation algorithm</b>, including the option to <b>choose your own features (genres, tags, etc.)</b> and to <b>change its thresholds</b>.  
 </p>
 <p>
-If you're struggling to decide on what to see next, this tool can assist you by giving reasonable recommendations based on the contents you liked. 
+If you're getting tired of looking for what to see next, this tool can assist you by giving reasonable recommendations based on the contents you liked.
 </p>
 <p>
 It's <b>free</b> and <b>runs locally</b> for your convenience.  
