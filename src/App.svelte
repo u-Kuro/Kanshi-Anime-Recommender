@@ -72,6 +72,7 @@
         trueWindowHeight,
         documentScrollTop,
         loadingCategory,
+        initComplete,
 	} from "./js/globalValues.js";
 
 	(async () => {
@@ -293,15 +294,18 @@
 						})
 						loadYoutube();
 
+						$initComplete = true;
 						$dataStatus = null;
 						checkAutoFunctions(true);
 						loadAnalytics();
 					} else {
+						$initComplete = true;
 						$dataStatus = null;
 						checkAutoFunctions(true);
 						loadAnalytics();
 					}
 				} else {
+					$initComplete = true;
 					$dataStatus = null;
 					checkAutoFunctions(true);
 					loadAnalytics();
@@ -327,6 +331,9 @@
 			}
 			if ($initData) {
 				$initData = false;
+			}
+			if (!$initComplete) {
+				$initComplete = true;
 			}
 			
 			loadYoutube();

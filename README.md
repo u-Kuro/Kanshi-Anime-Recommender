@@ -30,7 +30,7 @@ It's <b>free</b> and <b>runs locally</b> for your convenience.
 <div style="display: flex;flex-wrap:nowrap;">
   <img src="https://i.imgur.com/QQHODmR.png" style="flex:1;width: 24%;">
   <img src="https://i.imgur.com/iLD1imm.png" style="flex:1;width: 24%;">
-  <img src="https://i.imgur.com/1lANq1I.png" style="flex:1;width: 24%;">
+  <img src="https://i.imgur.com/s9scglT.png" style="flex:1;width: 24%;">
   <img src="https://i.imgur.com/Agj1v5n.png" style="flex:1;width: 24%;">
 </div>
 

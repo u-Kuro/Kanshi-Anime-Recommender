@@ -80,6 +80,7 @@ const ytPlayers = writable([])
 const autoPlay = writable(getLocalStorage('autoPlay') ?? null)
 
 const initData = writable(true)
+const initComplete = writable(false)
 const gridFullView = writable(getLocalStorage('gridFullView') ?? null)
 const showStatus = writable(getLocalStorage('showStatus') ?? true)
 const extraInfo = writable(null)
@@ -164,6 +165,7 @@ export {
     ytPlayers,
     autoPlay,
     initData,
+    initComplete,
     gridFullView,
     showStatus,
     extraInfo,

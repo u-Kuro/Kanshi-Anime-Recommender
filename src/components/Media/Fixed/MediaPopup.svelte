@@ -47,6 +47,7 @@
         windowHeight,
         windowWidth,
         documentScrollTop,
+        loadingCategory,
     } from "../../../js/globalValues.js";
 
     const emptyImage = "data:image/png;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=";
@@ -1782,7 +1783,7 @@
                                             {/if}
                                         </h3>
                                     </div>
-                                    {#if $listUpdateAvailable}
+                                    {#if $listUpdateAvailable || $loadingCategory[""] || $loadingCategory[$selectedCategory]}
                                         <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                                         <div
                                             class="list-update-container"

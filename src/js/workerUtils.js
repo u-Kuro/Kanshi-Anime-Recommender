@@ -38,6 +38,7 @@ import {
     isExporting,
     listUpdateAvailable,
     popupVisible,
+    initComplete,
 } from "./globalValues.js";
 
 const hasOwnProp = Object.prototype.hasOwnProperty
@@ -458,6 +459,10 @@ const mediaManager = (_data = {}) => {
                         mediaManagerWorkerTimeout = setTimeout(() => {
                             mediaManagerWorker?.terminate?.();
                         }, terminateDelay);
+
+                        if (!get(initComplete)) {
+                            initComplete.set(true);
+                        }
 
                         resolve()
                     }

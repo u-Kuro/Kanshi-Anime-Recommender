@@ -61,6 +61,8 @@
         currentMediaCautions,
         isImporting,
         isExporting,
+        listUpdateAvailable,
+        initComplete,
     } from "../../js/globalValues.js";
 
     const COOs = {
@@ -1759,6 +1761,18 @@
             });
     }
 
+    async function updateList() {
+        if ($android && window[$isBackgroundUpdateKey] === true) return;
+        if ((await $confirmPromise({
+                title: "Reload List",
+                text: "Do you want to refresh your list to sync changes?",
+            }))
+        ) {
+            $listUpdateAvailable = false;
+            mediaManager({ updateRecommendedMediaList: true });
+        }
+    }
+
     onMount(async () => {
         selectedFilterCategoryName = selectedFilterCategoryName || (await getIDBdata("selectedFilterCategoryName")) || "Media Filter";
         popupContainer = document?.getElementById("popup-container");
@@ -3030,6 +3044,20 @@
                 ></path>
             </svg>
         </div>
+        {#if ($listUpdateAvailable || $loadingCategory[""] || $loadingCategory[$selectedCategory]) && $initComplete}
+            <div
+                tabindex="{$menuVisible || $popupVisible ? '' : '0'}"
+                class="refresh-list"
+                on:click="{() => updateList()}"
+                on:keyup="{(e) => e.key === 'Enter' && updateList()}"
+            >
+                <svg viewBox="0 0 512 512">
+                    <path
+                        d="M105 203a160 160 0 0 1 264-60l17 17h-50a32 32 0 1 0 0 64h128c18 0 32-14 32-32V64a32 32 0 1 0-64 0v51l-18-17a224 224 0 0 0-369 83 32 32 0 0 0 60 22zm-66 86a32 32 0 0 0-23 31v128a32 32 0 1 0 64 0v-51l18 17a224 224 0 0 0 369-83 32 32 0 0 0-60-22 160 160 0 0 1-264 60l-17-17h50a32 32 0 1 0 0-64H48a39 39 0 0 0-9 1z"
+                    ></path>
+                </svg>
+            </div>
+        {/if}
         {#if $orderedFilters?.sortFilter}
             <div class="sort-filter">
                 <svg
@@ -3776,7 +3804,8 @@
         fill: var(--active-tag-filter-color) !important;
     }
 
-    .change-grid-view {
+    .change-grid-view,
+    .refresh-list {
         display: flex;
         justify-content: center;
         align-items: center;
@@ -3786,7 +3815,8 @@
         width: 30px;
         height: 30px;
     }
-    .change-grid-view svg {
+    .change-grid-view svg,
+    .refresh-list svg {
         height: 15px;
         width: 15px;
     }
