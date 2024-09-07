@@ -74,7 +74,7 @@ earlisetReleaseDate.subscribe((val) => {
 let mediaLoaderWorker, mediaLoaderWorkerPromise, mediaLoaderPromises = {};
 function getMediaLoaderWorker() {
     mediaLoaderWorkerPromise = new Promise(async (resolve) => {
-        resolve(new Worker(await cacheRequest("./webapi/worker/mediaLoader.js", 21405, "Checking existing List")))
+        resolve(new Worker(await cacheRequest("./webapi/worker/mediaLoader.js", 23139, "Checking existing List")))
         mediaLoaderWorkerPromise = null
     })
     return mediaLoaderWorkerPromise
@@ -538,7 +538,7 @@ const processRecommendedMediaList = (_data = {}) => {
         if (processRecommendedMediaListTerminateTimeout) clearTimeout(processRecommendedMediaListTerminateTimeout);
         processRecommendedMediaListWorker?.terminate?.();
         progress.set(0)
-        cacheRequest("./webapi/worker/processRecommendedMediaList.js", 41795, "Updating Recommendation List")
+        cacheRequest("./webapi/worker/processRecommendedMediaList.js", 41731, "Updating Recommendation List")
             .then(url => {
                 const lastProcessRecommendationAiringAt = parseInt((new Date().getTime() / 1000))
                 let neareastMediaReleaseAiringAt

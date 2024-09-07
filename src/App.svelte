@@ -113,7 +113,7 @@
 						loadAll: true, 
 						selectedCategory: ($selectedCategory ?? getLocalStorage("selectedCategory") ?? await getIDBdata("selectedCategory"))
 					}))?.shouldReloadList
-					if (!shouldReloadList) {
+					if (shouldReloadList === false) {
 						loadYoutube();
 					}
 				} catch (ex) { console.error(ex) }
@@ -280,16 +280,17 @@
 
 				let shouldLoadMedia
 				if (shouldProcessRecommendation) {
+					$loadingCategory[""] = new Date()
 					await processRecommendedMediaList()
 					shouldLoadMedia = true
 				}
 
 				shouldLoadMedia = shouldLoadMedia || shouldReloadList || (await getIDBdata("shouldLoadMedia"));
 				if (shouldLoadMedia) {
-					await mediaManager({ updateRecommendedMediaList: true })
-					if (shouldReloadList) {
-						await mediaLoader({ 
-							loadAll: true, 
+					if (shouldReloadList !== false) {
+						await mediaManager({ updateRecommendedMediaList: true })
+						await mediaLoader({
+							loadAll: true,
 							selectedCategory: ($selectedCategory ?? getLocalStorage("selectedCategory") ?? await getIDBdata("selectedCategory"))
 						})
 						loadYoutube();
@@ -299,6 +300,9 @@
 						checkAutoFunctions(true);
 						loadAnalytics();
 					} else {
+						$loadingCategory[""] = new Date()
+						await mediaManager({ updateRecommendedMediaList: true })
+
 						$initComplete = true;
 						$dataStatus = null;
 						checkAutoFunctions(true);
