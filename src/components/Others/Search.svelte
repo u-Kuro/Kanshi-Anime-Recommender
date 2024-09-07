@@ -1718,15 +1718,30 @@
     let shouldScrollSnap = getLocalStorage("nonScrollSnapFilters") ?? true;
 
     let meanAverageScore = getLocalStorage("meanAverageScore");
-    let meanPopularity = getLocalStorage("meanPopularity");
-    window.updateMeanNumberInfos = (newMeanAverageScore, newMeanPopularity) => {
+    let meanAnimePopularity = getLocalStorage("meanAnimePopularity");
+    let meanMangaPopularity = getLocalStorage("meanMangaPopularity");
+    let meanNovelPopularity = getLocalStorage("meanNovelPopularity");
+    window.updateMeanNumberInfos = (
+        newMeanAverageScore,
+        newMeanAnimePopularity,
+        newMeanMangaPopularity,
+        newMeanNovelPopularity
+    ) => {
         if (newMeanAverageScore && newMeanAverageScore > 0) {
             meanAverageScore = newMeanAverageScore;
             setLocalStorage("meanAverageScore", meanAverageScore);
         }
-        if (newMeanPopularity && newMeanPopularity > 0) {
-            meanPopularity = newMeanPopularity;
-            setLocalStorage("meanPopularity", meanPopularity);
+        if (newMeanAnimePopularity && newMeanAnimePopularity > 0) {
+            meanAnimePopularity = newMeanAnimePopularity;
+            setLocalStorage("meanAnimePopularity", meanAnimePopularity);
+        }
+        if (newMeanMangaPopularity && newMeanMangaPopularity > 0) {
+            meanMangaPopularity = newMeanMangaPopularity;
+            setLocalStorage("meanMangaPopularity", meanMangaPopularity);
+        }
+        if (newMeanNovelPopularity && newMeanNovelPopularity > 0) {
+            meanNovelPopularity = newMeanNovelPopularity;
+            setLocalStorage("meanNovelPopularity", meanNovelPopularity);
         }
     };
     let recListMAPE, recListMAPEIncreased;
@@ -2780,34 +2795,25 @@
                                         type="text"
                                         placeholder="{name === 'scoring system'
                                             ? 'Default: User Scoring'
-                                            : (name === 'average score' ||
-                                                    name ===
-                                                        'min average score') &&
-                                                typeof meanAverageScore ===
-                                                    'number' &&
-                                                meanAverageScore > 0
-                                              ? 'Average: ' +
-                                                formatNumber(meanAverageScore)
-                                              : (name === 'popularity' ||
-                                                      name ===
-                                                          'min popularity') &&
-                                                  typeof meanPopularity ===
-                                                      'number' &&
-                                                  meanPopularity > 0
-                                                ? 'Average: ' +
-                                                  formatNumber(
-                                                      meanPopularity,
-                                                      meanPopularity >= 1000
-                                                          ? 1
-                                                          : 0,
-                                                  )
-                                                : defaultValue != null
-                                                  ? 'Default: ' + defaultValue
-                                                  : conditionalInputNumberList.includes(
-                                                          name,
-                                                      )
-                                                    ? '>123 or 123'
-                                                    : '123'}"
+                                            : (name === 'average score' || name === 'min average score') && typeof meanAverageScore === 'number' && meanAverageScore > 0
+                                            ? 'Average: ' + formatNumber(meanAverageScore)
+                                            : name === 'popularity' && (
+                                                (typeof meanAnimePopularity === 'number' && meanAnimePopularity > 0) ||
+                                                (typeof meanMangaPopularity === 'number' && meanMangaPopularity > 0) ||
+                                                (typeof meanNovelPopularity === 'number' && meanNovelPopularity > 0)
+                                            )
+                                            ? [meanAnimePopularity, meanMangaPopularity, meanNovelPopularity].map((e) => typeof e === 'number' && e > 0 ? formatNumber(e, 0) : 'N/A').join(' | ')
+                                            : name === 'min anime popularity' && typeof meanAnimePopularity === 'number' && meanAnimePopularity > 0
+                                            ? 'Average: ' + formatNumber(meanAnimePopularity, meanAnimePopularity >= 1000 ? 1 : 0)
+                                            : name === 'min manga popularity' && typeof meanMangaPopularity === 'number' && meanMangaPopularity > 0
+                                            ? 'Average: ' + formatNumber(meanMangaPopularity, meanMangaPopularity >= 1000 ? 1 : 0)
+                                            : name === 'min novel popularity' && typeof meanNovelPopularity === 'number' && meanNovelPopularity > 0
+                                            ? 'Average: ' + formatNumber(meanNovelPopularity, meanNovelPopularity >= 1000 ? 1 : 0)
+                                            : defaultValue != null
+                                            ? 'Default: ' + defaultValue
+                                            : conditionalInputNumberList.includes(name)
+                                            ? '>123 or 123'
+                                            : '123'}"
                                         on:input="{(e) => {
                                             if ($initData) {
                                                 return pleaseWaitAlert();

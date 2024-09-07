@@ -538,7 +538,7 @@ const processRecommendedMediaList = (_data = {}) => {
         if (processRecommendedMediaListTerminateTimeout) clearTimeout(processRecommendedMediaListTerminateTimeout);
         processRecommendedMediaListWorker?.terminate?.();
         progress.set(0)
-        cacheRequest("./webapi/worker/processRecommendedMediaList.js", 41731, "Updating Recommendation List")
+        cacheRequest("./webapi/worker/processRecommendedMediaList.js", 43412, "Updating Recommendation List")
             .then(url => {
                 const lastProcessRecommendationAiringAt = parseInt((new Date().getTime() / 1000))
                 let neareastMediaReleaseAiringAt
@@ -605,8 +605,13 @@ const processRecommendedMediaList = (_data = {}) => {
                                 neareastMediaReleaseAiringAt = mediaReleaseAiringAt
                             }
                         }
-                    } else if (hasOwnProp?.call?.(data, "popularityMode") || hasOwnProp?.call?.(data, "averageScoreMode")) {
-                        window.updateMeanNumberInfos?.(data?.averageScoreMode, data?.popularityMode)
+                    } else if (
+                        hasOwnProp?.call?.(data, "averageScoreMode")
+                        || hasOwnProp?.call?.(data, "animePopularityMode")
+                        || hasOwnProp?.call?.(data, "mangaPopularityMode")
+                        || hasOwnProp?.call?.(data, "novelPopularityMode")
+                    ) {
+                        window.updateMeanNumberInfos?.(data?.averageScoreMode, data?.animePopularityMode, data?.mangaPopularityMode, data?.novelPopularityMode)
                     } else if (hasOwnProp?.call?.(data, "recListMAPE")) {
                         window.updateRecListMAPE?.(data?.recListMAPE)
                     } else {
@@ -1580,7 +1585,7 @@ const getFilterOptions = (_data) => {
     return new Promise((resolve, reject) => {
         if (getFilterOptionsTerminateTimeout) clearTimeout(getFilterOptionsTerminateTimeout)
         getFilterOptionsWorker?.terminate?.()
-        cacheRequest("./webapi/worker/getFilterOptions.js", 68296, "Initializing Filters")
+        cacheRequest("./webapi/worker/getFilterOptions.js", 68420, "Initializing Filters")
             .then(url => {
                 if (getFilterOptionsTerminateTimeout) clearTimeout(getFilterOptionsTerminateTimeout)
                 getFilterOptionsWorker?.terminate?.()
