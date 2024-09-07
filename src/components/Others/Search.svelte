@@ -1266,6 +1266,8 @@
                 setLocalStorage("selectedCategory", val)
                 .catch(() => removeLocalStorage("selectedCategory"))
                 .finally(() => saveIDBdata(val, "selectedCategory"));
+            } else if (customCategoryName == null) {
+                customCategoryName = val
             }
             previousCategoryName = val;
         }
