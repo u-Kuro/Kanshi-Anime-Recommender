@@ -46,6 +46,7 @@ let terminateDelay = 1000;
 let dataStatusPrio = false
 let isGettingNewEntries = false;
 let isRequestingMediaEntries = false
+let wasRequestingMediaEntries = false
 
 let idCounter = 0
 function getUniqueId() {
@@ -739,7 +740,7 @@ const requestMediaEntries = (_data = {}) => {
                     } catch {}
                 }
                 requestMediaEntriesWorker.postMessage(_data)
-                isRequestingMediaEntries = true
+                wasRequestingMediaEntries = isRequestingMediaEntries = true
                 requestMediaEntriesWorker.onmessage = ({ data }) => {
                     if (hasOwnProp?.call?.(data, "progress")) {
                         if (!dataStatusPrio && data?.progress >= 0 && data?.progress <= 100) {
@@ -759,7 +760,7 @@ const requestMediaEntries = (_data = {}) => {
                     }
                     
                     if (hasOwnProp?.call?.(data, "error")) {
-                        isRequestingMediaEntries = false
+                        wasRequestingMediaEntries = isRequestingMediaEntries = false
 
                         requestMediaEntriesWorker?.terminate?.();
                         notifyUpdatedMediaNotification()
@@ -775,7 +776,7 @@ const requestMediaEntries = (_data = {}) => {
                         }
                         updateRecommendationList.update(e => !e)
                     } else if (hasOwnProp?.call?.(data, "errorDuringInit")) {
-                        isRequestingMediaEntries = false
+                        wasRequestingMediaEntries = isRequestingMediaEntries = false
                         requestMediaEntriesWorker?.terminate?.();
                         notifyUpdatedMediaNotification()
                         dataStatus.set(null)
@@ -824,7 +825,7 @@ const requestMediaEntries = (_data = {}) => {
                                     rerunImportantWork()
                                 })
                         }
-                        isRequestingMediaEntries = false
+                        wasRequestingMediaEntries = isRequestingMediaEntries = false
                         requestMediaEntriesTerminateTimeout = setTimeout(() => {
                             requestMediaEntriesWorker?.terminate?.();
                         }, terminateDelay)
@@ -835,7 +836,7 @@ const requestMediaEntries = (_data = {}) => {
                     }
                 }
                 requestMediaEntriesWorker.onerror = (error) => {
-                    isRequestingMediaEntries = false
+                    wasRequestingMediaEntries = isRequestingMediaEntries = false
                     isGettingNewEntries = false
                     requestMediaEntriesWorker?.terminate?.();
                     notifyUpdatedMediaNotification()
@@ -845,7 +846,7 @@ const requestMediaEntries = (_data = {}) => {
                     reject(error)
                 }
             }).catch((error) => {
-                isRequestingMediaEntries = false
+                wasRequestingMediaEntries = isRequestingMediaEntries = false
                 isGettingNewEntries = false
                 requestMediaEntriesWorker?.terminate?.();
                 notifyUpdatedMediaNotification()
@@ -1055,7 +1056,7 @@ const exportUserData = (_data) => {
                             })
                         }
                         exportUserDataWorker?.terminate?.();
-                        rerunImportantWork()
+                        rerunImportantWork(_data?.isManual)
                         reject(data?.error)
                     } else if (get(android)) {
                         try {
@@ -1081,7 +1082,7 @@ const exportUserData = (_data) => {
                                     waitForExportApproval = null
                                     dataStatus.set(null)
                                     progress.set(100)
-                                    rerunImportantWork()
+                                    rerunImportantWork(_data?.isManual)
                                     resolve()
                                 })
                             } else {
@@ -1097,7 +1098,7 @@ const exportUserData = (_data) => {
                                 })
                                 dataStatus.set(null)
                                 progress.set(100)
-                                rerunImportantWork()
+                                rerunImportantWork(_data?.isManual)
                                 reject()
                             }
                         } catch (ex) {
@@ -1113,7 +1114,7 @@ const exportUserData = (_data) => {
                             })
                             dataStatus.set(null)
                             progress.set(100)
-                            rerunImportantWork()
+                            rerunImportantWork(_data?.isManual)
                             console.error(ex)
                             reject(ex)
                         }
@@ -1123,7 +1124,7 @@ const exportUserData = (_data) => {
                         progress.set(100)
                         downloadLink(data.url, `Kanshi.${data?.username?.toLowerCase?.() || "backup"}.json`)
                         isExporting.set(false)
-                        rerunImportantWork()
+                        rerunImportantWork(_data?.isManual)
                         resolve()
                         // dont terminate, can't oversee blob link lifetime
                     } else {
@@ -1137,7 +1138,7 @@ const exportUserData = (_data) => {
                         dataStatus.set(null)
                         progress.set(100)
                         isExporting.set(false)
-                        rerunImportantWork()
+                        rerunImportantWork(_data?.isManual)
                         reject()
                     }
                 }
@@ -1154,7 +1155,7 @@ const exportUserData = (_data) => {
                         text: "Data was not exported, please try again.",
                     })
                     exportUserDataWorker?.terminate?.();
-                    rerunImportantWork()
+                    rerunImportantWork(_data?.isManual)
                     console.error(error)
                     reject(error)
                 }
@@ -1167,7 +1168,7 @@ const exportUserData = (_data) => {
                 waitForExportApproval = null
                 alertError()
                 exportUserDataWorker?.terminate?.();
-                rerunImportantWork()
+                rerunImportantWork(_data?.isManual)
                 console.error(error)
                 reject(error)
             })
@@ -1692,9 +1693,12 @@ function stopConflictingWorkers(blocker) {
     dataStatus.set(null)
 }
 
-function rerunImportantWork() {
+function rerunImportantWork(shouldRequestMedia) {
     updateRecommendationList.update((e)=>!e)
-    runUpdate.update((e)=>!e)
+    if (wasRequestingMediaEntries || shouldRequestMedia !== true) {
+        // Probably terminated
+        runUpdate.update((e)=>!e)
+    }
 }
 
 function alertError() {

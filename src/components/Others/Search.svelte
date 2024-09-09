@@ -3066,7 +3066,7 @@
                 </svg>
             </div>
         {/if}
-        {#if $orderedFilters?.sortFilter}
+        {#if $orderedFilters?.sortFilter && $loadedMediaLists?.[$selectedCategory]?.sortBy}
             <div class="sort-filter">
                 <svg
                     viewBox="{`0 ${
@@ -3179,6 +3179,7 @@
 
     :-ms-input-placeholder,
     ::-ms-input-placeholder {
+        opacity: 1 !important;
         color: var(--fg-color) !important;
     }
 
@@ -3696,8 +3697,6 @@
     .filter-bool-container .filter-bool-label {
         font-weight: 600;
         text-transform: capitalize;
-        -webkit-user-select: none;
-        -ms-user-select: none;
         user-select: none;
         font-size: 14px;
         cursor: pointer;
@@ -3931,26 +3930,14 @@
         display: block;
         height: 100%;
         transform: translateX(0) translateZ(0);
-        -webkit-transform: translateX(0) translateZ(0);
-        -ms-transform: translateX(0) translateZ(0);
-        -moz-transform: translateX(0) translateZ(0);
-        -o-transform: translateX(0) translateZ(0);
         width: 200%;
     }
     @keyframes loading-shimmer {
         0% {
             transform: translateX(-100%) translateZ(0);
-            -webkit-transform: translateX(-100%) translateZ(0);
-            -ms-transform: translateX(-100%) translateZ(0);
-            -moz-transform: translateX(-100%) translateZ(0);
-            -o-transform: translateX(-100%) translateZ(0);
         }
         100% {
             transform: translateX(100%) translateZ(0);
-            -webkit-transform: translateX(100%) translateZ(0);
-            -ms-transform: translateX(100%) translateZ(0);
-            -moz-transform: translateX(100%) translateZ(0);
-            -o-transform: translateX(100%) translateZ(0);
         }
     }
 
@@ -4092,10 +4079,6 @@
             border: none !important;
             padding: 0 !important;
             transform: translateZ(0);
-            -webkit-transform: translateZ(0);
-            -ms-transform: translateZ(0);
-            -moz-transform: translateZ(0);
-            -o-transform: translateZ(0);
         }
         .options-wrap {
             opacity: 1;
@@ -4247,15 +4230,9 @@
         pointer-events: none !important;
         position: fixed !important;
         transform: translateY(-99999px) translateZ(0) !important;
-        -webkit-transform: translateY(-99999px) translateZ(0) !important;
-        -ms-transform: translateY(-99999px) translateZ(0) !important;
-        -moz-transform: translateY(-99999px) translateZ(0) !important;
-        -o-transform: translateY(-99999px) translateZ(0) !important;
         user-select: none !important;
         touch-action: none !important;
         -webkit-user-drag: none !important;
-        -moz-user-select: none !important;
-        -ms-user-select: none !important;
         height: 0 !important;
         width: 0 !important;
         max-width: 0 !important;

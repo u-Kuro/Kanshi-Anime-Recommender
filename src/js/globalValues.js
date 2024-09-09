@@ -12,7 +12,25 @@ const appInstallationAsked = writable(getLocalStorage('appInstallationAsked') ??
 const inApp = writable(true)
 const progress = writable(0)
 const resetProgress = writable(0)
-// const anilistAccessToken = writable(null)
+
+// const location = window.location.toString()
+// let $anilistClientId, $anilistRedirectUri
+// if (get(android)) {
+//     $anilistClientId = "13584"
+//     $anilistRedirectUri = "intent://kanshi.media.recommendations.anilist/.W~uPtWCq=vG$TR:Zl%5E#t%3CvdS]I~N70"
+// } else if (location.startsWith("https://u-kuro.github.io/Kanshi.Anime-Recommendation")) {
+//     $anilistClientId = "13583"
+//     $anilistRedirectUri = "https://u-kuro.github.io/Kanshi.Anime-Recommendation"
+// } else if (location.startsWith("http://localhost:8080")) {
+//     $anilistClientId = "12476"
+//     $anilistRedirectUri = "http://localhost:8080"
+// } else {
+//     $anilistClientId = "13582"
+//     $anilistRedirectUri = "https://kanshi.vercel.app"
+// }
+// const anilistClientId = readable($anilistClientId)
+// const anilistRedirectUri = readable($anilistRedirectUri)
+
 const hasWheel = writable(false)
 
 const currentWindowHeight = Math.max(
@@ -67,7 +85,7 @@ const loadingCategory = writable({})
 const isLoadingMedia = writable(false)
 const isProcessingList = writable(false)
 const userRequestIsRunning = writable(null)
-const autoUpdate = writable(getLocalStorage('autoUpdate') ?? null)
+const autoUpdate = writable(getLocalStorage('autoUpdate') ?? true)
 const autoUpdateInterval = writable(null)
 const runnedAutoUpdateAt = writable(null)
 
@@ -99,9 +117,9 @@ const showFilterOptions = writable(getLocalStorage('showFilterOptions') ?? null)
 const dropdownIsVisible = writable(null)
 const confirmIsVisible = writable(null)
 const keepAppRunningInBackground = writable(null)
+const toast = writable(null)
 // Reactive Functions
 const runUpdate = writable(null)
-const runExport = writable(null)
 const shouldUpdateRecommendationList = writable(null)
 const shouldUpdateList = writable(null)
 const updateRecommendationList = writable(null)
@@ -124,7 +142,8 @@ export {
     documentScrollTop,
     progress,
     resetProgress,
-    // anilistAccessToken,
+    // anilistClientId,
+    // anilistRedirectUri,
     isImporting,
     isExporting,
     isReloading,
@@ -184,9 +203,9 @@ export {
     dropdownIsVisible,
     confirmIsVisible,
     keepAppRunningInBackground,
+    toast,
     // Reactive Functions
     runUpdate,
-    runExport,
     shouldUpdateList,
     shouldUpdateRecommendationList,
     updateRecommendationList,

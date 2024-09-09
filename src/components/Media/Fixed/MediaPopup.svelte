@@ -1458,13 +1458,18 @@
         };
     }
 
+    let hasDragScroll
     const addInfoDragScroll = (e) => {
         try {
+            if (matchMedia("(hover:hover)").matches !== true) return
             let info = e.target;
             info.removeEventListener(e.type, addInfoDragScroll);
             if (info.addedCustomDragScroll) return;
             info.addedCustomDragScroll = true;
             dragScroll(info, 'x');
+            if (hasDragScroll == null) {
+                hasDragScroll = true
+            }
         } catch {}
     }
 
@@ -1744,7 +1749,11 @@
                             <div class="popup-body">
                                 <div class="popup-controls">
                                     <div class="auto-play-container">
-                                        <label class="switch">
+                                        <label 
+                                            class="switch"
+                                            tabindex="{!$menuVisible && $popupVisible ? '0' : '-1'}"
+                                            on:keyup="{(e) => e.key === 'Enter' && changeAutoPlay(e)}"
+                                        >
                                             <label
                                                 class="disable-interaction"
                                                 for="{'auto-play-' + media?.id}"
@@ -1758,16 +1767,7 @@
                                                 bind:checked="{$autoPlay}"
                                             />
                                             <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
-                                            <span
-                                                class="slider round"
-                                                tabindex="{!$menuVisible &&
-                                                $popupVisible
-                                                    ? '0'
-                                                    : '-1'}"
-                                                on:keyup="{(e) =>
-                                                    e.key === 'Enter' &&
-                                                    changeAutoPlay(e)}"
-                                            ></span>
+                                            <span class="slider round"></span>
                                         </label>
                                         <h3
                                             class="auto-play-label"
@@ -2317,13 +2317,8 @@
                                                                 ? '0'
                                                                 : ''}"
                                                             on:click="{() => {
-                                                                if (
-                                                                    !$popupVisible
-                                                                )
-                                                                    return;
-                                                                if (
-                                                                    !itemIsScrolling
-                                                                ) {
+                                                                if (!$popupVisible) return;
+                                                                if (hasDragScroll == null || !itemIsScrolling) {
                                                                     showFullScreenInfo(
                                                                         window.getTagInfoHTML?.(
                                                                             tags?.tagName,
@@ -2336,10 +2331,8 @@
                                                                     !$popupVisible
                                                                 )
                                                                     return;
-                                                                if (
-                                                                    e.key ===
-                                                                        'Enter' &&
-                                                                    !itemIsScrolling
+                                                                if (e.key === 'Enter' &&
+                                                                   (hasDragScroll == null || !itemIsScrolling)
                                                                 ) {
                                                                     showFullScreenInfo(
                                                                         window.getTagInfoHTML?.(
@@ -2661,18 +2654,10 @@
         justify-content: center;
         overflow: hidden;
         transform: translateY(-99999px) translateZ(0);
-        -webkit-transform: translateY(-99999px) translateZ(0);
-        -ms-transform: translateY(-99999px) translateZ(0);
-        -moz-transform: translateY(-99999px) translateZ(0);
-        -o-transform: translateY(-99999px) translateZ(0);
     }
 
     .popup-wrapper.visible {
         transform: translateY(0) translateZ(0);
-        -webkit-transform: translateY(0) translateZ(0);
-        -ms-transform: translateY(0) translateZ(0);
-        -moz-transform: translateY(0) translateZ(0);
-        -o-transform: translateY(0) translateZ(0);
     }
 
     .popup-wrapper svg {
@@ -2693,7 +2678,7 @@
         scrollbar-width: none;
         opacity: 0;
         scroll-behavior: auto;
-        box-shadow: 0 14px 28px rgba(0, 0, 0, 0.25), 0 10px 10px rgba(0, 0, 0, 0.22);
+        box-shadow: 0 0 50px 50px var(--ol-color);
     }
 
     .popup-container.show {
@@ -2712,10 +2697,6 @@
         top: 50%;
         left: 0;
         transform: translateY(-50%) translateX(-100%) translateZ(0);
-        -webkit-transform: translateY(-50%) translateX(-100%) translateZ(0);
-        -ms-transform: translateY(-50%) translateX(-100%) translateZ(0);
-        -moz-transform: translateY(-50%) translateX(-100%) translateZ(0);
-        -o-transform: translateY(-50%) translateX(-100%) translateZ(0);
         background-color: hsl(var(--ac-color), 0.5);
         width: 88px;
         height: 88px;
@@ -2726,10 +2707,6 @@
 
     .go-back-grid-highlight.will-go-back {
         transform: translateY(-50%) translateX(0) translateZ(0);
-        -webkit-transform: translateY(-50%) translateX(0) translateZ(0);
-        -ms-transform: translateY(-50%) translateX(0) translateZ(0);
-        -moz-transform: translateY(-50%) translateX(0) translateZ(0);
-        -o-transform: translateY(-50%) translateX(0) translateZ(0);
         background-color: hsl(var(--ac-color), 0.5);
         width: 88px;
         height: 88px;
@@ -2846,10 +2823,6 @@
     /* Need to add Globally, trailer Elements are Recreated */
     :global(.trailer) {
         transform: translateZ(0);
-        -webkit-transform: translateZ(0);
-        -ms-transform: translateZ(0);
-        -moz-transform: translateZ(0);
-        -o-transform: translateZ(0);
         z-index: 0;
         position: absolute;
         top: 0;
@@ -2874,13 +2847,8 @@
         width: 100%;
         height: 100%;
         transform: translateZ(0);
-        -webkit-transform: translateZ(0);
-        -ms-transform: translateZ(0);
-        -moz-transform: translateZ(0);
-        -o-transform: translateZ(0);
         position: absolute;
         object-fit: cover;
-        -o-object-fit: cover;
         object-position: center;
         background-color: var(--bg-color);
     }
@@ -3014,7 +2982,7 @@
         width: 100%;
         display: flex;
         flex-wrap: wrap;
-        gap: 5px;
+        gap: 8px;
     }
 
     .info-contents > div {
@@ -3045,12 +3013,7 @@
     .cover-img {
         height: 210px;
         object-fit: cover;
-        -o-object-fit: cover;
         transform: translateZ(0);
-        -webkit-transform: translateZ(0);
-        -ms-transform: translateZ(0);
-        -moz-transform: translateZ(0);
-        -o-transform: translateZ(0);
         border-radius: 6px;
         background-color: var(--bg-color);
     }
@@ -3440,11 +3403,7 @@
     }
 
     .auto-play-toggle:checked + .slider:before {
-        -webkit-transform: translateX(19px) translateZ(0);
-        -ms-transform: translateX(19px) translateZ(0);
         transform: translateX(19px) translateZ(0);
-        -moz-transform: translateX(19px) translateZ(0);
-        -o-transform: translateX(19px) translateZ(0);
     }
 
     .slider {
@@ -3461,10 +3420,6 @@
 
     .full-popup-wrapper {
         transform: translateZ(0);
-        -webkit-transform: translateZ(0);
-        -ms-transform: translateZ(0);
-        -moz-transform: translateZ(0);
-        -o-transform: translateZ(0);
         position: fixed;
         z-index: 1001;
         left: 0;
@@ -3504,12 +3459,7 @@
         max-width: min(100%, 1000px);
         max-height: 90%;
         object-fit: cover;
-        -o-object-fit: cover;
         transform: translateZ(0);
-        -webkit-transform: translateZ(0);
-        -ms-transform: translateZ(0);
-        -moz-transform: translateZ(0);
-        -o-transform: translateZ(0);
         border-radius: 6px;
         box-shadow: 0 14px 28px rgba(0, 0, 0, 0.25), 0 10px 10px rgba(0, 0, 0, 0.2);
         user-select: none;
@@ -3623,10 +3573,6 @@
         pointer-events: none !important;
         position: fixed !important;
         transform: translateY(-99999px) translateZ(0) !important;
-        -webkit-transform: translateY(-99999px) translateZ(0) !important;
-        -ms-transform: translateY(-99999px) translateZ(0) !important;
-        -moz-transform: translateY(-99999px) translateZ(0) !important;
-        -o-transform: translateY(-99999px) translateZ(0) !important;
         user-select: none !important;
         touch-action: none !important;
         -webkit-user-drag: none !important;

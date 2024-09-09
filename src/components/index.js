@@ -9,6 +9,7 @@ import MediaOptionsPopup from "./Media/Fixed/MediaOptionsPopup.svelte";
 import Categories from "./Fixed/Categories.svelte";
 import Navigator from "./Fixed/Navigator.svelte";
 import Menu from "./Fixed/Menu.svelte";
+import Statistics from "./Fixed/Statistics.svelte";
 
 // Other Components
 import Search from "./Others/Search.svelte";
@@ -16,19 +17,20 @@ import Confirm from "./Others/Confirm.svelte";
 
 export default {
     Fixed: {
-        Categories: Categories,
-        Navigator: Navigator,
-        Menu: Menu,
+        Categories,
+        Navigator,
+        Menu,
+        Statistics
     },
     Media: {
-        MediaGrid: MediaGrid,
+        MediaGrid,
         Fixed: {
-            MediaPopup: MediaPopup,
-            MediaOptionsPopup: MediaOptionsPopup
+            MediaPopup,
+            MediaOptionsPopup
         }
     },
     Others: {
-        Search: Search,
-        Confirm: Confirm
+        Search,
+        Confirm
     }
 }

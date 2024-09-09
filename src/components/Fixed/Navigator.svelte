@@ -107,7 +107,6 @@
                             } want to connect to ${usernameToShow}?`,
                         )
                     ) {
-                        $menuVisible = false;
                         if (!$popupVisible) {
                             document.documentElement.style.overflow = "hidden";
                             document.documentElement.style.overflow = "";
@@ -167,7 +166,6 @@
                             } want to connect to ${usernameToShow}?`,
                         )
                     ) {
-                        $menuVisible = false;
                         if (!$popupVisible) {
                             document.documentElement.style.overflow = "hidden";
                             document.documentElement.style.overflow = "";
@@ -235,39 +233,51 @@
         }
         let element = event.target;
         let classList = element.classList;
-        if (!$android) {
-            if (
-                !(
-                    classList.contains("nav") ||
-                    classList.contains("nav-container")
-                ) &&
-                !(
-                    classList.contains("logo-icon") ||
-                    element.closest(".logo-icon")
-                )
+        console.log(
+            !(
+                classList.contains("nav") ||
+                classList.contains("nav-container")
+            ),
+            !(
+                classList.contains("logo-icon") ||
+                element.closest(".logo-icon")
+            ),
+            !(
+                ($menuVisible || $popupVisible) && 
+                (classList.contains("input-search") || element.closest(".input-search"))
+            ),
+            !(
+                ($popupVisible && !$menuVisible) &&
+                (classList.contains("go-back-container") || element.closest(".go-back-container"))
             )
-                return;
-        } else {
-            if (
-                !(
-                    classList.contains("nav") ||
-                    classList.contains("nav-container")
-                ) &&
-                !(
-                    ($popupVisible || $menuVisible) &&
-                    (classList.contains("input-search") ||
-                        element.closest(".input-search"))
-                )
-            )
-                return;
+        )
+        if (classList.contains("go-back-container") || element.closest(".go-back-container")) {
+            return
         }
+        if (
+            !(
+                classList.contains("nav") ||
+                classList.contains("nav-container")
+            ) &&
+            !(
+                classList.contains("logo-icon") ||
+                element.closest(".logo-icon")
+            ) &&
+            !(
+                ($menuVisible || $popupVisible) && 
+                (classList.contains("input-search") || element.closest(".input-search"))
+            )
+        )
+            return;
         if (
             inputUsernameElFocused &&
             !(classList.contains("logo-icon") || element.closest(".logo-icon"))
         ) {
             inputUsernameEl?.blur?.();
             inputUsernameElFocused = false;
-            return;
+            if (!($popupVisible || $menuVisible)) {
+                return;
+            }
         }
         $menuVisible = !$menuVisible;
     }
@@ -498,8 +508,7 @@
     bind:this="{navContainerEl}"
     class="{'nav-container' +
         (delayedMenuVis ? ' menu-visible' : '') +
-        (delayedMenuVis ||
-        delayedPopupVis ||
+        (delayedMenuVis || delayedPopupVis ||
         (!navHasNoBackOption && ($popupVisible || $menuVisible))
             ? ' delayed-full-screen-popup'
             : '')}"
@@ -559,17 +568,18 @@
                 on:focusout="{onfocusUsernameInput}"
                 bind:value="{typedUsername}"
                 bind:this="{inputUsernameEl}"
+                disabled="{$popupVisible}"
             />
             <div
                 class="{'usernameText'}"
                 on:click="{() => {
-                    if (!$android || (!$popupVisible && !$menuVisible)) {
+                    if (!$popupVisible) {
                         focusInputUsernameEl();
                     }
                 }}"
                 on:keyup="{(e) => {
                     if (e.key !== 'Enter') return;
-                    if (!$android || (!$popupVisible && !$menuVisible)) {
+                    if (!$popupVisible) {
                         focusInputUsernameEl();
                     }
                 }}"
@@ -648,17 +658,10 @@
 
     :-ms-input-placeholder,
     ::-ms-input-placeholder {
+        opacity: 1 !important;
         color: var(--fg-color) !important;
     }
-    .nav-container.menu-visible {
-        z-index: 993 !important;
-        position: fixed !important;
-        transform: translateZ(0);
-        -webkit-transform: translateZ(0);
-        -ms-transform: translateZ(0);
-        -moz-transform: translateZ(0);
-        -o-transform: translateZ(0);
-    }
+
     .nav-container {
         z-index: 0;
         position: absolute;
@@ -682,8 +685,6 @@
         grid-template-columns: calc(100% - 30px - 15px) 30px;
         height: 100%;
         align-items: center;
-        -ms-user-select: none;
-        -webkit-user-select: none;
         user-select: none;
         max-width: 1140px;
         margin: auto;
@@ -734,19 +735,11 @@
     }
     .nav.inputfocused #usernameInput {
         transform: translateZ(0) !important;
-        -webkit-transform: translateZ(0) !important;
-        -ms-transform: translateZ(0) !important;
-        -moz-transform: translateZ(0) !important;
-        -o-transform: translateZ(0) !important;
         position: unset !important;
         opacity: 1 !important;
     }
     #usernameInput {
         transform: translateY(-99999px) translateZ(0);
-        -webkit-transform: translateY(-99999px) translateZ(0);
-        -ms-transform: translateY(-99999px) translateZ(0);
-        -moz-transform: translateY(-99999px) translateZ(0);
-        -o-transform: translateY(-99999px) translateZ(0);
         position: fixed;
     }
     input[type="search"]::-webkit-search-cancel-button {
@@ -882,10 +875,6 @@
         .nav-container.delayed-full-screen-popup {
             position: fixed !important;
             transform: translateZ(0);
-            -webkit-transform: translateZ(0);
-            -ms-transform: translateZ(0);
-            -moz-transform: translateZ(0);
-            -o-transform: translateZ(0);
             z-index: 999 !important;
         }
         .nav-container {
@@ -1005,15 +994,9 @@
         pointer-events: none !important;
         position: fixed !important;
         transform: translateY(-99999px) translateZ(0) !important;
-        -webkit-transform: translateY(-99999px) translateZ(0) !important;
-        -ms-transform: translateY(-99999px) translateZ(0) !important;
-        -moz-transform: translateY(-99999px) translateZ(0) !important;
-        -o-transform: translateY(-99999px) translateZ(0) !important;
         user-select: none !important;
         touch-action: none !important;
         -webkit-user-drag: none !important;
-        -moz-user-select: none !important;
-        -ms-user-select: none !important;
         height: 0 !important;
         width: 0 !important;
         max-width: 0 !important;

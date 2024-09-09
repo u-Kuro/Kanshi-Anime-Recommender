@@ -306,10 +306,6 @@
 <style>
     .media-options {
         transform: translateZ(0);
-        -webkit-transform: translateZ(0);
-        -ms-transform: translateZ(0);
-        -moz-transform: translateZ(0);
-        -o-transform: translateZ(0);
         position: fixed;
         display: flex;
         z-index: 994;

@@ -23,6 +23,7 @@
 		removeLocalStorage,
 		requestImmediate,
 		setLocalStorage,
+        showToast,
 	} from "./js/others/helper.js";
 	import {
 		appID,
@@ -45,7 +46,6 @@
 		confirmIsVisible,
 		mediaOptionVisible,
 		runUpdate,
-		runExport,
 		shouldUpdateList,
 		shouldUpdateRecommendationList,
 		updateRecommendationList,
@@ -73,6 +73,7 @@
         documentScrollTop,
         loadingCategory,
         initComplete,
+        toast,
 	} from "./js/globalValues.js";
 
 	(async () => {
@@ -297,7 +298,7 @@
 
 						$initComplete = true;
 						$dataStatus = null;
-						checkAutoFunctions(true);
+						checkAutoFunctions("first-visit");
 						loadAnalytics();
 					} else {
 						$loadingCategory[""] = new Date()
@@ -539,12 +540,14 @@
 		initCheck = false,
 		visibilityChange = false,
 	) {
-		if ($android && window[$isBackgroundUpdateKey] === true) return;
+		if ($initData || ($android && window[$isBackgroundUpdateKey] === true)) return;
 
 		if (initCheck) {
 			try {
 				await requestUserEntries();
-				await requestMediaEntries();
+				if (initCheck === "first-visit") {
+					await requestMediaEntries();
+				}
 				checkAutoExportOnLoad();
 			} catch (ex) {
 				checkAutoExportOnLoad();
@@ -562,7 +565,7 @@
 				console.error(ex)
 			}
 			checkAutoExportOnLoad(visibilityChange);
-		} else if ($autoExport && (await autoExportIsPastDate())) {
+		} else if ($autoExport && (await autoExportIsPastDate()) && $android) {
 			try {
 				await exportUserData({ visibilityChange })
 			} catch (ex) {
@@ -577,7 +580,7 @@
 	}
 	async function checkAutoExportOnLoad(visibilityChange) {
 		if ($android && window[$isBackgroundUpdateKey] === true) return;
-		if ($autoExport) {
+		if ($autoExport && $android) {
 			if (await autoExportIsPastDate()) {
 				exportUserData({ visibilityChange });
 			}
@@ -671,15 +674,12 @@
 			requestMediaEntries();
 		}
 	});
-	runExport.subscribe((val) => {
+	// Android Callable
+	window.runExport = () => {
 		if (typeof val !== "boolean" || $initData) return;
 		if ($android && window[$isBackgroundUpdateKey] === true) return;
 
 		exportUserData();
-	});
-	// Android Callable
-	window.runExport = () => {
-		runExport.update(e => !e)
 	};
 
 	// CONFIG CHANGES
@@ -687,7 +687,13 @@
 		if ($android && window[$isBackgroundUpdateKey] === true) return;
 		if (val === true) {
 			const hourINMS = 60 * 60 * 1000;
-			saveIDBdata(true, "autoUpdate");
+			setLocalStorage("autoUpdate", true)
+                .catch(() => {
+                    removeLocalStorage("autoUpdate");
+                })
+                .finally(() => {
+                    saveIDBdata(true, "autoUpdate");
+                });
 			if (await autoUpdateIsPastDate()) {
 				checkAutoFunctions();
 				if ($autoUpdateInterval) clearInterval($autoUpdateInterval);
@@ -712,14 +718,26 @@
 		} else if (val === false) {
 			if ($autoUpdateInterval) clearInterval($autoUpdateInterval);
 			$autoUpdateInterval = null;
-			saveIDBdata(false, "autoUpdate");
+			setLocalStorage("autoUpdate", false)
+                .catch(() => {
+                    removeLocalStorage("autoUpdate");
+                })
+                .finally(() => {
+                    saveIDBdata(false, "autoUpdate");
+                });
 		}
 	});
 	autoExport.subscribe(async (val) => {
 		if ($android && window[$isBackgroundUpdateKey] === true) return;
 		if (val === true) {
 			const hourINMS = 60 * 60 * 1000;
-			saveIDBdata(true, "autoExport");
+			setLocalStorage("autoExport", true)
+                .catch(() => {
+                    removeLocalStorage("autoExport");
+                })
+                .finally(() => {
+                    saveIDBdata(true, "autoExport");
+                });
 			if (await autoExportIsPastDate()) {
 				checkAutoFunctions();
 				if ($autoExportInterval) clearInterval($autoExportInterval);
@@ -745,7 +763,13 @@
 		} else if (val === false) {
 			if ($autoExportInterval) clearInterval($autoExportInterval);
 			$autoExportInterval = null;
-			saveIDBdata(false, "autoExport");
+			setLocalStorage("autoExport", false)
+                .catch(() => {
+                    removeLocalStorage("autoExport");
+                })
+                .finally(() => {
+                    saveIDBdata(false, "autoExport");
+				})
 		}
 	});
 	async function autoUpdateIsPastDate() {
@@ -783,14 +807,21 @@
 	}
 
 	// SPA History
-	let shouldGoBackInHistory = false, 
-		appShouldExit = false, 
+	let appShouldExit = false, 
 		exitScrollTimeout;
 	if ("history" in window) {
 		window.history.scrollRestoration = "manual"; // Disable scrolling to top when navigating back
 	}
+	window.onbeforeunload = () => {
+		if (
+			(!appShouldExit || window.history?.state === "visited")
+			&& !$android && !matchMedia("(hover:hover)").matches
+		) {
+			return "Do you want to leave the site?"
+		}
+	}
 	window.addHistory = () => {
-		appShouldExit = shouldGoBackInHistory = false;
+		appShouldExit = false;
 		if ($android) {
 			if (window[$isBackgroundUpdateKey] !== true) {
 				try {
@@ -802,10 +833,10 @@
 		} else if (window.history?.state !== "visited") {
 			// Only Add 1 state
 			window.history?.pushState?.("visited", ""); // Push Popped State
-		}
+		} 
 	};
 	window.backPressed = () => {
-		if (shouldGoBackInHistory && !$android) {
+		if (appShouldExit && !$android) {
 			// In Browser
 			window.history?.go?.(-1); 
 		} else {
@@ -866,13 +897,17 @@
 						}, 100);
 					}
 				}
-				if (appShouldExit) {
-					appShouldExit = false
-					try {
-						JSBridge.willExit();
-						JSBridge.setShouldGoBack(true);
-					} catch (ex) {
-						console.error(ex)
+				if ($android) {
+					if (appShouldExit) {
+						appShouldExit = false
+						try {
+							JSBridge.willExit();
+							JSBridge.setShouldGoBack(true);
+						} catch (ex) {
+							console.error(ex)
+						}
+					} else {
+						appShouldExit = true
 					}
 				} else {
 					appShouldExit = true
@@ -926,6 +961,17 @@
 		shownProgress = 0.01;
 		$progress = 0;
 	});
+
+	// toast
+	let toastTimeout
+	toast.subscribe((val) => {
+		if (val) {
+			clearTimeout(toastTimeout)
+			toastTimeout = setTimeout(()=>{
+				toast.set(null)
+			}, 3500)
+		}
+	})
 
 	// DEVICE WHEEL CHECKER
 	let windowWheel = () => {
@@ -1313,6 +1359,13 @@
 		{cancelLabel}
 		{isImportant}
 	/>
+
+	{#if $toast}
+		<div 
+			class="message-toast"
+			transition:fade="{{ duration: 200 }}"
+		>{$toast}</div>
+	{/if}
 </main>
 
 <style>
@@ -1352,10 +1405,6 @@
 		height: 2px;
 		width: 100%;
 		transform: translateX(var(--progress));
-		-webkit-transform: translateX(var(--progress));
-		-ms-transform: translateX(var(--progress));
-		-moz-transform: translateX(var(--progress));
-		-o-transform: translateX(var(--progress));
 		transition: transform 0.3s linear;
 	}
 
@@ -1378,6 +1427,26 @@
 
 	.media-list-pager.remove-snap-scroll {
 		overflow: hidden !important;
+	}
+
+	.message-toast {
+		position: fixed;
+		bottom: 45px;
+		left: 50%;
+		transform: translateX(-50%);
+		z-index: 9001;
+		padding: 8px 20px;
+		background: hsl(0, 0%, 32%);
+		border-radius: 25px;
+		min-height: 50px;
+		min-width: 100px;
+		width: max-content;
+		max-width: 100%;
+		display: grid;
+		justify-content: center;
+		align-items: center;
+		color: var(--fg-color);
+		box-shadow: 0 14px 28px rgba(0, 0, 0, 0.25), 0 10px 10px rgba(0, 0, 0, 0.2);
 	}
 
 	@media screen and (max-width: 750px) {
