@@ -47,12 +47,12 @@
                     app:layout_constraintTop_toTopOf="parent"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintRight_toLeftOf="@id/completed_media_switch"
-                    android:id="@+id/backup_media_releases"
+                    android:id="@+id/back_up_media_releases"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:padding="12dp"
                     android:src="@drawable/import_export_white"
-                    android:contentDescription="@string/backup_released_media" />
+                    android:contentDescription="@string/back_up_released_media" />
                 <ImageView
                     app:layout_constraintTop_toTopOf="parent"
                     app:layout_constraintBottom_toBottomOf="parent"

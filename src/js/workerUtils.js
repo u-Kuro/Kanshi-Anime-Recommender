@@ -39,6 +39,7 @@ import {
     listUpdateAvailable,
     popupVisible,
     initComplete,
+    toast,
 } from "./globalValues.js";
 
 const hasOwnProp = Object.prototype.hasOwnProperty
@@ -46,6 +47,7 @@ let terminateDelay = 1000;
 let dataStatusPrio = false
 let isGettingNewEntries = false;
 let isRequestingMediaEntries = false
+let wasRequestingMediaEntries = false
 
 let idCounter = 0
 function getUniqueId() {
@@ -538,7 +540,7 @@ const processRecommendedMediaList = (_data = {}) => {
         if (processRecommendedMediaListTerminateTimeout) clearTimeout(processRecommendedMediaListTerminateTimeout);
         processRecommendedMediaListWorker?.terminate?.();
         progress.set(0)
-        cacheRequest("./webapi/worker/processRecommendedMediaList.js", 43412, "Updating Recommendation List")
+        cacheRequest("./webapi/worker/processRecommendedMediaList.js", 43649, "Updating Recommendation List")
             .then(url => {
                 const lastProcessRecommendationAiringAt = parseInt((new Date().getTime() / 1000))
                 let neareastMediaReleaseAiringAt
@@ -739,7 +741,7 @@ const requestMediaEntries = (_data = {}) => {
                     } catch {}
                 }
                 requestMediaEntriesWorker.postMessage(_data)
-                isRequestingMediaEntries = true
+                wasRequestingMediaEntries = isRequestingMediaEntries = true
                 requestMediaEntriesWorker.onmessage = ({ data }) => {
                     if (hasOwnProp?.call?.(data, "progress")) {
                         if (!dataStatusPrio && data?.progress >= 0 && data?.progress <= 100) {
@@ -759,7 +761,7 @@ const requestMediaEntries = (_data = {}) => {
                     }
                     
                     if (hasOwnProp?.call?.(data, "error")) {
-                        isRequestingMediaEntries = false
+                        wasRequestingMediaEntries = isRequestingMediaEntries = false
 
                         requestMediaEntriesWorker?.terminate?.();
                         notifyUpdatedMediaNotification()
@@ -775,7 +777,7 @@ const requestMediaEntries = (_data = {}) => {
                         }
                         updateRecommendationList.update(e => !e)
                     } else if (hasOwnProp?.call?.(data, "errorDuringInit")) {
-                        isRequestingMediaEntries = false
+                        wasRequestingMediaEntries = isRequestingMediaEntries = false
                         requestMediaEntriesWorker?.terminate?.();
                         notifyUpdatedMediaNotification()
                         dataStatus.set(null)
@@ -824,7 +826,7 @@ const requestMediaEntries = (_data = {}) => {
                                     rerunImportantWork()
                                 })
                         }
-                        isRequestingMediaEntries = false
+                        wasRequestingMediaEntries = isRequestingMediaEntries = false
                         requestMediaEntriesTerminateTimeout = setTimeout(() => {
                             requestMediaEntriesWorker?.terminate?.();
                         }, terminateDelay)
@@ -835,7 +837,7 @@ const requestMediaEntries = (_data = {}) => {
                     }
                 }
                 requestMediaEntriesWorker.onerror = (error) => {
-                    isRequestingMediaEntries = false
+                    wasRequestingMediaEntries = isRequestingMediaEntries = false
                     isGettingNewEntries = false
                     requestMediaEntriesWorker?.terminate?.();
                     notifyUpdatedMediaNotification()
@@ -845,7 +847,7 @@ const requestMediaEntries = (_data = {}) => {
                     reject(error)
                 }
             }).catch((error) => {
-                isRequestingMediaEntries = false
+                wasRequestingMediaEntries = isRequestingMediaEntries = false
                 isGettingNewEntries = false
                 requestMediaEntriesWorker?.terminate?.();
                 notifyUpdatedMediaNotification()
@@ -1055,7 +1057,7 @@ const exportUserData = (_data) => {
                             })
                         }
                         exportUserDataWorker?.terminate?.();
-                        rerunImportantWork()
+                        rerunImportantWork(_data?.isManual)
                         reject(data?.error)
                     } else if (get(android)) {
                         try {
@@ -1074,14 +1076,14 @@ const exportUserData = (_data) => {
                                 new Promise((resolve, reject) => {
                                     waitForExportApproval = { resolve, reject }
                                 }).then(() => {
-                                    showToast("Data has been Exported")
+                                    showToast("Data has been exported")
                                 }).catch((error) => {
                                     reject(error)
                                 }).finally(() => {
                                     waitForExportApproval = null
                                     dataStatus.set(null)
                                     progress.set(100)
-                                    rerunImportantWork()
+                                    rerunImportantWork(_data?.isManual)
                                     resolve()
                                 })
                             } else {
@@ -1097,7 +1099,7 @@ const exportUserData = (_data) => {
                                 })
                                 dataStatus.set(null)
                                 progress.set(100)
-                                rerunImportantWork()
+                                rerunImportantWork(_data?.isManual)
                                 reject()
                             }
                         } catch (ex) {
@@ -1113,7 +1115,7 @@ const exportUserData = (_data) => {
                             })
                             dataStatus.set(null)
                             progress.set(100)
-                            rerunImportantWork()
+                            rerunImportantWork(_data?.isManual)
                             console.error(ex)
                             reject(ex)
                         }
@@ -1123,7 +1125,7 @@ const exportUserData = (_data) => {
                         progress.set(100)
                         downloadLink(data.url, `Kanshi.${data?.username?.toLowerCase?.() || "backup"}.json`)
                         isExporting.set(false)
-                        rerunImportantWork()
+                        rerunImportantWork(_data?.isManual)
                         resolve()
                         // dont terminate, can't oversee blob link lifetime
                     } else {
@@ -1137,7 +1139,7 @@ const exportUserData = (_data) => {
                         dataStatus.set(null)
                         progress.set(100)
                         isExporting.set(false)
-                        rerunImportantWork()
+                        rerunImportantWork(_data?.isManual)
                         reject()
                     }
                 }
@@ -1154,7 +1156,7 @@ const exportUserData = (_data) => {
                         text: "Data was not exported, please try again.",
                     })
                     exportUserDataWorker?.terminate?.();
-                    rerunImportantWork()
+                    rerunImportantWork(_data?.isManual)
                     console.error(error)
                     reject(error)
                 }
@@ -1167,7 +1169,7 @@ const exportUserData = (_data) => {
                 waitForExportApproval = null
                 alertError()
                 exportUserDataWorker?.terminate?.();
-                rerunImportantWork()
+                rerunImportantWork(_data?.isManual)
                 console.error(error)
                 reject(error)
             })
@@ -1262,7 +1264,9 @@ const importUserData = (_data) => {
                                             dataStatus.set(null)
                                             progress.set(100)
                                             if (get(android)) {
-                                                showToast("Data has been Imported")
+                                                showToast("File has been imported")
+                                            } else {
+                                                toast.set("File has been imported")
                                             }
                                             runUpdate.update(e => !e)
                                         })
@@ -1585,7 +1589,7 @@ const getFilterOptions = (_data) => {
     return new Promise((resolve, reject) => {
         if (getFilterOptionsTerminateTimeout) clearTimeout(getFilterOptionsTerminateTimeout)
         getFilterOptionsWorker?.terminate?.()
-        cacheRequest("./webapi/worker/getFilterOptions.js", 68420, "Initializing Filters")
+        cacheRequest("./webapi/worker/getFilterOptions.js", 68606, "Initializing Filters")
             .then(url => {
                 if (getFilterOptionsTerminateTimeout) clearTimeout(getFilterOptionsTerminateTimeout)
                 getFilterOptionsWorker?.terminate?.()
@@ -1692,9 +1696,12 @@ function stopConflictingWorkers(blocker) {
     dataStatus.set(null)
 }
 
-function rerunImportantWork() {
+function rerunImportantWork(shouldRequestMedia) {
     updateRecommendationList.update((e)=>!e)
-    runUpdate.update((e)=>!e)
+    if (wasRequestingMediaEntries || shouldRequestMedia !== true) {
+        // Probably terminated
+        runUpdate.update((e)=>!e)
+    }
 }
 
 function alertError() {
@@ -1702,13 +1709,13 @@ function alertError() {
         window.confirmPromise?.({
             isAlert: true,
             title: "Something went wrong",
-            text: "App may not be working properly, clear cache and make sure you're running the latest version.",
+            text: "App may not be working properly, restart the app or clear your cache, if it still fails you may want to reinstall the app.",
         })
     } else {
         window.confirmPromise?.({
             isAlert: true,
             title: "Something went wrong",
-            text: "App may not be working properly, clear cache and make sure you're not running in incognito.",
+            text: "App may not be working properly, refresh the page or clear this website data, this also does not run in incognito.",
         })
     }
 }

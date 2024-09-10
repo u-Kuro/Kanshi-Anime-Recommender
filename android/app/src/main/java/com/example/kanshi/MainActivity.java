@@ -199,7 +199,7 @@ public class MainActivity extends AppCompatActivity {
                             Uri uri = intent.getData();
                             Uri docUri = DocumentsContract.buildDocumentUriUsingTree(uri, DocumentsContract.getTreeDocumentId(uri));
                             exportPath = getThisPath(docUri);
-                            showToast(Toast.makeText(getApplicationContext(), "Backup folder is selected, you may now use the export feature.", Toast.LENGTH_LONG));
+                            showToast(Toast.makeText(getApplicationContext(), "Folder was selected, you can now back up your data", Toast.LENGTH_LONG));
                             prefsEdit.putString("savedExportPath", exportPath).apply();
                             webView.post(()->webView.loadUrl("javascript:window?.setExportPathAvailability?.(true)"));
                         }
@@ -387,7 +387,7 @@ public class MainActivity extends AppCompatActivity {
                     ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
                     Network network = connectivityManager.getActiveNetwork();
                     if (network == null) {
-                        showToast(Toast.makeText(getApplicationContext(), "You are currently offline.", Toast.LENGTH_LONG));
+                        showToast(Toast.makeText(getApplicationContext(), "You are currently offline", Toast.LENGTH_LONG));
                     }
                 }
                 CookieManager cookieManager = CookieManager.getInstance();
@@ -468,7 +468,7 @@ public class MainActivity extends AppCompatActivity {
                         }
                         overridePendingTransition(R.anim.fade_in, R.anim.remove);
                     } catch (Exception ignored) {
-                        showToast(Toast.makeText(getApplicationContext(), "Can't open the link.", Toast.LENGTH_LONG));
+                        showToast(Toast.makeText(getApplicationContext(), "Can't open the link", Toast.LENGTH_LONG));
                     }
                 }
                 return true;
@@ -487,12 +487,12 @@ public class MainActivity extends AppCompatActivity {
                 try {
                     i = fileChooserParams.createIntent();
                     chooseImportFile.launch(i);
-                    showToast(Toast.makeText(getApplicationContext(), "Please select your file.", Toast.LENGTH_LONG));
+                    showToast(Toast.makeText(getApplicationContext(), "Please select your file", Toast.LENGTH_LONG));
                 } catch (Exception ignored) {
                     i = new Intent(Intent.ACTION_GET_CONTENT).addCategory(Intent.CATEGORY_OPENABLE);
                     i.setType("*/*");
                     chooseImportFile.launch(i);
-                    showToast(Toast.makeText(getApplicationContext(), "Please select your file.", Toast.LENGTH_LONG));
+                    showToast(Toast.makeText(getApplicationContext(), "Please select your file", Toast.LENGTH_LONG));
                 }
                 return true;
             }
@@ -756,8 +756,8 @@ public class MainActivity extends AppCompatActivity {
                     exportJSONExecutor.submit(() -> {
                         if (!Environment.isExternalStorageManager()) {
                             exportJSONUIhandler.post(() -> showDialog(new AlertDialog.Builder(MainActivity.this)
-                            .setTitle("Folder Access for Backup")
-                            .setMessage("Allow permission to access folders for backup feature.")
+                            .setTitle("Folder Access for Back-up")
+                            .setMessage("Allow permission to access folders for backup.")
                             .setPositiveButton("OK", (dialogInterface, i) -> {
                                 Intent intent = new Intent(ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION, Uri.fromParts("package", getPackageName(), null));
                                 startActivity(intent);
@@ -798,13 +798,13 @@ public class MainActivity extends AppCompatActivity {
                                             } catch (Exception ignored) {}
                                             exportJSONUIhandler.post(() -> {
                                                 isExported(false);
-                                                showToast(Toast.makeText(getApplicationContext(), "Temporary backup file can't be re-written, please delete tmp.json in the selected directory.", Toast.LENGTH_LONG));
+                                                showToast(Toast.makeText(getApplicationContext(), "Temporary backup file can't be re-written, please delete tmp.json in the selected folder", Toast.LENGTH_LONG));
                                             });
                                         }
                                     } catch (Exception e) {
                                         exportJSONUIhandler.post(() -> {
                                             isExported(false);
-                                            showToast(Toast.makeText(getApplicationContext(), "An exception occurred initializing the temporary backup file.", Toast.LENGTH_LONG));
+                                            showToast(Toast.makeText(getApplicationContext(), "Exception occurred while initializing the temporary backup file", Toast.LENGTH_LONG));
                                         });
                                         try {
                                             if (writer != null) {
@@ -816,7 +816,7 @@ public class MainActivity extends AppCompatActivity {
                                         e.printStackTrace();
                                     }
                                 } else if (!dirIsCreated) {
-                                    exportJSONUIhandler.post(() -> showToast(Toast.makeText(getApplicationContext(), "Can't find backup folder, please create it first.", Toast.LENGTH_LONG)));
+                                    exportJSONUIhandler.post(() -> showToast(Toast.makeText(getApplicationContext(), "Can't find the folder for backup, please create it first", Toast.LENGTH_LONG)));
                                 }
                             } else if (exportPath != null && !exportPath.isEmpty() && !exportDirectory.isDirectory()) {
                                 String[] tempExportPath = exportPath.split(Pattern.quote(File.separator));
@@ -825,10 +825,10 @@ public class MainActivity extends AppCompatActivity {
                                                 tempExportPath[tempExportPath.length - 1]
                                         : tempExportPath[tempExportPath.length - 1];
                                 exportJSONUIhandler.post(() -> showDialog(new AlertDialog.Builder(MainActivity.this)
-                                .setTitle("Backup Folder is Missing")
+                                .setTitle("Back-up Folder is Missing")
                                 .setMessage("Folder directory [" + tempPathName + "] is missing, please choose another folder for backup.")
                                 .setPositiveButton("OK", (dialogInterface, x) -> {
-                                    showToast(Toast.makeText(getApplicationContext(), "Select or create a folder.", Toast.LENGTH_LONG));
+                                    showToast(Toast.makeText(getApplicationContext(), "Select or create a folder for backup", Toast.LENGTH_LONG));
                                     Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).addCategory(Intent.CATEGORY_DEFAULT);
                                     chooseExportFile.launch(i);
                                 })
@@ -836,7 +836,7 @@ public class MainActivity extends AppCompatActivity {
                             } else {
                                 Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).addCategory(Intent.CATEGORY_DEFAULT);
                                 chooseExportFile.launch(i);
-                                exportJSONUIhandler.post(() -> showToast(Toast.makeText(getApplicationContext(), "Select or create a folder.", Toast.LENGTH_LONG)));
+                                exportJSONUIhandler.post(() -> showToast(Toast.makeText(getApplicationContext(), "Select or create a folder for backup", Toast.LENGTH_LONG)));
                             }
                         }
                     });
@@ -853,7 +853,7 @@ public class MainActivity extends AppCompatActivity {
                         } catch (Exception e) {
                             exportJSONUIhandler.post(() -> {
                                 isExported(false);
-                                showToast(Toast.makeText(getApplicationContext(), "An exception occurred while writing to temporary backup file.", Toast.LENGTH_LONG));
+                                showToast(Toast.makeText(getApplicationContext(), "Exception occurred while writing into the temporary backup file", Toast.LENGTH_LONG));
                             });
                             try {
                                 if (writer != null) {
@@ -896,7 +896,7 @@ public class MainActivity extends AppCompatActivity {
                                     } catch (Exception e) {
                                         exportJSONUIhandler.post(() -> {
                                             isExported(false);
-                                            showToast(Toast.makeText(getApplicationContext(), "Failed to access the backup file.", Toast.LENGTH_LONG));
+                                            showToast(Toast.makeText(getApplicationContext(), "Failed to access the backup file", Toast.LENGTH_LONG));
                                         });
                                         Utils.handleUncaughtException(getApplicationContext(), e, "MainActivity exportJSON Status 2 0");
                                         e.printStackTrace();
@@ -906,19 +906,19 @@ public class MainActivity extends AppCompatActivity {
                                 } else {
                                     exportJSONUIhandler.post(() -> {
                                         isExported(false);
-                                        showToast(Toast.makeText(getApplicationContext(), "Failed to backup the file.", Toast.LENGTH_LONG));
+                                        showToast(Toast.makeText(getApplicationContext(), "Failed to back up the file", Toast.LENGTH_LONG));
                                     });
                                 }
                             } else {
                                 exportJSONUIhandler.post(() -> {
                                     isExported(false);
-                                    showToast(Toast.makeText(getApplicationContext(), "An exception occurred in finalizing the backup file.", Toast.LENGTH_LONG));
+                                    showToast(Toast.makeText(getApplicationContext(), "Exception occurred in finalizing the backup file", Toast.LENGTH_LONG));
                                 });
                             }
                         } catch (Exception e) {
                             exportJSONUIhandler.post(() -> {
                                 isExported(false);
-                                showToast(Toast.makeText(getApplicationContext(), "An exception occurred in finalizing the backup file.", Toast.LENGTH_LONG));
+                                showToast(Toast.makeText(getApplicationContext(), "Exception occurred in finalizing the backup file", Toast.LENGTH_LONG));
                             });
                             try {
                                 if (writer != null) {
@@ -947,7 +947,7 @@ public class MainActivity extends AppCompatActivity {
             clipboard.setPrimaryClip(clip);
         }
         @JavascriptInterface
-        public void willExit() { showToast(Toast.makeText(getApplicationContext(), "Press back again to exit.", Toast.LENGTH_SHORT)); }
+        public void willExit() { showToast(Toast.makeText(getApplicationContext(), "Press back again to exit", Toast.LENGTH_SHORT)); }
         @JavascriptInterface
         public void setShouldGoBack(boolean shouldGoBack) {
             if (MainActivity.this.shouldGoBack && !shouldGoBack && currentToast != null) {
@@ -960,8 +960,8 @@ public class MainActivity extends AppCompatActivity {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                 if (!Environment.isExternalStorageManager()) {
                     showDialog(new AlertDialog.Builder(MainActivity.this)
-                                    .setTitle("File Access for Backup")
-                                    .setMessage("Allow permission to access folders for backup feature.")
+                                    .setTitle("File Access for Back-up")
+                                    .setMessage("Allow permission to access folders for backup.")
                                     .setPositiveButton("OK", (dialogInterface, i) -> {
                                         Intent intent = new Intent(ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION, Uri.fromParts("package", getPackageName(), null));
                                         startActivity(intent);
@@ -971,7 +971,7 @@ public class MainActivity extends AppCompatActivity {
                 } else {
                     Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).addCategory(Intent.CATEGORY_DEFAULT);
                     chooseExportFile.launch(i);
-                    showToast(Toast.makeText(getApplicationContext(), "Select or create a folder.", Toast.LENGTH_LONG));
+                    showToast(Toast.makeText(getApplicationContext(), "Select or create a folder", Toast.LENGTH_LONG));
                 }
             }
         }
@@ -982,27 +982,22 @@ public class MainActivity extends AppCompatActivity {
                 if (isOnline) {
                     isAppConnectionAvailable(isConnected -> webView.post(() -> {
                         if (isConnected) {
-                            showToast(Toast.makeText(getApplicationContext(), "Your internet has been restored.", Toast.LENGTH_LONG));
+                            showToast(Toast.makeText(getApplicationContext(), "Your internet has been restored", Toast.LENGTH_LONG));
                         }
                     }));
                 } else {
-                    showToast(Toast.makeText(getApplicationContext(), "You are currently offline.", Toast.LENGTH_LONG));
+                    showToast(Toast.makeText(getApplicationContext(), "You are currently offline", Toast.LENGTH_LONG));
                 }
             } catch (Exception ignored) {}
         }
         @RequiresApi(api = Build.VERSION_CODES.O)
         @JavascriptInterface
-        public void checkAppID(int appID) {
+        public void checkAppID(int appID, boolean isManual) {
             if (appID > VERSION_CODE) {
                 showUpdateNotice();
+            } else if (isManual) {
+                showToast(Toast.makeText(getApplicationContext(), "No new updates available", Toast.LENGTH_LONG));
             }
-        }
-        @JavascriptInterface
-        public void refreshWeb() {
-            Intent intent = new Intent(getApplicationContext(), MainActivity.class);
-            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-            startActivity(intent);
-            finish();
         }
         @JavascriptInterface
         public void clearCache() {
@@ -1312,13 +1307,13 @@ public class MainActivity extends AppCompatActivity {
                                             if (!resolveInfoList.isEmpty()) {
                                                 startActivity(intent);
                                             } else {
-                                                showToast(Toast.makeText(MainActivity.this, "No application available to open the APK file.", Toast.LENGTH_LONG));
+                                                showToast(Toast.makeText(MainActivity.this, "Failed to open the APK file", Toast.LENGTH_LONG));
                                             }
                                         } else {
-                                            showToast(Toast.makeText(MainActivity.this, "File is not found.", Toast.LENGTH_LONG));
+                                            showToast(Toast.makeText(MainActivity.this, "File was not found", Toast.LENGTH_LONG));
                                         }
                                     })
-                                    .setNegativeButton("NO", (dialogInterface, i) -> showToast(Toast.makeText(getApplicationContext(), "APK is in your download folder, you may still manually install the new version.", Toast.LENGTH_LONG))).setCancelable(false),
+                                    .setNegativeButton("NO", (dialogInterface, i) -> showToast(Toast.makeText(getApplicationContext(), "APK is in your download folder, you may still manually install the new version", Toast.LENGTH_LONG))).setCancelable(false),
                             true);
                 }
             }
@@ -1340,7 +1335,7 @@ public class MainActivity extends AppCompatActivity {
         } else {
             webView.post(() -> webView.loadUrl("javascript:window?.isExported?.(false)"));
             showDialog(new AlertDialog.Builder(MainActivity.this)
-                            .setTitle("Backup Failed")
+                            .setTitle("Back Up Failed")
                             .setMessage("Do you want to try again?")
                             .setPositiveButton("YES", (dialogInterface, i) -> webView.post(() -> webView.loadUrl("javascript:window?.runExport?.()")))
                             .setNegativeButton("NO", null),

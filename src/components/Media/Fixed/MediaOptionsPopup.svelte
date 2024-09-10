@@ -1,7 +1,7 @@
 <script>
     import { fade } from "svelte/transition";
     import { sineOut } from "svelte/easing";
-    import { ncsCompare, requestImmediate } from "../../../js/others/helper.js";
+    import { ncsCompare, requestImmediate, showToast } from "../../../js/others/helper.js";
     import {
         android,
         mediaOptionVisible,
@@ -12,6 +12,7 @@
         confirmPromise,
         loadedMediaLists,
         selectedCategory,
+        toast,
     } from "../../../js/globalValues.js";
     import { mediaManager } from "../../../js/workerUtils.js";
 
@@ -170,12 +171,12 @@
         }
     }
 
-    async function pleaseWaitAlert() {
-        return await $confirmPromise({
-            isAlert: true,
-            title: "Initializing resources",
-            text: "Please wait a moment...",
-        });
+    function pleaseWaitAlert() {
+        if ($android) {
+            showToast("Please wait a moment")
+        } else {
+            $toast = "Please wait a moment"
+        }
     }
 
     function loadMediaOption() {
@@ -306,10 +307,6 @@
 <style>
     .media-options {
         transform: translateZ(0);
-        -webkit-transform: translateZ(0);
-        -ms-transform: translateZ(0);
-        -moz-transform: translateZ(0);
-        -o-transform: translateZ(0);
         position: fixed;
         display: flex;
         z-index: 994;

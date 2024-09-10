@@ -4,10 +4,10 @@
         getElementWidth,
         getLocalStorage,
         requestImmediate,
+        showToast,
         trimAllEmptyChar,
     } from "../../js/others/helper.js";
     import {
-        confirmPromise,
         gridFullView,
         android,
         hasWheel,
@@ -20,6 +20,7 @@
         categoriesKeys,
         selectedMediaGridEl,
         documentScrollTop,
+        toast,
     } from "../../js/globalValues.js";
 
     let categoriesNav;
@@ -181,12 +182,12 @@
         }
     }
 
-    async function pleaseWaitAlert() {
-        return await $confirmPromise({
-            isAlert: true,
-            title: "Initializing resources",
-            text: "Please wait a moment...",
-        });
+    function pleaseWaitAlert() {
+        if ($android) {
+            showToast("Please wait a moment")
+        } else {
+            $toast = "Please wait a moment"
+        }
     }
 
     let immediateCustomFilNavChange, immediateShowTimeout;
@@ -354,10 +355,6 @@
         background-color: var(--bg-color);
         color: var(--fg-color);
         transform: translateZ(0);
-        -webkit-transform: translateZ(0);
-        -ms-transform: translateZ(0);
-        -moz-transform: translateZ(0);
-        -o-transform: translateZ(0);
         opacity: 1;
         transition: opacity 0.2s ease-out;
     }
@@ -370,8 +367,6 @@
         width: min(calc(100% - 100px), calc(1140px - 100px));
         height: 100%;
         align-items: center;
-        -ms-user-select: none;
-        -webkit-user-select: none;
         user-select: none;
         max-width: 1140px;
         gap: 25px;
@@ -461,15 +456,9 @@
             pointer-events: none !important;
             position: fixed !important;
             transform: translateY(-99999px) translateZ(0) !important;
-            -webkit-transform: translateY(-99999px) translateZ(0) !important;
-            -ms-transform: translateY(-99999px) translateZ(0) !important;
-            -moz-transform: translateY(-99999px) translateZ(0) !important;
-            -o-transform: translateY(-99999px) translateZ(0) !important;
             user-select: none !important;
             touch-action: none !important;
             -webkit-user-drag: none !important;
-            -moz-user-select: none !important;
-            -ms-user-select: none !important;
             height: 0 !important;
             width: 0 !important;
             max-width: 0 !important;

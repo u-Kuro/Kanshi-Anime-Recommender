@@ -25,14 +25,14 @@
         <ImageView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:contentDescription="@string/import_released_media"
+            android:contentDescription="@string/restore_back_up"
             android:src="@drawable/import_white" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="30dp"
-            android:text="@string/import_released_media"
+            android:text="@string/restore_back_up"
             android:textColor="@color/white"
             android:textSize="16sp" />
 
@@ -53,7 +53,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:src="@drawable/sync_white"
-            android:contentDescription="@string/released_media_auto_export"/>
+            android:contentDescription="@string/released_media_automatic_back_up"/>
 
         <TextView
             android:id="@+id/auto_export_media_releases_textview"

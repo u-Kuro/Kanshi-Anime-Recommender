@@ -16,19 +16,19 @@ import Confirm from "./Others/Confirm.svelte";
 
 export default {
     Fixed: {
-        Categories: Categories,
-        Navigator: Navigator,
-        Menu: Menu,
+        Categories,
+        Navigator,
+        Menu
     },
     Media: {
-        MediaGrid: MediaGrid,
+        MediaGrid,
         Fixed: {
-            MediaPopup: MediaPopup,
-            MediaOptionsPopup: MediaOptionsPopup
+            MediaPopup,
+            MediaOptionsPopup
         }
     },
     Others: {
-        Search: Search,
-        Confirm: Confirm
+        Search,
+        Confirm
     }
 }

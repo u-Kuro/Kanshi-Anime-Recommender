@@ -10,9 +10,9 @@
     <string name="released">Released</string>
     <string name="schedules">Schedules</string>
     <string name="completed_media">Completed Media</string>
-    <string name="import_released_media">Import Released Media</string>
-    <string name="released_media_auto_export">Released Media Auto Export</string>
+    <string name="restore_back_up">Restore Back-up</string>
+    <string name="released_media_automatic_back_up">Released Media Automatic Back-up</string>
     <string name="enabled_automatic_back_up">Automatic Back-up: Enabled</string>
     <string name="disabled_automatic_back_up">Automatic Back-up: Disabled</string>
-    <string name="backup_released_media">Backup Released Media</string>
+    <string name="back_up_released_media">Back Up Released Media</string>
 </resources>

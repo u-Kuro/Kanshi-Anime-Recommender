@@ -121,9 +121,9 @@ public class MediaReleaseActivity extends AppCompatActivity {
                                                 Map.Entry<String, MediaNotification> currentEntry = allMediaNotificationEntries.get(j);
                                                 MediaNotificationManager.allMediaNotification.putIfAbsent(currentEntry.getKey(), currentEntry.getValue());
                                             }
-                                            showToast(Toast.makeText(this, "Anime Releases has been Imported", Toast.LENGTH_SHORT));
+                                            showToast(Toast.makeText(this, "File has been imported", Toast.LENGTH_SHORT));
                                         } else {
-                                            showToast(Toast.makeText(this, "Invalid File", Toast.LENGTH_SHORT));
+                                            showToast(Toast.makeText(this, "Invalid file", Toast.LENGTH_SHORT));
                                         }
                                     } else {
                                         showToast(Toast.makeText(this, "Failed to open", Toast.LENGTH_SHORT));
@@ -218,7 +218,7 @@ public class MediaReleaseActivity extends AppCompatActivity {
             completedMediaSwitch.setImageResource(R.drawable.done_white);
         }
 
-        ImageView backupMediaReleases = findViewById(R.id.backup_media_releases);
+        ImageView backupMediaReleases = findViewById(R.id.back_up_media_releases);
         backupMediaReleases.setVisibility(View.VISIBLE);
 
         String[] mediaReleaseOption = {"Updates", "My List", "Watching", "Finished", "Others"};
@@ -401,7 +401,7 @@ public class MediaReleaseActivity extends AppCompatActivity {
 
         importMediaReleases.setOnClickListener(view -> {
             chooseImportFile.launch("application/octet-stream");
-            showToast(Toast.makeText(getApplicationContext(), "Please select your backup file.", Toast.LENGTH_LONG));
+            showToast(Toast.makeText(getApplicationContext(), "Please select your backup file", Toast.LENGTH_LONG));
         });
 
         if (MediaNotificationManager.allMediaNotification.isEmpty()) {
@@ -465,7 +465,7 @@ public class MediaReleaseActivity extends AppCompatActivity {
             customTabsIntent.launchUrl(MediaReleaseActivity.this, Uri.parse(url));
             overridePendingTransition(R.anim.remove, R.anim.remove);
         } catch (Exception ignored) {
-            showToast(Toast.makeText(getApplicationContext(), "Can't open the link.", Toast.LENGTH_LONG));
+            showToast(Toast.makeText(getApplicationContext(), "Can't open the link", Toast.LENGTH_LONG));
         }
     }
 
