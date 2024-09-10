@@ -138,7 +138,7 @@ public class YoutubeViewActivity extends AppCompatActivity {
                 startActivity(intent);
             } catch (Exception ignored) {
                 resumeWebView();
-                Toast.makeText(getApplicationContext(), "Can't open the link.", Toast.LENGTH_LONG).show();
+                Toast.makeText(getApplicationContext(), "Can't open the link", Toast.LENGTH_LONG).show();
             }
         });
 
@@ -308,7 +308,7 @@ public class YoutubeViewActivity extends AppCompatActivity {
                         isFinished = true;
                         view.destroy();
                         finish();
-                        Toast.makeText(getApplicationContext(), "Failed to load.", Toast.LENGTH_LONG).show();
+                        Toast.makeText(getApplicationContext(), "Failed to load", Toast.LENGTH_LONG).show();
                     }
                 } else {
                     siteName.setText(R.string.youtube);
@@ -383,7 +383,7 @@ public class YoutubeViewActivity extends AppCompatActivity {
                         overridePendingTransition(R.anim.fade_in, R.anim.remove);
                     } catch (Exception ignored) {
                         resumeWebView();
-                        Toast.makeText(getApplicationContext(), "Can't open the link.", Toast.LENGTH_LONG).show();
+                        Toast.makeText(getApplicationContext(), "Can't open the link", Toast.LENGTH_LONG).show();
                     }
                 } else if (
                     // Should Load In Current WebView
@@ -431,10 +431,10 @@ public class YoutubeViewActivity extends AppCompatActivity {
                             overridePendingTransition(R.anim.fade_in, R.anim.remove);
                         } catch (Exception ignored) {
                             resumeWebView();
-                            Toast.makeText(getApplicationContext(), "Can't open the link.", Toast.LENGTH_LONG).show();
+                            Toast.makeText(getApplicationContext(), "Can't open the link", Toast.LENGTH_LONG).show();
                         }
                     } else {
-                        Toast.makeText(getApplicationContext(), "Can't open the link.", Toast.LENGTH_LONG).show();
+                        Toast.makeText(getApplicationContext(), "Can't open the link", Toast.LENGTH_LONG).show();
                     }
                 } else if (
                     // Is Another YouTube Link

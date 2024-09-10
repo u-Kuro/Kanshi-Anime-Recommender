@@ -20,6 +20,7 @@
         removeLocalStorage,
         formatNumber,
         requestImmediate,
+        showToast,
     } from "../../js/others/helper.js";
     import {
         android,
@@ -63,6 +64,7 @@
         isExporting,
         listUpdateAvailable,
         initComplete,
+        toast,
     } from "../../js/globalValues.js";
 
     const COOs = {
@@ -561,11 +563,12 @@
         }
 
         if ($categories?.[$selectedCategory] === true) {
-            return $confirmPromise({
-                isAlert: true,
-                title: "Updating Selected Category",
-                text: "Please wait a moment...",
-            });
+            if ($android) {
+                showToast("Please wait a moment")
+            } else {
+                $toast = "Please wait a moment"
+            }
+            return
         }
 
         let array;
@@ -664,11 +667,12 @@
         }
 
         if ($categories?.[$selectedCategory] === true) {
-            return $confirmPromise({
-                isAlert: true,
-                title: "Updating Selected Category",
-                text: "Please wait a moment...",
-            });
+            if ($android) {
+                showToast("Please wait a moment")
+            } else {
+                $toast = "Please wait a moment"
+            }
+            return
         }
 
         let array;
@@ -692,7 +696,8 @@
 
         let status = filter?.status,
             newStatus;
-        if (status === "excluded" || !status) {
+
+        if (status === "none" || !status) {
             newStatus = "included";
         }
 
@@ -760,11 +765,12 @@
             changeInputValue(event.target, oldValue);
             numberFiltersValues[numberFilterKey] = oldValue;
 
-            return $confirmPromise({
-                isAlert: true,
-                title: "Updating Selected Category",
-                text: "Please wait a moment...",
-            });
+            if ($android) {
+                showToast("Please wait a moment")
+            } else {
+                $toast = "Please wait a moment"
+            }
+            return
         }
 
         let array;
@@ -940,11 +946,12 @@
         if ($initData) return pleaseWaitAlert();
 
         if ($categories?.[$selectedCategory] === true) {
-            return $confirmPromise({
-                isAlert: true,
-                title: "Updating Selected Category",
-                text: "Please wait a moment...",
-            });
+            if ($android) {
+                showToast("Please wait a moment")
+            } else {
+                $toast = "Please wait a moment"
+            }
+            return
         }
 
         if (
@@ -1014,11 +1021,12 @@
         if ($initData) return pleaseWaitAlert();
 
         if ($categories?.[$selectedCategory] === true) {
-            return $confirmPromise({
-                isAlert: true,
-                title: "Updating Selected Category",
-                text: "Please wait a moment...",
-            });
+            if ($android) {
+                showToast("Please wait a moment")
+            } else {
+                $toast = "Please wait a moment"
+            }
+            return
         }
 
         if (
@@ -1057,11 +1065,12 @@
 
         let currentCategory = $selectedCategory;
         if ($categories?.[currentCategory] === true) {
-            return $confirmPromise({
-                isAlert: true,
-                title: "Updating Selected Category",
-                text: "Please wait a moment...",
-            });
+            if ($android) {
+                showToast("Please wait a moment")
+            } else {
+                $toast = "Please wait a moment"
+            }
+            return
         }
 
         let currentFilterCategoryName = selectedFilterCategoryName;
@@ -1072,11 +1081,12 @@
                 return pleaseWaitAlert();
             }
             if ($categories?.[currentCategory] === true) {
-                return $confirmPromise({
-                    isAlert: true,
-                    title: "Updating Selected Category",
-                    text: "Please wait a moment...",
-                });
+                if ($android) {
+                    showToast("Please wait a moment")
+                } else {
+                    $toast = "Please wait a moment"
+                }
+                return
             }
 
             let data;
@@ -1157,11 +1167,12 @@
             $categories?.[$selectedCategory] === true ||
             !$loadedMediaLists?.[$selectedCategory]?.sortBy
         ) {
-            return $confirmPromise({
-                isAlert: true,
-                title: "Updating Selected Category",
-                text: "Please wait a moment...",
-            });
+            if ($android) {
+                showToast("Please wait a moment")
+            } else {
+                $toast = "Please wait a moment"
+            }
+            return
         }
 
         let data;
@@ -1211,11 +1222,12 @@
             $categories?.[$selectedCategory] === true ||
             !$loadedMediaLists?.[$selectedCategory]?.sortBy
         ) {
-            return $confirmPromise({
-                isAlert: true,
-                title: "Updating Selected Category",
-                text: "Please wait a moment...",
-            });
+            if ($android) {
+                showToast("Please wait a moment")
+            } else {
+                $toast = "Please wait a moment"
+            }
+            return
         }
 
         let data;
@@ -1361,11 +1373,12 @@
 
         let previousCategoryName = $selectedCategory;
         if ($categories?.[previousCategoryName] === true) {
-            return $confirmPromise({
-                isAlert: true,
-                title: "Updating Selected Category",
-                text: "Please wait a moment...",
-            });
+            if ($android) {
+                showToast("Please wait a moment")
+            } else {
+                $toast = "Please wait a moment"
+            }
+            return
         }
 
         let newCategoryName = customCategoryName;
@@ -1384,11 +1397,12 @@
                 })
             ) {
                 if ($categories?.[previousCategoryName] === true) {
-                    return $confirmPromise({
-                        isAlert: true,
-                        title: "Updating Selected Category",
-                        text: "Please wait a moment...",
-                    });
+                    if ($android) {
+                        showToast("Please wait a moment")
+                    } else {
+                        $toast = "Please wait a moment"
+                    }
+                    return
                 }
 
                 if (
@@ -1421,11 +1435,12 @@
 
         let previousCategoryName = $selectedCategory;
         if ($categories?.[previousCategoryName] === true) {
-            return $confirmPromise({
-                isAlert: true,
-                title: "Updating Selected Category",
-                text: "Please wait a moment...",
-            });
+            if ($android) {
+                showToast("Please wait a moment")
+            } else {
+                $toast = "Please wait a moment"
+            }
+            return
         }
 
         let newCategoryName = customCategoryName;
@@ -1440,11 +1455,12 @@
                 })
             ) {
                 if ($categories?.[previousCategoryName] === true) {
-                    return $confirmPromise({
-                        isAlert: true,
-                        title: "Updating Selected Category",
-                        text: "Please wait a moment...",
-                    });
+                    if ($android) {
+                        showToast("Please wait a moment")
+                    } else {
+                        $toast = "Please wait a moment"
+                    }
+                    return
                 }
 
                 if (
@@ -1472,11 +1488,12 @@
         }
 
         if ($categories?.[previousCategoryName] === true) {
-            return $confirmPromise({
-                isAlert: true,
-                title: "Updating Selected Category",
-                text: "Please wait a moment...",
-            });
+            if ($android) {
+                showToast("Please wait a moment")
+            } else {
+                $toast = "Please wait a moment"
+            }
+            return
         }
 
         if (
@@ -1493,11 +1510,12 @@
                 })
             ) {
                 if ($categories?.[previousCategoryName] === true) {
-                    return $confirmPromise({
-                        isAlert: true,
-                        title: "Updating Selected Category",
-                        text: "Please wait a moment...",
-                    });
+                    if ($android) {
+                        showToast("Please wait a moment")
+                    } else {
+                        $toast = "Please wait a moment"
+                    }
+                    return
                 }
 
                 if (
@@ -1542,11 +1560,11 @@
                 }
             }
         } else {
-            $confirmPromise({
-                isAlert: true,
-                title: "Action failed",
-                text: "Requires atleast one category.",
-            });
+            if ($android) {
+                showToast("Requires atleast one category")
+            } else {
+                $toast = "Requires atleast one category"
+            }
         }
     }
 
@@ -1696,11 +1714,11 @@
     });
 
     function pleaseWaitAlert() {
-        $confirmPromise({
-            isAlert: true,
-            title: "Initializing resources",
-            text: "Please wait a moment...",
-        });
+        if ($android) {
+            showToast("Please wait a moment")
+        } else {
+            $toast = "Please wait a moment"
+        }
     }
 
     function horizontalWheel(event, parentClass) {
@@ -2724,7 +2742,7 @@
                                     id="{'Checkbox: ' + boolFilterKey}"
                                     type="checkbox"
                                     class="filter-bool"
-                                    on:change="{async (e) => {
+                                    on:change="{(e) => {
                                         if (
                                             !filterCategories ||
                                             !$nonOrderedFilters

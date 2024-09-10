@@ -39,6 +39,7 @@ import {
     listUpdateAvailable,
     popupVisible,
     initComplete,
+    toast,
 } from "./globalValues.js";
 
 const hasOwnProp = Object.prototype.hasOwnProperty
@@ -539,7 +540,7 @@ const processRecommendedMediaList = (_data = {}) => {
         if (processRecommendedMediaListTerminateTimeout) clearTimeout(processRecommendedMediaListTerminateTimeout);
         processRecommendedMediaListWorker?.terminate?.();
         progress.set(0)
-        cacheRequest("./webapi/worker/processRecommendedMediaList.js", 43412, "Updating Recommendation List")
+        cacheRequest("./webapi/worker/processRecommendedMediaList.js", 43649, "Updating Recommendation List")
             .then(url => {
                 const lastProcessRecommendationAiringAt = parseInt((new Date().getTime() / 1000))
                 let neareastMediaReleaseAiringAt
@@ -1075,7 +1076,7 @@ const exportUserData = (_data) => {
                                 new Promise((resolve, reject) => {
                                     waitForExportApproval = { resolve, reject }
                                 }).then(() => {
-                                    showToast("Data has been Exported")
+                                    showToast("Data has been exported")
                                 }).catch((error) => {
                                     reject(error)
                                 }).finally(() => {
@@ -1263,7 +1264,9 @@ const importUserData = (_data) => {
                                             dataStatus.set(null)
                                             progress.set(100)
                                             if (get(android)) {
-                                                showToast("Data has been Imported")
+                                                showToast("File has been imported")
+                                            } else {
+                                                toast.set("File has been imported")
                                             }
                                             runUpdate.update(e => !e)
                                         })
@@ -1586,7 +1589,7 @@ const getFilterOptions = (_data) => {
     return new Promise((resolve, reject) => {
         if (getFilterOptionsTerminateTimeout) clearTimeout(getFilterOptionsTerminateTimeout)
         getFilterOptionsWorker?.terminate?.()
-        cacheRequest("./webapi/worker/getFilterOptions.js", 68420, "Initializing Filters")
+        cacheRequest("./webapi/worker/getFilterOptions.js", 68606, "Initializing Filters")
             .then(url => {
                 if (getFilterOptionsTerminateTimeout) clearTimeout(getFilterOptionsTerminateTimeout)
                 getFilterOptionsWorker?.terminate?.()
@@ -1706,13 +1709,13 @@ function alertError() {
         window.confirmPromise?.({
             isAlert: true,
             title: "Something went wrong",
-            text: "App may not be working properly, clear cache and make sure you're running the latest version.",
+            text: "App may not be working properly, restart the app or clear your cache, if it still fails you may want to reinstall the app.",
         })
     } else {
         window.confirmPromise?.({
             isAlert: true,
             title: "Something went wrong",
-            text: "App may not be working properly, clear cache and make sure you're not running in incognito.",
+            text: "App may not be working properly, refresh the page or clear this website data, this also does not run in incognito.",
         })
     }
 }

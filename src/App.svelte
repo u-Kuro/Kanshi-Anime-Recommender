@@ -23,7 +23,6 @@
 		removeLocalStorage,
 		requestImmediate,
 		setLocalStorage,
-        showToast,
 	} from "./js/others/helper.js";
 	import {
 		appID,
@@ -325,13 +324,13 @@
 				$confirmPromise?.({
 					isAlert: true,
 					title: "Something went wrong",
-					text: "App may not be working properly, you may want to restart and make sure you're running the latest version.",
+					text: "App may not be working properly, restart the app or clear your cache, if it still fails you may want to reinstall the app.",
 				});
 			} else {
 				$confirmPromise?.({
 					isAlert: true,
 					title: "Something went wrong",
-					text: "App may not be working properly, you may want to refresh the page, or if not clear your cookies but backup your data first.",
+					text: "App may not be working properly, refresh the page or clear this website data, this also does not run in incognito.",
 				});
 			}
 			if ($initData) {
@@ -601,11 +600,11 @@
 		// After the initial lLoad has Finished
 		if (val === false) {
 			// Check App ID and Version Updates for Android
-			if ($android && window.navigator?.onLine) {
+			if ($android && window.navigator?.onLine !== false) {
 				try {
 					$appID = await getWebVersion();
 					if (window[$isBackgroundUpdateKey] !== true && typeof $appID === "number" && !isNaN($appID) && isFinite($appID)) {
-						JSBridge.checkAppID(Math.floor($appID));
+						JSBridge.checkAppID(Math.floor($appID), false);
 					}
 				} catch (ex) {
 					console.error(ex)

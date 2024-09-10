@@ -8,6 +8,7 @@
         removeLocalStorage,
         requestImmediate,
         setLocalStorage,
+        showToast,
     } from "../../js/others/helper.js";
     import {
         username,
@@ -29,6 +30,7 @@
         windowWidth,
         loadingCategory,
         listUpdateAvailable,
+        toast,
     } from "../../js/globalValues.js";
 
     let writableSubscriptions = [];
@@ -92,11 +94,12 @@
                     if (document?.activeElement !== inputUsernameEl) {
                         typedUsername = $username || typedUsername || "";
                     }
-                    return $confirmPromise({
-                        isAlert: true,
-                        title: "Currently Offline",
-                        text: "It seems that you're currently offline and unable to update.",
-                    });
+                    if ($android) {
+                        showToast("You are currently offline")
+                    } else {
+                        $toast = "You are currently offline"
+                    }
+                    return
                 }
                 let usernameToShow = `<span style="color:hsl(var(--ac-color));">${typedUsername}</span>`;
                 if ($username) {
@@ -233,24 +236,6 @@
         }
         let element = event.target;
         let classList = element.classList;
-        console.log(
-            !(
-                classList.contains("nav") ||
-                classList.contains("nav-container")
-            ),
-            !(
-                classList.contains("logo-icon") ||
-                element.closest(".logo-icon")
-            ),
-            !(
-                ($menuVisible || $popupVisible) && 
-                (classList.contains("input-search") || element.closest(".input-search"))
-            ),
-            !(
-                ($popupVisible && !$menuVisible) &&
-                (classList.contains("go-back-container") || element.closest(".go-back-container"))
-            )
-        )
         if (classList.contains("go-back-container") || element.closest(".go-back-container")) {
             return
         }
@@ -350,12 +335,12 @@
         writableSubscriptions.forEach((unsub) => unsub());
     });
 
-    async function pleaseWaitAlert() {
-        return await $confirmPromise({
-            isAlert: true,
-            title: "Initializing resources",
-            text: "Please wait a moment...",
-        });
+    function pleaseWaitAlert() {
+        if ($android) {
+            showToast("Please wait a moment")
+        } else {
+            $toast = "Please wait a moment"
+        }
     }
 
     let delayedPopupVis, delayedMenuVis;
@@ -485,16 +470,18 @@
                     } else if (typeof deferredPrompt?.prompt === "function") {
                         await deferredPrompt.prompt();
                     } else {
-                        $confirmPromise({
-                            isAlert: true,
-                            text: "App installer was not found.",
-                        });
+                        if ($android) {
+                            showToast("App installer was not found")
+                        } else {
+                            $toast = "App installer was not found"
+                        }
                     }
-                } catch (e) {
-                    $confirmPromise({
-                        isAlert: true,
-                        text: "App installer was not found.",
-                    });
+                } catch {
+                    if ($android) {
+                        showToast("App installer was not found")
+                    } else {
+                        $toast = "App installer was not found"
+                    }
                 }
             }
             $appInstallationAsked = true;

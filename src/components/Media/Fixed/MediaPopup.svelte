@@ -21,6 +21,7 @@
         removeLocalStorage,
         requestImmediate,
         ncsCompare,
+        showToast,
     } from "../../../js/others/helper.js";
     import {
         hiddenEntries,
@@ -32,7 +33,6 @@
         inApp,
         confirmPromise,
         shownAllInList,
-        dataStatus,
         listUpdateAvailable,
         popupIsGoingBack,
         earlisetReleaseDate,
@@ -48,6 +48,7 @@
         windowWidth,
         documentScrollTop,
         loadingCategory,
+        toast,
     } from "../../../js/globalValues.js";
 
     const emptyImage = "data:image/png;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=";
@@ -146,12 +147,12 @@
         }
     }
 
-    async function pleaseWaitAlert() {
-        return await $confirmPromise({
-            isAlert: true,
-            title: "Initializing resources",
-            text: "Please wait a moment...",
-        });
+    function pleaseWaitAlert() {
+        if ($android) {
+            showToast("Please wait a moment")
+        } else {
+            $toast = "Please wait a moment"
+        }
     }
 
     async function handleMoreVideos(titles, format, askFirst) {
@@ -1062,7 +1063,7 @@
                 JSBridge.isOnline(true);
             } catch (ex) { console.error(ex) }
         } else {
-            $dataStatus = "Reconnected Successfully";
+            $toast = "Your internet has been restored"
         }
         document.querySelectorAll("script")?.forEach((script) => {
             if (
@@ -1112,7 +1113,7 @@
                 JSBridge.isOnline(false);
             } catch (ex) { console.error(ex) }
         } else {
-            $dataStatus = "Currently Offline";
+            $toast = "You are currently offline"
         }
     });
     function loadYouTubeAPI() {

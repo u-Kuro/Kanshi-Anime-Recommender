@@ -9,7 +9,6 @@ import MediaOptionsPopup from "./Media/Fixed/MediaOptionsPopup.svelte";
 import Categories from "./Fixed/Categories.svelte";
 import Navigator from "./Fixed/Navigator.svelte";
 import Menu from "./Fixed/Menu.svelte";
-import Statistics from "./Fixed/Statistics.svelte";
 
 // Other Components
 import Search from "./Others/Search.svelte";
@@ -19,8 +18,7 @@ export default {
     Fixed: {
         Categories,
         Navigator,
-        Menu,
-        Statistics
+        Menu
     },
     Media: {
         MediaGrid,

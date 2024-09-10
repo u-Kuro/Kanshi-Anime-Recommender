@@ -4,10 +4,10 @@
         getElementWidth,
         getLocalStorage,
         requestImmediate,
+        showToast,
         trimAllEmptyChar,
     } from "../../js/others/helper.js";
     import {
-        confirmPromise,
         gridFullView,
         android,
         hasWheel,
@@ -20,6 +20,7 @@
         categoriesKeys,
         selectedMediaGridEl,
         documentScrollTop,
+        toast,
     } from "../../js/globalValues.js";
 
     let categoriesNav;
@@ -181,12 +182,12 @@
         }
     }
 
-    async function pleaseWaitAlert() {
-        return await $confirmPromise({
-            isAlert: true,
-            title: "Initializing resources",
-            text: "Please wait a moment...",
-        });
+    function pleaseWaitAlert() {
+        if ($android) {
+            showToast("Please wait a moment")
+        } else {
+            $toast = "Please wait a moment"
+        }
     }
 
     let immediateCustomFilNavChange, immediateShowTimeout;
