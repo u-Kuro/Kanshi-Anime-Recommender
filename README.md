@@ -30,8 +30,8 @@ It's <b>free</b> and <b>runs locally</b> for your convenience.
 <div style="display: flex;flex-wrap:nowrap;">
   <img src="https://i.imgur.com/QQHODmR.png" style="flex:1;width: 24%;">
   <img src="https://i.imgur.com/iLD1imm.png" style="flex:1;width: 24%;">
-  <img src="https://i.imgur.com/s9scglT.png" style="flex:1;width: 24%;">
   <img src="https://i.imgur.com/Agj1v5n.png" style="flex:1;width: 24%;">
+  <img src="https://i.imgur.com/K9ikkha.png" style="flex:1;width: 24%;">
 </div>
 
 <h2 align="center"></h2>
@@ -45,4 +45,4 @@ It's <b>free</b> and <b>runs locally</b> for your convenience.
 <h2 align="center"></h2>
 
 ## Additional Information
-- [Alternative Website](https://u-kuro.github.io/Kanshi-Anime-Recommender) 
+- [Alternative Website](https://u-kuro.github.io/Kanshi-Anime-Recommender)
