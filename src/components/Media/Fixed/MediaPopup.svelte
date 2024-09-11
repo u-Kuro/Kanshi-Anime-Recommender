@@ -49,6 +49,7 @@
         documentScrollTop,
         loadingCategory,
         toast,
+        initList,
     } from "../../../js/globalValues.js";
 
     const emptyImage = "data:image/png;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=";
@@ -116,7 +117,9 @@
     }
 
     async function handleHideShow(mediaID, title) {
-        if (!$hiddenEntries) return pleaseWaitAlert();
+        if ($initList !== false || !$hiddenEntries) {
+            return pleaseWaitAlert()
+        }
         let isHidden = $hiddenEntries[mediaID];
         title = title
             ? `<span style="color:hsl(var(--ac-color));">${title}</span>`
@@ -144,14 +147,6 @@
                 });
                 $hiddenEntries[mediaID] = 1;
             }
-        }
-    }
-
-    function pleaseWaitAlert() {
-        if ($android) {
-            showToast("Please wait a moment")
-        } else {
-            $toast = "Please wait a moment"
         }
     }
 
@@ -892,6 +887,12 @@
 
     async function updateList(skipConfirm) {
         if ($android && window[$isBackgroundUpdateKey] === true) return;
+        if ($initList !== false) {
+            if (!skipConfirm) {
+                pleaseWaitAlert()
+            }
+            return
+        }
         if (
             skipConfirm ||
             (await $confirmPromise({
@@ -901,6 +902,14 @@
         ) {
             $listUpdateAvailable = false;
             mediaManager({ updateRecommendedMediaList: true });
+        }
+    }
+
+    function pleaseWaitAlert() {
+        if ($android) {
+            showToast("Please wait a moment")
+        } else {
+            $toast = "Please wait a moment"
         }
     }
 

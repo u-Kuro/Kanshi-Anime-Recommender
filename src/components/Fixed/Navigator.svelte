@@ -31,6 +31,7 @@
         loadingCategory,
         listUpdateAvailable,
         toast,
+        initList,
     } from "../../js/globalValues.js";
 
     let writableSubscriptions = [];
@@ -65,14 +66,23 @@
 
     let awaitForInit;
     initData.subscribe((val) => {
-        if (val === false) {
+        if (val === false && $initList === false) {
             awaitForInit?.resolve?.();
         }
     });
+    initList.subscribe((val) => {
+        if (val === false && !$initData) {
+            awaitForInit?.resolve?.();
+        }
+    })
     async function updateUsername(event, isReconfirm = false) {
         if ($android && window[$isBackgroundUpdateKey] === true) return;
-        if ($initData) {
-            pleaseWaitAlert();
+        if ($initData || $initList !== false) {
+            if ($android) {
+                showToast("Please wait a moment")
+            } else {
+                $toast = "Please wait a moment"
+            }
             new Promise((resolve) => {
                 awaitForInit = { resolve };
             }).then(() => {
@@ -145,7 +155,11 @@
                                     typedUsername =
                                         $username || typedUsername || "";
                                 }
-                                $dataStatus = "Something went wrong";
+                                if ($android) {
+                                    showToast("Failed to retrieve user data")
+                                } else {
+                                    $toast = "Failed to retrieve user data"
+                                }
                                 $listUpdateAvailable = true;
                                 console.error(error);
                             })
@@ -158,8 +172,12 @@
                             });
                         resetProgress.update((e) => !e);
                     } else {
-                        typedUsername = $username || typedUsername || "";
-                        focusInputUsernameEl();
+                        if (isReconfirm) {
+                            typedUsername = $username || ""
+                        } else {
+                            typedUsername = $username || typedUsername || "";
+                            focusInputUsernameEl();
+                        }
                     }
                 } else {
                     if (
@@ -204,7 +222,11 @@
                                     typedUsername =
                                         $username || typedUsername || "";
                                 }
-                                $dataStatus = "Something went wrong";
+                                if ($android) {
+                                    showToast("Failed to retrieve user data")
+                                } else {
+                                    $toast = "Failed to retrieve user data"
+                                }
                                 $listUpdateAvailable = true;
                                 console.error(error);
                             })
@@ -217,8 +239,12 @@
                             });
                         resetProgress.update((e) => !e);
                     } else {
-                        typedUsername = $username || typedUsername || "";
-                        focusInputUsernameEl();
+                        if (isReconfirm) {
+                            typedUsername = $username || ""
+                        } else {
+                            typedUsername = $username || typedUsername || "";
+                            focusInputUsernameEl();
+                        }
                     }
                 }
             } else {
@@ -334,14 +360,6 @@
     onDestroy(() => {
         writableSubscriptions.forEach((unsub) => unsub());
     });
-
-    function pleaseWaitAlert() {
-        if ($android) {
-            showToast("Please wait a moment")
-        } else {
-            $toast = "Please wait a moment"
-        }
-    }
 
     let delayedPopupVis, delayedMenuVis;
     $: navHasNoBackOption =

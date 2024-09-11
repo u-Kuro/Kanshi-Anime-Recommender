@@ -71,8 +71,8 @@
         trueWindowHeight,
         documentScrollTop,
         loadingCategory,
-        initComplete,
         toast,
+        initList,
 	} from "./js/globalValues.js";
 
 	(async () => {
@@ -106,15 +106,16 @@
 				}
 			}
 
-			let shouldReloadList;
 			if (!$android || window[$isBackgroundUpdateKey] !== true) {
 				try {
-					shouldReloadList = (await mediaLoader({ 
+					$initList = (await mediaLoader({ 
 						loadAll: true, 
 						selectedCategory: ($selectedCategory ?? getLocalStorage("selectedCategory") ?? await getIDBdata("selectedCategory"))
 					}))?.shouldReloadList
-					if (shouldReloadList === false) {
+					if ($initList === false) {
 						loadYoutube();
+						getExtraInfo();
+						loadAnalytics();
 					}
 				} catch (ex) { console.error(ex) }
 			}
@@ -215,7 +216,7 @@
 					let recommendationListIsProcessed
 					if (dataIsUpdated) {
 						try {
-							await processRecommendedMediaList()
+							await processRecommendedMediaList({ initList: true })
 							try {
 								JSBridge.setShouldProcessRecommendation(false)
 							} catch (ex) { console.error(ex) }
@@ -230,7 +231,7 @@
 					try {
 						if (recommendationListIsProcessed) {
 							try {
-								await mediaManager({ updateRecommendedMediaList: true })
+								await mediaManager({ updateRecommendedMediaList: true, initList: true })
 								try {
 									JSBridge.setShouldLoadMedia(false);
 								} catch (ex) { console.error(ex) }
@@ -281,40 +282,35 @@
 				let shouldLoadMedia
 				if (shouldProcessRecommendation) {
 					$loadingCategory[""] = new Date()
-					await processRecommendedMediaList()
+					await processRecommendedMediaList({ initList: true })
 					shouldLoadMedia = true
 				}
 
-				shouldLoadMedia = shouldLoadMedia || shouldReloadList || (await getIDBdata("shouldLoadMedia"));
+				shouldLoadMedia = shouldLoadMedia || $initList !== false || (await getIDBdata("shouldLoadMedia"));
 				if (shouldLoadMedia) {
-					if (shouldReloadList !== false) {
-						await mediaManager({ updateRecommendedMediaList: true })
+					if ($initList !== false) {
+						await mediaManager({ updateRecommendedMediaList: true, initList: true })
 						await mediaLoader({
 							loadAll: true,
 							selectedCategory: ($selectedCategory ?? getLocalStorage("selectedCategory") ?? await getIDBdata("selectedCategory"))
 						})
+						$initList = false;
+						
 						loadYoutube();
-
-						$initComplete = true;
-						$dataStatus = null;
-						checkAutoFunctions("first-visit");
 						loadAnalytics();
+
+						checkAutoFunctions("first-visit");
+
+						getExtraInfo();
 					} else {
 						$loadingCategory[""] = new Date()
 						await mediaManager({ updateRecommendedMediaList: true })
-
-						$initComplete = true;
-						$dataStatus = null;
 						checkAutoFunctions(true);
-						loadAnalytics();
 					}
 				} else {
-					$initComplete = true;
-					$dataStatus = null;
 					checkAutoFunctions(true);
-					loadAnalytics();
 				}
-				getExtraInfo();
+				
 			}
 		} catch (ex) {
 			if ($android) {
@@ -336,8 +332,8 @@
 			if ($initData) {
 				$initData = false;
 			}
-			if (!$initComplete) {
-				$initComplete = true;
+			if ($initList !== false) {
+				$initList = false;
 			}
 			
 			loadYoutube();
@@ -519,7 +515,7 @@
 		}
 
 		const shouldUpdate = !$popupVisible;
-		if ($listUpdateAvailable && shouldUpdate) {
+		if ($listUpdateAvailable && shouldUpdate && $initList === false) {
 			if (!$initData && (!$android || window[$isBackgroundUpdateKey] !== true)) {
 				$listUpdateAvailable = false;
 				mediaManager({ updateRecommendedMediaList: true });
@@ -613,14 +609,14 @@
 		}
 	});
 	shouldUpdateList.subscribe((val) => {
-		if (typeof val !== "boolean" || $initData) return;
+		if (typeof val !== "boolean" || $initData || $initList !== false) return;
 		if ($android && window[$isBackgroundUpdateKey] === true) return;
 
 		$listUpdateAvailable = false;
 		mediaManager({ updateRecommendedMediaList: true });
 	});
 	shouldUpdateRecommendationList.subscribe(async (val) => {
-		if (typeof val !== "boolean" || $initData) return;
+		if (typeof val !== "boolean" || $initData || $initList !== false) return;
 		if ($android && window[$isBackgroundUpdateKey] === true) return;
 
 		$listUpdateAvailable = false;
@@ -632,7 +628,7 @@
 		shouldUpdateList.update((e) => !e);
 	});
 	updateRecommendationList.subscribe(async (val) => {
-		if (typeof val !== "boolean" || $initData) return;
+		if (typeof val !== "boolean" || $initData || $initList !== false) return;
 		if ($android && window[$isBackgroundUpdateKey] === true) return;
 
 		try {
@@ -652,7 +648,7 @@
 		if (typeof val !== "boolean" || $initData) return;
 		if ($android && window[$isBackgroundUpdateKey] === true) return;
 		
-		if ($popupVisible && $loadedMediaLists?.[$selectedCategory]?.mediaList?.length) {
+		if ($initList !== false || ($popupVisible && $loadedMediaLists?.[$selectedCategory]?.mediaList?.length)) {
 			$listUpdateAvailable = true;
 		} else {
 			mediaManager({ updateRecommendedMediaList: true });
@@ -1096,7 +1092,7 @@
 		shouldProcessRecommendation,
 		shouldLoadMedia,
 	) => {
-		if ($initData) return;
+		if ($initData || $initList !== false) return;
 		if ($android && window[$isBackgroundUpdateKey] === true) return;
 		
 		let thisShouldLoadMedia

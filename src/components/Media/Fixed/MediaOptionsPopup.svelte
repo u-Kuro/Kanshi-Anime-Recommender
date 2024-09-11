@@ -13,6 +13,7 @@
         loadedMediaLists,
         selectedCategory,
         toast,
+        initList,
     } from "../../../js/globalValues.js";
     import { mediaManager } from "../../../js/workerUtils.js";
 
@@ -138,7 +139,14 @@
 
     async function handleHideShow(e) {
         if (isRecentlyOpened && e.type !== "keydown") return;
-        if (!$hiddenEntries) return pleaseWaitAlert();
+        if ($initList !== false || !$hiddenEntries) {
+            if ($android) {
+                showToast("Please wait a moment")
+            } else {
+                $toast = "Please wait a moment"
+            }
+            return
+        }
         let title = shownTitle
             ? `<span style="color:hsl(var(--ac-color));">${shownTitle}</span>`
             : "this entry";
@@ -168,14 +176,6 @@
                 $hiddenEntries[mediaID] = 1;
                 $mediaOptionVisible = false;
             }
-        }
-    }
-
-    function pleaseWaitAlert() {
-        if ($android) {
-            showToast("Please wait a moment")
-        } else {
-            $toast = "Please wait a moment"
         }
     }
 

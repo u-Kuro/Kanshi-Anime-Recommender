@@ -63,8 +63,8 @@
         isImporting,
         isExporting,
         listUpdateAvailable,
-        initComplete,
         toast,
+        initList,
     } from "../../js/globalValues.js";
 
     const COOs = {
@@ -196,7 +196,7 @@
     let scrollingToTop;
     
     async function updateFilters(name, data) {
-        if (!filterCategories || !($orderedFilters || $nonOrderedFilters)) {
+        if ($initList !== false || !filterCategories || !($orderedFilters || $nonOrderedFilters)) {
             return pleaseWaitAlert();
         }
         if (!isJsonObject(data)) return;
@@ -336,7 +336,7 @@
 
     let openedFilterSelectionName;
     function filterCategorySelect(event, filterSelectionName) {
-        if ($initData || !filterCategories || !$orderedFilters) {
+        if (!filterCategories || !$orderedFilters) {
             return pleaseWaitAlert();
         }
 
@@ -558,17 +558,8 @@
         filterCategoryName,
         isReadOnly,
     ) {
-        if ($initData || !filterCategories || !$orderedFilters) {
+        if ($initData || !filterCategories || !$orderedFilters || $categories?.[$selectedCategory] === true) {
             return pleaseWaitAlert();
-        }
-
-        if ($categories?.[$selectedCategory] === true) {
-            if ($android) {
-                showToast("Please wait a moment")
-            } else {
-                $toast = "Please wait a moment"
-            }
-            return
         }
 
         let array;
@@ -667,12 +658,7 @@
         }
 
         if ($categories?.[$selectedCategory] === true) {
-            if ($android) {
-                showToast("Please wait a moment")
-            } else {
-                $toast = "Please wait a moment"
-            }
-            return
+            return pleaseWaitAlert()
         }
 
         let array;
@@ -765,12 +751,7 @@
             changeInputValue(event.target, oldValue);
             numberFiltersValues[numberFilterKey] = oldValue;
 
-            if ($android) {
-                showToast("Please wait a moment")
-            } else {
-                $toast = "Please wait a moment"
-            }
-            return
+            return pleaseWaitAlert()
         }
 
         let array;
@@ -943,16 +924,7 @@
         status,
         readOnly,
     ) {
-        if ($initData) return pleaseWaitAlert();
-
-        if ($categories?.[$selectedCategory] === true) {
-            if ($android) {
-                showToast("Please wait a moment")
-            } else {
-                $toast = "Please wait a moment"
-            }
-            return
-        }
+        if ($initData || $categories?.[$selectedCategory] === true) return pleaseWaitAlert();
 
         if (
             !(activeFilters instanceof Array) ||
@@ -1018,16 +990,7 @@
         updateFilters(currentFilterCategoryName, data);
     }
     function removeActiveFilter(activeFilterIdx) {
-        if ($initData) return pleaseWaitAlert();
-
-        if ($categories?.[$selectedCategory] === true) {
-            if ($android) {
-                showToast("Please wait a moment")
-            } else {
-                $toast = "Please wait a moment"
-            }
-            return
-        }
+        if ($initData || $categories?.[$selectedCategory] === true) return pleaseWaitAlert();
 
         if (
             !(activeFilters instanceof Array) ||
@@ -1065,12 +1028,7 @@
 
         let currentCategory = $selectedCategory;
         if ($categories?.[currentCategory] === true) {
-            if ($android) {
-                showToast("Please wait a moment")
-            } else {
-                $toast = "Please wait a moment"
-            }
-            return
+            return pleaseWaitAlert()
         }
 
         let currentFilterCategoryName = selectedFilterCategoryName;
@@ -1081,12 +1039,7 @@
                 return pleaseWaitAlert();
             }
             if ($categories?.[currentCategory] === true) {
-                if ($android) {
-                    showToast("Please wait a moment")
-                } else {
-                    $toast = "Please wait a moment"
-                }
-                return
+                return pleaseWaitAlert()
             }
 
             let data;
@@ -1167,12 +1120,7 @@
             $categories?.[$selectedCategory] === true ||
             !$loadedMediaLists?.[$selectedCategory]?.sortBy
         ) {
-            if ($android) {
-                showToast("Please wait a moment")
-            } else {
-                $toast = "Please wait a moment"
-            }
-            return
+            return pleaseWaitAlert()
         }
 
         let data;
@@ -1222,12 +1170,7 @@
             $categories?.[$selectedCategory] === true ||
             !$loadedMediaLists?.[$selectedCategory]?.sortBy
         ) {
-            if ($android) {
-                showToast("Please wait a moment")
-            } else {
-                $toast = "Please wait a moment"
-            }
-            return
+            return pleaseWaitAlert()
         }
 
         let data;
@@ -1373,12 +1316,7 @@
 
         let previousCategoryName = $selectedCategory;
         if ($categories?.[previousCategoryName] === true) {
-            if ($android) {
-                showToast("Please wait a moment")
-            } else {
-                $toast = "Please wait a moment"
-            }
-            return
+            return pleaseWaitAlert()
         }
 
         let newCategoryName = customCategoryName;
@@ -1397,12 +1335,7 @@
                 })
             ) {
                 if ($categories?.[previousCategoryName] === true) {
-                    if ($android) {
-                        showToast("Please wait a moment")
-                    } else {
-                        $toast = "Please wait a moment"
-                    }
-                    return
+                    return pleaseWaitAlert()
                 }
 
                 if (
@@ -1435,12 +1368,7 @@
 
         let previousCategoryName = $selectedCategory;
         if ($categories?.[previousCategoryName] === true) {
-            if ($android) {
-                showToast("Please wait a moment")
-            } else {
-                $toast = "Please wait a moment"
-            }
-            return
+            return pleaseWaitAlert()
         }
 
         let newCategoryName = customCategoryName;
@@ -1455,12 +1383,7 @@
                 })
             ) {
                 if ($categories?.[previousCategoryName] === true) {
-                    if ($android) {
-                        showToast("Please wait a moment")
-                    } else {
-                        $toast = "Please wait a moment"
-                    }
-                    return
+                    return pleaseWaitAlert()
                 }
 
                 if (
@@ -1488,12 +1411,7 @@
         }
 
         if ($categories?.[previousCategoryName] === true) {
-            if ($android) {
-                showToast("Please wait a moment")
-            } else {
-                $toast = "Please wait a moment"
-            }
-            return
+            return pleaseWaitAlert()
         }
 
         if (
@@ -1510,12 +1428,7 @@
                 })
             ) {
                 if ($categories?.[previousCategoryName] === true) {
-                    if ($android) {
-                        showToast("Please wait a moment")
-                    } else {
-                        $toast = "Please wait a moment"
-                    }
-                    return
+                    return pleaseWaitAlert()
                 }
 
                 if (
@@ -1798,6 +1711,7 @@
 
     async function updateList() {
         if ($android && window[$isBackgroundUpdateKey] === true) return;
+        if ($initList !== false) return pleaseWaitAlert();
         if ((await $confirmPromise({
                 title: "Reload List",
                 text: "Do you want to refresh your list to sync changes?",
@@ -2888,7 +2802,7 @@
     <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
     <div
         id="active-filters"
-        class="{'active-filters' + ($showFilterOptions ? '' : ' display-none')}"
+        class="{'active-filters' + ($showFilterOptions && activeFilters?.length ? '' : ' display-none')}"
     >
         <div id="tag-filters" class="tag-filters">
             <div
@@ -3070,7 +2984,7 @@
                 ></path>
             </svg>
         </div>
-        {#if ($listUpdateAvailable || $loadingCategory[""] || $loadingCategory[$selectedCategory]) && $initComplete}
+        {#if ($listUpdateAvailable || $loadingCategory[""] || $loadingCategory[$selectedCategory]) && $initList === false}
             <div
                 tabindex="{$menuVisible || $popupVisible ? '' : '0'}"
                 class="refresh-list"

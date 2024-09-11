@@ -1,6 +1,6 @@
 import { get } from "svelte/store";
 import { cacheRequest } from "./caching.js";
-import { downloadLink, isConnected, isJsonObject, removeLocalStorage, setLocalStorage, showToast, } from "../js/others/helper.js"
+import { downloadLink, isConnected, isJsonObject, jsonIsEmpty, removeLocalStorage, setLocalStorage, showToast, } from "../js/others/helper.js"
 import {
     dataStatus,
     updateRecommendationList,
@@ -38,8 +38,8 @@ import {
     isExporting,
     listUpdateAvailable,
     popupVisible,
-    initComplete,
     toast,
+    initList,
 } from "./globalValues.js";
 
 const hasOwnProp = Object.prototype.hasOwnProperty
@@ -258,6 +258,19 @@ const mediaLoader = (_data = {}) => {
 
             const currentCategory = get(selectedCategory)
             if (hasOwnProp?.call?.(data, "reloadList")) {
+                if (jsonIsEmpty(get(loadedMediaLists))) {
+                    if (mediaLoaderWorker) {
+                        mediaLoaderWorker.postMessage({
+                            loadAll: true,
+                            selectedCategory: currentCategory
+                        })
+                    } else {
+                        mediaLoader({
+                            loadAll: true,
+                            selectedCategory: currentCategory
+                        })
+                    }
+                }
                 mediaLoaderWorker.postMessage({
                     reload: true,
                     loadMore: true,
@@ -293,6 +306,9 @@ let mediaManagerWorker,
     entriesToShow = {},
     categoriesToEdit = []
 const mediaManager = (_data = {}) => {
+    if (get(initList) !== false && !_data?.initList) {
+        return
+    }
     return new Promise((resolve, reject) => {
 
         if (mediaManagerWorkerTimeout) clearTimeout(mediaManagerWorkerTimeout);
@@ -462,10 +478,6 @@ const mediaManager = (_data = {}) => {
                             mediaManagerWorker?.terminate?.();
                         }, terminateDelay);
 
-                        if (!get(initComplete)) {
-                            initComplete.set(true);
-                        }
-
                         resolve()
                     }
                 }
@@ -522,6 +534,9 @@ window.setMediaReleaseUpdateTimeout = (neareastMediaReleaseAiringAt) => {
 
 let passedAlgorithmFilter, passedAlgorithmFilterId
 const processRecommendedMediaList = (_data = {}) => {
+    if (get(initList) !== false && !_data?.initList) {
+        return
+    }
     return new Promise((resolve, reject) => {
         if (get(isImporting)) {
             if (!_data?.isImporting) {
@@ -708,6 +723,7 @@ function notifyUpdatedMediaNotification() {
 }
 window.notifyUpdatedMediaNotification = notifyUpdatedMediaNotification
 const requestMediaEntries = (_data = {}) => {
+    if (get(initList) !== false) return
     return new Promise((resolve, reject) => {
         if (isRequestingMediaEntries) {
             resolve()
@@ -998,6 +1014,7 @@ window.isExported = (success = true) => {
     }
 }
 const exportUserData = (_data) => {
+    if (get(initList) !== false) return
     return new Promise((resolve, reject) => {
         if (get(isExporting) && _data?.visibilityChange) {
             resolve()
@@ -1178,6 +1195,7 @@ const exportUserData = (_data) => {
 
 let importUserDataTerminateTimeout, importUserDataWorker;
 const importUserData = (_data) => {
+    if (get(initList) !== false) return
     return new Promise((resolve, reject) => {
         if (importUserDataTerminateTimeout) clearTimeout(importUserDataTerminateTimeout)
         importUserDataWorker?.terminate?.()
@@ -1326,8 +1344,8 @@ const waitForExtraInfo = () => {
     }, 1000 * 30)
 }
 const getExtraInfo = () => {
+    if (get(initList) !== false) return
     return new Promise((resolve, reject) => {
-        if (get(initData)) return
         loadingDataStatus.set(true)
         clearTimeout(getExtraInfoTimeout)
         getExtraInfoWorker?.terminate?.()

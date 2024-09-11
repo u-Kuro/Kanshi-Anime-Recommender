@@ -34,6 +34,7 @@
         loadingCategory,
         toast,
         appID,
+        initList,
     } from "../../js/globalValues.js";
     import getWebVersion from "../../version.js"
     import { fade } from "svelte/transition";
@@ -42,10 +43,20 @@
     let navContainerEl;
     let importFileInput;
 
-    async function importData() {
+    async function importData(manual) {
+        if ($initList !== false) {
+            if (manual) {
+                pleaseWaitAlert()
+            }
+            return
+        }
         if (!(importFileInput instanceof Element)) {
-            $dataStatus = "Something went wrong"
-            return;
+            if ($android) {
+                showToast("Import feature failed")
+            } else {
+                $toast = "Import feature failed"
+            }
+            return
         }
         if (await $confirmPromise("Do you want to import your backup file?")) {
             importFileInput.value = null;
@@ -57,7 +68,11 @@
     async function importJSONFile() {
         if ($android && window[$isBackgroundUpdateKey] === true) return;
         if (!(importFileInput instanceof Element)) {
-            $dataStatus = "Something went wrong"
+            if ($android) {
+                showToast("Failed to capture the backup file")
+            } else {
+                $toast = "Failed to capture the backup file"
+            }
             return
         }
         let importedFile = importFileInput.files?.[0];
@@ -134,6 +149,9 @@
                 return handleExportFolder();
             }
         }
+        if ($initList !== false) {
+            return pleaseWaitAlert()
+        }
         if (await $confirmPromise("Do you want to back up your data?")) {
             exportUserData({ isManual: true });
         }
@@ -147,6 +165,9 @@
                 $toast = "You are currently offline"
             }
             return
+        }
+        if ($initList !== false) {
+            return pleaseWaitAlert()
         }
         const target = e?.target
         const classList = target?.classList
@@ -181,6 +202,9 @@
 
     async function showAllHiddenEntries() {
         if ($android && window[$isBackgroundUpdateKey] === true) return;
+        if ($initList !== false) {
+            return pleaseWaitAlert()
+        }
         if (jsonIsEmpty($hiddenEntries)) {
             // Alert No Hidden Entries
             if ($android) {
@@ -200,6 +224,14 @@
             });
             $hiddenEntries = {};
             resetProgress.update((e) => !e);
+        }
+    }
+
+    function pleaseWaitAlert() {
+        if ($android) {
+            showToast("Please wait a moment")
+        } else {
+            $toast = "Please wait a moment"
         }
     }
 
@@ -285,9 +317,6 @@
                         : "color:hsl(345deg, 75%, 60%)"
                 };">Notification</span></span>.\n3) Bookmark this Website.</div>`,
             });
-        }
-        if (!persistent) {
-            await window.navigator?.storage?.persist?.();
         }
     }
     function refreshKanshiNotice() {
@@ -646,8 +675,8 @@
                 <div
                     class="option"
                     tabindex="{$menuVisible ? '0' : '-1'}"
-                    on:click="{() => importData()}"
-                    on:keyup="{(e) => e.key === 'Enter' && importData()}"
+                    on:click="{() => importData(true)}"
+                    on:keyup="{(e) => e.key === 'Enter' && importData(true)}"
                 >
                     <svg 
                         viewBox="0 0 448 512"
