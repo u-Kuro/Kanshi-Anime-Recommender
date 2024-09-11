@@ -263,6 +263,7 @@
             return
         }
         if (
+            !classList.contains("input-search") &&
             !(
                 classList.contains("nav") ||
                 classList.contains("nav-container")
@@ -273,7 +274,7 @@
             ) &&
             !(
                 ($menuVisible || $popupVisible) && 
-                (classList.contains("input-search") || element.closest(".input-search"))
+                element.closest(".input-search")
             )
         )
             return;
@@ -710,20 +711,6 @@
         opacity: 1;
         transition: opacity 0.1s ease-out;
     }
-    .app-installer {
-        width: 80px;
-        height: 36px;
-        font-size: 13px;
-        background-color: var(--bg-color);
-        color: var(--fg-color);
-        white-space: nowrap;
-        padding: 4px;
-        border-radius: 30px;
-        border: 1px solid var(--bd-color);
-        cursor: pointer;
-        animation: fade-in 0.1s ease-out;
-        display: block;
-    }
     @media screen and (max-width: 425px) {
         .go-back-container {
             min-width: 48px;
@@ -766,7 +753,7 @@
         cursor: pointer;
         padding-block: 19px;
         max-width: min(100%, 170px, calc(50vw - 48px));
-        min-width: 30px;
+        min-width: 185px;
     }
     #usernameInput[value=""] + .usernameText,
     #usernameInput:placeholder-shown + .usernameText {
@@ -794,6 +781,7 @@
             animation: fade-in 0.1s ease-out;
             font-size: 15px;
             font-weight: 1000;
+            min-width: 72px !important;
         }
         .nav-container.layout-change .go-back-container {
             opacity: 0;
@@ -831,11 +819,6 @@
             display: flex;
             justify-content: center;
         }
-        .nav.inputfocused .app-installer,
-        .nav.popupvisible .app-installer,
-        .nav-container.menu-visible .app-installer {
-            display: none !important;
-        }
         .nav.inputfocused,
         .nav.popupvisible,
         .nav-container.menu-visible .nav {
@@ -862,6 +845,7 @@
             line-height: 57px !important;
             padding-block: unset !important;
             max-width: min(100%, 167px) !important;
+            text-align: center !important;
         }
         .nav.inputfocused #usernameInput {
             max-width: none !important;
@@ -899,9 +883,6 @@
     }
 
     @media screen and (max-width: 250px) {
-        .app-installer {
-            display: none !important;
-        }
         .nav-container:not(.menu-visible) .nav:not(.nav.popupvisible):not(.inputfocused) {
             grid-template-columns: calc(100% - 48px) 48px;
             gap: 0 !important;

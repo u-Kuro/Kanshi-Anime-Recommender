@@ -914,7 +914,7 @@
     }
 
     function getFormattedMediaFormat(
-        { episodes, chapters, nextAiringEpisode, episodeProgress },
+        { episodes, chapters, nextAiringEpisode, episodeProgress, season },
         isManga,
         isNovel,
     ) {
@@ -925,13 +925,31 @@
         if (
             !isManga &&
             !isNovel &&
-            typeof nextAiringEpisode?.episode === "number" &&
             typeof nextAiringEpisode?.airingAt === "number"
         ) {
-            nextAiringDate = new Date(nextAiringEpisode?.airingAt * 1000);
-            nextEpisode = nextAiringEpisode?.episode;
-            if (nextAiringDate instanceof Date && !isNaN(nextAiringDate)) {
-                timeDifMS = nextAiringDate.getTime() - new Date().getTime();
+            if (typeof nextAiringEpisode?.episode === "number") {
+                nextAiringDate = new Date(nextAiringEpisode?.airingAt * 1000);
+                nextEpisode = nextAiringEpisode?.episode;
+                if (nextAiringDate instanceof Date && !isNaN(nextAiringDate)) {
+                    timeDifMS = nextAiringDate.getTime() - new Date().getTime();
+                }
+            } else if (nextAiringEpisode?.estimated === true) {
+                nextAiringDate = new Date(nextAiringEpisode?.airingAt * 1000);
+                if (nextAiringDate instanceof Date || isNaN(nextAiringDate)) {
+                    timeDifMS = nextAiringDate.getTime() - new Date().getTime();
+                }
+                if (episodes > 0) {
+                    text = ` · ${episodes} Ep${episodes > 1 ? "s" : ""}`
+                }
+                if (timeDifMS > 0) {
+                    text = `${text ? text : ""} · <span style="color:hsl(var(--ac-color));">${
+                    formatDateDifference(
+                        nextAiringDate,
+                        timeDifMS,
+                        season === "Winter" || season === "Spring" || season === "Summer" || season === "Fall"
+                    )}</span>`
+                }
+                return text
             }
         }
         if (
@@ -974,8 +992,17 @@
     const oneDay = 24 * oneHour;
     const oneWeek = 7 * oneDay;
 
-    function formatDateDifference(endDate, timeDifference) {
-        if (timeDifference > oneWeek) {
+    function formatDateDifference(endDate, timeDifference, hasEstimatedSeason) {
+        if (typeof hasEstimatedSeason === "boolean") {
+            if (hasEstimatedSeason) {
+                return `${msToTime(timeDifference, timeDifference <= oneDay || !timeDifference ? 2 : 1)}, ${
+                formatMonth(
+                    endDate,
+                )} ${formatYear(endDate)}`;
+            } else {
+                return `${msToTime(timeDifference, timeDifference <= oneDay || !timeDifference ? 2 : 1)}, ${formatYear(endDate)}`;
+            }
+        } else if (timeDifference > oneWeek) {
             return `${msToTime(timeDifference, 1)}, ${formatMonth(
                 endDate,
             )} ${formatDay(endDate)} ${formatYear(endDate)}`;
@@ -2054,9 +2081,7 @@
                                                         "N/A"}</span
                                                 >
                                                 {#if true}
-                                                    {@const isFinishedAiring =
-                                                        media.status?.toLowerCase?.() ===
-                                                        "Finished"}
+                                                    {@const isFinishedAiring = media.status === "Finished"}
                                                     {@const userStatus = media.userStatus}
                                                     {#if userStatus === "Current"
                                                       || userStatus === "Planning"
@@ -2075,19 +2100,17 @@
                                                                 airingAt <=
                                                                 new Date().getTime()}
                                                             {@const releasedEps =
-                                                                nextEpisode >
-                                                                    0 &&
+                                                                nextEpisode > 0 &&
                                                                 !isFinishedAiring
-                                                                    ? nextEpisodeIsAired
+                                                                    ? (nextEpisodeIsAired
                                                                         ? nextEpisode
                                                                         : nextEpisode -
-                                                                          1
-                                                                    : isFinishedAiring
+                                                                          1)
+                                                                    : (isFinishedAiring
                                                                       ? media.episodes
-                                                                      : null}
+                                                                      : null)}
                                                             {@const epsWatched =
-                                                                media.episodeProgress >
-                                                                0
+                                                                media.episodeProgress > 0
                                                                     ? media.episodeProgress
                                                                     : 0}
                                                             {@const epsBehind =
@@ -3175,7 +3198,7 @@
             width: 100% !important;
             display: flex;
             flex-wrap: wrap;
-            gap: 5px;
+            gap: 8px;
         }
     }
     @media screen and (max-width: 225px) {
