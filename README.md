@@ -1,4 +1,4 @@
-`<p align="center">
+<p align="center">
   <img src="https://i.imgur.com/6duwbXo.png" height="150px;" width="150px;" />
   <h2 align="center">Kanshi.</h2>
 </p>
