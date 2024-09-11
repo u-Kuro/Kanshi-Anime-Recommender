@@ -15,7 +15,6 @@
         android,
         menuVisible,
         hiddenEntries,
-        dataStatus,
         autoUpdate,
         autoExport,
         exportPathIsAvailable,
@@ -27,7 +26,6 @@
         username,
         isBackgroundUpdateKey,
         mobile,
-        appInstallationAsked,
         keepAppRunningInBackground,
         resetProgress,
         documentScrollTop,
@@ -262,7 +260,7 @@
     async function anilistSignup() {
         if (
             await $confirmPromise({
-                text: "Do you want to sign-up an AniList account?",
+                text: "Do you want to sign up an AniList account?",
                 isImportant: true,
             })
         ) {
@@ -482,72 +480,62 @@
         }
     });
 
-    let hasAvailableApp, downloadAndroidApp;
-    appInstallationAsked.subscribe((val) => {
-        if (val === true) {
-            if (!$android && $mobile) {
-                const isAndroidWeb = /android/i.test(
-                    window.navigator?.userAgent ||
-                    window.navigator?.vendor ||
-                    window.opera,
-                );
-                hasAvailableApp = isAndroidWeb;
-                let deferredPrompt;
-                window.addEventListener("beforeinstallprompt", (e) => {
-                    deferredPrompt = e;
-                    hasAvailableApp =
-                        isAndroidWeb ||
-                        typeof deferredPrompt?.prompt === "function";
-                });
-                downloadAndroidApp = async () => {
-                    hasAvailableApp =
-                        isAndroidWeb ||
-                        typeof deferredPrompt?.prompt === "function";
-                    if (!hasAvailableApp) return;
-                    if (
-                        await $confirmPromise({
-                            text: "Do you want to install Kanshi for your device?",
-                            isImportant: true,
-                        })
-                    ) {
-                        try {
-                            if (isAndroidWeb) {
-                                const appName = "Kanshi.apk";
-                                const appLocation = `./${appName}`;
-                                const response = await fetch(appLocation, {
-                                    method: "HEAD",
-                                });
-                                if (response?.ok) {
-                                    downloadLink(appLocation, appName);
-                                } else {
-                                    window.open?.(
-                                        "https://github.com/u-Kuro/Kanshi-Anime-Recommender/raw/main/Kanshi.apk",
-                                        "_blank",
-                                    );
-                                }
-                            } else if (
-                                typeof deferredPrompt?.prompt === "function"
-                            ) {
-                                await deferredPrompt.prompt();
-                            } else {
-                                if ($android) {
-                                    showToast("App installer was not found")
-                                } else {
-                                    $toast = "App installer was not found"
-                                }
-                            }
-                        } catch {
-                            if ($android) {
-                                showToast("App installer was not found")
-                            } else {
-                                $toast = "App installer was not found"
-                            }
+    let isAndroidWeb,
+        deferredPrompt, 
+        downloadAndroidApp;
+    if (!$android && $mobile) {
+        isAndroidWeb = /android/i.test(
+            window.navigator?.userAgent ||
+            window.navigator?.vendor ||
+            window.opera,
+        );
+        window.addEventListener("beforeinstallprompt", (e) => { deferredPrompt = e });
+        downloadAndroidApp = async () => {
+            if (
+                await $confirmPromise({
+                    text: `Do you want to ${isAndroidWeb ? 'install the android application for your device' : 'add the application to your device'}?`,
+                    isImportant: true,
+                })
+            ) {
+                if (isAndroidWeb) {
+                    try {
+                        const appName = "Kanshi.apk";
+                        const appLocation = `./${appName}`;
+                        const response = await fetch(appLocation, {
+                            method: "HEAD",
+                        });
+                        if (response?.ok) {
+                            downloadLink(appLocation, appName);
+                            return
+                        }
+                    } catch {}
+                    window.open(
+                        "https://github.com/u-Kuro/Kanshi-Anime-Recommender/raw/main/Kanshi.apk",
+                        "_blank",
+                    );
+                    return;
+                } else if (
+                    typeof deferredPrompt?.prompt === "function"
+                ) {
+                    try {
+                        await deferredPrompt.prompt();
+                    } catch {
+                        if ($android) {
+                            showToast("Something went wrong")
+                        } else {
+                            $toast = "Something went wrong"
                         }
                     }
-                };
+                } else {
+                    if ($android) {
+                        showToast("Something went wrong")
+                    } else {
+                        $toast = "Something went wrong"
+                    }
+                }
             }
-        }
-    });
+        };
+    }
 
     onMount(async () => {
         navContainerEl = document.getElementById("nav-container");
@@ -623,7 +611,7 @@
                 >
                     <!-- rotate-right -->
                     <svg viewBox="0 0 512 512">
-                        <path d="M463.5 224l8.5 0c13.3 0 24-10.7 24-24l0-128c0-9.7-5.8-18.5-14.8-22.2s-19.3-1.7-26.2 5.2L413.4 96.6c-87.6-86.5-228.7-86.2-315.8 1c-87.5 87.5-87.5 229.3 0 316.8s229.3 87.5 316.8 0c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0c-62.5 62.5-163.8 62.5-226.3 0s-62.5-163.8 0-226.3c62.2-62.2 162.7-62.5 225.3-1L327 183c-6.9 6.9-8.9 17.2-5.2 26.2s12.5 14.8 22.2 14.8l119.5 0z"/>
+                        <path d="M464 224h8c13 0 24-11 24-24V72a24 24 0 0 0-41-17l-42 42a224 224 0 1 0 1 317 32 32 0 0 0-45-45 160 160 0 1 1-1-227l-41 41a24 24 0 0 0 17 41h120z"/>
                     </svg>
                     <span class="option-label">Update Entries</span>
                     <label 
@@ -665,7 +653,7 @@
                     on:keyup="{(e) => e.key === 'Enter' && showAllHiddenEntries(e)}"
                 >
                     <svg viewBox="0 0 576 512">
-                        <path d="M288 32c-80.8 0-145.5 36.8-192.6 80.6C48.6 156 17.3 208 2.5 243.7c-3.3 7.9-3.3 16.7 0 24.6C17.3 304 48.6 356 95.4 399.4C142.5 443.2 207.2 480 288 480s145.5-36.8 192.6-80.6c46.8-43.5 78.1-95.4 93-131.1c3.3-7.9 3.3-16.7 0-24.6c-14.9-35.7-46.2-87.7-93-131.1C433.5 68.8 368.8 32 288 32zM144 256a144 144 0 1 1 288 0 144 144 0 1 1 -288 0zm144-64c0 35.3-28.7 64-64 64c-7.1 0-13.9-1.2-20.3-3.3c-5.5-1.8-11.9 1.6-11.7 7.4c.3 6.9 1.3 13.8 3.2 20.7c13.7 51.2 66.4 81.6 117.6 67.9s81.6-66.4 67.9-117.6c-11.1-41.5-47.8-69.4-88.6-71.1c-5.8-.2-9.2 6.1-7.4 11.7c2.1 6.4 3.3 13.2 3.3 20.3z"/>
+                        <path d="M288 32c-81 0-145 37-193 81-46 43-78 95-92 131-4 8-4 16 0 24 14 36 46 88 92 131 48 44 112 81 193 81s146-37 193-81c46-43 78-95 93-131 3-8 3-16 0-24-15-36-47-88-93-131-47-44-112-81-193-81zM144 256a144 144 0 1 1 288 0 144 144 0 1 1-288 0zm144-64a64 64 0 0 1-84 61c-6-2-12 1-12 7l3 21a96 96 0 1 0 97-121c-6 0-9 6-7 12s3 13 3 20z"/>
                     </svg>
                     <span class="option-label">Show All Hidden Entries</span>
                 </div>
@@ -682,7 +670,7 @@
                         viewBox="0 0 448 512"
                         style:--width={"18px"}
                     >
-                        <path d="M246.6 9.4c-12.5-12.5-32.8-12.5-45.3 0l-128 128c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L192 109.3 192 320c0 17.7 14.3 32 32 32s32-14.3 32-32l0-210.7 73.4 73.4c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3l-128-128zM64 352c0-17.7-14.3-32-32-32s-32 14.3-32 32l0 64c0 53 43 96 96 96l256 0c53 0 96-43 96-96l0-64c0-17.7-14.3-32-32-32s-32 14.3-32 32l0 64c0 17.7-14.3 32-32 32L96 448c-17.7 0-32-14.3-32-32l0-64z"/>
+                        <path d="M247 9a32 32 0 0 0-46 0L73 137a32 32 0 0 0 46 46l73-74v211a32 32 0 1 0 64 0V109l73 74a32 32 0 0 0 46-46L247 9zM64 352a32 32 0 1 0-64 0v64c0 53 43 96 96 96h256c53 0 96-43 96-96v-64a32 32 0 1 0-64 0v64c0 18-14 32-32 32H96c-18 0-32-14-32-32v-64z"/>
                     </svg>
                     <span class="option-label">Restore Backup</span>
                 </div>
@@ -693,7 +681,7 @@
                     on:keyup="{(e) => e.key === 'Enter' && exportData(e)}"
                 >
                     <svg viewBox="0 0 512 512">
-                        <path d="M288 32c0-17.7-14.3-32-32-32s-32 14.3-32 32l0 242.7-73.4-73.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l128 128c12.5 12.5 32.8 12.5 45.3 0l128-128c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L288 274.7 288 32zM64 352c-35.3 0-64 28.7-64 64l0 32c0 35.3 28.7 64 64 64l384 0c35.3 0 64-28.7 64-64l0-32c0-35.3-28.7-64-64-64l-101.5 0-45.3 45.3c-25 25-65.5 25-90.5 0L165.5 352 64 352zm368 56a24 24 0 1 1 0 48 24 24 0 1 1 0-48z"/>
+                        <path d="M288 32a32 32 0 1 0-64 0v243l-73-74a32 32 0 0 0-46 46l128 128c13 12 33 12 46 0l128-128a32 32 0 0 0-46-46l-73 74V32zM64 352c-35 0-64 29-64 64v32c0 35 29 64 64 64h384c35 0 64-29 64-64v-32c0-35-29-64-64-64H347l-46 45a64 64 0 0 1-90 0l-45-45H64zm368 56a24 24 0 1 1 0 48 24 24 0 1 1 0-48z"/>
                     </svg>
                     <span class="option-label">Back Up Data</span>
                     {#if $android}
@@ -704,7 +692,7 @@
                                 on:click="{handleExportFolder}"
                                 on:keyup="{(e) => e.key === 'Enter' && handleExportFolder(e)}"
                             >
-                                <path d="M88.7 223.8L0 375.8 0 96C0 60.7 28.7 32 64 32l117.5 0c17 0 33.3 6.7 45.3 18.7l26.5 26.5c12 12 28.3 18.7 45.3 18.7L416 96c35.3 0 64 28.7 64 64l0 32-336 0c-22.8 0-43.8 12.1-55.3 31.8zm27.6 16.1C122.1 230 132.6 224 144 224l400 0c11.5 0 22 6.1 27.7 16.1s5.7 22.2-.1 32.1l-112 192C453.9 474 443.4 480 432 480L32 480c-11.5 0-22-6.1-27.7-16.1s-5.7-22.2 .1-32.1l112-192z"/>
+                                <path d="M89 224 0 376V96c0-35 29-64 64-64h118c17 0 33 7 45 19l26 26c12 12 29 19 46 19h117c35 0 64 29 64 64v32H144c-23 0-44 12-55 32zm27 16c6-10 17-16 28-16h400c12 0 22 6 28 16s5 22 0 32L460 464c-6 10-17 16-28 16H32c-11 0-22-6-28-16s-5-22 0-32l112-192z"/>
                             </svg>
                         </div>
                         {#if $exportPathIsAvailable}
@@ -760,7 +748,7 @@
                             viewBox="0 0 640 512"
                             style:--width={"25px"}
                         >
-                            <path d="M308.5 135.3c7.1-6.3 9.9-16.2 6.2-25c-2.3-5.3-4.8-10.5-7.6-15.5L304 89.4c-3-5-6.3-9.9-9.8-14.6c-5.7-7.6-15.7-10.1-24.7-7.1l-28.2 9.3c-10.7-8.8-23-16-36.2-20.9L199 27.1c-1.9-9.3-9.1-16.7-18.5-17.8C173.9 8.4 167.2 8 160.4 8l-.7 0c-6.8 0-13.5 .4-20.1 1.2c-9.4 1.1-16.6 8.6-18.5 17.8L115 56.1c-13.3 5-25.5 12.1-36.2 20.9L50.5 67.8c-9-3-19-.5-24.7 7.1c-3.5 4.7-6.8 9.6-9.9 14.6l-3 5.3c-2.8 5-5.3 10.2-7.6 15.6c-3.7 8.7-.9 18.6 6.2 25l22.2 19.8C32.6 161.9 32 168.9 32 176s.6 14.1 1.7 20.9L11.5 216.7c-7.1 6.3-9.9 16.2-6.2 25c2.3 5.3 4.8 10.5 7.6 15.6l3 5.2c3 5.1 6.3 9.9 9.9 14.6c5.7 7.6 15.7 10.1 24.7 7.1l28.2-9.3c10.7 8.8 23 16 36.2 20.9l6.1 29.1c1.9 9.3 9.1 16.7 18.5 17.8c6.7 .8 13.5 1.2 20.4 1.2s13.7-.4 20.4-1.2c9.4-1.1 16.6-8.6 18.5-17.8l6.1-29.1c13.3-5 25.5-12.1 36.2-20.9l28.2 9.3c9 3 19 .5 24.7-7.1c3.5-4.7 6.8-9.5 9.8-14.6l3.1-5.4c2.8-5 5.3-10.2 7.6-15.5c3.7-8.7 .9-18.6-6.2-25l-22.2-19.8c1.1-6.8 1.7-13.8 1.7-20.9s-.6-14.1-1.7-20.9l22.2-19.8zM112 176a48 48 0 1 1 96 0 48 48 0 1 1 -96 0zM504.7 500.5c6.3 7.1 16.2 9.9 25 6.2c5.3-2.3 10.5-4.8 15.5-7.6l5.4-3.1c5-3 9.9-6.3 14.6-9.8c7.6-5.7 10.1-15.7 7.1-24.7l-9.3-28.2c8.8-10.7 16-23 20.9-36.2l29.1-6.1c9.3-1.9 16.7-9.1 17.8-18.5c.8-6.7 1.2-13.5 1.2-20.4s-.4-13.7-1.2-20.4c-1.1-9.4-8.6-16.6-17.8-18.5L583.9 307c-5-13.3-12.1-25.5-20.9-36.2l9.3-28.2c3-9 .5-19-7.1-24.7c-4.7-3.5-9.6-6.8-14.6-9.9l-5.3-3c-5-2.8-10.2-5.3-15.6-7.6c-8.7-3.7-18.6-.9-25 6.2l-19.8 22.2c-6.8-1.1-13.8-1.7-20.9-1.7s-14.1 .6-20.9 1.7l-19.8-22.2c-6.3-7.1-16.2-9.9-25-6.2c-5.3 2.3-10.5 4.8-15.6 7.6l-5.2 3c-5.1 3-9.9 6.3-14.6 9.9c-7.6 5.7-10.1 15.7-7.1 24.7l9.3 28.2c-8.8 10.7-16 23-20.9 36.2L315.1 313c-9.3 1.9-16.7 9.1-17.8 18.5c-.8 6.7-1.2 13.5-1.2 20.4s.4 13.7 1.2 20.4c1.1 9.4 8.6 16.6 17.8 18.5l29.1 6.1c5 13.3 12.1 25.5 20.9 36.2l-9.3 28.2c-3 9-.5 19 7.1 24.7c4.7 3.5 9.5 6.8 14.6 9.8l5.4 3.1c5 2.8 10.2 5.3 15.5 7.6c8.7 3.7 18.6 .9 25-6.2l19.8-22.2c6.8 1.1 13.8 1.7 20.9 1.7s14.1-.6 20.9-1.7l19.8 22.2zM464 304a48 48 0 1 1 0 96 48 48 0 1 1 0-96z"/>
+                            <path d="M309 135c7-6 9-16 6-25l-8-15-3-6-10-14c-6-8-16-10-25-7l-28 9c-10-9-23-16-36-21l-6-29c-2-9-9-17-18-18l-21-1-20 1c-10 1-17 9-19 18l-6 29c-13 5-25 12-36 21l-28-9c-9-3-19-1-25 7L16 89l-3 6-8 15c-3 9-1 19 7 25l22 20a129 129 0 0 0 0 42l-22 20c-8 6-10 16-7 25l8 15 3 6 10 14c5 8 15 10 24 7l29-9c10 9 23 16 36 21l6 29c2 9 9 17 19 18a172 172 0 0 0 40 0c10-1 17-9 19-18l6-29c13-5 25-12 36-21l28 9c9 3 19 1 25-7l10-14 3-6 8-15c3-9 0-19-7-25l-22-20a131 131 0 0 0 0-42l22-20zm-197 41a48 48 0 1 1 96 0 48 48 0 1 1-96 0zm393 325c6 7 16 9 25 6l15-8 6-3 14-10c8-6 10-16 7-25l-9-28c9-10 16-23 21-36l29-6c9-2 17-9 18-19a172 172 0 0 0 0-40c-1-10-9-17-18-19l-29-6c-5-13-12-25-21-36l9-28c3-9 1-19-7-25l-14-10-6-3-15-8c-9-3-19 0-25 7l-20 22a131 131 0 0 0-42 0l-20-22c-6-7-16-10-25-7l-15 8-6 3-14 10c-8 6-10 16-7 25l9 28c-9 11-16 23-21 36l-29 6c-9 2-17 9-18 19a172 172 0 0 0 0 40c1 10 9 17 18 19l29 6c5 13 12 25 21 36l-9 28c-3 9-1 19 7 25l15 10 5 3 15 7c9 4 19 1 25-6l20-22a131 131 0 0 0 42 0l20 22zm-41-197a48 48 0 1 1 0 96 48 48 0 1 1 0-96z"/>
                         </svg>
                         <span class="option-label">Enable Background Updates</span>
                         <label 
@@ -796,7 +784,7 @@
                         viewBox="0 0 384 512"
                         style:--width={"18px"}
                     >
-                        <path d="M272 384c9.6-31.9 29.5-59.1 49.2-86.2c0 0 0 0 0 0c5.2-7.1 10.4-14.2 15.4-21.4c19.8-28.5 31.4-63 31.4-100.3C368 78.8 289.2 0 192 0S16 78.8 16 176c0 37.3 11.6 71.9 31.4 100.3c5 7.2 10.2 14.3 15.4 21.4c0 0 0 0 0 0c19.8 27.1 39.7 54.4 49.2 86.2l160 0zM192 512c44.2 0 80-35.8 80-80l0-16-160 0 0 16c0 44.2 35.8 80 80 80zM112 176c0 8.8-7.2 16-16 16s-16-7.2-16-16c0-61.9 50.1-112 112-112c8.8 0 16 7.2 16 16s-7.2 16-16 16c-44.2 0-80 35.8-80 80z"/>
+                        <path d="M272 384c10-32 30-59 49-86l16-22a176 176 0 1 0-289 0c4 8 10 15 15 22 20 27 40 54 49 86h160zm-80 128c44 0 80-36 80-80v-16H112v16c0 44 36 80 80 80zm-80-336c0 9-7 16-16 16s-16-7-16-16c0-62 50-112 112-112 9 0 16 7 16 16s-7 16-16 16c-44 0-80 36-80 80z"/>
                     </svg>
                     <span class="option-label">Show Extra Info</span>
                     <label 
@@ -828,7 +816,7 @@
                         on:click="{checkForUpdates}"
                     >
                         <svg viewBox="0 0 576 512">
-                            <path d="M420.6 301.9a24 24 0 1 1 24-24 24 24 0 0 1 -24 24m-265.1 0a24 24 0 1 1 24-24 24 24 0 0 1 -24 24m273.7-144.5 47.9-83a10 10 0 1 0 -17.3-10h0l-48.5 84.1a301.3 301.3 0 0 0 -246.6 0L116.2 64.5a10 10 0 1 0 -17.3 10h0l47.9 83C64.5 202.2 8.2 285.6 0 384H576c-8.2-98.5-64.5-181.8-146.9-226.6"/>
+                            <path d="M421 302a24 24 0 1 1 24-24 24 24 0 0 1-24 24m-265 0a24 24 0 1 1 24-24 24 24 0 0 1-24 24m273-145 48-83a10 10 0 1 0-17-10l-49 84a301 301 0 0 0-246 0l-49-83a10 10 0 1 0-17 10l48 83A283 283 0 0 0 0 384h576c-8-98-64-182-147-227"/>
                         </svg>
                         <span class="option-label">Check for Updates</span>
                     </div>
@@ -842,7 +830,7 @@
                             viewBox="0 0 448 512"
                             style:--width={"17px"}
                         >
-                            <path d="M135.2 17.7L128 32 32 32C14.3 32 0 46.3 0 64S14.3 96 32 96l384 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-96 0-7.2-14.3C307.4 6.8 296.3 0 284.2 0L163.8 0c-12.1 0-23.2 6.8-28.6 17.7zM416 128L32 128 53.2 467c1.6 25.3 22.6 45 47.9 45l245.8 0c25.3 0 46.3-19.7 47.9-45L416 128z"/>
+                            <path d="m135 18-7 14H32a32 32 0 1 0 0 64h384a32 32 0 1 0 0-64h-96l-7-14c-6-11-17-18-29-18H164c-12 0-23 7-29 18zm281 110H32l21 339c2 25 23 45 48 45h246c25 0 46-20 48-45l21-339z"/>
                         </svg>
                         <span class="option-label">Clear Cache</span>
                     </div>
@@ -850,6 +838,30 @@
             {/if}
             <span class="menu-category">OTHERS</span>
             <div class="menu-options">
+                {#if $mobile && !$android && (isAndroidWeb || (deferredPrompt && typeof deferredPrompt?.prompt === "function"))}
+                    <div
+                        class="option"
+                        tabindex="{$menuVisible ? '0' : '-1'}"
+                        on:click="{() => downloadAndroidApp?.()}"
+                        on:keyup="{(e) => e.key === 'Enter' && downloadAndroidApp?.()}"
+                    >
+                        {#if isAndroidWeb}
+                            <svg viewBox="0 0 576 512">
+                                <path d="M421 302a24 24 0 1 1 24-24 24 24 0 0 1-24 24m-265 0a24 24 0 1 1 24-24 24 24 0 0 1-24 24m273-145 48-83a10 10 0 1 0-17-10l-49 84a301 301 0 0 0-246 0l-49-83a10 10 0 1 0-17 10l48 83A283 283 0 0 0 0 384h576c-8-98-64-182-147-227"/>
+                            </svg>
+                            <span class="option-label">Install Android App</span>
+                        {:else}
+                            <svg
+                                viewBox="0 0 384 512"
+                                style:--width={"18px"}
+                            >
+                                <path d="M16 64C16 29 45 0 80 0h224c35 0 64 29 64 64v384c0 35-29 64-64 64H80c-35 0-64-29-64-64V64zm208 384a32 32 0 1 0-64 0 32 32 0 1 0 64 0zm80-384H80v320h224V64z"/>
+                            </svg>
+                            <span class="option-label">Install Web App</span>
+                        {/if}
+                        
+                    </div>
+                {/if}
                 <div
                     class="option"
                     tabindex="{$menuVisible ? '0' : '-1'}"
@@ -857,7 +869,7 @@
                     on:keyup="{(e) => e.key === 'Enter' && anilistSignup(e)}"
                 >
                     <svg viewBox="0 0 640 512">
-                        <path d="M96 128a128 128 0 1 1 256 0A128 128 0 1 1 96 128zM0 482.3C0 383.8 79.8 304 178.3 304l91.4 0C368.2 304 448 383.8 448 482.3c0 16.4-13.3 29.7-29.7 29.7L29.7 512C13.3 512 0 498.7 0 482.3zM504 312l0-64-64 0c-13.3 0-24-10.7-24-24s10.7-24 24-24l64 0 0-64c0-13.3 10.7-24 24-24s24 10.7 24 24l0 64 64 0c13.3 0 24 10.7 24 24s-10.7 24-24 24l-64 0 0 64c0 13.3-10.7 24-24 24s-24-10.7-24-24z"/>
+                        <path d="M96 128a128 128 0 1 1 256 0 128 128 0 1 1-256 0zM0 482c0-98 80-178 178-178h92c98 0 178 80 178 178 0 17-13 30-30 30H30c-17 0-30-13-30-30zm504-170v-64h-64a24 24 0 1 1 0-48h64v-64a24 24 0 1 1 48 0v64h64a24 24 0 1 1 0 48h-64v64a24 24 0 1 1-48 0z"/>
                     </svg>
                     <span class="option-label">Create an AniList Account</span>
                 </div>
@@ -868,7 +880,7 @@
                     on:click="{showNotice}"
                 >
                     <svg viewBox="0 0 512 512">
-                        <path d="M256 32c14.2 0 27.3 7.5 34.5 19.8l216 368c7.3 12.4 7.3 27.7 .2 40.1S486.3 480 472 480L40 480c-14.3 0-27.6-7.7-34.7-20.1s-7-27.8 .2-40.1l216-368C228.7 39.5 241.8 32 256 32zm0 128c-13.3 0-24 10.7-24 24l0 112c0 13.3 10.7 24 24 24s24-10.7 24-24l0-112c0-13.3-10.7-24-24-24zm32 224a32 32 0 1 0 -64 0 32 32 0 1 0 64 0z"/>
+                        <path d="M256 32c14 0 27 8 35 20l216 368a40 40 0 0 1-35 60H40a40 40 0 0 1-34-60L222 52c7-12 20-20 34-20zm0 128c-13 0-24 11-24 24v112a24 24 0 1 0 48 0V184c0-13-11-24-24-24zm32 224a32 32 0 1 0-64 0 32 32 0 1 0 64 0z"/>
                     </svg>
                     <span class="option-label">Notice!</span>
                 </div>

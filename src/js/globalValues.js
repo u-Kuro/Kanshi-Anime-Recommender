@@ -8,7 +8,6 @@ const isBackgroundUpdateKey = readable(uniqueKey + ".isBackgroundUpdate")
 const visitedKey = readable(uniqueKey + ".visited")
 
 const appID = writable(null)
-const appInstallationAsked = writable(getLocalStorage('appInstallationAsked') ?? null)
 const inApp = writable(true)
 const progress = writable(0)
 const resetProgress = writable(0)
@@ -133,7 +132,6 @@ export {
     isBackgroundUpdateKey,
     visitedKey,
     inApp,
-    appInstallationAsked,
     hasWheel,
     windowHeight,
     windowWidth,

@@ -3,7 +3,6 @@
     import { requestUserEntries } from "../../js/workerUtils.js";
     import {
         addClass,
-        downloadLink,
         removeClass,
         removeLocalStorage,
         requestImmediate,
@@ -21,8 +20,6 @@
         gridFullView,
         userRequestIsRunning,
         android,
-        mobile,
-        appInstallationAsked,
         isBackgroundUpdateKey,
         selectedMediaGridEl,
         resetTypedUsername,
@@ -445,67 +442,6 @@
         }
     }
     window.onfocusUsernameInput = onfocusUsernameInput;
-
-    let hasAvailableApp, downloadAndroidApp;
-    if (!$android && $mobile && !$appInstallationAsked) {
-        const isAndroidWeb = /android/i.test(
-            window.navigator?.userAgent ||
-            window.navigator?.vendor ||
-            window.opera,
-        );
-        hasAvailableApp = isAndroidWeb;
-        let deferredPrompt;
-        window.addEventListener("beforeinstallprompt", (e) => {
-            deferredPrompt = e;
-            hasAvailableApp =
-                isAndroidWeb || typeof deferredPrompt?.prompt === "function";
-        });
-        downloadAndroidApp = async () => {
-            hasAvailableApp =
-                isAndroidWeb || typeof deferredPrompt?.prompt === "function";
-            if (!hasAvailableApp) return;
-            if (
-                await $confirmPromise({
-                    text: "Do you want to install Kanshi for your device?",
-                    isImportant: true,
-                })
-            ) {
-                try {
-                    if (isAndroidWeb) {
-                        const appName = "Kanshi.apk";
-                        const appLocation = `./${appName}`;
-                        const response = await fetch(appLocation, {
-                            method: "HEAD",
-                        });
-                        if (response?.ok) {
-                            downloadLink(appLocation, appName);
-                        } else {
-                            window.open?.(
-                                "https://github.com/u-Kuro/Kanshi-Anime-Recommender/raw/main/Kanshi.apk",
-                                "_blank",
-                            );
-                        }
-                    } else if (typeof deferredPrompt?.prompt === "function") {
-                        await deferredPrompt.prompt();
-                    } else {
-                        if ($android) {
-                            showToast("App installer was not found")
-                        } else {
-                            $toast = "App installer was not found"
-                        }
-                    }
-                } catch {
-                    if ($android) {
-                        showToast("App installer was not found")
-                    } else {
-                        $toast = "App installer was not found"
-                    }
-                }
-            }
-            $appInstallationAsked = true;
-            setLocalStorage("appInstallationAsked", true);
-        };
-    }
 </script>
 
 <div
@@ -526,9 +462,6 @@
         id="nav"
         class="{'nav ' +
             (delayedPopupVis ? ' popupvisible' : '') +
-            (!$appInstallationAsked && $mobile && hasAvailableApp && !$android
-                ? ' hasavailableapp'
-                : '') +
             (inputUsernameEl === document?.activeElement
                 ? ' inputfocused'
                 : '')}"
@@ -592,13 +525,6 @@
                 {typedUsername || "Your Anilist Username"}
             </div>
         </div>
-        {#if $appInstallationAsked !== true && !$android && $mobile && hasAvailableApp}
-            <button
-                class="app-installer"
-                on:keyup="{(e) => e.key === 'Enter' && downloadAndroidApp?.(e)}"
-                on:click="{(e) => downloadAndroidApp?.(e)}">Install App</button
-            >
-        {/if}
         {#if $android}
             <div
                 class="media-release-icon-container"
@@ -696,9 +622,6 @@
         gap: 15px;
         padding: 0 50px;
     }
-    .nav.hasavailableapp {
-        grid-template-columns: calc(100% - 80px - 30px - calc(15px * 2)) 80px 30px;
-    }
     .logo-icon,
     .media-release-icon {
         justify-self: start;
@@ -722,6 +645,7 @@
         justify-self: start;
         align-items: center;
         max-width: min(185px, 100%);
+        width: min(185px, 100%);
         opacity: 1;
     }
     #usernameInput {
@@ -890,11 +814,6 @@
             padding: 0 !important;
             gap: 0 !important;
         }
-        .nav.hasavailableapp {
-            grid-template-columns: calc(100% - 80px - 48px - calc(12px * 2)) 80px 48px;
-            padding: 0 !important;
-            gap: 12px !important;
-        }
         #usernameInput {
             opacity: 0;
             transition: opacity 0.1s ease-out;
@@ -927,6 +846,7 @@
         .nav-container.menu-visible .nav .input-search {
             justify-self: center !important;
             padding-left: 0 !important;
+            justify-content: center !important;
         }
         .nav.inputfocused input[type="search"]::-webkit-textfield-decoration-container {
             gap: 15px;
@@ -938,12 +858,10 @@
         }
         .nav.popupvisible .usernameText,
         .nav-container.menu-visible .usernameText {
-            display: flex;
-            align-items: center;
-            justify-content: start;
             height: 57px !important;
+            line-height: 57px !important;
             padding-block: unset !important;
-            max-width: min(100%, 165px) !important;
+            max-width: min(100%, 167px) !important;
         }
         .nav.inputfocused #usernameInput {
             max-width: none !important;
