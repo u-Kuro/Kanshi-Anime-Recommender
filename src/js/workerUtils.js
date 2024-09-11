@@ -555,7 +555,7 @@ const processRecommendedMediaList = (_data = {}) => {
         if (processRecommendedMediaListTerminateTimeout) clearTimeout(processRecommendedMediaListTerminateTimeout);
         processRecommendedMediaListWorker?.terminate?.();
         progress.set(0)
-        cacheRequest("./webapi/worker/processRecommendedMediaList.js", 43649, "Updating Recommendation List")
+        cacheRequest("./webapi/worker/processRecommendedMediaList.js", 43713, "Updating Recommendation List")
             .then(url => {
                 const lastProcessRecommendationAiringAt = parseInt((new Date().getTime() / 1000))
                 let neareastMediaReleaseAiringAt
