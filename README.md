@@ -1,5 +1,5 @@
-<p align="center">
-  <img src="https://i.imgur.com/6duwbXo.png" height="100px;" width="100px;" />
+`<p align="center">
+  <img src="https://i.imgur.com/6duwbXo.png" height="150px;" width="150px;" />
   <h2 align="center">Kanshi.</h2>
 </p>
 
@@ -21,19 +21,18 @@ It's <b>free</b> and <b>runs locally</b> for your convenience.
 <h2 align="center"></h2>
 
 ## Android / Website
-[<img src="https://i.imgur.com/RtS6ib5.png" width="105px;" />](https://github.com/u-Kuro/Kanshi-Anime-Recommender/raw/main/Kanshi.apk)
-[<img src="https://i.imgur.com/vXJ8zt8.png" width="105px;" />](https://kanshi.vercel.app)
+[<img src="https://i.imgur.com/RtS6ib5.png" width="144px;" />](https://github.com/u-Kuro/Kanshi-Anime-Recommender/raw/main/Kanshi.apk)
+[<img src="https://i.imgur.com/vXJ8zt8.png" width="144px;" />](https://kanshi.vercel.app)
 
 <h2 align="center"></h2>
 
 ## Android Preview
-<div style="display: flex;flex-wrap:nowrap;">
-  <img src="https://i.imgur.com/QQHODmR.png" style="flex:1;width: 24%;">
-  <img src="https://i.imgur.com/iLD1imm.png" style="flex:1;width: 24%;">
-  <img src="https://i.imgur.com/Agj1v5n.png" style="flex:1;width: 24%;">
-  <img src="https://i.imgur.com/K9ikkha.png" style="flex:1;width: 24%;">
+<div>
+  <img src="https://i.imgur.com/QQHODmR.png" style="width:300px;">
+  <img src="https://i.imgur.com/iLD1imm.png" style="width:300px;">
+  <img src="https://i.imgur.com/Agj1v5n.png" style="width:300px;">
+  <img src="https://i.imgur.com/K9ikkha.png" style="width:300px;">
 </div>
-
 <h2 align="center"></h2>
 
 ## Website Preview
