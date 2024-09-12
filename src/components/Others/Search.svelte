@@ -1892,12 +1892,13 @@
         </label>
         <input
             id="category-name"
-            class="category"
+            class={"category"+ ($selectedCategory == null ? " title-and-logo" : "")}
             type="text"
             autocomplete="off"
-            placeholder="Category"
+            placeholder={$selectedCategory == null ? "Kanshi" : "Category"}
             style:pointer-events="{editCategoryName ? "" : "none"}"
             disabled="{!editCategoryName}"
+            aria-label={$selectedCategory == null ? "Title and Logo" : "Category"}
             bind:value="{customCategoryName}"
             on:focusin="{() => window.addHistory?.()}"
         />
