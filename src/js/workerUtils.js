@@ -1062,15 +1062,16 @@ const exportUserData = (_data) => {
                         if (data?.missingData) {
                             window.confirmPromise?.({
                                 isAlert: true,
-                                title: "Export failed",
-                                text: "Data was not exported, incomplete data.",
+                                title: "Back up failed",
+                                text: `Data may be incomplete or corrupted. If this always occurs during export, please restore from a backup file or clear the ${get(android) ? "application" : "website"} data.`,
                             })
                         } else {
                             console.error(data?.error)
                             window.confirmPromise?.({
                                 isAlert: true,
-                                title: "Export failed",
-                                text: "Data was not exported, something went wrong.",
+                                title: "Back up failed",
+                                text: typeof data?.error === "string" && data.error !== "Something went wrong" && data.error
+                                ? data.error : "Something went wrong while processing your backup (B1)."
                             })
                         }
                         exportUserDataWorker?.terminate?.();
@@ -1093,8 +1094,20 @@ const exportUserData = (_data) => {
                                 new Promise((resolve, reject) => {
                                     waitForExportApproval = { resolve, reject }
                                 }).then(() => {
-                                    showToast("Data has been exported")
+                                    if (_data?.isManual) {
+                                        showToast("Data has been exported")
+                                    }
                                 }).catch((error) => {
+                                    if (_data?.isManual) {
+                                        (async () => {
+                                            if (await window.confirmPromise?.({
+                                                title: "Back up failed",
+                                                text: "Do you want to try again?",
+                                            })) {
+                                                exportUserData({ isManual: true });
+                                            }
+                                        })();
+                                    }
                                     reject(error)
                                 }).finally(() => {
                                     waitForExportApproval = null
@@ -1111,8 +1124,8 @@ const exportUserData = (_data) => {
                                 waitForExportApproval = null
                                 window.confirmPromise?.({
                                     isAlert: true,
-                                    title: "Export failed",
-                                    text: "Data was not exported, please try again.",
+                                    title: "Back up failed",
+                                    text: "Something went wrong while processing your backup (B2).",
                                 })
                                 dataStatus.set(null)
                                 progress.set(100)
@@ -1127,8 +1140,8 @@ const exportUserData = (_data) => {
                             waitForExportApproval = null
                             window.confirmPromise?.({
                                 isAlert: true,
-                                title: "Export failed",
-                                text: "Data was not exported, please try again.",
+                                title: "Back up failed",
+                                text: typeof ex === "string" && ex ? ex : "Something went wrong while processing your backup (B3).",
                             })
                             dataStatus.set(null)
                             progress.set(100)
@@ -1150,8 +1163,8 @@ const exportUserData = (_data) => {
                         exportUserDataWorker?.terminate?.();
                         window.confirmPromise?.({
                             isAlert: true,
-                            title: "Export failed",
-                            text: "Data was not exported, please try again.",
+                            title: "Back up failed",
+                            text: "Something went wrong while processing your backup (B4).",
                         })
                         dataStatus.set(null)
                         progress.set(100)
@@ -1169,8 +1182,8 @@ const exportUserData = (_data) => {
                     waitForExportApproval = null
                     window.confirmPromise?.({
                         isAlert: true,
-                        title: "Export failed",
-                        text: "Data was not exported, please try again.",
+                        title: "Back up failed",
+                        text: typeof error === "string" && error ? error : "Something went wrong while processing your backup (B5).",
                     })
                     exportUserDataWorker?.terminate?.();
                     rerunImportantWork(_data?.isManual)

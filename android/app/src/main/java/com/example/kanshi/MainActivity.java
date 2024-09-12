@@ -1330,17 +1330,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void isExported(boolean success) {
-        if (success) {
-            webView.post(() -> webView.loadUrl("javascript:window?.isExported?.(true)"));
-        } else {
-            webView.post(() -> webView.loadUrl("javascript:window?.isExported?.(false)"));
-            showDialog(new AlertDialog.Builder(MainActivity.this)
-                            .setTitle("Back Up Failed")
-                            .setMessage("Do you want to try again?")
-                            .setPositiveButton("YES", (dialogInterface, i) -> webView.post(() -> webView.loadUrl("javascript:window?.runExport?.()")))
-                            .setNegativeButton("NO", null),
-                    true);
-        }
+        webView.post(() -> webView.loadUrl("javascript:window?.isExported?.("+(success?"true":"false")+")"));
     }
 
     public void checkEntries() {

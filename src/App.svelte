@@ -669,13 +669,6 @@
 			requestMediaEntries();
 		}
 	});
-	// Android Callable
-	window.runExport = () => {
-		if (typeof val !== "boolean" || $initData) return;
-		if ($android && window[$isBackgroundUpdateKey] === true) return;
-
-		exportUserData();
-	};
 
 	// CONFIG CHANGES
 	autoUpdate.subscribe(async (val) => {
