@@ -133,6 +133,7 @@
 								
 						// 	} catch (ex) { console.error(ex) }
 						// }
+						throw new Error(navigator.userAgent)
 						await initMediaLoader()
 						// await getMediaEntries()
 					} else if (shouldGetMediaEntries !== false) {
