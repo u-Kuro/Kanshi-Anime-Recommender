@@ -73,17 +73,70 @@ earlisetReleaseDate.subscribe((val) => {
     }
 })
 
+let initMediaLoaderWorker
+const initMediaLoader = async () => {
+    try {
+        if (initMediaLoaderWorker === false) return;
+        initMediaLoaderWorker = new Worker(await cacheRequest("./webapi/worker/initalMediaLoader.js", 23278, "Checking initial List"))
+        initMediaLoaderWorker.onmessage = async ({ data }) => {
+            if (hasOwnProp.call(data, "media")) {
+                const media = data.media
+                const isLast = data.isLast
+                if (media || isLast) {
+                    const categoryKey = data.selectedCategory
+                    get(loadNewMedia)?.[categoryKey]?.({
+                        idx: data.idx,
+                        media,
+                        isLast,
+                        isInit: true,
+                    })
+                    if (!isLast) {
+                        initMediaLoaderWorker.postMessage({
+                            loadNext: true,
+                            selectedCategory: categoryKey,
+                        })
+                    }
+                }
+            } else if (hasOwnProp.call(data, "categories")) {
+                categories.set(data.categories);
+                selectedCategory.set(data.selectedCategory);
+                loadedMediaLists.update((val) => {
+                    for (const categoryKey in data.categories) {
+                        if (!val[categoryKey]) {
+                            val[categoryKey] = {}
+                        }
+                        initMediaLoaderWorker.postMessage({
+                            loadNext: true,
+                            selectedCategory: categoryKey,
+                        })
+                    }
+                    return val
+                })
+            } else {
+                initMediaLoaderWorker?.terminate?.()
+                console.error("Something went unexpected");
+            }
+        }
+        initMediaLoaderWorker.postMessage(false)
+    } catch (ex) {
+        initMediaLoaderWorker?.terminate?.()
+        console.error(ex);
+    }
+}
+
 let mediaLoaderWorker, mediaLoaderWorkerPromise, mediaLoaderPromises = {};
 function getMediaLoaderWorker() {
     mediaLoaderWorkerPromise = new Promise(async (resolve) => {
-        resolve(new Worker(await cacheRequest("./webapi/worker/mediaLoader.js", 23278, "Checking existing List")))
+        resolve(new Worker(await cacheRequest("./webapi/worker/mediaLoader.js", 1012745, "Checking existing List")))
         mediaLoaderWorkerPromise = null
     })
     return mediaLoaderWorkerPromise
 }
 const mediaLoader = (_data = {}) => {
+    if (get(initList) !== false && !_data?.initList) {
+        return
+    }
     return new Promise(async (resolve, reject) => {
-
         let postId = getUniqueId()
         _data.postId = postId
         mediaLoaderPromises[postId] = { resolve, reject }
@@ -95,6 +148,8 @@ const mediaLoader = (_data = {}) => {
 
             mediaLoaderWorker?.terminate?.()
             mediaLoaderWorker = null
+
+            console.error(ex)
 
             return reject(ex)
         }
@@ -193,6 +248,10 @@ const mediaLoader = (_data = {}) => {
                 })
 
             } else if (hasOwnProp?.call?.(data, "loadAll")) {
+                if (initMediaLoaderWorker !== false && data?.shouldReloadList !== true) {
+                    initMediaLoaderWorker?.terminate?.()
+                    initMediaLoaderWorker = false
+                }
                 categories.set(data?.categories || get(categories));
                 hiddenEntries.set(data?.hiddenEntries || get(hiddenEntries))
                 mediaCautions.set(data?.mediaCautions || get(mediaCautions))
@@ -246,6 +305,8 @@ const mediaLoader = (_data = {}) => {
                 mediaLoaderWorker?.terminate?.()
                 mediaLoaderWorker = null
 
+                console.error(data.error)
+
                 mediaLoaderPromises[data?.postId]?.reject?.()
             }
 
@@ -289,9 +350,9 @@ const mediaLoader = (_data = {}) => {
             mediaLoaderWorker?.terminate?.()
             mediaLoaderWorker = null
 
-            mediaLoaderPromises?.[postId]?.reject?.(error)
-
             console.error(error);
+
+            mediaLoaderPromises?.[postId]?.reject?.(error)
         };
     })
 }
@@ -406,7 +467,7 @@ const mediaManager = (_data = {}) => {
         }
 
         progress.set(0)
-        cacheRequest("./webapi/worker/mediaManager.js", 54954, "Updating the List")
+        cacheRequest("./webapi/worker/mediaManager.js", 54981, "Updating the List")
             .then(url => {
                 if (mediaManagerWorkerTimeout) clearTimeout(mediaManagerWorkerTimeout);
                 mediaManagerWorker?.terminate?.()
@@ -419,7 +480,8 @@ const mediaManager = (_data = {}) => {
                     categoriesToEdit,
                     entriesToHide,
                     entriesToShow,
-                    postId: mediaManagerWorkerPostId
+                    postId: mediaManagerWorkerPostId,
+                    initList: _data?.initList
                 });
                 mediaManagerWorker.onmessage = ({ data }) => {
                     if (hasOwnProp.call(data, "progress")) {
@@ -832,6 +894,7 @@ const requestMediaEntries = (_data = {}) => {
                         }
                     } else {
                         if (data?.noEntriesFound) {
+                            console.error("No entries found");
                             alertError()
                         } else if (data?.getEntries === true) {
                             isGettingNewEntries = true
@@ -1764,5 +1827,6 @@ export {
     processRecommendedMediaList,
     mediaManager,
     mediaLoader,
+    initMediaLoader,
     getExtraInfo
 }

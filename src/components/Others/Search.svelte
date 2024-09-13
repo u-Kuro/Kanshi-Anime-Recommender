@@ -136,8 +136,7 @@
         if (isJsonObject($nonOrderedFilters)) {
             let allCategoriesBoolFilter = {
                 "Media Filter": $nonOrderedFilters?.["Media Filter"]?.bool,
-                "Algorithm Filter":
-                    $nonOrderedFilters?.["Algorithm Filter"]?.bool,
+                "Algorithm Filter": $nonOrderedFilters?.["Algorithm Filter"]?.bool,
             };
             let activeMediaBoolFilters =
                 selectedCategoryMediaFilters?.filter?.(
@@ -196,7 +195,7 @@
     let scrollingToTop;
     
     async function updateFilters(name, data) {
-        if ($initList !== false || !filterCategories || !($orderedFilters || $nonOrderedFilters)) {
+        if ($initList !== false || $initData) {
             return pleaseWaitAlert();
         }
         if (!isJsonObject(data)) return;
@@ -269,7 +268,6 @@
     })
 
     function handleFilterCategory(event, newFilterCategoryName) {
-        if (!filterCategories) return pleaseWaitAlert();
         event.stopPropagation();
         selectedFilterCategoryName = newFilterCategoryName;
         setLocalStorage(
@@ -288,7 +286,6 @@
         selectedFilterCategoryElement = false;
     }
     function handleShowFilterCategories(event) {
-        if (!filterCategories) return pleaseWaitAlert();
         let element = event.target;
         let classList = element?.classList || [];
         let filterCategoriesEl = element?.closest?.(".filter-category");
@@ -336,10 +333,6 @@
 
     let openedFilterSelectionName;
     function filterCategorySelect(event, filterSelectionName) {
-        if (!filterCategories || !$orderedFilters) {
-            return pleaseWaitAlert();
-        }
-
         let element = event.target;
         let filSelectEl = element?.closest?.(".filter-select");
         if (filSelectEl === selectedFilterElement) return;
@@ -558,7 +551,11 @@
         filterCategoryName,
         isReadOnly,
     ) {
-        if ($initData || !filterCategories || !$orderedFilters || $categories?.[$selectedCategory] === true) {
+        if (
+            $initData 
+            || $initList !== false
+            || $categories?.[$selectedCategory] === true
+        ) {
             return pleaseWaitAlert();
         }
 
@@ -636,9 +633,10 @@
         updateFilters(filterCategoryName, data);
     }
     function handleCheckboxChange(event, optionName, filterCategoryName) {
-        if ($initData) {
+        if ($initData || $initList !== false) {
             return pleaseWaitAlert();
         }
+        
         let element = event.target;
         let classList = element?.classList || [];
         let key = event.key;
@@ -648,12 +646,6 @@
                 key !== "Enter" &&
                 event.type === "keyup")
         ) {
-            return;
-        }
-        if (!filterCategories || !$nonOrderedFilters) {
-            if (!classList.contains("filter-bool")) {
-                pleaseWaitAlert();
-            }
             return;
         }
 
@@ -740,7 +732,7 @@
     ) {
         let numberFilterKey = filterCategoryName + optionName;
 
-        if (!filterCategories || !$nonOrderedFilters || $initData) {
+        if ($initData || $initList !== false) {
             changeInputValue(event.target, oldValue);
             numberFiltersValues[numberFilterKey] = oldValue;
 
@@ -924,13 +916,16 @@
         status,
         readOnly,
     ) {
-        if ($initData || $categories?.[$selectedCategory] === true) return pleaseWaitAlert();
+        if ($initData || $initList !== false|| $categories?.[$selectedCategory] === true) {
+            return pleaseWaitAlert();
+        }
 
         if (
             !(activeFilters instanceof Array) ||
             !activeFilters[activeFilterIdx]
-        )
+        ) {
             return;
+        }
 
         let element = event?.target;
         let classList = element?.classList;
@@ -990,13 +985,16 @@
         updateFilters(currentFilterCategoryName, data);
     }
     function removeActiveFilter(activeFilterIdx) {
-        if ($initData || $categories?.[$selectedCategory] === true) return pleaseWaitAlert();
+        if ($initData || $initList !== true || $categories?.[$selectedCategory] === true) {
+            return pleaseWaitAlert();
+        }
 
         if (
             !(activeFilters instanceof Array) ||
             !activeFilters[activeFilterIdx]
-        )
+        ) {
             return;
+        }
 
         activeFilters.splice(activeFilterIdx, 1);
 
@@ -1022,7 +1020,7 @@
         updateFilters(currentFilterCategoryName, data);
     }
     async function removeAllActiveFilters() {
-        if ($initData) {
+        if ($initData || $initList !== false) {
             return pleaseWaitAlert();
         }
 
@@ -1035,11 +1033,8 @@
         if (
             await $confirmPromise("Do you want to remove all the active tags?")
         ) {
-            if ($initData) {
+            if ($initData || $initList !== false || $categories?.[currentCategory] === true) {
                 return pleaseWaitAlert();
-            }
-            if ($categories?.[currentCategory] === true) {
-                return pleaseWaitAlert()
             }
 
             let data;
@@ -1064,7 +1059,7 @@
         }
     }
     function handleSortFilterPopup(event) {
-        if ($initData || !$orderedFilters) {
+        if ($initData || $initList !== false) {
             return pleaseWaitAlert();
         }
 
@@ -1112,15 +1107,13 @@
     }
 
     function changeSort(newSortName) {
-        if ($initData || !$orderedFilters) {
-            return pleaseWaitAlert();
-        }
-
         if (
-            $categories?.[$selectedCategory] === true ||
-            !$loadedMediaLists?.[$selectedCategory]?.sortBy
+            $initData
+            || $initList !== false
+            || $categories?.[$selectedCategory] === true
+            || !$loadedMediaLists?.[$selectedCategory]?.sortBy
         ) {
-            return pleaseWaitAlert()
+            return pleaseWaitAlert();
         }
 
         let data;
@@ -1162,15 +1155,13 @@
         selectedSortElement = false;
     }
     function changeSortType() {
-        if ($initData || !$orderedFilters) {
-            return pleaseWaitAlert();
-        }
-
         if (
-            $categories?.[$selectedCategory] === true ||
-            !$loadedMediaLists?.[$selectedCategory]?.sortBy
+            $initData 
+            || $initList !== false
+            || $categories?.[$selectedCategory] === true 
+            || !$loadedMediaLists?.[$selectedCategory]?.sortBy
         ) {
-            return pleaseWaitAlert()
+            return pleaseWaitAlert();
         }
 
         let data;
@@ -1310,12 +1301,12 @@
         selectedCategoryElement = false;
     }
     async function saveCategoryName() {
-        if (!$categories) {
+        if ($initData || $initList !== false || !$categories) {
             return pleaseWaitAlert();
         }
 
         let previousCategoryName = $selectedCategory;
-        if ($categories?.[previousCategoryName] === true) {
+        if (!previousCategoryName || $categories?.[previousCategoryName] === true) {
             return pleaseWaitAlert()
         }
 
@@ -1362,12 +1353,12 @@
         }
     }
     async function addCategory() {
-        if (!$categories) {
+        if ($initData || $initList !== false || !$categories) {
             return pleaseWaitAlert();
         }
 
         let previousCategoryName = $selectedCategory;
-        if ($categories?.[previousCategoryName] === true) {
+        if (!previousCategoryName || $categories?.[previousCategoryName] === true) {
             return pleaseWaitAlert()
         }
 
@@ -1386,11 +1377,7 @@
                     return pleaseWaitAlert()
                 }
 
-                if (
-                    $categories &&
-                    newCategoryName &&
-                    !$categories?.[newCategoryName]
-                ) {
+                if ($categories && !$categories?.[newCategoryName]) {
                     $categories[newCategoryName] = true;
                     $selectedCategory = newCategoryName;
                     
@@ -1405,13 +1392,13 @@
     }
 
     async function removeCategory() {
-        let previousCategoryName = $selectedCategory;
-        if (!$categories || !previousCategoryName) {
+        if ($initData || $initList !== false || !$categories) {
             return pleaseWaitAlert();
         }
 
-        if ($categories?.[previousCategoryName] === true) {
-            return pleaseWaitAlert()
+        let previousCategoryName = $selectedCategory;
+        if (!previousCategoryName || $categories?.[previousCategoryName] === true) {
+            return pleaseWaitAlert();
         }
 
         if (
@@ -1432,7 +1419,6 @@
                 }
 
                 if (
-                    previousCategoryName &&
                     $categories &&
                     $categories?.[previousCategoryName] &&
                     Object.values($categories || {}).length > 1
@@ -1724,7 +1710,7 @@
 
     onMount(async () => {
         selectedFilterCategoryName = selectedFilterCategoryName || (await getIDBdata("selectedFilterCategoryName")) || "Media Filter";
-        popupContainer = document?.getElementById("popup-container");
+        popupContainer = document.getElementById("popup-container");
 
         window.addEventListener("click", clickOutsideListener);
 
@@ -1861,8 +1847,8 @@
     });
 </script>
 
-<main
-    id="main-home"
+<div
+    id="controls"
     style:--filters-space="{$showFilterOptions ? "80px" : ""}"
     style:--active-tag-filter-space="{$showFilterOptions ? "auto" : ""}"
     style:--category-settings-space="{$showFilterOptions ? "30px" : ""}"
@@ -1873,17 +1859,9 @@
     <div
         id="category-wrap"
         class={"category-wrap" + (editCategoryName ? ' editing' : '')}
-        tabindex="{editCategoryName || $menuVisible || $popupVisible || selectedCategoryElement
-            ? ''
-            : '0'}"
+        tabindex="{editCategoryName || $menuVisible || $popupVisible || selectedCategoryElement ? '' : '0'}"
         style:--edit-cancel-icon="{$showFilterOptions ? "25px" : ""}"
-        style:--save-icon="{editCategoryName &&
-        customCategoryName &&
-        $categories &&
-        !$categories?.[customCategoryName] &&
-        selectedCategoryMediaFilters
-            ? "25px"
-            : ""}"
+        style:--save-icon="{$showFilterOptions && editCategoryName && customCategoryName && $categories && !$categories?.[customCategoryName] ? "25px" : ""}"
         on:keyup="{(e) => e.key === 'Enter' && handleCategoryPopup(e)}"
         on:click="{handleCategoryPopup}"
     >
@@ -1961,37 +1939,15 @@
             </div>
         {/if}
         {#if $showFilterOptions}
-            {#if editCategoryName && customCategoryName && $categories && !$categories?.[customCategoryName] && $categories?.[$selectedCategory] !== true}
-                <div class="category-icon-wrap">
+            {#if editCategoryName && customCategoryName && $categories && !$categories?.[customCategoryName]}
+                <div class="category-icon-wrap" title="Save Category Name">
                     <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                     <svg
                         class="save-custom-category-name"
-                        title="Save Category Name"
-                        tabindex="{!$menuVisible &&
-                        !$popupVisible &&
-                        editCategoryName
-                            ? '0'
-                            : '-1'}"
+                        tabindex="{!$menuVisible && !$popupVisible ? '0' : '-1'}"
                         viewBox="0 0 448 512"
-                        on:click="{() => {
-                            if (
-                                !$selectedCategory ||
-                                !customCategoryName ||
-                                !selectedCategoryMediaFilters
-                            )
-                                return;
-                            saveCategoryName();
-                        }}"
-                        on:keyup="{(e) => {
-                            if (e.key !== 'Enter') return;
-                            if (
-                                !$selectedCategory ||
-                                !customCategoryName ||
-                                !selectedCategoryMediaFilters
-                            )
-                                return;
-                            saveCategoryName();
-                        }}"
+                        on:click="{() => saveCategoryName()}"
+                        on:keyup="{(e) => e.key === 'Enter' && saveCategoryName()}"
                     >
                         <!-- xmark and edit -->
                         <path
@@ -2000,12 +1956,10 @@
                     >
                 </div>
             {/if}
-            <div class="category-icon-wrap">
+            <div class="category-icon-wrap" title={editCategoryName ? 'Cancel Categories Editor' : 'Edit Categories'}>
                 <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                 <svg
-                    class="{editCategoryName
-                        ? 'cancel-custom-category-name'
-                        : 'edit-custom-category-name'}"
+                    class="{editCategoryName ? 'cancel-custom-category-name' : 'edit-custom-category-name'}"
                     tabindex="{!$menuVisible &&
                     !$popupVisible &&
                     $showFilterOptions
@@ -2056,16 +2010,8 @@
         </div>
     </div>
     <div
-        class="{'category-settings-wrap' +
-            ($showFilterOptions ? '' : ' display-none')}"
-        style:--add-icon-size="{$showFilterOptions &&
-        customCategoryName &&
-        $categories &&
-        !$categories?.[customCategoryName] &&
-        selectedCategoryMediaFilters &&
-        $categories?.[$selectedCategory] !== true
-            ? "25px"
-            : ""}"
+        class="{'category-settings-wrap' + ($showFilterOptions ? '' : ' display-none')}"
+        style:--add-icon-size="{$showFilterOptions && customCategoryName && $categories && !$categories?.[customCategoryName] ? "25px" : ""}"
         style:--remove-icon-size="{$categoriesKeys?.length > 1
             ? recListMAPE > 0
                 ? "25px"
@@ -2186,12 +2132,8 @@
                 class="remove-custom-category"
                 title="Delete Category"
                 style:visibility="{$categoriesKeys?.length > 1 ? "" : "hidden"}"
-                on:click="{(e) =>
-                    $categoriesKeys?.length > 1 && removeCategory(e)}"
-                on:keyup="{(e) =>
-                    $categoriesKeys?.length > 1 &&
-                    e.key === 'Enter' &&
-                    removeCategory(e)}"
+                on:click="{() => $categoriesKeys?.length > 1 && removeCategory()}"
+                on:keyup="{(e) => e.key === 'Enter' && $categoriesKeys?.length > 1 && removeCategory()}"
             >
                 <svg class="filter-category-wrap-icon" viewBox="0 0 448 512">
                     <!-- minus -->
@@ -2202,25 +2144,13 @@
             </div>
         {/if}
         <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
-        {#if $showFilterOptions && customCategoryName && $categories && !$categories?.[customCategoryName] && selectedCategoryMediaFilters && $categories?.[$selectedCategory] !== true}
+        {#if $showFilterOptions && customCategoryName && $categories && !$categories?.[customCategoryName]}
             <div
                 tabindex="{$menuVisible || $popupVisible ? '' : '0'}"
                 class="add-custom-category"
                 title="Add Custom Category"
-                on:click="{(e) => {
-                    if (!customCategoryName || !selectedCategoryMediaFilters)
-                        return;
-                    addCategory(e);
-                }}"
-                on:keyup="{(e) => {
-                    if (
-                        e.key !== 'Enter' ||
-                        !customCategoryName ||
-                        !selectedCategoryMediaFilters
-                    )
-                        return;
-                    addCategory(e);
-                }}"
+                on:click="{() => addCategory()}"
+                on:keyup="{(e) => e.key === 'Enter' && addCategory()}"
             >
                 <svg class="filter-category-wrap-icon" viewBox="0 0 448 512">
                     <!-- add -->
@@ -2618,8 +2548,7 @@
                         </div>
                     {/each}
                 {/if}
-                {@const boolFilters =
-                    $nonOrderedFilters?.[filterCategoryName]?.bool}
+                {@const boolFilters = $nonOrderedFilters?.[filterCategoryName]?.bool}
                 {#each boolFilters || [] as boolFilterName (filterCategoryName + boolFilterName || {})}
                     {#if filterCategoryIsSelected && boolFilterIsChecked[filterCategoryName + boolFilterName] != null}
                         {@const boolFilterKey =
@@ -2657,20 +2586,7 @@
                                     id="{'Checkbox: ' + boolFilterKey}"
                                     type="checkbox"
                                     class="filter-bool"
-                                    on:change="{(e) => {
-                                        if (
-                                            !filterCategories ||
-                                            !$nonOrderedFilters
-                                        ) {
-                                            return pleaseWaitAlert();
-                                        } else {
-                                            handleCheckboxChange(
-                                                e,
-                                                boolFilterName,
-                                                filterCategoryName,
-                                            );
-                                        }
-                                    }}"
+                                    on:change="{(e) => handleCheckboxChange(e, boolFilterName, filterCategoryName)}"
                                     bind:checked="{boolFilterIsChecked[
                                         boolFilterKey
                                     ]}"
@@ -2750,25 +2666,13 @@
                                             ? '>123 or 123'
                                             : '123'}"
                                         on:input="{(e) => {
-                                            if ($initData) {
-                                                return pleaseWaitAlert();
-                                            }
                                             let newValue = e.target.value;
-                                            let oldValue =
-                                                numberFiltersValues[
-                                                    numberFilterKey
-                                                ] ??
-                                                filterCategoryArray?.find?.(
-                                                    (filter) =>
-                                                        filter?.optionName ===
-                                                            name &&
-                                                        filter?.filterType ===
-                                                            'number',
-                                                )?.optionValue ??
-                                                '';
-                                            numberFiltersValues[
-                                                numberFilterKey
-                                            ] = newValue;
+                                            let oldValue = numberFiltersValues[numberFilterKey]
+                                                ?? filterCategoryArray?.find?.((filter) =>
+                                                    filter?.optionName === name &&
+                                                    filter?.filterType === 'number',
+                                                )?.optionValue ?? '';
+                                            numberFiltersValues[numberFilterKey] = newValue;
                                             handleInputNumber(
                                                 e,
                                                 name,
@@ -2950,13 +2854,13 @@
             </h2>
         </span>
     </div>
-    <div class="input-search-wrap" id="input-search-wrap">
-        <label class="disable-interaction" for="input-search">
+    <search class="search-media-wrap">
+        <label class="disable-interaction" for="search-media">
             Search Title
         </label>
         <input
-            id="input-search"
-            class="input-search"
+            id="search-media"
+            class="search-media"
             type="search"
             enterkeyhint="search"
             autocomplete="off"
@@ -2965,7 +2869,7 @@
             bind:value="{$searchedWord}"
             on:focusin="{() => window.addHistory?.()}"
         />
-    </div>
+    </search>
 
     <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
     <div class="last-filter-option">
@@ -3102,7 +3006,7 @@
             <div class="sort-filter skeleton shimmer"></div>
         {/if}
     </div>
-</main>
+</div>
 
 <style>
     ::placeholder {
@@ -3122,7 +3026,7 @@
         overflow-x: hidden;
     }
 
-    main {
+    #controls {
         --filters-space: ;
         --active-tag-filter-space: ;
         --category-settings-space: ;
@@ -3200,7 +3104,7 @@
         cursor: pointer;
         text-transform: capitalize;
     }
-    .input-search-wrap {
+    .search-media-wrap {
         display: grid;
         grid-template-columns: 1fr;
         align-items: center;
@@ -3222,7 +3126,7 @@
         width: calc(100% - var(--edit-icon-width) - 35px);
         height: 100%;
     }
-    .input-search,
+    .search-media,
     .category {
         outline: none;
         border: none;
@@ -3951,7 +3855,7 @@
             background-image: var(--x-close-icon);
             background-size: 15px;
         }
-        #input-search[type="search"]::-webkit-search-cancel-button {
+        .search-media[type="search"]::-webkit-search-cancel-button {
             -webkit-appearance: none;
             appearance: none;
             height: 20px;
@@ -3968,7 +3872,7 @@
     }
 
     @media screen and (max-width: 750px) {
-        main {
+        #controls {
             padding-inline: 10px;
         }
     }

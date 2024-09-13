@@ -50,6 +50,7 @@
         loadingCategory,
         toast,
         initList,
+        webCrawler,
     } from "../../../js/globalValues.js";
 
     const emptyImage = "data:image/png;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=";
@@ -1689,7 +1690,7 @@
             {@const mediaList = $loadedMediaLists[$selectedCategory]?.mediaList}
             {#each mediaList || [] as media, mediaIndex ((media?.id != null ? media.id + " " + mediaIndex : {}) ?? {})}
                 <div class="popup-content">
-                    {#if mediaIndex <= currentHeaderIdx + bottomPopupVisibleCount && mediaIndex >= currentHeaderIdx - topPopupVisibleCount}
+                    {#if $webCrawler || (mediaIndex <= currentHeaderIdx + bottomPopupVisibleCount && mediaIndex >= currentHeaderIdx - topPopupVisibleCount)}
                         {@const format = media.format}
                         {@const isManga = format === "Manga" || format === "One Shot"}
                         {@const isNovel = format === "Novel"}
@@ -3471,7 +3472,7 @@
     .full-popup-wrapper::-webkit-scrollbar {
         display: none;
     }
-    :global(#main.max-window-height.popupvisible .full-popup-wrapper) {
+    :global(#app.max-window-height.popup-visible .full-popup-wrapper) {
         touch-action: none;
     }
     .full-popup {
@@ -3522,7 +3523,7 @@
     .full-popup-description::-webkit-scrollbar {
         display: none;
     }
-    :global(#main.max-window-height.popup-visible .full-popup-description:not(.scrollable)) {
+    :global(#app.max-window-height.popup-visible .full-popup-description:not(.scrollable)) {
         touch-action: none;
     }
     :global(.full-popup-description *) {

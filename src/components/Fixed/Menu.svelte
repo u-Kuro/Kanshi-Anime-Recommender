@@ -318,7 +318,7 @@
         }
     }
     function refreshKanshiNotice() {
-        if (document?.getElementById?.("kanshi-show-notice")) {
+        if (document.getElementById("kanshi-show-notice")) {
             showNotice();
         }
     }
@@ -917,7 +917,7 @@
         color: var(--fg-color);
         z-index: 998;
     }
-    :global(#main.max-window-height.popup-visible .menu-container) {
+    :global(#app.max-window-height.popup-visible .menu-container) {
         touch-action: none;
     }
     .menu {
@@ -939,7 +939,7 @@
     .menu::-webkit-scrollbar {
         display: none;
     }
-    :global(#main.max-window-height.popup-visible .menu:not(.scrollable)) {
+    :global(#app.max-window-height.popup-visible .menu:not(.scrollable)) {
         touch-action: none;
     }
 

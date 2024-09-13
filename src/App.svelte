@@ -16,7 +16,8 @@
 		mediaLoader,
         updateTagInfo,
 		saveIDBdata,
-		getIDBdata
+		getIDBdata,
+        initMediaLoader
 	} from "./js/workerUtils.js";
 	import {
 		getLocalStorage,
@@ -73,10 +74,11 @@
         loadingCategory,
         toast,
         initList,
+        webCrawler,
 	} from "./js/globalValues.js";
 
 	(async () => {
-		try {			
+		try {
 			// Check App ID (Not for Android allow Fast Start on Slow Network)
 			if (!$android) {
 				$appID = await getWebVersion();
@@ -108,9 +110,10 @@
 
 			if (!$android || window[$isBackgroundUpdateKey] !== true) {
 				try {
-					$initList = (await mediaLoader({ 
+					$initList = (await mediaLoader({
 						loadAll: true, 
-						selectedCategory: ($selectedCategory ?? getLocalStorage("selectedCategory") ?? await getIDBdata("selectedCategory"))
+						selectedCategory: ($selectedCategory ?? getLocalStorage("selectedCategory") ?? await getIDBdata("selectedCategory")),
+						initList: true
 					}))?.shouldReloadList
 					if ($initList === false) {
 						loadYoutube();
@@ -125,6 +128,11 @@
 				(async () => {
 					const shouldGetMediaEntries = await getIDBdata("mediaEntriesIsEmpty");
 					if (shouldGetMediaEntries === true) {
+						if ($webCrawler && $initList !== false) {
+							try {
+								await initMediaLoader()
+							} catch (ex) { console.error(ex) }
+						}
 						await getMediaEntries()
 					} else if (shouldGetMediaEntries !== false) {
 						throw "Unexpected Error"
@@ -292,7 +300,8 @@
 						await mediaManager({ updateRecommendedMediaList: true, initList: true })
 						await mediaLoader({
 							loadAll: true,
-							selectedCategory: ($selectedCategory ?? getLocalStorage("selectedCategory") ?? await getIDBdata("selectedCategory"))
+							selectedCategory: ($selectedCategory ?? getLocalStorage("selectedCategory") ?? await getIDBdata("selectedCategory")),
+							initList: true
 						})
 						$initList = false;
 						
@@ -433,7 +442,7 @@
 					(activeElementTagName === "INPUT" || activeElementTagName === "TEXTAREA")
 				) {
 					activeElement.blur?.();
-					if (activeElement.id === "usernameInput") {
+					if (activeElement.id === "username-input") {
 						window.onfocusUsernameInput();
 					}
 				}
@@ -471,7 +480,7 @@
 	});
 	documentScrollTop.subscribe((scrollTop) => {
 		if (!$gridFullView && mediaListPagerEl) {
-			const element = mediaListPagerEl.querySelector("main.viewed .image-grid");
+			const element = mediaListPagerEl.querySelector(".category-list.viewed .image-grid");
 			if (element) {
 				const offsetToWindow = element.getBoundingClientRect().top;
 				if (
@@ -842,7 +851,7 @@
 				$windowWidth <= 750
 			) {
 				activeElement.blur?.();
-				if (activeElement.id === "usernameInput") {
+				if (activeElement.id === "username-input") {
 					window.onfocusUsernameInput?.();
 				}
 				appShouldExit = false;
@@ -1217,7 +1226,7 @@
 		}
 		lastVisualViewportWidth = newVisualViewportWidth;
 	})
-
+		
 	onMount(async () => {
 		mediaListPagerEl.addEventListener("scroll", () => {
 			mediaListPagerIsChanging = true;
@@ -1284,30 +1293,17 @@
 
 </script>
 
-<main
-	id="main"
-	class="{($android ? ' android' : '') +
+<div
+	id="app"
+	class="{($android ? 'android' : '') +
 		(isMaxWindowHeight ? ' max-window-height' : '') +
 		($popupVisible ? ' popup-visible' : '')}"
 >
-	{#if shownProgress > 0 && shownProgress < 100}
-		<div
-			out:fade="{{ duration: 0, delay: 400 }}"
-			on:outrostart="{(e) => {
-				e.target.style.setProperty('--progress', '0%');
-			}}"
-			id="progress"
-			class="{'progress' +
-				(isBelowNav ? ' is-below-absolute-progress' : '')}"
-			style:--progress="{"-" + (100 - shownProgress) + "%"}"
-		></div>
-	{/if}
-
 	<C.Fixed.Navigator />
 
 	<C.Fixed.Menu />
 
-	<div class="home" id="home">
+	<main>
 		<C.Others.Search />
 		<div
 			bind:this="{mediaListPagerEl}"
@@ -1328,7 +1324,7 @@
 				<C.Media.MediaGrid mainCategory="{''}" />
 			{/if}
 		</div>
-	</div>
+	</main>
 
 	<C.Fixed.Categories />
 
@@ -1348,13 +1344,27 @@
 		{isImportant}
 	/>
 
+	{#if shownProgress > 0 && shownProgress < 100}
+		<div
+			out:fade="{{ duration: 0, delay: 400 }}"
+			on:outrostart="{(e) => {
+				e.target.style.setProperty('--progress', '0%');
+			}}"
+			id="progress"
+			class="{'progress' +
+				(isBelowNav ? ' is-below-absolute-progress' : '')}"
+			style:--progress="{"-" + (100 - shownProgress) + "%"}"
+		></div>
+	{/if}
+
 	{#if $toast}
 		<div 
+			role="progressbar"
 			class="message-toast"
 			transition:fade="{{ duration: 200 }}"
 		>{$toast}</div>
 	{/if}
-</main>
+</div>
 
 <style>
 	:global(html) {
@@ -1362,20 +1372,20 @@
 		overflow-y: overlay !important;
 		scrollbar-gutter: stable !important;
 	}
-	main {
+	#app {
 		width: 100%;
 		min-height: calc(100vh - 57px);
 		overflow-x: clip;
 	}
-	main.android {
+	#app.android {
 		user-select: none !important;
 	}
 	@media screen and not (pointer:fine) {
-		main {
+		#app {
 			user-select: none !important;
 		}
 	}
-	.home {
+	main {
 		height: calc(100% - 57px) !important;
 		width: 100%;
 		margin: 57px auto 0 !important;
@@ -1450,7 +1460,7 @@
 			top: 0px !important;
 			z-index: 1003 !important;
 		}
-		#main.android > #progress.is-below-absolute-progress {
+		#app.android > #progress.is-below-absolute-progress {
 			height: 1px !important;
 		}
 		:global(.progress:has(~ #nav-container.delayed-full-screen-popup:not(.layout-change):not(.hide))) {

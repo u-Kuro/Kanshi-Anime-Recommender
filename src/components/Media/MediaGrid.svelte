@@ -9,6 +9,7 @@
         ncsCompare,
         removeClass,
         requestImmediate,
+        showToast,
     } from "../../js/others/helper.js";
     import {
         android,
@@ -34,6 +35,8 @@
         trueWindowHeight,
         documentScrollTop,
         loadingCategory,
+        initList,
+        toast,
     } from "../../js/globalValues.js";
     import { mediaLoader } from "../../js/workerUtils.js";
 
@@ -81,7 +84,15 @@
     let latestSearchDate
     searchedWord.subscribe((val) => {
         if ($categories==null) return
-        latestSearchDate = new Date()
+        if ($initList === false) {
+            latestSearchDate = new Date()
+        } else if (val) {
+            if ($android) {
+                showToast("Please wait a moment")
+            } else {
+                $toast = "Please wait a moment"
+            }
+        }
         mediaLoader({
             loadMore: true,
             selectedCategory: mainCategory,
@@ -95,8 +106,10 @@
         media,
         isLast,
         updateDate,
-        searchDate
+        searchDate,
+        isInit
     }) {
+        if (idx >= 285) return
         let finishedReloading, finishedSearching
         if (isLast) {
             finishedReloading = finishedSearching = true
@@ -132,6 +145,7 @@
                     $loadedMediaLists[mainCategory].mediaList = [media];
                 }
             }
+            if (isInit) return // already loads next media after return
             if (idx < shownMediaListCount - 1) {
                 mediaLoader({
                     loadMore: true,
@@ -421,12 +435,13 @@
         
         cancelCopyTimeout?.()
     }
+
 </script>
 
-<main
+<div
     data-category="{mainCategory}"
-    class="{(mainCategory === $selectedCategory || mainCategory === ''
-        ? 'viewed'
+    class="{"category-list" + (mainCategory === $selectedCategory || mainCategory === ''
+        ? ' viewed'
         : '') + ($gridFullView ? ' full-view' : '')}"
     style:--media-grid-height="{($mobile && !$android
         ? originalWindowHeight
@@ -441,6 +456,7 @@
                 ($loadingCategory[""]
                             || $loadingCategory[mainCategory]
                             || latestSearchDate
+                            || $initList !== false
                                 ? ' semi-loading'
                                 : '')
             }"
@@ -747,13 +763,13 @@
             </div>
         {/if}
     {/if}
-</main>
+</div>
 
 <style>
-    :global(.media-list-pager.pager-is-changing > main) {
+    :global(.media-list-pager.pager-is-changing > .category-list) {
         height: min(calc(var(--grid-max-height) + 65px),calc(100vh + max(20px, calc(var(--grid-position) + 20px)))) !important;
     }
-    main {
+    .category-list {
         width: 100%;
         min-width: 100%;
         min-height: 100vh;
@@ -769,26 +785,26 @@
         height: min(var(--grid-max-height), calc(100vh + max(20px, calc(var(--grid-position) + 20px))));
     }
 
-    :global(.media-list-pager.is-changing-top-position > main) {
+    :global(.media-list-pager.is-changing-top-position > .category-list) {
         visibility: hidden;
     }
 
-    main::-webkit-scrollbar {
+    .category-list::-webkit-scrollbar {
         display: none;
     }
 
-    main.viewed {
+    .category-list.viewed {
         height: unset !important;
         overflow-x: hidden !important;
         overflow-y: auto !important;
         visibility: unset !important;
     }
 
-    :global(.media-list-pager.remove-snap-scroll main) {
+    :global(.media-list-pager.remove-snap-scroll .category-list) {
         height: unset !important;
     }
 
-    main.full-view {
+    .category-list.full-view {
         padding: 12px 0;
         margin-bottom: 65px;
         height: max(calc(var(--media-grid-height) - 230px), 248px) !important;
@@ -858,7 +874,7 @@
         padding-bottom: calc(101vh + 65px);
     }
 
-    main.viewed .image-grid {
+    .category-list.viewed .image-grid {
         position: unset !important;
         padding-bottom: unset !important;
         transform: unset !important;

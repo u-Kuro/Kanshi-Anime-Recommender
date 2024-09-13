@@ -188,7 +188,7 @@
         display: none;
     }
 
-    :global(#main.max-window-height.popup-visible .confirm) {
+    :global(#app.max-window-height.popup-visible .confirm) {
         touch-action: none;
     }
 
@@ -215,7 +215,7 @@
         cursor: default;
     }
 
-    :global(#main.max-window-height.popup-visible .confirm-info-container:not(.scrollable)) {
+    :global(#app.max-window-height.popup-visible .confirm-info-container:not(.scrollable)) {
         touch-action: none;
     }
 
@@ -245,7 +245,7 @@
         scrollbar-width: none;
     }
 
-    :global(#main.max-window-height.popup-visible .confirm-title-wrapper) {
+    :global(#app.max-window-height.popup-visible .confirm-title-wrapper) {
         touch-action: pan-x;
         overscroll-behavior: contain;
     }

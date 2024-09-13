@@ -293,20 +293,6 @@
         (immediateCustomFilNavChange ? ' immediate' : '') +
         ($android ? ' android' : '')}"
 >
-    <div
-        class="prev-category"
-        on:click="{(e) => goToNextPrevCategory(e, false)}"
-        on:keyup="{(e) => {
-            e.key === 'Enter' && goToNextPrevCategory(e, false);
-        }}"
-    ></div>
-    <div
-        class="next-category"
-        on:click="{(e) => goToNextPrevCategory(e, true)}"
-        on:keyup="{(e) => {
-            e.key === 'Enter' && goToNextPrevCategory(true);
-        }}"
-    ></div>
     <nav
         id="categories-nav"
         bind:this="{categoriesNav}"
@@ -336,6 +322,20 @@
             </span>
         {/each}
     </nav>
+    <div
+        class="prev-category"
+        on:click="{(e) => goToNextPrevCategory(e, false)}"
+        on:keyup="{(e) => {
+            e.key === 'Enter' && goToNextPrevCategory(e, false);
+        }}"
+    ></div>
+    <div
+        class="next-category"
+        on:click="{(e) => goToNextPrevCategory(e, true)}"
+        on:keyup="{(e) => {
+            e.key === 'Enter' && goToNextPrevCategory(true);
+        }}"
+    ></div>
 </div>
 
 <style>

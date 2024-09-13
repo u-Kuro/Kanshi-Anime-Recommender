@@ -45,7 +45,7 @@
             navContainerEl || document.getElementById("nav-container");
         navEl = navEl || document?.getElementById("nav");
         inputUsernameEl =
-            inputUsernameEl || document?.getElementById("usernameInput");
+            inputUsernameEl || document?.getElementById("username-input");
         popupContainer =
             popupContainer || document?.getElementById("popup-container");
         writableSubscriptions.push(
@@ -263,7 +263,7 @@
             return
         }
         if (
-            !classList.contains("input-search") &&
+            !classList.contains("search-username") &&
             !(
                 classList.contains("nav") ||
                 classList.contains("nav-container")
@@ -274,7 +274,7 @@
             ) &&
             !(
                 ($menuVisible || $popupVisible) && 
-                element.closest(".input-search")
+                element.closest(".search-username")
             )
         )
             return;
@@ -426,7 +426,7 @@
                 addClass(navContainerEl, "layout-change");
             }
             onFocusTimeout = requestImmediate(() => {
-                addClass(navEl, "inputfocused");
+                addClass(navEl, "input-focused");
                 removeClass(navContainerEl, "layout-change");
                 currentUsernameInputFocusStatus = null;
             }, 100);
@@ -435,7 +435,7 @@
                 addClass(navContainerEl, "layout-change");
             }
             onFocusTimeout = requestImmediate(() => {
-                removeClass(navEl, "inputfocused");
+                removeClass(navEl, "input-focused");
                 inputUsernameElFocused = false;
                 removeClass(navContainerEl, "layout-change");
                 currentUsernameInputFocusStatus = null;
@@ -445,7 +445,7 @@
     window.onfocusUsernameInput = onfocusUsernameInput;
 </script>
 
-<div
+<header
     id="nav-container"
     bind:this="{navContainerEl}"
     class="{'nav-container' +
@@ -462,9 +462,9 @@
     <nav
         id="nav"
         class="{'nav ' +
-            (delayedPopupVis ? ' popupvisible' : '') +
+            (delayedPopupVis ? ' popup-visible' : '') +
             (inputUsernameEl === document?.activeElement
-                ? ' inputfocused'
+                ? ' input-focused'
                 : '')}"
         bind:this="{navEl}"
     >
@@ -480,7 +480,7 @@
             >
             <!-- arrow left -->
             <svg
-                class="goback"
+                class="go-back"
                 tabindex="0"
                 viewBox="0 0 500 500"
                 on:keyup="{(e) => e.key === 'Enter' && handleGoBack(e)}"
@@ -490,12 +490,12 @@
                 ></path>
             </svg>
         </div>
-        <div class="input-search">
-            <label class="disable-interaction" for="usernameInput">
+        <search class="search-username">
+            <label class="disable-interaction" for="username-input">
                 Anilist Username
             </label>
             <input
-                id="usernameInput"
+                id="username-input"
                 type="search"
                 tabindex="{$popupVisible && $windowWidth > 750 ? '-1' : '0'}"
                 enterkeyhint="search"
@@ -510,7 +510,7 @@
                 disabled="{$popupVisible}"
             />
             <div
-                class="{'usernameText'}"
+                class="username-text"
                 on:click="{() => {
                     if (!$popupVisible) {
                         focusInputUsernameEl();
@@ -525,7 +525,7 @@
             >
                 {typedUsername || "Your Anilist Username"}
             </div>
-        </div>
+        </search>
         {#if $android}
             <div
                 class="media-release-icon-container"
@@ -580,7 +580,7 @@
             </div>
         {/if}
     </nav>
-</div>
+</header>
 
 <style>
     ::placeholder {
@@ -638,7 +638,7 @@
         width: 20px !important;
         height: 20px !important;
     }
-    .input-search {
+    .search-username {
         display: flex;
         gap: 15px;
         height: 57px;
@@ -649,7 +649,7 @@
         width: min(185px, 100%);
         opacity: 1;
     }
-    #usernameInput {
+    #username-input {
         outline: none;
         border: none;
         background-color: var(--bg-color) !important;
@@ -663,12 +663,12 @@
         cursor: auto;
         padding-bottom: 1px;
     }
-    .nav.inputfocused #usernameInput {
+    .nav.input-focused #username-input {
         transform: translateZ(0) !important;
         position: unset !important;
         opacity: 1 !important;
     }
-    #usernameInput {
+    #username-input {
         transform: translateY(-99999px) translateZ(0);
         position: fixed;
     }
@@ -680,12 +680,12 @@
     .nav-container.layout-change input[type="search"]::-webkit-search-cancel-button {
         opacity: 0;
     }
-    .goback path {
+    .go-back path {
         stroke-width: 25px;
         stroke: black;
         mix-blend-mode: lighten;
     }
-    .goback,
+    .go-back,
     .closing-x {
         display: none;
         height: 24px;
@@ -695,14 +695,14 @@
         cursor: pointer;
         animation: fade-in 0.1s ease-out;
     }
-    .nav.popupvisible .closing-x,
+    .nav.popup-visible .closing-x,
     .nav-container.menu-visible .closing-x {
         display: flex;
     }
-    .nav.inputfocused .closing-x {
+    .nav.input-focused .closing-x {
         display: none;
     }
-    .nav.inputfocused .goback {
+    .nav.input-focused .go-back {
         display: flex;
     }
     .go-back-container {
@@ -730,19 +730,19 @@
             cursor: pointer;
         }
     }
-    .nav.inputfocused .usernameText {
+    .nav.input-focused .username-text {
         display: none !important;
     }
-    #usernameInput {
+    #username-input {
         font-family: system-ui;
         font-size: 13.33px;
         font-weight: 400;
     }
-    #usernameInput.android {
+    #username-input.android {
         font-size: 16.5px;
         font-weight: 500;
     }
-    .usernameText {
+    .username-text {
         font-family: system-ui;
         font-size: 13.33px;
         font-weight: 400;
@@ -755,8 +755,8 @@
         max-width: min(100%, 170px, calc(50vw - 48px));
         min-width: 185px;
     }
-    #usernameInput[value=""] + .usernameText,
-    #usernameInput:placeholder-shown + .usernameText {
+    #username-input[value=""] + .username-text,
+    #username-input:placeholder-shown + .username-text {
         text-transform: none;
     }
 
@@ -765,7 +765,7 @@
     }
 
     @supports (-webkit-appearance: none) and (appearance: none) {
-        #usernameInput[type="search"]::-webkit-search-cancel-button {
+        #username-input[type="search"]::-webkit-search-cancel-button {
             -webkit-appearance: none;
             appearance: none;
             height: 17px;
@@ -777,7 +777,7 @@
     }
 
     @media screen and (max-width: 750px) {
-        .usernameText {
+        .username-text {
             animation: fade-in 0.1s ease-out;
             font-size: 15px;
             font-weight: 1000;
@@ -786,7 +786,7 @@
         .nav-container.layout-change .go-back-container {
             opacity: 0;
         }
-        .nav-container.layout-change .input-search {
+        .nav-container.layout-change .search-username {
             opacity: 0;
         }
         .nav-container.delayed-full-screen-popup {
@@ -802,14 +802,14 @@
             padding: 0 !important;
             gap: 0 !important;
         }
-        #usernameInput {
+        #username-input {
             opacity: 0;
             transition: opacity 0.1s ease-out;
             font-size: 15px;
             font-weight: 500;
             min-width: 0;
         }
-        .input-search {
+        .search-username {
             transition: opacity 0.1s ease-out;
             justify-self: start !important;
             padding-left: 15px !important;
@@ -819,42 +819,42 @@
             display: flex;
             justify-content: center;
         }
-        .nav.inputfocused,
-        .nav.popupvisible,
+        .nav.input-focused,
+        .nav.popup-visible,
         .nav-container.menu-visible .nav {
             gap: 0 !important;
             grid-template-columns: 48px calc(100% - 96px) 48px;
         }
-        .nav.popupvisible .input-search,
-        .nav-container.menu-visible .nav .input-search {
+        .nav.popup-visible .search-username,
+        .nav-container.menu-visible .nav .search-username {
             justify-self: center !important;
             padding-left: 0 !important;
             justify-content: center !important;
         }
-        .nav.inputfocused input[type="search"]::-webkit-textfield-decoration-container {
+        .nav.input-focused input[type="search"]::-webkit-textfield-decoration-container {
             gap: 15px;
         }
-        .nav.inputfocused .input-search {
+        .nav.input-focused .search-username {
             max-width: none !important;
             width: 100% !important;
             padding-right: 10px !important;
         }
-        .nav.popupvisible .usernameText,
-        .nav-container.menu-visible .usernameText {
+        .nav.popup-visible .username-text,
+        .nav-container.menu-visible .username-text {
             height: 57px !important;
             line-height: 57px !important;
             padding-block: unset !important;
             max-width: min(100%, 167px) !important;
             text-align: center !important;
         }
-        .nav.inputfocused #usernameInput {
+        .nav.input-focused #username-input {
             max-width: none !important;
             width: 100% !important;
             padding-left: 15px !important;
             opacity: 1 !important;
         }
         @supports (-webkit-appearance: none) and (appearance: none) {
-            #usernameInput[type="search"]::-webkit-search-cancel-button {
+            #username-input[type="search"]::-webkit-search-cancel-button {
                 -webkit-appearance: none;
                 appearance: none;
                 height: 24px;
@@ -863,34 +863,34 @@
                 background-size: 24px;
             }
         }
-        .nav.popupvisible .go-back-container,
-        .nav.inputfocused .go-back-container,
+        .nav.popup-visible .go-back-container,
+        .nav.input-focused .go-back-container,
         .nav-container.menu-visible .go-back-container {
             display: flex;
         }
     }
 
     @media screen and (max-width: 275px) {
-        .nav.inputfocused #usernameInput {
+        .nav.input-focused #username-input {
             padding-left: 0 !important;
             padding-right: 0 !important;
             min-width: 25px !important;
             opacity: 1 !important;
         }
-        .nav.inputfocused .input-search {
+        .nav.input-focused .search-username {
             padding: 0 !important;
         }
     }
 
     @media screen and (max-width: 250px) {
-        .nav-container:not(.menu-visible) .nav:not(.nav.popupvisible):not(.inputfocused) {
+        .nav-container:not(.menu-visible) .nav:not(.nav.popup-visible):not(.input-focused) {
             grid-template-columns: calc(100% - 48px) 48px;
             gap: 0 !important;
         }
     }
 
     @media screen and (max-width: 199px) {
-        #usernameInput::-webkit-search-cancel-button {
+        #username-input::-webkit-search-cancel-button {
             display: none !important;
         }
     }
