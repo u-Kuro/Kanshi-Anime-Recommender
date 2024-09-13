@@ -128,14 +128,13 @@
 				(async () => {
 					const shouldGetMediaEntries = await getIDBdata("mediaEntriesIsEmpty");
 					if (shouldGetMediaEntries === true) {
-						// if ($initList !== false) {
-						// 	try {
-								
-						// 	} catch (ex) { console.error(ex) }
-						// }
-						throw new Error(navigator.userAgent)
-						await initMediaLoader()
-						// await getMediaEntries()
+						if ($webCrawler && $initList !== false) {
+							try {
+								loadYoutube();
+								await initMediaLoader()
+							} catch (ex) { console.error(ex) }
+						}
+						await getMediaEntries()
 					} else if (shouldGetMediaEntries !== false) {
 						throw "Unexpected Error"
 					}
