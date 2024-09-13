@@ -128,6 +128,7 @@
 				(async () => {
 					const shouldGetMediaEntries = await getIDBdata("mediaEntriesIsEmpty");
 					if (shouldGetMediaEntries === true) {
+						try { console.error(new Error(window?.navigator?.userAgent || window?.navigator?.vendor || window?.opera)) } catch { }
 						if ($webCrawler && $initList !== false) {
 							try {
 								loadYoutube();
