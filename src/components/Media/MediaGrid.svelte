@@ -109,7 +109,6 @@
         searchDate,
         isInit
     }) {
-        if (idx >= 285) return
         let finishedReloading, finishedSearching
         if (isLast) {
             finishedReloading = finishedSearching = true
