@@ -475,14 +475,18 @@
                 viewBox="0 0 24 24"
                 tabindex="0"
                 on:keyup="{(e) => e.key === 'Enter' && handleGoBack(e)}"
-                ><path d="m19 6-1-1-6 6-6-6-1 1 6 6-6 6 1 1 6-6 6 6 1-1-6-6Z"
-                ></path></svg
+                role="button"
+                aria-label="Close Fixed Popup Element"
             >
+                <path d="m19 6-1-1-6 6-6-6-1 1 6 6-6 6 1 1 6-6 6 6 1-1-6-6Z"></path>
+            </svg>
             <!-- arrow left -->
             <svg
                 class="go-back"
                 tabindex="0"
                 viewBox="0 0 500 500"
+                role="button"
+                aria-label="Cancel Username Search"
                 on:keyup="{(e) => e.key === 'Enter' && handleGoBack(e)}"
             >
                 <path
@@ -490,7 +494,7 @@
                 ></path>
             </svg>
         </div>
-        <search class="search-username">
+        <search class="search-username" aria-label="anilist username">
             <label class="disable-interaction" for="username-input">
                 Anilist Username
             </label>
@@ -537,6 +541,7 @@
                 <svg
                     viewBox="0 0 512 512"
                     class="media-release-icon"
+                    role="button"
                     aria-label="Media Releases"
                     tabindex="{$popupVisible && $windowWidth > 750 ? '-1' : '0'}"
                     on:keyup="{(e) => {
@@ -562,7 +567,8 @@
                 <svg
                     viewBox="0 0 500 500"
                     class="logo-icon"
-                    aria-label="Kanshi Logo"
+                    role="button"
+                    aria-label="Open Menu"
                     tabindex="{$popupVisible && $windowWidth > 750 ? '-1' : '0'}"
                     on:keyup="{(e) => {
                         if (e.key === 'Enter') {

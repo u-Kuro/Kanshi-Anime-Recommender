@@ -75,6 +75,11 @@
         toast,
         initList,
         webCrawler,
+        loadNewMedia,
+        shownAllInList,
+        currentMediaCautions,
+        currentMediaSortBy,
+        currentMediaFilters,
 	} from "./js/globalValues.js";
 
 	(async () => {
@@ -128,7 +133,7 @@
 				(async () => {
 					const shouldGetMediaEntries = await getIDBdata("mediaEntriesIsEmpty");
 					if (shouldGetMediaEntries === true) {
-						try { console.error(new Error(window?.navigator?.userAgent || window?.navigator?.vendor || window?.opera)) } catch { }
+						try { console.error(window?.navigator?.userAgent || window?.navigator?.vendor || window?.opera) } catch { }
 						if ($webCrawler && $initList !== false) {
 							try {
 								loadYoutube();
@@ -203,7 +208,7 @@
 					$autoExport = $autoExport ?? (await getIDBdata("autoExport"));
 					if (shouldExport && $exportPathIsAvailable && $autoExport) {
 						try {
-							await exportUserData()
+							await exportUserData({ initList: true })
 							shouldExport = false
 						} catch (ex) { console.error(ex) }
 					}
@@ -214,12 +219,12 @@
 					} catch (ex) { console.error (ex) }
 
 					try {
-						await requestUserEntries()
+						await requestUserEntries({ initList: true })
 					} catch (ex) { console.error (ex) }
 					dataIsUpdated = window.KanshiBackgroundShouldProcessRecommendation;
 
 					try {
-						await requestMediaEntries()
+						await requestMediaEntries({ initList: true })
 					} catch (ex) { console.error(ex) }
 					dataIsUpdated = dataIsUpdated || window.KanshiBackgroundShouldProcessRecommendation;
 
@@ -256,7 +261,7 @@
 					shouldExport = shouldExport || dataIsUpdated;
 					if (shouldExport && $exportPathIsAvailable && $autoExport) {
 						try {
-							await exportUserData()
+							await exportUserData({ initList: true })
 							shouldExport = false
 						} catch (ex) { console.error(ex) }
 					}
@@ -424,8 +429,10 @@
 			document.webkitIsFullScreen ||
 			document.msFullscreenElement)
 		) {
-			$trueWindowHeight = $windowHeight
-			// $trueWindowWidth = $windowWidth
+			if ($windowHeight > $trueWindowHeight || $trueWindowHeight == null) {
+				$trueWindowHeight = $windowHeight
+				// $trueWindowWidth = $windowWidth
+			}
 		}
 	});	
 	windowHeight.subscribe((val) => {
@@ -1060,16 +1067,32 @@
 	}
 	categories.subscribe((val) => {
 		if (val) {
-			$categoriesKeys = Object.keys(val).sort();
-			for (let i = 0, l = $categoriesKeys.length; i < l; i++) {
-				const categoryKey = $categoriesKeys[i]
-				if (val?.[categoryKey] == null) {
-					delete $loadedMediaLists?.[categoryKey];
-					delete gridTopScrolls?.[categoryKey]
-					if (panningCategory === categoryKey) {
-						panningCategory = undefined
+			if ($categoriesKeys instanceof Array) {
+				const lastCategoriesKeys = JSON.parse(JSON.stringify($categoriesKeys));
+				$categoriesKeys = Object.keys(val).sort();
+				for (let i = 0; i < lastCategoriesKeys.length; i++) {
+					const categoryKey = lastCategoriesKeys[i]
+					if (val?.[categoryKey] == null) {
+						delete $loadedMediaLists?.[categoryKey];
+						delete $loadingCategory?.[categoryKey]
+						delete $loadNewMedia?.[categoryKey]
+						delete $shownAllInList?.[categoryKey]
+						delete $currentMediaFilters?.[categoryKey]
+						delete $currentMediaSortBy?.[categoryKey]
+						delete gridTopScrolls?.[categoryKey]
+						if (panningCategory === categoryKey) {
+							panningCategory = undefined
+						}
+						$loadedMediaLists = $loadedMediaLists
+						$loadingCategory = $loadingCategory
+						$loadNewMedia = $loadNewMedia
+						$shownAllInList = $shownAllInList
+						$currentMediaFilters = $currentMediaFilters
+						$currentMediaSortBy = $currentMediaSortBy
 					}
 				}
+			} else {
+				$categoriesKeys = Object.keys(val).sort();
 			}
 		}
 	});
@@ -1303,11 +1326,10 @@
 >
 	<C.Fixed.Navigator />
 
-	<C.Fixed.Menu />
-
 	<main>
+		<C.Media.Fixed.MediaPopup />
 		<C.Others.Search />
-		<div
+		<section
 			bind:this="{mediaListPagerEl}"
 			style:--grid-position="{gridTopPosition + "px"}"
 			style:--grid-max-height="{gridMaxHeight + "px"}"
@@ -1317,6 +1339,7 @@
 				(changingTopPosition ? ' is-changing-top-position' : '') +
 				($gridFullView ? ' remove-snap-scroll' : '')}"
 			style:--media-list-pager-pad="{mediaListPagerPad + "px"}"
+			aria-label="List of Category of Media"
 		>
 			{#if $categoriesKeys?.length > 0}
 				{#each $categoriesKeys || [] as mainCategory (mainCategory)}
@@ -1325,12 +1348,12 @@
 			{:else}
 				<C.Media.MediaGrid mainCategory="{''}" />
 			{/if}
-		</div>
+		</section>
 	</main>
 
 	<C.Fixed.Categories />
 
-	<C.Media.Fixed.MediaPopup />
+	<C.Fixed.Menu />
 
 	<C.Media.Fixed.MediaOptionsPopup />
 
@@ -1348,20 +1371,20 @@
 
 	{#if shownProgress > 0 && shownProgress < 100}
 		<div
+			role="progressbar"
 			out:fade="{{ duration: 0, delay: 400 }}"
 			on:outrostart="{(e) => {
 				e.target.style.setProperty('--progress', '0%');
 			}}"
-			id="progress"
-			class="{'progress' +
+			class="{'fixed-progress' +
 				(isBelowNav ? ' is-below-absolute-progress' : '')}"
 			style:--progress="{"-" + (100 - shownProgress) + "%"}"
 		></div>
 	{/if}
 
 	{#if $toast}
-		<div 
-			role="progressbar"
+		<div
+			role="alert"
 			class="message-toast"
 			transition:fade="{{ duration: 200 }}"
 		>{$toast}</div>
@@ -1393,11 +1416,11 @@
 		margin: 57px auto 0 !important;
 		max-width: 1140px;
 	}
-	.progress.has-custom-filter-nav,
-	:global(.progress:has(~#nav-container.delayed-full-screen-popup)) {
+	.fixed-progress.has-custom-filter-nav,
+	:global(.fixed-progress:has(~#nav-container.delayed-full-screen-popup)) {
 		position: fixed !important;
 	}
-	.progress {
+	.fixed-progress {
 		background-color: var(--fg-color);
 		position: fixed;
 		top: 0px;
@@ -1450,22 +1473,22 @@
 	}
 
 	@media screen and (max-width: 750px) {
-		.progress {
+		.fixed-progress {
 			position: absolute;
 			height: 1px !important;
 			top: 55px !important;
 			z-index: 1000;
 		}
-		.progress.is-below-absolute-progress {
+		.fixed-progress.is-below-absolute-progress {
 			position: fixed;
 			height: 2px !important;
 			top: 0px !important;
 			z-index: 1003 !important;
 		}
-		#app.android > #progress.is-below-absolute-progress {
+		#app.android > .fixed-progress.is-below-absolute-progress {
 			height: 1px !important;
 		}
-		:global(.progress:has(~ #nav-container.delayed-full-screen-popup:not(.layout-change):not(.hide))) {
+		:global(.fixed-progress:has(~ #nav-container.delayed-full-screen-popup:not(.layout-change):not(.hide))) {
 			height: 1px !important;
 			top: 55px !important;
 			z-index: 1000 !important;

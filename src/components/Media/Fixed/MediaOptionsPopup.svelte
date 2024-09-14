@@ -230,7 +230,7 @@
 {#if $mediaOptionVisible && !$popupVisible && $loadedMediaLists?.[$selectedCategory]}
     <div
         use:loadMediaOption
-        class="media-options"
+        class="fixed-media-options"
         in:fade="{{ duration: 200, easing: sineOut }}"
         out:fade="{{ duration: 200, easing: sineOut }}"
         on:click="{handleMediaOptionVisibility}"
@@ -251,6 +251,8 @@
                     on:click="{handleMediaOptionVisibility}"
                     on:keydown="{(e) =>
                         e.key === 'Enter' && handleMediaOptionVisibility(e)}"
+                    role="button"
+                    aria-label="Close Media Options Popup"
                     ><path
                         fill="#fff"
                         d="m19 6-1-1-6 6-6-6-1 1 6 6-6 6 1 1 6-6 6 6 1-1-6-6Z"
@@ -263,6 +265,8 @@
                 on:click="{openMediaPopup}"
                 on:keydown="{(e) => e.key === 'Enter' && openMediaPopup(e)}"
                 bind:this="{firstActionEl}"
+                role="button"
+                aria-label="Open Detailed Information for the Media"
                 ><h2 class="option-title">Information</h2></span
             >
             <span
@@ -270,6 +274,8 @@
                 class="media-option"
                 on:click="{openInAnilist}"
                 on:keydown="{(e) => e.key === 'Enter' && openInAnilist(e)}"
+                role="button"
+                aria-label="Open in AniList"
                 ><h2 class="option-title">Open in Anilist</h2></span
             >
             <span
@@ -277,6 +283,8 @@
                 class="media-option"
                 on:click="{openInYoutube}"
                 on:keydown="{(e) => e.key === 'Enter' && openInYoutube(e)}"
+                role="button"
+                aria-label="Open Related YouTube Videos"
                 ><h2 class="option-title">Open in YouTube</h2></span
             >
             {#if mediaCopyTitle}
@@ -285,6 +293,8 @@
                     class="media-option"
                     on:click="{copyTitle}"
                     on:keydown="{(e) => e.key === 'Enter' && copyTitle(e)}"
+                    role="button"
+                    aria-label="Copy Title"
                     ><h2 class="option-title">Copy Title</h2></span
                 >
             {/if}
@@ -293,6 +303,8 @@
                 class="media-option"
                 on:click="{handleHideShow}"
                 on:keydown="{(e) => e.key === 'Enter' && handleHideShow(e)}"
+                role="button"
+                aria-label="Hide or Show Media"
                 ><h2 class="option-title">
                     {!$hiddenEntries
                         ? "Please Wait..."
@@ -305,7 +317,7 @@
 {/if}
 
 <style>
-    .media-options {
+    .fixed-media-options {
         transform: translateZ(0);
         position: fixed;
         display: flex;
@@ -323,7 +335,7 @@
         scrollbar-width: none;
     }
 
-    .media-options::-webkit-scrollbar {
+    .fixed-media-options::-webkit-scrollbar {
         display: none;
     }
 

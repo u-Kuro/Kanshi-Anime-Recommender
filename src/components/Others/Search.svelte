@@ -1847,13 +1847,14 @@
     });
 </script>
 
-<div
+<section
     id="controls"
     style:--filters-space="{$showFilterOptions ? "80px" : ""}"
     style:--active-tag-filter-space="{$showFilterOptions ? "auto" : ""}"
     style:--category-settings-space="{$showFilterOptions ? "30px" : ""}"
     style:--close-filters-space="{$showFilterOptions ? "42px" : ""}"
     style:--max-filter-selection-height="{maxFilterSelectionHeight}px"
+    aria-label="List of Control Actions for the App"
 >
     <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
     <div
@@ -1864,19 +1865,21 @@
         style:--save-icon="{$showFilterOptions && editCategoryName && customCategoryName && $categories && !$categories?.[customCategoryName] ? "25px" : ""}"
         on:keyup="{(e) => e.key === 'Enter' && handleCategoryPopup(e)}"
         on:click="{handleCategoryPopup}"
+        role="button"
+        aria-label="Select a Recommendation Category"
     >
         <label class="disable-interaction" for="category-name">
             Search Title
         </label>
         <input
             id="category-name"
-            class={"category"+ ($selectedCategory == null ? " title-and-logo" : "")}
+            class="category"
             type="text"
             autocomplete="off"
             placeholder={$selectedCategory == null ? "Kanshi" : "Category"}
             style:pointer-events="{editCategoryName ? "" : "none"}"
             disabled="{!editCategoryName}"
-            aria-label={$selectedCategory == null ? "Title and Logo" : "Category"}
+            aria-label="Category Name to Add or Edit"
             bind:value="{customCategoryName}"
             on:focusin="{() => window.addHistory?.()}"
         />
@@ -2001,6 +2004,8 @@
                 on:click="{() => handleShowFilterOptions()}"
                 on:keyup="{(e) =>
                     e.key === 'Enter' && handleShowFilterOptions()}"
+                role="button"
+                aria-label="Show Filter Options"
             >
                 <!-- slider -->
                 <path
@@ -2018,6 +2023,7 @@
                 : "1fr"
             : ""}"
         style:--mape-size="{recListMAPE > 0 ? "1fr" : ""}"
+        aria-label="Select a Type of Filter"
     >
         {#if filterCategories?.length}
             <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
@@ -2162,6 +2168,7 @@
         {/if}
     </div>
     <div
+        aria-label="List of Filters"
         class="{'filters' +
             ($showFilterOptions ? '' : ' display-none') +
             ($hasWheel ? ' has-wheel' : '') +
@@ -2706,6 +2713,7 @@
     </div>
     <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
     <div
+        aria-label="List of Active Filters"
         id="active-filters"
         class="{'active-filters' + ($showFilterOptions && activeFilters?.length ? '' : ' display-none')}"
     >
@@ -2813,6 +2821,7 @@
     </div>
     <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
     <div
+        aria-label="Expand/Hide Filter Controls"
         class="{'close-filters' + ($showFilterOptions ? '' : ' display-none')}"
         on:click="{() => handleShowFilterOptions()}"
         on:keyup="{(e) => e.key === 'Enter' && handleShowFilterOptions()}"
@@ -2827,10 +2836,8 @@
             ></path></svg
         >
     </div>
-    <div id="home-status" class="home-status">
-        <span
-            class="data-status"
-        >
+    <div class="status-and-trivia-wrapper" aria-label="Status of Page and Extra Trivia">
+        <span class="status-and-trivia">
             <h2
                 on:click="{() => {
                     getExtraInfo();
@@ -2839,6 +2846,7 @@
                 class="{(!$dataStatus || !$showStatus) && $loadingDataStatus
                     ? ' loading'
                     : ''}"
+                role="status"
             >
                 {#if $showStatus && (
                     $dataStatus 
@@ -2854,7 +2862,7 @@
             </h2>
         </span>
     </div>
-    <search class="search-media-wrap">
+    <search class="search-media-wrap" aria-label="Anime, Manga, Novel">
         <label class="disable-interaction" for="search-media">
             Search Title
         </label>
@@ -2870,7 +2878,6 @@
             on:focusin="{() => window.addHistory?.()}"
         />
     </search>
-
     <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
     <div class="last-filter-option">
         <div
@@ -2878,6 +2885,8 @@
             class="change-grid-view"
             on:click="{handleGridView}"
             on:keyup="{(e) => e.key === 'Enter' && handleGridView()}"
+            role="button"
+            aria-label="Change List View"
         >
             <svg viewBox="{`0 0 ${$gridFullView ? '312' : '512'} 512`}">
                 <path
@@ -2895,6 +2904,8 @@
                 class="refresh-list"
                 on:click="{() => updateList()}"
                 on:keyup="{(e) => e.key === 'Enter' && updateList()}"
+                role="button"
+                aria-label="Reload List"
             >
                 <svg viewBox="0 0 512 512">
                     <path
@@ -2916,6 +2927,8 @@
                     selectedSortElement
                         ? ''
                         : '0'}"
+                    role="button"
+                    aria-label="Change Sort Order"
                 >
                     <path
                         d="{// sortdown
@@ -2934,6 +2947,7 @@
                     on:click="{handleSortFilterPopup}"
                     on:keyup="{(e) =>
                         e.key === 'Enter' && handleSortFilterPopup(e)}"
+                    aria-label="Select Sort Type"
                 >
                     {selectedSortName || ""}
                 </h2>
@@ -3006,7 +3020,7 @@
             <div class="sort-filter skeleton shimmer"></div>
         {/if}
     </div>
-</div>
+</section>
 
 <style>
     ::placeholder {
@@ -3286,7 +3300,7 @@
         display: none;
     }
 
-    .home-status {
+    .status-and-trivia-wrapper {
         display: grid;
         grid-template-columns: 1fr;
         justify-content: space-between;
@@ -3297,33 +3311,33 @@
         margin-top: 10px;
     }
 
-    .home-status .skeleton {
+    .status-and-trivia-wrapper .skeleton {
         height: 18px;
         width: 100px;
     }
 
-    .home-status span {
+    .status-and-trivia-wrapper span {
         margin: 0 10px;
         overflow-x: auto;
         overflow-y: hidden;
         -ms-overflow-style: none;
         scrollbar-width: none;
     }
-    .home-status span::-webkit-scrollbar {
+    .status-and-trivia-wrapper span::-webkit-scrollbar {
         display: none;
     }
 
-    .home-status span h2 {
+    .status-and-trivia-wrapper span h2 {
         white-space: nowrap;
         user-select: none;
     }
 
-    .data-status h2 {
+    .status-and-trivia h2 {
         margin: auto;
         cursor: pointer;
     }
 
-    .data-status h2.loading {
+    .status-and-trivia h2.loading {
         animation: loading-blink 1s ease-in-out infinite;
     }
     .mean-error.loading {

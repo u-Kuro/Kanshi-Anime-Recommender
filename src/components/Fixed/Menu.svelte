@@ -576,38 +576,32 @@
     });
 </script>
 
-<input
-    id="import-file"
-    type="file"
-    style:display="none"
-    accept=".json"
-    bind:this="{importFileInput}"
-    on:change="{importJSONFile}"
-/>
 {#if $menuVisible}
     <div
-        class="menu-container"
+        class="fixed-menu-container"
         on:click="{handleMenuVisibility}"
         on:keyup="{(e) => e.key === 'Enter' && handleMenuVisibility(e)}"
         in:fade="{{ duration: 200, easing: sineOut }}"
         out:fade="{{ duration: 200, easing: sineOut }}"
     >
         <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
-        <div class="menu" 
+        <div class="menu"
             on:touchstart|passive="{menuContainerTouchStart}"
             on:touchmove|passive="{menuContainerTouchMove}"
             on:touchend|passive="{menuContainerTouchEnd}"
             on:touchcancel="{menuContainerTouchCancel}"
             on:scroll="{menuScroll}"
             use:isScrollableMenu
+            role="menu"
         >
             <span class="menu-category">LIST ACTIONS</span>
-            <div class="menu-options">
+            <div class="menu-options" role="group" aria-label="list actions">
                 <div
                     class="option switchable"
                     tabindex="{$menuVisible ? '0' : '-1'}"
                     on:click="{updateList}"
                     on:keyup="{(e) => e.key === 'Enter' && updateList(e)}"
+                    role="menuitem"
                 >
                     <!-- rotate-right -->
                     <svg viewBox="0 0 512 512">
@@ -651,6 +645,7 @@
                     tabindex="{$menuVisible ? '0' : '-1'}"
                     on:click="{showAllHiddenEntries}"
                     on:keyup="{(e) => e.key === 'Enter' && showAllHiddenEntries(e)}"
+                    role="menuitem"
                 >
                     <svg viewBox="0 0 576 512">
                         <path d="M288 32c-81 0-145 37-193 81-46 43-78 95-92 131-4 8-4 16 0 24 14 36 46 88 92 131 48 44 112 81 193 81s146-37 193-81c46-43 78-95 93-131 3-8 3-16 0-24-15-36-47-88-93-131-47-44-112-81-193-81zM144 256a144 144 0 1 1 288 0 144 144 0 1 1-288 0zm144-64a64 64 0 0 1-84 61c-6-2-12 1-12 7l3 21a96 96 0 1 0 97-121c-6 0-9 6-7 12s3 13 3 20z"/>
@@ -659,12 +654,13 @@
                 </div>
             </div>
             <span class="menu-category">BACKUP AND RESTORE</span>
-            <div class="menu-options">
+            <div class="menu-options" role="group" aria-label="backup and restore">
                 <div
                     class="option"
                     tabindex="{$menuVisible ? '0' : '-1'}"
                     on:click="{() => importData(true)}"
                     on:keyup="{(e) => e.key === 'Enter' && importData(true)}"
+                    role="menuitem"
                 >
                     <svg 
                         viewBox="0 0 448 512"
@@ -679,6 +675,7 @@
                     tabindex="{$menuVisible ? '0' : '-1'}"
                     on:click="{exportData}"
                     on:keyup="{(e) => e.key === 'Enter' && exportData(e)}"
+                    role="menuitem"
                 >
                     <svg viewBox="0 0 512 512">
                         <path d="M288 32a32 32 0 1 0-64 0v243l-73-74a32 32 0 0 0-46 46l128 128c13 12 33 12 46 0l128-128a32 32 0 0 0-46-46l-73 74V32zM64 352c-35 0-64 29-64 64v32c0 35 29 64 64 64h384c35 0 64-29 64-64v-32c0-35-29-64-64-64H347l-46 45a64 64 0 0 1-90 0l-45-45H64zm368 56a24 24 0 1 1 0 48 24 24 0 1 1 0-48z"/>
@@ -732,7 +729,7 @@
                 </div>
             </div>
             <span class="menu-category">TOOL CONFIGS</span>
-            <div class="menu-options">
+            <div class="menu-options" role="group" aria-label="tool configs">
                 {#if $android}
                     <div
                         class="option switchable"
@@ -808,12 +805,13 @@
             </div>
             {#if $android}
                 <span class="menu-category">TOOL ACTIONS</span>
-                <div class="menu-options">
+                <div class="menu-options" role="group" aria-label="tool actions">
                     <div
                         class="option"
                         tabindex="{$menuVisible ? '0' : '-1'}"
                         on:keyup="{(e) => e.key === 'Enter' && checkForUpdates(e)}"
                         on:click="{checkForUpdates}"
+                        role="menuitem"
                     >
                         <svg viewBox="0 0 576 512">
                             <path d="M421 302a24 24 0 1 1 24-24 24 24 0 0 1-24 24m-265 0a24 24 0 1 1 24-24 24 24 0 0 1-24 24m273-145 48-83a10 10 0 1 0-17-10l-49 84a301 301 0 0 0-246 0l-49-83a10 10 0 1 0-17 10l48 83A283 283 0 0 0 0 384h576c-8-98-64-182-147-227"/>
@@ -825,6 +823,7 @@
                         tabindex="{$menuVisible ? '0' : '-1'}"
                         on:keyup="{(e) => e.key === 'Enter' && clearCache(e)}"
                         on:click="{clearCache}"
+                        role="menuitem"
                     >
                         <svg
                             viewBox="0 0 448 512"
@@ -837,13 +836,14 @@
                 </div>
             {/if}
             <span class="menu-category">OTHERS</span>
-            <div class="menu-options">
+            <div class="menu-options" role="group" aria-label="other option">
                 {#if $mobile && !$android && (isAndroidWeb || (deferredPrompt && typeof deferredPrompt?.prompt === "function"))}
                     <div
                         class="option"
                         tabindex="{$menuVisible ? '0' : '-1'}"
                         on:click="{() => downloadAndroidApp?.()}"
                         on:keyup="{(e) => e.key === 'Enter' && downloadAndroidApp?.()}"
+                        role="menuitem"
                     >
                         {#if isAndroidWeb}
                             <svg viewBox="0 0 576 512">
@@ -867,6 +867,7 @@
                     tabindex="{$menuVisible ? '0' : '-1'}"
                     on:click="{anilistSignup}"
                     on:keyup="{(e) => e.key === 'Enter' && anilistSignup(e)}"
+                    role="menuitem"
                 >
                     <svg viewBox="0 0 640 512">
                         <path d="M96 128a128 128 0 1 1 256 0 128 128 0 1 1-256 0zM0 482c0-98 80-178 178-178h92c98 0 178 80 178 178 0 17-13 30-30 30H30c-17 0-30-13-30-30zm504-170v-64h-64a24 24 0 1 1 0-48h64v-64a24 24 0 1 1 48 0v64h64a24 24 0 1 1 0 48h-64v64a24 24 0 1 1-48 0z"/>
@@ -878,6 +879,7 @@
                     tabindex="{$menuVisible ? '0' : '-1'}"
                     on:keyup="{(e) => e.key === 'Enter' && showNotice(e)}"
                     on:click="{showNotice}"
+                    role="menuitem"
                 >
                     <svg viewBox="0 0 512 512">
                         <path d="M256 32c14 0 27 8 35 20l216 368a40 40 0 0 1-35 60H40a40 40 0 0 1-34-60L222 52c7-12 20-20 34-20zm0 128c-13 0-24 11-24 24v112a24 24 0 1 0 48 0V184c0-13-11-24-24-24zm32 224a32 32 0 1 0-64 0 32 32 0 1 0 64 0z"/>
@@ -888,6 +890,15 @@
         </div>
     </div>
 {/if}
+
+<input
+    aria-hidden="true"
+    type="file"
+    style:display="none"
+    accept=".json"
+    bind:this="{importFileInput}"
+    on:change="{importJSONFile}"
+/>
 
 {#if $menuVisible && menuIsGoingBack}
     <div
@@ -907,7 +918,7 @@
 {/if}
 
 <style>
-    .menu-container {
+    .fixed-menu-container {
         transform: translateZ(0);
         position: fixed;
         top: 56px;
@@ -917,7 +928,7 @@
         color: var(--fg-color);
         z-index: 998;
     }
-    :global(#app.max-window-height.popup-visible .menu-container) {
+    :global(#app.max-window-height.popup-visible .fixed-menu-container) {
         touch-action: none;
     }
     .menu {
@@ -1127,7 +1138,7 @@
     }
 
     @media screen and (min-width: 750px) {
-        .menu-container {
+        .fixed-menu-container {
             height: 100% !important;
             top: 0 !important;
             z-index: 992 !important;

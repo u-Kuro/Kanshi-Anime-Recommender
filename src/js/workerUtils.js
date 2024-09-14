@@ -77,7 +77,7 @@ let initMediaLoaderWorker
 const initMediaLoader = async () => {
     try {
         if (initMediaLoaderWorker === false) return;
-        initMediaLoaderWorker = new Worker(await cacheRequest("./webapi/worker/initalMediaLoader.js", 23278, "Checking initial List"))
+        initMediaLoaderWorker = new Worker(await cacheRequest("./webapi/worker/initalMediaLoader.js", 1012745, "Checking Initial List"))
         initMediaLoaderWorker.onmessage = async ({ data }) => {
             if (hasOwnProp.call(data, "media")) {
                 const media = data.media
@@ -127,7 +127,7 @@ const initMediaLoader = async () => {
 let mediaLoaderWorker, mediaLoaderWorkerPromise, mediaLoaderPromises = {};
 function getMediaLoaderWorker() {
     mediaLoaderWorkerPromise = new Promise(async (resolve) => {
-        resolve(new Worker(await cacheRequest("./webapi/worker/mediaLoader.js", 1012745, "Checking existing List")))
+        resolve(new Worker(await cacheRequest("./webapi/worker/mediaLoader.js", 23278, "Checking Existing List")))
         mediaLoaderWorkerPromise = null
     })
     return mediaLoaderWorkerPromise
@@ -467,7 +467,7 @@ const mediaManager = (_data = {}) => {
         }
 
         progress.set(0)
-        cacheRequest("./webapi/worker/mediaManager.js", 54981, "Updating the List")
+        cacheRequest("./webapi/worker/mediaManager.js", 54981, "Updating Categories and List")
             .then(url => {
                 if (mediaManagerWorkerTimeout) clearTimeout(mediaManagerWorkerTimeout);
                 mediaManagerWorker?.terminate?.()
@@ -785,7 +785,9 @@ function notifyUpdatedMediaNotification() {
 }
 window.notifyUpdatedMediaNotification = notifyUpdatedMediaNotification
 const requestMediaEntries = (_data = {}) => {
-    if (get(initList) !== false) return
+    if (get(initList) !== false && !_data?.initList) {
+        return
+    }
     return new Promise((resolve, reject) => {
         if (isRequestingMediaEntries) {
             resolve()
@@ -941,6 +943,9 @@ const requestMediaEntries = (_data = {}) => {
 let isRequestingNewUser
 let requestUserEntriesTerminateTimeout, requestUserEntriesWorker;
 const requestUserEntries = (_data = {}) => {
+    if (get(initList) !== false && !_data?.initList) {
+        return
+    }
     return new Promise((resolve, reject) => {
         if (_data?.username) {
             isRequestingNewUser = true
@@ -1077,7 +1082,9 @@ window.isExported = (success = true) => {
     }
 }
 const exportUserData = (_data) => {
-    if (get(initList) !== false) return
+    if (get(initList) !== false && !_data?.initList) {
+        return
+    }
     return new Promise((resolve, reject) => {
         if (get(isExporting) && _data?.visibilityChange) {
             resolve()
@@ -1614,11 +1621,11 @@ const saveIDBdata = (_data, name, isImportant = false) => {
 const getMediaEntries = (_data) => {
     return new Promise((resolve, reject) => {
         progress.set(0)
-        cacheRequest("./webapi/worker/getEntries.js", 282273, "Checking Media, Manga, and Novel Entries")
+        cacheRequest("./webapi/worker/getEntries.js", 282273, "Checking Anime, Manga, and Novel Entries")
             .then(async workerUrl => {
                 let worker = new Worker(workerUrl)
                 if (get(android)) {
-                    worker.postMessage({ entriesBlob: await cacheRequest("./webapi/worker/entries.json", 174425636, "Getting Media, Manga, and Novel Entries", true) })
+                    worker.postMessage({ entriesBlob: await cacheRequest("./webapi/worker/entries.json", 174425636, "Getting Anime, Manga, and Novel Entries", true) })
                 } else {
                     let server
                     if (window.location != null) {

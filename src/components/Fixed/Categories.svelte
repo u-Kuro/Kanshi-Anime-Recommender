@@ -288,7 +288,7 @@
 
 <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
 <div
-    class="{'categories-nav' +
+    class="{'bottom-nav-container' +
         (categoriesNavVisible ? '' : ' hide') +
         (immediateCustomFilNavChange ? ' immediate' : '') +
         ($android ? ' android' : '')}"
@@ -302,6 +302,7 @@
         on:wheel="{(e) => {
             horizontalWheel(e, 'nav');
         }}"
+        aria-label="Select a category"
     >
         <div
             class="selected-category-indicator"
@@ -318,6 +319,8 @@
                 data-category="{categoryName}"
                 class="{'category' +
                     (categoryName === $selectedCategory ? ' selected' : '')}"
+                role="button"
+                aria-label="category"
                 >{trimAllEmptyChar(categoryName) || ""}
             </span>
         {/each}
@@ -328,6 +331,7 @@
         on:keyup="{(e) => {
             e.key === 'Enter' && goToNextPrevCategory(e, false);
         }}"
+        aria-label="Select Previous Category"
     ></div>
     <div
         class="next-category"
@@ -335,6 +339,7 @@
         on:keyup="{(e) => {
             e.key === 'Enter' && goToNextPrevCategory(true);
         }}"
+        aria-label="Select Next Category"
     ></div>
 </div>
 
@@ -343,10 +348,10 @@
         --min-height: unset;
         min-height: var(--min-height);
     }
-    .categories-nav.hide {
+    .bottom-nav-container.hide {
         opacity: 0 !important;
     }
-    .categories-nav {
+    .bottom-nav-container {
         z-index: 991;
         position: fixed;
         bottom: 0px;
@@ -358,7 +363,7 @@
         opacity: 1;
         transition: opacity 0.2s ease-out;
     }
-    .categories-nav.immediate {
+    .bottom-nav-container.immediate {
         transition: unset !important;
     }
     .nav {
@@ -436,7 +441,7 @@
         letter-spacing: 0.2ch;
         cursor: pointer;
     }
-    .categories-nav .category {
+    .bottom-nav-container .category {
         font-size: 12px !important;
         letter-spacing: unset !important;
     }

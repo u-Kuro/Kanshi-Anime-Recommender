@@ -82,6 +82,12 @@
         }
     }
 
+    function getTextFromHTML(htmlString) {
+        const tempElement = document.createElement('div');
+        tempElement.innerHTML = htmlString;
+        return tempElement.textContent || tempElement.innerText;
+    }
+
     window.addEventListener("keydown", (e) => {
         if (shouldNotDispatch == null) {
             let element = e?.target;
@@ -115,21 +121,24 @@
 </script>
 
 {#if showConfirm}
+    {@const title = shouldShowPleaseWait ? "Initializing resources" : confirmTitle}
+    {@const text = shouldShowPleaseWait ? "Please wait a moment..." : confirmText}
     <div
-        class="confirm"
+        class="fixed-confirm-dialog"
         on:click="{handleConfirmVisibility}"
         on:touchend|passive="{handleConfirmVisibility}"
         on:keydown="{(e) => e.key === 'Enter' && handleConfirmVisibility(e)}"
         in:fade="{{ duration: 200, easing: sineOut }}"
         out:fade="{{ duration: 200, easing: sineOut }}"
+        role="alertdialog" 
+        aria-labelledby={title}
+        aria-describedby={getTextFromHTML(text)}
     >
         <div class="confirm-wrapper">
             <div class="confirm-container">
                 <div class="confirm-title-wrapper">
                     <h2 class="confirm-title">
-                        {shouldShowPleaseWait
-                            ? "Initializing resources"
-                            : confirmTitle}
+                        {title}
                     </h2>
                 </div>
                 <div
@@ -137,9 +146,7 @@
                     use:isScrollableConfirmContainer
                 >
                     <h2 class="confirm-text">
-                        {@html shouldShowPleaseWait
-                            ? "Please wait a moment..."
-                            : confirmText}
+                        {@html text}
                     </h2>
                 </div>
                 <div class="confirm-button-container">
@@ -167,7 +174,7 @@
 {/if}
 
 <style>
-    .confirm {
+    .fixed-confirm-dialog {
         position: fixed;
         z-index: 1002;
         left: 0;
@@ -184,11 +191,11 @@
         transform: translateZ(0);
     }
 
-    .confirm::-webkit-scrollbar {
+    .fixed-confirm-dialog::-webkit-scrollbar {
         display: none;
     }
 
-    :global(#app.max-window-height.popup-visible .confirm) {
+    :global(#app.max-window-height.popup-visible .fixed-confirm-dialog) {
         touch-action: none;
     }
 

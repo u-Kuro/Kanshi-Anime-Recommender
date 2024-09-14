@@ -151,7 +151,7 @@
         }
     }
 
-    async function handleMoreVideos(titles, format, askFirst) {
+    function getYoutubeRelatedLink(titles, format) {
         let youtubeSearchTitle, hasMoreThanOne, ytTitles = {}
         try {
             for (let key of ["english", "romaji", "native"]) {
@@ -170,23 +170,8 @@
         if (hasMoreThanOne) {
             youtubeSearchTitle = `(${youtubeSearchTitle})`
         }
-        if (
-            askFirst
-            && !(await $confirmPromise({
-                title: "See related videos",
-                text: "Do you want to see more related videos in YouTube?",
-                isImportant: true,
-            }))
-        ) {
-            return
-        }
-        let mediaType = format === "Manga" || format === "One Shot" || format === "Novel" ? format : "Anime"
-        window.open(
-            `https://www.youtube.com/results?search_query=${encodeURIComponent(
-                youtubeSearchTitle + " " + mediaType,
-            )}`,
-            "_blank",
-        );
+        const mediaType = format === "Manga" || format === "One Shot" || format === "Novel" ? format : "Anime"
+        return `https://www.youtube.com/results?search_query=${encodeURIComponent(youtubeSearchTitle + " " + mediaType)}`
     }
 
     function openInAnilist(mediaUrl) {
@@ -855,9 +840,8 @@
     async function openMoreInfo(
         mediaID, 
         trailerID, 
-        image, 
-        title, 
-        format
+        image,
+        youtubeRelatedLink,
     ) {
         if (image) {
             fullImagePopup = image;
@@ -870,19 +854,19 @@
                     isImportant: true,
                 })
             ) {
-                openTrailer(trailerID)
+                window.open(
+                    `https://www.youtube.com/watch?v=${trailerID}`,
+                    "_blank",
+                );
             }
         } else {
-            handleMoreVideos(title, format, true);
-        }
-    }
-
-    function openTrailer(trailerID) {
-        if (trailerID) {
-            window.open(
-                `https://www.youtube.com/watch?v=${trailerID}`,
-                "_blank",
-            );
+            if (youtubeRelatedLink && await $confirmPromise({
+                title: "See related videos",
+                text: "Do you want to see more related videos in YouTube?",
+                isImportant: true,
+            })) {
+                window.open(youtubeRelatedLink);
+            }
         }
     }
 
@@ -1673,7 +1657,7 @@
     bind:this="{popupWrapper}"
     tabindex="{!$menuVisible && $popupVisible ? '0' : '-1'}"
 >
-    <div
+    <section
         id="popup-container"
         class="popup-container hide"
         bind:this="{popupContainer}"
@@ -1685,6 +1669,7 @@
         on:pointerup="{popupContainerPointerEnd}"
         on:pointercancel="{popupContainerPointerEnd}"
         on:scroll="{popupScroll}"
+        aria-label="Detailed Information View for Media"
     >
         {#if $loadedMediaLists}
             {@const mediaList = $loadedMediaLists[$selectedCategory]?.mediaList}
@@ -1694,11 +1679,11 @@
                         {@const format = media.format}
                         {@const isManga = format === "Manga" || format === "One Shot"}
                         {@const isNovel = format === "Novel"}
+                        {@const youtubeRelatedLink = getYoutubeRelatedLink(media.title, media.format)}
                         <div class="popup-main" use:popupMainEl>
                             <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                             <div
-                                class="{'popup-header ' +
-                                    (media.trailerID ? 'loader' : '')}"
+                                class="{'popup-header ' + (media.trailerID ? 'loader' : '')}"
                                 bind:this="{media.popupHeader}"
                                 tabindex="{!$menuVisible && $popupVisible
                                     ? '0'
@@ -1709,8 +1694,7 @@
                                         media.id,
                                         media.trailerID,
                                         media.bannerImageUrl || media.trailerThumbnailUrl,
-                                        media.title,
-                                        media.format,
+                                        youtubeRelatedLink
                                     )
                                 }}"
                                 on:keyup="{(e) => {
@@ -1720,13 +1704,12 @@
                                             media.id,
                                             media.trailerID,
                                             media.bannerImageUrl || media.trailerThumbnailUrl,
-                                            media.title,
-                                            media.format,
+                                            youtubeRelatedLink
                                         )
                                     }
                                 }}"
                             >
-                                <div class="popup-header-loading">
+                                <div class="popup-header-loading" aria-hidden="true">
                                     <!-- k icon -->
                                     <svg viewBox="0 0 320 512">
                                         <path
@@ -1805,7 +1788,7 @@
                                                 bind:checked="{$autoPlay}"
                                             />
                                             <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
-                                            <span class="slider round"></span>
+                                            <span class="slider round" aria-hidden="true"></span>
                                         </label>
                                         <h3
                                             class="auto-play-label"
@@ -1833,6 +1816,8 @@
                                             on:keyup="{(e) =>
                                                 e.key === 'Enter' &&
                                                 updateList()}"
+                                            role="button"
+                                            aria-label="Reload List"
                                         >
                                             <!-- arrows rotate -->
                                             <svg
@@ -1854,22 +1839,14 @@
                                     {/if}
                                     {#if media.trailerID && failingTrailers[media.id]}
                                         <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
-                                        <div
+                                        <a
                                             class="icon-button"
-                                            tabindex="{!$menuVisible &&
-                                            $popupVisible
-                                                ? '0'
-                                                : '-1'}"
-                                            on:click="{() => {
-                                                if (!$popupVisible) return;
-                                                openTrailer(media.trailerID)
-                                            }}"
-                                            on:keyup="{(e) => {
-                                                if (!$popupVisible) return;
-                                                if (e.key === 'Enter') {
-                                                    openTrailer(media.trailerID)
-                                                }
-                                            }}"
+                                            tabindex="{!$menuVisible && $popupVisible ? '0' : '-1'}"
+                                            rel="noopener noreferrer"
+                                            target="_blank"
+                                            href="{`https://www.youtube.com/watch?v=${media.trailerID}`}"
+                                            role="button"
+                                            aria-label="Open Trailer"
                                         >
                                             <!-- youtube logo -->
                                             <svg viewBox="0 0 576 512" class="yt-small-icon">
@@ -1878,41 +1855,49 @@
                                                 ></path>
                                             </svg>
                                             <h3 class="small-icon-label">Trailer</h3>
-                                        </div>
-                                    {:else if media.bannerImageUrl || media.trailerThumbnailUrl}
+                                        </a>
+                                    {:else}
                                         <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
-                                        <div
-                                            class="icon-button"
-                                            tabindex="{!$menuVisible &&
-                                            $popupVisible
-                                                ? '0'
-                                                : '-1'}"
-                                            on:click="{() => {
-                                                if (!$popupVisible) return;
-                                                showFullScreenImage(media.bannerImageUrl || media.trailerThumbnailUrl)
-                                            }}"
-                                            on:keyup="{(e) => {
-                                                if (!$popupVisible) return;
-                                                if (e.key === 'Enter') {
+                                        {#if $webCrawler && media.trailerID}
+                                            <a class="trailer-link" href="{`https://www.youtube.com/watch?v=${media.trailerID}`}">Trailer</a>
+                                        {/if}
+                                        {#if media.bannerImageUrl || media.trailerThumbnailUrl}
+                                            
+                                            <div
+                                                class="icon-button"
+                                                tabindex="{!$menuVisible &&
+                                                $popupVisible
+                                                    ? '0'
+                                                    : '-1'}"
+                                                on:click="{() => {
+                                                    if (!$popupVisible) return;
                                                     showFullScreenImage(media.bannerImageUrl || media.trailerThumbnailUrl)
-                                                }
-                                            }}"
-                                        >
-                                            <!-- image icon -->
-                                            <svg
-                                                viewBox="0 0 512 512"
-                                                class="small-icon"
+                                                }}"
+                                                on:keyup="{(e) => {
+                                                    if (!$popupVisible) return;
+                                                    if (e.key === 'Enter') {
+                                                        showFullScreenImage(media.bannerImageUrl || media.trailerThumbnailUrl)
+                                                    }
+                                                }}"
+                                                role="button"
+                                                aria-label="Open Banner or Thumbnail"
                                             >
-                                                <path
-                                                    d="M0 96c0-35 29-64 64-64h384c35 0 64 29 64 64v320c0 35-29 64-64 64H64c-35 0-64-29-64-64V96zm324 107a24 24 0 0 0-40 0l-87 127-26-33a24 24 0 0 0-37 0l-65 80a24 24 0 0 0 19 39h336c9 0 17-5 21-13s4-17-1-25L324 204zm-212-11a48 48 0 1 0 0-96 48 48 0 1 0 0 96z"
-                                                ></path>
-                                            </svg>
-                                            <h3 class="small-icon-label">
-                                                {media.bannerImageUrl
-                                                    ? "Banner"
-                                                    : "Thumbnail"}
-                                            </h3>
-                                        </div>
+                                                <!-- image icon -->
+                                                <svg
+                                                    viewBox="0 0 512 512"
+                                                    class="small-icon"
+                                                >
+                                                    <path
+                                                        d="M0 96c0-35 29-64 64-64h384c35 0 64 29 64 64v320c0 35-29 64-64 64H64c-35 0-64-29-64-64V96zm324 107a24 24 0 0 0-40 0l-87 127-26-33a24 24 0 0 0-37 0l-65 80a24 24 0 0 0 19 39h336c9 0 17-5 21-13s4-17-1-25L324 204zm-212-11a48 48 0 1 0 0-96 48 48 0 1 0 0 96z"
+                                                    ></path>
+                                                </svg>
+                                                <h3 class="small-icon-label">
+                                                    {media.bannerImageUrl
+                                                        ? "Banner"
+                                                        : "Thumbnail"}
+                                                </h3>
+                                            </div>
+                                        {/if}
                                     {/if}
                                 </div>
                                 <div class="popup-info">
@@ -1924,29 +1909,17 @@
                                         on:scroll="{itemScroll}"
                                     >
                                         <a
-                                            tabindex="{!$menuVisible &&
-                                            $popupVisible
-                                                ? ''
-                                                : '-1'}"
-                                            rel="{media.mediaUrl
-                                                ? 'noopener noreferrer'
-                                                : ''}"
-                                            target="{media.mediaUrl
-                                                ? '_blank'
-                                                : ''}"
-                                            href="{media.mediaUrl ||
-                                                'javascript:void(0)'}"
-                                            class="{media?.contentCautionColor +
-                                                '-color media-title copy'}"
+                                            tabindex="{!$menuVisible && $popupVisible ? '' : '-1'}"
+                                            rel="{media.mediaUrl ? 'noopener noreferrer' : ''}"
+                                            target="{media.mediaUrl ? '_blank' : ''}"
+                                            href="{media.mediaUrl || 'javascript:void(0)'}"
+                                            class="{media?.contentCautionColor + '-color media-title copy'}"
                                             title="{media?.shownTitle || ''}"
-                                            data-copy="{media?.shownTitle ||
-                                                ''}"
-                                            data-secondcopy="{media?.copiedTitle ||
-                                                ''}"
-                                            style:overflow="{$popupIsGoingBack
-                                                ? "hidden"
-                                                : ""}"
+                                            data-copy="{media?.shownTitle || ''}"
+                                            data-secondcopy="{media?.copiedTitle || ''}"
+                                            style:overflow="{$popupIsGoingBack ? "hidden" : ""}"
                                             on:scroll="{itemScroll}"
+                                            aria-label="Open in AniList"
                                         >
                                             {media?.shownTitle || "N/A"}
                                         </a>
@@ -2058,136 +2031,66 @@
                                     </div>
                                     <div
                                         class="info-status"
-                                        style:overflow="{$popupIsGoingBack
-                                            ? "hidden"
-                                            : ""}"
+                                        style:overflow="{$popupIsGoingBack ? "hidden" : ""}"
                                         on:scroll="{itemScroll}"
                                     >
-                                        <h4>
-                                            <a
-                                                tabindex="-1"
-                                                rel="{media.mediaUrl
-                                                    ? 'noopener noreferrer'
-                                                    : ''}"
-                                                target="{media.mediaUrl
-                                                    ? '_blank'
-                                                    : ''}"
-                                                href="{media.mediaUrl ||
-                                                    'javascript:void(0)'}"
-                                                ><span
-                                                    class="{
-                                                        media?.userStatusColor
-                                                        ? media.userStatusColor+'-color' : ''}"
-                                                    >{media.userStatus ||
-                                                        "N/A"}</span
-                                                >
-                                                {#if true}
-                                                    {@const isFinishedAiring = media.status === "Finished"}
-                                                    {@const userStatus = media.userStatus}
-                                                    {#if userStatus === "Current"
-                                                      || userStatus === "Planning"
-                                                      || userStatus === "Paused"
-                                                      || userStatus === "Repeating"
-                                                    }
-                                                        {@const nextAiringEpisode =
-                                                            media.nextAiringEpisode}
-                                                        {@const nextEpisode =
-                                                            nextAiringEpisode?.episode}
-                                                        {@const airingAt =
-                                                            nextAiringEpisode?.airingAt *
-                                                            1000}
-                                                        {#if !isManga && !isNovel && ((airingAt > 0 && nextEpisode > 0) || media.episodes > 0)}
-                                                            {@const nextEpisodeIsAired =
-                                                                airingAt <=
-                                                                new Date().getTime()}
-                                                            {@const releasedEps =
-                                                                nextEpisode > 0 &&
-                                                                !isFinishedAiring
-                                                                    ? (nextEpisodeIsAired
-                                                                        ? nextEpisode
-                                                                        : nextEpisode -
-                                                                          1)
-                                                                    : (isFinishedAiring
-                                                                      ? media.episodes
-                                                                      : null)}
-                                                            {@const epsWatched =
-                                                                media.episodeProgress > 0
-                                                                    ? media.episodeProgress
-                                                                    : 0}
-                                                            {@const epsBehind =
-                                                                parseInt(
-                                                                    releasedEps,
-                                                                ) -
-                                                                parseInt(
-                                                                    epsWatched,
-                                                                )}
-                                                            {#if epsBehind >= 1}{" · "}
-                                                                <span
-                                                                    style:color="{"hsl(var(--ac-color))"}"
-                                                                    >{`${epsBehind} Ep${epsBehind > 1 ? "s" : ""} Behind`}</span
-                                                                >
-                                                            {/if}
-                                                        {:else if isFinishedAiring && (media.chapters > 0 || media.volumes > 0)}
-                                                            {#if isNovel}
-                                                                {#if media.volumes > 0}
-                                                                    {@const volSeen =
-                                                                        media.volumeProgress >
-                                                                        0
-                                                                            ? media.volumeProgress
-                                                                            : 0}
-                                                                    {@const volBehind =
-                                                                        parseInt(
-                                                                            media.volumes,
-                                                                        ) -
-                                                                        parseInt(
-                                                                            volSeen,
-                                                                        )}
-                                                                    {#if volBehind >= 1}{" · "}
-                                                                        <span
-                                                                            style:color="{"hsl(var(--ac-color))"}"
-                                                                            >{`${volBehind} Vol${volBehind > 1 ? "s" : ""} Behind`}</span
-                                                                        >
-                                                                    {/if}
-                                                                {:else}
-                                                                    {@const chapSeen =
-                                                                        media.episodeProgress >
-                                                                        0
-                                                                            ? media.episodeProgress
-                                                                            : 0}
-                                                                    {@const chapBehind =
-                                                                        parseInt(
-                                                                            media.chapters,
-                                                                        ) -
-                                                                        parseInt(
-                                                                            chapSeen,
-                                                                        )}
-                                                                    {#if chapBehind >= 1}{" · "}
-                                                                        <span
-                                                                            style:color="{"hsl(var(--ac-color))"}"
-                                                                            >{`${chapBehind} Ch${chapBehind > 1 ? "s" : ""} Behind`}</span
-                                                                        >
-                                                                    {/if}
-                                                                {/if}
-                                                            {:else if media.chapters > 0}
-                                                                {@const chapSeen =
-                                                                    media.episodeProgress >
-                                                                    0
-                                                                        ? media.episodeProgress
-                                                                        : 0}
-                                                                {@const chapBehind =
-                                                                    parseInt(
-                                                                        media.chapters,
-                                                                    ) -
-                                                                    parseInt(
-                                                                        chapSeen,
-                                                                    )}
-                                                                {#if chapBehind >= 1}{" · "}
-                                                                    <span
-                                                                        style:color="{"hsl(var(--ac-color))"}"
-                                                                        >{`${chapBehind} Ch${chapBehind > 1 ? "s" : ""} Behind`}</span
-                                                                    >
-                                                                {/if}
-                                                            {:else}
+                                        <h4
+                                            on:click="{() => openInAnilist(media.mediaUrl)}"
+                                            on:keyup="{(e) => e.key === 'Enter' && openInAnilist(media.mediaUrl)}"
+                                            aria-label="Open in AniList"
+                                        >
+                                            <span class="{media?.userStatusColor ? media.userStatusColor+'-color' : ''}">
+                                                {media.userStatus || "N/A"}
+                                            </span>
+                                            {#if true}
+                                                {@const isFinishedAiring = media.status === "Finished"}
+                                                {@const userStatus = media.userStatus}
+                                                {#if userStatus === "Current"
+                                                    || userStatus === "Planning"
+                                                    || userStatus === "Paused"
+                                                    || userStatus === "Repeating"
+                                                }
+                                                    {@const nextAiringEpisode =
+                                                        media.nextAiringEpisode}
+                                                    {@const nextEpisode =
+                                                        nextAiringEpisode?.episode}
+                                                    {@const airingAt =
+                                                        nextAiringEpisode?.airingAt *
+                                                        1000}
+                                                    {#if !isManga && !isNovel && ((airingAt > 0 && nextEpisode > 0) || media.episodes > 0)}
+                                                        {@const nextEpisodeIsAired =
+                                                            airingAt <=
+                                                            new Date().getTime()}
+                                                        {@const releasedEps =
+                                                            nextEpisode > 0 &&
+                                                            !isFinishedAiring
+                                                                ? (nextEpisodeIsAired
+                                                                    ? nextEpisode
+                                                                    : nextEpisode -
+                                                                        1)
+                                                                : (isFinishedAiring
+                                                                    ? media.episodes
+                                                                    : null)}
+                                                        {@const epsWatched =
+                                                            media.episodeProgress > 0
+                                                                ? media.episodeProgress
+                                                                : 0}
+                                                        {@const epsBehind =
+                                                            parseInt(
+                                                                releasedEps,
+                                                            ) -
+                                                            parseInt(
+                                                                epsWatched,
+                                                            )}
+                                                        {#if epsBehind >= 1}{" · "}
+                                                            <span
+                                                                style:color="{"hsl(var(--ac-color))"}"
+                                                                >{`${epsBehind} Ep${epsBehind > 1 ? "s" : ""} Behind`}</span
+                                                            >
+                                                        {/if}
+                                                    {:else if isFinishedAiring && (media.chapters > 0 || media.volumes > 0)}
+                                                        {#if isNovel}
+                                                            {#if media.volumes > 0}
                                                                 {@const volSeen =
                                                                     media.volumeProgress >
                                                                     0
@@ -2206,21 +2109,78 @@
                                                                         >{`${volBehind} Vol${volBehind > 1 ? "s" : ""} Behind`}</span
                                                                     >
                                                                 {/if}
+                                                            {:else}
+                                                                {@const chapSeen =
+                                                                    media.episodeProgress >
+                                                                    0
+                                                                        ? media.episodeProgress
+                                                                        : 0}
+                                                                {@const chapBehind =
+                                                                    parseInt(
+                                                                        media.chapters,
+                                                                    ) -
+                                                                    parseInt(
+                                                                        chapSeen,
+                                                                    )}
+                                                                {#if chapBehind >= 1}{" · "}
+                                                                    <span
+                                                                        style:color="{"hsl(var(--ac-color))"}"
+                                                                        >{`${chapBehind} Ch${chapBehind > 1 ? "s" : ""} Behind`}</span
+                                                                    >
+                                                                {/if}
+                                                            {/if}
+                                                        {:else if media.chapters > 0}
+                                                            {@const chapSeen =
+                                                                media.episodeProgress >
+                                                                0
+                                                                    ? media.episodeProgress
+                                                                    : 0}
+                                                            {@const chapBehind =
+                                                                parseInt(
+                                                                    media.chapters,
+                                                                ) -
+                                                                parseInt(
+                                                                    chapSeen,
+                                                                )}
+                                                            {#if chapBehind >= 1}{" · "}
+                                                                <span
+                                                                    style:color="{"hsl(var(--ac-color))"}"
+                                                                    >{`${chapBehind} Ch${chapBehind > 1 ? "s" : ""} Behind`}</span
+                                                                >
+                                                            {/if}
+                                                        {:else}
+                                                            {@const volSeen =
+                                                                media.volumeProgress >
+                                                                0
+                                                                    ? media.volumeProgress
+                                                                    : 0}
+                                                            {@const volBehind =
+                                                                parseInt(
+                                                                    media.volumes,
+                                                                ) -
+                                                                parseInt(
+                                                                    volSeen,
+                                                                )}
+                                                            {#if volBehind >= 1}{" · "}
+                                                                <span
+                                                                    style:color="{"hsl(var(--ac-color))"}"
+                                                                    >{`${volBehind} Vol${volBehind > 1 ? "s" : ""} Behind`}</span
+                                                                >
                                                             {/if}
                                                         {/if}
                                                     {/if}
                                                 {/if}
-                                                {#if media.userScore != null}
-                                                    {" · "}
-                                                    <!-- star regular -->
-                                                    <svg viewBox="0 0 576 512"
-                                                        ><path
-                                                            d="M288 0c9 0 17 5 21 14l69 141 153 22c9 2 17 8 20 17s0 18-6 24L434 328l26 156c1 9-2 18-10 24s-17 6-25 1l-137-73-137 73c-8 4-18 4-25-2s-11-14-10-23l26-156L31 218a24 24 0 0 1 14-41l153-22 68-141c4-9 13-14 22-14zm0 79-53 108c-3 7-10 12-18 13L99 219l86 85c5 6 8 13 7 21l-21 120 106-57c7-3 15-3 22 1l105 56-20-120c-1-8 1-15 7-21l86-85-118-17c-8-2-15-7-18-14L288 79z"
-                                                        ></path></svg
-                                                    >
-                                                    {media.userScore}
-                                                {/if}
-                                            </a>
+                                            {/if}
+                                            {#if media.userScore != null}
+                                                {" · "}
+                                                <!-- star regular -->
+                                                <svg viewBox="0 0 576 512"
+                                                    ><path
+                                                        d="M288 0c9 0 17 5 21 14l69 141 153 22c9 2 17 8 20 17s0 18-6 24L434 328l26 156c1 9-2 18-10 24s-17 6-25 1l-137-73-137 73c-8 4-18 4-25-2s-11-14-10-23l26-156L31 218a24 24 0 0 1 14-41l153-22 68-141c4-9 13-14 22-14zm0 79-53 108c-3 7-10 12-18 13L99 219l86 85c5 6 8 13 7 21l-21 120 106-57c7-3 15-3 22 1l105 56-20-120c-1-8 1-15 7-21l86-85-118-17c-8-2-15-7-18-14L288 79z"
+                                                    ></path></svg
+                                                >
+                                                {media.userScore}
+                                            {/if}
                                         </h4>
                                         {#if !isManga && !isNovel && media?.nextAiringEpisode && media?.status !== "Finished"}
                                             {@const nextAiringEpisode =
@@ -2306,6 +2266,7 @@
                                                                 ?.studio
                                                                 ?.studioUrl ||
                                                                 'javascript:void(0)'}"
+                                                            aria-label="Open Studio in AniList"
                                                         >
                                                             {studios?.studio
                                                                 ?.studioName ||
@@ -2378,6 +2339,8 @@
                                                             class="{tags?.tagColor
                                                                 ? `${tags?.tagColor}-color`
                                                                 : ''}"
+                                                            role="button"
+                                                            aria-label="Open Tag Description"
                                                             >{@html tags?.tag ||
                                                                 "N/A"}
                                                         </span>
@@ -2441,6 +2404,7 @@
                                                         )
                                                     }
                                                 }}"
+                                                aria-label="Open Cover Image"
                                             />
                                         {/key}
                                         {#if media?.description}
@@ -2462,6 +2426,8 @@
                                                         showFullScreenEditedHTMLInfo(editedHTMLString);
                                                     }
                                                 }}"
+                                                role="button"
+                                                aria-label="Open Media Synopsis"
                                             >
                                                 <div
                                                     class="media-description"
@@ -2500,6 +2466,7 @@
                                             e.stopImmediatePropagation();
                                         }
                                     }}"
+                                    aria-label="Hide or Show Media"
                                 >
                                     <!-- circle minus -->
                                     <svg class="hide-show" viewBox="0 0 512 512"
@@ -2516,46 +2483,29 @@
                                         Loading...
                                     {/if}
                                 </button>
-                                <button
-                                    tabindex="{!$menuVisible && $popupVisible
-                                        ? ''
-                                        : '-1'}"
+                                <a
+                                    tabindex="{!$menuVisible && $popupVisible ? '' : '-1'}"
                                     class="more-videos"
-                                    style:overflow="{$popupIsGoingBack
-                                        ? "hidden"
-                                        : ""}"
-                                    on:click="{handleMoreVideos(
-                                        media.title,
-                                        media.format,
-                                    )}"
-                                    on:keyup="{(e) =>
-                                        e.key === 'Enter' &&
-                                        handleMoreVideos(
-                                            media.title,
-                                            media.format,
-                                        )}"
+                                    style:overflow="{$popupIsGoingBack ? "hidden" : ""}"
+                                    rel="{youtubeRelatedLink ? 'noopener noreferrer' : ''}"
+                                    target="{youtubeRelatedLink ? '_blank' : ''}"
+                                    href="{youtubeRelatedLink || 'javascript:void(0)'}"
+                                    aria-label="Open Related YouTube Videos"
                                 >
                                     <!-- youtube logo -->
                                     <svg viewBox="0 0 576 512">
                                         <path
                                             d="M550 124c-7-24-25-42-49-49-42-11-213-11-213-11S117 64 75 75c-24 7-42 25-49 49-11 43-11 132-11 132s0 90 11 133c7 23 25 41 49 48 42 11 213 11 213 11s171 0 213-11c24-7 42-25 49-48 11-43 11-133 11-133s0-89-11-132zM232 338V175l143 81-143 82z"
                                         ></path>
-                                    </svg> YouTube</button
-                                >
+                                    </svg> YouTube
+                                </a>
                                 <button
-                                    tabindex="{!$menuVisible && $popupVisible
-                                        ? ''
-                                        : '-1'}"
+                                    tabindex="{!$menuVisible && $popupVisible ? '' : '-1'}"
                                     class="open-anilist"
-                                    style:overflow="{$popupIsGoingBack
-                                        ? "hidden"
-                                        : ""}"
-                                    on:click="{() => {
-                                        openInAnilist(media.mediaUrl);
-                                    }}"
-                                    on:keyup="{(e) =>
-                                        e.key === 'Enter' &&
-                                        openInAnilist(media.mediaUrl)}"
+                                    style:overflow="{$popupIsGoingBack ? "hidden" : ""}"
+                                    on:click="{() => openInAnilist(media.mediaUrl)}"
+                                    on:keyup="{(e) => e.key === 'Enter' && openInAnilist(media.mediaUrl)}"
+                                    aria-label="Open in AniList"
                                 >
                                     <!-- anilist logo -->
                                     <svg viewBox="0 0 172 172">
@@ -2571,12 +2521,12 @@
                             </div>
                         </div>
                     {:else}
-                        <div class="popup-header dummy"></div>
+                        <div class="popup-header dummy" aria-hidden="true"></div>
                     {/if}
                 </div>
             {/each}
             {#if mediaList?.length && !$shownAllInList?.[$selectedCategory]}
-                <div class="popup-content-loading">
+                <div class="popup-content-loading" aria-hidden="true">
                     <!-- k icon -->
                     <svg
                         class="popup-content-loading-icon"
@@ -2594,7 +2544,7 @@
                 </div>
             {/if}
         {/if}
-    </div>
+    </section>
 </div>
 {#if $popupVisible && $popupIsGoingBack}
     <div
@@ -3007,10 +2957,6 @@
         fill: rgb(245, 197, 24) !important;
     }
 
-    .info-status a {
-        color: unset;
-    }
-
     .info-contents {
         margin: 10px 0;
         width: 100%;
@@ -3169,6 +3115,8 @@
     .hide-show-btn,
     .open-anilist,
     .more-videos {
+        font-size: 13.33px;
+        text-decoration: none;
         border: 0;
         background-color: transparent !important;
         cursor: pointer;
@@ -3330,6 +3278,7 @@
 
     .list-update-container,
     .icon-button {
+        text-decoration: none;
         display: flex;
         align-items: center;
         gap: 6px;
@@ -3621,6 +3570,7 @@
         overflow: hidden !important;
         opacity: 0 !important;
     }
+    .trailer-link,
     .display-none {
         display: none !important;
     }

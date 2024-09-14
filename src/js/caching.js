@@ -1,5 +1,6 @@
 import { get } from "svelte/store"
 import { android, appID, dataStatus, progress } from "./globalValues.js"
+import { isConnected } from "./others/helper.js"
 
 let version, appIDNotChecked = true
 let loadedRequestUrlPromises = {}
@@ -100,7 +101,12 @@ const cacheRequest = async (url, totalLength, status, getBlob) => {
                 }
             } catch (ex) {
                 loadedRequestUrlPromises[url] = null
-                return await cacheRequest(url)
+                if (get(android) || (await isConnected())) {
+                    await new Promise((r) => setTimeout(r, 5000))
+                    return await cacheRequest(url)
+                } else {
+                    throw new Error("Server unreachable")
+                }
             }
         })();
         return loadedRequestUrlPromises[url]

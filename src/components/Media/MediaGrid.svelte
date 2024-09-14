@@ -1,5 +1,5 @@
 <script>
-    import { onMount } from "svelte";
+    import { onDestroy, onMount } from "svelte";
     import { fade } from "svelte/transition";
     import { sineOut } from "svelte/easing";
     import { cacheImage } from "../../js/caching.js";
@@ -41,21 +41,16 @@
     import { mediaLoader } from "../../js/workerUtils.js";
 
     export let mainCategory;
+    
+    const subscriptions = {}
+    let subscriptionId = 0
 
     const emptyImage = "data:image/png;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=";
-    let originalWindowHeight = screen?.height ? Math.min(screen.height, $trueWindowHeight) : $trueWindowHeight;
     let numberOfPageLoadedGrid = Math.max(5, (($windowHeight - 239) / 250.525) * 5);
 
+    subscriptions[subscriptionId++] =
     windowHeight.subscribe((val) => {
         numberOfPageLoadedGrid = Math.max(5, ((val - 239) / 250.525) * 5);
-    })
-    let lastTrueWindowHeight = $trueWindowHeight
-    trueWindowHeight.subscribe((val) => {
-        if (val==null) return
-        if (val > lastTrueWindowHeight) {
-            originalWindowHeight = screen?.height ? Math.min(screen.height, val) : val;
-            lastTrueWindowHeight = val
-        }
     })
 
     let mediaGridEl;    
@@ -82,24 +77,37 @@
     );
 
     let latestSearchDate
-    searchedWord.subscribe((val) => {
-        if ($categories==null) return
-        if ($initList === false) {
-            latestSearchDate = new Date()
-        } else if (val) {
+    if (mainCategory === "") {
+        subscriptions[subscriptionId++] = 
+        searchedWord.subscribe((val) => {
+            if (!val) return
             if ($android) {
                 showToast("Please wait a moment")
             } else {
                 $toast = "Please wait a moment"
             }
-        }
-        mediaLoader({
-            loadMore: true,
-            selectedCategory: mainCategory,
-            searchedWord: val,
-            searchDate: latestSearchDate
         });
-    });
+    } else {
+        subscriptions[subscriptionId++] = 
+        searchedWord.subscribe((val) => {
+            if ($categories == null) return
+            if ($initList === false) {
+                latestSearchDate = new Date()
+            } else if (val) {
+                if ($android) {
+                    showToast("Please wait a moment")
+                } else {
+                    $toast = "Please wait a moment"
+                }
+            }
+            mediaLoader({
+                loadMore: true,
+                selectedCategory: mainCategory,
+                searchedWord: val,
+                searchDate: latestSearchDate
+            });
+        });
+    }
 
     $loadNewMedia[mainCategory] = function ({
         idx,
@@ -294,8 +302,7 @@
         isOnVeryLeftOfMediaGridTimeout?.();
         if ($gridFullView && mediaGridEl?.scrollLeft < 1) {
             isOnVeryLeftOfMediaGridTimeout = requestImmediate(() => {
-                isOnVeryLeftOfMediaGrid =
-                    $gridFullView && mediaGridEl?.scrollLeft < 1;
+                isOnVeryLeftOfMediaGrid = $gridFullView && mediaGridEl?.scrollLeft < 1;
             }, 1000);
         } else {
             isOnVeryLeftOfMediaGrid = false;
@@ -307,12 +314,14 @@
         afterFullGrid &&
         (currentLeftScroll < lastLeftScroll || $windowWidth > 596.5);
 
+    subscriptions[subscriptionId++] =
     documentScrollTop.subscribe((val) => {
         const documentEl = document.documentElement
         isWholeGridSeen = $gridFullView && Math.abs(documentEl.scrollHeight - val - documentEl.clientHeight) <= 3;
     })
 
     let filterOptiChangeTimeout;
+    subscriptions[subscriptionId++] =
     showFilterOptions.subscribe(() => {
         filterOptiChangeTimeout?.();
         filterOptiChangeTimeout = requestImmediate(() => {
@@ -366,34 +375,37 @@
         } catch {}
     }
 
+    let waitForOnVeryLeft;
+    const mediaGridOnScroll = () => {
+        window.mediaGridScrolled?.(mediaGridEl.scrollLeft);
+        if (!waitForOnVeryLeft) {
+            isOnVeryLeftOfMediaGridTimeout?.();
+        }
+        if ($gridFullView && mediaGridEl?.scrollLeft < 1) {
+            if (!waitForOnVeryLeft) {
+                waitForOnVeryLeft = true;
+                isOnVeryLeftOfMediaGridTimeout = requestImmediate(() => {
+                    isOnVeryLeftOfMediaGrid =
+                        $gridFullView && mediaGridEl?.scrollLeft < 1;
+                    waitForOnVeryLeft = false;
+                }, 8);
+            }
+        } else {
+            isOnVeryLeftOfMediaGridTimeout?.();
+            waitForOnVeryLeft = false;
+            isOnVeryLeftOfMediaGrid = false;
+        }
+        if (!$gridFullView) return;
+    }
+
     onMount(() => {
+        subscriptions[subscriptionId++] =
         selectedCategory.subscribe((val) => {
             if (val === mainCategory && val) {
                 $selectedMediaGridEl = mediaGridEl;
             }
         });
-        let waitForOnVeryLeft;
-        mediaGridEl.addEventListener("scroll", () => {
-            window.mediaGridScrolled?.(mediaGridEl.scrollLeft);
-            if (!waitForOnVeryLeft) {
-                isOnVeryLeftOfMediaGridTimeout?.();
-            }
-            if ($gridFullView && mediaGridEl?.scrollLeft < 1) {
-                if (!waitForOnVeryLeft) {
-                    waitForOnVeryLeft = true;
-                    isOnVeryLeftOfMediaGridTimeout = requestImmediate(() => {
-                        isOnVeryLeftOfMediaGrid =
-                            $gridFullView && mediaGridEl?.scrollLeft < 1;
-                        waitForOnVeryLeft = false;
-                    }, 8);
-                }
-            } else {
-                isOnVeryLeftOfMediaGridTimeout?.();
-                waitForOnVeryLeft = false;
-                isOnVeryLeftOfMediaGrid = false;
-            }
-            if (!$gridFullView) return;
-        });
+        mediaGridEl.addEventListener("scroll", mediaGridOnScroll);
     });
 
     // COPY TEXT ABSTRACTION
@@ -435,6 +447,15 @@
         cancelCopyTimeout?.()
     }
 
+    onDestroy(() => {
+        mediaObserver?.disconnect?.()
+        mediaGridEl?.removeEventListener?.("scroll", mediaGridOnScroll);
+        for (const k in subscriptions) {
+            subscriptions[k]?.()
+        }
+        cancelOpenOption()
+        cancelCopyTimeout?.()
+    })
 </script>
 
 <div
@@ -443,12 +464,12 @@
         ? ' viewed'
         : '') + ($gridFullView ? ' full-view' : '')}"
     style:--media-grid-height="{($mobile && !$android
-        ? originalWindowHeight
+        ? $trueWindowHeight
         : $windowHeight) + "px"}"
 >
     {#if true}
         {@const mediaList = $loadedMediaLists?.[mainCategory]?.mediaList}
-        <div
+        <section
             class="{'image-grid ' +
                 ($gridFullView ? ' full-view' : '') +
                 (mediaList?.length === 0 && !$initData ? ' empty-grid' : '') +
@@ -484,6 +505,7 @@
                     afterFullGrid = false;
                 }
             }}"
+            aria-label="List of Media Per Category"
         >
             {#if mediaList?.length > 0}
                 {#each mediaList as media, mediaIndex ((media?.id != null ? media.id + " " + mediaIndex : {}) ?? {})}
@@ -511,6 +533,8 @@
                             on:keyup="{(e) =>
                                 e.key === 'Enter' &&
                                 handleOpenPopup(mediaIndex)}"
+                            role="button"
+                            aria-label="Open Detailed Information for the Media"
                         >
                             {#if media?.coverImageUrl || media?.bannerImageUrl || media?.trailerThumbnailUrl}
                                 {#key media?.coverImageUrl || media?.bannerImageUrl || media?.trailerThumbnailUrl}
@@ -708,6 +732,7 @@
                         </div>
                         {#if mediaIndex + 1 === mediaList.length}
                             <div
+                                aria-hidden="true"
                                 class="observed-grid"
                                 bind:this="{observedGrid}"
                             ></div>
@@ -715,17 +740,17 @@
                     </div>
                 {/each}
                 {#each Array($shownAllInList?.[mainCategory] ? 0 : 1) as _}
-                    <div class="image-card skeleton dummy">
+                    <div class="image-card skeleton dummy" aria-hidden="true">
                         <div class="shimmer"></div>
                     </div>
                 {/each}
                 {#each Array($gridFullView ? Math.floor(($windowHeight ?? 1100) / 220) : 5) as _}
-                    <div class="image-card dummy"></div>
+                    <div class="image-card dummy" aria-hidden="true"></div>
                 {/each}
             {:else if mediaList?.length === 0}
                 <div class="empty">No Results</div>
                 {#if !$shownAllInList?.[mainCategory]}
-                    <div class="image-card">
+                    <div class="image-card" aria-hidden="true">
                         <div
                             class="observed-grid empty-card"
                             bind:this="{observedGrid}"
@@ -734,15 +759,15 @@
                 {/if}
             {:else}
                 {#each Array(21) as _}
-                    <div class="image-card skeleton">
+                    <div class="image-card skeleton" aria-hidden="true">
                         <div class="shimmer"></div>
                     </div>
                 {/each}
                 {#each Array(5) as _}
-                    <div class="image-card"></div>
+                    <div class="image-card" aria-hidden="true"></div>
                 {/each}
             {/if}
-        </div>
+        </section>
         {#if !$android && shouldShowGoBackInFullView && $loadedMediaLists?.[mainCategory]?.mediaList?.length}
             <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
             <div
