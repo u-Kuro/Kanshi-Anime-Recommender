@@ -20,6 +20,7 @@
         initMediaLoader
 	} from "./js/workerUtils.js";
 	import {
+    	encodeText,
 		getLocalStorage,
 		removeLocalStorage,
 		requestImmediate,
@@ -133,7 +134,23 @@
 				(async () => {
 					const shouldGetMediaEntries = await getIDBdata("mediaEntriesIsEmpty");
 					if (shouldGetMediaEntries === true) {
-						try { console.error(window?.navigator?.userAgent || window?.navigator?.vendor || window?.opera) } catch { }
+						// Dev Test
+						try { 
+							const divEl = document.createElement("div");
+							try {
+								divEl.textContent = encodeText(window?.navigator?.userAgent || window?.navigator?.vendor || window?.opera) || "";
+							} catch (ex) { 
+                                const error = ex?.toString?.()
+                                if (error) {
+                                    divEl.textContent = error
+                                } else {
+                                    divEl.textContent = ex
+                                    divEl.textContent += " | Unexpected Error..."
+                                }
+                            }
+							document.querySelector("body > .dialog-web-info").appendChild(divEl);
+						} catch { }
+						// Dev Test
 						if ($webCrawler && $initList !== false) {
 							try {
 								loadYoutube();

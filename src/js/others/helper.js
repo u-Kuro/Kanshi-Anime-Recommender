@@ -674,13 +674,24 @@ const isWebCrawler = () => {
       .join('')
     ), 'i').test(navigator.userAgent);
   } catch { }
-  // const encodeRegex = (regex) => {
-  //   return btoa(regex.source)
-  //     .split('')
-  //     .map(char => char.charCodeAt(0).toString(16).padStart(2, '0'))
-  //     .join('');
-  // }
 }
+const encodeText = (s) => {
+  try {
+    return btoa(s)
+      .split('')
+      .map(char => char.charCodeAt(0).toString(16).padStart(2, '0'))
+      .join('');
+  } catch { }
+}
+// const decodeText = (s) => {
+//   try {
+//     return atob(
+//       s.match(/.{1,2}/g)
+//       .map(hex => String.fromCharCode(parseInt(hex, 16)))
+//       .join('')
+//     )
+//   } catch { }
+// }
 
 const android = isAndroid()
 const checkConnection = async () => {
@@ -765,6 +776,8 @@ export {
   // hasValidOrigin,
   isMobile,
   isWebCrawler,
+  encodeText,
+  // decodeText,
   formatYear,
   formatMonth,
   formatDay,

@@ -1675,7 +1675,7 @@
             {@const mediaList = $loadedMediaLists[$selectedCategory]?.mediaList}
             {#each mediaList || [] as media, mediaIndex ((media?.id != null ? media.id + " " + mediaIndex : {}) ?? {})}
                 <div class="popup-content">
-                    {#if $webCrawler || (mediaIndex <= currentHeaderIdx + bottomPopupVisibleCount && mediaIndex >= currentHeaderIdx - topPopupVisibleCount)}
+                    {#if ($webCrawler && $initList !== false) || (mediaIndex <= currentHeaderIdx + bottomPopupVisibleCount && mediaIndex >= currentHeaderIdx - topPopupVisibleCount)}
                         {@const format = media.format}
                         {@const isManga = format === "Manga" || format === "One Shot"}
                         {@const isNovel = format === "Novel"}
@@ -1858,7 +1858,7 @@
                                         </a>
                                     {:else}
                                         <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
-                                        {#if $webCrawler && media.trailerID}
+                                        {#if $webCrawler && $initList !== false && media.trailerID}
                                             <a class="trailer-link" href="{`https://www.youtube.com/watch?v=${media.trailerID}`}">Trailer</a>
                                         {/if}
                                         {#if media.bannerImageUrl || media.trailerThumbnailUrl}
