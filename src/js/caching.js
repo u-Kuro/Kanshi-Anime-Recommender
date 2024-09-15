@@ -1,5 +1,5 @@
 import { get } from "svelte/store"
-import { android, appID, dataStatus, progress } from "./globalValues.js"
+import { android, appID, dataStatus, progress, uniqueKey } from "./globalValues.js"
 import { isConnected } from "./others/helper.js"
 
 let version, appIDNotChecked = true
@@ -123,7 +123,7 @@ const cacheImage = (url, width, height) => {
     } else if (loadedImagePromises[url]) {
         return loadedImagePromises[url]
     } else {
-        const TOKEN = window["Kanshi.Media.Recommendations.Anilist.W~uPtWCq=vG$TR:Zl^#t<vdS]I~N70.isOwner"]
+        const TOKEN = window[`${get(uniqueKey)}.isOwner`]
         if (typeof TOKEN === "string" && get(android)) {
             loadedImagePromises[url] = new Promise(async (resolve) => {
                 let newUrl = `https://cors-anywhere-kuro.vercel.app/api/${TOKEN}?url=${url}`;

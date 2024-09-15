@@ -1,13 +1,13 @@
-import { readable, writable } from "svelte/store";
+import { get, readable, writable } from "svelte/store";
 import { getLocalStorage, isAndroid, isWebCrawler, isMobile } from "../js/others/helper.js"
 
 const $android = isAndroid()
 const android = readable($android)
 const mobile = readable(isMobile())
 const webCrawler = readable($android ? false : isWebCrawler())
-const uniqueKey = "Kanshi.Media.Recommendations.Anilist.W~uPtWCq=vG$TR:Zl^#t<vdS]I~N70"
-const isBackgroundUpdateKey = readable(uniqueKey + ".isBackgroundUpdate")
-const visitedKey = readable(uniqueKey + ".visited")
+const uniqueKey = readable("Kanshi.Media.Recommendations.Anilist.W~uPtWCq=vG$TR:Zl^#t<vdS]I~N70")
+const isBackgroundUpdateKey = readable(get(uniqueKey) + ".isBackgroundUpdate")
+const visitedKey = readable(get(uniqueKey) + ".visited")
 
 const appID = writable(null)
 const inApp = writable(true)
@@ -132,6 +132,7 @@ export {
     android,
     mobile,
     webCrawler,
+    uniqueKey,
     isBackgroundUpdateKey,
     visitedKey,
     inApp,
