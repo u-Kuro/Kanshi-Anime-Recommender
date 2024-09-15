@@ -1633,7 +1633,7 @@ const saveIDBdata = (_data, name, isImportant = false) => {
 const getMediaEntries = (_data) => {
     return new Promise((resolve, reject) => {
         progress.set(0)
-        cacheRequest("./webapi/worker/getEntries.js", 282273, "Checking Anime, Manga, and Novel Entries")
+        cacheRequest("./webapi/worker/getEntries.js", 282309, "Checking Anime, Manga, and Novel Entries")
             .then(async workerUrl => {
                 let worker = new Worker(workerUrl)
                 if (get(android)) {
