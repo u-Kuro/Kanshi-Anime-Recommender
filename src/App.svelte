@@ -551,22 +551,23 @@
 
 		if (initCheck) {
 			try {
-				await requestUserEntries();
-				if (initCheck === "first-visit") {
+				await requestUserEntries({ visibilityChange });
+			} catch (ex) { console.error(ex); }
+			if (initCheck === "first-visit") {
+				try {
 					await requestMediaEntries();
-				}
-				checkAutoExportOnLoad();
-			} catch (ex) {
-				checkAutoExportOnLoad();
-				console.error(ex);
+				} catch (ex) { console.error(ex); }
 			}
+			checkAutoExportOnLoad(visibilityChange);
 		} else if ($autoUpdate && (await autoUpdateIsPastDate())) {
 			try {
-				if (!$userRequestIsRunning) {
-					await requestUserEntries()
-					await requestMediaEntries()
+				if ($userRequestIsRunning) {
+					requestMediaEntries()
 				} else {
-					await requestMediaEntries()
+					try {
+						await requestUserEntries({ visibilityChange });
+					} catch (ex) { console.error(ex); }
+					requestMediaEntries();
 				}
 			} catch (ex) {
 				console.error(ex)
@@ -575,9 +576,7 @@
 		} else if ($autoExport && (await autoExportIsPastDate()) && $android) {
 			try {
 				await exportUserData({ visibilityChange })
-			} catch (ex) {
-				console.error(ex)
-			}
+			} catch (ex) { console.error(ex) }
 			if (visibilityChange && !$userRequestIsRunning) {
 				requestUserEntries({ visibilityChange: true });
 			}
@@ -673,10 +672,8 @@
 		if (!$userRequestIsRunning) {
 			try {
 				await requestUserEntries()
-				requestMediaEntries()
-			} catch (ex) {
-				console.error(ex)
-			}
+			} catch (ex) { console.error(ex) }
+			requestMediaEntries()
 		} else {
 			requestMediaEntries();
 		}

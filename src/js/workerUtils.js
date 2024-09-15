@@ -40,6 +40,7 @@ import {
     popupVisible,
     toast,
     initList,
+    showRateLimit,
 } from "./globalValues.js";
 
 const hasOwnProp = Object.prototype.hasOwnProperty
@@ -815,7 +816,9 @@ const requestMediaEntries = (_data = {}) => {
                         return
                     } else if (hasOwnProp?.call?.(data, "status")) {
                         if (!dataStatusPrio) {
-                            dataStatus.set(data.status)
+                            if (get(showRateLimit) || !data.status?.includes?.("Rate Limit:")) {
+                                dataStatus.set(data.status)
+                            }
                         }
                         return
                     } else if (hasOwnProp.call(data, "getConnectionState")) {
@@ -925,7 +928,7 @@ const requestMediaEntries = (_data = {}) => {
             })
     })
 }
-let isRequestingNewUser
+let isRequestingNewUser, isReloadingUserEntries
 let requestUserEntriesTerminateTimeout, requestUserEntriesWorker;
 const requestUserEntries = (_data = {}) => {
     if (get(initList) !== false && !_data?.initList) {
@@ -933,21 +936,30 @@ const requestUserEntries = (_data = {}) => {
     }
     return new Promise((resolve, reject) => {
         if (_data?.username) {
+            if (requestUserEntriesTerminateTimeout) clearTimeout(requestUserEntriesTerminateTimeout)
+            requestUserEntriesWorker?.terminate?.()
             isRequestingNewUser = true
         } else if (isRequestingNewUser) {
             return
+        } else if (_data?.reload) {
+            if (requestUserEntriesTerminateTimeout) clearTimeout(requestUserEntriesTerminateTimeout)
+            requestUserEntriesWorker?.terminate?.()
+            isReloadingUserEntries = true
+        } else if (isReloadingUserEntries) {
+            return
+        } else {
+            if (requestUserEntriesTerminateTimeout) clearTimeout(requestUserEntriesTerminateTimeout)
+            requestUserEntriesWorker?.terminate?.()
         }
-        if (requestUserEntriesTerminateTimeout) clearTimeout(requestUserEntriesTerminateTimeout)
-        requestUserEntriesWorker?.terminate?.()
+        
         if (!get(initData)) {
             if (get(isExporting)
                 || get(isImporting)
                 || isGettingNewEntries
             ) {
-                isRequestingNewUser = false
+                isRequestingNewUser = isReloadingUserEntries = false
                 userRequestIsRunning.set(false)
-                reject()
-                return
+                return reject()
             }
         }
         userRequestIsRunning.set(true)
@@ -969,13 +981,22 @@ const requestUserEntries = (_data = {}) => {
                 requestUserEntriesWorker.postMessage(_data)
                 requestUserEntriesWorker.onmessage = ({ data }) => {
                     if (hasOwnProp?.call?.(data, "progress")) {
-                        if (!dataStatusPrio && data?.progress >= 0 && data?.progress <= 100) {
+                        if ((!dataStatusPrio || isRequestingNewUser || isReloadingUserEntries)
+                            && data?.progress >= 0 && data?.progress <= 100
+                        ) {
                             progress.set(data.progress)
                         }
                         return
                     } else if (hasOwnProp?.call?.(data, "status")) {
-                        if (!dataStatusPrio) {
-                            dataStatus.set(data.status)
+                        if (isRequestingNewUser || isReloadingUserEntries) {
+                            if (get(showRateLimit) || !data.status?.includes?.("Rate Limit:")) {
+                                dataStatusPrio = true
+                                dataStatus.set(data.status)
+                            }
+                        } else if (!dataStatusPrio) {
+                            if (get(showRateLimit) || !data.status?.includes?.("Rate Limit:")) {
+                                dataStatus.set(data.status)
+                            }
                         }
                         return
                     } else if (hasOwnProp.call(data, "getConnectionState")) {
@@ -986,13 +1007,14 @@ const requestUserEntries = (_data = {}) => {
                     }
 
                     if (hasOwnProp?.call?.(data, "error")) {
-                        if (isRequestingNewUser) {
+                        if (isRequestingNewUser || isReloadingUserEntries) {
+                            dataStatusPrio = false
                             window.confirmPromise?.({
                                 isAlert: true,
                                 title: "Failed to Request User Data",
-                                text: "Request for user data has failed, please try again.",
+                                text: typeof data.error === "string" && data.error ? data.error : "Request for user data has failed, please try again.",
                             })
-                            isRequestingNewUser = false
+                            isRequestingNewUser = isReloadingUserEntries = false
                         }
                         userRequestIsRunning.set(false)
                         updateList.update((e) => !e)
@@ -1008,7 +1030,10 @@ const requestUserEntries = (_data = {}) => {
                         }
                         updateRecommendationList.update(e => !e)
                     } else {
-                        isRequestingNewUser = false
+                        if (isRequestingNewUser || isReloadingUserEntries) {
+                            dataStatusPrio = false
+                            isRequestingNewUser = isReloadingUserEntries = false
+                        }
                         userRequestIsRunning.set(false)
                         requestUserEntriesTerminateTimeout = setTimeout(() => {
                             requestUserEntriesWorker?.terminate?.();
@@ -1019,13 +1044,14 @@ const requestUserEntries = (_data = {}) => {
                     }
                 }
                 requestUserEntriesWorker.onerror = (error) => {
-                    if (isRequestingNewUser) {
+                    if (isRequestingNewUser || isReloadingUserEntries) {
+                        dataStatusPrio = false
                         window.confirmPromise?.({
                             isAlert: true,
                             title: "Failed to Request User Data",
                             text: "Request for user data has failed, please try again.",
                         })
-                        isRequestingNewUser = false
+                        isRequestingNewUser = isReloadingUserEntries = false
                     }
                     userRequestIsRunning.set(false)
                     updateList.update((e) => !e)
@@ -1037,13 +1063,14 @@ const requestUserEntries = (_data = {}) => {
                     reject(error)
                 }
             }).catch((error) => {
-                if (isRequestingNewUser) {
+                if (isRequestingNewUser || isReloadingUserEntries) {
+                    dataStatusPrio = false
                     window.confirmPromise?.({
                         isAlert: true,
                         title: "Failed to Request User Data",
                         text: "Request for user data has failed, please try again.",
                     })
-                    isRequestingNewUser = false
+                    isRequestingNewUser = isReloadingUserEntries = false
                 }
                 userRequestIsRunning.set(false)
                 dataStatus.set(null)
@@ -1764,13 +1791,13 @@ function stopConflictingWorkers(blocker) {
     isGettingNewEntries = blocker?.isGettingNewEntries ?? false
     requestUserEntriesWorker?.terminate?.()
     resetTypedUsername.update(e => !e)
-    if (isRequestingNewUser) {
+    if (isRequestingNewUser || isReloadingUserEntries) {
         window.confirmPromise?.({
             isAlert: true,
-            title: "User Data Request Terminated",
+            title: "Request Interrupted",
             text: "Request for user data was suddenly terminated, please try again.",
         })
-        isRequestingNewUser = false
+        isRequestingNewUser = isReloadingUserEntries = false
     }
     userRequestIsRunning.set(false)
     processRecommendedMediaListWorker?.terminate?.()

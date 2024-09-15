@@ -102,6 +102,7 @@ const initData = writable(true)
 const initList = writable(null)
 const gridFullView = writable(getLocalStorage('gridFullView') ?? null)
 const showStatus = writable(getLocalStorage('showStatus') ?? true)
+const showRateLimit = writable(getLocalStorage('showRateLimit') ?? true)
 const extraInfo = writable(null)
 const currentExtraInfo = writable(null)
 const earlisetReleaseDate = writable(null)
@@ -189,6 +190,7 @@ export {
     initList,
     gridFullView,
     showStatus,
+    showRateLimit,
     extraInfo,
     currentExtraInfo,
     earlisetReleaseDate,

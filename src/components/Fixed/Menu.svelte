@@ -1,6 +1,6 @@
 <script>
     import { onMount, tick } from "svelte";
-    import { mediaManager, getIDBdata, importUserData, saveIDBdata, exportUserData } from "../../js/workerUtils.js";
+    import { mediaManager, getIDBdata, importUserData, saveIDBdata, exportUserData, requestMediaEntries, requestUserEntries } from "../../js/workerUtils.js";
     import {
         jsonIsEmpty,
         removeLocalStorage,
@@ -18,7 +18,6 @@
         autoUpdate,
         autoExport,
         exportPathIsAvailable,
-        runUpdate,
         confirmPromise,
         popupVisible,
         listUpdateAvailable,
@@ -33,6 +32,10 @@
         toast,
         appID,
         initList,
+        initData,
+        userRequestIsRunning,
+        showRateLimit,
+        dataStatus,
     } from "../../js/globalValues.js";
     import getWebVersion from "../../version.js"
     import { fade } from "svelte/transition";
@@ -156,6 +159,7 @@
     }
 
     async function updateList(e) {
+        if ($android && window[$isBackgroundUpdateKey] === true) return;
         if (window.navigator?.onLine === false) {
             if ($android) {
                 showToast("You are currently offline")
@@ -164,15 +168,25 @@
             }
             return
         }
-        if ($initList !== false) {
+
+        if ($initList !== false || $initData) {
             return pleaseWaitAlert()
         }
+
         const target = e?.target
         const classList = target?.classList
         if (classList.contains("switch") || target?.closest?.(".switch")) return
+
         if (await $confirmPromise("Do you want to update existing entries?")) {
-            runUpdate.update((e) => !e);
             resetProgress.update((e) => !e);
+            if ($userRequestIsRunning) {
+                requestMediaEntries();
+            } else {
+                try {
+                    await requestUserEntries({ reload: true });
+                } catch (ex) { console.error(ex) }
+                requestMediaEntries()
+            }
         }
     }
 
@@ -241,6 +255,21 @@
                 })
                 .finally(() => {
                     saveIDBdata(val, "showStatus");
+                });
+        }
+    })
+
+    showRateLimit.subscribe((val) => {
+        if (typeof val === "boolean") {
+            if (!val && $dataStatus?.includes?.("Rate Limit:")) {
+                $dataStatus = null
+            }
+            setLocalStorage("showRateLimit", val)
+                .catch(() => {
+                    removeLocalStorage("showRateLimit");
+                })
+                .finally(() => {
+                    saveIDBdata(val, "showRateLimit");
                 });
         }
     })
@@ -547,6 +576,12 @@
         }
         
         // Get Export Folder for Android
+        $autoUpdate = $autoUpdate ?? (await getIDBdata("autoUpdate"));
+        if ($autoUpdate == null) {
+            setLocalStorage("autoUpdate", $autoUpdate = true)
+            .catch(() => removeLocalStorage("autoUpdate"))
+            .finally(() => saveIDBdata(true, "autoUpdate"));
+        }
         if ($android) {
             $exportPathIsAvailable = $exportPathIsAvailable ?? (await getIDBdata("exportPathIsAvailable"));
             if ($exportPathIsAvailable == null) {
@@ -567,11 +602,11 @@
             .catch(() => removeLocalStorage("showStatus"))
             .finally(() => saveIDBdata(true, "showStatus"));
         }
-        $autoUpdate = $autoUpdate ?? (await getIDBdata("autoUpdate"));
-        if ($autoUpdate == null) {
-            setLocalStorage("autoUpdate", $autoUpdate = true)
-            .catch(() => removeLocalStorage("autoUpdate"))
-            .finally(() => saveIDBdata(true, "autoUpdate"));
+        $showRateLimit = $showRateLimit ?? (await getIDBdata("showRateLimit"));
+        if ($showRateLimit == null) {
+            setLocalStorage("showRateLimit", $showRateLimit = true)
+            .catch(() => removeLocalStorage("showRateLimit"))
+            .finally(() => saveIDBdata(true, "showRateLimit"));
         }
     });
 </script>
@@ -783,7 +818,7 @@
                     >
                         <path d="M272 384c10-32 30-59 49-86l16-22a176 176 0 1 0-289 0c4 8 10 15 15 22 20 27 40 54 49 86h160zm-80 128c44 0 80-36 80-80v-16H112v16c0 44 36 80 80 80zm-80-336c0 9-7 16-16 16s-16-7-16-16c0-62 50-112 112-112 9 0 16 7 16 16s-7 16-16 16c-44 0-80 36-80 80z"/>
                     </svg>
-                    <span class="option-label">Show Extra Info</span>
+                    <span class="option-label">Show Status Updates</span>
                     <label 
                         class="switch"
                         tabindex="{$menuVisible ? '0' : '-1'}"
@@ -797,6 +832,41 @@
                             type="checkbox"
                             class="switch-toggle"
                             bind:checked="{$showStatus}"
+                        />
+                        <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
+                        <span class="slider round"></span>
+                    </label>
+                </div>
+                <div
+                    class="option switchable"
+                    on:click="{(e)=>{
+                        const target = e.target
+                        const classList = target.classList
+                        if (classList.contains("switch") || target.closest(".switch")) return
+                        $showRateLimit = !$showRateLimit
+                    }}"
+                    on:keyup="{()=>{}}"
+                >
+                    <svg 
+                        viewBox="0 0 448 512"
+                        style:--width={"18px"}
+                    >
+                        <path d="M176 0a32 32 0 1 0 0 64h16v34a208 208 0 1 0 207 93l24-24a32 32 0 0 0-46-46l-21 22c-28-23-63-39-100-45V64h16a32 32 0 1 0 0-64h-96zm72 192v128a24 24 0 1 1-48 0V192a24 24 0 1 1 48 0z"/>
+                    </svg>
+                    <span class="option-label">Show Rate Limit</span>
+                    <label 
+                        class="switch"
+                        tabindex="{$menuVisible ? '0' : '-1'}"
+                        on:keyup="{(e) => {
+                            if(e.key === 'Enter') {
+                                $showRateLimit = !$showRateLimit
+                            }
+                        }}"
+                    >
+                        <input
+                            type="checkbox"
+                            class="switch-toggle"
+                            bind:checked="{$showRateLimit}"
                         />
                         <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                         <span class="slider round"></span>

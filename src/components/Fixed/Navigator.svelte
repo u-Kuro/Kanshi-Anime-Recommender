@@ -56,7 +56,7 @@
 
     let awaitForInit;
     initData.subscribe((val) => {
-        if (val === false && $initList === false) {
+        if ($initList === false && !val) {
             awaitForInit?.resolve?.();
         }
     });

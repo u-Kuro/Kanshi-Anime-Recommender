@@ -985,7 +985,7 @@
         updateFilters(currentFilterCategoryName, data);
     }
     function removeActiveFilter(activeFilterIdx) {
-        if ($initData || $initList !== true || $categories?.[$selectedCategory] === true) {
+        if ($initData || $initList !== false || $categories?.[$selectedCategory] === true) {
             return pleaseWaitAlert();
         }
 
