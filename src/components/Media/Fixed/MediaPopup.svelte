@@ -22,6 +22,7 @@
         requestImmediate,
         ncsCompare,
         showToast,
+        getUniqueId,
     } from "../../../js/others/helper.js";
     import {
         hiddenEntries,
@@ -67,7 +68,7 @@
         videoLoops = {},
         manuallyPausedTrailers = {},
         autoPausedTrailers = {},
-        deletingTrailers = {};
+        failingTrailers = {};
 
     let checkMostVisiblePopupMediaFrame;
     function checkMostVisiblePopupMedia() {
@@ -256,7 +257,7 @@
                         let ytId = $ytPlayers[i]?.ytPlayer?.g?.id;
                         if (
                             $inApp &&
-                            !manuallyPausedTrailers?.[ytId] &&
+                            !manuallyPausedTrailers[ytId] &&
                             ($ytPlayers[i]?.ytPlayer?.getPlayerState?.() !== (getYTPlayerState("ENDED")??0) ||
                                 $ytPlayers[i]?.ytPlayer?.getPlayerState?.() === (getYTPlayerState("PAUSED")??2))
                         ) {
@@ -307,7 +308,7 @@
                 // Stop All Player
                 $ytPlayers.forEach(({ ytPlayer }) => {
                     let ytId = ytPlayer?.g?.id;
-                    if (ytId && !deletingTrailers?.[ytId]) {
+                    if (ytId) {
                         autoPausedTrailers[ytId] = true;
                         ytPlayer?.pauseVideo?.();
                     }
@@ -394,7 +395,7 @@
                 if (
                     $ytPlayers[i]?.ytPlayer?.g === visibleTrailer &&
                     $inApp &&
-                    !manuallyPausedTrailers?.[ytId] &&
+                    !manuallyPausedTrailers[ytId] &&
                     $ytPlayers[i]?.ytPlayer?.getPlayerState?.() !== (getYTPlayerState("ENDED")??0)
                 ) {
                     if (val === true) {
@@ -409,7 +410,7 @@
                     }
                 } else {
                     let ytId = $ytPlayers[i]?.ytPlayer?.g?.id;
-                    if (ytId && !deletingTrailers?.[ytId]) {
+                    if (ytId) {
                         autoPausedTrailers[ytId] = true;
                         $ytPlayers[i]?.ytPlayer?.pauseVideo?.();
                     }
@@ -510,7 +511,7 @@
                         if (
                             $popupVisible &&
                             $inApp &&
-                            !manuallyPausedTrailers?.[ytId] &&
+                            !manuallyPausedTrailers[ytId] &&
                             (($ytPlayers[i]?.ytPlayer?.getPlayerState?.() !== (getYTPlayerState("ENDED")??0)) ||
                                 $ytPlayers[i]?.ytPlayer?.getPlayerState?.() === (getYTPlayerState("PAUSED")??2))
                         ) {
@@ -520,7 +521,7 @@
                     }
                 } else {
                     let ytId = $ytPlayers[i]?.ytPlayer?.g?.id;
-                    if (ytId && !deletingTrailers?.[ytId]) {
+                    if (ytId) {
                         autoPausedTrailers[ytId] = true;
                         $ytPlayers[i]?.ytPlayer?.pauseVideo?.();
                     }
@@ -530,7 +531,7 @@
             // Pause All Players
             $ytPlayers?.forEach(({ ytPlayer }) => {
                 let ytId = ytPlayer?.g?.id;
-                if (ytId && !deletingTrailers?.[ytId]) {
+                if (ytId) {
                     autoPausedTrailers[ytId] = true;
                     ytPlayer?.pauseVideo?.();
                 }
@@ -556,7 +557,6 @@
         }
     }
 
-    let failingTrailers = {};
     function createPopupYTPlayer(openedMedia, headerIdx) {
         let popupHeader =
             openedMedia?.popupHeader ||
@@ -566,10 +566,10 @@
         let ytPlayerEl =
             popupHeader?.querySelector?.(".trailer") ||
             popupHeader?.querySelector?.(".trailer");
-        let youtubeID = openedMedia?.trailerID;
+        let trailerID = openedMedia?.trailerID;
         if (
             ytPlayerEl instanceof Element &&
-            youtubeID &&
+            trailerID &&
             typeof YT !== "undefined" &&
             typeof YT?.Player === "function"
         ) {
@@ -616,10 +616,10 @@
             // Add a Unique ID
             ytPlayerEl.setAttribute(
                 "id",
-                "yt-player" + Date.now() + Math.random(),
+                "yt-player" + getUniqueId(),
             );
             let ytPlayer = new YT.Player(ytPlayerEl, {
-                videoId: youtubeID,
+                videoId: trailerID,
                 playerVars: {
                     cc_lang_pref: "en", // Set preferred caption language to English
                     cc_load_policy: 1, // Set on by default
@@ -630,7 +630,7 @@
                 },
                 events: {
                     onReady: (event) => {
-                        onPlayerReady(event);
+                        onPlayerReady(event, trailerID);
                     },
                     onStateChange: (event) => {
                         onPlayerStateChange(event);
@@ -641,7 +641,7 @@
                 },
             });
             // Add Trailer to Iframe
-            let trailerUrl = `https://www.youtube.com/embed/${youtubeID}`;
+            let trailerUrl = `https://www.youtube.com/embed/${trailerID}`;
             ytPlayerEl.setAttribute("src", trailerUrl);
             $ytPlayers.push({ ytPlayer, headerIdx });
         } else {
@@ -679,27 +679,25 @@
         const playerState = _ytPlayer?.getPlayerState?.()
         if (
             ytId &&
-            !deletingTrailers?.[ytId] &&
             playerState === (getYTPlayerState("PAUSED")??2)
         ) {
             if (
                 mostVisiblePopupHeader === popupHeader
-                && !autoPausedTrailers?.[ytId]
+                && !autoPausedTrailers[ytId]
             ) {
                 manuallyPausedTrailers[ytId] = true
             }
         } else {
-            delete manuallyPausedTrailers?.[ytId];
-            delete autoPausedTrailers?.[ytId];
+            delete manuallyPausedTrailers[ytId];
+            delete autoPausedTrailers[ytId];
+            clearTimeout(videoLoops[ytId]);
+            delete videoLoops[ytId]
         }
         
         if (playerState === (getYTPlayerState("ENDED")??0)) {
             if (loopedMediaID != null) {
-                if (videoLoops[loopedMediaID]) {
-                    clearTimeout(videoLoops[loopedMediaID]);
-                    videoLoops[loopedMediaID] = null;
-                }
-                videoLoops[loopedMediaID] = setTimeout(() => {
+                clearTimeout(videoLoops[ytId]);
+                videoLoops[ytId] = setTimeout(() => {
                     _ytPlayer?.stopVideo?.();
                     let currentPlayerState = _ytPlayer?.getPlayerState?.();
                     let canReplay = currentPlayerState === (getYTPlayerState("CUED")??5) || currentPlayerState === (getYTPlayerState("ENDED")??0);
@@ -715,9 +713,8 @@
                     }
                 }, 30000); // Play Again after 30 seconds
             }
-        } else if (videoLoops[loopedMediaID]) {
-            clearTimeout(videoLoops[loopedMediaID]);
-            videoLoops[loopedMediaID] = null;
+        } else if (videoLoops[ytId]) {
+            clearTimeout(videoLoops[ytId]);
         }
         if (playerState === (getYTPlayerState("PLAYING")??1)) {
             if (
@@ -727,7 +724,7 @@
                 $ytPlayers?.forEach(({ ytPlayer }) => {
                     if (ytPlayer?.g !== _ytPlayer?.g) {
                         let ytId = ytPlayer?.g?.id;
-                        if (ytId && !deletingTrailers?.[ytId]) {
+                        if (ytId) {
                             autoPausedTrailers[ytId] = true;
                             ytPlayer?.pauseVideo?.();
                         }
@@ -744,20 +741,17 @@
         }
     }
 
-    async function onPlayerReady(event) {
+    async function onPlayerReady(event, trailerID) {
         let ytPlayer = event.target;
         let trailerEl = ytPlayer?.g;
         let popupHeader = trailerEl?.parentElement;
-        let popupContent = popupHeader?.closest?.(".popup-content");
-        let mediaList = $loadedMediaLists[$selectedCategory].mediaList;
-        let media = mediaList?.[getChildIndex(popupContent) ?? -1];
         if (
             ytPlayer?.getPlayerState?.() === (getYTPlayerState("UNSTARTED")??-1) ||
             trailerEl.tagName !== "IFRAME" ||
             window.navigator?.onLine === false
         ) {
-            if (media?.id != null) {
-                failingTrailers[media.id] = true;
+            if (trailerID != null) {
+                failingTrailers[trailerID] = true;
             }
             $ytPlayers =
                 $ytPlayers?.filter?.(
@@ -769,8 +763,8 @@
             let popupImg = popupHeader?.querySelector?.(".popup-img");
             removeClass(popupImg, "display-none");
         } else {
-            if (media?.id != null) {
-                delete failingTrailers[media.id];
+            if (trailerID != null) {
+                delete failingTrailers[trailerID];
                 failingTrailers = failingTrailers
             }
             // Play Most Visible when 1 Succeed
@@ -838,7 +832,6 @@
     }
 
     async function openMoreInfo(
-        mediaID, 
         trailerID, 
         image,
         youtubeRelatedLink,
@@ -846,7 +839,7 @@
         if (image) {
             fullImagePopup = image;
             fullDescriptionPopup = null;
-        } else if (trailerID && !failingTrailers[mediaID]) {
+        } else if (trailerID && !failingTrailers[trailerID]) {
             if (
                 await $confirmPromise({
                     title: "Open trailer",
@@ -1016,7 +1009,7 @@
                 let ytId = $ytPlayers[i]?.ytPlayer?.g?.id;
                 if (
                     $ytPlayers[i]?.ytPlayer?.g === visibleTrailer &&
-                    !manuallyPausedTrailers?.[ytId] &&
+                    !manuallyPausedTrailers[ytId] &&
                     ($ytPlayers[i]?.ytPlayer?.getPlayerState?.() !== (getYTPlayerState("ENDED")??0) ||
                         $ytPlayers[i]?.ytPlayer?.getPlayerState?.() === (getYTPlayerState("PAUSED")??2))
                 ) {
@@ -1024,7 +1017,7 @@
                     $ytPlayers[i]?.ytPlayer?.playVideo?.();
                 } else {
                     let ytId = $ytPlayers[i]?.ytPlayer?.g?.id;
-                    if (ytId && !deletingTrailers?.[ytId]) {
+                    if (ytId) {
                         autoPausedTrailers[ytId] = true;
                         $ytPlayers[i]?.ytPlayer?.pauseVideo?.();
                     }
@@ -1033,7 +1026,7 @@
         } else {
             for (let i = 0, l = $ytPlayers?.length; i < l; i++) {
                 let ytId = $ytPlayers[i]?.ytPlayer?.g?.id;
-                if (ytId && !deletingTrailers?.[ytId]) {
+                if (ytId) {
                     autoPausedTrailers[ytId] = true;
                     $ytPlayers[i]?.ytPlayer?.pauseVideo?.();
                 }
@@ -1052,7 +1045,7 @@
                 let ytId = $ytPlayers[i]?.ytPlayer?.g?.id;
                 if (
                     $ytPlayers[i]?.ytPlayer?.g === visibleTrailer &&
-                    !manuallyPausedTrailers?.[ytId] &&
+                    !manuallyPausedTrailers[ytId] &&
                     ($ytPlayers[i]?.ytPlayer?.getPlayerState?.() !== (getYTPlayerState("ENDED")??0) ||
                         $ytPlayers[i]?.ytPlayer?.getPlayerState?.() === (getYTPlayerState("PAUSED")??2))
                 ) {
@@ -1060,7 +1053,7 @@
                     $ytPlayers[i]?.ytPlayer?.playVideo?.();
                 } else {
                     let ytId = $ytPlayers[i]?.ytPlayer?.g?.id;
-                    if (ytId && !deletingTrailers?.[ytId]) {
+                    if (ytId) {
                         autoPausedTrailers[ytId] = true;
                         $ytPlayers[i]?.ytPlayer?.pauseVideo?.();
                     }
@@ -1069,7 +1062,7 @@
         } else {
             for (let i = 0, l = $ytPlayers?.length; i < l; i++) {
                 let ytId = $ytPlayers[i]?.ytPlayer?.g?.id;
-                if (ytId && !deletingTrailers?.[ytId]) {
+                if (ytId) {
                     autoPausedTrailers[ytId] = true;
                     $ytPlayers[i]?.ytPlayer?.pauseVideo?.();
                 }
@@ -1457,8 +1450,7 @@
             destroy() {
                 let trailerEl = node?.querySelector?.(".trailer");
                 let ytId = trailerEl?.id;
-                if (ytId && !deletingTrailers?.[ytId]) {
-                    deletingTrailers[ytId] = true;
+                if (ytId) {
                     $ytPlayers =
                         $ytPlayers?.filter?.((e) => {
                             let recTrailerEl = e?.ytPlayer?.g
@@ -1472,9 +1464,10 @@
                                 return true;
                             }
                         }) || [];
-                    delete manuallyPausedTrailers?.[ytId];
-                    delete autoPausedTrailers?.[ytId];
-                    delete deletingTrailers?.[ytId];
+                    delete manuallyPausedTrailers[ytId];
+                    delete autoPausedTrailers[ytId];
+                    clearTimeout(videoLoops[ytId]);
+                    delete videoLoops[ytId];
                 }
             },
         };
@@ -1552,7 +1545,7 @@
                 $ytPlayers?.forEach(({ ytPlayer }) => {
                     let trailerEl = ytPlayer?.g;
                     let ytId = trailerEl?.id;
-                    if (ytId && !deletingTrailers?.[ytId]) {
+                    if (ytId) {
                         if (visibleTrailer === trailerEl) {
                             if (ytPlayer?.getPlayerState?.() === (getYTPlayerState("PLAYING")??1)) {
                                 manuallyPausedTrailers[ytId] = true;
@@ -1575,8 +1568,7 @@
                     for (let node of mutation.removedNodes) {
                         if (node?.matches?.("iframe.trailer")) {
                             let ytId = node?.id;
-                            if (ytId && !deletingTrailers?.[ytId]) {
-                                deletingTrailers[ytId] = true;
+                            if (ytId) {
                                 $ytPlayers =
                                     $ytPlayers?.filter?.((e) => {
                                         const recTrailerEl = e?.ytPlayer?.g;
@@ -1590,9 +1582,10 @@
                                             return true
                                         }
                                     }) || [];
-                                delete manuallyPausedTrailers?.[ytId];
-                                delete autoPausedTrailers?.[ytId];
-                                delete deletingTrailers?.[ytId];
+                                delete manuallyPausedTrailers[ytId];
+                                delete autoPausedTrailers[ytId];
+                                clearTimeout(videoLoops[ytId]);
+                                delete videoLoops[ytId];
                             }
                         }
                     }
@@ -1691,7 +1684,6 @@
                                 on:click="{() => {
                                     if (!$popupVisible) return;
                                     openMoreInfo(
-                                        media.id,
                                         media.trailerID,
                                         media.bannerImageUrl || media.trailerThumbnailUrl,
                                         youtubeRelatedLink
@@ -1701,7 +1693,6 @@
                                     if (!$popupVisible) return;
                                     if (e.key === 'Enter') {
                                         openMoreInfo(
-                                            media.id,
                                             media.trailerID,
                                             media.bannerImageUrl || media.trailerThumbnailUrl,
                                             youtubeRelatedLink
@@ -1837,7 +1828,7 @@
                                             </h3>
                                         </div>
                                     {/if}
-                                    {#if media.trailerID && failingTrailers[media.id]}
+                                    {#if media.trailerID && failingTrailers[media.trailerID]}
                                         <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                                         <a
                                             class="icon-button"
@@ -2035,6 +2026,7 @@
                                         on:scroll="{itemScroll}"
                                     >
                                         <h4
+                                            class="user-info"
                                             on:click="{() => openInAnilist(media.mediaUrl)}"
                                             on:keyup="{(e) => e.key === 'Enter' && openInAnilist(media.mediaUrl)}"
                                             aria-label="Open in AniList"
@@ -2949,6 +2941,9 @@
     }
     .info-status > h4 {
         white-space: nowrap;
+    }
+    .info-status > .user-info {
+        cursor: pointer;
     }
 
     .info-status svg {

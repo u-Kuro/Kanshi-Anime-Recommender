@@ -657,6 +657,21 @@ const removeLocalStorage = (key) => {
 //   }
 // }
 
+let idCounter = -Number.MAX_SAFE_INTEGER
+function getUniqueId() {
+  if (idCounter < Number.MAX_SAFE_INTEGER || typeof idCounter === "bigint") {
+    return `${++idCounter}`
+  } else {
+    if (idCounter && typeof window.BigInt === "function") {
+      idCounter = BigInt(Number.MAX_SAFE_INTEGER)
+      ++idCounter
+    } else {
+      idCounter = -Number.MAX_SAFE_INTEGER
+    }
+    return `${idCounter}`
+  }
+}
+
 const isMobile = () => {
   try {
     let check = false;
@@ -677,14 +692,14 @@ const isWebCrawler = () => {
     , 'i').test(navigator.userAgent);
   } catch { }
 }
-const encodeText = (s) => {
-  try {
-    return btoa(s)
-      .split('')
-      .map(char => char.charCodeAt(0).toString(16).padStart(2, '0'))
-      .join('');
-  } catch { }
-}
+// const encodeText = (s) => {
+//   try {
+//     return btoa(s)
+//       .split('')
+//       .map(char => char.charCodeAt(0).toString(16).padStart(2, '0'))
+//       .join('');
+//   } catch { }
+// }
 // const decodeText = (s) => {
 //   try {
 //     return atob(
@@ -776,9 +791,10 @@ export {
   dragScroll,
   // isElementVisible,
   // hasValidOrigin,
+  getUniqueId,
   isMobile,
   isWebCrawler,
-  encodeText,
+  // encodeText,
   // decodeText,
   formatYear,
   formatMonth,

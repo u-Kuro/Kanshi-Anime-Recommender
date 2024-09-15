@@ -20,7 +20,6 @@
         initMediaLoader
 	} from "./js/workerUtils.js";
 	import {
-    	encodeText,
 		getLocalStorage,
 		removeLocalStorage,
 		requestImmediate,
@@ -78,7 +77,6 @@
         webCrawler,
         loadNewMedia,
         shownAllInList,
-        currentMediaCautions,
         currentMediaSortBy,
         currentMediaFilters,
 	} from "./js/globalValues.js";
@@ -134,23 +132,6 @@
 				(async () => {
 					const shouldGetMediaEntries = await getIDBdata("mediaEntriesIsEmpty");
 					if (shouldGetMediaEntries === true) {
-						// Dev Test
-						try { 
-							const divEl = document.createElement("div");
-							try {
-								divEl.textContent = encodeText(window?.navigator?.userAgent || window?.navigator?.vendor || window?.opera) || "";
-							} catch (ex) { 
-                                const error = ex?.toString?.()
-                                if (error) {
-                                    divEl.textContent = error
-                                } else {
-                                    divEl.textContent = ex
-                                    divEl.textContent += " | Unexpected Error..."
-                                }
-                            }
-							document.querySelector("body > .dialog-web-info").appendChild(divEl);
-						} catch { }
-						// Dev Test
 						if ($webCrawler && $initList !== false) {
 							try {
 								loadYoutube();
@@ -537,8 +518,7 @@
 				} else {
 					gridTopPosition = Math.abs(offsetToWindow);
 					const category = element.dataset.category;
-					const gridOffSetDocument =
-						$documentScrollTop + element.getBoundingClientRect().top;
+					const gridOffSetDocument = $documentScrollTop + element.getBoundingClientRect().top;
 					gridTopScrolls[category] = $documentScrollTop - gridOffSetDocument;
 				}
 				gridMaxHeight = element?.clientHeight ?? gridMaxHeight;

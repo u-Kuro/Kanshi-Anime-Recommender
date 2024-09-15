@@ -1,6 +1,6 @@
 import { get } from "svelte/store";
 import { cacheRequest } from "./caching.js";
-import { downloadLink, isConnected, isJsonObject, jsonIsEmpty, removeLocalStorage, setLocalStorage, showToast, } from "../js/others/helper.js"
+import { downloadLink, getUniqueId, isConnected, isJsonObject, jsonIsEmpty, removeLocalStorage, setLocalStorage, showToast, } from "../js/others/helper.js"
 import {
     dataStatus,
     updateRecommendationList,
@@ -48,16 +48,6 @@ let dataStatusPrio = false
 let isGettingNewEntries = false;
 let isRequestingMediaEntries = false
 let wasRequestingMediaEntries = false
-
-let idCounter = 0
-function getUniqueId() {
-    if (idCounter < Number.MAX_SAFE_INTEGER) {
-        return ++idCounter
-    } else {
-        idCounter = 0
-        return idCounter
-    }
-}
 
 let mostRecentAiringDateTimeout
 earlisetReleaseDate.subscribe((val) => {
@@ -127,7 +117,7 @@ const initMediaLoader = async () => {
 let mediaLoaderWorker, mediaLoaderWorkerPromise, mediaLoaderPromises = {};
 function getMediaLoaderWorker() {
     mediaLoaderWorkerPromise = new Promise(async (resolve) => {
-        resolve(new Worker(await cacheRequest("./webapi/worker/mediaLoader.js", 23278, "Checking Existing List")))
+        resolve(new Worker(await cacheRequest("./webapi/worker/mediaLoader.js", 24679, "Checking Existing List")))
         mediaLoaderWorkerPromise = null
     })
     return mediaLoaderWorkerPromise
@@ -174,17 +164,7 @@ const mediaLoader = (_data = {}) => {
                 if (airingAt && (airingAt < currentEarliestDate || currentEarliestDate == null)) {
                     earlisetReleaseDate.set(airingAt)
                 }
-                const media = data?.media
-                const isLast = data?.isLast
-                if (media || isLast) {
-                    get(loadNewMedia)?.[data?.selectedCategory]?.({
-                        idx: data?.idx,
-                        media,
-                        isLast,
-                        updateDate: data?.updateDate,
-                        searchDate: data?.searchDate
-                    })
-                }
+                get(loadNewMedia)[data.selectedCategory]?.(data)
             } else if (hasOwnProp.call(data, "categorySelected")) {
 
                 const categorySelected = data?.categorySelected
@@ -220,6 +200,7 @@ const mediaLoader = (_data = {}) => {
                     })
                 }
                 mediaLoaderPromises[data?.postId]?.resolve?.()
+                delete mediaLoaderPromises[data?.postId]
             } else if (hasOwnProp.call(data, "updatedCategories")) {
                 if (data.categories) {
                     categories.set(data.categories);
@@ -290,6 +271,7 @@ const mediaLoader = (_data = {}) => {
                 }
 
                 mediaLoaderPromises[data?.postId]?.resolve?.(data)
+                delete mediaLoaderPromises[data?.postId]
             } else if (hasOwnProp.call(data, "getEarlisetReleaseDate")) {
                 let currentEarliestDate = get(earlisetReleaseDate)
                 let airingAt = data.earliestReleaseDate
@@ -308,6 +290,7 @@ const mediaLoader = (_data = {}) => {
                 console.error(data.error)
 
                 mediaLoaderPromises[data?.postId]?.reject?.()
+                delete mediaLoaderPromises[data?.postId]
             }
 
             if (data?.updateDate >= get(loadingCategory)[""]) {
@@ -339,6 +322,7 @@ const mediaLoader = (_data = {}) => {
                     searchedWord: get(searchedWord),
                 });
                 mediaLoaderPromises[data?.postId]?.resolve?.()
+                delete mediaLoaderPromises[data?.postId]
             }
         };
         mediaLoaderWorker.onerror = (error) => {
@@ -353,6 +337,7 @@ const mediaLoader = (_data = {}) => {
             console.error(error);
 
             mediaLoaderPromises?.[postId]?.reject?.(error)
+            delete mediaLoaderPromises[postId]
         };
     })
 }

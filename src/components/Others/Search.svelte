@@ -2917,6 +2917,7 @@
         {#if $orderedFilters?.sortFilter && $loadedMediaLists?.[$selectedCategory]?.sortBy}
             <div class="sort-filter">
                 <svg
+                    class="sort-order-icon"
                     viewBox="{`0 ${
                         selectedSortType === 'asc' ? '-' : ''
                     }140 320 512`}"
@@ -3711,7 +3712,7 @@
         text-transform: capitalize;
     }
 
-    .sort-filter svg {
+    .sort-filter .sort-order-icon {
         height: 15px;
         width: 15px;
     }
@@ -3817,6 +3818,7 @@
     .closing-x {
         width: 24px;
         height: 24px;
+        cursor: pointer;
     }
 
     .filters {
@@ -4047,10 +4049,6 @@
         .option svg {
             height: 18px !important;
             width: 18px !important;
-        }
-        .closing-x {
-            width: 24px !important;
-            height: 24px !important;
         }
         .extra-item-info > path {
             translate: 25px !important;

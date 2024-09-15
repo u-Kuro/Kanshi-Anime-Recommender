@@ -1,5 +1,5 @@
 <script>
-    import { onMount, onDestroy } from "svelte";
+    import { onMount } from "svelte";
     import { requestUserEntries } from "../../js/workerUtils.js";
     import {
         addClass,
@@ -31,8 +31,6 @@
         initList,
     } from "../../js/globalValues.js";
 
-    let writableSubscriptions = [];
-
     let typedUsername = "";
     let popupContainer,
         navContainerEl,
@@ -41,18 +39,13 @@
         inputUsernameElFocused = false;
 
     onMount(() => {
-        navContainerEl =
-            navContainerEl || document.getElementById("nav-container");
+        navContainerEl = navContainerEl || document.getElementById("nav-container");
         navEl = navEl || document?.getElementById("nav");
-        inputUsernameEl =
-            inputUsernameEl || document?.getElementById("username-input");
-        popupContainer =
-            popupContainer || document?.getElementById("popup-container");
-        writableSubscriptions.push(
-            username.subscribe((val) => {
-                typedUsername = val || typedUsername || "";
-            }),
-        );
+        inputUsernameEl = inputUsernameEl || document?.getElementById("username-input");
+        popupContainer = popupContainer || document?.getElementById("popup-container");
+        username.subscribe((val) => {
+            typedUsername = val || typedUsername || "";
+        })
         resetTypedUsername.subscribe((val) => {
             if (val == null) return;
             if (document?.activeElement !== inputUsernameEl) {
@@ -354,10 +347,6 @@
             JSBridge.showRecentReleases();
         } catch (ex) { console.error(ex) }
     }
-
-    onDestroy(() => {
-        writableSubscriptions.forEach((unsub) => unsub());
-    });
 
     let delayedPopupVis, delayedMenuVis;
     $: navHasNoBackOption =

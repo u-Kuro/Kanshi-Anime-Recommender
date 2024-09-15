@@ -84,23 +84,23 @@ const cacheRequest = async (url, totalLength, status, getBlob) => {
                 }
 
                 if (getBlob) {
-                    loadedRequestUrlPromises[url] = null
+                    delete loadedRequestUrlPromises[url]
                     return await response.blob()
                 } else {
                     const result = await response.blob()
                     try {
                         const blobUrl = URL.createObjectURL(result);
                         loadedRequestUrls[url] = blobUrl;
-                        loadedRequestUrlPromises[url] = null
+                        delete loadedRequestUrlPromises[url]
                         return blobUrl
                     } catch (ex) {
                         console.error(ex)
-                        loadedRequestUrlPromises[url] = null
+                        delete loadedRequestUrlPromises[url]
                         return url
                     }
                 }
             } catch (ex) {
-                loadedRequestUrlPromises[url] = null
+                delete loadedRequestUrlPromises[url]
                 if (get(android) || (await isConnected())) {
                     await new Promise((r) => setTimeout(r, 5000))
                     return await cacheRequest(url)
@@ -149,31 +149,31 @@ const cacheImage = (url, width, height) => {
                                         try {
                                             let blobUrl = URL.createObjectURL(blob)
                                             loadedImages[url] = blobUrl
-                                            loadedImagePromises[url] = null
+                                            delete loadedImagePromises[url]
                                             resolve(blobUrl)
-                                        } catch (e) {
+                                        } catch  {
                                             loadedImages[url] = imgUrl
-                                            loadedImagePromises[url] = null
+                                            delete loadedImagePromises[url]
                                             resolve(imgUrl)
                                         }
                                     }, 'image/webp', 0.8)
-                                } catch (e) {
+                                } catch {
                                     loadedImages[url] = imgUrl
-                                    loadedImagePromises[url] = null
+                                    delete loadedImagePromises[url]
                                     resolve(imgUrl)
                                 }
                             }
                             img.onerror = () => {
-                                loadedImagePromises[url] = null
+                                delete loadedImagePromises[url]
                                 resolve(url)
                             }
-                        } catch (e) {
-                            loadedImagePromises[url] = null
+                        } catch {
+                            delete loadedImagePromises[url]
                             resolve(url)
                         }
                     })
-                    .catch(e => {
-                        loadedImagePromises[url] = null
+                    .catch(() => {
+                        delete loadedImagePromises[url]
                         resolve(url)
                     })
             })

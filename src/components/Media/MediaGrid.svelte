@@ -163,11 +163,9 @@
                 if (finishedReloading) {
                     delete $loadingCategory[mainCategory]
                     $loadingCategory = $loadingCategory
-                    finishedReloading = false
                 }
                 if (finishedSearching) {
                     latestSearchDate = undefined
-                    finishedSearching = false
                 }
                 if (shouldLoadMoreMedia()) {
                     mediaLoader({
@@ -181,13 +179,22 @@
             if ($loadedMediaLists[mainCategory]) {
                 $loadedMediaLists[mainCategory].mediaList = [];
             }
-        }
-        if (finishedReloading) {
-            delete $loadingCategory[mainCategory]
-            $loadingCategory = $loadingCategory
-        }
-        if (finishedSearching) {
-            latestSearchDate = undefined
+            if (isInit) return // already loads next media after return
+            if (finishedReloading) {
+                delete $loadingCategory[mainCategory]
+                $loadingCategory = $loadingCategory
+            }
+            if (finishedSearching) {
+                latestSearchDate = undefined
+            }
+        } else if (!isInit) {
+            if (finishedReloading) {
+                delete $loadingCategory[mainCategory]
+                $loadingCategory = $loadingCategory
+            }
+            if (finishedSearching) {
+                latestSearchDate = undefined
+            }
         }
     };
 
