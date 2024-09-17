@@ -154,11 +154,8 @@
                                 console.error(error);
                             })
                             .finally(() => {
-                                setLocalStorage("username", $username).catch(
-                                    () => {
-                                        removeLocalStorage("username");
-                                    },
-                                );
+                                setLocalStorage("username", $username)
+                                .catch(() => removeLocalStorage("username"));
                             });
                         resetProgress.update((e) => !e);
                     } else {
@@ -221,11 +218,8 @@
                                 console.error(error);
                             })
                             .finally(() => {
-                                setLocalStorage("username", $username).catch(
-                                    () => {
-                                        removeLocalStorage("username");
-                                    },
-                                );
+                                setLocalStorage("username", $username)
+                                .catch(() => removeLocalStorage("username"));
                             });
                         resetProgress.update((e) => !e);
                     } else {
@@ -303,7 +297,7 @@
     }
 
     function handleGoUp() {
-        if (goUpTimeout) clearTimeout(goUpTimeout);
+        clearTimeout(goUpTimeout);
         goUpTimeout = setTimeout(() => {
             goUpIsLongPressed = true;
             if ($popupVisible) {
@@ -328,7 +322,7 @@
         }, 500);
     }
     function cancelGoUp() {
-        if (goUpTimeout) clearTimeout(goUpTimeout);
+        clearTimeout(goUpTimeout);
         if (goUpIsLongPressed) {
             goUpTimeout = setTimeout(() => {
                 goUpIsLongPressed = false;

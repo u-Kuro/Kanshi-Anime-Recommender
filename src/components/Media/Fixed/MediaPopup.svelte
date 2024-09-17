@@ -52,31 +52,30 @@
         toast,
         initList,
         webCrawler,
+        shouldLoadAllList,
+        listReloadAvailable,
     } from "../../../js/globalValues.js";
 
     const emptyImage = "data:image/png;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=";
 
     let mostVisiblePopupHeader,
         currentHeaderIdx,
-        lastYTPlayer,
         popupWrapper,
         popupContainer,
         navContainerEl,
         popupMediaObserver,
         fullImagePopup,
         fullDescriptionPopup,
-        videoLoops = {},
         manuallyPausedTrailers = {},
         autoPausedTrailers = {},
-        failingTrailers = {};
+        failingTrailers = {},
+        checkMostVisiblePopupMediaFrame;
 
-    let checkMostVisiblePopupMediaFrame;
     function checkMostVisiblePopupMedia() {
         cancelAnimationFrame(checkMostVisiblePopupMediaFrame);
         if (!$popupVisible) return;
         checkMostVisiblePopupMediaFrame = requestAnimationFrame(() => {
-            if (!$popupVisible) return;
-            let visiblePopupHeader =
+            const visiblePopupHeader =
                 getMostVisibleElement(
                     popupContainer,
                     ".popup-header",
@@ -88,17 +87,15 @@
                     0,
                 )?.getElementsByClassName("popup-header")?.[0];
             mostVisiblePopupHeader = visiblePopupHeader;
+            if (!$popupVisible) return;
             playMostVisibleTrailer();
-        });
+        })
     }
 
     function addPopupObserver() {
-        popupMediaObserver?.disconnect?.();
-        popupMediaObserver = null;
-        popupMediaObserver = new IntersectionObserver(
-            () => {
-                checkMostVisiblePopupMedia();
-            },
+        popupMediaObserver?.disconnect();
+        popupMediaObserver = new IntersectionObserver(() => 
+            checkMostVisiblePopupMedia(),
             {
                 root: null,
                 rootMargin: "100%",
@@ -108,13 +105,12 @@
     }
 
     function handlePopupVisibility(e) {
-        let target = e.target;
-        let classList = target.classList;
+        const target = e.target;
+        const classList = target.classList;
         if (
             classList.contains("popup-container") ||
             target.closest(".popup-container")
-        )
-            return;
+        ) { return }
         $popupVisible = false;
     }
 
@@ -123,37 +119,24 @@
             return pleaseWaitAlert()
         }
         let isHidden = $hiddenEntries[mediaID];
-        title = title
-            ? `<span style="color:hsl(var(--ac-color));">${title}</span>`
-            : "this entry";
+        title = title ? `<span style="color:hsl(var(--ac-color));">${title}</span>` : "this entry";
         if (isHidden) {
-            if (
-                await $confirmPromise(
-                    `Do you want to unhide ${title} in your recommendation list?`,
-                )
-            ) {
-                mediaManager({
-                    showId: mediaID,
-                });
-                delete $hiddenEntries?.[mediaID];
+            if (await $confirmPromise(`Do you want to unhide ${title} in your recommendation list?`)) {
+                mediaManager({ showId: mediaID });
+                delete $hiddenEntries[mediaID];
                 $hiddenEntries = $hiddenEntries
             }
         } else {
-            if (
-                await $confirmPromise(
-                    `Do you want to hide ${title} in your recommendation list?`,
-                )
-            ) {
-                mediaManager({
-                    removeId: mediaID,
-                });
+            if (await $confirmPromise(`Do you want to hide ${title} in your recommendation list?`)) {
+                mediaManager({ removeId: mediaID });
                 $hiddenEntries[mediaID] = 1;
             }
         }
     }
 
     function getYoutubeRelatedLink(titles, format) {
-        let youtubeSearchTitle, hasMoreThanOne, ytTitles = {}
+        const ytTitles = {}
+        let youtubeSearchTitle, hasMoreThanOne
         try {
             for (let key of ["english", "romaji", "native"]) {
                 let title = titles?.[key]?.trim?.(), loweredTitle
@@ -181,24 +164,36 @@
     }
 
     function getYTPlayerState(state) {
+        let stateCode
         try {
-            return YT.PlayerState[state]
+            stateCode = YT.PlayerState[state]
         } catch {}
+        if (stateCode == null) {
+            if (state === "PLAYING") {
+                return 1
+            } else if (state === "PAUSED") {
+                return 2
+            } else if (state === "ENDED") {
+                return 0
+            } else if (state === "UNSTARTED") {
+                return -1
+            } else if (state === "CUED") {
+                return 5
+            } else if (state === "BUFFERING") {
+                return 3
+            }
+        }
+        return stateCode
     }
 
-    let afterImmediateScrollUponPopupVisible;
     popupVisible.subscribe(async (val) => {
         if (
             !(popupWrapper instanceof Element) ||
             !(popupContainer instanceof Element)
-        )
-            return;
+        ) { return }
         if (val === true) {
             // Scroll To Opened Media
-            let openedMediaPopupEl =
-                popupContainer?.children[
-                    $openedMediaPopupIdx ?? currentHeaderIdx ?? 0
-                ];
+            const openedMediaPopupEl = popupContainer?.children[$openedMediaPopupIdx ?? currentHeaderIdx ?? 0];
             if (openedMediaPopupEl instanceof Element) {
                 // Animate Opening
                 if ($documentScrollTop <= 0 || $menuVisible) {
@@ -218,66 +213,56 @@
                     });
                 }
                 // Try to Add YT player
-                currentHeaderIdx = $openedMediaPopupIdx;
-                let mediaList = $loadedMediaLists[$selectedCategory].mediaList;
-                let openedMedias = [
-                    [mediaList[$openedMediaPopupIdx], $openedMediaPopupIdx],
+                const headerIdx = $openedMediaPopupIdx;
+                currentHeaderIdx = headerIdx;
+                const mediaList = $loadedMediaLists[$selectedCategory].mediaList;
+                const openedMedias = [
+                    [mediaList[headerIdx], headerIdx],
                     [
-                        mediaList[$openedMediaPopupIdx + 1],
-                        $openedMediaPopupIdx + 1,
+                        mediaList[headerIdx + 1],
+                        headerIdx + 1,
                     ],
                     [
-                        mediaList[$openedMediaPopupIdx - 1],
-                        $openedMediaPopupIdx - 1,
+                        mediaList[headerIdx - 1],
+                        headerIdx - 1,
                     ],
                 ];
                 await tick();
+                if (!$popupVisible) {
+                    $openedMediaPopupIdx = null;
+                    window.addHistory?.()
+                    return
+                }
                 scrollToElement(
                     popupContainer,
                     openedMediaPopupEl,
                     "top",
                     "instant",
                 );
-                afterImmediateScrollUponPopupVisible = true;
-                let openedPopupHeader =
-                    mediaList?.[$openedMediaPopupIdx]?.popupHeader ||
-                    popupContainer?.children?.[
-                        $openedMediaPopupIdx
-                    ]?.querySelector?.(".popup-header");
+                const openedPopupHeader = mediaList?.[headerIdx]?.popupHeader
+                    || popupContainer?.children[headerIdx]?.querySelector(".popup-header");
                 mostVisiblePopupHeader = openedPopupHeader;
-                let trailerEl =
-                    openedPopupHeader?.querySelector?.(".trailer") ||
-                    popupContainer?.children?.[
-                        $openedMediaPopupIdx
-                    ]?.querySelector?.(".trailer");
+                const trailerEl = openedPopupHeader?.querySelector(".trailer")
+                    || popupContainer?.children[headerIdx]?.querySelector(".trailer");
                 let haveTrailer;
-                for (let i = 0, l = $ytPlayers?.length; i < l; i++) {
-                    if ($ytPlayers[i]?.ytPlayer?.g === trailerEl) {
+                for (let i = 0; i < $ytPlayers.length; i++) {
+                    const ytPlayer = $ytPlayers[i]?.ytPlayer
+                    const ytEl = ytPlayer?.g
+                    if (ytEl && ytEl === trailerEl) {
                         haveTrailer = true;
-                        let ytId = $ytPlayers[i]?.ytPlayer?.g?.id;
-                        if (
-                            $inApp &&
-                            !manuallyPausedTrailers[ytId] &&
-                            ($ytPlayers[i]?.ytPlayer?.getPlayerState?.() !== (getYTPlayerState("ENDED")??0) ||
-                                $ytPlayers[i]?.ytPlayer?.getPlayerState?.() === (getYTPlayerState("PAUSED")??2))
-                        ) {
-                            await tick();
-                            prePlayYtPlayer($ytPlayers[i]?.ytPlayer);
-                            $ytPlayers[i]?.ytPlayer?.playVideo?.();
-                            break;
+                        if ($inApp && !manuallyPausedTrailers[ytEl.id]) {
+                            ytPlayer?.playVideo?.();
                         }
+                        break;
                     }
                 }
                 openedMedias.forEach(([openedMedia, openedMediaIdx], idx) => {
                     if (haveTrailer && openedMedia && idx === 0) return;
-                    else if (openedMedia)
-                        createPopupYTPlayer(openedMedia, openedMediaIdx);
+                    else if (openedMedia) createPopupYTPlayer(openedMedia, openedMediaIdx);
                 });
                 $openedMediaPopupIdx = null;
-
                 window.addHistory?.();
             } else {
-                afterImmediateScrollUponPopupVisible = false;
                 // Animate Opening
                 if ($documentScrollTop <= 0) {
                     removeClass(navContainerEl, "hide");
@@ -306,35 +291,34 @@
             removeClass(popupContainer, "show");
             requestImmediate(() => {
                 // Stop All Player
-                $ytPlayers.forEach(({ ytPlayer }) => {
-                    let ytId = ytPlayer?.g?.id;
-                    if (ytId) {
-                        autoPausedTrailers[ytId] = true;
-                        ytPlayer?.pauseVideo?.();
-                    }
-                });
+                for (let i = 0; i < $ytPlayers.length; i++) {
+                    const ytPlayer = $ytPlayers[i]?.ytPlayer;
+                    const ytId = ytPlayer?.g?.id;
+                    if (ytId) autoPausedTrailers[ytId] = true;
+                    ytPlayer?.pauseVideo?.();
+                }
                 removeClass(navContainerEl, "hide");
                 removeClass(popupWrapper, "visible");
             }, 200);
 
-            if ($listUpdateAvailable) {
+            if ($listUpdateAvailable || $loadingCategory[""] || $loadingCategory[$selectedCategory]) {
                 updateList(true);
+            } else if ($listReloadAvailable) {
+                reloadList(true);
             }
         }
     });
 
     const newPopupMediaObserver = new IntersectionObserver(
-        (entries) => {
-            entries.forEach((entry) => {
-                if (entry.isIntersecting) {
-                    mediaLoader({
-                        loadMore: true,
-                        selectedCategory: $selectedCategory,
-                        searchedWord: $searchedWord,
-                    });
-                }
-            });
-        },
+        (entries) => entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+                mediaLoader({
+                    loadMore: true,
+                    selectedCategory: $selectedCategory,
+                    searchedWord: $searchedWord,
+                });
+            }
+        }),
         {
             root: null,
             rootMargin: "100%",
@@ -350,27 +334,21 @@
     }
 
     async function reloadPopupContentObserver() {
-        let mediaList = $loadedMediaLists?.[$selectedCategory || ""]?.mediaList;
+        const mediaList = $loadedMediaLists[$selectedCategory || ""]?.mediaList;
         if (mediaList instanceof Array && mediaList.length) {
-            if (popupMediaObserver) {
-                popupMediaObserver?.disconnect?.();
-                popupMediaObserver = null;
-            }
+            popupMediaObserver?.disconnect();
             await tick();
             addPopupObserver();
-            mediaList.forEach(async (media, mediaIdx) => {
-                let popupHeader =
-                    media.popupHeader ||
-                    popupContainer.children?.[mediaIdx]?.querySelector?.(
-                        ".popup-header",
-                    );
+            mediaList.forEach((media, mediaIdx) => {
+                const popupHeader = media?.popupHeader
+                    || popupContainer?.children[mediaIdx]?.querySelector(".popup-header");
                 if (popupHeader instanceof Element) {
-                    popupMediaObserver?.observe?.(popupHeader);
+                    popupMediaObserver?.observe(popupHeader);
                 }
             });
             playMostVisibleTrailer();
-        } else if (mediaList instanceof Array && mediaList.length < 1) {
-            $popupVisible = false;
+        } else {
+            $popupVisible = false
         }
     }
     selectedCategory.subscribe(reloadPopupContentObserver);
@@ -380,86 +358,71 @@
         $autoPlay = !$autoPlay;
     }
 
-    autoPlay.subscribe(async (val) => {
+    autoPlay.subscribe((val) => {
         if (typeof val === "boolean") {
-            saveIDBdata(val, "autoPlay");
-            setLocalStorage("autoPlay", val).catch(() => {
-                removeLocalStorage("autoPlay");
-            });
-            await tick();
-            if (!$popupVisible) return;
-            let visibleTrailer = mostVisiblePopupHeader?.querySelector?.(".trailer");
-            for (let i = 0, l = $ytPlayers?.length; i < l; i++) {
-                delete $ytPlayers?.[i]?.ytPlayer?.KanshiIsMuteApplied
-                let ytId = $ytPlayers[i]?.ytPlayer?.g?.id;
+            setLocalStorage("autoPlay", val)
+            .catch(() => removeLocalStorage("autoPlay"))
+            .finally(() => saveIDBdata(val, "autoPlay"));
+            const visibleTrailer = mostVisiblePopupHeader?.querySelector(".trailer");
+            for (let i = 0; i < $ytPlayers.length; i++) {
+                const ytPlayer = $ytPlayers[i]?.ytPlayer
+                const wasMuted = ytPlayer?.isMuted?.()
+                if (val === true) {
+                    ytPlayer?.unMute?.();
+                } else {
+                    ytPlayer?.mute?.()
+                }
+                
+                const ytEl = ytPlayer?.g
+                const ytId = ytEl?.id;
+
                 if (
-                    $ytPlayers[i]?.ytPlayer?.g === visibleTrailer &&
-                    $inApp &&
-                    !manuallyPausedTrailers[ytId] &&
-                    $ytPlayers[i]?.ytPlayer?.getPlayerState?.() !== (getYTPlayerState("ENDED")??0)
+                    ytEl === visibleTrailer && ytEl 
+                    && $inApp && $popupVisible
                 ) {
-                    if (val === true) {
-                        const isMuted = $ytPlayers[i]?.ytPlayer?.isMuted?.()
-                        if (isMuted === true) {
-                            $ytPlayers[i]?.ytPlayer?.seekTo?.(0, true)
-                        }
-                        prePlayYtPlayer($ytPlayers[i]?.ytPlayer);
-                        $ytPlayers[i]?.ytPlayer?.playVideo?.();
-                    } else {
-                        $ytPlayers[i]?.ytPlayer?.mute?.()
+                    if (
+                        val === true
+                        && wasMuted !== false
+                        && !manuallyPausedTrailers[ytId]
+                    ) {
+                        ytPlayer?.seekTo?.(0, true)
+                        ytPlayer?.playVideo?.();
                     }
                 } else {
-                    let ytId = $ytPlayers[i]?.ytPlayer?.g?.id;
-                    if (ytId) {
-                        autoPausedTrailers[ytId] = true;
-                        $ytPlayers[i]?.ytPlayer?.pauseVideo?.();
-                    }
                     if (val === true) {
-                        $ytPlayers[i]?.ytPlayer?.unMute?.();
-                    } else {
-                        $ytPlayers[i]?.ytPlayer?.mute?.()
+                        ytPlayer?.seekTo?.(0, true)
                     }
+                    if (ytId) autoPausedTrailers[ytId] = true;
+                    ytPlayer?.pauseVideo?.();
                 }
             }
         }
     });
 
-    let scrollToGridTimeout, createPopupPlayersTimeout;
-    async function playMostVisibleTrailer() {
-        if (
-            !$popupVisible ||
-            document.fullScreen ||
-            document.mozFullScreen ||
-            document.webkitIsFullScreen ||
-            document.msFullscreenElement
-        )
-            return;
-        await tick();
-        let visibleTrailer =
-            mostVisiblePopupHeader?.querySelector?.(".trailer");
+    let scrollToGridTimeout
+    function playMostVisibleTrailer() {
+        if (!$popupVisible || document.fullscreenElement) return
+        const visibleTrailer = mostVisiblePopupHeader?.querySelector(".trailer");
         // Scroll in Grid
-        let visibleTrailerIdx =
-            getChildIndex(
-                mostVisiblePopupHeader?.closest?.(".popup-content"),
-            ) ?? -1;
-        let previousCategory = $selectedCategory;
+        const visibleTrailerIdx = getChildIndex(mostVisiblePopupHeader?.closest(".popup-content")) ?? -1;
+        const previousCategory = $selectedCategory;
         clearTimeout(scrollToGridTimeout);
         scrollToGridTimeout = setTimeout(() => {
-            if (!$popupVisible || previousCategory !== $selectedCategory)
+            if (!$popupVisible || previousCategory !== $selectedCategory) {
                 return;
-            let mediaList = $loadedMediaLists[$selectedCategory].mediaList;
-            let mediaGrid =
-                mediaList?.[visibleTrailerIdx]?.gridElement ||
-                $selectedMediaGridEl?.children?.[visibleTrailerIdx];
-            if ($popupVisible && mediaGrid instanceof Element) {
+            }
+            const mediaList = $loadedMediaLists[$selectedCategory]?.mediaList;
+            const mediaGrid = mediaList?.[visibleTrailerIdx]?.gridElement
+                || $selectedMediaGridEl?.children?.[visibleTrailerIdx];
+            if (mediaGrid instanceof Element) {
                 if ($gridFullView) {
                     mediaGrid.scrollIntoView({
                         behavior: "smooth",
                         inline: "nearest",
                     });
                 } else {
-                    let top = mediaGrid.getBoundingClientRect().top;
-                    let clientHeight = mediaGrid.clientHeight;
+                    const top = mediaGrid.getBoundingClientRect().top;
+                    const clientHeight = mediaGrid.clientHeight;
                     let newScrollTop;
                     if (top < 0) {
                         newScrollTop = $documentScrollTop + (top - 5);
@@ -478,147 +441,116 @@
                 }
             }
         }, 300);
-        let haveTrailer;
-        if (visibleTrailer instanceof Element) {
-            haveTrailer = $ytPlayers?.some(
-                ({ ytPlayer }) => ytPlayer?.g === visibleTrailer,
-            );
-        }
+        const haveTrailer = visibleTrailer instanceof Element
+            && $ytPlayers.some((e) => e?.ytPlayer?.g === visibleTrailer);
         if (haveTrailer) {
             // Recheck Trailer
             if (visibleTrailerIdx >= 0) {
-                let mediaList = $loadedMediaLists[$selectedCategory].mediaList;
+                const mediaList = $loadedMediaLists[$selectedCategory].mediaList;
                 currentHeaderIdx = visibleTrailerIdx;
-                let nearMedias = [
+                const nearMedias = [
                     [mediaList?.[visibleTrailerIdx + 1], visibleTrailerIdx + 1],
                     [mediaList?.[visibleTrailerIdx - 1], visibleTrailerIdx - 1],
                 ];
-                createPopupPlayersTimeout?.();
-                createPopupPlayersTimeout = requestImmediate(async () => {
-                    if (!$popupVisible) return;
-                    nearMedias.forEach(([nearMedia, nearMediaIdx]) => {
-                        if (nearMedia)
-                            createPopupYTPlayer(nearMedia, nearMediaIdx);
-                    });
-                }, 300);
+                for (let i = 0; i < nearMedias.length; i++) {
+                    const [nearMedia, nearMediaIdx] = nearMedias[i];
+                    if (nearMedia) createPopupYTPlayer(nearMedia, nearMediaIdx);
+                }
             }
             // Replay Most Visible Trailer
-            for (let i = 0, l = $ytPlayers?.length; i < l; i++) {
-                if ($ytPlayers[i]?.ytPlayer?.g === visibleTrailer) {
-                    if ($ytPlayers[i]?.ytPlayer?.getPlayerState?.() !== (getYTPlayerState("PLAYING")??1)) {
-                        await tick();
-                        let ytId = $ytPlayers[i]?.ytPlayer?.g?.id;
-                        if (
-                            $popupVisible &&
-                            $inApp &&
-                            !manuallyPausedTrailers[ytId] &&
-                            (($ytPlayers[i]?.ytPlayer?.getPlayerState?.() !== (getYTPlayerState("ENDED")??0)) ||
-                                $ytPlayers[i]?.ytPlayer?.getPlayerState?.() === (getYTPlayerState("PAUSED")??2))
-                        ) {
-                            prePlayYtPlayer($ytPlayers[i]?.ytPlayer);
-                            $ytPlayers[i]?.ytPlayer?.playVideo?.();
-                        }
+            for (let i = 0; i < $ytPlayers.length; i++) {
+                const ytPlayer = $ytPlayers[i]?.ytPlayer
+                const ytEl = ytPlayer?.g
+                const ytId = ytEl?.id;
+                const state = ytPlayer?.getPlayerState?.()
+                if (
+                    ytEl === visibleTrailer && ytEl
+                    && $inApp && $popupVisible
+                ) {
+                    if (
+                        !manuallyPausedTrailers[ytId]
+                        && state !== getYTPlayerState("ENDED")
+                    ) {
+                        ytPlayer?.playVideo?.();
                     }
                 } else {
-                    let ytId = $ytPlayers[i]?.ytPlayer?.g?.id;
-                    if (ytId) {
-                        autoPausedTrailers[ytId] = true;
-                        $ytPlayers[i]?.ytPlayer?.pauseVideo?.();
-                    }
+                    if (ytId) autoPausedTrailers[ytId] = true;
+                    ytPlayer?.pauseVideo?.();
                 }
             }
         } else {
             // Pause All Players
-            $ytPlayers?.forEach(({ ytPlayer }) => {
-                let ytId = ytPlayer?.g?.id;
-                if (ytId) {
-                    autoPausedTrailers[ytId] = true;
-                    ytPlayer?.pauseVideo?.();
-                }
-            });
+            for (let i = 0; i < $ytPlayers.length; i++) {
+                const ytPlayer = $ytPlayers[i]?.ytPlayer
+                const ytId = ytPlayer?.g?.id;
+                if (ytId) autoPausedTrailers[ytId] = true;
+                ytPlayer?.pauseVideo?.();
+            }
             // Recheck Trailer
             if (visibleTrailerIdx >= 0) {
                 currentHeaderIdx = visibleTrailerIdx;
-                let mediaList = $loadedMediaLists[$selectedCategory].mediaList;
-                let nearMedias = [
+                const mediaList = $loadedMediaLists[$selectedCategory].mediaList;
+                const nearMedias = [
                     [mediaList?.[visibleTrailerIdx], visibleTrailerIdx],
                     [mediaList?.[visibleTrailerIdx + 1], visibleTrailerIdx + 1],
                     [mediaList?.[visibleTrailerIdx - 1], visibleTrailerIdx - 1],
                 ];
-                createPopupPlayersTimeout?.();
-                createPopupPlayersTimeout = requestImmediate(async () => {
-                    if (!$popupVisible) return;
-                    nearMedias.forEach(([nearMedia, nearMediaIdx]) => {
-                        if (nearMedia)
-                            createPopupYTPlayer(nearMedia, nearMediaIdx);
-                    });
-                }, 300);
+                for (let i = 0; i < nearMedias.length; i++) {
+                    const [nearMedia, nearMediaIdx] = nearMedias[i];
+                    if (nearMedia) createPopupYTPlayer(nearMedia, nearMediaIdx);
+                }
             }
         }
     }
 
     function createPopupYTPlayer(openedMedia, headerIdx) {
-        let popupHeader =
-            openedMedia?.popupHeader ||
-            popupContainer.children?.[headerIdx]?.querySelector(
-                ".popup-header",
-            );
-        let ytPlayerEl =
-            popupHeader?.querySelector?.(".trailer") ||
-            popupHeader?.querySelector?.(".trailer");
-        let trailerID = openedMedia?.trailerID;
+        const popupHeader = openedMedia?.popupHeader
+            || popupContainer?.children[headerIdx]?.querySelector(".popup-header");
+        let ytPlayerEl = popupHeader?.querySelector(".trailer");
+        const trailerID = openedMedia?.trailerID;
+        const popupImg = popupHeader?.querySelector(".popup-img");
         if (
             ytPlayerEl instanceof Element &&
             trailerID &&
             typeof YT !== "undefined" &&
             typeof YT?.Player === "function"
         ) {
-            if ($ytPlayers.some(({ ytPlayer }) => ytPlayer?.g === ytPlayerEl))
+            if ($ytPlayers.some((e) => e?.ytPlayer?.g === ytPlayerEl)) {
                 return;
+            }
             addClass(popupHeader, "loader");
-            let popupImg = popupHeader?.querySelector?.(".popup-img");
             if ($ytPlayers.length >= 3) {
                 let destroyedPlayerIdx = 0;
                 let furthestDistance = -Infinity;
-                $ytPlayers.forEach((_ytPlayer, index) => {
-                    if (_ytPlayer?.headerIdx === -1) return;
-                    let distance = Math.abs(
-                        _ytPlayer?.headerIdx - currentHeaderIdx,
-                    );
-                    if (distance > furthestDistance) {
-                        furthestDistance = distance;
-                        destroyedPlayerIdx = index;
+                for (let i = 0; i < $ytPlayers.length; i++) {
+                    const headerIdx = $ytPlayers[i]?.headerIdx;
+                    if (headerIdx >= 0) {
+                        const distance = Math.abs(headerIdx - currentHeaderIdx)
+                        if (distance > furthestDistance) {
+                            furthestDistance = distance;
+                            destroyedPlayerIdx = idx;
+                        }
                     }
-                });
-                let destroyedPlayer = $ytPlayers?.splice?.(
-                    destroyedPlayerIdx,
-                    1,
-                )?.[0]?.ytPlayer;
-                let destroyedPopupHeader =
-                    destroyedPlayer?.g?.closest?.(".popup-header");
-                destroyedPlayer?.destroy?.();
-                let destroyedPopupImg =
-                    destroyedPopupHeader?.querySelector?.(".popup-img");
-                if (destroyedPopupImg instanceof Element) {
+                }
+                const destroyedPlayer = $ytPlayers.splice(destroyedPlayerIdx, 1)[0]?.ytPlayer;
+                const destroyedytPlayerEl = destroyedPlayer?.g
+                const destroyedPopupImg = destroyedytPlayerEl?.closest(".popup-header")?.querySelector(".popup-img");
+                if (destroyedPopupImg) {
                     removeClass(destroyedPopupImg, "display-none");
                 }
-                let newYtPlayerEl = document.createElement("div");
-                newYtPlayerEl.className = "trailer";
-                addClass(ytPlayerEl, "display-none");
-                removeClass(popupImg, "display-none");
+                destroyedPlayer?.destroy();
+
+                const newYtPlayerEl = document.createElement("div");
+                newYtPlayerEl.className = "trailer"
+                addClass(newYtPlayerEl, "display-none");
                 popupHeader.replaceChild(newYtPlayerEl, ytPlayerEl);
-                addClass(ytPlayerEl, "display-none");
-                ytPlayerEl = popupHeader.querySelector(".trailer"); // Get new YT player
-            } else {
-                addClass(ytPlayerEl, "display-none");
             }
+            addClass(ytPlayerEl, "display-none");
             removeClass(popupImg, "display-none");
             // Add a Unique ID
-            ytPlayerEl.setAttribute(
-                "id",
-                "yt-player" + getUniqueId(),
-            );
-            let ytPlayer = new YT.Player(ytPlayerEl, {
+            ytPlayerEl.id = "yt-player" + getUniqueId()
+            // Add Trailer to Iframe
+            const ytPlayer = new YT.Player(ytPlayerEl, {
                 videoId: trailerID,
                 playerVars: {
                     cc_lang_pref: "en", // Set preferred caption language to English
@@ -640,128 +572,86 @@
                     },
                 },
             });
-            // Add Trailer to Iframe
-            let trailerUrl = `https://www.youtube.com/embed/${trailerID}`;
-            ytPlayerEl.setAttribute("src", trailerUrl);
             $ytPlayers.push({ ytPlayer, headerIdx });
         } else {
-            let popupImg = popupHeader?.querySelector?.(".popup-img");
             removeClass(popupHeader, "loader");
             removeClass(popupImg, "display-none");
         }
     }
 
     function onPlayerError(event) {
-        let ytPlayer = event.target;
-        let trailerEl = ytPlayer?.g;
-        let popupHeader = trailerEl?.parentElement;
-        let popupImg = popupHeader?.querySelector?.(".popup-img");
-        $ytPlayers =
-            $ytPlayers?.filter?.(
-                (_ytPlayer) => _ytPlayer?.ytPlayer !== ytPlayer,
-            ) || [];
-        ytPlayer?.destroy?.();
-        addClass(trailerEl, "display-none");
+        const ytPlayer = event?.target;
+        const ytEl = ytPlayer?.g;
+        const popupHeader = ytEl?.parentElement;
+        const popupImg = popupHeader?.querySelector?.(".popup-img");
+        $ytPlayers = $ytPlayers.filter((e) => e?.ytPlayer?.g !== ytEl) || [];
+        ytPlayer?.destroy();
+        addClass(ytEl, "display-none");
         removeClass(popupHeader, "loader");
         removeClass(popupImg, "display-none");
     }
 
     function onPlayerStateChange(event) {
-        let _ytPlayer = event.target;
-        if (!_ytPlayer || !_ytPlayer?.getPlayerState) return;
-        let trailerEl = _ytPlayer?.g;
-        let popupHeader = trailerEl?.parentElement;
-        let popupImg = popupHeader?.querySelector?.(".popup-img");
-        let popupContent = popupHeader?.closest?.(".popup-content");
-        let mediaList = $loadedMediaLists[$selectedCategory].mediaList;
-        let loopedMediaID = mediaList?.[getChildIndex(popupContent) ?? -1]?.id;
-        let ytId = trailerEl?.id;
-        const playerState = _ytPlayer?.getPlayerState?.()
-        if (
-            ytId &&
-            playerState === (getYTPlayerState("PAUSED")??2)
-        ) {
+        const changedYTPlayer = event?.target;
+        const changedYTEl = changedYTPlayer?.g;
+        const changedPopupHeader = changedYTEl?.parentElement;
+        const changedPopupImg = changedPopupHeader?.querySelector(".popup-img");
+        const changedYTId = changedYTEl?.id;
+        const changedPlayerState = changedYTPlayer?.getPlayerState?.()
+        if (changedPlayerState === getYTPlayerState("PAUSED")) {
             if (
-                mostVisiblePopupHeader === popupHeader
-                && !autoPausedTrailers[ytId]
+                changedYTId
+                && mostVisiblePopupHeader === changedPopupHeader
+                && !autoPausedTrailers[changedYTId]
             ) {
-                manuallyPausedTrailers[ytId] = true
+                manuallyPausedTrailers[changedYTId] = true
             }
         } else {
-            delete manuallyPausedTrailers[ytId];
-            delete autoPausedTrailers[ytId];
-            clearTimeout(videoLoops[ytId]);
-            delete videoLoops[ytId]
+            delete manuallyPausedTrailers[changedYTId];
+            delete autoPausedTrailers[changedYTId];
         }
         
-        if (playerState === (getYTPlayerState("ENDED")??0)) {
-            if (loopedMediaID != null) {
-                clearTimeout(videoLoops[ytId]);
-                videoLoops[ytId] = setTimeout(() => {
-                    _ytPlayer?.stopVideo?.();
-                    let currentPlayerState = _ytPlayer?.getPlayerState?.();
-                    let canReplay = currentPlayerState === (getYTPlayerState("CUED")??5) || currentPlayerState === (getYTPlayerState("ENDED")??0);
-                    if (
-                        mostVisiblePopupHeader === popupHeader &&
-                        canReplay &&
-                        _ytPlayer?.g &&
-                        $inApp &&
-                        $popupVisible
-                    ) {
-                        prePlayYtPlayer(_ytPlayer);
-                        _ytPlayer?.playVideo?.();
-                    }
-                }, 30000); // Play Again after 30 seconds
-            }
-        } else if (videoLoops[ytId]) {
-            clearTimeout(videoLoops[ytId]);
-        }
-        if (playerState === (getYTPlayerState("PLAYING")??1)) {
+        if (changedPlayerState === getYTPlayerState("PLAYING")) {
             if (
-                trailerEl?.classList?.contains?.("display-none") ||
-                !popupImg?.classList?.contains?.("display-none")
+                changedYTEl?.classList?.contains("display-none") ||
+                !changedPopupImg?.classList?.contains("display-none")
             ) {
-                $ytPlayers?.forEach(({ ytPlayer }) => {
-                    if (ytPlayer?.g !== _ytPlayer?.g) {
-                        let ytId = ytPlayer?.g?.id;
-                        if (ytId) {
-                            autoPausedTrailers[ytId] = true;
-                            ytPlayer?.pauseVideo?.();
-                        }
+                for (let i = 0; i < $ytPlayers.length; i++) {
+                    const ytEl = $ytPlayers[i]?.ytPlayer?.g
+                    if (ytEl !== changedYTEl) {
+                        const ytId = ytEl?.id;
+                        if (ytId) autoPausedTrailers[ytId] = true;
+                        ytEl?.pauseVideo?.();
                     }
-                });
-                addClass(popupImg, "fade-out");
-                removeClass(popupHeader, "loader");
-                removeClass(trailerEl, "display-none");
+                }
+                addClass(changedPopupImg, "fade-out");
+                removeClass(changedPopupHeader, "loader");
+                removeClass(changedYTEl, "display-none");
                 requestImmediate(() => {
-                    addClass(popupImg, "display-none");
-                    removeClass(popupImg, "fade-out");
+                    addClass(changedPopupImg, "display-none");
+                    removeClass(changedPopupImg, "fade-out");
                 }, 200);
             }
         }
     }
 
     async function onPlayerReady(event, trailerID) {
-        let ytPlayer = event.target;
-        let trailerEl = ytPlayer?.g;
-        let popupHeader = trailerEl?.parentElement;
+        const readyYTPlayer = event?.target;
+        const readyYTEl = readyYTPlayer?.g;
+        const readyPopupHeader = readyYTEl?.parentElement;
         if (
-            ytPlayer?.getPlayerState?.() === (getYTPlayerState("UNSTARTED")??-1) ||
-            trailerEl.tagName !== "IFRAME" ||
+            readyYTPlayer?.getPlayerState?.() === getYTPlayerState("UNSTARTED") ||
+            readyYTEl?.tagName !== "IFRAME" ||
             window.navigator?.onLine === false
         ) {
             if (trailerID != null) {
                 failingTrailers[trailerID] = true;
             }
-            $ytPlayers =
-                $ytPlayers?.filter?.(
-                    (_ytPlayer) => _ytPlayer?.ytPlayer !== ytPlayer,
-                ) || [];
-            ytPlayer?.destroy?.();
-            addClass(trailerEl, "display-none");
-            removeClass(popupHeader, "loader");
-            let popupImg = popupHeader?.querySelector?.(".popup-img");
-            removeClass(popupImg, "display-none");
+            $ytPlayers = $ytPlayers.filter((e) => e?.ytPlayer?.g !== readyYTEl) || [];
+            addClass(readyYTEl, "display-none");
+            removeClass(readyPopupHeader, "loader");
+            removeClass(readyPopupHeader?.querySelector(".popup-img"), "display-none");
+            readyYTPlayer?.destroy?.();
         } else {
             if (trailerID != null) {
                 delete failingTrailers[trailerID];
@@ -769,65 +659,23 @@
             }
             // Play Most Visible when 1 Succeed
             // then Mute/Buffer other players
-            let mostVisibleTrailerEl = mostVisiblePopupHeader?.querySelector?.(".trailer")
-            let ytId = trailerEl?.id;
-            if (ytId && mostVisibleTrailerEl && mostVisibleTrailerEl !== trailerEl) {
-                trailerEl?.setAttribute?.("loading", "lazy");
-                ytPlayer?.mute?.()
-                ytPlayer?.playVideo?.()
-                autoPausedTrailers[ytId] = true;
-                ytPlayer?.pauseVideo?.()
+            const mostVisibleTrailerEl = mostVisiblePopupHeader?.querySelector(".trailer")            
+            if (mostVisibleTrailerEl && mostVisibleTrailerEl !== readyYTEl) {
+                readyYTEl?.setAttribute("loading", "lazy");
+                readyYTPlayer?.mute?.()
+                readyYTPlayer?.playVideo?.()
+                const readyYTId = readyYTEl?.id;
+                if (readyYTId) autoPausedTrailers[readyYTId] = true;
+                readyYTPlayer?.pauseVideo?.()
+                if ($autoPlay) {
+                    readyYTPlayer?.unMute?.();
+                }
+            } else if ($autoPlay) {
+                readyYTPlayer?.unMute?.();
+            } else {
+                readyYTPlayer?.mute?.()
             }
             playMostVisibleTrailer();
-        }
-    }
-
-    let savedYtVolume
-    function prePlayYtPlayer(ytPlayer) {
-        const ytVolume = lastYTPlayer?.getVolume?.();
-        if (typeof ytVolume === "number") {
-            if (!savedYtVolume) {
-                (async () => {
-                    savedYtVolume = (await getIDBdata("savedYtVolume")) || savedYtVolume;
-                    if (!savedYtVolume) {
-                        savedYtVolume = !$android && matchMedia("(hover:hover)").matches ? 50 : 100;
-                    }
-                    if (savedYtVolume !== ytVolume) {
-                        savedYtVolume = ytVolume;
-                        saveIDBdata(savedYtVolume, "savedYtVolume");
-                    }
-                    ytPlayer?.setVolume?.(savedYtVolume);
-                })()
-            } else {
-                if (savedYtVolume !== ytVolume) {
-                    savedYtVolume = ytVolume;
-                    saveIDBdata(savedYtVolume, "savedYtVolume");
-                }    
-                ytPlayer?.setVolume?.(savedYtVolume);
-            }
-        }
-        
-        const isMuted = ytPlayer?.isMuted?.()
-        if (typeof isMuted==="boolean" 
-            && ytPlayer?.KanshiIsMuteApplied !== true
-        ) {
-            if ($autoPlay) {
-                if (isMuted) {
-                    ytPlayer?.unMute?.();
-                } else {
-                    try {
-                        ytPlayer.KanshiIsMuteApplied = true
-                    } catch {}
-                }
-            } else {
-                if (isMuted) {
-                    try {
-                        ytPlayer.KanshiIsMuteApplied = true
-                    } catch {}
-                } else {
-                    ytPlayer?.mute?.();
-                }
-            }
         }
     }
 
@@ -878,8 +726,35 @@
                 text: "Do you want to refresh your list to sync changes?",
             }))
         ) {
-            $listUpdateAvailable = false;
+            $shouldLoadAllList = true
             mediaManager({ updateRecommendedMediaList: true });
+            $listReloadAvailable = $listUpdateAvailable = false;
+        }
+    }
+
+    async function reloadList(skipConfirm) {
+        if ($android && window[$isBackgroundUpdateKey] === true) return;
+        if ($initList !== false) {
+            if (!skipConfirm) {
+                pleaseWaitAlert()
+            }
+            return
+        }
+        if (
+            skipConfirm ||
+            (await $confirmPromise({
+                title: "Reload List",
+                text: "Do you want to refresh your list to sync changes?",
+            }))
+        ) {
+            $shouldLoadAllList = true
+            mediaLoader({
+                loadMore: true,
+                selectedCategory: $selectedCategory,
+                searchedWord: $searchedWord,
+                reload: true
+            })
+            $listReloadAvailable = false;
         }
     }
 
@@ -999,37 +874,31 @@
     window.returnedAppIsVisible = (inAndroidApp) => {
         // Only For Android, and workaround for Alert visibility
         if (!$android) return;
-        if (!$popupVisible) return;
-        if ($inApp === inAndroidApp) return;
         $inApp = inAndroidApp;
-        let visibleTrailer = mostVisiblePopupHeader?.querySelector?.(".trailer");
-        if (!visibleTrailer) return;
-        if ($inApp) {
-            for (let i = 0, l = $ytPlayers?.length; i < l; i++) {
-                let ytId = $ytPlayers[i]?.ytPlayer?.g?.id;
-                if (
-                    $ytPlayers[i]?.ytPlayer?.g === visibleTrailer &&
-                    !manuallyPausedTrailers[ytId] &&
-                    ($ytPlayers[i]?.ytPlayer?.getPlayerState?.() !== (getYTPlayerState("ENDED")??0) ||
-                        $ytPlayers[i]?.ytPlayer?.getPlayerState?.() === (getYTPlayerState("PAUSED")??2))
-                ) {
-                    prePlayYtPlayer($ytPlayers[i]?.ytPlayer);
-                    $ytPlayers[i]?.ytPlayer?.playVideo?.();
-                } else {
-                    let ytId = $ytPlayers[i]?.ytPlayer?.g?.id;
-                    if (ytId) {
-                        autoPausedTrailers[ytId] = true;
-                        $ytPlayers[i]?.ytPlayer?.pauseVideo?.();
+        const visibleTrailer = mostVisiblePopupHeader?.querySelector(".trailer");
+        if (inAndroidApp && $popupVisible && visibleTrailer) {
+            for (let i = 0; i < $ytPlayers.length; i++) {
+                const ytPlayer = $ytPlayers[i]?.ytPlayer
+                const ytEl = ytPlayer?.g
+                const ytId = ytEl?.id;
+                if (ytEl === visibleTrailer && ytEl) {
+                    if (
+                        !manuallyPausedTrailers[ytId]
+                        && ytPlayer?.getPlayerState?.() !== getYTPlayerState("ENDED")
+                    ) {
+                        ytPlayer?.playVideo?.();
                     }
+                } else {
+                    if (ytId) autoPausedTrailers[ytId] = true;
+                    ytPlayer?.pauseVideo?.();
                 }
             }
         } else {
-            for (let i = 0, l = $ytPlayers?.length; i < l; i++) {
-                let ytId = $ytPlayers[i]?.ytPlayer?.g?.id;
-                if (ytId) {
-                    autoPausedTrailers[ytId] = true;
-                    $ytPlayers[i]?.ytPlayer?.pauseVideo?.();
-                }
+            for (let i = 0; i < $ytPlayers.length; i++) {
+                const ytPlayer = $ytPlayers[i]?.ytPlayer;
+                const ytId = ytPlayer?.g?.id;
+                if (ytId) autoPausedTrailers[ytId] = true;
+                ytPlayer?.pauseVideo?.();
             }
         }
     };
@@ -1037,35 +906,30 @@
         // Only for Browsers
         if ($android) return;
         $inApp = document.visibilityState === "visible";
-        if (!$popupVisible) return;
-        let visibleTrailer = mostVisiblePopupHeader?.querySelector?.(".trailer");
-        if (!visibleTrailer) return;
-        if ($inApp) {
-            for (let i = 0, l = $ytPlayers?.length; i < l; i++) {
-                let ytId = $ytPlayers[i]?.ytPlayer?.g?.id;
-                if (
-                    $ytPlayers[i]?.ytPlayer?.g === visibleTrailer &&
-                    !manuallyPausedTrailers[ytId] &&
-                    ($ytPlayers[i]?.ytPlayer?.getPlayerState?.() !== (getYTPlayerState("ENDED")??0) ||
-                        $ytPlayers[i]?.ytPlayer?.getPlayerState?.() === (getYTPlayerState("PAUSED")??2))
-                ) {
-                    prePlayYtPlayer($ytPlayers[i]?.ytPlayer);
-                    $ytPlayers[i]?.ytPlayer?.playVideo?.();
-                } else {
-                    let ytId = $ytPlayers[i]?.ytPlayer?.g?.id;
-                    if (ytId) {
-                        autoPausedTrailers[ytId] = true;
-                        $ytPlayers[i]?.ytPlayer?.pauseVideo?.();
+        const visibleTrailer = mostVisiblePopupHeader?.querySelector?.(".trailer");
+        if ($inApp && $popupVisible && visibleTrailer) {
+            for (let i = 0; i < $ytPlayers.length; i++) {
+                const ytPlayer = $ytPlayers[i]?.ytPlayer
+                const ytEl = ytPlayer?.g
+                const ytId = ytEl?.id;
+                if (ytEl === visibleTrailer && ytEl) {
+                    if (
+                        !manuallyPausedTrailers[ytId]
+                        && ytPlayer?.getPlayerState?.() !== getYTPlayerState("ENDED")
+                    ) {
+                        ytPlayer?.playVideo?.();
                     }
+                } else {
+                    if (ytId) autoPausedTrailers[ytId] = true;
+                    ytPlayer?.pauseVideo?.();
                 }
             }
         } else {
-            for (let i = 0, l = $ytPlayers?.length; i < l; i++) {
-                let ytId = $ytPlayers[i]?.ytPlayer?.g?.id;
-                if (ytId) {
-                    autoPausedTrailers[ytId] = true;
-                    $ytPlayers[i]?.ytPlayer?.pauseVideo?.();
-                }
+            for (let i = 0; i < $ytPlayers.length; i++) {
+                const ytPlayer = $ytPlayers[i]?.ytPlayer
+                const ytId = ytPlayer?.g?.id;
+                if (ytId) autoPausedTrailers[ytId] = true;
+                ytPlayer?.pauseVideo?.();
             }
         }
     });
@@ -1096,25 +960,26 @@
     });
     function reloadYoutube() {
         loadYouTubeAPI().then(() => {
-            $ytPlayers =
-                $ytPlayers?.filter?.(({ ytPlayer }) => {
-                    if (
-                        typeof ytPlayer?.playVideo === "function" &&
-                        ytPlayer?.getPlayerState?.() !== (getYTPlayerState("UNSTARTED")??-1) &&
-                        !isNaN(ytPlayer?.getPlayerState?.())
-                    ) {
-                        return true;
-                    } else {
-                        ytPlayer?.destroy?.();
-                        let popupImg = ytPlayer?.g
-                            ?.closest?.(".popup-header")
-                            ?.querySelector?.(".popup-img");
-                        if (popupImg instanceof Element) {
-                            removeClass(popupImg, "display-none");
-                        }
-                        return false;
-                    }
-                }) || [];
+            $ytPlayers = $ytPlayers.filter((e) => {
+                const ytPlayer = e?.ytPlayer
+                const state = ytPlayer?.getPlayerState?.()
+                if (
+                    ytPlayer
+                    && ytPlayer?.g instanceof Element
+                    && typeof ytPlayer?.playVideo === "function"
+                    && state !== getYTPlayerState("UNSTARTED")
+                    && typeof state === "number" && !isNaN(state)
+                ) {
+                    return true;
+                } else {
+                    ytPlayer?.destroy?.();
+                    const popupImg = ytPlayer?.g
+                        ?.closest?.(".popup-header")
+                        ?.querySelector?.(".popup-img");
+                    if (popupImg) removeClass(popupImg, "display-none");
+                    return false;
+                }
+            }) || [];
             playMostVisibleTrailer();
         });
     }
@@ -1183,12 +1048,8 @@
         if (!(element instanceof Element)) {
             element = popupContainer
         }
-        if (afterImmediateScrollUponPopupVisible) {
-            let isScrolledDownMax = element.scrollHeight >= element.scrollTop + element.clientHeight - 50;
-            let isScrolledUpMax = element.scrollTop <= 50;
-            if (isScrolledUpMax || isScrolledDownMax) {
-                checkMostVisiblePopupMedia();
-            }
+        if ($popupVisible) {
+            checkMostVisiblePopupMedia();
         }
         itemIsScrolling = true;
         clearTimeout(itemIsScrollingTimeout);
@@ -1448,27 +1309,23 @@
     function popupMainEl(node) {
         return {
             destroy() {
-                let trailerEl = node?.querySelector?.(".trailer");
-                let ytId = trailerEl?.id;
-                if (ytId) {
-                    $ytPlayers =
-                        $ytPlayers?.filter?.((e) => {
-                            let recTrailerEl = e?.ytPlayer?.g
-                            if (
-                                recTrailerEl === trailerEl ||
-                                recTrailerEl?.id === ytId
-                            ) {
-                                e?.ytPlayer?.destroy?.();
-                                return false
-                            } else {
-                                return true;
-                            }
-                        }) || [];
-                    delete manuallyPausedTrailers[ytId];
-                    delete autoPausedTrailers[ytId];
-                    clearTimeout(videoLoops[ytId]);
-                    delete videoLoops[ytId];
-                }
+                const thisYTEl = node?.querySelector?.(".trailer");
+                const ytId = thisYTEl?.id;
+                $ytPlayers = $ytPlayers.filter((e) => {
+                    const ytPlayer = e?.ytPlayer
+                    const ytEl = ytPlayer?.g
+                    if (
+                        ytEl === thisYTEl ||
+                        ytEl?.id === ytId
+                    ) {
+                        ytPlayer?.destroy?.();
+                        return false
+                    } else {
+                        return true;
+                    }
+                }) || [];
+                delete manuallyPausedTrailers[ytId];
+                delete autoPausedTrailers[ytId];
             },
         };
     }
@@ -1490,76 +1347,38 @@
 
     onMount(async () => {
         popupWrapper = popupWrapper || document.getElementById("popup-wrapper");
-        popupContainer =
-            popupContainer || popupWrapper.querySelector("#popup-container");
+        popupContainer = popupContainer || popupWrapper.querySelector("#popup-container");
         navContainerEl = document.getElementById("nav-container");
-        const fullScreenExitHandler = () => {
-            if (
-                !(
-                    document.fullScreen ||
-                    document.mozFullScreen ||
-                    document.webkitIsFullScreen ||
-                    document.msFullscreenElement
-                )
-            ) {
+        document.addEventListener("fullscreenchange", () => {
+            if (!document.fullscreenElement) {
                 playMostVisibleTrailer();
             }
-        };
-        document.addEventListener(
-            "fullscreenchange",
-            fullScreenExitHandler,
-            false,
-        );
-        document.addEventListener(
-            "mozfullscreenchange",
-            fullScreenExitHandler,
-            false,
-        );
-        document.addEventListener(
-            "MSFullscreenChange",
-            fullScreenExitHandler,
-            false,
-        );
-        document.addEventListener(
-            "webkitfullscreenchange",
-            fullScreenExitHandler,
-            false,
-        );
-        document.addEventListener("keydown", async (e) => {
-            if (
-                (e.key === "Escape" && !document.fullscreenElement) ||
-                (e.key === " " && $popupVisible)
-            ) {
+        }, false);
+        document.addEventListener("keydown", (e) => {
+            if (e.key === " " && $popupVisible) {
                 e.preventDefault();
             }
         });
-        document.addEventListener("keyup", async (e) => {
-            if (e.key === "Escape" && !document.fullscreenElement) {
-                e.preventDefault();
-                window.backPressed?.();
-            }
+        document.addEventListener("keyup", (e) => {
             if (e.key === " " && $popupVisible) {
                 e.preventDefault();
-                let visibleTrailer =
-                    mostVisiblePopupHeader?.querySelector?.(".trailer");
-                $ytPlayers?.forEach(({ ytPlayer }) => {
-                    let trailerEl = ytPlayer?.g;
-                    let ytId = trailerEl?.id;
-                    if (ytId) {
-                        if (visibleTrailer === trailerEl) {
-                            if (ytPlayer?.getPlayerState?.() === (getYTPlayerState("PLAYING")??1)) {
-                                manuallyPausedTrailers[ytId] = true;
-                                ytPlayer?.pauseVideo?.();
-                            } else if ($inApp) {
-                                prePlayYtPlayer(ytPlayer);
-                                ytPlayer?.playVideo?.();
-                            }
-                        } else {
-                            autoPausedTrailers[ytId] = true;
+                const visibleTrailer = mostVisiblePopupHeader?.querySelector(".trailer");
+                for (let i = 0; i < $ytPlayers.length; i++) {
+                    const ytPlayer = $ytPlayers[i]?.ytPlayer
+                    const ytEl = ytPlayer?.g;
+                    const ytId = ytEl?.id;
+                    if (visibleTrailer === ytEl && ytEl) {
+                        if (ytPlayer?.getPlayerState?.() === getYTPlayerState("PLAYING")) {
+                            if (ytId) manuallyPausedTrailers[ytId] = true;
                             ytPlayer?.pauseVideo?.();
+                        } else if ($inApp) {
+                            ytPlayer?.playVideo?.();
                         }
+                    } else {
+                        if (ytId) autoPausedTrailers[ytId] = true;
+                        ytPlayer?.pauseVideo?.();
                     }
-                });
+                }
             }
         });
         new MutationObserver((mutationsList) => {
@@ -1567,26 +1386,23 @@
                 if (mutation.type === "childList") {
                     for (let node of mutation.removedNodes) {
                         if (node?.matches?.("iframe.trailer")) {
-                            let ytId = node?.id;
-                            if (ytId) {
-                                $ytPlayers =
-                                    $ytPlayers?.filter?.((e) => {
-                                        const recTrailerEl = e?.ytPlayer?.g;
-                                        if (
-                                            recTrailerEl === node ||
-                                            recTrailerEl?.id === ytId
-                                        ) {
-                                            e?.ytPlayer?.destroy?.();
-                                            return false
-                                        } else {
-                                            return true
-                                        }
-                                    }) || [];
-                                delete manuallyPausedTrailers[ytId];
-                                delete autoPausedTrailers[ytId];
-                                clearTimeout(videoLoops[ytId]);
-                                delete videoLoops[ytId];
-                            }
+                            const ytPlayer = node
+                            const thisYTId = ytPlayer?.id;
+                            $ytPlayers = $ytPlayers.filter((e) => {
+                                const ytPlayer = e?.ytPlayer
+                                const ytEl = ytPlayer?.g;
+                                if (
+                                    ytEl === ytPlayer ||
+                                    ytEl?.id === thisYTId
+                                ) {
+                                    ytPlayer?.destroy?.();
+                                    return false
+                                } else {
+                                    return true
+                                }
+                            }) || [];
+                            delete manuallyPausedTrailers[thisYTId];
+                            delete autoPausedTrailers[thisYTId];
                         }
                     }
                 }
@@ -1795,7 +1611,7 @@
                                             {/if}
                                         </h3>
                                     </div>
-                                    {#if $listUpdateAvailable || $loadingCategory[""] || $loadingCategory[$selectedCategory]}
+                                    {#if $listUpdateAvailable || $loadingCategory[""] || $loadingCategory[$selectedCategory] || $listReloadAvailable}
                                         <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                                         <div
                                             class="list-update-container"
@@ -1803,10 +1619,21 @@
                                             $popupVisible
                                                 ? '0'
                                                 : '-1'}"
-                                            on:click="{() => updateList()}"
-                                            on:keyup="{(e) =>
-                                                e.key === 'Enter' &&
-                                                updateList()}"
+                                            on:click="{() => {
+                                                if ($listUpdateAvailable || $loadingCategory[""] || $loadingCategory[$selectedCategory]) {
+                                                    updateList()
+                                                } else {
+                                                    reloadList()
+                                                }
+                                            }}"
+                                            on:keyup="{(e) => {
+                                                if (e.key === 'Enter') return
+                                                if ($listUpdateAvailable || $loadingCategory[""] || $loadingCategory[$selectedCategory]) {
+                                                    updateList()
+                                                } else {
+                                                    reloadList()
+                                                }
+                                            }}"
                                             role="button"
                                             aria-label="Reload List"
                                         >
@@ -1935,9 +1762,14 @@
                                                     {" · " +
                                                         media.formattedPopularity}
                                                 {/if}
-                                                {#if media?.recommendedRatingInfo}
-                                                    {" · "}{@html media?.recommendedRatingInfo ||
-                                                        ""}
+                                                {#if media?.recommendedRatingColor}
+                                                    {" · "}
+                                                    <svg
+                                                        class={`general-rating-icon ${media?.recommendedRatingColor}`}
+                                                        viewBox="0 0 320 512"
+                                                    >
+                                                        <path d="M311 86a32 32 0 1 0-46-44L110 202l-46 47V64a32 32 0 1 0-64 0v384a32 32 0 1 0 64 0V341l65-67 133 192c10 15 30 18 44 8s18-30 8-44L174 227 311 86z"/>
+                                                    </svg>
                                                 {/if}
                                             </h4>
                                         </div>
@@ -1958,14 +1790,20 @@
                                                 )}
                                             {@const volOrDur =
                                                 (isManga || isNovel
-                                                    ? media?.volumes > 0
+                                                    ? (
+                                                        media?.volumes > 0
                                                         ? ` · ${media?.volumes} Vol${media?.volumes > 1 ? "s" : ""}`
-                                                        : media?.volumeProgress >
-                                                            0
-                                                          ? ` · Seen ${media?.volumeProgress} Vol${media?.volumeProgress > 1 ? "s" : ""}`
-                                                          : ""
-                                                    : media?.formattedDuration) ||
-                                                ""}
+                                                        : (
+                                                            media?.volumeProgress > 0
+                                                            ? ` · Seen ${media?.volumeProgress} Vol${media?.volumeProgress > 1 ? "s" : ""}`
+                                                            : ""
+                                                        )
+                                                    ) : (
+                                                        media?.duration > 0
+                                                        ? ` · ${msToTime(media.duration * 60 * 1000, 2)}`
+                                                        : ""
+                                                    )
+                                                ) || ""}
                                             <h4>
                                                 {(media?.format || "N/A") +
                                                     (media?.countryOfOrigin
@@ -1987,14 +1825,20 @@
                                                 )}
                                             {@const volOrDur =
                                                 (isManga || isNovel
-                                                    ? media?.volumes > 0
+                                                    ? (
+                                                        media?.volumes > 0
                                                         ? ` · ${media?.volumes} Vol${media?.volumes > 1 ? "s" : ""}`
-                                                        : media?.volumeProgress >
-                                                            0
-                                                          ? ` · Seen ${media?.volumeProgress} Vol${media?.volumeProgress > 1 ? "s" : ""}`
-                                                          : ""
-                                                    : media?.formattedDuration) ||
-                                                ""}
+                                                        : (
+                                                            media?.volumeProgress > 0
+                                                            ? ` · Seen ${media?.volumeProgress} Vol${media?.volumeProgress > 1 ? "s" : ""}`
+                                                            : ""
+                                                        )
+                                                    ) : (
+                                                        media?.duration > 0
+                                                        ? ` · ${msToTime(media.duration * 60 * 1000, 2)}`
+                                                        : ""
+                                                    )
+                                                ) || ""}
                                             <h4>
                                                 {(media?.format || "N/A") +
                                                     (media?.countryOfOrigin
@@ -2637,7 +2481,7 @@
     }
 
     .popup-wrapper svg {
-        fill: var(--sfg-color) !important;
+        fill: var(--sfg-color);
     }
 
     .popup-container {
@@ -2901,7 +2745,7 @@
         padding-right: 2px;
     }
 
-    :global(.general-rating-icon) {
+    .general-rating-icon {
         height: 10px;
         width: 10px;
     }

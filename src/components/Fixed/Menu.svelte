@@ -22,7 +22,6 @@
         popupVisible,
         listUpdateAvailable,
         showStatus,
-        username,
         isBackgroundUpdateKey,
         mobile,
         keepAppRunningInBackground,
@@ -101,9 +100,6 @@
                         $listUpdateAvailable = true;
                     })
                     .finally(() => {
-                        setLocalStorage("username", $username).catch(() => {
-                            removeLocalStorage("username");
-                        });
                         if (importFileInput instanceof Element) {
                             importFileInput.value = null;
                         }
@@ -125,14 +121,9 @@
         } catch (ex) { console.error(ex); }
     }
     window.setExportPathAvailability = async (value = true) => {
-        $exportPathIsAvailable = value;
-        setLocalStorage("exportPathIsAvailable", value)
-            .catch(() => {
-                removeLocalStorage("exportPathIsAvailable");
-            })
-            .finally(() => {
-                saveIDBdata(value, "exportPathIsAvailable");
-            });
+        setLocalStorage("exportPathIsAvailable", $exportPathIsAvailable = value)
+        .catch(() => removeLocalStorage("exportPathIsAvailable"))
+        .finally(() => saveIDBdata(value, "exportPathIsAvailable"));
     };
 
     async function exportData(e) {
@@ -250,12 +241,8 @@
     showStatus.subscribe((val) => {
         if (typeof val === "boolean") {
             setLocalStorage("showStatus", val)
-                .catch(() => {
-                    removeLocalStorage("showStatus");
-                })
-                .finally(() => {
-                    saveIDBdata(val, "showStatus");
-                });
+            .catch(() => removeLocalStorage("showStatus"))
+            .finally(() => saveIDBdata(val, "showStatus"));
         }
     })
 
@@ -265,12 +252,8 @@
                 $dataStatus = null
             }
             setLocalStorage("showRateLimit", val)
-                .catch(() => {
-                    removeLocalStorage("showRateLimit");
-                })
-                .finally(() => {
-                    saveIDBdata(val, "showRateLimit");
-                });
+            .catch(() => removeLocalStorage("showRateLimit"))
+            .finally(() => saveIDBdata(val, "showRateLimit"));
         }
     })
 
@@ -485,6 +468,9 @@
     }
 
     menuVisible.subscribe((val) => {
+        if (navContainerEl == null) {
+            navContainerEl = document.getElementById("nav-container");
+        }
         if (val) {
             if ($documentScrollTop <= 0 || $popupVisible) {
                 removeClass(navContainerEl, "hide");
@@ -567,7 +553,6 @@
     }
 
     onMount(async () => {
-        navContainerEl = document.getElementById("nav-container");
         if (
             typeof window.keepAppRunningInBackground === "boolean" &&
             typeof $keepAppRunningInBackground !== "boolean"

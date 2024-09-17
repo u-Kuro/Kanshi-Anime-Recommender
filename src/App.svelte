@@ -144,12 +144,9 @@
 				(async () => {
 					const savedUsername = await getIDBdata("username");
 					if (savedUsername !== $username) {
+						$username = savedUsername
 						setLocalStorage("username", savedUsername || "")
-						.catch((ex) => {
-							removeLocalStorage("username");
-							console.error(ex)
-						})
-						$username = savedUsername;
+						.catch(() => removeLocalStorage("username"))
 					}
 					if (
 						$android &&
@@ -418,12 +415,7 @@
 		window.scrollToSelectedCategory?.();
 
 		// Set True Window Size if its not in full screen
-		if (
-			!(document.fullScreen ||
-			document.mozFullScreen ||
-			document.webkitIsFullScreen ||
-			document.msFullscreenElement)
-		) {
+		if (!document.fullscreenElement) {
 			if ($windowHeight > $trueWindowHeight || $trueWindowHeight == null) {
 				$trueWindowHeight = $windowHeight
 				// $trueWindowWidth = $windowWidth
@@ -526,8 +518,7 @@
 			}
 		}
 
-		const shouldUpdate = !$popupVisible;
-		if ($listUpdateAvailable && shouldUpdate && $initList === false) {
+		if ($listUpdateAvailable && !$popupVisible && $initList === false) {
 			if (!$initData && (!$android || window[$isBackgroundUpdateKey] !== true)) {
 				$listUpdateAvailable = false;
 				mediaManager({ updateRecommendedMediaList: true });
@@ -684,16 +675,13 @@
 		if ($android && window[$isBackgroundUpdateKey] === true) return;
 		if (val === true) {
 			const hourINMS = 60 * 60 * 1000;
-			setLocalStorage("autoUpdate", true)
-                .catch(() => {
-                    removeLocalStorage("autoUpdate");
-                })
-                .finally(() => {
-                    saveIDBdata(true, "autoUpdate");
-                });
+			setLocalStorage("autoUpdate", val)
+			.catch(() => removeLocalStorage("autoUpdate"))
+			.finally(() => saveIDBdata(val, "autoUpdate"));
 			if (await autoUpdateIsPastDate()) {
 				checkAutoFunctions();
-				if ($autoUpdateInterval) clearInterval($autoUpdateInterval);
+				clearTimeout($autoUpdateInterval)
+				clearInterval($autoUpdateInterval)
 				$autoUpdateInterval = setInterval(() => {
 					if ($autoUpdate) {
 						checkAutoFunctions();
@@ -701,10 +689,13 @@
 				}, hourINMS);
 			} else {
 				const timeLeft = hourINMS - (new Date().getTime() - $runnedAutoUpdateAt) || 0;
-				setTimeout(() => {
+				clearTimeout($autoUpdateInterval)
+				clearInterval($autoUpdateInterval)
+				$autoUpdateInterval = setTimeout(() => {
 					if ($autoUpdate === false) return;
 					checkAutoFunctions();
-					if ($autoUpdateInterval) clearInterval($autoUpdateInterval);
+					clearTimeout($autoUpdateInterval)
+					clearInterval($autoUpdateInterval)
 					$autoUpdateInterval = setInterval(() => {
 						if ($autoUpdate) {
 							checkAutoFunctions();
@@ -713,31 +704,24 @@
 				}, Math.min(timeLeft, 2000000000));
 			}
 		} else if (val === false) {
-			if ($autoUpdateInterval) clearInterval($autoUpdateInterval);
-			$autoUpdateInterval = null;
-			setLocalStorage("autoUpdate", false)
-                .catch(() => {
-                    removeLocalStorage("autoUpdate");
-                })
-                .finally(() => {
-                    saveIDBdata(false, "autoUpdate");
-                });
+			clearTimeout($autoUpdateInterval)
+			clearInterval($autoUpdateInterval)
+			setLocalStorage("autoUpdate", val)
+			.catch(() => removeLocalStorage("autoUpdate"))
+			.finally(() => saveIDBdata(val, "autoUpdate"));
 		}
 	});
 	autoExport.subscribe(async (val) => {
 		if ($android && window[$isBackgroundUpdateKey] === true) return;
 		if (val === true) {
 			const hourINMS = 60 * 60 * 1000;
-			setLocalStorage("autoExport", true)
-                .catch(() => {
-                    removeLocalStorage("autoExport");
-                })
-                .finally(() => {
-                    saveIDBdata(true, "autoExport");
-                });
+			setLocalStorage("autoExport", val)
+			.catch(() => removeLocalStorage("autoExport"))
+			.finally(() => saveIDBdata(val, "autoExport"));
 			if (await autoExportIsPastDate()) {
 				checkAutoFunctions();
-				if ($autoExportInterval) clearInterval($autoExportInterval);
+				clearTimeout($autoExportInterval)
+				clearInterval($autoExportInterval)
 				$autoExportInterval = setInterval(() => {
 					if ($autoExport) {
 						checkAutoFunctions();
@@ -745,11 +729,13 @@
 				}, hourINMS);
 			} else {
 				const timeLeft = hourINMS - (new Date().getTime() - $runnedAutoExportAt) || 0;
-				setTimeout(() => {
+				clearTimeout($autoExportInterval)
+				clearInterval($autoExportInterval)
+				$autoExportInterval = setTimeout(() => {
 					if ($autoExport === false) return;
 					checkAutoFunctions();
-					if ($autoExportInterval)
-						clearInterval($autoExportInterval);
+					clearTimeout($autoExportInterval)
+					clearInterval($autoExportInterval)
 					$autoExportInterval = setInterval(() => {
 						if ($autoExport) {
 							checkAutoFunctions();
@@ -758,15 +744,12 @@
 				}, Math.min(timeLeft, 2000000000));
 			}
 		} else if (val === false) {
-			if ($autoExportInterval) clearInterval($autoExportInterval);
+			clearTimeout($autoExportInterval)
+			clearInterval($autoExportInterval)
 			$autoExportInterval = null;
-			setLocalStorage("autoExport", false)
-                .catch(() => {
-                    removeLocalStorage("autoExport");
-                })
-                .finally(() => {
-                    saveIDBdata(false, "autoExport");
-				})
+			setLocalStorage("autoExport", val)
+			.catch(() => removeLocalStorage("autoExport"))
+			.finally(() => saveIDBdata(val, "autoExport"));
 		}
 	});
 	async function autoUpdateIsPastDate() {

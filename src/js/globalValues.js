@@ -46,7 +46,7 @@ const currentWindowWidth = Math.max(
 const windowHeight = writable(currentWindowHeight)
 const windowWidth = writable(currentWindowWidth)
 
-const isFullScreen = window.document?.fullScreen || window.document?.mozFullScreen || window.document?.webkitIsFullScreen || window.document?.msFullscreenElement
+const isFullScreen = window.document?.fullscreenElement
 const trueWindowHeight = writable(isFullScreen ? null : currentWindowHeight)
 // const trueWindowWidth = writable(isFullScreen ? null : currentWindowWidth)
 
@@ -107,6 +107,7 @@ const extraInfo = writable(null)
 const currentExtraInfo = writable(null)
 const earlisetReleaseDate = writable(null)
 const shownAllInList = writable({})
+const shouldLoadAllList = writable(false)
 const confirmPromise = writable(null)
 const menuVisible = writable(false)
 const mediaOptionVisible = writable(false)
@@ -114,6 +115,7 @@ const openedMediaOptionIdx = writable(null)
 const popupVisible = writable(false)
 const openedMediaPopupIdx = writable(null)
 const listUpdateAvailable = writable(false)
+const listReloadAvailable = writable(false)
 const popupIsGoingBack = writable(false)
 const showFilterOptions = writable(getLocalStorage('showFilterOptions') ?? null)
 const dropdownIsVisible = writable(null)
@@ -195,6 +197,7 @@ export {
     currentExtraInfo,
     earlisetReleaseDate,
     shownAllInList,
+    shouldLoadAllList,
     confirmPromise,
     menuVisible,
     mediaOptionVisible,
@@ -202,6 +205,7 @@ export {
     popupVisible,
     openedMediaPopupIdx,
     listUpdateAvailable,
+    listReloadAvailable,
     popupIsGoingBack,
     showFilterOptions,
     dropdownIsVisible,

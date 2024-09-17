@@ -65,6 +65,8 @@
         listUpdateAvailable,
         toast,
         initList,
+        listReloadAvailable,
+        shouldLoadAllList,
     } from "../../js/globalValues.js";
 
     const COOs = {
@@ -79,9 +81,7 @@
         filterCategoriesSelections,
         filterCategories;
 
-    let selectedFilterCategoryName = getLocalStorage(
-        "selectedFilterCategoryName",
-    );
+    let selectedFilterCategoryName = getLocalStorage("selectedFilterCategoryName");
 
     $: {
         let category = $loadedMediaLists?.[$selectedCategory];
@@ -269,13 +269,10 @@
 
     function handleFilterCategory(event, newFilterCategoryName) {
         event.stopPropagation();
-        selectedFilterCategoryName = newFilterCategoryName;
-        setLocalStorage(
-            "selectedFilterCategoryName",
-            selectedFilterCategoryName,
-        ).catch(() => {
-            saveIDBdata(selectedFilterCategoryName, "selectedFilterCategoryName");
-        });
+
+        setLocalStorage("selectedFilterCategoryName", selectedFilterCategoryName = newFilterCategoryName)
+        .catch(() => removeLocalStorage("selectedFilterCategoryName"))
+
         if (
             highlightedEl instanceof Element &&
             highlightedEl.closest(".filter-category")
@@ -1189,10 +1186,8 @@
         customCategoryName = $selectedCategory;
         editCategoryName = false;
 
-        $showFilterOptions = !$showFilterOptions;
-        setLocalStorage("showFilterOptions", $showFilterOptions).catch(() => {
-            removeLocalStorage("showFilterOptions");
-        });
+        setLocalStorage("showFilterOptions", $showFilterOptions = !$showFilterOptions)
+        .catch(() => removeLocalStorage("showFilterOptions"))
     }
 
     function hasPartialMatch(strings, query) {
@@ -1648,19 +1643,23 @@
     ) => {
         if (newMeanAverageScore && newMeanAverageScore > 0) {
             meanAverageScore = newMeanAverageScore;
-            setLocalStorage("meanAverageScore", meanAverageScore);
+            setLocalStorage("meanAverageScore", meanAverageScore)
+            .catch(() => removeLocalStorage("meanAverageScore"));
         }
         if (newMeanAnimePopularity && newMeanAnimePopularity > 0) {
             meanAnimePopularity = newMeanAnimePopularity;
-            setLocalStorage("meanAnimePopularity", meanAnimePopularity);
+            setLocalStorage("meanAnimePopularity", meanAnimePopularity)
+            .catch(() => removeLocalStorage("meanAnimePopularity"));
         }
         if (newMeanMangaPopularity && newMeanMangaPopularity > 0) {
             meanMangaPopularity = newMeanMangaPopularity;
-            setLocalStorage("meanMangaPopularity", meanMangaPopularity);
+            setLocalStorage("meanMangaPopularity", meanMangaPopularity)
+            .catch(() => removeLocalStorage("meanMangaPopularity"));
         }
         if (newMeanNovelPopularity && newMeanNovelPopularity > 0) {
             meanNovelPopularity = newMeanNovelPopularity;
-            setLocalStorage("meanNovelPopularity", meanNovelPopularity);
+            setLocalStorage("meanNovelPopularity", meanNovelPopularity)
+            .catch(() => removeLocalStorage("meanNovelPopularity"));
         }
     };
     let recListMAPE, recListMAPEIncreased;
@@ -1684,15 +1683,11 @@
         }
     };
 
-    async function handleGridView() {
-        $gridFullView = !$gridFullView;
-        setLocalStorage("gridFullView", $gridFullView)
-            .catch(() => {
-                removeLocalStorage("gridFullView");
-            })
-            .finally(() => {
-                saveIDBdata($gridFullView, "gridFullView");
-            });
+    function handleGridView() {
+        const newGridFullView = !$gridFullView
+        setLocalStorage("gridFullView", $gridFullView = newGridFullView)
+        .catch(() => removeLocalStorage("gridFullView"))
+        .finally(() => saveIDBdata(newGridFullView, "gridFullView"));
     }
 
     async function updateList() {
@@ -1703,13 +1698,43 @@
                 text: "Do you want to refresh your list to sync changes?",
             }))
         ) {
-            $listUpdateAvailable = false;
+            $shouldLoadAllList = true
             mediaManager({ updateRecommendedMediaList: true });
+            $listReloadAvailable = $listUpdateAvailable = false;
+        }
+    }
+
+    async function reloadList() {
+        if ($android && window[$isBackgroundUpdateKey] === true) return;
+        if ($initList !== false) return pleaseWaitAlert();
+        if ((await $confirmPromise({
+                title: "Reload List",
+                text: "Do you want to refresh your list to sync changes?",
+            }))
+        ) {
+            $shouldLoadAllList = true
+            mediaLoader({
+                loadMore: true,
+                selectedCategory: $selectedCategory,
+                searchedWord: $searchedWord,
+                reload: true
+            })
+            $listReloadAvailable = false;
         }
     }
 
     onMount(async () => {
-        selectedFilterCategoryName = selectedFilterCategoryName || (await getIDBdata("selectedFilterCategoryName")) || "Media Filter";
+        selectedFilterCategoryName = selectedFilterCategoryName || "Media Filter"
+
+        $showFilterOptions = $showFilterOptions ?? false
+
+        $gridFullView = $gridFullView ?? (await getIDBdata("gridFullView"));
+        if ($gridFullView == null) {
+            setLocalStorage("gridFullView", $gridFullView = false)
+            .catch(() => removeLocalStorage("gridFullView"))
+            .finally(() => saveIDBdata(false, "gridFullView"))
+        }
+
         popupContainer = document.getElementById("popup-container");
 
         window.addEventListener("click", clickOutsideListener);
@@ -1835,15 +1860,6 @@
                 }
             }
         });
-
-        $gridFullView = $gridFullView ?? (await getIDBdata("gridFullView"));
-        if ($gridFullView == null) {
-            setLocalStorage("gridFullView", $gridFullView = false)
-            .catch((ex) => {
-                removeLocalStorage("gridFullView")
-                console.error(ex)
-            }).finally(() => saveIDBdata(false, "gridFullView"))
-        }
     });
 </script>
 
@@ -1926,12 +1942,7 @@
                                         e.key === 'Enter' &&
                                         selectCategory(categoryName)}"
                                 >
-                                    <h3
-                                        style:color="{categoryName ===
-                                        $selectedCategory
-                                            ? "hsl(var(--ac-color))"
-                                            : "inherit"}"
-                                    >
+                                    <h3>
                                         {trimAllEmptyChar(categoryName) || ""}
                                     </h3>
                                 </div>
@@ -2084,7 +2095,6 @@
                         </div>
                         <div class="options">
                             {#each filterCategories || [] as filterCategoryName (filterCategoryName || {})}
-                                {@const filterCategoryIsSelected = filterCategoryName === selectedFilterCategoryName}
                                 <div
                                     class="option"
                                     on:click="{(e) =>
@@ -2099,11 +2109,7 @@
                                             filterCategoryName,
                                         )}"
                                 >
-                                    <h3
-                                        style:color="{filterCategoryIsSelected
-                                            ? "hsl(var(--ac-color))"
-                                            : "inherit"}"
-                                    >
+                                    <h3>
                                         {filterCategoryName || ""}
                                     </h3>
                                 </div>
@@ -2198,6 +2204,7 @@
                     {#each filterSelections || [] as filterSelectionName (filterCategoryName + filterSelectionName || {})}
                         {@const filterSelectionKey = filterCategoryName + "_" + filterSelectionName}
                         {@const filterSelectionIsSelected = filterCategoryIsSelected && filterSelectionName === openedFilterSelectionName}
+                        {@const isStaticSelection = filterCategoryName === "Media Filter" && $filterConfig?.staticSelection?.[filterSelectionName]}
                         <div
                             class="{'filter-select' +
                                 (filterCategoryIsSelected
@@ -2290,19 +2297,11 @@
                                 {/if}
                             </div>
                             <div
-                                class="{'options-wrap' +
-                                    (filterSelectionIsSelected
-                                        ? ''
-                                        : ' display-none hide')}"
+                                class="{'options-wrap' + (filterSelectionIsSelected ? '' : ' display-none hide')}"
                                 on:wheel|stopPropagation="{() => {}}"
                                 on:touchend|passive="{handleOptionsWrapVisibility}"
                             >
-                                <div
-                                    class="{'options-wrap-filter-info' +
-                                        (filterSelectionIsSelected
-                                            ? ''
-                                            : ' hide')}"
-                                >
+                                <div class="{'options-wrap-filter-info' + (filterSelectionIsSelected ? '' : ' hide')}">
                                     <div class="header">
                                         <div class="filter-title">
                                             {filterSelectionName || ""}
@@ -2354,7 +2353,7 @@
                                             window.addHistory?.()}"
                                     />
                                     <div
-                                        class="options"
+                                        class={"options" + (isStaticSelection ? ' static-selection' : '')}
                                         on:wheel|stopPropagation="{() => {}}"
                                     >
                                         {#if filterSelectionIsSelected}
@@ -2368,13 +2367,7 @@
                                                 : $orderedFilters?.[filterSelectionName]
                                             }
                                             {#if selectionOptions?.length}
-                                                {@const isReadOnly =
-                                                    filterCategoryName ===
-                                                        "Media Filter" &&
-                                                    $filterConfig
-                                                        ?.readOnly?.[
-                                                        filterSelectionName
-                                                    ]}
+                                                {@const isReadOnly = filterCategoryName === "Media Filter" && $filterConfig?.readOnly?.[filterSelectionName]}
                                                 {@const filterCategoryArray =
                                                     filterCategoryName ===
                                                     "Media Filter"
@@ -2387,7 +2380,7 @@
                                                             ? $mediaCautions
                                                             : []}
                                                 {#each selectionOptions || [] as optionName, optionIdx (optionName || {})}
-                                                    {#if categoryIsAlgorithmFilter || optionName !== "all"}
+                                                    {#if categoryIsAlgorithmFilter || optionName !== "All"}
                                                         {@const status = filterCategoryArray?.find?.((filter) =>
                                                             filter?.optionName === optionName &&
                                                             filter?.optionCategory === filterSelectionName &&
@@ -2736,8 +2729,8 @@
                 </svg>
             </div>
             {#each activeFilters || [] as { filterType, optionName, optionCategory, status, optionValue }, activeFilterIdx (filterType + optionName + (optionCategory ?? "") || {})}
-                {@const addTagInfo = optionCategory === "tag" && optionName !== "all"}
-                {@const addTagCategoryInfo = optionCategory === "tag category" && optionName !== "all"}
+                {@const addTagInfo = optionCategory === "tag" && optionName !== "All"}
+                {@const addTagCategoryInfo = optionCategory === "tag category" && optionName !== "All"}
                 <div
                     class="active-tag-filter"
                     title={(
@@ -2785,7 +2778,11 @@
                                 {@const upperCaseCC = optionName?.toUpperCase?.()}
                                 {@const fullCountryName = COOs[upperCaseCC]}
                                 <h3>
-                                    {`${optionCategory} : ${fullCountryName || upperCaseCC || ''}`}
+                                    {#if fullCountryName && upperCaseCC}
+                                        {`${optionCategory} : ${fullCountryName} (${upperCaseCC})`}
+                                    {:else}
+                                        {`${optionCategory} : ${fullCountryName || upperCaseCC || ''}`}
+                                    {/if}
                                 </h3>
                             {:else}
                                 <h3>
@@ -2898,12 +2895,25 @@
                 ></path>
             </svg>
         </div>
-        {#if ($listUpdateAvailable || $loadingCategory[""] || $loadingCategory[$selectedCategory]) && $initList === false}
+        {#if ($listReloadAvailable || $listUpdateAvailable || $loadingCategory[""] || $loadingCategory[$selectedCategory]) && $initList === false}
             <div
                 tabindex="{$menuVisible || $popupVisible ? '' : '0'}"
                 class="refresh-list"
-                on:click="{() => updateList()}"
-                on:keyup="{(e) => e.key === 'Enter' && updateList()}"
+                on:click="{() => {
+                    if ($listUpdateAvailable || $loadingCategory[""] || $loadingCategory[$selectedCategory]) {
+                        updateList()
+                    } else {
+                        reloadList()
+                    }
+                }}"
+                on:keyup="{(e) => {
+                    if (e.key === 'Enter') return
+                    if ($listUpdateAvailable || $loadingCategory[""] || $loadingCategory[$selectedCategory]) {
+                        updateList()
+                    } else {
+                        reloadList()
+                    }
+                }}"
                 role="button"
                 aria-label="Reload List"
             >
@@ -3117,7 +3127,6 @@
     }
     .category-wrap .option h3 {
         cursor: pointer;
-        text-transform: capitalize;
     }
     .search-media-wrap {
         display: grid;
@@ -3509,6 +3518,9 @@
 
     .filter-select .option h3 {
         cursor: pointer !important;
+    }
+
+    .filter-select .options.static-selection h3 {
         text-transform: capitalize;
     }
 

@@ -37,6 +37,8 @@
         loadingCategory,
         initList,
         toast,
+        shouldLoadAllList,
+        listReloadAvailable,
     } from "../../js/globalValues.js";
     import { mediaLoader } from "../../js/workerUtils.js";
 
@@ -117,6 +119,17 @@
         searchDate,
         isInit
     }) {
+        if (
+            $selectedCategory === mainCategory
+            && $popupVisible
+            && !$shouldLoadAllList
+            && idx < shownMediaListCount - 1
+            && $initList === false
+            && !isInit
+        ) {
+            $listReloadAvailable = true
+            return
+        }
         let finishedReloading, finishedSearching
         if (isLast) {
             finishedReloading = finishedSearching = true
@@ -160,6 +173,9 @@
                     searchedWord: $searchedWord,
                 });
             } else {
+                if ($selectedCategory === mainCategory) {
+                    $shouldLoadAllList = false
+                }
                 if (finishedReloading) {
                     delete $loadingCategory[mainCategory]
                     $loadingCategory = $loadingCategory
@@ -180,6 +196,9 @@
                 $loadedMediaLists[mainCategory].mediaList = [];
             }
             if (isInit) return // already loads next media after return
+            if ($selectedCategory === mainCategory) {
+                $shouldLoadAllList = false
+            }
             if (finishedReloading) {
                 delete $loadingCategory[mainCategory]
                 $loadingCategory = $loadingCategory
@@ -480,12 +499,13 @@
             class="{'image-grid ' +
                 ($gridFullView ? ' full-view' : '') +
                 (mediaList?.length === 0 && !$initData ? ' empty-grid' : '') +
-                ($loadingCategory[""]
-                            || $loadingCategory[mainCategory]
-                            || latestSearchDate
-                            || $initList !== false
-                                ? ' semi-loading'
-                                : '')
+                ($listReloadAvailable
+                || $loadingCategory[""]
+                || $loadingCategory[mainCategory]
+                || latestSearchDate
+                || $initList !== false
+                    ? ' semi-loading'
+                    : '')
             }"
             data-category="{mainCategory}"
             bind:this="{mediaGridEl}"

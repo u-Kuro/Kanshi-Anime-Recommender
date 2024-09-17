@@ -41,6 +41,9 @@ import {
     toast,
     initList,
     showRateLimit,
+    orderedFilters,
+    tagInfo,
+    listReloadAvailable,
 } from "./globalValues.js";
 
 const hasOwnProp = Object.prototype.hasOwnProperty
@@ -68,7 +71,7 @@ let initMediaLoaderWorker
 const initMediaLoader = async () => {
     try {
         if (initMediaLoaderWorker === false) return;
-        initMediaLoaderWorker = new Worker(await cacheRequest("./webapi/worker/initalMediaLoader.js", 1012745, "Checking Initial List"))
+        initMediaLoaderWorker = new Worker(await cacheRequest("./webapi/worker/initalMediaLoader.js", 916291, "Checking Initial List"))
         initMediaLoaderWorker.onmessage = async ({ data }) => {
             if (hasOwnProp.call(data, "media")) {
                 const media = data.media
@@ -118,7 +121,7 @@ const initMediaLoader = async () => {
 let mediaLoaderWorker, mediaLoaderWorkerPromise, mediaLoaderPromises = {};
 function getMediaLoaderWorker() {
     mediaLoaderWorkerPromise = new Promise(async (resolve) => {
-        resolve(new Worker(await cacheRequest("./webapi/worker/mediaLoader.js", 24679, "Checking Existing List")))
+        resolve(new Worker(await cacheRequest("./webapi/worker/mediaLoader.js", 22844, "Checking Existing List")))
         mediaLoaderWorkerPromise = null
     })
     return mediaLoaderWorkerPromise
@@ -302,7 +305,8 @@ const mediaLoader = (_data = {}) => {
             }
 
             const currentCategory = get(selectedCategory)
-            if (hasOwnProp?.call?.(data, "reloadList")) {
+            const hasAvailableListReload = !get(popupVisible) && get(listReloadAvailable)
+            if (hasOwnProp?.call?.(data, "reloadList") || hasAvailableListReload) {
                 if (jsonIsEmpty(get(loadedMediaLists))) {
                     if (mediaLoaderWorker) {
                         mediaLoaderWorker.postMessage({
@@ -322,6 +326,9 @@ const mediaLoader = (_data = {}) => {
                     selectedCategory: currentCategory,
                     searchedWord: get(searchedWord),
                 });
+                if (hasAvailableListReload) {
+                    listReloadAvailable.set(false)
+                }
                 mediaLoaderPromises[data?.postId]?.resolve?.()
                 delete mediaLoaderPromises[data?.postId]
             }
@@ -358,7 +365,7 @@ const mediaManager = (_data = {}) => {
     }
     return new Promise((resolve, reject) => {
 
-        if (mediaManagerWorkerTimeout) clearTimeout(mediaManagerWorkerTimeout);
+        clearTimeout(mediaManagerWorkerTimeout);
         mediaManagerWorker?.terminate?.()
 
         if (get(isImporting)) {
@@ -403,7 +410,7 @@ const mediaManager = (_data = {}) => {
         } else if (hasOwnProp.call(_data, "showId")) {
             const showId = _data.showId
             if (showId === "all") {
-                entriesToShow = { "all": true }
+                entriesToShow = { all: true }
                 entriesToHide = {}
             } else {
                 entriesToShow[showId] = true
@@ -453,9 +460,9 @@ const mediaManager = (_data = {}) => {
         }
 
         progress.set(0)
-        cacheRequest("./webapi/worker/mediaManager.js", 54981, "Updating Categories and List")
+        cacheRequest("./webapi/worker/mediaManager.js", 54229, "Updating Categories and List")
             .then(url => {
-                if (mediaManagerWorkerTimeout) clearTimeout(mediaManagerWorkerTimeout);
+                clearTimeout(mediaManagerWorkerTimeout);
                 mediaManagerWorker?.terminate?.()
                 isLoadingMedia.set(true)
                 mediaManagerWorker = new Worker(url);
@@ -600,14 +607,14 @@ const processRecommendedMediaList = (_data = {}) => {
             _data.algorithmFiltersId = passedAlgorithmFilterId
         }
         
-        if (processRecommendedMediaListTerminateTimeout) clearTimeout(processRecommendedMediaListTerminateTimeout);
+        clearTimeout(processRecommendedMediaListTerminateTimeout);
         processRecommendedMediaListWorker?.terminate?.();
         progress.set(0)
-        cacheRequest("./webapi/worker/processRecommendedMediaList.js", 43744, "Updating Recommendation List")
+        cacheRequest("./webapi/worker/processRecommendedMediaList.js", 44130, "Updating Recommendation List")
             .then(url => {
                 const lastProcessRecommendationAiringAt = parseInt((new Date().getTime() / 1000))
                 let neareastMediaReleaseAiringAt
-                if (processRecommendedMediaListTerminateTimeout) clearTimeout(processRecommendedMediaListTerminateTimeout);
+                clearTimeout(processRecommendedMediaListTerminateTimeout);
                 processRecommendedMediaListWorker?.terminate?.();
                 isProcessingList.set(true)
                 processRecommendedMediaListWorker = new Worker(url);
@@ -681,8 +688,8 @@ const processRecommendedMediaList = (_data = {}) => {
                         window.updateRecListMAPE?.(data?.recListMAPE)
                     } else {
                         setLocalStorage("neareastMediaReleaseAiringAt", neareastMediaReleaseAiringAt)
-                            .catch(() => removeLocalStorage("neareastMediaReleaseAiringAt"))
-                            .finally(() => saveIDBdata(neareastMediaReleaseAiringAt, "neareastMediaReleaseAiringAt"));
+                        .catch(() => removeLocalStorage("neareastMediaReleaseAiringAt"))
+                        .finally(() => saveIDBdata(neareastMediaReleaseAiringAt, "neareastMediaReleaseAiringAt"));
                         if (window.shouldUpdateNotifications === true && get(android)) {
                             window.shouldUpdateNotifications = false
                             if (typeof (get(username)) === "string") {
@@ -693,6 +700,9 @@ const processRecommendedMediaList = (_data = {}) => {
                         }
                         if (passedAlgorithmFilterId === data?.passedAlgorithmFilterId && passedAlgorithmFilterId != null) {
                             passedAlgorithmFilterId = passedAlgorithmFilter = undefined
+                        }
+                        if (data?.hasNewFilterOption) {
+                            getOrderedFilters()
                         }
                         dataStatusPrio = false
                         processRecommendedMediaListTerminateTimeout = setTimeout(() => {
@@ -779,7 +789,7 @@ const requestMediaEntries = (_data = {}) => {
             resolve()
             return
         }
-        if (requestMediaEntriesTerminateTimeout) clearTimeout(requestMediaEntriesTerminateTimeout)
+        clearTimeout(requestMediaEntriesTerminateTimeout)
         requestMediaEntriesWorker?.terminate?.()
         notifyUpdatedMediaNotification()
         if (!get(initData)) {
@@ -794,7 +804,7 @@ const requestMediaEntries = (_data = {}) => {
         progress.set(0)
         cacheRequest("./webapi/worker/requestMediaEntries.js")
             .then(url => {
-                if (requestMediaEntriesTerminateTimeout) clearTimeout(requestMediaEntriesTerminateTimeout)
+                clearTimeout(requestMediaEntriesTerminateTimeout)
                 requestMediaEntriesWorker?.terminate?.()
                 notifyUpdatedMediaNotification()
                 requestMediaEntriesWorker = new Worker(url)
@@ -936,19 +946,19 @@ const requestUserEntries = (_data = {}) => {
     }
     return new Promise((resolve, reject) => {
         if (_data?.username) {
-            if (requestUserEntriesTerminateTimeout) clearTimeout(requestUserEntriesTerminateTimeout)
+            clearTimeout(requestUserEntriesTerminateTimeout)
             requestUserEntriesWorker?.terminate?.()
             isRequestingNewUser = true
         } else if (isRequestingNewUser) {
             return
         } else if (_data?.reload) {
-            if (requestUserEntriesTerminateTimeout) clearTimeout(requestUserEntriesTerminateTimeout)
+            clearTimeout(requestUserEntriesTerminateTimeout)
             requestUserEntriesWorker?.terminate?.()
             isReloadingUserEntries = true
         } else if (isReloadingUserEntries) {
             return
         } else {
-            if (requestUserEntriesTerminateTimeout) clearTimeout(requestUserEntriesTerminateTimeout)
+            clearTimeout(requestUserEntriesTerminateTimeout)
             requestUserEntriesWorker?.terminate?.()
         }
         
@@ -966,7 +976,7 @@ const requestUserEntries = (_data = {}) => {
         progress.set(0)
         cacheRequest("./webapi/worker/requestUserEntries.js")
             .then(url => {
-                if (requestUserEntriesTerminateTimeout) clearTimeout(requestUserEntriesTerminateTimeout)
+                clearTimeout(requestUserEntriesTerminateTimeout)
                 requestUserEntriesWorker?.terminate?.()
                 requestUserEntriesWorker = new Worker(url)
                 userRequestIsRunning.set(true)
@@ -1292,7 +1302,7 @@ let importUserDataTerminateTimeout, importUserDataWorker;
 const importUserData = (_data) => {
     if (get(initList) !== false) return
     return new Promise((resolve, reject) => {
-        if (importUserDataTerminateTimeout) clearTimeout(importUserDataTerminateTimeout)
+        clearTimeout(importUserDataTerminateTimeout)
         importUserDataWorker?.terminate?.()
         if (!get(initData)) {
             if (get(isExporting) || isGettingNewEntries) return
@@ -1306,7 +1316,7 @@ const importUserData = (_data) => {
         resetProgress.update((e) => !e);
         cacheRequest("./webapi/worker/importUserData.js")
             .then(url => {
-                if (importUserDataTerminateTimeout) clearTimeout(importUserDataTerminateTimeout)
+                clearTimeout(importUserDataTerminateTimeout)
                 importUserDataWorker?.terminate?.()
                 importUserDataWorker = new Worker(url)
                 removeLocalStorage("username");
@@ -1339,9 +1349,8 @@ const importUserData = (_data) => {
                         reject(data.error || "Something went wrong")
                     } else if (hasOwnProp?.call?.(data, "importedUsername")) {
                         if (typeof data?.importedUsername === "string") {
-                            setLocalStorage("username", data.importedUsername).catch(() => {
-                                removeLocalStorage("username");
-                            });
+                            setLocalStorage("username", data.importedUsername)
+                            .catch(() => removeLocalStorage("username"));
                             username.set(data.importedUsername)
                         }
                     } else if (hasOwnProp?.call?.(data, "importedHiddenEntries")) {
@@ -1700,11 +1709,11 @@ const getMediaEntries = (_data) => {
 let getFilterOptionsTerminateTimeout, getFilterOptionsWorker;
 const getFilterOptions = (_data) => {
     return new Promise((resolve, reject) => {
-        if (getFilterOptionsTerminateTimeout) clearTimeout(getFilterOptionsTerminateTimeout)
+        clearTimeout(getFilterOptionsTerminateTimeout)
         getFilterOptionsWorker?.terminate?.()
-        cacheRequest("./webapi/worker/getFilterOptions.js", 68606, "Initializing Filters")
+        cacheRequest("./webapi/worker/getFilterOptions.js", 68663, "Initializing Filters")
             .then(url => {
-                if (getFilterOptionsTerminateTimeout) clearTimeout(getFilterOptionsTerminateTimeout)
+                clearTimeout(getFilterOptionsTerminateTimeout)
                 getFilterOptionsWorker?.terminate?.()
                 getFilterOptionsWorker = new Worker(url)
                 getFilterOptionsWorker.postMessage(_data)
@@ -1749,6 +1758,29 @@ const getFilterOptions = (_data) => {
     })
 }
 
+let getOrderedFiltersWorker
+const getOrderedFilters = async () => {
+    try {
+        const url = await cacheRequest("./webapi/worker/getOrderedFilters.js")
+        getOrderedFiltersWorker?.terminate?.()
+        getOrderedFiltersWorker = new Worker(url)
+        getOrderedFiltersWorker.postMessage(0)
+        getOrderedFiltersWorker.onmessage = ({ data }) => {
+            if (hasOwnProp?.call?.(data, "error")) {
+                console.error(data.error)
+            } else if (hasOwnProp?.call?.(data, "orderedFilters") && isJsonObject(data.orderedFilters) && !jsonIsEmpty(data.orderedFilters)) {
+                orderedFilters.set(data.orderedFilters)
+            }
+            getOrderedFiltersWorker?.terminate?.()
+        }
+        getOrderedFiltersWorker.onerror = () => {
+            getOrderedFiltersWorker?.terminate?.()
+        }
+    } catch {
+        getOrderedFiltersWorker?.terminate?.()
+    }
+}
+
 let updateTagInfoWorker
 const updateTagInfo = async () => {
     try {
@@ -1771,6 +1803,9 @@ const updateTagInfo = async () => {
                     updateTagInfoWorker?.postMessage?.({ connected: await isConnected() })
                 })();
                 return
+            }
+            if (hasOwnProp.call(data, "tagInfo") && isJsonObject(data.tagInfo) && !jsonIsEmpty(data.tagInfo)) {
+                tagInfo.set(data.tagInfo)
             }
             updateTagInfoWorker?.terminate?.()
         }
