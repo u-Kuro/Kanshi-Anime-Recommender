@@ -1298,6 +1298,19 @@
 		(isMaxWindowHeight ? ' max-window-height' : '') +
 		($popupVisible ? ' popup-visible' : '')}"
 >
+	{#if shownProgress > 0 && shownProgress < 100}
+		<div
+			role="progressbar"
+			out:fade="{{ duration: 0, delay: 400 }}"
+			on:outrostart="{(e) => {
+				e.target.style.setProperty('--progress', '0%');
+			}}"
+			class="{'fixed-progress' +
+				(isBelowNav ? ' is-below-absolute-progress' : '')}"
+			style:--progress="{"-" + (100 - shownProgress) + "%"}"
+		></div>
+	{/if}
+
 	<C.Fixed.Navigator />
 
 	<main>
@@ -1343,19 +1356,6 @@
 		{isImportant}
 	/>
 
-	{#if shownProgress > 0 && shownProgress < 100}
-		<div
-			role="progressbar"
-			out:fade="{{ duration: 0, delay: 400 }}"
-			on:outrostart="{(e) => {
-				e.target.style.setProperty('--progress', '0%');
-			}}"
-			class="{'fixed-progress' +
-				(isBelowNav ? ' is-below-absolute-progress' : '')}"
-			style:--progress="{"-" + (100 - shownProgress) + "%"}"
-		></div>
-	{/if}
-
 	{#if $toast}
 		<div
 			role="alert"
@@ -1391,7 +1391,7 @@
 		max-width: 1140px;
 	}
 	.fixed-progress.has-custom-filter-nav,
-	:global(.fixed-progress:has(~#nav-container.delayed-full-screen-popup)) {
+	:global(.fixed-progress:has(~ #nav-container.delayed-full-screen-popup)) {
 		position: fixed !important;
 	}
 	.fixed-progress {
