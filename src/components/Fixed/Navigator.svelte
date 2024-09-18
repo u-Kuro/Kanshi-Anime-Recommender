@@ -653,12 +653,12 @@
         padding-bottom: 1px;
     }
     .nav.input-focused #username-input {
-        transform: translateZ(0) !important;
+        transform: unset !important;
         position: unset !important;
         opacity: 1 !important;
     }
     #username-input {
-        transform: translateY(-99999px) translateZ(0);
+        transform: translateY(-99999px);
         position: fixed;
     }
     input[type="search"]::-webkit-search-cancel-button {
@@ -780,7 +780,6 @@
         }
         .nav-container.delayed-full-screen-popup {
             position: fixed !important;
-            transform: translateZ(0);
             z-index: 999 !important;
         }
         .nav-container {
@@ -886,7 +885,7 @@
     .disable-interaction {
         pointer-events: none !important;
         position: fixed !important;
-        transform: translateY(-99999px) translateZ(0) !important;
+        transform: translateY(-99999px) !important;
         user-select: none !important;
         touch-action: none !important;
         -webkit-user-drag: none !important;

@@ -673,8 +673,8 @@
                 const readyYTId = readyYTEl?.id;
                 if (readyYTId) autoPausedTrailers[readyYTId] = true;
                 readyYTPlayer?.pauseVideo?.()
-                if ($autoPlay) {
-                    readyYTPlayer?.unMute?.();
+            if ($autoPlay) {
+                readyYTPlayer?.unMute?.();
                 }
             } else if ($autoPlay) {
                 readyYTPlayer?.unMute?.();
@@ -2227,7 +2227,7 @@
                                                     !media.bannerImageUrl &&
                                                     !media.trailerThumbnailUrl
                                                         ? ' display-none'
-                                                        : '')}"
+                                                        : '') + (!media?.description ? ' no-description' : '')}"
                                                 on:error="{(e) => {
                                                     addClass(
                                                         e.target,
@@ -2487,11 +2487,11 @@
         display: flex;
         justify-content: center;
         overflow: hidden;
-        transform: translateY(-99999px) translateZ(0);
+        transform: translateY(-99999px);
     }
 
     .popup-wrapper.visible {
-        transform: translateY(0) translateZ(0);
+        transform: translateY(0);
     }
 
     .popup-wrapper svg {
@@ -2530,7 +2530,7 @@
         align-items: center;
         top: 50%;
         left: 0;
-        transform: translateY(-50%) translateX(-100%) translateZ(0);
+        transform: translateY(-50%) translateX(-100%);
         background-color: hsl(var(--ac-color), 0.5);
         width: 88px;
         height: 88px;
@@ -2540,7 +2540,7 @@
     }
 
     .go-back-grid-highlight.will-go-back {
-        transform: translateY(-50%) translateX(0) translateZ(0);
+        transform: translateY(-50%) translateX(0);
         background-color: hsl(var(--ac-color), 0.5);
         width: 88px;
         height: 88px;
@@ -2656,7 +2656,6 @@
 
     /* Need to add Globally, trailer Elements are Recreated */
     :global(.trailer) {
-        transform: translateZ(0);
         z-index: 0;
         position: absolute;
         top: 0;
@@ -2672,15 +2671,10 @@
         background-color: var(--bg-color) !important;
         z-index: 2;
     }
-
-    .popup-img.fade-out {
-        opacity: 0;
-    }
-
+    
     .banner-img {
         width: 100%;
         height: 100%;
-        transform: translateZ(0);
         position: absolute;
         object-fit: cover;
         object-position: center;
@@ -2835,29 +2829,19 @@
     }
 
     .cover-img {
-        height: 210px;
-        object-fit: cover;
-        transform: translateZ(0);
-        border-radius: 6px;
-        background-color: var(--bg-color);
-    }
-    .cover-img.display-none + .media-description-wrapper {
-        height: unset;
-        max-height: 210px;
-        width: 100%;
-    }
-
-    .cover-img {
         width: min(40% - 10px, 150px);
+        height: 210px;
+        max-height: 210px;
+        object-fit: cover;
+        border-radius: 6px;
         user-select: none;
         cursor: pointer;
         background-color: var(--bg-color);
         margin: 0 auto;
     }
 
-    .cover-img.display-none + .media-description-wrapper {
-        width: 100%;
-        min-width: 100%;
+    .cover-img.no-description {
+        width: min(100%, 150px);
     }
 
     .media-description-wrapper {
@@ -2868,10 +2852,16 @@
         width: max(60% - 10px, 160px);
         min-width: max(60% - 10px, 160px);
         height: 210px;
+        max-height: 210px;
         cursor: pointer;
         -ms-overflow-style: none !important;
         user-select: none !important;
         overflow: hidden !important;
+    }
+
+    .cover-img.display-none + .media-description-wrapper {
+        width: 100%;
+        min-width: 100%;
     }
 
     .media-description {
@@ -3006,10 +2996,6 @@
         }
         .cover-img {
             width: min(100%, 150px);
-            margin: 0 auto;
-        }
-        .media-description-wrapper {
-            height: unset;
         }
     }
     @media screen and (min-width: 750px) {
@@ -3229,7 +3215,7 @@
     }
 
     .auto-play-toggle:checked + .slider .round-icon {
-        transform: translateX(19px) translateZ(0);
+        transform: translateX(19px);
     }
 
     .slider {
@@ -3245,7 +3231,6 @@
     }
 
     .full-popup-wrapper {
-        transform: translateZ(0);
         position: fixed;
         z-index: 1001;
         left: 0;
@@ -3285,7 +3270,6 @@
         max-width: min(100%, 1000px);
         max-height: 90%;
         object-fit: cover;
-        transform: translateZ(0);
         border-radius: 6px;
         box-shadow: 0 14px 28px rgba(0, 0, 0, 0.25), 0 10px 10px rgba(0, 0, 0, 0.2);
         user-select: none;
@@ -3398,7 +3382,7 @@
     .disable-interaction {
         pointer-events: none !important;
         position: fixed !important;
-        transform: translateY(-99999px) translateZ(0) !important;
+        transform: translateY(-99999px) !important;
         user-select: none !important;
         touch-action: none !important;
         -webkit-user-drag: none !important;

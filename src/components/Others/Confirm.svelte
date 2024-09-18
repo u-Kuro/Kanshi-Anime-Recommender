@@ -188,7 +188,6 @@
         user-select: none;
         -ms-overflow-style: none;
         scrollbar-width: none;
-        transform: translateZ(0);
     }
 
     .fixed-confirm-dialog::-webkit-scrollbar {

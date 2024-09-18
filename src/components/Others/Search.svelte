@@ -3800,15 +3800,15 @@
         background: linear-gradient(90deg,hsla(0, 0%, 10%, 0) 0,hsla(0, 0%, 100%, 0.06) 40%,hsla(0, 0%, 100%, 0.06) 60%,hsla(0, 0%, 10%, 0));
         display: block;
         height: 100%;
-        transform: translateX(0) translateZ(0);
+        transform: translateX(0);
         width: 200%;
     }
     @keyframes loading-shimmer {
         0% {
-            transform: translateX(-100%) translateZ(0);
+            transform: translateX(-100%);
         }
         100% {
-            transform: translateX(100%) translateZ(0);
+            transform: translateX(100%);
         }
     }
 
@@ -3950,7 +3950,6 @@
             border-radius: 0 !important;
             border: none !important;
             padding: 0 !important;
-            transform: translateZ(0);
         }
         .options-wrap {
             opacity: 1;
@@ -4097,7 +4096,7 @@
     .disable-interaction {
         pointer-events: none !important;
         position: fixed !important;
-        transform: translateY(-99999px) translateZ(0) !important;
+        transform: translateY(-99999px) !important;
         user-select: none !important;
         touch-action: none !important;
         -webkit-user-drag: none !important;

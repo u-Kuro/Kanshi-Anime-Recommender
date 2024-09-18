@@ -318,7 +318,6 @@
 
 <style>
     .fixed-media-options {
-        transform: translateZ(0);
         position: fixed;
         display: flex;
         z-index: 994;

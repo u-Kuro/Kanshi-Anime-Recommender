@@ -578,7 +578,7 @@
                                         numberOfPageLoadedGrid
                                             ? 'lazy'
                                             : 'eager'}"
-                                        class="{'image-card-thumb  fade-out'}"
+                                        class="{'image-card-thumb fade-out'}"
                                         alt="{(media?.shownTitle || '') +
                                             ' Cover'}"
                                         width="180px"
@@ -926,7 +926,7 @@
         position: absolute;
         width: 100%;
         top: 0;
-        transform: translateY(max(20px, calc(var(--grid-position) + 20px))) translateZ(0);
+        transform: translateY(max(20px, calc(var(--grid-position) + 20px)));
         padding-bottom: calc(101vh + 65px);
     }
 
@@ -1025,7 +1025,6 @@
         object-fit: cover;
         width: 100%;
         height: 100%;
-        transform: translateZ(0);
         user-select: none;
     }
 
@@ -1101,7 +1100,7 @@
         top: unset !important;
         bottom: 80px !important;
         right: 30px !important;
-        transform: translateZ(0) !important;
+        transform: unset !important;
         display: flex;
         justify-content: center;
         align-items: center;
@@ -1121,7 +1120,7 @@
         bottom: unset !important;
         top: 50% !important;
         left: 8px !important;
-        transform: translateY(-50%) translateZ(0) !important;
+        transform: translateY(-50%) !important;
         width: 44px !important;
         height: 44px !important;
     }
@@ -1173,15 +1172,15 @@
         background: linear-gradient(90deg,hsla(0, 0%, 10%, 0) 0,hsla(0, 0%, 100%, 0.06) 40%,hsla(0, 0%, 100%, 0.06) 60%,hsla(0, 0%, 10%, 0));
         display: block;
         height: 100%;
-        transform: translateX(0) translateZ(0);
+        transform: translateX(0);
         width: 200%;
     }
     @keyframes loading-shimmer {
         0% {
-            transform: translateX(-100%) translateZ(0);
+            transform: translateX(-100%);
         }
         100% {
-            transform: translateX(100%) translateZ(0);
+            transform: translateX(100%);
         }
     }
 

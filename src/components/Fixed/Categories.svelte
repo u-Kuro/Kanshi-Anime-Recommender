@@ -359,7 +359,6 @@
         height: 65px;
         background-color: var(--bg-color);
         color: var(--fg-color);
-        transform: translateZ(0);
         opacity: 1;
         transition: opacity 0.2s ease-out;
     }
@@ -460,7 +459,7 @@
         .next-category {
             pointer-events: none !important;
             position: fixed !important;
-            transform: translateY(-99999px) translateZ(0) !important;
+            transform: translateY(-99999px) !important;
             user-select: none !important;
             touch-action: none !important;
             -webkit-user-drag: none !important;

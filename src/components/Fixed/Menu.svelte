@@ -984,7 +984,6 @@
 
 <style>
     .fixed-menu-container {
-        transform: translateZ(0);
         position: fixed;
         top: 56px;
         width: 100%;
@@ -1141,7 +1140,7 @@
     }
 
     .switch-toggle:checked + .slider .round-icon {
-        transform: translateX(19px) translateZ(0);
+        transform: translateX(19px);
     }
 
     .slider {
@@ -1159,7 +1158,7 @@
         align-items: center;
         top: 50%;
         left: 0;
-        transform: translateY(-50%) translateX(-100%) translateZ(0);
+        transform: translateY(-50%) translateX(-100%);
         background-color: hsl(var(--ac-color), 0.5);
         width: 88px;
         height: 88px;
@@ -1169,7 +1168,7 @@
     }
 
     .go-back-grid-highlight.will-go-back {
-        transform: translateY(-50%) translateX(0) translateZ(0);
+        transform: translateY(-50%) translateX(0);
         background-color: hsl(var(--ac-color), 0.5);
         width: 88px;
         height: 88px;
