@@ -756,6 +756,7 @@
                                     </div>
                                 </span>
                             </span>
+                            <div class="shimmer-background"></div>
                         </div>
                         {#if mediaIndex + 1 === mediaList.length}
                             <div
@@ -768,7 +769,9 @@
                 {/each}
                 {#each Array($shownAllInList?.[mainCategory] ? 0 : 1) as _}
                     <div class="image-card skeleton dummy" aria-hidden="true">
-                        <div class="shimmer"></div>
+                        <div class="shimmer">
+                            <div class="shimmer-background"></div>
+                        </div>
                     </div>
                 {/each}
                 {#each Array($gridFullView ? Math.floor(($windowHeight ?? 1100) / 220) : 5) as _}
@@ -787,7 +790,9 @@
             {:else}
                 {#each Array(21) as _}
                     <div class="image-card skeleton" aria-hidden="true">
-                        <div class="shimmer"></div>
+                        <div class="shimmer">
+                            <div class="shimmer-background"></div>
+                        </div>
                     </div>
                 {/each}
                 {#each Array(5) as _}
@@ -1158,15 +1163,14 @@
         overflow: hidden;
     }
 
-    .shimmer.loaded::before {
-        content: unset !important;
+    .shimmer.loaded .shimmer-background  {
+        display: none !important;
     }
 
-    .shimmer::before {
+    .shimmer .shimmer-background {
         animation: loading-shimmer 2s linear infinite;
         position: absolute;
         background: linear-gradient(90deg,hsla(0, 0%, 10%, 0) 0,hsla(0, 0%, 100%, 0.06) 40%,hsla(0, 0%, 100%, 0.06) 60%,hsla(0, 0%, 10%, 0));
-        content: "";
         display: block;
         height: 100%;
         transform: translateX(0) translateZ(0);

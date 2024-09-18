@@ -251,7 +251,12 @@
                     if (ytEl && ytEl === trailerEl) {
                         haveTrailer = true;
                         if ($inApp && !manuallyPausedTrailers[ytEl.id]) {
-                            ytPlayer?.playVideo?.();
+                            if (ytPlayer?.getPlayerState?.() === getYTPlayerState("ENDED")) {
+                                ytPlayer?.seekTo?.(0, true)
+                                ytPlayer?.playVideo?.();
+                            } else {
+                                ytPlayer?.playVideo?.();
+                            }
                         }
                         break;
                     }
@@ -663,6 +668,7 @@
             if (mostVisibleTrailerEl && mostVisibleTrailerEl !== readyYTEl) {
                 readyYTEl?.setAttribute("loading", "lazy");
                 readyYTPlayer?.mute?.()
+                readyYTPlayer?.seekTo?.(0, true)
                 readyYTPlayer?.playVideo?.()
                 const readyYTId = readyYTEl?.id;
                 if (readyYTId) autoPausedTrailers[readyYTId] = true;
@@ -1368,11 +1374,17 @@
                     const ytEl = ytPlayer?.g;
                     const ytId = ytEl?.id;
                     if (visibleTrailer === ytEl && ytEl) {
-                        if (ytPlayer?.getPlayerState?.() === getYTPlayerState("PLAYING")) {
+                        const state = ytPlayer?.getPlayerState?.()
+                        if (state === getYTPlayerState("PLAYING")) {
                             if (ytId) manuallyPausedTrailers[ytId] = true;
                             ytPlayer?.pauseVideo?.();
                         } else if ($inApp) {
-                            ytPlayer?.playVideo?.();
+                            if (state === getYTPlayerState("ENDED")) {
+                                ytPlayer?.seekTo?.(0, true)
+                                ytPlayer?.playVideo?.();
+                            } else {
+                                ytPlayer?.playVideo?.();
+                            }
                         }
                     } else {
                         if (ytId) autoPausedTrailers[ytId] = true;
@@ -1595,7 +1607,9 @@
                                                 bind:checked="{$autoPlay}"
                                             />
                                             <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
-                                            <span class="slider round" aria-hidden="true"></span>
+                                            <span class="slider round" aria-hidden="true">
+                                                <div class="round-icon"></div>
+                                            </span>
                                         </label>
                                         <h3
                                             class="auto-play-label"
@@ -2673,15 +2687,6 @@
         background-color: var(--bg-color);
     }
 
-    .banner-img::after {
-        content: "";
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: var(--ol-color);
-    }
     .banner-img.fade-out {
         animation: fade-out 0.2s ease-out forwards;
         opacity: 0;
@@ -3200,9 +3205,8 @@
         border: 2px solid var(--sfg-color);
     }
 
-    .slider:before {
+    .slider .round-icon {
         position: absolute;
-        content: "";
         height: 14px;
         width: 14px;
         left: 1.5px;
@@ -3211,7 +3215,7 @@
         transition: 0.16s transform ease-out;
     }
 
-    .auto-play-toggle:checked + .slider:before {
+    .auto-play-toggle:checked + .slider .round-icon {
         background-color: var(--bg-color);
     }
 
@@ -3224,7 +3228,7 @@
         box-shadow: 0 0 1px var(--sfg-color);
     }
 
-    .auto-play-toggle:checked + .slider:before {
+    .auto-play-toggle:checked + .slider .round-icon {
         transform: translateX(19px) translateZ(0);
     }
 
@@ -3232,7 +3236,7 @@
         border-radius: 34px;
     }
 
-    .slider:before {
+    .slider .round-icon {
         border-radius: 50%;
     }
 

@@ -2119,7 +2119,9 @@
                 </div>
             </span>
         {:else}
-            <div class="skeleton shimmer"></div>
+            <div class="skeleton shimmer">
+                <div class="shimmer-background"></div>
+            </div>
         {/if}
         {#if recListMAPE > 0}
             <div
@@ -2698,8 +2700,12 @@
         {#if !filterCategories || !($orderedFilters && $nonOrderedFilters)}
             {#each Array(10) as _}
                 <div class="filter-select">
-                    <div class="filter-name skeleton shimmer"></div>
-                    <div class="select skeleton shimmer"></div>
+                    <div class="filter-name skeleton shimmer">
+                        <div class="shimmer-background"></div>
+                    </div>
+                    <div class="select skeleton shimmer">
+                        <div class="shimmer-background"></div>
+                    </div>
                 </div>
             {/each}
         {/if}
@@ -3028,7 +3034,9 @@
                 </div>
             </div>
         {:else}
-            <div class="sort-filter skeleton shimmer"></div>
+            <div class="sort-filter skeleton shimmer">
+                <div class="shimmer-background"></div>
+            </div>
         {/if}
     </div>
 </section>
@@ -3786,11 +3794,10 @@
         overflow: hidden;
     }
 
-    .shimmer::before {
+    .shimmer .shimmer-background {
         animation: loading-shimmer 2s linear infinite;
         position: absolute;
         background: linear-gradient(90deg,hsla(0, 0%, 10%, 0) 0,hsla(0, 0%, 100%, 0.06) 40%,hsla(0, 0%, 100%, 0.06) 60%,hsla(0, 0%, 10%, 0));
-        content: "";
         display: block;
         height: 100%;
         transform: translateX(0) translateZ(0);

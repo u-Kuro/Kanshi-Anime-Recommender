@@ -657,7 +657,9 @@
                             }}"
                         />
                         <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
-                        <span class="slider round"></span>
+                        <span class="slider round">
+                            <div class="round-icon"></div>
+                        </span>
                     </label>
                 </div>
                 <div
@@ -742,7 +744,9 @@
                                     }}"
                                 />
                                 <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
-                                <span class="slider round"></span>
+                                <span class="slider round">
+                                    <div class="round-icon"></div>
+                                </span>
                             </label>
                         {/if}
                     {/if}
@@ -783,7 +787,9 @@
                                 bind:checked="{$keepAppRunningInBackground}"
                             />
                             <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
-                            <span class="slider round"></span>
+                            <span class="slider round">
+                                <div class="round-icon"></div>
+                            </span>
                         </label>
                     </div>
                 {/if}
@@ -819,7 +825,9 @@
                             bind:checked="{$showStatus}"
                         />
                         <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
-                        <span class="slider round"></span>
+                        <span class="slider round">
+                            <div class="round-icon"></div>
+                        </span>
                     </label>
                 </div>
                 <div
@@ -854,7 +862,9 @@
                             bind:checked="{$showRateLimit}"
                         />
                         <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
-                        <span class="slider round"></span>
+                        <span class="slider round">
+                            <div class="round-icon"></div>
+                        </span>
                     </label>
                 </div>
             </div>
@@ -1107,9 +1117,8 @@
         border: 2px solid var(--fg-color);
     }
 
-    .slider:before {
+    .slider .round-icon {
         position: absolute;
-        content: "";
         height: 20px;
         width: 20px;
         left: 2.25px;
@@ -1118,7 +1127,7 @@
         transition: 0.16s transform ease-out;
     }
 
-    .switch-toggle:checked + .slider:before {
+    .switch-toggle:checked + .slider .round-icon {
         background-color: var(--bg-color);
     }
 
@@ -1131,7 +1140,7 @@
         box-shadow: 0 0 1px var(--fg-color);
     }
 
-    .switch-toggle:checked + .slider:before {
+    .switch-toggle:checked + .slider .round-icon {
         transform: translateX(19px) translateZ(0);
     }
 
@@ -1139,7 +1148,7 @@
         border-radius: 34px;
     }
 
-    .slider:before {
+    .slider .round-icon {
         border-radius: 50%;
     }
 
@@ -1185,11 +1194,6 @@
         fill: var(--sfg-color);
         width: 20px;
         height: 20px;
-    }
-
-    .menu:after {
-        content: "";
-        flex: 1000 0 auto;
     }
 
     @media screen and (min-width: 750px) {
