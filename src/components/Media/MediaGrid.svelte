@@ -552,10 +552,7 @@
                             {#if media?.coverImageUrl || media?.bannerImageUrl || media?.trailerThumbnailUrl}
                                 {#key media?.coverImageUrl || media?.bannerImageUrl || media?.trailerThumbnailUrl}
                                     <img
-                                        use:addImage="{media?.coverImageUrl ||
-                                            media?.bannerImageUrl ||
-                                            media?.trailerThumbnailUrl ||
-                                            emptyImage}"
+                                        use:addImage="{media?.coverImageUrl || media?.bannerImageUrl || media?.trailerThumbnailUrl}"
                                         fetchpriority="{mediaIndex >
                                         numberOfPageLoadedGrid
                                             ? ''
@@ -565,8 +562,7 @@
                                             ? 'lazy'
                                             : 'eager'}"
                                         class="image-card-thumb"
-                                        alt="{(media?.shownTitle || '') +
-                                            ' Cover'}"
+                                        alt="{(media?.shownTitle || '') + ' Cover'}"
                                         width="180px"
                                         height="254.531px"
                                         on:load="{(e) => {
@@ -1006,6 +1002,7 @@
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15), 0 1px 2px rgba(0, 0, 0, 0.25);
         transition: opacity 0.2s ease-out;
         object-fit: cover;
+        object-position: center;
         width: 100%;
         height: 100%;
         user-select: none;

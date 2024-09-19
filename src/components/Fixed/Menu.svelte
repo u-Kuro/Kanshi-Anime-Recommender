@@ -286,8 +286,8 @@
         if ($android) {
             await $confirmPromise({
                 isAlert: true,
-                title: "Possiblity for Future Data Loss",
-                text: `<div id="kanshi-show-notice">You may want to regularly <span style='color:hsl(345deg, 75%, 60%);'>Back Up</span> your data or use auto-export to prevent future data loss.\n\nCurrently, the storage can be <span style='color:hsl(345deg, 75%, 60%);'>Automatically Cleared by Chrome</span> when your <span style='color:hsl(345deg, 75%, 60%);'>Disk is Nearly Full.</span>\n\n<span ${
+                title: "Possibility for Future Data Loss",
+                text: `<div id="kanshi-show-notice">You may want to <span style='color:hsl(345deg, 75%, 60%);'>Regularly Back Up</span> your data or <span style='color:hsl(345deg, 75%, 60%);'>Enable Automatic Back Up</span> to prevent future data loss.\n\nCurrently, the storage can be <span style='color:hsl(345deg, 75%, 60%);'>Automatically Cleared by Chrome</span> when your <span style='color:hsl(345deg, 75%, 60%);'>Disk is Nearly Full.</span>\n\n<span ${
                     persistent
                         ? ""
                         : "tabindex='0' style='cursor:pointer;' onclick='(async()=>{await window.navigator?.storage?.persisted?.();await window.navigator?.storage?.persist?.();window.refreshKanshiNotice?.()})()'"
@@ -300,8 +300,8 @@
         } else {
             await $confirmPromise({
                 isAlert: true,
-                title: "Possiblity for Future Data Loss",
-                text: `<div id="kanshi-show-notice">You may want to <span style='color:hsl(345deg, 75%, 60%);'>Back Up</span> your data or enable persistent storage to prevent future data loss. Currently, browsers can <span style='color:hsl(345deg, 75%, 60%);'>Automatically Clear your Data</span> when your <span style='color:hsl(345deg, 75%, 60%);'>Disk is Nearly Full.</span>\n\nPersistent Storage Status: ${
+                title: "Possibility for Future Data Loss",
+                text: `<div id="kanshi-show-notice">You may want to <span style='color:hsl(345deg, 75%, 60%);'>Enable Persistent Storage</span> or <span style='color:hsl(345deg, 75%, 60%);'>Regularly Back Up</span> your data to prevent future data loss. Currently, browsers can <span style='color:hsl(345deg, 75%, 60%);'>Automatically Clear your Data</span> when your <span style='color:hsl(345deg, 75%, 60%);'>Disk is Nearly Full.</span>\n\nPersistent Storage Status: ${
                     persistent
                         ? "<span style='color:hsl(185deg, 65%, 50%);'>Enabled</span>"
                         : "<span style='color:hsl(345deg, 75%, 60%);'>Disabled</span>"
@@ -325,7 +325,7 @@
                     notificationGranted
                         ? "color:hsl(185deg, 65%, 50%)"
                         : "color:hsl(345deg, 75%, 60%)"
-                };">Notification</span></span>.\n3) Bookmark this Website.</div>`,
+                };">Notification</span></span>.\n3) OR Bookmark this Website.</div>`,
             });
         }
     }

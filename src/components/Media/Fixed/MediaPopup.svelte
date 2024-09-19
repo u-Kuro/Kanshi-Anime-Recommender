@@ -1539,9 +1539,7 @@
                                     {#if media.bannerImageUrl || media.trailerThumbnailUrl}
                                         {#key media.bannerImageUrl || media.trailerThumbnailUrl}
                                             <img
-                                                use:addImage="{media.bannerImageUrl ||
-                                                    media.trailerThumbnailUrl ||
-                                                    emptyImage}"
+                                                use:addImage="{media.bannerImageUrl || media.trailerThumbnailUrl}"
                                                 loading="lazy"
                                                 width="640px"
                                                 height="360px"
@@ -1685,7 +1683,6 @@
                                             <a class="trailer-link" href="{`https://www.youtube.com/watch?v=${media.trailerID}`}">Trailer</a>
                                         {/if}
                                         {#if media.bannerImageUrl || media.trailerThumbnailUrl}
-                                            
                                             <div
                                                 class="icon-button"
                                                 tabindex="{!$menuVisible &&
@@ -2192,78 +2189,68 @@
                                     </div>
                                     <div class="info-profile">
                                         <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
-                                        {#key media.coverImageUrl || media.bannerImageUrl || media.trailerThumbnailUrl || emptyImage}
-                                            <div class="shimmer">
-                                                <img
-                                                    use:addImage="{media.coverImageUrl ||
-                                                        media.bannerImageUrl ||
-                                                        media.trailerThumbnailUrl ||
-                                                        emptyImage}"
-                                                    loading="lazy"
-                                                    width="150px"
-                                                    height="210px"
-                                                    alt="{(media?.shownTitle ||
-                                                        '') +
-                                                        (media.coverImageUrl
-                                                            ? ' Cover'
-                                                            : media.bannerImageUrl
-                                                            ? ' Banner'
-                                                            : ' Thumbnail')}"
-                                                    tabindex="{!$menuVisible &&
-                                                    $popupVisible
-                                                        ? '0'
-                                                        : '-1'}"
-                                                    class="{'cover-img' +
-                                                        (!media.coverImageUrl &&
-                                                        !media.bannerImageUrl &&
-                                                        !media.trailerThumbnailUrl
-                                                            ? ' display-none'
-                                                            : '') + (media?.description ? '' : ' no-description')}"
-                                                    on:load="{(e) => {
-                                                        removeClass(
-                                                            e.target,
-                                                            "display-none",
-                                                        )
-                                                        addClass(
-                                                            e.target,
-                                                            "loaded",
-                                                        );
-                                                    }}"
-                                                    on:error="{(e) => {
-                                                        removeClass(
-                                                            e.target,
-                                                            "loaded",
-                                                        )
-                                                        addClass(
-                                                            e.target,
-                                                            "display-none",
-                                                        );
-                                                    }}"
-                                                    on:click="{() => {
-                                                        if (!$popupVisible) return;
-                                                        showFullScreenImage(
-                                                            media.coverImageUrl ||
+                                         {#if media.coverImageUrl || media.bannerImageUrl || media.trailerThumbnailUrl}
+                                            {#key media.coverImageUrl || media.bannerImageUrl || media.trailerThumbnailUrl}
+                                                <div class="shimmer">
+                                                    <img
+                                                        use:addImage="{media.coverImageUrl ||
                                                             media.bannerImageUrl ||
-                                                            media.trailerThumbnailUrl ||
-                                                            emptyImage
-                                                        )
-                                                    }}"
-                                                    on:keyup="{(e) => {
-                                                        if (!$popupVisible) return;
-                                                        if (e.key === 'Enter') {
+                                                            media.trailerThumbnailUrl}"
+                                                        loading="lazy"
+                                                        width="150px"
+                                                        height="210px"
+                                                        alt="{(media?.shownTitle || '') +
+                                                            (media.coverImageUrl
+                                                                ? ' Cover'
+                                                                : media.bannerImageUrl
+                                                                ? ' Banner'
+                                                                : ' Thumbnail')}"
+                                                        tabindex="{!$menuVisible && $popupVisible ? '0' : '-1'}"
+                                                        class="cover-img"
+                                                        on:load="{(e) => {
+                                                            removeClass(
+                                                                e.target,
+                                                                "display-none",
+                                                            )
+                                                            addClass(
+                                                                e.target,
+                                                                "loaded",
+                                                            );
+                                                        }}"
+                                                        on:error="{(e) => {
+                                                            removeClass(
+                                                                e.target,
+                                                                "loaded",
+                                                            )
+                                                            addClass(
+                                                                e.target,
+                                                                "display-none",
+                                                            );
+                                                        }}"
+                                                        on:click="{() => {
+                                                            if (!$popupVisible) return;
                                                             showFullScreenImage(
                                                                 media.coverImageUrl ||
                                                                 media.bannerImageUrl ||
-                                                                media.trailerThumbnailUrl ||
-                                                                emptyImage
+                                                                media.trailerThumbnailUrl
                                                             )
-                                                        }
-                                                    }}"
-                                                    aria-label="Open Cover Image"
-                                                />
-                                                <div class="shimmer-background"></div>
-                                            </div>
-                                        {/key}
+                                                        }}"
+                                                        on:keyup="{(e) => {
+                                                            if (!$popupVisible) return;
+                                                            if (e.key === 'Enter') {
+                                                                showFullScreenImage(
+                                                                    media.coverImageUrl ||
+                                                                    media.bannerImageUrl ||
+                                                                    media.trailerThumbnailUrl
+                                                                )
+                                                            }
+                                                        }}"
+                                                        aria-label="Open Cover Image"
+                                                    />
+                                                    <div class="shimmer-background"></div>
+                                                </div>
+                                            {/key}
+                                        {/if}
                                         {#if media?.description}
                                             {@const editedHTMLString = editHTMLString(media?.description) || ''}
                                             <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
@@ -2837,13 +2824,15 @@
     }
 
     .cover-img {
-        width: min(100%, 150px);
+        width: 100%;
         height: 210px;
         max-height: 210px;
         object-fit: cover;
+        object-position: center;
         user-select: none;
         cursor: pointer;
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15), 0 1px 2px rgba(0, 0, 0, 0.25);
+        border-radius: 6px;
         transition: opacity 0.2s ease-out;
         opacity: 0;
     }
@@ -2857,7 +2846,7 @@
         border-radius: 6px;
         padding: 8px 16px;
         flex: 1;
-        width: max(60% - 10px, 160px);
+        width: 100%;
         min-width: max(60% - 10px, 160px);
         height: 210px;
         max-height: 210px;
@@ -2865,11 +2854,6 @@
         -ms-overflow-style: none !important;
         user-select: none !important;
         overflow: hidden !important;
-    }
-
-    .shimmer:has(.cover-img.display-none) + .media-description-wrapper {
-        width: 100%;
-        min-width: 100%;
     }
 
     .media-description {
@@ -2909,15 +2893,10 @@
     }
 
     .shimmer:has(.cover-img) {
-        width: min(100% - 204px, 150px);
         height: 210px;
         max-height: 210px;
         border-radius: 6px;
         background-color: var(--bg-color);
-    }
-
-    .shimmer:has(.cover-img.no-description) {
-        width: min(100%, 150px);
     }
 
     .shimmer:has(.cover-img.loaded) .shimmer-background  {
@@ -3048,7 +3027,13 @@
             flex-wrap: wrap;
         }
         .shimmer:has(.cover-img) {
-            width: min(100%, 150px);
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .cover-img {
+            width: auto;
         }
     }
     @media screen and (min-width: 750px) {

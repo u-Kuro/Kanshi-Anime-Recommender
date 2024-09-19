@@ -101,134 +101,67 @@
                     }
                     return
                 }
-                let usernameToShow = `<span style="color:hsl(var(--ac-color));">${typedUsername}</span>`;
-                if ($username) {
-                    if (
-                        await $confirmPromise(
-                            `Do you${
-                                isReconfirm ? " still" : ""
-                            } want to connect to ${usernameToShow}?`,
-                        )
-                    ) {
-                        if (!$popupVisible) {
-                            document.documentElement.style.overflow = "hidden";
-                            document.documentElement.style.overflow = "";
-                            window.scrollTo?.({
-                                top: -9999,
-                                behavior: "smooth",
-                            });
-                        }
-                        $dataStatus = "Getting User Entries";
-                        $userRequestIsRunning = true;
-                        removeLocalStorage("username");
-                        $loadingCategory[""] = new Date()
-                        requestUserEntries({
-                            username: typedUsername,
-                        })
-                            .then(({ newusername }) => {
-                                if (newusername) {
-                                    typedUsername = $username =
-                                        newusername ||
-                                        $username ||
-                                        typedUsername ||
-                                        "";
-                                } else {
-                                    typedUsername =
-                                        $username || typedUsername || "";
-                                }
-                                shouldUpdateRecommendationList.update((e) => !e);
-                            })
-                            .catch((error) => {
-                                if (
-                                    document.activeElement !== inputUsernameEl
-                                ) {
-                                    typedUsername =
-                                        $username || typedUsername || "";
-                                }
-                                if ($android) {
-                                    showToast("Failed to retrieve user data")
-                                } else {
-                                    $toast = "Failed to retrieve user data"
-                                }
-                                $listUpdateAvailable = true;
-                                console.error(error);
-                            })
-                            .finally(() => {
-                                setLocalStorage("username", $username)
-                                .catch(() => removeLocalStorage("username"));
-                            });
-                        resetProgress.update((e) => !e);
-                    } else {
-                        if (isReconfirm) {
-                            typedUsername = $username || ""
-                        } else {
-                            typedUsername = $username || typedUsername || "";
-                            focusInputUsernameEl();
-                        }
+                if (
+                    await $confirmPromise(
+                        `Do you${
+                            isReconfirm ? " still" : ""
+                        } want to connect to <span style="color:hsl(var(--ac-color));">${typedUsername}</span>?`,
+                    )
+                ) {
+                    if (!$popupVisible) {
+                        document.documentElement.style.overflow = "hidden";
+                        document.documentElement.style.overflow = "";
+                        window.scrollTo?.({
+                            top: -9999,
+                            behavior: "smooth",
+                        });
                     }
-                } else {
-                    if (
-                        await $confirmPromise(
-                            `Do you${
-                                isReconfirm ? " still" : ""
-                            } want to connect to ${usernameToShow}?`,
-                        )
-                    ) {
-                        if (!$popupVisible) {
-                            document.documentElement.style.overflow = "hidden";
-                            document.documentElement.style.overflow = "";
-                            window.scrollTo?.({
-                                top: -9999,
-                                behavior: "smooth",
-                            });
-                        }
-                        $dataStatus = "Getting User Entries";
-                        $userRequestIsRunning = true;
-                        removeLocalStorage("username");
-                        $loadingCategory[""] = new Date()
-                        requestUserEntries({
-                            username: typedUsername,
+                    $dataStatus = "Getting User Entries";
+                    $userRequestIsRunning = true;
+                    removeLocalStorage("username");
+                    $loadingCategory[""] = new Date()
+                    requestUserEntries({
+                        username: typedUsername,
+                    })
+                        .then(({ newusername }) => {
+                            if (newusername) {
+                                typedUsername = $username =
+                                    newusername ||
+                                    $username ||
+                                    typedUsername ||
+                                    "";
+                            } else {
+                                typedUsername =
+                                    $username || typedUsername || "";
+                            }
+                            shouldUpdateRecommendationList.update((e) => !e);
                         })
-                            .then(({ newusername }) => {
-                                if (newusername) {
-                                    typedUsername = $username =
-                                        newusername ||
-                                        $username ||
-                                        typedUsername ||
-                                        "";
-                                } else {
-                                    typedUsername =
-                                        $username || typedUsername || "";
-                                }
-                                shouldUpdateRecommendationList.update((e) => !e);
-                            })
-                            .catch((error) => {
-                                if (
-                                    document.activeElement !== inputUsernameEl
-                                ) {
-                                    typedUsername =
-                                        $username || typedUsername || "";
-                                }
-                                if ($android) {
-                                    showToast("Failed to retrieve user data")
-                                } else {
-                                    $toast = "Failed to retrieve user data"
-                                }
-                                $listUpdateAvailable = true;
-                                console.error(error);
-                            })
-                            .finally(() => {
-                                setLocalStorage("username", $username)
-                                .catch(() => removeLocalStorage("username"));
-                            });
-                        resetProgress.update((e) => !e);
+                        .catch((error) => {
+                            if (
+                                document.activeElement !== inputUsernameEl
+                            ) {
+                                typedUsername =
+                                    $username || typedUsername || "";
+                            }
+                            if ($android) {
+                                showToast("Failed to retrieve user data")
+                            } else {
+                                $toast = "Failed to retrieve user data"
+                            }
+                            $listUpdateAvailable = true;
+                            console.error(error);
+                        })
+                        .finally(() => {
+                            setLocalStorage("username", $username)
+                            .catch(() => removeLocalStorage("username"));
+                        });
+                    resetProgress.update((e) => !e);
+                } else {
+                    if (isReconfirm) {
+                        typedUsername = $username || ""
                     } else {
-                        if (isReconfirm) {
-                            typedUsername = $username || ""
-                        } else {
-                            typedUsername = $username || typedUsername || "";
-                            focusInputUsernameEl();
-                        }
+                        typedUsername = $username || typedUsername || "";
+                        focusInputUsernameEl();
                     }
                 }
             } else {
