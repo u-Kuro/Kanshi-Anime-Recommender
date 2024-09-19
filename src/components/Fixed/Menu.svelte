@@ -513,21 +513,9 @@
                 })
             ) {
                 if (isAndroidWeb) {
-                    try {
-                        const appName = "Kanshi.apk";
-                        const appLocation = `./${appName}`;
-                        const response = await fetch(appLocation, {
-                            method: "HEAD",
-                        });
-                        if (response?.ok) {
-                            downloadLink(appLocation, appName);
-                            return
-                        }
-                    } catch {}
-                    window.open(
-                        "https://github.com/u-Kuro/Kanshi-Anime-Recommender/raw/main/Kanshi.apk",
-                        "_blank",
-                    );
+                    const appName = "Kanshi.apk";
+                    // const appLocation = `./${appName}`;
+                    downloadLink("https://github.com/u-Kuro/Kanshi-Anime-Recommender/raw/main/Kanshi.apk", appName);
                     return;
                 } else if (
                     typeof deferredPrompt?.prompt === "function"
