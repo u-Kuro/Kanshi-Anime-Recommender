@@ -387,19 +387,6 @@
             node.src = emptyImage;
         }
     }
-    function reloadImage(e) {
-        try {
-            let element = e?.target
-            if (element?.tagName!=="IMG") {
-                const classList = element?.classList
-                const parent = classList?.contains?.("shimmer") ? element : element?.closest?.(".shimmer")
-                element = parent?.querySelector?.("img")
-            }
-            const src = element?.src;
-            if (src && src !== emptyImage)
-            element.src = src
-        } catch {}
-    }
 
     let waitForOnVeryLeft;
     const mediaGridOnScroll = () => {
@@ -552,7 +539,6 @@
                                 : '0'}"
                             on:click="{handleOpenPopup(mediaIndex)}"
                             on:pointerdown="{(e) => {
-                                reloadImage(e)
                                 handleOpenOption(e, mediaIndex)
                             }}"
                             on:pointerup="{cancelOpenOption}"
@@ -578,21 +564,18 @@
                                         numberOfPageLoadedGrid
                                             ? 'lazy'
                                             : 'eager'}"
-                                        class="{'image-card-thumb fade-out'}"
+                                        class="image-card-thumb"
                                         alt="{(media?.shownTitle || '') +
                                             ' Cover'}"
                                         width="180px"
                                         height="254.531px"
                                         on:load="{(e) => {
-                                            removeClass(e.target, 'fade-out');
-                                            addClass(
-                                                e.target?.closest?.('.shimmer'),
-                                                'loaded',
-                                            );
+                                            removeClass(e.target, "display-none");
+                                            addClass(e.target, "loaded");
                                         }}"
                                         on:error="{(e) => {
-                                            addClass(e.target, 'fade-out');
-                                            addClass(e.target, 'display-none');
+                                            removeClass(e.target, "loaded");
+                                            addClass(e.target, "display-none");
                                         }}"
                                     />
                                 {/key}
@@ -1026,17 +1009,19 @@
         width: 100%;
         height: 100%;
         user-select: none;
+        transition: opacity 0.2s ease-out;
+        opacity: 0;
     }
 
     .image-card:not(.skeleton):focus-within .image-card-thumb,
     .image-card:not(.skeleton):focus .image-card-thumb,
     .image-card:not(.skeleton):hover .image-card-thumb {
-        opacity: 0.5 !important;
+        opacity: 0.5;
         box-shadow: 0 14px 28px rgba(0, 0, 0, 0.25), 0 10px 10px rgba(0, 0, 0, 0.22);
     }
 
-    .image-card-thumb.fade-out {
-        opacity: 0;
+    .image-card-thumb.loaded {
+        opacity: 1;
     }
 
     .image-card-title {
@@ -1162,7 +1147,7 @@
         overflow: hidden;
     }
 
-    .shimmer.loaded .shimmer-background  {
+    .shimmer:has(.image-card-thumb.loaded) .shimmer-background  {
         display: none !important;
     }
 

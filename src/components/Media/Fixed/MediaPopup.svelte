@@ -66,6 +66,7 @@
         popupMediaObserver,
         fullImagePopup,
         fullDescriptionPopup,
+        bufferingTrailers = {},
         manuallyPausedTrailers = {},
         autoPausedTrailers = {},
         failingTrailers = {},
@@ -248,9 +249,11 @@
                 for (let i = 0; i < $ytPlayers.length; i++) {
                     const ytPlayer = $ytPlayers[i]?.ytPlayer
                     const ytEl = ytPlayer?.g
-                    if (ytEl && ytEl === trailerEl) {
+                    const ytId = ytEl.id
+                    if (bufferingTrailers[ytId]) continue;
+                    if (ytEl === trailerEl && ytEl) {
                         haveTrailer = true;
-                        if ($inApp && !manuallyPausedTrailers[ytEl.id]) {
+                        if ($inApp && !manuallyPausedTrailers[ytId]) {
                             if (ytPlayer?.getPlayerState?.() === getYTPlayerState("ENDED")) {
                                 ytPlayer?.seekTo?.(0, true)
                                 ytPlayer?.playVideo?.();
@@ -299,6 +302,7 @@
                 for (let i = 0; i < $ytPlayers.length; i++) {
                     const ytPlayer = $ytPlayers[i]?.ytPlayer;
                     const ytId = ytPlayer?.g?.id;
+                    if (bufferingTrailers[ytId]) continue
                     if (ytId) autoPausedTrailers[ytId] = true;
                     ytPlayer?.pauseVideo?.();
                 }
@@ -371,16 +375,15 @@
             const visibleTrailer = mostVisiblePopupHeader?.querySelector(".trailer");
             for (let i = 0; i < $ytPlayers.length; i++) {
                 const ytPlayer = $ytPlayers[i]?.ytPlayer
+                const ytEl = ytPlayer?.g
+                const ytId = ytEl?.id;
+                if (bufferingTrailers[ytId]) continue;
                 const wasMuted = ytPlayer?.isMuted?.()
                 if (val === true) {
                     ytPlayer?.unMute?.();
                 } else {
                     ytPlayer?.mute?.()
                 }
-                
-                const ytEl = ytPlayer?.g
-                const ytId = ytEl?.id;
-
                 if (
                     ytEl === visibleTrailer && ytEl 
                     && $inApp && $popupVisible
@@ -467,6 +470,7 @@
                 const ytPlayer = $ytPlayers[i]?.ytPlayer
                 const ytEl = ytPlayer?.g
                 const ytId = ytEl?.id;
+                if (bufferingTrailers[ytId]) continue;
                 const state = ytPlayer?.getPlayerState?.()
                 if (
                     ytEl === visibleTrailer && ytEl
@@ -488,6 +492,7 @@
             for (let i = 0; i < $ytPlayers.length; i++) {
                 const ytPlayer = $ytPlayers[i]?.ytPlayer
                 const ytId = ytPlayer?.g?.id;
+                if (bufferingTrailers[ytId]) continue;
                 if (ytId) autoPausedTrailers[ytId] = true;
                 ytPlayer?.pauseVideo?.();
             }
@@ -520,40 +525,14 @@
             typeof YT !== "undefined" &&
             typeof YT?.Player === "function"
         ) {
-            if ($ytPlayers.some((e) => e?.ytPlayer?.g === ytPlayerEl)) {
-                return;
-            }
-            addClass(popupHeader, "loader");
-            if ($ytPlayers.length >= 3) {
-                let destroyedPlayerIdx = 0;
-                let furthestDistance = -Infinity;
-                for (let i = 0; i < $ytPlayers.length; i++) {
-                    const headerIdx = $ytPlayers[i]?.headerIdx;
-                    if (headerIdx >= 0) {
-                        const distance = Math.abs(headerIdx - currentHeaderIdx)
-                        if (distance > furthestDistance) {
-                            furthestDistance = distance;
-                            destroyedPlayerIdx = idx;
-                        }
-                    }
-                }
-                const destroyedPlayer = $ytPlayers.splice(destroyedPlayerIdx, 1)[0]?.ytPlayer;
-                const destroyedytPlayerEl = destroyedPlayer?.g
-                const destroyedPopupImg = destroyedytPlayerEl?.closest(".popup-header")?.querySelector(".popup-img");
-                if (destroyedPopupImg) {
-                    removeClass(destroyedPopupImg, "display-none");
-                }
-                destroyedPlayer?.destroy();
-
-                const newYtPlayerEl = document.createElement("div");
-                newYtPlayerEl.className = "trailer"
-                addClass(newYtPlayerEl, "display-none");
-                popupHeader.replaceChild(newYtPlayerEl, ytPlayerEl);
-            }
-            addClass(ytPlayerEl, "display-none");
+            if ($ytPlayers.some((e) => e?.ytPlayer?.g === ytPlayerEl)) return;
             removeClass(popupImg, "display-none");
+            addClass(popupImg, "loaded");
+            addClass(popupHeader, "loader");
+            addClass(ytPlayerEl, "display-none");
             // Add a Unique ID
             ytPlayerEl.id = "yt-player" + getUniqueId()
+            bufferingTrailers[ytPlayerEl.id] = true
             // Add Trailer to Iframe
             const ytPlayer = new YT.Player(ytPlayerEl, {
                 videoId: trailerID,
@@ -573,27 +552,38 @@
                         onPlayerStateChange(event);
                     },
                     onError: (event) => {
-                        onPlayerError(event);
+                        onPlayerError(event, trailerID);
                     },
                 },
             });
             $ytPlayers.push({ ytPlayer, headerIdx });
         } else {
-            removeClass(popupHeader, "loader");
+            if (trailerID != null) {
+                failingTrailers[trailerID] = true;
+            }
             removeClass(popupImg, "display-none");
+            addClass(popupImg, "loaded");
+            removeClass(popupHeader, "loader");
+            addClass(ytPlayerEl, "display-none");
         }
     }
 
-    function onPlayerError(event) {
-        const ytPlayer = event?.target;
-        const ytEl = ytPlayer?.g;
-        const popupHeader = ytEl?.parentElement;
-        const popupImg = popupHeader?.querySelector?.(".popup-img");
-        $ytPlayers = $ytPlayers.filter((e) => e?.ytPlayer?.g !== ytEl) || [];
-        ytPlayer?.destroy();
-        addClass(ytEl, "display-none");
-        removeClass(popupHeader, "loader");
-        removeClass(popupImg, "display-none");
+    function onPlayerError(event, trailerID) {
+        const errorYTPlayer = event?.target;
+        const errorYTEl = errorYTPlayer?.g;
+        const errorPopupHeader = errorYTEl?.parentElement;
+        const errorPopupImg = errorPopupHeader?.querySelector(".popup-img")
+        const errorYTId = errorYTPlayer?.id;
+        if (trailerID != null) {
+            failingTrailers[trailerID] = true;
+        }
+        $ytPlayers = $ytPlayers.filter((e) => e?.ytPlayer?.g !== errorYTEl) || [];
+        removeClass(errorPopupImg, "display-none");
+        addClass(errorPopupImg, "loaded");
+        removeClass(errorPopupHeader, "loader");
+        addClass(errorYTEl, "display-none");
+        errorYTPlayer?.destroy?.();
+        delete bufferingTrailers[errorYTId]
     }
 
     function onPlayerStateChange(event) {
@@ -603,7 +593,53 @@
         const changedPopupImg = changedPopupHeader?.querySelector(".popup-img");
         const changedYTId = changedYTEl?.id;
         const changedPlayerState = changedYTPlayer?.getPlayerState?.()
-        if (changedPlayerState === getYTPlayerState("PAUSED")) {
+        if (changedPlayerState === getYTPlayerState("PLAYING")) {
+            if (bufferingTrailers[changedYTId]) {
+                delete bufferingTrailers[changedYTId]
+                if (
+                    mostVisiblePopupHeader === changedPopupHeader
+                    && $inApp && $popupVisible
+                ) {
+                    changedYTPlayer?.seekTo?.(0, true)
+                    if ($autoPlay) {
+                        changedYTPlayer?.unMute?.();
+                    } else {
+                        changedYTPlayer?.mute?.()
+                    }
+                    changedYTPlayer?.playVideo?.()
+                    removeClass(changedYTEl, "display-none");
+                    removeClass(changedPopupHeader, "loader");
+                    removeClass(changedPopupImg, "loaded");
+                    requestImmediate(() => {
+                        addClass(changedPopupImg, "display-none");
+                    }, 200);
+                } else {
+                    removeClass(changedPopupHeader, "loader");
+                    if (changedYTId) autoPausedTrailers[changedYTId] = true;
+                    changedYTPlayer?.pauseVideo?.();
+                    if ($autoPlay) {
+                        changedYTPlayer?.unMute?.();
+                    } else {
+                        changedYTPlayer?.mute?.()
+                    }
+                }
+            } else if (
+                changedYTEl?.classList?.contains("display-none") ||
+                changedPopupHeader?.classList?.contains("loader") ||
+                !changedPopupImg?.classList?.contains("display-none")
+            ) {
+                removeClass(changedYTEl, "display-none");
+                removeClass(changedPopupHeader, "loader");
+                removeClass(changedPopupImg, "loaded");
+                requestImmediate(() => {
+                    addClass(changedPopupImg, "display-none");
+                }, 200);
+            }
+        } else if (changedPlayerState === getYTPlayerState("CUED")) {
+            changedYTPlayer?.mute?.()
+            changedYTPlayer?.seekTo?.(0, true)
+            changedYTPlayer?.playVideo?.()
+        } else if (changedPlayerState === getYTPlayerState("PAUSED")) {
             if (
                 changedYTId
                 && mostVisiblePopupHeader === changedPopupHeader
@@ -611,39 +647,15 @@
             ) {
                 manuallyPausedTrailers[changedYTId] = true
             }
-        } else {
-            delete manuallyPausedTrailers[changedYTId];
-            delete autoPausedTrailers[changedYTId];
+            return
         }
-        
-        if (changedPlayerState === getYTPlayerState("PLAYING")) {
-            if (
-                changedYTEl?.classList?.contains("display-none") ||
-                !changedPopupImg?.classList?.contains("display-none")
-            ) {
-                for (let i = 0; i < $ytPlayers.length; i++) {
-                    const ytEl = $ytPlayers[i]?.ytPlayer?.g
-                    if (ytEl !== changedYTEl) {
-                        const ytId = ytEl?.id;
-                        if (ytId) autoPausedTrailers[ytId] = true;
-                        ytEl?.pauseVideo?.();
-                    }
-                }
-                addClass(changedPopupImg, "fade-out");
-                removeClass(changedPopupHeader, "loader");
-                removeClass(changedYTEl, "display-none");
-                requestImmediate(() => {
-                    addClass(changedPopupImg, "display-none");
-                    removeClass(changedPopupImg, "fade-out");
-                }, 200);
-            }
-        }
+        delete manuallyPausedTrailers[changedYTId];
+        delete autoPausedTrailers[changedYTId];
     }
 
     async function onPlayerReady(event, trailerID) {
         const readyYTPlayer = event?.target;
         const readyYTEl = readyYTPlayer?.g;
-        const readyPopupHeader = readyYTEl?.parentElement;
         if (
             readyYTPlayer?.getPlayerState?.() === getYTPlayerState("UNSTARTED") ||
             readyYTEl?.tagName !== "IFRAME" ||
@@ -653,34 +665,22 @@
                 failingTrailers[trailerID] = true;
             }
             $ytPlayers = $ytPlayers.filter((e) => e?.ytPlayer?.g !== readyYTEl) || [];
-            addClass(readyYTEl, "display-none");
+            const readyPopupHeader = readyYTEl?.parentElement;
+            const readyPopupImg = readyPopupHeader?.querySelector(".popup-img")
+            removeClass(readyPopupImg, "display-none");
+            addClass(readyPopupImg, "loaded");
             removeClass(readyPopupHeader, "loader");
-            removeClass(readyPopupHeader?.querySelector(".popup-img"), "display-none");
+            addClass(readyYTEl, "display-none");
             readyYTPlayer?.destroy?.();
+            delete bufferingTrailers[readyYTEl?.id]
         } else {
             if (trailerID != null) {
                 delete failingTrailers[trailerID];
                 failingTrailers = failingTrailers
             }
-            // Play Most Visible when 1 Succeed
-            // then Mute/Buffer other players
-            const mostVisibleTrailerEl = mostVisiblePopupHeader?.querySelector(".trailer")            
-            if (mostVisibleTrailerEl && mostVisibleTrailerEl !== readyYTEl) {
-                readyYTEl?.setAttribute("loading", "lazy");
-                readyYTPlayer?.mute?.()
-                readyYTPlayer?.seekTo?.(0, true)
-                readyYTPlayer?.playVideo?.()
-                const readyYTId = readyYTEl?.id;
-                if (readyYTId) autoPausedTrailers[readyYTId] = true;
-                readyYTPlayer?.pauseVideo?.()
-            if ($autoPlay) {
-                readyYTPlayer?.unMute?.();
-                }
-            } else if ($autoPlay) {
-                readyYTPlayer?.unMute?.();
-            } else {
-                readyYTPlayer?.mute?.()
-            }
+            readyYTPlayer?.mute?.()
+            readyYTPlayer?.seekTo?.(0, true)
+            readyYTPlayer?.playVideo?.()
             playMostVisibleTrailer();
         }
     }
@@ -887,6 +887,7 @@
                 const ytPlayer = $ytPlayers[i]?.ytPlayer
                 const ytEl = ytPlayer?.g
                 const ytId = ytEl?.id;
+                if (bufferingTrailers[ytId]) continue;
                 if (ytEl === visibleTrailer && ytEl) {
                     if (
                         !manuallyPausedTrailers[ytId]
@@ -903,6 +904,7 @@
             for (let i = 0; i < $ytPlayers.length; i++) {
                 const ytPlayer = $ytPlayers[i]?.ytPlayer;
                 const ytId = ytPlayer?.g?.id;
+                if (bufferingTrailers[ytId]) continue;
                 if (ytId) autoPausedTrailers[ytId] = true;
                 ytPlayer?.pauseVideo?.();
             }
@@ -918,6 +920,7 @@
                 const ytPlayer = $ytPlayers[i]?.ytPlayer
                 const ytEl = ytPlayer?.g
                 const ytId = ytEl?.id;
+                if (bufferingTrailers[ytId]) continue;
                 if (ytEl === visibleTrailer && ytEl) {
                     if (
                         !manuallyPausedTrailers[ytId]
@@ -934,6 +937,7 @@
             for (let i = 0; i < $ytPlayers.length; i++) {
                 const ytPlayer = $ytPlayers[i]?.ytPlayer
                 const ytId = ytPlayer?.g?.id;
+                if (bufferingTrailers[ytId]) continue;
                 if (ytId) autoPausedTrailers[ytId] = true;
                 ytPlayer?.pauseVideo?.();
             }
@@ -1293,17 +1297,6 @@
             node.src = emptyImage;
         }
     }
-    function reloadImage(e) {
-        try {
-            let element = this
-            if (element?.tagName!=="IMG") {
-                element = e?.target
-            }
-            const src = element?.src;
-            if (src && src !== emptyImage)
-            element.src = src
-        } catch {}
-    }
 
     let topPopupVisibleCount = $windowHeight >= 1000 ? 2 : 1,
         bottomPopupVisibleCount = Math.floor(Math.max(1, $windowHeight / 640)) || 1
@@ -1332,6 +1325,7 @@
                 }) || [];
                 delete manuallyPausedTrailers[ytId];
                 delete autoPausedTrailers[ytId];
+                delete bufferingTrailers[ytId];
             },
         };
     }
@@ -1373,6 +1367,7 @@
                     const ytPlayer = $ytPlayers[i]?.ytPlayer
                     const ytEl = ytPlayer?.g;
                     const ytId = ytEl?.id;
+                    if (bufferingTrailers[ytId]) continue;
                     if (visibleTrailer === ytEl && ytEl) {
                         const state = ytPlayer?.getPlayerState?.()
                         if (state === getYTPlayerState("PLAYING")) {
@@ -1415,6 +1410,7 @@
                             }) || [];
                             delete manuallyPausedTrailers[thisYTId];
                             delete autoPausedTrailers[thisYTId];
+                            delete bufferingTrailers[thisYTId];
                         }
                     }
                 }
@@ -1539,14 +1535,13 @@
                                 {#if media.trailerID}
                                     <div class="trailer display-none"></div>
                                 {/if}
-                                <div class="popup-img">
+                                <div class="popup-img loaded">
                                     {#if media.bannerImageUrl || media.trailerThumbnailUrl}
                                         {#key media.bannerImageUrl || media.trailerThumbnailUrl}
                                             <img
                                                 use:addImage="{media.bannerImageUrl ||
                                                     media.trailerThumbnailUrl ||
                                                     emptyImage}"
-                                                on:pointerdown="{reloadImage}"
                                                 loading="lazy"
                                                 width="640px"
                                                 height="360px"
@@ -1555,29 +1550,25 @@
                                                     (media.bannerImageUrl
                                                         ? ' Banner'
                                                         : ' Thumbnail')}"
-                                                class="banner-img fade-out"
+                                                class="banner-img"
                                                 on:load="{(e) => {
                                                     removeClass(
                                                         e.target,
-                                                        'fade-out',
+                                                        "display-none",
                                                     );
                                                     addClass(
                                                         e.target,
-                                                        'fade-in',
+                                                        "loaded",
                                                     );
                                                 }}"
                                                 on:error="{(e) => {
                                                     removeClass(
                                                         e.target,
-                                                        'fade-in',
+                                                        "loaded",
                                                     );
                                                     addClass(
                                                         e.target,
-                                                        'fade-out',
-                                                    );
-                                                    addClass(
-                                                        e.target,
-                                                        'display-none',
+                                                        "display-none",
                                                     );
                                                 }}"
                                             />
@@ -2202,60 +2193,76 @@
                                     <div class="info-profile">
                                         <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                                         {#key media.coverImageUrl || media.bannerImageUrl || media.trailerThumbnailUrl || emptyImage}
-                                            <img
-                                                use:addImage="{media.coverImageUrl ||
-                                                    media.bannerImageUrl ||
-                                                    media.trailerThumbnailUrl ||
-                                                    emptyImage}"
-                                                on:pointerdown="{reloadImage}"
-                                                loading="lazy"
-                                                width="150px"
-                                                height="210px"
-                                                alt="{(media?.shownTitle ||
-                                                    '') +
-                                                    (media.coverImageUrl
-                                                        ? ' Cover'
-                                                        : media.bannerImageUrl
-                                                          ? ' Banner'
-                                                          : ' Thumbnail')}"
-                                                tabindex="{!$menuVisible &&
-                                                $popupVisible
-                                                    ? '0'
-                                                    : '-1'}"
-                                                class="{'cover-img' +
-                                                    (!media.coverImageUrl &&
-                                                    !media.bannerImageUrl &&
-                                                    !media.trailerThumbnailUrl
-                                                        ? ' display-none'
-                                                        : '') + (!media?.description ? ' no-description' : '')}"
-                                                on:error="{(e) => {
-                                                    addClass(
-                                                        e.target,
-                                                        'display-none',
-                                                    );
-                                                }}"
-                                                on:click="{() => {
-                                                    if (!$popupVisible) return;
-                                                    showFullScreenImage(
-                                                        media.coverImageUrl ||
+                                            <div class="shimmer">
+                                                <img
+                                                    use:addImage="{media.coverImageUrl ||
                                                         media.bannerImageUrl ||
                                                         media.trailerThumbnailUrl ||
-                                                        emptyImage
-                                                    )
-                                                }}"
-                                                on:keyup="{(e) => {
-                                                    if (!$popupVisible) return;
-                                                    if (e.key === 'Enter') {
+                                                        emptyImage}"
+                                                    loading="lazy"
+                                                    width="150px"
+                                                    height="210px"
+                                                    alt="{(media?.shownTitle ||
+                                                        '') +
+                                                        (media.coverImageUrl
+                                                            ? ' Cover'
+                                                            : media.bannerImageUrl
+                                                            ? ' Banner'
+                                                            : ' Thumbnail')}"
+                                                    tabindex="{!$menuVisible &&
+                                                    $popupVisible
+                                                        ? '0'
+                                                        : '-1'}"
+                                                    class="{'cover-img' +
+                                                        (!media.coverImageUrl &&
+                                                        !media.bannerImageUrl &&
+                                                        !media.trailerThumbnailUrl
+                                                            ? ' display-none'
+                                                            : '') + (media?.description ? '' : ' no-description')}"
+                                                    on:load="{(e) => {
+                                                        removeClass(
+                                                            e.target,
+                                                            "display-none",
+                                                        )
+                                                        addClass(
+                                                            e.target,
+                                                            "loaded",
+                                                        );
+                                                    }}"
+                                                    on:error="{(e) => {
+                                                        removeClass(
+                                                            e.target,
+                                                            "loaded",
+                                                        )
+                                                        addClass(
+                                                            e.target,
+                                                            "display-none",
+                                                        );
+                                                    }}"
+                                                    on:click="{() => {
+                                                        if (!$popupVisible) return;
                                                         showFullScreenImage(
                                                             media.coverImageUrl ||
                                                             media.bannerImageUrl ||
                                                             media.trailerThumbnailUrl ||
                                                             emptyImage
                                                         )
-                                                    }
-                                                }}"
-                                                aria-label="Open Cover Image"
-                                            />
+                                                    }}"
+                                                    on:keyup="{(e) => {
+                                                        if (!$popupVisible) return;
+                                                        if (e.key === 'Enter') {
+                                                            showFullScreenImage(
+                                                                media.coverImageUrl ||
+                                                                media.bannerImageUrl ||
+                                                                media.trailerThumbnailUrl ||
+                                                                emptyImage
+                                                            )
+                                                        }
+                                                    }}"
+                                                    aria-label="Open Cover Image"
+                                                />
+                                                <div class="shimmer-background"></div>
+                                            </div>
                                         {/key}
                                         {#if media?.description}
                                             {@const editedHTMLString = editHTMLString(media?.description) || ''}
@@ -2666,10 +2673,15 @@
     }
 
     .popup-img {
-        transition: opacity 0.2s ease-out;
         width: 100%;
         background-color: var(--bg-color) !important;
         z-index: 2;
+        transition: opacity 0.2s ease-out;
+        opacity: 0;
+    }
+
+    .popup-img.loaded {
+        opacity: 1;
     }
     
     .banner-img {
@@ -2679,14 +2691,11 @@
         object-fit: cover;
         object-position: center;
         background-color: var(--bg-color);
-    }
-
-    .banner-img.fade-out {
-        animation: fade-out 0.2s ease-out forwards;
+        transition: opacity 0.2s ease-out;
         opacity: 0;
     }
-    .banner-img.fade-in {
-        animation: fade-in 0.2s ease-out forwards;
+
+    .banner-img.loaded {
         opacity: 1;
     }
 
@@ -2822,26 +2831,25 @@
 
     .info-profile {
         display: flex;
-        flex-wrap: wrap;
         justify-content: space-between;
         gap: 10px;
         width: 100%;
     }
 
     .cover-img {
-        width: min(40% - 10px, 150px);
+        width: min(100%, 150px);
         height: 210px;
         max-height: 210px;
         object-fit: cover;
-        border-radius: 6px;
         user-select: none;
         cursor: pointer;
-        background-color: var(--bg-color);
-        margin: 0 auto;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15), 0 1px 2px rgba(0, 0, 0, 0.25);
+        transition: opacity 0.2s ease-out;
+        opacity: 0;
     }
 
-    .cover-img.no-description {
-        width: min(100%, 150px);
+    .cover-img.loaded {
+        opacity: 1;
     }
 
     .media-description-wrapper {
@@ -2859,7 +2867,7 @@
         overflow: hidden !important;
     }
 
-    .cover-img.display-none + .media-description-wrapper {
+    .shimmer:has(.cover-img.display-none) + .media-description-wrapper {
         width: 100%;
         min-width: 100%;
     }
@@ -2892,6 +2900,51 @@
 
     .media-description::-webkit-scrollbar {
         display: none;
+    }
+
+    .shimmer {
+        position: relative;
+        overflow: hidden;
+        margin: 0 auto;
+    }
+
+    .shimmer:has(.cover-img) {
+        width: min(100% - 204px, 150px);
+        height: 210px;
+        max-height: 210px;
+        border-radius: 6px;
+        background-color: var(--bg-color);
+    }
+
+    .shimmer:has(.cover-img.no-description) {
+        width: min(100%, 150px);
+    }
+
+    .shimmer:has(.cover-img.loaded) .shimmer-background  {
+        display: none !important;
+    }
+
+    .shimmer .shimmer-background {
+        animation: loading-shimmer 2s linear infinite;
+        position: absolute;
+        background: linear-gradient(90deg,hsla(0, 0%, 10%, 0) 0,hsla(0, 0%, 100%, 0.06) 40%,hsla(0, 0%, 100%, 0.06) 60%,hsla(0, 0%, 10%, 0));
+        display: block;
+        height: 100%;
+        transform: translateX(0);
+        width: 200%;
+        top: 0;
+    }
+    @keyframes loading-shimmer {
+        0% {
+            transform: translateX(-100%);
+        }
+        100% {
+            transform: translateX(100%);
+        }
+    }
+
+    .shimmer:has(.cover-img.display-none) {
+        display: none !important;
     }
 
     .media-title {
@@ -2990,11 +3043,11 @@
             display: none;
         }
     }
-    @media screen and (max-width: 319px) {
+    @media screen and (max-width: 339px) {
         .info-profile {
             flex-wrap: wrap;
         }
-        .cover-img {
+        .shimmer:has(.cover-img) {
             width: min(100%, 150px);
         }
     }
