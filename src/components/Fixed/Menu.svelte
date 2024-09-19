@@ -513,9 +513,7 @@
                 })
             ) {
                 if (isAndroidWeb) {
-                    const appName = "Kanshi.apk";
-                    const appLocation = `./${appName}`;
-                    downloadLink(appLocation, appName);
+                    downloadLink("https://github.com/u-Kuro/Kanshi-Anime-Recommender/raw/main/Kanshi.apk", "Kanshi.apk");
                     return;
                 } else if (
                     typeof deferredPrompt?.prompt === "function"
