@@ -4,5 +4,6 @@
 /android/app/src/main/assets/webapi/worker/entries.json
 /docs/webapi/worker/entries.json
 /prettified/
+/public/data/ignored/
 .DS_Store
 .vercel
