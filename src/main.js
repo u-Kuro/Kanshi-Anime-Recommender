@@ -1,7 +1,7 @@
 import './css/global.css';
 import App from './App.svelte';
 import { get } from 'svelte/store';
-import { android } from './js/globalValues';
+import { android, dataStatus, progress } from './js/globalValues';
 
 try {
 	if (!get(android)) {
@@ -24,8 +24,16 @@ try {
 	}
 } catch {}
 
-const app = new App({
-	target: document.body
-});
+navigator.serviceWorker.register("sw.js")
+navigator.serviceWorker.onmessage = ({ data }) => {
+	if (data.type === "progress") {
+		const { percent, message } = data
+		progress.set(percent)
+		dataStatus.set(`${percent.toFixed(2)}% ${message}`)
+	}
+};
+// const app = new App({
+// 	target: document.body
+// });
 
-export default app;
+// export default app;

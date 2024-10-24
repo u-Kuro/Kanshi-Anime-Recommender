@@ -1,5 +1,12 @@
 const uniqueKey = "Kanshi.Media.Recommendations.Anilist.W~uPtWCq=vG$TR:Zl^#t<vdS]I~N70"
-
+const isAndroid = () => {
+  try {
+    // Android Interface
+    return typeof JSBridge?.exportJSON === "function"
+  } catch (e) {
+    return false
+  }
+}
 const isJsonObject = (obj) => {
   return Object.prototype.toString.call(obj) === "[object Object]"
 }
@@ -505,14 +512,6 @@ const dragScroll = (element, axis = 'xy', avoidCondition = () => false) => {
     };
   } catch {
     return () => { }
-  }
-}
-const isAndroid = () => {
-  try {
-    // Android Interface
-    return typeof JSBridge?.exportJSON === "function"
-  } catch (e) {
-    return false
   }
 }
 const showToast = (str, isLongDuration = true) => {

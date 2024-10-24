@@ -5,8 +5,8 @@
 	import C from "./components/index.js";
 	import getWebVersion from "./version.js";
 	import {
-		getMediaEntries,
-		getFilterOptions,
+		requestInitialData,
+		getInitialData,
 		requestMediaEntries,
 		requestUserEntries,
 		processRecommendedMediaList,
@@ -15,7 +15,6 @@
 		getExtraInfo,
 		mediaLoader,
         updateTagInfo,
-		saveIDBdata,
 		getIDBdata,
         initMediaLoader
 	} from "./js/workerUtils.js";
@@ -55,7 +54,6 @@
 		progress,
 		dropdownIsVisible,
 		isBackgroundUpdateKey,
-		visitedKey,
 		orderedFilters,
 		algorithmFilters,
 		nonOrderedFilters,
@@ -79,6 +77,8 @@
         shownAllInList,
         currentMediaSortBy,
         currentMediaFilters,
+        uniqueKey,
+        visitedKey,
 	} from "./js/globalValues.js";
 
 	(async () => {
@@ -93,7 +93,8 @@
 				if (window[$visitedKey] === true) {
 					const isAlreadyVisited = await getIDBdata($visitedKey);
 					if (!isAlreadyVisited) {
-						window[".androidDataIsEvicted"] = true;
+						const evictedKey = `${$uniqueKey}.evicted`
+						window[evictedKey] = true;
 						try {
 							JSBridge.notifyDataEviction();
 							if (window[$isBackgroundUpdateKey] === true) {
@@ -101,8 +102,8 @@
 							}
 						} catch (ex) { console.error(ex) }
 					}
-				} else if (window[$visitedKey] === false) {
-					saveIDBdata(true, $visitedKey, true)
+				} else if (window[visitedKey] === false) {
+					saveIDBdata(true, visitedKey, true)
 					.then(() => {
 						try {
 							JSBridge.pageVisited()
@@ -133,10 +134,7 @@
 			await Promise.all([
 				// Check/Get/Update/Process Media Entries
 				(async () => {
-					const shouldGetMediaEntries = await getIDBdata("mediaEntriesIsEmpty");
-					if (shouldGetMediaEntries === true) {
-						await getMediaEntries()
-					} else if (shouldGetMediaEntries !== false) {
+					if (await (await fetch(new URL("initial-check", window.location)).json()) !== true) {
 						throw "Unexpected Error"
 					}
 				})(),
@@ -164,7 +162,7 @@
 					if ($android && window[$isBackgroundUpdateKey] === true) {
 						updateTagInfo();
 					} else {
-						const response = await getFilterOptions()
+						const response = await getInitialData()
 						if (response) {
 							$orderedFilters = response.orderedFilters;
 							$nonOrderedFilters = response.nonOrderedFilters;

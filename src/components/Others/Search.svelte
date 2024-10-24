@@ -5,8 +5,8 @@
         mediaManager,
         getExtraInfo,
         processRecommendedMediaList,
-        saveIDBdata,
-        getIDBdata
+        setIDBdata,
+        getIDBdata,
     } from "../../js/workerUtils.js";
     import {
         addClass,
@@ -1206,7 +1206,7 @@
                 customCategoryName = val
                 setLocalStorage("selectedCategory", val)
                 .catch(() => removeLocalStorage("selectedCategory"))
-                .finally(() => saveIDBdata(val, "selectedCategory"));
+                .finally(() => setIDBdata("selectedCategory", val));
             } else if (customCategoryName == null) {
                 customCategoryName = val
             }
@@ -1687,7 +1687,7 @@
         const newGridFullView = !$gridFullView
         setLocalStorage("gridFullView", $gridFullView = newGridFullView)
         .catch(() => removeLocalStorage("gridFullView"))
-        .finally(() => saveIDBdata(newGridFullView, "gridFullView"));
+        .finally(() => setIDBdata("gridFullView", newGridFullView));
     }
 
     async function updateList() {
@@ -1732,7 +1732,7 @@
         if ($gridFullView == null) {
             setLocalStorage("gridFullView", $gridFullView = false)
             .catch(() => removeLocalStorage("gridFullView"))
-            .finally(() => saveIDBdata(false, "gridFullView"))
+            .finally(() => setIDBdata("gridFullView", false))
         }
 
         popupContainer = document.getElementById("popup-container");

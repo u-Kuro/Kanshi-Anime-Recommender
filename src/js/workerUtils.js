@@ -44,6 +44,7 @@ import {
     orderedFilters,
     tagInfo,
     listReloadAvailable,
+    uniqueKey,
 } from "./globalValues.js";
 
 const hasOwnProp = Object.prototype.hasOwnProperty
@@ -66,6 +67,36 @@ earlisetReleaseDate.subscribe((val) => {
         }, Math.min(timeBeforeEarliestReleaseDate, 2000000000));
     }
 })
+
+const getIDBdata = async (name, dataToSend) => {
+    try {
+        const url = new URL("get", window.location)
+        url.searchParams.set("key", name)
+        let response
+        if (dataToSend != null) {
+            response = await fetch(url, {
+                method: "POST",
+                body: JSON.stringify(dataToSend)
+            })
+        } else {
+            response = await fetch(url)
+        }
+        return await response.json()
+    } catch (e) { console.error(e) }
+}
+
+const setIDBdata = async (name, dataToSend, isImportant) => {
+    try {
+        if (!get(android) || isImportant || window[get(isBackgroundUpdateKey)] !== true) {
+            const url = new URL("set", window.location)
+            url.searchParams.set("key", name)
+            await fetch(url, {
+                method: "POST",
+                body: JSON.stringify(dataToSend)
+            })
+        }
+    } catch (e) { console.error(e) }
+}
 
 let initMediaLoaderWorker
 const initMediaLoader = async () => {
@@ -689,7 +720,7 @@ const processRecommendedMediaList = (_data = {}) => {
                     } else {
                         setLocalStorage("neareastMediaReleaseAiringAt", neareastMediaReleaseAiringAt)
                         .catch(() => removeLocalStorage("neareastMediaReleaseAiringAt"))
-                        .finally(() => saveIDBdata(neareastMediaReleaseAiringAt, "neareastMediaReleaseAiringAt"));
+                        .finally(() => setIDBdata("neareastMediaReleaseAiringAt", neareastMediaReleaseAiringAt));
                         if (window.shouldUpdateNotifications === true && get(android)) {
                             window.shouldUpdateNotifications = false
                             if (typeof (get(username)) === "string") {
@@ -756,7 +787,7 @@ isProcessingList.subscribe((val) => {
 
 let newAddedMediaCount, newUpdatedMediaCount
 function notifyUpdatedMediaNotification() {
-    if (get(android) && window[".androidDataIsEvicted"] !== true) {
+    if (get(android) && window[`${get(uniqueKey)}.evicted`] !== true) {
         try {
             if (
                 typeof newAddedMediaCount === "number" && !isNaN(newAddedMediaCount) && isFinite(newAddedMediaCount)
@@ -781,6 +812,7 @@ function notifyUpdatedMediaNotification() {
 }
 window.notifyUpdatedMediaNotification = notifyUpdatedMediaNotification
 const requestMediaEntries = (_data = {}) => {
+    return
     if (get(initList) !== false && !_data?.initList) {
         return
     }
@@ -862,7 +894,7 @@ const requestMediaEntries = (_data = {}) => {
                         progress.set(100)
                         resolve(data)
                     } else if (hasOwnProp?.call?.(data, "notifyAddedEntries")) {
-                        if (get(android) && window[".androidDataIsEvicted"] !== true) {
+                        if (get(android) && window[`${get(uniqueKey)}.evicted`] !== true) {
                             try {
                                 let addedMediaCount = data?.notifyAddedEntries
                                 if (typeof addedMediaCount !== "number" || isNaN(addedMediaCount) || !isFinite(addedMediaCount) || addedMediaCount < 0) {
@@ -893,18 +925,18 @@ const requestMediaEntries = (_data = {}) => {
                             } catch (ex) { console.error(ex) }
                         }
                     } else {
-                        if (data?.noEntriesFound) {
-                            console.error("No entries found");
-                            alertError()
-                        } else if (data?.getEntries === true) {
-                            isGettingNewEntries = true
-                            stopConflictingWorkers({ isGettingNewEntries: true })
-                            getMediaEntries()
-                                .finally(() => {
-                                    isGettingNewEntries = false
-                                    rerunImportantWork()
-                                })
-                        }
+                        // if (data?.noEntriesFound) {
+                        //     console.error("No entries found");
+                        //     alertError()
+                        // } else if (data?.getEntries === true) {
+                        //     isGettingNewEntries = true
+                        //     stopConflictingWorkers({ isGettingNewEntries: true })
+                        //     requestInitialData()
+                        //         .finally(() => {
+                        //             isGettingNewEntries = false
+                        //             rerunImportantWork()
+                        //         })
+                        // }
                         wasRequestingMediaEntries = isRequestingMediaEntries = false
                         requestMediaEntriesTerminateTimeout = setTimeout(() => {
                             requestMediaEntriesWorker?.terminate?.();
@@ -1368,7 +1400,7 @@ const importUserData = (_data) => {
                             currentAlgorithmFilters.set(data?.algorithmFilters)
                         }
                     } else {
-                        window[".androidDataIsEvicted"] = false
+                        window[`${get(uniqueKey)}.evicted`] = false
                         if (get(android)) {
                             window.shouldUpdateNotifications = true
                         }
@@ -1520,145 +1552,93 @@ const getExtraInfo = () => {
 }
 
 // IndexedDB
-const getIDBdata = (name) => {
-    return new Promise((resolve, reject) => {
-        cacheRequest("./webapi/worker/getIDBdata.js", 3022, "Retrieving Some Data")
-            .then(url => {
-                let worker = new Worker(url)
-                worker.postMessage({ name })
-                worker.onmessage = ({ data }) => {
-                    worker?.terminate?.()
-                    if (hasOwnProp?.call?.(data || {}, "Failed to retrieve the data")) {
-                        console.error(data?.["Failed to retrieve the data"])
-                        reject(data?.["Failed to retrieve the data"] || "Failed to retrieve the data")
-                    } else {
-                        resolve(data)
-                    }
-                }
-                worker.onerror = (error) => {
-                    worker?.terminate?.()
-                    alertError()
-                    console.error(error)
-                    reject(error)
-                }
-            }).catch((error) => {
-                alertError()
-                console.error(error)
-                reject(error)
-            })
-    })
-}
+// const getIDBdata = (name) => {
+//     return new Promise((resolve, reject) => {
+//         cacheRequest("./webapi/worker/getIDBdata.js", 3022, "Retrieving Some Data")
+//             .then(url => {
+//                 let worker = new Worker(url)
+//                 worker.postMessage({ name })
+//                 worker.onmessage = ({ data }) => {
+//                     worker?.terminate?.()
+//                     if (hasOwnProp?.call?.(data || {}, "Failed to retrieve the data")) {
+//                         console.error(data?.["Failed to retrieve the data"])
+//                         reject(data?.["Failed to retrieve the data"] || "Failed to retrieve the data")
+//                     } else {
+//                         resolve(data)
+//                     }
+//                 }
+//                 worker.onerror = (error) => {
+//                     worker?.terminate?.()
+//                     alertError()
+//                     console.error(error)
+//                     reject(error)
+//                 }
+//             }).catch((error) => {
+//                 alertError()
+//                 console.error(error)
+//                 reject(error)
+//             })
+//     })
+// }
 window.updateNotifications = async (aniIdsNotificationToBeUpdated = []) => {
     if (!get(android)) return
-    new Promise((resolve, reject) => {
-        cacheRequest("./webapi/worker/getIDBdata.js", 3022, "Retrieving Some Data")
-            .then(url => {
-                let worker = new Worker(url)
-                worker.postMessage({ name: "aniIdsNotificationToBeUpdated", aniIdsNotificationToBeUpdated })
-                worker.onmessage = ({ data }) => {
-                    worker?.terminate?.()
-                    if (hasOwnProp?.call?.(data || {}, "Failed to retrieve the data")) {
-                        console.error(data?.["Failed to retrieve the data"])
-                        reject(data?.["Failed to retrieve the data"] || "Failed to retrieve the data")
-                    } else {
-                        resolve(data)
-                    }
-                }
-                worker.onerror = (error) => {
-                    worker?.terminate?.()
-                    console.error(error)
-                    reject(error)
-                }
-            }).catch((error) => {
-                alertError()
-                console.error(error)
-                reject(error)
-            })
-    }).then((updatedAniIdsNotification = {}) => {
-        try {
-            for (let mediaId in updatedAniIdsNotification) {
-                let media = updatedAniIdsNotification[mediaId]
-                mediaId = parseInt(mediaId)
-                if (typeof mediaId === "number" && !isNaN(mediaId) && isFinite(mediaId)
-                    && typeof media?.title === "string"
-                    && typeof media.maxEpisode === "number" && !isNaN(media.maxEpisode) && isFinite(media.maxEpisode)
-                    && typeof media.mediaUrl === "string"
-                    && typeof media.userStatus === "string"
-                    && typeof media.episodeProgress === "number" && !isNaN(media.episodeProgress) && isFinite(media.episodeProgress)
-                ) {
-                    JSBridge.updateNotifications(
-                        Math.floor(mediaId),
-                        media.title,
-                        Math.floor(media?.maxEpisode),
-                        media.mediaUrl,
-                        media.userStatus,
-                        Math.floor(media.episodeProgress)
-                    )
-                }
+    // new Promise((resolve, reject) => {
+    //     cacheRequest("./webapi/worker/getIDBdata.js", 3022, "Retrieving Some Data")
+    //         .then(url => {
+    //             let worker = new Worker(url)
+    //             worker.postMessage({ name: "aniIdsNotificationToBeUpdated", aniIdsNotificationToBeUpdated })
+    //             worker.onmessage = ({ data }) => {
+    //                 worker?.terminate?.()
+    //                 if (hasOwnProp?.call?.(data || {}, "Failed to retrieve the data")) {
+    //                     console.error(data?.["Failed to retrieve the data"])
+    //                     reject(data?.["Failed to retrieve the data"] || "Failed to retrieve the data")
+    //                 } else {
+    //                     resolve(data)
+    //                 }
+    //             }
+    //             worker.onerror = (error) => {
+    //                 worker?.terminate?.()
+    //                 console.error(error)
+    //                 reject(error)
+    //             }
+    //         }).catch((error) => {
+    //             alertError()
+    //             console.error(error)
+    //             reject(error)
+    //         })
+    // })
+    
+    try {
+        updatedAniIdsNotification = await getIDBdata("aniIdsNotificationToBeUpdated", aniIdsNotificationToBeUpdated)
+        for (let mediaId in updatedAniIdsNotification) {
+            let media = updatedAniIdsNotification[mediaId]
+            mediaId = parseInt(mediaId)
+            if (typeof mediaId === "number" && !isNaN(mediaId) && isFinite(mediaId)
+                && typeof media?.title === "string"
+                && typeof media.maxEpisode === "number" && !isNaN(media.maxEpisode) && isFinite(media.maxEpisode)
+                && typeof media.mediaUrl === "string"
+                && typeof media.userStatus === "string"
+                && typeof media.episodeProgress === "number" && !isNaN(media.episodeProgress) && isFinite(media.episodeProgress)
+            ) {
+                JSBridge.updateNotifications(
+                    Math.floor(mediaId),
+                    media.title,
+                    Math.floor(media?.maxEpisode),
+                    media.mediaUrl,
+                    media.userStatus,
+                    Math.floor(media.episodeProgress)
+                )
             }
-        } catch (ex) { console.error(ex) }
-    })
-}
-
-const saveIDBdata = (_data, name, isImportant = false) => {
-    return new Promise((resolve, reject) => {
-        if (!get(android) || isImportant || window[get(isBackgroundUpdateKey)] !== true) {
-            cacheRequest("./webapi/worker/saveIDBdata.js")
-                .then(url => {
-                    let worker = new Worker(url)
-                    worker.onmessage = ({ data }) => {
-                        if (hasOwnProp?.call?.(data, "status")) {
-                            dataStatus.set(data.status)
-                            return
-                        }
-                        setTimeout(() => {
-                            worker?.terminate?.();
-                        }, terminateDelay)
-                        if (hasOwnProp?.call?.(data, "error")) {
-                            console.error(data.error)
-                            reject(data.error)
-                        } else {
-                            resolve()
-                        }
-                    }
-                    worker.onerror = (error) => {
-                        setTimeout(() => {
-                            worker?.terminate?.();
-                        }, terminateDelay)
-                        console.error(error)
-                        reject(error)
-                    }
-                    worker.postMessage({ data: _data, name: name })
-                }).catch((error) => {
-                    alertError()
-                    console.error(error)
-                    reject(error)
-                })
         }
-    })
+    } catch (ex) { console.error(ex) }
 }
 
-// One Time Use
-const getMediaEntries = (_data) => {
+const requestInitialData = (_data) => {
     return new Promise((resolve, reject) => {
         progress.set(0)
         cacheRequest("./webapi/worker/getEntries.js", 282309, "Checking Anime, Manga, and Novel Entries")
             .then(async workerUrl => {
-                let worker = new Worker(workerUrl)
-                if (get(android)) {
-                    worker.postMessage({ entriesBlob: await cacheRequest("./webapi/worker/entries.json", 174425636, "Getting Anime, Manga, and Novel Entries", true) })
-                } else {
-                    let server
-                    if (window.location != null) {
-                        try {
-                            const $server = new URL(window.location).toString()
-                            if (typeof $server === "string" && server !== "") {
-                                server = $server
-                            }
-                        } catch {}
-                    }
-                    worker.postMessage({ server, appID: get(appID) })
-                }
+                const worker = new Worker(workerUrl)
                 worker.onmessage = ({ data }) => {
                     if (hasOwnProp?.call?.(data, "progress")) {
                         if (data?.progress >= 0 && data?.progress <= 100) {
@@ -1678,6 +1658,12 @@ const getMediaEntries = (_data) => {
                         worker?.terminate?.();
                     }, terminateDelay)
                     if (hasOwnProp?.call?.(data, "error")) {
+                        dataStatusPrio = false
+                        dataStatus.set(null)
+                        progress.set(100)
+                        alertError()
+                        updateRecommendationList.update(e => !e)
+                        worker?.terminate?.();
                         console.error(data.error)
                         reject(data.error)
                     } else {
@@ -1685,6 +1671,86 @@ const getMediaEntries = (_data) => {
                     }
                 }
                 worker.onerror = (error) => {
+                    dataStatusPrio = false
+                    dataStatus.set(null)
+                    progress.set(100)
+                    alertError()
+                    updateRecommendationList.update(e => !e)
+                    worker?.terminate?.();
+                    console.error(error)
+                    reject(error)
+                }
+
+                let totalLength,
+                    receivedLength = 0,
+                    isDataStatusShowing;
+                const fetchAndStream = async (id, url) => {
+                    try {
+                        const response = await fetch(url);
+                        if (response.ok) {
+                            for await (const chunk of response.body) {
+                                worker.postMessage({ id, buffer: chunk.buffer }, [chunk.buffer]);
+                                receivedLength += chunk.byteLength;
+                                if (!isDataStatusShowing) {
+                                    isDataStatusShowing = true
+                                    setTimeout(() => {
+                                        const percent = (receivedLength / totalLength) * 100
+                                        const currentProgress = get(progress)
+                                        if (percent > 0 && percent <= 100
+                                            && (
+                                                !currentProgress
+                                                || currentProgress >= 100
+                                                || percent > currentProgress
+                                            )
+                                        ) {
+                                            progress.set(percent)
+                                            if (percent >= 100) {
+                                                dataStatus.set("100% Getting Anime, Manga, and Novel Entries")
+                                            } else {
+                                                dataStatus.set(`${percent.toFixed(2)}% Getting Anime, Manga, and Novel Entries`)
+                                            }
+                                        }
+                                        isDataStatusShowing = false
+                                    }, 17)
+                                }
+                            }
+                        } else {
+                            throw new Error('Failed to fetch initial data');
+                        }
+                    } catch (error) {
+                        dataStatusPrio = false
+                        dataStatus.set(null)
+                        progress.set(100)
+                        alertError()
+                        updateRecommendationList.update(e => !e)
+                        worker?.terminate?.();
+                        console.error(error)
+                        reject(error)
+                    }
+                }
+                try {
+                    const dataPath = "/data/", mediaOptionsPath = `${dataPath}/media-options/`
+                    await Promise.all([
+                        (async () => {
+                            await fetchAndStream("mediaEntries",`${dataPath}media-entries-chunk-1.json`),
+                            await fetchAndStream("mediaEntries",`${dataPath}media-entries-chunk-2.json`)
+                        })(),
+                        fetchAndStream("excludedEntries",`${dataPath}excluded-entries.json`),
+                        fetchAndStream("tagInfo",`${dataPath}tag-info.json`),
+                        fetchAndStream("Format",`${mediaOptionsPath}format.json`),
+                        fetchAndStream("Country Of Origin",`${mediaOptionsPath}country-of-origin.json`),
+                        fetchAndStream("Genres",`${mediaOptionsPath}genres.json`),
+                        fetchAndStream("Tags",`${mediaOptionsPath}tags.json`),
+                        fetchAndStream("Tag Category",`${mediaOptionsPath}tag-category.json`),
+                        fetchAndStream("Studios",`${mediaOptionsPath}studios.json`),
+                        fetchAndStream("Release Status",`${mediaOptionsPath}release-status.json`),
+                        fetchAndStream("User Status",`${mediaOptionsPath}user-status.json`),
+                        fetchAndStream("Season",`${mediaOptionsPath}season.json`),
+                        // saving ordered list of ids per category will not work since catories
+                        // are stores and stores are created on idb version upgrade
+                    ])
+                    worker.postMessage("done");
+                } catch (error) {
                     dataStatusPrio = false
                     dataStatus.set(null)
                     progress.set(100)
@@ -1706,18 +1772,18 @@ const getMediaEntries = (_data) => {
     })
 }
 
-let getFilterOptionsTerminateTimeout, getFilterOptionsWorker;
-const getFilterOptions = (_data) => {
+let getInitialDataTerminateTimeout, getInitialDataWorker;
+const getInitialData = (_data) => {
     return new Promise((resolve, reject) => {
-        clearTimeout(getFilterOptionsTerminateTimeout)
-        getFilterOptionsWorker?.terminate?.()
-        cacheRequest("./webapi/worker/getFilterOptions.js", 68663, "Initializing Filters")
+        clearTimeout(getInitialDataTerminateTimeout)
+        getInitialDataWorker?.terminate?.()
+        cacheRequest("./webapi/worker/getInitialData.js", 68663, "Initializing Filters")
             .then(url => {
-                clearTimeout(getFilterOptionsTerminateTimeout)
-                getFilterOptionsWorker?.terminate?.()
-                getFilterOptionsWorker = new Worker(url)
-                getFilterOptionsWorker.postMessage(_data)
-                getFilterOptionsWorker.onmessage = ({ data }) => {
+                clearTimeout(getInitialDataTerminateTimeout)
+                getInitialDataWorker?.terminate?.()
+                getInitialDataWorker = new Worker(url)
+                getInitialDataWorker.postMessage(_data)
+                getInitialDataWorker.onmessage = ({ data }) => {
                     if (hasOwnProp?.call?.(data, "status")) {
                         dataStatusPrio = true
                         dataStatus.set(data.status)
@@ -1727,23 +1793,23 @@ const getFilterOptions = (_data) => {
                         dataStatusPrio = false
                         dataStatus.set(null)
                         alertError()
-                        getFilterOptionsWorker?.terminate?.()
+                        getInitialDataWorker?.terminate?.()
                         console.error(data.error)
                         reject(data.error)
                     } else {
                         dataStatusPrio = false
                         dataStatus.set(null)
-                        getFilterOptionsTerminateTimeout = setTimeout(() => {
-                            getFilterOptionsWorker?.terminate?.();
+                        getInitialDataTerminateTimeout = setTimeout(() => {
+                            getInitialDataWorker?.terminate?.();
                         }, terminateDelay)
                         resolve(data)
                     }
                 }
-                getFilterOptionsWorker.onerror = (error) => {
+                getInitialDataWorker.onerror = (error) => {
                     dataStatusPrio = false
                     dataStatus.set(null)
                     alertError()
-                    getFilterOptionsWorker?.terminate?.()
+                    getInitialDataWorker?.terminate?.()
                     console.error(error)
                     reject(error)
                 }
@@ -1751,7 +1817,7 @@ const getFilterOptions = (_data) => {
                 dataStatusPrio = false
                 dataStatus.set(null)
                 alertError()
-                getFilterOptionsWorker?.terminate?.()
+                getInitialDataWorker?.terminate?.()
                 console.error(error)
                 reject(error)
             })
@@ -1869,10 +1935,10 @@ function alertError() {
 }
 
 export {
-    saveIDBdata,
     getIDBdata,
-    getMediaEntries,
-    getFilterOptions,
+    setIDBdata,
+    requestInitialData,
+    getInitialData,
     updateTagInfo,
     requestMediaEntries,
     requestUserEntries,

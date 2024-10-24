@@ -25,7 +25,7 @@ const cacheRequest = async (url, totalLength, status, getBlob) => {
             }
 
             try {
-                let response = await fetch(newUrl || url, {
+                const response = await fetch(newUrl || url, {
                     headers: {
                         'Cache-Control': 'public, max-age=31536000, immutable',
                     },
@@ -33,56 +33,37 @@ const cacheRequest = async (url, totalLength, status, getBlob) => {
                 })
 
                 if (totalLength && status) {
-                    const reader = response?.body?.getReader?.();
-                    if (typeof (reader?.read) === "function") {
-                        try {
-                            response = new Response(new ReadableStream({
-                                async start(controller) {
-                                    let receivedLength = 0;
-                                    let streamStatusTimeout, isDataStatusShowing;
-                                    while (true) {
-                                        const { done, value } = await reader.read()
-                                        if (done) {
-                                            clearTimeout(streamStatusTimeout)
-                                            dataStatus.set(null)
-                                            progress.set(100)
-                                            return controller.close()
-                                        }
-                                        receivedLength += value?.byteLength || value?.length || 0;
-                                        if (!isDataStatusShowing) {
-                                            isDataStatusShowing = true
-                                            streamStatusTimeout = setTimeout(() => {
-                                                let percent = (receivedLength / totalLength) * 100
-                                                let currentProgress = get(progress)
-                                                if (percent > 0 && percent <= 100
-                                                    && (
-                                                        !currentProgress
-                                                        || currentProgress >= 100
-                                                        || percent > currentProgress)
-                                                ) {
-                                                    progress.set(percent)
-                                                    if (percent >= 100) {
-                                                        dataStatus.set(`100% ` + status)
-                                                    } else {
-                                                        dataStatus.set(`${percent.toFixed(2)}% ` + status)
-                                                    }
-                                                }
-                                                isDataStatusShowing = false
-                                            }, 17)
-                                        }
-                                        controller.enqueue(value)
+                    const body = response.body;
+                    let receivedLength = 0;
+                    let streamStatusTimeout, isDataStatusShowing;
+                    for await (const chunk of body) {
+                        receivedLength += chunk.byteLength || chunk.length || 0;
+                        if (!isDataStatusShowing) {
+                            isDataStatusShowing = true
+                            streamStatusTimeout = setTimeout(() => {
+                                const percent = (receivedLength / totalLength) * 100
+                                const currentProgress = get(progress)
+                                if (percent > 0 && percent <= 100
+                                    && (
+                                        !currentProgress
+                                        || currentProgress >= 100
+                                        || percent > currentProgress)
+                                ) {
+                                    progress.set(percent)
+                                    if (percent >= 100) {
+                                        dataStatus.set(`100% ` + status)
+                                    } else {
+                                        dataStatus.set(`${percent.toFixed(2)}% ` + status)
                                     }
                                 }
-                            }));
-                        } catch (ex) {
-                            console.error(ex)
-                            return await cacheRequest(url)
+                                isDataStatusShowing = false
+                            }, 17)
                         }
-                    } else {
-                        return await cacheRequest(url)
                     }
+                    clearTimeout(streamStatusTimeout)
+                    dataStatus.set(null)
+                    progress.set(100)
                 }
-
                 if (getBlob) {
                     delete loadedRequestUrlPromises[url]
                     return await response.blob()

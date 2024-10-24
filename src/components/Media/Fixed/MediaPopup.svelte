@@ -3,7 +3,7 @@
     import { fade } from "svelte/transition";
     import { sineOut } from "svelte/easing";
     import { cacheImage } from "../../../js/caching.js";
-    import { mediaLoader, mediaManager, saveIDBdata, getIDBdata } from "../../../js/workerUtils.js";
+    import { mediaLoader, mediaManager, getIDBdata, setIDBdata } from "../../../js/workerUtils.js";
     import {
         scrollToElement,
         getChildIndex,
@@ -371,7 +371,7 @@
         if (typeof val === "boolean") {
             setLocalStorage("autoPlay", val)
             .catch(() => removeLocalStorage("autoPlay"))
-            .finally(() => saveIDBdata(val, "autoPlay"));
+            .finally(() => setIDBdata("autoPlay", val));
             const visibleTrailer = mostVisiblePopupHeader?.querySelector(".trailer");
             for (let i = 0; i < $ytPlayers.length; i++) {
                 const ytPlayer = $ytPlayers[i]?.ytPlayer
@@ -1421,7 +1421,7 @@
         if ($autoPlay == null) {
             setLocalStorage("autoPlay", $autoPlay = false)
             .catch(() => removeLocalStorage("autoPlay"))
-            .finally(() => saveIDBdata(false, "autoPlay"));
+            .finally(() => setIDBdata("autoPlay", false));
         }
     });
     

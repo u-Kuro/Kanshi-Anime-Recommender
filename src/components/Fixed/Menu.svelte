@@ -1,6 +1,6 @@
 <script>
     import { onMount, tick } from "svelte";
-    import { mediaManager, getIDBdata, importUserData, saveIDBdata, exportUserData, requestMediaEntries, requestUserEntries } from "../../js/workerUtils.js";
+    import { mediaManager, importUserData, exportUserData, requestMediaEntries, requestUserEntries, getIDBdata, setIDBdata } from "../../js/workerUtils.js";
     import {
         jsonIsEmpty,
         removeLocalStorage,
@@ -123,7 +123,7 @@
     window.setExportPathAvailability = async (value = true) => {
         setLocalStorage("exportPathIsAvailable", $exportPathIsAvailable = value)
         .catch(() => removeLocalStorage("exportPathIsAvailable"))
-        .finally(() => saveIDBdata(value, "exportPathIsAvailable"));
+        .finally(() => setIDBdata("exportPathIsAvailable", value));
     };
 
     async function exportData(e) {
@@ -242,7 +242,7 @@
         if (typeof val === "boolean") {
             setLocalStorage("showStatus", val)
             .catch(() => removeLocalStorage("showStatus"))
-            .finally(() => saveIDBdata(val, "showStatus"));
+            .finally(() => setIDBdata("showStatus", val));
         }
     })
 
@@ -253,7 +253,7 @@
             }
             setLocalStorage("showRateLimit", val)
             .catch(() => removeLocalStorage("showRateLimit"))
-            .finally(() => saveIDBdata(val, "showRateLimit"));
+            .finally(() => setIDBdata("showRateLimit", val));
         }
     })
 
@@ -551,33 +551,33 @@
         if ($autoUpdate == null) {
             setLocalStorage("autoUpdate", $autoUpdate = true)
             .catch(() => removeLocalStorage("autoUpdate"))
-            .finally(() => saveIDBdata(true, "autoUpdate"));
+            .finally(() => setIDBdata("autoUpdate", true));
         }
         if ($android) {
             $exportPathIsAvailable = $exportPathIsAvailable ?? (await getIDBdata("exportPathIsAvailable"));
             if ($exportPathIsAvailable == null) {
                 setLocalStorage("exportPathIsAvailable", $exportPathIsAvailable = false)
                 .catch(() => removeLocalStorage("exportPathIsAvailable"))
-                .finally(() => saveIDBdata(false, "exportPathIsAvailable"));
+                .finally(() => setIDBdata("exportPathIsAvailable", false));
             }
             $autoExport = $autoExport ?? (await getIDBdata("autoExport"));
             if ($autoExport == null) {
                 setLocalStorage("autoExport", $autoExport = false)
                 .catch(() => removeLocalStorage("autoExport"))
-                .finally(() => saveIDBdata(false, "autoExport"));
+                .finally(() => setIDBdata("autoExport", false));
             }
         }
         $showStatus = $showStatus ?? (await getIDBdata("showStatus"));
         if ($showStatus == null) {
             setLocalStorage("showStatus", $showStatus = true)
             .catch(() => removeLocalStorage("showStatus"))
-            .finally(() => saveIDBdata(true, "showStatus"));
+            .finally(() => setIDBdata("showStatus", true));
         }
         $showRateLimit = $showRateLimit ?? (await getIDBdata("showRateLimit"));
         if ($showRateLimit == null) {
             setLocalStorage("showRateLimit", $showRateLimit = true)
             .catch(() => removeLocalStorage("showRateLimit"))
-            .finally(() => saveIDBdata(true, "showRateLimit"));
+            .finally(() => setIDBdata("showRateLimit", true));
         }
     });
 </script>
