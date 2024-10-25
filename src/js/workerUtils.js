@@ -1,6 +1,6 @@
 import { get } from "svelte/store";
-import { cacheRequest } from "./caching.js";
-import { downloadLink, getUniqueId, isConnected, isJsonObject, jsonIsEmpty, removeLocalStorage, setLocalStorage, showToast, } from "../js/others/helper.js"
+import { progressedFetch } from "./fetch.js";
+import { downloadLink, getUniqueId, isConnected, isJsonObject, jsonIsEmpty, removeLocalStorage, setLocalStorage, showToast, } from "./helper.js"
 import {
     dataStatus,
     updateRecommendationList,
@@ -71,7 +71,7 @@ let initMediaLoaderWorker
 const initMediaLoader = async () => {
     try {
         if (initMediaLoaderWorker === false) return;
-        initMediaLoaderWorker = new Worker(await cacheRequest("./webapi/worker/initalMediaLoader.js", 916291, "Checking Initial List"))
+        initMediaLoaderWorker = new Worker(await progressedFetch("./webapi/worker/initalMediaLoader.js", 916291, "Checking Initial List"))
         initMediaLoaderWorker.onmessage = async ({ data }) => {
             if (hasOwnProp.call(data, "media")) {
                 const media = data.media
@@ -121,7 +121,7 @@ const initMediaLoader = async () => {
 let mediaLoaderWorker, mediaLoaderWorkerPromise, mediaLoaderPromises = {};
 function getMediaLoaderWorker() {
     mediaLoaderWorkerPromise = new Promise(async (resolve) => {
-        resolve(new Worker(await cacheRequest("./webapi/worker/mediaLoader.js", 22844, "Checking Existing List")))
+        resolve(new Worker(await progressedFetch("./webapi/worker/mediaLoader.js", 22844, "Checking Existing List")))
         mediaLoaderWorkerPromise = null
     })
     return mediaLoaderWorkerPromise
@@ -460,7 +460,7 @@ const mediaManager = (_data = {}) => {
         }
 
         progress.set(0)
-        cacheRequest("./webapi/worker/mediaManager.js", 54229, "Updating Categories and List")
+        progressedFetch("./webapi/worker/mediaManager.js", 54229, "Updating Categories and List")
             .then(url => {
                 clearTimeout(mediaManagerWorkerTimeout);
                 mediaManagerWorker?.terminate?.()
@@ -610,7 +610,7 @@ const processRecommendedMediaList = (_data = {}) => {
         clearTimeout(processRecommendedMediaListTerminateTimeout);
         processRecommendedMediaListWorker?.terminate?.();
         progress.set(0)
-        cacheRequest("./webapi/worker/processRecommendedMediaList.js", 44130, "Updating Recommendation List")
+        progressedFetch("./webapi/worker/processRecommendedMediaList.js", 44130, "Updating Recommendation List")
             .then(url => {
                 const lastProcessRecommendationAiringAt = parseInt((new Date().getTime() / 1000))
                 let neareastMediaReleaseAiringAt
@@ -692,11 +692,9 @@ const processRecommendedMediaList = (_data = {}) => {
                         .finally(() => saveIDBdata(neareastMediaReleaseAiringAt, "neareastMediaReleaseAiringAt"));
                         if (window.shouldUpdateNotifications === true && get(android)) {
                             window.shouldUpdateNotifications = false
-                            if (typeof (get(username)) === "string") {
-                                try {
-                                    JSBridge.callUpdateNotifications()
-                                } catch (ex) { console.error(ex) }
-                            }
+                            try {
+                                JSBridge.callUpdateNotifications()
+                            } catch (ex) { console.error(ex) }
                         }
                         if (passedAlgorithmFilterId === data?.passedAlgorithmFilterId && passedAlgorithmFilterId != null) {
                             passedAlgorithmFilterId = passedAlgorithmFilter = undefined
@@ -802,7 +800,7 @@ const requestMediaEntries = (_data = {}) => {
             }
         }
         progress.set(0)
-        cacheRequest("./webapi/worker/requestMediaEntries.js")
+        progressedFetch("./webapi/worker/requestMediaEntries.js")
             .then(url => {
                 clearTimeout(requestMediaEntriesTerminateTimeout)
                 requestMediaEntriesWorker?.terminate?.()
@@ -899,7 +897,7 @@ const requestMediaEntries = (_data = {}) => {
                         } else if (data?.getEntries === true) {
                             isGettingNewEntries = true
                             stopConflictingWorkers({ isGettingNewEntries: true })
-                            getMediaEntries()
+                            retrieveInitialData()
                                 .finally(() => {
                                     isGettingNewEntries = false
                                     rerunImportantWork()
@@ -974,7 +972,7 @@ const requestUserEntries = (_data = {}) => {
         }
         userRequestIsRunning.set(true)
         progress.set(0)
-        cacheRequest("./webapi/worker/requestUserEntries.js")
+        progressedFetch("./webapi/worker/requestUserEntries.js")
             .then(url => {
                 clearTimeout(requestUserEntriesTerminateTimeout)
                 requestUserEntriesWorker?.terminate?.()
@@ -1122,7 +1120,7 @@ const exportUserData = (_data) => {
         waitForExportApproval = null
         progress.set(0)
         resetProgress.update((e) => !e);
-        cacheRequest("./webapi/worker/exportUserData.js")
+        progressedFetch("./webapi/worker/exportUserData.js")
             .then(url => {
                 waitForExportApproval?.reject?.()
                 waitForExportApproval = null
@@ -1314,7 +1312,7 @@ const importUserData = (_data) => {
         }
         progress.set(0)
         resetProgress.update((e) => !e);
-        cacheRequest("./webapi/worker/importUserData.js")
+        progressedFetch("./webapi/worker/importUserData.js")
             .then(url => {
                 clearTimeout(importUserDataTerminateTimeout)
                 importUserDataWorker?.terminate?.()
@@ -1453,7 +1451,7 @@ const getExtraInfo = () => {
         loadingDataStatus.set(true)
         clearTimeout(getExtraInfoTimeout)
         getExtraInfoWorker?.terminate?.()
-        cacheRequest("./webapi/worker/getExtraInfo.js")
+        progressedFetch("./webapi/worker/getExtraInfo.js")
             .then(url => {
                 clearTimeout(getExtraInfoTimeout)
                 getExtraInfoWorker?.terminate?.()
@@ -1522,7 +1520,7 @@ const getExtraInfo = () => {
 // IndexedDB
 const getIDBdata = (name) => {
     return new Promise((resolve, reject) => {
-        cacheRequest("./webapi/worker/getIDBdata.js", 3022, "Retrieving Some Data")
+        progressedFetch("./webapi/worker/getIDBdata.js", 3022, "Retrieving Some Data")
             .then(url => {
                 let worker = new Worker(url)
                 worker.postMessage({ name })
@@ -1551,7 +1549,7 @@ const getIDBdata = (name) => {
 window.updateNotifications = async (aniIdsNotificationToBeUpdated = []) => {
     if (!get(android)) return
     new Promise((resolve, reject) => {
-        cacheRequest("./webapi/worker/getIDBdata.js", 3022, "Retrieving Some Data")
+        progressedFetch("./webapi/worker/getIDBdata.js", 3022, "Retrieving Some Data")
             .then(url => {
                 let worker = new Worker(url)
                 worker.postMessage({ name: "aniIdsNotificationToBeUpdated", aniIdsNotificationToBeUpdated })
@@ -1603,7 +1601,7 @@ window.updateNotifications = async (aniIdsNotificationToBeUpdated = []) => {
 const saveIDBdata = (_data, name, isImportant = false) => {
     return new Promise((resolve, reject) => {
         if (!get(android) || isImportant || window[get(isBackgroundUpdateKey)] !== true) {
-            cacheRequest("./webapi/worker/saveIDBdata.js")
+            progressedFetch("./webapi/worker/saveIDBdata.js")
                 .then(url => {
                     let worker = new Worker(url)
                     worker.onmessage = ({ data }) => {
@@ -1639,26 +1637,13 @@ const saveIDBdata = (_data, name, isImportant = false) => {
 }
 
 // One Time Use
-const getMediaEntries = (_data) => {
+const retrieveInitialData = (_data) => {
     return new Promise((resolve, reject) => {
         progress.set(0)
-        cacheRequest("./webapi/worker/getEntries.js", 282309, "Checking Anime, Manga, and Novel Entries")
+        progressedFetch("./webapi/worker/retrieveInitialData.js", 282309, "Checking Anime, Manga, and Novel Entries")
             .then(async workerUrl => {
-                let worker = new Worker(workerUrl)
-                if (get(android)) {
-                    worker.postMessage({ entriesBlob: await cacheRequest("./webapi/worker/entries.json", 174425636, "Getting Anime, Manga, and Novel Entries", true) })
-                } else {
-                    let server
-                    if (window.location != null) {
-                        try {
-                            const $server = new URL(window.location).toString()
-                            if (typeof $server === "string" && server !== "") {
-                                server = $server
-                            }
-                        } catch {}
-                    }
-                    worker.postMessage({ server, appID: get(appID) })
-                }
+                const worker = new Worker(workerUrl)
+                worker.postMessage({ initialDataBlob: await progressedFetch("./data/initial-data.gzip", 174425636, "Getting Anime, Manga, and Novel Entries", true) })
                 worker.onmessage = ({ data }) => {
                     if (hasOwnProp?.call?.(data, "progress")) {
                         if (data?.progress >= 0 && data?.progress <= 100) {
@@ -1711,7 +1696,7 @@ const getFilterOptions = (_data) => {
     return new Promise((resolve, reject) => {
         clearTimeout(getFilterOptionsTerminateTimeout)
         getFilterOptionsWorker?.terminate?.()
-        cacheRequest("./webapi/worker/getFilterOptions.js", 68663, "Initializing Filters")
+        progressedFetch("./webapi/worker/getFilterOptions.js", 68663, "Initializing Filters")
             .then(url => {
                 clearTimeout(getFilterOptionsTerminateTimeout)
                 getFilterOptionsWorker?.terminate?.()
@@ -1761,7 +1746,7 @@ const getFilterOptions = (_data) => {
 let getOrderedFiltersWorker
 const getOrderedFilters = async () => {
     try {
-        const url = await cacheRequest("./webapi/worker/getOrderedFilters.js")
+        const url = await progressedFetch("./webapi/worker/getOrderedFilters.js")
         getOrderedFiltersWorker?.terminate?.()
         getOrderedFiltersWorker = new Worker(url)
         getOrderedFiltersWorker.postMessage(0)
@@ -1784,7 +1769,7 @@ const getOrderedFilters = async () => {
 let updateTagInfoWorker
 const updateTagInfo = async () => {
     try {
-        const url = await cacheRequest("./webapi/worker/updateTagInfo.js")
+        const url = await progressedFetch("./webapi/worker/updateTagInfo.js")
         updateTagInfoWorker?.terminate?.()
         updateTagInfoWorker = new Worker(url)
         let server
@@ -1871,7 +1856,7 @@ function alertError() {
 export {
     saveIDBdata,
     getIDBdata,
-    getMediaEntries,
+    retrieveInitialData,
     getFilterOptions,
     updateTagInfo,
     requestMediaEntries,

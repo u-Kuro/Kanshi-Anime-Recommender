@@ -2,7 +2,6 @@
     import { onMount, tick } from "svelte";
     import { fade } from "svelte/transition";
     import { sineOut } from "svelte/easing";
-    import { cacheImage } from "../../../js/caching.js";
     import { mediaLoader, mediaManager, saveIDBdata, getIDBdata } from "../../../js/workerUtils.js";
     import {
         scrollToElement,
@@ -55,8 +54,6 @@
         shouldLoadAllList,
         listReloadAvailable,
     } from "../../../js/globalValues.js";
-
-    const emptyImage = "data:image/png;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=";
 
     let mostVisiblePopupHeader,
         currentHeaderIdx,
@@ -1286,18 +1283,6 @@
         fullDescriptionPopup = fullImagePopup = null;
     };
 
-    async function addImage(node, imageUrl) {
-        if (imageUrl && imageUrl !== emptyImage) {
-            node.src = imageUrl;
-            let newImageUrl = await cacheImage(imageUrl);
-            if (newImageUrl) {
-                node.src = newImageUrl;
-            }
-        } else {
-            node.src = emptyImage;
-        }
-    }
-
     let topPopupVisibleCount = $windowHeight >= 1000 ? 2 : 1,
         bottomPopupVisibleCount = Math.floor(Math.max(1, $windowHeight / 640)) || 1
     windowHeight.subscribe((val) => {
@@ -1539,7 +1524,7 @@
                                     {#if media.bannerImageUrl || media.trailerThumbnailUrl}
                                         {#key media.bannerImageUrl || media.trailerThumbnailUrl}
                                             <img
-                                                use:addImage="{media.bannerImageUrl || media.trailerThumbnailUrl}"
+                                                src={media.bannerImageUrl || media.trailerThumbnailUrl}
                                                 loading="lazy"
                                                 width="640px"
                                                 height="360px"
@@ -2193,9 +2178,7 @@
                                             {#key media.coverImageUrl || media.bannerImageUrl || media.trailerThumbnailUrl}
                                                 <div class="shimmer">
                                                     <img
-                                                        use:addImage="{media.coverImageUrl ||
-                                                            media.bannerImageUrl ||
-                                                            media.trailerThumbnailUrl}"
+                                                        src={media.coverImageUrl || media.bannerImageUrl || media.trailerThumbnailUrl}
                                                         loading="lazy"
                                                         width="150px"
                                                         height="210px"
@@ -2453,7 +2436,7 @@
         <div class="full-popup">
             {#key fullImagePopup}
                 <img
-                    use:addImage="{fullImagePopup}"
+                    src="{fullImagePopup}"
                     tabindex="0"
                     class="full-popup-image"
                     loading="lazy"

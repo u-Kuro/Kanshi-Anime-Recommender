@@ -2,7 +2,6 @@
     import { onDestroy, onMount } from "svelte";
     import { fade } from "svelte/transition";
     import { sineOut } from "svelte/easing";
-    import { cacheImage } from "../../js/caching.js";
     import {
         addClass,
         isJsonObject,
@@ -47,7 +46,6 @@
     const subscriptions = {}
     let subscriptionId = 0
 
-    const emptyImage = "data:image/png;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=";
     let numberOfPageLoadedGrid = Math.max(5, (($windowHeight - 239) / 250.525) * 5);
 
     subscriptions[subscriptionId++] =
@@ -376,18 +374,6 @@
         }
     }
 
-    async function addImage(node, imageUrl) {
-        if (imageUrl && imageUrl !== emptyImage) {
-            node.src = imageUrl;
-            let newImageUrl = await cacheImage(imageUrl);
-            if (newImageUrl) {
-                node.src = newImageUrl;
-            }
-        } else {
-            node.src = emptyImage;
-        }
-    }
-
     let waitForOnVeryLeft;
     const mediaGridOnScroll = () => {
         window.mediaGridScrolled?.(mediaGridEl.scrollLeft);
@@ -550,17 +536,11 @@
                             aria-label="Open Detailed Information for the Media"
                         >
                             {#if media?.coverImageUrl || media?.bannerImageUrl || media?.trailerThumbnailUrl}
-                                {#key media?.coverImageUrl || media?.bannerImageUrl || media?.trailerThumbnailUrl}
+                                {#key media.coverImageUrl || media.bannerImageUrl || media.trailerThumbnailUrl}
                                     <img
-                                        use:addImage="{media?.coverImageUrl || media?.bannerImageUrl || media?.trailerThumbnailUrl}"
-                                        fetchpriority="{mediaIndex >
-                                        numberOfPageLoadedGrid
-                                            ? ''
-                                            : 'high'}"
-                                        loading="{mediaIndex >
-                                        numberOfPageLoadedGrid
-                                            ? 'lazy'
-                                            : 'eager'}"
+                                        src={media.coverImageUrl || media.bannerImageUrl || media.trailerThumbnailUrl}
+                                        fetchpriority="{mediaIndex > numberOfPageLoadedGrid ? '' : 'high'}"
+                                        loading="{mediaIndex > numberOfPageLoadedGrid ? 'lazy' : 'eager'}"
                                         class="image-card-thumb"
                                         alt="{(media?.shownTitle || '') + ' Cover'}"
                                         width="180px"

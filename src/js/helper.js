@@ -7,11 +7,11 @@ const jsonIsEmpty = (obj) => {
   for (const key in obj) return false;
   return true;
 }
-function objectLength(obj) {
-  let i = 0;
-  for (let k in obj) i++
-  return i
-}
+// const objectLength = (obj) => {
+//   let i = 0;
+//   for (let k in obj) i++
+//   return i
+// }
 // const requestFrame = (fn = () => { }, delay = 16) => {
 //   let start = performance.now()
 //   const loop = (timestamp) => {
@@ -137,7 +137,7 @@ const formatDay = (date) => date?.toLocaleDateString?.(undefined, { day: "numeri
 const formatTime = (date) => date?.toLocaleTimeString?.(undefined, { hour: "numeric", minute: "2-digit", hour12: true }) || "";
 const formatWeekday = (date) => date?.toLocaleDateString?.(undefined, { weekday: "short" }) || "";
 const arraySum = (obj) => obj.reduce((a, b) => a + b, 0)
-// function getScrollbarWidth() {
+// const getScrollbarWidth = () => {
 //   try {
 //     let outer = document.createElement('div');
 //     outer.style.visibility = 'hidden';
@@ -755,7 +755,7 @@ export {
   showToast,
   isJsonObject,
   jsonIsEmpty,
-  objectLength,
+  // objectLength,
   arraySum,
   getChildIndex,
   getMostVisibleElement,

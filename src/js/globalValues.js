@@ -1,5 +1,5 @@
 import { get, readable, writable } from "svelte/store";
-import { getLocalStorage, isAndroid, isWebCrawler, isMobile } from "../js/others/helper.js"
+import { getLocalStorage, isAndroid, isWebCrawler, isMobile } from "./helper.js"
 
 const $android = isAndroid()
 const android = readable($android)

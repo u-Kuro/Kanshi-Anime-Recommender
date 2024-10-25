@@ -5,7 +5,7 @@
 	import C from "./components/index.js";
 	import getWebVersion from "./version.js";
 	import {
-		getMediaEntries,
+		retrieveInitialData,
 		getFilterOptions,
 		requestMediaEntries,
 		requestUserEntries,
@@ -24,7 +24,7 @@
 		removeLocalStorage,
 		requestImmediate,
 		setLocalStorage,
-	} from "./js/others/helper.js";
+	} from "./js/helper.js";
 	import {
 		appID,
 		android,
@@ -133,10 +133,10 @@
 			await Promise.all([
 				// Check/Get/Update/Process Media Entries
 				(async () => {
-					const shouldGetMediaEntries = await getIDBdata("mediaEntriesIsEmpty");
-					if (shouldGetMediaEntries === true) {
-						await getMediaEntries()
-					} else if (shouldGetMediaEntries !== false) {
+					const shouldRetrieveInitialData = await getIDBdata("checkInitialData");
+					if (shouldRetrieveInitialData === true) {
+						await retrieveInitialData()
+					} else if (shouldRetrieveInitialData !== false) {
 						throw "Unexpected Error"
 					}
 				})(),
@@ -147,16 +147,6 @@
 						$username = savedUsername
 						setLocalStorage("username", savedUsername || "")
 						.catch(() => removeLocalStorage("username"))
-					}
-					if (
-						$android &&
-						window.shouldUpdateNotifications === true &&
-						window[$isBackgroundUpdateKey] !== true
-					) {
-						window.shouldUpdateNotifications = false;
-						try {
-							JSBridge.callUpdateNotifications();
-						} catch (ex) { console.error(ex) }
 					}
 				})(),
 				// Check/Get/Update Filter Options Selection
@@ -223,6 +213,7 @@
 					let recommendationListIsProcessed
 					if (dataIsUpdated) {
 						try {
+							window.shouldUpdateNotifications = true
 							await processRecommendedMediaList({ initList: true })
 							try {
 								JSBridge.setShouldProcessRecommendation(false)
@@ -289,6 +280,7 @@
 				let shouldLoadMedia
 				if (shouldProcessRecommendation) {
 					$loadingCategory[""] = new Date()
+					window.shouldUpdateNotifications = true
 					await processRecommendedMediaList({ initList: true })
 					shouldLoadMedia = true
 				}

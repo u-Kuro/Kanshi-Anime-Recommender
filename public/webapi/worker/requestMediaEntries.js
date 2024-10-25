@@ -1,1 +1,1612 @@
-let db,server,connected,isShowingProgress,isShowingProgressTimeout;const entriesVersion=4;const maxArraySize=65535;const maxMediaPerPage=50;const maxStaffPerPage=25;const excludedFormats={music:true};const animeFormats={tv:true,tv_short:true,movie:true,special:true,ova:true,ona:true};const currentRequestTimestamp=(new Date).getTime();let newAddedEntriesCount=0,lastAddedEntriesCount=0;let newEditedEntriesCount=0,lastEditedEntriesCount=0;let minimizeTransaction=false;let onlyGetNewEntries;self.addEventListener("unhandledrejection",event=>{const reason=event?.reason;console.error(reason);let error=reason?.stack||reason?.message;if(typeof error!=="string"||!error){error="Something went wrong"}self.postMessage({error:error})});self.onmessage=async({data})=>{if(data?.connected!=null){connected=data?.connected;return}if(server==null&&data?.server!=null){server=data.server}if(!db)await IDBinit();if(data?.hasOwnProperty("minimizeTransaction")){minimizeTransaction=data?.minimizeTransaction}else{onlyGetNewEntries=data?.onlyGetNewEntries??false;let mediaUpdateAt=await retrieveJSON("mediaUpdateAt")||1706674120;let mediaEntries=await retrieveJSON("mediaEntries");let excludedEntries=await retrieveJSON("excludedEntries")||{};if(isJsonObject(mediaEntries)){if(jsonIsEmpty(mediaEntries)){self.postMessage({getEntries:true})}else{getNewEntries(mediaEntries,excludedEntries,mediaUpdateAt)}}else{self.postMessage({noEntriesFound:true})}}async function getNewEntries(mediaEntries,excludedEntries,mediaUpdateAt){const lastHighestID=Math.max(getMax(Object.keys(mediaEntries).concat(Object.keys(excludedEntries)).map(id=>parseInt(id)))||1,1);let foundLastHighestID=false;let percentage,newLowestID,newHighestID,largestDif;self.postMessage({status:"Checking New Entries"});let shouldUpdateMediaEntries,shouldUpdateExcludedEntries;let highestIncludedEntryID=-Infinity,highestExcludedEntryID=-Infinity;function recallGNE(page){fetch("https://graphql.anilist.co",{method:"POST",headers:{"Content-Type":"application/json",Accept:"application/json","Cache-Control":"max-age=31536000, immutable"},body:JSON.stringify({query:`{Page(page:${page},perPage:${maxMediaPerPage}){pageInfo{hasNextPage}media(sort:ID_DESC){id updatedAt title{romaji english native}relations{edges{relationType(version:2)node{id popularity}}}description siteUrl averageScore episodes chapters volumes countryOfOrigin duration trending popularity favourites format genres status(version:2)coverImage{large}trailer{id thumbnail site}bannerImage tags{name rank category}studios{edges{node{name siteUrl isAnimationStudio}isMain}}startDate{month day year}endDate{month day year}seasonYear season staff(perPage:${maxStaffPerPage},page:1,sort:RELEVANCE){edges{node{name{userPreferred}siteUrl}role}}nextAiringEpisode{episode airingAt}}}}`})}).then(async response=>{let headers=response.headers;let result=await response.json();return{result:result,headers:headers}}).then(async({result,headers})=>{let error;if(typeof(error=result?.errors?.[0]?.message)==="string"){if(onlyGetNewEntries){self.postMessage({errorDuringInit:true})}let secondsPassed=60;let rateLimitInterval=setInterval(()=>{self.postMessage({status:(error?error+" ":"")+`Rate Limit: ${msToTime(secondsPassed*1e3)}`});--secondsPassed},1e3);setTimeout(()=>{clearInterval(rateLimitInterval);self.postMessage({status:"Retrying"});return recallGNE(page)},6e4)}else{let Page=result?.data?.Page;let medias=Page?.media||[];if(medias instanceof Array&&medias.length){for(let media of medias){if(foundLastHighestID===null)break;const currentId=media?.id;if(typeof currentId==="number"&&!isNaN(currentId)&&isFinite(currentId)&&currentId<=Number.MAX_SAFE_INTEGER){foundLastHighestID=foundLastHighestID||currentId===lastHighestID;if(newHighestID==null||currentId>newHighestID){newHighestID=currentId;if(largestDif==null){largestDif=newHighestID-lastHighestID}else{largestDif=Math.max(largestDif,newHighestID-lastHighestID)}}if(newLowestID==null||currentId<newLowestID){newLowestID=currentId;if(lastHighestID>=newLowestID&&newLowestID&&lastHighestID){break}else if(newHighestID&&lastHighestID<=newLowestID&&newHighestID>newLowestID){percentage=(largestDif-(newLowestID-lastHighestID))/largestDif*100}}const loweredFormat=media?.format?.trim?.()?.toLowerCase?.();if((typeof media?.format!=="string"||!excludedFormats[loweredFormat])&&!media?.genres?.some?.(genre=>genre?.trim?.()?.toLowerCase?.()==="hentai")){if(media?.genres instanceof Array){let unique={};media.genres=media.genres.filter(genre=>{if(genre&&!unique[genre]){unique[genre]=true;return true}else{return false}})}if(media?.tags instanceof Array){let unique={};media.tags=media.tags.filter(tag=>{let _tag=tag?.name;if(_tag&&!unique[_tag]){unique[_tag]=true;return true}else{return false}})}if(media?.studios?.edges instanceof Array){let unique={};media.studios.edges=media.studios.edges.filter(studio=>{let _studio=studio?.node?.name;if(_studio&&!unique[_studio]){unique[_studio]=true;return true}else{return false}})}if(excludedEntries?.hasOwnProperty?.(currentId)){delete excludedEntries[currentId];shouldUpdateExcludedEntries=true}if(isJsonObject(mediaEntries?.[currentId])){continue}else if(animeFormats[loweredFormat]){++newAddedEntriesCount}media.dateAdded=currentRequestTimestamp;highestIncludedEntryID=Math.max(highestIncludedEntryID,currentId);mediaEntries[currentId]=media;shouldUpdateMediaEntries=true}else{if(mediaEntries?.hasOwnProperty?.(currentId)){delete mediaEntries[currentId];shouldUpdateMediaEntries=true}highestExcludedEntryID=Math.max(highestExcludedEntryID,currentId);excludedEntries[currentId]=1;shouldUpdateExcludedEntries=true}}else{foundLastHighestID=null;break}}}if(foundLastHighestID===false&&newLowestID>lastHighestID){if(!isShowingProgress){isShowingProgress=true;isShowingProgressTimeout=setTimeout(()=>{if(percentage>=.01){percentage=Math.min(percentage,99.99);self.postMessage({status:`${percentage.toFixed(2)}% Adding New Entries`})}isShowingProgress=false},17)}let hasNextPage=Page?.pageInfo?.hasNextPage??true;if(headers?.get("x-ratelimit-remaining")>0){if(hasNextPage&&medias.length>0){return recallGNE(++page)}else{return recallGNE(page)}}else{if(onlyGetNewEntries){self.postMessage({errorDuringInit:true})}let secondsPassed=60;let rateLimitInterval=setInterval(()=>{self.postMessage({status:`Rate Limit: ${msToTime(secondsPassed*1e3)}`});--secondsPassed},1e3);setTimeout(()=>{clearInterval(rateLimitInterval);self.postMessage({status:"Retrying"});if(hasNextPage&&medias.length>0){return recallGNE(++page)}else{return recallGNE(page)}},6e4)}}else{clearTimeout(isShowingProgressTimeout);isShowingProgress=false;if(shouldUpdateMediaEntries){self.postMessage({status:"100% Adding New Entries"})}isShowingProgress=false;if(foundLastHighestID===true){if(highestIncludedEntryID<=highestExcludedEntryID){const collectionToPut={};if(shouldUpdateMediaEntries){collectionToPut.shouldProcessRecommendation=true;collectionToPut.mediaEntries=mediaEntries}if(shouldUpdateExcludedEntries){collectionToPut.excludedEntries=excludedEntries}if(!jsonIsEmpty(collectionToPut)){await saveJSONCollection(collectionToPut);if(shouldUpdateMediaEntries){self.postMessage({updateRecommendationList:true});shouldUpdateMediaEntries=false}if(shouldUpdateExcludedEntries){shouldUpdateExcludedEntries=false}}}else{const collectionToPut={};if(shouldUpdateExcludedEntries){collectionToPut.excludedEntries=excludedEntries}if(shouldUpdateMediaEntries){collectionToPut.shouldProcessRecommendation=true;collectionToPut.mediaEntries=mediaEntries}if(!jsonIsEmpty(collectionToPut)){await saveJSONCollection(collectionToPut);if(shouldUpdateMediaEntries){self.postMessage({updateRecommendationList:true});shouldUpdateMediaEntries=false}if(shouldUpdateExcludedEntries){shouldUpdateExcludedEntries=false}}}if(newAddedEntriesCount>lastAddedEntriesCount){self.postMessage({notifyAddedEntries:newAddedEntriesCount,notifyEditedEntries:newEditedEntriesCount});lastAddedEntriesCount=newAddedEntriesCount}}else{mediaUpdateAt=await retrieveJSON("mediaUpdateAt")||1706674120;mediaEntries=await retrieveJSON("mediaEntries");if(isJsonObject(mediaEntries)){if(jsonIsEmpty(mediaEntries)){self.postMessage({getEntries:true});return}}else{self.postMessage({noEntriesFound:true});return}excludedEntries=await retrieveJSON("excludedEntries")||{};newAddedEntriesCount=0}self.postMessage({status:null});if(onlyGetNewEntries){self.postMessage({done:true})}else{updateMediaEntries(mediaEntries,excludedEntries,mediaUpdateAt)}}}}).catch(async error=>{clearTimeout(isShowingProgressTimeout);isShowingProgress=false;if(!await isConnected()){self.postMessage({status:"Server unreachable"});self.postMessage({error:"Server unreachable"});return}let headers=error.headers;if(headers?.get("x-ratelimit-remaining")>0){return recallGNE(page)}else{if(onlyGetNewEntries){self.postMessage({errorDuringInit:true})}let secondsPassed=60;let rateLimitInterval=setInterval(()=>{self.postMessage({status:`Rate Limit: ${msToTime(secondsPassed*1e3)}`});--secondsPassed},1e3);setTimeout(()=>{clearInterval(rateLimitInterval);self.postMessage({status:"Retrying"});return recallGNE(page)},6e4)}console.error(error)})}recallGNE(1)}async function updateMediaEntries(mediaEntries,excludedEntries,mediaUpdateAt){const hasNewVersion=entriesVersion>(await retrieveJSON("entriesVersion")??0);const mediaEntriesArray=Object.values(mediaEntries);let pastAiringEpisodeIDs=mediaEntriesArray.filter(({nextAiringEpisode,format})=>{if(isJsonObject(nextAiringEpisode)){const loweredFormat=format?.trim?.()?.toLowerCase?.();if(loweredFormat==="manga"||loweredFormat==="one_shot"||loweredFormat==="novel")return false;let releaseDate=new Date(nextAiringEpisode?.airingAt*1e3);if(releaseDate instanceof Date&&!isNaN(releaseDate)&&releaseDate<=(new Date).getTime()){return true}else{return false}}else{return false}}).map(({id})=>id);let nonUpdatedMediaIDs=[];if(!hasNewVersion){nonUpdatedMediaIDs=mediaEntriesArray.filter(({updatedAt})=>{return updatedAt<=mediaUpdateAt||typeof updatedAt!=="number"||isNaN(updatedAt)||!isFinite(updatedAt)||!(updatedAt<=Number.MAX_SAFE_INTEGER)}).sort((a,b)=>{let updatedAtA=a?.updatedAt,updatedAtB=b?.updatedAt;updatedAtA=typeof updatedAtA==="number"&&!isNaN(updatedAtA)&&isFinite(updatedAtA)&&updatedAtA<=Number.MAX_SAFE_INTEGER?updatedAtA:-Infinity;updatedAtB=typeof updatedAtB==="number"&&!isNaN(updatedAtB)&&isFinite(updatedAtB)&&updatedAtB<=Number.MAX_SAFE_INTEGER?updatedAtB:-Infinity;return updatedAtA-updatedAtB}).map(({id})=>id)}const mediaLength=pastAiringEpisodeIDs.length;let currentNonProcessedLength=mediaLength;const pastAiringEpisodeIDsCollection=divideArray(pastAiringEpisodeIDs,maxArraySize);const nonUpdatedMediaIDsCollection=divideArray(nonUpdatedMediaIDs,maxArraySize);let pastAiringEpisodeIDsCollectionIdx=0;let nonUpdatedMediaIDsCollectionIdx=0;self.postMessage({status:"Checking Recent Entries"});let shouldUpdateMediaEntries,shouldUpdateExcludedEntries;let nonUpdatedMediaPercentFinished=0,currentNonUpdatedMediaCollectionMaxPercent=0;function recallUNAE(page,pastAiringEpisodeIDsString){fetch("https://graphql.anilist.co",{method:"POST",headers:{"Content-Type":"application/json",Accept:"application/json","Cache-Control":"max-age=31536000, immutable"},body:JSON.stringify({query:`{Page(page:${page},perPage:${maxMediaPerPage}){pageInfo{hasNextPage}media(id_in:[${pastAiringEpisodeIDsString||""}],type:ANIME){id format genres status(version:2)nextAiringEpisode{episode airingAt}}}}`})}).then(async response=>{let headers=response.headers;let result=await response.json();return{result:result,headers:headers}}).then(async({result,headers})=>{let error;if(typeof(error=result?.errors?.[0]?.message)==="string"){let secondsPassed=60;let rateLimitInterval=setInterval(()=>{self.postMessage({status:(error?error+" ":"")+`Rate Limit: ${msToTime(secondsPassed*1e3)}`});--secondsPassed},1e3);setTimeout(()=>{clearInterval(rateLimitInterval);self.postMessage({status:"Retrying"});return recallUNAE(page,pastAiringEpisodeIDsString)},6e4)}else{let Page=result?.data?.Page;let medias=Page?.media||[];if(medias instanceof Array){for(let media of medias){const currentId=media?.id;if(typeof currentId==="number"&&!isNaN(currentId)&&isFinite(currentId)&&currentId<=Number.MAX_SAFE_INTEGER){pastAiringEpisodeIDs=pastAiringEpisodeIDs.filter(_id=>_id!==currentId);if((typeof media?.format!=="string"||!excludedFormats[media?.format?.trim?.()?.toLowerCase?.()])&&!media?.genres?.some?.(genre=>genre?.trim?.()?.toLowerCase?.()==="hentai")){if(excludedEntries?.hasOwnProperty?.(currentId)){delete excludedEntries[currentId];shouldUpdateExcludedEntries=true}let savedMedia=mediaEntries?.[currentId];if(isJsonObject(savedMedia)){let isPossiblyFinished=typeof savedMedia?.nextAiringEpisode?.episode==="number"&&!isNaN(savedMedia?.nextAiringEpisode?.episode)&&isFinite(savedMedia?.nextAiringEpisode?.episode)&&savedMedia?.nextAiringEpisode?.episode<=Number.MAX_SAFE_INTEGER&&savedMedia?.nextAiringEpisode?.episode===savedMedia?.episodes&&typeof savedMedia?.nextAiringEpisode?.airingAt==="number"&&!isNaN(savedMedia?.nextAiringEpisode?.airingAt)&&isFinite(savedMedia?.nextAiringEpisode?.airingAt)&&savedMedia?.nextAiringEpisode?.airingAt<=Number.MAX_SAFE_INTEGER&&new Date(savedMedia?.nextAiringEpisode?.airingAt*1e3)<=new Date;let newStatusIsStillReleasing=media?.status?.trim?.()?.toLowerCase?.()==="releasing"&&savedMedia?.status?.trim?.()?.toLowerCase?.()==="releasing";let newNextAiringEpisodeIsRemoved=!isJsonObject(media?.nextAiringEpisode);let updateNextAiringEpisode=!(isPossiblyFinished&&newStatusIsStillReleasing&&newNextAiringEpisodeIsRemoved);if(updateNextAiringEpisode){mediaEntries[currentId].nextAiringEpisode=media?.nextAiringEpisode;shouldUpdateMediaEntries=true}}}else{if(mediaEntries?.hasOwnProperty?.(currentId)){delete mediaEntries[currentId];shouldUpdateMediaEntries=true}excludedEntries[currentId]=1;shouldUpdateExcludedEntries=true}}}}let hasNextPage=Page?.pageInfo?.hasNextPage??true;if(hasNextPage&&medias.length>0){if(!minimizeTransaction){if(currentNonProcessedLength>pastAiringEpisodeIDs.length){currentNonProcessedLength=pastAiringEpisodeIDs.length;let processedLength=Math.max(mediaLength-currentNonProcessedLength,0);let percentage=100*(processedLength/mediaLength);percentage=Math.min(percentage,99.99);if(!isShowingProgress){isShowingProgress=true;isShowingProgressTimeout=setTimeout(()=>{self.postMessage({status:`${percentage.toFixed(2)}% Updating Recent Entries`});isShowingProgress=false},17)}}const collectionToPut={};if(shouldUpdateMediaEntries){collectionToPut.shouldProcessRecommendation=true;collectionToPut.mediaEntries=mediaEntries}if(shouldUpdateExcludedEntries){collectionToPut.excludedEntries=excludedEntries}if(!jsonIsEmpty(collectionToPut)){await saveJSONCollection(collectionToPut);if(shouldUpdateMediaEntries){shouldUpdateMediaEntries=false}if(shouldUpdateExcludedEntries){shouldUpdateExcludedEntries=false}}}if(headers?.get("x-ratelimit-remaining")>0){return recallUNAE(++page,pastAiringEpisodeIDsString)}else{let secondsPassed=60;let rateLimitInterval=setInterval(()=>{self.postMessage({status:`Rate Limit: ${msToTime(secondsPassed*1e3)}`});--secondsPassed},1e3);setTimeout(()=>{clearInterval(rateLimitInterval);self.postMessage({status:"Retrying"});return recallUNAE(++page,pastAiringEpisodeIDsString)},6e4)}}else if(pastAiringEpisodeIDsCollection.length-1>pastAiringEpisodeIDsCollectionIdx){++pastAiringEpisodeIDsCollectionIdx;recallUNAE(1,pastAiringEpisodeIDsCollection[pastAiringEpisodeIDsCollectionIdx].join(","))}else{clearTimeout(isShowingProgressTimeout);isShowingProgress=false;const collectionToPut={};if(shouldUpdateMediaEntries){collectionToPut.shouldProcessRecommendation=true;collectionToPut.mediaEntries=mediaEntries}if(shouldUpdateExcludedEntries){collectionToPut.excludedEntries=excludedEntries}if(!jsonIsEmpty(collectionToPut)){await saveJSONCollection(collectionToPut);if(shouldUpdateMediaEntries){self.postMessage({updateRecommendationList:true});shouldUpdateMediaEntries=false}if(shouldUpdateExcludedEntries){shouldUpdateExcludedEntries=false}}if(hasNewVersion){updateAllEntries(mediaEntries,excludedEntries,mediaUpdateAt)}else if(nonUpdatedMediaIDsCollection.length>0){nonUpdatedMediaPercentFinished=nonUpdatedMediaIDsCollection.reduce((accRatio,arr,idx)=>{let ratio=arr.length/nonUpdatedMediaIDs.length;if(idx<nonUpdatedMediaIDsCollectionIdx){accRatio+=ratio}else if(idx===nonUpdatedMediaIDsCollectionIdx){currentNonUpdatedMediaCollectionMaxPercent=ratio*100}return accRatio},0)*100;recallUNUA(1,nonUpdatedMediaIDsCollection[nonUpdatedMediaIDsCollectionIdx].join(","))}else{self.postMessage({status:"100% Updating Recent Entries"});self.postMessage({status:null});self.postMessage({done:true})}}}}).catch(async error=>{clearTimeout(isShowingProgressTimeout);isShowingProgress=false;if(!await isConnected()){self.postMessage({status:"Server unreachable"});self.postMessage({error:"Server unreachable"});return}let headers=error.headers;if(headers?.get("x-ratelimit-remaining")>0){return recallUNAE(page,pastAiringEpisodeIDsString)}else{let secondsPassed=60;let rateLimitInterval=setInterval(()=>{self.postMessage({status:`Rate Limit: ${msToTime(secondsPassed*1e3)}`});--secondsPassed},1e3);setTimeout(()=>{clearInterval(rateLimitInterval);self.postMessage({status:"Retrying"});return recallUNAE(page,pastAiringEpisodeIDsString)},6e4)}console.error(error)})}let currentRecursingOldestUpdateAt,currentNewestUpdateAt,newestUpdateAt,currentLargestDif,percentage=0;function recallUNUA(page,nonUpdatedMediaIDsString){fetch("https://graphql.anilist.co",{method:"POST",headers:{"Content-Type":"application/json",Accept:"application/json","Cache-Control":"max-age=31536000, immutable"},body:JSON.stringify({query:`{Page(page:${page},perPage:${maxMediaPerPage}){pageInfo{hasNextPage}media(id_in:[${nonUpdatedMediaIDsString||""}],sort:UPDATED_AT_DESC){id updatedAt title{romaji english native}relations{edges{relationType(version:2)node{id popularity}}}description siteUrl averageScore episodes chapters volumes countryOfOrigin duration trending popularity favourites format genres status(version:2)coverImage{large}trailer{id thumbnail site}bannerImage tags{name rank category}studios{edges{node{name siteUrl isAnimationStudio}isMain}}startDate{month day year}endDate{month day year}seasonYear season staff(perPage:${maxStaffPerPage},page:1,sort:RELEVANCE){edges{node{name{userPreferred}siteUrl}role}}nextAiringEpisode{episode airingAt}}}}`})}).then(async response=>{let headers=response.headers;let result=await response.json();return{result:result,headers:headers}}).then(async({result,headers})=>{let error;if(typeof(error=result?.errors?.[0]?.message)==="string"){let secondsPassed=60;let rateLimitInterval=setInterval(()=>{self.postMessage({status:(error?error+" ":"")+`Rate Limit: ${msToTime(secondsPassed*1e3)}`});--secondsPassed},1e3);setTimeout(()=>{clearInterval(rateLimitInterval);self.postMessage({status:"Retrying"});return recallUNUA(page,nonUpdatedMediaIDsString)},6e4)}else{let Page=result?.data?.Page;let medias=Page?.media||[];let currentUpdateAt;if(medias instanceof Array){for(let media of medias){const currentId=media?.id;if(typeof currentId==="number"&&!isNaN(currentId)&&isFinite(currentId)&&currentId<=Number.MAX_SAFE_INTEGER){currentUpdateAt=media?.updatedAt;if(currentUpdateAt&&typeof currentUpdateAt==="number"&&!isNaN(currentUpdateAt)&&isFinite(currentUpdateAt)&&currentUpdateAt<=Number.MAX_SAFE_INTEGER){if(currentUpdateAt>currentNewestUpdateAt||currentNewestUpdateAt==null){newestUpdateAt=currentNewestUpdateAt=currentUpdateAt;if(currentLargestDif==null){currentLargestDif=currentNewestUpdateAt-mediaUpdateAt}else{currentLargestDif=Math.max(currentLargestDif,currentNewestUpdateAt-mediaUpdateAt)}}if(currentUpdateAt<currentRecursingOldestUpdateAt||currentRecursingOldestUpdateAt==null){currentRecursingOldestUpdateAt=currentUpdateAt;if(mediaUpdateAt>currentRecursingOldestUpdateAt&&currentRecursingOldestUpdateAt&&mediaUpdateAt){break}else if(currentNewestUpdateAt&&mediaUpdateAt<=currentRecursingOldestUpdateAt&&currentNewestUpdateAt>currentRecursingOldestUpdateAt){percentage=(currentLargestDif-(currentRecursingOldestUpdateAt-mediaUpdateAt))/currentLargestDif*currentNonUpdatedMediaCollectionMaxPercent+nonUpdatedMediaPercentFinished}}}const loweredFormat=media?.format?.trim?.()?.toLowerCase?.();if((typeof media?.format!=="string"||!excludedFormats[loweredFormat])&&!media?.genres?.some?.(genre=>genre?.trim?.()?.toLowerCase?.()==="hentai")){if(media?.genres instanceof Array){let unique={};media.genres=media.genres.filter(genre=>{if(genre&&!unique[genre]){unique[genre]=true;return true}else{return false}})}if(media?.tags instanceof Array){let unique={};media.tags=media.tags.filter(tag=>{let _tag=tag?.name;if(_tag&&!unique[_tag]){unique[_tag]=true;return true}else{return false}})}if(media?.studios?.edges instanceof Array){let unique={};media.studios.edges=media.studios.edges.filter(studio=>{let _studio=studio?.node?.name;if(_studio&&!unique[_studio]){unique[_studio]=true;return true}else{return false}})}if(excludedEntries?.hasOwnProperty?.(currentId)){delete excludedEntries[currentId];shouldUpdateExcludedEntries=true}let savedMedia=mediaEntries?.[currentId];if(isJsonObject(savedMedia)){media.dateAdded=savedMedia?.dateAdded;let isEditedEntry=false;let newCoverImage=media?.coverImage?.large;if(newCoverImage){let oldCoverImage=savedMedia?.coverImage?.large;if(newCoverImage!==oldCoverImage){isEditedEntry=true}}if(!isEditedEntry){let newTrailerId=media?.trailer?.id;if(newTrailerId){let oldTrailerId=savedMedia?.trailer?.id;if(newTrailerId!==oldTrailerId){isEditedEntry=true}}}const loweredStatus=media?.status?.trim?.()?.toLowerCase?.();if(isEditedEntry&&loweredStatus!=="finished"){if(animeFormats[loweredFormat]){++newEditedEntriesCount}media.dateEdited=currentRequestTimestamp}else if(savedMedia?.dateEdited){media.dateEdited=savedMedia?.dateEdited}let isPossiblyFinished=typeof savedMedia?.nextAiringEpisode?.episode==="number"&&!isNaN(savedMedia?.nextAiringEpisode?.episode)&&isFinite(savedMedia?.nextAiringEpisode?.episode)&&savedMedia?.nextAiringEpisode?.episode<=Number.MAX_SAFE_INTEGER&&savedMedia?.nextAiringEpisode?.episode===savedMedia?.episodes&&typeof savedMedia?.nextAiringEpisode?.airingAt==="number"&&!isNaN(savedMedia?.nextAiringEpisode?.airingAt)&&isFinite(savedMedia?.nextAiringEpisode?.airingAt)&&savedMedia?.nextAiringEpisode?.airingAt<=Number.MAX_SAFE_INTEGER&&new Date(savedMedia?.nextAiringEpisode?.airingAt*1e3)<=new Date;let newStatusIsStillReleasing=loweredStatus==="releasing"&&savedMedia?.status?.trim?.()?.toLowerCase?.()==="releasing";let newNextAiringEpisodeIsRemoved=!isJsonObject(media?.nextAiringEpisode);let dontUpdateNextAiringEpisode=isPossiblyFinished&&newStatusIsStillReleasing&&newNextAiringEpisodeIsRemoved;if(dontUpdateNextAiringEpisode){media.nextAiringEpisode=savedMedia.nextAiringEpisode}}mediaEntries[currentId]=media;shouldUpdateMediaEntries=true}else{if(mediaEntries?.hasOwnProperty?.(currentId)){delete mediaEntries[currentId];shouldUpdateMediaEntries=true}excludedEntries[currentId]=1;shouldUpdateExcludedEntries=true}}}}let hasNextPage=Page?.pageInfo?.hasNextPage??true;if(hasNextPage&&medias.length>0&&(currentUpdateAt>=mediaUpdateAt||!currentUpdateAt||!mediaUpdateAt)){if(!minimizeTransaction){if(!isShowingProgress){isShowingProgress=true;isShowingProgressTimeout=setTimeout(()=>{if(percentage>=.01){percentage=Math.min(percentage,99.99);self.postMessage({status:`${percentage.toFixed(2)}% Updating Entries`})}else{self.postMessage({status:"Updating Entries"})}isShowingProgress=false},17)}const collectionToPut={};if(shouldUpdateMediaEntries){collectionToPut.shouldProcessRecommendation=true;collectionToPut.mediaEntries=mediaEntries}if(shouldUpdateExcludedEntries){collectionToPut.excludedEntries=excludedEntries}if(!jsonIsEmpty(collectionToPut)){await saveJSONCollection(collectionToPut);if(shouldUpdateMediaEntries){shouldUpdateMediaEntries=false}if(shouldUpdateExcludedEntries){shouldUpdateExcludedEntries=false}}}if(headers?.get("x-ratelimit-remaining")>0){return recallUNUA(++page,nonUpdatedMediaIDsString)}else{let secondsPassed=60;let rateLimitInterval=setInterval(()=>{self.postMessage({status:`Rate Limit: ${msToTime(secondsPassed*1e3)}`});--secondsPassed},1e3);setTimeout(()=>{clearInterval(rateLimitInterval);self.postMessage({status:"Retrying"});return recallUNUA(++page,nonUpdatedMediaIDsString)},6e4)}}else if(nonUpdatedMediaIDsCollection.length-1>nonUpdatedMediaIDsCollectionIdx){currentNewestUpdateAt=currentRecursingOldestUpdateAt=currentLargestDif=null;++nonUpdatedMediaIDsCollectionIdx;nonUpdatedMediaPercentFinished=nonUpdatedMediaIDsCollection.reduce((accRatio,arr,idx)=>{let ratio=arr.length/nonUpdatedMediaIDs.length;if(idx<nonUpdatedMediaIDsCollectionIdx){accRatio+=ratio}else if(idx===nonUpdatedMediaIDsCollectionIdx){currentNonUpdatedMediaCollectionMaxPercent=ratio*100}return accRatio},0)*100;return recallUNUA(1,nonUpdatedMediaIDsCollection[nonUpdatedMediaIDsCollectionIdx].join(","))}else{clearTimeout(isShowingProgressTimeout);isShowingProgress=false;const collectionToPut={};if(shouldUpdateMediaEntries){collectionToPut.shouldProcessRecommendation=true;collectionToPut.mediaEntries=mediaEntries}if(shouldUpdateExcludedEntries){collectionToPut.excludedEntries=excludedEntries}if(newestUpdateAt&&newestUpdateAt>mediaUpdateAt){collectionToPut.mediaUpdateAt=newestUpdateAt}if(newAddedEntriesCount>lastAddedEntriesCount||newEditedEntriesCount>lastEditedEntriesCount){self.postMessage({notifyAddedEntries:newAddedEntriesCount,notifyEditedEntries:newEditedEntriesCount});lastAddedEntriesCount=newAddedEntriesCount;lastEditedEntriesCount=newEditedEntriesCount}collectionToPut.runnedAutoUpdateAt=(new Date).getTime();if(!jsonIsEmpty(collectionToPut)){await saveJSONCollection(collectionToPut);if(shouldUpdateMediaEntries){self.postMessage({updateRecommendationList:true});shouldUpdateMediaEntries=false}if(shouldUpdateExcludedEntries){shouldUpdateExcludedEntries=false}}self.postMessage({status:"100% Updating Entries"});self.postMessage({status:null});self.postMessage({done:true})}}}).catch(async error=>{clearTimeout(isShowingProgressTimeout);isShowingProgress=false;if(!await isConnected()){self.postMessage({status:"Server unreachable"});self.postMessage({error:"Server unreachable"});return}let headers=error.headers;if(headers?.get("x-ratelimit-remaining")>0){return recallUNUA(page,nonUpdatedMediaIDsString)}else{let secondsPassed=60;let rateLimitInterval=setInterval(()=>{self.postMessage({status:`Rate Limit: ${msToTime(secondsPassed*1e3)}`});--secondsPassed},1e3);setTimeout(()=>{clearInterval(rateLimitInterval);self.postMessage({status:"Retrying"});return recallUNUA(page,nonUpdatedMediaIDsString)},6e4)}console.error(error)})}if(pastAiringEpisodeIDsCollection.length>0){recallUNAE(1,pastAiringEpisodeIDsCollection[pastAiringEpisodeIDsCollectionIdx].join(","))}else{if(hasNewVersion){updateAllEntries(mediaEntries,excludedEntries,mediaUpdateAt)}else if(nonUpdatedMediaIDsCollection.length>0){recallUNUA(1,nonUpdatedMediaIDsCollection[nonUpdatedMediaIDsCollectionIdx].join(","))}else{self.postMessage({status:null});self.postMessage({done:true})}}}async function updateAllEntries(mediaEntries,excludedEntries,mediaUpdateAt){let oldestMediaUpdateAt;let recursingOldestUpdateAt,newestUpdateAt,largestDif;self.postMessage({status:"Checking Entries"});function recallGOUD(currentPage){fetch("https://graphql.anilist.co",{method:"POST",headers:{"Content-Type":"application/json",Accept:"application/json","Cache-Control":"max-age=31536000, immutable"},body:JSON.stringify({query:`{Page(page:1,perPage:1){media(sort:UPDATED_AT){updatedAt}}}`})}).then(async response=>{let headers=response.headers;let result=await response.json();return{result:result,headers:headers}}).then(async({result,headers})=>{let error;if(typeof(error=result?.errors?.[0]?.message)==="string"){let secondsPassed=60;let rateLimitInterval=setInterval(()=>{self.postMessage({status:(error?error+" ":"")+`Rate Limit: ${msToTime(secondsPassed*1e3)}`});--secondsPassed},1e3);setTimeout(()=>{clearInterval(rateLimitInterval);self.postMessage({status:"Retrying"});return recallGOUD(currentPage)},6e4)}else{oldestMediaUpdateAt=result?.data?.Page?.media?.[0]?.updatedAt||oldestMediaUpdateAt;if(oldestMediaUpdateAt||currentPage){return recallUNRE(currentPage||1)}else{self.postMessage({status:null});self.postMessage({done:true})}}}).catch(async error=>{clearTimeout(isShowingProgressTimeout);isShowingProgress=false;if(!await isConnected()){self.postMessage({status:"Server unreachable"});self.postMessage({error:"Server unreachable"});return}let headers=error.headers;if(headers?.get("x-ratelimit-remaining")>0){return recallGOUD(currentPage)}else{let secondsPassed=60;let rateLimitInterval=setInterval(()=>{self.postMessage({status:`Rate Limit: ${msToTime(secondsPassed*1e3)}`});--secondsPassed},1e3);setTimeout(()=>{clearInterval(rateLimitInterval);self.postMessage({status:"Retrying"});return recallGOUD(currentPage)},6e4)}console.error(error)})}let hasFoundLessOrEqualToOldestUpdateAt=false;let shouldUpdateMediaEntries,shouldUpdateExcludedEntries;let percentage=0;function recallUNRE(page){fetch("https://graphql.anilist.co",{method:"POST",headers:{"Content-Type":"application/json",Accept:"application/json","Cache-Control":"max-age=31536000, immutable"},body:JSON.stringify({query:`{Page(page:${page},perPage:${maxMediaPerPage}){pageInfo{hasNextPage}media(sort:UPDATED_AT_DESC){id updatedAt title{romaji english native}relations{edges{relationType(version:2)node{id popularity}}}description siteUrl averageScore episodes chapters volumes countryOfOrigin duration trending popularity favourites format genres status(version:2)coverImage{large}trailer{id thumbnail site}bannerImage tags{name rank category}studios{edges{node{name siteUrl isAnimationStudio}isMain}}startDate{month day year}endDate{month day year}seasonYear season staff(perPage:${maxStaffPerPage},page:1,sort:RELEVANCE){edges{node{name{userPreferred}siteUrl}role}}nextAiringEpisode{episode airingAt}}}}`})}).then(async response=>{let headers=response.headers;let result=await response.json();return{result:result,headers:headers}}).then(async({result,headers})=>{let error;if(typeof(error=result?.errors?.[0]?.message)==="string"){let secondsPassed=60;let rateLimitInterval=setInterval(()=>{self.postMessage({status:(error?error+" ":"")+`Rate Limit: ${msToTime(secondsPassed*1e3)}`});--secondsPassed},1e3);setTimeout(()=>{clearInterval(rateLimitInterval);self.postMessage({status:"Retrying"});return recallUNRE(page)},6e4)}else{let Page=result?.data?.Page;let medias=Page?.media||[];let currentUpdateAt;if(medias instanceof Array){for(let media of medias){const currentId=media?.id;if(typeof currentId==="number"&&!isNaN(currentId)&&isFinite(currentId)&&currentId<=Number.MAX_SAFE_INTEGER){currentUpdateAt=media?.updatedAt;if(currentUpdateAt&&typeof currentUpdateAt==="number"&&!isNaN(currentUpdateAt)&&isFinite(currentUpdateAt)&&currentUpdateAt<=Number.MAX_SAFE_INTEGER){hasFoundLessOrEqualToOldestUpdateAt=hasFoundLessOrEqualToOldestUpdateAt||currentUpdateAt<=oldestMediaUpdateAt;if(currentUpdateAt>newestUpdateAt||newestUpdateAt==null){newestUpdateAt=currentUpdateAt;if(largestDif==null){largestDif=newestUpdateAt-oldestMediaUpdateAt}else{largestDif=Math.max(largestDif,newestUpdateAt-oldestMediaUpdateAt)}}if(currentUpdateAt<recursingOldestUpdateAt||recursingOldestUpdateAt==null){recursingOldestUpdateAt=currentUpdateAt;if(oldestMediaUpdateAt<=recursingOldestUpdateAt&&newestUpdateAt>recursingOldestUpdateAt&&newestUpdateAt){percentage=(largestDif-(recursingOldestUpdateAt-oldestMediaUpdateAt))/largestDif*100}}}const loweredFormat=media?.format?.trim?.()?.toLowerCase?.();if((typeof media?.format!=="string"||!excludedFormats[loweredFormat])&&!media?.genres?.some?.(genre=>genre?.trim?.()?.toLowerCase?.()==="hentai")){if(media?.genres instanceof Array){let unique={};media.genres=media.genres.filter(genre=>{if(genre&&!unique[genre]){unique[genre]=true;return true}else{return false}})}if(media?.tags instanceof Array){let unique={};media.tags=media.tags.filter(tag=>{let _tag=tag?.name;if(_tag&&!unique[_tag]){unique[_tag]=true;return true}else{return false}})}if(media?.studios?.edges instanceof Array){let unique={};media.studios.edges=media.studios.edges.filter(studio=>{let _studio=studio?.node?.name;if(_studio&&!unique[_studio]){unique[_studio]=true;return true}else{return false}})}if(excludedEntries?.hasOwnProperty?.(currentId)){delete excludedEntries[currentId];shouldUpdateExcludedEntries=true}let savedMedia=mediaEntries?.[currentId];if(isJsonObject(savedMedia)){media.dateAdded=savedMedia?.dateAdded;let isEditedEntry=false;let newCoverImage=media?.coverImage?.large;if(newCoverImage){let oldCoverImage=savedMedia?.coverImage?.large;if(newCoverImage!==oldCoverImage){isEditedEntry=true}}if(!isEditedEntry){let newTrailerId=media?.trailer?.id;if(newTrailerId){let oldTrailerId=savedMedia?.trailer?.id;if(newTrailerId!==oldTrailerId){isEditedEntry=true}}}const loweredStatus=media?.status?.trim?.()?.toLowerCase?.();if(isEditedEntry&&loweredStatus!=="finished"){if(animeFormats[loweredFormat]){++newEditedEntriesCount}media.dateEdited=currentRequestTimestamp}else if(savedMedia?.dateEdited){media.dateEdited=savedMedia?.dateEdited}let isPossiblyFinished=typeof savedMedia?.nextAiringEpisode?.episode==="number"&&!isNaN(savedMedia?.nextAiringEpisode?.episode)&&isFinite(savedMedia?.nextAiringEpisode?.episode)&&savedMedia?.nextAiringEpisode?.episode<=Number.MAX_SAFE_INTEGER&&savedMedia?.nextAiringEpisode?.episode===savedMedia?.episodes&&typeof savedMedia?.nextAiringEpisode?.airingAt==="number"&&!isNaN(savedMedia?.nextAiringEpisode?.airingAt)&&isFinite(savedMedia?.nextAiringEpisode?.airingAt)&&savedMedia?.nextAiringEpisode?.airingAt<=Number.MAX_SAFE_INTEGER&&new Date(savedMedia?.nextAiringEpisode?.airingAt*1e3)<=new Date;let newStatusIsStillReleasing=loweredStatus==="releasing"&&savedMedia?.status?.trim?.()?.toLowerCase?.()==="releasing";let newNextAiringEpisodeIsRemoved=!isJsonObject(media?.nextAiringEpisode);let dontUpdateNextAiringEpisode=isPossiblyFinished&&newStatusIsStillReleasing&&newNextAiringEpisodeIsRemoved;if(dontUpdateNextAiringEpisode){media.nextAiringEpisode=savedMedia.nextAiringEpisode}}mediaEntries[currentId]=media;shouldUpdateMediaEntries=true}else{if(mediaEntries?.hasOwnProperty?.(currentId)){delete mediaEntries[currentId];shouldUpdateMediaEntries=true}excludedEntries[currentId]=1;shouldUpdateExcludedEntries=true}}}}if(!hasFoundLessOrEqualToOldestUpdateAt){if(!minimizeTransaction){if(!isShowingProgress){isShowingProgress=true;isShowingProgressTimeout=setTimeout(()=>{if(percentage>=.01){percentage=Math.min(percentage,99.99);self.postMessage({status:`${percentage.toFixed(2)}% Updating Entries`})}else{self.postMessage({status:"Updating Entries"})}isShowingProgress=false},17)}const collectionToPut={};if(shouldUpdateMediaEntries){collectionToPut.shouldProcessRecommendation=true;collectionToPut.mediaEntries=mediaEntries}if(shouldUpdateExcludedEntries){collectionToPut.excludedEntries=excludedEntries}if(!jsonIsEmpty(collectionToPut)){await saveJSONCollection(collectionToPut);if(shouldUpdateMediaEntries){shouldUpdateMediaEntries=false}if(shouldUpdateExcludedEntries){shouldUpdateExcludedEntries=false}}}let hasNextPage=Page?.pageInfo?.hasNextPage??true;if(headers?.get("x-ratelimit-remaining")>0){if(hasNextPage&&medias.length>0){return recallUNRE(++page)}else{return recallGOUD(page)}}else{let secondsPassed=60;let rateLimitInterval=setInterval(()=>{self.postMessage({status:(error?error+" ":"")+`Rate Limit: ${msToTime(secondsPassed*1e3)}`});--secondsPassed},1e3);setTimeout(()=>{clearInterval(rateLimitInterval);self.postMessage({status:"Retrying"});if(hasNextPage&&medias.length>0){return recallUNRE(++page)}else{return recallGOUD(page)}},6e4)}}else{clearTimeout(isShowingProgressTimeout);isShowingProgress=false;const collectionToPut={};if(shouldUpdateMediaEntries){self.postMessage({status:"100% Updating Entries"});collectionToPut.shouldProcessRecommendation=true;collectionToPut.mediaEntries=mediaEntries}if(shouldUpdateExcludedEntries){collectionToPut.excludedEntries=excludedEntries}collectionToPut.entriesVersion=entriesVersion;if(newestUpdateAt&&newestUpdateAt>mediaUpdateAt){collectionToPut.mediaUpdateAt=newestUpdateAt}if(!jsonIsEmpty(collectionToPut)){await saveJSONCollection(collectionToPut);if(shouldUpdateMediaEntries){self.postMessage({updateRecommendationList:true});shouldUpdateMediaEntries=false}if(shouldUpdateExcludedEntries){shouldUpdateExcludedEntries=false}}if(newAddedEntriesCount>lastAddedEntriesCount||newEditedEntriesCount>lastEditedEntriesCount){self.postMessage({notifyAddedEntries:newAddedEntriesCount,notifyEditedEntries:newEditedEntriesCount});lastAddedEntriesCount=newAddedEntriesCount;lastEditedEntriesCount=newEditedEntriesCount}self.postMessage({status:null});self.postMessage({done:true})}}}).catch(async error=>{clearTimeout(isShowingProgressTimeout);isShowingProgress=false;if(!await isConnected()){self.postMessage({status:"Server unreachable"});self.postMessage({error:"Server unreachable"});return}let headers=error.headers;if(headers?.get("x-ratelimit-remaining")>0){return recallUNRE(page)}else{let secondsPassed=60;let rateLimitInterval=setInterval(()=>{self.postMessage({status:`Rate Limit: ${msToTime(secondsPassed*1e3)}`});--secondsPassed},1e3);setTimeout(()=>{clearInterval(rateLimitInterval);self.postMessage({status:"Retrying"});return recallUNRE(page)},6e4)}console.error(error)})}recallGOUD()}};function IDBinit(){return new Promise(resolve=>{let request=indexedDB.open("Kanshi.Media.Recommendations.Anilist.W~uPtWCq=vG$TR:Zl^#t<vdS]I~N70",1);request.onsuccess=event=>{db=event.target.result;resolve()};request.onupgradeneeded=event=>{db=event.target.result;db.createObjectStore("others");event.target.transaction.oncomplete=()=>{resolve()}};request.onerror=error=>{console.error(error)}})}function retrieveJSON(name){return new Promise(resolve=>{try{let get=db.transaction("others","readonly").objectStore("others").get(name);get.onsuccess=()=>{let result=get.result;if(result instanceof Blob){result=JSON.parse((new FileReaderSync).readAsText(result))}else if(result instanceof ArrayBuffer){result=JSON.parse((new TextDecoder).decode(result))}resolve(result)};get.onerror=ex=>{console.error(ex);resolve()}}catch(ex){console.error(ex);resolve()}})}function saveJSONCollection(collection){return new Promise((resolve,reject)=>{try{let transaction=db.transaction("others","readwrite");let store=transaction.objectStore("others");let put;transaction.oncomplete=()=>{resolve()};for(let key in collection){let data=collection[key];let blob;if(data instanceof Blob){blob=data;put=store.put(blob,key)}else if(isJsonObject(data)||data instanceof Array){blob=new Blob([JSON.stringify(data)]);put=store.put(blob,key)}else{put=store.put(data,key)}put.onerror=ex=>{transaction.oncomplete=undefined;if(blob instanceof Blob){try{transaction.oncomplete=()=>{resolve()};put=store.put((new FileReaderSync).readAsArrayBuffer(blob),key);put.onerror=ex=>{console.error(ex);reject(ex)};try{transaction?.commit?.()}catch{}}catch(ex2){console.error(ex);console.error(ex2);reject(ex2)}}else{console.error(ex);reject(ex)}}}try{transaction?.commit?.()}catch{}}catch(ex){console.error(ex);reject(ex)}})}function getMax(arr){let len=arr.length;let max=-Infinity;while(len--){max=arr[len]>max?arr[len]:max}return max}function divideArray(array,size,sameSize){let result=[];for(let i=0;i<array.length;i+=size){result.push(array.slice(sameSize?Math.min(i,array.length-size):i,i+size))}return result}function msToTime(duration,limit){try{if(duration<1e3){return"0s"}let seconds=Math.floor(duration/1e3%60),minutes=Math.floor(duration/6e4%60),hours=Math.floor(duration/36e5%24),days=Math.floor(duration/864e5%7),weeks=Math.floor(duration/6048e5%4),months=Math.floor(duration/24192e5%12),years=Math.floor(duration/290304e5%10),decades=Math.floor(duration/290304e6%10),century=Math.floor(duration/290304e7%10),millenium=Math.floor(duration/290304e8%10);let time=[];if(millenium>0)time.push(`${millenium}mil`);if(century>0)time.push(`${century}cen`);if(decades>0)time.push(`${decades}dec`);if(years>0)time.push(`${years}y`);if(months>0)time.push(`${months}mon`);if(weeks>0)time.push(`${weeks}w`);if(days>0)time.push(`${days}d`);if(hours>0)time.push(`${hours}h`);if(minutes>0)time.push(`${minutes}m`);if(seconds>0)time.push(`${seconds}s`);if(limit>0){time=time.slice(0,limit)}return time.join(" ")||"0s"}catch(e){return""}}function isJsonObject(obj){return Object.prototype.toString.call(obj)==="[object Object]"}function jsonIsEmpty(obj){for(const key in obj){return false}return true}function isConnected(url=server){if(typeof url!=="string"||url===""){const $connected=connected;if(typeof $connected==="boolean"){connected=null;return $connected}else{self.postMessage({getConnectionState:true});return true}}else{return new Promise(async resolve=>{if(await checkConnection(url))return resolve(true);else await new Promise(r=>setTimeout(r,5e3));return resolve(await checkConnection(url))})}}async function checkConnection(url){try{if(navigator?.onLine!==false){const response=await fetch(url,{method:"HEAD",cache:"no-store"});return response?.ok}}catch{}return false}
+let db, server, connected, isShowingProgress, isShowingProgressTimeout;
+const maxArraySize = 65535;
+const maxMediaPerPage = 50;
+const maxStaffPerPage = 25;
+const excludedFormats = {
+    music: true
+};
+const animeFormats = {
+    tv: true,
+    tv_short: true,
+    movie: true,
+    special: true,
+    ova: true,
+    ona: true
+};
+const currentRequestTimestamp = (new Date).getTime();
+let newAddedEntriesCount = 0,
+    lastAddedEntriesCount = 0;
+let newEditedEntriesCount = 0,
+    lastEditedEntriesCount = 0;
+let minimizeTransaction = false;
+let onlyGetNewEntries;
+
+self.addEventListener("unhandledrejection", (event) => {
+    const reason = event?.reason
+    console.error(reason)
+    let error = reason?.stack || reason?.message
+    if (typeof error !== "string" || !error) {
+        error = "Something went wrong"
+    }
+    self.postMessage({ error })
+});
+
+self.onmessage = async ({
+    data
+}) => {
+    if (data?.connected != null) {
+        connected = data?.connected
+        return
+    }
+    if (server == null && data?.server != null) {
+        server = data.server
+    }
+    
+    if (!db) await IDBinit();
+
+    if (data?.hasOwnProperty("minimizeTransaction")) {
+        minimizeTransaction = data?.minimizeTransaction
+    } else {
+        onlyGetNewEntries = data?.onlyGetNewEntries ?? false;
+        let mediaUpdateAt = await retrieveJSON("mediaUpdateAt") || 1706674120;
+        let mediaEntries = await retrieveJSON("mediaEntries");
+        let excludedEntries = await retrieveJSON("excludedEntries") || {};
+        if (isJsonObject(mediaEntries)) {
+            if (jsonIsEmpty(mediaEntries)) {
+                self.postMessage({
+                    getEntries: true
+                })
+            } else {
+                getNewEntries(mediaEntries, excludedEntries, mediaUpdateAt)
+            }
+        } else {
+            self.postMessage({
+                noEntriesFound: true
+            })
+        }
+    }
+    async function getNewEntries(mediaEntries, excludedEntries, mediaUpdateAt) {
+        const lastHighestID = Math.max(getMax(Object.keys(mediaEntries).concat(Object.keys(excludedEntries)).map(id => parseInt(id))) || 1, 1)
+        let foundLastHighestID = false;
+        let percentage, newLowestID, newHighestID, largestDif;
+        self.postMessage({
+            status: "Checking New Entries"
+        });
+        let shouldUpdateMediaEntries, shouldUpdateExcludedEntries;
+        let highestIncludedEntryID = -Infinity,
+            highestExcludedEntryID = -Infinity;
+
+        function recallGNE(page) {
+            fetch("https://graphql.anilist.co", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Accept: "application/json",
+                    "Cache-Control": "max-age=31536000, immutable"
+                },
+                body: JSON.stringify({
+                    query: `{Page(page:${page},perPage:${maxMediaPerPage}){pageInfo{hasNextPage}media(sort:ID_DESC){id updatedAt title{romaji english native}relations{edges{relationType(version:2)node{id popularity}}}description siteUrl averageScore episodes chapters volumes countryOfOrigin duration trending popularity favourites format genres status(version:2)coverImage{large}trailer{id thumbnail site}bannerImage tags{name rank category}studios{edges{node{name siteUrl isAnimationStudio}isMain}}startDate{month day year}endDate{month day year}seasonYear season staff(perPage:${maxStaffPerPage},page:1,sort:RELEVANCE){edges{node{name{userPreferred}siteUrl}role}}nextAiringEpisode{episode airingAt}}}}`
+                })
+            }).then(async response => {
+                let headers = response.headers;
+                let result = await response.json();
+                return {
+                    result: result,
+                    headers: headers
+                }
+            }).then(async ({
+                result,
+                headers
+            }) => {
+                let error;
+                if (typeof (error = result?.errors?.[0]?.message) === "string") {
+                    if (onlyGetNewEntries) {
+                        self.postMessage({
+                            errorDuringInit: true
+                        })
+                    }
+                    let secondsPassed = 60;
+                    let rateLimitInterval = setInterval(() => {
+                        self.postMessage({
+                            status: (error ? error + " " : "") + `Rate Limit: ${msToTime(secondsPassed * 1e3)}`
+                        });
+                        --secondsPassed
+                    }, 1e3)
+                    setTimeout(() => {
+                        clearInterval(rateLimitInterval);
+                        self.postMessage({
+                            status: "Retrying"
+                        });
+                        return recallGNE(page)
+                    }, 6e4)
+                } else {
+                    let Page = result?.data?.Page;
+                    let medias = Page?.media || [];
+                    if (medias instanceof Array && medias.length) {
+                        for (let media of medias) {
+                            const currentId = media?.id;
+                            if (typeof currentId === "number" && !isNaN(currentId) && isFinite(currentId) && currentId <= Number.MAX_SAFE_INTEGER) {
+                                foundLastHighestID = foundLastHighestID || currentId === lastHighestID;
+                                if (newHighestID == null || currentId > newHighestID) {
+                                    newHighestID = currentId;
+                                    if (largestDif == null) {
+                                        largestDif = newHighestID - lastHighestID
+                                    } else {
+                                        largestDif = Math.max(largestDif, newHighestID - lastHighestID)
+                                    }
+                                }
+                                if (newLowestID == null || currentId < newLowestID) {
+                                    newLowestID = currentId;
+                                    if (lastHighestID >= newLowestID && newLowestID && lastHighestID) {
+                                        break
+                                    } else if (newHighestID && lastHighestID <= newLowestID && newHighestID > newLowestID) {
+                                        percentage = (largestDif - (newLowestID - lastHighestID)) / largestDif * 100
+                                    }
+                                }
+                                const loweredFormat = media?.format?.trim?.()?.toLowerCase?.();
+                                if (
+                                    (typeof media?.format !== "string" || !excludedFormats[loweredFormat]) 
+                                    && !media?.genres?.some?.(genre => genre?.trim?.()?.toLowerCase?.() === "hentai")
+                                ) {
+                                    if (media?.genres instanceof Array) {
+                                        let unique = {};
+                                        media.genres = media.genres.filter(genre => {
+                                            if (genre && !unique[genre]) {
+                                                unique[genre] = true;
+                                                return true
+                                            } else {
+                                                return false
+                                            }
+                                        })
+                                    }
+                                    if (media?.tags instanceof Array) {
+                                        let unique = {};
+                                        media.tags = media.tags.filter(tag => {
+                                            let _tag = tag?.name;
+                                            if (_tag && !unique[_tag]) {
+                                                unique[_tag] = true;
+                                                return true
+                                            } else {
+                                                return false
+                                            }
+                                        })
+                                    }
+                                    if (media?.studios?.edges instanceof Array) {
+                                        let unique = {};
+                                        media.studios.edges = media.studios.edges.filter(studio => {
+                                            let _studio = studio?.node?.name;
+                                            if (_studio && !unique[_studio]) {
+                                                unique[_studio] = true;
+                                                return true
+                                            } else {
+                                                return false
+                                            }
+                                        })
+                                    }
+                                    if (excludedEntries?.hasOwnProperty?.(currentId)) {
+                                        delete excludedEntries[currentId];
+                                        shouldUpdateExcludedEntries = true
+                                    }
+                                    if (isJsonObject(mediaEntries?.[currentId])) {
+                                        continue
+                                    } else if (animeFormats[loweredFormat]) {
+                                        ++newAddedEntriesCount
+                                    }
+                                    media.dateAdded = currentRequestTimestamp;
+                                    highestIncludedEntryID = Math.max(highestIncludedEntryID, currentId);
+                                    mediaEntries[currentId] = media;
+                                    shouldUpdateMediaEntries = true
+                                } else {
+                                    if (mediaEntries?.hasOwnProperty?.(currentId)) {
+                                        delete mediaEntries[currentId];
+                                        shouldUpdateMediaEntries = true
+                                    }
+                                    highestExcludedEntryID = Math.max(highestExcludedEntryID, currentId);
+                                    excludedEntries[currentId] = 1;
+                                    shouldUpdateExcludedEntries = true
+                                }
+                            }
+                        }
+                    }
+                    if (!foundLastHighestID && newLowestID > lastHighestID) {
+                        if (!isShowingProgress) {
+                            isShowingProgress = true;
+                            isShowingProgressTimeout = setTimeout(() => {
+                                if (percentage >= .01) {
+                                    percentage = Math.min(percentage, 99.99);
+                                    self.postMessage({
+                                        status: `${percentage.toFixed(2)}% Adding New Entries`
+                                    })
+                                }
+                                isShowingProgress = false
+                            }, 17)
+                        }
+                        let hasNextPage = Page?.pageInfo?.hasNextPage ?? true;
+                        if (headers?.get("x-ratelimit-remaining") > 0) {
+                            if (hasNextPage && medias.length > 0) {
+                                return recallGNE(++page)
+                            } else {
+                                return recallGNE(page)
+                            }
+                        } else {
+                            if (onlyGetNewEntries) {
+                                self.postMessage({
+                                    errorDuringInit: true
+                                })
+                            }
+                            let secondsPassed = 60;
+                            let rateLimitInterval = setInterval(() => {
+                                self.postMessage({
+                                    status: `Rate Limit: ${msToTime(secondsPassed * 1e3)}`
+                                });
+                                --secondsPassed
+                            }, 1e3);
+                            setTimeout(() => {
+                                clearInterval(rateLimitInterval);
+                                self.postMessage({
+                                    status: "Retrying"
+                                });
+                                if (hasNextPage && medias.length > 0) {
+                                    return recallGNE(++page)
+                                } else {
+                                    return recallGNE(page)
+                                }
+                            }, 6e4)
+                        }
+                    } else {
+                        clearTimeout(isShowingProgressTimeout);
+                        isShowingProgress = false;
+                        if (shouldUpdateMediaEntries) {
+                            self.postMessage({
+                                status: "100% Adding New Entries"
+                            })
+                        }
+                        isShowingProgress = false;
+                        if (foundLastHighestID) {
+                            if (highestIncludedEntryID <= highestExcludedEntryID) {
+                                const collectionToPut = {}
+                                if (shouldUpdateMediaEntries) {
+                                    collectionToPut.shouldProcessRecommendation = true
+                                    collectionToPut.mediaEntries = mediaEntries
+                                }
+                                if (shouldUpdateExcludedEntries) {
+                                    collectionToPut.excludedEntries = excludedEntries
+                                }
+                                if (!jsonIsEmpty(collectionToPut)) {
+                                    await saveJSONCollection(collectionToPut)
+                                    if (shouldUpdateMediaEntries) {
+                                        self.postMessage({
+                                            updateRecommendationList: true
+                                        });
+                                        shouldUpdateMediaEntries = false
+                                    }
+                                    if (shouldUpdateExcludedEntries) {
+                                        shouldUpdateExcludedEntries = false
+                                    }
+                                }
+                            } else {
+                                const collectionToPut = {}
+                                if (shouldUpdateExcludedEntries) {
+                                    collectionToPut.excludedEntries = excludedEntries
+                                }
+                                if (shouldUpdateMediaEntries) {
+                                    collectionToPut.shouldProcessRecommendation = true
+                                    collectionToPut.mediaEntries = mediaEntries
+                                }
+                                if (!jsonIsEmpty(collectionToPut)) {
+                                    await saveJSONCollection(collectionToPut)
+                                    if (shouldUpdateMediaEntries) {
+                                        self.postMessage({
+                                            updateRecommendationList: true
+                                        });
+                                        shouldUpdateMediaEntries = false
+                                    }
+                                    if (shouldUpdateExcludedEntries) {
+                                        shouldUpdateExcludedEntries = false
+                                    }
+                                }
+                            }
+                            if (newAddedEntriesCount > lastAddedEntriesCount) {
+                                self.postMessage({
+                                    notifyAddedEntries: newAddedEntriesCount,
+                                    notifyEditedEntries: newEditedEntriesCount
+                                });
+                                lastAddedEntriesCount = newAddedEntriesCount
+                            }
+                        } else {
+                            // Reset so newly added entries would not be saved for next updates
+                            mediaUpdateAt = await retrieveJSON("mediaUpdateAt") || 1706674120;
+                            mediaEntries = await retrieveJSON("mediaEntries");
+                            if (isJsonObject(mediaEntries)) {
+                                if (jsonIsEmpty(mediaEntries)) {
+                                    self.postMessage({
+                                        getEntries: true
+                                    })
+                                    return
+                                }
+                            } else {
+                                self.postMessage({
+                                    noEntriesFound: true
+                                })
+                                return
+                            }
+                            excludedEntries = await retrieveJSON("excludedEntries") || {};
+                            newAddedEntriesCount = 0
+                        }
+                        self.postMessage({
+                            status: null
+                        });
+                        if (onlyGetNewEntries) {
+                            self.postMessage({
+                                done: true
+                            })
+                        } else {
+                            updateMediaEntries(mediaEntries, excludedEntries, mediaUpdateAt)
+                        }
+                    }
+                }
+            }).catch(async error => {
+                clearTimeout(isShowingProgressTimeout);
+                isShowingProgress = false;
+                if (!await isConnected()) {
+                    self.postMessage({
+                        status: "Server unreachable"
+                    });
+                    self.postMessage({
+                        error: "Server unreachable"
+                    });
+                    return
+                }
+                let headers = error.headers;
+                if (headers?.get("x-ratelimit-remaining") > 0) {
+                    return recallGNE(page)
+                } else {
+                    if (onlyGetNewEntries) {
+                        self.postMessage({
+                            errorDuringInit: true
+                        })
+                    }
+                    let secondsPassed = 60;
+                    let rateLimitInterval = setInterval(() => {
+                        self.postMessage({
+                            status: `Rate Limit: ${msToTime(secondsPassed * 1e3)}`
+                        });
+                        --secondsPassed
+                    }, 1e3)
+                    setTimeout(() => {
+                        clearInterval(rateLimitInterval);
+                        self.postMessage({
+                            status: "Retrying"
+                        });
+                        return recallGNE(page)
+                    }, 6e4)
+                }
+                console.error(error)
+            })
+        }
+        recallGNE(1)
+    }
+    async function updateMediaEntries(mediaEntries, excludedEntries, mediaUpdateAt) {
+        const mediaEntriesArray = Object.values(mediaEntries);
+        let pastAiringEpisodeIDs = mediaEntriesArray.filter(({
+            nextAiringEpisode,
+            format
+        }) => {
+            if (isJsonObject(nextAiringEpisode)) {
+                const loweredFormat = format?.trim?.()?.toLowerCase?.();
+                if (loweredFormat === "manga" || loweredFormat === "one_shot" || loweredFormat === "novel") return false;
+                let releaseDate = new Date(nextAiringEpisode?.airingAt * 1e3);
+                if (releaseDate instanceof Date && !isNaN(releaseDate) && releaseDate <= (new Date).getTime()) {
+                    return true
+                } else {
+                    return false
+                }
+            } else {
+                return false
+            }
+        }).map(({
+            id
+        }) => id);
+        let nonUpdatedMediaIDs = mediaEntriesArray.filter(({
+            updatedAt
+        }) => {
+            return updatedAt <= mediaUpdateAt 
+                || typeof updatedAt !== "number" 
+                || isNaN(updatedAt) 
+                || !isFinite(updatedAt) 
+                || !(updatedAt <= Number.MAX_SAFE_INTEGER)
+        }).sort((a, b) => {
+            let updatedAtA = a?.updatedAt,
+                updatedAtB = b?.updatedAt;
+            updatedAtA = typeof updatedAtA === "number" && !isNaN(updatedAtA) && isFinite(updatedAtA) && updatedAtA <= Number.MAX_SAFE_INTEGER ? updatedAtA : -Infinity;
+            updatedAtB = typeof updatedAtB === "number" && !isNaN(updatedAtB) && isFinite(updatedAtB) && updatedAtB <= Number.MAX_SAFE_INTEGER ? updatedAtB : -Infinity;
+            return updatedAtA - updatedAtB
+        }).map(({
+            id
+        }) => id)
+        const mediaLength = pastAiringEpisodeIDs.length;
+        let currentNonProcessedLength = mediaLength;
+        const pastAiringEpisodeIDsCollection = divideArray(pastAiringEpisodeIDs, maxArraySize);
+        const nonUpdatedMediaIDsCollection = divideArray(nonUpdatedMediaIDs, maxArraySize);
+        let pastAiringEpisodeIDsCollectionIdx = 0;
+        let nonUpdatedMediaIDsCollectionIdx = 0;
+        self.postMessage({
+            status: "Checking Recent Entries"
+        });
+        let shouldUpdateMediaEntries, shouldUpdateExcludedEntries;
+        let nonUpdatedMediaPercentFinished = 0,
+            currentNonUpdatedMediaCollectionMaxPercent = 0;
+
+        function recallUNAE(page, pastAiringEpisodeIDsString) {
+            fetch("https://graphql.anilist.co", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Accept: "application/json",
+                    "Cache-Control": "max-age=31536000, immutable"
+                },
+                body: JSON.stringify({
+                    query: `{Page(page:${page},perPage:${maxMediaPerPage}){pageInfo{hasNextPage}media(id_in:[${pastAiringEpisodeIDsString || ""}],type:ANIME){id format genres status(version:2)nextAiringEpisode{episode airingAt}}}}`
+                })
+            }).then(async response => {
+                let headers = response.headers;
+                let result = await response.json();
+                return {
+                    result: result,
+                    headers: headers
+                }
+            }).then(async ({
+                result,
+                headers
+            }) => {
+                let error;
+                if (typeof (error = result?.errors?.[0]?.message) === "string") {
+                    let secondsPassed = 60;
+                    let rateLimitInterval = setInterval(() => {
+                        self.postMessage({
+                            status: (error ? error + " " : "") + `Rate Limit: ${msToTime(secondsPassed * 1e3)}`
+                        });
+                        --secondsPassed
+                    }, 1e3)
+                    setTimeout(() => {
+                        clearInterval(rateLimitInterval);
+                        self.postMessage({
+                            status: "Retrying"
+                        });
+                        return recallUNAE(page, pastAiringEpisodeIDsString)
+                    }, 6e4)
+                } else {
+                    let Page = result?.data?.Page;
+                    let medias = Page?.media || [];
+                    if (medias instanceof Array) {
+                        for (let media of medias) {
+                            const currentId = media?.id;
+                            if (typeof currentId === "number" && !isNaN(currentId) && isFinite(currentId) && currentId <= Number.MAX_SAFE_INTEGER) {
+                                pastAiringEpisodeIDs = pastAiringEpisodeIDs.filter(_id => _id !== currentId);
+                                if (
+                                    (typeof media?.format !== "string" || !excludedFormats[media?.format?.trim?.()?.toLowerCase?.()]) 
+                                    && !media?.genres?.some?.(genre => genre?.trim?.()?.toLowerCase?.() === "hentai")
+                                ) {
+                                    if (excludedEntries?.hasOwnProperty?.(currentId)) {
+                                        delete excludedEntries[currentId];
+                                        shouldUpdateExcludedEntries = true
+                                    }
+                                    let savedMedia = mediaEntries?.[currentId];
+                                    if (isJsonObject(savedMedia)) {
+                                        let isPossiblyFinished = typeof savedMedia?.nextAiringEpisode?.episode === "number" 
+                                            && !isNaN(savedMedia?.nextAiringEpisode?.episode) 
+                                            && isFinite(savedMedia?.nextAiringEpisode?.episode)
+                                            && savedMedia?.nextAiringEpisode?.episode <= Number.MAX_SAFE_INTEGER 
+                                            && savedMedia?.nextAiringEpisode?.episode === savedMedia?.episodes 
+                                            && typeof savedMedia?.nextAiringEpisode?.airingAt === "number"
+                                            && !isNaN(savedMedia?.nextAiringEpisode?.airingAt)
+                                            && isFinite(savedMedia?.nextAiringEpisode?.airingAt)
+                                            && savedMedia?.nextAiringEpisode?.airingAt <= Number.MAX_SAFE_INTEGER 
+                                            && new Date(savedMedia?.nextAiringEpisode?.airingAt * 1e3) <= new Date;
+                                        let newStatusIsStillReleasing = media?.status?.trim?.()?.toLowerCase?.() === "releasing" 
+                                            && savedMedia?.status?.trim?.()?.toLowerCase?.() === "releasing";
+                                        let newNextAiringEpisodeIsRemoved = !isJsonObject(media?.nextAiringEpisode);
+                                        let updateNextAiringEpisode = !(isPossiblyFinished && newStatusIsStillReleasing && newNextAiringEpisodeIsRemoved);
+                                        if (updateNextAiringEpisode) {
+                                            mediaEntries[currentId].nextAiringEpisode = media?.nextAiringEpisode;
+                                            shouldUpdateMediaEntries = true
+                                        }
+                                    }
+                                } else {
+                                    if (mediaEntries?.hasOwnProperty?.(currentId)) {
+                                        delete mediaEntries[currentId];
+                                        shouldUpdateMediaEntries = true
+                                    }
+                                    excludedEntries[currentId] = 1;
+                                    shouldUpdateExcludedEntries = true
+                                }
+                            }
+                        }
+                    }
+                    let hasNextPage = Page?.pageInfo?.hasNextPage ?? true;
+                    if (hasNextPage && medias.length > 0) {
+                        if (!minimizeTransaction) {
+                            if (currentNonProcessedLength > pastAiringEpisodeIDs.length) {
+                                currentNonProcessedLength = pastAiringEpisodeIDs.length;
+                                let processedLength = Math.max(mediaLength - currentNonProcessedLength, 0);
+                                let percentage = 100 * (processedLength / mediaLength);
+                                percentage = Math.min(percentage, 99.99);
+                                if (!isShowingProgress) {
+                                    isShowingProgress = true;
+                                    isShowingProgressTimeout = setTimeout(() => {
+                                        self.postMessage({
+                                            status: `${percentage.toFixed(2)}% Updating Recent Entries`
+                                        });
+                                        isShowingProgress = false
+                                    }, 17)
+                                }
+                            }
+                            const collectionToPut = {}
+                            if (shouldUpdateMediaEntries) {
+                                collectionToPut.shouldProcessRecommendation = true
+                                collectionToPut.mediaEntries = mediaEntries
+                            }
+                            if (shouldUpdateExcludedEntries) {
+                                collectionToPut.excludedEntries = excludedEntries
+                            }
+                            if (!jsonIsEmpty(collectionToPut)) {
+                                await saveJSONCollection(collectionToPut)
+                                if (shouldUpdateMediaEntries) {
+                                    shouldUpdateMediaEntries = false
+                                }
+                                if (shouldUpdateExcludedEntries) {
+                                    shouldUpdateExcludedEntries = false
+                                }
+                            }
+                        }
+                        if (headers?.get("x-ratelimit-remaining") > 0) {
+                            return recallUNAE(++page, pastAiringEpisodeIDsString)
+                        } else {
+                            let secondsPassed = 60;
+                            let rateLimitInterval = setInterval(() => {
+                                self.postMessage({
+                                    status: `Rate Limit: ${msToTime(secondsPassed * 1e3)}`
+                                });
+                                --secondsPassed
+                            }, 1e3);
+                            setTimeout(() => {
+                                clearInterval(rateLimitInterval);
+                                self.postMessage({
+                                    status: "Retrying"
+                                });
+                                return recallUNAE(++page, pastAiringEpisodeIDsString)
+                            }, 6e4)
+                        }
+                    } else if (pastAiringEpisodeIDsCollection.length - 1 > pastAiringEpisodeIDsCollectionIdx) {
+                        ++pastAiringEpisodeIDsCollectionIdx;
+                        recallUNAE(1, pastAiringEpisodeIDsCollection[pastAiringEpisodeIDsCollectionIdx].join(","))
+                    } else {
+                        clearTimeout(isShowingProgressTimeout);
+                        isShowingProgress = false;
+                        const collectionToPut = {}
+                        if (shouldUpdateMediaEntries) {
+                            collectionToPut.shouldProcessRecommendation = true
+                            collectionToPut.mediaEntries = mediaEntries
+                        }
+                        if (shouldUpdateExcludedEntries) {
+                            collectionToPut.excludedEntries = excludedEntries
+                        }
+                        if (!jsonIsEmpty(collectionToPut)) {
+                            await saveJSONCollection(collectionToPut)
+                            if (shouldUpdateMediaEntries) {
+                                self.postMessage({
+                                    updateRecommendationList: true
+                                });
+                                shouldUpdateMediaEntries = false
+                            }
+                            if (shouldUpdateExcludedEntries) {
+                                shouldUpdateExcludedEntries = false
+                            }
+                        }
+                        if (nonUpdatedMediaIDsCollection.length > 0) {
+                            nonUpdatedMediaPercentFinished = nonUpdatedMediaIDsCollection.reduce((accRatio, arr, idx) => {
+                                let ratio = arr.length / nonUpdatedMediaIDs.length;
+                                if (idx < nonUpdatedMediaIDsCollectionIdx) {
+                                    accRatio += ratio
+                                } else if (idx === nonUpdatedMediaIDsCollectionIdx) {
+                                    currentNonUpdatedMediaCollectionMaxPercent = ratio * 100
+                                }
+                                return accRatio
+                            }, 0) * 100;
+                            recallUNUA(1, nonUpdatedMediaIDsCollection[nonUpdatedMediaIDsCollectionIdx].join(","))
+                        } else {
+                            self.postMessage({
+                                status: "100% Updating Recent Entries"
+                            });
+                            self.postMessage({
+                                status: null
+                            });
+                            self.postMessage({
+                                done: true
+                            })
+                        }
+                    }
+                }
+            }).catch(async error => {
+                clearTimeout(isShowingProgressTimeout);
+                isShowingProgress = false;
+                if (!await isConnected()) {
+                    self.postMessage({
+                        status: "Server unreachable"
+                    });
+                    self.postMessage({
+                        error: "Server unreachable"
+                    });
+                    return
+                }
+                let headers = error.headers;
+                if (headers?.get("x-ratelimit-remaining") > 0) {
+                    return recallUNAE(page, pastAiringEpisodeIDsString)
+                } else {
+                    let secondsPassed = 60;
+                    let rateLimitInterval = setInterval(() => {
+                        self.postMessage({
+                            status: `Rate Limit: ${msToTime(secondsPassed * 1e3)}`
+                        });
+                        --secondsPassed
+                    }, 1e3)
+                    setTimeout(() => {
+                        clearInterval(rateLimitInterval);
+                        self.postMessage({
+                            status: "Retrying"
+                        });
+                        return recallUNAE(page, pastAiringEpisodeIDsString)
+                    }, 6e4)
+                }
+                console.error(error)
+            })
+        }
+        let currentRecursingOldestUpdateAt, currentNewestUpdateAt, newestUpdateAt, currentLargestDif, percentage = 0;
+
+        function recallUNUA(page, nonUpdatedMediaIDsString) {
+            fetch("https://graphql.anilist.co", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Accept: "application/json",
+                    "Cache-Control": "max-age=31536000, immutable"
+                },
+                body: JSON.stringify({
+                    query: `{Page(page:${page},perPage:${maxMediaPerPage}){pageInfo{hasNextPage}media(id_in:[${nonUpdatedMediaIDsString || ""}],sort:UPDATED_AT_DESC){id updatedAt title{romaji english native}relations{edges{relationType(version:2)node{id popularity}}}description siteUrl averageScore episodes chapters volumes countryOfOrigin duration trending popularity favourites format genres status(version:2)coverImage{large}trailer{id thumbnail site}bannerImage tags{name rank category}studios{edges{node{name siteUrl isAnimationStudio}isMain}}startDate{month day year}endDate{month day year}seasonYear season staff(perPage:${maxStaffPerPage},page:1,sort:RELEVANCE){edges{node{name{userPreferred}siteUrl}role}}nextAiringEpisode{episode airingAt}}}}`
+                })
+            }).then(async response => {
+                let headers = response.headers;
+                let result = await response.json();
+                return {
+                    result: result,
+                    headers: headers
+                }
+            }).then(async ({
+                result,
+                headers
+            }) => {
+                let error;
+                if (typeof (error = result?.errors?.[0]?.message) === "string") {
+                    let secondsPassed = 60;
+                    let rateLimitInterval = setInterval(() => {
+                        self.postMessage({
+                            status: (error ? error + " " : "") + `Rate Limit: ${msToTime(secondsPassed * 1e3)}`
+                        });
+                        --secondsPassed
+                    }, 1e3)
+                    setTimeout(() => {
+                        clearInterval(rateLimitInterval);
+                        self.postMessage({
+                            status: "Retrying"
+                        });
+                        return recallUNUA(page, nonUpdatedMediaIDsString)
+                    }, 6e4)
+                } else {
+                    let Page = result?.data?.Page;
+                    let medias = Page?.media || [];
+                    let currentUpdateAt;
+                    if (medias instanceof Array) {
+                        for (let media of medias) {
+                            const currentId = media?.id;
+                            if (typeof currentId === "number" && !isNaN(currentId) && isFinite(currentId) && currentId <= Number.MAX_SAFE_INTEGER) {
+                                currentUpdateAt = media?.updatedAt;
+                                if (currentUpdateAt 
+                                    && typeof currentUpdateAt === "number" 
+                                    && !isNaN(currentUpdateAt) 
+                                    && isFinite(currentUpdateAt) 
+                                    && currentUpdateAt <= Number.MAX_SAFE_INTEGER
+                                ) {
+                                    if (currentUpdateAt > currentNewestUpdateAt || currentNewestUpdateAt == null) {
+                                        newestUpdateAt = currentNewestUpdateAt = currentUpdateAt;
+                                        if (currentLargestDif == null) {
+                                            currentLargestDif = currentNewestUpdateAt - mediaUpdateAt
+                                        } else {
+                                            currentLargestDif = Math.max(currentLargestDif, currentNewestUpdateAt - mediaUpdateAt)
+                                        }
+                                    }
+                                    if (currentUpdateAt < currentRecursingOldestUpdateAt || currentRecursingOldestUpdateAt == null) {
+                                        currentRecursingOldestUpdateAt = currentUpdateAt;
+                                        if (mediaUpdateAt > currentRecursingOldestUpdateAt && currentRecursingOldestUpdateAt && mediaUpdateAt) {
+                                            break
+                                        } else if (currentNewestUpdateAt && mediaUpdateAt <= currentRecursingOldestUpdateAt && currentNewestUpdateAt > currentRecursingOldestUpdateAt) {
+                                            percentage = (currentLargestDif - (currentRecursingOldestUpdateAt - mediaUpdateAt)) / currentLargestDif * currentNonUpdatedMediaCollectionMaxPercent + nonUpdatedMediaPercentFinished
+                                        }
+                                    }
+                                }
+                                const loweredFormat = media?.format?.trim?.()?.toLowerCase?.();
+                                if (
+                                    (typeof media?.format !== "string" || !excludedFormats[loweredFormat]) 
+                                    && !media?.genres?.some?.(genre => genre?.trim?.()?.toLowerCase?.() === "hentai")
+                                ) {
+                                    if (media?.genres instanceof Array) {
+                                        let unique = {};
+                                        media.genres = media.genres.filter(genre => {
+                                            if (genre && !unique[genre]) {
+                                                unique[genre] = true;
+                                                return true
+                                            } else {
+                                                return false
+                                            }
+                                        })
+                                    }
+                                    if (media?.tags instanceof Array) {
+                                        let unique = {};
+                                        media.tags = media.tags.filter(tag => {
+                                            let _tag = tag?.name;
+                                            if (_tag && !unique[_tag]) {
+                                                unique[_tag] = true;
+                                                return true
+                                            } else {
+                                                return false
+                                            }
+                                        })
+                                    }
+                                    if (media?.studios?.edges instanceof Array) {
+                                        let unique = {};
+                                        media.studios.edges = media.studios.edges.filter(studio => {
+                                            let _studio = studio?.node?.name;
+                                            if (_studio && !unique[_studio]) {
+                                                unique[_studio] = true;
+                                                return true
+                                            } else {
+                                                return false
+                                            }
+                                        })
+                                    }
+                                    if (excludedEntries?.hasOwnProperty?.(currentId)) {
+                                        delete excludedEntries[currentId];
+                                        shouldUpdateExcludedEntries = true
+                                    }
+                                    let savedMedia = mediaEntries?.[currentId];
+                                    if (isJsonObject(savedMedia)) {
+                                        media.dateAdded = savedMedia?.dateAdded;
+                                        let isEditedEntry = false;
+                                        let newCoverImage = media?.coverImage?.large;
+                                        if (newCoverImage) {
+                                            let oldCoverImage = savedMedia?.coverImage?.large;
+                                            if (newCoverImage !== oldCoverImage) {
+                                                isEditedEntry = true
+                                            }
+                                        }
+                                        if (!isEditedEntry) {
+                                            let newTrailerId = media?.trailer?.id;
+                                            if (newTrailerId) {
+                                                let oldTrailerId = savedMedia?.trailer?.id;
+                                                if (newTrailerId !== oldTrailerId) {
+                                                    isEditedEntry = true
+                                                }
+                                            }
+                                        }
+                                        const loweredStatus = media?.status?.trim?.()?.toLowerCase?.();
+                                        if (isEditedEntry && loweredStatus !== "finished") {
+                                            if (animeFormats[loweredFormat]) {
+                                                ++newEditedEntriesCount
+                                            }
+                                            media.dateEdited = currentRequestTimestamp
+                                        } else if (savedMedia?.dateEdited) {
+                                            media.dateEdited = savedMedia?.dateEdited
+                                        }
+                                        let isPossiblyFinished = typeof savedMedia?.nextAiringEpisode?.episode === "number" 
+                                            && !isNaN(savedMedia?.nextAiringEpisode?.episode) 
+                                            && isFinite(savedMedia?.nextAiringEpisode?.episode)
+                                            && savedMedia?.nextAiringEpisode?.episode <= Number.MAX_SAFE_INTEGER 
+                                            && savedMedia?.nextAiringEpisode?.episode === savedMedia?.episodes 
+                                            && typeof savedMedia?.nextAiringEpisode?.airingAt === "number" 
+                                            && !isNaN(savedMedia?.nextAiringEpisode?.airingAt) 
+                                            && isFinite(savedMedia?.nextAiringEpisode?.airingAt)
+                                            && savedMedia?.nextAiringEpisode?.airingAt <= Number.MAX_SAFE_INTEGER 
+                                            && new Date(savedMedia?.nextAiringEpisode?.airingAt * 1e3) <= new Date;
+                                        let newStatusIsStillReleasing = loweredStatus === "releasing" && savedMedia?.status?.trim?.()?.toLowerCase?.() === "releasing";
+                                        let newNextAiringEpisodeIsRemoved = !isJsonObject(media?.nextAiringEpisode);
+                                        let dontUpdateNextAiringEpisode = isPossiblyFinished && newStatusIsStillReleasing && newNextAiringEpisodeIsRemoved;
+                                        if (dontUpdateNextAiringEpisode) {
+                                            media.nextAiringEpisode = savedMedia.nextAiringEpisode
+                                        }
+                                    }
+                                    mediaEntries[currentId] = media;
+                                    shouldUpdateMediaEntries = true
+                                } else {
+                                    if (mediaEntries?.hasOwnProperty?.(currentId)) {
+                                        delete mediaEntries[currentId];
+                                        shouldUpdateMediaEntries = true
+                                    }
+                                    excludedEntries[currentId] = 1;
+                                    shouldUpdateExcludedEntries = true
+                                }
+                            }
+                        }
+                    }
+                    let hasNextPage = Page?.pageInfo?.hasNextPage ?? true;
+                    if (hasNextPage && medias.length > 0 && (currentUpdateAt >= mediaUpdateAt || !currentUpdateAt || !mediaUpdateAt)) {
+                        if (!minimizeTransaction) {
+                            if (!isShowingProgress) {
+                                isShowingProgress = true;
+                                isShowingProgressTimeout = setTimeout(() => {
+                                    if (percentage >= .01) {
+                                        percentage = Math.min(percentage, 99.99);
+                                        self.postMessage({
+                                            status: `${percentage.toFixed(2)}% Updating Entries`
+                                        })
+                                    } else {
+                                        self.postMessage({
+                                            status: "Updating Entries"
+                                        })
+                                    }
+                                    isShowingProgress = false
+                                }, 17)
+                            }
+                            const collectionToPut = {}
+                            if (shouldUpdateMediaEntries) {
+                                collectionToPut.shouldProcessRecommendation = true
+                                collectionToPut.mediaEntries = mediaEntries
+                            }
+                            if (shouldUpdateExcludedEntries) {
+                                collectionToPut.excludedEntries = excludedEntries
+                            }
+                            if (!jsonIsEmpty(collectionToPut)) {
+                                await saveJSONCollection(collectionToPut)
+                                if (shouldUpdateMediaEntries) {
+                                    shouldUpdateMediaEntries = false
+                                }
+                                if (shouldUpdateExcludedEntries) {
+                                    shouldUpdateExcludedEntries = false
+                                }
+                            }
+                        }
+                        if (headers?.get("x-ratelimit-remaining") > 0) {
+                            return recallUNUA(++page, nonUpdatedMediaIDsString)
+                        } else {
+                            let secondsPassed = 60;
+                            let rateLimitInterval = setInterval(() => {
+                                self.postMessage({
+                                    status: `Rate Limit: ${msToTime(secondsPassed * 1e3)}`
+                                });
+                                --secondsPassed
+                            }, 1e3);
+                            setTimeout(() => {
+                                clearInterval(rateLimitInterval);
+                                self.postMessage({
+                                    status: "Retrying"
+                                });
+                                return recallUNUA(++page, nonUpdatedMediaIDsString)
+                            }, 6e4)
+                        }
+                    } else if (nonUpdatedMediaIDsCollection.length - 1 > nonUpdatedMediaIDsCollectionIdx) {
+                        currentNewestUpdateAt = currentRecursingOldestUpdateAt = currentLargestDif = null;
+                        ++nonUpdatedMediaIDsCollectionIdx;
+                        nonUpdatedMediaPercentFinished = nonUpdatedMediaIDsCollection.reduce((accRatio, arr, idx) => {
+                            let ratio = arr.length / nonUpdatedMediaIDs.length;
+                            if (idx < nonUpdatedMediaIDsCollectionIdx) {
+                                accRatio += ratio
+                            } else if (idx === nonUpdatedMediaIDsCollectionIdx) {
+                                currentNonUpdatedMediaCollectionMaxPercent = ratio * 100
+                            }
+                            return accRatio
+                        }, 0) * 100;
+                        return recallUNUA(1, nonUpdatedMediaIDsCollection[nonUpdatedMediaIDsCollectionIdx].join(","))
+                    } else {
+                        clearTimeout(isShowingProgressTimeout);
+                        isShowingProgress = false;
+                        const collectionToPut = {}
+                        if (shouldUpdateMediaEntries) {
+                            collectionToPut.shouldProcessRecommendation = true
+                            collectionToPut.mediaEntries = mediaEntries
+                        }
+                        if (shouldUpdateExcludedEntries) {
+                            collectionToPut.excludedEntries = excludedEntries
+                        }
+                        if (newestUpdateAt && newestUpdateAt > mediaUpdateAt) {
+                            collectionToPut.mediaUpdateAt = newestUpdateAt
+                        }
+                        if (newAddedEntriesCount > lastAddedEntriesCount || newEditedEntriesCount > lastEditedEntriesCount) {
+                            self.postMessage({
+                                notifyAddedEntries: newAddedEntriesCount,
+                                notifyEditedEntries: newEditedEntriesCount
+                            });
+                            lastAddedEntriesCount = newAddedEntriesCount;
+                            lastEditedEntriesCount = newEditedEntriesCount
+                        }
+                        collectionToPut.runnedAutoUpdateAt = (new Date).getTime();
+                        if (!jsonIsEmpty(collectionToPut)) {
+                            await saveJSONCollection(collectionToPut)
+                            if (shouldUpdateMediaEntries) {
+                                self.postMessage({
+                                    updateRecommendationList: true
+                                });
+                                shouldUpdateMediaEntries = false
+                            }
+                            if (shouldUpdateExcludedEntries) {
+                                shouldUpdateExcludedEntries = false
+                            }
+                        }
+                        self.postMessage({
+                            status: "100% Updating Entries"
+                        });
+                        self.postMessage({
+                            status: null
+                        });
+                        self.postMessage({
+                            done: true
+                        })
+                    }
+                }
+            }).catch(async error => {
+                clearTimeout(isShowingProgressTimeout);
+                isShowingProgress = false;
+                if (!await isConnected()) {
+                    self.postMessage({
+                        status: "Server unreachable"
+                    });
+                    self.postMessage({
+                        error: "Server unreachable"
+                    });
+                    return
+                }
+                let headers = error.headers;
+                if (headers?.get("x-ratelimit-remaining") > 0) {
+                    return recallUNUA(page, nonUpdatedMediaIDsString)
+                } else {
+                    let secondsPassed = 60;
+                    let rateLimitInterval = setInterval(() => {
+                        self.postMessage({
+                            status: `Rate Limit: ${msToTime(secondsPassed * 1e3)}`
+                        });
+                        --secondsPassed
+                    }, 1e3)
+                    setTimeout(() => {
+                        clearInterval(rateLimitInterval);
+                        self.postMessage({
+                            status: "Retrying"
+                        });
+                        return recallUNUA(page, nonUpdatedMediaIDsString)
+                    }, 6e4)
+                }
+                console.error(error)
+            })
+        }
+        if (pastAiringEpisodeIDsCollection.length > 0) {
+            recallUNAE(1, pastAiringEpisodeIDsCollection[pastAiringEpisodeIDsCollectionIdx].join(","))
+        } else {
+            if (nonUpdatedMediaIDsCollection.length > 0) {
+                recallUNUA(1, nonUpdatedMediaIDsCollection[nonUpdatedMediaIDsCollectionIdx].join(","))
+            } else {
+                self.postMessage({
+                    status: null
+                });
+                self.postMessage({
+                    done: true
+                })
+            }
+        }
+    }
+    // async function updateAllEntries(mediaEntries, excludedEntries, mediaUpdateAt) {
+    //     let oldestMediaUpdateAt;
+    //     let recursingOldestUpdateAt, newestUpdateAt, largestDif;
+    //     self.postMessage({
+    //         status: "Checking Entries"
+    //     });
+
+    //     function recallGOUD(currentPage) {
+    //         fetch("https://graphql.anilist.co", {
+    //             method: "POST",
+    //             headers: {
+    //                 "Content-Type": "application/json",
+    //                 Accept: "application/json",
+    //                 "Cache-Control": "max-age=31536000, immutable"
+    //             },
+    //             body: JSON.stringify({
+    //                 query: `{Page(page:1,perPage:1){media(sort:UPDATED_AT){updatedAt}}}`
+    //             })
+    //         }).then(async response => {
+    //             let headers = response.headers;
+    //             let result = await response.json();
+    //             return {
+    //                 result: result,
+    //                 headers: headers
+    //             }
+    //         }).then(async ({
+    //             result,
+    //             headers
+    //         }) => {
+    //             let error;
+    //             if (typeof (error = result?.errors?.[0]?.message) === "string") {
+    //                 let secondsPassed = 60;
+    //                 let rateLimitInterval = setInterval(() => {
+    //                     self.postMessage({
+    //                         status: (error ? error + " " : "") + `Rate Limit: ${msToTime(secondsPassed * 1e3)}`
+    //                     });
+    //                     --secondsPassed
+    //                 }, 1e3)
+    //                 setTimeout(() => {
+    //                     clearInterval(rateLimitInterval);
+    //                     self.postMessage({
+    //                         status: "Retrying"
+    //                     });
+    //                     return recallGOUD(currentPage)
+    //                 }, 6e4)
+    //             } else {
+    //                 oldestMediaUpdateAt = result?.data?.Page?.media?.[0]?.updatedAt || oldestMediaUpdateAt;
+    //                 if (oldestMediaUpdateAt || currentPage) {
+    //                     return recallUNRE(currentPage || 1)
+    //                 } else {
+    //                     self.postMessage({
+    //                         status: null
+    //                     });
+    //                     self.postMessage({
+    //                         done: true
+    //                     })
+    //                 }
+    //             }
+    //         }).catch(async error => {
+    //             clearTimeout(isShowingProgressTimeout);
+    //             isShowingProgress = false;
+    //             if (!await isConnected()) {
+    //                 self.postMessage({
+    //                     status: "Server unreachable"
+    //                 });
+    //                 self.postMessage({
+    //                     error: "Server unreachable"
+    //                 });
+    //                 return
+    //             }
+    //             let headers = error.headers;
+    //             if (headers?.get("x-ratelimit-remaining") > 0) {
+    //                 return recallGOUD(currentPage)
+    //             } else {
+    //                 let secondsPassed = 60;
+    //                 let rateLimitInterval = setInterval(() => {
+    //                     self.postMessage({
+    //                         status: `Rate Limit: ${msToTime(secondsPassed * 1e3)}`
+    //                     });
+    //                     --secondsPassed
+    //                 }, 1e3)
+    //                 setTimeout(() => {
+    //                     clearInterval(rateLimitInterval);
+    //                     self.postMessage({
+    //                         status: "Retrying"
+    //                     });
+    //                     return recallGOUD(currentPage)
+    //                 }, 6e4)
+    //             }
+    //             console.error(error)
+    //         })
+    //     }
+    //     let hasFoundLessOrEqualToOldestUpdateAt = false;
+    //     let shouldUpdateMediaEntries, shouldUpdateExcludedEntries;
+    //     let percentage = 0;
+
+    //     function recallUNRE(page) {
+    //         fetch("https://graphql.anilist.co", {
+    //             method: "POST",
+    //             headers: {
+    //                 "Content-Type": "application/json",
+    //                 Accept: "application/json",
+    //                 "Cache-Control": "max-age=31536000, immutable"
+    //             },
+    //             body: JSON.stringify({
+    //                 query: `{Page(page:${page},perPage:${maxMediaPerPage}){pageInfo{hasNextPage}media(sort:UPDATED_AT_DESC){id updatedAt title{romaji english native}relations{edges{relationType(version:2)node{id popularity}}}description siteUrl averageScore episodes chapters volumes countryOfOrigin duration trending popularity favourites format genres status(version:2)coverImage{large}trailer{id thumbnail site}bannerImage tags{name rank category}studios{edges{node{name siteUrl isAnimationStudio}isMain}}startDate{month day year}endDate{month day year}seasonYear season staff(perPage:${maxStaffPerPage},page:1,sort:RELEVANCE){edges{node{name{userPreferred}siteUrl}role}}nextAiringEpisode{episode airingAt}}}}`
+    //             })
+    //         }).then(async response => {
+    //             let headers = response.headers;
+    //             let result = await response.json();
+    //             return {
+    //                 result: result,
+    //                 headers: headers
+    //             }
+    //         }).then(async ({
+    //             result,
+    //             headers
+    //         }) => {
+    //             let error;
+    //             if (typeof (error = result?.errors?.[0]?.message) === "string") {
+    //                 let secondsPassed = 60;
+    //                 let rateLimitInterval = setInterval(() => {
+    //                     self.postMessage({
+    //                         status: (error ? error + " " : "") + `Rate Limit: ${msToTime(secondsPassed * 1e3)}`
+    //                     });
+    //                     --secondsPassed
+    //                 }, 1e3)
+    //                 setTimeout(() => {
+    //                     clearInterval(rateLimitInterval);
+    //                     self.postMessage({
+    //                         status: "Retrying"
+    //                     });
+    //                     return recallUNRE(page)
+    //                 }, 6e4)
+    //             } else {
+    //                 let Page = result?.data?.Page;
+    //                 let medias = Page?.media || [];
+    //                 let currentUpdateAt
+    //                 if (medias instanceof Array) {
+    //                     for (let media of medias) {
+    //                         const currentId = media?.id;
+    //                         if (typeof currentId === "number" && !isNaN(currentId) && isFinite(currentId) && currentId <= Number.MAX_SAFE_INTEGER) {
+    //                             currentUpdateAt = media?.updatedAt;
+    //                             if (currentUpdateAt 
+    //                                 && typeof currentUpdateAt === "number" 
+    //                                 && !isNaN(currentUpdateAt) 
+    //                                 && isFinite(currentUpdateAt) 
+    //                                 && currentUpdateAt <= Number.MAX_SAFE_INTEGER
+    //                             ) {
+    //                                 hasFoundLessOrEqualToOldestUpdateAt = hasFoundLessOrEqualToOldestUpdateAt || currentUpdateAt <= oldestMediaUpdateAt;
+    //                                 if (currentUpdateAt > newestUpdateAt || newestUpdateAt == null) {
+    //                                     newestUpdateAt = currentUpdateAt;
+    //                                     if (largestDif == null) {
+    //                                         largestDif = newestUpdateAt - oldestMediaUpdateAt
+    //                                     } else {
+    //                                         largestDif = Math.max(largestDif, newestUpdateAt - oldestMediaUpdateAt)
+    //                                     }
+    //                                 }
+    //                                 if (currentUpdateAt < recursingOldestUpdateAt || recursingOldestUpdateAt == null) {
+    //                                     recursingOldestUpdateAt = currentUpdateAt;
+    //                                     if (oldestMediaUpdateAt <= recursingOldestUpdateAt && newestUpdateAt > recursingOldestUpdateAt && newestUpdateAt) {
+    //                                         percentage = (largestDif - (recursingOldestUpdateAt - oldestMediaUpdateAt)) / largestDif * 100
+    //                                     }
+    //                                 }
+    //                             }
+    //                             const loweredFormat = media?.format?.trim?.()?.toLowerCase?.();
+    //                             if (
+    //                                 (typeof media?.format !== "string" || !excludedFormats[loweredFormat]) 
+    //                                 && !media?.genres?.some?.(genre => genre?.trim?.()?.toLowerCase?.() === "hentai")
+    //                             ) {
+    //                                 if (media?.genres instanceof Array) {
+    //                                     let unique = {};
+    //                                     media.genres = media.genres.filter(genre => {
+    //                                         if (genre && !unique[genre]) {
+    //                                             unique[genre] = true;
+    //                                             return true
+    //                                         } else {
+    //                                             return false
+    //                                         }
+    //                                     })
+    //                                 }
+    //                                 if (media?.tags instanceof Array) {
+    //                                     let unique = {};
+    //                                     media.tags = media.tags.filter(tag => {
+    //                                         let _tag = tag?.name;
+    //                                         if (_tag && !unique[_tag]) {
+    //                                             unique[_tag] = true;
+    //                                             return true
+    //                                         } else {
+    //                                             return false
+    //                                         }
+    //                                     })
+    //                                 }
+    //                                 if (media?.studios?.edges instanceof Array) {
+    //                                     let unique = {};
+    //                                     media.studios.edges = media.studios.edges.filter(studio => {
+    //                                         let _studio = studio?.node?.name;
+    //                                         if (_studio && !unique[_studio]) {
+    //                                             unique[_studio] = true;
+    //                                             return true
+    //                                         } else {
+    //                                             return false
+    //                                         }
+    //                                     })
+    //                                 }
+    //                                 if (excludedEntries?.hasOwnProperty?.(currentId)) {
+    //                                     delete excludedEntries[currentId];
+    //                                     shouldUpdateExcludedEntries = true
+    //                                 }
+    //                                 let savedMedia = mediaEntries?.[currentId];
+    //                                 if (isJsonObject(savedMedia)) {
+    //                                     media.dateAdded = savedMedia?.dateAdded;
+    //                                     let isEditedEntry = false;
+    //                                     let newCoverImage = media?.coverImage?.large;
+    //                                     if (newCoverImage) {
+    //                                         let oldCoverImage = savedMedia?.coverImage?.large;
+    //                                         if (newCoverImage !== oldCoverImage) {
+    //                                             isEditedEntry = true
+    //                                         }
+    //                                     }
+    //                                     if (!isEditedEntry) {
+    //                                         let newTrailerId = media?.trailer?.id;
+    //                                         if (newTrailerId) {
+    //                                             let oldTrailerId = savedMedia?.trailer?.id;
+    //                                             if (newTrailerId !== oldTrailerId) {
+    //                                                 isEditedEntry = true
+    //                                             }
+    //                                         }
+    //                                     }
+    //                                     const loweredStatus = media?.status?.trim?.()?.toLowerCase?.();
+    //                                     if (isEditedEntry && loweredStatus !== "finished") {
+    //                                         if (animeFormats[loweredFormat]) {
+    //                                             ++newEditedEntriesCount
+    //                                         }
+    //                                         media.dateEdited = currentRequestTimestamp
+    //                                     } else if (savedMedia?.dateEdited) {
+    //                                         media.dateEdited = savedMedia?.dateEdited
+    //                                     }
+    //                                     let isPossiblyFinished = typeof savedMedia?.nextAiringEpisode?.episode === "number" 
+    //                                         && !isNaN(savedMedia?.nextAiringEpisode?.episode) 
+    //                                         && isFinite(savedMedia?.nextAiringEpisode?.episode)
+    //                                         && savedMedia?.nextAiringEpisode?.episode <= Number.MAX_SAFE_INTEGER
+    //                                         && savedMedia?.nextAiringEpisode?.episode === savedMedia?.episodes 
+    //                                         && typeof savedMedia?.nextAiringEpisode?.airingAt === "number" 
+    //                                         && !isNaN(savedMedia?.nextAiringEpisode?.airingAt) 
+    //                                         && isFinite(savedMedia?.nextAiringEpisode?.airingAt)
+    //                                         && savedMedia?.nextAiringEpisode?.airingAt <= Number.MAX_SAFE_INTEGER
+    //                                         && new Date(savedMedia?.nextAiringEpisode?.airingAt * 1e3) <= new Date;
+    //                                     let newStatusIsStillReleasing = loweredStatus === "releasing" && savedMedia?.status?.trim?.()?.toLowerCase?.() === "releasing";
+    //                                     let newNextAiringEpisodeIsRemoved = !isJsonObject(media?.nextAiringEpisode);
+    //                                     let dontUpdateNextAiringEpisode = isPossiblyFinished && newStatusIsStillReleasing && newNextAiringEpisodeIsRemoved;
+    //                                     if (dontUpdateNextAiringEpisode) {
+    //                                         media.nextAiringEpisode = savedMedia.nextAiringEpisode
+    //                                     }
+    //                                 }
+    //                                 mediaEntries[currentId] = media;
+    //                                 shouldUpdateMediaEntries = true
+    //                             } else {
+    //                                 if (mediaEntries?.hasOwnProperty?.(currentId)) {
+    //                                     delete mediaEntries[currentId];
+    //                                     shouldUpdateMediaEntries = true
+    //                                 }
+    //                                 excludedEntries[currentId] = 1;
+    //                                 shouldUpdateExcludedEntries = true
+    //                             }
+    //                         }
+    //                     }
+    //                 }
+    //                 if (!hasFoundLessOrEqualToOldestUpdateAt) {
+    //                     if (!minimizeTransaction) {
+    //                         if (!isShowingProgress) {
+    //                             isShowingProgress = true;
+    //                             isShowingProgressTimeout = setTimeout(() => {
+    //                                 if (percentage >= .01) {
+    //                                     percentage = Math.min(percentage, 99.99);
+    //                                     self.postMessage({
+    //                                         status: `${percentage.toFixed(2)}% Updating Entries`
+    //                                     })
+    //                                 } else {
+    //                                     self.postMessage({
+    //                                         status: "Updating Entries"
+    //                                     })
+    //                                 }
+    //                                 isShowingProgress = false
+    //                             }, 17)
+    //                         }
+    //                         const collectionToPut = {}
+    //                         if (shouldUpdateMediaEntries) {
+    //                             collectionToPut.shouldProcessRecommendation = true
+    //                             collectionToPut.mediaEntries = mediaEntries
+    //                         }
+    //                         if (shouldUpdateExcludedEntries) {
+    //                             collectionToPut.excludedEntries = excludedEntries
+    //                         }
+    //                         if (!jsonIsEmpty(collectionToPut)) {
+    //                             await saveJSONCollection(collectionToPut)
+    //                             if (shouldUpdateMediaEntries) {
+    //                                 shouldUpdateMediaEntries = false
+    //                             }
+    //                             if (shouldUpdateExcludedEntries) {
+    //                                 shouldUpdateExcludedEntries = false
+    //                             }
+    //                         }
+    //                     }
+    //                     let hasNextPage = Page?.pageInfo?.hasNextPage ?? true;
+    //                     if (headers?.get("x-ratelimit-remaining") > 0) {
+    //                         if (hasNextPage && medias.length > 0) {
+    //                             return recallUNRE(++page)
+    //                         } else {
+    //                             return recallGOUD(page)
+    //                         }
+    //                     } else {
+    //                         let secondsPassed = 60;
+    //                         let rateLimitInterval = setInterval(() => {
+    //                             self.postMessage({
+    //                                 status: (error ? error + " " : "") + `Rate Limit: ${msToTime(secondsPassed * 1e3)}`
+    //                             });
+    //                             --secondsPassed
+    //                         }, 1e3);
+    //                         setTimeout(() => {
+    //                             clearInterval(rateLimitInterval);
+    //                             self.postMessage({
+    //                                 status: "Retrying"
+    //                             });
+    //                             if (hasNextPage && medias.length > 0) {
+    //                                 return recallUNRE(++page)
+    //                             } else {
+    //                                 return recallGOUD(page)
+    //                             }
+    //                         }, 6e4)
+    //                     }
+    //                 } else {
+    //                     clearTimeout(isShowingProgressTimeout);
+    //                     isShowingProgress = false;
+    //                     const collectionToPut = {}
+    //                     if (shouldUpdateMediaEntries) {
+    //                         self.postMessage({
+    //                             status: "100% Updating Entries"
+    //                         });
+    //                         collectionToPut.shouldProcessRecommendation = true
+    //                         collectionToPut.mediaEntries = mediaEntries
+    //                     }
+    //                     if (shouldUpdateExcludedEntries) {
+    //                         collectionToPut.excludedEntries = excludedEntries
+    //                     }
+    //                     if (newestUpdateAt && newestUpdateAt > mediaUpdateAt) {
+    //                         collectionToPut.mediaUpdateAt = newestUpdateAt
+    //                     }
+    //                     if (!jsonIsEmpty(collectionToPut)) {
+    //                         await saveJSONCollection(collectionToPut)
+    //                         if (shouldUpdateMediaEntries) {
+    //                             self.postMessage({
+    //                                 updateRecommendationList: true
+    //                             });
+    //                             shouldUpdateMediaEntries = false
+    //                         }
+    //                         if (shouldUpdateExcludedEntries) {
+    //                             shouldUpdateExcludedEntries = false
+    //                         }
+    //                     }
+    //                     if (newAddedEntriesCount > lastAddedEntriesCount || newEditedEntriesCount > lastEditedEntriesCount) {
+    //                         self.postMessage({
+    //                             notifyAddedEntries: newAddedEntriesCount,
+    //                             notifyEditedEntries: newEditedEntriesCount
+    //                         });
+    //                         lastAddedEntriesCount = newAddedEntriesCount;
+    //                         lastEditedEntriesCount = newEditedEntriesCount
+    //                     }
+    //                     self.postMessage({
+    //                         status: null
+    //                     });
+    //                     self.postMessage({
+    //                         done: true
+    //                     })
+    //                 }
+    //             }
+    //         }).catch(async error => {
+    //             clearTimeout(isShowingProgressTimeout);
+    //             isShowingProgress = false;
+    //             if (!await isConnected()) {
+    //                 self.postMessage({
+    //                     status: "Server unreachable"
+    //                 });
+    //                 self.postMessage({
+    //                     error: "Server unreachable"
+    //                 });
+    //                 return
+    //             }
+    //             let headers = error.headers;
+    //             if (headers?.get("x-ratelimit-remaining") > 0) {
+    //                 return recallUNRE(page)
+    //             } else {
+    //                 let secondsPassed = 60;
+    //                 let rateLimitInterval = setInterval(() => {
+    //                     self.postMessage({
+    //                         status: `Rate Limit: ${msToTime(secondsPassed * 1e3)}`
+    //                     });
+    //                     --secondsPassed
+    //                 }, 1e3)
+    //                 setTimeout(() => {
+    //                     clearInterval(rateLimitInterval);
+    //                     self.postMessage({
+    //                         status: "Retrying"
+    //                     });
+    //                     return recallUNRE(page)
+    //                 }, 6e4)
+    //             }
+    //             console.error(error)
+    //         })
+    //     }
+    //     recallGOUD()
+    // }
+};
+function IDBinit() {
+    return new Promise((resolve) => {
+        let request = indexedDB.open(
+            "Kanshi.Media.Recommendations.Anilist.W~uPtWCq=vG$TR:Zl^#t<vdS]I~N70",
+            1
+        );
+        request.onsuccess = (event) => {
+            db = event.target.result;
+            resolve()
+        };
+        request.onupgradeneeded = (event) => {
+            db = event.target.result;
+            db.createObjectStore("others");
+            event.target.transaction.oncomplete = () => {
+                resolve();
+            }
+        }
+        request.onerror = (error) => {
+            console.error(error);
+        };
+    })
+}
+function retrieveJSON(name) {
+    return new Promise((resolve) => {
+        try {
+            let get = db
+                .transaction("others", "readonly")
+                .objectStore("others")
+                .get(name);
+            get.onsuccess = () => {
+                let result = get.result;
+                if (result instanceof Blob) {
+                    result = JSON.parse((new FileReaderSync()).readAsText(result));
+                } else if (result instanceof ArrayBuffer) {
+                    result = JSON.parse((new TextDecoder()).decode(result));
+                }
+                resolve(result);
+            };
+            get.onerror = (ex) => {
+                console.error(ex);
+                resolve();
+            };
+        } catch (ex) {
+            console.error(ex);
+            resolve();
+        }
+    });
+}
+function saveJSONCollection(collection) {
+    return new Promise((resolve, reject) => {
+        try {
+            let transaction = db.transaction("others", "readwrite");
+            let store = transaction.objectStore("others");
+            let put;
+            transaction.oncomplete = () => {
+                resolve();
+            }
+            for (let key in collection) {
+                let data = collection[key];
+                let blob
+                if (data instanceof Blob) {
+                    blob = data
+                    put = store.put(blob, key);
+                } else if (isJsonObject(data) || data instanceof Array) {
+                    blob = new Blob([JSON.stringify(data)]);
+                    put = store.put(blob, key);
+                } else {
+                    put = store.put(data, key);
+                }
+                put.onerror = (ex) => {
+                    transaction.oncomplete = undefined;
+                    if (blob instanceof Blob) {
+                        try {
+                            transaction.oncomplete = () => {
+                                resolve();
+                            }
+                            put = store.put((new FileReaderSync()).readAsArrayBuffer(blob), key);
+                            put.onerror = (ex) => {
+                                console.error(ex);
+                                reject(ex);
+                            }
+                            try {
+                                transaction?.commit?.();
+                            } catch {}
+                        } catch (ex2) {
+                            console.error(ex);
+                            console.error(ex2);
+                            reject(ex2);
+                        }
+                    } else {
+                        console.error(ex);
+                        reject(ex);
+                    }
+                };
+            }
+            try {
+                transaction?.commit?.();
+            } catch {}
+        } catch (ex) {
+            console.error(ex);
+            reject(ex);
+        }
+    });
+}
+function getMax(arr) {
+    let len = arr.length;
+    let max = -Infinity;
+    while (len--) {
+        max = arr[len] > max ? arr[len] : max
+    }
+    return max
+}
+
+function divideArray(array, size, sameSize) {
+    let result = [];
+    for (let i = 0; i < array.length; i += size) {
+        result.push(array.slice(sameSize ? Math.min(i, array.length - size) : i, i + size))
+    }
+    return result
+}
+
+function msToTime(duration, limit) {
+    try {
+        if (duration < 1e3) {
+            return "0s"
+        }
+        let seconds = Math.floor(duration / 1e3 % 60),
+            minutes = Math.floor(duration / 6e4 % 60),
+            hours = Math.floor(duration / 36e5 % 24),
+            days = Math.floor(duration / 864e5 % 7),
+            weeks = Math.floor(duration / 6048e5 % 4),
+            months = Math.floor(duration / 24192e5 % 12),
+            years = Math.floor(duration / 290304e5 % 10),
+            decades = Math.floor(duration / 290304e6 % 10),
+            century = Math.floor(duration / 290304e7 % 10),
+            millenium = Math.floor(duration / 290304e8 % 10);
+        let time = [];
+        if (millenium > 0) time.push(`${millenium}mil`);
+        if (century > 0) time.push(`${century}cen`);
+        if (decades > 0) time.push(`${decades}dec`);
+        if (years > 0) time.push(`${years}y`);
+        if (months > 0) time.push(`${months}mon`);
+        if (weeks > 0) time.push(`${weeks}w`);
+        if (days > 0) time.push(`${days}d`);
+        if (hours > 0) time.push(`${hours}h`);
+        if (minutes > 0) time.push(`${minutes}m`);
+        if (seconds > 0) time.push(`${seconds}s`);
+        if (limit > 0) {
+            time = time.slice(0, limit)
+        }
+        return time.join(" ") || "0s"
+    } catch (e) {
+        return ""
+    }
+}
+
+function isJsonObject(obj) {
+    return Object.prototype.toString.call(obj) === "[object Object]"
+}
+
+function jsonIsEmpty(obj) {
+    for (const key in obj) {
+        return false
+    }
+    return true
+}
+function isConnected(url = server) {
+    if (typeof url !== "string" || url === "") {
+        // when web worker does not allow server connection
+        // then check it in the main thread
+        const $connected = connected
+        if (typeof $connected === "boolean") {
+            connected = null
+            return $connected
+        } else {
+            self.postMessage({ getConnectionState: true })
+            return true
+        }
+    } else {
+        return new Promise(async (resolve) => {
+            if (await checkConnection(url)) return resolve(true)
+            else await new Promise((r) => setTimeout(r, 5000))
+            return resolve(await checkConnection(url));
+        })
+    }
+}
+async function checkConnection(url) {
+    try {
+        if (navigator?.onLine !== false) {
+            const response = await fetch(url, {
+                method: "HEAD",
+                cache: "no-store"
+            });
+            return response?.ok
+        }
+    } catch {}
+    return false
+}
