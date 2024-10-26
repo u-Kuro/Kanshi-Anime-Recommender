@@ -185,9 +185,9 @@ self.onmessage = async ({ data }) => {
         // let staffMeanCount = {}
         let includedMediaRelations = {}
         self.postMessage({ status: "Processing Recommendation List" })
-        for (let i = 0, l = userEntries.length; i < l; i++) {
+        for (let i = 0; i < userEntries.length; i++) {
 
-            loadProgress(((i + 1) / l) * 100 * 0.3)
+            loadProgress(((i + 1) / userEntries.length) * 100 * 0.3)
 
             let media = userEntries[i].media
             let mediaID = media?.id
@@ -245,7 +245,7 @@ self.onmessage = async ({ data }) => {
                 // Add as Included Entry in Recommendation Scheme
                 ++includedUserEntryCount
                 // Calculate the Variable Scheme
-                for (let j = 0, jl = genres.length; j < jl; j++) {
+                for (let j = 0; j < genres.length; j++) {
                     let genre = genres[j]
                     if (typeof genre === "string") {
                         if ((jsonIsEmpty(include.genres) || include.genres[genre] || include.genres.All) &&
@@ -267,7 +267,7 @@ self.onmessage = async ({ data }) => {
                     }
                 }
                 // Tag
-                for (let j = 0, jl = tags.length; j < jl; j++) {
+                for (let j = 0; j < tags.length; j++) {
                     let tagRank = tags[j]?.rank;
                     if (!tagRank || tagRank < tagRankLimit) continue
                     let tag = tags[j]?.name
@@ -298,7 +298,7 @@ self.onmessage = async ({ data }) => {
                 }
                 // Studio
                 let includedStudios = {}
-                for (let j = 0, jl = studios.length; j < jl; j++) {
+                for (let j = 0; j < studios.length; j++) {
                     let studio = studios[j]?.node?.name
                     if (typeof studio === "string") {
                         if (includedStudios[studio]) continue
@@ -399,7 +399,7 @@ self.onmessage = async ({ data }) => {
             let genresMeanAndSTD = arrayMeanAndSTD(genresKey.map(genre => arrayMean(varScheme.genres[genre].userScore)))
             const genresMean = genresMeanAndSTD.mean
             const genresUpperScore = genresMeanAndSTD.mean + genresMeanAndSTD.standardDeviation
-            for (let i = 0, l = genresKey.length; i < l; i++) {
+            for (let i = 0; i < genresKey.length; i++) {
                 const genre = genresKey[i]
                 const originalScore = arrayMean(varScheme.genres[genre].userScore)
                 const count = varScheme.genres[genre].count
@@ -513,7 +513,7 @@ self.onmessage = async ({ data }) => {
             let studiosKey = Object.keys(varScheme.studios)
             let studiosMeanAndSTD = arrayMeanAndSTD(studiosKey.map(studio => arrayMean(varScheme.studios[studio].userScore)))
             const studiosUpperScore = studiosMeanAndSTD.mean + studiosMeanAndSTD.standardDeviation
-            for (let i = 0, l = studiosKey.length; i < l; i++) {
+            for (let i = 0; i < studiosKey.length; i++) {
                 const studio = studiosKey[i]
                 const originalScore = arrayMean(varScheme.studios[studio].userScore)
                 const count = varScheme.studios[studio].count
@@ -537,7 +537,7 @@ self.onmessage = async ({ data }) => {
             // Year Model
             if (includeYear) {
                 let yearXY = []
-                for (let i = 0, l = year.length; i < l; i++) {
+                for (let i = 0; i < year.length; i++) {
                     yearXY.push([year[i].year, year[i].userScore])
                 }
                 if (yearXY.length >= (minSampleSize || 33)) {
@@ -547,7 +547,7 @@ self.onmessage = async ({ data }) => {
             // Average Score Model
             if (includeAverageScore) {
                 let averageScoreXY = []
-                for (let i = 0, l = averageScore.length; i < l; i++) {
+                for (let i = 0; i < averageScore.length; i++) {
                     averageScoreXY.push([averageScore[i].averageScore, averageScore[i].userScore])
                 }
                 if (averageScoreXY.length >= (minSampleSize || 33)) {
@@ -564,7 +564,7 @@ self.onmessage = async ({ data }) => {
         const mediaEntriesArray = Object.values(mediaEntries ?? {});
         let averageScoresArray = [], maxAverageScore = -Infinity,
             animePopularityArray = [], mangaPopularityArray = [], novelPopularityArray = []
-        for (let i = 0, l = mediaEntriesArray.length; i < l; i++) {
+        for (let i = 0; i < mediaEntriesArray.length; i++) {
             const media = mediaEntriesArray[i]
             const averageScore = media.averageScore
             if (averageScore > 0) {
@@ -665,9 +665,9 @@ self.onmessage = async ({ data }) => {
                 minUserScore,
             )
             
-            for (let i = 0, l = mediaEntriesArray.length; i < l; i++) {
+            for (let i = 0; i < mediaEntriesArray.length; i++) {
 
-                loadProgress(((i / l) * 100 * 0.7) + 30)
+                loadProgress(((i / mediaEntriesArray.length) * 100 * 0.7) + 30)
 
                 let media = mediaEntriesArray[i];
                 let mediaID = media?.id;
@@ -718,7 +718,7 @@ self.onmessage = async ({ data }) => {
                     studiosIncluded = {};
                 // Calculate Recommendation Scores and Update Iterative Filters
                 let zgenres = [];
-                for (let j = 0, jl = genres.length; j < jl; j++) {
+                for (let j = 0; j < genres.length; j++) {
                     let genre = genres[j];
                     if (typeof genre !== "string") continue;
                     if ((jsonIsEmpty(varScheme.includeGenres) || varScheme.includeGenres[genre] || varScheme.includeGenres.All) &&
@@ -758,7 +758,7 @@ self.onmessage = async ({ data }) => {
                     }
                 }
                 let ztags = [];
-                for (let j = 0, jl = tags.length; j < jl; j++) {
+                for (let j = 0; j < tags.length; j++) {
                     let tag = tags[j]?.name;
                     if (typeof tag !== "string") continue;
                     let tagCategory = tags[j]?.category;
@@ -806,7 +806,7 @@ self.onmessage = async ({ data }) => {
                     }
                 }
                 let includedStudios = {};
-                for (let j = 0, jl = studios.length; j < jl; j++) {
+                for (let j = 0; j < studios.length; j++) {
                     let studio = studios[j]?.node?.name;
                     if (typeof studio !== "string") continue;
                     if (includedStudios[studio]) continue;
@@ -1116,9 +1116,9 @@ self.onmessage = async ({ data }) => {
                 minScoreValue,
             )
 
-            for (let i = 0, l = mediaEntriesArray.length; i < l; i++) {
+            for (let i = 0; i < mediaEntriesArray.length; i++) {
 
-                loadProgress((i / l) * 100)
+                loadProgress((i / mediaEntriesArray.length) * 100)
 
                 let media = mediaEntriesArray[i];
                 let mediaID = media?.id;
@@ -1156,14 +1156,14 @@ self.onmessage = async ({ data }) => {
                     }
                 }
                 // Arrange
-                for (let j = 0, jl = genres.length; j < jl; j++) {
+                for (let j = 0; j < genres.length; j++) {
                     let genre = genres[j];
                     if (typeof genre !== "string") continue;
                     if (genre && mediaOptions.Genre[genre] === undefined) {
                         hasNewFilterOption = mediaOptions.Genre[genre] = true
                     }
                 }
-                for (let j = 0, jl = tags.length; j < jl; j++) {
+                for (let j = 0; j < tags.length; j++) {
                     let tag = tags[j]?.name;
                     if (typeof tag !== "string") continue;
                     if (tag && mediaOptions.Tag[tag] === undefined) {
@@ -1175,7 +1175,7 @@ self.onmessage = async ({ data }) => {
                         hasNewFilterOption = mediaOptions["Tag Category"][tagCategory] = true
                     }
                 }
-                for (let j = 0, jl = studios.length; j < jl; j++) {
+                for (let j = 0; j < studios.length; j++) {
                     let studio = studios[j]?.node?.name
                     if (typeof studio !== "string") continue
                     if (studio && mediaOptions.Studio[studio] === undefined) {
@@ -1431,7 +1431,7 @@ self.onmessage = async ({ data }) => {
         }
         // Update List
         const recommendedMediaList = {}
-        for (let i = 0, l = recommendedMediaListArray.length; i < l; i++) {
+        for (let i = 0; i < recommendedMediaListArray.length; i++) {
             const media = recommendedMediaListArray[i]
             if (media.score > meanScoreAbove) {
                 media.recommendationCode = 2
@@ -1584,7 +1584,7 @@ function linearRegression(XY) {
     let sum_xy = 0;
     let sum_xx = 0;
     let sum_yy = 0;
-    for (let i = 0, l = XY.length; i < l; i++) {
+    for (let i = 0; i < XY.length; i++) {
         sum_x += XY[i][0];
         sum_y += XY[i][1];
         sum_xy += (XY[i][0] * XY[i][1]);
@@ -1612,7 +1612,7 @@ function LRpredictInverse(modelObj, y) {
 function calculateError(actual, predicted, minval, maxval) {
     const range = maxval - minval;
     let totalError = 0;
-    for (let i = 0; i < actual?.length; i++) {
+    for (let i = 0; i < actual.length; i++) {
         totalError += Math.abs(actual[i] - predicted[i]) / range;
     }
     const error = totalError / actual?.length
