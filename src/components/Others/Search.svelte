@@ -1,27 +1,22 @@
 <script>
     import { onMount, tick } from "svelte";
+    import { formatNumber } from "../../js/utils/formatUtils.js";
+    import { isJsonObject, jsonIsEmpty } from "../../js/utils/dataUtils.js";
+    import { requestImmediate, showToast } from "../../js/utils/appUtils.js";
+    import { addClass, removeClass, changeInputValue } from "../../js/utils/domUtils.js";
     import {
         mediaLoader,
         mediaManager,
         getExtraInfo,
         processRecommendedMediaList,
-        saveIDBdata,
-        getIDBdata
     } from "../../js/workerUtils.js";
     import {
-        addClass,
-        changeInputValue,
-        removeClass,
-        getLocalStorage,
-        trimAllEmptyChar,
-        isJsonObject,
-        jsonIsEmpty,
-        setLocalStorage,
-        removeLocalStorage,
-        formatNumber,
-        requestImmediate,
-        showToast,
-    } from "../../js/others/helper.js";
+        getIDBData,
+		setIDBData,
+        getLSData,
+        setLSData,
+        removeLSData,
+	} from "../../js/database.js";
     import {
         android,
         dataStatus,
@@ -81,7 +76,7 @@
         filterCategoriesSelections,
         filterCategories;
 
-    let selectedFilterCategoryName = getLocalStorage("selectedFilterCategoryName");
+    let selectedFilterCategoryName = getLSData("selectedFilterCategoryName");
 
     $: {
         let category = $loadedMediaLists?.[$selectedCategory];
@@ -184,12 +179,12 @@
     let highlightedEl;
 
     let conditionalInputNumberList = [
-        "weighted score",
-        "score",
-        "average score",
-        "user score",
-        "popularity",
-        "year",
+        "Weighted Score",
+        "Score",
+        "Average Score",
+        "User Score",
+        "Popularity",
+        "Year",
     ];
 
     let scrollingToTop;
@@ -270,8 +265,8 @@
     function handleFilterCategory(event, newFilterCategoryName) {
         event.stopPropagation();
 
-        setLocalStorage("selectedFilterCategoryName", selectedFilterCategoryName = newFilterCategoryName)
-        .catch(() => removeLocalStorage("selectedFilterCategoryName"))
+        setLSData("selectedFilterCategoryName", selectedFilterCategoryName = newFilterCategoryName)
+        .catch(() => removeLSData("selectedFilterCategoryName"))
 
         if (
             highlightedEl instanceof Element &&
@@ -1186,16 +1181,16 @@
         customCategoryName = $selectedCategory;
         editCategoryName = false;
 
-        setLocalStorage("showFilterOptions", $showFilterOptions = !$showFilterOptions)
-        .catch(() => removeLocalStorage("showFilterOptions"))
+        setLSData("showFilterOptions", $showFilterOptions = !$showFilterOptions)
+        .catch(() => removeLSData("showFilterOptions"))
     }
 
     function hasPartialMatch(strings, query) {
         if (typeof strings !== "string" || typeof query !== "string") return
         return strings.trim().replace(/[\uFF01-\uFF60\uFFE0-\uFFE6\u3000]/g, (ch) => {
-            if (ch === '\u3000') return '';
+            if (ch === "\u3000") return "";
             return String.fromCharCode(ch.charCodeAt(0) - 0xFEE0);
-        }).normalize('NFD').replace(/[^a-zA-Z0-9\p{Lo}]/gu, '').toLowerCase().includes(query)
+        }).normalize("NFD").replace(/[^a-zA-Z0-9\p{Lo}]/gu, "").toLowerCase().includes(query)
     }
 
     let previousCategoryName;
@@ -1204,9 +1199,9 @@
             if (previousCategoryName && previousCategoryName !== val) {
                 mediaLoader({ categorySelected: val });
                 customCategoryName = val
-                setLocalStorage("selectedCategory", val)
-                .catch(() => removeLocalStorage("selectedCategory"))
-                .finally(() => saveIDBdata(val, "selectedCategory"));
+                setLSData("selectedCategory", val)
+                .catch(() => removeLSData("selectedCategory"))
+                .finally(() => setIDBData("selectedCategory", val));
             } else if (customCategoryName == null) {
                 customCategoryName = val
             }
@@ -1311,9 +1306,9 @@
             previousCategoryName !== newCategoryName &&
             $categories?.[previousCategoryName]
         ) {
-            let categoryNameToShow = `<span style="color:hsl(var(--ac-color));">${trimAllEmptyChar(
-                newCategoryName,
-            )}</span>`;
+            let categoryNameToShow = `<span style="color:hsl(var(--ac-color));">${
+                newCategoryName.trim()
+            }</span>`;
             if (
                 await $confirmPromise({
                     title: "Save category",
@@ -1359,9 +1354,9 @@
 
         let newCategoryName = customCategoryName;
         if (newCategoryName && !$categories?.[newCategoryName]) {
-            let categoryNameToShow = `<span style="color:hsl(var(--ac-color));">${trimAllEmptyChar(
-                newCategoryName,
-            )}</span>`;
+            let categoryNameToShow = `<span style="color:hsl(var(--ac-color));">${
+                newCategoryName.trim()
+            }</span>`;
             if (
                 await $confirmPromise({
                     title: "Add custom category",
@@ -1400,9 +1395,9 @@
             $categories?.[previousCategoryName] &&
             Object.values($categories || {}).length > 1
         ) {
-            let categoryNameToShow = `<span style="color:hsl(var(--ac-color));">${trimAllEmptyChar(
-                previousCategoryName,
-            )}</span>`;
+            let categoryNameToShow = `<span style="color:hsl(var(--ac-color));">${
+                previousCategoryName.trim()
+            }</span>`;
             if (
                 await $confirmPromise({
                     title: "Delete category",
@@ -1629,12 +1624,12 @@
         }
     }
 
-    let shouldScrollSnap = getLocalStorage("nonScrollSnapFilters") ?? true;
+    let shouldScrollSnap = getLSData("nonScrollSnapFilters") ?? true;
 
-    let meanAverageScore = getLocalStorage("meanAverageScore");
-    let meanAnimePopularity = getLocalStorage("meanAnimePopularity");
-    let meanMangaPopularity = getLocalStorage("meanMangaPopularity");
-    let meanNovelPopularity = getLocalStorage("meanNovelPopularity");
+    let meanAverageScore = getLSData("meanAverageScore");
+    let meanAnimePopularity = getLSData("meanAnimePopularity");
+    let meanMangaPopularity = getLSData("meanMangaPopularity");
+    let meanNovelPopularity = getLSData("meanNovelPopularity");
     window.updateMeanNumberInfos = (
         newMeanAverageScore,
         newMeanAnimePopularity,
@@ -1643,28 +1638,28 @@
     ) => {
         if (newMeanAverageScore && newMeanAverageScore > 0) {
             meanAverageScore = newMeanAverageScore;
-            setLocalStorage("meanAverageScore", meanAverageScore)
-            .catch(() => removeLocalStorage("meanAverageScore"));
+            setLSData("meanAverageScore", meanAverageScore)
+            .catch(() => removeLSData("meanAverageScore"));
         }
         if (newMeanAnimePopularity && newMeanAnimePopularity > 0) {
             meanAnimePopularity = newMeanAnimePopularity;
-            setLocalStorage("meanAnimePopularity", meanAnimePopularity)
-            .catch(() => removeLocalStorage("meanAnimePopularity"));
+            setLSData("meanAnimePopularity", meanAnimePopularity)
+            .catch(() => removeLSData("meanAnimePopularity"));
         }
         if (newMeanMangaPopularity && newMeanMangaPopularity > 0) {
             meanMangaPopularity = newMeanMangaPopularity;
-            setLocalStorage("meanMangaPopularity", meanMangaPopularity)
-            .catch(() => removeLocalStorage("meanMangaPopularity"));
+            setLSData("meanMangaPopularity", meanMangaPopularity)
+            .catch(() => removeLSData("meanMangaPopularity"));
         }
         if (newMeanNovelPopularity && newMeanNovelPopularity > 0) {
             meanNovelPopularity = newMeanNovelPopularity;
-            setLocalStorage("meanNovelPopularity", meanNovelPopularity)
-            .catch(() => removeLocalStorage("meanNovelPopularity"));
+            setLSData("meanNovelPopularity", meanNovelPopularity)
+            .catch(() => removeLSData("meanNovelPopularity"));
         }
     };
     let recListMAPE, recListMAPEIncreased;
     (async () => {
-        recListMAPE = await getIDBdata("recListMAPE");
+        recListMAPE = await getIDBData("recListMAPE");
     })();
     window.updateRecListMAPE = (newRecListMAPE) => {
         if (recListMAPE > 0 && recListMAPE !== newRecListMAPE) {
@@ -1684,10 +1679,10 @@
     };
 
     function handleGridView() {
-        const newGridFullView = !$gridFullView
-        setLocalStorage("gridFullView", $gridFullView = newGridFullView)
-        .catch(() => removeLocalStorage("gridFullView"))
-        .finally(() => saveIDBdata(newGridFullView, "gridFullView"));
+        const val = !$gridFullView
+        setLSData("gridFullView", $gridFullView = val)
+        .catch(() => removeLSData("gridFullView"))
+        .finally(() => setIDBData("gridFullView", val));
     }
 
     async function updateList() {
@@ -1728,11 +1723,11 @@
 
         $showFilterOptions = $showFilterOptions ?? false
 
-        $gridFullView = $gridFullView ?? (await getIDBdata("gridFullView"));
+        $gridFullView = $gridFullView ?? (await getIDBData("gridFullView"));
         if ($gridFullView == null) {
-            setLocalStorage("gridFullView", $gridFullView = false)
-            .catch(() => removeLocalStorage("gridFullView"))
-            .finally(() => saveIDBdata(false, "gridFullView"))
+            setLSData("gridFullView", $gridFullView = false)
+            .catch(() => removeLSData("gridFullView"))
+            .finally(() => setIDBData("gridFullView", false))
         }
 
         popupContainer = document.getElementById("popup-container");
@@ -1875,11 +1870,11 @@
     <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
     <div
         id="category-wrap"
-        class={"category-wrap" + (editCategoryName ? ' editing' : '')}
-        tabindex="{editCategoryName || $menuVisible || $popupVisible || selectedCategoryElement ? '' : '0'}"
+        class={"category-wrap" + (editCategoryName ? " editing" : "")}
+        tabindex="{editCategoryName || $menuVisible || $popupVisible || selectedCategoryElement ? "" : "0"}"
         style:--edit-cancel-icon="{$showFilterOptions ? "25px" : ""}"
         style:--save-icon="{$showFilterOptions && editCategoryName && customCategoryName && $categories && !$categories?.[customCategoryName] ? "25px" : ""}"
-        on:keyup="{(e) => e.key === 'Enter' && handleCategoryPopup(e)}"
+        on:keyup="{(e) => e.key === "Enter" && handleCategoryPopup(e)}"
         on:click="{handleCategoryPopup}"
         role="button"
         aria-label="Select a Recommendation Category"
@@ -1901,14 +1896,14 @@
         />
         {#if !editCategoryName || !$showFilterOptions}
             <div
-                class="{'options-wrap ' +
-                    (selectedCategoryElement ? '' : 'display-none hide')}"
+                class="{"options-wrap " +
+                    (selectedCategoryElement ? "" : "display-none hide")}"
                 on:touchend|passive="{handleOptionsWrapVisibility}"
             >
                 {#if $categories}
                     <div
-                        class="{'options-wrap-filter-info ' +
-                            (selectedCategoryElement ? '' : 'hide')}"
+                        class="{"options-wrap-filter-info " +
+                            (selectedCategoryElement ? "" : "hide")}"
                     >
                         <div class="header">
                             <div class="filter-title">Category</div>
@@ -1920,10 +1915,10 @@
                                 !$popupVisible &&
                                 selectedCategoryElement &&
                                 $windowWidth <= 425
-                                    ? '0'
-                                    : '-1'}"
+                                    ? "0"
+                                    : "-1"}"
                                 on:keyup="{(e) =>
-                                    e.key === 'Enter' &&
+                                    e.key === "Enter" &&
                                     handleCategoryPopup(e)}"
                                 on:click="{handleCategoryPopup}"
                                 ><path
@@ -1939,11 +1934,11 @@
                                     on:click="{() =>
                                         selectCategory(categoryName)}"
                                     on:keyup="{(e) =>
-                                        e.key === 'Enter' &&
+                                        e.key === "Enter" &&
                                         selectCategory(categoryName)}"
                                 >
                                     <h3>
-                                        {trimAllEmptyChar(categoryName) || ""}
+                                        {categoryName.trim() || ""}
                                     </h3>
                                 </div>
                             {/each}
@@ -1958,10 +1953,10 @@
                     <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                     <svg
                         class="save-custom-category-name"
-                        tabindex="{!$menuVisible && !$popupVisible ? '0' : '-1'}"
+                        tabindex="{!$menuVisible && !$popupVisible ? "0" : "-1"}"
                         viewBox="0 0 448 512"
                         on:click="{() => saveCategoryName()}"
-                        on:keyup="{(e) => e.key === 'Enter' && saveCategoryName()}"
+                        on:keyup="{(e) => e.key === "Enter" && saveCategoryName()}"
                     >
                         <!-- xmark and edit -->
                         <path
@@ -1970,38 +1965,38 @@
                     >
                 </div>
             {/if}
-            <div class="category-icon-wrap" title={editCategoryName ? 'Cancel Categories Editor' : 'Edit Categories'}>
+            <div class="category-icon-wrap" title={editCategoryName ? "Cancel Categories Editor" : "Edit Categories"}>
                 <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                 <svg
-                    class="{editCategoryName ? 'cancel-custom-category-name' : 'edit-custom-category-name'}"
+                    class="{editCategoryName ? "cancel-custom-category-name" : "edit-custom-category-name"}"
                     tabindex="{!$menuVisible &&
                     !$popupVisible &&
                     $showFilterOptions
-                        ? '0'
-                        : '-1'}"
-                    viewBox="{'0 0' +
-                        (editCategoryName ? ' 24 24' : ' 512 512')}"
+                        ? "0"
+                        : "-1"}"
+                    viewBox="{"0 0" +
+                        (editCategoryName ? " 24 24" : " 512 512")}"
                     on:click="{async () => {
                         editCategoryName = !editCategoryName;
                         customCategoryName = $selectedCategory;
                         selectedCategoryElement = false;
                         await tick();
-                        document?.getElementById?.('category-name')?.focus?.();
+                        document?.getElementById?.("category-name")?.focus?.();
                     }}"
                     on:keyup="{async (e) => {
-                        if (e.key !== 'Enter') return;
+                        if (e.key !== "Enter") return;
                         editCategoryName = !editCategoryName;
                         customCategoryName = $selectedCategory;
                         selectedCategoryElement = false;
                         await tick();
-                        document?.getElementById?.('category-name')?.focus?.();
+                        document?.getElementById?.("category-name")?.focus?.();
                     }}"
                 >
                     <!-- xmark and edit -->
                     <path
                         d="{editCategoryName
-                            ? 'm19 6-1-1-6 6-6-6-1 1 6 6-6 6 1 1 6-6 6 6 1-1-6-6Z'
-                            : 'M472 22a56 56 0 0 0-80 0l-30 30 98 98 30-30c22-22 22-58 0-80l-18-18zM172 242c-6 6-10 13-13 22l-30 88a24 24 0 0 0 31 31l89-30c8-3 15-7 21-13l168-168-98-98-168 168zM96 64c-53 0-96 43-96 96v256c0 53 43 96 96 96h256c53 0 96-43 96-96v-96a32 32 0 1 0-64 0v96c0 18-14 32-32 32H96c-18 0-32-14-32-32V160c0-18 14-32 32-32h96a32 32 0 1 0 0-64H96z'}"
+                            ? "m19 6-1-1-6 6-6-6-1 1 6 6-6 6 1 1 6-6 6 6 1-1-6-6Z"
+                            : "M472 22a56 56 0 0 0-80 0l-30 30 98 98 30-30c22-22 22-58 0-80l-18-18zM172 242c-6 6-10 13-13 22l-30 88a24 24 0 0 0 31 31l89-30c8-3 15-7 21-13l168-168-98-98-168 168zM96 64c-53 0-96 43-96 96v256c0 53 43 96 96 96h256c53 0 96-43 96-96v-96a32 32 0 1 0-64 0v96c0 18-14 32-32 32H96c-18 0-32-14-32-32V160c0-18 14-32 32-32h96a32 32 0 1 0 0-64H96z"}"
                     ></path></svg
                 >
             </div>
@@ -2010,11 +2005,11 @@
             <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
             <svg
                 class="show-filter-options"
-                tabindex="{$menuVisible || $popupVisible ? '' : '0'}"
+                tabindex="{$menuVisible || $popupVisible ? "" : "0"}"
                 viewBox="0 0 512 512"
                 on:click="{() => handleShowFilterOptions()}"
                 on:keyup="{(e) =>
-                    e.key === 'Enter' && handleShowFilterOptions()}"
+                    e.key === "Enter" && handleShowFilterOptions()}"
                 role="button"
                 aria-label="Show Filter Options"
             >
@@ -2026,7 +2021,7 @@
         </div>
     </div>
     <div
-        class="{'category-settings-wrap' + ($showFilterOptions ? '' : ' display-none')}"
+        class="{"category-settings-wrap" + ($showFilterOptions ? "" : " display-none")}"
         style:--add-icon-size="{$showFilterOptions && customCategoryName && $categories && !$categories?.[customCategoryName] ? "25px" : ""}"
         style:--remove-icon-size="{$categoriesKeys?.length > 1
             ? recListMAPE > 0
@@ -2042,7 +2037,7 @@
                 class="filter-category"
                 on:click="{handleShowFilterCategories}"
                 on:keyup="{(e) =>
-                    e.key === 'Enter' && handleShowFilterCategories(e)}"
+                    e.key === "Enter" && handleShowFilterCategories(e)}"
             >
                 <h2 class="filter-category-dropdown">
                     {selectedFilterCategoryName || ""}
@@ -2052,8 +2047,8 @@
                         !$popupVisible &&
                         $showFilterOptions &&
                         !selectedFilterCategoryElement
-                            ? '0'
-                            : ''}"
+                            ? "0"
+                            : ""}"
                     >
                         <!-- chevron down -->
                         <path
@@ -2062,15 +2057,15 @@
                     >
                 </h2>
                 <div
-                    class="{'options-wrap' +
+                    class="{"options-wrap" +
                         (selectedFilterCategoryElement
-                            ? ''
-                            : ' display-none hide')}"
+                            ? ""
+                            : " display-none hide")}"
                     on:touchend|passive="{handleOptionsWrapVisibility}"
                 >
                     <div
-                        class="{'options-wrap-filter-info' +
-                            (selectedFilterCategoryElement ? '' : ' hide')}"
+                        class="{"options-wrap-filter-info" +
+                            (selectedFilterCategoryElement ? "" : " hide")}"
                     >
                         <div class="header">
                             <div class="filter-title">Filter</div>
@@ -2081,10 +2076,10 @@
                                 !$popupVisible &&
                                 selectedFilterCategoryElement &&
                                 $windowWidth <= 425
-                                    ? '0'
-                                    : '-1'}"
+                                    ? "0"
+                                    : "-1"}"
                                 on:keyup="{(e) =>
-                                    e.key === 'Enter' &&
+                                    e.key === "Enter" &&
                                     handleShowFilterCategories(e)}"
                                 on:click="{handleShowFilterCategories}"
                                 ><path
@@ -2103,7 +2098,7 @@
                                             filterCategoryName,
                                         )}"
                                     on:keyup="{(e) =>
-                                        e.key === 'Enter' &&
+                                        e.key === "Enter" &&
                                         handleFilterCategory(
                                             e,
                                             filterCategoryName,
@@ -2125,7 +2120,7 @@
         {/if}
         {#if recListMAPE > 0}
             <div
-                class="{'mean-error' + ($isProcessingList ? ' loading' : '')}"
+                class="{"mean-error" + ($isProcessingList ? " loading" : "")}"
                 style:--mean-error-color="{recListMAPEIncreased === true
                     ? "hsl(185deg,65%,50%)"
                     : recListMAPEIncreased === false
@@ -2142,12 +2137,12 @@
         <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
         {#if $showFilterOptions && $categoriesKeys?.length > 1}
             <div
-                tabindex="{$menuVisible || $popupVisible ? '' : '0'}"
+                tabindex="{$menuVisible || $popupVisible ? "" : "0"}"
                 class="remove-custom-category"
                 title="Delete Category"
                 style:visibility="{$categoriesKeys?.length > 1 ? "" : "hidden"}"
                 on:click="{() => $categoriesKeys?.length > 1 && removeCategory()}"
-                on:keyup="{(e) => e.key === 'Enter' && $categoriesKeys?.length > 1 && removeCategory()}"
+                on:keyup="{(e) => e.key === "Enter" && $categoriesKeys?.length > 1 && removeCategory()}"
             >
                 <svg class="filter-category-wrap-icon" viewBox="0 0 448 512">
                     <!-- minus -->
@@ -2160,16 +2155,16 @@
         <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
         {#if $showFilterOptions && customCategoryName && $categories && !$categories?.[customCategoryName]}
             <div
-                tabindex="{$menuVisible || $popupVisible ? '' : '0'}"
+                tabindex="{$menuVisible || $popupVisible ? "" : "0"}"
                 class="add-custom-category"
                 title="Add Custom Category"
                 on:click="{() => addCategory()}"
-                on:keyup="{(e) => e.key === 'Enter' && addCategory()}"
+                on:keyup="{(e) => e.key === "Enter" && addCategory()}"
             >
                 <svg class="filter-category-wrap-icon" viewBox="0 0 448 512">
                     <!-- add -->
                     <path
-                        d="{'M256 80a32 32 0 1 0-64 0v144H48a32 32 0 1 0 0 64h144v144a32 32 0 1 0 64 0V288h144a32 32 0 1 0 0-64H256V80z'}"
+                        d="{"M256 80a32 32 0 1 0-64 0v144H48a32 32 0 1 0 0 64h144v144a32 32 0 1 0 64 0V288h144a32 32 0 1 0 0-64H256V80z"}"
                     ></path>
                 </svg>
             </div>
@@ -2177,13 +2172,13 @@
     </div>
     <div
         aria-label="List of Filters"
-        class="{'filters' +
-            ($showFilterOptions ? '' : ' display-none') +
-            ($hasWheel ? ' has-wheel' : '') +
-            (shouldScrollSnap && $android ? ' android' : '')}"
+        class="{"filters" +
+            ($showFilterOptions ? "" : " display-none") +
+            ($hasWheel ? " has-wheel" : "") +
+            (shouldScrollSnap && $android ? " android" : "")}"
         id="filters"
         on:wheel="{(e) => {
-            horizontalWheel(e, 'filters');
+            horizontalWheel(e, "filters");
             if ($gridFullView) {
                 if (!scrollingToTop && e.deltaY < 0) {
                     scrollingToTop = true;
@@ -2208,10 +2203,10 @@
                         {@const filterSelectionIsSelected = filterCategoryIsSelected && filterSelectionName === openedFilterSelectionName}
                         {@const isStaticSelection = filterCategoryName === "Media Filter" && $filterConfig?.staticSelection?.[filterSelectionName]}
                         <div
-                            class="{'filter-select' +
+                            class="{"filter-select" +
                                 (filterCategoryIsSelected
-                                    ? ''
-                                    : ' display-none')}"
+                                    ? ""
+                                    : " display-none")}"
                         >
                             <div class="filter-name">
                                 <h2>
@@ -2226,12 +2221,12 @@
                                 $showFilterOptions &&
                                 $windowWidth <= 425 &&
                                 filterCategoryIsSelected
-                                    ? '0'
-                                    : '-1'}"
+                                    ? "0"
+                                    : "-1"}"
                                 on:keyup="{(e) =>
-                                    (e.key === 'Enter' ||
-                                        e.key === 'ArrowDown' ||
-                                        e.key === 'ArrowUp') &&
+                                    (e.key === "Enter" ||
+                                        e.key === "ArrowDown" ||
+                                        e.key === "ArrowUp") &&
                                     filterCategorySelect(
                                         e,
                                         filterSelectionName,
@@ -2254,8 +2249,8 @@
                                         tabindex="{!$menuVisible &&
                                         !$popupVisible &&
                                         $showFilterOptions
-                                            ? '0'
-                                            : '-1'}"
+                                            ? "0"
+                                            : "-1"}"
                                         id="{filterSelectionKey}"
                                         placeholder="Any"
                                         type="search"
@@ -2277,7 +2272,7 @@
                                         class="angle-up"
                                         viewBox="0 0 512 512"
                                         on:keyup="{(e) =>
-                                            e.key === 'Enter' &&
+                                            e.key === "Enter" &&
                                             closeFilterSelect()}"
                                         on:click="{closeFilterSelect}"
                                     >
@@ -2299,11 +2294,11 @@
                                 {/if}
                             </div>
                             <div
-                                class="{'options-wrap' + (filterSelectionIsSelected ? '' : ' display-none hide')}"
+                                class="{"options-wrap" + (filterSelectionIsSelected ? "" : " display-none hide")}"
                                 on:wheel|stopPropagation="{() => {}}"
                                 on:touchend|passive="{handleOptionsWrapVisibility}"
                             >
-                                <div class="{'options-wrap-filter-info' + (filterSelectionIsSelected ? '' : ' hide')}">
+                                <div class="{"options-wrap-filter-info" + (filterSelectionIsSelected ? "" : " hide")}">
                                     <div class="header">
                                         <div class="filter-title">
                                             {filterSelectionName || ""}
@@ -2316,10 +2311,10 @@
                                             !$popupVisible &&
                                             $showFilterOptions &&
                                             filterSelectionIsSelected
-                                                ? '0'
-                                                : '-1'}"
+                                                ? "0"
+                                                : "-1"}"
                                             on:keyup="{(e) =>
-                                                e.key === 'Enter' &&
+                                                e.key === "Enter" &&
                                                 closeFilterSelect()}"
                                             on:click="{closeFilterSelect}"
                                             ><path
@@ -2330,7 +2325,7 @@
                                     </div>
                                     <label
                                         class="disable-interaction"
-                                        for="{'Search ' + filterSelectionKey}"
+                                        for="{"Search " + filterSelectionKey}"
                                     >
                                         {"Search " + filterSelectionKey}
                                     </label>
@@ -2338,9 +2333,9 @@
                                         tabindex="{!$menuVisible &&
                                         !$popupVisible &&
                                         $showFilterOptions
-                                            ? '0'
-                                            : '-1'}"
-                                        id="{'Search ' + filterSelectionKey}"
+                                            ? "0"
+                                            : "-1"}"
+                                        id="{"Search " + filterSelectionKey}"
                                         placeholder="Any"
                                         type="search"
                                         enterkeyhint="search"
@@ -2355,15 +2350,15 @@
                                             window.addHistory?.()}"
                                     />
                                     <div
-                                        class={"options" + (isStaticSelection ? ' static-selection' : '')}
+                                        class={"options" + (isStaticSelection ? " static-selection" : "")}
                                         on:wheel|stopPropagation="{() => {}}"
                                     >
                                         {#if filterSelectionIsSelected}
-                                            {@const isCOO = filterSelectionName === "country of origin"}
+                                            {@const isCOO = filterSelectionName === "Country Of Origin"}
                                             {@const filterSelectionSearchWord = filterSelectionsSearch[filterSelectionKey]?.trim?.().replace(/[\uFF01-\uFF60\uFFE0-\uFFE6\u3000]/g, (ch) => {
-                                                if (ch === '\u3000') return '';
+                                                if (ch === "\u3000") return "";
                                                 return String.fromCharCode(ch.charCodeAt(0) - 0xFEE0);
-                                            }).normalize('NFD').replace(/[^a-zA-Z0-9\p{Lo}]/gu, '').toLowerCase()}
+                                            }).normalize("NFD").replace(/[^a-zA-Z0-9\p{Lo}]/gu, "").toLowerCase()}
                                             {@const selectionOptions = filterSelectionSearchWord ? 
                                                 $orderedFilters?.[filterSelectionName]?.filter?.((option) => hasPartialMatch(option, filterSelectionSearchWord))
                                                 : $orderedFilters?.[filterSelectionName]
@@ -2392,24 +2387,24 @@
                                                             <div
                                                                 title="{getTagFilterInfoText(
                                                                     filterSelectionName ===
-                                                                        'tag category'
+                                                                        "Tag Category"
                                                                         ? {
                                                                             category:
                                                                                 optionName,
                                                                         }
                                                                         : filterSelectionName ===
-                                                                            'tag'
+                                                                            "Tag"
                                                                         ? {
                                                                                 tag: optionName,
                                                                             }
                                                                         : {},
                                                                     filterSelectionName ===
-                                                                        'tag category'
-                                                                        ? 'all tags'
+                                                                        "Tag Category"
+                                                                        ? "all tags"
                                                                         : filterSelectionName ===
-                                                                            'tag'
-                                                                        ? 'category and description'
-                                                                        : '',
+                                                                            "Tag"
+                                                                        ? "category and description"
+                                                                        : "",
                                                                 )}"
                                                                 class="option"
                                                                 on:click="{handleFilterSelectionOptionChange(
@@ -2422,7 +2417,7 @@
                                                                     e,
                                                                 ) =>
                                                                     e.key ===
-                                                                        'Enter' &&
+                                                                        "Enter" &&
                                                                     handleFilterSelectionOptionChange(
                                                                         optionName,
                                                                         filterSelectionName,
@@ -2457,27 +2452,27 @@
                                                                         <path
                                                                             class="item-info-path"
                                                                             d="{status ===
-                                                                                'excluded' ||
+                                                                                "excluded" ||
                                                                             filterCategoryName ===
-                                                                                'Content Caution'
+                                                                                "Content Caution"
                                                                                 ? // circle-xmark
-                                                                                'M256 48a208 208 0 1 1 0 416 208 208 0 1 1 0-416zm0 464a256 256 0 1 0 0-512 256 256 0 1 0 0 512zm-81-337c-9 9-9 25 0 34l47 47-47 47c-9 9-9 24 0 34s25 9 34 0l47-47 47 47c9 9 24 9 34 0s9-25 0-34l-47-47 47-47c9-10 9-25 0-34s-25-9-34 0l-47 47-47-47c-10-9-25-9-34 0z'
+                                                                                "M256 48a208 208 0 1 1 0 416 208 208 0 1 1 0-416zm0 464a256 256 0 1 0 0-512 256 256 0 1 0 0 512zm-81-337c-9 9-9 25 0 34l47 47-47 47c-9 9-9 24 0 34s25 9 34 0l47-47 47 47c9 9 24 9 34 0s9-25 0-34l-47-47 47-47c9-10 9-25 0-34s-25-9-34 0l-47 47-47-47c-10-9-25-9-34 0z"
                                                                                 : // circle-check
-                                                                                'M256 48a208 208 0 1 1 0 416 208 208 0 1 1 0-416zm0 464a256 256 0 1 0 0-512 256 256 0 1 0 0 512zm113-303c9-9 9-25 0-34s-25-9-34 0L224 286l-47-47c-9-9-24-9-34 0s-9 25 0 34l64 64c10 9 25 9 34 0l128-128z'}"
+                                                                                "M256 48a208 208 0 1 1 0 416 208 208 0 1 1 0-416zm0 464a256 256 0 1 0 0-512 256 256 0 1 0 0 512zm113-303c9-9 9-25 0-34s-25-9-34 0L224 286l-47-47c-9-9-24-9-34 0s-9 25 0 34l64 64c10 9 25 9 34 0l128-128z"}"
 
                                                                         ></path>
                                                                     </svg>
                                                                 {/if}
-                                                                {#if typeof window.showFullScreenInfo === "function" && ((filterSelectionName === "tag" && getTagFilterInfoText({ tag: optionName }, "category and description")) || (filterSelectionName === "tag category" && !jsonIsEmpty($tagInfo?.[optionName])))}
+                                                                {#if typeof window.showFullScreenInfo === "function" && ((filterSelectionName === "Tag" && getTagFilterInfoText({ tag: optionName }, "category and description")) || (filterSelectionName === "Tag Category" && !jsonIsEmpty($tagInfo?.[optionName])))}
                                                                     <svg
                                                                         class="extra-item-info"
                                                                         viewBox="0 0 512 512"
                                                                         on:click|stopPropagation="{() => {
                                                                             let htmlToShow =
-                                                                                '';
+                                                                                "";
                                                                             if (
                                                                                 filterSelectionName ===
-                                                                                'tag'
+                                                                                "Tag"
                                                                             ) {
                                                                                 htmlToShow =
                                                                                     getTagInfoHTML(
@@ -2485,7 +2480,7 @@
                                                                                     );
                                                                             } else if (
                                                                                 filterSelectionName ===
-                                                                                'tag category'
+                                                                                "Tag Category"
                                                                             ) {
                                                                                 htmlToShow =
                                                                                     getTagCategoryInfoHTML(
@@ -2501,13 +2496,13 @@
                                                                         ) => {
                                                                             if (
                                                                                 e.key ===
-                                                                                'Enter'
+                                                                                "Enter"
                                                                             ) {
                                                                                 let htmlToShow =
-                                                                                    '';
+                                                                                    "";
                                                                                 if (
                                                                                     filterSelectionName ===
-                                                                                    'tag'
+                                                                                    "Tag"
                                                                                 ) {
                                                                                     htmlToShow =
                                                                                         getTagInfoHTML(
@@ -2515,7 +2510,7 @@
                                                                                         );
                                                                                 } else if (
                                                                                     filterSelectionName ===
-                                                                                    'tag category'
+                                                                                    "Tag Category"
                                                                                 ) {
                                                                                     htmlToShow =
                                                                                         getTagCategoryInfoHTML(
@@ -2566,7 +2561,7 @@
                                         filterCategoryName,
                                     )}"
                                 on:keyup="{(e) =>
-                                    e.key === 'Enter' &&
+                                    e.key === "Enter" &&
                                     handleCheckboxChange(
                                         e,
                                         boolFilterName,
@@ -2575,7 +2570,7 @@
                             >
                                 <label
                                     class="disable-interaction"
-                                    for="{'Checkbox: ' + boolFilterKey}"
+                                    for="{"Checkbox: " + boolFilterKey}"
                                 >
                                     {boolFilterKey}
                                 </label>
@@ -2583,9 +2578,9 @@
                                     tabindex="{!$menuVisible &&
                                     !$popupVisible &&
                                     $showFilterOptions
-                                        ? '0'
-                                        : '-1'}"
-                                    id="{'Checkbox: ' + boolFilterKey}"
+                                        ? "0"
+                                        : "-1"}"
+                                    id="{"Checkbox: " + boolFilterKey}"
                                     type="checkbox"
                                     class="filter-bool"
                                     on:change="{(e) => handleCheckboxChange(e, boolFilterName, filterCategoryName)}"
@@ -2626,7 +2621,7 @@
                             <div class="value-input-number-wrap">
                                 <label
                                     class="disable-interaction"
-                                    for="{'Number Filter: ' + numberFilterKey}"
+                                    for="{"Number Filter: " + numberFilterKey}"
                                 >
                                     {"Number Filter: " + numberFilterKey}
                                 </label>
@@ -2635,45 +2630,45 @@
                                         use:setDefaultInputNumberValue="{filterCategoryArray?.find?.(
                                             (filter) =>
                                                 filter?.optionName === name &&
-                                                filter?.filterType === 'number',
+                                                filter?.filterType === "number",
                                         )?.optionValue}"
                                         tabindex="{!$menuVisible &&
                                         !$popupVisible &&
                                         $showFilterOptions
-                                            ? '0'
-                                            : '-1'}"
-                                        id="{'Number Filter: ' +
+                                            ? "0"
+                                            : "-1"}"
+                                        id="{"Number Filter: " +
                                             numberFilterKey}"
                                         class="value-input-number"
                                         type="text"
-                                        placeholder="{name === 'scoring system'
-                                            ? 'Default: User Scoring'
-                                            : (name === 'average score' || name === 'min average score') && typeof meanAverageScore === 'number' && meanAverageScore > 0
-                                            ? 'Average: ' + formatNumber(meanAverageScore)
-                                            : name === 'popularity' && (
-                                                (typeof meanAnimePopularity === 'number' && meanAnimePopularity > 0) ||
-                                                (typeof meanMangaPopularity === 'number' && meanMangaPopularity > 0) ||
-                                                (typeof meanNovelPopularity === 'number' && meanNovelPopularity > 0)
+                                        placeholder="{name === "Scoring System"
+                                            ? "Default: User Scoring"
+                                            : (name === "Average Score" || name === "Min Average Score") && typeof meanAverageScore === "number" && meanAverageScore > 0
+                                            ? "Average: " + formatNumber(meanAverageScore)
+                                            : name === "Popularity" && (
+                                                (typeof meanAnimePopularity === "number" && meanAnimePopularity > 0) ||
+                                                (typeof meanMangaPopularity === "number" && meanMangaPopularity > 0) ||
+                                                (typeof meanNovelPopularity === "number" && meanNovelPopularity > 0)
                                             )
-                                            ? [meanAnimePopularity, meanMangaPopularity, meanNovelPopularity].map((e) => typeof e === 'number' && e > 0 ? formatNumber(e, 0) : 'N/A').join(' | ')
-                                            : name === 'min anime popularity' && typeof meanAnimePopularity === 'number' && meanAnimePopularity > 0
-                                            ? 'Average: ' + formatNumber(meanAnimePopularity, meanAnimePopularity >= 1000 ? 1 : 0)
-                                            : name === 'min manga popularity' && typeof meanMangaPopularity === 'number' && meanMangaPopularity > 0
-                                            ? 'Average: ' + formatNumber(meanMangaPopularity, meanMangaPopularity >= 1000 ? 1 : 0)
-                                            : name === 'min novel popularity' && typeof meanNovelPopularity === 'number' && meanNovelPopularity > 0
-                                            ? 'Average: ' + formatNumber(meanNovelPopularity, meanNovelPopularity >= 1000 ? 1 : 0)
+                                            ? [meanAnimePopularity, meanMangaPopularity, meanNovelPopularity].map((e) => typeof e === "number" && e > 0 ? formatNumber(e, 0) : "N/A").join(" | ")
+                                            : name === "Min Anime Popularity" && typeof meanAnimePopularity === "number" && meanAnimePopularity > 0
+                                            ? "Average: " + formatNumber(meanAnimePopularity, meanAnimePopularity >= 1000 ? 1 : 0)
+                                            : name === "Min Manga Popularity" && typeof meanMangaPopularity === "number" && meanMangaPopularity > 0
+                                            ? "Average: " + formatNumber(meanMangaPopularity, meanMangaPopularity >= 1000 ? 1 : 0)
+                                            : name === "Min Novel Popularity" && typeof meanNovelPopularity === "number" && meanNovelPopularity > 0
+                                            ? "Average: " + formatNumber(meanNovelPopularity, meanNovelPopularity >= 1000 ? 1 : 0)
                                             : defaultValue != null
-                                            ? 'Default: ' + defaultValue
+                                            ? "Default: " + defaultValue
                                             : conditionalInputNumberList.includes(name)
-                                            ? '>123 or 123'
-                                            : '123'}"
+                                            ? ">123 or 123"
+                                            : "123"}"
                                         on:input="{(e) => {
                                             let newValue = e.target.value;
                                             let oldValue = numberFiltersValues[numberFilterKey]
                                                 ?? filterCategoryArray?.find?.((filter) =>
                                                     filter?.optionName === name &&
-                                                    filter?.filterType === 'number',
-                                                )?.optionValue ?? '';
+                                                    filter?.filterType === "number",
+                                                )?.optionValue ?? "";
                                             numberFiltersValues[numberFilterKey] = newValue;
                                             handleInputNumber(
                                                 e,
@@ -2714,18 +2709,18 @@
     <div
         aria-label="List of Active Filters"
         id="active-filters"
-        class="{'active-filters' + ($showFilterOptions && activeFilters?.length ? '' : ' display-none')}"
+        class="{"active-filters" + ($showFilterOptions && activeFilters?.length ? "" : " display-none")}"
     >
         <div id="tag-filters" class="tag-filters">
             <div
                 tabindex="{!$menuVisible && !$popupVisible && $showFilterOptions
-                    ? '0'
-                    : '-1'}"
+                    ? "0"
+                    : "-1"}"
                 class="empty-tag-filter"
                 title="Remove Filters"
                 on:click="{removeAllActiveFilters}"
                 on:keyup="{(e) =>
-                    e.key === 'Enter' && removeAllActiveFilters()}"
+                    e.key === "Enter" && removeAllActiveFilters()}"
             >
                 <!-- Ban -->
                 <svg viewBox="0 0 512 512">
@@ -2735,8 +2730,8 @@
                 </svg>
             </div>
             {#each activeFilters || [] as { filterType, optionName, optionCategory, status, optionValue }, activeFilterIdx (filterType + optionName + (optionCategory ?? "") || {})}
-                {@const addTagInfo = optionCategory === "tag" && optionName !== "All"}
-                {@const addTagCategoryInfo = optionCategory === "tag category" && optionName !== "All"}
+                {@const addTagInfo = optionCategory === "Tag" && optionName !== "All"}
+                {@const addTagCategoryInfo = optionCategory === "Tag Category" && optionName !== "All"}
                 <div
                     class="active-tag-filter"
                     title={(
@@ -2747,8 +2742,8 @@
                     tabindex="{!$menuVisible &&
                     !$popupVisible &&
                     $showFilterOptions
-                        ? '0'
-                        : '-1'}"
+                        ? "0"
+                        : "-1"}"
                     style:--active-tag-filter-color="{status === "included"
                         ? "hsl(185deg, 65%, 50%)"
                         : status === "excluded"
@@ -2764,7 +2759,7 @@
                             $filterConfig?.readOnly?.[optionCategory],
                         )}"
                     on:keyup="{(e) =>
-                        e.key === 'Enter' &&
+                        e.key === "Enter" &&
                         changeActiveStatus(
                             e,
                             filterType,
@@ -2780,19 +2775,19 @@
                                 {optionName + " : " + optionValue || ""}
                             </h3>
                         {:else if optionCategory}
-                            {#if optionCategory === "country of origin"}
+                            {#if optionCategory === "Country Of Origin"}
                                 {@const upperCaseCC = optionName?.toUpperCase?.()}
                                 {@const fullCountryName = COOs[upperCaseCC]}
                                 <h3>
                                     {#if fullCountryName && upperCaseCC}
                                         {`${optionCategory} : ${fullCountryName} (${upperCaseCC})`}
                                     {:else}
-                                        {`${optionCategory} : ${fullCountryName || upperCaseCC || ''}`}
+                                        {`${optionCategory} : ${fullCountryName || upperCaseCC || ""}`}
                                     {/if}
                                 </h3>
                             {:else}
                                 <h3>
-                                    {`${optionCategory} : ${optionName || ''}`}
+                                    {`${optionCategory} : ${optionName || ""}`}
                                 </h3>
                             {/if}
                         {:else}
@@ -2806,12 +2801,12 @@
                         tabindex="{!$menuVisible &&
                         !$popupVisible &&
                         $showFilterOptions
-                            ? '0'
-                            : '-1'}"
+                            ? "0"
+                            : "-1"}"
                         on:click|preventDefault="{() =>
                             removeActiveFilter(activeFilterIdx)}"
                         on:keyup="{(e) =>
-                            e.key === 'Enter' &&
+                            e.key === "Enter" &&
                             removeActiveFilter(activeFilterIdx)}"
                     >
                         <path
@@ -2825,12 +2820,12 @@
     <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
     <div
         aria-label="Expand/Hide Filter Controls"
-        class="{'close-filters' + ($showFilterOptions ? '' : ' display-none')}"
+        class="{"close-filters" + ($showFilterOptions ? "" : " display-none")}"
         on:click="{() => handleShowFilterOptions()}"
-        on:keyup="{(e) => e.key === 'Enter' && handleShowFilterOptions()}"
+        on:keyup="{(e) => e.key === "Enter" && handleShowFilterOptions()}"
         tabindex="{!$menuVisible && !$popupVisible && $showFilterOptions
-            ? '0'
-            : '-1'}"
+            ? "0"
+            : "-1"}"
     >
         <!-- Angle up -->
         <svg viewBox="0 0 512 512"
@@ -2847,8 +2842,8 @@
                 }}"
                 on:keyup="{() => {}}"
                 class="{(!$dataStatus || !$showStatus) && $loadingDataStatus
-                    ? ' loading'
-                    : ''}"
+                    ? " loading"
+                    : ""}"
                 role="status"
             >
                 {#if $showStatus && (
@@ -2876,7 +2871,7 @@
             enterkeyhint="search"
             autocomplete="off"
             placeholder="Search"
-            tabindex="{$menuVisible || $popupVisible ? '-1' : '0'}"
+            tabindex="{$menuVisible || $popupVisible ? "-1" : "0"}"
             bind:value="{$searchedWord}"
             on:focusin="{() => window.addHistory?.()}"
         />
@@ -2884,26 +2879,26 @@
     <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
     <div class="last-filter-option">
         <div
-            tabindex="{$menuVisible || $popupVisible ? '' : '0'}"
+            tabindex="{$menuVisible || $popupVisible ? "" : "0"}"
             class="change-grid-view"
             on:click="{handleGridView}"
-            on:keyup="{(e) => e.key === 'Enter' && handleGridView()}"
+            on:keyup="{(e) => e.key === "Enter" && handleGridView()}"
             role="button"
             aria-label="Change List View"
         >
-            <svg viewBox="{`0 0 ${$gridFullView ? '312' : '512'} 512`}">
+            <svg viewBox="{`0 0 ${$gridFullView ? "312" : "512"} 512`}">
                 <path
                     d="{$gridFullView
                         ? // arrows-up-down
-                          'M183 9a32 32 0 0 0-46 0l-96 96a32 32 0 0 0 46 46l41-42v294l-41-42a32 32 0 0 0-46 46l96 96c13 12 33 12 46 0l96-96a32 32 0 0 0-46-46l-41 42V109l41 42a32 32 0 0 0 46-46L183 9z'
+                          "M183 9a32 32 0 0 0-46 0l-96 96a32 32 0 0 0 46 46l41-42v294l-41-42a32 32 0 0 0-46 46l96 96c13 12 33 12 46 0l96-96a32 32 0 0 0-46-46l-41 42V109l41 42a32 32 0 0 0 46-46L183 9z"
                         : // arrows-left-right
-                          'm407 375 96-96c12-13 12-33 0-46l-96-96a32 32 0 0 0-46 46l42 41H109l42-41a32 32 0 0 0-46-46L9 233a32 32 0 0 0 0 46l96 96a32 32 0 0 0 46-46l-42-41h294l-42 41a32 32 0 0 0 46 46z'}"
+                          "m407 375 96-96c12-13 12-33 0-46l-96-96a32 32 0 0 0-46 46l42 41H109l42-41a32 32 0 0 0-46-46L9 233a32 32 0 0 0 0 46l96 96a32 32 0 0 0 46-46l-42-41h294l-42 41a32 32 0 0 0 46 46z"}"
                 ></path>
             </svg>
         </div>
         {#if ($listReloadAvailable || $listUpdateAvailable || $loadingCategory[""] || $loadingCategory[$selectedCategory]) && $initList === false}
             <div
-                tabindex="{$menuVisible || $popupVisible ? '' : '0'}"
+                tabindex="{$menuVisible || $popupVisible ? "" : "0"}"
                 class="refresh-list"
                 on:click="{() => {
                     if ($listUpdateAvailable || $loadingCategory[""] || $loadingCategory[$selectedCategory]) {
@@ -2913,7 +2908,7 @@
                     }
                 }}"
                 on:keyup="{(e) => {
-                    if (e.key === 'Enter') return
+                    if (e.key === "Enter") return
                     if ($listUpdateAvailable || $loadingCategory[""] || $loadingCategory[$selectedCategory]) {
                         updateList()
                     } else {
@@ -2935,47 +2930,47 @@
                 <svg
                     class="sort-order-icon"
                     viewBox="{`0 ${
-                        selectedSortType === 'asc' ? '-' : ''
+                        selectedSortType === "asc" ? "-" : ""
                     }140 320 512`}"
                     on:click="{changeSortType}"
-                    on:keyup="{(e) => e.key === 'Enter' && changeSortType()}"
+                    on:keyup="{(e) => e.key === "Enter" && changeSortType()}"
                     tabindex="{$menuVisible ||
                     $popupVisible ||
                     selectedSortElement
-                        ? ''
-                        : '0'}"
+                        ? ""
+                        : "0"}"
                     role="button"
                     aria-label="Change Sort Order"
                 >
                     <path
                         d="{// sortdown
-                        selectedSortType === 'asc'
-                            ? 'M183 41a32 32 0 0 0-46 0L9 169c-9 10-12 23-7 35s17 20 30 20h256a32 32 0 0 0 23-55L183 41z'
+                        selectedSortType === "asc"
+                            ? "M183 41a32 32 0 0 0-46 0L9 169c-9 10-12 23-7 35s17 20 30 20h256a32 32 0 0 0 23-55L183 41z"
                             : // sort up
-                              'M183 471a32 32 0 0 1-46 0L9 343c-9-10-12-23-7-35s17-20 30-20h256a32 32 0 0 1 23 55L183 471z'}"
+                              "M183 471a32 32 0 0 1-46 0L9 343c-9-10-12-23-7-35s17-20 30-20h256a32 32 0 0 1 23 55L183 471z"}"
                     ></path>
                 </svg>
                 <h2
                     tabindex="{$menuVisible ||
                     $popupVisible ||
                     selectedSortElement
-                        ? ''
-                        : '0'}"
+                        ? ""
+                        : "0"}"
                     on:click="{handleSortFilterPopup}"
                     on:keyup="{(e) =>
-                        e.key === 'Enter' && handleSortFilterPopup(e)}"
+                        e.key === "Enter" && handleSortFilterPopup(e)}"
                     aria-label="Select Sort Type"
                 >
                     {selectedSortName || ""}
                 </h2>
                 <div
-                    class="{'options-wrap ' +
-                        (selectedSortElement ? '' : 'display-none hide')}"
+                    class="{"options-wrap " +
+                        (selectedSortElement ? "" : "display-none hide")}"
                     on:touchend|passive="{handleOptionsWrapVisibility}"
                 >
                     <div
-                        class="{'options-wrap-filter-info ' +
-                            (selectedSortElement ? '' : 'hide')}"
+                        class="{"options-wrap-filter-info " +
+                            (selectedSortElement ? "" : "hide")}"
                     >
                         <div class="header">
                             <div class="filter-title">Sort By</div>
@@ -2987,10 +2982,10 @@
                                 !$popupVisible &&
                                 selectedSortElement &&
                                 $windowWidth <= 425
-                                    ? '0'
-                                    : ''}"
+                                    ? "0"
+                                    : ""}"
                                 on:keyup="{(e) =>
-                                    e.key === 'Enter' &&
+                                    e.key === "Enter" &&
                                     handleSortFilterPopup(e)}"
                                 on:click="{handleSortFilterPopup}"
                                 ><path
@@ -3006,24 +3001,24 @@
                                     on:click="{() =>
                                         changeSort(sortFilterName)}"
                                     on:keyup="{(e) =>
-                                        e.key === 'Enter' &&
+                                        e.key === "Enter" &&
                                         changeSort(sortFilterName)}"
                                 >
                                     <h3>{sortFilterName || ""}</h3>
                                     {#if selectedSortName === sortFilterName}
                                         <svg
                                             viewBox="{`0 ${
-                                                selectedSortType === 'asc'
-                                                    ? '-180'
-                                                    : '100'
+                                                selectedSortType === "asc"
+                                                    ? "-180"
+                                                    : "100"
                                             } 320 512`}"
                                         >
                                             <path
                                                 d="{// sortdown
-                                                selectedSortType === 'asc'
-                                                    ? 'M183 41a32 32 0 0 0-46 0L9 169c-9 10-12 23-7 35s17 20 30 20h256a32 32 0 0 0 23-55L183 41z'
+                                                selectedSortType === "asc"
+                                                    ? "M183 41a32 32 0 0 0-46 0L9 169c-9 10-12 23-7 35s17 20 30 20h256a32 32 0 0 0 23-55L183 41z"
                                                     : // sort up
-                                                      'M183 471a32 32 0 0 1-46 0L9 343c-9-10-12-23-7-35s17-20 30-20h256a32 32 0 0 1 23 55L183 471z'}"
+                                                      "M183 471a32 32 0 0 1-46 0L9 343c-9-10-12-23-7-35s17-20 30-20h256a32 32 0 0 1 23 55L183 471z"}"
                                             ></path>
                                         </svg>
                                     {/if}

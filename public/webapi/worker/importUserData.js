@@ -276,12 +276,12 @@ function jsonIsEmpty(obj) {
 function parseJSON(text, textLength) {
     if (isJsonObject(text) || text instanceof Array) {
         return text
-    } else if (!(typeof text === 'string' || text instanceof String)) {
+    } else if (!(typeof text === "string" || text instanceof String)) {
         throw new Error(`Input Text has Unexpected Type of ${text?.constructor?.name || typeof text}`, { cause: JSON.stringify(text) })
     }
     // Seeked First Character Below Before Parsing
     let at = -1;
-    let ch = '';
+    let ch = "";
 
     const maxByteSize = 64 * 1024; // 64 KB
     let textProcessed = 0
@@ -315,7 +315,7 @@ function parseJSON(text, textLength) {
         while (true) {
             // Recheck new chunk in next position
             ch = text.charAt(newAt);
-            if (ch && ch <= ' ') {
+            if (ch && ch <= " ") {
                 newAt += 1
                 continue
             }
@@ -326,7 +326,7 @@ function parseJSON(text, textLength) {
     };
 
     let wordCheck = () => {
-        let word = '';
+        let word = "";
         do {
             word += ch;
             seek();
@@ -337,7 +337,7 @@ function parseJSON(text, textLength) {
     let isPrimitive = true;
     let normalizeUnicodedString = (quote) => {
         // Start Quote is Already Removed
-        let inQuotes = '';
+        let inQuotes = "";
         let hasCompleteString = false;
         let startIndexNotIncluded = at
         let endIndexNotIncluded = 0;
@@ -356,7 +356,7 @@ function parseJSON(text, textLength) {
             }
             // Chch 
             ch = text.charAt(endIndexNotIncluded - 1);
-            while (ch === '\\') {
+            while (ch === "\\") {
                 slashCount++;
                 ch = text.charAt(endIndexNotIncluded - (slashCount + 1));
             }
@@ -415,11 +415,11 @@ function parseJSON(text, textLength) {
         let wordToFind
         let isFirstKey;
         switch (ch) {
-            case '{':
+            case "{":
                 isPrimitive = false;
                 let returnObj = {};
                 seek()
-                if (ch === '}') {
+                if (ch === "}") {
                     seek()
                     return returnObj
                 } else if (ch !== `"`
@@ -433,7 +433,7 @@ function parseJSON(text, textLength) {
                 do {
                     if (isFirstKey) {
                         isFirstKey = false
-                    } else if (ch === ',') {
+                    } else if (ch === ",") {
                         lastCh = ch;
                         seek();
                     } else {
@@ -441,7 +441,7 @@ function parseJSON(text, textLength) {
                     }
                     // Get Key
                     let key = parse(); // Already Seeked Next Character
-                    if (ch === ':') {
+                    if (ch === ":") {
                         lastCh = ch;
                         seek();
                     } else {
@@ -449,25 +449,25 @@ function parseJSON(text, textLength) {
                     }
                     // Get Value
                     returnObj[key] = parse(); // Already Seeked Next Character
-                    if (ch === '}') {
+                    if (ch === "}") {
                         seek()
                         return returnObj
                     }
-                } while (ch === ',');
-                if (lastCh === ',') {
+                } while (ch === ",");
+                if (lastCh === ",") {
                     throw error("Expected double-quoted property name in JSON")
-                } else if (lastCh === ':') {
+                } else if (lastCh === ":") {
                     throw error("Unexpected end of JSON input")
                 } else if (jsonIsEmpty(returnObj)) {
                     throw error("Expected property name or '}' in JSON")
                 } else {
                     throw error("Expected ',' or '}' after property value in JSON")
                 }
-            case '[':
+            case "[":
                 isPrimitive = false
                 let returnArr = [];
                 seek()
-                if (ch === ']') {
+                if (ch === "]") {
                     seek()
                     return returnArr
                 }
@@ -475,7 +475,7 @@ function parseJSON(text, textLength) {
                 do {
                     if (isFirstKey) {
                         isFirstKey = false
-                    } else if (ch === ',') {
+                    } else if (ch === ",") {
                         seek();
                     } else {
                         throw error(returnArr.length ? "Expected ',' or ']' after array element" : "Unexpected end of JSON input");
@@ -483,15 +483,15 @@ function parseJSON(text, textLength) {
                     // Get Value
                     let value = parse(); // Already Seeked Next Character
                     returnArr.push(value);
-                    if (ch === ']') {
+                    if (ch === "]") {
                         seek()
                         return returnArr
                     }
-                } while (ch === ',');
+                } while (ch === ",");
                 throw error(returnArr.length ? "Expected ',' or ']' after array element" : "Unexpected end of JSON input");
             case '"':
                 // case "'":
-                // case '`':
+                // case "`":
                 // Get First Quote
                 quote = ch
                 if (text.length < 2) {
@@ -513,38 +513,38 @@ function parseJSON(text, textLength) {
                         // 2 Quotes
                         seek(2);
                     }
-                    return '';
+                    return "";
                 } else {
                     // normalizeUnicodedString function
                     // already updates character position
                     return normalizeUnicodedString(quote);
                 }
-            case '0':
-            case '1':
-            case '2':
-            case '3':
-            case '4':
-            case '5':
-            case '6':
-            case '7':
-            case '8':
-            case '9':
-            case '-':
-                // case '.':
-                // case 'I':
-                // case '+':
-                let numHolder = ''
+            case "0":
+            case "1":
+            case "2":
+            case "3":
+            case "4":
+            case "5":
+            case "6":
+            case "7":
+            case "8":
+            case "9":
+            case "-":
+                // case ".":
+                // case "I":
+                // case "+":
+                let numHolder = ""
                 let addUpNumberStr = () => {
                     numHolder += ch;
                     seek();
                 };
 
-                if (ch === '-' || ch === '+') {
+                if (ch === "-" || ch === "+") {
                     addUpNumberStr();
                 }
-                // if (ch === 'I') {
+                // if (ch === "I") {
                 //     word = wordCheck();
-                //     wordToFind = 'Infinity'
+                //     wordToFind = "Infinity"
                 //     if (word === wordToFind) {
                 //         if (isPrimitive) {
                 //             const indexAfterWord = at
@@ -571,20 +571,20 @@ function parseJSON(text, textLength) {
                 //         }
                 //     }
                 // } else {
-                let afterDecimal = ch === '.'
+                let afterDecimal = ch === "."
                 let afterExponential
                 if (afterDecimal) {
                     addUpNumberStr();
                 }
-                while (isFinite(ch) && ch !== '') {
+                while (isFinite(ch) && ch !== "") {
                     addUpNumberStr();
-                    if (!afterDecimal && ch === '.') {
+                    if (!afterDecimal && ch === ".") {
                         afterDecimal = true
                         addUpNumberStr();
-                    } else if (!afterExponential && (ch === 'e' || ch === 'E')) {
+                    } else if (!afterExponential && (ch === "e" || ch === "E")) {
                         afterExponential = true
                         addUpNumberStr();
-                        if (ch === '+' || ch === '-') {
+                        if (ch === "+" || ch === "-") {
                             addUpNumberStr();
                         }
                     }
@@ -593,7 +593,7 @@ function parseJSON(text, textLength) {
                 const num = Number(numHolder);
                 if (isNaN(num)) {
                     const errorIndex = at - numHolder.length
-                    throw error('Invalid Number', errorIndex);
+                    throw error("Invalid Number", errorIndex);
                 } else {
                     if (isPrimitive) {
                         const indexAfterNumber = at
@@ -608,9 +608,9 @@ function parseJSON(text, textLength) {
                     }
                     return num;
                 }
-            case 't':
+            case "t":
                 word = wordCheck();
-                wordToFind = 'true'
+                wordToFind = "true"
                 if (word === wordToFind) {
                     if (isPrimitive) {
                         const indexAfterWord = at
@@ -635,9 +635,9 @@ function parseJSON(text, textLength) {
                         throw error("Unexpected non-whitespace character after JSON", errorInWordIndex)
                     }
                 }
-            case 'f':
+            case "f":
                 word = wordCheck();
-                wordToFind = 'false'
+                wordToFind = "false"
                 if (word === wordToFind) {
                     if (isPrimitive) {
                         const indexAfterWord = at
@@ -662,9 +662,9 @@ function parseJSON(text, textLength) {
                         throw error("Unexpected non-whitespace character after JSON", errorInWordIndex)
                     }
                 }
-            case 'n':
+            case "n":
                 word = wordCheck();
-                wordToFind = 'null'
+                wordToFind = "null"
                 if (word === wordToFind) {
                     if (isPrimitive) {
                         const indexAfterWord = at
@@ -689,9 +689,9 @@ function parseJSON(text, textLength) {
                         throw error("Unexpected non-whitespace character after JSON", errorInWordIndex)
                     }
                 }
-            // case 'u':
+            // case "u":
             //     word = wordCheck();
-            //     wordToFind = 'undefined'
+            //     wordToFind = "undefined"
             //     if (word === wordToFind) {
             //         if (isPrimitive) {
             //             const indexAfterWord = at
@@ -717,7 +717,7 @@ function parseJSON(text, textLength) {
             //         }
             //     }
             default:
-                throw error('Unexpected Token');
+                throw error("Unexpected Token");
         }
     }
     // Initialize First Variable

@@ -1,9 +1,9 @@
-import { get } from "svelte/store"
-import { android, appID, dataStatus, progress } from "./globalValues.js"
-import { isConnected } from "./helper.js"
+import { get } from "svelte/store";
+import { isConnected } from "./utils/deviceUtils.js";
+import { android, appID, dataStatus, progress } from "./globalValues.js";
 
 let version, appIDNotChecked = true
-let loadedRequestUrlPromises = {}
+const loadedRequestUrlPromises = {}
 
 const progressedFetch = async (url, totalLength, status, getBlob) => {
     if (loadedRequestUrlPromises[url]) {

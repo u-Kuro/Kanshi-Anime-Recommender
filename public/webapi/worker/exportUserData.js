@@ -18,7 +18,7 @@ self.onmessage = async ({ data }) => {
     }
     self.postMessage({ status: "Exporting User Data" })
 
-    if (data === 'android') {
+    if (data === "android") {
         self.postMessage({ state: 0 }) // Start Deleting Existing File
     }
 
@@ -72,8 +72,8 @@ self.onmessage = async ({ data }) => {
         }
     }
     countRecursiveCalls(backUpData)
-    if (data === 'android') {
-        let chunkStr = ''
+    if (data === "android") {
+        let chunkStr = ""
         let completedRecursionCalls = 0;
         let startPost = performance.now()
         function stringify(x) {
@@ -85,7 +85,7 @@ self.onmessage = async ({ data }) => {
                         chunk: chunkStr,
                         state: 1
                     })
-                    chunkStr = ''
+                    chunkStr = ""
                     let progress = (completedRecursionCalls / maxRecursion)
                     if (progress < .9763) {
                         progress = progress * 0.5 * 100 
@@ -99,7 +99,7 @@ self.onmessage = async ({ data }) => {
             completedRecursionCalls++;
             let first = true;
             if (isJsonObject(x)) {
-                chunkStr += '{'
+                chunkStr += "{"
                 for (const [k, v] of Object.entries(x)) {
                     if (v === undefined) continue
                     if (isJsonObject(v) || v instanceof Array) {
@@ -119,14 +119,14 @@ self.onmessage = async ({ data }) => {
                         }
                     }
                 }
-                chunkStr += '}'
+                chunkStr += "}"
             } else if (x instanceof Array) {
-                chunkStr += '[';
+                chunkStr += "[";
                 for (let i = 0, l = x.length; i < l; i++) {
                     let v = x[i]
                     if (isJsonObject(v) || v instanceof Array) {
                         if (first) { first = false }
-                        else { chunkStr += ',' }
+                        else { chunkStr += "," }
                         stringify(v);
                     } else {
                         if (first) {
@@ -137,7 +137,7 @@ self.onmessage = async ({ data }) => {
                         }
                     }
                 }
-                chunkStr += ']'
+                chunkStr += "]"
             }
             return
         }
@@ -227,7 +227,7 @@ self.onmessage = async ({ data }) => {
                 self.postMessage({ status: `97.63% Exporting User Data` })
                 self.postMessage({ status: null })
                 self.postMessage({
-                    chunk: '',
+                    chunk: "",
                     state: 2,
                     username
                 })
@@ -365,7 +365,7 @@ function retrieveJSON(name) {
 }
 function JSONToBlob(object, _maxRecursion) {
     let propertyStrings = [];
-    let chunkStr = '';
+    let chunkStr = "";
     const maxRecursion = _maxRecursion
     function isJsonObject(obj) {
         return Object.prototype.toString.call(obj) === "[object Object]"
@@ -376,7 +376,7 @@ function JSONToBlob(object, _maxRecursion) {
         if (chunkStr.length >= maxByteSize) {
             const propertyBlob = new Blob([chunkStr]);
             propertyStrings.push(propertyBlob);
-            chunkStr = '';
+            chunkStr = "";
             let progress = (completedRecursionCalls / maxRecursion)
             if (progress < .9763) {
                 const endPost = performance.now()
@@ -393,7 +393,7 @@ function JSONToBlob(object, _maxRecursion) {
         completedRecursionCalls++;
         let first = true;
         if (isJsonObject(x)) {
-            chunkStr += '{';
+            chunkStr += "{";
             for (let [k, v] of Object.entries(x)) {
                 if (v === undefined) continue;
                 if (isJsonObject(v) || v instanceof Array) {
@@ -413,16 +413,16 @@ function JSONToBlob(object, _maxRecursion) {
                     }
                 }
             }
-            chunkStr += '}';
+            chunkStr += "}";
         } else if (x instanceof Array) {
-            chunkStr += '[';
+            chunkStr += "[";
             for (let i = 0, l = x.length; i < l; i++) {
                 let v = x[i];
                 if (isJsonObject(v) || v instanceof Array) {
                     if (first) {
                         first = false;
                     } else {
-                        chunkStr += ',';
+                        chunkStr += ",";
                     }
                     bloberize(v);
                 } else {
@@ -434,14 +434,14 @@ function JSONToBlob(object, _maxRecursion) {
                     }
                 }
             }
-            chunkStr += ']';
+            chunkStr += "]";
         }
     }
     bloberize(object)
-    const propertyBlob = new Blob([chunkStr], { type: 'text/plain' });
+    const propertyBlob = new Blob([chunkStr], { type: "text/plain" });
     propertyStrings.push(propertyBlob);
-    chunkStr = '';
-    return new Blob(propertyStrings, { type: 'application/json' });
+    chunkStr = "";
+    return new Blob(propertyStrings, { type: "application/json" });
 }
 function splitString(str, len) {
     const result = [];

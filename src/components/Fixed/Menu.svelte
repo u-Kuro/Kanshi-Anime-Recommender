@@ -1,16 +1,19 @@
 <script>
     import { onMount, tick } from "svelte";
-    import { mediaManager, getIDBdata, importUserData, saveIDBdata, exportUserData, requestMediaEntries, requestUserEntries } from "../../js/workerUtils.js";
-    import {
-        jsonIsEmpty,
-        removeLocalStorage,
-        setLocalStorage,
-        removeClass,
-        addClass,
-        downloadLink,
-        requestImmediate,
-        showToast,
-    } from "../../js/others/helper.js";
+    import { sineOut } from "svelte/easing";
+    import { fade } from "svelte/transition";
+    import getWebVersion from "../../js/version.js";
+    import { jsonIsEmpty } from "../../js/utils/dataUtils.js";
+    import { removeClass, addClass } from "../../js/utils/domUtils.js";
+    import { downloadLink, requestImmediate, showToast } from "../../js/utils/appUtils.js";
+    import { getIDBData, setIDBData, setLSData, removeLSData } from "../../js/database.js";
+    import { 
+        mediaManager,
+        importUserData,
+        exportUserData,
+        requestMediaEntries,
+        requestUserEntries
+    } from "../../js/workerUtils.js";
     import {
         android,
         menuVisible,
@@ -36,9 +39,7 @@
         showRateLimit,
         dataStatus,
     } from "../../js/globalValues.js";
-    import getWebVersion from "../../version.js"
-    import { fade } from "svelte/transition";
-    import { sineOut } from "svelte/easing";
+    
 
     let navContainerEl;
     let importFileInput;
@@ -120,10 +121,10 @@
             JSBridge.chooseExportFolder();
         } catch (ex) { console.error(ex); }
     }
-    window.setExportPathAvailability = async (value = true) => {
-        setLocalStorage("exportPathIsAvailable", $exportPathIsAvailable = value)
-        .catch(() => removeLocalStorage("exportPathIsAvailable"))
-        .finally(() => saveIDBdata(value, "exportPathIsAvailable"));
+    window.setExportPathAvailability = async (val = true) => {
+        setLSData("exportPathIsAvailable", $exportPathIsAvailable = val)
+        .catch(() => removeLSData("exportPathIsAvailable"))
+        .finally(() => setIDBData("exportPathIsAvailable", val));
     };
 
     async function exportData(e) {
@@ -240,9 +241,9 @@
 
     showStatus.subscribe((val) => {
         if (typeof val === "boolean") {
-            setLocalStorage("showStatus", val)
-            .catch(() => removeLocalStorage("showStatus"))
-            .finally(() => saveIDBdata(val, "showStatus"));
+            setLSData("showStatus", val)
+            .catch(() => removeLSData("showStatus"))
+            .finally(() => setIDBData("showStatus", val));
         }
     })
 
@@ -251,9 +252,9 @@
             if (!val && $dataStatus?.includes?.("Rate Limit:")) {
                 $dataStatus = null
             }
-            setLocalStorage("showRateLimit", val)
-            .catch(() => removeLocalStorage("showRateLimit"))
-            .finally(() => saveIDBdata(val, "showRateLimit"));
+            setLSData("showRateLimit", val)
+            .catch(() => removeLSData("showRateLimit"))
+            .finally(() => setIDBData("showRateLimit", val));
         }
     })
 
@@ -508,7 +509,7 @@
         downloadAndroidApp = async () => {
             if (
                 await $confirmPromise({
-                    text: `Do you want to ${isAndroidWeb ? 'install the android application for your device' : 'add the application to your device'}?`,
+                    text: `Do you want to ${isAndroidWeb ? "install the android application for your device" : "add the application to your device"}?`,
                     isImportant: true,
                 })
             ) {
@@ -547,37 +548,37 @@
         }
         
         // Get Export Folder for Android
-        $autoUpdate = $autoUpdate ?? (await getIDBdata("autoUpdate"));
+        $autoUpdate = $autoUpdate ?? (await getIDBData("autoUpdate"));
         if ($autoUpdate == null) {
-            setLocalStorage("autoUpdate", $autoUpdate = true)
-            .catch(() => removeLocalStorage("autoUpdate"))
-            .finally(() => saveIDBdata(true, "autoUpdate"));
+            setLSData("autoUpdate", $autoUpdate = true)
+            .catch(() => removeLSData("autoUpdate"))
+            .finally(() => setIDBData("autoUpdate", true));
         }
         if ($android) {
-            $exportPathIsAvailable = $exportPathIsAvailable ?? (await getIDBdata("exportPathIsAvailable"));
+            $exportPathIsAvailable = $exportPathIsAvailable ?? (await getIDBData("exportPathIsAvailable"));
             if ($exportPathIsAvailable == null) {
-                setLocalStorage("exportPathIsAvailable", $exportPathIsAvailable = false)
-                .catch(() => removeLocalStorage("exportPathIsAvailable"))
-                .finally(() => saveIDBdata(false, "exportPathIsAvailable"));
+                setLSData("exportPathIsAvailable", $exportPathIsAvailable = false)
+                .catch(() => removeLSData("exportPathIsAvailable"))
+                .finally(() => setIDBData("exportPathIsAvailable", false));
             }
-            $autoExport = $autoExport ?? (await getIDBdata("autoExport"));
+            $autoExport = $autoExport ?? (await getIDBData("autoExport"));
             if ($autoExport == null) {
-                setLocalStorage("autoExport", $autoExport = false)
-                .catch(() => removeLocalStorage("autoExport"))
-                .finally(() => saveIDBdata(false, "autoExport"));
+                setLSData("autoExport", $autoExport = false)
+                .catch(() => removeLSData("autoExport"))
+                .finally(() => setIDBData("autoExport", false));
             }
         }
-        $showStatus = $showStatus ?? (await getIDBdata("showStatus"));
+        $showStatus = $showStatus ?? (await getIDBData("showStatus"));
         if ($showStatus == null) {
-            setLocalStorage("showStatus", $showStatus = true)
-            .catch(() => removeLocalStorage("showStatus"))
-            .finally(() => saveIDBdata(true, "showStatus"));
+            setLSData("showStatus", $showStatus = true)
+            .catch(() => removeLSData("showStatus"))
+            .finally(() => setIDBData("showStatus", true));
         }
-        $showRateLimit = $showRateLimit ?? (await getIDBdata("showRateLimit"));
+        $showRateLimit = $showRateLimit ?? (await getIDBData("showRateLimit"));
         if ($showRateLimit == null) {
-            setLocalStorage("showRateLimit", $showRateLimit = true)
-            .catch(() => removeLocalStorage("showRateLimit"))
-            .finally(() => saveIDBdata(true, "showRateLimit"));
+            setLSData("showRateLimit", $showRateLimit = true)
+            .catch(() => removeLSData("showRateLimit"))
+            .finally(() => setIDBData("showRateLimit", true));
         }
     });
 </script>
@@ -586,7 +587,7 @@
     <div
         class="fixed-menu-container"
         on:click="{handleMenuVisibility}"
-        on:keyup="{(e) => e.key === 'Enter' && handleMenuVisibility(e)}"
+        on:keyup="{(e) => e.key === "Enter" && handleMenuVisibility(e)}"
         in:fade="{{ duration: 200, easing: sineOut }}"
         out:fade="{{ duration: 200, easing: sineOut }}"
     >
@@ -604,9 +605,9 @@
             <div class="menu-options" role="group" aria-label="list actions">
                 <div
                     class="option switchable"
-                    tabindex="{$menuVisible ? '0' : '-1'}"
+                    tabindex="{$menuVisible ? "0" : "-1"}"
                     on:click="{updateList}"
-                    on:keyup="{(e) => e.key === 'Enter' && updateList(e)}"
+                    on:keyup="{(e) => e.key === "Enter" && updateList(e)}"
                     role="menuitem"
                 >
                     <!-- rotate-right -->
@@ -616,11 +617,11 @@
                     <span class="option-label">Update Entries</span>
                     <label 
                         class="switch"
-                        tabindex="{$menuVisible ? '0' : '-1'}"
+                        tabindex="{$menuVisible ? "0" : "-1"}"
                         on:keyup="{(e) => {
-                            if(e.key === 'Enter') {
+                            if(e.key === "Enter") {
                                 $autoUpdate = !$autoUpdate
-                                const message = `${$autoUpdate ? 'Enabled' : 'Disabled'} automatic update`
+                                const message = `${$autoUpdate ? "Enabled" : "Disabled"} automatic update`
                                 if ($android) {
                                     showToast(message)
                                 } else {
@@ -634,7 +635,7 @@
                             class="switch-toggle"
                             bind:checked="{$autoUpdate}"
                             on:change="{() => {
-                                const message = `${$autoUpdate ? 'Enabled' : 'Disabled'} automatic update`
+                                const message = `${$autoUpdate ? "Enabled" : "Disabled"} automatic update`
                                 if ($android) {
                                     showToast(message)
                                 } else {
@@ -650,9 +651,9 @@
                 </div>
                 <div
                     class="option"
-                    tabindex="{$menuVisible ? '0' : '-1'}"
+                    tabindex="{$menuVisible ? "0" : "-1"}"
                     on:click="{showAllHiddenEntries}"
-                    on:keyup="{(e) => e.key === 'Enter' && showAllHiddenEntries(e)}"
+                    on:keyup="{(e) => e.key === "Enter" && showAllHiddenEntries(e)}"
                     role="menuitem"
                 >
                     <svg viewBox="0 0 576 512">
@@ -665,9 +666,9 @@
             <div class="menu-options" role="group" aria-label="backup and restore">
                 <div
                     class="option"
-                    tabindex="{$menuVisible ? '0' : '-1'}"
+                    tabindex="{$menuVisible ? "0" : "-1"}"
                     on:click="{() => importData(true)}"
-                    on:keyup="{(e) => e.key === 'Enter' && importData(true)}"
+                    on:keyup="{(e) => e.key === "Enter" && importData(true)}"
                     role="menuitem"
                 >
                     <svg 
@@ -679,10 +680,10 @@
                     <span class="option-label">Restore Backup</span>
                 </div>
                 <div
-                    class={"option " + ($android ? ($exportPathIsAvailable ? 'export-switchable' : 'export') : '')}
-                    tabindex="{$menuVisible ? '0' : '-1'}"
+                    class={"option " + ($android ? ($exportPathIsAvailable ? "export-switchable" : "export") : "")}
+                    tabindex="{$menuVisible ? "0" : "-1"}"
                     on:click="{exportData}"
-                    on:keyup="{(e) => e.key === 'Enter' && exportData(e)}"
+                    on:keyup="{(e) => e.key === "Enter" && exportData(e)}"
                     role="menuitem"
                 >
                     <svg viewBox="0 0 512 512">
@@ -693,9 +694,9 @@
                         <div class="change-folder">
                             <svg 
                                 viewBox="0 0 576 512"
-                                tabindex="{$menuVisible ? '0' : '-1'}"
+                                tabindex="{$menuVisible ? "0" : "-1"}"
                                 on:click="{handleExportFolder}"
-                                on:keyup="{(e) => e.key === 'Enter' && handleExportFolder(e)}"
+                                on:keyup="{(e) => e.key === "Enter" && handleExportFolder(e)}"
                             >
                                 <path d="M89 224 0 376V96c0-35 29-64 64-64h118c17 0 33 7 45 19l26 26c12 12 29 19 46 19h117c35 0 64 29 64 64v32H144c-23 0-44 12-55 32zm27 16c6-10 17-16 28-16h400c12 0 22 6 28 16s5 22 0 32L460 464c-6 10-17 16-28 16H32c-11 0-22-6-28-16s-5-22 0-32l112-192z"/>
                             </svg>
@@ -703,11 +704,11 @@
                         {#if $exportPathIsAvailable}
                             <label 
                                 class="switch"
-                                tabindex="{$menuVisible ? '0' : '-1'}"
+                                tabindex="{$menuVisible ? "0" : "-1"}"
                                 on:keyup="{(e) => {
-                                    if(e.key === 'Enter') {
+                                    if(e.key === "Enter") {
                                         $autoExport = !$autoExport
-                                        const message = `${$autoExport ? 'Enabled' : 'Disabled'} automatic back up`
+                                        const message = `${$autoExport ? "Enabled" : "Disabled"} automatic back up`
                                         if ($android) {
                                             showToast(message)
                                         } else {
@@ -721,7 +722,7 @@
                                     class="switch-toggle"
                                     bind:checked="{$autoExport}"
                                     on:change="{() => {
-                                        const message = `${$autoExport ? 'Enabled' : 'Disabled'} automatic back up`
+                                        const message = `${$autoExport ? "Enabled" : "Disabled"} automatic back up`
                                         if ($android) {
                                             showToast(message)
                                         } else {
@@ -760,9 +761,9 @@
                         <span class="option-label">Enable Background Updates</span>
                         <label 
                             class="switch"
-                            tabindex="{$menuVisible ? '0' : '-1'}"
+                            tabindex="{$menuVisible ? "0" : "-1"}"
                             on:keyup="{(e) => {
-                                if(e.key === 'Enter') {
+                                if(e.key === "Enter") {
                                     $keepAppRunningInBackground = !$keepAppRunningInBackground
                                 }
                             }}"
@@ -798,9 +799,9 @@
                     <span class="option-label">Show Status Updates</span>
                     <label 
                         class="switch"
-                        tabindex="{$menuVisible ? '0' : '-1'}"
+                        tabindex="{$menuVisible ? "0" : "-1"}"
                         on:keyup="{(e) => {
-                            if(e.key === 'Enter') {
+                            if(e.key === "Enter") {
                                 $showStatus = !$showStatus
                             }
                         }}"
@@ -835,9 +836,9 @@
                     <span class="option-label">Show Rate Limit</span>
                     <label 
                         class="switch"
-                        tabindex="{$menuVisible ? '0' : '-1'}"
+                        tabindex="{$menuVisible ? "0" : "-1"}"
                         on:keyup="{(e) => {
-                            if(e.key === 'Enter') {
+                            if(e.key === "Enter") {
                                 $showRateLimit = !$showRateLimit
                             }
                         }}"
@@ -859,8 +860,8 @@
                 <div class="menu-options" role="group" aria-label="tool actions">
                     <div
                         class="option"
-                        tabindex="{$menuVisible ? '0' : '-1'}"
-                        on:keyup="{(e) => e.key === 'Enter' && checkForUpdates(e)}"
+                        tabindex="{$menuVisible ? "0" : "-1"}"
+                        on:keyup="{(e) => e.key === "Enter" && checkForUpdates(e)}"
                         on:click="{checkForUpdates}"
                         role="menuitem"
                     >
@@ -871,8 +872,8 @@
                     </div>
                     <div
                         class="option"
-                        tabindex="{$menuVisible ? '0' : '-1'}"
-                        on:keyup="{(e) => e.key === 'Enter' && clearCache(e)}"
+                        tabindex="{$menuVisible ? "0" : "-1"}"
+                        on:keyup="{(e) => e.key === "Enter" && clearCache(e)}"
                         on:click="{clearCache}"
                         role="menuitem"
                     >
@@ -891,9 +892,9 @@
                 {#if $mobile && !$android && (isAndroidWeb || (deferredPrompt && typeof deferredPrompt?.prompt === "function"))}
                     <div
                         class="option"
-                        tabindex="{$menuVisible ? '0' : '-1'}"
+                        tabindex="{$menuVisible ? "0" : "-1"}"
                         on:click="{() => downloadAndroidApp?.()}"
-                        on:keyup="{(e) => e.key === 'Enter' && downloadAndroidApp?.()}"
+                        on:keyup="{(e) => e.key === "Enter" && downloadAndroidApp?.()}"
                         role="menuitem"
                     >
                         {#if isAndroidWeb}
@@ -915,9 +916,9 @@
                 {/if}
                 <div
                     class="option"
-                    tabindex="{$menuVisible ? '0' : '-1'}"
+                    tabindex="{$menuVisible ? "0" : "-1"}"
                     on:click="{anilistSignup}"
-                    on:keyup="{(e) => e.key === 'Enter' && anilistSignup(e)}"
+                    on:keyup="{(e) => e.key === "Enter" && anilistSignup(e)}"
                     role="menuitem"
                 >
                     <svg viewBox="0 0 640 512">
@@ -927,8 +928,8 @@
                 </div>
                 <div
                     class="option"
-                    tabindex="{$menuVisible ? '0' : '-1'}"
-                    on:keyup="{(e) => e.key === 'Enter' && showNotice(e)}"
+                    tabindex="{$menuVisible ? "0" : "-1"}"
+                    on:keyup="{(e) => e.key === "Enter" && showNotice(e)}"
                     on:click="{showNotice}"
                     role="menuitem"
                 >
@@ -953,7 +954,7 @@
 
 {#if $menuVisible && menuIsGoingBack}
     <div
-        class="{'go-back-grid-highlight' + (willGoBack ? ' will-go-back' : '')}"
+        class="{"go-back-grid-highlight" + (willGoBack ? " will-go-back" : "")}"
         in:fade="{{ duration: 200, easing: sineOut }}"
         out:fade="{{ duration: 200, easing: sineOut }}"
     >

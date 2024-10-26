@@ -467,11 +467,11 @@ self.onmessage = async ({ data }) => {
         collectionToPut.tagInfoUpdateAt = 1706687489
     }
 
-    let filters = await retrieveJSON("filters")
+    let mediaOptions = await retrieveJSON("mediaOptions")
     const version = 5
-    if (!isJsonObject(filters) || filters.version !== version || jsonIsEmpty(filters)) {
+    if (!isJsonObject(mediaOptions) || mediaOptions.version !== version || jsonIsEmpty(mediaOptions)) {
         self.postMessage({ status: "Getting Filters" })
-        filters = {
+        mediaOptions = {
             format: {
                 "Anime": true,
                 "TV": true,
@@ -1931,7 +1931,7 @@ self.onmessage = async ({ data }) => {
             version
         }
         collectionToPut.shouldProcessRecommendation = true
-        collectionToPut.filters = filters
+        collectionToPut.mediaOptions = mediaOptions
     }
 
     const orderedFilters = {
@@ -1939,51 +1939,51 @@ self.onmessage = async ({ data }) => {
             "weighted score",
             "score",
             "average score",
-            "user score",
-            "popularity",
-            "trending",
-            "date",
-            "date updated",
-            "date added",
-            "favorites",
+            "User Score",
+            "Popularity",
+            "Trending",
+            "Date",
+            "Date Updated",
+            "Date Added",
+            "Favorites",
         ],
         season: [
-            "current season",
-            "next season",
-            "previous season",
-            "ongoing seasons",
-            "future seasons",
+            "Current Season",
+            "Next Season",
+            "Previous Season",
+            "Ongoing Seasons",
+            "Future Seasons",
             "past seasons",
             "Winter",
             "Spring",
             "Summer",
             "Fall",
         ],
-        "flexible inclusion": [
-            "OR: genre",
-            "OR: tag",
+        "Flexible Inclusion": [
+            "OR: Genre",
+            "OR: Tag",
             "OR: studio",
-            "OR: genre / tag",
-            "OR: genre / studio",
-            "OR: tag / studio",
-            "OR: genre / tag / studio",
+            "OR: Genre / Tag",
+            "OR: Genre / Studios",
+            "OR: Tag / Studios",
+            "OR: Genre / Tag / Studios",
         ],
-        "shown metric": [
+        "Shown Metric": [
             "weighted score",
             "score",
             "average score",
-            "user score",
-            "popularity",
-            "favorites",
-            "trending",
+            "User Score",
+            "Popularity",
+            "Favorites",
+            "Trending",
         ],
-        "shown list": [
+        "Shown List": [
             "recommended studios",
-            "non-caution",
+            "Non-Caution",
             "non-semi-caution",
-            "recommended score",
-            "semi-recommended score",
-            "other",
+            "Recommended Score",
+            "Semi-Recommended Score",
+            "Other Score",
         ]
     }
     const orderedFiltersKeys = ["genre", "tag", "tag category", "year", "format", "country of origin", "release status", "user status", "studio"]
@@ -1995,7 +1995,7 @@ self.onmessage = async ({ data }) => {
     const algorithmFilterSelections = { genre: 1, tag: 1, "tag category": 1 }
     for (let i = 0, l = orderedFiltersKeys.length; i < l; i++) {
         const filterKey = orderedFiltersKeys[i], isAlgorithmFilterSelection = algorithmFilterSelections[filterKey]
-        let options = Object.keys(filters[filterKey]);
+        let options = Object.keys(mediaOptions[filterKey]);
         options = options.reduce((uniqueOptions, k) => {
             if (!uniqueOptions[k]) {
                 uniqueOptions[k] = 1
@@ -2014,15 +2014,15 @@ self.onmessage = async ({ data }) => {
             // }  else if (optionSort === "ascnum") {
             //     options.sort((a, b) => parseFloat(a) - parseFloat(b))
             // } else if (optionSort === "desclet") {
-            //     options.sort((a, b) => a.localeCompare(b, undefined, {sensitivity: 'base'}))
+            //     options.sort((a, b) => a.localeCompare(b, undefined, {sensitivity: "base"}))
             //     options.reverse()
         } else if (isJsonObject(optionSort)) {
             options.sort((a, b) => {
                 const optionSortA = optionSort[a];
                 const optionSortB = optionSort[b];
             
-                const isNumberA = typeof optionSortA === 'number';
-                const isNumberB = typeof optionSortB === 'number';
+                const isNumberA = typeof optionSortA === "number";
+                const isNumberB = typeof optionSortB === "number";
             
                 if (isNumberA && isNumberB) {
                     return optionSortA - optionSortB;
@@ -2036,11 +2036,11 @@ self.onmessage = async ({ data }) => {
                     return 1;
                 }
             
-                const isStringA = typeof a === 'string';
-                const isStringB = typeof b === 'string';
+                const isStringA = typeof a === "string";
+                const isStringB = typeof b === "string";
             
                 if (isStringA && isStringB) {
-                    return a.localeCompare(b, undefined, {sensitivity: 'base'});
+                    return a.localeCompare(b, undefined, {sensitivity: "base"});
                 }
             
                 if (isStringA) {
@@ -2054,7 +2054,7 @@ self.onmessage = async ({ data }) => {
                 return 0;
             });
         } else {
-            options.sort((a, b) => a.localeCompare(b, undefined, {sensitivity: 'base'})) // default ascending
+            options.sort((a, b) => a.localeCompare(b, undefined, {sensitivity: "base"})) // default ascending
         }
         if (isAlgorithmFilterSelection) {
             options.unshift("All")
@@ -2065,14 +2065,14 @@ self.onmessage = async ({ data }) => {
     const nonOrderedFilters = {
         "Media Filter": {
             bool: [
-                "hide my list",
-                "hide my finished list",
-                "show my list",
-                "show all sequels",
-                "show next sequel",
-                "show anime adapted",
-                "has unseen progress",
-                "hidden list",
+                "Hide My List",
+                "Hide My Finished List",
+                "Show My List",
+                "Show All Sequels",
+                "Show Next Sequel",
+                "Show Anime Adapted",
+                "Has Unseen Progress",
+                "Hidden List",
             ],
             number: [
                 {
@@ -2081,7 +2081,7 @@ self.onmessage = async ({ data }) => {
                     minValue: 0,
                 },
                 {
-                    name: "user score",
+                    name: "User Score",
                     maxValue: Infinity,
                     minValue: 0,
                 },
@@ -2091,7 +2091,7 @@ self.onmessage = async ({ data }) => {
                     min: 0,
                 },
                 {
-                    name: "popularity",
+                    name: "Popularity",
                     maxValue: Infinity,
                     minValue: 0,
                 },
@@ -2109,49 +2109,49 @@ self.onmessage = async ({ data }) => {
         },
         "Algorithm Filter": {
             bool: [
-                "content focused",
-                "inc. average score",
-                "inc. all factors",
-                "exclude year",
+                "Content Focused",
+                "Inc. Average Score",
+                "Inc. All Factors",
+                "Exclude Year",
             ],
             number: [
                 {
-                    name: "min tag percentage",
+                    name: "Min Tag Percentage",
                     defaultValue: 0,
                     maxValue: Infinity,
                     minValue: 0,
                 },
                 {
-                    name: "scoring system",
+                    name: "Scoring System",
                     maxValue: Infinity,
                     minValue: 0,
                 },
                 {
-                    name: "sample size",
+                    name: "Sample Size",
                     maxValue: Infinity,
                     minValue: 1,
                 },
                 {
-                    name: "min sample size",
+                    name: "Min Sample Size",
                     maxValue: Infinity,
                     minValue: 1,
                 },
                 {
-                    name: "min average score",
+                    name: "Min Average Score",
                     minValue: 1,
                 },
                 {
-                    name: "min anime popularity",
+                    name: "Min Anime Popularity",
                     maxValue: Infinity,
                     minValue: 1,
                 },
                 {
-                    name: "min manga popularity",
+                    name: "Min Manga Popularity",
                     maxValue: Infinity,
                     minValue: 1,
                 },
                 {
-                    name: "min novel popularity",
+                    name: "Min Novel Popularity",
                     maxValue: Infinity,
                     minValue: 1,
                 }
@@ -2160,14 +2160,14 @@ self.onmessage = async ({ data }) => {
     }
     const filterConfig = {
         readOnly: {
-            "flexible inclusion": 1,
-            "shown metric": 1
+            "Flexible Inclusion": 1,
+            "Shown Metric": 1
         },
         staticSelection: {
             season: 1,
-            "flexible inclusion": 1,
-            "shown metric": 1,
-            "shown list": 1
+            "Flexible Inclusion": 1,
+            "Shown Metric": 1,
+            "Shown List": 1
         },
         selection: {
             "Media Filter": [
@@ -2178,9 +2178,9 @@ self.onmessage = async ({ data }) => {
                 "user status",
                 "format",
                 "country of origin",
-                "shown metric",
-                "shown list",
-                "flexible inclusion",
+                "Shown Metric",
+                "Shown List",
+                "Flexible Inclusion",
                 "year",
                 "studio",
             ],
@@ -2201,22 +2201,22 @@ self.onmessage = async ({ data }) => {
         algorithmFilters = [
             {
                 filterType: "bool",
-                optionName: "content focused",
+                optionName: "Content Focused",
                 status: "none"
             },
             {
                 filterType: "bool",
-                optionName: "inc. all factors",
+                optionName: "Inc. All Factors",
                 status: "none"
             },
             {
                 filterType: "bool",
-                optionName: "inc. average score",
+                optionName: "Inc. Average Score",
                 status: "none"
             },
             {
                 filterType: "bool",
-                optionName: "exclude year",
+                optionName: "Exclude Year",
                 status: "none"
             },
         ]

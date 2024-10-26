@@ -1,9 +1,19 @@
 <script>
+	import C from "./components/index.js";
 	import { onMount, tick } from "svelte";
 	import { fade } from "svelte/transition";
 	import { inject } from "@vercel/analytics";
-	import C from "./components/index.js";
-	import getWebVersion from "./version.js";
+	import getWebVersion from "./js/version.js";
+	import { requestImmediate } from "./js/utils/appUtils.js";
+	import {
+		getIDBData,
+		setIDBData,
+		getLSData,
+		setLSData,
+		removeLSData,
+        hasIDBData,
+        getIDBRecords,
+	} from "./js/database.js";
 	import {
 		retrieveInitialData,
 		getFilterOptions,
@@ -15,16 +25,8 @@
 		getExtraInfo,
 		mediaLoader,
         updateTagInfo,
-		saveIDBdata,
-		getIDBdata,
         initMediaLoader
 	} from "./js/workerUtils.js";
-	import {
-		getLocalStorage,
-		removeLocalStorage,
-		requestImmediate,
-		setLocalStorage,
-	} from "./js/helper.js";
 	import {
 		appID,
 		android,
@@ -79,6 +81,7 @@
         shownAllInList,
         currentMediaSortBy,
         currentMediaFilters,
+        evictedKey,
 	} from "./js/globalValues.js";
 
 	(async () => {
@@ -91,9 +94,9 @@
 			// Check Data Loss
 			if ($android) {
 				if (window[$visitedKey] === true) {
-					const isAlreadyVisited = await getIDBdata($visitedKey);
+					const isAlreadyVisited = await getIDBData($visitedKey);
 					if (!isAlreadyVisited) {
-						window[".androidDataIsEvicted"] = true;
+						window[$evictedKey] = true;
 						try {
 							JSBridge.notifyDataEviction();
 							if (window[$isBackgroundUpdateKey] === true) {
@@ -102,7 +105,7 @@
 						} catch (ex) { console.error(ex) }
 					}
 				} else if (window[$visitedKey] === false) {
-					saveIDBdata(true, $visitedKey, true)
+					setIDBData($visitedKey, true, true)
 					.then(() => {
 						try {
 							JSBridge.pageVisited()
@@ -116,7 +119,7 @@
 				try {
 					$initList = (await mediaLoader({
 						loadAll: true, 
-						selectedCategory: ($selectedCategory ?? getLocalStorage("selectedCategory") ?? await getIDBdata("selectedCategory")),
+						selectedCategory: ($selectedCategory ?? getLSData("selectedCategory") ?? await getIDBData("selectedCategory")),
 						initList: true
 					}))?.shouldReloadList
 					if ($initList === false) {
@@ -130,44 +133,40 @@
 				} catch (ex) { console.error(ex) }
 			}
 
-			await Promise.all([
-				// Check/Get/Update/Process Media Entries
-				(async () => {
-					const shouldRetrieveInitialData = await getIDBdata("checkInitialData");
-					if (shouldRetrieveInitialData === true) {
-						await retrieveInitialData()
-					} else if (shouldRetrieveInitialData !== false) {
-						throw "Unexpected Error"
-					}
-				})(),
-				// Check/Update/Process User Media Entries
-				(async () => {
-					const savedUsername = await getIDBdata("username");
-					if (savedUsername !== $username) {
-						$username = savedUsername
-						setLocalStorage("username", savedUsername || "")
-						.catch(() => removeLocalStorage("username"))
-					}
-				})(),
-				// Check/Get/Update Filter Options Selection
-				(async () => {
-					if ($android && window[$isBackgroundUpdateKey] === true) {
+			// Get Initial Data
+			await (async () => {
+				const hasInitialData = await hasIDBData([
+					"mediaEntries",
+					"excludedEntries",
+					// "orderedMediaOptions",
+					"tagInfo",
+				])
+				if (!hasInitialData) await retrieveInitialData()
+				if (!$android || window[$isBackgroundUpdateKey] !== true) {
+					const records = await getIDBRecords([
+						"username",
+						// "orderedFilters",
+						"algorithmFilters",
+						"tagInfo"
+					])
+					if (records) {
+						const savedUsername = records.username;
+						if (savedUsername !== $username) {
+							$username = savedUsername
+							setLSData("username", savedUsername || "")
+							.catch(() => removeLSData("username"))
+						}
+						// $orderedFilters = records.orderedFilters;
+						// $nonOrderedFilters = records.nonOrderedFilters;
+						// $filterConfig = records.filterConfig;
+						$algorithmFilters = records.algorithmFilters || [];
+						$tagInfo = records.tagInfo || {};
 						updateTagInfo();
 					} else {
-						const response = await getFilterOptions()
-						if (response) {
-							$orderedFilters = response.orderedFilters;
-							$nonOrderedFilters = response.nonOrderedFilters;
-							$filterConfig = response.filterConfig;
-							$algorithmFilters = response.algorithmFilters;
-							$tagInfo = response.tagInfo;
-						}
-						try {
-							updateTagInfo();
-						} catch (ex) { console.error(ex) }
+						throw new Error("Failed to load initial data")
 					}
-				})()
-			])
+				}
+			})()
 
 			$initData = false;
 						
@@ -186,8 +185,8 @@
 					});
 
 					let shouldExport = await autoExportIsPastDate();
-					$exportPathIsAvailable = $exportPathIsAvailable ?? (await getIDBdata("exportPathIsAvailable"));
-					$autoExport = $autoExport ?? (await getIDBdata("autoExport"));
+					$exportPathIsAvailable = $exportPathIsAvailable ?? (await getIDBData("exportPathIsAvailable"));
+					$autoExport = $autoExport ?? (await getIDBData("autoExport"));
 					if (shouldExport && $exportPathIsAvailable && $autoExport) {
 						try {
 							await exportUserData({ initList: true })
@@ -209,6 +208,10 @@
 						await requestMediaEntries({ initList: true })
 					} catch (ex) { console.error(ex) }
 					dataIsUpdated = dataIsUpdated || window.KanshiBackgroundShouldProcessRecommendation;
+
+					try {
+						await updateTagInfo({ initList: true, getTagInfo: false });
+					} catch (ex) { console.error(ex) }
 
 					let recommendationListIsProcessed
 					if (dataIsUpdated) {
@@ -258,7 +261,7 @@
 			} else {
 				// Get/Show List
 				let shouldProcessRecommendation;
-				const neareastMediaReleaseAiringAt = getLocalStorage("neareastMediaReleaseAiringAt") ?? (await getIDBdata("neareastMediaReleaseAiringAt"));
+				const neareastMediaReleaseAiringAt = getLSData("neareastMediaReleaseAiringAt") ?? (await getIDBData("neareastMediaReleaseAiringAt"));
 				if (
 					typeof neareastMediaReleaseAiringAt === "number" &&
 					!isNaN(neareastMediaReleaseAiringAt)
@@ -274,7 +277,7 @@
 					}
 				}
 				if (!shouldProcessRecommendation) {
-					shouldProcessRecommendation = (await getIDBdata("shouldProcessRecommendation")) || (await getIDBdata("recommendedMediaListIsEmpty"));
+					shouldProcessRecommendation = (await getIDBData("shouldProcessRecommendation")) || (await getIDBData("recommendedMediaListIsEmpty"));
 				}
 
 				let shouldLoadMedia
@@ -285,13 +288,13 @@
 					shouldLoadMedia = true
 				}
 
-				shouldLoadMedia = shouldLoadMedia || $initList !== false || (await getIDBdata("shouldLoadMedia"));
+				shouldLoadMedia = shouldLoadMedia || $initList !== false || (await getIDBData("shouldLoadMedia"));
 				if (shouldLoadMedia) {
 					if ($initList !== false) {
 						await mediaManager({ updateRecommendedMediaList: true, initList: true })
 						await mediaLoader({
 							loadAll: true,
-							selectedCategory: ($selectedCategory ?? getLocalStorage("selectedCategory") ?? await getIDBdata("selectedCategory")),
+							selectedCategory: ($selectedCategory ?? getLSData("selectedCategory") ?? await getIDBData("selectedCategory")),
 							initList: true
 						})
 						$initList = false;
@@ -667,9 +670,9 @@
 		if ($android && window[$isBackgroundUpdateKey] === true) return;
 		if (val === true) {
 			const hourINMS = 60 * 60 * 1000;
-			setLocalStorage("autoUpdate", val)
-			.catch(() => removeLocalStorage("autoUpdate"))
-			.finally(() => saveIDBdata(val, "autoUpdate"));
+			setLSData("autoUpdate", val)
+			.catch(() => removeLSData("autoUpdate"))
+			.finally(() => setIDBData("autoUpdate", val));
 			if (await autoUpdateIsPastDate()) {
 				checkAutoFunctions();
 				clearTimeout($autoUpdateInterval)
@@ -698,18 +701,18 @@
 		} else if (val === false) {
 			clearTimeout($autoUpdateInterval)
 			clearInterval($autoUpdateInterval)
-			setLocalStorage("autoUpdate", val)
-			.catch(() => removeLocalStorage("autoUpdate"))
-			.finally(() => saveIDBdata(val, "autoUpdate"));
+			setLSData("autoUpdate", val)
+			.catch(() => removeLSData("autoUpdate"))
+			.finally(() => setIDBData("autoUpdate", val));
 		}
 	});
 	autoExport.subscribe(async (val) => {
 		if ($android && window[$isBackgroundUpdateKey] === true) return;
 		if (val === true) {
 			const hourINMS = 60 * 60 * 1000;
-			setLocalStorage("autoExport", val)
-			.catch(() => removeLocalStorage("autoExport"))
-			.finally(() => saveIDBdata(val, "autoExport"));
+			setLSData("autoExport", val)
+			.catch(() => removeLSData("autoExport"))
+			.finally(() => setIDBData("autoExport", val));
 			if (await autoExportIsPastDate()) {
 				checkAutoFunctions();
 				clearTimeout($autoExportInterval)
@@ -739,14 +742,14 @@
 			clearTimeout($autoExportInterval)
 			clearInterval($autoExportInterval)
 			$autoExportInterval = null;
-			setLocalStorage("autoExport", val)
-			.catch(() => removeLocalStorage("autoExport"))
-			.finally(() => saveIDBdata(val, "autoExport"));
+			setLSData("autoExport", val)
+			.catch(() => removeLSData("autoExport"))
+			.finally(() => setIDBData("autoExport", val));
 		}
 	});
 	async function autoUpdateIsPastDate() {
 		let isPastDate = false;
-		$runnedAutoUpdateAt = await getIDBdata("runnedAutoUpdateAt");
+		$runnedAutoUpdateAt = await getIDBData("runnedAutoUpdateAt");
 		if ($runnedAutoUpdateAt == null) {
 			isPastDate = true;
 		} else if (
@@ -763,7 +766,7 @@
 	async function autoExportIsPastDate() {
 		// Check Run First
 		let isPastDate = false;
-		$runnedAutoExportAt = await getIDBdata("runnedAutoExportAt");
+		$runnedAutoExportAt = await getIDBData("runnedAutoExportAt");
 		if ($runnedAutoExportAt == null) {
 			isPastDate = true;
 		} else if (
@@ -1286,19 +1289,19 @@
 
 <div
 	id="app"
-	class="{($android ? 'android' : '') +
-		(isMaxWindowHeight ? ' max-window-height' : '') +
-		($popupVisible ? ' popup-visible' : '')}"
+	class="{($android ? "android" : "") +
+		(isMaxWindowHeight ? " max-window-height" : "") +
+		($popupVisible ? " popup-visible" : "")}"
 >
 	{#if shownProgress > 0 && shownProgress < 100}
 		<div
 			role="progressbar"
 			out:fade="{{ duration: 0, delay: 400 }}"
 			on:outrostart="{(e) => {
-				e.target.style.setProperty('--progress', '0%');
+				e.target.style.setProperty("--progress", "0%");
 			}}"
-			class="{'fixed-progress' +
-				(isBelowNav ? ' is-below-absolute-progress' : '')}"
+			class="{"fixed-progress" +
+				(isBelowNav ? " is-below-absolute-progress" : "")}"
 			style:--progress="{"-" + (100 - shownProgress) + "%"}"
 		></div>
 	{/if}
@@ -1313,10 +1316,10 @@
 			style:--grid-position="{gridTopPosition + "px"}"
 			style:--grid-max-height="{gridMaxHeight + "px"}"
 			id="media-list-pager"
-			class="{'media-list-pager' +
-				(mediaListPagerIsChanging ? ' pager-is-changing' : '') +
-				(changingTopPosition ? ' is-changing-top-position' : '') +
-				($gridFullView ? ' remove-snap-scroll' : '')}"
+			class="{"media-list-pager" +
+				(mediaListPagerIsChanging ? " pager-is-changing" : "") +
+				(changingTopPosition ? " is-changing-top-position" : "") +
+				($gridFullView ? " remove-snap-scroll" : "")}"
 			style:--media-list-pager-pad="{mediaListPagerPad + "px"}"
 			aria-label="List of Category of Media"
 		>
@@ -1325,7 +1328,7 @@
 					<C.Media.MediaGrid {mainCategory} />
 				{/each}
 			{:else}
-				<C.Media.MediaGrid mainCategory="{''}" />
+				<C.Media.MediaGrid mainCategory="{""}" />
 			{/if}
 		</section>
 	</main>
