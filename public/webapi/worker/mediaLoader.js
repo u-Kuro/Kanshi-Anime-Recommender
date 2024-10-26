@@ -77,17 +77,17 @@ async function executeMessage() {
 
                             if (typeof searchedWord === "string") {
                                 const query = searchedWord.trim().replace(/[\uFF01-\uFF60\uFFE0-\uFFE6\u3000]/g, (ch) => {
-                                    if (ch === '\u3000') return '';
+                                    if (ch === "\u3000") return "";
                                     return String.fromCharCode(ch.charCodeAt(0) - 0xFEE0);
-                                }).normalize('NFD').replace(/[^a-zA-Z0-9\p{Lo}]/gu, '').toLowerCase()
+                                }).normalize("NFD").replace(/[^a-zA-Z0-9\p{Lo}]/gu, "").toLowerCase()
                                 loadedMediaList[selectedCategory] = mediaList.filter((id) => {
                                     let title = recommendedMediaList[id]?.title
                                     if (isJsonObject(title)) {
                                         return Object.values(title).some(($title) => 
                                             typeof $title === "string" && $title.trim().replace(/[\uFF01-\uFF60\uFFE0-\uFFE6\u3000]/g, (ch) => {
-                                                if (ch === '\u3000') return '';
+                                                if (ch === "\u3000") return "";
                                                 return String.fromCharCode(ch.charCodeAt(0) - 0xFEE0);
-                                            }).normalize('NFD').replace(/[^a-zA-Z0-9\p{Lo}]/gu, '').toLowerCase().includes(query)
+                                            }).normalize("NFD").replace(/[^a-zA-Z0-9\p{Lo}]/gu, "").toLowerCase().includes(query)
                                         );
                                     }
                                 })
@@ -250,18 +250,18 @@ async function executeMessage() {
                     } = mediaCautions[i] || {}
                     // Included is Semi Caution and Excluded is Caution
                     if (status === "included") {
-                        if (filterType === 'selection') {
-                            if (optionCategory === 'Genre') {
+                        if (filterType === "selection") {
+                            if (optionCategory === "Genre") {
                                 semiContentCautions.genres[optionName] = true
-                            } else if (optionCategory === 'Tag') {
+                            } else if (optionCategory === "Tag") {
                                 semiContentCautions.tags[optionName] = true
                             }
                         }
-                    } else if (status === 'excluded') {
-                        if (filterType === 'selection') {
-                            if (optionCategory === 'Genre') {
+                    } else if (status === "excluded") {
+                        if (filterType === "selection") {
+                            if (optionCategory === "Genre") {
                                 cautionContents.genres[optionName] = true
-                            } else if (optionCategory === 'Tag') {
+                            } else if (optionCategory === "Tag") {
                                 cautionContents.tags[optionName] = true
                             }
                         }
@@ -314,18 +314,18 @@ async function executeMessage() {
                                 } = mediaCautions[i] || {}
                                 // Included is Semi Caution and Excluded is Caution
                                 if (status === "included") {
-                                    if (filterType === 'selection') {
-                                        if (optionCategory === 'Genre') {
+                                    if (filterType === "selection") {
+                                        if (optionCategory === "Genre") {
                                             semiContentCautions.genres[optionName] = true
-                                        } else if (optionCategory === 'Tag') {
+                                        } else if (optionCategory === "Tag") {
                                             semiContentCautions.tags[optionName] = true
                                         }
                                     }
-                                } else if (status === 'excluded') {
-                                    if (filterType === 'selection') {
-                                        if (optionCategory === 'Genre') {
+                                } else if (status === "excluded") {
+                                    if (filterType === "selection") {
+                                        if (optionCategory === "Genre") {
                                             cautionContents.genres[optionName] = true
-                                        } else if (optionCategory === 'Tag') {
+                                        } else if (optionCategory === "Tag") {
                                             cautionContents.tags[optionName] = true
                                         }
                                     }
@@ -813,7 +813,7 @@ function editMedia(media, shownSortName) {
         briefInfo = `LOVED \n - ${sortedFavoriteContents.join(", \n - ")}`;
     }
     if ($contentCaution.length) {
-        briefInfo = `${briefInfo ? (briefInfo + '\n\n ') : ''}${"CAUTION \n - " + $contentCaution.join(", \n - ")}`;
+        briefInfo = `${briefInfo ? (briefInfo + "\n\n ") : ""}${"CAUTION \n - " + $contentCaution.join(", \n - ")}`;
     }
     media.briefInfo = briefInfo;
 
@@ -919,8 +919,8 @@ function formatNumber(number, dec = 2) {
         } else {
             let formattedNumber = number.toFixed(dec);
             // Remove trailing zeros and decimal point if not needed
-            if (formattedNumber.indexOf('.') !== -1) {
-                formattedNumber = formattedNumber.replace(/\.?0+$/, '');
+            if (formattedNumber.indexOf(".") !== -1) {
+                formattedNumber = formattedNumber.replace(/\.?0+$/, "");
             }
             return formattedNumber || number.toLocaleString("en-US", { maximumFractionDigits: dec });
         }
