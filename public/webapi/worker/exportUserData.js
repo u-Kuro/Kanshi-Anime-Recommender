@@ -113,7 +113,6 @@ function IDBInit() {
             request.onupgradeneeded = ({ target }) => {
                 try {
                     const { result, transaction } = target
-                    db = result;
                     const stores = [
                         // All Media
                         "mediaEntries", "excludedMediaIds", "mediaUpdateAt",
@@ -142,9 +141,10 @@ function IDBInit() {
                         "others",
                     ]
                     for (const store of stores) {
-                        db.createObjectStore(store);
+                        result.createObjectStore(store);
                     }
                     transaction.oncomplete = () => {
+                        db = result;
                         resolve();
                     }
                 } catch (ex) {
@@ -258,9 +258,6 @@ async function compressBlob(blob) {
         .stream()
         .pipeThrough(new CompressionStream("gzip"))
     ).blob()
-}
-function streamBlobCompression(blob) {
-    return blob.stream().pipeThrough(new CompressionStream("gzip"))
 }
 // function splitString(str, chunkSize) {
 //     let parts = [];

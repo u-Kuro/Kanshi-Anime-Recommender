@@ -59,8 +59,6 @@
 		visitedKey,
 		orderedMediaOptions,
 		algorithmFilters,
-		nonOrderedMediaOptions,
-		mediaOptionsConfig,
 		categories,
 		selectedCategory,
 		loadedMediaLists,
@@ -144,7 +142,7 @@
 				if (!$android || window[$isBackgroundUpdateKey] !== true) {
 					const records = await getIDBRecords([
 						"username",
-						// "orderedMediaOptions",
+						"orderedMediaOptions",
 						"algorithmFilters",
 						"tagInfo"
 					])
@@ -155,9 +153,7 @@
 							setLSData("username", savedUsername || "")
 							.catch(() => removeLSData("username"))
 						}
-						// $orderedMediaOptions = records.orderedMediaOptions;
-						// $nonOrderedMediaOptions = records.nonOrderedMediaOptions;
-						// $mediaOptionsConfig = records.mediaOptionsConfig;
+						$orderedMediaOptions = records.orderedMediaOptions;
 						$algorithmFilters = records.algorithmFilters || [
 							{
 								filterType: "bool",

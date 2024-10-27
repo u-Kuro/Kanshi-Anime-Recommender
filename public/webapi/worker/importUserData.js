@@ -260,7 +260,6 @@ function IDBInit() {
             request.onupgradeneeded = ({ target }) => {
                 try {
                     const { result, transaction } = target
-                    db = result;
                     const stores = [
                         // All Media
                         "mediaEntries", "excludedMediaIds", "mediaUpdateAt",
@@ -289,9 +288,10 @@ function IDBInit() {
                         "others",
                     ]
                     for (const store of stores) {
-                        db.createObjectStore(store);
+                        result.createObjectStore(store);
                     }
                     transaction.oncomplete = () => {
+                        db = result;
                         resolve();
                     }
                 } catch (ex) {
@@ -311,12 +311,13 @@ function IDBInit() {
     })
 }
 function setIDBRecords(records) {
-    return new Promise(async (resolve, reject) => {
+    return new Promise((resolve, reject) => {
         try {
             const transaction = db.transaction(Object.keys(records), "readwrite");
             for (const key in records) {
-                const store = transaction.objectStore(key);
-                let put = store.put(records[key], key);
+                const put = transaction
+                    .objectStore(key)
+                    .put(records[key], key);
                 put.onerror = (ex) => {
                     console.error(ex);
                     reject(ex);

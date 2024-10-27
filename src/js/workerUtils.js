@@ -1,7 +1,7 @@
 import { get } from "svelte/store";
 import { progressedFetch } from "./fetch.js";
 import { isConnected } from "./utils/deviceUtils.js";
-import { removeLSData, setLSData } from "./database.js";
+import { setIDBData, removeLSData, setLSData } from "./database.js";
 import { isJsonObject, jsonIsEmpty } from "./utils/dataUtils.js";
 import { downloadLink, getUniqueId, showToast } from "./utils/appUtils.js";
 import {
@@ -685,7 +685,7 @@ const processRecommendedMediaList = (_data = {}) => {
                     } else {
                         setLSData("nearestMediaReleaseAiringAt", nearestMediaReleaseAiringAt)
                         .catch(() => removeLSData("nearestMediaReleaseAiringAt"))
-                        .finally(() => setIDBData(nearestMediaReleaseAiringAt, "nearestMediaReleaseAiringAt"));
+                        .finally(() => setIDBData("nearestMediaReleaseAiringAt", nearestMediaReleaseAiringAt));
                         if (window.shouldUpdateNotifications === true && get(android)) {
                             window.shouldUpdateNotifications = false
                             try {

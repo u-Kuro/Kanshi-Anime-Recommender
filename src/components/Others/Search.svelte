@@ -121,37 +121,30 @@
 
     $: {
         filterCategoriesSelections = $mediaOptionsConfig.selection;
-        filterCategories = Object.keys(filterCategoriesSelections || {});
+        filterCategories = Object.keys(filterCategoriesSelections);
     }
 
     let filterSelectionsSearch = {};
     let numberFiltersValues = {};
     let boolFilterIsChecked = {};
     $: {
-        let allCategoriesBoolFilter = {
-            "Media Filter": $nonOrderedMediaOptions["Media Filter"].bool,
-            "Algorithm Filter": $nonOrderedMediaOptions["Algorithm Filter"].bool,
-        };
-        let activeMediaBoolFilters =
+        const activeMediaBoolFilters =
             selectedCategoryMediaFilters?.filter?.(
                 (filter) => filter?.filterType === "bool",
             ) || [];
-        let activeAlgorithmBoolFilters =
+        const activeAlgorithmBoolFilters =
             $algorithmFilters?.filter?.(
                 (filter) => filter?.filterType === "bool",
             ) || [];
-        boolFilterIsChecked = Object.entries(
-            allCategoriesBoolFilter,
-        ).reduce((acc, [filterCategoryName, boolFilterCategoryArray]) => {
+        boolFilterIsChecked = Object.entries({
+            "Media Filter": $nonOrderedMediaOptions["Media Filter"].bool,
+            "Algorithm Filter": $nonOrderedMediaOptions["Algorithm Filter"].bool,
+        }).reduce((acc, [filterCategoryName, boolFilterCategoryArray]) => {
             let activeBoolFilters =
                 filterCategoryName === "Media Filter"
                     ? activeMediaBoolFilters
                     : activeAlgorithmBoolFilters;
-            for (
-                let i = 0, l = boolFilterCategoryArray?.length;
-                i < l;
-                i++
-            ) {
+            for (let i = 0; i < boolFilterCategoryArray?.length; i++) {
                 let boolFilterName = boolFilterCategoryArray[i];
                 let activeBoolFilter = activeBoolFilters?.find?.(
                     (boolFilter) => {
@@ -2195,7 +2188,7 @@
                 {@const filterCategoryIsSelected = filterCategoryName === selectedFilterCategoryName}
                 {#if $orderedMediaOptions && filterCategoriesSelections}
                     {@const categoryIsAlgorithmFilter = filterCategoryName === "Algorithm Filter"}
-                    {@const filterSelections = filterCategoriesSelections?.[filterCategoryName] || []}
+                    {@const filterSelections = filterCategoriesSelections[filterCategoryName] || []}
                     {#each filterSelections || [] as filterSelectionName (filterCategoryName + filterSelectionName || {})}
                         {@const filterSelectionKey = filterCategoryName + "_" + filterSelectionName}
                         {@const filterSelectionIsSelected = filterCategoryIsSelected && filterSelectionName === openedFilterSelectionName}
@@ -2543,7 +2536,7 @@
                         </div>
                     {/each}
                 {/if}
-                {@const boolFilters = $nonOrderedMediaOptions[filterCategoryName].bool}
+                {@const boolFilters = $nonOrderedMediaOptions[filterCategoryName]?.bool}
                 {#each boolFilters || [] as boolFilterName (filterCategoryName + boolFilterName || {})}
                     {#if filterCategoryIsSelected && boolFilterIsChecked[filterCategoryName + boolFilterName] != null}
                         {@const boolFilterKey =
@@ -2595,7 +2588,7 @@
                         </div>
                     {/if}
                 {/each}
-                {@const numberFilters = $nonOrderedMediaOptions[filterCategoryName].number}
+                {@const numberFilters = $nonOrderedMediaOptions[filterCategoryName]?.number}
                 {#each numberFilters || [] as { name, defaultValue, maxValue, minValue } (filterCategoryName + name || {})}
                     {#if filterCategoryIsSelected}
                         {@const numberFilterKey = filterCategoryName + name}

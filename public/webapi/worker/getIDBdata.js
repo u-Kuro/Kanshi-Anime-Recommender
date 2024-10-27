@@ -66,7 +66,6 @@ function IDBInit() {
             request.onupgradeneeded = ({ target }) => {
                 try {
                     const { result, transaction } = target
-                    db = result;
                     const stores = [
                         // All Media
                         "mediaEntries", "excludedMediaIds", "mediaUpdateAt",
@@ -95,9 +94,10 @@ function IDBInit() {
                         "others",
                     ]
                     for (const store of stores) {
-                        db.createObjectStore(store);
+                        result.createObjectStore(store);
                     }
                     transaction.oncomplete = () => {
+                        db = result;
                         resolve();
                     }
                 } catch (ex) {
@@ -128,7 +128,7 @@ function getIDBData(key) {
                     value = await new Response(
                         value
                         .stream()
-                        .pipeThrough(new CompressionStream("gzip"))
+                        .pipeThrough(new DecompressionStream("gzip"))
                     ).json()
                 }
                 resolve(value);

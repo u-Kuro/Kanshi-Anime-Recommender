@@ -51,8 +51,8 @@ self.onmessage = async ({
         const {
             mediaEntries,
             excludedMediaIds = {},
-            mediaUpdateAt = 1706674120,
-        } = getIDBRecords([
+            mediaUpdateAt = 1730019637,
+        } = await getIDBRecords([
             "mediaEntries",
             "excludedMediaIds",
             "mediaUpdateAt",
@@ -323,8 +323,8 @@ self.onmessage = async ({
                             // Reset so newly added entries would not be saved for next updates
                             ({ 
                                 mediaEntries,
-                                mediaUpdateAt = 1706674120,
-                            } = getIDBRecords([
+                                mediaUpdateAt = 1730019637,
+                            } = await getIDBRecords([
                                 "mediaEntries",
                                 "mediaUpdateAt"
                             ]));
@@ -1405,7 +1405,6 @@ function IDBInit() {
             request.onupgradeneeded = ({ target }) => {
                 try {
                     const { result, transaction } = target
-                    db = result;
                     const stores = [
                         // All Media
                         "mediaEntries", "excludedMediaIds", "mediaUpdateAt",
@@ -1434,9 +1433,10 @@ function IDBInit() {
                         "others",
                     ]
                     for (const store of stores) {
-                        db.createObjectStore(store);
+                        result.createObjectStore(store);
                     }
                     transaction.oncomplete = () => {
+                        db = result;
                         resolve();
                     }
                 } catch (ex) {
@@ -1458,28 +1458,26 @@ function IDBInit() {
 function setIDBRecords(records) {
     return new Promise(async (resolve, reject) => {
         try {
+            for (const key in records) {
+                if (isJsonObject(records[key]) || records[key] instanceof Array) {
+                    records[key] = await new Response(
+                        new Blob([JSON.stringify(records[key])])
+                        .stream()
+                        .pipeThrough(new CompressionStream("gzip"))
+                    ).blob()
+                } else if (records[key] instanceof Blob) {
+                    records[key] = await new Response(
+                        records[key]
+                        .stream()
+                        .pipeThrough(new CompressionStream("gzip"))
+                    ).blob()
+                }
+            }
             const transaction = db.transaction(Object.keys(records), "readwrite");
             for (const key in records) {
-                const store = transaction.objectStore(key);
-                let value = records[key];
-                let put;
-                if (value instanceof Blob) {
-                    value = await new Response(
-                        value
-                        .stream()
-                        .pipeThrough(new CompressionStream("gzip"))
-                    ).blob()
-                    put = store.put(value, key);
-                } else if (isJsonObject(value) || value instanceof Array) {
-                    value = await new Response(
-                        new Blob([JSON.stringify(value)])
-                        .stream()
-                        .pipeThrough(new CompressionStream("gzip"))
-                    ).blob()
-                    put = store.put(value, key);
-                } else {
-                    put = store.put(value, key);
-                }
+                const put = transaction
+                    .objectStore(key)
+                    .put(records[key], key);
                 put.onerror = (ex) => {
                     console.error(ex);
                     reject(ex);
@@ -1505,7 +1503,7 @@ function getIDBData(key) {
                     value = await new Response(
                         value
                         .stream()
-                        .pipeThrough(new CompressionStream("gzip"))
+                        .pipeThrough(new DecompressionStream("gzip"))
                     ).json()
                 }
                 resolve(value);
@@ -1537,7 +1535,7 @@ function getIDBRecords(recordKeys) {
                                     value = await new Response(
                                         value
                                         .stream()
-                                        .pipeThrough(new CompressionStream("gzip"))
+                                        .pipeThrough(new DecompressionStream("gzip"))
                                     ).json()
                                 }
                                 resolve([key, value]);
